@@ -1,24 +1,21 @@
 # Authors: Shane Grigsby <refuge@rocktalus.com>
 #          Adrin Jalali <adrin.jalali@gmail.com>
 # License: BSD 3 clause
+import warnings
+
 import numpy as np
 import pytest
 from scipy import sparse
-import warnings
 
-from sklearn.datasets import make_blobs
-from sklearn.cluster import OPTICS
+from sklearn.cluster import DBSCAN, OPTICS
 from sklearn.cluster._optics import _extend_region, _extract_xi_labels
-from sklearn.exceptions import DataConversionWarning
+from sklearn.cluster.tests.common import generate_clustered_data
+from sklearn.datasets import make_blobs
+from sklearn.exceptions import DataConversionWarning, EfficiencyWarning
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.cluster import DBSCAN
 from sklearn.utils import shuffle
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.exceptions import EfficiencyWarning
-from sklearn.cluster.tests.common import generate_clustered_data
-
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 rng = np.random.RandomState(0)
 n_points_per_cluster = 10

@@ -138,7 +138,7 @@ Changes impacting all modules
   :pr:`25129` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |Fix| Fix a bug where the current configuration was ignored in estimators using
-  `n_jobs > 1`. This bug was triggered for tasks dispatched by the auxillary
+  `n_jobs > 1`. This bug was triggered for tasks dispatched by the auxiliary
   thread of `joblib` as :func:`sklearn.get_config` used to access an empty thread
   local configuration instead of the configuration visible from the thread where
   `joblib.Parallel` was first called.
@@ -459,7 +459,7 @@ Changelog
   :pr:`23038` by :user:`Meekail Zain <micky774>`.
 
 - |Enhancement| :class:`cluster.SpectralClustering` and
-  :func:`cluster.spectral_clustering` now propogates the `eigen_tol` parameter
+  :func:`cluster.spectral_clustering` now propagates the `eigen_tol` parameter
   to all choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
   and begins deprecation to change the default from `eigen_tol=0` to
   `eigen_tol="auto"` in version 1.3.
@@ -755,7 +755,7 @@ Changelog
 
 - |Enhancement| Adds `eigen_tol` parameter to
   :class:`manifold.SpectralEmbedding`. Both :func:`manifold.spectral_embedding`
-  and :class:`manifold.SpectralEmbedding` now propogate `eigen_tol` to all
+  and :class:`manifold.SpectralEmbedding` now propagate `eigen_tol` to all
   choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
   and begins deprecation to change the default from `eigen_tol=0` to
   `eigen_tol="auto"` in version 1.3.
@@ -768,7 +768,7 @@ Changelog
   :class:`manifold.MDS` and :func:`manifold.smacof`. Note that
   `normalized_stress` is only valid for non-metric MDS, therefore the `"auto"`
   option enables `normalized_stress` when `metric=False` and disables it when
-  `metric=True`. `"auto"` will become the default value foor `normalized_stress`
+  `metric=True`. `"auto"` will become the default value for `normalized_stress`
   in version 1.4.
   :pr:`23834` by :user:`Meekail Zain <micky774>`
 
@@ -971,7 +971,7 @@ Changelog
   parameter to specific `y`'s dtype. :pr:`22629` by `Thomas Fan`_.
 
 - |Enhancement| :func:`utils.extmath.cartesian` now accepts arrays with different
-  `dtype` and will cast the ouptut to the most permissive `dtype`.
+  `dtype` and will cast the output to the most permissive `dtype`.
   :pr:`25067` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.

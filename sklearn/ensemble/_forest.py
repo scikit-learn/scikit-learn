@@ -40,18 +40,24 @@ Single and multi-output problems are both handled.
 # License: BSD 3 clause
 
 
+import threading
+from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 from warnings import catch_warnings, simplefilter, warn
-import threading
 
-from abc import ABCMeta, abstractmethod
 import numpy as np
-from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
+from scipy.sparse import issparse
 
-from ..base import is_classifier
-from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin, TransformerMixin
-
+from ..base import (
+    ClassifierMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    TransformerMixin,
+    _fit_context,
+    is_classifier,
+)
+from ..exceptions import DataConversionWarning
 from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (
@@ -61,21 +67,18 @@ from ..tree import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
-from ..tree._tree import DTYPE, DOUBLE
+from ..tree._tree import DOUBLE, DTYPE
 from ..utils import check_random_state, compute_sample_weight
-from ..exceptions import DataConversionWarning
-from ._base import BaseEnsemble, _partition_estimators
-from ..utils.parallel import delayed, Parallel
+from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.multiclass import check_classification_targets, type_of_target
+from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
-    check_is_fitted,
-    _check_sample_weight,
     _check_feature_names_in,
+    _check_sample_weight,
+    _num_samples,
+    check_is_fitted,
 )
-from ..utils.validation import _num_samples
-from ..utils._param_validation import Interval, StrOptions
-from ..utils._param_validation import RealNotInt
-
+from ._base import BaseEnsemble, _partition_estimators
 
 __all__ = [
     "RandomForestClassifier",
@@ -311,6 +314,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         return sparse_hstack(indicators).tocsr(), n_nodes_ptr
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """
         Build a forest of trees from the training set (X, y).
@@ -338,8 +342,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         # Validate or convert input data
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
@@ -474,7 +476,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # Collect newly grown trees
             self.estimators_.extend(trees)
 
-        if self.oob_score:
+        if self.oob_score and (
+            n_more_estimators > 0 or not hasattr(self, "oob_score_")
+        ):
             y_type = type_of_target(y)
             if y_type in ("multiclass-multioutput", "unknown"):
                 # FIXME: we could consider to support multiclass-multioutput if
@@ -1094,6 +1098,9 @@ class RandomForestClassifier(ForestClassifier):
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
 
+    For a comparison between tree-based ensemble models see the example
+    :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`.
+
     Read more in the :ref:`User Guide <forest>`.
 
     Parameters
@@ -1453,6 +1460,9 @@ class RandomForestRegressor(ForestRegressor):
     The sub-sample size is controlled with the `max_samples` parameter if
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
+
+    For a comparison between tree-based ensemble models see the example
+    :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`.
 
     Read more in the :ref:`User Guide <forest>`.
 
@@ -2729,6 +2739,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         self.fit_transform(X, y, sample_weight=sample_weight)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None, sample_weight=None):
         """
         Fit estimator and transform dataset.
@@ -2754,8 +2765,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         X_transformed : sparse matrix of shape (n_samples, n_out)
             Transformed dataset.
         """
-        self._validate_params()
-
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=_num_samples(X))
         super().fit(X, y, sample_weight=sample_weight)
