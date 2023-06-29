@@ -306,13 +306,13 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.tree.export_graphviz",
     "sklearn.tree.export_text",
     "sklearn.tree.plot_tree",
-    "sklearn.utils.class_weight.compute_sample_weight",
     "sklearn.utils.gen_batches",
     "sklearn.utils.gen_even_slices",
-    "sklearn.utils.graph.single_source_shortest_path_length",
     "sklearn.utils.resample",
     "sklearn.utils.safe_mask",
     "sklearn.utils.extmath.randomized_svd",
+    "sklearn.utils.class_weight.compute_class_weight",
+    "sklearn.utils.class_weight.compute_sample_weight",
     "sklearn.utils.graph.single_source_shortest_path_length",
 ]
 

@@ -22,33 +22,53 @@ def test_compute_class_weight():
     assert cw[0] < cw[1] < cw[2]
 
 
-def test_compute_class_weight_not_present():
+@pytest.mark.parametrize(
+    "y_type, class_weight, classes, err_msg",
+    [
+        (
+            "numeric",
+            "balanced",
+            np.arange(4),
+            "classes should have valid labels that are in y",
+        ),
+        # Non-regression for https://github.com/scikit-learn/scikit-learn/issues/8312
+        (
+            "numeric",
+            {"label_not_present": 1.0},
+            np.arange(4),
+            r"The classes, \[0, 1, 2, 3\], are not in class_weight",
+        ),
+        (
+            "numeric",
+            "balanced",
+            np.arange(2),
+            "classes should include all valid labels",
+        ),
+        (
+            "numeric",
+            {0: 1.0, 1: 2.0},
+            np.arange(2),
+            "classes should include all valid labels",
+        ),
+        (
+            "string",
+            {"dogs": 3, "cat": 2},
+            np.array(["dog", "cat"]),
+            r"The classes, \['dog'\], are not in class_weight",
+        ),
+    ],
+)
+def test_compute_class_weight_not_present(y_type, class_weight, classes, err_msg):
     # Raise error when y does not contain all class labels
-    classes = np.arange(4)
-    y = np.asarray([0, 0, 0, 1, 1, 2])
-    with pytest.raises(ValueError):
-        compute_class_weight("balanced", classes=classes, y=y)
-    # Fix exception in error message formatting when missing label is a string
-    # https://github.com/scikit-learn/scikit-learn/issues/8312
-    with pytest.raises(
-        ValueError, match=r"The classes, \[0, 1, 2, 3\], are not in class_weight"
-    ):
-        compute_class_weight({"label_not_present": 1.0}, classes=classes, y=y)
-    # Raise error when y has items not in classes
-    classes = np.arange(2)
-    with pytest.raises(ValueError):
-        compute_class_weight("balanced", classes=classes, y=y)
-    with pytest.raises(ValueError):
-        compute_class_weight({0: 1.0, 1: 2.0}, classes=classes, y=y)
+    y = (
+        np.asarray([0, 0, 0, 1, 1, 2])
+        if y_type == "numeric"
+        else np.asarray(["dog", "cat", "dog"])
+    )
 
-    # y contains a unweighted class that is not in class_weights
-    classes = np.asarray(["cat", "dog"])
-    y = np.asarray(["dog", "cat", "dog"])
-    class_weights = {"dogs": 3, "cat": 2}
-    msg = r"The classes, \['dog'\], are not in class_weight"
-
-    with pytest.raises(ValueError, match=msg):
-        compute_class_weight(class_weights, classes=classes, y=y)
+    print(y)
+    with pytest.raises(ValueError, match=err_msg):
+        compute_class_weight(class_weight, classes=classes, y=y)
 
 
 def test_compute_class_weight_dict():
