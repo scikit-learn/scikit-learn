@@ -262,7 +262,7 @@ Fixed models
   :pr:`20880` by :user:`Guillaume Lemaitre <glemaitre>`
   and :user:`András Simon <simonandras>`.
 
-- |Fix| Solve a bug in :func:`~sklearn.utils.metaestimators.if_delegate_has_method`
+- |Fix| Solve a bug in ``sklearn.utils.metaestimators.if_delegate_has_method``
   where the underlying check for an attribute did not work with NumPy arrays.
   :pr:`21145` by :user:`Zahlii <Zahlii>`.
 

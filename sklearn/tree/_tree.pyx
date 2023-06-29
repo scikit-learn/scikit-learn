@@ -94,7 +94,7 @@ cdef class TreeBuilder:
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=None,
-        const unsigned char[::1] feature_has_missing=None,
+        const unsigned char[::1] missing_values_in_feature_mask=None,
     ):
         """Build a decision tree from the training set (X, y)."""
         pass
@@ -168,7 +168,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=None,
-        const unsigned char[::1] feature_has_missing=None,
+        const unsigned char[::1] missing_values_in_feature_mask=None,
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -194,7 +194,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double min_impurity_decrease = self.min_impurity_decrease
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight, feature_has_missing)
+        splitter.init(X, y, sample_weight, missing_values_in_feature_mask)
 
         cdef SIZE_t start
         cdef SIZE_t end
@@ -366,7 +366,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=None,
-        const unsigned char[::1] feature_has_missing=None,
+        const unsigned char[::1] missing_values_in_feature_mask=None,
     ):
         """Build a decision tree from the training set (X, y)."""
 
@@ -378,7 +378,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t max_leaf_nodes = self.max_leaf_nodes
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight, feature_has_missing)
+        splitter.init(X, y, sample_weight, missing_values_in_feature_mask)
 
         cdef vector[FrontierRecord] frontier
         cdef FrontierRecord record

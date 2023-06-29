@@ -2,18 +2,17 @@
 Test the fastica algorithm.
 """
 import itertools
-import pytest
-import warnings
 import os
+import warnings
 
 import numpy as np
+import pytest
 from scipy import stats
 
-from sklearn.utils._testing import assert_allclose
-
-from sklearn.decomposition import FastICA, fastica, PCA
+from sklearn.decomposition import PCA, FastICA, fastica
 from sklearn.decomposition._fastica import _gs_decorrelation
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._testing import assert_allclose
 
 
 def center_and_norm(x, axis=-1):
@@ -165,8 +164,9 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
     assert sources.shape == (1000, 2)
 
     assert_allclose(sources_fun, sources)
-    # the debian 32 bit build with global dtype float32 needs an atol to pass
-    atol = 1e-7 if global_dtype == np.float32 else 0
+    # Set atol to account for the different magnitudes of the elements in sources
+    # (from 1e-4 to 1e1).
+    atol = np.max(np.abs(sources)) * (1e-5 if global_dtype == np.float32 else 1e-7)
     assert_allclose(sources, ica.transform(m.T), atol=atol)
 
     assert ica.mixing_.shape == (2, 2)
