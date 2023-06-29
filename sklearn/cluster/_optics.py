@@ -442,7 +442,7 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
         ],
         "max_eps": [Interval(Real, 0, None, closed="both")],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
-        "p": [Interval(Real, 0, None, closed="right"), None],
+        "p": [Interval(Real, 0, None, closed="right")],
         "metric_params": [dict, None],
         "algorithm": [StrOptions({"auto", "brute", "ball_tree", "kd_tree"})],
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
