@@ -540,6 +540,11 @@ def test_check_fit_score_takes_y_works_on_deprecated_fit():
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
+
+    # check that we have a set_params and can clone
+    msg = "Passing a class was deprecated"
+    with raises(TypeError, match=msg):
+        check_estimator(object)
     msg = (
         "Parameter 'p' of estimator 'HasMutableParameters' is of type "
         "object which is not allowed"

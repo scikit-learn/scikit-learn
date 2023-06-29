@@ -61,7 +61,6 @@ from sklearn.preprocessing import (
 )
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 from sklearn.utils import IS_PYPY, all_estimators
-from sklearn.utils._param_validation import InvalidParameterError
 from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
 from sklearn.utils._testing import (
     SkipTest,
@@ -279,10 +278,10 @@ def test_class_support_removed():
     # Make sure passing classes to check_estimator or parametrize_with_checks
     # raises an error
 
-    with pytest.raises(InvalidParameterError):
+    msg = "Passing a class was deprecated.* isn't supported anymore"
+    with pytest.raises(TypeError, match=msg):
         check_estimator(LogisticRegression)
 
-    msg = "Passing a class was deprecated.* isn't supported anymore"
     with pytest.raises(TypeError, match=msg):
         parametrize_with_checks([LogisticRegression])
 
