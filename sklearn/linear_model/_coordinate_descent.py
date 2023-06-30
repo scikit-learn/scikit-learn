@@ -350,7 +350,7 @@ def lasso_path(
         "y": ["array-like", "sparse matrix"],
         "l1_ratio": [Interval(Real, 0.0, 1.0, closed="both")],
         "eps": [Interval(Real, 0.0, None, closed="neither")],
-        "n_alphas": [Interval(Integral, 0, None, closed="left")],
+        "n_alphas": [Interval(Integral, 1, None, closed="left")],
         "alphas": ["array-like", None],
         "precompute": [StrOptions({"auto"}), "boolean", "array-like"],
         "Xy": ["array-like", None],
