@@ -67,8 +67,8 @@ import inspect
 import pprint
 from collections import OrderedDict
 
-from ..base import BaseEstimator
 from .._config import get_config
+from ..base import BaseEstimator
 from . import is_scalar_nan
 
 

@@ -178,6 +178,10 @@ characteristics of the dataset and the modeling task. It's always a good idea
 to try both models and compare their performance and computational efficiency
 on your specific problem to determine which model is the best fit.
 
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`
+
 Extremely Randomized Trees
 --------------------------
 

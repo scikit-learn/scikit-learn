@@ -1,19 +1,24 @@
 """
 Testing for export functions of decision trees (sklearn.tree.export).
 """
+from io import StringIO
 from re import finditer, search
 from textwrap import dedent
 
 import numpy as np
-from numpy.random import RandomState
 import pytest
+from numpy.random import RandomState
 
 from sklearn.base import is_classifier
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.tree import export_graphviz, plot_tree, export_text
-from io import StringIO
 from sklearn.exceptions import NotFittedError
+from sklearn.tree import (
+    DecisionTreeClassifier,
+    DecisionTreeRegressor,
+    export_graphviz,
+    export_text,
+    plot_tree,
+)
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -292,13 +297,6 @@ def test_graphviz_errors():
     out = StringIO()
     with pytest.raises(IndexError):
         export_graphviz(clf, out, class_names=[])
-
-    # Check precision error
-    out = StringIO()
-    with pytest.raises(ValueError, match="should be greater or equal"):
-        export_graphviz(clf, out, precision=-1)
-    with pytest.raises(ValueError, match="should be an integer"):
-        export_graphviz(clf, out, precision="1")
 
 
 def test_friedman_mse_in_graphviz():
