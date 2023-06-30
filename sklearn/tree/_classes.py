@@ -1386,6 +1386,16 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionadded:: 0.22
 
+    store_leaf_values : bool, default=False
+        Whether to store the samples that fall into leaves in the ``tree_`` attribute.
+        Each leaf will store a 2D array corresponding to the samples that fall into it
+        keyed by node_id.
+
+        XXX: This is currently experimental and may change without notice.
+        Moreover, it can be improved upon since storing the samples twice is not ideal.
+        One could instead store the indices in ``y_train`` that fall into each leaf,
+        which would lower RAM/diskspace usage.
+
     Attributes
     ----------
     feature_importances_ : ndarray of shape (n_features,)
@@ -1713,6 +1723,16 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         .. versionadded:: 0.22
 
+    store_leaf_values : bool, default=False
+        Whether to store the samples that fall into leaves in the ``tree_`` attribute.
+        Each leaf will store a 2D array corresponding to the samples that fall into it
+        keyed by node_id.
+
+        XXX: This is currently experimental and may change without notice.
+        Moreover, it can be improved upon since storing the samples twice is not ideal.
+        One could instead store the indices in ``y_train`` that fall into each leaf,
+        which would lower RAM/diskspace usage.
+
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,) or list of ndarray
@@ -1958,6 +1978,16 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         :ref:`minimal_cost_complexity_pruning` for details.
 
         .. versionadded:: 0.22
+
+    store_leaf_values : bool, default=False
+        Whether to store the samples that fall into leaves in the ``tree_`` attribute.
+        Each leaf will store a 2D array corresponding to the samples that fall into it
+        keyed by node_id.
+
+        XXX: This is currently experimental and may change without notice.
+        Moreover, it can be improved upon since storing the samples twice is not ideal.
+        One could instead store the indices in ``y_train`` that fall into each leaf,
+        which would lower RAM/diskspace usage.
 
     Attributes
     ----------
