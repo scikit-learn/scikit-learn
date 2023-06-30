@@ -68,3 +68,12 @@ TODO: update at the time of the release.
   when using a custom initialization. The default value of this parameter will change
   from `None` to `auto` in version 1.6.
   :pr:`26634` by :user:`Alexandre Landeau <AlexL>` and :user:`Alexandre Vigny <avigny>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Enhancement| A fitted property, ``estimators_samples_``, was added to all Forest methods,
+  :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`, and :class:`ensemble.ExtraTreesRegressor`,
+  which allows to retrieve the training sample indices used for each tree estimator.
+  :pr:`26736` by :user:`Adam Li <adam2392>`.

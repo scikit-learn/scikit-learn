@@ -1849,3 +1849,6 @@ def test_estimators_samples(ForestClass):
     new_tree_values = estimator.tree_.value
 
     assert_array_almost_equal(orig_tree_values, new_tree_values)
+
+    # the bootstrap can sample multiple indices
+    assert len(np.unique(estimator_samples)) != len(estimator_samples)

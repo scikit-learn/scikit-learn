@@ -410,7 +410,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             )
         else:
             n_samples_bootstrap = None
-        self._n_samples_bootstrap = n_samples_bootstrap if n_samples_bootstrap is not None else self._n_samples
+        self._n_samples_bootstrap = (
+            n_samples_bootstrap if n_samples_bootstrap is not None else self._n_samples
+        )
 
         self._validate_estimator()
 
@@ -1366,6 +1368,10 @@ class RandomForestClassifier(ForestClassifier):
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
 
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
     See Also
     --------
     sklearn.tree.DecisionTreeClassifier : A decision tree classifier.
@@ -1707,6 +1713,10 @@ class RandomForestRegressor(ForestRegressor):
     oob_prediction_ : ndarray of shape (n_samples,) or (n_samples, n_outputs)
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
+
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
 
     See Also
     --------
@@ -2067,6 +2077,10 @@ class ExtraTreesClassifier(ForestClassifier):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
+    
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
 
     See Also
     --------
@@ -2395,6 +2409,10 @@ class ExtraTreesRegressor(ForestRegressor):
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
 
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+        
     See Also
     --------
     ExtraTreesClassifier : An extra-trees classifier with random splits.
