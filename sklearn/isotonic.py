@@ -24,7 +24,8 @@ __all__ = ["check_increasing", "isotonic_regression", "IsotonicRegression"]
     {
         "x": ["array-like"],
         "y": ["array-like"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def check_increasing(x, y):
     """Determine whether y is monotonically correlated with x.
