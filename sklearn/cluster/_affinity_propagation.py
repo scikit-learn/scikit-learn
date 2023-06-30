@@ -5,19 +5,18 @@
 
 # License: BSD 3 clause
 
-from numbers import Integral, Real
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 
+from .._config import config_context
+from ..base import BaseEstimator, ClusterMixin, _fit_context
 from ..exceptions import ConvergenceWarning
-from ..base import BaseEstimator, ClusterMixin
+from ..metrics import euclidean_distances, pairwise_distances_argmin
 from ..utils import check_random_state
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.validation import check_is_fitted
-from ..metrics import euclidean_distances
-from ..metrics import pairwise_distances_argmin
-from .._config import config_context
 
 
 def _equal_similarities_and_preferences(S, preference):
@@ -186,7 +185,8 @@ def _affinity_propagation(
     {
         "S": ["array-like"],
         "return_n_iter": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def affinity_propagation(
     S,
@@ -469,6 +469,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     def _more_tags(self):
         return {"pairwise": self.affinity == "precomputed"}
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the clustering from features, or affinity matrix.
 
@@ -488,8 +489,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self
             Returns the instance itself.
         """
-        self._validate_params()
-
         if self.affinity == "precomputed":
             accept_sparse = False
         else:
