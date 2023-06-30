@@ -175,7 +175,7 @@ def _alpha_grid(
         "X": ["array-like", "sparse matrix"],
         "y": ["array-like", "sparse matrix"],
         "eps": [Interval(Real, 0, None, closed="neither")],
-        "n_alphas": [Interval(Integral, 0, None, closed="left")],
+        "n_alphas": [Interval(Integral, 1, None, closed="left")],
         "alphas": ["array-like", None],
         "precompute": [StrOptions({"auto"}), "boolean", "array-like"],
         "Xy": ["array-like", None],
@@ -241,7 +241,7 @@ def lasso_path(
     n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    alphas : ndarray, default=None
+    alphas : array-like, default=None
         List of alphas where to compute the models.
         If ``None`` alphas are set automatically.
 
@@ -259,7 +259,7 @@ def lasso_path(
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    coef_init : ndarray of shape (n_features, ), default=None
+    coef_init : array-like of shape (n_features, ), default=None
         The initial values of the coefficients.
 
     verbose : bool or int, default=False
