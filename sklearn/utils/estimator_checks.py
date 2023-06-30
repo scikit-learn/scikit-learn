@@ -4504,7 +4504,7 @@ def check_set_output_transform_pandas(name, transformer_orig):
         )
 
 
-def check_global_ouptut_transform_pandas(name, transformer_orig):
+def check_global_output_transform_pandas(name, transformer_orig):
     """Check that setting globally the output of a transformer to pandas lead to the
     right results."""
     try:
