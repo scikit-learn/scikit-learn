@@ -43,6 +43,11 @@ Changes impacting all modules
   to work with our estimators and functions.
   :pr:`26464` by `Thomas Fan`_.
 
+- |Enhancement| The function `precision_recall_fscore_support`'s name was changed to
+  `precision_recall_fscore_support_pred`. As the name implies, the function now outputs
+  the number of predictions for each class (i.e., TP + FP) along with the support (i.e., TP + FN).
+  :pr:`26675` by `Sean (Seok-Won) Yi`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
