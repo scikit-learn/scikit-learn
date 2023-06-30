@@ -209,7 +209,7 @@ def fetch_20newsgroups(
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, default=42
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
