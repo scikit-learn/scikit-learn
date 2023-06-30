@@ -417,7 +417,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # Check to correct monotonicity constraint' specification,
             # by applying element-wise logical conjunction
             # Note: we do not cast `np.asarray(self.monotonic_cst, dtype=np.int8)`
-            # straight away here so as  to generate error messages for invalid
+            # straight away here so as to generate error messages for invalid
             # values using the original values prior to any dtype related conversion.
             monotonic_cst = np.asarray(self.monotonic_cst)
             if monotonic_cst.shape[0] != X.shape[1]:
@@ -425,10 +425,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     "monotonic_cst has shape {} but the input data "
                     "X has {} features.".format(monotonic_cst.shape[0], X.shape[1])
                 )
-            unsatisfied_constraints_conditions = (
-                (monotonic_cst != -1) * (monotonic_cst != 0) * (monotonic_cst != 1)
-            )
-            if np.any(unsatisfied_constraints_conditions):
+            valid_constraints = np.isin(monotonic_cst, (-1, 0, 1))
+            if not np.all(valid_constraints):
                 unique_constaints_value = np.unique(monotonic_cst)
                 raise ValueError(
                     "monotonic_cst must be None or an array-like of -1, 0 or 1, but"
