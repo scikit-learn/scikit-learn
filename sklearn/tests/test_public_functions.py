@@ -201,6 +201,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.isotonic.isotonic_regression",
     "sklearn.linear_model.enet_path",
     "sklearn.linear_model.lars_path_gram",
+    "sklearn.linear_model.lasso_path",
     "sklearn.linear_model.orthogonal_mp",
     "sklearn.linear_model.orthogonal_mp_gram",
     "sklearn.linear_model.ridge_regression",
