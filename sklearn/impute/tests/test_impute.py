@@ -1,33 +1,31 @@
-import pytest
+import io
 import warnings
 
 import numpy as np
+import pytest
 from scipy import sparse
 from scipy.stats import kstest
 
-import io
-
-from sklearn.utils._testing import _convert_container
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn import tree
+from sklearn.datasets import load_diabetes
+from sklearn.dummy import DummyRegressor
+from sklearn.exceptions import ConvergenceWarning
 
 # make IterativeImputer available
 from sklearn.experimental import enable_iterative_imputer  # noqa
-
-from sklearn.datasets import load_diabetes
-from sklearn.impute import MissingIndicator
-from sklearn.impute import SimpleImputer, IterativeImputer, KNNImputer
-from sklearn.dummy import DummyRegressor
-from sklearn.linear_model import BayesianRidge, ARDRegression, RidgeCV
-from sklearn.pipeline import Pipeline
-from sklearn.pipeline import make_union
-from sklearn.model_selection import GridSearchCV
-from sklearn import tree
-from sklearn.random_projection import _sparse_random_matrix
-from sklearn.exceptions import ConvergenceWarning
+from sklearn.impute import IterativeImputer, KNNImputer, MissingIndicator, SimpleImputer
 from sklearn.impute._base import _most_frequent
+from sklearn.linear_model import ARDRegression, BayesianRidge, RidgeCV
+from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline, make_union
+from sklearn.random_projection import _sparse_random_matrix
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 
 def _assert_array_equal_and_same_dtype(x, y):
@@ -98,11 +96,7 @@ def test_imputation_shape(strategy):
 def test_imputation_deletion_warning(strategy):
     X = np.ones((3, 5))
     X[:, 0] = np.nan
-    imputer = SimpleImputer(strategy=strategy, verbose=1)
-
-    # TODO: Remove in 1.3
-    with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
-        imputer.fit(X)
+    imputer = SimpleImputer(strategy=strategy).fit(X)
 
     with pytest.warns(UserWarning, match="Skipping"):
         imputer.transform(X)
@@ -122,11 +116,7 @@ def test_imputation_deletion_warning_feature_names(strategy):
         columns=feature_names,
     )
 
-    imputer = SimpleImputer(strategy=strategy, verbose=1)
-
-    # TODO: Remove in 1.3
-    with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
-        imputer.fit(X)
+    imputer = SimpleImputer(strategy=strategy).fit(X)
 
     # check SimpleImputer returning feature name attribute correctly
     assert_array_equal(imputer.feature_names_in_, feature_names)

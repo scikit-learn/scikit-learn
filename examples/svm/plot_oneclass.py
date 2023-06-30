@@ -11,9 +11,10 @@ classifying new data as similar or different to the training set.
 
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.font_manager
+import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import svm
 
 xx, yy = np.meshgrid(np.linspace(-5, 5, 500), np.linspace(-5, 5, 500))
