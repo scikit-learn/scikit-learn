@@ -139,6 +139,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.ward_tree",
     "sklearn.covariance.empirical_covariance",
     "sklearn.covariance.ledoit_wolf_shrinkage",
+    "sklearn.covariance.log_likelihood",
     "sklearn.covariance.shrunk_covariance",
     "sklearn.datasets.clear_data_home",
     "sklearn.datasets.dump_svmlight_file",
@@ -198,8 +199,10 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.inspection.permutation_importance",
     "sklearn.isotonic.isotonic_regression",
     "sklearn.linear_model.orthogonal_mp",
+    "sklearn.linear_model.orthogonal_mp_gram",
     "sklearn.linear_model.ridge_regression",
     "sklearn.metrics.accuracy_score",
+    "sklearn.manifold.smacof",
     "sklearn.metrics.auc",
     "sklearn.metrics.average_precision_score",
     "sklearn.metrics.balanced_accuracy_score",
@@ -307,9 +310,13 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.tree.export_text",
     "sklearn.tree.plot_tree",
     "sklearn.utils.gen_batches",
-    "sklearn.utils.graph.single_source_shortest_path_length",
+    "sklearn.utils.gen_even_slices",
     "sklearn.utils.resample",
     "sklearn.utils.safe_mask",
+    "sklearn.utils.extmath.randomized_svd",
+    "sklearn.utils.class_weight.compute_class_weight",
+    "sklearn.utils.class_weight.compute_sample_weight",
+    "sklearn.utils.graph.single_source_shortest_path_length",
 ]
 
 
