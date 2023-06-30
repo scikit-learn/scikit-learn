@@ -202,6 +202,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.linear_model.orthogonal_mp_gram",
     "sklearn.linear_model.ridge_regression",
     "sklearn.metrics.accuracy_score",
+    "sklearn.manifold.smacof",
     "sklearn.metrics.auc",
     "sklearn.metrics.average_precision_score",
     "sklearn.metrics.balanced_accuracy_score",
