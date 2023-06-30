@@ -2077,7 +2077,7 @@ class ExtraTreesClassifier(ForestClassifier):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
-    
+
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
         estimator. Each subset is defined by an array of the indices selected.
@@ -2412,7 +2412,7 @@ class ExtraTreesRegressor(ForestRegressor):
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
         estimator. Each subset is defined by an array of the indices selected.
-        
+
     See Also
     --------
     ExtraTreesClassifier : An extra-trees classifier with random splits.
