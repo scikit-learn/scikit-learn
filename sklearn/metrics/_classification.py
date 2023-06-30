@@ -1560,8 +1560,7 @@ def precision_recall_fscore_support_pred(
     sample_weight=None,
     zero_division="warn",
 ):
-    """Compute precision, recall, F-measure, support,
-        and predicted for each class.
+    """Compute precision, recall, F-measure, support, predicted.
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
     true positives and ``fp`` the number of false positives. The precision is
