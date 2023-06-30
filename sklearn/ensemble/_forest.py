@@ -385,7 +385,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     "is necessary for Poisson regression."
                 )
 
-        self.n_outputs_ = y.shape[1]
+        self._n_samples, self.n_outputs_ = y.shape
 
         y, expanded_class_weight = self._validate_y_class_weight(y)
 
@@ -635,6 +635,33 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         all_importances = np.mean(all_importances, axis=0, dtype=np.float64)
         return all_importances / np.sum(all_importances)
+
+    def _get_estimators_indices(self):
+        # Get drawn indices along both sample and feature axes
+        for tree in self.estimators_:
+            seed = tree.random_state
+            # Operations accessing random_state must be performed identically
+            # to those in `_parallel_build_trees()`
+            sample_indices = _generate_sample_indices(
+                seed, self.bootstrap, self._n_samples
+            )
+
+            yield sample_indices
+
+    @property
+    def estimators_samples_(self):
+        """
+        The subset of drawn samples for each base estimator.
+
+        Returns a dynamically generated list of indices identifying
+        the samples used for fitting each member of the ensemble, i.e.,
+        the in-bag samples.
+
+        Note: the list is re-created at each call to the property in order
+        to reduce the object memory footprint by not storing the sampling
+        data. Thus fetching the property may be slower than expected.
+        """
+        return [sample_indices for sample_indices in self._get_estimators_indices()]
 
 
 def _accumulate_prediction(predict, X, out, lock):
