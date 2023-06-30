@@ -2657,6 +2657,10 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
     one_hot_encoder_ : OneHotEncoder instance
         One-hot encoder used to create the sparse embedding.
 
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
     See Also
     --------
     ExtraTreesClassifier : An extra-trees classifier.
