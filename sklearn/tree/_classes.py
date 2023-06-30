@@ -860,6 +860,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         The constraints hold over the probability of the positive class.
 
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
         .. versionadded:: 1.4
 
     Attributes
@@ -1252,6 +1254,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
           - multioutput regressions (i.e. when `n_outputs_ > 1`),
           - regressions trained on data with missing values.
 
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
         .. versionadded:: 1.4
 
     Attributes
@@ -1596,6 +1600,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         The constraints hold over the probability of the positive class.
 
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
         .. versionadded:: 1.4
 
     Attributes
@@ -1855,6 +1861,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         Monotonicity constraints are not supported for:
           - multioutput regressions (i.e. when `n_outputs_ > 1`),
           - regressions trained on data with missing values.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 1.4
 
