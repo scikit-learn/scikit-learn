@@ -142,20 +142,20 @@ def lars_path(
 
     Returns
     -------
-    alphas : array-like of shape (n_alphas + 1,)
+    alphas : ndarray of shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         `n_alphas` is either `max_iter`, `n_features`, or the
         number of nodes in the path with `alpha >= alpha_min`, whichever
         is smaller.
 
-    active : array-like of shape (n_alphas,)
+    active : ndarray of shape (n_alphas,)
         Indices of active variables at the end of the path.
 
-    coefs : array-like of shape (n_features, n_alphas + 1)
+    coefs : ndarray of shape (n_features, n_alphas + 1)
         Coefficients along the path.
 
     n_iter : int
-        Number of iterations run. Returned only if return_n_iter is set
+        Number of iterations run. Returned only if `return_n_iter` is set
         to True.
 
     See Also
