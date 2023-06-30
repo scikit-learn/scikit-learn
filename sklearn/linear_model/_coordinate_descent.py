@@ -361,6 +361,25 @@ def lasso_path(
     )
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", "sparse matrix"],
+        "l1_ratio": [Interval(Real, 0.0, 1.0, closed="both")],
+        "eps": [Interval(Real, 0.0, None, closed="neither")],
+        "n_alphas": [Interval(Integral, 1, None, closed="left")],
+        "alphas": ["array-like", None],
+        "precompute": [StrOptions({"auto"}), "boolean", "array-like"],
+        "Xy": ["array-like", None],
+        "copy_X": ["boolean"],
+        "coef_init": ["array-like", None],
+        "verbose": ["verbose"],
+        "return_n_iter": ["boolean"],
+        "positive": ["boolean"],
+        "check_input": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def enet_path(
     X,
     y,
@@ -425,7 +444,7 @@ def enet_path(
     n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    alphas : ndarray, default=None
+    alphas : array-like, default=None
         List of alphas where to compute the models.
         If None alphas are set automatically.
 
@@ -443,7 +462,7 @@ def enet_path(
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    coef_init : ndarray of shape (n_features, ), default=None
+    coef_init : array-like of shape (n_features, ), default=None
         The initial values of the coefficients.
 
     verbose : bool or int, default=False
