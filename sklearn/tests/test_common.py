@@ -7,81 +7,82 @@ General tests for all estimators in sklearn.
 # License: BSD 3 clause
 
 import os
-import warnings
-import sys
-import re
 import pkgutil
-from inspect import isgenerator, signature
-from itertools import product, chain
+import re
+import sys
+import warnings
 from functools import partial
+from inspect import isgenerator, signature
+from itertools import chain, product
 
-import pytest
 import numpy as np
+import pytest
 
+import sklearn
 from sklearn.cluster import (
+    OPTICS,
     AffinityPropagation,
     Birch,
     MeanShift,
-    OPTICS,
     SpectralClustering,
 )
+from sklearn.compose import ColumnTransformer
 from sklearn.datasets import make_blobs
-from sklearn.manifold import Isomap, TSNE, LocallyLinearEmbedding
+from sklearn.decomposition import PCA
+from sklearn.exceptions import ConvergenceWarning, FitFailedWarning
+
+# make it possible to discover experimental estimators when calling `all_estimators`
+from sklearn.experimental import (
+    enable_halving_search_cv,  # noqa
+    enable_iterative_imputer,  # noqa
+)
+from sklearn.linear_model import LogisticRegression, Ridge
+from sklearn.linear_model._base import LinearClassifierMixin
+from sklearn.manifold import TSNE, Isomap, LocallyLinearEmbedding
+from sklearn.model_selection import (
+    GridSearchCV,
+    HalvingGridSearchCV,
+    HalvingRandomSearchCV,
+    RandomizedSearchCV,
+)
 from sklearn.neighbors import (
-    LocalOutlierFactor,
     KNeighborsClassifier,
     KNeighborsRegressor,
+    LocalOutlierFactor,
     RadiusNeighborsClassifier,
     RadiusNeighborsRegressor,
 )
-from sklearn.preprocessing import FunctionTransformer
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import (
+    FunctionTransformer,
+    MinMaxScaler,
+    OneHotEncoder,
+    StandardScaler,
+)
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
-
-from sklearn.utils import all_estimators
-from sklearn.utils._testing import ignore_warnings
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.exceptions import FitFailedWarning
-from sklearn.utils.estimator_checks import check_estimator
-
-import sklearn
-
-# make it possible to discover experimental estimators when calling `all_estimators`
-from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.experimental import enable_halving_search_cv  # noqa
-
-from sklearn.compose import ColumnTransformer
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder
-from sklearn.linear_model._base import LinearClassifierMixin
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import Ridge
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.model_selection import HalvingGridSearchCV
-from sklearn.model_selection import HalvingRandomSearchCV
-from sklearn.pipeline import make_pipeline, Pipeline
-
-from sklearn.utils import IS_PYPY
+from sklearn.utils import IS_PYPY, all_estimators
 from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
 from sklearn.utils._testing import (
     SkipTest,
+    ignore_warnings,
     set_random_state,
 )
 from sklearn.utils.estimator_checks import (
     _construct_instance,
-    _set_checking_parameters,
     _get_check_estimator_ids,
+    _set_checking_parameters,
     check_class_weight_balanced_linear_classifier,
-    parametrize_with_checks,
     check_dataframe_column_names_consistency,
+    check_estimator,
+    check_get_feature_names_out_error,
+    check_global_output_transform_pandas,
     check_n_features_in_after_fitting,
     check_param_validation,
-    check_transformer_get_feature_names_out,
-    check_transformer_get_feature_names_out_pandas,
     check_set_output_transform,
     check_set_output_transform_pandas,
-    check_global_ouptut_transform_pandas,
-    check_get_feature_names_out_error,
+    check_transformer_get_feature_names_out,
+    check_transformer_get_feature_names_out_pandas,
+    parametrize_with_checks,
 )
 
 
@@ -133,7 +134,17 @@ def _tested_estimators(type_filter=None):
         yield estimator
 
 
-@parametrize_with_checks(list(_tested_estimators()))
+def _generate_pipeline():
+    for final_estimator in [Ridge(), LogisticRegression()]:
+        yield Pipeline(
+            steps=[
+                ("scaler", StandardScaler()),
+                ("final_estimator", final_estimator),
+            ]
+        )
+
+
+@parametrize_with_checks(list(chain(_tested_estimators(), _generate_pipeline())))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(category=(FutureWarning, ConvergenceWarning, UserWarning)):
@@ -281,16 +292,6 @@ def _generate_column_transformer_instances():
             ("trans1", StandardScaler(), [0, 1]),
         ]
     )
-
-
-def _generate_pipeline():
-    for final_estimator in [Ridge(), LogisticRegression()]:
-        yield Pipeline(
-            steps=[
-                ("scaler", StandardScaler()),
-                ("final_estimator", final_estimator),
-            ]
-        )
 
 
 def _generate_search_cv_instances():
@@ -595,9 +596,9 @@ def test_global_output_transform_pandas(estimator):
     name = estimator.__class__.__name__
     if not hasattr(estimator, "set_output"):
         pytest.skip(
-            f"Skipping check_global_ouptut_transform_pandas for {name}: Does not"
+            f"Skipping check_global_output_transform_pandas for {name}: Does not"
             " support set_output API yet"
         )
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
-        check_global_ouptut_transform_pandas(estimator.__class__.__name__, estimator)
+        check_global_output_transform_pandas(estimator.__class__.__name__, estimator)

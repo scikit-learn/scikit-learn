@@ -2,8 +2,8 @@ from functools import wraps
 
 from scipy.sparse import issparse
 
-from . import check_pandas_support
 from .._config import get_config
+from . import check_pandas_support
 from ._available_if import available_if
 
 
@@ -57,7 +57,7 @@ def _wrap_in_pandas_container(
             data_to_wrap.columns = columns
         return data_to_wrap
 
-    return pd.DataFrame(data_to_wrap, index=index, columns=columns)
+    return pd.DataFrame(data_to_wrap, index=index, columns=columns, copy=False)
 
 
 def _get_output_config(method, estimator=None):
