@@ -82,3 +82,14 @@ TODO: update at the time of the release.
   not supported.
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`, initiated by
   :user:`Patrick O'Reilly <pat-oreilly>`.
+
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Enhancement| An "auto" option was added to the `n_components` parameter of
+  :func:`decomposition.non_negative_factorization`, :class:`decomposition.NMF` and
+  :class:`decomposition.MiniBatchNMF` to automatically infer the number of components from W or H shapes
+  when using a custom initialization. The default value of this parameter will change
+  from `None` to `auto` in version 1.6.
+  :pr:`26634` by :user:`Alexandre Landeau <AlexL>` and :user:`Alexandre Vigny <avigny>`.
