@@ -63,13 +63,6 @@ from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.tree import (
-    BaseDecisionTree,
-    DecisionTreeClassifier,
-    DecisionTreeRegressor,
-    ExtraTreeClassifier,
-    ExtraTreeRegressor,
-)
 from sklearn.utils import check_random_state, compute_sample_weight
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
@@ -82,6 +75,13 @@ from sklearn.utils.validation import (
     check_is_fitted,
 )
 
+from ..tree import (
+    BaseDecisionTree,
+    DecisionTreeClassifier,
+    DecisionTreeRegressor,
+    ExtraTreeClassifier,
+    ExtraTreeRegressor,
+)
 from ..tree._tree import DOUBLE, DTYPE
 
 __all__ = [
