@@ -462,7 +462,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         A distance scaling parameter as used in robust single linkage.
         See [3]_ for more information.
 
-    algorithm : {"auto", "brute", "kdtree", "balltree"}, default="auto"
+    algorithm : {"auto", "brute", "kd_tree", "ball_tree"}, default="auto"
         Exactly which algorithm to use for computing core distances; By default
         this is set to `"auto"` which attempts to use a
         :class:`~sklearn.neighbors.KDTree` tree if possible, otherwise it uses
@@ -477,7 +477,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest neighbour queries when
-        a KDTree or a BallTree are used as core-distance algorithms. A large
+        a KDTree or a BallTree are used as core-distance algorithms.A large
         dataset size and small `leaf_size` may induce excessive memory usage.
         If you are running out of memory consider increasing the `leaf_size`
         parameter. Ignored for `algorithm="brute"`.
@@ -630,8 +630,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 {
                     "auto",
                     "brute",
-                    "kdtree",
-                    "balltree",
+                    "kd_tree",
+                    "ball_tree",
                 }
             )
         ],
@@ -768,13 +768,14 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             n_jobs=self.n_jobs,
             **self._metric_params,
         )
-        if self.algorithm == "kdtree" and self.metric not in KDTree.valid_metrics():
+        if self.algorithm == "kd_tree" and self.metric not in KDTree.valid_metrics():
             raise ValueError(
                 f"{self.metric} is not a valid metric for a KDTree-based algorithm."
                 " Please select a different metric."
             )
         elif (
-            self.algorithm == "balltree" and self.metric not in BallTree.valid_metrics()
+            self.algorithm == "ball_tree"
+            and self.metric not in BallTree.valid_metrics()
         ):
             raise ValueError(
                 f"{self.metric} is not a valid metric for a BallTree-based algorithm."
@@ -792,11 +793,11 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             if self.algorithm == "brute":
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = self.copy
-            elif self.algorithm == "kdtree":
+            elif self.algorithm == "kd_tree":
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "kd_tree"
                 kwargs["leaf_size"] = self.leaf_size
-            elif self.algorithm == "balltree":
+            elif self.algorithm == "ball_tree":
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "ball_tree"
                 kwargs["leaf_size"] = self.leaf_size
