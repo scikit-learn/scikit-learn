@@ -410,6 +410,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             )
         else:
             n_samples_bootstrap = None
+        self._n_samples_bootstrap = n_samples_bootstrap if n_samples_bootstrap is not None else self._n_samples
 
         self._validate_estimator()
 
@@ -643,7 +644,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # Operations accessing random_state must be performed identically
             # to those in `_parallel_build_trees()`
             sample_indices = _generate_sample_indices(
-                seed, self.bootstrap, self._n_samples
+                seed, self._n_samples, self._n_samples_bootstrap
             )
 
             yield sample_indices

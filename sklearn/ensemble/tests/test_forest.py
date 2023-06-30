@@ -25,7 +25,7 @@ from scipy.special import comb
 
 import sklearn
 from sklearn import datasets
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_classification, make_hastie_10_2
 from sklearn.decomposition import TruncatedSVD
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import (
@@ -1809,3 +1809,43 @@ def test_round_samples_to_one_when_samples_too_low(class_weight):
         n_estimators=10, max_samples=1e-4, class_weight=class_weight, random_state=0
     )
     forest.fit(X, y)
+
+
+@pytest.mark.parametrize("ForestClass", FOREST_CLASSIFIERS_REGRESSORS.values())
+def test_estimators_samples(ForestClass):
+    # Check that format of estimators_samples_ is correct and that results
+    # generated at fit time can be identically reproduced at a later time
+    # using data saved in object attributes.
+    X, y = make_hastie_10_2(n_samples=200, random_state=1)
+    est = ForestClass(
+        n_estimators=10,
+        max_samples=0.5,
+        max_features=0.5,
+        random_state=1,
+        bootstrap=True,
+    )
+    est.fit(X, y)
+
+    # Get relevant attributes
+    estimators_samples = est.estimators_samples_
+    estimators = est.estimators_
+
+    # Test for correct formatting
+    assert len(estimators_samples) == len(estimators)
+    assert len(estimators_samples[0]) == len(X) // 2
+    assert estimators_samples[0].dtype.kind == "i"
+
+    # Re-fit single estimator to test for consistent sampling
+    estimator_index = 0
+    estimator_samples = estimators_samples[estimator_index]
+    estimator = estimators[estimator_index]
+
+    X_train = X[estimator_samples]
+    y_train = y[estimator_samples]
+
+    # the tree should not change
+    orig_tree_values = estimator.tree_.value
+    estimator.fit(X_train, y_train)
+    new_tree_values = estimator.tree_.value
+
+    assert_array_almost_equal(orig_tree_values, new_tree_values)
