@@ -6,11 +6,11 @@
 
 
 import numpy as np
-from ..utils import check_scalar
-from ..utils.validation import check_is_fitted
-from ..model_selection import GridSearchCV
 
 from ..base import BaseEstimator, ClusterMixin
+from ..model_selection import GridSearchCV
+from ..utils import check_scalar
+from ..utils.validation import check_is_fitted
 from . import GaussianMixture
 
 
@@ -123,8 +123,8 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         :class:`~sklearn.mixture.GaussianMixture` for details.
 
     precisions_ : array-like
-        The precision matrices for each component in the mixture for the model
-        with the best bic/aic. See :class:`~sklearn.mixture.GaussianMixture` for details.
+        The precision matrices for each component in the mixture for the model with
+        the best bic/aic. See :class:`~sklearn.mixture.GaussianMixture` for details.
 
     precisions_cholesky_ : array-like
         The cholesky decomposition of the precision matrices of each mixture component

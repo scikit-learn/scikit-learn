@@ -1,11 +1,11 @@
 """Testing for GaussianMixtureIC"""
 
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose, assert_equal
+
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics import adjusted_rand_score
-
 from sklearn.mixture import GaussianMixtureIC
 
 

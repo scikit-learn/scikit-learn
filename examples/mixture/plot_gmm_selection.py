@@ -59,7 +59,7 @@ plt.show()
 
 from sklearn.mixture import GaussianMixtureIC
 
-gm_ic = GaussianMixtureIC(min_components=1, max_components=6, covariance_type='all')
+gm_ic = GaussianMixtureIC(min_components=1, max_components=6, covariance_type="all")
 gm_ic.fit(X)
 
 # %%
