@@ -1,18 +1,19 @@
 import numpy as np
 import pytest
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_equal
-
+from sklearn.datasets import make_regression
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import (
+    LinearRegression,
+    OrthogonalMatchingPursuit,
+    RANSACRegressor,
+    Ridge,
+)
+from sklearn.linear_model._ransac import _dynamic_max_trials
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose
-from sklearn.datasets import make_regression
-from sklearn.linear_model import LinearRegression, RANSACRegressor, Ridge
-from sklearn.linear_model import OrthogonalMatchingPursuit
-from sklearn.linear_model._ransac import _dynamic_max_trials
-from sklearn.exceptions import ConvergenceWarning
-
 
 # Generate coordinates of line
 X = np.arange(-200, 200)
@@ -569,18 +570,3 @@ def test_perfect_horizontal_line():
 
     assert_allclose(ransac_estimator.estimator_.coef_, 0.0)
     assert_allclose(ransac_estimator.estimator_.intercept_, 0.0)
-
-
-def test_base_estimator_deprecated():
-    ransac_estimator = RANSACRegressor(
-        base_estimator=LinearRegression(),
-        min_samples=2,
-        residual_threshold=5,
-        random_state=0,
-    )
-    err_msg = (
-        "`base_estimator` was renamed to `estimator` in version 1.1 and "
-        "will be removed in 1.3."
-    )
-    with pytest.warns(FutureWarning, match=err_msg):
-        ransac_estimator.fit(X, y)
