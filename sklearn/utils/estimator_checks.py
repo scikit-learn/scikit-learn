@@ -4287,6 +4287,12 @@ def check_param_validation(name, estimator_orig):
                 # the method is not accessible with the current set of parameters
                 continue
 
+            err_msg = (
+                f"{name} does not raise an informative error message when the parameter"
+                f" {param_name} does not have a valid type. If any Python type is"
+                " valid, the constraint should be 'no_validation'."
+            )
+
             with raises(InvalidParameterError, match=match, err_msg=err_msg):
                 if any(
                     isinstance(X_type, str) and X_type.endswith("labels")
@@ -4314,6 +4320,16 @@ def check_param_validation(name, estimator_orig):
                 if not hasattr(estimator, method):
                     # the method is not accessible with the current set of parameters
                     continue
+
+                err_msg = (
+                    f"{name} does not raise an informative error message when the "
+                    f"parameter {param_name} does not have a valid value.\n"
+                    "Constraints should be disjoint. For instance "
+                    "[StrOptions({'a_string'}), str] is not a acceptable set of "
+                    "constraint because generating an invalid string for the first "
+                    "constraint will always produce a valid string for the second "
+                    "constraint."
+                )
 
                 with raises(InvalidParameterError, match=match, err_msg=err_msg):
                     if any(

@@ -44,7 +44,7 @@ dependent_packages = {
     "pyarrow": ("12.0.0", "tests"),
     "sphinx": ("6.0.0", "docs"),
     "sphinx-copybutton": ("0.5.2", "docs"),
-    "sphinx-gallery": ("0.7.0", "docs"),
+    "sphinx-gallery": ("0.10.1", "docs"),
     "numpydoc": ("1.2.0", "docs, tests"),
     "Pillow": ("7.1.2", "docs"),
     "pooch": ("1.6.0", "docs, examples, tests"),
