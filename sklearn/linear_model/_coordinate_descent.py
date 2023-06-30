@@ -361,7 +361,7 @@ def lasso_path(
         "positive": ["boolean"],
         "check_input": ["boolean"],
     },
-    prefer_skip_nested_validation=False,  # params in **params are not validated yet
+    prefer_skip_nested_validation=True,
 )
 def enet_path(
     X,
