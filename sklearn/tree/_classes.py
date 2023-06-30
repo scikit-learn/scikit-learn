@@ -441,7 +441,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                         "Monotonicity constraints are not supported with multiclass "
                         "classification"
                     )
-                # Imposing the constraint on the probability of the positive class
+                # Binary classification trees are built by constraining the probabilities
+                # of the *negative class* in order to make the implementation similar to
+                # regression trees.
+                # Since self.monotonic_cst encodes constraints on the *positive class*,
+                # its signs must be flipped before passing it to the Splitter.
                 monotonic_cst *= -1
 
         if not isinstance(self.splitter, Splitter):
