@@ -37,20 +37,18 @@ For an example of using this dataset, see
 #
 # License: BSD 3 clause
 
+import logging
 from io import BytesIO
 from os import makedirs, remove
 from os.path import exists
 
-import logging
+import joblib
 import numpy as np
 
-import joblib
-
-from . import get_data_home
-from ._base import _fetch_remote
-from ._base import RemoteFileMetadata
 from ..utils import Bunch
-from ._base import _pkl_filepath
+from ..utils._param_validation import validate_params
+from . import get_data_home
+from ._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath
 
 # The original data can be found at:
 # https://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
@@ -137,6 +135,10 @@ def construct_grids(batch):
     return (xgrid, ygrid)
 
 
+@validate_params(
+    {"data_home": [str, None], "download_if_missing": ["boolean"]},
+    prefer_skip_nested_validation=True,
+)
 def fetch_species_distributions(*, data_home=None, download_if_missing=True):
     """Loader for species distribution dataset from Phillips et. al. (2006).
 
@@ -149,7 +151,7 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     Returns
@@ -226,7 +228,7 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
 
     if not exists(archive_path):
         if not download_if_missing:
-            raise IOError("Data not found and `download_if_missing` is False")
+            raise OSError("Data not found and `download_if_missing` is False")
         logger.info("Downloading species data from %s to %s" % (SAMPLES.url, data_home))
         samples_path = _fetch_remote(SAMPLES, dirname=data_home)
         with np.load(samples_path) as X:  # samples.zip is a valid npz

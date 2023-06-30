@@ -64,8 +64,8 @@ X_train, X_test, y_train, y_test = train_test_split(
 # the LIBSVM webpage, and then normalize to unit length as done in the
 # original Tensor Sketch paper [1].
 
-from sklearn.preprocessing import MinMaxScaler, Normalizer
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import MinMaxScaler, Normalizer
 
 mm = make_pipeline(MinMaxScaler(), Normalizer())
 X_train = mm.fit_transform(X_train)
@@ -80,11 +80,12 @@ X_test = mm.transform(X_test)
 # plot them later.
 
 import time
+
 from sklearn.svm import LinearSVC
 
 results = {}
 
-lsvm = LinearSVC()
+lsvm = LinearSVC(dual="auto")
 start = time.time()
 lsvm.fit(X_train, y_train)
 lsvm_time = time.time() - start
@@ -120,14 +121,12 @@ n_runs = 1
 N_COMPONENTS = [250, 500, 1000, 2000]
 
 for n_components in N_COMPONENTS:
-
     ps_lsvm_time = 0
     ps_lsvm_score = 0
     for _ in range(n_runs):
-
         pipeline = make_pipeline(
             PolynomialCountSketch(n_components=n_components, degree=4),
-            LinearSVC(),
+            LinearSVC(dual="auto"),
         )
 
         start = time.time()

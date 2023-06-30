@@ -1,14 +1,44 @@
+import warnings
 from numbers import Integral, Real
 
 import numpy as np
 
-from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
-from ..base import BaseEstimator, RegressorMixin, OutlierMixin
-from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, LinearModel
+from ..base import BaseEstimator, OutlierMixin, RegressorMixin, _fit_context
+from ..linear_model._base import LinearClassifierMixin, LinearModel, SparseCoefMixin
 from ..utils import deprecated
-from ..utils.validation import _num_samples
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
-from ..utils._param_validation import Interval, StrOptions
+from ..utils.validation import _num_samples
+from ._base import BaseLibSVM, BaseSVC, _fit_liblinear, _get_liblinear_solver_type
+
+
+def _validate_dual_parameter(dual, loss, penalty, multi_class, X):
+    """Helper function to assign the value of dual parameter."""
+    if dual == "auto":
+        if X.shape[0] < X.shape[1]:
+            try:
+                _get_liblinear_solver_type(multi_class, penalty, loss, True)
+                return True
+            except ValueError:  # dual not supported for the combination
+                return False
+        else:
+            try:
+                _get_liblinear_solver_type(multi_class, penalty, loss, False)
+                return False
+            except ValueError:  # primal not supported by the combination
+                return True
+    # TODO 1.5
+    elif dual == "warn":
+        warnings.warn(
+            (
+                "The default value of `dual` will change from `True` to `'auto'` in"
+                " 1.5. Set the value of `dual` explicitly to suppress the warning."
+            ),
+            FutureWarning,
+        )
+        return True
+    else:
+        return dual
 
 
 class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
@@ -37,9 +67,17 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         square of the hinge loss. The combination of ``penalty='l1'``
         and ``loss='hinge'`` is not supported.
 
-    dual : bool, default=True
+    dual : "auto" or bool, default=True
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
+        `dual="auto"` will choose the value of the parameter automatically,
+        based on the values of `n_samples`, `n_features`, `loss`, `multi_class`
+        and `penalty`. If `n_samples` < `n_features` and optmizer supports
+        chosen `loss`, `multi_class` and `penalty`, then dual will be set to True,
+        otherwise it will be set to False.
+
+        .. versionchanged:: 1.3
+           The default value will change from `True` to `"auto"` in 1.5.
 
     tol : float, default=1e-4
         Tolerance for stopping criteria.
@@ -176,10 +214,10 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(n_features=4, random_state=0)
     >>> clf = make_pipeline(StandardScaler(),
-    ...                     LinearSVC(random_state=0, tol=1e-5))
+    ...                     LinearSVC(dual="auto", random_state=0, tol=1e-5))
     >>> clf.fit(X, y)
     Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('linearsvc', LinearSVC(random_state=0, tol=1e-05))])
+                    ('linearsvc', LinearSVC(dual='auto', random_state=0, tol=1e-05))])
 
     >>> print(clf.named_steps['linearsvc'].coef_)
     [[0.141...   0.526... 0.679... 0.493...]]
@@ -193,7 +231,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     _parameter_constraints: dict = {
         "penalty": [StrOptions({"l1", "l2"})],
         "loss": [StrOptions({"hinge", "squared_hinge"})],
-        "dual": ["boolean"],
+        "dual": ["boolean", StrOptions({"auto"}), Hidden(StrOptions({"warn"}))],
         "tol": [Interval(Real, 0.0, None, closed="neither")],
         "C": [Interval(Real, 0.0, None, closed="neither")],
         "multi_class": [StrOptions({"ovr", "crammer_singer"})],
@@ -210,7 +248,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         penalty="l2",
         loss="squared_hinge",
         *,
-        dual=True,
+        dual="warn",
         tol=1e-4,
         C=1.0,
         multi_class="ovr",
@@ -234,6 +272,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.penalty = penalty
         self.loss = loss
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -258,8 +297,6 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self : object
             An instance of the estimator.
         """
-        self._validate_params()
-
         X, y = self._validate_data(
             X,
             y,
@@ -271,6 +308,10 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
+        _dual = _validate_dual_parameter(
+            self.dual, self.loss, self.penalty, self.multi_class, X
+        )
+
         self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
             X,
             y,
@@ -279,7 +320,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             self.intercept_scaling,
             self.class_weight,
             self.penalty,
-            self.dual,
+            _dual,
             self.verbose,
             self.max_iter,
             self.tol,
@@ -362,9 +403,16 @@ class LinearSVR(RegressorMixin, LinearModel):
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    dual : bool, default=True
+    dual : "auto" or bool, default=True
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
+        `dual="auto"` will choose the value of the parameter automatically,
+        based on the values of `n_samples`, `n_features` and `loss`. If
+        `n_samples` < `n_features` and optmizer supports chosen `loss`,
+        then dual will be set to True, otherwise it will be set to False.
+
+        .. versionchanged:: 1.3
+           The default value will change from `True` to `"auto"` in 1.5.
 
     verbose : int, default=0
         Enable verbose output. Note that this setting takes advantage of a
@@ -429,10 +477,10 @@ class LinearSVR(RegressorMixin, LinearModel):
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_features=4, random_state=0)
     >>> regr = make_pipeline(StandardScaler(),
-    ...                      LinearSVR(random_state=0, tol=1e-5))
+    ...                      LinearSVR(dual="auto", random_state=0, tol=1e-5))
     >>> regr.fit(X, y)
     Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('linearsvr', LinearSVR(random_state=0, tol=1e-05))])
+                    ('linearsvr', LinearSVR(dual='auto', random_state=0, tol=1e-05))])
 
     >>> print(regr.named_steps['linearsvr'].coef_)
     [18.582... 27.023... 44.357... 64.522...]
@@ -449,7 +497,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         "loss": [StrOptions({"epsilon_insensitive", "squared_epsilon_insensitive"})],
         "fit_intercept": ["boolean"],
         "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
-        "dual": ["boolean"],
+        "dual": ["boolean", StrOptions({"auto"}), Hidden(StrOptions({"warn"}))],
         "verbose": ["verbose"],
         "random_state": ["random_state"],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
@@ -464,7 +512,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         loss="epsilon_insensitive",
         fit_intercept=True,
         intercept_scaling=1.0,
-        dual=True,
+        dual="warn",
         verbose=0,
         random_state=None,
         max_iter=1000,
@@ -480,6 +528,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         self.dual = dual
         self.loss = loss
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -504,8 +553,6 @@ class LinearSVR(RegressorMixin, LinearModel):
         self : object
             An instance of the estimator.
         """
-        self._validate_params()
-
         X, y = self._validate_data(
             X,
             y,
@@ -515,6 +562,9 @@ class LinearSVR(RegressorMixin, LinearModel):
             accept_large_sparse=False,
         )
         penalty = "l2"  # SVR only accepts l2 penalty
+
+        _dual = _validate_dual_parameter(self.dual, self.loss, penalty, "ovr", X)
+
         self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
             X,
             y,
@@ -523,7 +573,7 @@ class LinearSVR(RegressorMixin, LinearModel):
             self.intercept_scaling,
             None,
             penalty,
-            self.dual,
+            _dual,
             self.verbose,
             self.max_iter,
             self.tol,
@@ -796,7 +846,6 @@ class SVC(BaseSVC):
         break_ties=False,
         random_state=None,
     ):
-
         super().__init__(
             kernel=kernel,
             degree=degree,
@@ -1064,7 +1113,6 @@ class NuSVC(BaseSVC):
         break_ties=False,
         random_state=None,
     ):
-
         super().__init__(
             kernel=kernel,
             degree=degree,
@@ -1279,7 +1327,6 @@ class SVR(RegressorMixin, BaseLibSVM):
         verbose=False,
         max_iter=-1,
     ):
-
         super().__init__(
             kernel=kernel,
             degree=degree,
@@ -1488,7 +1535,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         verbose=False,
         max_iter=-1,
     ):
-
         super().__init__(
             kernel=kernel,
             degree=degree,
@@ -1686,7 +1732,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         verbose=False,
         max_iter=-1,
     ):
-
         super().__init__(
             kernel,
             degree,

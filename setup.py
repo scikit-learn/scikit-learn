@@ -4,17 +4,16 @@
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 # License: 3-clause BSD
 
-import sys
+import importlib
 import os
-from os.path import join
 import platform
 import shutil
+import sys
+import traceback
+from os.path import join
 
 from setuptools import Command, Extension, setup
 from setuptools.command.build_ext import build_ext
-
-import traceback
-import importlib
 
 try:
     import builtins
@@ -196,7 +195,7 @@ extension_config = {
         {"sources": ["_check_build.pyx"]},
     ],
     "": [
-        {"sources": ["_isotonic.pyx"], "include_np": True},
+        {"sources": ["_isotonic.pyx"]},
     ],
     "_loss": [
         {"sources": ["_loss.pyx.tp"]},
@@ -208,6 +207,11 @@ extension_config = {
         {"sources": ["_k_means_lloyd.pyx"], "include_np": True},
         {"sources": ["_k_means_elkan.pyx"], "include_np": True},
         {"sources": ["_k_means_minibatch.pyx"], "include_np": True},
+    ],
+    "cluster._hdbscan": [
+        {"sources": ["_linkage.pyx"], "include_np": True},
+        {"sources": ["_reachability.pyx"], "include_np": True},
+        {"sources": ["_tree.pyx"], "include_np": True},
     ],
     "datasets": [
         {
@@ -265,7 +269,6 @@ extension_config = {
         {
             "sources": ["_middle_term_computer.pyx.tp", "_middle_term_computer.pxd.tp"],
             "language": "c++",
-            "include_np": True,
             "extra_compile_args": ["-std=c++11"],
         },
         {
@@ -294,7 +297,7 @@ extension_config = {
         },
     ],
     "preprocessing": [
-        {"sources": ["_csr_polynomial_expansion.pyx"], "include_np": True},
+        {"sources": ["_csr_polynomial_expansion.pyx"]},
         {
             "sources": ["_target_encoder_fast.pyx"],
             "include_np": True,
@@ -387,8 +390,7 @@ extension_config = {
             "include_dirs": ["src"],
             "include_np": True,
         },
-        {"sources": ["_fast_dict.pyx"], "language": "c++", "include_np": True},
-        {"sources": ["_fast_dict.pyx"], "language": "c++", "include_np": True},
+        {"sources": ["_fast_dict.pyx"], "language": "c++"},
         {"sources": ["_openmp_helpers.pyx"]},
         {"sources": ["_seq_dataset.pyx.tp", "_seq_dataset.pxd.tp"], "include_np": True},
         {
@@ -397,9 +399,9 @@ extension_config = {
         },
         {"sources": ["_random.pyx"], "include_np": True},
         {"sources": ["_logistic_sigmoid.pyx"], "include_np": True},
-        {"sources": ["_typedefs.pyx"], "include_np": True},
-        {"sources": ["_heap.pyx"], "include_np": True},
-        {"sources": ["_sorting.pyx"], "include_np": True},
+        {"sources": ["_typedefs.pyx"]},
+        {"sources": ["_heap.pyx"]},
+        {"sources": ["_sorting.pyx"]},
         {"sources": ["_vector_sentinel.pyx"], "language": "c++", "include_np": True},
         {"sources": ["_isfinite.pyx"]},
     ],
@@ -451,9 +453,9 @@ def configure_extension_modules():
     if "sdist" in sys.argv or "--help" in sys.argv:
         return []
 
-    from sklearn._build_utils import cythonize_extensions
-    from sklearn._build_utils import gen_from_templates
     import numpy
+
+    from sklearn._build_utils import cythonize_extensions, gen_from_templates
 
     is_pypy = platform.python_implementation() == "PyPy"
     np_include = numpy.get_include()

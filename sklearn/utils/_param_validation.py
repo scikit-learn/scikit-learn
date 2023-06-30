@@ -1,19 +1,17 @@
-from abc import ABC
-from abc import abstractmethod
-from collections.abc import Iterable
 import functools
 import math
-from inspect import signature
-from numbers import Integral
-from numbers import Real
 import operator
 import re
 import warnings
+from abc import ABC, abstractmethod
+from collections.abc import Iterable
+from inspect import signature
+from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import issparse
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 
+from .._config import config_context, get_config
 from .validation import _is_arraylike_not_scalar
 
 
@@ -48,7 +46,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         - the string "boolean"
         - the string "verbose"
         - the string "cv_object"
-        - the string "missing_values"
+        - a MissingValues object representing markers for missing values
         - a HasMethods object, representing method(s) an object must have
         - a Hidden object, representing a constraint not meant to be exposed to the user
 
@@ -125,14 +123,14 @@ def make_constraint(constraint):
         return _NoneConstraint()
     if isinstance(constraint, type):
         return _InstancesOf(constraint)
-    if isinstance(constraint, (Interval, StrOptions, Options, HasMethods)):
+    if isinstance(
+        constraint, (Interval, StrOptions, Options, HasMethods, MissingValues)
+    ):
         return constraint
     if isinstance(constraint, str) and constraint == "boolean":
         return _Booleans()
     if isinstance(constraint, str) and constraint == "verbose":
         return _VerboseHelper()
-    if isinstance(constraint, str) and constraint == "missing_values":
-        return _MissingValues()
     if isinstance(constraint, str) and constraint == "cv_object":
         return _CVObjects()
     if isinstance(constraint, Hidden):
@@ -142,7 +140,7 @@ def make_constraint(constraint):
     raise ValueError(f"Unknown constraint type: {constraint}")
 
 
-def validate_params(parameter_constraints):
+def validate_params(parameter_constraints, *, prefer_skip_nested_validation):
     """Decorator to validate types and values of functions and methods.
 
     Parameters
@@ -153,6 +151,19 @@ def validate_params(parameter_constraints):
 
         Note that the *args and **kwargs parameters are not validated and must not be
         present in the parameter_constraints dictionary.
+
+    prefer_skip_nested_validation : bool
+        If True, the validation of parameters of inner estimators or functions
+        called by the decorated function will be skipped.
+
+        This is useful to avoid validating many times the parameters passed by the
+        user from the public facing API. It's also useful to avoid validating
+        parameters that we pass internally to inner functions that are guaranteed to
+        be valid by the test suite.
+
+        It should be set to True for most functions, except for those that receive
+        non-validated objects as parameters or that are just wrappers around classes
+        because they only perform a partial validation.
 
     Returns
     -------
@@ -168,6 +179,9 @@ def validate_params(parameter_constraints):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            global_skip_validation = get_config()["skip_parameter_validation"]
+            if global_skip_validation:
+                return func(*args, **kwargs)
 
             func_sig = signature(func)
 
@@ -189,7 +203,12 @@ def validate_params(parameter_constraints):
             )
 
             try:
-                return func(*args, **kwargs)
+                with config_context(
+                    skip_parameter_validation=(
+                        prefer_skip_nested_validation or global_skip_validation
+                    )
+                ):
+                    return func(*args, **kwargs)
             except InvalidParameterError as e:
                 # When the function is just a wrapper around an estimator, we allow
                 # the function to delegate validation to the estimator, but we replace
@@ -570,8 +589,10 @@ class _Booleans(_Constraint):
         # TODO(1.4) remove support for Integral.
         if isinstance(val, Integral) and not isinstance(val, bool):
             warnings.warn(
-                "Passing an int for a boolean parameter is deprecated in version 1.2 "
-                "and won't be supported anymore in version 1.4.",
+                (
+                    "Passing an int for a boolean parameter is deprecated in version"
+                    " 1.2 and won't be supported anymore in version 1.4."
+                ),
                 FutureWarning,
             )
 
@@ -609,31 +630,40 @@ class _VerboseHelper(_Constraint):
         )
 
 
-class _MissingValues(_Constraint):
+class MissingValues(_Constraint):
     """Helper constraint for the `missing_values` parameters.
 
     Convenience for
     [
         Integral,
         Interval(Real, None, None, closed="both"),
-        str,
-        None,
+        str,   # when numeric_only is False
+        None,  # when numeric_only is False
         _NanConstraint(),
         _PandasNAConstraint(),
     ]
+
+    Parameters
+    ----------
+    numeric_only : bool, default=False
+        Whether to consider only numeric missing value markers.
+
     """
 
-    def __init__(self):
+    def __init__(self, numeric_only=False):
         super().__init__()
+
+        self.numeric_only = numeric_only
+
         self._constraints = [
             _InstancesOf(Integral),
             # we use an interval of Real to ignore np.nan that has its own constraint
             Interval(Real, None, None, closed="both"),
-            _InstancesOf(str),
-            _NoneConstraint(),
             _NanConstraint(),
             _PandasNAConstraint(),
         ]
+        if not self.numeric_only:
+            self._constraints.extend([_InstancesOf(str), _NoneConstraint()])
 
     def is_satisfied_by(self, val):
         return any(c.is_satisfied_by(val) for c in self._constraints)
@@ -657,7 +687,10 @@ class HasMethods(_Constraint):
         The method(s) that the object is expected to expose.
     """
 
-    @validate_params({"methods": [str, list]})
+    @validate_params(
+        {"methods": [str, list]},
+        prefer_skip_nested_validation=True,
+    )
     def __init__(self, methods):
         super().__init__()
         if isinstance(methods, str):
@@ -752,7 +785,7 @@ def generate_invalid_param_val(constraint):
     if isinstance(constraint, StrOptions):
         return f"not {' or '.join(constraint.options)}"
 
-    if isinstance(constraint, _MissingValues):
+    if isinstance(constraint, MissingValues):
         return np.array([1, 2, 3])
 
     if isinstance(constraint, _VerboseHelper):
@@ -841,8 +874,11 @@ def generate_valid_param(constraint):
     if isinstance(constraint, _VerboseHelper):
         return 1
 
-    if isinstance(constraint, _MissingValues):
+    if isinstance(constraint, MissingValues) and constraint.numeric_only:
         return np.nan
+
+    if isinstance(constraint, MissingValues) and not constraint.numeric_only:
+        return "missing"
 
     if isinstance(constraint, HasMethods):
         return type(

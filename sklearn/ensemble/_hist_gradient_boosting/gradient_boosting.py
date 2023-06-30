@@ -1,13 +1,14 @@
 """Fast Gradient Boosting decision trees for classification and regression."""
 # Author: Nicolas Hug
 
+import itertools
 from abc import ABC, abstractmethod
 from functools import partial
-import itertools
-from numbers import Real, Integral
+from numbers import Integral, Real
+from timeit import default_timer as time
 
 import numpy as np
-from timeit import default_timer as time
+
 from ..._loss.loss import (
     _LOSSES,
     BaseLoss,
@@ -17,27 +18,30 @@ from ..._loss.loss import (
     HalfPoissonLoss,
     PinballLoss,
 )
-from ...base import BaseEstimator, RegressorMixin, ClassifierMixin, is_classifier
-from ...utils import check_random_state, resample, compute_sample_weight
-from ...utils.validation import (
-    check_is_fitted,
-    check_consistent_length,
-    _check_sample_weight,
-    _check_monotonic_cst,
+from ...base import (
+    BaseEstimator,
+    ClassifierMixin,
+    RegressorMixin,
+    _fit_context,
+    is_classifier,
 )
-from ...utils._param_validation import Interval, StrOptions
-from ...utils._param_validation import RealNotInt
-from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
+from ...utils import check_random_state, compute_sample_weight, resample
+from ...utils._openmp_helpers import _openmp_effective_n_threads
+from ...utils._param_validation import Interval, RealNotInt, StrOptions
+from ...utils.multiclass import check_classification_targets
+from ...utils.validation import (
+    _check_monotonic_cst,
+    _check_sample_weight,
+    check_consistent_length,
+    check_is_fitted,
+)
 from ._gradient_boosting import _update_raw_predictions
-from .common import Y_DTYPE, X_DTYPE, G_H_DTYPE
-
 from .binning import _BinMapper
+from .common import G_H_DTYPE, X_DTYPE, Y_DTYPE
 from .grower import TreeGrower
-
 
 _LOSSES = _LOSSES.copy()
 _LOSSES.update(
@@ -269,6 +273,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if missing.any():
                     categories = categories[~missing]
 
+                # Treat negative values for categorical features as missing values.
+                negative_categories = categories < 0
+                if negative_categories.any():
+                    categories = categories[~negative_categories]
+
                 if hasattr(self, "feature_names_in_"):
                     feature_name = f"'{self.feature_names_in_[f_idx]}'"
                 else:
@@ -331,6 +340,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         return constraints
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the gradient boosting model.
 
@@ -352,8 +362,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         fit_start_time = time()
         acc_find_split_time = 0.0  # time spent finding the best splits
         acc_apply_split_time = 0.0  # time spent splitting nodes
@@ -627,7 +635,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         )
 
         for iteration in range(begin_at_stage, self.max_iter):
-
             if self.verbose:
                 iteration_start_time = time()
                 print(
@@ -1265,9 +1272,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           data has feature names).
 
         For each categorical feature, there must be at most `max_bins` unique
-        categories, and each categorical value must be in [0, max_bins -1].
-        During prediction, categories encoded as a negative value are treated as
-        missing values.
+        categories, and each categorical value must be less then `max_bins - 1`.
+        Negative values for categorical features are treated as missing values.
+        All categorical values are converted to floating point numbers.
+        This means that categorical values of 1.0 and 1 are treated as
+        the same category.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
@@ -1297,7 +1306,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Accept dict of constraints with feature names as keys.
 
-    interaction_cst : {"pairwise", "no_interaction"} or sequence of lists/tuples/sets \
+    interaction_cst : {"pairwise", "no_interactions"} or sequence of lists/tuples/sets \
             of int, default=None
         Specify interaction constraints, the sets of features which can
         interact with each other in child node splits.
@@ -1623,9 +1632,11 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
           data has feature names).
 
         For each categorical feature, there must be at most `max_bins` unique
-        categories, and each categorical value must be in [0, max_bins -1].
-        During prediction, categories encoded as a negative value are treated as
-        missing values.
+        categories, and each categorical value must be less then `max_bins - 1`.
+        Negative values for categorical features are treated as missing values.
+        All categorical values are converted to floating point numbers.
+        This means that categorical values of 1.0 and 1 are treated as
+        the same category.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
@@ -1655,7 +1666,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Accept dict of constraints with feature names as keys.
 
-    interaction_cst : {"pairwise", "no_interaction"} or sequence of lists/tuples/sets \
+    interaction_cst : {"pairwise", "no_interactions"} or sequence of lists/tuples/sets \
             of int, default=None
         Specify interaction constraints, the sets of features which can
         interact with each other in child node splits.

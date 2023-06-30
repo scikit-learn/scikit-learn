@@ -3,9 +3,9 @@
 import numpy as np
 cimport cython
 
-from ..metrics._dist_metrics cimport DistanceMetric
+from ..metrics._dist_metrics cimport DistanceMetric64
 from ..utils._fast_dict cimport IntFloatDict
-from ..utils._typedefs cimport float64_t, intp_t, bool_t
+from ..utils._typedefs cimport float64_t, intp_t, uint8_t
 
 # C++
 from cython.operator cimport dereference as deref, preincrement as inc
@@ -119,7 +119,7 @@ def _get_parents(
     nodes,
     heads,
     const intp_t[:] parents,
-    bool_t[::1] not_visited
+    uint8_t[::1] not_visited
 ):
     """Returns the heads of the given nodes, as defined by parents.
 
@@ -322,26 +322,21 @@ cdef class WeightedEdge:
 
 cdef class UnionFind(object):
 
-    cdef intp_t next_label
-    cdef intp_t[:] parent
-    cdef intp_t[:] size
-
     def __init__(self, N):
         self.parent = np.full(2 * N - 1, -1., dtype=np.intp, order='C')
         self.next_label = N
         self.size = np.hstack((np.ones(N, dtype=np.intp),
                                np.zeros(N - 1, dtype=np.intp)))
 
-    cdef void union(self, intp_t m, intp_t n):
+    cdef void union(self, intp_t m, intp_t n) noexcept:
         self.parent[m] = self.next_label
         self.parent[n] = self.next_label
         self.size[self.next_label] = self.size[m] + self.size[n]
         self.next_label += 1
-
         return
 
     @cython.wraparound(True)
-    cdef intp_t fast_find(self, intp_t n):
+    cdef intp_t fast_find(self, intp_t n) noexcept:
         cdef intp_t p
         p = n
         # find the highest node in the linkage graph so far
@@ -432,7 +427,7 @@ def single_linkage_label(L):
 # Implements MST-LINKAGE-CORE from https://arxiv.org/abs/1109.2378
 def mst_linkage_core(
         const float64_t [:, ::1] raw_data,
-        DistanceMetric dist_metric):
+        DistanceMetric64 dist_metric):
     """
     Compute the necessary elements of a minimum spanning
     tree for computation of single linkage clustering. This
@@ -449,8 +444,8 @@ def mst_linkage_core(
     raw_data: array of shape (n_samples, n_features)
         The array of feature data to be clustered. Must be C-aligned
 
-    dist_metric: DistanceMetric
-        A DistanceMetric object conforming to the API from
+    dist_metric: DistanceMetric64
+        A DistanceMetric64 object conforming to the API from
         ``sklearn.metrics._dist_metrics.pxd`` that will be
         used to compute distances.
 
@@ -465,7 +460,7 @@ def mst_linkage_core(
     """
     cdef:
         intp_t n_samples = raw_data.shape[0]
-        bool_t[:] in_tree = np.zeros(n_samples, dtype=bool)
+        uint8_t[:] in_tree = np.zeros(n_samples, dtype=bool)
         float64_t[:, ::1] result = np.zeros((n_samples - 1, 3))
 
         intp_t current_node = 0

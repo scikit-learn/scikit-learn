@@ -6,24 +6,22 @@
 #          Hamzeh Alsalhi <ha258@cornell.edu>
 # License: BSD 3 clause
 
+import array
+import itertools
+import warnings
 from collections import defaultdict
 from numbers import Integral
-import itertools
-import array
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
-
-from ..utils.sparsefuncs import min_max_axis
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import column_or_1d
-from ..utils.validation import _num_samples, check_array, check_is_fitted
-from ..utils.multiclass import unique_labels
-from ..utils.multiclass import type_of_target
 from ..utils._encode import _encode, _unique
-
+from ..utils._param_validation import Interval, validate_params
+from ..utils.multiclass import type_of_target, unique_labels
+from ..utils.sparsefuncs import min_max_axis
+from ..utils.validation import _num_samples, check_array, check_is_fitted
 
 __all__ = [
     "label_binarize",
@@ -178,12 +176,12 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     At learning time, this simply consists in learning one regressor
     or binary classifier per class. In doing so, one needs to convert
     multi-class labels to binary labels (belong or does not belong
-    to the class). LabelBinarizer makes this process easy with the
+    to the class). `LabelBinarizer` makes this process easy with the
     transform method.
 
     At prediction time, one assigns the class for which the corresponding
-    model gave the greatest confidence. LabelBinarizer makes this easy
-    with the inverse_transform method.
+    model gave the greatest confidence. `LabelBinarizer` makes this easy
+    with the :meth:`inverse_transform` method.
 
     Read more in the :ref:`User Guide <preprocessing_targets>`.
 
@@ -206,13 +204,13 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
     y_type_ : str
         Represents the type of the target data as evaluated by
-        utils.multiclass.type_of_target. Possible type are 'continuous',
-        'continuous-multioutput', 'binary', 'multiclass',
+        :func:`~sklearn.utils.multiclass.type_of_target`. Possible type are
+        'continuous', 'continuous-multioutput', 'binary', 'multiclass',
         'multiclass-multioutput', 'multilabel-indicator', and 'unknown'.
 
     sparse_input_ : bool
-        True if the input data to transform is given as a sparse matrix, False
-        otherwise.
+        `True` if the input data to transform is given as a sparse matrix,
+         `False` otherwise.
 
     See Also
     --------
@@ -263,11 +261,11 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     }
 
     def __init__(self, *, neg_label=0, pos_label=1, sparse_output=False):
-
         self.neg_label = neg_label
         self.pos_label = pos_label
         self.sparse_output = sparse_output
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, y):
         """Fit label binarizer.
 
@@ -282,9 +280,6 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-
-        self._validate_params()
-
         if self.neg_label >= self.pos_label:
             raise ValueError(
                 f"neg_label={self.neg_label} must be strictly less than "
@@ -379,9 +374,9 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         threshold : float, default=None
             Threshold used in the binary and multi-label cases.
 
-            Use 0 when ``Y`` contains the output of decision_function
+            Use 0 when ``Y`` contains the output of :term:`decision_function`
             (classifier).
-            Use 0.5 when ``Y`` contains the output of predict_proba.
+            Use 0.5 when ``Y`` contains the output of :term:`predict_proba`.
 
             If None, the threshold is assumed to be half way between
             neg_label and pos_label.
@@ -394,10 +389,10 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         Notes
         -----
         In the case when the binary labels are fractional
-        (probabilistic), inverse_transform chooses the class with the
+        (probabilistic), :meth:`inverse_transform` chooses the class with the
         greatest value. Typically, this allows to use the output of a
-        linear model's decision_function method directly as the input
-        of inverse_transform.
+        linear model's :term:`decision_function` method directly as the input
+        of :meth:`inverse_transform`.
         """
         check_is_fitted(self)
 
@@ -422,6 +417,16 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         return {"X_types": ["1dlabels"]}
 
 
+@validate_params(
+    {
+        "y": ["array-like"],
+        "classes": ["array-like"],
+        "neg_label": [Interval(Integral, None, None, closed="neither")],
+        "pos_label": [Interval(Integral, None, None, closed="neither")],
+        "sparse_output": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False):
     """Binarize labels in a one-vs-all fashion.
 
@@ -752,6 +757,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self.classes = classes
         self.sparse_output = sparse_output
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, y):
         """Fit the label sets binarizer, storing :term:`classes_`.
 
@@ -767,7 +773,6 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         self._cached_dict = None
 
         if self.classes is None:
@@ -785,6 +790,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self.classes_[:] = classes
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, y):
         """Fit the label sets binarizer and transform the given label sets.
 
@@ -805,7 +811,6 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         if self.classes is not None:
             return self.fit(y).transform(y)
 
-        self._validate_params()
         self._cached_dict = None
 
         # Automatically increment on new class

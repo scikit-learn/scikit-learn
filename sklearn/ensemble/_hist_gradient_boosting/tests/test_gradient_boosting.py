@@ -1,35 +1,34 @@
+import re
 import warnings
 
-import re
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
+
 from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
     HalfSquaredError,
     PinballLoss,
 )
-from sklearn.datasets import make_classification, make_regression
-from sklearn.datasets import make_low_rank_matrix
-from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.base import clone, BaseEstimator, TransformerMixin
-from sklearn.base import is_regressor
-from sklearn.pipeline import make_pipeline
-from sklearn.metrics import mean_gamma_deviance, mean_poisson_deviance
-from sklearn.dummy import DummyRegressor
-from sklearn.exceptions import NotFittedError
+from sklearn.base import BaseEstimator, TransformerMixin, clone, is_regressor
 from sklearn.compose import make_column_transformer
-
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
+from sklearn.datasets import make_classification, make_low_rank_matrix, make_regression
+from sklearn.dummy import DummyRegressor
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
+from sklearn.exceptions import NotFittedError
+from sklearn.metrics import mean_gamma_deviance, mean_poisson_deviance
+from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
 from sklearn.utils import shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
-
 
 n_threads = _openmp_effective_n_threads()
 
@@ -80,7 +79,6 @@ def _make_dumb_dataset(n_samples):
     ],
 )
 def test_init_parameters_validation(GradientBoosting, X, y, params, err_msg):
-
     with pytest.raises(ValueError, match=err_msg):
         GradientBoosting(**params).fit(X, y)
 
@@ -100,7 +98,6 @@ def test_init_parameters_validation(GradientBoosting, X, y, params, err_msg):
 def test_early_stopping_regression(
     scoring, validation_fraction, early_stopping, n_iter_no_change, tol
 ):
-
     max_iter = 200
 
     X, y = make_regression(n_samples=50, random_state=0)
@@ -148,7 +145,6 @@ def test_early_stopping_regression(
 def test_early_stopping_classification(
     data, scoring, validation_fraction, early_stopping, n_iter_no_change, tol
 ):
-
     max_iter = 50
 
     X, y = data
@@ -208,7 +204,6 @@ def test_early_stopping_default(GradientBoosting, X, y):
     ],
 )
 def test_should_stop(scores, n_iter_no_change, tol, stopping):
-
     gbdt = HistGradientBoostingClassifier(n_iter_no_change=n_iter_no_change, tol=tol)
     assert gbdt._should_stop(scores) == stopping
 
@@ -417,8 +412,10 @@ def test_missing_values_trivial():
 
 @pytest.mark.parametrize("problem", ("classification", "regression"))
 @pytest.mark.parametrize(
-    "missing_proportion, expected_min_score_classification, "
-    "expected_min_score_regression",
+    (
+        "missing_proportion, expected_min_score_classification, "
+        "expected_min_score_regression"
+    ),
     [(0.1, 0.97, 0.89), (0.2, 0.93, 0.81), (0.5, 0.79, 0.52)],
 )
 def test_missing_values_resilience(
@@ -908,7 +905,6 @@ def test_custom_loss(Est, loss, X, y):
     ],
 )
 def test_staged_predict(HistGradientBoosting, X, y):
-
     # Test whether staged predictor eventually gives
     # the same prediction.
     X_train, X_test, y_train, y_test = train_test_split(
@@ -932,7 +928,6 @@ def test_staged_predict(HistGradientBoosting, X, y):
         else ["predict", "predict_proba", "decision_function"]
     )
     for method_name in method_names:
-
         staged_method = getattr(gb, "staged_" + method_name)
         staged_predictions = list(staged_method(X_test))
         assert len(staged_predictions) == gb.n_iter_
@@ -950,7 +945,10 @@ def test_staged_predict(HistGradientBoosting, X, y):
     "Est", (HistGradientBoostingRegressor, HistGradientBoostingClassifier)
 )
 @pytest.mark.parametrize("bool_categorical_parameter", [True, False])
-def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter):
+@pytest.mark.parametrize("missing_value", [np.nan, -1])
+def test_unknown_categories_nan(
+    insert_missing, Est, bool_categorical_parameter, missing_value
+):
     # Make sure no error is raised at predict if a category wasn't seen during
     # fit. We also make sure they're treated as nans.
 
@@ -970,7 +968,7 @@ def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter)
     if insert_missing:
         mask = rng.binomial(1, 0.01, size=X.shape).astype(bool)
         assert mask.sum() > 0
-        X[mask] = np.nan
+        X[mask] = missing_value
 
     est = Est(max_iter=20, categorical_features=categorical_features).fit(X, y)
     assert_array_equal(est.is_categorical_, [False, True])
@@ -979,7 +977,7 @@ def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter)
     # unknown categories will be treated as nans
     X_test = np.zeros((10, X.shape[1]), dtype=float)
     X_test[:5, 1] = 30
-    X_test[5:, 1] = np.nan
+    X_test[5:, 1] = missing_value
     assert len(np.unique(est.predict(X_test))) == 1
 
 
