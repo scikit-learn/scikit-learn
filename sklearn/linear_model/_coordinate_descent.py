@@ -359,6 +359,7 @@ def lasso_path(
         "verbose": ["verbose"],
         "return_n_iter": ["boolean"],
         "positive": ["boolean"],
+        "check_input": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
