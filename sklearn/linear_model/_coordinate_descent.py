@@ -361,7 +361,7 @@ def lasso_path(
         "positive": ["boolean"],
         "check_input": ["boolean"],
     },
-    prefer_skip_nested_validation=True,
+    prefer_skip_nested_validation=False,  # params in **params are not validated yet
 )
 def enet_path(
     X,
@@ -427,7 +427,7 @@ def enet_path(
     n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    alphas : ndarray, default=None
+    alphas : array-like, default=None
         List of alphas where to compute the models.
         If None alphas are set automatically.
 
@@ -445,7 +445,7 @@ def enet_path(
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    coef_init : ndarray of shape (n_features, ), default=None
+    coef_init : array-like of shape (n_features, ), default=None
         The initial values of the coefficients.
 
     verbose : bool or int, default=False
