@@ -20,6 +20,13 @@ from .utils.validation import _check_sample_weight, check_is_fitted
 __all__ = ["check_increasing", "isotonic_regression", "IsotonicRegression"]
 
 
+@validate_params(
+    {
+        "x": ["array-like"],
+        "y": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def check_increasing(x, y):
     """Determine whether y is monotonically correlated with x.
 
