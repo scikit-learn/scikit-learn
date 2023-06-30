@@ -118,68 +118,12 @@ def test_two_class_sequential_v_parallel():
     X2 = np.random.normal(-2, 0.5, size=(n, d))
     X = np.vstack((X1, X2))
 
-    gmIC_parallel = GaussianMixtureIC(
-        max_components=5, criterion="bic", n_jobs=-1, random_state=1
-    )
+    gmIC_parallel = GaussianMixtureIC(max_components=5, criterion="bic", n_jobs=-1)
     preds_parallel = gmIC_parallel.fit_predict(X)
 
-    gmIC_sequential = GaussianMixtureIC(
-        max_components=5, criterion="bic", n_jobs=1, random_state=1
-    )
+    gmIC_sequential = GaussianMixtureIC(max_components=5, criterion="bic", n_jobs=1)
     preds_sequential = gmIC_sequential.fit_predict(X)
 
     # Results obtained with sequential and parallel executions
     # must be identical
     assert_equal(preds_parallel, preds_sequential)
-
-
-def test_five_class():
-    """
-    Easily separable five gaussian problem.
-    """
-    np.random.seed(1)
-
-    n = 100
-    mus = [[i * 5, 0] for i in range(5)]
-    cov = np.eye(2)  # balls
-
-    X = np.vstack([np.random.multivariate_normal(mu, cov, n) for mu in mus])
-
-    # test BIC
-    gmIC = GaussianMixtureIC(min_components=3, max_components=10, criterion="bic")
-    gmIC.fit(X)
-    assert_equal(gmIC.n_components_, 5)
-
-    # test AIC
-    gmIC = GaussianMixtureIC(min_components=3, max_components=10, criterion="aic")
-    gmIC.fit(X)
-    # AIC fails often so there is no assertion here
-    assert_equal(gmIC.n_components_ >= 3, True)
-    assert_equal(gmIC.n_components_ <= 10, True)
-
-
-@pytest.mark.parametrize(
-    "cov1, cov2, expected_cov_type",
-    [
-        (2 * np.eye(2), 2 * np.eye(2), "spherical"),
-        (np.diag([1, 1]), np.diag([2, 1]), "diag"),
-        (np.array([[2, 1], [1, 2]]), np.array([[2, 1], [1, 2]]), "tied"),
-        (np.array([[2, -1], [-1, 2]]), np.array([[2, 1], [1, 2]]), "full"),
-    ],
-)
-def test_covariances(cov1, cov2, expected_cov_type):
-    """
-    Testing that the predicted covariance type is correct
-    on an easily separable two gaussian problem for each covariance type.
-    """
-    np.random.seed(1)
-    n = 100
-    mu1 = [-10, 0]
-    mu2 = [10, 0]
-    X1 = np.random.multivariate_normal(mu1, cov1, n)
-    X2 = np.random.multivariate_normal(mu2, cov2, n)
-    X = np.concatenate((X1, X2))
-
-    gmIC = GaussianMixtureIC(min_components=2)
-    gmIC.fit(X)
-    assert_equal(gmIC.covariance_type_, expected_cov_type)

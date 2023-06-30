@@ -10,6 +10,7 @@ import numpy as np
 from ..base import BaseEstimator, ClusterMixin
 from ..model_selection import GridSearchCV
 from ..utils import check_scalar
+from ..utils._param_validation import StrOptions
 from ..utils.validation import check_is_fitted
 from . import GaussianMixture
 
@@ -185,6 +186,11 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
     >>> print(gmIC.n_components_)
     2
     """
+
+    _parameter_constraints: dict = {
+        **GaussianMixture._parameter_constraints,
+        "criterion": [StrOptions({"aic", "bic"})],
+    }
 
     def __init__(
         self,
