@@ -407,12 +407,12 @@ def mean_absolute_percentage_error(
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
-        "squared": ["boolean"],
+        "squared": [StrOptions({"deprecated"}),"boolean"],
     },
     prefer_skip_nested_validation=True,
 )
 def mean_squared_error(
-    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared=True
+    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared="deprecated"
 ):
     """Mean squared error regression loss.
 
@@ -443,6 +443,11 @@ def mean_squared_error(
     squared : bool, default=True
         If True returns MSE value, if False returns RMSE value.
 
+        .. deprecated:: 1.3.0
+           `squared` is deprecated in 1.3.0 and will be removed in 1.3.2. \
+           Use `root_mean_squared_error` function instead to calculate \
+           the root mean squared error.
+
     Returns
     -------
     loss : float or ndarray of floats
@@ -456,21 +461,24 @@ def mean_squared_error(
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> mean_squared_error(y_true, y_pred)
     0.375
-    >>> y_true = [3, -0.5, 2, 7]
-    >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> mean_squared_error(y_true, y_pred, squared=False)
-    0.612...
     >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> mean_squared_error(y_true, y_pred)
     0.708...
-    >>> mean_squared_error(y_true, y_pred, squared=False)
-    0.822...
     >>> mean_squared_error(y_true, y_pred, multioutput='raw_values')
     array([0.41666667, 1.        ])
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.825...
     """
+    if squared != 'deprecated':
+        warnings.warn("'squared' is deprecated in version 1.3.0 and "
+                      "will be removed in 1.3.2. To calculate the "
+                      "root mean squared error, use the function"
+                      "'root_mean_squared_error'.",
+                      FutureWarning)
+        if not squared:
+            return root_mean_squared_error(y_true, y_pred)
+
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
     )
@@ -531,12 +539,24 @@ def root_mean_squared_error(
         A non-negative floating point value (the best value is 0.0), or an
         array of floating point values, one for each individual target.
 
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_squared_error
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> root_mean_squared_error(y_true, y_pred)
+    0.612...
+    >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
+    >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
+    >>> root_mean_squared_error(y_true, y_pred)
+    0.822...
     """
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
-    )
-    check_consistent_length(y_true, y_pred, sample_weight)
-    output_errors = np.sqrt(np.average((y_true - y_pred) ** 2, axis=0, weights=sample_weight))
+    output_errors = np.sqrt(mean_squared_error(
+        y_true,
+        y_pred,
+        sample_weight=sample_weight,
+        multioutput="raw_values"
+    ))
 
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
