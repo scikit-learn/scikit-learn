@@ -244,8 +244,8 @@ def pair_confusion_matrix(labels_true, labels_pred):
     contingency = contingency_matrix(
         labels_true, labels_pred, sparse=True, dtype=np.int64
     )
-    n_c_squares = np.ravel(contingency.sum(axis=1))**2 
-    n_k_squares = np.ravel(contingency.sum(axis=0))**2
+    n_c_squares = np.ravel(contingency.sum(axis=1)) ** 2
+    n_k_squares = np.ravel(contingency.sum(axis=0)) ** 2
     sum_squares = (contingency.data**2).sum()
     C = np.empty((2, 2), dtype=np.int64)
     C[1, 1] = sum_squares - n_samples
