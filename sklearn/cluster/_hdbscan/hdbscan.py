@@ -477,7 +477,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest neighbour queries when
-        a KDTree or a BallTree are used as core-distance algorithms.A large
+        a KDTree or a BallTree are used as core-distance algorithms. A large
         dataset size and small `leaf_size` may induce excessive memory usage.
         If you are running out of memory consider increasing the `leaf_size`
         parameter. Ignored for `algorithm="brute"`.

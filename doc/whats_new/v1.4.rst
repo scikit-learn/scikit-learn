@@ -59,6 +59,14 @@ TODO: update at the time of the release.
   passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
   Jalali`_.
 
+:mod:`sklearn.cluster`
+............................
+
+- |Fix| :class:`cluster.HDBSCAN` now correctly uses ``kd_tree`` and ``ball_tree``
+  instead of ``kdtree`` and ``balltree`` respectively for ``algorithm`` paramaeter
+  ensuring consistency in naming convention.
+  :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
