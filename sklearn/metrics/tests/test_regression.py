@@ -146,6 +146,9 @@ def test_multioutput_regression():
     error = mean_squared_log_error(y_true, y_pred)
     assert_almost_equal(error, 0.200, decimal=2)
 
+    error = root_mean_squared_log_error(y_true, y_pred)
+    assert_almost_equal(error, np.sqrt(0.200), decimal=2)
+
     # mean_absolute_error and mean_squared_error are equal because
     # it is a binary problem.
     error = mean_absolute_error(y_true, y_pred)
@@ -259,6 +262,12 @@ def test_regression_metrics_at_limits():
     )
     with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([1.0, -2.0, 3.0], [1.0, 2.0, 3.0])
+    msg = (
+        "Root Mean Squared Logarithmic Error cannot be used when targets "
+        "contain negative values."
+    )
+    with pytest.raises(ValueError, match=msg):
+        root_mean_squared_log_error([1.0, -2.0, 3.0], [1.0, 2.0, 3.0])
 
     # Tweedie deviance error
     power = -1.2
@@ -627,3 +636,17 @@ def test_mean_squared_error_deprecation():
 
     with pytest.warns(FutureWarning, match=depr_msg):
         mean_squared_error(y_true, y_pred, square=False)
+
+def test_mean_squared_log_error_deprecation():
+    # check the deprecation warning of mean_squared_log_error
+    depr_msg = (
+        "'squared' is deprecated in version 1.3.0 and "
+        "will be removed in 1.3.2. To calculate the "
+        "root mean squared logarithmic error, use the function"
+        "'root_mean_squared_log_error'."
+    )
+    y_true = np.arange(10)
+    y_pred = y_true + 1
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        mean_squared_log_error(y_true, y_pred, square=False)
