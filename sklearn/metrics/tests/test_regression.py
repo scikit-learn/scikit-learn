@@ -612,3 +612,17 @@ def test_pinball_loss_relation_with_mae():
         mean_absolute_error(y_true, y_pred)
         == mean_pinball_loss(y_true, y_pred, alpha=0.5) * 2
     )
+
+def test_mean_squared_error_deprecation():
+    # check the deprecation warning of mean_squared_error
+    depr_msg = (
+        "'squared' is deprecated in version 1.3.0 and "
+        "will be removed in 1.3.2. To calculate the "
+        "root mean squared error, use the function"
+        "'root_mean_squared_error'."
+    )
+    y_true = np.arange(10)
+    y_pred = y_true + 1
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        mean_squared_error(y_true, y_pred, square=False)
