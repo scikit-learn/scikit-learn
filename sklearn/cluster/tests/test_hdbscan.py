@@ -29,7 +29,7 @@ X = StandardScaler().fit_transform(X)
 
 ALGORITHMS = [
     "kd_tree",
-    "ball_tree",
+    "balltree",
     "brute",
     "auto",
 ]
@@ -150,7 +150,7 @@ def test_hdbscan_algorithms(algo, metric):
 
     ALGOS_TREES = {
         "kd_tree": KDTree,
-        "ball_tree": BallTree,
+        "balltree": BallTree,
     }
     metric_params = {
         "mahalanobis": {"V": np.eye(X.shape[1])},
@@ -302,7 +302,7 @@ def test_hdbscan_sparse():
 
     msg = "Sparse data matrices only support algorithm `brute`."
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(metric="euclidean", algorithm="ball_tree").fit(sparse_X)
+        HDBSCAN(metric="euclidean", algorithm="balltree").fit(sparse_X)
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
@@ -420,7 +420,7 @@ def test_hdbscan_tree_invalid_metric():
     with pytest.raises(ValueError, match=msg):
         HDBSCAN(algorithm="kd_tree", metric=metric_callable).fit(X)
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(algorithm="ball_tree", metric=metric_callable).fit(X)
+        HDBSCAN(algorithm="balltree", metric=metric_callable).fit(X)
 
     # The set of valid metrics for KDTree at the time of writing this test is a
     # strict subset of those supported in BallTree
