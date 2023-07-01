@@ -466,8 +466,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         Exactly which algorithm to use for computing core distances; By default
         this is set to `"auto"` which attempts to use a
         :class:`~sklearn.neighbors.KDTree` tree if possible, otherwise it uses
-        a :class:`~sklearn.neighbors.BallTree` tree. Both `"KDTree"` and
-        `"BallTree"` algorithms use the
+        a :class:`~sklearn.neighbors.BallTree` tree. Both `"kd_tree"` and
+        `"ball_tree"` algorithms use the
         :class:`~sklearn.neighbors.NearestNeighbors` estimator.
 
         If the `X` passed during `fit` is sparse or `metric` is invalid for
