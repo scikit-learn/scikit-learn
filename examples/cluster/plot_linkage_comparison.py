@@ -25,13 +25,13 @@ dimensional data.
 
 import time
 import warnings
+from itertools import cycle, islice
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn import cluster, datasets
 from sklearn.preprocessing import StandardScaler
-from itertools import cycle, islice
 
 np.random.seed(0)
 

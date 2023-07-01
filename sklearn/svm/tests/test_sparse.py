@@ -1,16 +1,14 @@
-import pytest
-
 import numpy as np
+import pytest
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
-from sklearn import datasets, svm, linear_model, base
-from sklearn.datasets import make_classification, load_digits, make_blobs
-from sklearn.svm.tests import test_svm
+from sklearn import base, datasets, linear_model, svm
+from sklearn.datasets import load_digits, make_blobs, make_classification
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.svm.tests import test_svm
 from sklearn.utils._testing import ignore_warnings, skip_if_32bit
-
+from sklearn.utils.extmath import safe_sparse_dot
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -230,8 +228,8 @@ def test_error():
 
 def test_linearsvc():
     # Similar to test_SVC
-    clf = svm.LinearSVC(random_state=0).fit(X, Y)
-    sp_clf = svm.LinearSVC(random_state=0).fit(X_sp, Y)
+    clf = svm.LinearSVC(dual="auto", random_state=0).fit(X, Y)
+    sp_clf = svm.LinearSVC(dual="auto", random_state=0).fit(X_sp, Y)
 
     assert sp_clf.fit_intercept
 
@@ -250,8 +248,10 @@ def test_linearsvc():
 def test_linearsvc_iris():
     # Test the sparse LinearSVC with the iris dataset
 
-    sp_clf = svm.LinearSVC(random_state=0).fit(iris.data, iris.target)
-    clf = svm.LinearSVC(random_state=0).fit(iris.data.toarray(), iris.target)
+    sp_clf = svm.LinearSVC(dual="auto", random_state=0).fit(iris.data, iris.target)
+    clf = svm.LinearSVC(dual="auto", random_state=0).fit(
+        iris.data.toarray(), iris.target
+    )
 
     assert clf.fit_intercept == sp_clf.fit_intercept
 
@@ -282,7 +282,7 @@ def test_weight():
     X_ = sparse.csr_matrix(X_)
     for clf in (
         linear_model.LogisticRegression(),
-        svm.LinearSVC(random_state=0),
+        svm.LinearSVC(dual="auto", random_state=0),
         svm.SVC(),
     ):
         clf.set_params(class_weight={0: 5})

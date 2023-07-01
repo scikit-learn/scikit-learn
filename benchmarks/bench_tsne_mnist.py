@@ -7,18 +7,19 @@ MNIST dataset T-SNE benchmark
 
 # License: BSD 3 clause
 
+import argparse
+import json
 import os
 import os.path as op
 from time import time
+
 import numpy as np
-import json
-import argparse
 from joblib import Memory
 
 from sklearn.datasets import fetch_openml
+from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.neighbors import NearestNeighbors
-from sklearn.decomposition import PCA
 from sklearn.utils import check_array
 from sklearn.utils import shuffle as _shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads

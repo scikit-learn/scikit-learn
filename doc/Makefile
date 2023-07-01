@@ -14,7 +14,7 @@ endif
 ifeq ($(CI), true)
     # On CircleCI using -j2 does not seem to speed up the html-noplot build
     SPHINX_NUMJOBS_NOPLOT_DEFAULT=1
-else ($(shell uname), Darwin)
+else ifeq ($(shell uname), Darwin)
     # Avoid stalling issues on MacOS
     SPHINX_NUMJOBS_NOPLOT_DEFAULT=1
 else
