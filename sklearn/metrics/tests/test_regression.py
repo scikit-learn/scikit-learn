@@ -19,11 +19,12 @@ from sklearn.metrics import (
     mean_absolute_percentage_error,
     mean_pinball_loss,
     mean_squared_error,
-    root_mean_squared_error,
     mean_squared_log_error,
     mean_tweedie_deviance,
     median_absolute_error,
     r2_score,
+    root_mean_squared_log_error,
+    root_mean_squared_error
 )
 from sklearn.metrics._regression import _check_reg_targets
 from sklearn.model_selection import GridSearchCV
