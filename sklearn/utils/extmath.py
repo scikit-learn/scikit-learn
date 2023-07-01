@@ -861,19 +861,22 @@ def svd_flip(u, v, u_based_decision=True):
     v_adjusted : ndarray
         Array v with adjusted rows and the same dimensions as v.
     """
-    xp, _ = get_namespace(u)
+    xp, _ = get_namespace(u, v)
+    device = getattr(u, "device", None)
 
     if u_based_decision:
         # columns of u, rows of v, or equivalently rows of u.T and v
         max_abs_u_cols = xp.argmax(xp.abs(u.T), axis=1)
-        indices = max_abs_u_cols + xp.arange(u.T.shape[0]) * u.T.shape[1]
-        signs = xp.sign(xp.take(xp.reshape(u.T, (-1,)), indices))
+        shift = xp.arange(u.T.shape[0], device=device)
+        indices = max_abs_u_cols + shift * u.T.shape[1]
+        signs = xp.sign(xp.take(xp.reshape(u.T, (-1,)), indices, axis=0))
         u *= signs[None, :]
         v *= signs[:, None]
     else:
         # rows of v, columns of u
         max_abs_v_rows = xp.argmax(xp.abs(v), axis=1)
-        indices = max_abs_v_rows + xp.arange(v.shape[0]) * v.shape[1]
+        shift = xp.arange(v.shape[0], device=device)
+        indices = max_abs_v_rows + shift * v.shape[1]
         signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices))
         u *= signs[None, :]
         v *= signs[:, None]
