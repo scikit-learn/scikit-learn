@@ -722,12 +722,23 @@ def root_mean_squared_log_error(
     >>> root_mean_squared_log_error(y_true, y_pred)
     0.199...
     """
-    return np.sqrt(mean_squared_log_error(
-        y_true,
-        y_pred,
+    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput
+    )
+    check_consistent_length(y_true, y_pred, sample_weight)
+
+    if (y_true < 0).any() or (y_pred < 0).any():
+        raise ValueError(
+            "Root Mean Squared Logarithmic Error cannot be used when "
+            "targets contain negative values."
+        )
+
+    return root_mean_squared_error(
+        np.log1p(y_true),
+        np.log1p(y_pred),
         sample_weight=sample_weight,
         multioutput=multioutput,
-    ))
+    )
 
 @validate_params(
     {
