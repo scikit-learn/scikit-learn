@@ -22,7 +22,7 @@ from cython cimport final
 
 import numpy as np
 
-from scipy.sparse import isspmatrix_csc
+from scipy.sparse import issparse
 
 from ._utils cimport log
 from ._utils cimport rand_int
@@ -1100,7 +1100,7 @@ cdef class SparsePartitioner:
         DTYPE_t[::1] feature_values,
         const unsigned char[::1] missing_values_in_feature_mask,
     ):
-        if not isspmatrix_csc(X):
+        if not (issparse(X) and X.format == "csc"):
             raise ValueError("X should be in csc format")
 
         self.samples = samples
