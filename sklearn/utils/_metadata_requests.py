@@ -990,8 +990,8 @@ REQUESTER_DOC = """        Request metadata passed to the ``{method}`` method.
 
         Note that this method is only relevant if
         ``enable_metadata_routing=True`` (see :func:`sklearn.set_config`).
-        Please see :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
+        Please see ``Metadata Routing`` in the ``scikit-learn`` User Guide on
+        how the routing mechanism works.
 
         The options for each parameter are:
 
@@ -1287,8 +1287,8 @@ class _MetadataRequester:
     def get_metadata_routing(self):
         """Get metadata routing of this object.
 
-        Please check :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
+        Please see ``Metadata Routing`` in the ``scikit-learn`` User Guide on
+        how the routing mechanism works.
 
         Returns
         -------

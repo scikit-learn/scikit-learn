@@ -180,8 +180,8 @@ class _MultimetricScorer:
     def get_metadata_routing(self):
         """Get metadata routing of this object.
 
-        Please check :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
+        Please see ``Metadata Routing`` in the ``scikit-learn`` User Guide on
+        how the routing mechanism works.
 
         .. versionadded:: 1.3
 
@@ -243,8 +243,8 @@ class _BaseScorer(_MetadataRequester):
             Other parameters passed to the scorer. Refer to
             :func:`set_score_request` for more details.
 
-            Only available if `enable_metadata_routing=True`. See the
-            :ref:`User Guide <metadata_routing>`.
+            Only available if `enable_metadata_routing=True`. See ``Metadata Routing``
+            in the ``scikit-learn`` User Guide.
 
             .. versionadded:: 1.3
 
@@ -285,8 +285,8 @@ class _BaseScorer(_MetadataRequester):
     def set_score_request(self, **kwargs):
         """Set requested parameters by the scorer.
 
-        Please see :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
+        Please see ``Metadata Routing`` in the ``scikit-learn`` User Guide on
+        how the routing mechanism works.
 
         .. versionadded:: 1.3
 
@@ -529,8 +529,8 @@ class _PassthroughScorer:
     def get_metadata_routing(self):
         """Get requested data properties.
 
-        Please check :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
+        Please see ``Metadata Routing`` in the ``scikit-learn`` User Guide on
+        how the routing mechanism works.
 
         .. versionadded:: 1.3
 
