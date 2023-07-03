@@ -462,7 +462,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         A distance scaling parameter as used in robust single linkage.
         See [3]_ for more information.
 
-    algorithm : {"auto", "brute", "kd_tree", "balltree"}, default="auto"
+    algorithm : {"auto", "brute", "kd_tree", "ball_tree"}, default="auto"
         Exactly which algorithm to use for computing core distances; By default
         this is set to `"auto"` which attempts to use a
         :class:`~sklearn.neighbors.KDTree` tree if possible, otherwise it uses
@@ -631,7 +631,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                     "auto",
                     "brute",
                     "kd_tree",
-                    "balltree",
+                    "ball_tree",
                 }
             )
         ],
@@ -774,7 +774,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 " Please select a different metric."
             )
         elif (
-            self.algorithm == "balltree" and self.metric not in BallTree.valid_metrics()
+            self.algorithm == "ball_tree"
+            and self.metric not in BallTree.valid_metrics()
         ):
             raise ValueError(
                 f"{self.metric} is not a valid metric for a BallTree-based algorithm."
@@ -796,7 +797,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "kd_tree"
                 kwargs["leaf_size"] = self.leaf_size
-            elif self.algorithm == "balltree":
+            elif self.algorithm == "ball_tree":
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "ball_tree"
                 kwargs["leaf_size"] = self.leaf_size
