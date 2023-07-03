@@ -167,7 +167,14 @@ def _isdtype_single(dtype, kind, *, xp):
 
 
 def supported_float_dtypes(xp):
-    """Supported floating point types for the namespace"""
+    """Supported floating point types for the namespace
+
+    Note: float16 is not officially part of the Array API spec at the
+    time of writing but scikit-learn estimators and functions can choose
+    to accept it when xp.float16 is defined.
+
+    https://data-apis.org/array-api/latest/API_specification/data_types.html
+    """
     if hasattr(xp, "float16"):
         return (xp.float64, xp.float32, xp.float16)
     else:
@@ -273,6 +280,8 @@ class _NumPyAPIWrapper:
         "uint16",
         "uint32",
         "uint64",
+        # XXX: float16 is not part of the Array API spec but exposed by
+        # some namespaces.
         "float16",
         "float32",
         "float64",
