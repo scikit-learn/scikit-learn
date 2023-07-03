@@ -10,8 +10,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     balanced_accuracy_score,
     confusion_matrix,
-    fbeta_score,
     f1_score,
+    fbeta_score,
     make_scorer,
     precision_recall_curve,
     precision_score,
@@ -19,6 +19,8 @@ from sklearn.metrics import (
     roc_curve,
 )
 from sklearn.metrics._scorer import _ContinuousScorer
+from sklearn.model_selection import CutOffClassifier
+from sklearn.model_selection._prediction import _fit_and_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
@@ -29,9 +31,6 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
 )
-
-from sklearn.model_selection import CutOffClassifier
-from sklearn.model_selection._prediction import _fit_and_score
 
 
 @pytest.mark.parametrize(
@@ -110,12 +109,12 @@ def test_fit_and_score_scorers(scorer, score_method):
         (
             make_scorer(roc_curve, needs_proba=True),
             "max_tnr_at_tpr_constraint",
-            [[0.0, 1.0, 1.0], [1.0, 1.0, 0.0]],
+            [[0.0, 1.0], [1.0, 1.0]],
         ),
         (
             make_scorer(roc_curve, needs_proba=True),
             "max_tpr_at_tnr_constraint",
-            [[0.0, 1.0, 1.0], [1.0, 1.0, 0.0]],
+            [[0.0, 1.0], [1.0, 1.0]],
         ),
         (
             make_scorer(precision_recall_curve, needs_proba=True),

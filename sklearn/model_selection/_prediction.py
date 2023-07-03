@@ -23,15 +23,14 @@ from ..utils.multiclass import type_of_target
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_fit_params,
-    _check_sample_weight,
     _check_pos_label_consistency,
+    _check_sample_weight,
     _num_samples,
     check_consistent_length,
     check_is_fitted,
     indexable,
 )
-
-from ._split import check_cv, StratifiedShuffleSplit
+from ._split import StratifiedShuffleSplit, check_cv
 
 
 def _estimator_has(attr):
@@ -134,6 +133,8 @@ def _fit_and_score(
             fpr, tpr, potential_thresholds = scorer(
                 classifier, X_val, y_val, sample_weight=sw_val
             )
+            # For fpr=0/tpr=0, the threshold is set to `np.inf`. We need to remove it.
+            fpr, tpr, potential_thresholds = fpr[1:], tpr[1:], potential_thresholds[1:]
             # thresholds are in decreasing order
             return potential_thresholds[::-1], ((1 - fpr)[::-1], tpr[::-1])
         elif score_method in {
