@@ -101,6 +101,13 @@ def _is_numpy_namespace(xp):
     return xp.__name__ in {"numpy", "array_api_compat.numpy", "numpy.array_api"}
 
 
+def _union1d(a, b, xp):
+    if xp.__name__ == "numpy":
+        return numpy.union1d(a, b)
+    assert a.ndim == b.ndim == 1
+    return xp.unique_values(xp.concat([xp.unique_values(a), xp.unique_values(b)]))
+
+
 def isdtype(dtype, kind, *, xp):
     """Returns a boolean indicating whether a provided dtype is of type "kind".
 
@@ -419,6 +426,14 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         else:
             sample_weight_np = None
         return float(numpy.average(sample_score_np, weights=sample_weight_np))
+
+    if not xp.isdtype(sample_score.dtype, "real floating"):
+        sample_score = xp.astype(sample_score, xp.float64)
+
+    if sample_weight is not None:
+        sample_weight = xp.asarray(sample_weight)
+        if not xp.isdtype(sample_weight.dtype, "real floating"):
+            sample_weight = xp.astype(sample_weight, xp.float64)
 
     if normalize:
         if sample_weight is not None:
