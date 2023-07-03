@@ -20,6 +20,7 @@ from ..utils import (
     check_pandas_support,  # noqa  # noqa
 )
 from ..utils._param_validation import (
+    Hidden,
     Integral,
     Interval,
     Real,
@@ -755,7 +756,11 @@ def _valid_data_column_names(features_list, target_columns):
         "as_frame": [bool, StrOptions({"auto"})],
         "n_retries": [Interval(Integral, 1, None, closed="left")],
         "delay": [Interval(Real, 0, None, closed="right")],
-        "parser": [StrOptions({"auto", "pandas", "liac-arff", "warn"})],
+        "parser": [
+            StrOptions({"auto", "pandas", "liac-arff"}),
+            Hidden(StrOptions({"warn"})),
+        ],
+        "read_csv_kwargs": [dict, None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -879,7 +884,7 @@ def fetch_openml(
 
     read_csv_kwargs : dict, default=None
         Keyword arguments passed to :func:`pandas.read_csv` when loading the data
-        from a ARFF file and using the pandas parser. It can allows to
+        from a ARFF file and using the pandas parser. It can allow to
         overwrite some default parameters.
 
         .. versionadded:: 1.3
