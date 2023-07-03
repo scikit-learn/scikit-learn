@@ -27,15 +27,14 @@ There are three options to assign labels:
 
 import time
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import gaussian_filter
-import matplotlib.pyplot as plt
 from skimage.data import coins
 from skimage.transform import rescale
 
-from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
-
+from sklearn.feature_extraction import image
 
 # load the coins as a numpy array
 orig_coins = coins()

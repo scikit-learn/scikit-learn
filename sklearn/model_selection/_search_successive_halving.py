@@ -1,19 +1,19 @@
+from abc import abstractmethod
 from copy import deepcopy
 from math import ceil, floor, log
-from abc import abstractmethod
 from numbers import Integral, Real
 
 import numpy as np
-from ._search import BaseSearchCV
-from . import ParameterGrid, ParameterSampler
-from ..base import is_classifier
-from ._split import check_cv, _yields_constant_splits
+
+from ..base import _fit_context, is_classifier
 from ..metrics._scorer import get_scorer_names
 from ..utils import resample
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import _num_samples
-
+from . import ParameterGrid, ParameterSampler
+from ._search import BaseSearchCV
+from ._split import _yields_constant_splits, check_cv
 
 __all__ = ["HalvingGridSearchCV", "HalvingRandomSearchCV"]
 
@@ -211,6 +211,10 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         return last_iter_indices[best_idx]
 
+    @_fit_context(
+        # Halving*SearchCV.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None, groups=None, **fit_params):
         """Run fit with all sets of parameters.
 
@@ -238,7 +242,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self : object
             Instance of fitted estimator.
         """
-        self._validate_params()
         self._checked_cv_orig = check_cv(
             self.cv, y, classifier=is_classifier(self.estimator)
         )
