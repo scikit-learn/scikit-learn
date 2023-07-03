@@ -773,9 +773,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 f"{self.metric} is not a valid metric for a KDTree-based algorithm."
                 " Please select a different metric."
             )
-        elif (
-            self.algorithm == "balltree" and self.metric not in BallTree.valid_metrics
-        ):
+        elif self.algorithm == "balltree" and self.metric not in BallTree.valid_metrics:
             raise ValueError(
                 f"{self.metric} is not a valid metric for a BallTree-based algorithm."
                 " Please select a different metric."
