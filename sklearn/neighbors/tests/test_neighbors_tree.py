@@ -298,7 +298,8 @@ def test_pickle(Cls, metric, protocol):
 
 @pytest.mark.parametrize("BinaryTree", (BallTree, KDTree))
 def test_ball_tree_valid_metrics(BinaryTree):
-    """BinaryTrees must expose a public `valid_metrics` class attribute.
+    """BinaryTrees must expose a public `valid_metrics` class attribute containing
+    distance metric string identifiers.
 
     Non-regression test for #26742"""
 
