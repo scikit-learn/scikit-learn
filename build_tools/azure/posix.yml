@@ -107,5 +107,6 @@ jobs:
       condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
                      eq(variables['SELECTED_TESTS'], ''))
       displayName: 'Upload To Codecov'
+      retryCountOnTaskFailure: 5
       env:
         CODECOV_TOKEN: $(CODECOV_TOKEN)

@@ -125,6 +125,7 @@ _ = plt.title("Limitation of a linear model such as ridge")
 #
 # Thus, let's use such a :class:`~sklearn.kernel_ridge.KernelRidge`.
 import time
+
 from sklearn.gaussian_process.kernels import ExpSineSquared
 from sklearn.kernel_ridge import KernelRidge
 
@@ -176,8 +177,9 @@ kernel_ridge.kernel
 # parameter and the kernel parameters.
 
 # %%
-from sklearn.model_selection import RandomizedSearchCV
 from scipy.stats import loguniform
+
+from sklearn.model_selection import RandomizedSearchCV
 
 param_distributions = {
     "alpha": loguniform(1e0, 1e3),
