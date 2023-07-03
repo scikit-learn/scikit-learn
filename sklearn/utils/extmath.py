@@ -228,7 +228,7 @@ def randomized_range_finder(
         (the fastest but numerically unstable when `n_iter` is large, e.g.
         typically 5 or larger), or 'LU' factorization (numerically stable
         but can lose slightly in accuracy). The 'auto' mode applies no
-        normalization if `n_iter` <= 2 and switches to LR otherwise.
+        normalization if `n_iter` <= 2 and switches to LU otherwise.
 
         .. versionadded:: 0.18
 
