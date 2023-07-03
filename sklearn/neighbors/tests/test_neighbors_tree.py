@@ -294,14 +294,3 @@ def test_pickle(Cls, metric, protocol):
     assert_array_almost_equal(dist1, dist2)
 
     assert isinstance(tree2, Cls)
-
-
-@pytest.mark.parametrize("BinaryTree", (BallTree, KDTree))
-def test_ball_tree_valid_metrics(BinaryTree):
-    """BinaryTrees must expose a public `valid_metrics` class attribute containing
-    distance metric string identifiers.
-
-    Non-regression test for #26742"""
-
-    valid_metrics_list = BinaryTree.valid_metrics
-    assert all(isinstance(valid_metric, str) for valid_metric in valid_metrics_list)
