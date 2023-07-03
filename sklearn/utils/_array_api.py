@@ -479,6 +479,8 @@ def _isneginf(X):
 
 
 def _nanmin(X, axis=None):
+    # TODO: refactor once nan-aware reductions are standardized:
+    # https://github.com/data-apis/array-api/issues/621
     xp, _ = get_namespace(X)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmin(X, axis=axis))
@@ -490,6 +492,8 @@ def _nanmin(X, axis=None):
 
 
 def _nanmax(X, axis=None):
+    # TODO: refactor once nan-aware reductions are standardized:
+    # https://github.com/data-apis/array-api/issues/621
     xp, _ = get_namespace(X)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmax(X, axis=axis))

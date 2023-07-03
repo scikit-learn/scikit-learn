@@ -9,6 +9,8 @@ from sklearn.utils._array_api import (
     _asarray_with_order,
     _convert_to_numpy,
     _estimator_with_converted_arrays,
+    _nanmax,
+    _nanmin,
     _NumPyAPIWrapper,
     get_namespace,
     supported_float_dtypes,
@@ -158,6 +160,27 @@ def test_asarray_with_order_ignored():
     X_new_np = numpy.asarray(X_new)
     assert X_new_np.flags["C_CONTIGUOUS"]
     assert not X_new_np.flags["F_CONTIGUOUS"]
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "library", ["numpy", "numpy.array_api", "cupy", "torch", "cupy.array_api"]
+)
+@pytest.mark.parametrize(
+    "X,reduction,expected",
+    [
+        ([1, 2, numpy.nan], _nanmin, 1),
+        ([1, -2, -numpy.nan], _nanmin, -2),
+        ([1, 2, numpy.nan], _nanmax, 2),
+        ([1, 2, numpy.nan], _nanmax, 2),
+    ],
+)
+def test_nan_reductions(library, X, reduction, expected):
+    """Check NaN reductions like _nanmin and _nanmax"""
+    xp = pytest.importorskip(library)
+
+    result = reduction(xp.asarray(X))
+    assert result == expected
 
 
 @skip_if_array_api_compat_not_configured
