@@ -138,11 +138,12 @@ ax.set_title("Convergence of AdaBoost algorithm")
 # %%
 # Errors of the Weak Learners
 # ***************************
-# We also want to extract the `estimator_errors_` and the `estimator_weights_`
-# from the fitted :class:`~sklearn.ensemble.AdaBoostClassifier`.
-# `estimator_errors_` is an array of weighted errors of each individual weak
-# learner immediately after it has been trained at each boosting iteration,
-# while the `estimator_weights_` represents the corresponding weights.
+# As previously mentioned, adaboost is an a forward stagewise additive model.
+# We can now focus on understanding the relationship between the attributed
+# weights and the statistical performance of each weak learner.
+#
+# We can use `estimator_errors_` and `estimator_weights_` to investigate this
+# link.
 #
 # Since boosting might terminate early, leaving some of the `n_estimators`
 # estimators untrained, we want to make sure to only keep attribtes from trained
