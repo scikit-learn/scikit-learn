@@ -3,20 +3,8 @@
 implementation_specific_values = [
     # Values are the following ones:
     #
-    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
-    #
-    # On the first hand, an empty string is used for `name_suffix`
-    # for the float64 case as to still be able to expose the original
-    # float64 implementation under the same API, namely `DistanceMetric`.
-    #
-    # On the other hand, '32' bit is used for `name_suffix` for the float32
-    # case to remove ambiguity and use `DistanceMetric32`, which is not
-    # publicly exposed.
-    #
-    # The metric mapping is adapted accordingly to route to the correct
-    # implementations.
-    #
-    ('', 'float64_t', 'np.float64'),
+    # name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
+    ('64', 'float64_t', 'np.float64'),
     ('32', 'float32_t', 'np.float32')
 ]
 
@@ -73,9 +61,36 @@ def get_valid_metric_ids(L):
     >>> sorted(L)
     ['cityblock', 'euclidean', 'l1', 'l2', 'manhattan']
     """
-    return [key for (key, val) in METRIC_MAPPING.items()
+    return [key for (key, val) in METRIC_MAPPING64.items()
             if (val.__name__ in L) or (val in L)]
 
+cdef class DistanceMetric:
+    @classmethod
+    def get_metric(cls, metric, dtype=np.float64, **kwargs):
+        """Get the given distance metric from the string identifier.
+
+        See the docstring of DistanceMetric for a list of available metrics.
+
+        Parameters
+        ----------
+        metric : str or class name
+            The distance metric to use
+        dtype : {np.float32, np.float64}, default=np.float64
+            The dtype of the data on which the metric will be applied
+        **kwargs
+            additional arguments will be passed to the requested metric
+        """
+        if dtype == np.float32:
+            specialized_class = DistanceMetric32
+        elif dtype == np.float64:
+            specialized_class = DistanceMetric64
+        else:
+            raise ValueError(
+                f"Unexpected dtype {dtype} provided. Please select a dtype from"
+                " {np.float32, np.float64}"
+            )
+
+        return specialized_class.get_metric(metric, **kwargs)
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
@@ -125,7 +140,7 @@ cdef {{INPUT_DTYPE_t}} INF{{name_suffix}} = np.inf
 
 ######################################################################
 # Distance Metric Classes
-cdef class DistanceMetric{{name_suffix}}:
+cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     """DistanceMetric class
 
     This class provides a uniform interface to fast distance metric

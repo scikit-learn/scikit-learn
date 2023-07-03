@@ -1,31 +1,29 @@
 from abc import abstractmethod
-
-import numpy as np
-
 from typing import List
 
-from scipy.sparse import isspmatrix_csr, issparse
-
-from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
-from .. import DistanceMetric, DistanceMetric32
-
-from ._base import _sqeuclidean_row_norms32, _sqeuclidean_row_norms64
-from ._argkmin import (
-    ArgKmin64,
-    ArgKmin32,
-)
-
-from ._argkmin_classmode import (
-    ArgKminClassMode64,
-    ArgKminClassMode32,
-)
-
-from ._radius_neighbors import (
-    RadiusNeighbors64,
-    RadiusNeighbors32,
-)
+import numpy as np
+from scipy.sparse import issparse, isspmatrix_csr
 
 from ... import get_config
+from .._dist_metrics import (
+    BOOL_METRICS,
+    METRIC_MAPPING64,
+    DistanceMetric,
+    DistanceMetric32,
+)
+from ._argkmin import (
+    ArgKmin32,
+    ArgKmin64,
+)
+from ._argkmin_classmode import (
+    ArgKminClassMode32,
+    ArgKminClassMode64,
+)
+from ._base import _sqeuclidean_row_norms32, _sqeuclidean_row_norms64
+from ._radius_neighbors import (
+    RadiusNeighbors32,
+    RadiusNeighbors64,
+)
 
 
 def sqeuclidean_row_norms(X, num_threads):
@@ -77,7 +75,7 @@ class BaseDistancesReductionDispatcher:
             "hamming",
             *BOOL_METRICS,
         }
-        return sorted(({"sqeuclidean"} | set(METRIC_MAPPING.keys())) - excluded)
+        return sorted(({"sqeuclidean"} | set(METRIC_MAPPING64.keys())) - excluded)
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
