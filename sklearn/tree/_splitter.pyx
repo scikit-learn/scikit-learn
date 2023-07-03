@@ -11,6 +11,8 @@
 #
 # License: BSD 3 clause
 
+cimport numpy as cnp
+
 from ._criterion cimport Criterion
 
 from libc.stdlib cimport qsort
@@ -53,9 +55,15 @@ cdef class Splitter:
     sparse and dense data, one split at a time.
     """
 
-    def __cinit__(self, Criterion criterion, SIZE_t max_features,
-                  SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state):
+    def __cinit__(
+        self,
+        Criterion criterion,
+        SIZE_t max_features,
+        SIZE_t min_samples_leaf,
+        double min_weight_leaf,
+        object random_state,
+        const cnp.int8_t[:] monotonic_cst,
+    ):
         """
         Parameters
         ----------
@@ -77,6 +85,10 @@ cdef class Splitter:
 
         random_state : object
             The user inputted random state to be used for pseudo-randomness
+
+        monotonic_cst : const cnp.int8_t[:]
+            Monotonicity constraints
+
         """
 
         self.criterion = criterion
@@ -88,6 +100,8 @@ cdef class Splitter:
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.random_state = random_state
+        self.monotonic_cst = monotonic_cst
+        self.with_monotonic_cst = monotonic_cst is not None
 
     def __getstate__(self):
         return {}
@@ -100,7 +114,8 @@ cdef class Splitter:
                              self.max_features,
                              self.min_samples_leaf,
                              self.min_weight_leaf,
-                             self.random_state), self.__getstate__())
+                             self.random_state,
+                             self.monotonic_cst), self.__getstate__())
 
     cdef int init(
         self,
@@ -208,8 +223,15 @@ cdef class Splitter:
         weighted_n_node_samples[0] = self.criterion.weighted_n_node_samples
         return 0
 
-    cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features) except -1 nogil:
+    cdef int node_split(
+        self,
+        double impurity,
+        SplitRecord* split,
+        SIZE_t* n_constant_features,
+        double lower_bound,
+        double upper_bound,
+    ) nogil except -1:
+
         """Find the best split on node samples[start:end].
 
         This is a placeholder method. The majority of computation will be done
@@ -224,6 +246,11 @@ cdef class Splitter:
         """Copy the value of node samples[start:end] into dest."""
 
         self.criterion.node_value(dest)
+
+    cdef inline void clip_node_value(self, double* dest, double lower_bound, double upper_bound) noexcept nogil:
+        """Clip the value in dest between lower_bound and upper_bound for monotonic constraints."""
+
+        self.criterion.clip_node_value(dest, lower_bound, upper_bound)
 
     cdef double node_impurity(self) noexcept nogil:
         """Return the impurity of the current node."""
@@ -264,6 +291,10 @@ cdef inline int node_split_best(
     double impurity,
     SplitRecord* split,
     SIZE_t* n_constant_features,
+    bint with_monotonic_cst,
+    const cnp.int8_t[:] monotonic_cst,
+    double lower_bound,
+    double upper_bound,
 ) except -1 nogil:
     """Find the best split on node samples[start:end]
 
@@ -415,6 +446,18 @@ cdef inline int node_split_best(
 
                 current_split.pos = p
                 criterion.update(current_split.pos)
+
+                # Reject if monotonicity constraints are not satisfied
+                if (
+                    with_monotonic_cst and
+                    monotonic_cst[current_split.feature] != 0 and
+                    not criterion.check_monotonicity(
+                        monotonic_cst[current_split.feature],
+                        lower_bound,
+                        upper_bound,
+                    )
+                ):
+                    continue
 
                 # Reject if min_weight_leaf is not satisfied
                 if ((criterion.weighted_n_left < min_weight_leaf) or
@@ -628,7 +671,11 @@ cdef inline int node_split_random(
     Criterion criterion,
     double impurity,
     SplitRecord* split,
-    SIZE_t* n_constant_features
+    SIZE_t* n_constant_features,
+    bint with_monotonic_cst,
+    const cnp.int8_t[:] monotonic_cst,
+    double lower_bound,
+    double upper_bound,
 ) except -1 nogil:
     """Find the best random split on node samples[start:end]
 
@@ -754,6 +801,18 @@ cdef inline int node_split_random(
         # Reject if min_weight_leaf is not satisfied
         if ((criterion.weighted_n_left < min_weight_leaf) or
                 (criterion.weighted_n_right < min_weight_leaf)):
+            continue
+
+        # Reject if monotonicity constraints are not satisfied
+        if (
+                with_monotonic_cst and
+                monotonic_cst[current_split.feature] != 0 and
+                not criterion.check_monotonicity(
+                    monotonic_cst[current_split.feature],
+                    lower_bound,
+                    upper_bound,
+                )
+        ):
             continue
 
         current_proxy_improvement = criterion.proxy_impurity_improvement()
@@ -1441,8 +1500,14 @@ cdef class BestSplitter(Splitter):
             X, self.samples, self.feature_values, missing_values_in_feature_mask
         )
 
-    cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features) except -1 nogil:
+    cdef int node_split(
+            self,
+            double impurity,
+            SplitRecord* split,
+            SIZE_t* n_constant_features,
+            double lower_bound,
+            double upper_bound
+    ) except -1 nogil:
         return node_split_best(
             self,
             self.partitioner,
@@ -1450,6 +1515,10 @@ cdef class BestSplitter(Splitter):
             impurity,
             split,
             n_constant_features,
+            self.with_monotonic_cst,
+            self.monotonic_cst,
+            lower_bound,
+            upper_bound
         )
 
 cdef class BestSparseSplitter(Splitter):
@@ -1467,8 +1536,14 @@ cdef class BestSparseSplitter(Splitter):
             X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask
         )
 
-    cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features) except -1 nogil:
+    cdef int node_split(
+            self,
+            double impurity,
+            SplitRecord* split,
+            SIZE_t* n_constant_features,
+            double lower_bound,
+            double upper_bound
+    ) except -1 nogil:
         return node_split_best(
             self,
             self.partitioner,
@@ -1476,6 +1551,10 @@ cdef class BestSparseSplitter(Splitter):
             impurity,
             split,
             n_constant_features,
+            self.with_monotonic_cst,
+            self.monotonic_cst,
+            lower_bound,
+            upper_bound
         )
 
 cdef class RandomSplitter(Splitter):
@@ -1493,8 +1572,14 @@ cdef class RandomSplitter(Splitter):
             X, self.samples, self.feature_values, missing_values_in_feature_mask
         )
 
-    cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features) except -1 nogil:
+    cdef int node_split(
+            self,
+            double impurity,
+            SplitRecord* split,
+            SIZE_t* n_constant_features,
+            double lower_bound,
+            double upper_bound
+    ) except -1 nogil:
         return node_split_random(
             self,
             self.partitioner,
@@ -1502,6 +1587,10 @@ cdef class RandomSplitter(Splitter):
             impurity,
             split,
             n_constant_features,
+            self.with_monotonic_cst,
+            self.monotonic_cst,
+            lower_bound,
+            upper_bound
         )
 
 cdef class RandomSparseSplitter(Splitter):
@@ -1518,9 +1607,14 @@ cdef class RandomSparseSplitter(Splitter):
         self.partitioner = SparsePartitioner(
             X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask
         )
-
-    cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features) except -1 nogil:
+    cdef int node_split(
+            self,
+            double impurity,
+            SplitRecord* split,
+            SIZE_t* n_constant_features,
+            double lower_bound,
+            double upper_bound
+    ) except -1 nogil:
         return node_split_random(
             self,
             self.partitioner,
@@ -1528,4 +1622,8 @@ cdef class RandomSparseSplitter(Splitter):
             impurity,
             split,
             n_constant_features,
+            self.with_monotonic_cst,
+            self.monotonic_cst,
+            lower_bound,
+            upper_bound
         )
