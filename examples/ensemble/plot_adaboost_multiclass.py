@@ -169,6 +169,30 @@ fig.suptitle("Weak learner's errors and weights for the AdaBoostClassifier")
 fig.tight_layout()
 
 # %%
-# In the left plot, the classification errors of the individual estimators
-# during the training are shown. The plot to the right represents the weights
-# assigned to each base estimator.
+# On the left plot, we show the weighted error of each weak learner on the
+# reweighted training set at each boosting iteration. On the right plot, we
+# show the weight associated with each weak learner later used to make the
+# predictions of the final additive model.
+#
+# We see that the error of the weak learner is the inverse of the weights.
+# It means that our additive model will trust more a weak learner that makes
+# less error (on the training set) by increasing its impact on the final
+# decision. Indeed, this exactly the formulation of the of AdaBoost:
+#
+# .. math::
+#    \alpha^{(m)} = \log \frac{1 - err^{(m)}}{err^{(m)}} + \log (K - 1),
+#
+# where :math:`\alpha^{(m)}` and :math:`\err^{(m)}` is the weight and error
+# of the :math:`m` weak learner, respectively, and :math:`K` is the number
+# of classes in our classification problem.
+#
+# Another interesting observation boils down to the fact that the couple
+# of first classifiers of the model are making fewer errors than
+# later classifiers of the boosting chain.
+#
+# The intuition to have behind this observation is the following:
+# Due to the sample reweighting, later classifiers are forced to try
+# to well classify more difficult/noisy samples and ignoring already
+# well classified samples. Therefore, the overall error on the training
+# set will increase. That's why the weak learner weights are counter-
+# balancing the worsen statical performance of the weak learner.
