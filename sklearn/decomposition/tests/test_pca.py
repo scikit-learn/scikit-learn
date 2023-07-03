@@ -7,13 +7,19 @@ import scipy as sp
 from numpy.testing import assert_array_equal
 
 from sklearn import config_context, datasets
+from sklearn.base import clone
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA
 from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.estimator_checks import (
-    _yield_array_api_checks,
-    parametrize_with_checks,
+    _array_api_for_tests,
+    _get_check_estimator_ids,
+    check_array_api_input_and_values,
 )
 
 iris = datasets.load_iris()
@@ -691,7 +697,47 @@ def test_variance_correctness(copy):
     np.testing.assert_allclose(pca_var, true_var)
 
 
-@parametrize_with_checks(
+def check_array_api_get_precision(name, estimator, array_namepsace, device, dtype):
+    xp, device, dtype = _array_api_for_tests(array_namepsace, device, dtype)
+    iris_np = iris.data.astype(dtype)
+    iris_xp = xp.asarray(iris_np, device=device)
+
+    estimator.fit(iris_np)
+    precision_np = estimator.get_precision()
+    covariance_np = estimator.get_covariance()
+
+    with config_context(array_api_dispatch=True):
+        estimator_xp = clone(estimator).fit(iris_xp)
+        precision_xp = estimator_xp.get_precision()
+        assert precision_xp.shape == (4, 4)
+        assert precision_xp.dtype == iris_xp.dtype
+
+        assert_allclose(
+            _convert_to_numpy(precision_xp, xp=xp),
+            precision_np,
+            atol=np.finfo(dtype).eps * 100,
+        )
+        covariance_xp = estimator_xp.get_covariance()
+        assert covariance_xp.shape == (4, 4)
+        assert covariance_xp.dtype == iris_xp.dtype
+
+        assert_allclose(
+            _convert_to_numpy(covariance_xp, xp=xp),
+            covariance_np,
+            atol=np.finfo(dtype).eps * 100,
+        )
+
+
+@pytest.mark.parametrize(
+    "array_namepsace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "check",
+    [check_array_api_input_and_values, check_array_api_get_precision],
+    ids=_get_check_estimator_ids,
+)
+@pytest.mark.parametrize(
+    "estimator",
     [
         PCA(n_components=2, svd_solver="full"),
         PCA(n_components=2, svd_solver="full", whiten=True),
@@ -702,10 +748,11 @@ def test_variance_correctness(copy):
             random_state=0,  # how to use global_random_seed here?
         ),
     ],
-    check_yielder=_yield_array_api_checks,
+    ids=_get_check_estimator_ids,
 )
-def test_array_api_compliance(check, estimator, request):
-    check(estimator, check_values=True)
+def test_pca_array_api_compliance(estimator, check, array_namepsace, device, dtype):
+    name = estimator.__class__.__name__
+    check(name, estimator, array_namepsace, device=device, dtype=dtype)
 
 
 def test_array_api_error_and_warnings_on_unsupported_params():

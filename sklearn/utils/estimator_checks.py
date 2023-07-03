@@ -858,23 +858,7 @@ def _generate_sparse_matrix(X_csr):
         yield sparse_format + "_64", X
 
 
-def check_array_api_input(
-    name,
-    estimator_orig,
-    *,
-    array_namespace,
-    device=None,
-    dtype="float64",
-    check_values=False,
-):
-    """Check that the estimator can work consistently with Array API
-
-    By default, this just checks that the types and shapes of the arrays are
-    consistent with calling the same estimator with numpy arrays.
-
-    When check_values is True, it also checks that calling the estimator on the
-    array_api Array gives the same results as ndarrays.
-    """
+def _array_api_for_tests(array_namespace, device, dtype):
     try:
         array_mod = importlib.import_module(array_namespace)
     except ModuleNotFoundError:
@@ -901,6 +885,26 @@ def check_array_api_input(
 
         if cupy.cuda.runtime.getDeviceCount() == 0:
             raise SkipTest("CuPy test requires cuda, which is not available")
+    return xp, device, dtype
+
+
+def check_array_api_input(
+    name,
+    estimator_orig,
+    array_namespace,
+    device=None,
+    dtype="float64",
+    check_values=False,
+):
+    """Check that the estimator can work consistently with Array API
+
+    By default, this just checks that the types and shapes of the arrays are
+    consistent with calling the same estimator with numpy arrays.
+
+    When check_values is True, it also checks that calling the estimator on the
+    array_api Array gives the same results as ndarrays.
+    """
+    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
 
     X, y = make_classification(random_state=42)
     X = X.astype(dtype, copy=False)
@@ -1025,6 +1029,23 @@ def check_array_api_input(
             else:
                 assert inverse_result.shape == invese_result_xp_np.shape
                 assert inverse_result.dtype == invese_result_xp_np.dtype
+
+
+def check_array_api_input_and_values(
+    name,
+    estimator_orig,
+    array_namespace,
+    device=None,
+    dtype="float64",
+):
+    return check_array_api_input(
+        name,
+        estimator_orig,
+        array_namespace=array_namespace,
+        device=device,
+        dtype=dtype,
+        check_values=True,
+    )
 
 
 def check_estimator_sparse_data(name, estimator_orig):
