@@ -1006,6 +1006,7 @@ class _BaseKMeans(
         """
         n_samples = X.shape[0]
         n_clusters = self.n_clusters if n_centroids is None else n_centroids
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         if init_size is not None and init_size < n_samples:
             init_indices = random_state.randint(0, n_samples, init_size)
