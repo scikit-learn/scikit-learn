@@ -8,13 +8,14 @@ multi-label classification problem. It reproduces a similar experiment as
 depicted by Figure 1 in Zhu et al [1]_.
 
 The core principle of AdaBoost (Adaptive Boosting) is to fit a sequence of weak
-learners (e. g. Decision Trees) on repeatedly re-sampled versions of the data.
+learners (e.g. Decision Trees) on repeatedly re-sampled versions of the data.
 Each sample carries a weight that is adjusted after each training step, such
-that misclassified samples will be assigned higher weights. The re-sampling with
-replacement then accounts for the different weights, because the chance of
-selecting a higher weighted sample several times for the new data set is bigger
-than a lower weighted sample to be selected. This way, each weak learner focuses
-on the difficult-to-classify samples during subsequent iterations.
+that misclassified samples will be assigned higher weights. The re-sampling
+process with replacement takes into account the weights assigned to each sample.
+Samples with higher weights have a greater chance of being selected multiple
+times in the new data set, while samples with lower weights are less likely to
+be selected. This ensures that subsequent iterations of the algorithm focus on
+the difficult-to-classify samples.
 
 .. topic:: References:
 
@@ -31,9 +32,10 @@ on the difficult-to-classify samples during subsequent iterations.
 # Creating the dataset
 # --------------------
 # The classification dataset is constructed by taking a ten-dimensional standard
-# normal distribution and defining three classes separated by nested concentric
-# ten-dimensional spheres such that roughly equal numbers of samples are in each
-# class (quantiles of the :math:`\chi^2` distribution).
+# normal distribution (:math:`x` in :math:`R^{10}`) and defining three classes
+# separated by nested concentric ten-dimensional spheres such that roughly equal
+# numbers of samples are in each class (quantiles of the :math:`\chi^2`
+# distribution).
 from sklearn.datasets import make_gaussian_quantiles
 
 X, y = make_gaussian_quantiles(
@@ -65,7 +67,10 @@ X_train, X_test, y_train, y_test = train_test_split(
 # The `SAMME` algorithm build into the
 # :class:`~sklearn.ensemble.AdaBoostClassifier` then uses the correct or
 # incorrect predictions made be the current weak learner to update the sample
-# weights used for training the consecutive weak learners.
+# weights used for training the consecutive weak learners. Also, the weight of
+# the weak learner itself is calculated based on its accuracy in classifying the
+# training examples. The weight of the weak learner determines its influence on
+# the final ensemble prediction.
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 
@@ -90,7 +95,7 @@ adaboost_clf = AdaBoostClassifier(
 # obtained from the :class:`~sklearn.tree.DecisionTreeClassifier`, which serves
 # as a reference point. The second baseline score is obtained from the
 # :class:`~sklearn.dummy.DummyClassifier`, which predicts the most prevalent
-# class in the dataset.
+# class in a dataset.
 from sklearn.dummy import DummyClassifier
 from sklearn.metrics import accuracy_score
 
@@ -167,9 +172,9 @@ plt.show()
 # %%
 # The plot shows the classification error, i.e. `1 - accuracy`, on the test
 # set after each boosting iteration. We can see that the error of the boosted
-# trees converges at approximately 0.3 after 50 iterations, thus archiving a
-# much higher accuracy than a single tree, which is shown in the plot with the
-# dashed line.
+# trees converges to around 0.3 after 50 iterations, indicating a significantly
+# higher accuracy compared to single tree, as illustrated by the dashed line in
+# the plot.
 #
 # The misclassification error jitters because the `SAMME` algorithm uses the
 # discrete outputs of the weak learners to train the boosted model.
@@ -184,9 +189,10 @@ plt.show()
 # ***************************************
 # As previously mentioned, `AdaBoost` is a forward stagewise additive model. We
 # can now focus on understanding the relationship between the attributed weights
-# and the statistical performance of each weak learner.
+# of the weak learners and their statistical performance.
 #
-# We can use `estimator_errors_` and `estimator_weights_` to investigate this
+# We can use the fitted :class:`~sklearn.ensemble.AdaBoostClassifier`'s
+# attributes `estimator_errors_` and `estimator_weights_` to investigate this
 # link.
 weak_learners_info = pd.DataFrame(
     {
@@ -216,7 +222,8 @@ fig.tight_layout()
 # We see that the error of the weak learner is the inverse of the weights. It
 # means that our additive model will trust more a weak learner that makes
 # smaller errors (on the training set) by increasing its impact on the final
-# decision. Indeed, this exactly is the formulation of AdaBoost:
+# decision. Indeed, this exactly is the formulation of updating the base
+# estimators' weights after each iteration in AdaBoost:
 #
 # .. math:: \alpha^{(m)} = \log \frac{1 - err^{(m)}}{err^{(m)}} + \log (K - 1),
 #
@@ -231,5 +238,5 @@ fig.tight_layout()
 # The intuition behind this observation is the following: Due to the sample
 # reweighting, later classifiers are forced to try to classify more difficult or
 # noisy samples and to ignore already well classified samples. Therefore, the
-# overall error on the training set will increase. That's why the weak learner
+# overall error on the training set will increase. That's why the weak learner's
 # weights are built to counter-balance the worse performing weak learners.
