@@ -164,7 +164,7 @@ def test_asarray_with_order_ignored():
 
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize(
-    "library", ["numpy", "numpy.array_api", "cupy", "torch", "cupy.array_api"]
+    "library", ["numpy", "numpy.array_api", "cupy", "cupy.array_api", "torch"]
 )
 @pytest.mark.parametrize(
     "X,reduction,expected",
