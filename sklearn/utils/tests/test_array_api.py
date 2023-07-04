@@ -179,7 +179,8 @@ def test_nan_reductions(library, X, reduction, expected):
     """Check NaN reductions like _nanmin and _nanmax"""
     xp = pytest.importorskip(library)
 
-    result = reduction(xp.asarray(X))
+    with config_context(array_api_dispatch=True):
+        result = reduction(xp.asarray(X))
     assert result == expected
 
 
