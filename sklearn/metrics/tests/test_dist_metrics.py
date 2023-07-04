@@ -46,14 +46,14 @@ VI = np.dot(V, V.T)
 METRICS_DEFAULT_PARAMS = [
     ("euclidean", {}),
     ("cityblock", {}),
-    ("minkowski", dict(p=(1, 1.5, 2, 3))),
+    ("minkowski", dict(p=(0.5, 1, 1.5, 2, 3))),
     ("chebyshev", {}),
     ("seuclidean", dict(V=(rng.random_sample(d),))),
     ("mahalanobis", dict(VI=(VI,))),
     ("hamming", {}),
     ("canberra", {}),
     ("braycurtis", {}),
-    ("minkowski", dict(p=(1, 1.5, 3), w=(rng.random_sample(d),))),
+    ("minkowski", dict(p=(0.5, 1, 1.5, 3), w=(rng.random_sample(d),))),
 ]
 
 
@@ -397,3 +397,9 @@ def test_get_metric_bad_dtype():
     msg = r"Unexpected dtype .* provided. Please select a dtype from"
     with pytest.raises(ValueError, match=msg):
         DistanceMetric.get_metric("manhattan", dtype)
+
+
+def test_minkowski_metric_validate_bad_p_parameter():
+    msg = "p must be greater than 0"
+    with pytest.raises(ValueError, match=msg):
+        DistanceMetric.get_metric("minkowski", p=0)
