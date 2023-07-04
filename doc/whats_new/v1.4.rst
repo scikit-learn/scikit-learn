@@ -59,6 +59,13 @@ TODO: update at the time of the release.
   passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
   Jalali`_.
 
+:mod:`sklearn.utils`
+....................
+
+- |API| :func:`utils.validation.check_array` has been extended with a
+  `accept_complex` parameter to allow for complex input data. :pr:`26692`
+  by :user:`Miles Cranmer <MilesCranmer>`_.
+
 
 :mod:`sklearn.ensemble`
 .......................

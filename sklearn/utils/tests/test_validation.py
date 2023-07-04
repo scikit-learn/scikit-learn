@@ -743,6 +743,12 @@ def test_check_array_complex_data_error():
     with pytest.raises(ValueError, match="Complex data not supported"):
         _check_y(y)
 
+    # disabled check
+    X = np.array([[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]])
+    y = X[:, 0]
+    check_array(X, accept_complex=True)
+    check_X_y(X, y, accept_complex=True)
+
 
 def test_has_fit_parameter():
     assert not has_fit_parameter(KNeighborsClassifier, "sample_weight")

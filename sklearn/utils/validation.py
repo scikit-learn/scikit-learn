@@ -649,6 +649,7 @@ def check_array(
     accept_sparse=False,
     *,
     accept_large_sparse=True,
+    accept_complex=False,
     dtype="numeric",
     order=None,
     copy=False,
@@ -684,6 +685,10 @@ def check_array(
         only if its indices are stored with a 32-bit dtype.
 
         .. versionadded:: 0.20
+
+    accept_complex : bool, default=False
+        If data with a complex type is passed, `accept_complex=False`
+        will trigger a value error.
 
     dtype : 'numeric', type, list of type or None, default='numeric'
         Data type of result. If None, the dtype of the input is preserved.
@@ -880,7 +885,8 @@ def check_array(
                         )
 
     if sp.issparse(array):
-        _ensure_no_complex_data(array)
+        if not accept_complex:
+            _ensure_no_complex_data(array)
         array = _ensure_sparse_format(
             array,
             accept_sparse=accept_sparse,
@@ -925,7 +931,8 @@ def check_array(
         # when no dtype conversion happened, for example dtype = None. The
         # result is that np.array(..) produces an array of complex dtype
         # and we need to catch and raise exception for such cases.
-        _ensure_no_complex_data(array)
+        if not accept_complex:
+            _ensure_no_complex_data(array)
 
         if ensure_2d:
             # If input is scalar raise error
@@ -1026,6 +1033,7 @@ def check_X_y(
     accept_sparse=False,
     *,
     accept_large_sparse=True,
+    accept_complex=False,
     dtype="numeric",
     order=None,
     copy=False,
@@ -1068,6 +1076,10 @@ def check_X_y(
         if its indices are stored with a 32-bit dtype.
 
         .. versionadded:: 0.20
+
+    accept_complex : bool, default=False
+        If data with a complex type is passed, `accept_complex=False`
+        will trigger a value error.
 
     dtype : 'numeric', type, list of type or None, default='numeric'
         Data type of result. If None, the dtype of the input is preserved.
@@ -1149,6 +1161,7 @@ def check_X_y(
         X,
         accept_sparse=accept_sparse,
         accept_large_sparse=accept_large_sparse,
+        accept_complex=accept_complex,
         dtype=dtype,
         order=order,
         copy=copy,
@@ -1161,14 +1174,22 @@ def check_X_y(
         input_name="X",
     )
 
-    y = _check_y(y, multi_output=multi_output, y_numeric=y_numeric, estimator=estimator)
+    y = _check_y(
+        y,
+        multi_output=multi_output,
+        y_numeric=y_numeric,
+        estimator=estimator,
+        accept_complex=accept_complex,
+    )
 
     check_consistent_length(X, y)
 
     return X, y
 
 
-def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
+def _check_y(
+    y, multi_output=False, y_numeric=False, estimator=None, accept_complex=False
+):
     """Isolated part of check_X_y dedicated to y validation"""
     if multi_output:
         y = check_array(
@@ -1184,7 +1205,8 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
         estimator_name = _check_estimator_name(estimator)
         y = column_or_1d(y, warn=True)
         _assert_all_finite(y, input_name="y", estimator_name=estimator_name)
-        _ensure_no_complex_data(y)
+        if not accept_complex:
+            _ensure_no_complex_data(y)
     if y_numeric and y.dtype.kind == "O":
         y = y.astype(np.float64)
 
