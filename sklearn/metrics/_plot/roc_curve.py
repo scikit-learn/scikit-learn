@@ -1,6 +1,5 @@
-from .. import auc
-from .. import roc_curve
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
+from .._ranking import auc, roc_curve
 
 
 class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):

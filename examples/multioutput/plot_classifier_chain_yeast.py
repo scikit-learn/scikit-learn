@@ -36,14 +36,15 @@ with randomly ordered chains).
 # Author: Adam Kleczewski
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.datasets import fetch_openml
-from sklearn.multioutput import ClassifierChain
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import jaccard_score
 from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.metrics import jaccard_score
-from sklearn.linear_model import LogisticRegression
+from sklearn.multioutput import ClassifierChain
 
 # Load a multi-label dataset from https://www.openml.org/d/40597
 X, Y = fetch_openml("yeast", version=4, return_X_y=True, parser="pandas")
