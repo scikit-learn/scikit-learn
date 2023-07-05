@@ -15,7 +15,8 @@ Changelog
 :mod:`sklearn.neighbors`
 ........................
 
-- |Fix| :meth:`neighbors.KNeighborsClassifier.predict` now works with dataframes.
+- |FIX| :meth:`neighbors.KNeighborsClassifier.predict` no longer raises an
+  exception for `pandas.DataFrames` input.
   :pr:`26772` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 .. _changes_1_3:
