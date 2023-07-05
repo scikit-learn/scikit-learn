@@ -22,27 +22,12 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 
-# TODO(1.6): Remove kdtree warning filter
-filterwarnings_kdtree = pytest.mark.filterwarnings(
-    "ignore:`algorithm='kdtree'`has been deprecated in 1.4 and will be renamed"
-    " to'kd_tree'`in 1.6. To keep the past behaviour, set `algorithm=kd_tree`."
-)
-# TODO(1.6): Remove balltree warning filter
-filterwarnings_balltree = pytest.mark.filterwarnings(
-    "ignore:`algorithm='balltree'`has been deprecated in 1.4 and will be renamed"
-    " to'ball_tree'`in 1.6. To keep the past behaviour, set `algorithm=ball_tree`."
-)
-
 n_clusters_true = 3
 X, y = make_blobs(n_samples=200, random_state=10)
 X, y = shuffle(X, y, random_state=7)
 X = StandardScaler().fit_transform(X)
 
 ALGORITHMS = [
-    # TODO(1.6): Remove "kdtree"
-    "kdtree",
-    # TODO(1.6): Remove "balltree"
-    "balltree",
     "kd_tree",
     "ball_tree",
     "brute",
@@ -148,10 +133,6 @@ def test_hdbscan_feature_array():
     assert score >= 0.98
 
 
-# TODO(1.6): Remove "kdtree" warning filter
-@filterwarnings_kdtree
-# TODO(1.6): Remove "balltree" warning filter
-@filterwarnings_balltree
 @pytest.mark.parametrize("algo", ALGORITHMS)
 @pytest.mark.parametrize("metric", _VALID_METRICS)
 def test_hdbscan_algorithms(algo, metric):
@@ -168,10 +149,6 @@ def test_hdbscan_algorithms(algo, metric):
         return
 
     ALGOS_TREES = {
-        # TODO(1.6): Remove "kdtree"
-        "kdtree": KDTree,
-        # TODO(1.6): Remove "balltree"
-        "balltree": BallTree,
         "kd_tree": KDTree,
         "ball_tree": BallTree,
     }
@@ -307,11 +284,7 @@ def test_hdbscan_precomputed_non_brute(tree):
         hdb.fit(X)
 
 
-# TODO(1.6): Remove "balltree" warning filter
-@filterwarnings_balltree
-# TODO(1.6): Remove "balltree" from algorithm parameter
-@pytest.mark.parametrize("algorithm", ["balltree", "ball_tree"])
-def test_hdbscan_sparse(algorithm):
+def test_hdbscan_sparse():
     """
     Tests that HDBSCAN works correctly when passing sparse feature data.
     """
@@ -329,13 +302,9 @@ def test_hdbscan_sparse(algorithm):
 
     msg = "Sparse data matrices only support algorithm `brute`."
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(metric="euclidean", algorithm=algorithm).fit(sparse_X)
+        HDBSCAN(metric="euclidean", algorithm="ball_tree").fit(sparse_X)
 
 
-# TODO(1.6): Remove "kdtree" warning filter
-@filterwarnings_kdtree
-# TODO(1.6): Remove "balltree" warning filter
-@filterwarnings_balltree
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
 def test_hdbscan_centers(algorithm):
     """
@@ -358,11 +327,7 @@ def test_hdbscan_centers(algorithm):
     assert hdb.medoids_.shape[0] == 0
 
 
-# TODO(1.6): Remove "kdtree" warning filter
-@filterwarnings_kdtree
-# TODO(1.6): Remove "kdtree" from algorithm parameter
-@pytest.mark.parametrize("algorithm", ["kdtree", "kd_tree"])
-def test_hdbscan_allow_single_cluster_with_epsilon(algorithm):
+def test_hdbscan_allow_single_cluster_with_epsilon():
     """
     Tests that HDBSCAN single-cluster selection with epsilon works correctly.
     """
@@ -388,7 +353,7 @@ def test_hdbscan_allow_single_cluster_with_epsilon(algorithm):
         cluster_selection_epsilon=0.18,
         cluster_selection_method="eom",
         allow_single_cluster=True,
-        algorithm=algorithm,
+        algorithm="kd_tree",
     ).fit_predict(no_structure)
     unique_labels, counts = np.unique(labels, return_counts=True)
     assert len(unique_labels) == 2
@@ -441,15 +406,7 @@ def test_hdbscan_sparse_distances_too_few_nonzero():
         HDBSCAN(metric="precomputed").fit(X)
 
 
-# TODO(1.6): Remove "kdtree" warning filter
-@filterwarnings_kdtree
-# TODO(1.6): Remove "balltree" warning filter
-@filterwarnings_balltree
-# TODO(1.6): Remove "kdtree" from kd_tree_algorithm parameter
-@pytest.mark.parametrize("kd_tree_algorithm", ["kdtree", "kd_tree"])
-# TODO(1.6): Remove "balltree" from ball_tree_algorithm parameter
-@pytest.mark.parametrize("ball_tree_algorithm", ["balltree", "ball_tree"])
-def test_hdbscan_tree_invalid_metric(kd_tree_algorithm, ball_tree_algorithm):
+def test_hdbscan_tree_invalid_metric():
     """
     Tests that HDBSCAN correctly raises an error for invalid metric choices.
     """
@@ -461,16 +418,16 @@ def test_hdbscan_tree_invalid_metric(kd_tree_algorithm, ball_tree_algorithm):
 
     # Callables are not supported for either
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(algorithm=kd_tree_algorithm, metric=metric_callable).fit(X)
+        HDBSCAN(algorithm="kd_tree", metric=metric_callable).fit(X)
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(algorithm=ball_tree_algorithm, metric=metric_callable).fit(X)
+        HDBSCAN(algorithm="ball_tree", metric=metric_callable).fit(X)
 
     # The set of valid metrics for KDTree at the time of writing this test is a
     # strict subset of those supported in BallTree
     metrics_not_kd = list(set(BallTree.valid_metrics()) - set(KDTree.valid_metrics()))
     if len(metrics_not_kd) > 0:
         with pytest.raises(ValueError, match=msg):
-            HDBSCAN(algorithm=kd_tree_algorithm, metric=metrics_not_kd[0]).fit(X)
+            HDBSCAN(algorithm="kd_tree", metric=metrics_not_kd[0]).fit(X)
 
 
 def test_hdbscan_too_many_min_samples():
