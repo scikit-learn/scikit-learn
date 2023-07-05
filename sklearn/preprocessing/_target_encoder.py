@@ -250,20 +250,21 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         for train_idx, test_idx in cv.split(X, y_1d):
             X_train, y_train = X_ordinal[train_idx, :], y[train_idx]
-            y_mean = np.mean(y_train, axis=0)
+            y_train_mean = np.mean(y_train, axis=0)
 
             if self.target_type_ == "multiclass":
                 encodings = self._learn_multiclass_encodings(
                     X_ordinal,
                     y_train,
                     n_categories,
+                    y_train_mean,
                 )
             else:
                 encodings = self._learn_encodings(
                     X_train,
                     y_train,
                     n_categories,
-                    self.target_mean_,
+                    y_train_mean,
                     save_encodings=False,
                 )
             self._transform_X_ordinal(
@@ -272,7 +273,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 X_unknown_mask,
                 test_idx,
                 encodings,
-                y_mean,
+                y_train_mean,
                 n_classes,
             )
         return X_out
@@ -365,6 +366,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 X_ordinal,
                 y,
                 n_categories,
+                self.target_mean_,
             )
             self.encodings_ = encodings
         else:
@@ -402,7 +404,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:
             return encodings
 
-    def _learn_multiclass_encodings(self, X_ordinal, y, n_categories):
+    def _learn_multiclass_encodings(self, X_ordinal, y, n_categories, target_mean):
         n_features = self.n_features_in_
         n_classes = self._label_binarizer_.classes_.shape[0]
         reorder_index = [
@@ -418,7 +420,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 X_ordinal,
                 y_class,
                 n_categories,
-                self.target_mean_[i],
+                target_mean[i],
                 save_encodings=False,
             )
             encodings += encoding
@@ -432,16 +434,16 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         X_unknown_mask,
         indices,
         encodings,
-        y_mean,
+        target_mean,
         n_classes,
     ):
         for f_idx, encoding in enumerate(encodings):
             X_out[indices, f_idx] = encoding[X_ordinal[indices, f_idx]]
             if n_classes:  # multiclass
                 mean_idx = f_idx - (n_classes * (f_idx // n_classes))
-                X_out[X_unknown_mask[:, f_idx], f_idx] = y_mean[mean_idx]
+                X_out[X_unknown_mask[:, f_idx], f_idx] = target_mean[mean_idx]
             else:
-                X_out[X_unknown_mask[:, f_idx], f_idx] = y_mean
+                X_out[X_unknown_mask[:, f_idx], f_idx] = target_mean
 
     def _more_tags(self):
         return {"requires_y": True}
