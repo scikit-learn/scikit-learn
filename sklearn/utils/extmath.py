@@ -863,16 +863,16 @@ def svd_flip(u, v, u_based_decision=True):
         shift = xp.arange(u.T.shape[0], device=device)
         indices = max_abs_u_cols + shift * u.T.shape[1]
         signs = xp.sign(xp.take(xp.reshape(u.T, (-1,)), indices, axis=0))
-        u *= signs[None, :]
-        v *= signs[:, None]
+        u *= signs[np.newaxis, :]
+        v *= signs[:, np.newaxis]
     else:
         # rows of v, columns of u
         max_abs_v_rows = xp.argmax(xp.abs(v), axis=1)
         shift = xp.arange(v.shape[0], device=device)
         indices = max_abs_v_rows + shift * v.shape[1]
         signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices))
-        u *= signs[None, :]
-        v *= signs[:, None]
+        u *= signs[np.newaxis, :]
+        v *= signs[:, np.newaxis]
     return u, v
 
 
