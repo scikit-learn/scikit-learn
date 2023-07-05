@@ -183,11 +183,12 @@ which accepts and uses some :term:`metadata` in at least one of its methods
 ``split``). Meta-estimators which only forward the metadata to other objects
 (the child estimator, scorers, or splitters) and don't use the metadata
 themselves are not consumers. (Meta-)Estimators which route metadata to other
-objects are :term:`router`s. A(n) (meta-)estimator can be a :term:`consumer`
-and a :term:`router` at the same time. (Meta-)Estimators and splitters expose a
-``set_*_request`` method for each method which accepts at least one metadata.
-For instance, if an estimator supports ``sample_weight`` in ``fit`` and
-``score``, it exposes ``estimator.set_fit_request(sample_weight=value)`` and
+objects are :term:`routers <router>`. A(n) (meta-)estimator can be a
+:term:`consumer` and a :term:`router` at the same time. (Meta-)Estimators and
+splitters expose a ``set_*_request`` method for each method which accepts at
+least one metadata. For instance, if an estimator supports ``sample_weight`` in
+``fit`` and ``score``, it exposes
+``estimator.set_fit_request(sample_weight=value)`` and
 ``estimator.set_score_request(sample_weight=value)``. Here ``value`` can be:
 
 - ``True``: method requests a ``sample_weight``. This means if the metadata is
