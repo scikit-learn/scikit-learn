@@ -22,12 +22,12 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 
-# TODO(1.6): Remove
+# TODO(1.6): Remove kdtree warning filter
 filterwarnings_kdtree = pytest.mark.filterwarnings(
     "ignore:`algorithm='kdtree'`has been deprecated in 1.4 and will be renamed"
     " to'kd_tree'`in 1.6. To keep the past behaviour, set `algorithm=kd_tree`."
 )
-# TODO(1.6): Remove
+# TODO(1.6): Remove balltree warning filter
 filterwarnings_balltree = pytest.mark.filterwarnings(
     "ignore:`algorithm='balltree'`has been deprecated in 1.4 and will be renamed"
     " to'ball_tree'`in 1.6. To keep the past behaviour, set `algorithm=ball_tree`."
@@ -148,9 +148,9 @@ def test_hdbscan_feature_array():
     assert score >= 0.98
 
 
-# TODO(1.6): Remove "kdtree" warning
+# TODO(1.6): Remove "kdtree" warning filter
 @filterwarnings_kdtree
-# TODO(1.6): Remove "balltree" warning
+# TODO(1.6): Remove "balltree" warning filter
 @filterwarnings_balltree
 @pytest.mark.parametrize("algo", ALGORITHMS)
 @pytest.mark.parametrize("metric", _VALID_METRICS)
@@ -307,6 +307,8 @@ def test_hdbscan_precomputed_non_brute(tree):
         hdb.fit(X)
 
 
+# TODO(1.6): Remove "balltree" warning filter
+@filterwarnings_balltree
 # TODO(1.6): Remove "balltree" from algorithm parameter
 @pytest.mark.parametrize("algorithm", ["balltree", "ball_tree"])
 def test_hdbscan_sparse(algorithm):
@@ -330,9 +332,9 @@ def test_hdbscan_sparse(algorithm):
         HDBSCAN(metric="euclidean", algorithm=algorithm).fit(sparse_X)
 
 
-# TODO(1.6): Remove "kdtree" warning
+# TODO(1.6): Remove "kdtree" warning filter
 @filterwarnings_kdtree
-# TODO(1.6): Remove "balltree" warning
+# TODO(1.6): Remove "balltree" warning filter
 @filterwarnings_balltree
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
 def test_hdbscan_centers(algorithm):
@@ -356,7 +358,7 @@ def test_hdbscan_centers(algorithm):
     assert hdb.medoids_.shape[0] == 0
 
 
-# TODO(1.6): Remove "kdtree" warning
+# TODO(1.6): Remove "kdtree" warning filter
 @filterwarnings_kdtree
 # TODO(1.6): Remove "kdtree" from algorithm parameter
 @pytest.mark.parametrize("algorithm", ["kdtree", "kd_tree"])
@@ -439,9 +441,9 @@ def test_hdbscan_sparse_distances_too_few_nonzero():
         HDBSCAN(metric="precomputed").fit(X)
 
 
-# TODO(1.6): Remove "kdtree" warning
+# TODO(1.6): Remove "kdtree" warning filter
 @filterwarnings_kdtree
-# TODO(1.6): Remove "balltree" warning
+# TODO(1.6): Remove "balltree" warning filter
 @filterwarnings_balltree
 # TODO(1.6): Remove "kdtree" from kd_tree_algorithm parameter
 @pytest.mark.parametrize("kd_tree_algorithm", ["kdtree", "kd_tree"])
