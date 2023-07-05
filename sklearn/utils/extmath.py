@@ -12,10 +12,12 @@ Extended math utilities.
 # License: BSD 3 clause
 
 import warnings
+from numbers import Integral
 
 import numpy as np
 from scipy import linalg, sparse
 
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from . import check_random_state
 from ._array_api import _is_numpy_namespace, get_namespace
 from ._logistic_sigmoid import _log_logistic_sigmoid
@@ -288,6 +290,20 @@ def randomized_range_finder(
     return Q
 
 
+@validate_params(
+    {
+        "M": [np.ndarray, "sparse matrix"],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "n_oversamples": [Interval(Integral, 0, None, closed="left")],
+        "n_iter": [Interval(Integral, 0, None, closed="left"), StrOptions({"auto"})],
+        "power_iteration_normalizer": [StrOptions({"auto", "QR", "LU", "none"})],
+        "transpose": ["boolean", StrOptions({"auto"})],
+        "flip_sign": ["boolean"],
+        "random_state": ["random_state"],
+        "svd_lapack_driver": [StrOptions({"gesdd", "gesvd"})],
+    },
+    prefer_skip_nested_validation=True,
+)
 def randomized_svd(
     M,
     n_components,
@@ -314,9 +330,9 @@ def randomized_svd(
         Number of singular values and vectors to extract.
 
     n_oversamples : int, default=10
-        Additional number of random vectors to sample the range of M so as
+        Additional number of random vectors to sample the range of `M` so as
         to ensure proper conditioning. The total number of random vectors
-        used to find the range of M is n_components + n_oversamples. Smaller
+        used to find the range of `M` is `n_components + n_oversamples`. Smaller
         number can improve speed but can negatively impact the quality of
         approximation of singular vectors and singular values. Users might wish
         to increase this parameter up to `2*k - n_components` where k is the

@@ -1998,15 +1998,16 @@ def test_sample_weight_not_modified(multi_class, class_weight):
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
-def test_large_sparse_matrix(solver):
+def test_large_sparse_matrix(solver, global_random_seed):
     # Solvers either accept large sparse matrices, or raise helpful error.
     # Non-regression test for pull-request #21093.
 
     # generate sparse matrix with int64 indices
-    X = sparse.rand(20, 10, format="csr")
+    X = sparse.rand(20, 10, format="csr", random_state=global_random_seed)
     for attr in ["indices", "indptr"]:
         setattr(X, attr, getattr(X, attr).astype("int64"))
-    y = np.random.randint(2, size=X.shape[0])
+    rng = np.random.RandomState(global_random_seed)
+    y = rng.randint(2, size=X.shape[0])
 
     if solver in ["liblinear", "sag", "saga"]:
         msg = "Only sparse matrices with 32-bit integer indices"
@@ -2062,3 +2063,29 @@ def test_liblinear_not_stuck():
     with warnings.catch_warnings():
         warnings.simplefilter("error", ConvergenceWarning)
         clf.fit(X_prep, y)
+
+
+@pytest.mark.parametrize("solver", SOLVERS)
+def test_zero_max_iter(solver):
+    # Make sure we can inspect the state of LogisticRegression right after
+    # initialization (before the first weight update).
+    X, y = load_iris(return_X_y=True)
+    y = y == 2
+    with ignore_warnings(category=ConvergenceWarning):
+        clf = LogisticRegression(solver=solver, max_iter=0).fit(X, y)
+    if solver not in ["saga", "sag"]:
+        # XXX: sag and saga have n_iter_ = [1]...
+        assert clf.n_iter_ == 0
+
+    if solver != "lbfgs":
+        # XXX: lbfgs has already started to update the coefficients...
+        assert_allclose(clf.coef_, np.zeros_like(clf.coef_))
+        assert_allclose(
+            clf.decision_function(X),
+            np.full(shape=X.shape[0], fill_value=clf.intercept_),
+        )
+        assert_allclose(
+            clf.predict_proba(X),
+            np.full(shape=(X.shape[0], 2), fill_value=0.5),
+        )
+    assert clf.score(X, y) < 0.7
