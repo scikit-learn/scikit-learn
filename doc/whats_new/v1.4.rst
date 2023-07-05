@@ -62,9 +62,10 @@ TODO: update at the time of the release.
 :mod:`sklearn.cluster`
 ............................
 
-- |Fix| :class:`cluster.HDBSCAN` now correctly uses ``kd_tree`` and ``ball_tree``
-  instead of ``kdtree`` and ``balltree`` respectively for ``algorithm`` paramaeter
-  ensuring consistency in naming convention.
+- |API| : `kdtree` and `balltree` values are now deprecated and are renamed as
+ `kd_tree` and `ball_tree` respectively now for `algorithm` parameter of
+  :class:`cluster.HDBSCAN` ensuring consistency in naming convention.
+  `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
 :mod:`sklearn.ensemble`
