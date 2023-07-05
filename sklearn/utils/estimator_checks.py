@@ -896,7 +896,7 @@ def check_array_api_input(
     dtype="float64",
     check_values=False,
 ):
-    """Check that the estimator can work consistently with Array API
+    """Check that the estimator can work consistently with the Array API
 
     By default, this just checks that the types and shapes of the arrays are
     consistent with calling the same estimator with numpy arrays.
