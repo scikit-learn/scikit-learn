@@ -149,6 +149,8 @@ cdef struct StackRecord:
     bint is_left
     double impurity
     SIZE_t n_constant_features
+    double lower_bound
+    double upper_bound
 
 cdef class DepthFirstTreeBuilder(TreeBuilder):
     """Build a decision tree in depth-first fashion."""
@@ -218,6 +220,9 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SplitRecord* split_ptr = <SplitRecord *>malloc(splitter.pointer_size())
 
         cdef double impurity = INFINITY
+        cdef double lower_bound
+        cdef double upper_bound
+        cdef double middle_value
         cdef SIZE_t n_constant_features
         cdef bint is_leaf
         cdef bint first = 1
@@ -236,7 +241,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 "parent": _TREE_UNDEFINED,
                 "is_left": 0,
                 "impurity": INFINITY,
-                "n_constant_features": 0})
+                "n_constant_features": 0,
+                "lower_bound": -INFINITY,
+                "upper_bound": INFINITY,
+            })
 
             while not builder_stack.empty():
                 stack_record = builder_stack.top()
@@ -249,6 +257,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 is_left = stack_record.is_left
                 impurity = stack_record.impurity
                 n_constant_features = stack_record.n_constant_features
+                lower_bound = stack_record.lower_bound
+                upper_bound = stack_record.upper_bound
 
                 n_node_samples = end - start
                 splitter.node_reset(start, end, &weighted_n_node_samples)
@@ -266,7 +276,13 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 is_leaf = is_leaf or impurity <= EPSILON
 
                 if not is_leaf:
-                    splitter.node_split(impurity, split_ptr, &n_constant_features)
+                    splitter.node_split(
+                        impurity,
+                        split_ptr,
+                        &n_constant_features,
+                        lower_bound,
+                        upper_bound
+                    )
 
                     # assign local copy of SplitRecord to assign
                     # pos, improvement, and impurity scores
@@ -290,8 +306,42 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 # Store value for all nodes, to facilitate tree/model
                 # inspection and interpretation
                 splitter.node_value(tree.value + node_id * tree.value_stride)
+                if splitter.with_monotonic_cst:
+                    splitter.clip_node_value(tree.value + node_id * tree.value_stride, lower_bound, upper_bound)
 
                 if not is_leaf:
+                    if (
+                        not splitter.with_monotonic_cst or
+                        splitter.monotonic_cst[split.feature] == 0
+                    ):
+                        # Split on a feature with no monotonicity constraint
+
+                        # Current bounds must always be propagated to both children.
+                        # If a monotonic constraint is active, bounds are used in
+                        # node value clipping.
+                        left_child_min = right_child_min = lower_bound
+                        left_child_max = right_child_max = upper_bound
+                    elif splitter.monotonic_cst[split.feature] == 1:
+                        # Split on a feature with monotonic increase constraint
+                        left_child_min = lower_bound
+                        right_child_max = upper_bound
+
+                        # Lower bound for right child and upper bound for left child
+                        # are set to the same value.
+                        middle_value = splitter.criterion.middle_value()
+                        right_child_min = middle_value
+                        left_child_max = middle_value
+                    else:  # i.e. splitter.monotonic_cst[split.feature] == -1
+                        # Split on a feature with monotonic decrease constraint
+                        right_child_min = lower_bound
+                        left_child_max = upper_bound
+
+                        # Lower bound for left child and upper bound for right child
+                        # are set to the same value.
+                        middle_value = splitter.criterion.middle_value()
+                        left_child_min = middle_value
+                        right_child_max = middle_value
+
                     # Push right child on stack
                     builder_stack.push({
                         "start": split.pos,
@@ -300,7 +350,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "parent": node_id,
                         "is_left": 0,
                         "impurity": split.impurity_right,
-                        "n_constant_features": n_constant_features})
+                        "n_constant_features": n_constant_features,
+                        "lower_bound": right_child_min,
+                        "upper_bound": right_child_max,
+                    })
 
                     # Push left child on stack
                     builder_stack.push({
@@ -310,7 +363,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "parent": node_id,
                         "is_left": 1,
                         "impurity": split.impurity_left,
-                        "n_constant_features": n_constant_features})
+                        "n_constant_features": n_constant_features,
+                        "n_constant_features": n_constant_features,
+                        "lower_bound": left_child_min,
+                        "upper_bound": left_child_max,
+                    })
                 elif self.store_leaf_values and is_leaf:
                     # copy leaf values to leaf_values array
                     splitter.node_samples(tree.value_samples[node_id])
@@ -346,6 +403,9 @@ cdef struct FrontierRecord:
     double impurity_left
     double impurity_right
     double improvement
+    double lower_bound
+    double upper_bound
+    double middle_value
 
 cdef inline bool _compare_records(
     const FrontierRecord& left,
@@ -414,6 +474,10 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef FrontierRecord record
         cdef FrontierRecord split_node_left
         cdef FrontierRecord split_node_right
+        cdef double left_child_min
+        cdef double left_child_max
+        cdef double right_child_min
+        cdef double right_child_max
 
         cdef SIZE_t n_node_samples = splitter.n_samples
         cdef SIZE_t max_split_nodes = max_leaf_nodes - 1
@@ -428,9 +492,20 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
         with nogil:
             # add root to frontier
-            rc = self._add_split_node(splitter, tree, 0, n_node_samples,
-                                      INFINITY, IS_FIRST, IS_LEFT, NULL, 0,
-                                      &split_node_left)
+            rc = self._add_split_node(
+                splitter=splitter,
+                tree=tree,
+                start=0,
+                end=n_node_samples,
+                impurity=INFINITY,
+                is_first=IS_FIRST,
+                is_left=IS_LEFT,
+                parent=NULL,
+                depth=0,
+                lower_bound=-INFINITY,
+                upper_bound=INFINITY,
+                res=&split_node_left,
+            )
             if rc >= 0:
                 _add_to_frontier(split_node_left, frontier)
 
@@ -455,16 +530,54 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                 else:
                     # Node is expandable
 
+                    if (
+                        not splitter.with_monotonic_cst or
+                        splitter.monotonic_cst[node.feature] == 0
+                    ):
+                        # Split on a feature with no monotonicity constraint
+
+                        # Current bounds must always be propagated to both children.
+                        # If a monotonic constraint is active, bounds are used in
+                        # node value clipping.
+                        left_child_min = right_child_min = record.lower_bound
+                        left_child_max = right_child_max = record.upper_bound
+                    elif splitter.monotonic_cst[node.feature] == 1:
+                        # Split on a feature with monotonic increase constraint
+                        left_child_min = record.lower_bound
+                        right_child_max = record.upper_bound
+
+                        # Lower bound for right child and upper bound for left child
+                        # are set to the same value.
+                        right_child_min = record.middle_value
+                        left_child_max = record.middle_value
+                    else:  # i.e. splitter.monotonic_cst[split.feature] == -1
+                        # Split on a feature with monotonic decrease constraint
+                        right_child_min = record.lower_bound
+                        left_child_max = record.upper_bound
+
+                        # Lower bound for left child and upper bound for right child
+                        # are set to the same value.
+                        left_child_min = record.middle_value
+                        right_child_max = record.middle_value
+
                     # Decrement number of split nodes available
                     max_split_nodes -= 1
 
                     # Compute left split node
-                    rc = self._add_split_node(splitter, tree,
-                                              record.start, record.pos,
-                                              record.impurity_left,
-                                              IS_NOT_FIRST, IS_LEFT, node,
-                                              record.depth + 1,
-                                              &split_node_left)
+                    rc = self._add_split_node(
+                        splitter=splitter,
+                        tree=tree,
+                        start=record.start,
+                        end=record.pos,
+                        impurity=record.impurity_left,
+                        is_first=IS_NOT_FIRST,
+                        is_left=IS_LEFT,
+                        parent=node,
+                        depth=record.depth + 1,
+                        lower_bound=left_child_min,
+                        upper_bound=left_child_max,
+                        res=&split_node_left,
+                    )
                     if rc == -1:
                         break
 
@@ -472,12 +585,20 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     node = &tree.nodes[record.node_id]
 
                     # Compute right split node
-                    rc = self._add_split_node(splitter, tree, record.pos,
-                                              record.end,
-                                              record.impurity_right,
-                                              IS_NOT_FIRST, IS_NOT_LEFT, node,
-                                              record.depth + 1,
-                                              &split_node_right)
+                    rc = self._add_split_node(
+                        splitter=splitter,
+                        tree=tree,
+                        start=record.pos,
+                        end=record.end,
+                        impurity=record.impurity_right,
+                        is_first=IS_NOT_FIRST,
+                        is_left=IS_NOT_LEFT,
+                        parent=node,
+                        depth=record.depth + 1,
+                        lower_bound=right_child_min,
+                        upper_bound=right_child_max,
+                        res=&split_node_right,
+                    )
                     if rc == -1:
                         break
 
@@ -497,11 +618,21 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         if rc == -1:
             raise MemoryError()
 
-    cdef inline int _add_split_node(self, Splitter splitter, Tree tree,
-                                    SIZE_t start, SIZE_t end, double impurity,
-                                    bint is_first, bint is_left, Node* parent,
-                                    SIZE_t depth,
-                                    FrontierRecord* res) except -1 nogil:
+    cdef inline int _add_split_node(
+        self,
+        Splitter splitter,
+        Tree tree,
+        SIZE_t start,
+        SIZE_t end,
+        double impurity,
+        bint is_first,
+        bint is_left,
+        Node* parent,
+        SIZE_t depth,
+        double lower_bound,
+        double upper_bound,
+        FrontierRecord* res
+    ) nogil except -1:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
         cdef SplitRecord* split_ptr = <SplitRecord *>malloc(splitter.pointer_size())
@@ -527,7 +658,13 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                    )
 
         if not is_leaf:
-            splitter.node_split(impurity, split_ptr, &n_constant_features)
+            splitter.node_split(
+                impurity,
+                split_ptr,
+                &n_constant_features,
+                lower_bound,
+                upper_bound
+            )
             # assign local copy of SplitRecord to assign
             # pos, improvement, and impurity scores
             split = deref(split_ptr)
@@ -548,12 +685,17 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
         # compute values also for split nodes (might become leafs later).
         splitter.node_value(tree.value + node_id * tree.value_stride)
+        if splitter.with_monotonic_cst:
+            splitter.clip_node_value(tree.value + node_id * tree.value_stride, lower_bound, upper_bound)
 
         res.node_id = node_id
         res.start = start
         res.end = end
         res.depth = depth
         res.impurity = impurity
+        res.lower_bound = lower_bound
+        res.upper_bound = upper_bound
+        res.middle_value = splitter.criterion.middle_value()
 
         if not is_leaf:
             # is split node

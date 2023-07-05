@@ -1525,8 +1525,30 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 0.22
 
+    max_bins : int, default=255
+        The maximum number of bins to use for non-missing values.
+
     store_leaf_values : bool, default=False
         Whether to store the leaf values in the ``get_leaf_node_samples`` function.
+
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonic increase
+          - 0: no constraint
+          - -1: monotonic decrease
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multiclass classifications (i.e. when `n_classes > 2`),
+          - multioutput classifications (i.e. when `n_outputs_ > 1`),
+          - classifications trained on data with missing values.
+
+        The constraints hold over the probability of the positive class.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
 
     Attributes
     ----------
@@ -1670,6 +1692,7 @@ class RandomForestClassifier(ForestClassifier):
         max_samples=None,
         max_bins=None,
         store_leaf_values=False,
+        monotonic_cst=None,
     ):
         super().__init__(
             estimator=DecisionTreeClassifier(),
@@ -1686,6 +1709,7 @@ class RandomForestClassifier(ForestClassifier):
                 "random_state",
                 "ccp_alpha",
                 "store_leaf_values",
+                "monotonic_cst",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1707,6 +1731,7 @@ class RandomForestClassifier(ForestClassifier):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
+        self.monotonic_cst = monotonic_cst
         self.ccp_alpha = ccp_alpha
 
 
@@ -1887,8 +1912,28 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 0.22
 
+    max_bins : int, default=255
+        The maximum number of bins to use for non-missing values. Used for
+        speeding up training time.
+
     store_leaf_values : bool, default=False
         Whether to store the leaf values in the ``get_leaf_node_samples`` function.
+
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonically increasing
+          - 0: no constraint
+          - -1: monotonically decreasing
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multioutput regressions (i.e. when `n_outputs_ > 1`),
+          - regressions trained on data with missing values.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
 
     Attributes
     ----------
@@ -2019,6 +2064,7 @@ class RandomForestRegressor(ForestRegressor):
         max_samples=None,
         max_bins=None,
         store_leaf_values=False,
+        monotonic_cst=None,
     ):
         super().__init__(
             estimator=DecisionTreeRegressor(),
@@ -2035,6 +2081,7 @@ class RandomForestRegressor(ForestRegressor):
                 "random_state",
                 "ccp_alpha",
                 "store_leaf_values",
+                "monotonic_cst",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -2056,6 +2103,7 @@ class RandomForestRegressor(ForestRegressor):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
+        self.monotonic_cst = monotonic_cst
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -2242,9 +2290,31 @@ class ExtraTreesClassifier(ForestClassifier):
           `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
+    
+    max_bins : int, default=255
+        The maximum number of bins to use for non-missing values.
 
     store_leaf_values : bool, default=False
         Whether to store the leaf values in the ``get_leaf_node_samples`` function.
+
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonically increasing
+          - 0: no constraint
+          - -1: monotonically decreasing
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multiclass classifications (i.e. when `n_classes > 2`),
+          - multioutput classifications (i.e. when `n_outputs_ > 1`),
+          - classifications trained on data with missing values.
+
+        The constraints hold over the probability of the positive class.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
 
     Attributes
     ----------
@@ -2377,6 +2447,7 @@ class ExtraTreesClassifier(ForestClassifier):
         max_samples=None,
         max_bins=None,
         store_leaf_values=False,
+        monotonic_cst=None,
     ):
         super().__init__(
             estimator=ExtraTreeClassifier(),
@@ -2393,6 +2464,7 @@ class ExtraTreesClassifier(ForestClassifier):
                 "random_state",
                 "ccp_alpha",
                 "store_leaf_values",
+                "monotonic_cst",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -2415,6 +2487,7 @@ class ExtraTreesClassifier(ForestClassifier):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
+        self.monotonic_cst = monotonic_cst
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -2590,8 +2663,27 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionadded:: 0.22
 
+    max_bins : int, default=255
+        The maximum number of bins to use for non-missing values.
+
     store_leaf_values : bool, default=False
         Whether to store the leaf values in the ``get_leaf_node_samples`` function.
+
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonically increasing
+          - 0: no constraint
+          - -1: monotonically decreasing
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multioutput regressions (i.e. when `n_outputs_ > 1`),
+          - regressions trained on data with missing values.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
 
     Attributes
     ----------
@@ -2707,6 +2799,7 @@ class ExtraTreesRegressor(ForestRegressor):
         max_samples=None,
         max_bins=None,
         store_leaf_values=False,
+        monotonic_cst=None,
     ):
         super().__init__(
             estimator=ExtraTreeRegressor(),
@@ -2723,6 +2816,7 @@ class ExtraTreesRegressor(ForestRegressor):
                 "random_state",
                 "ccp_alpha",
                 "store_leaf_values",
+                "monotonic_cst",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -2744,6 +2838,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
+        self.monotonic_cst = monotonic_cst
 
 
 class RandomTreesEmbedding(TransformerMixin, BaseForest):
@@ -2937,7 +3032,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         **BaseDecisionTree._parameter_constraints,
         "sparse_output": ["boolean"],
     }
-    for param in ("max_features", "ccp_alpha", "splitter"):
+    for param in ("max_features", "ccp_alpha", "splitter", "monotonic_cst"):
         _parameter_constraints.pop(param)
 
     criterion = "squared_error"

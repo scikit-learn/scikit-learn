@@ -10,6 +10,7 @@
 # License: BSD 3 clause
 
 # See _splitter.pyx for details.
+cimport numpy as cnp
 
 from libcpp.vector cimport vector
 
@@ -31,6 +32,8 @@ cdef struct SplitRecord:
     double improvement     # Impurity improvement given parent node.
     double impurity_left   # Impurity of the left split.
     double impurity_right  # Impurity of the right split.
+    double lower_bound     # Lower bound on value of both children for monotonicity
+    double upper_bound     # Upper bound on value of both children for monotonicity
     unsigned char missing_go_to_left  # Controls if missing values go to the left node.
     SIZE_t n_missing       # Number of missing values for the feature being split on
 
@@ -61,6 +64,14 @@ cdef class BaseSplitter:
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current node
 
+    # Monotonicity constraints for each feature.
+    # The encoding is as follows:
+    #   -1: monotonic decrease
+    #    0: no constraint
+    #   +1: monotonic increase
+    cdef const cnp.int8_t[:] monotonic_cst
+    cdef bint with_monotonic_cst
+
     cdef const DOUBLE_t[:] sample_weight
 
     # The samples vector `samples` is maintained by the Splitter object such
@@ -90,9 +101,17 @@ cdef class BaseSplitter:
         self,
         double impurity,   # Impurity of the node
         SplitRecord* split,
-        SIZE_t* n_constant_features
+        SIZE_t* n_constant_features,
+        double lower_bound,
+        double upper_bound,
     ) except -1 nogil
     cdef void node_value(self, double* dest) noexcept nogil
+    cdef void clip_node_value(
+        self,
+        double* dest,
+        double lower_bound,
+        double upper_bound
+    ) noexcept nogil
     cdef double node_impurity(self) noexcept nogil
     cdef int pointer_size(self) noexcept nogil
 
@@ -117,6 +136,7 @@ cdef class Splitter(BaseSplitter):
         SIZE_t n_missing,
         bint missing_go_to_left,
     ) noexcept nogil
+
     cdef bint check_postsplit_conditions(
         self
     ) noexcept nogil

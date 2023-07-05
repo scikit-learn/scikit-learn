@@ -138,6 +138,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     }
     _parameter_constraints.pop("store_leaf_values")
     _parameter_constraints.pop("splitter")
+    _parameter_constraints.pop("monotonic_cst")
 
     @abstractmethod
     def __init__(

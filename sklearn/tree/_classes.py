@@ -124,6 +124,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "min_impurity_decrease": [Interval(Real, 0.0, None, closed="left")],
         "ccp_alpha": [Interval(Real, 0.0, None, closed="left")],
         "store_leaf_values": ["boolean"],
+        "monotonic_cst": ["array-like", None],
     }
 
     @abstractmethod
@@ -143,6 +144,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         class_weight=None,
         ccp_alpha=0.0,
         store_leaf_values=False,
+        monotonic_cst=None,
     ):
         self.criterion = criterion
         self.splitter = splitter
@@ -157,6 +159,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.class_weight = class_weight
         self.ccp_alpha = ccp_alpha
         self.store_leaf_values = store_leaf_values
+        self.monotonic_cst = monotonic_cst
 
     def get_depth(self):
         """Return the depth of the decision tree.
@@ -184,7 +187,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self.tree_.n_leaves
 
     def _support_missing_values(self, X):
-        return not issparse(X) and self._get_tags()["allow_nan"]
+        return (
+            not issparse(X)
+            and self._get_tags()["allow_nan"]
+            and self.monotonic_cst is None
+        )
 
     def _compute_missing_values_in_feature_mask(self, X):
         """Return boolean mask denoting if there are missing values for each feature.
@@ -469,7 +476,45 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 
-        splitter = self.splitter
+        if self.monotonic_cst is None:
+            monotonic_cst = None
+        else:
+            if self.n_outputs_ > 1:
+                raise ValueError(
+                    "Monotonicity constraints are not supported with multiple outputs."
+                )
+            # Check to correct monotonicity constraint' specification,
+            # by applying element-wise logical conjunction
+            # Note: we do not cast `np.asarray(self.monotonic_cst, dtype=np.int8)`
+            # straight away here so as to generate error messages for invalid
+            # values using the original values prior to any dtype related conversion.
+            monotonic_cst = np.asarray(self.monotonic_cst)
+            if monotonic_cst.shape[0] != X.shape[1]:
+                raise ValueError(
+                    "monotonic_cst has shape {} but the input data "
+                    "X has {} features.".format(monotonic_cst.shape[0], X.shape[1])
+                )
+            valid_constraints = np.isin(monotonic_cst, (-1, 0, 1))
+            if not np.all(valid_constraints):
+                unique_constaints_value = np.unique(monotonic_cst)
+                raise ValueError(
+                    "monotonic_cst must be None or an array-like of -1, 0 or 1, but"
+                    f" got {unique_constaints_value}"
+                )
+            monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
+            if is_classifier(self):
+                if self.n_classes_[0] > 2:
+                    raise ValueError(
+                        "Monotonicity constraints are not supported with multiclass "
+                        "classification"
+                    )
+                # Binary classification trees are built by constraining probabilities
+                # of the *negative class* in order to make the implementation similar
+                # to regression trees.
+                # Since self.monotonic_cst encodes constraints on probabilities of the
+                # *positive class*, all signs must be flipped.
+                monotonic_cst *= -1
+
         if not isinstance(self.splitter, BaseSplitter):
             splitter = SPLITTERS[self.splitter](
                 criterion,
@@ -477,6 +522,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 min_samples_leaf,
                 min_weight_leaf,
                 random_state,
+                monotonic_cst,
             )
 
         if is_classifier(self):
@@ -1003,6 +1049,25 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         One could instead store the indices in ``y_train`` that fall into each leaf,
         which would lower RAM/diskspace usage.
 
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonic increase
+          - 0: no constraint
+          - -1: monotonic decrease
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multiclass classifications (i.e. when `n_classes > 2`),
+          - multioutput classifications (i.e. when `n_outputs_ > 1`),
+          - classifications trained on data with missing values.
+
+        The constraints hold over the probability of the positive class.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,) or list of ndarray
@@ -1121,6 +1186,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         class_weight=None,
         ccp_alpha=0.0,
         store_leaf_values=False,
+        monotonic_cst=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -1134,6 +1200,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             class_weight=class_weight,
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
+            monotonic_cst=monotonic_cst,
             ccp_alpha=ccp_alpha,
             store_leaf_values=store_leaf_values,
         )
@@ -1396,6 +1463,22 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         One could instead store the indices in ``y_train`` that fall into each leaf,
         which would lower RAM/diskspace usage.
 
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonic increase
+          - 0: no constraint
+          - -1: monotonic decrease
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multioutput regressions (i.e. when `n_outputs_ > 1`),
+          - regressions trained on data with missing values.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
     feature_importances_ : ndarray of shape (n_features,)
@@ -1495,6 +1578,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         min_impurity_decrease=0.0,
         ccp_alpha=0.0,
         store_leaf_values=False,
+        monotonic_cst=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -1509,6 +1593,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             min_impurity_decrease=min_impurity_decrease,
             ccp_alpha=ccp_alpha,
             store_leaf_values=store_leaf_values,
+            monotonic_cst=monotonic_cst,
         )
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1733,6 +1818,25 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         One could instead store the indices in ``y_train`` that fall into each leaf,
         which would lower RAM/diskspace usage.
 
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonic increase
+          - 0: no constraint
+          - -1: monotonic decrease
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multiclass classifications (i.e. when `n_classes > 2`),
+          - multioutput classifications (i.e. when `n_outputs_ > 1`),
+          - classifications trained on data with missing values.
+
+        The constraints hold over the probability of the positive class.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,) or list of ndarray
@@ -1834,6 +1938,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         class_weight=None,
         ccp_alpha=0.0,
         store_leaf_values=False,
+        monotonic_cst=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -1849,6 +1954,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             random_state=random_state,
             ccp_alpha=ccp_alpha,
             store_leaf_values=store_leaf_values,
+            monotonic_cst=monotonic_cst,
         )
 
 
@@ -1989,6 +2095,22 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         One could instead store the indices in ``y_train`` that fall into each leaf,
         which would lower RAM/diskspace usage.
 
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonic increase
+          - 0: no constraint
+          - -1: monotonic decrease
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multioutput regressions (i.e. when `n_outputs_ > 1`),
+          - regressions trained on data with missing values.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
     max_features_ : int
@@ -2073,6 +2195,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         max_leaf_nodes=None,
         ccp_alpha=0.0,
         store_leaf_values=False,
+        monotonic_cst=None,
     ):
         super().__init__(
             criterion=criterion,
@@ -2087,4 +2210,5 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             random_state=random_state,
             ccp_alpha=ccp_alpha,
             store_leaf_values=store_leaf_values,
+            monotonic_cst=monotonic_cst,
         )

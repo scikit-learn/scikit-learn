@@ -10,6 +10,7 @@
 # License: BSD 3 clause
 
 # See _criterion.pyx for implementation details.
+cimport numpy as cnp
 
 from libcpp.vector cimport vector
 
@@ -58,6 +59,13 @@ cdef class BaseCriterion:
         self,
         double* dest
     ) noexcept nogil
+    cdef void clip_node_value(
+        self,
+        double* dest,
+        double lower_bound,
+        double upper_bound
+    ) noexcept nogil
+    cdef double middle_value(self) noexcept nogil
     cdef double impurity_improvement(
         self,
         double impurity_parent,
@@ -65,6 +73,20 @@ cdef class BaseCriterion:
         double impurity_right
     ) noexcept nogil
     cdef double proxy_impurity_improvement(self) noexcept nogil
+    cdef bint check_monotonicity(
+            self,
+            cnp.int8_t monotonic_cst,
+            double lower_bound,
+            double upper_bound,
+    ) noexcept nogil
+    cdef inline bint _check_monotonicity(
+            self,
+            cnp.int8_t monotonic_cst,
+            double lower_bound,
+            double upper_bound,
+            double sum_left,
+            double sum_right,
+    ) noexcept nogil
 
     cdef void set_sample_pointers(
         self,
