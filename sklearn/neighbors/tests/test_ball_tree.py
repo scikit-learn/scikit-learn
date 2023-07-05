@@ -122,8 +122,8 @@ def test_bad_pyfunc_metric(BallTreeImplementation):
 def test_ball_tree_numerical_consistency(global_random_seed, metric):
     # Results on float64 and float32 versions of a dataset must be
     # numerically close.
-    X_64, X_32, Y_64, Y_32 = get_dataset_for_query_methods(
-        random_seed=global_random_seed
+    X_64, X_32, Y_64, Y_32 = get_dataset_for_binary_tree(
+        random_seed=global_random_seed, features=50
     )
 
     metric_params = METRICS.get(metric, {})
@@ -141,30 +141,26 @@ def test_ball_tree_numerical_consistency(global_random_seed, metric):
 
     # Test consistency with respect to the `query_radius` method
     r = 2.38
-    ind_64, neighbors_64 = bt_64.query_radius(Y_64[0:2, :], r=r)
-    ind_32, neighbors_32 = bt_32.query_radius(Y_32[0:2, :], r=r)
-    assert_equal(ind_64, ind_32)
-    assert_allclose(
-        neighbors_64,
-        neighbors_32,
-    )
+    ind_64 = bt_64.query_radius(Y_64, r=r)
+    ind_32 = bt_32.query_radius(Y_32, r=r)
+    for _ind64, _ind32 in zip(ind_64, ind_32):
+        assert_equal(_ind64, _ind32)
 
     # Test consistency with respect to the `query_radius` method
     # with return distances being true
-    ind_64, dist_64 = bt_64.query_radius(Y_64[4:5, :], r=r, return_distance=True)
-    ind_32, dist_32 = bt_32.query_radius(Y_32[4:5, :], r=r, return_distance=True)
-    assert_equal(ind_64[0], ind_32[0])
-    assert_allclose(dist_64[0], dist_32[0], rtol=1e-5)
-    assert dist_64[0].dtype == np.float64
-    assert dist_32[0].dtype == np.float32
+    ind_64, dist_64 = bt_64.query_radius(Y_64, r=r, return_distance=True)
+    ind_32, dist_32 = bt_32.query_radius(Y_32, r=r, return_distance=True)
+    for _ind64, _ind32, _dist_64, _dist_32 in zip(ind_64, ind_32, dist_64, dist_32):
+        assert_equal(_ind64, _ind32)
+        assert_allclose(_dist_64, _dist_32, rtol=1e-5)
+        assert _dist_64.dtype == np.float64
+        assert _dist_32.dtype == np.float32
 
 
 @pytest.mark.parametrize("metric", itertools.chain(METRICS, BOOLEAN_METRICS))
 def test_kernel_density_numerical_consistency(global_random_seed, metric):
     # Test consistency with respect to the `kernel_density` method
-    X_64, X_32, Y_64, Y_32 = get_dataset_for_kernel_density(
-        random_seed=global_random_seed
-    )
+    X_64, X_32, Y_64, Y_32 = get_dataset_for_binary_tree(random_seed=global_random_seed)
 
     metric_params = METRICS.get(metric, {})
     bt_64 = BallTree64(X_64, leaf_size=1, metric=metric, **metric_params)
@@ -181,15 +177,7 @@ def test_kernel_density_numerical_consistency(global_random_seed, metric):
 
 def test_two_point_correlation_numerical_consistency(global_random_seed):
     # Test consistency with respect to the `two_point_correlation` method
-    rng = np.random.RandomState(global_random_seed)
-    _X = rng.random_sample((100, 3))
-    _Y = rng.random_sample((5, 3))
-
-    X_64 = _X.astype(dtype=np.float64, copy=False)
-    Y_64 = _Y.astype(dtype=np.float64, copy=False)
-
-    X_32 = _X.astype(dtype=np.float32, copy=False)
-    Y_32 = _Y.astype(dtype=np.float32, copy=False)
+    X_64, X_32, Y_64, Y_32 = get_dataset_for_binary_tree(random_seed=global_random_seed)
 
     bt_64 = BallTree64(X_64, leaf_size=10)
     bt_32 = BallTree32(X_32, leaf_size=10)
@@ -201,24 +189,10 @@ def test_two_point_correlation_numerical_consistency(global_random_seed):
     assert_allclose(counts_64, counts_32)
 
 
-def get_dataset_for_query_methods(random_seed):
+def get_dataset_for_binary_tree(random_seed, features=3):
     rng = np.random.RandomState(random_seed)
-    _X = rng.rand(100, 50)
-    _Y = rng.rand(5, 50)
-
-    X_64 = _X.astype(dtype=np.float64, copy=False)
-    Y_64 = _Y.astype(dtype=np.float64, copy=False)
-
-    X_32 = _X.astype(dtype=np.float32, copy=False)
-    Y_32 = _Y.astype(dtype=np.float32, copy=False)
-
-    return X_64, X_32, Y_64, Y_32
-
-
-def get_dataset_for_kernel_density(random_seed):
-    rng = np.random.RandomState(random_seed)
-    _X = rng.random_sample((100, 3))
-    _Y = rng.random_sample((5, 3))
+    _X = rng.rand(100, features)
+    _Y = rng.rand(5, features)
 
     X_64 = _X.astype(dtype=np.float64, copy=False)
     Y_64 = _Y.astype(dtype=np.float64, copy=False)
