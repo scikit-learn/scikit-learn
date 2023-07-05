@@ -721,11 +721,12 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     mean_ : ndarray of shape (n_features,) or None
         The mean value for each feature in the training set.
-        Equal to ``None`` when ``with_mean=False``.
+        Equal to ``None`` when ``with_mean=False`` and ``with_std=False``.
 
     var_ : ndarray of shape (n_features,) or None
         The variance for each feature in the training set. Used to compute
-        `scale_`. Equal to ``None`` when ``with_std=False``.
+        `scale_`. Equal to ``None`` when ``with_mean=False`` and
+        ``with_std=False``.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
