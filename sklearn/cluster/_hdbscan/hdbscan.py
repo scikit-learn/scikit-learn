@@ -479,6 +479,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
            The `'kdtree'` option was deprecated in version 1.4,
            and will be renamed to `'kd_tree'` in 1.6.
 
+        .. deprecated:: 1.4
            The `'balltree'` option was deprecated in version 1.4,
            and will be renamed to `'ball_tree'` in 1.6.
 
