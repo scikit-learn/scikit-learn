@@ -1,8 +1,8 @@
 .. _ensemble:
 
-=================================================================
-Ensemble methods: Gradient boosting, random forests, bagging...
-=================================================================
+===========================================================================
+Ensembles: Gradient boosting, random forests, bagging, voting, stacking...
+===========================================================================
 
 .. currentmodule:: sklearn.ensemble
 
