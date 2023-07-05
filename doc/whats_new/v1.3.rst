@@ -15,7 +15,7 @@ Changelog
 :mod:`sklearn.neighbors`
 ........................
 
-- |FIX| :meth:`neighbors.KNeighborsClassifier.predict` no longer raises an
+- |Fix| :meth:`neighbors.KNeighborsClassifier.predict` no longer raises an
   exception for `pandas.DataFrames` input.
   :pr:`26772` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
