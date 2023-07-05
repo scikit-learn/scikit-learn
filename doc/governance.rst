@@ -91,11 +91,11 @@ Documentation team
 
 Members of the documentation team engage with the documentation of the project
 among other things. They might also be involved in other aspects of the
-project, but their reviews on documentation contributions of others are
-considered authoritative, and can merge such contributions.
+project, but their reviews on documentation contributions are considered
+authoritative, and can merge such contributions.
 
-To this end, they have the required permissions to merge pull requests on the
-main repo.
+To this end, they have permissions to merge pull requests in scikit-learn's
+repository.
 
 Maintainers
 ~~~~~~~~~~~

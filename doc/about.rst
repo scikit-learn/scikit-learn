@@ -42,7 +42,7 @@ in the FAQ.
 Documentation Team
 ------------------
 
-The following people help with documentation aspects of the project:
+The following people help with documenting the project:
 
 .. include:: documentation_team.rst
 
