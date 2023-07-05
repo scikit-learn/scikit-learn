@@ -25,9 +25,6 @@ from sklearn.utils._testing import (
 DISCRETE_NAIVE_BAYES_CLASSES = [BernoulliNB, CategoricalNB, ComplementNB, MultinomialNB]
 ALL_NAIVE_BAYES_CLASSES = DISCRETE_NAIVE_BAYES_CLASSES + [GaussianNB]
 
-msg = "The default value for `force_alpha` will change"
-pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")
-
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
 y = np.array([1, 1, 1, 2, 2, 2])
@@ -811,10 +808,11 @@ def test_categoricalnb_min_categories_errors(min_categories, error_msg):
 
 def test_alpha():
     # Setting alpha=0 should not output nan results when p(x_i|y_j)=0 is a case
+    msg = "alpha too small will result in numeric errors, setting alpha=1.0e-10"
     X = np.array([[1, 0], [1, 1]])
     y = np.array([0, 1])
-    nb = BernoulliNB(alpha=0.0)
-    msg = "alpha too small will result in numeric errors, setting alpha = 1.0e-10"
+
+    nb = BernoulliNB(alpha=0.0, force_alpha=False)
     with pytest.warns(UserWarning, match=msg):
         nb.partial_fit(X, y, classes=[0, 1])
     with pytest.warns(UserWarning, match=msg):
@@ -822,7 +820,7 @@ def test_alpha():
     prob = np.array([[1, 0], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
-    nb = MultinomialNB(alpha=0.0)
+    nb = MultinomialNB(alpha=0.0, force_alpha=False)
     with pytest.warns(UserWarning, match=msg):
         nb.partial_fit(X, y, classes=[0, 1])
     with pytest.warns(UserWarning, match=msg):
@@ -830,7 +828,7 @@ def test_alpha():
     prob = np.array([[2.0 / 3, 1.0 / 3], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
-    nb = CategoricalNB(alpha=0.0)
+    nb = CategoricalNB(alpha=0.0, force_alpha=False)
     with pytest.warns(UserWarning, match=msg):
         nb.fit(X, y)
     prob = np.array([[1.0, 0.0], [0.0, 1.0]])
@@ -838,13 +836,13 @@ def test_alpha():
 
     # Test sparse X
     X = scipy.sparse.csr_matrix(X)
-    nb = BernoulliNB(alpha=0.0)
+    nb = BernoulliNB(alpha=0.0, force_alpha=False)
     with pytest.warns(UserWarning, match=msg):
         nb.fit(X, y)
     prob = np.array([[1, 0], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
-    nb = MultinomialNB(alpha=0.0)
+    nb = MultinomialNB(alpha=0.0, force_alpha=False)
     with pytest.warns(UserWarning, match=msg):
         nb.fit(X, y)
     prob = np.array([[2.0 / 3, 1.0 / 3], [0, 1]])
@@ -879,7 +877,7 @@ def test_alpha_vector():
     # Test that too small pseudo-counts are replaced
     ALPHA_MIN = 1e-10
     alpha = np.array([ALPHA_MIN / 2, 0.5])
-    m_nb = MultinomialNB(alpha=alpha)
+    m_nb = MultinomialNB(alpha=alpha, force_alpha=False)
     m_nb.partial_fit(X, y, classes=[0, 1])
     assert_array_almost_equal(m_nb._check_alpha(), [ALPHA_MIN, 0.5], decimal=12)
 
@@ -924,26 +922,6 @@ def test_check_accuracy_on_digits():
     assert scores.mean() > 0.86
 
 
-# TODO(1.4): Remove
-@pytest.mark.parametrize("Estimator", DISCRETE_NAIVE_BAYES_CLASSES)
-@pytest.mark.parametrize("alpha", [1, [0.1, 1e-11], 1e-12])
-def test_force_alpha_deprecation(Estimator, alpha):
-    if Estimator is CategoricalNB and isinstance(alpha, list):
-        pytest.skip("CategoricalNB does not support array-like alpha values.")
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    alpha_min = 1e-10
-    msg = "The default value for `force_alpha` will change to `True`"
-    est = Estimator(alpha=alpha)
-    est_force = Estimator(alpha=alpha, force_alpha=True)
-    if np.min(alpha) < alpha_min:
-        with pytest.warns(FutureWarning, match=msg):
-            est.fit(X, y)
-    else:
-        est.fit(X, y)
-    est_force.fit(X, y)
-
-
 def test_check_alpha():
     """The provided value for alpha must only be
     used if alpha < _ALPHA_MIN and force_alpha is True.
@@ -952,25 +930,24 @@ def test_check_alpha():
     https://github.com/scikit-learn/scikit-learn/issues/10772
     """
     _ALPHA_MIN = 1e-10
-    b = BernoulliNB(alpha=0, force_alpha=True)
+    b = BernoulliNB(alpha=0)
     assert b._check_alpha() == 0
 
     alphas = np.array([0.0, 1.0])
 
-    b = BernoulliNB(alpha=alphas, force_alpha=True)
+    b = BernoulliNB(alpha=alphas)
     # We manually set `n_features_in_` not to have `_check_alpha` err
     b.n_features_in_ = alphas.shape[0]
     assert_array_equal(b._check_alpha(), alphas)
 
     msg = (
-        "alpha too small will result in numeric errors, setting alpha = %.1e"
-        % _ALPHA_MIN
+        "alpha too small will result in numeric errors, setting alpha=%.1e" % _ALPHA_MIN
     )
     b = BernoulliNB(alpha=0, force_alpha=False)
     with pytest.warns(UserWarning, match=msg):
         assert b._check_alpha() == _ALPHA_MIN
 
-    b = BernoulliNB(alpha=0)
+    b = BernoulliNB(alpha=0, force_alpha=False)
     with pytest.warns(UserWarning, match=msg):
         assert b._check_alpha() == _ALPHA_MIN
 

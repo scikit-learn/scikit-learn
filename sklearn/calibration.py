@@ -38,7 +38,6 @@ from .utils import (
 )
 from .utils._param_validation import (
     HasMethods,
-    Hidden,
     Interval,
     StrOptions,
     validate_params,
@@ -158,13 +157,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         .. versionadded:: 0.24
 
-    base_estimator : estimator instance
-        This parameter is deprecated. Use `estimator` instead.
-
-        .. deprecated:: 1.2
-           The parameter `base_estimator` is deprecated in 1.2 and will be
-           removed in 1.4. Use `estimator` instead.
-
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,)
@@ -263,12 +255,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         "cv": ["cv_object", StrOptions({"prefit"})],
         "n_jobs": [Integral, None],
         "ensemble": ["boolean"],
-        "base_estimator": [
-            HasMethods(["fit", "predict_proba"]),
-            HasMethods(["fit", "decision_function"]),
-            None,
-            Hidden(StrOptions({"deprecated"})),
-        ],
     }
 
     def __init__(
@@ -279,41 +265,23 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         cv=None,
         n_jobs=None,
         ensemble=True,
-        base_estimator="deprecated",
     ):
         self.estimator = estimator
         self.method = method
         self.cv = cv
         self.n_jobs = n_jobs
         self.ensemble = ensemble
-        self.base_estimator = base_estimator
 
     def _get_estimator(self):
         """Resolve which estimator to return (default is LinearSVC)"""
-        # TODO(1.4): Remove when base_estimator is removed
-        if self.base_estimator != "deprecated":
-            if self.estimator is not None:
-                raise ValueError(
-                    "Both `base_estimator` and `estimator` are set. Only set "
-                    "`estimator` since `base_estimator` is deprecated."
-                )
-            warnings.warn(
-                (
-                    "`base_estimator` was renamed to `estimator` in version 1.2 and "
-                    "will be removed in 1.4."
-                ),
-                FutureWarning,
-            )
-            estimator = self.base_estimator
-        else:
-            estimator = self.estimator
-
-        if estimator is None:
+        if self.estimator is None:
             # we want all classifiers that don't expose a random_state
             # to be deterministic (and we don't want to expose this one).
             estimator = LinearSVC(random_state=0, dual="auto")
             if _routing_enabled():
                 estimator.set_fit_request(sample_weight=True)
+        else:
+            estimator = self.estimator
 
         return estimator
 

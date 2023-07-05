@@ -79,17 +79,6 @@ def test_normalize_metric_warning():
 
 
 @pytest.mark.parametrize("metric", [True, False])
-def test_normalized_stress_default_change(metric):
-    msg = "The default value of `normalized_stress` will change"
-    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
-    est = mds.MDS(metric=metric)
-    with pytest.warns(FutureWarning, match=msg):
-        mds.smacof(sim, metric=metric)
-    with pytest.warns(FutureWarning, match=msg):
-        est.fit(sim)
-
-
-@pytest.mark.parametrize("metric", [True, False])
 def test_normalized_stress_auto(metric, monkeypatch):
     rng = np.random.RandomState(0)
     X = rng.randn(4, 3)

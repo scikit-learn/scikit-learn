@@ -14,7 +14,7 @@ from ..base import (
 )
 from ..linear_model import ridge_regression
 from ..utils import check_random_state
-from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_array, check_is_fitted
 from ._dict_learning import MiniBatchDictionaryLearning, dict_learning
@@ -358,17 +358,9 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
         Amount of ridge shrinkage to apply in order to improve
         conditioning when calling the transform method.
 
-    n_iter : int, default=100
-        Number of iterations to perform for each mini batch.
-
-        .. deprecated:: 1.2
-           `n_iter` is deprecated in 1.2 and will be removed in 1.4. Use
-           `max_iter` instead.
-
-    max_iter : int, default=None
+    max_iter : int, default=100
         Maximum number of iterations over the complete dataset before
         stopping independently of any early stopping criterion heuristics.
-        If `max_iter` is not `None`, `n_iter` is ignored.
 
         .. versionadded:: 1.2
 
@@ -479,11 +471,7 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
 
     _parameter_constraints: dict = {
         **_BaseSparsePCA._parameter_constraints,
-        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
-        "n_iter": [
-            Interval(Integral, 0, None, closed="left"),
-            Hidden(StrOptions({"deprecated"})),
-        ],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
         "callback": [None, callable],
         "batch_size": [Interval(Integral, 1, None, closed="left")],
         "shuffle": ["boolean"],
@@ -496,8 +484,7 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
         *,
         alpha=1,
         ridge_alpha=0.01,
-        n_iter="deprecated",
-        max_iter=None,
+        max_iter=100,
         callback=None,
         batch_size=3,
         verbose=False,
@@ -519,7 +506,6 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
             verbose=verbose,
             random_state=random_state,
         )
-        self.n_iter = n_iter
         self.callback = callback
         self.batch_size = batch_size
         self.shuffle = shuffle
@@ -532,7 +518,6 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
         est = MiniBatchDictionaryLearning(
             n_components=n_components,
             alpha=self.alpha,
-            n_iter=self.n_iter,
             max_iter=self.max_iter,
             dict_init=None,
             batch_size=self.batch_size,

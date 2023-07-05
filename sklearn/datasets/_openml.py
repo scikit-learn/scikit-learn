@@ -748,7 +748,7 @@ def fetch_openml(
     as_frame: Union[str, bool] = "auto",
     n_retries: int = 3,
     delay: float = 1.0,
-    parser: Optional[str] = "warn",
+    parser: Optional[str] = "auto",
     read_csv_kwargs: Optional[Dict] = None,
 ):
     """Fetch dataset from openml by name or dataset id.
@@ -835,7 +835,7 @@ def fetch_openml(
     delay : float, default=1.0
         Number of seconds between retries.
 
-    parser : {"auto", "pandas", "liac-arff"}, default="liac-arff"
+    parser : {"auto", "pandas", "liac-arff"}, default="auto"
         Parser used to load the ARFF file. Two parsers are implemented:
 
         - `"pandas"`: this is the most efficient parser. However, it requires
@@ -848,11 +848,11 @@ def fetch_openml(
         `"pandas"` is selected.
 
         .. versionadded:: 1.2
+
         .. versionchanged:: 1.4
-           The default value of `parser` will change from `"liac-arff"` to
-           `"auto"` in 1.4. You can set `parser="auto"` to silence this
-           warning. Therefore, an `ImportError` will be raised from 1.4 if
-           the dataset is dense and pandas is not installed.
+           The default value of `parser` changed from `"liac-arff"` to
+           `"auto"` in 1.4. Therefore, an `ImportError` will be raised from
+           1.4 if the dataset is dense and pandas is not installed.
 
     read_csv_kwargs : dict, default=None
         Keyword arguments passed to :func:`pandas.read_csv` when loading the data
@@ -988,27 +988,11 @@ def fetch_openml(
             "unusable. Warning: {}".format(data_description["warning"])
         )
 
-    # TODO(1.4): remove "warn" from the valid parser
-    valid_parsers = ("auto", "pandas", "liac-arff", "warn")
+    valid_parsers = ("auto", "pandas", "liac-arff")
     if parser not in valid_parsers:
         raise ValueError(
             f"`parser` must be one of {', '.join(repr(p) for p in valid_parsers)}. Got"
             f" {parser!r} instead."
-        )
-
-    if parser == "warn":
-        # TODO(1.4): remove this warning
-        parser = "liac-arff"
-        warn(
-            (
-                "The default value of `parser` will change from `'liac-arff'` to"
-                " `'auto'` in 1.4. You can set `parser='auto'` to silence this warning."
-                " Therefore, an `ImportError` will be raised from 1.4 if the dataset is"
-                " dense and pandas is not installed. Note that the pandas parser may"
-                " return different data types. See the Notes Section in fetch_openml's"
-                " API doc for details."
-            ),
-            FutureWarning,
         )
 
     if as_frame not in ("auto", True, False):
@@ -1040,17 +1024,11 @@ def fetch_openml(
                     "Alternatively, explicitly set `parser='liac-arff'`."
                 )
                 if parser == "auto":
-                    # TODO(1.4): In version 1.4, we will raise an error instead of
-                    # a warning.
-                    warn(
-                        (
-                            "From version 1.4, `parser='auto'` with `as_frame=False` "
-                            "will use pandas. Either install pandas or set explicitly "
-                            "`parser='liac-arff'` to preserve the current behavior."
-                        ),
-                        FutureWarning,
+                    raise ImportError(
+                        "From version 1.4, `parser='auto'` with `as_frame=False` "
+                        "will use pandas. Either install pandas or set explicitly "
+                        "`parser='liac-arff'` to preserve the current behavior."
                     )
-                    parser_ = "liac-arff"
                 else:
                     raise ImportError(err_msg) from exc
 

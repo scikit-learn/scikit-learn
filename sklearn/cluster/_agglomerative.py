@@ -28,7 +28,6 @@ from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils._param_validation import (
     HasMethods,
-    Hidden,
     Interval,
     StrOptions,
     validate_params,
@@ -773,7 +772,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         The number of clusters to find. It must be ``None`` if
         ``distance_threshold`` is not ``None``.
 
-    affinity : str or callable, default='euclidean'
+    metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
@@ -781,17 +780,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         If linkage is "ward", only "euclidean" is accepted.
         If "precomputed", a distance matrix (instead of a similarity matrix)
         is needed as input for the fit method.
-
-        .. deprecated:: 1.2
-            `affinity` was deprecated in version 1.2 and will be renamed to
-            `metric` in 1.4.
-
-    metric : str or callable, default=None
-        Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
-        "manhattan", "cosine", or "precomputed". If set to `None` then
-        "euclidean" is used. If linkage is "ward", only "euclidean" is
-        accepted. If "precomputed", a distance matrix is needed as input for
-        the fit method.
 
         .. versionadded:: 1.2
 
@@ -914,15 +902,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
     _parameter_constraints: dict = {
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
-        "affinity": [
-            Hidden(StrOptions({"deprecated"})),
-            StrOptions(set(_VALID_METRICS) | {"precomputed"}),
-            callable,
-        ],
         "metric": [
             StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
-            None,
         ],
         "memory": [str, HasMethods("cache"), None],
         "connectivity": ["array-like", callable, None],
@@ -936,8 +918,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self,
         n_clusters=2,
         *,
-        affinity="deprecated",  # TODO(1.4): Remove
-        metric=None,  # TODO(1.4): Set to "euclidean"
+        metric="euclidean",
         memory=None,
         connectivity=None,
         compute_full_tree="auto",
@@ -951,7 +932,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
-        self.affinity = affinity
         self.metric = metric
         self.compute_distances = compute_distances
 
@@ -984,7 +964,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         ----------
         X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            ``metric='precomputed'``.
 
         Returns
         -------
@@ -992,26 +972,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             Returns the fitted instance.
         """
         memory = check_memory(self.memory)
-
-        self._metric = self.metric
-        # TODO(1.4): Remove
-        if self.affinity != "deprecated":
-            if self.metric is not None:
-                raise ValueError(
-                    "Both `affinity` and `metric` attributes were set. Attribute"
-                    " `affinity` was deprecated in version 1.2 and will be removed in"
-                    " 1.4. To avoid this error, only set the `metric` attribute."
-                )
-            warnings.warn(
-                (
-                    "Attribute `affinity` was deprecated in version 1.2 and will be"
-                    " removed in 1.4. Use `metric` instead"
-                ),
-                FutureWarning,
-            )
-            self._metric = self.affinity
-        elif self.metric is None:
-            self._metric = "euclidean"
 
         if not ((self.n_clusters is None) ^ (self.distance_threshold is None)):
             raise ValueError(
@@ -1025,9 +985,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
                 "compute_full_tree must be True if distance_threshold is set."
             )
 
-        if self.linkage == "ward" and self._metric != "euclidean":
+        if self.linkage == "ward" and self.metric != "euclidean":
             raise ValueError(
-                f"{self._metric} was provided as metric. Ward can only "
+                f"{self.metric} was provided as metric. linkage='ward' can only "
                 "work with euclidean distances."
             )
 
@@ -1061,7 +1021,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         kwargs = {}
         if self.linkage != "ward":
             kwargs["linkage"] = self.linkage
-            kwargs["affinity"] = self._metric
+            kwargs["affinity"] = self.metric
 
         distance_threshold = self.distance_threshold
 
@@ -1110,7 +1070,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features) or \
                 (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            ``metric='precomputed'``.
 
         y : Ignored
             Not used, present here for API consistency by convention.
@@ -1138,7 +1098,7 @@ class FeatureAgglomeration(
         The number of clusters to find. It must be ``None`` if
         ``distance_threshold`` is not ``None``.
 
-    affinity : str or callable, default='euclidean'
+    metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
@@ -1146,17 +1106,6 @@ class FeatureAgglomeration(
         If linkage is "ward", only "euclidean" is accepted.
         If "precomputed", a distance matrix (instead of a similarity matrix)
         is needed as input for the fit method.
-
-        .. deprecated:: 1.2
-            `affinity` was deprecated in version 1.2 and will be renamed to
-            `metric` in 1.4.
-
-    metric : str or callable, default=None
-        Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
-        "manhattan", "cosine", or "precomputed". If set to `None` then
-        "euclidean" is used. If linkage is "ward", only "euclidean" is
-        accepted. If "precomputed", a distance matrix is needed as input for
-        the fit method.
 
         .. versionadded:: 1.2
 
@@ -1283,15 +1232,9 @@ class FeatureAgglomeration(
 
     _parameter_constraints: dict = {
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
-        "affinity": [
-            Hidden(StrOptions({"deprecated"})),
-            StrOptions(set(_VALID_METRICS) | {"precomputed"}),
-            callable,
-        ],
         "metric": [
             StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
-            None,
         ],
         "memory": [str, HasMethods("cache"), None],
         "connectivity": ["array-like", callable, None],
@@ -1306,8 +1249,7 @@ class FeatureAgglomeration(
         self,
         n_clusters=2,
         *,
-        affinity="deprecated",  # TODO(1.4): Remove
-        metric=None,  # TODO(1.4): Set to "euclidean"
+        metric="euclidean",
         memory=None,
         connectivity=None,
         compute_full_tree="auto",
@@ -1322,7 +1264,6 @@ class FeatureAgglomeration(
             connectivity=connectivity,
             compute_full_tree=compute_full_tree,
             linkage=linkage,
-            affinity=affinity,
             metric=metric,
             distance_threshold=distance_threshold,
             compute_distances=compute_distances,

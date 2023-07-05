@@ -1360,15 +1360,6 @@ def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
     assert_allclose(X_trans, [[1], [1]])
 
 
-# TODO(1.4): Remove when `sparse` parameter is replaced by `sparse_output`
-def test_one_hot_encoder_sparse_deprecated():
-    X = [["Male", 1], ["Female", 3], ["Female", 2]]
-
-    msg = "`sparse` was renamed to `sparse_output`"
-    with pytest.warns(FutureWarning, match=msg):
-        OneHotEncoder(sparse=False).fit(X)
-
-
 # deliberately omit 'OS' as an invalid combo
 @pytest.mark.parametrize(
     "input_dtype, category_dtype", ["OO", "OU", "UO", "UU", "SO", "SU", "SS"]

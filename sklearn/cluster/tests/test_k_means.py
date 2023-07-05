@@ -1,7 +1,6 @@
 """Testing for K-means"""
 import re
 import sys
-import warnings
 from io import StringIO
 
 import numpy as np
@@ -32,13 +31,6 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.fixes import threadpool_limits
-
-# TODO(1.4): Remove
-msg = (
-    r"The default value of `n_init` will change from \d* to 'auto' in 1.4. Set the"
-    r" value of `n_init` explicitly to suppress the warning:FutureWarning"
-)
-pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
 
 # non centered, sparse centers to check the
 centers = np.array(
@@ -1106,24 +1098,6 @@ def test_inertia(dtype, global_random_seed):
     assert_allclose(inertia_sparse, expected, rtol=rtol)
 
 
-# TODO(1.4): Remove
-@pytest.mark.parametrize("Klass, default_n_init", [(KMeans, 10), (MiniBatchKMeans, 3)])
-def test_change_n_init_future_warning(Klass, default_n_init):
-    est = Klass(n_init=1)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", FutureWarning)
-        est.fit(X)
-
-    default_n_init = 10 if Klass.__name__ == "KMeans" else 3
-    msg = (
-        f"The default value of `n_init` will change from {default_n_init} to 'auto'"
-        " in 1.4"
-    )
-    est = Klass()
-    with pytest.warns(FutureWarning, match=msg):
-        est.fit(X)
-
-
 @pytest.mark.parametrize("Klass, default_n_init", [(KMeans, 10), (MiniBatchKMeans, 3)])
 def test_n_init_auto(Klass, default_n_init):
     est = Klass(n_init="auto", init="k-means++")
@@ -1132,7 +1106,7 @@ def test_n_init_auto(Klass, default_n_init):
 
     est = Klass(n_init="auto", init="random")
     est.fit(X)
-    assert est._n_init == 10 if Klass.__name__ == "KMeans" else 3
+    assert est._n_init == default_n_init
 
 
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])

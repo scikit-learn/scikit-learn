@@ -974,8 +974,6 @@ def test_fetch_openml_types_inference(
 # Test some more specific behaviour
 
 
-# TODO(1.4): remove this filterwarning decorator
-@pytest.mark.filterwarnings("ignore:The default value of `parser` will change")
 @pytest.mark.parametrize(
     "params, err_msg",
     [
@@ -994,6 +992,7 @@ def test_fetch_openml_validation_parameter(monkeypatch, params, err_msg):
     "params",
     [
         {"as_frame": True, "parser": "auto"},
+        {"as_frame": False, "parser": "auto"},
         {"as_frame": "auto", "parser": "auto"},
         {"as_frame": False, "parser": "pandas"},
     ],
@@ -1012,27 +1011,7 @@ def test_fetch_openml_requires_pandas_error(monkeypatch, params):
         raise SkipTest("This test requires pandas to not be installed.")
 
 
-# TODO(1.4): move this parameter option in`test_fetch_openml_requires_pandas_error`
-def test_fetch_openml_requires_pandas_in_future(monkeypatch):
-    """Check that we raise a warning that pandas will be required in the future."""
-    params = {"as_frame": False, "parser": "auto"}
-    data_id = 1119
-    try:
-        check_pandas_support("test_fetch_openml_requires_pandas")
-    except ImportError:
-        _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-        warn_msg = (
-            "From version 1.4, `parser='auto'` with `as_frame=False` will use pandas"
-        )
-        with pytest.warns(FutureWarning, match=warn_msg):
-            fetch_openml(data_id=data_id, **params)
-    else:
-        raise SkipTest("This test requires pandas to not be installed.")
-
-
 @pytest.mark.filterwarnings("ignore:Version 1 of dataset Australian is inactive")
-# TODO(1.4): remove this filterwarning decorator for `parser`
-@pytest.mark.filterwarnings("ignore:The default value of `parser` will change")
 @pytest.mark.parametrize(
     "params, err_msg",
     [
@@ -1661,18 +1640,3 @@ def test_fetch_openml_quotechar_escapechar(monkeypatch):
     adult_pandas = fetch_openml(parser="pandas", **common_params)
     adult_liac_arff = fetch_openml(parser="liac-arff", **common_params)
     pd.testing.assert_frame_equal(adult_pandas.frame, adult_liac_arff.frame)
-
-
-###############################################################################
-# Deprecation-changed parameters
-
-
-# TODO(1.4): remove this test
-def test_fetch_openml_deprecation_parser(monkeypatch):
-    """Check that we raise a deprecation warning for parser parameter."""
-    pytest.importorskip("pandas")
-    data_id = 61
-    _monkey_patch_webbased_functions(monkeypatch, data_id=data_id, gzip_response=False)
-
-    with pytest.warns(FutureWarning, match="The default value of `parser` will change"):
-        sklearn.datasets.fetch_openml(data_id=data_id)

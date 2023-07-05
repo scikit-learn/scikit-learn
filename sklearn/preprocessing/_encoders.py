@@ -13,7 +13,7 @@ from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_c
 from ..utils import _safe_indexing, check_array, is_scalar_nan
 from ..utils._encode import _check_unknown, _encode, _get_counts, _unique
 from ..utils._mask import _get_mask
-from ..utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
+from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.validation import _check_feature_names_in, check_is_fitted
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
@@ -511,13 +511,6 @@ class OneHotEncoder(_BaseEncoder):
         .. versionchanged:: 1.1
             Support for dropping infrequent categories.
 
-    sparse : bool, default=True
-        Will return sparse matrix if set True else will return an array.
-
-        .. deprecated:: 1.2
-           `sparse` is deprecated in 1.2 and will be removed in 1.4. Use
-           `sparse_output` instead.
-
     sparse_output : bool, default=True
         Will return sparse matrix if set True else will return an array.
 
@@ -725,7 +718,6 @@ class OneHotEncoder(_BaseEncoder):
             Interval(RealNotInt, 0, 1, closed="neither"),
             None,
         ],
-        "sparse": [Hidden(StrOptions({"deprecated"})), "boolean"],  # deprecated
         "sparse_output": ["boolean"],
         "feature_name_combiner": [StrOptions({"concat"}), callable],
     }
@@ -735,7 +727,6 @@ class OneHotEncoder(_BaseEncoder):
         *,
         categories="auto",
         drop=None,
-        sparse="deprecated",
         sparse_output=True,
         dtype=np.float64,
         handle_unknown="error",
@@ -744,8 +735,6 @@ class OneHotEncoder(_BaseEncoder):
         feature_name_combiner="concat",
     ):
         self.categories = categories
-        # TODO(1.4): Remove self.sparse
-        self.sparse = sparse
         self.sparse_output = sparse_output
         self.dtype = dtype
         self.handle_unknown = handle_unknown
@@ -968,17 +957,6 @@ class OneHotEncoder(_BaseEncoder):
         self
             Fitted encoder.
         """
-        if self.sparse != "deprecated":
-            warnings.warn(
-                (
-                    "`sparse` was renamed to `sparse_output` in version 1.2 and "
-                    "will be removed in 1.4. `sparse_output` is ignored unless you "
-                    "leave `sparse` to its default value."
-                ),
-                FutureWarning,
-            )
-            self.sparse_output = self.sparse
-
         self._fit(
             X,
             handle_unknown=self.handle_unknown,

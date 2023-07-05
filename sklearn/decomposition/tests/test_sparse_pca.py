@@ -268,35 +268,6 @@ def test_spca_feature_names_out(SPCA):
     assert_array_equal([f"{estimator_name}{i}" for i in range(4)], names)
 
 
-# TODO (1.4): remove this test
-def test_spca_n_iter_deprecation():
-    """Check that we raise a warning for the deprecation of `n_iter` and it is ignored
-    when `max_iter` is specified.
-    """
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 12, 10
-    X = rng.randn(n_samples, n_features)
-
-    warn_msg = "'n_iter' is deprecated in version 1.1 and will be removed"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        MiniBatchSparsePCA(n_iter=2).fit(X)
-
-    n_iter, max_iter = 1, 100
-    with pytest.warns(FutureWarning, match=warn_msg):
-        model = MiniBatchSparsePCA(
-            n_iter=n_iter, max_iter=max_iter, random_state=0
-        ).fit(X)
-    assert model.n_iter_ > 1
-    assert model.n_iter_ <= max_iter
-
-
-def test_pca_n_features_deprecation():
-    X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-    pca = PCA(n_components=2).fit(X)
-    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
-        pca.n_features_
-
-
 def test_spca_early_stopping(global_random_seed):
     """Check that `tol` and `max_no_improvement` act as early stopping."""
     rng = np.random.RandomState(global_random_seed)

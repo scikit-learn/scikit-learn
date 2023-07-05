@@ -71,7 +71,7 @@ def test_calibration(data, method, ensemble):
     X_test, y_test = X[n_samples:], y[n_samples:]
 
     # Naive-Bayes
-    clf = MultinomialNB(force_alpha=True).fit(X_train, y_train, sample_weight=sw_train)
+    clf = MultinomialNB().fit(X_train, y_train, sample_weight=sw_train)
     prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
     cal_clf = CalibratedClassifierCV(clf, cv=y.size + 1, ensemble=ensemble)
@@ -300,7 +300,7 @@ def test_calibration_prefit():
     X_test, y_test = X[2 * n_samples :], y[2 * n_samples :]
 
     # Naive-Bayes
-    clf = MultinomialNB(force_alpha=True)
+    clf = MultinomialNB()
     # Check error if clf not prefit
     unfit_clf = CalibratedClassifierCV(clf, cv="prefit")
     with pytest.raises(NotFittedError):
@@ -961,27 +961,6 @@ def test_calibrated_classifier_cv_zeros_sample_weights_equivalence(method, ensem
     y_pred_without_weights = calibrated_clf_without_weights.predict_proba(X)
 
     assert_allclose(y_pred_with_weights, y_pred_without_weights)
-
-
-# TODO(1.4): Remove
-def test_calibrated_classifier_error_base_estimator(data):
-    """Check that we raise an error is a user set both `base_estimator` and
-    `estimator`."""
-    calibrated_classifier = CalibratedClassifierCV(
-        base_estimator=LogisticRegression(), estimator=LogisticRegression()
-    )
-    with pytest.raises(ValueError, match="Both `base_estimator` and `estimator`"):
-        calibrated_classifier.fit(*data)
-
-
-# TODO(1.4): Remove
-def test_calibrated_classifier_deprecation_base_estimator(data):
-    """Check that we raise a warning regarding the deprecation of
-    `base_estimator`."""
-    calibrated_classifier = CalibratedClassifierCV(base_estimator=LogisticRegression())
-    warn_msg = "`base_estimator` was renamed to `estimator`"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        calibrated_classifier.fit(*data)
 
 
 def test_calibration_with_non_sample_aligned_fit_param(data):

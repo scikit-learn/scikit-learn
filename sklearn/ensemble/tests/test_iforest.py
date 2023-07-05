@@ -324,21 +324,6 @@ def test_iforest_with_n_jobs_does_not_segfault():
     IsolationForest(n_estimators=10, max_samples=256, n_jobs=2).fit(X)
 
 
-# TODO(1.4): remove in 1.4
-def test_base_estimator_property_deprecated():
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    model = IsolationForest()
-    model.fit(X, y)
-
-    warn_msg = (
-        "Attribute `base_estimator_` was deprecated in version 1.2 and "
-        "will be removed in 1.4. Use `estimator_` instead."
-    )
-    with pytest.warns(FutureWarning, match=warn_msg):
-        model.base_estimator_
-
-
 def test_iforest_preserve_feature_names():
     """Check that feature names are preserved when contamination is not "auto".
 

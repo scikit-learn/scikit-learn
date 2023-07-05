@@ -16,9 +16,9 @@ from scipy.linalg.lapack import get_lapack_funcs
 from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
 from ..utils import as_float_array, check_array
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
-from ._base import LinearModel, _deprecate_normalize, _pre_fit
+from ._base import LinearModel, _pre_fit
 
 premature = (
     "Orthogonal matching pursuit ended prematurely due to linear"
@@ -632,20 +632,6 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. versionchanged:: 1.2
-           default changed from True to False in 1.2.
-
-        .. deprecated:: 1.2
-            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
-
     precompute : 'auto' or bool, default='auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
         calculations. Improves performance when :term:`n_targets` or
@@ -720,7 +706,6 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left"), None],
         "fit_intercept": ["boolean"],
-        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "precompute": [StrOptions({"auto"}), "boolean"],
     }
 
@@ -730,13 +715,11 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         n_nonzero_coefs=None,
         tol=None,
         fit_intercept=True,
-        normalize="deprecated",
         precompute="auto",
     ):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.tol = tol
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.precompute = precompute
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -756,15 +739,11 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        _normalize = _deprecate_normalize(
-            self.normalize, estimator_name=self.__class__.__name__
-        )
-
         X, y = self._validate_data(X, y, multi_output=True, y_numeric=True)
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale, Gram, Xy = _pre_fit(
-            X, y, None, self.precompute, _normalize, self.fit_intercept, copy=True
+            X, y, None, self.precompute, self.fit_intercept, copy=True
         )
 
         if y.ndim == 1:
@@ -812,7 +791,6 @@ def _omp_path_residues(
     y_test,
     copy=True,
     fit_intercept=True,
-    normalize=False,
     max_iter=100,
 ):
     """Compute the residues on left-out data for a full LARS path.
@@ -840,20 +818,6 @@ def _omp_path_residues(
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. versionchanged:: 1.2
-           default changed from True to False in 1.2.
-
-        .. deprecated:: 1.2
-            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
-
     max_iter : int, default=100
         Maximum numbers of iterations to perform, therefore maximum features
         to include. 100 by default.
@@ -880,11 +844,6 @@ def _omp_path_residues(
         y_test = as_float_array(y_test, copy=False)
         y_test -= y_mean
 
-    if normalize:
-        norms = np.sqrt(np.sum(X_train**2, axis=0))
-        nonzeros = np.flatnonzero(norms)
-        X_train[:, nonzeros] /= norms[nonzeros]
-
     coefs = orthogonal_mp(
         X_train,
         y_train,
@@ -896,8 +855,6 @@ def _omp_path_residues(
     )
     if coefs.ndim == 1:
         coefs = coefs[:, np.newaxis]
-    if normalize:
-        coefs[nonzeros] /= norms[nonzeros][:, np.newaxis]
 
     return np.dot(coefs.T, X_test.T) - y_test
 
@@ -920,20 +877,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. versionchanged:: 1.2
-           default changed from True to False in 1.2.
-
-        .. deprecated:: 1.2
-            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     max_iter : int, default=None
         Maximum numbers of iterations to perform, therefore maximum features
@@ -1029,7 +972,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     _parameter_constraints: dict = {
         "copy": ["boolean"],
         "fit_intercept": ["boolean"],
-        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "max_iter": [Interval(Integral, 0, None, closed="left"), None],
         "cv": ["cv_object"],
         "n_jobs": [Integral, None],
@@ -1041,7 +983,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         *,
         copy=True,
         fit_intercept=True,
-        normalize="deprecated",
         max_iter=None,
         cv=None,
         n_jobs=None,
@@ -1049,7 +990,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     ):
         self.copy = copy
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.max_iter = max_iter
         self.cv = cv
         self.n_jobs = n_jobs
@@ -1072,10 +1012,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-        _normalize = _deprecate_normalize(
-            self.normalize, estimator_name=self.__class__.__name__
-        )
-
         X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2)
         X = as_float_array(X, copy=False, force_all_finite=False)
         cv = check_cv(self.cv, classifier=False)
@@ -1090,10 +1026,9 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
                 y[train],
                 X[test],
                 y[test],
-                self.copy,
-                self.fit_intercept,
-                _normalize,
-                max_iter,
+                copy=self.copy,
+                fit_intercept=self.fit_intercept,
+                max_iter=max_iter,
             )
             for train, test in cv.split(X)
         )
@@ -1107,13 +1042,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         omp = OrthogonalMatchingPursuit(
             n_nonzero_coefs=best_n_nonzero_coefs,
             fit_intercept=self.fit_intercept,
-            normalize=_normalize,
-        )
-
-        # avoid duplicating warning for deprecated normalize
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=FutureWarning)
-            omp.fit(X, y)
+        ).fit(X, y)
 
         self.coef_ = omp.coef_
         self.intercept_ = omp.intercept_

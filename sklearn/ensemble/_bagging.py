@@ -17,7 +17,7 @@ from ..base import ClassifierMixin, RegressorMixin, _fit_context
 from ..metrics import accuracy_score, r2_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, column_or_1d, indices_to_mask
-from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
+from ..utils._param_validation import HasMethods, Interval, RealNotInt
 from ..utils._tags import _safe_tags
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
@@ -229,8 +229,7 @@ def _estimator_has(attr):
             return hasattr(self.estimators_[0], attr)
         elif self.estimator is not None:
             return hasattr(self.estimator, attr)
-        else:  # TODO(1.4): Remove when the base_estimator deprecation cycle ends
-            return hasattr(self.base_estimator, attr)
+        return False
 
     return check
 
@@ -260,11 +259,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
         "verbose": ["verbose"],
-        "base_estimator": [
-            HasMethods(["fit", "predict"]),
-            StrOptions({"deprecated"}),
-            None,
-        ],
     }
 
     @abstractmethod
@@ -282,12 +276,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         n_jobs=None,
         random_state=None,
         verbose=0,
-        base_estimator="deprecated",
     ):
         super().__init__(
             estimator=estimator,
             n_estimators=n_estimators,
-            base_estimator=base_estimator,
         )
         self.max_samples = max_samples
         self.max_features = max_features
@@ -630,13 +622,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     verbose : int, default=0
         Controls the verbosity when fitting and predicting.
 
-    base_estimator : object, default="deprecated"
-        Use `estimator` instead.
-
-        .. deprecated:: 1.2
-            `base_estimator` is deprecated and will be removed in 1.4.
-            Use `estimator` instead.
-
     Attributes
     ----------
     estimator_ : estimator
@@ -644,13 +629,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
-
-    base_estimator_ : estimator
-        The base estimator from which the ensemble is grown.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -738,7 +716,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         n_jobs=None,
         random_state=None,
         verbose=0,
-        base_estimator="deprecated",
     ):
         super().__init__(
             estimator=estimator,
@@ -752,7 +729,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
-            base_estimator=base_estimator,
         )
 
     def _validate_estimator(self):
@@ -1075,13 +1051,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     verbose : int, default=0
         Controls the verbosity when fitting and predicting.
 
-    base_estimator : object, default="deprecated"
-        Use `estimator` instead.
-
-        .. deprecated:: 1.2
-            `base_estimator` is deprecated and will be removed in 1.4.
-            Use `estimator` instead.
-
     Attributes
     ----------
     estimator_ : estimator
@@ -1089,13 +1058,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
-
-    base_estimator_ : estimator
-        The base estimator from which the ensemble is grown.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1177,7 +1139,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         n_jobs=None,
         random_state=None,
         verbose=0,
-        base_estimator="deprecated",
     ):
         super().__init__(
             estimator=estimator,
@@ -1191,7 +1152,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
-            base_estimator=base_estimator,
         )
 
     def predict(self, X):

@@ -51,10 +51,9 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
 
 
 def _check_solver(solver, penalty, dual):
-    # TODO(1.4): Remove "none" option
-    if solver not in ["liblinear", "saga"] and penalty not in ("l2", "none", None):
+    if solver not in ["liblinear", "saga"] and penalty not in ("l2", None):
         raise ValueError(
-            "Solver %s supports only 'l2' or 'none' penalties, got %s penalty."
+            "Solver %s supports only 'l2' or None penalties, got %s penalty."
             % (solver, penalty)
         )
     if solver != "liblinear" and dual:
@@ -68,9 +67,6 @@ def _check_solver(solver, penalty, dual):
                 solver
             )
         )
-
-    if solver == "liblinear" and penalty == "none":
-        raise ValueError("penalty='none' is not supported for the liblinear solver")
 
     return solver
 
@@ -832,10 +828,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         .. versionadded:: 0.19
            l1 penalty with SAGA solver (allowing 'multinomial' + L1)
 
-        .. deprecated:: 1.2
-           The 'none' option was deprecated in version 1.2, and will be removed
-           in 1.4. Use `None` instead.
-
     dual : bool, default=False
         Dual or primal formulation. Dual formulation is only implemented for
         l2 penalty with liblinear solver. Prefer dual=False when
@@ -1075,11 +1067,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """
 
     _parameter_constraints: dict = {
-        # TODO(1.4): Remove "none" option
-        "penalty": [
-            StrOptions({"l1", "l2", "elasticnet", "none"}, deprecated={"none"}),
-            None,
-        ],
+        "penalty": [StrOptions({"l1", "l2", "elasticnet"}), None],
         "dual": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
         "C": [Interval(Real, 0, None, closed="right")],
@@ -1177,17 +1165,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if self.penalty == "elasticnet" and self.l1_ratio is None:
             raise ValueError("l1_ratio must be specified when penalty is elasticnet.")
 
-        # TODO(1.4): Remove "none" option
-        if self.penalty == "none":
-            warnings.warn(
-                (
-                    "`penalty='none'`has been deprecated in 1.2 and will be removed in"
-                    " 1.4. To keep the past behaviour, set `penalty=None`."
-                ),
-                FutureWarning,
-            )
-
-        if self.penalty is None or self.penalty == "none":
+        if self.penalty is None:
             if self.C != 1.0:  # default values
                 warnings.warn(
                     "Setting penalty=None will ignore the C and l1_ratio parameters"

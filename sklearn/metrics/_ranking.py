@@ -1715,11 +1715,10 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     ----------
     y_true : array-like of shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
-        to be ranked. Negative values in `y_true` may result in an output
-        that is not between 0 and 1.
+        to be ranked. All values in `y_true` must be non-negative.
 
-        .. versionchanged:: 1.2
-            These negative values are deprecated, and will raise an error in v1.4.
+        .. versionchanged:: 1.4
+            Negative values in `y_true` are not allowed since v1.4.
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
@@ -1802,15 +1801,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     check_consistent_length(y_true, y_score, sample_weight)
 
     if y_true.min() < 0:
-        # TODO(1.4): Replace warning w/ ValueError
-        warnings.warn(
-            (
-                "ndcg_score should not be used on negative y_true values. ndcg_score"
-                " will raise a ValueError on negative y_true values starting from"
-                " version 1.4."
-            ),
-            FutureWarning,
-        )
+        raise ValueError("ndcg_score should not be used on negative y_true values")
     if y_true.ndim > 1 and y_true.shape[1] <= 1:
         raise ValueError(
             "Computing NDCG is only meaningful when there is more than 1 document. "
