@@ -110,7 +110,7 @@ cdef class BaseSplitter:
         """Copy the value of node samples[start:end] into dest."""
         pass
 
-    cdef inline void clip_node_value(self, double* dest, double lower_bound, double upper_bound) noexcept nogil:
+    cdef void clip_node_value(self, double* dest, double lower_bound, double upper_bound) noexcept nogil:
         """Clip the value of node samples[start:end] into dest."""
         pass
 
@@ -309,11 +309,6 @@ cdef class Splitter(BaseSplitter):
     cdef void node_samples(self, vector[vector[DOUBLE_t]]& dest) noexcept nogil:
         """Copy the samples[start:end] into dest."""
         self.criterion.node_samples(dest)
-
-    cdef inline void clip_node_value(self, double* dest, double lower_bound, double upper_bound) noexcept nogil:
-        """Clip the value in dest between lower_bound and upper_bound for monotonic constraints."""
-
-        self.criterion.clip_node_value(dest, lower_bound, upper_bound)
 
     cdef double node_impurity(self) noexcept nogil:
         """Return the impurity of the current node."""
