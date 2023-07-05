@@ -55,7 +55,7 @@ Changelog
 ............................
 
 - |API| : `kdtree` and `balltree` values are now deprecated and are renamed as
- `kd_tree` and `ball_tree` respectively now for `algorithm` parameter of
+  `kd_tree` and `ball_tree` respectively now for `algorithm` parameter of
   :class:`cluster.HDBSCAN` ensuring consistency in naming convention.
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
