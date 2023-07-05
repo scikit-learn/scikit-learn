@@ -56,7 +56,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 # ---------------------------------
 # We train the :class:`~sklearn.ensemble.AdaBoostClassifier`. The estimator
 # utilizes boosting to improve the classification accuracy. Boosting is a method
-# designed to train weak learners (base estimators) that learn from their
+# designed to train weak learners (i.e. `base_estimator`) that learn from their
 # predecessor's mistakes.
 #
 # Here, we define the weak learner as a
@@ -90,10 +90,11 @@ adaboost_clf = AdaBoostClassifier(
 # Convergence of the `AdaBoostClassifier`
 # ***************************************
 # To demonstrate the effectiveness of boosting in improving accuracy, we
-# evaluate the `misclassification_error` of the boosted trees in comparison to
-# two baseline scores. The first baseline score is the `misclassification_error`
-# obtained from the :class:`~sklearn.tree.DecisionTreeClassifier`, which serves
-# as a reference point. The second baseline score is obtained from the
+# evaluate the misclassification error of the boosted trees in comparison to two
+# baseline scores. The first baseline score is the `misclassification_error`
+# obtained from a single weak-learner (i.e.
+# :class:`~sklearn.tree.DecisionTreeClassifier`), which serves as a reference
+# point. The second baseline score is obtained from the
 # :class:`~sklearn.dummy.DummyClassifier`, which predicts the most prevalent
 # class in a dataset.
 from sklearn.dummy import DummyClassifier
@@ -115,10 +116,12 @@ dummy_classifiers_misclassification_error = misclassification_error(
 )
 
 print(
-    "DecisionTreeClassifier's misclassification_error:"
-    f"{weak_learners_misclassification_error}\n"
-    "DummyClassifier's misclassification_error:"
-    f"{round(dummy_classifiers_misclassification_error, 3)}"
+    "DecisionTreeClassifier's misclassification_error: "
+    f"{weak_learners_misclassification_error:.3f}"
+)
+print(
+    "DummyClassifier's misclassification_error: "
+    f"{dummy_classifiers_misclassification_error:.3f}"
 )
 
 # %%
@@ -127,14 +130,18 @@ print(
 # guessing the most frequent class label, as the
 # :class:`~sklearn.dummy.DummyClassifier` does.
 #
-# Now, we calculate the `misclassification_error` of the additive model
-# (:class:`~sklearn.tree.DecisionTreeClassifier`) at each boosting iteration to
-# assess its performance. To obtain the predictions at each iteration, we use
-# the :func:`~sklearn.ensemble._weight_boosting.staged_predict` method which
-# returns a generator containing the predictions of all the weak learners during
-# the training progresses. We compare these predictions to the actual values in
-# `y_test` by calculating the difference. This process allows us to generate the
-# data needed for plotting a learning curve.
+# Now, we calculate the `misclassification_error`, i.e. `1 - accuracy`, of the
+# additive model (:class:`~sklearn.tree.DecisionTreeClassifier`) at each
+# boosting iteration on the test set to assess its performance.
+#
+# We use :meth:`~sklearn.ensemble.AdaBoostClassifier.staged_predict` that makes
+# as many iterations as the number of fitted estimator (i.e. corresponding to
+# `n_estimators`). At iteration `n`, the predictions of AdaBoost only use the
+# `n` first weak learners. We compare these predictions with the true
+# predictions `y_test` and we therefore conclude on benefit (or not) of adding a
+# new weak learner into the chain.
+#
+# We plot the misclassification error for the different stages:
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -154,7 +161,7 @@ ax.set_title("Convergence of AdaBoost algorithm")
 plt.plot(
     [boosting_errors.index.min(), boosting_errors.index.max()],
     [weak_learners_misclassification_error, weak_learners_misclassification_error],
-    color="c",
+    color="tab:orange",
     linestyle="dashed",
 )
 plt.plot(
@@ -170,30 +177,29 @@ plt.legend(["AdaBoost", "DecisionTreeClassifier", "DummyClassifier"], loc=1)
 plt.show()
 
 # %%
-# The plot shows the classification error, i.e. `1 - accuracy`, on the test
-# set after each boosting iteration. We can see that the error of the boosted
-# trees converges to around 0.3 after 50 iterations, indicating a significantly
-# higher accuracy compared to single tree, as illustrated by the dashed line in
-# the plot.
+# The plot shows the missclassification error on the test set after each
+# boosting iteration. We see that the error of the boosted trees converges to an
+# error of around 0.3 after 50 iterations, indicating a significantly higher
+# accuracy compared to a single tree, as illustrated by the dashed line in the
+# plot.
 #
 # The misclassification error jitters because the `SAMME` algorithm uses the
 # discrete outputs of the weak learners to train the boosted model.
 #
 # The convergence of :class:`~sklearn.ensemble.AdaBoostClassifier` is mainly
-# influenced by the `learning_rate`, the number of weak learners used
-# (`n_estimators`), and the expressivity of the weak learners (e.g.
-# `max_leaf_nodes`).
+# influenced by the learning rate (i.e `learning_rate`), the number of weak
+# learners used (`n_estimators`), and the expressivity of the weak learners
+# (e.g. `max_leaf_nodes`).
 
 # %%
 # Errors and weights of the Weak Learners
 # ***************************************
 # As previously mentioned, `AdaBoost` is a forward stagewise additive model. We
-# can now focus on understanding the relationship between the attributed weights
-# of the weak learners and their statistical performance.
+# now focus on understanding the relationship between the attributed weights of
+# the weak learners and their statistical performance.
 #
-# We can use the fitted :class:`~sklearn.ensemble.AdaBoostClassifier`'s
-# attributes `estimator_errors_` and `estimator_weights_` to investigate this
-# link.
+# We use the fitted :class:`~sklearn.ensemble.AdaBoostClassifier`'s attributes
+# `estimator_errors_` and `estimator_weights_` to investigate this link.
 weak_learners_info = pd.DataFrame(
     {
         "Number of trees": range(1, n_estimators + 1),
@@ -223,19 +229,24 @@ fig.tight_layout()
 # means that our additive model will trust more a weak learner that makes
 # smaller errors (on the training set) by increasing its impact on the final
 # decision. Indeed, this exactly is the formulation of updating the base
-# estimators' weights after each iteration in AdaBoost:
+# estimators' weights after each iteration in AdaBoost.
+#
+# |details-start| Mathematical details |details-split|
+#
+# The weight associated with a weak learner trained at the stage :math:`m` is
+# inversely associated with its misclassification error such that:
 #
 # .. math:: \alpha^{(m)} = \log \frac{1 - err^{(m)}}{err^{(m)}} + \log (K - 1),
 #
 # where :math:`\alpha^{(m)}` and :math:`err^{(m)}` are the weight and the error
 # of the :math:`m` th weak learner, respectively, and :math:`K` is the number of
-# classes in our classification problem.
+# classes in our classification problem. |details-end|
 #
 # Another interesting observation boils down to the fact that the first weak
 # learners of the model make fewer errors than later weak learners of the
 # boosting chain.
 #
-# The intuition behind this observation is the following: Due to the sample
+# The intuition behind this observation is the following: due to the sample
 # reweighting, later classifiers are forced to try to classify more difficult or
 # noisy samples and to ignore already well classified samples. Therefore, the
 # overall error on the training set will increase. That's why the weak learner's
