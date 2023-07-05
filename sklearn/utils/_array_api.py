@@ -217,6 +217,19 @@ def _accept_device_cpu(func):
     return wrapped_func
 
 
+def to_device(a, device):
+    _, is_array_api_compliant = get_namespace(a)
+    if is_array_api_compliant:
+        # Do not import array_api_compat as it is a dependency of scikit-learn
+        # only when array_api_dispatch=True
+        import array_api_compat
+
+        return array_api_compat.to_device(a, device)
+    else:
+        # Nothing to do
+        return a
+
+
 class _NumPyAPIWrapper:
     """Array API compat wrapper for any numpy version
 

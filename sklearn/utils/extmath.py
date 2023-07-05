@@ -20,7 +20,7 @@ from scipy import linalg, sparse
 
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from . import check_random_state
-from ._array_api import _is_numpy_namespace, get_namespace
+from ._array_api import _is_numpy_namespace, get_namespace, to_device
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
@@ -271,13 +271,7 @@ def randomized_range_finder(
     # Move Q to device if needed only after converting to float32 if needed to
     # avoid allocating unnecessary memory on the device.
     if hasattr(A, "device"):
-        if not hasattr(Q, "to_device"):
-            # array_api_compat for PyTorch does not seem to make it possible
-            # to use the intended to_device API:
-            # https://data-apis.org/array-api/2022.12/design_topics/device_support.html
-            Q = xp.asarray(Q, device=A.device)
-        else:
-            Q = Q.to_device(A.device)
+        Q = to_device(Q, A.device)
 
     # Deal with "auto" mode
     if power_iteration_normalizer == "auto":
