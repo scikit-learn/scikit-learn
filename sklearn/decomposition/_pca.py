@@ -543,6 +543,13 @@ class PCA(_BasePCA):
         X -= self.mean_
 
         if not is_array_api_compliant:
+            # Use scipy.linalg with NumPy/SciPy inputs for the sake of not
+            # introducing unanticipated behavior changes. In the long run we
+            # could instead decide to always use xp.linalg.svd for all inputs,
+            # but that would make this code rely on numpy's SVD instead of
+            # scipy's. It's not 100% clear whether they use the same LAPACK
+            # solver by default though (assuming both are built against the
+            # same BLAS).
             U, S, Vt = linalg.svd(X, full_matrices=False)
         else:
             U, S, Vt = xp.linalg.svd(X, full_matrices=False)
