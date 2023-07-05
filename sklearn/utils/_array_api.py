@@ -102,8 +102,8 @@ def _is_numpy_namespace(xp):
 
 
 def _union1d(a, b, xp):
-    if xp.__name__ == "numpy":
-        return numpy.union1d(a, b)
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.union1d(a, b))
     assert a.ndim == b.ndim == 1
     return xp.unique_values(xp.concat([xp.unique_values(a), xp.unique_values(b)]))
 
