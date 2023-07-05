@@ -96,7 +96,9 @@ class BaseDistancesReductionDispatcher:
         """
 
         def is_numpy_c_ordered(X):
-            return hasattr(X, "flags") and X.flags.c_contiguous
+            if not hasattr(X, "flags"):
+                return False
+            return getattr(X.flags, "c_contiguous", False)
 
         def is_valid_sparse_matrix(X):
             return (
