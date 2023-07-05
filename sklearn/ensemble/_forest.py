@@ -2316,6 +2316,25 @@ class ExtraTreesClassifier(ForestClassifier):
 
         .. versionadded:: 1.4
 
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonically increasing
+          - 0: no constraint
+          - -1: monotonically decreasing
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multiclass classifications (i.e. when `n_classes > 2`),
+          - multioutput classifications (i.e. when `n_outputs_ > 1`),
+          - classifications trained on data with missing values.
+
+        The constraints hold over the probability of the positive class.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.ExtraTreesClassifier`

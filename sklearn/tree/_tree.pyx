@@ -364,7 +364,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "is_left": 1,
                         "impurity": split.impurity_left,
                         "n_constant_features": n_constant_features,
-                        "n_constant_features": n_constant_features,
                         "lower_bound": left_child_min,
                         "upper_bound": left_child_max,
                     })

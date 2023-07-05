@@ -71,7 +71,6 @@ cdef class BaseSplitter:
     #   +1: monotonic increase
     cdef const cnp.int8_t[:] monotonic_cst
     cdef bint with_monotonic_cst
-
     cdef const DOUBLE_t[:] sample_weight
 
     # The samples vector `samples` is maintained by the Splitter object such
