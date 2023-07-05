@@ -217,17 +217,39 @@ def _accept_device_cpu(func):
     return wrapped_func
 
 
-def to_device(a, device):
-    _, is_array_api_compliant = get_namespace(a)
-    if is_array_api_compliant:
-        # Do not import array_api_compat as it is a dependency of scikit-learn
-        # only when array_api_dispatch=True
+def to_device(a, device=None):
+    """Move array to device.
+
+    This helper delegates to `array_api_compat.to_device` only when `device` is
+    not None. This is useful to avoid unnecessary imports of `array_api_compat`
+    when `array_api_dispatch is False`, in which case the caller is expected to
+    always pass `device=None`.
+
+    Parameters
+    ----------
+    a : array-like or sparse matrix
+        The input data to move to `device` when not None.
+
+    device : object
+        Device object typically retrieved via the idiom
+        `getattr(some_other_array, "device", None)` in the caller to make it
+        possible to safely call this both on NumPy arrays /  and Array API
+        containers.
+
+    Returns
+    -------
+    a : array
+        Either the unchanged input array or a copy of it on the specified
+        device.
+    """
+    if device is None:
+        return a
+    else:
+        # Lazy import array_api_compat as it is a dependency of scikit-learn
+        # only when array_api_dispatch=True.
         import array_api_compat
 
         return array_api_compat.to_device(a, device)
-    else:
-        # Nothing to do
-        return a
 
 
 class _NumPyAPIWrapper:

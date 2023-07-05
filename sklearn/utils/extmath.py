@@ -270,8 +270,7 @@ def randomized_range_finder(
 
     # Move Q to device if needed only after converting to float32 if needed to
     # avoid allocating unnecessary memory on the device.
-    if hasattr(A, "device"):
-        Q = to_device(Q, A.device)
+    Q = to_device(Q, getattr(A, "device", None))
 
     # Deal with "auto" mode
     if power_iteration_normalizer == "auto":
