@@ -38,13 +38,11 @@ is prone to overfitting. The use of the power transform is then recommended.
 #         Nicolas Hug <contact@nicolas-hug.com>
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.preprocessing import PowerTransformer
-from sklearn.preprocessing import QuantileTransformer
 from sklearn.model_selection import train_test_split
-
+from sklearn.preprocessing import PowerTransformer, QuantileTransformer
 
 N_SAMPLES = 1000
 FONT_SIZE = 6

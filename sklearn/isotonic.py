@@ -3,23 +3,30 @@
 #          Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # License: BSD 3 clause
 
+import math
+import warnings
+from numbers import Real
+
 import numpy as np
 from scipy import interpolate
 from scipy.stats import spearmanr
-from numbers import Real
-import warnings
-import math
 
-from .base import BaseEstimator, TransformerMixin, RegressorMixin
-from .utils import check_array, check_consistent_length
-from .utils.validation import _check_sample_weight, check_is_fitted
-from .utils._param_validation import Interval, StrOptions
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
-
+from .base import BaseEstimator, RegressorMixin, TransformerMixin, _fit_context
+from .utils import check_array, check_consistent_length
+from .utils._param_validation import Interval, StrOptions, validate_params
+from .utils.validation import _check_sample_weight, check_is_fitted
 
 __all__ = ["check_increasing", "isotonic_regression", "IsotonicRegression"]
 
 
+@validate_params(
+    {
+        "x": ["array-like"],
+        "y": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def check_increasing(x, y):
     """Determine whether y is monotonically correlated with x.
 
@@ -79,6 +86,16 @@ def check_increasing(x, y):
     return increasing_bool
 
 
+@validate_params(
+    {
+        "y": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "y_min": [Interval(Real, None, None, closed="both"), None],
+        "y_max": [Interval(Real, None, None, closed="both"), None],
+        "increasing": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def isotonic_regression(
     y, *, sample_weight=None, y_min=None, y_max=None, increasing=True
 ):
@@ -109,7 +126,7 @@ def isotonic_regression(
 
     Returns
     -------
-    y_ : list of floats
+    y_ : ndarray of shape (n_samples,)
         Isotonic fit of y.
 
     References
@@ -310,6 +327,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             # prediction speed).
             return X, y
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
 
@@ -338,7 +356,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         X is stored for future use, as :meth:`transform` needs X to interpolate
         new input data.
         """
-        self._validate_params()
         check_params = dict(accept_sparse=False, ensure_2d=False)
         X = check_array(
             X, input_name="X", dtype=[np.float64, np.float32], **check_params

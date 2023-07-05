@@ -1,39 +1,45 @@
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import csr_matrix
 import pytest
+from scipy.sparse import csr_matrix
 
-from sklearn.base import BaseEstimator
+from sklearn._config import config_context, get_config
+from sklearn.base import BaseEstimator, _fit_context
 from sklearn.model_selection import LeaveOneOut
 from sklearn.utils import deprecated
-from sklearn.utils._param_validation import Hidden
-from sklearn.utils._param_validation import Interval
-from sklearn.utils._param_validation import Options
-from sklearn.utils._param_validation import StrOptions
-from sklearn.utils._param_validation import _ArrayLikes
-from sklearn.utils._param_validation import _Booleans
-from sklearn.utils._param_validation import _Callables
-from sklearn.utils._param_validation import _CVObjects
-from sklearn.utils._param_validation import _InstancesOf
-from sklearn.utils._param_validation import MissingValues
-from sklearn.utils._param_validation import _PandasNAConstraint
-from sklearn.utils._param_validation import _IterablesNotString
-from sklearn.utils._param_validation import _NoneConstraint
-from sklearn.utils._param_validation import _RandomStates
-from sklearn.utils._param_validation import _SparseMatrices
-from sklearn.utils._param_validation import _VerboseHelper
-from sklearn.utils._param_validation import HasMethods
-from sklearn.utils._param_validation import make_constraint
-from sklearn.utils._param_validation import generate_invalid_param_val
-from sklearn.utils._param_validation import generate_valid_param
-from sklearn.utils._param_validation import validate_params
-from sklearn.utils._param_validation import InvalidParameterError
-from sklearn.utils._param_validation import RealNotInt
+from sklearn.utils._param_validation import (
+    HasMethods,
+    Hidden,
+    Interval,
+    InvalidParameterError,
+    MissingValues,
+    Options,
+    RealNotInt,
+    StrOptions,
+    _ArrayLikes,
+    _Booleans,
+    _Callables,
+    _CVObjects,
+    _InstancesOf,
+    _IterablesNotString,
+    _NoneConstraint,
+    _PandasNAConstraint,
+    _RandomStates,
+    _SparseMatrices,
+    _VerboseHelper,
+    generate_invalid_param_val,
+    generate_valid_param,
+    make_constraint,
+    validate_params,
+)
 
 
 # Some helpers for the tests
-@validate_params({"a": [Real], "b": [Real], "c": [Real], "d": [Real]})
+@validate_params(
+    {"a": [Real], "b": [Real], "c": [Real], "d": [Real]},
+    prefer_skip_nested_validation=True,
+)
 def _func(a, b=0, *args, c, d=0, **kwargs):
     """A function to test the validation of functions."""
 
@@ -41,12 +47,12 @@ def _func(a, b=0, *args, c, d=0, **kwargs):
 class _Class:
     """A class to test the _InstancesOf constraint and the validation of methods."""
 
-    @validate_params({"a": [Real]})
+    @validate_params({"a": [Real]}, prefer_skip_nested_validation=True)
     def _method(self, a):
         """A validated method"""
 
     @deprecated()
-    @validate_params({"a": [Real]})
+    @validate_params({"a": [Real]}, prefer_skip_nested_validation=True)
     def _deprecated_method(self, a):
         """A deprecated validated method"""
 
@@ -59,8 +65,9 @@ class _Estimator(BaseEstimator):
     def __init__(self, a):
         self.a = a
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X=None, y=None):
-        self._validate_params()
+        pass
 
 
 @pytest.mark.parametrize("interval_type", [Integral, Real])
@@ -466,7 +473,7 @@ def test_validate_params_missing_params():
     constraints
     """
 
-    @validate_params({"a": [int]})
+    @validate_params({"a": [int]}, prefer_skip_nested_validation=True)
     def func(a, b):
         pass
 
@@ -480,7 +487,7 @@ def test_decorate_validated_function():
     with pytest.warns(FutureWarning, match="Function _func is deprecated"):
         decorated_function(1, 2, c=3)
 
-    # outer decorator does not interfer with validation
+    # outer decorator does not interfere with validation
     with pytest.warns(FutureWarning, match="Function _func is deprecated"):
         with pytest.raises(
             InvalidParameterError, match=r"The 'c' parameter of _func must be"
@@ -524,7 +531,9 @@ def test_stroptions_deprecated_subset():
 def test_hidden_constraint():
     """Check that internal constraints are not exposed in the error message."""
 
-    @validate_params({"param": [Hidden(list), dict]})
+    @validate_params(
+        {"param": [Hidden(list), dict]}, prefer_skip_nested_validation=True
+    )
     def f(param):
         pass
 
@@ -546,7 +555,10 @@ def test_hidden_constraint():
 def test_hidden_stroptions():
     """Check that we can have 2 StrOptions constraints, one being hidden."""
 
-    @validate_params({"param": [StrOptions({"auto"}), Hidden(StrOptions({"warn"}))]})
+    @validate_params(
+        {"param": [StrOptions({"auto"}), Hidden(StrOptions({"warn"}))]},
+        prefer_skip_nested_validation=True,
+    )
     def f(param):
         pass
 
@@ -578,7 +590,7 @@ def test_boolean_constraint_deprecated_int():
     validation when using an int for a parameter accepting a boolean.
     """
 
-    @validate_params({"param": ["boolean"]})
+    @validate_params({"param": ["boolean"]}, prefer_skip_nested_validation=True)
     def f(param):
         pass
 
@@ -596,7 +608,10 @@ def test_boolean_constraint_deprecated_int():
 def test_no_validation():
     """Check that validation can be skipped for a parameter."""
 
-    @validate_params({"param1": [int, None], "param2": "no_validation"})
+    @validate_params(
+        {"param1": [int, None], "param2": "no_validation"},
+        prefer_skip_nested_validation=True,
+    )
     def f(param1=None, param2=None):
         pass
 
@@ -672,3 +687,71 @@ def test_real_not_int():
     assert not isinstance(1, RealNotInt)
     assert isinstance(np.float64(1), RealNotInt)
     assert not isinstance(np.int64(1), RealNotInt)
+
+
+def test_skip_param_validation():
+    """Check that param validation can be skipped using config_context."""
+
+    @validate_params({"a": [int]}, prefer_skip_nested_validation=True)
+    def f(a):
+        pass
+
+    with pytest.raises(InvalidParameterError, match="The 'a' parameter"):
+        f(a="1")
+
+    # does not raise
+    with config_context(skip_parameter_validation=True):
+        f(a="1")
+
+
+@pytest.mark.parametrize("prefer_skip_nested_validation", [True, False])
+def test_skip_nested_validation(prefer_skip_nested_validation):
+    """Check that nested validation can be skipped."""
+
+    @validate_params({"a": [int]}, prefer_skip_nested_validation=True)
+    def f(a):
+        pass
+
+    @validate_params(
+        {"b": [int]},
+        prefer_skip_nested_validation=prefer_skip_nested_validation,
+    )
+    def g(b):
+        # calls f with a bad parameter type
+        return f(a="invalid_param_value")
+
+    # Validation for g is never skipped.
+    with pytest.raises(InvalidParameterError, match="The 'b' parameter"):
+        g(b="invalid_param_value")
+
+    if prefer_skip_nested_validation:
+        g(b=1)  # does not raise because inner f is not validated
+    else:
+        with pytest.raises(InvalidParameterError, match="The 'a' parameter"):
+            g(b=1)
+
+
+@pytest.mark.parametrize(
+    "skip_parameter_validation, prefer_skip_nested_validation, expected_skipped",
+    [
+        (True, True, True),
+        (True, False, True),
+        (False, True, True),
+        (False, False, False),
+    ],
+)
+def test_skip_nested_validation_and_config_context(
+    skip_parameter_validation, prefer_skip_nested_validation, expected_skipped
+):
+    """Check interaction between global skip and local skip."""
+
+    @validate_params(
+        {"a": [int]}, prefer_skip_nested_validation=prefer_skip_nested_validation
+    )
+    def g(a):
+        return get_config()["skip_parameter_validation"]
+
+    with config_context(skip_parameter_validation=skip_parameter_validation):
+        actual_skipped = g(1)
+
+    assert actual_skipped == expected_skipped

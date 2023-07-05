@@ -2,65 +2,57 @@
 Testing for the tree module (sklearn.tree).
 """
 import copy
-import pickle
-from itertools import product, chain
-import struct
-import io
 import copyreg
-
-import pytest
-import numpy as np
-from numpy.testing import assert_allclose
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import coo_matrix
+import io
+import pickle
+import struct
+from itertools import chain, product
 
 import joblib
+import numpy as np
+import pytest
 from joblib.numpy_pickle import NumpyPickler
+from numpy.testing import assert_allclose
+from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 
-from sklearn.random_projection import _sparse_random_matrix
-
+from sklearn import datasets, tree
 from sklearn.dummy import DummyRegressor
-
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import mean_poisson_deviance
-
+from sklearn.exceptions import NotFittedError
+from sklearn.metrics import accuracy_score, mean_poisson_deviance, mean_squared_error
 from sklearn.model_selection import train_test_split
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import create_memmap_backed_data
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import skip_if_32bit
-
+from sklearn.random_projection import _sparse_random_matrix
+from sklearn.tree import (
+    DecisionTreeClassifier,
+    DecisionTreeRegressor,
+    ExtraTreeClassifier,
+    ExtraTreeRegressor,
+)
+from sklearn.tree._classes import (
+    CRITERIA_CLF,
+    CRITERIA_REG,
+    DENSE_SPLITTERS,
+    SPARSE_SPLITTERS,
+)
+from sklearn.tree._tree import (
+    NODE_DTYPE,
+    TREE_LEAF,
+    TREE_UNDEFINED,
+    _check_n_classes,
+    _check_node_ndarray,
+    _check_value_ndarray,
+)
+from sklearn.tree._tree import Tree as CythonTree
+from sklearn.utils import _IS_32BIT, compute_sample_weight
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    create_memmap_backed_data,
+    ignore_warnings,
+    skip_if_32bit,
+)
 from sklearn.utils.estimator_checks import check_sample_weights_invariance
 from sklearn.utils.validation import check_random_state
-from sklearn.utils import _IS_32BIT
-
-from sklearn.exceptions import NotFittedError
-
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.tree import ExtraTreeClassifier
-from sklearn.tree import ExtraTreeRegressor
-
-from sklearn import tree
-from sklearn.tree._tree import TREE_LEAF, TREE_UNDEFINED
-from sklearn.tree._tree import Tree as CythonTree
-from sklearn.tree._tree import _check_n_classes
-from sklearn.tree._tree import _check_value_ndarray
-from sklearn.tree._tree import _check_node_ndarray
-from sklearn.tree._tree import NODE_DTYPE
-
-from sklearn.tree._classes import CRITERIA_CLF
-from sklearn.tree._classes import CRITERIA_REG
-from sklearn import datasets
-
-from sklearn.utils import compute_sample_weight
-from sklearn.tree._classes import DENSE_SPLITTERS, SPARSE_SPLITTERS
-
 
 CLF_CRITERIONS = ("gini", "log_loss")
 REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
@@ -2367,7 +2359,7 @@ def test_splitter_serializable(Splitter):
     n_outputs, n_classes = 2, np.array([3, 2], dtype=np.intp)
 
     criterion = CRITERIA_CLF["gini"](n_outputs, n_classes)
-    splitter = Splitter(criterion, max_features, 5, 0.5, rng)
+    splitter = Splitter(criterion, max_features, 5, 0.5, rng, monotonic_cst=None)
     splitter_serialize = pickle.dumps(splitter)
 
     splitter_back = pickle.loads(splitter_serialize)
@@ -2414,3 +2406,223 @@ def test_min_sample_split_1_error(Tree):
     )
     with pytest.raises(ValueError, match=msg):
         tree.fit(X, y)
+
+
+@pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
+def test_missing_values_on_equal_nodes_no_missing(criterion):
+    """Check missing values goes to correct node during predictions"""
+    X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
+    y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
+
+    dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
+    dtc.fit(X, y)
+
+    # Goes to right node because it has the most data points
+    y_pred = dtc.predict([[np.nan]])
+    assert_allclose(y_pred, [np.mean(y[-5:])])
+
+    # equal number of elements in both nodes
+    X_equal = X[:-1]
+    y_equal = y[:-1]
+
+    dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
+    dtc.fit(X_equal, y_equal)
+
+    # Goes to right node because the implementation sets:
+    # missing_go_to_left = n_left > n_right, which is False
+    y_pred = dtc.predict([[np.nan]])
+    assert_allclose(y_pred, [np.mean(y_equal[-4:])])
+
+
+@pytest.mark.parametrize("criterion", ["entropy", "gini"])
+def test_missing_values_best_splitter_three_classes(criterion):
+    """Test when missing values are uniquely present in a class among 3 classes."""
+    missing_values_class = 0
+    X = np.array([[np.nan] * 4 + [0, 1, 2, 3, 8, 9, 11, 12]]).T
+    y = np.array([missing_values_class] * 4 + [1] * 4 + [2] * 4)
+    dtc = DecisionTreeClassifier(random_state=42, max_depth=2, criterion=criterion)
+    dtc.fit(X, y)
+
+    X_test = np.array([[np.nan, 3, 12]]).T
+    y_nan_pred = dtc.predict(X_test)
+    # Missing values necessarily are associated to the observed class.
+    assert_array_equal(y_nan_pred, [missing_values_class, 1, 2])
+
+
+@pytest.mark.parametrize("criterion", ["entropy", "gini"])
+def test_missing_values_best_splitter_to_left(criterion):
+    """Missing values spanning only one class at fit-time must make missing
+    values at predict-time be classified has belonging to this class."""
+    X = np.array([[np.nan] * 4 + [0, 1, 2, 3, 4, 5]]).T
+    y = np.array([0] * 4 + [1] * 6)
+
+    dtc = DecisionTreeClassifier(random_state=42, max_depth=2, criterion=criterion)
+    dtc.fit(X, y)
+
+    X_test = np.array([[np.nan, 5, np.nan]]).T
+    y_pred = dtc.predict(X_test)
+
+    assert_array_equal(y_pred, [0, 1, 0])
+
+
+@pytest.mark.parametrize("criterion", ["entropy", "gini"])
+def test_missing_values_best_splitter_to_right(criterion):
+    """Missing values and non-missing values sharing one class at fit-time
+    must make missing values at predict-time be classified has belonging
+    to this class."""
+    X = np.array([[np.nan] * 4 + [0, 1, 2, 3, 4, 5]]).T
+    y = np.array([1] * 4 + [0] * 4 + [1] * 2)
+
+    dtc = DecisionTreeClassifier(random_state=42, max_depth=2, criterion=criterion)
+    dtc.fit(X, y)
+
+    X_test = np.array([[np.nan, 1.2, 4.8]]).T
+    y_pred = dtc.predict(X_test)
+
+    assert_array_equal(y_pred, [1, 0, 1])
+
+
+@pytest.mark.parametrize("criterion", ["entropy", "gini"])
+def test_missing_values_missing_both_classes_has_nan(criterion):
+    """Check behavior of missing value when there is one missing value in each class."""
+    X = np.array([[1, 2, 3, 5, np.nan, 10, 20, 30, 60, np.nan]]).T
+    y = np.array([0] * 5 + [1] * 5)
+
+    dtc = DecisionTreeClassifier(random_state=42, max_depth=1, criterion=criterion)
+    dtc.fit(X, y)
+    X_test = np.array([[np.nan, 2.3, 34.2]]).T
+    y_pred = dtc.predict(X_test)
+
+    # Missing value goes to the class at the right (here 1) because the implementation
+    # searches right first.
+    assert_array_equal(y_pred, [1, 0, 1])
+
+
+@pytest.mark.parametrize("is_sparse", [True, False])
+@pytest.mark.parametrize(
+    "tree",
+    [
+        DecisionTreeClassifier(splitter="random"),
+        DecisionTreeRegressor(criterion="absolute_error"),
+    ],
+)
+def test_missing_value_errors(is_sparse, tree):
+    """Check unsupported configurations for missing values."""
+
+    X = np.array([[1, 2, 3, 5, np.nan, 10, 20, 30, 60, np.nan]]).T
+    y = np.array([0] * 5 + [1] * 5)
+
+    if is_sparse:
+        X = csr_matrix(X)
+
+    with pytest.raises(ValueError, match="Input X contains NaN"):
+        tree.fit(X, y)
+
+
+def test_missing_values_poisson():
+    """Smoke test for poisson regression and missing values."""
+    X, y = diabetes.data.copy(), diabetes.target
+
+    # Set some values missing
+    X[::5, 0] = np.nan
+    X[::6, -1] = np.nan
+
+    reg = DecisionTreeRegressor(criterion="poisson", random_state=42)
+    reg.fit(X, y)
+
+    y_pred = reg.predict(X)
+    assert (y_pred >= 0.0).all()
+
+
+@pytest.mark.parametrize(
+    "make_data, Tree",
+    [
+        (datasets.make_regression, DecisionTreeRegressor),
+        (datasets.make_classification, DecisionTreeClassifier),
+    ],
+)
+@pytest.mark.parametrize("sample_weight_train", [None, "ones"])
+def test_missing_values_is_resilience(make_data, Tree, sample_weight_train):
+    """Check that trees can deal with missing values and have decent performance."""
+
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 1000, 50
+    X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
+
+    # Create dataset with missing values
+    X_missing = X.copy()
+    X_missing[rng.choice([False, True], size=X.shape, p=[0.9, 0.1])] = np.nan
+    X_missing_train, X_missing_test, y_train, y_test = train_test_split(
+        X_missing, y, random_state=0
+    )
+
+    if sample_weight_train == "ones":
+        sample_weight_train = np.ones(X_missing_train.shape[0])
+
+    # Train tree with missing values
+    tree_with_missing = Tree(random_state=rng)
+    tree_with_missing.fit(X_missing_train, y_train, sample_weight=sample_weight_train)
+    score_with_missing = tree_with_missing.score(X_missing_test, y_test)
+
+    # Train tree without missing values
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    tree = Tree(random_state=rng)
+    tree.fit(X_train, y_train, sample_weight=sample_weight_train)
+    score_without_missing = tree.score(X_test, y_test)
+
+    # Score is still 90 percent of the tree's score that had no missing values
+    assert score_with_missing >= 0.9 * score_without_missing
+
+
+def test_missing_value_is_predictive():
+    """Check the tree learns when only the missing value is predictive."""
+    rng = np.random.RandomState(0)
+    n_samples = 1000
+
+    X = rng.standard_normal(size=(n_samples, 10))
+    y = rng.randint(0, high=2, size=n_samples)
+
+    # Create a predictive feature using `y` and with some noise
+    X_random_mask = rng.choice([False, True], size=n_samples, p=[0.95, 0.05])
+    y_mask = y.copy().astype(bool)
+    y_mask[X_random_mask] = ~y_mask[X_random_mask]
+
+    X_predictive = rng.standard_normal(size=n_samples)
+    X_predictive[y_mask] = np.nan
+
+    X[:, 5] = X_predictive
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
+    tree = DecisionTreeClassifier(random_state=rng).fit(X_train, y_train)
+
+    assert tree.score(X_train, y_train) >= 0.85
+    assert tree.score(X_test, y_test) >= 0.85
+
+
+@pytest.mark.parametrize(
+    "make_data, Tree",
+    [
+        (datasets.make_regression, DecisionTreeRegressor),
+        (datasets.make_classification, DecisionTreeClassifier),
+    ],
+)
+def test_sample_weight_non_uniform(make_data, Tree):
+    """Check sample weight is correctly handled with missing values."""
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 1000, 10
+    X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
+
+    # Create dataset with missing values
+    X[rng.choice([False, True], size=X.shape, p=[0.9, 0.1])] = np.nan
+
+    # Zero sample weight is the same as removing the sample
+    sample_weight = np.ones(X.shape[0])
+    sample_weight[::2] = 0.0
+
+    tree_with_sw = Tree(random_state=0)
+    tree_with_sw.fit(X, y, sample_weight=sample_weight)
+
+    tree_samples_removed = Tree(random_state=0)
+    tree_samples_removed.fit(X[1::2, :], y[1::2])
+
+    assert_allclose(tree_samples_removed.predict(X), tree_with_sw.predict(X))
