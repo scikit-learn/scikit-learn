@@ -71,7 +71,6 @@ TODO: update at the time of the release.
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
   initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
 
-
 :mod:`sklearn.tree`
 ...................
 
@@ -100,3 +99,11 @@ TODO: update at the time of the release.
 
 - |Fix| :func:`feature_selection.mutual_info_regression` now correctly computes the
   result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+
+:mod:`sklearn.metrics`
+.......................
+
+- |Fix| The `"minkowski"` metric of :class:`metrics.DistanceMetric` now correctly allows
+  parameter `p` to accept values greater than 0 and less than 1.
+  :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
