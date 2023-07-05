@@ -92,10 +92,10 @@ Weighted scoring and unweighted fitting
 ---------------------------------------
 
 When passing metadata such as ``sample_weight`` around, all ``sample_weight``
-:term:`consumer`s require weights to be either explicitly requested or not
-requested (i.e. ``True`` or ``False``) when used in another :term:`router` such
-as a :class:`~pipeline.Pipeline` or a ``*GridSearchCV``. To perform an
-unweighted fit, we need to configure
+:term:`consumers <consumer>` require weights to be either explicitly requested
+or not requested (i.e. ``True`` or ``False``) when used in another
+:term:`router` such as a :class:`~pipeline.Pipeline` or a ``*GridSearchCV``. To
+perform an unweighted fit, we need to configure
 :class:`~linear_model.LogisticRegressionCV` to not request sample weights, so
 that :func:`~model_selection.cross_validate` does not pass the weights along::
 

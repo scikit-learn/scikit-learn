@@ -1048,12 +1048,12 @@ Metadata Routing
         e.g. to a :term:`scorer` or a :term:`CV splitter`.
 
     router
-        An object which routes metadata to :term:`consumer`s. This object is
-        usually a :term:`meta-estimator`, e.g. :class:`~pipeline.Pipeline` or
-        :class:`~model_selection.GridSearchCV`. Some routers can also be a
-        consumer. This happens for example when a meta-estimator uses the
-        given :term:`groups`, and it also passes it along to some of its
-        sub-objects, such as a :term:`CV splitter`.
+        An object which routes metadata to :term:`consumers <consumer>`. This
+        object is usually a :term:`meta-estimator`, e.g.
+        :class:`~pipeline.Pipeline` or :class:`~model_selection.GridSearchCV`.
+        Some routers can also be a consumer. This happens for example when a
+        meta-estimator uses the given :term:`groups`, and it also passes it
+        along to some of its sub-objects, such as a :term:`CV splitter`.
 
 Please refer to :ref:`Metadta Routing User Guide <metadata_routing>` for more
 information.
