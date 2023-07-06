@@ -42,8 +42,9 @@ classification, in particular for tabular data.
   magnitude faster** than the latter when the number of samples is
   larger than tens of thousands of samples.
 
-  The Hist.. version also have built-in support for missing values, which
-  avoids the need for an imputer.
+  Missing values and categorical data are natively supported by the
+  Hist... version, removing the need for additional preprocessing such as
+  imputation.
 
   :class:`GradientBoostingClassifier` and
   :class:`GradientBoostingRegressor`, might be preferred for small sample
