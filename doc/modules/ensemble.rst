@@ -845,7 +845,7 @@ based on permutation of the features.
 
 .. _forest:
 
-Random forests and other randomized trees ensembles
+Random forests and other randomized tree ensembles
 ===================================================
 
 The :mod:`sklearn.ensemble` module includes two averaging algorithms based
