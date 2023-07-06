@@ -395,7 +395,7 @@ samples are implicitly ordered. Building a histogram has a
 :math:`\mathcal{O}(n)` complexity, so the node splitting procedure has a
 :math:`\mathcal{O}(n_\text{features} \times n)` complexity, much smaller
 than the previous one. In addition, instead of considering :math:`n` split
-points, we consider only ``max_bins`` split points, which is much
+points, we consider only ``max_bins`` split points, which might be much
 smaller.
 
 In order to build histograms, the input data `X` needs to be binned into
