@@ -231,7 +231,7 @@ categorical features::
 
   >>> gbdt = HistGradientBoostingClassifier(categorical_features=[0])
 
-The cardinality of each categorical feature should be less than the `max_bins`
+The cardinality of each categorical feature must be less than the `max_bins`
 parameter, and each categorical feature is expected to be encoded in
 `[0, max_bins - 1]`. To that end, it might be useful to pre-process the data
 with an :class:`~sklearn.preprocessing.OrdinalEncoder` as done in
