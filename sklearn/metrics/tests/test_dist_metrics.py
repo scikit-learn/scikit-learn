@@ -77,15 +77,14 @@ def test_cdist(metric_param_grid, X, Y):
             # with scipy
             rtol_dict = {"rtol": 1e-6}
 
-        # TODO: Remove when scipy minimum version is upgraded to 1.7.0
-        # scipy supports 0<p<1 for minkowski metric in 1.7
+        # TODO: Remove when scipy minimum version >= 1.7.0
+        # scipy supports 0<p<1 for minkowski metric >= 1.7.0
         if metric == "minkowski":
             # default value of p for Minkowski is 2
             p = float(kwargs.get("p", 2))
+            print("p", p)
             if sp_version < parse_version("1.7.0") and p < 1:
-                msg = "p must be at least 1"
-                with pytest.raises(ValueError, match=msg):
-                    D_scipy_cdist = cdist(X, Y, metric, **kwargs)
+                pytest.skip("scipy does not support 0<p<1 for minkowski metric < 1.7.0")
                 return
 
         D_scipy_cdist = cdist(X, Y, metric, **kwargs)
@@ -162,17 +161,14 @@ def test_pdist(metric_param_grid, X):
             # with scipy
             rtol_dict = {"rtol": 1e-6}
 
-        # TODO: Remove when scipy minimum version is upgraded to 1.7.0
-        # scipy supports 0<p<1 for minkowski metric in 1.7
+        # TODO: Remove when scipy minimum version >= 1.7.0
+        # scipy supports 0<p<1 for minkowski metric >= 1.7.0
         if metric == "minkowski":
             # default value of p for Minkowski is 2
             p = float(kwargs.get("p", 2))
             if sp_version < parse_version("1.7.0") and p < 1:
-                msg = "p must be at least 1"
-                with pytest.raises(ValueError, match=msg):
-                    D_scipy_pdist = cdist(X, X, metric, **kwargs)
+                pytest.skip("scipy does not support 0<p<1 for minkowski metric < 1.7.0")
                 return
-
         D_scipy_pdist = cdist(X, X, metric, **kwargs)
 
         dm = DistanceMetric.get_metric(metric, X.dtype, **kwargs)
