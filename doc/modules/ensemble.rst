@@ -83,7 +83,7 @@ are not yet supported, for instance some loss functions.
  * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
 
 Usage
-^^^^^^
+^^^^^
 
 Most of the parameters are unchanged from
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`.
