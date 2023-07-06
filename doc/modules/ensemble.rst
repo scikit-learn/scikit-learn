@@ -321,7 +321,7 @@ Also, monotonic constraints are not supported for multiclass classification.
 Interaction constraints
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-A priori, the histogram gradient boosting trees are allowed to use any feature
+A priori, the histogram gradient boosted trees are allowed to use any feature
 to split a node into child nodes. This creates so called interactions between
 features, i.e. usage of different features as split along a branch. Sometimes,
 one wants to restrict the possible interactions, see [Mayer2022]_. This can be
