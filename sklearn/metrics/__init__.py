@@ -62,8 +62,8 @@ from ._regression import (
     mean_tweedie_deviance,
     median_absolute_error,
     r2_score,
-    root_mean_squared_log_error,
     root_mean_squared_error,
+    root_mean_squared_log_error,
 )
 from ._scorer import check_scoring, get_scorer, get_scorer_names, make_scorer
 from .cluster import (
