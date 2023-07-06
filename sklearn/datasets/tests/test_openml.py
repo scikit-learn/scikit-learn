@@ -979,8 +979,14 @@ def test_fetch_openml_types_inference(
 @pytest.mark.parametrize(
     "params, err_msg",
     [
-        ({"parser": "unknown"}, "`parser` must be one of"),
-        ({"as_frame": "unknown"}, "`as_frame` must be one of"),
+        (
+            {"parser": "unknown"},
+            "The 'parser' parameter of fetch_openml must be a str among",
+        ),
+        (
+            {"as_frame": "unknown"},
+            "The 'as_frame' parameter of fetch_openml must be an instance",
+        ),
     ],
 )
 def test_fetch_openml_validation_parameter(monkeypatch, params, err_msg):
@@ -1258,17 +1264,17 @@ def test_fetch_openml_error(
         (
             {"data_id": -1, "name": None, "version": "version"},
             ValueError,
-            "Dataset data_id=-1 and version=version passed, but you can only",
+            "The 'version' parameter of fetch_openml must be an int in the range",
         ),
         (
             {"data_id": -1, "name": "nAmE"},
             ValueError,
-            "Dataset data_id=-1 and name=name passed, but you can only",
+            "The 'data_id' parameter of fetch_openml must be an int in the range",
         ),
         (
             {"data_id": -1, "name": "nAmE", "version": "version"},
             ValueError,
-            "Dataset data_id=-1 and name=name passed, but you can only",
+            "The 'version' parameter of fetch_openml must be an int",
         ),
         (
             {},
