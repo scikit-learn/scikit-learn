@@ -2420,3 +2420,22 @@ def test_search_cv_verbose_3(capsys, return_train_score):
     else:
         match = re.findall(r"score=[\d\.]+", captured)
     assert len(match) == 3
+
+
+def test_search_estimator_param():
+    X, y = make_classification(random_state=42)
+
+    params = {"clf": [LinearSVC(dual="auto")], "clf__C": [0.01]}
+    orig_C = params["clf"][0].C
+
+    pipe = Pipeline([("trs", MinimalTransformer()), ("clf", None)])
+
+    GridSearchCV(
+        pipe,
+        param_grid=params,
+        refit=True,
+        cv=2,
+        scoring="accuracy",
+    ).fit(X, y)
+
+    assert params["clf"][0].C == orig_C
