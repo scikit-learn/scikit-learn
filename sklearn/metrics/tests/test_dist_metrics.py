@@ -15,6 +15,7 @@ from sklearn.metrics._dist_metrics import (
 )
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose, create_memmap_backed_data
+from sklearn.utils.fixes import parse_version, sp_version
 
 
 def dist_func(x1, x2, p):
@@ -75,6 +76,17 @@ def test_cdist(metric_param_grid, X, Y):
             # TODO: Inspect slight numerical discrepancy
             # with scipy
             rtol_dict = {"rtol": 1e-6}
+
+        # TODO: Remove when scipy minimum version is upgraded to 1.7.0
+        # scipy supports 0<p<1 for minkowski metric in 1.7
+        if metric == "minkowski":
+            # default value of p for Minkowski is 2
+            p = float(kwargs.get("p", 2))
+            if sp_version < parse_version("1.7.0") and p < 1:
+                msg = "p must be at least 1"
+                with pytest.raises(ValueError, match=msg):
+                    D_scipy_cdist = cdist(X, Y, metric, **kwargs)
+                return
 
         D_scipy_cdist = cdist(X, Y, metric, **kwargs)
 
@@ -149,6 +161,17 @@ def test_pdist(metric_param_grid, X):
             # TODO: Inspect slight numerical discrepancy
             # with scipy
             rtol_dict = {"rtol": 1e-6}
+
+        # TODO: Remove when scipy minimum version is upgraded to 1.7.0
+        # scipy supports 0<p<1 for minkowski metric in 1.7
+        if metric == "minkowski":
+            # default value of p for Minkowski is 2
+            p = float(kwargs.get("p", 2))
+            if sp_version < parse_version("1.7.0") and p < 1:
+                msg = "p must be at least 1"
+                with pytest.raises(ValueError, match=msg):
+                    D_scipy_pdist = cdist(X, X, metric, **kwargs)
+                return
 
         D_scipy_pdist = cdist(X, X, metric, **kwargs)
 
