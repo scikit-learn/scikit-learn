@@ -360,7 +360,7 @@ Low-level parallelism
 
 
 :class:`HistGradientBoostingClassifier` and
-:class:`HistGradientBoostingRegressor` have implementations that use OpenMP
+:class:`HistGradientBoostingRegressor` use OpenMP
 for parallelization through Cython. For more details on how to control the
 number of threads, please refer to our :ref:`parallelism` notes.
 
