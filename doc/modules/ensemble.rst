@@ -38,7 +38,7 @@ classification, in particular for tabular data.
   Scikit-learn provides two implementations of gradient-boosted trees:
   :class:`HistGradientBoostingClassifier` vs
   :class:`GradientBoostingClassifier` for classification, and the
-  corresponding classes for regression. The former can be **order of
+  corresponding classes for regression. The former can be **orders of
   magnitude faster** than the latter when the number of samples is
   larger than tens of thousands of samples.
 
