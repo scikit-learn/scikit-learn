@@ -138,7 +138,7 @@ print(
 # as many iterations as the number of fitted estimator (i.e. corresponding to
 # `n_estimators`). At iteration `n`, the predictions of AdaBoost only use the
 # `n` first weak learners. We compare these predictions with the true
-# predictions `y_test` and we therefore conclude on benefit (or not) of adding a
+# predictions `y_test` and we, therefore, conclude on the benefit (or not) of adding a
 # new weak learner into the chain.
 #
 # We plot the misclassification error for the different stages:
@@ -194,7 +194,7 @@ plt.show()
 # %%
 # Errors and weights of the Weak Learners
 # ***************************************
-# As previously mentioned, `AdaBoost` is a forward stagewise additive model. We
+# As previously mentioned, AdaBoost is a forward stagewise additive model. We
 # now focus on understanding the relationship between the attributed weights of
 # the weak learners and their statistical performance.
 #
