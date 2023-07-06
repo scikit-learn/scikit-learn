@@ -151,7 +151,7 @@ the left or right child consequently::
   >>> gbdt.predict(X)
   array([0, 0, 1, 1])
 
-When the missingness pattern is predictive, the splits can be done on
+When the missingness pattern is predictive, the splits can be performed on
 whether the feature value is missing or not::
 
   >>> X = np.array([0, np.nan, 1, 2, np.nan]).reshape(-1, 1)
