@@ -176,8 +176,7 @@ Sample weight support
 :class:`HistGradientBoostingRegressor` support sample weights during
 :term:`fit`.
 
-The following toy example demonstrates how the model ignores the samples with
-zero sample weights:
+The following toy example demonstrates that samples with a sample weight of zero are ignored:
 
     >>> X = [[1, 0],
     ...      [1, 0],
