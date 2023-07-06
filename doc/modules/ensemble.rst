@@ -10,7 +10,7 @@ Ensembles: Gradient boosting, random forests, bagging, voting, stacking...
 base estimators built with a given learning algorithm in order to improve
 generalizability / robustness over a single estimator.
 
-Two very famous usage of ensemble methods are `gradient-boosted trees
+Two very famous examples of ensemble methods are `gradient-boosted trees
 <gradient_boosting>`_ and `random forests <forest>`_.
 
 More generally, ensemble models can be applied to any base learner beyond
