@@ -68,3 +68,8 @@ TODO: update at the time of the release.
   when using a custom initialization. The default value of this parameter will change
   from `None` to `auto` in version 1.6.
   :pr:`26634` by :user:`Alexandre Landeau <AlexL>` and :user:`Alexandre Vigny <avigny>`.
+
+  :mod:`sklearn.metrics`
+...................
+- |API| Added functions for root_mean_squared_error and root_mean_squared_log_error
+  :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.

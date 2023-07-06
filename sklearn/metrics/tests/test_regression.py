@@ -23,8 +23,8 @@ from sklearn.metrics import (
     mean_tweedie_deviance,
     median_absolute_error,
     r2_score,
+    root_mean_squared_error,
     root_mean_squared_log_error,
-    root_mean_squared_error
 )
 from sklearn.metrics._regression import _check_reg_targets
 from sklearn.model_selection import GridSearchCV
@@ -623,6 +623,8 @@ def test_pinball_loss_relation_with_mae():
         == mean_pinball_loss(y_true, y_pred, alpha=0.5) * 2
     )
 
+
+# TODO(1.6): remove this test
 def test_mean_squared_error_deprecation():
     # check the deprecation warning of mean_squared_error
     depr_msg = (
@@ -637,6 +639,8 @@ def test_mean_squared_error_deprecation():
     with pytest.warns(FutureWarning, match=depr_msg):
         mean_squared_error(y_true, y_pred, square=False)
 
+
+# TODO(1.6): remove this test
 def test_mean_squared_log_error_deprecation():
     # check the deprecation warning of mean_squared_log_error
     depr_msg = (

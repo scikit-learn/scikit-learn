@@ -24,6 +24,7 @@ the lower the better.
 #          Uttam kumar <bajiraouttamsinha@gmail.com>
 #          Sylvain Marie <sylvain.marie@se.com>
 #          Ohad Michel <ohadmich@gmail.com>
+#          Alejandro Martin Gil <almagil98@gmail.com>
 # License: BSD 3 clause
 
 import warnings
@@ -33,7 +34,7 @@ import numpy as np
 from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
-from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
     _check_sample_weight,
@@ -409,12 +410,17 @@ def mean_absolute_percentage_error(
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
-        "squared": [StrOptions({"deprecated"}),"boolean"],
+        "squared": [Hidden(StrOptions({"deprecated"})), "boolean"],
     },
     prefer_skip_nested_validation=True,
 )
 def mean_squared_error(
-    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared="deprecated"
+    y_true,
+    y_pred,
+    *,
+    sample_weight=None,
+    multioutput="uniform_average",
+    squared="deprecated",
 ):
     """Mean squared error regression loss.
 
@@ -445,9 +451,9 @@ def mean_squared_error(
     squared : bool, default=True
         If True returns MSE value, if False returns RMSE value.
 
-        .. deprecated:: 1.3.0
-           `squared` is deprecated in 1.3.0 and will be removed in 1.3.2. \
-           Use `root_mean_squared_error` function instead to calculate \
+        .. deprecated:: 1.4
+           `squared` is deprecated in 1.4 and will be removed in 1.6.
+           Use `root_mean_squared_error` instead to calculate
            the root mean squared error.
 
     Returns
@@ -472,12 +478,17 @@ def mean_squared_error(
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.825...
     """
-    if squared != 'deprecated':
-        warnings.warn("'squared' is deprecated in version 1.3.0 and "
-                      "will be removed in 1.3.2. To calculate the "
-                      "root mean squared error, use the function"
-                      "'root_mean_squared_error'.",
-                      FutureWarning)
+    # TODO(1.6): remove
+    if squared != "deprecated":
+        warnings.warn(
+            (
+                "'squared' is deprecated in version 1.4 and "
+                "will be removed in 1.6 To calculate the "
+                "root mean squared error, use the function"
+                "'root_mean_squared_error'."
+            ),
+            FutureWarning,
+        )
         if not squared:
             return root_mean_squared_error(y_true, y_pred)
 
@@ -487,9 +498,6 @@ def mean_squared_error(
     check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = np.average((y_true - y_pred) ** 2, axis=0, weights=sample_weight)
 
-    if not squared:
-        output_errors = np.sqrt(output_errors)
-
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
             return output_errors
@@ -498,6 +506,7 @@ def mean_squared_error(
             multioutput = None
 
     return np.average(output_errors, weights=multioutput)
+
 
 @validate_params(
     {
@@ -553,12 +562,11 @@ def root_mean_squared_error(
     >>> root_mean_squared_error(y_true, y_pred)
     0.822...
     """
-    output_errors = np.sqrt(mean_squared_error(
-        y_true,
-        y_pred,
-        sample_weight=sample_weight,
-        multioutput="raw_values"
-    ))
+    output_errors = np.sqrt(
+        mean_squared_error(
+            y_true, y_pred, sample_weight=sample_weight, multioutput="raw_values"
+        )
+    )
 
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -569,18 +577,24 @@ def root_mean_squared_error(
 
     return np.average(output_errors, weights=multioutput)
 
+
 @validate_params(
     {
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
-        "squared": [StrOptions({"deprecated"}),"boolean"],
+        "squared": [Hidden(StrOptions({"deprecated"})), "boolean"],
     },
     prefer_skip_nested_validation=True,
 )
 def mean_squared_log_error(
-    y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared="deprecated"
+    y_true,
+    y_pred,
+    *,
+    sample_weight=None,
+    multioutput="uniform_average",
+    squared="deprecated",
 ):
     """Mean squared logarithmic error regression loss.
 
@@ -613,10 +627,10 @@ def mean_squared_log_error(
         If True returns MSLE (mean squared log error) value.
         If False returns RMSLE (root mean squared log error) value.
 
-        .. deprecated:: 1.3.0
-           `squared` is deprecated in 1.3.0 and will be removed in 1.3.2. \
-           Use `root_mean_squared_log_error` function instead to calculate \
-           the root mean squared logarithmic error.
+        .. deprecated:: 1.4
+           `squared` is deprecated in 1.4 and will be removed in 1.6.
+           Use `root_mean_squared_log_error` instead to calculate
+           the root mean squared error.
 
     Returns
     -------
@@ -640,12 +654,17 @@ def mean_squared_log_error(
     >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.060...
     """
-    if squared != 'deprecated':
-        warnings.warn("'squared' is deprecated in version 1.3.0 and "
-                      "will be removed in 1.3.2. To calculate the "
-                      "root mean squared logarithmic error, use the function"
-                      "'root_mean_squared_log_error'.",
-                      FutureWarning)
+    # TODO(1.6): remove
+    if squared != "deprecated":
+        warnings.warn(
+            (
+                "'squared' is deprecated in version 1.4 and "
+                "will be removed in 1.6. To calculate the "
+                "root mean squared logarithmic error, use the function"
+                "'root_mean_squared_log_error'."
+            ),
+            FutureWarning,
+        )
         if not squared:
             return root_mean_squared_log_error(y_true, y_pred)
 
@@ -739,6 +758,7 @@ def root_mean_squared_log_error(
         sample_weight=sample_weight,
         multioutput=multioutput,
     )
+
 
 @validate_params(
     {
