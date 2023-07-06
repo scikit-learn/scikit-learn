@@ -2433,6 +2433,7 @@ def test_search_cv_verbose_3(capsys, return_train_score):
     ],
 )
 def test_search_estimator_param(SearchCV, param_search):
+    # test that SearchCV object doesn't change the object given in the parameter grid
     X, y = make_classification(random_state=42)
 
     params = {"clf": [LinearSVC(dual="auto")], "clf__C": [0.01]}
