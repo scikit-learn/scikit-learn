@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 from scipy import sparse
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, TransformerMixin, clone, is_classifier
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
@@ -29,6 +30,7 @@ from sklearn.neighbors import LocalOutlierFactor
 from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline, make_union
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
+from sklearn.utils._metadata_requests import COMPOSITE_METHODS, METHODS
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
@@ -1679,3 +1681,83 @@ def test_feature_union_feature_names_in_():
     union = FeatureUnion([("pass", "passthrough")])
     union.fit(X_array)
     assert not hasattr(union, "feature_names_in_")
+
+
+def test_metadata_routing_for_pipeline():
+    """Test that metadata is routed correctly for pipelines."""
+
+    class SimpleEstimator(BaseEstimator):
+        # This class should have every set_{method}_request
+        def fit(self, X, y, sample_weight=None):
+            assert sample_weight is not None
+
+        def fit_transform(self, X, y, sample_weight=None):
+            assert sample_weight is not None
+
+        def fit_predict(self, X, y, sample_weight=None):
+            assert sample_weight is not None
+
+        def predict(self, X, sample_weight=None):
+            assert sample_weight is not None
+
+        def predict_proba(self, X, sample_weight=None):
+            assert sample_weight is not None
+
+        def predict_log_proba(self, X, sample_weight=None):
+            assert sample_weight is not None
+
+        def decision_function(self, X, sample_weight=None):
+            assert sample_weight is not None
+
+        def score(self, X, y, sample_weight=None):
+            assert sample_weight is not None
+
+        def transform(self, X, sample_weight=None):
+            assert sample_weight is not None
+
+        def inverse_transform(self, X, sample_weight=None):
+            assert sample_weight is not None
+
+    def set_request(est, method, **kwarg):
+        """Set requests for a given method.
+
+        If the given method is a composite method, set the same requests for
+        all the methods that compose it.
+        """
+        if method in COMPOSITE_METHODS:
+            methods = COMPOSITE_METHODS[method]
+        else:
+            methods = [method]
+
+        for method in methods:
+            getattr(est, f"set_{method}_request")(**kwarg)
+        return est
+
+    # split and partial_fit not relevant for pipelines
+    methods = set(METHODS) - {"split", "partial_fit"}
+
+    for method in methods:
+        # test that metadata is routed correctly for pipelines when requested
+        with config_context(enable_metadata_routing=True):
+            est = SimpleEstimator()
+            est = set_request(est, method, sample_weight=True)
+            pipeline = Pipeline([("estimator", est)])
+            try:
+                getattr(pipeline, method)([[1]], [1], sample_weight=[1])
+            except TypeError:
+                getattr(pipeline, method)([[1]], sample_weight=[1])
+
+        # test that metadata is not routed for pipelines when not requested
+        with config_context(enable_metadata_routing=True):
+            est = SimpleEstimator()
+            # here not setting sample_weight request and leaving it as None
+            pipeline = Pipeline([("estimator", est)])
+            error_message = (
+                "[sample_weight] are passed but are not explicitly set as requested or"
+                f" not for SimpleEstimator.{method}"
+            )
+            with pytest.raises(ValueError, match=re.escape(error_message)):
+                try:
+                    getattr(pipeline, method)([[1]], [1], sample_weight=[1])
+                except TypeError:
+                    getattr(pipeline, method)([[1]], sample_weight=[1])

@@ -741,7 +741,7 @@ class Pipeline(_BaseComposition):
         y_score : ndarray of shape (n_samples, n_classes)
             Result of calling `decision_function` on the final estimator.
         """
-        if params:
+        if params and not _routing_enabled():
             raise ValueError(
                 "params is only supported if enable_metadata_routing=True."
                 " See the User Guide for more information."
