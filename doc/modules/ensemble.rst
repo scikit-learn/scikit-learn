@@ -404,7 +404,7 @@ models that are only slightly better than random guessing, such as small
 decision trees) on repeatedly modified versions of the data. The predictions
 from all of them are then combined through a weighted majority vote (or sum) to
 produce the final prediction. The data modifications at each so-called boosting
-iteration consist of applying weights :math:`w_1`, :math:`w_2`, ..., :math:`w_N`
+iteration consists of applying weights :math:`w_1`, :math:`w_2`, ..., :math:`w_N`
 to each of the training samples. Initially, those weights are all set to
 :math:`w_i = 1/N`, so that the first step simply trains a weak learner on the
 original data. For each successive iteration, the sample weights are
