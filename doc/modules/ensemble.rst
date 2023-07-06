@@ -115,7 +115,7 @@ The size of the trees can be controlled through the ``max_leaf_nodes``,
 
 The number of bins used to bin the data is controlled with the ``max_bins``
 parameter. Using less bins acts as a form of regularization. It is
-generally recommended to use as many bins as possible, which is the default.
+generally recommended to use as many bins as possible (256), which is the default.
 
 The ``l2_regularization`` parameter is a regularizer on the loss function and
 corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
