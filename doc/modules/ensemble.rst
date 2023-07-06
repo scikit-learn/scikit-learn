@@ -30,7 +30,7 @@ Gradient-boosted trees
 `Gradient Tree Boosting <https://en.wikipedia.org/wiki/Gradient_boosting>`_
 or Gradient Boosted Decision Trees (GBDT) is a generalization
 of boosting to arbitrary differentiable loss functions, see the seminal work of
-[Friedman2001]_. GBDT is an excellent models for both regression and
+[Friedman2001]_. GBDT is an excellent model for both regression and
 classification, in particular for tabular data.
 
 .. topic:: :class:`GradientBoostingClassifier` vs :class:`HistGradientBoostingClassifier`
