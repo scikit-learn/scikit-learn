@@ -20,7 +20,7 @@ boosting, as :ref:`AdaBoost <adaboost>`.
 
 .. contents::
     :local:
-    :depth: 2
+    :depth: 1
 
 .. _gradient_boosting:
 
