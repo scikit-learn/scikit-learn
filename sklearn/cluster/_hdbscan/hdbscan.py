@@ -56,7 +56,7 @@ from ._linkage import (
 from ._reachability import mutual_reachability_graph
 from ._tree import HIERARCHY_dtype, labelling_at_cut, tree_to_labels
 
-FAST_METRICS = set(KDTree.valid_metrics() + BallTree.valid_metrics())
+FAST_METRICS = set(KDTree.valid_metrics + BallTree.valid_metrics)
 
 # Encodings are arbitrary but must be strictly negative.
 # The current encodings are chosen as extensions to the -1 noise label.
@@ -768,14 +768,12 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             n_jobs=self.n_jobs,
             **self._metric_params,
         )
-        if self.algorithm == "kdtree" and self.metric not in KDTree.valid_metrics():
+        if self.algorithm == "kdtree" and self.metric not in KDTree.valid_metrics:
             raise ValueError(
                 f"{self.metric} is not a valid metric for a KDTree-based algorithm."
                 " Please select a different metric."
             )
-        elif (
-            self.algorithm == "balltree" and self.metric not in BallTree.valid_metrics()
-        ):
+        elif self.algorithm == "balltree" and self.metric not in BallTree.valid_metrics:
             raise ValueError(
                 f"{self.metric} is not a valid metric for a BallTree-based algorithm."
                 " Please select a different metric."
@@ -805,7 +803,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 # We can't do much with sparse matrices ...
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = self.copy
-            elif self.metric in KDTree.valid_metrics():
+            elif self.metric in KDTree.valid_metrics:
                 # TODO: Benchmark KD vs Ball Tree efficiency
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "kd_tree"
