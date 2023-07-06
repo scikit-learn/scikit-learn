@@ -996,6 +996,8 @@ details.
    metrics.mean_squared_log_error
    metrics.mean_squared_error
    metrics.r2_score
+   metrics.mean_squared_log_error
+   metrics.mean_squared_error
    metrics.mean_poisson_deviance
    metrics.mean_gamma_deviance
    metrics.mean_tweedie_deviance
