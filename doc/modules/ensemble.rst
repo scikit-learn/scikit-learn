@@ -921,7 +921,7 @@ A competitive alternative to random forests are
    splitting, which can be computationally expensive.
 
 Overall, the computational cost of HGBT versus RF depends on the specific
-characteristics of the dataset and the modeling task. It's always a good idea
+characteristics of the dataset and the modeling task. It's a good idea
 to try both models and compare their performance and computational efficiency
 on your specific problem to determine which model is the best fit.
 
