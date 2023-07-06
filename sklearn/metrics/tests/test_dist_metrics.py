@@ -85,7 +85,6 @@ def test_cdist(metric_param_grid, X, Y):
             print("p", p)
             if sp_version < parse_version("1.7.0") and p < 1:
                 pytest.skip("scipy does not support 0<p<1 for minkowski metric < 1.7.0")
-                return
 
         D_scipy_cdist = cdist(X, Y, metric, **kwargs)
 
@@ -168,7 +167,6 @@ def test_pdist(metric_param_grid, X):
             p = float(kwargs.get("p", 2))
             if sp_version < parse_version("1.7.0") and p < 1:
                 pytest.skip("scipy does not support 0<p<1 for minkowski metric < 1.7.0")
-                return
         D_scipy_pdist = cdist(X, X, metric, **kwargs)
 
         dm = DistanceMetric.get_metric(metric, X.dtype, **kwargs)
