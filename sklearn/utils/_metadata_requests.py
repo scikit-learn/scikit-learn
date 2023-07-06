@@ -1017,7 +1017,7 @@ this given alias instead of the original name.
         .. note::
             This method is only relevant if this estimator is used as a
             sub-estimator of a meta-estimator, e.g. used inside a
-            :class:`pipeline.Pipeline`. Otherwise it has no effect.
+            :class:`~sklearn.pipeline.Pipeline`. Otherwise it has no effect.
 
         Parameters
         ----------
@@ -1275,7 +1275,7 @@ class _MetadataRequester:
         Returns
         -------
         request : MetadataRequest
-            A :class:`~.utils.metadata_requests.MetadataRequest` instance.
+            A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
         """
         if hasattr(self, "_metadata_request"):
             requests = get_routing_for_object(self._metadata_request)
@@ -1293,7 +1293,7 @@ class _MetadataRequester:
         Returns
         -------
         routing : MetadataRequest
-            A :class:`~utils.metadata_routing.MetadataRequest` encapsulating
+            A :class:`~sklearn.utils.metadata_routing.MetadataRequest` encapsulating
             routing information.
         """
         return self._get_metadata_request()
