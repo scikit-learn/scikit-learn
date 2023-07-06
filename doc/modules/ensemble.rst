@@ -266,7 +266,7 @@ instead of :math:`2^{K - 1} - 1`. The initial sorting is a
 .. _monotonic_cst_gbdt:
 
 Monotonic Constraints
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 Depending on the problem at hand, you may have prior knowledge indicating
 that a given feature should in general have a positive (or negative) effect
