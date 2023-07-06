@@ -22,6 +22,7 @@ from sklearn.datasets import (
     make_multilabel_classification,
 )
 from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression, Ridge, SGDClassifier
 from sklearn.metrics import (
@@ -38,6 +39,7 @@ from sklearn.model_selection import (
     GridSearchCV,
     GroupKFold,
     GroupShuffleSplit,
+    HalvingGridSearchCV,
     KFold,
     LeaveOneGroupOut,
     LeavePGroupsOut,
@@ -2422,7 +2424,15 @@ def test_search_cv_verbose_3(capsys, return_train_score):
     assert len(match) == 3
 
 
-def test_search_estimator_param():
+@pytest.mark.parametrize(
+    "SearchCV, param_search",
+    [
+        (GridSearchCV, "param_grid"),
+        (RandomizedSearchCV, "param_distributions"),
+        (HalvingGridSearchCV, "param_grid"),
+    ],
+)
+def test_search_estimator_param(SearchCV, param_search):
     X, y = make_classification(random_state=42)
 
     params = {"clf": [LinearSVC(dual="auto")], "clf__C": [0.01]}
@@ -2430,12 +2440,7 @@ def test_search_estimator_param():
 
     pipe = Pipeline([("trs", MinimalTransformer()), ("clf", None)])
 
-    GridSearchCV(
-        pipe,
-        param_grid=params,
-        refit=True,
-        cv=2,
-        scoring="accuracy",
-    ).fit(X, y)
+    param_grid_search = {param_search: params}
+    SearchCV(pipe, refit=True, cv=2, scoring="accuracy", **param_grid_search).fit(X, y)
 
     assert params["clf"][0].C == orig_C
