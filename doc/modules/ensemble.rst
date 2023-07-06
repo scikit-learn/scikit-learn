@@ -173,7 +173,7 @@ Sample weight support
 ^^^^^^^^^^^^^^^^^^^^^
 
 :class:`HistGradientBoostingClassifier` and
-:class:`HistGradientBoostingRegressor` sample support weights during
+:class:`HistGradientBoostingRegressor` support sample weights during
 :term:`fit`.
 
 The following toy example demonstrates how the model ignores the samples with
