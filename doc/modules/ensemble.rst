@@ -1,7 +1,7 @@
 .. _ensemble:
 
 ===========================================================================
-Ensembles: Gradient boosting, random forests, bagging, voting, stacking...
+Ensembles: Gradient boosting, random forests, bagging, voting, stacking
 ===========================================================================
 
 .. currentmodule:: sklearn.ensemble
