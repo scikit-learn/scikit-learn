@@ -165,7 +165,7 @@ def test_hdbscan_algorithms(algo, metric):
         metric_params=metric_params,
     )
 
-    if metric not in ALGOS_TREES[algo].valid_metrics():
+    if metric not in ALGOS_TREES[algo].valid_metrics:
         with pytest.raises(ValueError):
             hdb.fit(X)
     elif metric == "wminkowski":
@@ -424,7 +424,7 @@ def test_hdbscan_tree_invalid_metric():
 
     # The set of valid metrics for KDTree at the time of writing this test is a
     # strict subset of those supported in BallTree
-    metrics_not_kd = list(set(BallTree.valid_metrics()) - set(KDTree.valid_metrics()))
+    metrics_not_kd = list(set(BallTree.valid_metrics) - set(KDTree.valid_metrics))
     if len(metrics_not_kd) > 0:
         with pytest.raises(ValueError, match=msg):
             HDBSCAN(algorithm="kdtree", metric=metrics_not_kd[0]).fit(X)
