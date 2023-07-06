@@ -230,7 +230,7 @@ cdef class Splitter:
         SIZE_t* n_constant_features,
         double lower_bound,
         double upper_bound,
-    ) nogil except -1:
+    ) except -1 nogil:
 
         """Find the best split on node samples[start:end].
 
