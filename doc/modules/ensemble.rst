@@ -25,7 +25,7 @@ boosting, as :ref:`AdaBoost <adaboost>`.
 .. _gradient_boosting:
 
 Gradient-boosted trees
-========================
+======================
 
 `Gradient Tree Boosting <https://en.wikipedia.org/wiki/Gradient_boosting>`_
 or Gradient Boosted Decision Trees (GBDT) is a generalization
