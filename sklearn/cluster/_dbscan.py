@@ -187,8 +187,11 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         and distance function.
 
     min_samples : int, default=5
-        The number of samples (or total weight) in a neighborhood for a point
-        to be considered as a core point. This includes the point itself.
+        The number of samples (or total weight) in a neighborhood for a point to
+        be considered as a core point. This includes the point itself. If
+        min_samples is set to a higher value, DBSCAN will find denser clusters,
+        whereas if it is set to a lower value, the found clusters will be more
+        sparse.
 
     metric : str, or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
