@@ -90,11 +90,10 @@ Changelog
   :user:`Patrick O'Reilly <pat-oreilly>`.
 
 :mod:`sklearn.metrics`
-...................
+......................
 
-- |Performance| Computing pairwise distances for (CSR x CSR) and (CSR x Dense)
-  datasets is now 1.5x faster by improving the argument passing strategy used
-  in the computation routines in :class:`metrics.DistanceMetric`.
+- |Performance| Computing pairwise distances via :class:`metrics.DistanceMetric`
+  for CSR × CSR,  Dense × CSR, and CSR × Dense datasets is now 1.5x faster.
   :pr:`26765` by :user:`Meekail Zain <micky774>`
 
 Code and Documentation Contributors
