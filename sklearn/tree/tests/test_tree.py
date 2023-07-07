@@ -2,65 +2,57 @@
 Testing for the tree module (sklearn.tree).
 """
 import copy
-import pickle
-from itertools import product, chain
-import struct
-import io
 import copyreg
-
-import pytest
-import numpy as np
-from numpy.testing import assert_allclose
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import coo_matrix
+import io
+import pickle
+import struct
+from itertools import chain, product
 
 import joblib
+import numpy as np
+import pytest
 from joblib.numpy_pickle import NumpyPickler
+from numpy.testing import assert_allclose
+from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 
-from sklearn.random_projection import _sparse_random_matrix
-
+from sklearn import datasets, tree
 from sklearn.dummy import DummyRegressor
-
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import mean_poisson_deviance
-
+from sklearn.exceptions import NotFittedError
+from sklearn.metrics import accuracy_score, mean_poisson_deviance, mean_squared_error
 from sklearn.model_selection import train_test_split
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import create_memmap_backed_data
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import skip_if_32bit
-
+from sklearn.random_projection import _sparse_random_matrix
+from sklearn.tree import (
+    DecisionTreeClassifier,
+    DecisionTreeRegressor,
+    ExtraTreeClassifier,
+    ExtraTreeRegressor,
+)
+from sklearn.tree._classes import (
+    CRITERIA_CLF,
+    CRITERIA_REG,
+    DENSE_SPLITTERS,
+    SPARSE_SPLITTERS,
+)
+from sklearn.tree._tree import (
+    NODE_DTYPE,
+    TREE_LEAF,
+    TREE_UNDEFINED,
+    _check_n_classes,
+    _check_node_ndarray,
+    _check_value_ndarray,
+)
+from sklearn.tree._tree import Tree as CythonTree
+from sklearn.utils import _IS_32BIT, compute_sample_weight
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    create_memmap_backed_data,
+    ignore_warnings,
+    skip_if_32bit,
+)
 from sklearn.utils.estimator_checks import check_sample_weights_invariance
 from sklearn.utils.validation import check_random_state
-from sklearn.utils import _IS_32BIT
-
-from sklearn.exceptions import NotFittedError
-
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.tree import ExtraTreeClassifier
-from sklearn.tree import ExtraTreeRegressor
-
-from sklearn import tree
-from sklearn.tree._tree import TREE_LEAF, TREE_UNDEFINED
-from sklearn.tree._tree import Tree as CythonTree
-from sklearn.tree._tree import _check_n_classes
-from sklearn.tree._tree import _check_value_ndarray
-from sklearn.tree._tree import _check_node_ndarray
-from sklearn.tree._tree import NODE_DTYPE
-
-from sklearn.tree._classes import CRITERIA_CLF
-from sklearn.tree._classes import CRITERIA_REG
-from sklearn import datasets
-
-from sklearn.utils import compute_sample_weight
-from sklearn.tree._classes import DENSE_SPLITTERS, SPARSE_SPLITTERS
-
 
 CLF_CRITERIONS = ("gini", "log_loss")
 REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
@@ -2367,7 +2359,7 @@ def test_splitter_serializable(Splitter):
     n_outputs, n_classes = 2, np.array([3, 2], dtype=np.intp)
 
     criterion = CRITERIA_CLF["gini"](n_outputs, n_classes)
-    splitter = Splitter(criterion, max_features, 5, 0.5, rng)
+    splitter = Splitter(criterion, max_features, 5, 0.5, rng, monotonic_cst=None)
     splitter_serialize = pickle.dumps(splitter)
 
     splitter_back = pickle.loads(splitter_serialize)
@@ -2549,7 +2541,8 @@ def test_missing_values_poisson():
         (datasets.make_classification, DecisionTreeClassifier),
     ],
 )
-def test_missing_values_is_resilience(make_data, Tree):
+@pytest.mark.parametrize("sample_weight_train", [None, "ones"])
+def test_missing_values_is_resilience(make_data, Tree, sample_weight_train):
     """Check that trees can deal with missing values and have decent performance."""
 
     rng = np.random.RandomState(0)
@@ -2563,15 +2556,18 @@ def test_missing_values_is_resilience(make_data, Tree):
         X_missing, y, random_state=0
     )
 
+    if sample_weight_train == "ones":
+        sample_weight_train = np.ones(X_missing_train.shape[0])
+
     # Train tree with missing values
     tree_with_missing = Tree(random_state=rng)
-    tree_with_missing.fit(X_missing_train, y_train)
+    tree_with_missing.fit(X_missing_train, y_train, sample_weight=sample_weight_train)
     score_with_missing = tree_with_missing.score(X_missing_test, y_test)
 
     # Train tree without missing values
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     tree = Tree(random_state=rng)
-    tree.fit(X_train, y_train)
+    tree.fit(X_train, y_train, sample_weight=sample_weight_train)
     score_without_missing = tree.score(X_test, y_test)
 
     # Score is still 90 percent of the tree's score that had no missing values
@@ -2601,3 +2597,32 @@ def test_missing_value_is_predictive():
 
     assert tree.score(X_train, y_train) >= 0.85
     assert tree.score(X_test, y_test) >= 0.85
+
+
+@pytest.mark.parametrize(
+    "make_data, Tree",
+    [
+        (datasets.make_regression, DecisionTreeRegressor),
+        (datasets.make_classification, DecisionTreeClassifier),
+    ],
+)
+def test_sample_weight_non_uniform(make_data, Tree):
+    """Check sample weight is correctly handled with missing values."""
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 1000, 10
+    X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
+
+    # Create dataset with missing values
+    X[rng.choice([False, True], size=X.shape, p=[0.9, 0.1])] = np.nan
+
+    # Zero sample weight is the same as removing the sample
+    sample_weight = np.ones(X.shape[0])
+    sample_weight[::2] = 0.0
+
+    tree_with_sw = Tree(random_state=0)
+    tree_with_sw.fit(X, y, sample_weight=sample_weight)
+
+    tree_samples_removed = Tree(random_state=0)
+    tree_samples_removed.fit(X[1::2, :], y[1::2])
+
+    assert_allclose(tree_samples_removed.predict(X), tree_with_sw.predict(X))

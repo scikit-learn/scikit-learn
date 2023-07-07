@@ -5,17 +5,26 @@ __all__ = ['BallTree']
 
 DOC_DICT = {'BinaryTree': 'BallTree', 'binary_tree': 'ball_tree'}
 
-VALID_METRICS = ['EuclideanDistance', 'SEuclideanDistance',
-                 'ManhattanDistance', 'ChebyshevDistance',
-                 'MinkowskiDistance', 'WMinkowskiDistance',
-                 'MahalanobisDistance', 'HammingDistance',
-                 'CanberraDistance', 'BrayCurtisDistance',
-                 'JaccardDistance', 'MatchingDistance',
-                 'DiceDistance',
-                 'RogersTanimotoDistance', 'RussellRaoDistance',
-                 'SokalMichenerDistance', 'SokalSneathDistance',
-                 'PyFuncDistance', 'HaversineDistance']
-
+VALID_METRICS = [
+    'BrayCurtisDistance64',
+    'CanberraDistance64',
+    'ChebyshevDistance64',
+    'DiceDistance64',
+    'EuclideanDistance64',
+    'HammingDistance64',
+    'HaversineDistance64',
+    'JaccardDistance64',
+    'MahalanobisDistance64',
+    'ManhattanDistance64',
+    'MinkowskiDistance64',
+    'PyFuncDistance64',
+    'RogersTanimotoDistance64',
+    'RussellRaoDistance64',
+    'SEuclideanDistance64',
+    'SokalMichenerDistance64',
+    'SokalSneathDistance64',
+    'WMinkowskiDistance64',
+]
 
 include "_binary_tree.pxi"
 
@@ -130,7 +139,7 @@ cdef inline float64_t min_rdist(BinaryTree tree, intp_t i_node,
                                 float64_t* pt) except -1 nogil:
     """Compute the minimum reduced-distance between a point and a node"""
     if tree.euclidean:
-        return euclidean_dist_to_rdist(min_dist(tree, i_node, pt))
+        return euclidean_dist_to_rdist64(min_dist(tree, i_node, pt))
     else:
         return tree.dist_metric._dist_to_rdist(min_dist(tree, i_node, pt))
 
@@ -139,7 +148,7 @@ cdef inline float64_t max_rdist(BinaryTree tree, intp_t i_node,
                                 float64_t* pt) except -1:
     """Compute the maximum reduced-distance between a point and a node"""
     if tree.euclidean:
-        return euclidean_dist_to_rdist(max_dist(tree, i_node, pt))
+        return euclidean_dist_to_rdist64(max_dist(tree, i_node, pt))
     else:
         return tree.dist_metric._dist_to_rdist(max_dist(tree, i_node, pt))
 
@@ -168,8 +177,8 @@ cdef inline float64_t min_rdist_dual(BinaryTree tree1, intp_t i_node1,
                                      BinaryTree tree2, intp_t i_node2) except -1:
     """compute the minimum reduced distance between two nodes"""
     if tree1.euclidean:
-        return euclidean_dist_to_rdist(min_dist_dual(tree1, i_node1,
-                                                     tree2, i_node2))
+        return euclidean_dist_to_rdist64(min_dist_dual(tree1, i_node1,
+                                                       tree2, i_node2))
     else:
         return tree1.dist_metric._dist_to_rdist(min_dist_dual(tree1, i_node1,
                                                               tree2, i_node2))
@@ -179,8 +188,8 @@ cdef inline float64_t max_rdist_dual(BinaryTree tree1, intp_t i_node1,
                                      BinaryTree tree2, intp_t i_node2) except -1:
     """compute the maximum reduced distance between two nodes"""
     if tree1.euclidean:
-        return euclidean_dist_to_rdist(max_dist_dual(tree1, i_node1,
-                                                     tree2, i_node2))
+        return euclidean_dist_to_rdist64(max_dist_dual(tree1, i_node1,
+                                                       tree2, i_node2))
     else:
         return tree1.dist_metric._dist_to_rdist(max_dist_dual(tree1, i_node1,
                                                               tree2, i_node2))

@@ -139,10 +139,10 @@ including specification of query strategies, distance metrics, etc. For a list
 of valid metrics use :meth:`KDTree.valid_metrics` and :meth:`BallTree.valid_metrics`:
 
     >>> from sklearn.neighbors import KDTree, BallTree
-    >>> KDTree.valid_metrics()
+    >>> KDTree.valid_metrics
     ['euclidean', 'l2', 'minkowski', 'p', 'manhattan', 'cityblock', 'l1', 'chebyshev', 'infinity']
-    >>> BallTree.valid_metrics()
-    ['euclidean', 'l2', 'minkowski', 'p', 'manhattan', 'cityblock', 'l1', 'chebyshev', 'infinity', 'seuclidean', 'mahalanobis', 'wminkowski', 'hamming', 'canberra', 'braycurtis', 'matching', 'jaccard', 'dice', 'rogerstanimoto', 'russellrao', 'sokalmichener', 'sokalsneath', 'haversine', 'pyfunc']
+    >>> BallTree.valid_metrics
+    ['euclidean', 'l2', 'minkowski', 'p', 'manhattan', 'cityblock', 'l1', 'chebyshev', 'infinity', 'seuclidean', 'mahalanobis', 'hamming', 'canberra', 'braycurtis', 'jaccard', 'dice', 'rogerstanimoto', 'russellrao', 'sokalmichener', 'sokalsneath', 'haversine', 'pyfunc']
 
 .. _classification:
 

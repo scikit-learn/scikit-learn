@@ -37,12 +37,13 @@ example, none of these could be applied that easily.
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
 # License: BSD 3 clause
 
-import numpy as np
-from sklearn.covariance import EllipticEnvelope
-from sklearn.svm import OneClassSVM
-import matplotlib.pyplot as plt
 import matplotlib.font_manager
+import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.covariance import EllipticEnvelope
 from sklearn.datasets import load_wine
+from sklearn.svm import OneClassSVM
 
 # Define "classifiers" to be used
 classifiers = {

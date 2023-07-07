@@ -25,25 +25,25 @@ the lower the better.
 
 from numbers import Integral, Real
 import warnings
-import numpy as np
+from numbers import Integral, Real
 
-from scipy.sparse import coo_matrix
-from scipy.sparse import csr_matrix
+import numpy as np
+from scipy.sparse import coo_matrix, csr_matrix
 from scipy.special import xlogy
 
-from ..preprocessing import LabelBinarizer
-from ..preprocessing import LabelEncoder
-from ..utils import assert_all_finite
-from ..utils import check_array
-from ..utils import check_consistent_length
-from ..utils import column_or_1d
-from ..utils.extmath import _nanaverage
-from ..utils.multiclass import unique_labels
-from ..utils.multiclass import type_of_target
-from ..utils.validation import _check_pos_label_consistency, _num_samples
-from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import StrOptions, Options, Interval, validate_params
 from ..exceptions import UndefinedMetricWarning
+from ..preprocessing import LabelBinarizer, LabelEncoder
+from ..utils import (
+    assert_all_finite,
+    check_array,
+    check_consistent_length,
+    column_or_1d,
+)
+from ..utils._param_validation import Interval, Options, StrOptions, validate_params
+from ..utils.extmath import _nanaverage
+from ..utils.multiclass import type_of_target, unique_labels
+from ..utils.sparsefuncs import count_nonzero
+from ..utils.validation import _check_pos_label_consistency, _num_samples
 
 
 def _check_zero_division(zero_division):
@@ -148,7 +148,8 @@ def _weighted_sum(sample_score, sample_weight, normalize=False):
         "y_pred": ["array-like", "sparse matrix"],
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Accuracy classification score.
@@ -235,7 +236,8 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
         "labels": ["array-like", None],
         "sample_weight": ["array-like", None],
         "normalize": [StrOptions({"true", "pred", "all"}), None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def confusion_matrix(
     y_true, y_pred, *, labels=None, sample_weight=None, normalize=None
@@ -398,7 +400,8 @@ def confusion_matrix(
         "sample_weight": ["array-like", None],
         "labels": ["array-like", None],
         "samplewise": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def multilabel_confusion_matrix(
     y_true, y_pred, *, sample_weight=None, labels=None, samplewise=False
@@ -616,7 +619,8 @@ def multilabel_confusion_matrix(
         "labels": ["array-like", None],
         "weights": [StrOptions({"linear", "quadratic"}), None],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
@@ -710,7 +714,8 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
             Options(Real, {0, 1}),
             StrOptions({"warn"}),
         ],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def jaccard_score(
     y_true,
@@ -888,7 +893,8 @@ def jaccard_score(
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     """Compute the Matthews correlation coefficient (MCC).
@@ -984,7 +990,8 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
         "y_pred": ["array-like", "sparse matrix"],
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Zero-one classification loss.
@@ -1076,7 +1083,8 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
             Options(Real, {0.0, 1.0, np.nan}),
             StrOptions({"warn"}),
         ],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def f1_score(
     y_true,
@@ -1256,7 +1264,8 @@ def f1_score(
             Options(Real, {0.0, 1.0, np.nan}),
             StrOptions({"warn"}),
         ],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fbeta_score(
     y_true,
@@ -1274,10 +1283,12 @@ def fbeta_score(
     The F-beta score is the weighted harmonic mean of precision and recall,
     reaching its optimal value at 1 and its worst value at 0.
 
-    The `beta` parameter determines the weight of recall in the combined
-    score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
-    favors recall (``beta -> 0`` considers only precision, ``beta -> +inf``
-    only recall).
+    The `beta` parameter represents the ratio of recall importance to
+    precision importance. `beta > 1` gives more weight to recall, while
+    `beta < 1` favors precision. For example, `beta = 2` makes recall twice
+    as important as precision, while `beta = 0.5` does the opposite.
+    Asymptotically, `beta -> +inf` considers only recall, and `beta -> 0`
+    only precision.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
@@ -1535,7 +1546,8 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
             Options(Real, {0.0, 1.0, np.nan}),
             StrOptions({"warn"}),
         ],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def precision_recall_fscore_support(
     y_true,
@@ -1785,7 +1797,8 @@ def precision_recall_fscore_support(
         "labels": ["array-like", None],
         "sample_weight": ["array-like", None],
         "raise_warning": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def class_likelihood_ratios(
     y_true,
@@ -1970,7 +1983,8 @@ def class_likelihood_ratios(
             Options(Real, {0.0, 1.0, np.nan}),
             StrOptions({"warn"}),
         ],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def precision_score(
     y_true,
@@ -2139,7 +2153,8 @@ def precision_score(
             Options(Real, {0.0, 1.0, np.nan}),
             StrOptions({"warn"}),
         ],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def recall_score(
     y_true,
@@ -2301,7 +2316,8 @@ def recall_score(
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "adjusted": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=False):
     """Compute the balanced accuracy.
@@ -2400,7 +2416,8 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
             Options(Real, {0.0, 1.0, np.nan}),
             StrOptions({"warn"}),
         ],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def classification_report(
     y_true,
@@ -2630,7 +2647,8 @@ def classification_report(
         "y_true": ["array-like", "sparse matrix"],
         "y_pred": ["array-like", "sparse matrix"],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def hamming_loss(y_true, y_pred, *, sample_weight=None):
     """Compute the average Hamming loss.
@@ -2734,7 +2752,8 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
         "labels": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def log_loss(
     y_true, y_pred, *, eps="auto", normalize=True, sample_weight=None, labels=None
@@ -2914,7 +2933,8 @@ def log_loss(
         "pred_decision": ["array-like"],
         "labels": ["array-like", None],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     """Average hinge loss (non-regularized).
@@ -2973,9 +2993,9 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     >>> from sklearn.metrics import hinge_loss
     >>> X = [[0], [1]]
     >>> y = [-1, 1]
-    >>> est = svm.LinearSVC(random_state=0)
+    >>> est = svm.LinearSVC(dual="auto", random_state=0)
     >>> est.fit(X, y)
-    LinearSVC(random_state=0)
+    LinearSVC(dual='auto', random_state=0)
     >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
     >>> pred_decision
     array([-2.18...,  2.36...,  0.09...])
@@ -2988,9 +3008,9 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     >>> X = np.array([[0], [1], [2], [3]])
     >>> Y = np.array([0, 1, 2, 3])
     >>> labels = np.array([0, 1, 2, 3])
-    >>> est = svm.LinearSVC()
+    >>> est = svm.LinearSVC(dual="auto")
     >>> est.fit(X, Y)
-    LinearSVC()
+    LinearSVC(dual='auto')
     >>> pred_decision = est.decision_function([[-1], [2], [3]])
     >>> y_true = [0, 2, 3]
     >>> hinge_loss(y_true, pred_decision, labels=labels)
@@ -3065,7 +3085,8 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
         "y_prob": ["array-like"],
         "sample_weight": ["array-like", None],
         "pos_label": [Real, str, "boolean", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     """Compute the Brier score loss.
