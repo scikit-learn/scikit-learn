@@ -2301,7 +2301,7 @@ def kernel_metrics():
 
     Returns
     -------
-    kernal_metrics : dict
+    kernel_metrics : dict
         Returns valid metrics for pairwise_kernels.
     """
     return PAIRWISE_KERNEL_FUNCTIONS
