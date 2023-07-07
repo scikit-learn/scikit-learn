@@ -1276,7 +1276,7 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     w : (N,) array-like (optional)
         The weight vector.
 
-    Minkowski Distance requires p > 0 and finite. For p = infinity,
+    Minkowski Distance requires p >= 1 and finite. For p = infinity,
     use ChebyshevDistance.
     Note that for p=1, ManhattanDistance is more efficient, and for
     p=2, EuclideanDistance is more efficient.
