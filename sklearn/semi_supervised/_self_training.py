@@ -188,6 +188,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             Array representing the labels. Unlabeled samples should have the
             label -1.
 
+        **kwargs : list of keyword arguments to be passed to the `fit` method of the
+            `base_estimator`.
+
         Returns
         -------
         self : object
