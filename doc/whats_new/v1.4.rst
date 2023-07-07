@@ -100,3 +100,12 @@ TODO: update at the time of the release.
 
 - |Fix| :func:`feature_selection.mutual_info_regression` now correctly computes the
   result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+
+:mod:`sklearn.metrics`
+...................
+
+- |Performance| Computing pairwise distances for (CSR x CSR) and (CSR x Dense)
+  datasets is now 1.5x faster by improving the argument passing strategy used
+  in the computation routines in :class:`metrics.DistanceMetric`.
+  :pr:`26765` by :user:`Meekail Zain <micky774>`
