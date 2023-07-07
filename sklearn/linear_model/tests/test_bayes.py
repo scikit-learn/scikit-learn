@@ -8,14 +8,14 @@ from math import log
 import numpy as np
 import pytest
 
-
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_less
-from sklearn.utils import check_random_state
-from sklearn.linear_model import BayesianRidge, ARDRegression
-from sklearn.linear_model import Ridge
 from sklearn import datasets
+from sklearn.linear_model import ARDRegression, BayesianRidge, Ridge
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_less,
+)
 from sklearn.utils.extmath import fast_logdet
 
 diabetes = datasets.load_diabetes()

@@ -27,13 +27,11 @@ hyperparameters used in the first figure by black dots.
 # License: BSD 3 clause
 
 import numpy as np
-
 from matplotlib import pyplot as plt
 
-from sklearn.metrics import accuracy_score, log_loss
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
-
+from sklearn.metrics import accuracy_score, log_loss
 
 # Generate data
 train_size = 50

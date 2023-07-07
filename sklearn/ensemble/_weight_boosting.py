@@ -23,28 +23,32 @@ The module structure is the following:
 #
 # License: BSD 3 clause
 
-from abc import ABCMeta, abstractmethod
-
-from numbers import Integral, Real
-import numpy as np
-
 import warnings
+from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
 
+import numpy as np
 from scipy.special import xlogy
 
-from ._base import BaseEnsemble
-from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
-
-from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, _safe_indexing
-from ..utils.extmath import softmax
-from ..utils.extmath import stable_cumsum
+from ..base import (
+    ClassifierMixin,
+    RegressorMixin,
+    _fit_context,
+    is_classifier,
+    is_regressor,
+)
 from ..metrics import accuracy_score, r2_score
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_sample_weight
-from ..utils.validation import has_fit_parameter
-from ..utils.validation import _num_samples
+from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
+from ..utils import _safe_indexing, check_random_state
 from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils.extmath import softmax, stable_cumsum
+from ..utils.validation import (
+    _check_sample_weight,
+    _num_samples,
+    check_is_fitted,
+    has_fit_parameter,
+)
+from ._base import BaseEnsemble
 
 __all__ = [
     "AdaBoostClassifier",
@@ -64,7 +68,11 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "learning_rate": [Interval(Real, 0, None, closed="neither")],
         "random_state": ["random_state"],
-        "base_estimator": [HasMethods(["fit", "predict"]), StrOptions({"deprecated"})],
+        "base_estimator": [
+            HasMethods(["fit", "predict"]),
+            StrOptions({"deprecated"}),
+            None,
+        ],
     }
 
     @abstractmethod
@@ -99,6 +107,10 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             reset=False,
         )
 
+    @_fit_context(
+        # AdaBoost*.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
 
@@ -120,8 +132,6 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         X, y = self._validate_data(
             X,
             y,
@@ -751,7 +761,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         -------
         score : ndarray of shape of (n_samples, k)
             The decision function of the input samples. The order of
-            outputs is the same of that of the :term:`classes_` attribute.
+            outputs is the same as that of the :term:`classes_` attribute.
             Binary classification is a special cases with ``k == 1``,
             otherwise ``k==n_classes``. For binary classification,
             values closer to -1 or 1 mean more like the first or second

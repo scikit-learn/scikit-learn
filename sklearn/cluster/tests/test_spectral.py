@@ -1,24 +1,21 @@
 """Testing for Spectral Clustering methods"""
+import pickle
 import re
 
 import numpy as np
+import pytest
 from scipy import sparse
 from scipy.linalg import LinAlgError
 
-import pytest
-
-import pickle
-
-from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_array_equal
-
 from sklearn.cluster import SpectralClustering, spectral_clustering
-from sklearn.cluster._spectral import discretize, cluster_qr
+from sklearn.cluster._spectral import cluster_qr, discretize
+from sklearn.datasets import make_blobs
 from sklearn.feature_extraction import img_to_graph
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
 from sklearn.neighbors import NearestNeighbors
-from sklearn.datasets import make_blobs
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import assert_array_equal
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa
