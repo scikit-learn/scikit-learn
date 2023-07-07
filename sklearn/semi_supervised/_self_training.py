@@ -175,7 +175,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         # SelfTrainingClassifier.base_estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y):
+    def fit(self, X, y,**kwargs):
         """
         Fit self-training classifier using `X`, `y` as training data.
 
@@ -236,7 +236,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         ):
             self.n_iter_ += 1
             self.base_estimator_.fit(
-                X[safe_mask(X, has_label)], self.transduction_[has_label]
+                X[safe_mask(X, has_label)], self.transduction_[has_label],**kwargs
             )
 
             # Predict on the unlabeled samples
@@ -280,7 +280,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             self.termination_condition_ = "all_labeled"
 
         self.base_estimator_.fit(
-            X[safe_mask(X, has_label)], self.transduction_[has_label]
+            X[safe_mask(X, has_label)], self.transduction_[has_label],**kwargs
         )
         self.classes_ = self.base_estimator_.classes_
         return self
