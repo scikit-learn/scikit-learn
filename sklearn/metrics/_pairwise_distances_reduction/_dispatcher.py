@@ -9,7 +9,6 @@ from .._dist_metrics import (
     BOOL_METRICS,
     METRIC_MAPPING64,
     DistanceMetric,
-    DistanceMetric32,
 )
 from ._argkmin import (
     ArgKmin32,
@@ -121,10 +120,7 @@ class BaseDistancesReductionDispatcher:
             and (is_numpy_c_ordered(Y) or is_valid_sparse_matrix(Y))
             and X.dtype == Y.dtype
             and X.dtype in (np.float32, np.float64)
-            and (
-                metric in cls.valid_metrics()
-                or isinstance(metric, (DistanceMetric, DistanceMetric32))
-            )
+            and (metric in cls.valid_metrics() or isinstance(metric, DistanceMetric))
         )
 
         return is_usable

@@ -26,7 +26,7 @@ from ._classification import (
     recall_score,
     zero_one_loss,
 )
-from ._dist_metrics import DistanceMetric, DistanceMetric32
+from ._dist_metrics import DistanceMetric
 from ._plot.confusion_matrix import ConfusionMatrixDisplay
 from ._plot.det_curve import DetCurveDisplay
 from ._plot.precision_recall_curve import PrecisionRecallDisplay
@@ -118,7 +118,6 @@ __all__ = [
     "DetCurveDisplay",
     "det_curve",
     "DistanceMetric",
-    "DistanceMetric32",
     "euclidean_distances",
     "explained_variance_score",
     "f1_score",

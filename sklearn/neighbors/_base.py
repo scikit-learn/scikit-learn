@@ -19,7 +19,7 @@ from scipy.sparse import csr_matrix, issparse
 
 from ..base import BaseEstimator, MultiOutputMixin, is_classifier
 from ..exceptions import DataConversionWarning, EfficiencyWarning
-from ..metrics import DistanceMetric, DistanceMetric32, pairwise_distances_chunked
+from ..metrics import DistanceMetric, pairwise_distances_chunked
 from ..metrics._pairwise_distances_reduction import (
     ArgKmin,
     RadiusNeighbors,
@@ -388,7 +388,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             StrOptions(set(itertools.chain(*VALID_METRICS.values()))),
             callable,
             DistanceMetric,
-            DistanceMetric32,
         ],
         "metric_params": [dict, None],
         "n_jobs": [Integral, None],
@@ -422,7 +421,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             elif (
                 callable(self.metric)
                 or self.metric in VALID_METRICS["ball_tree"]
-                or isinstance(self.metric, (DistanceMetric, DistanceMetric32))
+                or isinstance(self.metric, DistanceMetric)
             ):
                 alg_check = "ball_tree"
             else:
@@ -440,7 +439,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     % self.metric
                 )
         elif self.metric not in VALID_METRICS[alg_check] and not isinstance(
-            self.metric, (DistanceMetric, DistanceMetric32)
+            self.metric, DistanceMetric
         ):
             raise ValueError(
                 "Metric '%s' not valid. Use "
@@ -577,9 +576,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if (
                 self.effective_metric_ not in VALID_METRICS_SPARSE["brute"]
                 and not callable(self.effective_metric_)
-                and not isinstance(
-                    self.effective_metric_, (DistanceMetric, DistanceMetric32)
-                )
+                and not isinstance(self.effective_metric_, DistanceMetric)
             ):
                 raise ValueError(
                     "Metric '%s' not valid for sparse input. "
@@ -810,6 +807,7 @@ class KNeighborsMixin:
                 "n_neighbors does not take %s value, enter integer value"
                 % type(n_neighbors)
             )
+
         query_is_train = X is None
         if query_is_train:
             X = self._fit_X

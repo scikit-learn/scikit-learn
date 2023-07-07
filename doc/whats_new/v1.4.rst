@@ -93,9 +93,10 @@ Changelog
 :mod:`sklearn.neighbors`
 ............................
 
-- |API| The :class:`neighbors.KNeighborsRegressor` can now accept `DistanceMetric{32}`
-  objects directly via the `metric` keyword argument allowing for the use of
-  accelerated third-party `DistanceMetric{32}` objects.
+- |API| The :class:`neighbors.KNeighborsRegressor` can now accept
+  :class:`metric.DistanceMetric` objects directly via the `metric` keyword
+  argument allowing for the use of accelerated third-party
+  :class:`metric.DistanceMetric` objects.
   :pr:`26267` by :user:`Meekail Zain <micky774>`
 
 Code and Documentation Contributors

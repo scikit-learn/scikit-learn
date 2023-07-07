@@ -28,7 +28,6 @@ from sklearn.metrics._dist_metrics import (
     METRIC_MAPPING32,
     METRIC_MAPPING64,
     DistanceMetric,
-    DistanceMetric32,
 )
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.tests.test_dist_metrics import BOOL_METRICS
@@ -185,11 +184,11 @@ def test_unsupervised_kneighbors(
     results = []
 
     for algorithm in ALGORITHMS:
-        if isinstance(metric, DistanceMetric32):
+        if isinstance(metric, DistanceMetric) and global_dtype == np.float32:
             if "tree" in algorithm:  # pragma: nocover
                 pytest.skip(
-                    "Neither KDTree nor BallTree support 32-bit distance metric objects"
-                    " (DistanceMetric32)."
+                    "Neither KDTree nor BallTree support 32-bit distance metric"
+                    " objects."
                 )
         neigh = neighbors.NearestNeighbors(
             n_neighbors=n_neighbors, algorithm=algorithm, metric=metric
@@ -293,11 +292,11 @@ def test_neigh_predictions_algorithm_agnosticity(
     )
 
     for algorithm in ALGORITHMS:
-        if isinstance(metric, DistanceMetric32):
+        if isinstance(metric, DistanceMetric) and global_dtype == np.float32:
             if "tree" in algorithm:  # pragma: nocover
                 pytest.skip(
-                    "Neither KDTree nor BallTree support 32-bit distance metric objects"
-                    " (DistanceMetric32)."
+                    "Neither KDTree nor BallTree support 32-bit distance metric"
+                    " objects."
                 )
         neigh = NeighborsMixinSubclass(parameter, algorithm=algorithm, metric=metric)
         neigh.fit(X, y)
@@ -1656,11 +1655,11 @@ def test_neighbors_metrics(
         results = {}
         p = metric_params.pop("p", 2)
         for algorithm in algorithms:
-            if isinstance(metric, DistanceMetric32):
+            if isinstance(metric, DistanceMetric) and global_dtype == np.float32:
                 if "tree" in algorithm:  # pragma: nocover
                     pytest.skip(
                         "Neither KDTree nor BallTree support 32-bit distance metric"
-                        " objects (DistanceMetric32)."
+                        " objects."
                     )
             neigh = neighbors.NearestNeighbors(
                 n_neighbors=n_neighbors,
