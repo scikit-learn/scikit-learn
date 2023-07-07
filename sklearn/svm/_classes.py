@@ -76,6 +76,9 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         chosen `loss`, `multi_class` and `penalty`, then dual will be set to True,
         otherwise it will be set to False.
 
+        .. versionadded:: 1.3
+           The option `"auto"` is added.
+
         .. versionchanged:: 1.3
            The default value will change from `True` to `"auto"` in 1.5.
 
@@ -410,6 +413,9 @@ class LinearSVR(RegressorMixin, LinearModel):
         based on the values of `n_samples`, `n_features` and `loss`. If
         `n_samples` < `n_features` and optmizer supports chosen `loss`,
         then dual will be set to True, otherwise it will be set to False.
+
+        .. versionadded:: 1.3
+           The option `"auto"` is added.
 
         .. versionchanged:: 1.3
            The default value will change from `True` to `"auto"` in 1.5.
