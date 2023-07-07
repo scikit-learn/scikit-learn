@@ -6,8 +6,8 @@ Ridge coefficients as a function of the L2 Regularization
 A model that overfits learns the training data too well, capturing both the
 underlying patterns and the noise in the data. However, when applied to unseen
 data, the learned associations may not hold. We normally detect this when we
-apply our trained predictions to the test data and see the performance drop
-significantly compared to the training data.
+apply our trained predictions to the test data and see the statistical
+performance drop significantly compared to the training data.
 
 One way to overcome overfitting is through regularization. Regularization
 penalizes large training weights, forcing the model to shrink all coefficients.
@@ -16,7 +16,7 @@ the training samples.
 
 This example illustrates how L2 regularization in a
 :class:`~sklearn.linear_model.Ridge` regression affects a model's performance by
-adding a penalty term to the Loss that increases with the coefficients
+adding a penalty term to the loss that increases with the coefficients
 :math:`\\beta`.
 
 The regularized loss function is given by: :math:`\\mathcal{L}(X, y, \\beta) =
@@ -61,14 +61,9 @@ capable of generalizing well to unseen data while avoiding overfitting.
 # regularization strengths (:math:`\alpha`) and plot how the trained
 # coefficients and the mean squared error between those and the original values
 # behave as functions of the regularization strength.
-
-# %%
-# Ridge Regularization on a non-noisy data set
-# --------------------------------------------
-
-# %%
+#
 # Creating a non-noisy data set
-###############################
+# *****************************
 # We make a toy data set with 100 samples and 10 features, that's suitable to
 # detect regression. Out of the 10 features, 8 are informative and contribute to
 # the regression, while the remaining 2 features do not have any effect on the
@@ -86,15 +81,15 @@ print(f"The true coefficient of this regression problem are:\n{w}")
 
 # %%
 # Training the Ridge Regressor
-##############################
+# ****************************
 # We use :class:`~sklearn.linear_model.Ridge`, a linear model with L2
 # regularization. We train several models, each with a different value for the
 # model parameter `alpha`. `alpha` is a positive constant that multiplies the
 # penalty term, controlling the regularization strength. For each trained model
-# we then compute the error between the true coefficients `w` the the
-# coefficients found by the model clf. We safe the identified coefficients and
-# the calculated errors for the corresponding coefficients in lists, which makes
-# it convenient for us to plot them.
+# we then compute the error between the true coefficients `w` and the
+# coefficients found by the model `clf`. We store the identified coefficients
+# and the calculated errors for the corresponding coefficients in lists, which
+# makes it convenient for us to plot them.
 import numpy as np
 
 from sklearn.linear_model import Ridge
@@ -115,7 +110,7 @@ for a in alphas:
 
 # %%
 # Plotting trained Coefficients and Mean Squared Errors
-#######################################################
+# *****************************************************
 # We now plot the 10 different regularized coefficients as a function of the
 # regularization parameter `alpha` where each color represents a different
 # coefficient.
@@ -134,18 +129,18 @@ fig, axs = plt.subplots(1, 2, figsize=(20, 6))
 coefs.plot(
     ax=axs[0],
     logx=True,
-    ylabel="Ridge coefficient values",
     title="Ridge coefficients as a function of the regularization strength",
 )
-_ = errors.plot(
+axs[0].set_ylabel("Ridge coefficient values")
+errors.plot(
     ax=axs[1],
     logx=True,
-    ylabel="Mean squared error",
     title="Coefficient error as a function of the regularization strength",
 )
+_ = axs[1].set_ylabel("Mean squared error")
 # %%
 # Interpreting the plots
-########################
+# **********************
 # The plot on the left-hand side shows how the regularization strength (`alpha`)
 # affects the Ridge regression coefficients. Smaller values of `alpha` (weak
 # regularization), allow the coefficients to closely resemble the true
