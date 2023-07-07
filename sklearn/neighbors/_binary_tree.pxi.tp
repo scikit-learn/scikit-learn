@@ -1010,8 +1010,8 @@ cdef class BinaryTree{{name_suffix}}:
             self.node_bounds.base,
         )
 
-    cdef inline float64_t dist(self, float64_t* x1, float64_t* x2,
-                               intp_t size) except -1 nogil:
+    cdef inline float64_t dist(self, {{INPUT_DTYPE_t}}* x1, {{INPUT_DTYPE_t}}* x2,
+                             intp_t size) except -1 nogil:
         """Compute the distance between arrays x1 and x2"""
         self.n_calls += 1
         if self.euclidean:
