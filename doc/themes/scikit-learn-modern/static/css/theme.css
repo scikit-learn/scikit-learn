@@ -1000,14 +1000,6 @@ div.sphx-glr-thumbcontainer {
   font-size: 0.9rem;
 }
 
-.sphx-glr-example-title > :target::before {
-  display: block;
-  content: "";
-  margin-top: -150px;
-  height: 150px;
-  visibility: hidden;
-}
-
 .sphx-glr-script-out .highlight pre {
   padding: 1ex;
 }
