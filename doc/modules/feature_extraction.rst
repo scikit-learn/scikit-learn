@@ -206,8 +206,11 @@ Note the use of a generator comprehension,
 which introduces laziness into the feature extraction:
 tokens are only processed on demand from the hasher.
 
-Implementation details
-----------------------
+.. Implementation details
+.. ----------------------
+|details-start|
+**Implementation details**
+|details-split|
 
 :class:`FeatureHasher` uses the signed 32-bit variant of MurmurHash3.
 As a result (and because of limitations in ``scipy.sparse``),
@@ -223,6 +226,11 @@ Since a simple modulo is used to transform the hash function to a column index,
 it is advisable to use a power of two as the ``n_features`` parameter;
 otherwise the features will not be mapped evenly to the columns.
 
+.. topic:: References:
+
+   * `MurmurHash3 <https://github.com/aappleby/smhasher>`_.
+
+|details-end|
 
 .. topic:: References:
 
@@ -230,7 +238,8 @@ otherwise the features will not be mapped evenly to the columns.
    Josh Attenberg (2009). `Feature hashing for large scale multitask learning
    <https://alex.smola.org/papers/2009/Weinbergeretal09.pdf>`_. Proc. ICML.
 
- * `MurmurHash3 <https://github.com/aappleby/smhasher>`_.
+..  * `MurmurHash3 <https://github.com/aappleby/smhasher>`_.
+.. The above was a cross reference and was hence added inside the dropdown.
 
 
 .. _text_feature_extraction:
@@ -870,8 +879,11 @@ The :class:`HashingVectorizer` also comes with the following limitations:
   model. A :class:`TfidfTransformer` can be appended to it in a pipeline if
   required.
 
-Performing out-of-core scaling with HashingVectorizer
-------------------------------------------------------
+.. Performing out-of-core scaling with HashingVectorizer
+.. ------------------------------------------------------
+|details-start|
+**Performing out-of-core scaling with HashingVectorizer**
+|details-split|
 
 An interesting development of using a :class:`HashingVectorizer` is the ability
 to perform `out-of-core`_ scaling. This means that we can learn from data that
@@ -889,6 +901,8 @@ time is often limited by the CPU time one wants to spend on the task.
 
 For a full-fledged example of out-of-core scaling in a text classification
 task see :ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`.
+
+|details-end|
 
 Customizing the vectorizer classes
 ----------------------------------
