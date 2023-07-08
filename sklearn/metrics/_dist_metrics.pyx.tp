@@ -70,7 +70,10 @@ cdef class DistanceMetric:
         """Get the given distance metric from the string identifier.
 
         See the docstring of DistanceMetric for a list of available metrics.
-
+        $p\in(0, 1)$
+        p\in(0, 1)
+        p in (0,1)
+        :math:`p \in (0,1)`
         Parameters
         ----------
         metric : str or class name
@@ -79,6 +82,7 @@ cdef class DistanceMetric:
             The dtype of the data on which the metric will be applied
         **kwargs
             additional arguments will be passed to the requested metric
+
         """
         if dtype == np.float32:
             specialized_class = DistanceMetric32
@@ -1281,12 +1285,12 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     w : (N,) array-like (optional)
         The weight vector.
 
-    Minkowski Distance requires p >= 1 and finite. For p = infinity,
-    use ChebyshevDistance.
+    Minkowski Distance requires p >= 1 and finite.
+    When :math:`p \in (0,1)`, it isn't a true metric but is permissible when
+    the triangular inequality isn't necessary.
+    For p = infinity, use ChebyshevDistance.
     Note that for p=1, ManhattanDistance is more efficient, and for
     p=2, EuclideanDistance is more efficient.
-    For `p<1`, `"Minkowski"` isn't a true metric but is permissible when
-    the triangular inequality isn't necessary.
 
     """
     def __init__(self, p, w=None):
