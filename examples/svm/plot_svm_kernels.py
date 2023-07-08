@@ -1,93 +1,285 @@
 """
 =========================================================
-SVM-Kernels
+Plot classification boundaries with different SVM Kernels
 =========================================================
+This example visualizes how different kernels in a :class:`~sklearn.svm.SVC`
+(Support Vector Classifier) influence the classification boundaries in a binary,
+two-dimensional classification problem.
 
-Three different types of SVM-Kernels are displayed below.
-The polynomial and RBF are especially useful when the
-data-points are not linearly separable.
+Support Vector Classifiers (SVC) aim to find a hyperplane that effectively
+separates the classes in their training data by maximizing the margin between
+the outermost data points of each class. This is achieved by finding the best
+weight vector :math:`w` that defines the decision boundary hyperplane and
+minimizes the sum of hinge losses for misclassified samples, as measured by the
+:func:`~sklearn.metrics.hinge_loss` function. By default, regularization is
+applied with a parameter `C=1`, which allows for a certain degree of
+misclassification tolerance.
 
+If the data is not linearly separable in the original feature space, a
+non-linear `kernel` parameter can be set. Depending on the kernel, the process
+involves adding new features or transforming existing features to enrich and
+potentially add meaning to the data. When a kernel other than `linear` is set,
+the SVC applies the kernel trick, which computes the similarity between pairs of
+data points using the kernel function without explicitly transforming the entire
+dataset. The kernel trick surpasses the otherwise necessary matrix
+transformation of the whole dataset by only considering the relations between
+all pairs of data points. The kernel function maps two vectors (each pair of
+observations) to their similarity using their dot product.
 
+The hyperplane can then be calculated using the kernel function as if the
+dataset were represented in a higher-dimensional space. Using a kernel function
+instead of an explicit matrix transformation improves performance, as the kernel
+function has a time complexity of :math:`O({n}^2)`, whereas matrix
+transformation scales according to the specific transformation being applied.
+
+In this example, we compare the most common kernel types of Support Vector
+Machines: the linear kernel (`linear`), the polynomial kernel (`poly`), the
+radial basis function kernel (`rbf`) and the sigmoid kernel (`sigmoid`).
 """
 
 # Code source: Gaël Varoquaux
 # License: BSD 3 clause
 
+# %%
+# Creating a dataset
+# ------------------
+# We create a two-dimensional dataset with 16 samples and two targets. We plot
+# the samples with the colors matching their respective targets.
 import matplotlib.pyplot as plt
 import numpy as np
 
+X = np.array(
+    [
+        [0.4, -0.7],
+        [-1.5, -1.0],
+        [-1.4, -0.9],
+        [-1.3, -1.2],
+        [-1.1, -0.2],
+        [-1.2, -0.4],
+        [-0.5, 1.2],
+        [-1.5, 2.1],
+        [1.0, 1.0],
+        [1.3, 0.8],
+        [1.2, 0.5],
+        [0.2, -2.0],
+        [0.5, -2.4],
+        [0.2, -2.3],
+        [0.0, -2.7],
+        [1.3, 2.1],
+    ]
+)
+
+y = np.array([0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1])
+
+# Plotting settings
+fig, ax = plt.subplots(figsize=(4, 3))
+ax.grid(True)
+x_min = -3
+x_max = 3
+y_min = -3
+y_max = 3
+plt.xlim(x_min, x_max)
+plt.ylim(y_min, y_max)
+samples_colormap = np.array(["b", "r"])
+
+# Plot samples by color and add legend
+ax.scatter(X[:, 0], X[:, 1], s=150, c=samples_colormap[y], label=y, edgecolors="k")
+legend_labels = ["class 0", "class 1"]
+legend_handles = [
+    plt.Line2D([0], [0], marker="o", color="w", markerfacecolor=color, markersize=10)
+    for color in samples_colormap
+]
+ax.legend(legend_handles, legend_labels)
+ax.set_title("Samples in two-dimensional feature space")
+_ = plt.show()
+
+
+# %%
+# We can see that the samples are not clearly separable by a straight line.
+#
+# Training SVC model and plotting decision boundaries
+# ---------------------------------------------------
+# We create a function to plot the decision boundaries learned by the trained
+# :class:`~sklearn.svm.SVC` model, allowing the `kernel` parameter as input.
+#
+# First, we train the model.
+#
+# Next, we obtain the decision boundary by using the fitted classifier's
+# :func:`~sklearn.svm.SVC.decision_function`. In a prediction task, this
+# function computes the signed distance of each new sample to the hyperplane
+# (decision boundary) to determine its class. Here, we use it to get the
+# position of the hyperplane.
+#
+# We then color the areas separated by the hyperplane based on their predicted
+# class. We also plot the margins to both sides of the decision boundary and the
+# support vectors used during training.
+#
+# Please note that in this example, for the sake of simplicity, we do not fine
+# tune any of the :class:`~sklearn.svm.SVC` parameters. The `C` parameter is set
+# to its default value (`C=1`), resulting in margins at 1 unit distance from
+# both sides of the hyperplane. The `gamma` parameter is set to a constant value
+# (`gamma=2`) for simplicity across all kernels, although it is automatically
+# ignored for the linear kernel.
+#
+# In a real classification task, where performance matters, parameter tuning
+# with techniques like :class:`~sklearn.model_selection.GridSearchCV` is
+# recommended to capture different structures within the data.
+from matplotlib.colors import ListedColormap
+
 from sklearn import svm
 
-# Our dataset and targets
-X = np.c_[
-    (0.4, -0.7),
-    (-1.5, -1),
-    (-1.4, -0.9),
-    (-1.3, -1.2),
-    (-1.1, -0.2),
-    (-1.2, -0.4),
-    (-0.5, 1.2),
-    (-1.5, 2.1),
-    (1, 1),
-    # --
-    (1.3, 0.8),
-    (1.2, 0.5),
-    (0.2, -2),
-    (0.5, -2.4),
-    (0.2, -2.3),
-    (0, -2.7),
-    (1.3, 2.1),
-].T
-Y = [0] * 8 + [1] * 8
 
-# figure number
-fignum = 1
-
-# fit the model
-for kernel in ("linear", "poly", "rbf"):
+def plot_training_data_with_decision_boundary(kernel):
+    # Train the SVC
     clf = svm.SVC(kernel=kernel, gamma=2)
-    clf.fit(X, Y)
+    clf.fit(X, y)
 
-    # plot the line, the points, and the nearest vectors to the plane
-    plt.figure(fignum, figsize=(4, 3))
-    plt.clf()
-
-    plt.scatter(
-        clf.support_vectors_[:, 0],
-        clf.support_vectors_[:, 1],
-        s=80,
-        facecolors="none",
-        zorder=10,
-        edgecolors="k",
-    )
-    plt.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.cm.Paired, edgecolors="k")
-
-    plt.axis("tight")
+    # Plotting settings
+    fig, ax = plt.subplots(figsize=(4, 3))
+    ax.grid(True)
     x_min = -3
     x_max = 3
     y_min = -3
     y_max = 3
+    plt.xlim(x_min, x_max)
+    plt.ylim(y_min, y_max)
+    samples_colormap = np.array(["b", "r"])
 
+    # Extract the decision boundary
     XX, YY = np.mgrid[x_min:x_max:200j, y_min:y_max:200j]
     Z = clf.decision_function(np.c_[XX.ravel(), YY.ravel()])
 
     # Put the result into a color plot
     Z = Z.reshape(XX.shape)
-    plt.figure(fignum, figsize=(4, 3))
-    plt.pcolormesh(XX, YY, Z > 0, cmap=plt.cm.Paired)
+    plt.pcolormesh(XX, YY, Z > 0, cmap=ListedColormap(["lightblue", "lightpink"]))
     plt.contour(
         XX,
         YY,
         Z,
         colors=["k", "k", "k"],
         linestyles=["--", "-", "--"],
-        levels=[-0.5, 0, 0.5],
+        levels=[-1, 0, 1],
     )
 
-    plt.xlim(x_min, x_max)
-    plt.ylim(y_min, y_max)
+    # Plot huger circles around samples that serve as support vectors
+    ax.scatter(
+        clf.support_vectors_[:, 0],
+        clf.support_vectors_[:, 1],
+        s=250,
+        facecolors="none",
+        edgecolors="k",
+    )
+    # Plot samples by color and add legend
+    ax.scatter(X[:, 0], X[:, 1], c=samples_colormap[y], s=150, edgecolors="k")
+    legend_labels = ["class 0", "class 1"]
+    legend_handles = [
+        plt.Line2D(
+            [0], [0], marker="o", color="w", markerfacecolor=color, markersize=10
+        )
+        for color in samples_colormap
+    ]
+    ax.legend(legend_handles, legend_labels)
+    ax.set_title(f" Decision boundaries of {kernel} kernel in SVC")
 
-    plt.xticks(())
-    plt.yticks(())
-    fignum = fignum + 1
-plt.show()
+    _ = plt.show()
+
+
+# %%
+# Linear kernel
+# *************
+# For the linear kernel, the kernel function remains in its base form:
+#
+# .. math:: K(\mathbf{x}_1, \mathbf{x}_2) = \mathbf{x}_1^\top \mathbf{x}_2
+#
+# It is then applied to any combination of two data points (samples) in the
+# dataset. The dot product of the two points determines the
+# :func:`~sklearn.metrics.pairwise.cosine_similarity` between both points. The
+# higher the value, the more similar the points are.
+plot_training_data_with_decision_boundary("linear")
+
+# %%
+# Training a :class:`~sklearn.svm.SVC` on a linear kernel results in an
+# untransformed feature space and we can see the hyperplane and the margins as
+# straight lines. The support vectors are on the margins. The trained classes do
+# not perfectly capture the data, but thanks to the model's soft margins, we can
+# expect that it has converged, and the position of the classification
+# boundaries has stabilized.
+#
+# Polynomial kernel
+# *****************
+# The polynomial kernel changes the notion of similarity. The kernel function
+# is defined as:
+#
+# .. math:: K(\mathbf{x}_1, \mathbf{x}_2) = (\gamma \cdot \
+# .. math:: \mathbf{x}_1^\top\mathbf{x}_2 + r)^d
+#
+# where :math:`{d}` is the degree (`degree`) of the polynomial, :math:`{\gamma}`
+# (`gamma`) controls the influence of each individual training sample on the
+# decision boundary and :math:`{r}` is the bias term (`coef0`) that shifts the
+# data up or down. When `coef0=0` (the default), the data is only transformed,
+# but no additional dimension is added. The polynomial kernel captures nonlinear
+# relationships by considering whether points are within a circular region
+# around each other. Using a polynomial kernel is equivalent to creating
+# :class:`~sklearn.preprocessing.PolynomialFeatures` and then fitting a
+# :class:`~sklearn.svm.SVC` with a linear kernel on the transformed data,
+# although this alternative approach would be computationally expensive for most
+# datasets.
+plot_training_data_with_decision_boundary("poly")
+
+# %%
+# The polynomial kernel with the kernel coefficient `gamma=2` bends around
+# the training data well. The margins to both sides of the hyperplane bend with
+# it.
+#
+# RBF kernel
+# **********
+# The radial basis function (RBF) kernel, also known as the Gaussian kernel, is
+# the default kernel for Support Vector Machines in scikit-learn. It measures
+# similarity between two data points in infinite dimensions and then approaches
+# classification by majority vote. The kernel function is defined as:
+#
+# .. math:: K(\mathbf{x}_1, \mathbf{x}_2) = \exp\left(-\gamma \cdot \
+# .. math:: {\|\mathbf{x}_1 - \mathbf{x}_2\|^2}\right)
+#
+# where :math:`{\gamma}` (`gamma`) controls the influence of each individual
+# training sample on the decision boundary.
+#
+# The larger the euclidean distance between two points
+# :math:`\|\mathbf{x}_1 - \mathbf{x}_2\|^2`
+# the closer the kernel function is to zero. This means that two points far away
+# are more likely to be dissimilar.
+plot_training_data_with_decision_boundary("rbf")
+
+# %%
+# In the plot we can see how the decision boundaries tend to contract around
+# data points, that are close to each other.
+#
+# Sigmoid kernel
+# **************
+# The sigmoid kernel function is defined as:
+#
+# .. math:: K(\mathbf{x}_1, \mathbf{x}_2) = \tanh(\gamma \cdot \\
+# .. math:: \mathbf{x}_1^\top\mathbf{x}_2 + r)
+#
+plot_training_data_with_decision_boundary("sigmoid")
+
+# %%
+# Conclusion
+# ----------
+# In this example, we have visualized the decision boundaries trained with the
+# provided dataset. The plots serve as an intuitive demonstration of how
+# different kernels utilize the training data to determine the classification
+# boundaries.
+#
+# The hyperplanes and margins, although computed indirectly, can be imagined as
+# planes in the transformed feature space. However, in the plots, they are
+# represented relative to the original feature space, resulting in curved
+# decision boundaries for the polynomial, RBF, and sigmoid kernels.
+#
+# Please note that the plots do not evaluate the individual kernel's accuracy or
+# quality. They are intended to provide a visual understanding of how the
+# different kernels use the training data.
+#
+# For a comprehensive evaluation, fine-tuning of SVC parameters using techniques
+# such as :class:`~sklearn.model_selection.GridSearchCV` is recommended to
+# capture the underlying structures within the data.
