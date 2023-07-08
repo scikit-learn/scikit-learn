@@ -1273,6 +1273,11 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     ----------
     p : int
         The order of the p-norm of the difference (see above).
+
+        .. versionchanged:: 1.4.0
+            Minkowski distance allows `p` to be `0<p<1`.
+
+
     w : (N,) array-like (optional)
         The weight vector.
 
@@ -1280,6 +1285,9 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     use ChebyshevDistance.
     Note that for p=1, ManhattanDistance is more efficient, and for
     p=2, EuclideanDistance is more efficient.
+    For `p<1`, `"Minkowski"` isn't a true metric but is permissible when
+    the triangular inequality isn't necessary.
+
     """
     def __init__(self, p, w=None):
         if p <= 0:

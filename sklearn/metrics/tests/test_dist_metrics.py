@@ -43,7 +43,6 @@ Y_bool = (Y64 < 0.7).astype(np.float64)  # not too sparse
 V = rng.random_sample((d, d))
 VI = np.dot(V, V.T)
 
-
 METRICS_DEFAULT_PARAMS = [
     ("euclidean", {}),
     ("cityblock", {}),
@@ -80,9 +79,7 @@ def test_cdist(metric_param_grid, X, Y):
         # TODO: Remove when scipy minimum version >= 1.7.0
         # scipy supports 0<p<1 for minkowski metric >= 1.7.0
         if metric == "minkowski":
-            # default value of p for Minkowski is 2
-            p = float(kwargs.get("p", 2))
-            print("p", p)
+            p = kwargs["p"]
             if sp_version < parse_version("1.7.0") and p < 1:
                 pytest.skip("scipy does not support 0<p<1 for minkowski metric < 1.7.0")
 
@@ -163,8 +160,7 @@ def test_pdist(metric_param_grid, X):
         # TODO: Remove when scipy minimum version >= 1.7.0
         # scipy supports 0<p<1 for minkowski metric >= 1.7.0
         if metric == "minkowski":
-            # default value of p for Minkowski is 2
-            p = float(kwargs.get("p", 2))
+            p = kwargs["p"]
             if sp_version < parse_version("1.7.0") and p < 1:
                 pytest.skip("scipy does not support 0<p<1 for minkowski metric < 1.7.0")
         D_scipy_pdist = cdist(X, X, metric, **kwargs)
