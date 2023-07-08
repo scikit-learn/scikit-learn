@@ -81,10 +81,8 @@ Changelog
 :mod:`sklearn.metrics`
 .......................
 
-- |ENH| The `"minkowski"` metric of :class:`metrics.DistanceMetric` now allows
-  parameter `p` to accept values greater than 0 and less than 1. Although `"Minkowski"``
-  metric is not a true metric for `p<1`, objective is to allow `0<p<1` if triangular
-  inequality is not required to be satisfied.
+- |Enhancement| The `"Minkowski"` metric of :class:`metrics.DistanceMetric` now accepts
+  parameter `p` values in the open interval (0,1).
   :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
 :mod:`sklearn.tree`
