@@ -78,6 +78,14 @@ Changelog
 - |Fix| :func:`feature_selection.mutual_info_regression` now correctly computes the
   result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| Add :func:`metrics.fpr_tpr_fnr_tnr_score`,
+  :func:`metrics.specificity_score` and :func:`metrics.npv_score`.
+  :pr:`19556` by :user:`Hao Chun Chang <haochunchang>`
+  and :user:`Pawel Kranzberg <Pawel-Kranzberg>`.
+
 :mod:`sklearn.tree`
 ...................
 
