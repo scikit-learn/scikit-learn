@@ -70,10 +70,7 @@ cdef class DistanceMetric:
         """Get the given distance metric from the string identifier.
 
         See the docstring of DistanceMetric for a list of available metrics.
-        $p\in(0, 1)$
-        p\in(0, 1)
-        p in (0,1)
-        :math:`p \in (0,1)`
+
         Parameters
         ----------
         metric : str or class name
