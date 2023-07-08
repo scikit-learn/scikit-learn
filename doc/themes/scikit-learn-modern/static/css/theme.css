@@ -459,6 +459,10 @@ section[id]::before {
   content: "";
 }
 
+section > section[id]::before {
+  height: 60px;
+}
+
 div.sk-page-content {
   background-color: white;
   position: relative;
