@@ -822,11 +822,6 @@ Changelog
   :func:`metrics.pairwise.manhattan_distances` is deprecated and will be removed in 1.4.
   :pr:`24630` by :user:`Rushil Desai <rusdes>`.
 
-- |Feature| Add :func:`metrics.fpr_tpr_fnr_tnr_score`,
-  :func:`metrics.specificity_score` and :func:`metrics.npv_score`.
-  :pr:`19556` by :user:`Hao Chun Chang <haochunchang>`
-  and :user:`Pawel Kranzberg <Pawel-Kranzberg>`.
-
 :mod:`sklearn.model_selection`
 ..............................
 
