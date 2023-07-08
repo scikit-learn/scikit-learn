@@ -79,7 +79,6 @@ cdef class DistanceMetric:
             The dtype of the data on which the metric will be applied
         **kwargs
             additional arguments will be passed to the requested metric
-
         """
         if dtype == np.float32:
             specialized_class = DistanceMetric32
