@@ -637,7 +637,7 @@ def test_mean_squared_error_deprecation():
     y_pred = y_true + 1
 
     with pytest.warns(FutureWarning, match=depr_msg):
-        mean_squared_error(y_true, y_pred, square=False)
+        mean_squared_error(y_true, y_pred, squared=False)
 
 
 # TODO(1.6): remove this test
@@ -653,4 +653,4 @@ def test_mean_squared_log_error_deprecation():
     y_pred = y_true + 1
 
     with pytest.warns(FutureWarning, match=depr_msg):
-        mean_squared_log_error(y_true, y_pred, square=False)
+        mean_squared_log_error(y_true, y_pred, squared=False)
