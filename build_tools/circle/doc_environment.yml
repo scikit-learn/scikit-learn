@@ -23,6 +23,7 @@ dependencies:
   - memory_profiler
   - compilers
   - sphinx=6.0.0
+  - pydata-sphinx-theme
   - sphinx-gallery
   - sphinx-copybutton
   - numpydoc

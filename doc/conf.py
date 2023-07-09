@@ -186,16 +186,16 @@ pygments_style = "sphinx"
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-html_theme = "scikit-learn-modern"
+html_theme = "pydata_sphinx_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    "legacy_google_analytics": True,
-    "analytics": True,
-    "mathjax_path": mathjax_path,
-    "link_to_live_contributing_page": not parsed_version.is_devrelease,
+    "logo": {
+        "link": "http://scikit-learn.org/stable/index.html",
+        "alt_text": "scikit-learn home page",
+    }
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
@@ -221,7 +221,7 @@ html_favicon = "logos/favicon.ico"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["images"]
+html_static_path = ["images", "css"]
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
