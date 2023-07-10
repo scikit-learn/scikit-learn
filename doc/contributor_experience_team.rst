@@ -43,6 +43,6 @@
     </div>
     <div>
     <a href='https://github.com/marenwestermann'><img src='https://avatars.githubusercontent.com/u/17019042?v=4' class='avatar' /></a> <br />
-    <p>Albert Thomas</p>
+    <p>Maren Westermann</p>
     </div>
     </div>
