@@ -2784,7 +2784,7 @@ def log_loss(
         the probabilities provided are assumed to be that of the
         positive class. The labels in ``y_pred`` are assumed to be
         ordered alphabetically, as done by
-        :class:`preprocessing.LabelBinarizer`.
+        :class:`~sklearn.preprocessing.LabelBinarizer`.
 
     eps : float or "auto", default="auto"
         Log loss is undefined for p=0 or p=1, so probabilities are

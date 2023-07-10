@@ -416,7 +416,7 @@ it will allow the estimator RNG to vary for each fold.
 **Cloning**
 
 Another subtle side effect of passing `RandomState` instances is how
-:func:`~sklearn.clone` will work::
+:func:`~sklearn.base.clone` will work::
 
     >>> from sklearn import clone
     >>> from sklearn.ensemble import RandomForestClassifier
@@ -439,10 +439,10 @@ If an integer were passed, `a` and `b` would be exact clones and they would not
 influence each other.
 
 .. warning::
-    Even though :func:`~sklearn.clone` is rarely used in user code, it is
+    Even though :func:`~sklearn.base.clone` is rarely used in user code, it is
     called pervasively throughout scikit-learn codebase: in particular, most
     meta-estimators that accept non-fitted estimators call
-    :func:`~sklearn.clone` internally
+    :func:`~sklearn.base.clone` internally
     (:class:`~sklearn.model_selection.GridSearchCV`,
     :class:`~sklearn.ensemble.StackingClassifier`,
     :class:`~sklearn.calibration.CalibratedClassifierCV`, etc.).
@@ -553,7 +553,7 @@ When we evaluate a randomized estimator performance by cross-validation, we
 want to make sure that the estimator can yield accurate predictions for new
 data, but we also want to make sure that the estimator is robust w.r.t. its
 random initialization. For example, we would like the random weights
-initialization of a :class:`~sklearn.linear_model.SGDCLassifier` to be
+initialization of a :class:`~sklearn.linear_model.SGDClassifier` to be
 consistently good across all folds: otherwise, when we train that estimator
 on new data, we might get unlucky and the random initialization may lead to
 bad performance. Similarly, we want a random forest to be robust w.r.t the

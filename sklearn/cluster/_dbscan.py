@@ -134,8 +134,8 @@ def dbscan(
     Another way to reduce memory and computation time is to remove
     (near-)duplicate points and use ``sample_weight`` instead.
 
-    :func:`cluster.optics <sklearn.cluster.optics>` provides a similar
-    clustering with lower memory usage.
+    :class:`~sklearn.cluster.OPTICS` provides a similar clustering with lower
+    memory usage.
 
     References
     ----------
@@ -274,7 +274,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     Another way to reduce memory and computation time is to remove
     (near-)duplicate points and use ``sample_weight`` instead.
 
-    :class:`cluster.OPTICS` provides a similar clustering with lower memory
+    :class:`~sklearn.cluster.OPTICS` provides a similar clustering with lower memory
     usage.
 
     References

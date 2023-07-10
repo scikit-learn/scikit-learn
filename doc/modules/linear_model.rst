@@ -1062,15 +1062,16 @@ with `loss="log_loss"`, which might be even faster but requires more tuning.
 .. topic:: Differences from liblinear:
 
    There might be a difference in the scores obtained between
-   :class:`LogisticRegression` with ``solver=liblinear``
-   or :class:`LinearSVC` and the external liblinear library directly,
-   when ``fit_intercept=False`` and the fit ``coef_`` (or) the data to
-   be predicted are zeroes. This is because for the sample(s) with
-   ``decision_function`` zero, :class:`LogisticRegression` and :class:`LinearSVC`
-   predict the negative class, while liblinear predicts the positive class.
-   Note that a model with ``fit_intercept=False`` and having many samples with
-   ``decision_function`` zero, is likely to be a underfit, bad model and you are
-   advised to set ``fit_intercept=True`` and increase the intercept_scaling.
+   :class:`LogisticRegression` with ``solver=liblinear`` or
+   :class:`~sklearn.svm.LinearSVC` and the external liblinear library directly,
+   when ``fit_intercept=False`` and the fit ``coef_`` (or) the data to be
+   predicted are zeroes. This is because for the sample(s) with
+   ``decision_function`` zero, :class:`LogisticRegression` and
+   :class:`~sklearn.svm.LinearSVC` predict the negative class, while liblinear
+   predicts the positive class. Note that a model with ``fit_intercept=False``
+   and having many samples with ``decision_function`` zero, is likely to be a
+   underfit, bad model and you are advised to set ``fit_intercept=True`` and
+   increase the intercept_scaling.
 
 .. note:: **Feature selection with sparse logistic regression**
 
