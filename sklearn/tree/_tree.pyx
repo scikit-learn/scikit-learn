@@ -598,7 +598,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         double lower_bound,
         double upper_bound,
         FrontierRecord* res
-    ) nogil except -1:
+    ) except -1 nogil:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
         cdef SIZE_t node_id
