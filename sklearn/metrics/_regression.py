@@ -490,7 +490,9 @@ def mean_squared_error(
             FutureWarning,
         )
         if not squared:
-            return root_mean_squared_error(y_true, y_pred)
+            return root_mean_squared_error(
+                y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
+            )
 
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
@@ -666,7 +668,9 @@ def mean_squared_log_error(
             FutureWarning,
         )
         if not squared:
-            return root_mean_squared_log_error(y_true, y_pred)
+            return root_mean_squared_log_error(
+                y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
+            )
 
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
