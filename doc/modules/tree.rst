@@ -577,7 +577,7 @@ Note that it fits much slower than the MSE criterion.
 Missing Values Support
 ======================
 
-:class:`~tree.DecisionTreeClassifier` and :class:`~tree.DecisionTreeRegressor`
+:class:`DecisionTreeClassifier` and :class:`DecisionTreeRegressor`
 have built-in support for missing values when `splitter='best'` and criterion is
 `'gini'`, `'entropy`', or `'log_loss'`, for classification or
 `'squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.

@@ -397,7 +397,6 @@ class LabelPropagation(BaseLabelPropagation):
 
     See Also
     --------
-    BaseLabelPropagation : Base class for label propagation module.
     LabelSpreading : Alternate label propagation strategy more robust to noise.
 
     References

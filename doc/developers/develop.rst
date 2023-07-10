@@ -414,7 +414,7 @@ trailing ``_`` is used to check if the estimator has been fitted.
 
 Cloning
 -------
-For use with the :mod:`model_selection` module,
+For use with the :mod:`~sklearn.model_selection` module,
 an estimator must support the ``base.clone`` function to replicate an estimator.
 This can be done by providing a ``get_params`` method.
 If ``get_params`` is present, then ``clone(estimator)`` will be an instance of
@@ -508,7 +508,7 @@ independent term is stored in ``intercept_``.  ``sklearn.linear_model._base``
 contains a few base classes and mixins that implement common linear model
 patterns.
 
-The :mod:`sklearn.utils.multiclass` module contains useful functions
+The :mod:`~sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
 
 .. _estimator_tags:
@@ -568,7 +568,7 @@ pairwise (default=False)
     or a cross validation procedure that extracts a sub-sample of data intended
     for a pairwise estimator, where the data needs to be indexed on both axes.
     Specifically, this tag is used by
-    :func:`~sklearn.utils.metaestimators._safe_split` to slice rows and
+    `sklearn.utils.metaestimators._safe_split` to slice rows and
     columns.
 
 preserves_dtype (default=``[np.float64]``)
@@ -855,7 +855,7 @@ Numerical assertions in tests
 -----------------------------
 
 When asserting the quasi-equality of arrays of continuous values,
-do use :func:`sklearn.utils._testing.assert_allclose`.
+do use `sklearn.utils._testing.assert_allclose`.
 
 The relative tolerance is automatically inferred from the provided arrays
 dtypes (for float32 and float64 dtypes in particular) but you can override
@@ -865,4 +865,4 @@ When comparing arrays of zero-elements, please do provide a non-zero value for
 the absolute tolerance via ``atol``.
 
 For more information, please refer to the docstring of
-:func:`sklearn.utils._testing.assert_allclose`.
+`sklearn.utils._testing.assert_allclose`.

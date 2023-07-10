@@ -108,7 +108,7 @@ The additive chi squared kernel as used here is given by
 
         k(x, y) = \sum_i \frac{2x_iy_i}{x_i+y_i}
 
-This is not exactly the same as :func:`sklearn.metrics.additive_chi2_kernel`.
+This is not exactly the same as :func:`sklearn.metrics.pairwise.additive_chi2_kernel`.
 The authors of [VZ2010]_ prefer the version above as it is always positive
 definite.
 Since the kernel is additive, it is possible to treat all components
