@@ -11,6 +11,7 @@
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+from scipy import linalg
 
 from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
 from ..utils._array_api import _add_to_diagonal, get_namespace
@@ -63,7 +64,7 @@ class _BasePCA(
         precision : array, shape=(n_features, n_features)
             Estimated precision of data.
         """
-        xp, _ = get_namespace(self.components_)
+        xp, is_array_api_compliant = get_namespace(self.components_)
 
         n_features = self.components_.shape[1]
 
@@ -71,8 +72,13 @@ class _BasePCA(
         if self.n_components_ == 0:
             return xp.eye(n_features) / self.noise_variance_
 
+        if is_array_api_compliant:
+            linalg_inv = xp.linalg.inv
+        else:
+            linalg_inv = linalg.inv
+
         if self.noise_variance_ == 0.0:
-            return xp.linalg.inv(self.get_covariance())
+            return linalg_inv(self.get_covariance())
 
         # Get precision using matrix inversion lemma
         components_ = self.components_
@@ -85,7 +91,7 @@ class _BasePCA(
         )
         precision = components_ @ components_.T / self.noise_variance_
         _add_to_diagonal(precision, 1.0 / exp_var_diff, xp)
-        precision = components_.T @ xp.linalg.inv(precision) @ components_
+        precision = components_.T @ linalg_inv(precision) @ components_
         precision /= -(self.noise_variance_**2)
         _add_to_diagonal(precision, 1.0 / self.noise_variance_, xp)
         return precision
