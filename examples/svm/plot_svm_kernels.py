@@ -187,7 +187,7 @@ def plot_training_data_with_decision_boundary(kernel):
 # %%
 # Linear kernel
 # *************
-# For the linear kernel, the kernel function remains in its base form:
+# Linear kernel is the dot products of the input samples:
 #
 # .. math:: K(\mathbf{x}_1, \mathbf{x}_2) = \mathbf{x}_1^\top \mathbf{x}_2
 #
@@ -217,10 +217,10 @@ plot_training_data_with_decision_boundary("linear")
 # where :math:`{d}` is the degree (`degree`) of the polynomial, :math:`{\gamma}`
 # (`gamma`) controls the influence of each individual training sample on the
 # decision boundary and :math:`{r}` is the bias term (`coef0`) that shifts the
-# data up or down. When `coef0=0` (the default), the data is only transformed,
-# but no additional dimension is added. The polynomial kernel captures nonlinear
-# relationships by considering whether points are within a circular region
-# around each other. Using a polynomial kernel is equivalent to creating
+# data up or down. Here, we use the default value for the degree of the
+# polynomal in the kernel funcion (`degree=3`). When `coef0=0` (the default),
+# the data is only transformed, but no additional dimension is added. Using a
+# polynomial kernel is equivalent to creating
 # :class:`~sklearn.preprocessing.PolynomialFeatures` and then fitting a
 # :class:`~sklearn.svm.SVC` with a linear kernel on the transformed data,
 # although this alternative approach would be computationally expensive for most
