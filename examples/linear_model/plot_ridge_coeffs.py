@@ -9,10 +9,10 @@ data, the learned associations may not hold. We normally detect this when we
 apply our trained predictions to the test data and see the statistical
 performance drop significantly compared to the training data.
 
-One way to overcome overfitting is through regularization. Regularization
-penalizes large training weights, forcing the model to shrink all coefficients.
-Regularization reduces a model's reliance on specific information obtained from
-the training samples.
+One way to overcome overfitting is through regularization, which can be done by
+penalizing large weights (coefficients) in linear models, forcing the model to
+shrink all coefficients. Regularization reduces a model's reliance on specific
+information obtained from the training samples.
 
 This example illustrates how L2 regularization in a
 :class:`~sklearn.linear_model.Ridge` regression affects a model's performance by
@@ -84,7 +84,7 @@ print(f"The true coefficient of this regression problem are:\n{w}")
 # ****************************
 # We use :class:`~sklearn.linear_model.Ridge`, a linear model with L2
 # regularization. We train several models, each with a different value for the
-# model parameter `alpha`. `alpha` is a positive constant that multiplies the
+# model parameter `alpha`, which is a positive constant that multiplies the
 # penalty term, controlling the regularization strength. For each trained model
 # we then compute the error between the true coefficients `w` and the
 # coefficients found by the model `clf`. We store the identified coefficients
