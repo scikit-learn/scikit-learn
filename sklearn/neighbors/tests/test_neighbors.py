@@ -2193,3 +2193,17 @@ def test_regressor_predict_on_arraylikes():
     est = KNeighborsRegressor(n_neighbors=1, algorithm="brute", weights=_weights)
     est.fit(X, y)
     assert_allclose(est.predict([[0, 2.5]]), [6])
+
+
+def test_predict_dataframe():
+    """Check that KNN predict works with dataframes
+
+    non-regression test for issue #26768
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame(np.array([[1, 2], [3, 4], [5, 6], [7, 8]]), columns=["a", "b"])
+    y = np.array([1, 2, 3, 4])
+
+    knn = neighbors.KNeighborsClassifier(n_neighbors=2).fit(X, y)
+    knn.predict(X)
