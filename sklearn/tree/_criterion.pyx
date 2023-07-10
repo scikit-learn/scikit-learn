@@ -236,7 +236,7 @@ cdef class Criterion:
         double upper_bound,
         double value_left,
         double value_right,
-    ) nogil:
+    ) noexcept nogil:
         cdef:
             bint check_lower_bound = (
                 (value_left >= lower_bound) &
