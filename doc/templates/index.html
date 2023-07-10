@@ -11,6 +11,11 @@
 
 
 {% block content %}
+{% block docs_navbar %}
+<nav class="bd-header navbar navbar-expand-lg bd-navbar">
+  {%- include "sections/header.html" %}
+</nav>
+{% endblock docs_navbar %}
 <div class="container-fluid sk-landing-bg py-3">
   <div class="container sk-landing-container">
     <div class="row">
@@ -19,7 +24,6 @@
         <h4 class="sk-landing-subheader text-white font-italic mb-3">Machine Learning in Python</h4>
         <a class="btn sk-landing-btn mb-1" href="{{ pathto('getting_started') }}" role="button">Getting Started</a>
         <a class="btn sk-landing-btn mb-1" href="{{ pathto(release_highlights) }}" role="button">Release Highlights for {{ release_highlights_version }}</a>
-        <a class="btn sk-landing-btn mb-1" href="https://github.com/scikit-learn/scikit-learn" role="button">GitHub</a>
       </div>
       <div class="col-md-6 d-flex">
         <ul class="sk-landing-header-body">
@@ -53,7 +57,7 @@
           <img src="_images/sphx_glr_plot_classifier_comparison_001_carousel.png" class="sk-index-img" style="width:initial;max-width:initial" alt="Classifier comparison">
           </a>
         </div>
-          <a href="auto_examples/index.html#classification" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+          <a href="auto_examples/index.html#classification" class="sk-btn-primary text-white btn-block" role="button">Examples</a>
       </div>
     </div>
     <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
@@ -74,7 +78,7 @@
           <img src="_images/sphx_glr_plot_adaboost_regression_thumb.png" class="sk-index-img" alt="Decision Tree Regression with AdaBoost">
           </a>
         </div>
-          <a href="auto_examples/index.html#examples" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+          <a href="auto_examples/index.html#examples" class="sk-btn-primary text-white btn-block" role="button">Examples</a>
       </div>
     </div>
     <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
@@ -95,7 +99,7 @@
           <img src="_images/sphx_glr_plot_kmeans_digits_thumb.png" class="sk-index-img" alt="A demo of K-Means clustering on the handwritten digits data">
           </a>
         </div>
-          <a href="auto_examples/index.html#cluster-examples" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+          <a href="auto_examples/index.html#cluster-examples" class="sk-btn-primary text-white btn-block" role="button">Examples</a>
       </div>
     </div>
     <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
@@ -115,7 +119,7 @@
           <img src="_images/sphx_glr_plot_pca_iris_thumb.png" class="sk-index-img" alt="PCA example with Iris Data-set">
           </a>
         </div>
-          <a href="auto_examples/index.html#decomposition-examples" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+          <a href="auto_examples/index.html#decomposition-examples" class="sk-btn-primary text-white btn-block" role="button">Examples</a>
       </div>
     </div>
     <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
@@ -135,7 +139,7 @@
             <img src="_images/sphx_glr_plot_multi_metric_evaluation_thumb.png" class="sk-index-img" alt="Demonstration of multi-metric evaluation on cross_val_score and GridSearchCV">
           </a>
         </div>
-          <a href="auto_examples/index.html#model-selection" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+          <a href="auto_examples/index.html#model-selection" class="sk-btn-primary text-white btn-block" role="button">Examples</a>
       </div>
     </div>
     <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
@@ -154,7 +158,7 @@
           <img src="_images/sphx_glr_plot_discretization_strategies_thumb.png" class="sk-index-img" alt="Demonstrating the different strategies of KBinsDiscretizer">
           </a>
         </div>
-          <a href="auto_examples/index.html#preprocessing" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+          <a href="auto_examples/index.html#preprocessing" class="sk-btn-primary text-white btn-block" role="button">Examples</a>
       </div>
     </div>
   </div>

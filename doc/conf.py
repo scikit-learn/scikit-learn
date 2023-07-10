@@ -195,7 +195,32 @@ html_theme_options = {
     "logo": {
         "link": "http://scikit-learn.org/stable/index.html",
         "alt_text": "scikit-learn home page",
-    }
+    },
+    "icon_links": [
+        {
+            # Label for this link
+            "name": "GitHub",
+            # URL where the link will redirect
+            "url": "https://github.com/scikit-learn/scikit-learn",  # required
+            # Icon class (if "type": "fontawesome"), or path to local
+            # image (if "type": "local")
+            "icon": "fa-brands fa-square-github",
+            # The type of image to be used
+            "type": "fontawesome",
+        },
+        {
+            "name": "Twitter",
+            "url": "https://twitter.com/scikit_learn",
+            "icon": "fa-brands fa-twitter",
+            "type": "fontawesome",
+        },
+        {
+            "name": "Linkedin",
+            "url": "https://www.linkedin.com/company/scikit-learn",
+            "icon": "fa-brands fa-linkedin-in",
+            "type": "fontawesome",
+        },
+    ],
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
