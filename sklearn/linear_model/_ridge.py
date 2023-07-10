@@ -105,12 +105,7 @@ def _solve_sparse_cg(
             C = sp_linalg.LinearOperator(
                 (n_samples, n_samples), matvec=mv, dtype=X.dtype
             )
-            # FIXME atol
-            try:
-                coef, info = sp_linalg.cg(C, y_column, tol=tol, atol="legacy")
-            except TypeError:
-                # old scipy
-                coef, info = sp_linalg.cg(C, y_column, tol=tol)
+            coef, info = sp_linalg.cg(C, y_column, tol=tol, atol="legacy")
             coefs[i] = X1.rmatvec(coef)
         else:
             # linear ridge
