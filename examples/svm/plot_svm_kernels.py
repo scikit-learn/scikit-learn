@@ -123,7 +123,7 @@ _ = plt.show()
 #
 # In a real classification task, where performance matters, parameter tuning
 # with techniques like :class:`~sklearn.model_selection.GridSearchCV` is
-# recommended to capture different structures within the data.
+# highly recommended to capture different structures within the data.
 from matplotlib.colors import ListedColormap
 
 from sklearn import svm
@@ -210,8 +210,9 @@ plot_training_data_with_decision_boundary("linear")
 # The polynomial kernel changes the notion of similarity. The kernel function
 # is defined as:
 #
-# .. math:: K(\mathbf{x}_1, \mathbf{x}_2) = (\gamma \cdot \
-# .. math:: \mathbf{x}_1^\top\mathbf{x}_2 + r)^d
+# .. math::
+#   K(\mathbf{x}_1, \mathbf{x}_2) = (\gamma \cdot \
+#       \mathbf{x}_1^\top\mathbf{x}_2 + r)^d
 #
 # where :math:`{d}` is the degree (`degree`) of the polynomial, :math:`{\gamma}`
 # (`gamma`) controls the influence of each individual training sample on the
@@ -238,8 +239,9 @@ plot_training_data_with_decision_boundary("poly")
 # similarity between two data points in infinite dimensions and then approaches
 # classification by majority vote. The kernel function is defined as:
 #
-# .. math:: K(\mathbf{x}_1, \mathbf{x}_2) = \exp\left(-\gamma \cdot \
-# .. math:: {\|\mathbf{x}_1 - \mathbf{x}_2\|^2}\right)
+# .. math::
+#   K(\mathbf{x}_1, \mathbf{x}_2) = \exp\left(-\gamma \cdot
+#       {\|\mathbf{x}_1 - \mathbf{x}_2\|^2}\right)
 #
 # where :math:`{\gamma}` (`gamma`) controls the influence of each individual
 # training sample on the decision boundary.
@@ -258,12 +260,31 @@ plot_training_data_with_decision_boundary("rbf")
 # **************
 # The sigmoid kernel function is defined as:
 #
-# .. math:: K(\mathbf{x}_1, \mathbf{x}_2) = \tanh(\gamma \cdot \\
-# .. math:: \mathbf{x}_1^\top\mathbf{x}_2 + r)
+# .. math::
+#   K(\mathbf{x}_1, \mathbf{x}_2) = \tanh(\gamma \cdot
+#       \mathbf{x}_1^\top\mathbf{x}_2 + r)
 #
+# where :math:`{\gamma}` (`gamma`) controls the influence of each individual
+# training sample on the decision boundary and :math:`{r}` is the bias term
+# (`coef0`) that shifts the data up or down.
+#
+# In the sigmoid kernel, the similarity between two data points is computed
+# using the hyperbolic tangent function (tanh). The kernel function takes into
+# account the dot product of the two points (x1 and x2), scaled by the kernel
+# coefficient γ, and shifted by a bias term r.
 plot_training_data_with_decision_boundary("sigmoid")
 
 # %%
+# We can see that the decision boundaries obtained with the sigmoid kernel
+# appear curved and irregular. The decision boundary tries to separate the
+# classes by fitting a sigmoid-shaped curve, resulting in a complex boundary
+# that may not generalize well to unseen data. From this example it becomes
+# obvious, that the sigmoid kernel has very specific use cases, when dealing
+# with data that exhibits a sigmoidal shape. In this example, careful fine
+# tuning might find more generalizable decision boundaries. Because of it's
+# specificity, the sigmoid kernel is less commonly used in practice compared to
+# other kernels.
+#
 # Conclusion
 # ----------
 # In this example, we have visualized the decision boundaries trained with the
