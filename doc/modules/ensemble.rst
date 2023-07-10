@@ -499,8 +499,8 @@ with least squares loss and 500 base learners to the diabetes dataset
 (:func:`sklearn.datasets.load_diabetes`).
 The plot shows the train and test error at each iteration.
 The train error at each iteration is stored in the
-:attr:`~GradientBoostingRegressor.train_score_` attribute
-of the gradient boosting model. The test error at each iterations can be obtained
+`train_score_` attribute of the gradient boosting model.
+The test error at each iterations can be obtained
 via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
 generator that yields the predictions at each stage. Plots like these can be used
 to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
@@ -770,10 +770,9 @@ parameter.
 Stochastic gradient boosting allows to compute out-of-bag estimates of the
 test deviance by computing the improvement in deviance on the examples that are
 not included in the bootstrap sample (i.e. the out-of-bag examples).
-The improvements are stored in the attribute
-:attr:`~GradientBoostingRegressor.oob_improvement_`. ``oob_improvement_[i]`` holds
-the improvement in terms of the loss on the OOB samples if you add the i-th stage
-to the current predictions.
+The improvements are stored in the attribute `oob_improvement_`.
+``oob_improvement_[i]`` holds the improvement in terms of the loss on the OOB samples
+if you add the i-th stage to the current predictions.
 Out-of-bag estimates can be used for model selection, for example to determine
 the optimal number of iterations. OOB estimates are usually very pessimistic thus
 we recommend to use cross-validation instead and only use OOB if cross-validation
@@ -1180,8 +1179,8 @@ samples and features are drawn with or without replacement. When using a subset
 of the available samples the generalization accuracy can be estimated with the
 out-of-bag samples by setting ``oob_score=True``. As an example, the
 snippet below illustrates how to instantiate a bagging ensemble of
-:class:`KNeighborsClassifier` estimators, each built on random subsets of
-50% of the samples and 50% of the features.
+:class:`~sklearn.neighbors.KNeighborsClassifier` estimators, each built on random
+subsets of 50% of the samples and 50% of the features.
 
     >>> from sklearn.ensemble import BaggingClassifier
     >>> from sklearn.neighbors import KNeighborsClassifier
