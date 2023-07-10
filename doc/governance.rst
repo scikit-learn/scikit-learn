@@ -158,8 +158,8 @@ are made according to the following rules:
   versions** happen via a :ref:`slep` and follows the decision-making process
   outlined above.
 
-* **Changes to the governance model** follow the process outlined in [
-  SLEP020](https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep020/proposal.html).
+* **Changes to the governance model** follow the process outlined in `SLEP020
+  <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep020/proposal.html>`__.
 
 If a veto -1 vote is cast on a lazy consensus, the proposer can appeal to the
 community and maintainers and the change can be approved or rejected using
