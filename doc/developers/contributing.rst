@@ -247,7 +247,7 @@ how to set up your git repository:
       git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
       cd scikit-learn
 
-4. Follow steps 2-7 in :ref:`install_bleeding_edge` to build scikit-learn in
+4. Follow steps 2-6 in :ref:`install_bleeding_edge` to build scikit-learn in
    development mode and return to this document.
 
 5. Install the development dependencies:
@@ -274,9 +274,11 @@ how to set up your git repository:
         upstream	git@github.com:scikit-learn/scikit-learn.git (fetch)
         upstream	git@github.com:scikit-learn/scikit-learn.git (push)
 
-You should now have a working installation of scikit-learn, and your git
-repository properly configured. The next steps now describe the process of
-modifying code and submitting a PR:
+You should now have a working installation of scikit-learn, and your git repository
+properly configured. It could be useful to run some test to verify your installation.
+Please refer to :ref:`pytest_tips` for examples.
+
+The next steps now describe the process of modifying code and submitting a PR:
 
 8. Synchronize your ``main`` branch with the ``upstream/main`` branch,
    more details on `GitHub Docs <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_:
