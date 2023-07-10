@@ -217,13 +217,16 @@ def _accept_device_cpu(func):
     return wrapped_func
 
 
-def to_device(a, device=None):
+def to_device(a, device):
     """Move array to device.
 
-    This helper delegates to `array_api_compat.to_device` only when `device` is
-    not None. This is useful to avoid unnecessary imports of `array_api_compat`
-    when `array_api_dispatch is False`, in which case the caller is expected to
-    always pass `device=None`.
+    This helper delegates to `array_api_compat.to_device`.
+
+    This helper is not meant to be called on arrays for which
+    `is_array_api_compliant is False`, and in particular when
+    `sklearn.get_config("array_api_dispatch") is False` as it lazily imports of
+    `array_api_compat` which is not an expected scikit-learn dependency in this
+    case.
 
     Parameters
     ----------
@@ -231,10 +234,8 @@ def to_device(a, device=None):
         The input data to move to `device` when not None.
 
     device : object
-        Device object typically retrieved via the idiom
-        `getattr(some_other_array, "device", None)` in the caller to make it
-        possible to safely call this both on NumPy arrays /  and Array API
-        containers.
+        Device object typically retrieved via the idiom `other_array.device`
+        under an `is_array_api_compliant` condition in the caller.
 
     Returns
     -------
@@ -242,14 +243,9 @@ def to_device(a, device=None):
         Either the unchanged input array or a copy of it on the specified
         device.
     """
-    if device is None:
-        return a
-    else:
-        # Lazy import array_api_compat as it is a dependency of scikit-learn
-        # only when array_api_dispatch=True.
-        import array_api_compat
+    import array_api_compat
 
-        return array_api_compat.to_device(a, device)
+    return array_api_compat.to_device(a, device)
 
 
 class _NumPyAPIWrapper:
