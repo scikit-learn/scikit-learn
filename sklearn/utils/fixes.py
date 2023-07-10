@@ -15,6 +15,7 @@ from importlib import resources
 
 import numpy as np
 import scipy
+import scipy.sparse.linalg
 import scipy.stats
 import threadpoolctl
 
@@ -107,6 +108,17 @@ def _mode(a, axis=0):
                 mode = np.ravel(mode)
         return mode
     return scipy.stats.mode(a, axis=axis)
+
+
+# TODO: Remove when Scipy 1.12 is the minimum supported version
+if parse_version(scipy.__version__) >= parse_version("1.12.0.dev0"):
+    _sparse_linalg_cg = scipy.sparse.linalg.cg
+else:
+
+    def _sparse_linalg_cg(A, b, **kwargs):
+        if "rtol" in kwargs:
+            kwargs["tol"] = kwargs.pop("rtol")
+        return scipy.sparse.linalg.cg(A, b, **kwargs)
 
 
 ###############################################################################
