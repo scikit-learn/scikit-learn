@@ -144,38 +144,36 @@ def test_multioutput_regression():
     assert_almost_equal(error, 0.454, decimal=2)
 
     # TODO(1.6): remove this test
-    error_mse = mean_squared_error(y_true, y_pred, squared=False)
-    error_rmse = root_mean_squared_error(y_true, y_pred)
-    assert_almost_equal(error_mse, error_rmse, decimal=2)
+    mse = mean_squared_error(y_true, y_pred, squared=False)
+    rmse = root_mean_squared_error(y_true, y_pred)
+    assert_almost_equal(mse, rmse, decimal=2)
 
     # TODO(1.6): remove this test
-    error_mse = mean_squared_error(
+    mse = mean_squared_error(
         y_true, y_pred, sample_weight=np.arange(len(y_true)), squared=False
     )
-    error_rmse = root_mean_squared_error(
-        y_true, y_pred, sample_weight=np.arange(len(y_true))
-    )
-    assert_almost_equal(error_mse, error_rmse, decimal=2)
+    rmse = root_mean_squared_error(y_true, y_pred, sample_weight=np.arange(len(y_true)))
+    assert_almost_equal(mse, rmse, decimal=2)
 
     error = mean_squared_log_error(y_true, y_pred)
     assert_almost_equal(error, 0.200, decimal=2)
 
     error = root_mean_squared_log_error(y_true, y_pred)
-    assert_almost_equal(error, np.sqrt(0.200), decimal=2)
+    assert_almost_equal(error, 0.315, decimal=2)
 
     # TODO(1.6): remove this test
-    error_msle = mean_squared_log_error(y_true, y_pred, squared=False)
-    error_rmsle = root_mean_squared_log_error(y_true, y_pred)
-    assert_almost_equal(error_msle, error_rmsle, decimal=2)
+    msle = mean_squared_log_error(y_true, y_pred, squared=False)
+    rmsle = root_mean_squared_log_error(y_true, y_pred)
+    assert_almost_equal(msle, rmsle, decimal=2)
 
     # TODO(1.6): remove this test
-    error_msle = mean_squared_log_error(
+    msle = mean_squared_log_error(
         y_true, y_pred, sample_weight=np.arange(len(y_true)), squared=False
     )
-    error_rmsle = root_mean_squared_log_error(
+    rmsle = root_mean_squared_log_error(
         y_true, y_pred, sample_weight=np.arange(len(y_true))
     )
-    assert_almost_equal(error_msle, error_rmsle, decimal=2)
+    assert_almost_equal(msle, rmsle, decimal=2)
 
     # mean_absolute_error and mean_squared_error are equal because
     # it is a binary problem.
@@ -475,7 +473,7 @@ def test_regression_multioutput_array():
     msle = mean_squared_log_error(
         y_true, y_pred, multioutput="raw_values", squared=False
     )
-    rmsle = mean_squared_log_error(y_true, y_pred, multioutput="raw_values")
+    rmsle = root_mean_squared_log_error(y_true, y_pred, multioutput="raw_values")
     assert_array_almost_equal(msle, rmsle, decimal=2)
 
     # TODO(1.6): remove this test
@@ -486,14 +484,14 @@ def test_regression_multioutput_array():
         multioutput="raw_values",
         squared=False,
     )
-    rmsle = mean_squared_log_error(
+    rmsle = root_mean_squared_log_error(
         y_true, y_pred, sample_weight=np.arange(len(y_true)), multioutput="raw_values"
     )
     assert_array_almost_equal(msle, rmsle, decimal=2)
 
     # TODO(1.6): remove this test
     mse = mean_squared_error(y_true, y_pred, multioutput="raw_values", squared=False)
-    rmse = mean_squared_error(y_true, y_pred, multioutput="raw_values")
+    rmse = root_mean_squared_error(y_true, y_pred, multioutput="raw_values")
     assert_array_almost_equal(mse, rmse, decimal=2)
 
     # TODO(1.6): remove this test
@@ -504,7 +502,7 @@ def test_regression_multioutput_array():
         multioutput="raw_values",
         squared=False,
     )
-    rmse = mean_squared_error(
+    rmse = root_mean_squared_error(
         y_true, y_pred, sample_weight=np.arange(len(y_true)), multioutput="raw_values"
     )
     assert_array_almost_equal(mse, rmse, decimal=2)

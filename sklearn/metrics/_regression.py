@@ -697,7 +697,6 @@ def mean_squared_log_error(
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
-        "squared": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
