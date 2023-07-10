@@ -265,11 +265,17 @@ def randomized_range_finder(
     # one day.
     Q = xp.asarray(random_state.normal(size=(A.shape[1], size)))
     if hasattr(A, "dtype") and xp.isdtype(A.dtype, kind="real floating"):
-        # Use float32 computation and components if A has a float32 dtype
+        # Use float32 computation and components if A has a float32 dtype.
         Q = xp.astype(Q, A.dtype, copy=False)
 
     # Move Q to device if needed only after converting to float32 if needed to
     # avoid allocating unnecessary memory on the device.
+
+    # Note: we cannot combine the astype and to_device operations in one go
+    # using xp.asarray(..., dtype=dtype, device=device) because downcasting
+    # from float64 to float32 in asarray might not always be accepted as only
+    # casts following type promotion rules are guarateed to work.
+    # https://github.com/data-apis/array-api/issues/647
     Q = to_device(Q, getattr(A, "device", None))
 
     # Deal with "auto" mode
