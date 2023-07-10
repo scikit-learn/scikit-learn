@@ -12,7 +12,6 @@ import numpy as np
 import pytest
 from scipy import sparse
 
-from sklearn import config_context
 from sklearn.base import BaseEstimator, TransformerMixin, clone, is_classifier
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
@@ -1683,40 +1682,47 @@ def test_feature_union_feature_names_in_():
     assert not hasattr(union, "feature_names_in_")
 
 
+# Test that metadata is routed correctly for pipelines
+# ====================================================
+
+
+class SimpleEstimator(BaseEstimator):
+    # This class is used in this section for testing routing in the pipeline.
+    # This class should have every set_{method}_request
+    def fit(self, X, y, sample_weight=None, prop=None):
+        assert sample_weight is not None
+
+    def fit_transform(self, X, y, sample_weight=None, prop=None):
+        assert sample_weight is not None
+
+    def fit_predict(self, X, y, sample_weight=None, prop=None):
+        assert sample_weight is not None
+
+    def predict(self, X, sample_weight=None, prop=None):
+        assert sample_weight is not None
+
+    def predict_proba(self, X, sample_weight=None, prop=None):
+        assert sample_weight is not None
+
+    def predict_log_proba(self, X, sample_weight=None, prop=None):
+        assert sample_weight is not None
+
+    def decision_function(self, X, sample_weight=None, prop=None):
+        assert sample_weight is not None
+
+    def score(self, X, y, sample_weight=None, prop=None):
+        assert sample_weight is not None
+
+    def transform(self, X, sample_weight=None, prop=None):
+        assert sample_weight is not None
+
+    def inverse_transform(self, X, sample_weight=None, prop=None):
+        assert sample_weight is not None
+
+
+@pytest.mark.usefixtures("enable_slep006")
 def test_metadata_routing_for_pipeline():
     """Test that metadata is routed correctly for pipelines."""
-
-    class SimpleEstimator(BaseEstimator):
-        # This class should have every set_{method}_request
-        def fit(self, X, y, sample_weight=None):
-            assert sample_weight is not None
-
-        def fit_transform(self, X, y, sample_weight=None):
-            assert sample_weight is not None
-
-        def fit_predict(self, X, y, sample_weight=None):
-            assert sample_weight is not None
-
-        def predict(self, X, sample_weight=None):
-            assert sample_weight is not None
-
-        def predict_proba(self, X, sample_weight=None):
-            assert sample_weight is not None
-
-        def predict_log_proba(self, X, sample_weight=None):
-            assert sample_weight is not None
-
-        def decision_function(self, X, sample_weight=None):
-            assert sample_weight is not None
-
-        def score(self, X, y, sample_weight=None):
-            assert sample_weight is not None
-
-        def transform(self, X, sample_weight=None):
-            assert sample_weight is not None
-
-        def inverse_transform(self, X, sample_weight=None):
-            assert sample_weight is not None
 
     def set_request(est, method, **kwarg):
         """Set requests for a given method.
@@ -1738,26 +1744,43 @@ def test_metadata_routing_for_pipeline():
 
     for method in methods:
         # test that metadata is routed correctly for pipelines when requested
-        with config_context(enable_metadata_routing=True):
-            est = SimpleEstimator()
-            est = set_request(est, method, sample_weight=True)
-            pipeline = Pipeline([("estimator", est)])
-            try:
-                getattr(pipeline, method)([[1]], [1], sample_weight=[1])
-            except TypeError:
-                getattr(pipeline, method)([[1]], sample_weight=[1])
+        est = SimpleEstimator()
+        est = set_request(est, method, sample_weight=True, prop=True)
+        pipeline = Pipeline([("estimator", est)])
+        try:
+            getattr(pipeline, method)([[1]], [1], sample_weight=[1], prop="a")
+        except TypeError:
+            getattr(pipeline, method)([[1]], sample_weight=[1], prop="a")
 
         # test that metadata is not routed for pipelines when not requested
-        with config_context(enable_metadata_routing=True):
-            est = SimpleEstimator()
-            # here not setting sample_weight request and leaving it as None
-            pipeline = Pipeline([("estimator", est)])
-            error_message = (
-                "[sample_weight] are passed but are not explicitly set as requested or"
-                f" not for SimpleEstimator.{method}"
-            )
-            with pytest.raises(ValueError, match=re.escape(error_message)):
-                try:
-                    getattr(pipeline, method)([[1]], [1], sample_weight=[1])
-                except TypeError:
-                    getattr(pipeline, method)([[1]], sample_weight=[1])
+        est = SimpleEstimator()
+        # here not setting sample_weight request and leaving it as None
+        pipeline = Pipeline([("estimator", est)])
+        error_message = (
+            "[sample_weight, prop] are passed but are not explicitly set as requested"
+            f" or not for SimpleEstimator.{method}"
+        )
+        with pytest.raises(ValueError, match=re.escape(error_message)):
+            try:
+                getattr(pipeline, method)([[1]], [1], sample_weight=[1], prop="a")
+            except TypeError:
+                getattr(pipeline, method)([[1]], sample_weight=[1], prop="a")
+
+
+@pytest.mark.parametrize(
+    "method", ["decision_function", "transform", "inverse_transform"]
+)
+def test_routing_passed_metadata_not_supported(method):
+    # Test that the right error message is raised when metadata is passed while
+    # not supported when enable_metadata_routing=False
+
+    pipe = Pipeline([("estimator", SimpleEstimator())])
+
+    with pytest.raises(
+        ValueError, match="is only supported if enable_metadata_routing=True"
+    ):
+        getattr(pipe, method)([[1]], sample_weight=[1], prop="a")
+
+
+# End of routing tests
+# ====================
