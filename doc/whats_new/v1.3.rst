@@ -7,13 +7,17 @@
 Version 1.3.1
 =============
 
-**TODO: set date**
+**In development**
 
 Changelog
 ---------
 
 :mod:`sklearn.neighbors`
 ........................
+
+- |Fix| :meth:`neighbors.KNeighborsClassifier.predict` no longer raises an
+  exception for `pandas.DataFrames` input.
+  :pr:`26772` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Fix| Reintroduce :attr:`sklearn.neighbors.BallTree.valid_metrics` and
   :attr:`sklearn.neighbors.KDTree.valid_metrics` as public class attributes.
