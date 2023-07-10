@@ -2141,3 +2141,18 @@ def test_zero_max_iter(solver):
             np.full(shape=(X.shape[0], 2), fill_value=0.5),
         )
     assert clf.score(X, y) < 0.7
+
+
+def test_passing_params_without_enabling_metadata_routing():
+    X, y = make_classification(n_samples=10, random_state=0)
+    lr_cv = LogisticRegressionCV()
+    msg = "params is only supported if enable_metadata_routing=True"
+
+    with config_context(enable_metadata_routing=False):
+        params = {"extra_param": 1.0}
+
+        with pytest.raises(ValueError, match=msg):
+            lr_cv.fit(X, y, **params)
+
+        with pytest.raises(ValueError, match=msg):
+            lr_cv.score(X, y, **params)
