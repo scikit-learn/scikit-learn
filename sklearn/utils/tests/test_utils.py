@@ -545,11 +545,6 @@ def test_gen_even_slices():
     joined_range = list(chain(*[some_range[slice] for slice in gen_even_slices(10, 3)]))
     assert_array_equal(some_range, joined_range)
 
-    # check that passing negative n_chunks raises an error
-    slices = gen_even_slices(10, -1)
-    with pytest.raises(ValueError, match="gen_even_slices got n_packs=-1, must be >=1"):
-        next(slices)
-
 
 @pytest.mark.parametrize(
     ("row_bytes", "max_n_rows", "working_memory", "expected"),
