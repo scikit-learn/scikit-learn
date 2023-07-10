@@ -81,7 +81,7 @@ class _BasePCA(
             components_ = components_ * xp.sqrt(exp_var[:, np.newaxis])
         exp_var_diff = exp_var - self.noise_variance_
         exp_var_diff = xp.where(
-            exp_var > self.noise_variance_, exp_var_diff, xp.zeros_like(exp_var)
+            exp_var > self.noise_variance_, exp_var_diff, xp.asarray(0.0)
         )
         precision = components_ @ components_.T / self.noise_variance_
         _add_to_diagonal(precision, 1.0 / exp_var_diff, xp)
