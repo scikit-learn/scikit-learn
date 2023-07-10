@@ -47,7 +47,7 @@ class _BasePCA(
             components_ = components_ * xp.sqrt(exp_var[:, np.newaxis])
         exp_var_diff = exp_var - self.noise_variance_
         exp_var_diff = xp.where(
-            exp_var > self.noise_variance_, exp_var_diff, xp.zeros_like(exp_var)
+            exp_var > self.noise_variance_, exp_var_diff, xp.asarray(0.0)
         )
         cov = (components_.T * exp_var_diff) @ components_
         _add_to_diagonal(cov, self.noise_variance_, xp)
