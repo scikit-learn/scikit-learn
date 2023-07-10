@@ -119,14 +119,9 @@ def _solve_sparse_cg(
             C = sp_linalg.LinearOperator(
                 (n_features, n_features), matvec=mv, dtype=X.dtype
             )
-            # FIXME atol
-            try:
-                coefs[i], info = sp_linalg.cg(
-                    C, y_column, maxiter=max_iter, tol=tol, atol="legacy"
-                )
-            except TypeError:
-                # old scipy
-                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter, tol=tol)
+            coefs[i], info = sp_linalg.cg(
+                C, y_column, maxiter=max_iter, tol=tol, atol="legacy"
+            )
 
         if info < 0:
             raise ValueError("Failed with error code %d" % info)
