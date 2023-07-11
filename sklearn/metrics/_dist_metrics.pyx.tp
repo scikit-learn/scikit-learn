@@ -65,11 +65,19 @@ def get_valid_metric_ids(L):
             if (val.__name__ in L) or (val in L)]
 
 cdef class DistanceMetric:
-    """DistanceMetric class
+    """Uniform interface for fast distance metric functions.
 
-    This class provides a uniform interface to fast distance metric
-    functions.  The various metrics can be accessed via the :meth:`get_metric`
-    class method and the metric string identifier (see below).
+    The `DistanceMetric` class provides a convenient way to compute pairwise distances
+    between samples. It supports various distance metrics, such as Euclidean distance,
+    Manhattan distance, and more.
+
+    The `pairwise` method can be used to compute pairwise distances between samples in
+    the input arrays. It returns a distance matrix representing the distances between
+    all pairs of samples.
+
+    The `get_metric` class method allows obtaining an instance of a specific distance
+    metric by providing its name or class. The various metrics can be accessed via the
+    :meth:`get_metric` class method and the metric string identifiers.
 
     Examples
     --------
@@ -78,41 +86,30 @@ cdef class DistanceMetric:
     >>> X = [[1, 2], [3, 4], [5, 6]]
     >>> Y = [[7, 8], [9, 10]]
     >>> dist.pairwise(X,Y)
-    array([[7.81024968, 10.63014581]
-           [5.65685425,  8.48528137]
-           [1.41421356,  4.24264069]])
-
-    Notes
-    -----
-    The `DistanceMetric` class provides a convenient way to compute pairwise distances between samples.
-    It supports various distance metrics, such as Euclidean distance, Manhattan distance, and more.
-
-    The `pairwise` method can be used to compute pairwise distances between samples in the input arrays.
-    It returns a distance matrix representing the distances between all pairs of samples.
-
-    The `get_metric` class method allows obtaining an instance of a specific distance metric by providing its name or class.
+    array([[7.81..., 10.63...]
+           [5.65...,  8.48...]
+           [1.41...,  4.24...]])
     """
     @classmethod
     def get_metric(cls, metric, dtype=np.float64, **kwargs):
         """Get the given distance metric from the string identifier.
 
-        This method returns an instance of the requested distance metric given its string identifier or class name.
-        It provides a convenient way to obtain a distance metric object for use in pairwise distance computations.
-
         Parameters
         ----------
         metric : str or class name
             The string identifier or class name of the desired distance metric.
-            See the documentation of the `DistanceMetric` class for a list of available metrics.
+            See the documentation of the `DistanceMetric` class for a list of
+            available metrics.
 
         dtype : {np.float32, np.float64}, default=np.float64
             The data type of the input on which the metric will be applied.
             This affects the precision of the computed distances.
-            By default, it is set to `np.float64` for higher precision.
+            By default, it is set to `np.float64`.
 
         **kwargs
             Additional keyword arguments that will be passed to the requested metric.
-            These arguments can be used to customize the behavior of the specific metric.
+            These arguments can be used to customize the behavior of the specific
+            metric.
 
         Returns
         -------
