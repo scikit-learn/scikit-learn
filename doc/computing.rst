@@ -6,8 +6,6 @@
 Computing with scikit-learn
 ============================
 
-.. include:: includes/big_toc_css.rst
-
 .. toctree::
     :maxdepth: 2
 

@@ -1,6 +1,3 @@
-.. include:: includes/big_toc_css.rst
-.. include:: tune_toc.rst
-
 .. Places global toc into the sidebar
 
 :globalsidebartoc: True
@@ -14,11 +11,18 @@ Table Of Contents
 .. toctree::
     :maxdepth: 2
 
-    preface
-    tutorial/index
-    getting_started
+    install
     user_guide
-    glossary
-    auto_examples/index
     modules/classes
+    auto_examples/index
+    getting_started
+    tutorial/index
+    whats_new
+    glossary
     developers/index
+    faq
+    support
+    related_projects
+    roadmap
+    governance
+    about

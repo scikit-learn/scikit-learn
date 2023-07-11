@@ -159,15 +159,6 @@ div.sk-page-content summary.btn {
     border: 1pt solid #999;
 }
 
-div.sk-page-content details div.card {
-    padding: 0pt .5ex;
-    margin: 1ex 0pt;
-    border: 1px solid #e9ecef;
-    border-left-width: .25rem;
-    border-radius: .25rem;
-    background: rgb(250, 252, 253)
-}
-
 div.sk-page-content summary {
   position: relative; /* Needed for the tooltips */
 }
@@ -232,62 +223,6 @@ div.sk-page-content summary:hover .tooltiptext {
   margin-bottom: 1em;
 }
 
-/* Search */
-
-#search-results {
-  margin-top: 1rem;
-}
-
-#searchbox {
-  padding-top: 0.1rem;
-}
-
-.sk-search-text-input {
-  width: 12rem;
-}
-
-.sk-search-text-btn {
-  padding-left: 0.2rem;
-  padding-right: 0.2rem;
-}
-
-ul.search li div.context {
-  color: #888;
-  margin: 0.1rem 0 0 0;
-  text-align: left;
-}
-
-@media screen and (min-width: 768px) {
-  ul.search li div.context {
-    margin-left: 1rem;
-  }
-
-  .sk-search-text-input {
-    width: 5rem;
-  }
-}
-
-@media screen and (min-width: 806px) {
-  .sk-search-text-input {
-    width: 7rem;
-  }
-}
-
-@media screen and (min-width: 820px) {
-  .sk-search-text-input {
-    width: 8rem;
-  }
-}
-
-@media screen and (min-width: 886px) {
-  .sk-search-text-input {
-    width: 12rem;
-  }
-}
-
-ul.search li a {
-  font-weight: bold;
-}
 /* navbar */
 
 img.sk-brand-img {
@@ -351,8 +286,11 @@ div.sk-landing-bg {
 }
 
 div.sk-landing-bg-more-info {
-  background-color: #f8f8f8;
   font-size: 0.96rem;
+}
+
+div.sk-landing-bg-more-info[data-theme="light"] {
+  background-color: #f8f8f8;
 }
 
 .sk-card-title {
@@ -1018,15 +956,6 @@ div.sphx-glr-thumbcontainer {
 
 .sphx-glr-script-out div.highlight {
   padding: 0;
-}
-
-@media screen and (min-width: 1540px) {
-  div.sphx-glr-download-link-note.admonition.note {
-    position: absolute;
-    left: 98%;
-    width: 20ex;
-    margin-top: calc(max(5.75rem, 1vh));
-  }
 }
 
 /* Pandas dataframe css */

@@ -4,10 +4,6 @@
 
 .. _tutorial_menu:
 
-
-.. include:: ../includes/big_toc_css.rst
-.. include:: ../tune_toc.rst
-
 ======================
 scikit-learn Tutorials
 ======================

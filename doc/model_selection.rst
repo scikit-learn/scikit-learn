@@ -2,8 +2,6 @@
 
 :parenttoc: True
 
-.. include:: includes/big_toc_css.rst
-
 .. _model_selection:
 
 Model selection and evaluation

@@ -1,5 +1,23 @@
 {% extends "layout.html" %}
 {% set title = 'scikit-learn: machine learning in Python' %}
+{%- import "static/webpack-macros.html" as _webpack with context %}
+{%- block css %}
+  {# The data-cfasync attribute disables CloudFlare's Rocket loader so that #}
+  {# mode/theme are correctly set before the browser renders the page. #}
+  {# https://github.com/pydata/pydata-sphinx-theme/pull/1045 #}
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "{{ default_mode }}";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  {{ _webpack.head_pre_assets() }}
+  {{ _webpack.head_pre_icons() }}
+  {{- css() }}
+  {{ _webpack.head_js_preload() }}
+{%- endblock css %}
+{%- block extrahead %}
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="{{ language }}"/>
+{%- endblock extrahead %}
 
 {% if theme_link_to_live_contributing_page|tobool %}
   {%- set contributing_link = "https://scikit-learn.org/dev/developers/contributing.html" %}
@@ -16,6 +34,11 @@
   {%- include "sections/header.html" %}
 </nav>
 {% endblock docs_navbar %}
+{# A search field pop-up that will only show when the search button is clicked #}
+<div class="search-button__wrapper">
+  <div class="search-button__overlay"></div>
+  <div class="search-button__search-container">{% include "../components/search-field.html" %}</div>
+</div>
 <div class="container-fluid sk-landing-bg py-3">
   <div class="container sk-landing-container">
     <div class="row">
@@ -99,7 +122,7 @@
           <img src="_images/sphx_glr_plot_kmeans_digits_thumb.png" class="sk-index-img" alt="A demo of K-Means clustering on the handwritten digits data">
           </a>
         </div>
-          <a href="auto_examples/index.html#cluster-examples" class="sk-btn-primary text-white btn-block" role="button">Examples</a>
+          <a href="auto_examples/cluster/index.html#clustering" class="sk-btn-primary text-white btn-block" role="button">Examples</a>
       </div>
     </div>
     <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
@@ -119,7 +142,7 @@
           <img src="_images/sphx_glr_plot_pca_iris_thumb.png" class="sk-index-img" alt="PCA example with Iris Data-set">
           </a>
         </div>
-          <a href="auto_examples/index.html#decomposition-examples" class="sk-btn-primary text-white btn-block" role="button">Examples</a>
+          <a href="auto_examples/decomposition/index.html#decomposition" class="sk-btn-primary text-white btn-block" role="button">Examples</a>
       </div>
     </div>
     <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
@@ -194,13 +217,14 @@
         <li><strong>Blog:</strong> <a href="https://blog.scikit-learn.org">blog.scikit-learn.org</a></li>
         <li><strong>Logos & Branding:</strong> <a href="https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos">logos and branding</a></li>
         <li><strong>Calendar:</strong> <a href="https://blog.scikit-learn.org/calendar/">calendar</a></li>
-        <li><strong>Twitter:</strong> <a href="https://twitter.com/scikit_learn">@scikit_learn</a></li>
-        <li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/company/scikit-learn">linkedin/scikit-learn</a></li>
-        <li><strong>YouTube:</strong> <a href="https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists">youtube.com/scikit-learn</a></li>
-        <li><strong>Facebook:</strong> <a href="https://www.facebook.com/scikitlearnofficial/">@scikitlearnofficial</a></li>
-        <li><strong>Instagram:</strong> <a href="https://www.instagram.com/scikitlearnofficial/">@scikitlearnofficial</a></li>
-        <li><strong>TikTok:</strong> <a href="https://www.tiktok.com/@scikit.learn">@scikit.learn</a></li>
         <li>Communication on all channels should respect <a href="https://www.python.org/psf/conduct/">PSF's code of conduct.</a></li>
+        <li><a href="https://twitter.com/scikit_learn"><i class="fa-brands fa-twitter"></i></a>
+            <a href="https://www.linkedin.com/company/scikit-learn"><i class="fa-brands fa-linkedin-in"></i></a>
+            <a href="https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists"><i class="fa-brands fa-youtube"></i></a>
+            <a href="https://www.facebook.com/scikitlearnofficial/"><i class="fa-brands fa-facebook"></i></a>
+            <a href="https://www.instagram.com/scikitlearnofficial/"><i class="fa-brands fa-instagram"></i></a>
+            <a href="ttps://www.tiktok.com/@scikit.learn"><i class="fa-brands fa-tiktok"></i></a>
+        </li>
         </ul>
 
         <a class="btn btn-warning btn-big sk-donate-btn mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
@@ -264,4 +288,6 @@
         </a>
   </div>
 </div>
+{# Scripts placed at the end of the page to cut down on time to first content #}
+{%- block scripts_end %}{{ _webpack.body_post() }}{%- endblock scripts_end %}
 {% endblock %}
