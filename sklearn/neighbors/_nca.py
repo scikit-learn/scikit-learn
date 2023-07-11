@@ -6,22 +6,29 @@ Neighborhood Component Analysis
 #          John Chiotellis <ioannis.chiotellis@in.tum.de>
 # License: BSD 3 clause
 
-from warnings import warn
-from numbers import Integral, Real
-import numpy as np
 import sys
 import time
+from numbers import Integral, Real
+from warnings import warn
+
+import numpy as np
 from scipy.optimize import minimize
-from ..utils.extmath import softmax
-from ..metrics import pairwise_distances
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from ..preprocessing import LabelEncoder
+
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..decomposition import PCA
+from ..exceptions import ConvergenceWarning
+from ..metrics import pairwise_distances
+from ..preprocessing import LabelEncoder
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import softmax
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
-from ..utils.validation import check_is_fitted, check_array
-from ..utils._param_validation import Interval, StrOptions
-from ..exceptions import ConvergenceWarning
+from ..utils.validation import check_array, check_is_fitted
 
 
 class NeighborhoodComponentsAnalysis(
@@ -215,6 +222,7 @@ class NeighborhoodComponentsAnalysis(
         self.verbose = verbose
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model according to the given training data.
 
@@ -231,8 +239,6 @@ class NeighborhoodComponentsAnalysis(
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         # Validate the inputs X and y, and converts y to numerical classes.
         X, y = self._validate_data(X, y, ensure_min_samples=2)
         check_classification_targets(y)

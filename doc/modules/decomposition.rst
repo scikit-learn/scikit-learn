@@ -808,7 +808,7 @@ faces dataset, in comparison with the PCA eigenfaces.
 .. centered:: |pca_img5| |nmf_img5|
 
 
-The :attr:`init` attribute determines the initialization method applied, which
+The `init` attribute determines the initialization method applied, which
 has a great impact on the performance of the method. :class:`NMF` implements the
 method Nonnegative Double Singular Value Decomposition. NNDSVD [4]_ is based on
 two SVD processes, one approximating the data matrix, the other approximating
@@ -825,20 +825,20 @@ basic NNDSVD algorithm which introduces a lot of zeros; in this case, NNDSVDa or
 NNDSVDar should be preferred.
 
 :class:`NMF` can also be initialized with correctly scaled random non-negative
-matrices by setting :attr:`init="random"`. An integer seed or a
-``RandomState`` can also be passed to :attr:`random_state` to control
+matrices by setting `init="random"`. An integer seed or a
+``RandomState`` can also be passed to `random_state` to control
 reproducibility.
 
-In :class:`NMF`, L1 and L2 priors can be added to the loss function in order
-to regularize the model. The L2 prior uses the Frobenius norm, while the L1
-prior uses an elementwise L1 norm. As in :class:`ElasticNet`, we control the
-combination of L1 and L2 with the :attr:`l1_ratio` (:math:`\rho`) parameter,
-and the intensity of the regularization with the :attr:`alpha_W` and :attr:`alpha_H`
-(:math:`\alpha_W` and :math:`\alpha_H`) parameters. The priors are scaled by the number
-of samples (:math:`n\_samples`) for `H` and the number of features (:math:`n\_features`)
-for `W` to keep their impact balanced with respect to one another and to the data fit
-term as independent as possible of the size of the training set. Then the priors terms
-are:
+In :class:`NMF`, L1 and L2 priors can be added to the loss function in order to
+regularize the model. The L2 prior uses the Frobenius norm, while the L1 prior
+uses an elementwise L1 norm. As in :class:`~sklearn.linear_model.ElasticNet`,
+we control the combination of L1 and L2 with the `l1_ratio` (:math:`\rho`)
+parameter, and the intensity of the regularization with the `alpha_W` and
+`alpha_H` (:math:`\alpha_W` and :math:`\alpha_H`) parameters. The priors are
+scaled by the number of samples (:math:`n\_samples`) for `H` and the number of
+features (:math:`n\_features`) for `W` to keep their impact balanced with
+respect to one another and to the data fit term as independent as possible of
+the size of the training set. Then the priors terms are:
 
 .. math::
     (\alpha_W \rho ||W||_1 + \frac{\alpha_W(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2) * n\_features
@@ -1002,16 +1002,16 @@ structure.
 
 When modeling text corpora, the model assumes the following generative process
 for a corpus with :math:`D` documents and :math:`K` topics, with :math:`K`
-corresponding to :attr:`n_components` in the API:
+corresponding to `n_components` in the API:
 
   1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim
      \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words,
      i.e. the probability of a word appearing in topic :math:`k`.
-     :math:`\eta` corresponds to :attr:`topic_word_prior`.
+     :math:`\eta` corresponds to `topic_word_prior`.
 
   2. For each document :math:`d \in D`, draw the topic proportions
      :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha`
-     corresponds to :attr:`doc_topic_prior`.
+     corresponds to `doc_topic_prior`.
 
   3. For each word :math:`i` in document :math:`d`:
 
@@ -1054,7 +1054,7 @@ points.
 
 When :class:`LatentDirichletAllocation` is applied on a "document-term" matrix, the matrix
 will be decomposed into a "topic-term" matrix and a "document-topic" matrix. While
-"topic-term" matrix is stored as :attr:`components_` in the model, "document-topic" matrix
+"topic-term" matrix is stored as `components_` in the model, "document-topic" matrix
 can be calculated from ``transform`` method.
 
 :class:`LatentDirichletAllocation` also implements ``partial_fit`` method. This is used

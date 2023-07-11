@@ -1,7 +1,8 @@
 from unittest.mock import Mock
+
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_allclose
 import pytest
+from numpy.testing import assert_allclose, assert_array_almost_equal
 
 from sklearn.manifold import _mds as mds
 from sklearn.metrics import euclidean_distances

@@ -162,6 +162,12 @@ the :func:`fbeta_score` function::
     >>> grid = GridSearchCV(LinearSVC(dual="auto"), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer, cv=5)
 
+
+|details-start|
+**Custom scorer objects**
+|details-split|
+
+
 The second use case is to build a completely custom scorer object
 from a simple python function using :func:`make_scorer`, which can
 take several parameters:
@@ -202,13 +208,21 @@ Here is an example of building custom scorers, and of using the
     >>> score(clf, X, y)
     -0.69...
 
+|details-end|
 
 .. _diy_scoring:
 
 Implementing your own scoring object
 ------------------------------------
+
 You can generate even more flexible model scorers by constructing your own
 scoring object from scratch, without using the :func:`make_scorer` factory.
+
+
+|details-start|
+**How to build a scorer from scratch**
+|details-split|
+
 For a callable to be a scorer, it needs to meet the protocol specified by
 the following two rules:
 
@@ -248,6 +262,8 @@ the following two rules:
         ...  scoring=make_scorer(custom_scoring_function, greater_is_better=False),
         ...  cv=5,
         ...  n_jobs=-1) # doctest: +SKIP
+
+|details-end|
 
 .. _multimetric_scoring:
 
@@ -807,8 +823,8 @@ binary case. The :func:`average_precision_score` function supports multiclass
 and multilabel formats by computing each class score in a One-vs-the-rest (OvR)
 fashion and averaging them or not depending of its ``average`` argument value.
 
-The :func:`PredictionRecallDisplay.from_estimator` and
-:func:`PredictionRecallDisplay.from_predictions` functions will plot the
+The :func:`PrecisionRecallDisplay.from_estimator` and
+:func:`PrecisionRecallDisplay.from_predictions` functions will plot the
 precision-recall curve as follows.
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_precision_recall_001.png
@@ -2769,8 +2785,8 @@ model would grow with the predicted value of `E[y|X]` (either linearly for
 Poisson or quadratically for Gamma).
 
 When fitting a linear least squares regression model (see
-:class:`~sklearn.linear_mnodel.LinearRegression` and
-:class:`~sklearn.linear_mnodel.Ridge`), we can use this plot to check
+:class:`~sklearn.linear_model.LinearRegression` and
+:class:`~sklearn.linear_model.Ridge`), we can use this plot to check
 if some of the `model assumptions
 <https://en.wikipedia.org/wiki/Ordinary_least_squares#Assumptions>`_
 are met, in particular that the residuals should be uncorrelated, their

@@ -67,8 +67,8 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
-- |Fix| Fix zero division error in :func:`HistGradientBoostingClassifier` and
-  :func:`HistGradientBoostingRegressor`.
+- |Fix| Fix zero division error in :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor`.
   :pr:`14024` by `Nicolas Hug <NicolasHug>`.
 
 :mod:`sklearn.impute`
@@ -81,7 +81,7 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Fix| Fixed a bug in :func:`inspection.plot_partial_dependence` where 
+- |Fix| Fixed a bug in :func:`inspection.plot_partial_dependence` where
   ``target`` parameter was not being taken into account for multiclass problems.
   :pr:`14393` by :user:`Guillem G. Subies <guillemgsubies>`.
 
@@ -109,7 +109,7 @@ Changelog
 :mod:`sklearn.tree`
 ...................
 
-- |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and 
+- |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and
   a single feature name is passed in. :pr:`14053` by `Thomas Fan`.
 
 - |Fix| Fixed an issue with :func:`plot_tree` where it displayed
@@ -129,7 +129,7 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
-- |Fix| Fixed a bug in :class:`cross_decomposition.CCA` improving numerical 
+- |Fix| Fixed a bug in :class:`cross_decomposition.CCA` improving numerical
   stability when `Y` is close to zero. :pr:`13903` by `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
@@ -148,11 +148,11 @@ Changelog
   by :user:`James Myatt <jamesmyatt>`.
 
 
-:mod:`sklearn.utils.sparsefuncs`
-................................
+`sklearn.utils.sparsefuncs`
+...........................
 
-- |Fix| Fixed a bug where :func:`min_max_axis` would fail on 32-bit systems
-  for certain large inputs. This affects :class:`preprocessing.MaxAbsScaler`, 
+- |Fix| Fixed a bug where `min_max_axis` would fail on 32-bit systems
+  for certain large inputs. This affects :class:`preprocessing.MaxAbsScaler`,
   :func:`preprocessing.normalize` and :class:`preprocessing.LabelBinarizer`.
   :pr:`13741` by :user:`Roddy MacSween <rlms>`.
 
@@ -230,7 +230,7 @@ random sampling procedures.
 - :func:`svm.SVC.decision_function` and
   :func:`multiclass.OneVsOneClassifier.decision_function`. |Fix|
 - :class:`linear_model.SGDClassifier` and any derived classifiers. |Fix|
-- Any model using the :func:`linear_model._sag.sag_solver` function with a `0`
+- Any model using the `linear_model._sag.sag_solver` function with a `0`
   seed, including :class:`linear_model.LogisticRegression`,
   :class:`linear_model.LogisticRegressionCV`, :class:`linear_model.Ridge`,
   and :class:`linear_model.RidgeCV` with 'sag' solver. |Fix|
@@ -420,7 +420,7 @@ Support for Python 3.4 and below has been officially dropped.
     >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
     >>> # now you can import normally from sklearn.ensemble
     >>> from sklearn.ensemble import HistGradientBoostingClassifier
-  
+
   .. note::
       Update: since version 1.0, these estimators are not experimental
       anymore and you don't need to use `from sklearn.experimental import
@@ -508,24 +508,24 @@ Support for Python 3.4 and below has been officially dropped.
   if any targets were strings. :pr:`12834` by :user:`Elizabeth Sander
   <elsander>`.
 
-- |Fix| Fixed a bug in :class:`ensemble.gradient_boosting.LossFunction` and
-  :class:`ensemble.gradient_boosting.LeastSquaresError` where the default
+- |Fix| Fixed a bug in `ensemble.gradient_boosting.LossFunction` and
+  `ensemble.gradient_boosting.LeastSquaresError` where the default
   value of ``learning_rate`` in ``update_terminal_regions`` is not consistent
   with the document and the caller functions. Note however that directly using
   these loss functions is deprecated.
   :pr:`6463` by :user:`movelikeriver <movelikeriver>`.
 
-- |Fix| :func:`ensemble.partial_dependence` (and consequently the new
+- |Fix| `ensemble.partial_dependence` (and consequently the new
   version :func:`sklearn.inspection.partial_dependence`) now takes sample
   weights into account for the partial dependence computation when the
   gradient boosting model has been trained with sample weights.
   :pr:`13193` by :user:`Samuel O. Ronsin <samronsin>`.
 
-- |API| :func:`ensemble.partial_dependence` and
-  :func:`ensemble.plot_partial_dependence` are now deprecated in favor of
+- |API| `ensemble.partial_dependence` and
+  `ensemble.plot_partial_dependence` are now deprecated in favor of
   :func:`inspection.partial_dependence<sklearn.inspection.partial_dependence>`
   and
-  :func:`inspection.plot_partial_dependence<sklearn.inspection.plot_partial_dependence>`.
+  `inspection.plot_partial_dependence<sklearn.inspection.plot_partial_dependence>`.
   :pr:`12599` by :user:`Trevor Stephens<trevorstephens>` and
   :user:`Nicolas Hug<NicolasHug>`.
 
@@ -540,10 +540,10 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`pipeline.FeatureUnion` and :class:`compose.ColumnTransformer`).
   :pr:`13780` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-:mod:`sklearn.externals`
-........................
+`sklearn.externals`
+...................
 
-- |API| Deprecated :mod:`externals.six` since we have dropped support for
+- |API| Deprecated `externals.six` since we have dropped support for
   Python 2.7. :pr:`12916` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 :mod:`sklearn.feature_extraction`
@@ -599,7 +599,7 @@ Support for Python 3.4 and below has been officially dropped.
 (new subpackage)
 
 - |Feature| Partial dependence plots
-  (:func:`inspection.plot_partial_dependence`) are now supported for
+  (`inspection.plot_partial_dependence`) are now supported for
   any regressor or classifier (provided that they have a `predict_proba`
   method). :pr:`12599` by :user:`Trevor Stephens <trevorstephens>` and
   :user:`Nicolas Hug <NicolasHug>`.
@@ -627,7 +627,7 @@ Support for Python 3.4 and below has been officially dropped.
   users to compute :class:`linear_model.lars_path` without providing
   ``X`` and ``y``. :pr:`11699` by :user:`Kuai Yu <yukuairoy>`.
 
-- |Efficiency| :func:`linear_model.make_dataset` now preserves
+- |Efficiency| `linear_model.make_dataset` now preserves
   ``float32`` and ``float64`` dtypes, reducing memory consumption in stochastic
   gradient, SAG and SAGA solvers.
   :pr:`8769` and :pr:`11000` by
@@ -683,7 +683,7 @@ Support for Python 3.4 and below has been officially dropped.
   case. :pr:`13389` by :user:`Pierre Glaser <pierreglaser>`.
 
 - |Fix| Fixed a bug in
-  :class:`linear_model.stochastic_gradient.BaseSGDClassifier` that was not
+  `linear_model.stochastic_gradient.BaseSGDClassifier` that was not
   deterministic when trained in a multi-class setting on several threads.
   :pr:`13422` by :user:`Clément Doumouro <ClemDoum>`.
 
@@ -708,7 +708,7 @@ Support for Python 3.4 and below has been officially dropped.
   in version 0.23. Use :class:`linear_model.lars_path_gram` instead.
   :pr:`11699` by :user:`Kuai Yu <yukuairoy>`.
 
-- |API| :func:`linear_model.logistic_regression_path` is deprecated
+- |API| `linear_model.logistic_regression_path` is deprecated
   in version 0.21 and will be removed in version 0.23.
   :pr:`12821` by :user:`Nicolas Hug <NicolasHug>`.
 
@@ -719,7 +719,7 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.manifold`
 .......................
 
-- |Efficiency| Make :func:`manifold.tsne.trustworthiness` use an inverted index
+- |Efficiency| Make :func:`manifold.trustworthiness` use an inverted index
   instead of an `np.where` lookup to find the rank of neighbors in the input
   space. This improves efficiency in particular when computed with
   lots of neighbors and/or small datasets.
@@ -789,13 +789,13 @@ Support for Python 3.4 and below has been officially dropped.
   in version 0.21 and will be removed in version 0.23. :pr:`10580` by
   :user:`Reshama Shaikh <reshamas>` and :user:`Sandra Mitrovic <SandraMNE>`.
 
-- |Fix| The function :func:`metrics.pairwise.euclidean_distances`, and 
-  therefore several estimators with ``metric='euclidean'``, suffered from 
-  numerical precision issues with ``float32`` features. Precision has been 
-  increased at the cost of a small drop of performance. :pr:`13554` by 
+- |Fix| The function :func:`metrics.pairwise.euclidean_distances`, and
+  therefore several estimators with ``metric='euclidean'``, suffered from
+  numerical precision issues with ``float32`` features. Precision has been
+  increased at the cost of a small drop of performance. :pr:`13554` by
   :user:`Celelibi` and :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |API| :func:`metrics.jaccard_similarity_score` is deprecated in favour of
+- |API| `metrics.jaccard_similarity_score` is deprecated in favour of
   the more consistent :func:`metrics.jaccard_score`. The former behavior for
   binary and multiclass targets is broken.
   :pr:`13151` by `Joel Nothman`_.
@@ -803,7 +803,7 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.mixture`
 ......................
 
-- |Fix| Fixed a bug in :class:`mixture.BaseMixture` and therefore on estimators
+- |Fix| Fixed a bug in `mixture.BaseMixture` and therefore on estimators
   based on it, i.e. :class:`mixture.GaussianMixture` and
   :class:`mixture.BayesianGaussianMixture`, where ``fit_predict`` and
   ``fit.predict`` were not equivalent. :pr:`13142` by
@@ -865,7 +865,7 @@ Support for Python 3.4 and below has been officially dropped.
   `predict_proba` method incorrectly checked for `predict_proba` attribute in
   the estimator object.
   :pr:`12222` by :user:`Rebekah Kim <rebekahkim>`
-  
+
 :mod:`sklearn.neighbors`
 ........................
 
@@ -958,7 +958,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |API| The default value of `copy` in :func:`preprocessing.quantile_transform`
   will change from False to True in 0.23 in order to make it more consistent
   with the default `copy` values of other functions in
-  :mod:`preprocessing` and prevent unexpected side effects by modifying
+  :mod:`sklearn.preprocessing` and prevent unexpected side effects by modifying
   the value of `X` inplace.
   :pr:`13459` by :user:`Hunter McGushion <HunterMcGushion>`.
 
@@ -976,7 +976,7 @@ Support for Python 3.4 and below has been officially dropped.
 ...................
 
 - |Feature| Decision Trees can now be plotted with matplotlib using
-  :func:`tree.plot_tree` without relying on the ``dot`` library,
+  `tree.plot_tree` without relying on the ``dot`` library,
   removing a hard-to-install dependency. :pr:`8508` by `Andreas Müller`_.
 
 - |Feature| Decision Trees can now be exported in a human readable
@@ -984,7 +984,7 @@ Support for Python 3.4 and below has been officially dropped.
   :pr:`6261` by `Giuseppe Vettigli <JustGlowing>`.
 
 - |Feature| ``get_n_leaves()`` and ``get_depth()`` have been added to
-  :class:`tree.BaseDecisionTree` and consequently all estimators based
+  `tree.BaseDecisionTree` and consequently all estimators based
   on it, including :class:`tree.DecisionTreeClassifier`,
   :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
   and :class:`tree.ExtraTreeRegressor`.
@@ -994,7 +994,7 @@ Support for Python 3.4 and below has been officially dropped.
   classification targets with string labels, despite accepting them in `fit`.
   :pr:`11458` by :user:`Mitar Milutinovic <mitar>`.
 
-- |Fix| Fixed an issue with :class:`tree.BaseDecisionTree`
+- |Fix| Fixed an issue with `tree.BaseDecisionTree`
   and consequently all estimators based
   on it, including :class:`tree.DecisionTreeClassifier`,
   :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
@@ -1013,7 +1013,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |API| Deprecated ``warn_on_dtype`` parameter from :func:`utils.check_array`
   and :func:`utils.check_X_y`. Added explicit warning for dtype conversion
-  in :func:`check_pairwise_arrays` if the ``metric`` being passed is a
+  in `check_pairwise_arrays` if the ``metric`` being passed is a
   pairwise boolean metric.
   :pr:`13382` by :user:`Prathmesh Savale <praths007>`.
 
@@ -1038,7 +1038,7 @@ Multiple modules
   dtype in multiple estimators. :pr:`11973` by :user:`Roman Yurchak
   <rth>`.
 
-- |Fix| Fixed a bug in the implementation of the :func:`our_rand_r`
+- |Fix| Fixed a bug in the implementation of the `our_rand_r`
   helper function that was not behaving consistently across platforms.
   :pr:`13422` by :user:`Madhura Parikh <jdnc>` and
   :user:`Clément Doumouro <ClemDoum>`.
@@ -1083,7 +1083,7 @@ Baibak, daten-kieker, Denis Kataev, Didi Bar-Zev, Dillon Gardner, Dmitry Mottl,
 Dmitry Vukolov, Dougal J. Sutherland, Dowon, drewmjohnston, Dror Atariah,
 Edward J Brown, Ekaterina Krivich, Elizabeth Sander, Emmanuel Arias, Eric
 Chang, Eric Larson, Erich Schubert, esvhd, Falak, Feda Curic, Federico Caselli,
-Frank Hoang, Fibinse Xavier`, Finn O'Shea, Gabriel Marzinotto, Gabriel Vacaliuc, 
+Frank Hoang, Fibinse Xavier`, Finn O'Shea, Gabriel Marzinotto, Gabriel Vacaliuc,
 Gabriele Calvo, Gael Varoquaux, GauravAhlawat, Giuseppe Vettigli, Greg Gandenberger,
 Guillaume Fournier, Guillaume Lemaitre, Gustavo De Mari Pereira, Hanmin Qin,
 haroldfox, hhu-luqi, Hunter McGushion, Ian Sanders, JackLangerman, Jacopo
