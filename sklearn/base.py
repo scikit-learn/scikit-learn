@@ -880,12 +880,12 @@ class BiclusterMixin:
 class TransformerMixin(_SetOutputMixin):
     """Mixin class for all transformers in scikit-learn.
 
-    If :term:`get_feature_names_out` is defined, then `BaseEstimator` will
+    If :term:`get_feature_names_out` is defined, then :class:`BaseEstimator` will
     automatically wrap `transform` and `fit_transform` to follow the `set_output`
     API. See the :ref:`developer_api_set_output` for details.
 
-    :class:`base.OneToOneFeatureMixin` and
-    :class:`base.ClassNamePrefixFeaturesOutMixin` are helpful mixins for
+    :class:`OneToOneFeatureMixin` and
+    :class:`ClassNamePrefixFeaturesOutMixin` are helpful mixins for
     defining :term:`get_feature_names_out`.
     """
 
@@ -927,7 +927,7 @@ class OneToOneFeatureMixin:
     """Provides `get_feature_names_out` for simple transformers.
 
     This mixin assumes there's a 1-to-1 correspondence between input features
-    and output features, such as :class:`~preprocessing.StandardScaler`.
+    and output features, such as :class:`~sklearn.preprocessing.StandardScaler`.
     """
 
     def get_feature_names_out(self, input_features=None):
@@ -958,8 +958,8 @@ class ClassNamePrefixFeaturesOutMixin:
     """Mixin class for transformers that generate their own names by prefixing.
 
     This mixin is useful when the transformer needs to generate its own feature
-    names out, such as :class:`~decomposition.PCA`. For example, if
-    :class:`~decomposition.PCA` outputs 3 features, then the generated feature
+    names out, such as :class:`~sklearn.decomposition.PCA`. For example, if
+    :class:`~sklearn.decomposition.PCA` outputs 3 features, then the generated feature
     names out are: `["pca0", "pca1", "pca2"]`.
 
     This mixin assumes that a `_n_features_out` attribute is defined when the
@@ -977,7 +977,7 @@ class ClassNamePrefixFeaturesOutMixin:
         Parameters
         ----------
         input_features : array-like of str or None, default=None
-            Only used to validate feature names with the names seen in :meth:`fit`.
+            Only used to validate feature names with the names seen in `fit`.
 
         Returns
         -------
