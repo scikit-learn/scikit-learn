@@ -76,11 +76,9 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         chosen `loss`, `multi_class` and `penalty`, then dual will be set to True,
         otherwise it will be set to False.
 
-        .. versionadded:: 1.3
-           The option `"auto"` is added.
-
         .. versionchanged:: 1.3
-           The default value will change from `True` to `"auto"` in 1.5.
+           The `"auto"` option is added in version 1.3 and will be the default
+           in version 1.5.
 
     tol : float, default=1e-4
         Tolerance for stopping criteria.
@@ -414,11 +412,9 @@ class LinearSVR(RegressorMixin, LinearModel):
         `n_samples` < `n_features` and optmizer supports chosen `loss`,
         then dual will be set to True, otherwise it will be set to False.
 
-        .. versionadded:: 1.3
-           The option `"auto"` is added.
-
         .. versionchanged:: 1.3
-           The default value will change from `True` to `"auto"` in 1.5.
+           The `"auto"` option is added in version 1.3 and will be the default
+           in version 1.5.
 
     verbose : int, default=0
         Enable verbose output. Note that this setting takes advantage of a
