@@ -147,8 +147,13 @@ that is particularly suited for imbalanced data sets. Specifically, CNB uses
 statistics from the *complement* of each class to compute the model's weights.
 The inventors of CNB show empirically that the parameter estimates for CNB are
 more stable than those for MNB. Further, CNB regularly outperforms MNB (often
-by a considerable margin) on text classification tasks. The procedure for
-calculating the weights is as follows:
+by a considerable margin) on text classification tasks.
+
+|details-start|
+**Weights calculation**
+|details-split|
+
+The procedure for calculating the weights is as follows:
 
 .. math::
 
@@ -172,6 +177,8 @@ classification rule is:
 
 i.e., a document is assigned to the class that is the *poorest* complement
 match.
+
+|details-end|
 
 .. topic:: References:
 
@@ -239,6 +246,10 @@ For each feature :math:`i` in the training set :math:`X`,
 of X conditioned on the class y. The index set of the samples is defined as
 :math:`J = \{ 1, \dots, m \}`, with :math:`m` as the number of samples.
 
+|details-start|
+**Probability calculation**
+|details-split|
+
 The probability of category :math:`t` in feature :math:`i` given class
 :math:`c` is estimated as:
 
@@ -252,6 +263,8 @@ of times category :math:`t` appears in the samples :math:`x_{i}`, which belong
 to class :math:`c`, :math:`N_{c} = |\{ j \in J\mid y_j = c\}|` is the number
 of samples with class c, :math:`\alpha` is a smoothing parameter and
 :math:`n_i` is the number of available categories of feature :math:`i`.
+
+|details-end|
 
 :class:`CategoricalNB` assumes that the sample matrix :math:`X` is encoded (for
 instance with the help of :class:`~sklearn.preprocessing.OrdinalEncoder`) such
