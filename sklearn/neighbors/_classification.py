@@ -15,7 +15,10 @@ import numpy as np
 from sklearn.neighbors._base import _check_precomputed
 
 from ..base import ClassifierMixin, _fit_context
-from ..metrics._pairwise_distances_reduction import ArgKminClassMode
+from ..metrics._pairwise_distances_reduction import (
+    ArgKminClassMode,
+    RadiusNeighborsClassMode,
+)
 from ..utils._param_validation import StrOptions
 from ..utils.extmath import weighted_mode
 from ..utils.fixes import _mode
@@ -707,75 +710,98 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-
+        check_is_fitted(self, "_fit_method")
         n_queries = _num_samples(X)
 
-        neigh_dist, neigh_ind = self.radius_neighbors(X)
-        outlier_mask = np.zeros(n_queries, dtype=bool)
-        outlier_mask[:] = [len(nind) == 0 for nind in neigh_ind]
-        outliers = np.flatnonzero(outlier_mask)
-        inliers = np.flatnonzero(~outlier_mask)
+        metric, metric_kwargs = _adjusted_metric(
+            metric=self.metric, metric_kwargs=self.metric_params, p=self.p
+        )
 
-        classes_ = self.classes_
-        _y = self._y
-        if not self.outputs_2d_:
-            _y = self._y.reshape((-1, 1))
-            classes_ = [self.classes_]
-
-        if self.outlier_label_ is None and outliers.size > 0:
-            raise ValueError(
-                "No neighbors found for test samples %r, "
-                "you can try using larger radius, "
-                "giving a label for outliers, "
-                "or considering removing them from your dataset." % outliers
+        if (
+            self.weights == "uniform"
+            and self._fit_method == "brute"
+            and not self.outputs_2d_
+            and RadiusNeighborsClassMode.is_usable_for(X, self._fit_X, metric)
+        ):
+            probabilities = RadiusNeighborsClassMode.compute(
+                X=X,
+                Y=self._fit_X,
+                radius=self.radius,
+                weights=self.weights,
+                labels=self._y,
+                unique_labels=self.classes_,
+                outlier_label=self.outlier_label,
+                metric=metric,
+                metric_kwargs=metric_kwargs,
+                strategy="parallel_on_X",
             )
+        else:
+            neigh_dist, neigh_ind = self.radius_neighbors(X)
+            outlier_mask = np.zeros(n_queries, dtype=bool)
+            outlier_mask[:] = [len(nind) == 0 for nind in neigh_ind]
+            outliers = np.flatnonzero(outlier_mask)
+            inliers = np.flatnonzero(~outlier_mask)
 
-        weights = _get_weights(neigh_dist, self.weights)
-        if weights is not None:
-            weights = weights[inliers]
+            classes_ = self.classes_
+            _y = self._y
+            if not self.outputs_2d_:
+                _y = self._y.reshape((-1, 1))
+                classes_ = [self.classes_]
 
-        probabilities = []
-        # iterate over multi-output, measure probabilities of the k-th output.
-        for k, classes_k in enumerate(classes_):
-            pred_labels = np.zeros(len(neigh_ind), dtype=object)
-            pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
+            if self.outlier_label_ is None and outliers.size > 0:
+                raise ValueError(
+                    "No neighbors found for test samples %r, "
+                    "you can try using larger radius, "
+                    "giving a label for outliers, "
+                    "or considering removing them from your dataset." % outliers
+                )
 
-            proba_k = np.zeros((n_queries, classes_k.size))
-            proba_inl = np.zeros((len(inliers), classes_k.size))
+            weights = _get_weights(neigh_dist, self.weights)
+            if weights is not None:
+                weights = weights[inliers]
 
-            # samples have different size of neighbors within the same radius
-            if weights is None:
-                for i, idx in enumerate(pred_labels[inliers]):
-                    proba_inl[i, :] = np.bincount(idx, minlength=classes_k.size)
-            else:
-                for i, idx in enumerate(pred_labels[inliers]):
-                    proba_inl[i, :] = np.bincount(
-                        idx, weights[i], minlength=classes_k.size
-                    )
-            proba_k[inliers, :] = proba_inl
+            probabilities = []
+            # iterate over multi-output, measure probabilities of the k-th output.
+            for k, classes_k in enumerate(classes_):
+                pred_labels = np.zeros(len(neigh_ind), dtype=object)
+                pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
 
-            if outliers.size > 0:
-                _outlier_label = self.outlier_label_[k]
-                label_index = np.flatnonzero(classes_k == _outlier_label)
-                if label_index.size == 1:
-                    proba_k[outliers, label_index[0]] = 1.0
+                proba_k = np.zeros((n_queries, classes_k.size))
+                proba_inl = np.zeros((len(inliers), classes_k.size))
+
+                # samples have different size of neighbors within the same radius
+                if weights is None:
+                    for i, idx in enumerate(pred_labels[inliers]):
+                        proba_inl[i, :] = np.bincount(idx, minlength=classes_k.size)
                 else:
-                    warnings.warn(
-                        "Outlier label {} is not in training "
-                        "classes. All class probabilities of "
-                        "outliers will be assigned with 0."
-                        "".format(self.outlier_label_[k])
-                    )
+                    for i, idx in enumerate(pred_labels[inliers]):
+                        proba_inl[i, :] = np.bincount(
+                            idx, weights[i], minlength=classes_k.size
+                        )
+                proba_k[inliers, :] = proba_inl
 
-            # normalize 'votes' into real [0,1] probabilities
-            normalizer = proba_k.sum(axis=1)[:, np.newaxis]
-            normalizer[normalizer == 0.0] = 1.0
-            proba_k /= normalizer
+                if outliers.size > 0:
+                    _outlier_label = self.outlier_label_[k]
+                    label_index = np.flatnonzero(classes_k == _outlier_label)
+                    if label_index.size == 1:
+                        proba_k[outliers, label_index[0]] = 1.0
+                    else:
+                        warnings.warn(
+                            "Outlier label {} is not in training "
+                            "classes. All class probabilities of "
+                            "outliers will be assigned with 0."
+                            "".format(self.outlier_label_[k])
+                        )
 
-            probabilities.append(proba_k)
+                # normalize 'votes' into real [0,1] probabilities
+                normalizer = proba_k.sum(axis=1)[:, np.newaxis]
+                normalizer[normalizer == 0.0] = 1.0
+                proba_k /= normalizer
 
-        if not self.outputs_2d_:
-            probabilities = probabilities[0]
+                probabilities.append(proba_k)
+
+            if not self.outputs_2d_:
+                probabilities = probabilities[0]
 
         return probabilities
 

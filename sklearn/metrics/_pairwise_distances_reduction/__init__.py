@@ -91,6 +91,7 @@ from ._dispatcher import (
     ArgKminClassMode,
     BaseDistancesReductionDispatcher,
     RadiusNeighbors,
+    RadiusNeighborsClassMode,
     sqeuclidean_row_norms,
 )
 
@@ -98,6 +99,7 @@ __all__ = [
     "BaseDistancesReductionDispatcher",
     "ArgKmin",
     "RadiusNeighbors",
+    "RadiusNeighborsClassMode",
     "ArgKminClassMode",
     "sqeuclidean_row_norms",
 ]
