@@ -219,7 +219,7 @@ def check_classification_targets(y):
         )
 
 
-def type_of_target(y, input_name=""):
+def type_of_target(y, input_name="", n_classes=None):
     """Determine the type of data indicated by the target.
 
     Note that this type is the most specific type that can be inferred.
@@ -241,6 +241,11 @@ def type_of_target(y, input_name=""):
         The data name used to construct the error message.
 
         .. versionadded:: 1.1.0
+
+    n_classes : int, default=None
+        Number of classes. Will be inferred from the data if not provided.
+
+        .. versionadded:: 1.4
 
     Returns
     -------
@@ -383,8 +388,9 @@ def type_of_target(y, input_name=""):
             return "continuous" + suffix
 
     # Check multiclass
+    n_classes = n_classes or xp.unique_values(y).shape[0]
     first_row = y[0] if not issparse(y) else y.getrow(0).data
-    if xp.unique_values(y).shape[0] > 2 or (y.ndim == 2 and len(first_row) > 1):
+    if n_classes > 2 or (y.ndim == 2 and len(first_row) > 1):
         # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
         return "multiclass" + suffix
     else:
