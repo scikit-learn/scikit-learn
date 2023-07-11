@@ -15,6 +15,7 @@ Table Of Contents
     user_guide
     modules/classes
     auto_examples/index
+    Community <https://blog.scikit-learn.org/>
     getting_started
     tutorial/index
     whats_new
@@ -26,3 +27,4 @@ Table Of Contents
     roadmap
     governance
     about
+    Other Versions and Download <https://scikit-learn.org/dev/versions.html>
