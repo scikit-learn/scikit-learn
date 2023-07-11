@@ -2,21 +2,31 @@
 #
 # License: BSD 3 clause
 
-from numbers import Integral, Real
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
-from ..base import MultiOutputMixin
-from ..utils import check_random_state, check_consistent_length
-from ..utils.random import sample_without_replacement
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ._base import LinearRegression
-from ..utils.validation import has_fit_parameter
-from ..utils._param_validation import Interval, Options, StrOptions, HasMethods
-from ..utils._param_validation import RealNotInt
+from ..base import (
+    BaseEstimator,
+    MetaEstimatorMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+    clone,
+)
 from ..exceptions import ConvergenceWarning
+from ..utils import check_consistent_length, check_random_state
+from ..utils._param_validation import (
+    HasMethods,
+    Interval,
+    Options,
+    RealNotInt,
+    StrOptions,
+)
+from ..utils.random import sample_without_replacement
+from ..utils.validation import _check_sample_weight, check_is_fitted, has_fit_parameter
+from ._base import LinearRegression
 
 _EPSILON = np.spacing(1)
 
@@ -91,10 +101,11 @@ class RANSACRegressor(
         relative number `ceil(min_samples * X.shape[0])` for
         `min_samples < 1`. This is typically chosen as the minimal number of
         samples necessary to estimate the given `estimator`. By default a
-        ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
+        :class:`~sklearn.linear_model.LinearRegression` estimator is assumed and
         `min_samples` is chosen as ``X.shape[1] + 1``. This parameter is highly
         dependent upon the model, so if a `estimator` other than
-        :class:`linear_model.LinearRegression` is used, the user must provide a value.
+        :class:`~sklearn.linear_model.LinearRegression` is used, the user must
+        provide a value.
 
     residual_threshold : float, default=None
         Maximum residual for a data sample to be classified as an inlier.
@@ -283,6 +294,10 @@ class RANSACRegressor(
         self.random_state = random_state
         self.loss = loss
 
+    @_fit_context(
+        # RansacRegressor.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None):
         """Fit estimator using RANSAC algorithm.
 
@@ -313,8 +328,6 @@ class RANSACRegressor(
             `is_data_valid` and `is_model_valid` return False for all
             `max_trials` randomly chosen sub-samples.
         """
-        self._validate_params()
-
         # Need to validate separately here. We can't pass multi_output=True
         # because that would allow y to be csr. Delay expensive finiteness
         # check to the estimator's own input validation.

@@ -27,20 +27,24 @@ To run this script you need:
   sklearn/_min_dependencies.py
 - pip-tools
 
+To only update the environment and lock files for specific builds, you can use
+the command line argument `--select-build` which will take a regex. For example,
+to only update the documentation builds you can use:
+`python build_tools/update_environments_and_lock_files.py --select-build doc`
 """
 
-import re
-import subprocess
-import sys
-from pathlib import Path
-import shlex
 import json
 import logging
+import re
+import shlex
+import subprocess
+import sys
 from importlib.metadata import version
+from pathlib import Path
 
 import click
-
 from jinja2 import Environment
+from packaging.version import Version
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -93,6 +97,8 @@ conda_build_metadata_list = [
             "ccache",
             "pytorch",
             "pytorch-cpu",
+            "polars",
+            "pyarrow",
             "array-api-compat",
         ],
         "package_constraints": {
@@ -247,6 +253,7 @@ conda_build_metadata_list = [
             "compilers",
             "sphinx",
             "sphinx-gallery",
+            "sphinx-copybutton",
             "numpydoc",
             "sphinx-prompt",
             "plotly",
@@ -263,6 +270,7 @@ conda_build_metadata_list = [
             "sphinx": "min",
             "pandas": "min",
             "sphinx-gallery": "min",
+            "sphinx-copybutton": "min",
             "numpydoc": "min",
             "sphinx-prompt": "min",
             "sphinxext-opengraph": "min",
@@ -281,6 +289,7 @@ conda_build_metadata_list = [
             "compilers",
             "sphinx",
             "sphinx-gallery",
+            "sphinx-copybutton",
             "numpydoc",
             "sphinx-prompt",
             "plotly",
@@ -539,6 +548,22 @@ def check_conda_lock_version():
         )
 
 
+def check_conda_version():
+    # Avoid issues with glibc (https://github.com/conda/conda-lock/issues/292)
+    # or osx (https://github.com/conda/conda-lock/issues/408) virtual package.
+    # The glibc one has been fixed in conda 23.1.0 and the osx has been fixed
+    # in main and will be fixed when conda > 23.5.0 is released.
+    conda_info_output = execute_command(["conda", "info", "--json"])
+
+    conda_info = json.loads(conda_info_output)
+    conda_version = Version(conda_info["conda_version"])
+
+    if Version("22.9.0") < conda_version <= Version("23.5.0"):
+        raise RuntimeError(
+            f"conda version should be <= 22.9.0 or > 23.5.0, got: {conda_version}"
+        )
+
+
 @click.command()
 @click.option(
     "--select-build",
@@ -547,6 +572,7 @@ def check_conda_lock_version():
 )
 def main(select_build):
     check_conda_lock_version()
+    check_conda_version()
     filtered_conda_build_metadata_list = [
         each
         for each in conda_build_metadata_list

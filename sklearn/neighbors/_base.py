@@ -7,39 +7,36 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 import itertools
-from functools import partial
-
+import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
-import numbers
+from functools import partial
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import csr_matrix, issparse
 from joblib import effective_n_jobs
+from scipy.sparse import csr_matrix, issparse
 
-from ._ball_tree import BallTree
-from ._kd_tree import KDTree
-from ..base import BaseEstimator, MultiOutputMixin
-from ..base import is_classifier
+from ..base import BaseEstimator, MultiOutputMixin, is_classifier
+from ..exceptions import DataConversionWarning, EfficiencyWarning
 from ..metrics import pairwise_distances_chunked
-from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..metrics._pairwise_distances_reduction import (
     ArgKmin,
     RadiusNeighbors,
 )
+from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import (
+    _to_object_array,
     check_array,
     gen_even_slices,
-    _to_object_array,
 )
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
-from ..utils.validation import check_non_negative
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.parallel import delayed, Parallel
 from ..utils.fixes import parse_version, sp_base_version
-from ..exceptions import DataConversionWarning, EfficiencyWarning
+from ..utils.multiclass import check_classification_targets
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import check_is_fitted, check_non_negative
+from ._ball_tree import BallTree
+from ._kd_tree import KDTree
 
 SCIPY_METRICS = [
     "braycurtis",
@@ -68,8 +65,8 @@ if sp_base_version < parse_version("1.9"):
     SCIPY_METRICS += ["matching"]
 
 VALID_METRICS = dict(
-    ball_tree=BallTree._valid_metrics,
-    kd_tree=KDTree._valid_metrics,
+    ball_tree=BallTree.valid_metrics,
+    kd_tree=KDTree.valid_metrics,
     # The following list comes from the
     # sklearn.metrics.pairwise doc string
     brute=sorted(set(PAIRWISE_DISTANCE_FUNCTIONS).union(SCIPY_METRICS)),
@@ -198,7 +195,8 @@ def _check_precomputed(X):
         "graph": ["sparse matrix"],
         "copy": ["boolean"],
         "warn_when_not_sorted": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
     """Sort a sparse graph such that each row is stored with increasing values.

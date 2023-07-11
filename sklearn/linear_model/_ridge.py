@@ -9,39 +9,34 @@ Ridge regression
 # License: BSD 3 clause
 
 
+import numbers
+import warnings
 from abc import ABCMeta, abstractmethod
 from functools import partial
 from numbers import Integral, Real
-import warnings
 
 import numpy as np
-import numbers
-from scipy import linalg
-from scipy import sparse
-from scipy import optimize
+from scipy import linalg, optimize, sparse
 from scipy.sparse import linalg as sp_linalg
 
-from ._base import LinearClassifierMixin, LinearModel
-from ._base import _preprocess_data, _rescale_data
-from ._sag import sag_solver
-from ..base import MultiOutputMixin, RegressorMixin, is_classifier
-from ..utils.extmath import safe_sparse_dot
-from ..utils.extmath import row_norms
-from ..utils import check_array
-from ..utils import check_consistent_length
-from ..utils import check_scalar
-from ..utils import compute_sample_weight
-from ..utils import column_or_1d
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_sample_weight
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
-from ..preprocessing import LabelBinarizer
-from ..model_selection import GridSearchCV
-from ..metrics import check_scoring
-from ..metrics import get_scorer_names
+from ..base import MultiOutputMixin, RegressorMixin, _fit_context, is_classifier
 from ..exceptions import ConvergenceWarning
+from ..metrics import check_scoring, get_scorer_names
+from ..model_selection import GridSearchCV
+from ..preprocessing import LabelBinarizer
+from ..utils import (
+    check_array,
+    check_consistent_length,
+    check_scalar,
+    column_or_1d,
+    compute_sample_weight,
+)
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.validation import _check_sample_weight, check_is_fitted
+from ._base import LinearClassifierMixin, LinearModel, _preprocess_data, _rescale_data
+from ._sag import sag_solver
 
 
 def _get_rescaled_operator(X, X_offset, sample_weight_sqrt):
@@ -110,12 +105,7 @@ def _solve_sparse_cg(
             C = sp_linalg.LinearOperator(
                 (n_samples, n_samples), matvec=mv, dtype=X.dtype
             )
-            # FIXME atol
-            try:
-                coef, info = sp_linalg.cg(C, y_column, tol=tol, atol="legacy")
-            except TypeError:
-                # old scipy
-                coef, info = sp_linalg.cg(C, y_column, tol=tol)
+            coef, info = sp_linalg.cg(C, y_column, tol=tol, atol="legacy")
             coefs[i] = X1.rmatvec(coef)
         else:
             # linear ridge
@@ -124,14 +114,9 @@ def _solve_sparse_cg(
             C = sp_linalg.LinearOperator(
                 (n_features, n_features), matvec=mv, dtype=X.dtype
             )
-            # FIXME atol
-            try:
-                coefs[i], info = sp_linalg.cg(
-                    C, y_column, maxiter=max_iter, tol=tol, atol="legacy"
-                )
-            except TypeError:
-                # old scipy
-                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter, tol=tol)
+            coefs[i], info = sp_linalg.cg(
+                C, y_column, maxiter=max_iter, tol=tol, atol="legacy"
+            )
 
         if info < 0:
             raise ValueError("Failed with error code %d" % info)
@@ -374,6 +359,32 @@ def _get_valid_accept_sparse(is_X_sparse, solver):
         return ["csr", "csc", "coo"]
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix", sp_linalg.LinearOperator],
+        "y": ["array-like"],
+        "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
+        "sample_weight": [
+            Interval(Real, None, None, closed="neither"),
+            "array-like",
+            None,
+        ],
+        "solver": [
+            StrOptions(
+                {"auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"}
+            )
+        ],
+        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "verbose": ["verbose"],
+        "positive": ["boolean"],
+        "random_state": ["random_state"],
+        "return_n_iter": ["boolean"],
+        "return_intercept": ["boolean"],
+        "check_input": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def ridge_regression(
     X,
     y,
@@ -396,11 +407,11 @@ def ridge_regression(
 
     Parameters
     ----------
-    X : {ndarray, sparse matrix, LinearOperator} of shape \
+    X : {array-like, sparse matrix, LinearOperator} of shape \
         (n_samples, n_features)
         Training data.
 
-    y : ndarray of shape (n_samples,) or (n_samples, n_targets)
+    y : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values.
 
     alpha : float or array-like of shape (n_targets,)
@@ -1114,6 +1125,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             random_state=random_state,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model.
 
@@ -1134,8 +1146,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
         X, y = self._validate_data(
             X,
@@ -1423,6 +1433,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         )
         self.class_weight = class_weight
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge classifier model.
 
@@ -1446,8 +1457,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         self : object
             Instance of the estimator.
         """
-        self._validate_params()
-
         X, y, sample_weight, Y = self._prepare_data(X, y, sample_weight, self.solver)
 
         super().fit(X, Y, sample_weight=sample_weight)
@@ -2354,6 +2363,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     0.5166...
     """
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model with cv.
 
@@ -2383,8 +2393,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         cross-validation takes the sample weights into account when computing
         the validation score.
         """
-        self._validate_params()
-
         super().fit(X, y, sample_weight=sample_weight)
         return self
 
@@ -2533,6 +2541,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         )
         self.class_weight = class_weight
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge classifier with cv.
 
@@ -2555,8 +2564,6 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         # `RidgeClassifier` does not accept "sag" or "saga" solver and thus support
         # csr, csc, and coo sparse matrices. By using solver="eigen" we force to accept
         # all sparse format.

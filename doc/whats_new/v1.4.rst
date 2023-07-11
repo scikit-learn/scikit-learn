@@ -1,0 +1,98 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _changes_1_4:
+
+Version 1.4.0
+=============
+
+**In Development**
+
+.. include:: changelog_legend.inc
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+Changes impacting all modules
+-----------------------------
+
+- |Enhancement| All estimators now recognizes the column names from any dataframe
+  that adopts the
+  `DataFrame Interchange Protocol <https://data-apis.org/dataframe-protocol/latest/purpose_and_scope.html>`__.
+  Dataframes that return a correct representation through `np.asarray(df)` is expected
+  to work with our estimators and functions.
+  :pr:`26464` by `Thomas Fan`_.
+
+Changelog
+---------
+
+..
+    Entries should be grouped by module (in alphabetic order) and prefixed with
+    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
+    |Fix| or |API| (see whats_new.rst for descriptions).
+    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
+    Changes not specific to a module should be listed under *Multiple Modules*
+    or *Miscellaneous*.
+    Entries should end with:
+    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123456 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.base`
+...................
+
+- |Enhancement| :meth:`base.ClusterMixin.fit_predict` and
+  :meth:`base.OutlierMixin.fit_predict` now accept ``**kwargs`` which are
+  passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
+  Jalali`_.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Enhancement| An "auto" option was added to the `n_components` parameter of
+  :func:`decomposition.non_negative_factorization`, :class:`decomposition.NMF` and
+  :class:`decomposition.MiniBatchNMF` to automatically infer the number of components from W or H shapes
+  when using a custom initialization. The default value of this parameter will change
+  from `None` to `auto` in version 1.6.
+  :pr:`26634` by :user:`Alexandre Landeau <AlexL>` and :user:`Alexandre Vigny <avigny>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Feature| :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`
+  and :class:`ensemble.ExtraTreesRegressor` now support monotonic constraints,
+  useful when features are supposed to have a positive/negative effect on the target.
+  Missing values in the train data and multi-output targets are not supported.
+  :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
+  initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| :func:`feature_selection.mutual_info_regression` now correctly computes the
+  result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Feature| :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
+  :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor` now support
+  monotonic constraints, useful when features are supposed to have a positive/negative
+  effect on the target. Missing values in the train data and multi-output targets are
+  not supported.
+  :pr:`13649` by :user:`Samuel Ronsin <samronsin>`, initiated by
+  :user:`Patrick O'Reilly <pat-oreilly>`.
+
+Code and Documentation Contributors
+-----------------------------------
+
+Thanks to everyone who has contributed to the maintenance and improvement of
+the project since version 1.3, including:
+
+TODO: update at the time of the release.
