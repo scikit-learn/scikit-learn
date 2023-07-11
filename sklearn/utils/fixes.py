@@ -111,13 +111,15 @@ def _mode(a, axis=0):
 
 
 # TODO: Remove when Scipy 1.12 is the minimum supported version
-if parse_version(scipy.__version__) >= parse_version("1.12.0.dev0"):
+if sp_base_version >= parse_version("1.12.0"):
     _sparse_linalg_cg = scipy.sparse.linalg.cg
 else:
 
     def _sparse_linalg_cg(A, b, **kwargs):
         if "rtol" in kwargs:
             kwargs["tol"] = kwargs.pop("rtol")
+        if "atol" not in kwargs:
+            kwargs["atol"] = "legacy"
         return scipy.sparse.linalg.cg(A, b, **kwargs)
 
 
