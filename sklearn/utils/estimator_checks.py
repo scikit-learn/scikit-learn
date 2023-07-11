@@ -576,8 +576,8 @@ def check_estimator(estimator=None, generate_only=False):
     independently and report the checks that are failing.
 
     scikit-learn provides a pytest specific decorator,
-    :func:`~sklearn.utils.parametrize_with_checks`, making it easier to test
-    multiple estimators.
+    :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`, making it
+    easier to test multiple estimators.
 
     Parameters
     ----------
