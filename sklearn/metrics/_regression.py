@@ -705,7 +705,6 @@ def root_mean_squared_log_error(
 ):
     """Root mean squared logarithmic error regression loss.
 
-
     Parameters
     ----------
     y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)

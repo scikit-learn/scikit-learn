@@ -80,8 +80,11 @@ Changelog
 
 :mod:`sklearn.metrics`
 ...................
-- |API| Added functions for root_mean_squared_error and root_mean_squared_log_error
-  :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.
+- |API| The `squared` parameter of :func:`metrics.mean_squared_error` and
+  :func:`metrics.mean_squared_log_error` is deprecated and will be removed in 1.6.
+  Use the new functions :func:`metrics.root_mean_squared_error` and
+  :func:`root_mean_squared_log_error` instead.
+  :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`..
 
 :mod:`sklearn.tree`
 ...................

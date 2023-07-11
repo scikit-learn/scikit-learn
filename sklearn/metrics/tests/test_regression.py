@@ -143,37 +143,11 @@ def test_multioutput_regression():
     error = root_mean_squared_error(y_true, y_pred)
     assert_almost_equal(error, 0.454, decimal=2)
 
-    # TODO(1.6): remove this test
-    mse = mean_squared_error(y_true, y_pred, squared=False)
-    rmse = root_mean_squared_error(y_true, y_pred)
-    assert_almost_equal(mse, rmse, decimal=2)
-
-    # TODO(1.6): remove this test
-    mse = mean_squared_error(
-        y_true, y_pred, sample_weight=np.arange(len(y_true)), squared=False
-    )
-    rmse = root_mean_squared_error(y_true, y_pred, sample_weight=np.arange(len(y_true)))
-    assert_almost_equal(mse, rmse, decimal=2)
-
     error = mean_squared_log_error(y_true, y_pred)
     assert_almost_equal(error, 0.200, decimal=2)
 
     error = root_mean_squared_log_error(y_true, y_pred)
     assert_almost_equal(error, 0.315, decimal=2)
-
-    # TODO(1.6): remove this test
-    msle = mean_squared_log_error(y_true, y_pred, squared=False)
-    rmsle = root_mean_squared_log_error(y_true, y_pred)
-    assert_almost_equal(msle, rmsle, decimal=2)
-
-    # TODO(1.6): remove this test
-    msle = mean_squared_log_error(
-        y_true, y_pred, sample_weight=np.arange(len(y_true)), squared=False
-    )
-    rmsle = root_mean_squared_log_error(
-        y_true, y_pred, sample_weight=np.arange(len(y_true))
-    )
-    assert_almost_equal(msle, rmsle, decimal=2)
 
     # mean_absolute_error and mean_squared_error are equal because
     # it is a binary problem.
@@ -469,44 +443,6 @@ def test_regression_multioutput_array():
     )
     assert_array_almost_equal(msle, msle2, decimal=2)
 
-    # TODO(1.6): remove this test
-    msle = mean_squared_log_error(
-        y_true, y_pred, multioutput="raw_values", squared=False
-    )
-    rmsle = root_mean_squared_log_error(y_true, y_pred, multioutput="raw_values")
-    assert_array_almost_equal(msle, rmsle, decimal=2)
-
-    # TODO(1.6): remove this test
-    msle = mean_squared_log_error(
-        y_true,
-        y_pred,
-        sample_weight=np.arange(len(y_true)),
-        multioutput="raw_values",
-        squared=False,
-    )
-    rmsle = root_mean_squared_log_error(
-        y_true, y_pred, sample_weight=np.arange(len(y_true)), multioutput="raw_values"
-    )
-    assert_array_almost_equal(msle, rmsle, decimal=2)
-
-    # TODO(1.6): remove this test
-    mse = mean_squared_error(y_true, y_pred, multioutput="raw_values", squared=False)
-    rmse = root_mean_squared_error(y_true, y_pred, multioutput="raw_values")
-    assert_array_almost_equal(mse, rmse, decimal=2)
-
-    # TODO(1.6): remove this test
-    mse = mean_squared_error(
-        y_true,
-        y_pred,
-        sample_weight=np.arange(len(y_true)),
-        multioutput="raw_values",
-        squared=False,
-    )
-    rmse = root_mean_squared_error(
-        y_true, y_pred, sample_weight=np.arange(len(y_true)), multioutput="raw_values"
-    )
-    assert_array_almost_equal(mse, rmse, decimal=2)
-
 
 def test_regression_custom_weights():
     y_true = [[1, 2], [2.5, -1], [4.5, 3], [5, 7]]
@@ -718,3 +654,72 @@ def test_mean_squared_log_error_deprecation():
 
     with pytest.warns(FutureWarning, match=depr_msg):
         mean_squared_log_error(y_true, y_pred, squared=False)
+
+
+# TODO(1.6): remove this test
+@pytest.mark.filterwarnings("ignore:'squared' is deprecated")
+def test_rmse_rmsle_parameter():
+    y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
+    y_pred = np.array([[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]])
+
+    msle = mean_squared_log_error(y_true, y_pred, squared=False)
+    rmsle = root_mean_squared_log_error(y_true, y_pred)
+    assert_almost_equal(msle, rmsle, decimal=2)
+
+    msle = mean_squared_log_error(
+        y_true, y_pred, sample_weight=np.arange(len(y_true)), squared=False
+    )
+    rmsle = root_mean_squared_log_error(
+        y_true, y_pred, sample_weight=np.arange(len(y_true))
+    )
+    assert_almost_equal(msle, rmsle, decimal=2)
+
+    y_true = np.array([[0.5, 1], [1, 2], [7, 6]])
+    y_pred = np.array([[0.5, 2], [1, 2.5], [8, 8]])
+
+    msle = mean_squared_log_error(
+        y_true, y_pred, multioutput="raw_values", squared=False
+    )
+    rmsle = root_mean_squared_log_error(y_true, y_pred, multioutput="raw_values")
+    assert_array_almost_equal(msle, rmsle, decimal=2)
+
+    msle = mean_squared_log_error(
+        y_true,
+        y_pred,
+        sample_weight=np.arange(len(y_true)),
+        multioutput="raw_values",
+        squared=False,
+    )
+    rmsle = root_mean_squared_log_error(
+        y_true, y_pred, sample_weight=np.arange(len(y_true)), multioutput="raw_values"
+    )
+    assert_array_almost_equal(msle, rmsle, decimal=2)
+
+    mse = mean_squared_error(y_true, y_pred, multioutput="raw_values", squared=False)
+    rmse = root_mean_squared_error(y_true, y_pred, multioutput="raw_values")
+    assert_array_almost_equal(mse, rmse, decimal=2)
+
+    mse = mean_squared_error(
+        y_true,
+        y_pred,
+        sample_weight=np.arange(len(y_true)),
+        multioutput="raw_values",
+        squared=False,
+    )
+    rmse = root_mean_squared_error(
+        y_true, y_pred, sample_weight=np.arange(len(y_true)), multioutput="raw_values"
+    )
+    assert_array_almost_equal(mse, rmse, decimal=2)
+
+    y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
+    y_pred = np.array([[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]])
+
+    mse = mean_squared_error(y_true, y_pred, squared=False)
+    rmse = root_mean_squared_error(y_true, y_pred)
+    assert_almost_equal(mse, rmse, decimal=2)
+
+    mse = mean_squared_error(
+        y_true, y_pred, sample_weight=np.arange(len(y_true)), squared=False
+    )
+    rmse = root_mean_squared_error(y_true, y_pred, sample_weight=np.arange(len(y_true)))
+    assert_almost_equal(mse, rmse, decimal=2)
