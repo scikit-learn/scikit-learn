@@ -277,7 +277,7 @@ def randomized_range_finder(
     # casts following type promotion rules are guarateed to work.
     # https://github.com/data-apis/array-api/issues/647
     if is_array_api_compliant:
-        Q = to_device(Q, A.device)
+        Q = to_device(Q, getattr(A, "device", None))
 
     # Deal with "auto" mode
     if power_iteration_normalizer == "auto":

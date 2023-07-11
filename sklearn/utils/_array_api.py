@@ -28,7 +28,18 @@ def yield_namespace_device_dtype_combinations():
         The name of the data type to use for arrays. Can be None to indicate
         that the default value should be used.
     """
-    for array_namespace in ["numpy.array_api", "cupy.array_api", "cupy", "torch"]:
+    for array_namespace in [
+        # The following is used to test the array_api_compat wrapper when
+        # array_api_dispatch is enabled: in particular, the arrays used in the
+        # tests are regular numpy arrays without any "device" attribute.
+        "numpy",
+        # Stricter NumPy-based Array API implementation. The
+        # numpy.array_api.Array instances always a dummy "device" attribute.
+        "numpy.array_api",
+        "cupy",
+        "cupy.array_api",
+        "torch",
+    ]:
         if array_namespace == "torch":
             for device, dtype in itertools.product(
                 ("cpu", "cuda"), ("float64", "float32")
@@ -234,8 +245,14 @@ def to_device(a, device):
         The input data to move to `device` when not None.
 
     device : object
-        Device object typically retrieved via the idiom `other_array.device`
-        under an `is_array_api_compliant` condition in the caller.
+        Device object typically retrieved via the idiom `getattr(other_array,
+        "device", None)`  under an `is_array_api_compliant` condition in the
+        caller.
+
+        Note: `array_api_compat` can wrap libraries such as `numpy` and return
+        a wrapper module such that `is_array_api_compliant is True` while the
+        underlying array object does not expose a `device` attribute, hence the
+        need to use `getattr` in this idiom.
 
     Returns
     -------
@@ -243,9 +260,12 @@ def to_device(a, device):
         Either the unchanged input array or a copy of it on the specified
         device.
     """
-    import array_api_compat
+    if device is None:
+        return a
+    else:
+        from array_api_compat import to_device
 
-    return array_api_compat.to_device(a, device)
+        return to_device(a, device)
 
 
 class _NumPyAPIWrapper:
