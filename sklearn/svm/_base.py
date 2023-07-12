@@ -1100,17 +1100,19 @@ def _fit_liblinear(
 
     fit_intercept : bool
         Whether or not to fit an intercept. If set to True, the feature vector
-        is extended to include an intercept term: [x_1, ..., x_n, 1].
+        is extended to include an intercept term: ``[x_1, ..., x_n, 1]``, where
+        1 corresponds to the intercept. If set to False, no intercept will be
+        used in calculations (i.e. data is expected to be already centered).
 
     intercept_scaling : float
-        LibLinear internally penalizes the intercept, treating it like any other
+        Liblinear internally penalizes the intercept, treating it like any other
         term in the feature vector. To reduce the impact of the regularization
         on the intercept, the `intercept_scaling` parameter can be set to a
         value greater than 1. Then, the weights become `[w_x_1, ..., w_x_n,
-        1*intercept_scaling]`, where `w_x_1, ..., w_x_n` represent the feature
-        weights and the intercept term is scaled by `intercept_scaling`. This
-        scaling allows the intercept term to have a different regularization
-        behavior compared to the other features.
+        w_intercept*intercept_scaling]`, where `w_x_1, ..., w_x_n` represent the
+        feature weights and the intercept weight is scaled by
+        `intercept_scaling`. This scaling allows the intercept term to have a
+        different regularization behavior compared to the other features.
 
     class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
