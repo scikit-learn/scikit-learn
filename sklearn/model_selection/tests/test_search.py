@@ -2442,9 +2442,11 @@ def test_search_estimator_param(SearchCV, param_search):
     pipe = Pipeline([("trs", MinimalTransformer()), ("clf", None)])
 
     param_grid_search = {param_search: params}
-    SearchCV(pipe, refit=True, cv=2, scoring="accuracy", **param_grid_search).fit(X, y)
+    gs = SearchCV(pipe, refit=True, cv=2, scoring="accuracy", **param_grid_search).fit(
+        X, y
+    )
 
     # testing that the original object in params is not changed
     assert params["clf"][0].C == orig_C
     # testing that the GS is setting the parameter of the step correctly
-    assert pipe.named_steps["clf"].C == 0.01
+    assert gs.best_estimator_.named_steps["clf"].C == 0.01
