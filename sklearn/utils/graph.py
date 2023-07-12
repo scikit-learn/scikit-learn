@@ -54,7 +54,7 @@ def single_source_shortest_path_length(graph, source, *, cutoff=None):
     >>> sorted(single_source_shortest_path_length(graph, 2).items())
     [(0, 1), (1, 1), (2, 0), (3, 1), (4, 1), (5, 1)]
     """
-    if sparse.isspmatrix(graph):
+    if sparse.issparse(graph):
         graph = graph.tolil()
     else:
         graph = sparse.lil_matrix(graph)
