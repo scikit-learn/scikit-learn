@@ -127,9 +127,9 @@ jobs:
     vmImage: ubuntu-22.04
   variables:
     # Need to match Python version and Emscripten version for the correct
-    # Pyodide version. For Pyodide version 0.23.2, see
-    # https://github.com/pyodide/pyodide/blob/0.23.2/Makefile.envs
-    PYODIDE_VERSION: '0.23.2'
+    # Pyodide version. For example, for Pyodide version 0.23.4, see
+    # https://github.com/pyodide/pyodide/blob/0.23.4/Makefile.envs
+    PYODIDE_VERSION: '0.23.4'
     EMSCRIPTEN_VERSION: '3.1.32'
     PYTHON_VERSION: '3.11.2'
 
