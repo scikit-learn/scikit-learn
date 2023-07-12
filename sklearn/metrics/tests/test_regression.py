@@ -666,28 +666,28 @@ def test_mean_squared_log_error_deprecation():
     ],
 )
 def test_rmse_rmsle_parameter(old_func, new_func):
-    # Check that the new rmse function is equivalent to
-    # the old mse + squared=False function.
+    # Check that the new rmse/rmsle function is equivalent to
+    # the old mse/msle + squared=False function.
     y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
     y_pred = np.array([[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]])
     y_true = np.array([[0.5, 1], [1, 2], [7, 6]])
     y_pred = np.array([[0.5, 2], [1, 2.5], [8, 8]])
     sw = np.arange(len(y_true))
 
-    msle = old_func(y_true, y_pred, squared=False)
-    rmsle = new_func(y_true, y_pred)
-    assert_allclose(msle, rmsle)
+    expected = old_func(y_true, y_pred, squared=False)
+    actual = new_func(y_true, y_pred)
+    assert_allclose(expected, actual)
 
-    msle = old_func(y_true, y_pred, sample_weight=sw, squared=False)
-    rmsle = new_func(y_true, y_pred, sample_weight=sw)
-    assert_allclose(msle, rmsle)
+    expected = old_func(y_true, y_pred, sample_weight=sw, squared=False)
+    actual = new_func(y_true, y_pred, sample_weight=sw)
+    assert_allclose(expected, actual)
 
-    msle = old_func(y_true, y_pred, multioutput="raw_values", squared=False)
-    rmsle = new_func(y_true, y_pred, multioutput="raw_values")
-    assert_allclose(msle, rmsle)
+    expected = old_func(y_true, y_pred, multioutput="raw_values", squared=False)
+    actual = new_func(y_true, y_pred, multioutput="raw_values")
+    assert_allclose(expected, actual)
 
-    msle = old_func(
+    expected = old_func(
         y_true, y_pred, sample_weight=sw, multioutput="raw_values", squared=False
     )
-    rmsle = new_func(y_true, y_pred, sample_weight=sw, multioutput="raw_values")
-    assert_allclose(msle, rmsle)
+    actual = new_func(y_true, y_pred, sample_weight=sw, multioutput="raw_values")
+    assert_allclose(expected, actual)
