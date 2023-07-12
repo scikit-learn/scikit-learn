@@ -398,7 +398,7 @@ def _get_column_indices(X, key):
     """Get feature column indices for input data X and key.
 
     For accepted values of `key`, see the docstring of
-    :func:`_safe_indexing_column`.
+    :func:`_safe_indexing`.
     """
     n_columns = X.shape[1]
 
