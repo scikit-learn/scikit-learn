@@ -1692,6 +1692,7 @@ class SimpleEstimator(BaseEstimator):
     def fit(self, X, y, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
+        return self
 
     def fit_transform(self, X, y, sample_weight=None, prop=None):
         assert sample_weight is not None
@@ -1730,13 +1731,27 @@ class SimpleEstimator(BaseEstimator):
         assert prop is not None
 
 
-class SimpleTransfoemer(BaseEstimator, TransformerMixin):
+class SimpleTransformer(BaseEstimator, TransformerMixin):
     def fit(self, X, y, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
         return self
 
     def transform(self, X, sample_weight=None, prop=None):
+        assert sample_weight is not None
+        assert prop is not None
+        return X
+
+    def fit_transform(self, X, y, sample_weight=None, prop=None):
+        # implementing ``fit_transform`` is necessary since
+        # ``TransformerMixin.fit_transform`` doesn't route any metadata to
+        # ``transform``, while here we want ``transform`` to receive
+        # ``sample_weight`` and ``prop``.
+        assert sample_weight is not None
+        assert prop is not None
+        return self.fit(X, y, sample_weight, prop).transform(X, sample_weight, prop)
+
+    def inverse_transform(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
         return X
@@ -1769,9 +1784,10 @@ def test_metadata_routing_for_pipeline():
         est = SimpleEstimator()
         est = set_request(est, method, sample_weight=True, prop=True)
         trs = (
-            SimpleTransfoemer()
+            SimpleTransformer()
             .set_fit_request(sample_weight=True, prop=True)
             .set_transform_request(sample_weight=True, prop=True)
+            .set_inverse_transform_request(sample_weight=True, prop=True)
         )
         pipeline = Pipeline([("trs", trs), ("estimator", est)])
         try:
