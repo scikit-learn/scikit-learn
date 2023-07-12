@@ -917,7 +917,7 @@ class HashingVectorizer(
 
 def _document_frequency(X):
     """Count the number of non-zero values for each feature in sparse X."""
-    if sp.isspmatrix_csr(X):
+    if sp.issparse(X) and X.format == "csr":
         return np.bincount(X.indices, minlength=X.shape[1])
     else:
         return np.diff(X.indptr)

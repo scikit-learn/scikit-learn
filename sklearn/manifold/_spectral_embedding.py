@@ -85,7 +85,7 @@ def _graph_is_connected(graph):
     is_connected : bool
         True means the graph is fully connected and False means not.
     """
-    if sparse.isspmatrix(graph):
+    if sparse.issparse(graph):
         # sparse graph, find all the connected components
         n_connected_components, _ = connected_components(graph)
         return n_connected_components == 1
@@ -118,7 +118,7 @@ def _set_diag(laplacian, value, norm_laplacian):
     """
     n_nodes = laplacian.shape[0]
     # We need all entries in the diagonal to values
-    if not sparse.isspmatrix(laplacian):
+    if not sparse.issparse(laplacian):
         if norm_laplacian:
             laplacian.flat[:: n_nodes + 1] = value
     else:
@@ -280,7 +280,7 @@ def spectral_embedding(
     if (
         eigen_solver == "arpack"
         or eigen_solver != "lobpcg"
-        and (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)
+        and (not sparse.issparse(laplacian) or n_nodes < 5 * n_components)
     ):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
         # for details see the source code in scipy:
@@ -371,7 +371,7 @@ def spectral_embedding(
             # see note above under arpack why lobpcg has problems with small
             # number of nodes
             # lobpcg will fallback to eigh, so we short circuit it
-            if sparse.isspmatrix(laplacian):
+            if sparse.issparse(laplacian):
                 laplacian = laplacian.toarray()
             _, diffusion_map = eigh(laplacian, check_finite=False)
             embedding = diffusion_map.T[:n_components]

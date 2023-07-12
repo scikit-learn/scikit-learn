@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import List
 
 import numpy as np
-from scipy.sparse import issparse, isspmatrix_csr
+from scipy.sparse import issparse
 
 from ... import get_config
 from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING64
@@ -100,7 +100,8 @@ class BaseDistancesReductionDispatcher:
 
         def is_valid_sparse_matrix(X):
             return (
-                isspmatrix_csr(X)
+                issparse(X)
+                and X.format == "csr"
                 and
                 # TODO: support CSR matrices without non-zeros elements
                 X.nnz > 0
