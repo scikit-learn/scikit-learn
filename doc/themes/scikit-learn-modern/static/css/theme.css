@@ -460,7 +460,7 @@ section[id]::before {
 }
 
 section > section[id]::before {
-  height: 68px;
+  height: 64px;
 }
 
 div.sk-page-content {
