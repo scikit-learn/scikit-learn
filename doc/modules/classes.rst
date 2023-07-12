@@ -993,8 +993,6 @@ details.
    metrics.mean_squared_log_error
    metrics.median_absolute_error
    metrics.mean_absolute_percentage_error
-   metrics.mean_squared_log_error
-   metrics.mean_squared_error
    metrics.r2_score
    metrics.root_mean_squared_log_error
    metrics.root_mean_squared_error

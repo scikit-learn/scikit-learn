@@ -79,12 +79,13 @@ Changelog
   result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.metrics`
-...................
+......................
+
 - |API| The `squared` parameter of :func:`metrics.mean_squared_error` and
   :func:`metrics.mean_squared_log_error` is deprecated and will be removed in 1.6.
   Use the new functions :func:`metrics.root_mean_squared_error` and
   :func:`root_mean_squared_log_error` instead.
-  :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`..
+  :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.
 
 :mod:`sklearn.tree`
 ...................

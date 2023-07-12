@@ -658,68 +658,36 @@ def test_mean_squared_log_error_deprecation():
 
 # TODO(1.6): remove this test
 @pytest.mark.filterwarnings("ignore:'squared' is deprecated")
-def test_rmse_rmsle_parameter():
+@pytest.mark.parametrize(
+    "old_func, new_func",
+    [
+        (mean_squared_error, root_mean_squared_error),
+        (mean_squared_log_error, root_mean_squared_log_error),
+    ],
+)
+def test_rmse_rmsle_parameter(old_func, new_func):
+    # Check that the new rmse function is equivalent to
+    # the old mse + squared=False function.
     y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
     y_pred = np.array([[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]])
-
-    msle = mean_squared_log_error(y_true, y_pred, squared=False)
-    rmsle = root_mean_squared_log_error(y_true, y_pred)
-    assert_almost_equal(msle, rmsle, decimal=2)
-
-    msle = mean_squared_log_error(
-        y_true, y_pred, sample_weight=np.arange(len(y_true)), squared=False
-    )
-    rmsle = root_mean_squared_log_error(
-        y_true, y_pred, sample_weight=np.arange(len(y_true))
-    )
-    assert_almost_equal(msle, rmsle, decimal=2)
-
     y_true = np.array([[0.5, 1], [1, 2], [7, 6]])
     y_pred = np.array([[0.5, 2], [1, 2.5], [8, 8]])
+    sw = np.arange(len(y_true))
 
-    msle = mean_squared_log_error(
-        y_true, y_pred, multioutput="raw_values", squared=False
+    msle = old_func(y_true, y_pred, squared=False)
+    rmsle = new_func(y_true, y_pred)
+    assert_allclose(msle, rmsle)
+
+    msle = old_func(y_true, y_pred, sample_weight=sw, squared=False)
+    rmsle = new_func(y_true, y_pred, sample_weight=sw)
+    assert_allclose(msle, rmsle)
+
+    msle = old_func(y_true, y_pred, multioutput="raw_values", squared=False)
+    rmsle = new_func(y_true, y_pred, multioutput="raw_values")
+    assert_allclose(msle, rmsle)
+
+    msle = old_func(
+        y_true, y_pred, sample_weight=sw, multioutput="raw_values", squared=False
     )
-    rmsle = root_mean_squared_log_error(y_true, y_pred, multioutput="raw_values")
-    assert_array_almost_equal(msle, rmsle, decimal=2)
-
-    msle = mean_squared_log_error(
-        y_true,
-        y_pred,
-        sample_weight=np.arange(len(y_true)),
-        multioutput="raw_values",
-        squared=False,
-    )
-    rmsle = root_mean_squared_log_error(
-        y_true, y_pred, sample_weight=np.arange(len(y_true)), multioutput="raw_values"
-    )
-    assert_array_almost_equal(msle, rmsle, decimal=2)
-
-    mse = mean_squared_error(y_true, y_pred, multioutput="raw_values", squared=False)
-    rmse = root_mean_squared_error(y_true, y_pred, multioutput="raw_values")
-    assert_array_almost_equal(mse, rmse, decimal=2)
-
-    mse = mean_squared_error(
-        y_true,
-        y_pred,
-        sample_weight=np.arange(len(y_true)),
-        multioutput="raw_values",
-        squared=False,
-    )
-    rmse = root_mean_squared_error(
-        y_true, y_pred, sample_weight=np.arange(len(y_true)), multioutput="raw_values"
-    )
-    assert_array_almost_equal(mse, rmse, decimal=2)
-
-    y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
-    y_pred = np.array([[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]])
-
-    mse = mean_squared_error(y_true, y_pred, squared=False)
-    rmse = root_mean_squared_error(y_true, y_pred)
-    assert_almost_equal(mse, rmse, decimal=2)
-
-    mse = mean_squared_error(
-        y_true, y_pred, sample_weight=np.arange(len(y_true)), squared=False
-    )
-    rmse = root_mean_squared_error(y_true, y_pred, sample_weight=np.arange(len(y_true)))
-    assert_almost_equal(mse, rmse, decimal=2)
+    rmsle = new_func(y_true, y_pred, sample_weight=sw, multioutput="raw_values")
+    assert_allclose(msle, rmsle)
