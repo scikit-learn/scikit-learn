@@ -422,7 +422,7 @@ class Pipeline(_BaseComposition):
             Training targets. Must fulfill label requirements for all steps of
             the pipeline.
 
-        **params : dict of string -> object
+        **params : dict of str -> object
             - If `enable_metadata_routing=False` (default):
 
                 Parameters passed to the ``fit`` method of each step, where
@@ -487,7 +487,7 @@ class Pipeline(_BaseComposition):
             Training targets. Must fulfill label requirements for all steps of
             the pipeline.
 
-        **params : dict of string -> object
+        **params : dict of str -> object
             - If `enable_metadata_routing=False` (default):
 
                 Parameters passed to the ``fit`` method of each step, where
@@ -544,7 +544,7 @@ class Pipeline(_BaseComposition):
             Data to predict on. Must fulfill input requirements of first step
             of the pipeline.
 
-        **params : dict of string -> object
+        **params : dict of str -> object
             - If `enable_metadata_routing=False` (default):
 
                 Parameters to the ``predict`` called at the end of all
@@ -613,7 +613,7 @@ class Pipeline(_BaseComposition):
             Training targets. Must fulfill label requirements for all steps
             of the pipeline.
 
-        **params : dict of string -> object
+        **params : dict of str -> object
             - If `enable_metadata_routing=False` (default):
 
                 Parameters to the ``predict`` called at the end of all
@@ -670,7 +670,7 @@ class Pipeline(_BaseComposition):
             Data to predict on. Must fulfill input requirements of first step
             of the pipeline.
 
-        **params : dict of string -> object
+        **params : dict of str -> object
             - If `enable_metadata_routing=False` (default):
 
                 Parameters to the `predict_proba` called at the end of all
@@ -801,7 +801,7 @@ class Pipeline(_BaseComposition):
             Data to predict on. Must fulfill input requirements of first step
             of the pipeline.
 
-        **params : dict of string -> object
+        **params : dict of str -> object
             - If `enable_metadata_routing=False` (default):
 
                 Parameters to the `predict_log_proba` called at the end of all
@@ -866,7 +866,7 @@ class Pipeline(_BaseComposition):
             Data to transform. Must fulfill input requirements of first step
             of the pipeline.
 
-        **params : dict of string -> object
+        **params : dict of str -> object
             Parameters requested and accepted by steps. Each step must have
             requested certain metadata for these parameters to be forwarded to
             them.
@@ -912,7 +912,7 @@ class Pipeline(_BaseComposition):
             input requirements of last step of pipeline's
             ``inverse_transform`` method.
 
-        **params : dict of string -> object
+        **params : dict of str -> object
             Parameters requested and accepted by steps. Each step must have
             requested certain metadata for these parameters to be forwarded to
             them.
@@ -966,7 +966,7 @@ class Pipeline(_BaseComposition):
             If not None, this argument is passed as ``sample_weight`` keyword
             argument to the ``score`` method of the final estimator.
 
-        **params : dict
+        **params : dict of str -> object
             Parameters requested and accepted by steps. Each step must have
             requested certain metadata for these parameters to be forwarded to
             them.

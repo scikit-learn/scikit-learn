@@ -1730,6 +1730,18 @@ class SimpleEstimator(BaseEstimator):
         assert prop is not None
 
 
+def SimpleTransfoemer(BaseEstimator, TransfoermMixin):
+    def fit(self, X, y, sample_weight=None, prop=None):
+        assert sample_weight is not None
+        assert prop is not None
+        return self
+
+    def transform(self, X, sample_weight=None, prop=None):
+        assert sample_weight is not None
+        assert prop is not None
+        return X
+
+
 @pytest.mark.usefixtures("enable_slep006")
 def test_metadata_routing_for_pipeline():
     """Test that metadata is routed correctly for pipelines."""
@@ -1756,7 +1768,12 @@ def test_metadata_routing_for_pipeline():
         # test that metadata is routed correctly for pipelines when requested
         est = SimpleEstimator()
         est = set_request(est, method, sample_weight=True, prop=True)
-        pipeline = Pipeline([("estimator", est)])
+        trs = (
+            SimpleTransfoemer()
+            .set_fit_request(sample_weight=True, prop=True)
+            .set_transform_request(sample_weight=True, prop=True)
+        )
+        pipeline = Pipeline([("trs", trs), ("estimator", est)])
         try:
             getattr(pipeline, method)([[1]], [1], sample_weight=[1], prop="a")
         except TypeError:
@@ -1772,8 +1789,11 @@ def test_metadata_routing_for_pipeline():
         )
         with pytest.raises(ValueError, match=re.escape(error_message)):
             try:
+                # passing X, y positional as the first two arguments
                 getattr(pipeline, method)([[1]], [1], sample_weight=[1], prop="a")
             except TypeError:
+                # not all methods accept y (like `predict`), so here we only
+                # pass X as a positional arg.
                 getattr(pipeline, method)([[1]], sample_weight=[1], prop="a")
 
 
@@ -1781,8 +1801,8 @@ def test_metadata_routing_for_pipeline():
     "method", ["decision_function", "transform", "inverse_transform"]
 )
 def test_routing_passed_metadata_not_supported(method):
-    # Test that the right error message is raised when metadata is passed while
-    # not supported when enable_metadata_routing=False
+    """Test that the right error message is raised when metadata is passed while
+    not supported when `enable_metadata_routing=False`."""
 
     pipe = Pipeline([("estimator", SimpleEstimator())])
 
