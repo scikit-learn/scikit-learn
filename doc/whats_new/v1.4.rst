@@ -78,12 +78,11 @@ Changelog
 - |Fix| :func:`feature_selection.mutual_info_regression` now correctly computes the
   result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
 
-:mod:`sklearn.metrics`
+:mod:`sklearn.neighbors`
 .......................
 
-- |Enhancement| The `"Minkowski"` metric of :class:`metrics.DistanceMetric` now accepts
-  parameter `p` values in the open interval (0,1).
-  :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+- |Fix| :class:`neighbors.NearestNeighbors` now works with `p < 1` regardless of the
+  `dtype` of `X`. :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
 :mod:`sklearn.tree`
 ...................
