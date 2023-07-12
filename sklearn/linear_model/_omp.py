@@ -493,7 +493,8 @@ def orthogonal_mp_gram(
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
-        Maximum squared norm of the residual. If not `None`, overrides `n_nonzero_coefs`.
+        Maximum squared norm of the residual. If not `None`,
+        overrides `n_nonzero_coefs`.
 
     norms_squared : array-like of shape (n_targets,), default=None
         Squared L2 norms of the lines of `y`. Required if `tol` is not None.
