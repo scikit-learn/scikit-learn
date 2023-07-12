@@ -262,6 +262,10 @@ a.sk-nav-dropdown-item:active {
 }
 /* LANDING PAGE STYLE */
 
+div.bd-container.sk-landing {
+  display: block!important;
+}
+
 div.sk-landing-container {
   max-width: 1400px;
 }

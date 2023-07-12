@@ -1,3 +1,9 @@
+{# We redefine <html/> for "basic/layout.html" to add a default `data-theme` attribute when
+ # a default mode has been set. This also improves compatibility when JavaScript is disabled.
+ #}
+{% set html_tag %}
+<html{% if not html5_doctype %} xmlns="http://www.w3.org/1999/xhtml"{% endif %}{% if language is not none %} lang="{{ language }}"{% endif %} {% if default_mode %}data-theme="{{ default_mode }}"{% endif %}>
+{% endset %}
 {% extends "layout.html" %}
 {% set title = 'scikit-learn: machine learning in Python' %}
 {%- import "static/webpack-macros.html" as _webpack with context %}
@@ -18,16 +24,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="{{ language }}"/>
 {%- endblock extrahead %}
-
-{% if theme_link_to_live_contributing_page|tobool %}
-  {%- set contributing_link = "https://scikit-learn.org/dev/developers/contributing.html" %}
-  {%- set contributing_attrs = 'target="_blank" rel="noopener noreferrer"' %}
-{%- else %}
-  {%- set contributing_link = pathto('developers/contributing') %}
-  {%- set contributing_attrs = '' %}
-{%- endif %}
-
-
 {% block content %}
 {# checkbox to toggle primary sidebar #}
 <input type="checkbox"
@@ -45,9 +41,13 @@
   {%- include "sections/header.html" %}
 </nav>
 {% endblock docs_navbar %}
+<div class="bd-container sk-landing">
+{# Primary sidebar #}
+<div class="bd-sidebar-primary bd-sidebar{% if not sidebars %} hide-on-wide{% endif %}">
+{% include "sections/sidebar-primary.html" %}
+</div>
 <div class="container-fluid sk-landing-bg py-3">
   <div class="container sk-landing-container">
-    </div>
     <div class="row">
       <div class="col-md-6 mb-3 mb-md-0">
         <h1 class="sk-landing-header text-white text-monospace">scikit-learn</h1>
@@ -295,9 +295,7 @@
         </a>
   </div>
 </div>
-{# Primary sidebar #}
-<div class="bd-sidebar-primary bd-sidebar{% if not sidebars %} hide-on-wide{% endif %}">
-{% include "sections/sidebar-primary.html" %}
+</div>
 {# Scripts placed at the end of the page to cut down on time to first content #}
 {%- block scripts_end %}{{ _webpack.body_post() }}{%- endblock scripts_end %}
 {% endblock %}
