@@ -1691,33 +1691,43 @@ class SimpleEstimator(BaseEstimator):
     # This class should have every set_{method}_request
     def fit(self, X, y, sample_weight=None, prop=None):
         assert sample_weight is not None
+        assert prop is not None
 
     def fit_transform(self, X, y, sample_weight=None, prop=None):
         assert sample_weight is not None
+        assert prop is not None
 
     def fit_predict(self, X, y, sample_weight=None, prop=None):
         assert sample_weight is not None
+        assert prop is not None
 
     def predict(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
+        assert prop is not None
 
     def predict_proba(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
+        assert prop is not None
 
     def predict_log_proba(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
+        assert prop is not None
 
     def decision_function(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
+        assert prop is not None
 
     def score(self, X, y, sample_weight=None, prop=None):
         assert sample_weight is not None
+        assert prop is not None
 
     def transform(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
+        assert prop is not None
 
     def inverse_transform(self, X, sample_weight=None, prop=None):
         assert sample_weight is not None
+        assert prop is not None
 
 
 @pytest.mark.usefixtures("enable_slep006")

@@ -453,8 +453,8 @@ class Pipeline(_BaseComposition):
         Xt = self._fit(X, y, routed_params)
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             if self._final_estimator != "passthrough":
-                last_step_name = self.steps[-1][0]
-                self._final_estimator.fit(Xt, y, **routed_params[last_step_name]["fit"])
+                last_step_params = routed_params[self.steps[-1][0]]
+                self._final_estimator.fit(Xt, y, **last_step_params["fit"])
 
         return self
 
