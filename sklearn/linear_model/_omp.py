@@ -332,7 +332,7 @@ def orthogonal_mp(
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
-        Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
+        Maximum squared norm of the residual. If not None, overrides n_nonzero_coefs.
 
     precompute : 'auto' or bool, default=False
         Whether to perform precomputations. Improves performance when n_targets
@@ -493,7 +493,8 @@ def orthogonal_mp_gram(
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
-        Maximum norm of the residual. If not `None`, overrides `n_nonzero_coefs`.
+        Maximum squared norm of the residual. If not `None`,
+        overrides `n_nonzero_coefs`.
 
     norms_squared : array-like of shape (n_targets,), default=None
         Squared L2 norms of the lines of `y`. Required if `tol` is not None.
@@ -625,7 +626,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
-        Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
+        Maximum squared norm of the residual. If not None, overrides n_nonzero_coefs.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
