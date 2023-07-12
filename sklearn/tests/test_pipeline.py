@@ -1730,7 +1730,7 @@ class SimpleEstimator(BaseEstimator):
         assert prop is not None
 
 
-def SimpleTransfoemer(BaseEstimator, TransfoermMixin):
+class SimpleTransfoemer(BaseEstimator, TransformerMixin):
     def fit(self, X, y, sample_weight=None, prop=None):
         assert sample_weight is not None
         assert prop is not None
