@@ -512,16 +512,15 @@ def randomized_svd(
 
     # compute the SVD on the thin matrix: (k + p) wide
     xp, is_array_api_compliant = get_namespace(B)
-    if _is_numpy_namespace(xp) and not is_array_api_compliant:
+    if is_array_api_compliant:
+        Uhat, s, Vt = xp.linalg.svd(B, full_matrices=False)
+    else:
         # When when array_api_dispatch is disabled, rely on scipy.linalg
         # instead of numpy.linalg to avoid introducing a behavior change w.r.t.
         # previous versions of scikit-learn.
         Uhat, s, Vt = linalg.svd(
             B, full_matrices=False, lapack_driver=svd_lapack_driver
         )
-    else:
-        Uhat, s, Vt = xp.linalg.svd(B, full_matrices=False)
-
     del B
     U = Q @ Uhat
 
