@@ -81,8 +81,8 @@ Changelog
 :mod:`sklearn.neighbors`
 .......................
 
-- |Fix| :class:`neighbors.NearestNeighbors` now works with `p < 1` regardless of the
-  `dtype` of `X`. :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+- |Fix| :class:`neighbors.NearestNeighbors` now correctly works with `p < 1` regardless
+  of the `dtype` of `X`. :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
 :mod:`sklearn.tree`
 ...................
