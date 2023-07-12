@@ -1577,7 +1577,7 @@ class LarsCV(Lars):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, :class:`KFold` is used.
+        For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1881,7 +1881,7 @@ class LassoLarsCV(LarsCV):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, :class:`KFold` is used.
+        For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
