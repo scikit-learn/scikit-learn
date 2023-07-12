@@ -503,7 +503,7 @@ def compute_optics_graph(
         .. note::
            `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
-    p : int, default=2
+    p : float, default=2
         Parameter for the Minkowski metric from
         :class:`~sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
