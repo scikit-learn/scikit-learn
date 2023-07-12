@@ -27,6 +27,10 @@ To run this script you need:
   sklearn/_min_dependencies.py
 - pip-tools
 
+To only update the environment and lock files for specific builds, you can use
+the command line argument `--select-build` which will take a regex. For example,
+to only update the documentation builds you can use:
+`python build_tools/update_environments_and_lock_files.py --select-build doc`
 """
 
 import json
