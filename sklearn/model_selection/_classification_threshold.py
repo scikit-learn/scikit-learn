@@ -4,7 +4,13 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import BaseEstimator, ClassifierMixin, MetaEstimatorMixin, clone
+from ..base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MetaEstimatorMixin,
+    _fit_context,
+    clone,
+)
 from ..exceptions import NotFittedError
 from ..metrics import (
     check_scoring,
@@ -423,6 +429,10 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         self.n_jobs = n_jobs
         self.random_state = random_state
 
+    @_fit_context(
+        # estimators in TunedThresholdClassifier.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the classifier and post-tune the decision threshold.
 
