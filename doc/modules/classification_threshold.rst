@@ -6,21 +6,20 @@
 Tuning cut-off decision threshold for classes prediction
 ========================================================
 
-Classifiers are predictive models: they use statistical learning to predict
-outcomes. The outcomes of a classifier are scores for each sample in relation
-to each class and categorical prediction (class label). Scores are obtained
-from :term:`predict_proba` or :term:`decision_function`. The former returns
-posterior probability estimates for each class while the latter returns a
-decision function value for each class. The decision function value is a
-measure of how strongly the sample is predicted to belong to the positive
-class (e.g. the distance to the decisin boundary). A decision rule is then
-defined by thresholding the scores and obtained the class label for each
-sample. Those labels are obtained with :term:`predict`.
+Classifiers are predictive models: they use statistical learning to predict outcomes.
+The outcomes of a classifier are scores for each sample in relation to each class and
+categorical prediction (class label). Scores are obtained from :term:`predict_proba` or
+:term:`decision_function`. The former returns posterior probability estimates for each
+class while the latter returns a decision score for each class. The decision score is a
+measure of how strongly the sample is predicted to belong to the positive class (e.g.
+the distance to the decisin boundary). A decision rule is then defined by thresholding
+the scores and obtained the class label for each sample. Those labels are obtained with
+:term:`predict`.
 
-For binary classification in scikit-learn, class labels are obtained by
-associating the positive class with probability estimates greater than 0.5
-(obtained with :term:`predict_proba`) or decision function values greater than
-0 (obtained with :term:`decision_function`).
+For binary classification in scikit-learn, class labels are obtained by associating the
+positive class with posterior probability estimates greater than 0.5 (obtained with
+:term:`predict_proba`) or decision scores greater than 0 (obtained with
+:term:`decision_function`).
 
 Here, we show an example that illustrates the relation between posterior
 probability estimates and class labels::
@@ -37,38 +36,37 @@ probability estimates and class labels::
     >>> classifier.predict(X[:4])
     array([0, 0, 1, 1])
 
-While these approaches are reasonable as default behaviors, they are not be
-ideal for all cases. The context and nature of the use case defines the
-expected behavior of the classifier and thus the strategy to convert soft
-predictions into hard predictions. We illustrate this point with an example.
+While these approaches are reasonable as default behaviors, they are not be ideal for
+all cases. The context and nature of the use case defines the expected behavior of the
+classifier and thus the strategy to convert soft predictions into hard predictions. We
+illustrate this point with an example.
 
-Let's imagine the deployment of a predictive model helping medical doctors to
-detect tumour. In a setting where this model was a tool to discard obvious
-cases and false positives don't lead to potentially harmful treatments, doctors
-might be interested in having a high recall (all cancer cases should be tagged
-as such) to not miss any patient with a cancer. However, that is at the cost of
-having more false positive predictions (i.e. lower precision). Thus, in terms of
-decision threshold, it may be better to classify a patient as having a cancer
-for a probability estimate lower than 0.5.
+Let's imagine the deployment of a predictive model helping medical doctors to detect
+tumour. In a setting where this model was a tool to discard obvious cases and false
+positives don't lead to potentially harmful treatments, doctors might be interested in
+having a high recall (all cancer cases should be tagged as such) to not miss any patient
+with a cancer. However, that is at the cost of having more false positive predictions
+(i.e. lower precision). Thus, in terms of decision threshold, it may be better to
+classify a patient as having a cancer for a posterior probability estimate lower than
+0.5.
 
 Post-tuning of the decision threshold
 =====================================
 
 One solution to address the problem stated in the introduction is to tune the decision
 threshold of the classifier once the model has been trained. The
-:class:`~sklearn.model_selection.TunedThresholdClassifier` tunes this threshold using
-an internal cross-validation. The optimum threshold is chosen to maximize a given metric
+:class:`~sklearn.model_selection.TunedThresholdClassifier` tunes this threshold using an
+internal cross-validation. The optimum threshold is chosen to maximize a given metric
 with or without constraints.
 
-The following image illustrates the tuning of the cut-off point for a gradient
-boosting classifier. While the vanilla and tuned classifiers provide the same
-Receiver Operating Characteristic (ROC) and Precision-Recall curves, and thus
-the same :term:`predict_proba` outputs, the "hard" predictions differ because of
-the tuned cut-off point. The vanilla classifier predicts the class of interest
-for a probability greater than 0.5 while the tuned classifier predicts the
-class of interest for a very low probability (around 0.02). This cut-off point
-optimizes a utility metric defined by the business case (in this case an
-insurance company).
+The following image illustrates the tuning of the cut-off point for a gradient boosting
+classifier. While the vanilla and tuned classifiers provide the same Receiver Operating
+Characteristic (ROC) and Precision-Recall curves, and thus the same
+:term:`predict_proba` outputs, the class label predictions differ because of the tuned
+decision threshold. The vanilla classifier predicts the class of interest for a
+posterior probability greater than 0.5 while the tuned classifier predicts the class of
+interest for a very low probability (around 0.02). This cut-off point optimizes a
+utility metric defined by the business case (in this case an insurance company).
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_tuned_threshold_classifier_002.png
    :target: ../auto_examples/model_selection/plot_tuned_threshold_classifier.html
@@ -155,6 +153,15 @@ a float number that will use a single split internally.
 
 The option `cv="prefit"` should only be used when the provided classifier was already
 trained on some data and you want to tune (or re-tune) on a new validation set.
+
+Manually setting the decision thresholding
+-------------------------------------------
+
+The previous sections discussed strategies to find an optimal decision threshold. It is
+also possible to manually set the decision threshold in
+:class`~sklearn.model_selection.TunedThresholdClassifier` by setting the parameter
+`strategy` to `"constant"` and provide the desired threshold using the parameter
+`constant_threshold`.
 
 Examples
 --------
