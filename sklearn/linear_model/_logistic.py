@@ -801,9 +801,7 @@ def _log_reg_scoring_path(
             scores.append(log_reg.score(X_test, y_test))
         else:
             score_params = score_params or {}
-            score_params = _check_method_params(
-                X=X, fit_params=score_params, indices=test
-            )
+            score_params = _check_method_params(X=X, params=score_params, indices=test)
             scores.append(scoring(log_reg, X_test, y_test, **score_params))
 
     return coefs, Cs, np.array(scores), n_iter

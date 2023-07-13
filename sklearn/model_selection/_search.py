@@ -804,7 +804,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             refit_metric = self.refit
 
         X, y, groups = indexable(X, y, groups)
-        fit_params = _check_method_params(X, fit_params)
+        fit_params = _check_method_params(X, params=fit_params)
 
         cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
         n_splits = cv_orig.get_n_splits(X, y, groups)

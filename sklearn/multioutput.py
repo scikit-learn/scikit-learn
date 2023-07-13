@@ -265,7 +265,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
                     "Underlying estimator does not support sample weights."
                 )
 
-            fit_params_validated = _check_method_params(X, fit_params)
+            fit_params_validated = _check_method_params(X, params=fit_params)
             routed_params = Bunch(estimator=Bunch(fit=fit_params_validated))
             if sample_weight is not None:
                 routed_params.estimator.fit["sample_weight"] = sample_weight
