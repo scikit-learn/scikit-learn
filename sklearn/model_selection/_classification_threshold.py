@@ -160,7 +160,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
     class. The tuning is done by maximizing a binary metric, potentially
     constrained by a another metric.
 
-    Read more in the :ref:`User Guide <TunedThresholdClassifier>`.
+    Read more in the :ref:`User Guide <tunedthresholdclassifier>`.
 
     .. versionadded:: 1.3
 
