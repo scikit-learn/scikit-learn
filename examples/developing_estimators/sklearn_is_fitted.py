@@ -24,7 +24,7 @@ by verifying the presence of the `_is_fitted` attribute.
 # ------------------------------------------------------------
 # This code snippet defines a custom estimator class called `CustomEstimator`
 # that extends both the `BaseEstimator` and `ClassifierMixin` classes from
-# scikit-learn. And showcases the usage of the `__sklearn_is_fitted__` method
+# scikit-learn and showcases the usage of the `__sklearn_is_fitted__` method
 # and the `check_is_fitted` utility function.
 
 # Author: Kushan <kushansharma1@gmail.com>
