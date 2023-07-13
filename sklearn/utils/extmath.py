@@ -276,7 +276,8 @@ def randomized_range_finder(
     # from float64 to float32 in asarray might not always be accepted as only
     # casts following type promotion rules are guarateed to work.
     # https://github.com/data-apis/array-api/issues/647
-    Q = xp.asarray(Q, device=device(A))
+    if is_array_api_compliant:
+        Q = xp.asarray(Q, device=device(A))
 
     # Deal with "auto" mode
     if power_iteration_normalizer == "auto":
