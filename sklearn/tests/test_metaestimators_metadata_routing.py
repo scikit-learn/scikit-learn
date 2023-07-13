@@ -390,11 +390,11 @@ def test_setting_request_removes_error(metaestimator):
                     check_recorded_metadata(estimator, method_name, **kwargs)
 
 
-@pytest.mark.parametrize(
-    "cv_scorer",
-    CV_SCORERS,
-)
+@pytest.mark.parametrize("cv_scorer", CV_SCORERS)
 def test_metadata_is_routed_correctly_to_scorer(cv_scorer):
+    """Test that any requested metadata is correctly routed to the underlying
+    scorers in CV estimators.
+    """
     registry = _Registry()
     cls = cv_scorer["cv_estimator"]
     scorer_name = cv_scorer["scorer_name"]
@@ -416,11 +416,11 @@ def test_metadata_is_routed_correctly_to_scorer(cv_scorer):
             )
 
 
-@pytest.mark.parametrize(
-    "cv_splitter",
-    CV_SPLITTERS,
-)
+@pytest.mark.parametrize("cv_splitter", CV_SPLITTERS)
 def test_metadata_is_routed_correctly_to_splitter(cv_splitter):
+    """Test that any requested metadata is correctly routed to the underlying
+    splitters in CV estimators.
+    """
     registry = _Registry()
     cls = cv_splitter["cv_estimator"]
     splitter_name = cv_splitter["splitter_name"]

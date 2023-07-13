@@ -110,7 +110,15 @@ def record_metadata(obj, method, record_default=True, **kwargs):
 
 
 def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
-    """Check whether the expected metadata is passed to the object's method."""
+    """Check whether the expected metadata is passed to the object's method.
+
+    Parameters
+    ----------
+    split_params : tuple, default=empty
+        specifies any parameters which are to be checked as being a subset
+        of the original values.
+
+    """
     records = getattr(obj, "_records", dict()).get(method, dict())
     assert set(kwargs.keys()) == set(records.keys())
     for key, value in kwargs.items():

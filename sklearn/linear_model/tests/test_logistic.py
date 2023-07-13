@@ -2077,6 +2077,10 @@ def test_liblinear_not_stuck():
 
 
 def test_lr_cv_scores_differ_when_sample_weight_is_requested():
+    """Test sample_weight is correctly passed to the scorer in
+    LogisticRegressionCV :meth:`fit` by checking the difference
+    in scores with the case when sample_weight is not requested.
+    """
     rng = np.random.RandomState(10)
     X, y = make_classification(n_samples=10, random_state=rng)
     sample_weight = np.ones(len(y))
@@ -2093,10 +2097,13 @@ def test_lr_cv_scores_differ_when_sample_weight_is_requested():
         lr_cv2 = LogisticRegressionCV(scoring=scorer2)
         lr_cv2.fit(X, y, **kwargs)
 
-    assert pytest.approx(lr_cv1.scores_[1]) != lr_cv2.scores_[1]
+    assert not np.allclose(lr_cv1.scores_[1], lr_cv2.scores_[1])
 
 
 def test_lr_cv_scores_without_enabling_metadata_routing():
+    """Test that sample_weight is passed correctly to the scorer in
+    LogisticRegressionCV :meth:`fit` even when `enable_metadata_routing=False`
+    """
     rng = np.random.RandomState(10)
     X, y = make_classification(n_samples=10, random_state=rng)
     sample_weight = np.ones(len(y))
@@ -2114,7 +2121,7 @@ def test_lr_cv_scores_without_enabling_metadata_routing():
         lr_cv2 = LogisticRegressionCV(scoring=scorer2)
         lr_cv2.fit(X, y, **kwargs)
 
-    assert_almost_equal(lr_cv1.scores_[1], lr_cv2.scores_[1])
+    assert_allclose(lr_cv1.scores_[1], lr_cv2.scores_[1])
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -2144,6 +2151,8 @@ def test_zero_max_iter(solver):
 
 
 def test_passing_params_without_enabling_metadata_routing():
+    """Test that the right error message is raised when metadata params
+    are passed while not supported when `enable_metadata_routing=False`."""
     X, y = make_classification(n_samples=10, random_state=0)
     lr_cv = LogisticRegressionCV()
     msg = "params is only supported if enable_metadata_routing=True"
