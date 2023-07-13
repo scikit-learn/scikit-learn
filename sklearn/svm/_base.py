@@ -179,7 +179,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         """
         rnd = check_random_state(self.random_state)
 
-        sparse = sp.isspmatrix(X)
+        sparse = sp.issparse(X)
         if sparse and self.kernel == "precomputed":
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
@@ -617,7 +617,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 reset=False,
             )
 
-        if self._sparse and not sp.isspmatrix(X):
+        if self._sparse and not sp.issparse(X):
             X = sp.csr_matrix(X)
         if self._sparse:
             X.sort_indices()
@@ -1222,7 +1222,7 @@ def _fit_liblinear(
     raw_coef_, n_iter_ = liblinear.train_wrap(
         X,
         y_ind,
-        sp.isspmatrix(X),
+        sp.issparse(X),
         solver_type,
         tol,
         bias,

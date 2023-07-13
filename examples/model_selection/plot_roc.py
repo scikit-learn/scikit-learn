@@ -141,13 +141,13 @@ plt.show()
 # ----------------------------------
 #
 # Micro-averaging aggregates the contributions from all the classes (using
-# :func:`np.ravel`) to compute the average metrics as follows:
+# :func:`numpy.ravel`) to compute the average metrics as follows:
 #
 # :math:`TPR=\frac{\sum_{c}TP_c}{\sum_{c}(TP_c + FN_c)}` ;
 #
 # :math:`FPR=\frac{\sum_{c}FP_c}{\sum_{c}(FP_c + TN_c)}` .
 #
-# We can briefly demo the effect of :func:`np.ravel`:
+# We can briefly demo the effect of :func:`numpy.ravel`:
 
 print(f"y_score:\n{y_score[0:2,:]}")
 print()
