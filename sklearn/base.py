@@ -80,8 +80,9 @@ def _clone_parametrized(estimator, *, safe=True):
     """Default implementation of clone. See :func:`sklearn.base.clone` for details."""
 
     estimator_type = type(estimator)
-    # XXX: not handling dictionaries
-    if estimator_type in (list, tuple, set, frozenset):
+    if estimator_type is dict:
+        return {k: clone(v, safe=safe) for k, v in estimator.items()}
+    elif estimator_type in (list, tuple, set, frozenset):
         return estimator_type([clone(e, safe=safe) for e in estimator])
     elif not hasattr(estimator, "get_params") or isinstance(estimator, type):
         if not safe:
