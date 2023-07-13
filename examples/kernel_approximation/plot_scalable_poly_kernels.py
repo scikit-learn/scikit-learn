@@ -1,14 +1,14 @@
 """
-=======================================================
+======================================================
 Scalable learning with polynomial kernel approximation
-=======================================================
+======================================================
+
+.. currentmodule:: sklearn.kernel_approximation
 
 This example illustrates the use of :class:`PolynomialCountSketch` to
 efficiently generate polynomial kernel feature-space approximations.
 This is used to train linear classifiers that approximate the accuracy
 of kernelized ones.
-
-.. currentmodule:: sklearn.kernel_approximation
 
 We use the Covtype dataset [2], trying to reproduce the experiments on the
 original paper of Tensor Sketch [1], i.e. the algorithm implemented by

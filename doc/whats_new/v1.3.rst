@@ -2,6 +2,27 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_3_1:
+
+Version 1.3.1
+=============
+
+**In development**
+
+Changelog
+---------
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :meth:`neighbors.KNeighborsClassifier.predict` no longer raises an
+  exception for `pandas.DataFrames` input.
+  :pr:`26772` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Reintroduce :attr:`sklearn.neighbors.BallTree.valid_metrics` and
+  :attr:`sklearn.neighbors.KDTree.valid_metrics` as public class attributes.
+  :pr:`26754` by :user:`Julien Jerphanion <jjerphan>`.
+
 .. _changes_1_3:
 
 Version 1.3.0
@@ -183,8 +204,8 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-:mod:`sklearn`
-..............
+`sklearn`
+.........
 
 - |Feature| Added a new option `skip_parameter_validation`, to the function
   :func:`sklearn.set_config` and context manager :func:`sklearn.config_context`, that
@@ -281,7 +302,7 @@ Changelog
   :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
 
 - |API| Adds `eps` parameter in :class:`covariance.GraphicalLasso`,
-  :func:`covariance.graphical_lasso_path`, and :class:`covariance.GraphicalLassoCV`.
+  :func:`covariance.graphical_lasso`, and :class:`covariance.GraphicalLassoCV`.
   :pr:`26033` by :user:`Genesis Valencia <genvalen>`.
 
 :mod:`sklearn.datasets`
@@ -300,7 +321,7 @@ Changelog
   the pandas parser. The parameter `read_csv_kwargs` allows to overwrite this behaviour.
   :pr:`26551` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| :func:`dataasets.fetch_openml` will consistenly use `np.nan` as missing marker
+- |Fix| :func:`datasets.fetch_openml` will consistenly use `np.nan` as missing marker
   with both parsers `"pandas"` and `"liac-arff"`.
   :pr:`26579` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -440,6 +461,13 @@ Changelog
   and the `values` key will be removed in 1.5.
   :pr:`21809` and :pr:`25732` by `Thomas Fan`_.
 
+:mod:`sklearn.kernel_approximation`
+...................................
+
+- |Fix| :class:`kernel_approximation.AdditiveChi2Sampler` is now stateless.
+  The `sample_interval_` attribute is deprecated and will be removed in 1.5.
+  :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -459,13 +487,14 @@ Changelog
   :pr:`25697` by :user:`John Pangas <jpangas>`.
 
 - |Fix| Use a more robust criterion to detect convergence of
-  :class:`linear_model.LogisticRegression(penalty="l1", solver="liblinear")`
+  :class:`linear_model.LogisticRegression` with `penalty="l1"` and `solver="liblinear"`
   on linearly separable problems.
   :pr:`25214` by `Tom Dupre la Tour`_.
 
 - |Fix| Fix a crash when calling `fit` on
-  :class:`linear_model.LogisticRegression(solver="newton-cholesky", max_iter=0)`
-  which failed to inspect the state of the model prior to the first parameter update.
+  :class:`linear_model.LogisticRegression` with `solver="newton-cholesky"` and
+  `max_iter=0` which failed to inspect the state of the model prior to the
+  first parameter update.
   :pr:`26653` by :user:`Olivier Grisel <ogrisel>`.
 
 - |API| Deprecates `n_iter` in favor of `max_iter` in
@@ -529,7 +558,7 @@ Changelog
   chance level. This line is exposed in the `chance_level_` attribute.
   :pr:`26019` by :user:`Yao Xiao <Charlie-XIAO>`.
 
-- |Fix| :func:`metrics.manhattan_distances` now supports readonly sparse datasets.
+- |Fix| :func:`metrics.pairwise.manhattan_distances` now supports readonly sparse datasets.
   :pr:`25432` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |Fix| Fixed :func:`metrics.classification_report` so that empty input will return
@@ -670,9 +699,10 @@ Changelog
   CSR matrix. :pr:`24145` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| Adds a `feature_name_combiner` parameter to
-  :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to create
-  feature names to be returned by :meth:`get_feature_names_out`.
-  The callable combines input arguments `(input_feature, category)` to a string.
+  :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to
+  create feature names to be returned by
+  :meth:`preprocessing.OneHotEncoder.get_feature_names_out`. The callable
+  combines input arguments `(input_feature, category)` to a string.
   :pr:`22506` by :user:`Mario Kostelac <mariokostelac>`.
 
 - |Enhancement| Added support for `sample_weight` in
@@ -685,10 +715,6 @@ Changelog
 - |Enhancement| Subsampling through the `subsample` parameter can now be used in
   :class:`preprocessing.KBinsDiscretizer` regardless of the strategy used.
   :pr:`26424` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-- |Fix| :class:`preprocessing.AdditiveChi2Sampler` is now stateless.
-  The `sample_interval_` attribute is deprecated and will be removed in 1.5.
-  :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
 - |Fix| :class:`preprocessing.PowerTransformer` now correctly preserves the Pandas
   Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
@@ -735,14 +761,14 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |FIX| Fixes :func:`utils.validation.check_array` to properly convert pandas
+- |FIX| Fixes :func:`utils.check_array` to properly convert pandas
   extension arrays. :pr:`25813` and :pr:`26106` by `Thomas Fan`_.
 
-- |Fix| :func:`utils.validation.check_array` now supports pandas DataFrames with
+- |Fix| :func:`utils.check_array` now supports pandas DataFrames with
   extension arrays and object dtypes by return an ndarray with object dtype.
   :pr:`25814` by `Thomas Fan`_.
 
-- |API| :func:`utils.estimator_checks.check_transformers_unfitted_stateless` has been
+- |API| `utils.estimator_checks.check_transformers_unfitted_stateless` has been
   introduced to ensure stateless transformers don't raise `NotFittedError`
   during `transform` with no prior call to `fit` or `fit_transform`.
   :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
