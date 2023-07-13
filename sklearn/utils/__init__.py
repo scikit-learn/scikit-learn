@@ -705,7 +705,7 @@ def shuffle(*arrays, random_state=None, n_samples=None):
         "X": ["array-like", "sparse matrix"],
         "copy": ["boolean"],
     },
-    prefer_skip_nested_validation=True
+    prefer_skip_nested_validation=True,
 )
 def safe_sqr(X, *, copy=True):
     """Element wise squaring of array-likes and sparse matrices.
