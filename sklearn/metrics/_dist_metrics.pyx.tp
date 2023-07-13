@@ -75,8 +75,8 @@ cdef class DistanceMetric:
     the input arrays. It returns a distance matrix representing the distances between
     all pairs of samples.
 
-    The :meth:`get_metric` method allows you to obtain an instance of a specific
-    distance metric based on its name or class. 
+    The :meth:`get_metric` method allows you to retrieve a specific metric using its
+    string identifier.
 
     Examples
     --------
