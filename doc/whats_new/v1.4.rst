@@ -51,6 +51,12 @@ Changelog
   passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
   Jalali`_.
 
+- |Enhancement| :meth:`base.TransformerMixin.fit_transform` and
+  :meth:`base.OutlierMixin.fit_predict` now raise a warning if ``transform`` /
+  ``predict`` consume metadata, but no custom ``fit_transform`` / ``fit_predict``
+  is defined in the class inheriting from them correspondingly. :pr:`26831` by
+  `Adrin Jalali`_.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -88,6 +94,14 @@ Changelog
   not supported.
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`, initiated by
   :user:`Patrick O'Reilly <pat-oreilly>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :class:`~utils.metadata_routing.MetadataRequest` and
+  :class:`~utils.metadata_routing.MetadataRouter` now have a ``consumes`` method
+  which can be used to check whether a given set of parameters would be consumed.
+  :pr:`26831` by `Adrin Jalali`_.
 
 Code and Documentation Contributors
 -----------------------------------
