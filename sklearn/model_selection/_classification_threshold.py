@@ -431,7 +431,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
 
     @_fit_context(
         # estimators in TunedThresholdClassifier.estimator is not validated yet
-        prefer_skip_nested_validation=False
+        prefer_skip_nested_validation=True
     )
     def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the classifier and post-tune the decision threshold.

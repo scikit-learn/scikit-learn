@@ -86,6 +86,13 @@ Changelog
   classification metric through cross-validation.
   :pr:`26120` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Feature| :class:`pipeline.Pipeline` now supports metadata routing according
+  to :ref:`metadata routing user guide <metadata_routing>`. :pr:`26789` by
+  `Adrin Jalali`_.
+
 :mod:`sklearn.tree`
 ...................
 
