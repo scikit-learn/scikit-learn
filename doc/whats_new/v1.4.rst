@@ -78,6 +78,14 @@ Changelog
 - |Fix| :func:`feature_selection.mutual_info_regression` now correctly computes the
   result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |MajorFeature| :class:`model_selection.CutOffClassifier` calibrates decision threshold
+  function of a binary classifier by maximizing a classification metric through
+  cross-validation.
+  :pr:`26120` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.tree`
 ...................
 
