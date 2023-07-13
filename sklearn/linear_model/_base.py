@@ -839,7 +839,7 @@ def _pre_fit(
     """
     n_samples, n_features = X.shape
 
-    if sparse.isspmatrix(X):
+    if sparse.issparse(X):
         # copy is not needed here as X is not modified inplace when X is sparse
         precompute = False
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
