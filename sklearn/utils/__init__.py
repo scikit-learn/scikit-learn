@@ -723,7 +723,6 @@ def safe_sqr(X, *, copy=True):
     X ** 2 : element wise square
          Return the element-wise square of the input.
     """
-    X = check_array(X, accept_sparse=["csr", "csc", "coo"], ensure_2d=False)
     if issparse(X):
         if copy:
             X = X.copy()
