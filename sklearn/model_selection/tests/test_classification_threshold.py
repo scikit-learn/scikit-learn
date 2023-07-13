@@ -325,13 +325,18 @@ def test_tunedthresholdclassifier_no_binary():
         ),
     ],
 )
-def test_tunedthresholdclassifier_conflict_cv_refit(params, err_type, err_msg):
+@pytest.mark.parametrize("strategy", ["optimum", "constant"])
+def test_tunedthresholdclassifier_conflict_cv_refit(
+    strategy, params, err_type, err_msg
+):
     """Check that we raise an informative error message when `cv` and `refit`
     cannot be used together.
     """
     X, y = make_classification(n_samples=100, random_state=0)
     with pytest.raises(err_type, match=err_msg):
-        TunedThresholdClassifier(LogisticRegression(), **params).fit(X, y)
+        TunedThresholdClassifier(LogisticRegression(), strategy=strategy, **params).fit(
+            X, y
+        )
 
 
 @pytest.mark.parametrize(
@@ -341,15 +346,16 @@ def test_tunedthresholdclassifier_conflict_cv_refit(params, err_type, err_msg):
 @pytest.mark.parametrize(
     "response_method", ["predict_proba", "predict_log_proba", "decision_function"]
 )
+@pytest.mark.parametrize("strategy", ["optimum", "constant"])
 def test_tunedthresholdclassifier_estimator_response_methods(
-    estimator, response_method
+    estimator, strategy, response_method
 ):
     """Check that `TunedThresholdClassifier` exposes the same response methods as the
     underlying estimator.
     """
     X, y = make_classification(n_samples=100, random_state=0)
 
-    model = TunedThresholdClassifier(estimator)
+    model = TunedThresholdClassifier(estimator, strategy=strategy)
     assert hasattr(model, response_method) == hasattr(estimator, response_method)
 
     model.fit(X, y)
@@ -475,8 +481,11 @@ def test_tunedthresholdclassifier_with_string_targets(response_method, metric):
     assert_array_equal(np.sort(np.unique(y_pred)), np.sort(classes))
 
 
+@pytest.mark.parametrize("strategy", ["optimum", "constant"])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
-def test_tunedthresholdclassifier_refit(with_sample_weight, global_random_seed):
+def test_tunedthresholdclassifier_refit(
+    strategy, with_sample_weight, global_random_seed
+):
     """Check the behaviour of the `refit` parameter."""
     rng = np.random.RandomState(global_random_seed)
     X, y = make_classification(n_samples=100, random_state=0)
@@ -488,7 +497,7 @@ def test_tunedthresholdclassifier_refit(with_sample_weight, global_random_seed):
 
     # check that `estimator_` if fitted on the full dataset when `refit=True`
     estimator = LogisticRegression()
-    model = TunedThresholdClassifier(estimator, refit=True).fit(
+    model = TunedThresholdClassifier(estimator, strategy=strategy, refit=True).fit(
         X, y, sample_weight=sample_weight
     )
 
@@ -500,9 +509,9 @@ def test_tunedthresholdclassifier_refit(with_sample_weight, global_random_seed):
     # check that `estimator_` was not altered when `refit=False` and `cv="prefit"`
     estimator = LogisticRegression().fit(X, y, sample_weight=sample_weight)
     coef = estimator.coef_.copy()
-    model = TunedThresholdClassifier(estimator, cv="prefit", refit=False).fit(
-        X, y, sample_weight=sample_weight
-    )
+    model = TunedThresholdClassifier(
+        estimator, strategy=strategy, cv="prefit", refit=False
+    ).fit(X, y, sample_weight=sample_weight)
 
     assert model.estimator_ is estimator
     assert_allclose(model.estimator_.coef_, coef)
@@ -512,9 +521,9 @@ def test_tunedthresholdclassifier_refit(with_sample_weight, global_random_seed):
     cv = [
         (np.arange(50), np.arange(50, 100)),
     ]  # single split
-    model = TunedThresholdClassifier(estimator, cv=cv, refit=False).fit(
-        X, y, sample_weight=sample_weight
-    )
+    model = TunedThresholdClassifier(
+        estimator, strategy=strategy, cv=cv, refit=False
+    ).fit(X, y, sample_weight=sample_weight)
 
     assert model.estimator_ is not estimator
     if with_sample_weight:
@@ -661,7 +670,7 @@ def test_tunedthresholdclassifier_objective_metric_dict(global_random_seed):
     assert np.mean(model.predict(X) == 0) > 0.9
 
 
-def test_tunedthresholdclassifier_sample_weight_costs_and_again():
+def test_tunedthresholdclassifier_sample_weight_costs_and_gain():
     """Check that we dispatch the `sample_weight` to the scorer when computing the
     confusion matrix."""
     X, y = load_iris(return_X_y=True)
@@ -838,3 +847,27 @@ def test_tunedthresholdclassifier_pos_label_single_metric(pos_label, metric_type
 
     precision = precision_score(y, model.predict(X), pos_label=pos_label)
     assert precision == pytest.approx(model.objective_score_, abs=1e-3)
+
+
+@pytest.mark.parametrize(
+    "predict_method",
+    ["predict", "predict_proba", "decision_function", "predict_log_proba"],
+)
+def test_tunedthresholdclassifier_constant_strategy(predict_method):
+    """Check the behavior when `strategy='contant'."""
+    X, y = make_classification(n_samples=100, weights=[0.6, 0.4], random_state=42)
+
+    # With a constant strategy and a threshold at 0.5, we should get the same than the
+    # original model
+    estimator = LogisticRegression().fit(X, y)
+    constant_threshold = 0.5
+    tuned_model = TunedThresholdClassifier(
+        estimator, strategy="constant", constant_threshold=constant_threshold
+    ).fit(X, y)
+    assert tuned_model.decision_threshold_ == pytest.approx(constant_threshold)
+    for attribute in ("decision_thresholds_", "objective_score_", "objective_scores_"):
+        assert getattr(tuned_model, attribute) is None
+
+    assert_allclose(
+        getattr(tuned_model, predict_method)(X), getattr(estimator, predict_method)(X)
+    )

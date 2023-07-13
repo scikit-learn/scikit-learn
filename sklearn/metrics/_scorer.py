@@ -269,20 +269,6 @@ class _BaseScorer(_MetadataRequester):
         """Return non-default make_scorer arguments for repr."""
         return ""
 
-    def _from_scores_to_class_labels(self, y_score, threshold, classes):
-        """Threshold `y_score` and return the associated class labels."""
-        pos_label = self._get_pos_label()
-        if pos_label is None:
-            map_thresholded_score_to_label = np.array([0, 1])
-        else:
-            pos_label_idx = np.flatnonzero(classes == pos_label)[0]
-            neg_label_idx = np.flatnonzero(classes != pos_label)[0]
-            map_thresholded_score_to_label = np.array([neg_label_idx, pos_label_idx])
-
-        return classes[
-            map_thresholded_score_to_label[(y_score >= threshold).astype(int)]
-        ]
-
     def _warn_overlap(self, message, kwargs):
         """Warn if there is any overlap between ``self._kwargs`` and ``kwargs``.
 
@@ -488,6 +474,18 @@ class _ThresholdScorer(_BaseScorer):
         return ", needs_threshold=True"
 
 
+def _threshold_scores_to_class_labels(y_score, threshold, classes, pos_label):
+    """Threshold `y_score` and return the associated class labels."""
+    if pos_label is None:
+        map_thresholded_score_to_label = np.array([0, 1])
+    else:
+        pos_label_idx = np.flatnonzero(classes == pos_label)[0]
+        neg_label_idx = np.flatnonzero(classes != pos_label)[0]
+        map_thresholded_score_to_label = np.array([neg_label_idx, pos_label_idx])
+
+    return classes[map_thresholded_score_to_label[(y_score >= threshold).astype(int)]]
+
+
 class _ContinuousScorer(_BaseScorer):
     """Scorer taking a continuous response and output a score for each threshold."""
 
@@ -536,7 +534,9 @@ class _ContinuousScorer(_BaseScorer):
             self._sign
             * score_func(
                 y_true,
-                self._from_scores_to_class_labels(y_score, th, estimator.classes_),
+                _threshold_scores_to_class_labels(
+                    y_score, th, estimator.classes_, self._get_pos_label()
+                ),
                 **self._kwargs,
             )
             for th in potential_thresholds

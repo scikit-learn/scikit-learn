@@ -14,7 +14,7 @@ from ..metrics import (
     precision_recall_curve,
     roc_curve,
 )
-from ..metrics._scorer import _ContinuousScorer
+from ..metrics._scorer import _ContinuousScorer, _threshold_scores_to_class_labels
 from ..utils import _safe_indexing
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils._response import _get_response_values_binary
@@ -155,20 +155,27 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
     """Decision threshold tuning for binary classification.
 
     This estimator post-tunes the decision threshold (cut-off point) that is
-    used for converting probabilities (i.e. output of `predict_proba`) or
-    decision function (i.e. output of `decision_function`) into a predicted
-    class. The tuning is done by maximizing a binary metric, potentially
-    constrained by a another metric.
+    used for converting posterior probability estimates (i.e. output of
+    `predict_proba`) or decision scores (i.e. output of `decision_function`)
+    into a class label. The tuning is done by maximizing a binary metric,
+    potentially constrained by a another metric.
 
     Read more in the :ref:`User Guide <tunedthresholdclassifier>`.
 
-    .. versionadded:: 1.3
+    .. versionadded:: 1.4
 
     Parameters
     ----------
     estimator : estimator instance
         The classifier, fitted or not fitted, for which we want to optimize
         the decision threshold used during `predict`.
+
+    strategy : {"optimum", "constant"}, default="optimum"
+        The strategy to use for tuning the decision threshold:
+
+        * `"optimum"`: the decision threshold is tuned to optimize the objective
+            metric;
+        * `"constant"`: the decision threshold is set to `constant_value`.
 
     objective_metric : {"max_tpr_at_tnr_constraint", "max_tnr_at_tpr_constraint", \
             "max_precision_at_recall_constraint, "max_recall_at_precision_constraint"} \
@@ -197,6 +204,9 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         `"max_tnr_at_tpr_constraint"`, `"max_tpr_at_tnr_constraint"`,
         `"max_precision_at_recall_constraint"`, or
         `"max_recall_at_precision_constraint"`.
+
+    constant_threshold : float, default=0.5
+        The constant threshold to use when `strategy` is `"constant"`.
 
     pos_label : int, float, bool or str, default=None
         The label of the positive class. Used when `objective_metric` is
@@ -272,8 +282,9 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
     decision_threshold_ : float
         The new decision threshold.
 
-    decision_thresholds_ : ndarray of shape (n_thresholds,)
-        All decision thresholds that were evaluated.
+    decision_thresholds_ : ndarray of shape (n_thresholds,) or None
+        All decision thresholds that were evaluated. If `strategy="constant"`,
+        `decision_thresholds_` is None.
 
     objective_score_ : float or tuple of floats
         The score of the objective metric associated with the decision threshold found.
@@ -281,10 +292,12 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         `"max_tnr_at_tpr_constraint"`, `"max_precision_at_recall_constraint"`,
         `"max_recall_at_precision_constraint"`, it will corresponds to a tuple of
         two float values: the first one is the score of the metric which is constrained
-        and the second one is the score of the maximized metric.
+        and the second one is the score of the maximized metric. If
+        `strategy="constant"`, `objective_score_` is None.
 
     objective_scores_ : ndarray of shape (n_thresholds,)
         The scores of the objective metric associated with the decision thresholds.
+        If `strategy="constant"`, `objective_scores_` is None.
 
     classes_ : ndarray of shape (n_classes,)
         The class labels.
@@ -352,6 +365,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             HasMethods(["fit", "predict_proba"]),
             HasMethods(["fit", "decision_function"]),
         ],
+        "strategy": [StrOptions({"optimum", "constant"})],
         "objective_metric": [
             StrOptions(
                 set(get_scorer_names())
@@ -366,6 +380,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             MutableMapping,
         ],
         "constraint_value": [Real, None],
+        "constant_threshold": [Real],
         "pos_label": [Real, str, "boolean", None],
         "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
         "n_thresholds": [Interval(Integral, 1, None, closed="left")],
@@ -383,8 +398,10 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         self,
         estimator,
         *,
+        strategy="optimum",
         objective_metric="balanced_accuracy",
         constraint_value=None,
+        constant_threshold=0.5,
         pos_label=None,
         response_method="auto",
         n_thresholds=100,
@@ -394,8 +411,10 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         random_state=None,
     ):
         self.estimator = estimator
+        self.strategy = strategy
         self.objective_metric = objective_metric
         self.constraint_value = constraint_value
+        self.constant_threshold = constant_threshold
         self.pos_label = pos_label
         self.response_method = response_method
         self.n_thresholds = n_thresholds
@@ -522,6 +541,18 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
                 )
             else:
                 self.estimator_.fit(X_train, y_train, **fit_params_train)
+
+        if hasattr(self.estimator_, "n_features_in_"):
+            self.n_features_in_ = self.estimator_.n_features_in_
+        if hasattr(self.estimator_, "feature_names_in_"):
+            self.feature_names_in_ = self.estimator_.feature_names_in_
+
+        if self.strategy == "constant":
+            # early exit when we don't need to find the optimal threshold
+            self.decision_threshold_ = self.constant_threshold
+            self.decision_thresholds_ = None
+            self.objective_score_, self.objective_scores_ = None, None
+            return self
 
         if isinstance(self.objective_metric, MutableMapping):
             keys = set(self.objective_metric.keys())
@@ -700,11 +731,6 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             )
             self.decision_threshold_ = self.decision_thresholds_[best_idx]
 
-        if hasattr(self.estimator_, "n_features_in_"):
-            self.n_features_in_ = self.estimator_.n_features_in_
-        if hasattr(self.estimator_, "feature_names_in_"):
-            self.feature_names_in_ = self.estimator_.feature_names_in_
-
         return self
 
     @property
@@ -726,12 +752,17 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             The predicted class.
         """
         check_is_fitted(self, "estimator_")
-        pos_label = self._scorer._get_pos_label()
+        if self.strategy == "optimum":
+            # `pos_label` has been validated and is stored in the scorer
+            pos_label = self._scorer._get_pos_label()
+        else:
+            pos_label = self.pos_label
         y_score, _ = _get_response_values_binary(
             self.estimator_, X, self._response_method, pos_label=pos_label
         )
-        return self._scorer._from_scores_to_class_labels(
-            y_score, self.decision_threshold_, self.classes_
+
+        return _threshold_scores_to_class_labels(
+            y_score, self.decision_threshold_, self.classes_, pos_label
         )
 
     @available_if(_estimator_has("predict_proba"))
