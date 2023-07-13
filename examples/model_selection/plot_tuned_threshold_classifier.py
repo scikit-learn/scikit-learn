@@ -478,17 +478,17 @@ _ = fig.suptitle("Tuned GBDT model without refitting and using the entire datase
 # the same set as the model was trained on, and this is the reason for the observed
 # overfitting.
 #
-# This option should therefore be used with caution. One needs to make sure
-# that the data providing at fitting time to the
-# :class:`~sklearn.model_selection.TunedThresholdClassifier` is not the same as
-# the data used to train the underlying classifier. This could happen sometimes
-# when the idea is just to tune the predictive model on a completely new
-# validation set without a costly complete refit.
+# This option should therefore be used with caution. One needs to make sure that the
+# data providing at fitting time to the
+# :class:`~sklearn.model_selection.TunedThresholdClassifier` is not the same as the data
+# used to train the underlying classifier. This could happen sometimes when the idea is
+# just to tune the predictive model on a completely new validation set without a costly
+# complete refit.
 #
-# In the case that cross-validation is too costly, a potential alternative is to use
-# a single train-test split by providing a floating number in range `[0, 1]` to the
-# `cv` parameter. It splits the data into a training and testing set. Let's
-# explore this option:
+# In the case that cross-validation is too costly, a potential alternative is to use a
+# single train-test split by providing a floating number in range `[0, 1]` to the `cv`
+# parameter. It splits the data into a training and testing set. Let's explore this
+# option:
 model_tuned.set_params(cv=0.75).fit(X_train, y_train)
 
 # %%
@@ -570,7 +570,7 @@ _ = fig.suptitle("Tuned GBDT model without refitting and using the entire datase
 # is any variance in the cut-off point. The repeated cross-validation averages out
 # this effect.
 #
-# Another observation concerns the ROC and Precision-Recall curves of the tuned
-# model. As expected, these curves differ from those of the vanilla model, given
-# that we trained the underlying classifier on a subset of the data provided
-# during fitting and reserved a validation set for tuning the cut-off point.
+# Another observation concerns the ROC and Precision-Recall curves of the tuned model.
+# As expected, these curves differ from those of the vanilla model, given that we
+# trained the underlying classifier on a subset of the data provided during fitting and
+# reserved a validation set for tuning the cut-off point.
