@@ -3,10 +3,11 @@
 Post-tuning the cut-off point of decision function
 ==================================================
 
-Once a classifier is trained, the output of the :term:`predict` method output hard
-predictions corresponding to a thresholding of either the :term:`decision function`
-or the :term:`predict_proba` output. For binary classifier, the default threshold is
-defined as a probability score of 0.5 or a decision function value of 0.0.
+Once a classifier is trained, the output of the :term:`predict` method output class
+label predictions corresponding to a thresholding of either the :term:`decision
+function` or the :term:`predict_proba` output. For a binary classifier, the default
+threshold is defined as a posterior probability estimate of 0.5 or a decision score of
+0.0.
 
 However, this default strategy may not be optimal for the task at hand.
 Here, we use the "Statlog" German credit dataset [1]_ to illustrate a use case.
@@ -244,11 +245,11 @@ _ = fig.suptitle("Evaluation of the vanilla GBDT model")
 # reported metrics are the precision and recall and for the ROC curve, the reported
 # metrics are the TPR (same as recall) and FPR.
 #
-# Here, the different cut-off points correspond to different levels of probability
-# scores ranging between 0 and 1. By default, `model.predict` uses a cut-off point at
-# a probability of 0.5. The metrics for such cut-off point are reported with the
-# blue dot on the curves: it corresponds to the statistical performance of the model
-# when using `model.predict`.
+# Here, the different cut-off points correspond to different levels of posterior
+# probability estimates ranging between 0 and 1. By default, `model.predict` uses a
+# cut-off point at a probability estimate of 0.5. The metrics for such cut-off point are
+# reported with the blue dot on the curves: it corresponds to the statistical
+# performance of the model when using `model.predict`.
 #
 # However, we recall that the original aim was to minimize the cost (or maximize the
 # gain) by the business metric. We can compute the value of the business metric:
