@@ -7,17 +7,23 @@ Tuning cut-off decision threshold for classes prediction
 ========================================================
 
 Classifiers are predictive models: they use statistical learning to predict
-outcomes. The outcomes of a classifier takes two forms: a "soft" score for each
-sample in relation to each class, and a "hard" categorical prediction (i.e.
-class label). Soft predictions are obtained using :term:`predict_proba` or
-:term:`decision_function` while hard predictions are obtained using
-:term:`predict`.
+outcomes. The outcomes of a classifier are scores for each sample in relation
+to each class and categorical prediction (class label). Scores are obtained
+from :term:`predict_proba` or :term:`decision_function`. The former returns
+posterior probability estimates for each class while the latter returns a
+decision function value for each class. The decision function value is a
+measure of how strongly the sample is predicted to belong to the positive
+class (e.g. the distance to the decisin boundary). A decision rule is then
+defined by thresholding the scores and obtained the class label for each
+sample. Those labels are obtained with :term:`predict`.
 
-In scikit-learn, there is a connection between soft and hard prediction. In the
-case of a binary classification, hard predictions are obtained by associating
-the positive class with probability value greater than 0.5 (obtained with
-:term:`predict_proba`) or decision function value greater than 0 (obtained with
-:term:`decision_function`).
+For binary classification in scikit-learn, class labels are obtained by
+associating the positive class with probability estimates greater than 0.5
+(obtained with :term:`predict_proba`) or decision function values greater than
+0 (obtained with :term:`decision_function`).
+
+Here, we show an example that illustrates the relation between posterior
+probability estimates and class labels::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.tree import DecisionTreeClassifier
@@ -31,33 +37,30 @@ the positive class with probability value greater than 0.5 (obtained with
     >>> classifier.predict(X[:4])
     array([0, 0, 1, 1])
 
-
-Similar rules apply for other classification problems.
-
-While these approaches are reasonable as default behaviors, they might not be
-adapted to some cases. The context and nature of the use case define the
+While these approaches are reasonable as default behaviors, they are not be
+ideal for all cases. The context and nature of the use case defines the
 expected behavior of the classifier and thus the strategy to convert soft
 predictions into hard predictions. We illustrate this point with an example.
 
 Let's imagine the deployment of a predictive model helping medical doctors to
-detect cancers. In a setting where this model was a tool to discard obvious
+detect tumour. In a setting where this model was a tool to discard obvious
 cases and false positives don't lead to potentially harmful treatments, doctors
-might be interested in having a high recall (all cancers cases should be tagged
+might be interested in having a high recall (all cancer cases should be tagged
 as such) to not miss any patient with a cancer. However, that is at the cost of
 having more false positive predictions (i.e. lower precision). Thus, in terms of
 decision threshold, it may be better to classify a patient as having a cancer
-for a probability lower than 0.5.
+for a probability estimate lower than 0.5.
 
 Post-tuning of the decision threshold
 =====================================
 
 One solution to address the problem stated in the introduction is to tune the decision
-threshold of the classifier once this model has been trained. The
-:class:`~sklearn.model_selection.CutOffClassifier` allows to tune this threshold using
-an internal cross-validation. The optimum threshold is tuned to maximize a given metric
+threshold of the classifier once the model has been trained. The
+:class:`~sklearn.model_selection.CutOffClassifier` tunes this threshold using
+an internal cross-validation. The optimum threshold is chosen to maximize a given metric
 with or without constraints.
 
-The following image illustrate the tuning of the cut-off point for a gradient
+The following image illustrates the tuning of the cut-off point for a gradient
 boosting classifier. While the vanilla and tuned classifiers provide the same
 Receiver Operating Characteristic (ROC) and Precision-Recall curves, and thus
 the same :term:`predict_proba` outputs, the "hard" predictions differ because of
@@ -125,7 +128,7 @@ For these options, the `constraint_value` parameter needs to be defined. In addi
 you can use the `pos_label` parameter to indicate the label of the class of interest.
 
 The final strategy maximizes a custom utility function. This problem is also known as
-cost-sensitive learning. The utility function is defined by providing dictionary
+cost-sensitive learning. The utility function is defined by providing a dictionary
 containing the cost-gain associated with the entries of the confusion matrix. The keys
 are defined as `{"tn", "fp", "fn", "tp"}`. The class of interest is defined using the
 `pos_label` parameter. Refer to :ref:`cost_sensitive_learning_example` for an example
