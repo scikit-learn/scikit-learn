@@ -347,7 +347,9 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     classified instances are adjusted such that subsequent classifiers focus
     more on difficult cases.
 
-    # TODO(1.6) Adjust sentence, as SAMME.R will be deprecated.
+    ..
+        TODO(1.6) Adjust sentence, as SAMME.R will be deprecated.
+
     This class implements the algorithm known as AdaBoost-SAMME.R as a
     default algorithm. [2]_
 
@@ -386,7 +388,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         achieving a lower test error with fewer boosting iterations.
 
         .. deprecated:: 1.4
-            `SAMME.R` is deprecated and will be removed in 1.6.
+            `SAMME.R` is deprecated and will be removed in version 1.6.
             'SAMME' will be the only algorithm then.
 
     random_state : int, RandomState instance or None, default=None
