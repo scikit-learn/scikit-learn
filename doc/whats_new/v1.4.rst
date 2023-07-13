@@ -51,6 +51,9 @@ Changelog
   passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
   Jalali`_.
 
+- |Enhancement| :func:`base.clone` now supports `dict` as input and creates a
+  copy. :pr:`26786` by `Adrin Jalali`_.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -84,6 +87,15 @@ Changelog
 - |Feature| :class:`pipeline.Pipeline` now supports metadata routing according
   to :ref:`metadata routing user guide <metadata_routing>`. :pr:`26789` by
   `Adrin Jalali`_.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| :class:`model_selection.GridSearchCV`,
+  :class:`model_selection.RandomizedSearchCV`, and
+  :class:`model_selection.HalvingGridSearchCV` now don't change the given
+  object in the parameter grid if it's an estimator. :pr:`26786` by `Adrin
+  Jalali`_.
 
 :mod:`sklearn.tree`
 ...................
