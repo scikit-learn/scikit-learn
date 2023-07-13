@@ -14,10 +14,9 @@ import warnings
 
 import numpy as np
 
-from ._base import _get_weights
-from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
-from ..base import RegressorMixin
+from ..base import RegressorMixin, _fit_context
 from ..utils._param_validation import StrOptions
+from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, _get_weights
 
 
 class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
@@ -67,7 +66,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p : int, default=2
+    p : float, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
@@ -194,6 +193,10 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         # For cross-validation routines to split data correctly
         return {"pairwise": self.metric == "precomputed"}
 
+    @_fit_context(
+        # KNeighborsRegressor.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit the k-nearest neighbors regressor from the training dataset.
 
@@ -212,8 +215,6 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         self : KNeighborsRegressor
             The fitted k-nearest neighbors regressor.
         """
-        self._validate_params()
-
         return self._fit(X, y)
 
     def predict(self, X):
@@ -308,7 +309,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p : int, default=2
+    p : float, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
@@ -422,6 +423,10 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         )
         self.weights = weights
 
+    @_fit_context(
+        # RadiusNeighborsRegressor.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit the radius neighbors regressor from the training dataset.
 
@@ -440,7 +445,6 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         self : RadiusNeighborsRegressor
             The fitted radius neighbors regressor.
         """
-        self._validate_params()
         return self._fit(X, y)
 
     def predict(self, X):
@@ -479,9 +483,11 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         else:
             y_pred = np.array(
                 [
-                    np.average(_y[ind, :], axis=0, weights=weights[i])
-                    if len(ind)
-                    else empty_obs
+                    (
+                        np.average(_y[ind, :], axis=0, weights=weights[i])
+                        if len(ind)
+                        else empty_obs
+                    )
                     for (i, ind) in enumerate(neigh_ind)
                 ]
             )

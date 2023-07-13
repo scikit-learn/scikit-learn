@@ -87,7 +87,7 @@ be placed. In this case, we suggest using matplotlib's
 By default, the `ax` keyword in `plot` is `None`. In this case, the single
 axes is created and the gridspec api is used to create the regions to plot in.
 
-See for example, :func:`~sklearn.inspection.PartialDependenceDisplay.from_estimator
+See for example, :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator`
 which plots multiple lines and contours using this API. The axes defining the
 bounding box is saved in a `bounding_ax_` attribute. The individual axes
 created are stored in an `axes_` ndarray, corresponding to the axes position on

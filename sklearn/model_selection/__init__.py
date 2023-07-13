@@ -40,6 +40,7 @@ from ._subselect import constrain
 from ._subselect import by_fixed_window
 
 from ._plot import LearningCurveDisplay
+from ._plot import ValidationCurveDisplay
 
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
@@ -48,7 +49,6 @@ if typing.TYPE_CHECKING:
         HalvingGridSearchCV,
         HalvingRandomSearchCV,
     )
-
 
 __all__ = [
     "BaseCrossValidator",
@@ -78,6 +78,7 @@ __all__ = [
     "cross_validate",
     "learning_curve",
     "LearningCurveDisplay",
+    "ValidationCurveDisplay",
     "permutation_test_score",
     "train_test_split",
     "validation_curve",

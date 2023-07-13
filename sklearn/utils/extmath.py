@@ -12,15 +12,17 @@ Extended math utilities.
 # License: BSD 3 clause
 
 import warnings
+from numbers import Integral
 
 import numpy as np
 from scipy import linalg, sparse
 
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from . import check_random_state
+from ._array_api import _is_numpy_namespace, get_namespace
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from ._array_api import get_namespace
 
 
 def squared_norm(x):
@@ -42,8 +44,10 @@ def squared_norm(x):
     x = np.ravel(x, order="K")
     if np.issubdtype(x.dtype, np.integer):
         warnings.warn(
-            "Array type is integer, np.dot may overflow. "
-            "Data should be float type to avoid this issue",
+            (
+                "Array type is integer, np.dot may overflow. "
+                "Data should be float type to avoid this issue"
+            ),
             UserWarning,
         )
     return np.dot(x, x)
@@ -70,8 +74,7 @@ def row_norms(X, squared=False):
         The row-wise (squared) Euclidean norm of X.
     """
     if sparse.issparse(X):
-        if not isinstance(X, sparse.csr_matrix):
-            X = sparse.csr_matrix(X)
+        X = X.tocsr()
         norms = csr_row_norms(X)
     else:
         norms = np.einsum("ij,ij->i", X, X)
@@ -141,8 +144,10 @@ def density(w, **kwargs):
     """
     if kwargs:
         warnings.warn(
-            "Additional keyword arguments are deprecated in version 1.2 and will be"
-            " removed in version 1.4.",
+            (
+                "Additional keyword arguments are deprecated in version 1.2 and will be"
+                " removed in version 1.4."
+            ),
             FutureWarning,
         )
 
@@ -284,6 +289,20 @@ def randomized_range_finder(
     return Q
 
 
+@validate_params(
+    {
+        "M": [np.ndarray, "sparse matrix"],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "n_oversamples": [Interval(Integral, 0, None, closed="left")],
+        "n_iter": [Interval(Integral, 0, None, closed="left"), StrOptions({"auto"})],
+        "power_iteration_normalizer": [StrOptions({"auto", "QR", "LU", "none"})],
+        "transpose": ["boolean", StrOptions({"auto"})],
+        "flip_sign": ["boolean"],
+        "random_state": ["random_state"],
+        "svd_lapack_driver": [StrOptions({"gesdd", "gesvd"})],
+    },
+    prefer_skip_nested_validation=True,
+)
 def randomized_svd(
     M,
     n_components,
@@ -310,9 +329,9 @@ def randomized_svd(
         Number of singular values and vectors to extract.
 
     n_oversamples : int, default=10
-        Additional number of random vectors to sample the range of M so as
+        Additional number of random vectors to sample the range of `M` so as
         to ensure proper conditioning. The total number of random vectors
-        used to find the range of M is n_components + n_oversamples. Smaller
+        used to find the range of `M` is `n_components + n_oversamples`. Smaller
         number can improve speed but can negatively impact the quality of
         approximation of singular vectors and singular values. Users might wish
         to increase this parameter up to `2*k - n_components` where k is the
@@ -421,7 +440,7 @@ def randomized_svd(
     >>> U.shape, s.shape, Vh.shape
     ((3, 2), (2,), (2, 4))
     """
-    if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
+    if sparse.issparse(M) and M.format in ("lil", "dok"):
         warnings.warn(
             "Calculating SVD of a {} is expensive. "
             "csr_matrix is more efficient.".format(type(M).__name__),
@@ -563,7 +582,7 @@ def _randomized_eigsh(
 
     Strategy 'value': not implemented yet.
     Algorithms 5.3, 5.4 and 5.5 in the Halko et al paper should provide good
-    condidates for a future implementation.
+    candidates for a future implementation.
 
     Strategy 'module':
     The principle is that for diagonalizable matrices, the singular values and
@@ -880,13 +899,13 @@ def softmax(X, copy=True):
     out : ndarray of shape (M, N)
         Softmax function evaluated at every point in x.
     """
-    xp, is_array_api = get_namespace(X)
+    xp, is_array_api_compliant = get_namespace(X)
     if copy:
         X = xp.asarray(X, copy=True)
     max_prob = xp.reshape(xp.max(X, axis=1), (-1, 1))
     X -= max_prob
 
-    if xp.__name__ in {"numpy", "numpy.array_api"}:
+    if _is_numpy_namespace(xp):
         # optimization for NumPy arrays
         np.exp(X, out=np.asarray(X))
     else:
@@ -1143,8 +1162,54 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
         )
     ):
         warnings.warn(
-            "cumsum was found to be unstable: "
-            "its last element does not correspond to sum",
+            (
+                "cumsum was found to be unstable: "
+                "its last element does not correspond to sum"
+            ),
             RuntimeWarning,
         )
     return out
+
+
+def _nanaverage(a, weights=None):
+    """Compute the weighted average, ignoring NaNs.
+
+    Parameters
+    ----------
+    a : ndarray
+        Array containing data to be averaged.
+    weights : array-like, default=None
+        An array of weights associated with the values in a. Each value in a
+        contributes to the average according to its associated weight. The
+        weights array can either be 1-D of the same shape as a. If `weights=None`,
+        then all data in a are assumed to have a weight equal to one.
+
+    Returns
+    -------
+    weighted_average : float
+        The weighted average.
+
+    Notes
+    -----
+    This wrapper to combine :func:`numpy.average` and :func:`numpy.nanmean`, so
+    that :func:`np.nan` values are ignored from the average and weights can
+    be passed. Note that when possible, we delegate to the prime methods.
+    """
+
+    if len(a) == 0:
+        return np.nan
+
+    mask = np.isnan(a)
+    if mask.all():
+        return np.nan
+
+    if weights is None:
+        return np.nanmean(a)
+
+    weights = np.array(weights, copy=False)
+    a, weights = a[~mask], weights[~mask]
+    try:
+        return np.average(a, weights=weights)
+    except ZeroDivisionError:
+        # this is when all weights are zero, then ignore them
+        return np.average(a)

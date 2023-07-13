@@ -2,17 +2,19 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
-from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import MonotonicConstraint
+from sklearn.ensemble._hist_gradient_boosting.common import (
+    G_H_DTYPE,
+    HISTOGRAM_DTYPE,
+    X_BINNED_DTYPE,
+    MonotonicConstraint,
+)
+from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.ensemble._hist_gradient_boosting.splitting import (
     Splitter,
     compute_node_value,
 )
-from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
-from sklearn.utils._testing import skip_if_32bit
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._testing import skip_if_32bit
 
 n_threads = _openmp_effective_n_threads()
 
@@ -381,8 +383,10 @@ def test_min_gain_to_split():
 
 
 @pytest.mark.parametrize(
-    "X_binned, all_gradients, has_missing_values, n_bins_non_missing, "
-    " expected_split_on_nan, expected_bin_idx, expected_go_to_left",
+    (
+        "X_binned, all_gradients, has_missing_values, n_bins_non_missing, "
+        " expected_split_on_nan, expected_bin_idx, expected_go_to_left"
+    ),
     [
         # basic sanity check with no missing values: given the gradient
         # values, the split must occur on bin_idx=3
@@ -672,8 +676,10 @@ def _assert_categories_equals_bitset(categories, bitset):
 
 
 @pytest.mark.parametrize(
-    "X_binned, all_gradients, expected_categories_left, n_bins_non_missing,"
-    "missing_values_bin_idx, has_missing_values, expected_missing_go_to_left",
+    (
+        "X_binned, all_gradients, expected_categories_left, n_bins_non_missing,"
+        "missing_values_bin_idx, has_missing_values, expected_missing_go_to_left"
+    ),
     [
         # 4 categories
         (

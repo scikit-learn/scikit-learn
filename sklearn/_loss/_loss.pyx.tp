@@ -46,6 +46,18 @@ doc_PinballLoss = (
     """
 )
 
+doc_HuberLoss = (
+    """Huber Loss with identity link.
+
+    Domain:
+    y_true and y_pred all real numbers
+    delta in positive real numbers
+
+    Link:
+    y_pred = raw_prediction
+    """
+)
+
 doc_HalfPoissonLoss = (
     """Half Poisson deviance loss with log-link.
 
@@ -151,6 +163,18 @@ doc_HalfBinomialLoss = (
     """
 )
 
+doc_ExponentialLoss = (
+    """"Exponential loss with (half) logit link
+
+    Domain:
+    y_true in [0, 1]
+    y_pred in (0, 1), i.e. boundaries excluded
+
+    Link:
+    y_pred = expit(2 * raw_prediction)
+    """
+)
+
 # loss class name, docstring, param,
 # cy_loss, cy_loss_grad,
 # cy_grad, cy_grad_hess,
@@ -164,6 +188,9 @@ class_list = [
     ("CyPinballLoss", doc_PinballLoss, "quantile",
      "closs_pinball_loss", None,
      "cgradient_pinball_loss", "cgrad_hess_pinball_loss"),
+     ("CyHuberLoss", doc_HuberLoss, "delta",
+     "closs_huber_loss", None,
+     "cgradient_huber_loss", "cgrad_hess_huber_loss"),
     ("CyHalfPoissonLoss", doc_HalfPoissonLoss, None,
      "closs_half_poisson", "closs_grad_half_poisson",
      "cgradient_half_poisson", "cgrad_hess_half_poisson"),
@@ -179,13 +206,11 @@ class_list = [
     ("CyHalfBinomialLoss", doc_HalfBinomialLoss, None,
      "closs_half_binomial", "closs_grad_half_binomial",
      "cgradient_half_binomial", "cgrad_hess_half_binomial"),
+     ("CyExponentialLoss", doc_ExponentialLoss, None,
+     "closs_exponential", "closs_grad_exponential",
+     "cgradient_exponential", "cgrad_hess_exponential"),
 ]
 }}
-"""
-WARNING: Do not edit `sklearn/_loss/_loss.pyx` file directly, as it is generated from
-`sklearn/_loss/_loss.pyx.tp`. Changes must be made there.
-"""
-#------------------------------------------------------------------------------
 
 # Design:
 # See https://github.com/scikit-learn/scikit-learn/issues/15123 for reasons.
@@ -361,6 +386,47 @@ cdef inline double_pair cgrad_hess_pinball_loss(
     # in HGBT, however, need a hessian > 0. Therefore, we assign 1.
     gh.val1 = -quantile if y_true >=raw_prediction else 1. - quantile  # gradient
     gh.val2 = 1.                                                       # hessian
+    return gh
+
+
+# Huber Loss
+cdef inline double closs_huber_loss(
+    double y_true,
+    double raw_prediction,
+    double delta,
+) noexcept nogil:
+    cdef double abserr = fabs(y_true - raw_prediction)
+    if abserr <= delta:
+        return 0.5 * abserr**2
+    else:
+        return delta * (abserr - 0.5 * delta)
+
+
+cdef inline double cgradient_huber_loss(
+    double y_true,
+    double raw_prediction,
+    double delta,
+) noexcept nogil:
+    cdef double res = raw_prediction - y_true
+    if fabs(res) <= delta:
+        return res
+    else:
+        return delta if res >=0 else -delta
+
+
+cdef inline double_pair cgrad_hess_huber_loss(
+    double y_true,
+    double raw_prediction,
+    double delta,
+) noexcept nogil:
+    cdef double_pair gh
+    gh.val2 = raw_prediction - y_true               # used as temporary
+    if fabs(gh.val2) <= delta:
+        gh.val1 = gh.val2                           # gradient
+        gh.val2 = 1                                 # hessian
+    else:
+        gh.val1 = delta if gh.val2 >=0 else -delta  # gradient
+        gh.val2 = 0                                 # hessian
     return gh
 
 
@@ -684,6 +750,48 @@ cdef inline double_pair cgrad_hess_half_binomial(
     gh.val2 = exp(-raw_prediction)  # used as temporary
     gh.val1 = ((1 - y_true) - y_true * gh.val2) / (1 + gh.val2)  # gradient
     gh.val2 = gh.val2 / (1 + gh.val2)**2                         # hessian
+    return gh
+
+
+# Exponential loss with (half) logit-link, aka boosting loss
+cdef inline double closs_exponential(
+    double y_true,
+    double raw_prediction
+) noexcept nogil:
+    cdef double tmp = exp(raw_prediction)
+    return y_true / tmp + (1 - y_true) * tmp
+
+
+cdef inline double cgradient_exponential(
+    double y_true,
+    double raw_prediction
+) noexcept nogil:
+    cdef double tmp = exp(raw_prediction)
+    return -y_true / tmp + (1 - y_true) * tmp
+
+
+cdef inline double_pair closs_grad_exponential(
+    double y_true,
+    double raw_prediction
+) noexcept nogil:
+    cdef double_pair lg
+    lg.val2 = exp(raw_prediction)  # used as temporary
+
+    lg.val1 =  y_true / lg.val2 + (1 - y_true) * lg.val2  # loss
+    lg.val2 = -y_true / lg.val2 + (1 - y_true) * lg.val2  # gradient
+    return lg
+
+
+cdef inline double_pair cgrad_hess_exponential(
+    double y_true,
+    double raw_prediction
+) noexcept nogil:
+    # Note that hessian = loss
+    cdef double_pair gh
+    gh.val2 = exp(raw_prediction)  # used as temporary
+
+    gh.val1 = -y_true / gh.val2 + (1 - y_true) * gh.val2  # gradient
+    gh.val2 =  y_true / gh.val2 + (1 - y_true) * gh.val2  # hessian
     return gh
 
 

@@ -10,14 +10,15 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
-import warnings
 import re
+import sys
+import warnings
 from datetime import datetime
-from sklearn.externals._packaging.version import parse
-from pathlib import Path
 from io import StringIO
+from pathlib import Path
+
+from sklearn.externals._packaging.version import parse
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -25,8 +26,9 @@ from io import StringIO
 # absolute, like shown here.
 sys.path.insert(0, os.path.abspath("sphinxext"))
 
-from github_link import make_linkcode_resolve
 import sphinx_gallery
+from github_link import make_linkcode_resolve
+from sphinx_gallery.notebook import add_code_cell, add_markdown_cell
 from sphinx_gallery.sorting import ExampleTitleSortKey
 
 try:
@@ -56,11 +58,30 @@ extensions = [
     "sphinx_issues",
     "add_toctree_functions",
     "sphinx-prompt",
+    "sphinx_copybutton",
     "sphinxext.opengraph",
     "doi_role",
     "allow_nan_estimators",
     "matplotlib.sphinxext.plot_directive",
 ]
+
+# Specify how to identify the prompt when copying code snippets
+copybutton_prompt_text = r">>> |\.\.\. "
+copybutton_prompt_is_regexp = True
+
+try:
+    import jupyterlite_sphinx  # noqa: F401
+
+    extensions.append("jupyterlite_sphinx")
+    with_jupyterlite = True
+except ImportError:
+    # In some cases we don't want to require jupyterlite_sphinx to be installed,
+    # e.g. the doc-min-dependencies build
+    warnings.warn(
+        "jupyterlite_sphinx is not installed, you need to install it "
+        "if you want JupyterLite links to appear in each example"
+    )
+    with_jupyterlite = False
 
 # Produce `plot::` directives for examples that contain `import matplotlib` or
 # `from matplotlib import`.
@@ -171,7 +192,8 @@ html_theme = "scikit-learn-modern"
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    "google_analytics": True,
+    "legacy_google_analytics": True,
+    "analytics": True,
     "mathjax_path": mathjax_path,
     "link_to_live_contributing_page": not parsed_version.is_devrelease,
 }
@@ -248,9 +270,9 @@ latest_highlights = sorted(release_highlights_dir.glob("plot_release_highlights_
     -1
 ]
 latest_highlights = latest_highlights.with_suffix("").name
-html_context[
-    "release_highlights"
-] = f"auto_examples/release_highlights/{latest_highlights}"
+html_context["release_highlights"] = (
+    f"auto_examples/release_highlights/{latest_highlights}"
+)
 
 # get version from highlight name assuming highlights have the form
 # plot_release_highlights_0_22_0
@@ -268,11 +290,14 @@ redirects = {
     "auto_examples/linear_model/plot_bayesian_ridge": (
         "auto_examples/linear_model/plot_ard"
     ),
-    "examples/model_selection/grid_search_text_feature_extraction.py": (
-        "examples/model_selection/plot_grid_search_text_feature_extraction.py"
+    "auto_examples/model_selection/grid_search_text_feature_extraction.py": (
+        "auto_examples/model_selection/plot_grid_search_text_feature_extraction.py"
     ),
-    "examples/miscellaneous/plot_changed_only_pprint_parameter": (
-        "examples/miscellaneous/plot_estimator_representation"
+    "auto_examples/miscellaneous/plot_changed_only_pprint_parameter": (
+        "auto_examples/miscellaneous/plot_estimator_representation"
+    ),
+    "auto_examples/decomposition/plot_beta_divergence": (
+        "auto_examples/applications/plot_topics_extraction_with_nmf_lda"
     ),
 }
 html_context["redirects"] = redirects
@@ -281,6 +306,26 @@ for old_link in redirects:
 
 # Not showing the search summary makes the search page load faster.
 html_show_search_summary = False
+
+
+rst_prolog = """
+.. |details-start| raw:: html
+
+    <details>
+    <summary class="btn btn-light">
+
+.. |details-split| raw:: html
+
+    <span class="tooltiptext">Click for more details</span>
+    </summary>
+    <div class="card">
+
+.. |details-end| raw:: html
+
+    </div>
+    </details>
+
+"""
 
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
@@ -400,6 +445,72 @@ class SKExampleTitleSortKey(ExampleTitleSortKey):
         return -version_float
 
 
+def notebook_modification_function(notebook_content, notebook_filename):
+    notebook_content_str = str(notebook_content)
+    warning_template = "\n".join(
+        [
+            "<div class='alert alert-{message_class}'>",
+            "",
+            "# JupyterLite warning",
+            "",
+            "{message}",
+            "</div>",
+        ]
+    )
+
+    message_class = "warning"
+    message = (
+        "Running the scikit-learn examples in JupyterLite is experimental and you may"
+        " encounter some unexpected behavior.\n\nThe main difference is that imports"
+        " will take a lot longer than usual, for example the first `import sklearn` can"
+        " take roughly 10-20s.\n\nIf you notice problems, feel free to open an"
+        " [issue](https://github.com/scikit-learn/scikit-learn/issues/new/choose)"
+        " about it."
+    )
+
+    markdown = warning_template.format(message_class=message_class, message=message)
+
+    dummy_notebook_content = {"cells": []}
+    add_markdown_cell(dummy_notebook_content, markdown)
+
+    code_lines = []
+
+    if "seaborn" in notebook_content_str:
+        code_lines.append("%pip install seaborn")
+    if "plotly.express" in notebook_content_str:
+        code_lines.append("%pip install plotly")
+    if "skimage" in notebook_content_str:
+        code_lines.append("%pip install scikit-image")
+    if "fetch_" in notebook_content_str:
+        code_lines.extend(
+            [
+                "%pip install pyodide-http",
+                "import pyodide_http",
+                "pyodide_http.patch_all()",
+            ]
+        )
+    # always import matplotlib and pandas to avoid Pyodide limitation with
+    # imports inside functions
+    code_lines.extend(["import matplotlib", "import pandas"])
+
+    if code_lines:
+        code_lines = ["# JupyterLite-specific code"] + code_lines
+        code = "\n".join(code_lines)
+        add_code_cell(dummy_notebook_content, code)
+
+    notebook_content["cells"] = (
+        dummy_notebook_content["cells"] + notebook_content["cells"]
+    )
+
+
+default_global_config = sklearn.get_config()
+
+
+def reset_sklearn_config(gallery_conf, fname):
+    """Reset sklearn config to default values."""
+    sklearn.set_config(**default_global_config)
+
+
 sphinx_gallery_conf = {
     "doc_module": "sklearn",
     "backreferences_dir": os.path.join("modules", "generated"),
@@ -421,7 +532,12 @@ sphinx_gallery_conf = {
     "inspect_global_variables": False,
     "remove_config_comments": True,
     "plot_gallery": "True",
+    "reset_modules": ("matplotlib", "seaborn", reset_sklearn_config),
 }
+if with_jupyterlite:
+    sphinx_gallery_conf["jupyterlite"] = {
+        "notebook_modification_function": notebook_modification_function
+    }
 
 
 # The following dictionary contains the information used to create the
@@ -565,9 +681,11 @@ def setup(app):
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve(
     "sklearn",
-    "https://github.com/scikit-learn/"
-    "scikit-learn/blob/{revision}/"
-    "{package}/{path}#L{lineno}",
+    (
+        "https://github.com/scikit-learn/"
+        "scikit-learn/blob/{revision}/"
+        "{package}/{path}#L{lineno}"
+    ),
 )
 
 warnings.filterwarnings(
@@ -613,20 +731,32 @@ linkcheck_ignore = [
     # ignore links to specific pdf pages because linkcheck does not handle them
     # ('utf-8' codec can't decode byte error)
     r"http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=.*",
-    "https://www.fordfoundation.org/media/2976/"
-    "roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=.*",
+    (
+        "https://www.fordfoundation.org/media/2976/roads-and-bridges"
+        "-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=.*"
+    ),
     # links falsely flagged as broken
-    "https://www.researchgate.net/publication/"
-    "233096619_A_Dendrite_Method_for_Cluster_Analysis",
-    "https://www.researchgate.net/publication/221114584_Random_Fourier_Approximations_"
-    "for_Skewed_Multiplicative_Histogram_Kernels",
-    "https://www.researchgate.net/publication/4974606_"
-    "Hedonic_housing_prices_and_the_demand_for_clean_air",
-    "https://www.researchgate.net/profile/Anh-Huy-Phan/publication/220241471_Fast_"
-    "Local_Algorithms_for_Large_Scale_Nonnegative_Matrix_and_Tensor_Factorizations",
+    (
+        "https://www.researchgate.net/publication/"
+        "233096619_A_Dendrite_Method_for_Cluster_Analysis"
+    ),
+    (
+        "https://www.researchgate.net/publication/221114584_Random_Fourier"
+        "_Approximations_for_Skewed_Multiplicative_Histogram_Kernels"
+    ),
+    (
+        "https://www.researchgate.net/publication/4974606_"
+        "Hedonic_housing_prices_and_the_demand_for_clean_air"
+    ),
+    (
+        "https://www.researchgate.net/profile/Anh-Huy-Phan/publication/220241471_Fast_"
+        "Local_Algorithms_for_Large_Scale_Nonnegative_Matrix_and_Tensor_Factorizations"
+    ),
     "https://doi.org/10.13140/RG.2.2.35280.02565",
-    "https://www.microsoft.com/en-us/research/uploads/prod/2006/01/"
-    "Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf",
+    (
+        "https://www.microsoft.com/en-us/research/uploads/prod/2006/01/"
+        "Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf"
+    ),
     "https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-99-87.pdf",
     "https://microsoft.com/",
     "https://www.jstor.org/stable/2984099",

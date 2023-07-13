@@ -33,8 +33,8 @@ NY, USA: Springer New York Inc..
 
 # Authors: Wenhao Zhang <wenhaoz@ucla.edu>, Derek Pisner <dpysalexander@gmail.com>
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
@@ -57,7 +57,7 @@ param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14]}
 pipe = Pipeline(
     [
         ("reduce_dim", PCA(random_state=42)),
-        ("classify", LinearSVC(random_state=42, C=0.01)),
+        ("classify", LinearSVC(random_state=42, C=0.01, dual="auto")),
     ]
 )
 

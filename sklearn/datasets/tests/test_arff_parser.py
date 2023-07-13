@@ -1,5 +1,5 @@
-from io import BytesIO
 import textwrap
+from io import BytesIO
 
 import pytest
 
@@ -83,9 +83,7 @@ def test_pandas_arff_parser_strip_single_quotes(parser_func):
     """Check that we properly strip single quotes from the data."""
     pd = pytest.importorskip("pandas")
 
-    arff_file = BytesIO(
-        textwrap.dedent(
-            """
+    arff_file = BytesIO(textwrap.dedent("""
             @relation 'toy'
             @attribute 'cat_single_quote' {'A', 'B', 'C'}
             @attribute 'str_single_quote' string
@@ -93,9 +91,7 @@ def test_pandas_arff_parser_strip_single_quotes(parser_func):
             @attribute 'class' numeric
             @data
             'A','some text','\"expect double quotes\"',0
-            """
-        ).encode("utf-8")
-    )
+            """).encode("utf-8"))
 
     columns_info = {
         "cat_single_quote": {
@@ -154,9 +150,7 @@ def test_pandas_arff_parser_strip_double_quotes(parser_func):
     """Check that we properly strip double quotes from the data."""
     pd = pytest.importorskip("pandas")
 
-    arff_file = BytesIO(
-        textwrap.dedent(
-            """
+    arff_file = BytesIO(textwrap.dedent("""
             @relation 'toy'
             @attribute 'cat_double_quote' {"A", "B", "C"}
             @attribute 'str_double_quote' string
@@ -164,9 +158,7 @@ def test_pandas_arff_parser_strip_double_quotes(parser_func):
             @attribute 'class' numeric
             @data
             "A","some text","\'expect double quotes\'",0
-            """
-        ).encode("utf-8")
-    )
+            """).encode("utf-8"))
 
     columns_info = {
         "cat_double_quote": {
@@ -225,9 +217,7 @@ def test_pandas_arff_parser_strip_no_quotes(parser_func):
     """Check that we properly parse with no quotes characters."""
     pd = pytest.importorskip("pandas")
 
-    arff_file = BytesIO(
-        textwrap.dedent(
-            """
+    arff_file = BytesIO(textwrap.dedent("""
             @relation 'toy'
             @attribute 'cat_without_quote' {A, B, C}
             @attribute 'str_without_quote' string
@@ -235,9 +225,7 @@ def test_pandas_arff_parser_strip_no_quotes(parser_func):
             @attribute 'class' numeric
             @data
             A,some text,'internal' quote,0
-            """
-        ).encode("utf-8")
-    )
+            """).encode("utf-8"))
 
     columns_info = {
         "cat_without_quote": {

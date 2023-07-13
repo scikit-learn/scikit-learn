@@ -2,36 +2,36 @@
 import re
 import sys
 import warnings
+from io import StringIO
 
 import numpy as np
+import pytest
 from scipy import sparse as sp
 
-import pytest
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils.fixes import threadpool_limits
 from sklearn.base import clone
-from sklearn.exceptions import ConvergenceWarning
-
-from sklearn.utils.extmath import row_norms
-from sklearn.metrics import pairwise_distances
-from sklearn.metrics import pairwise_distances_argmin
-from sklearn.metrics.cluster import v_measure_score
-from sklearn.cluster import KMeans, k_means, kmeans_plusplus
-from sklearn.cluster import MiniBatchKMeans
-from sklearn.cluster._kmeans import _labels_inertia
-from sklearn.cluster._kmeans import _mini_batch_step
-from sklearn.cluster._k_means_common import _relocate_empty_clusters_dense
-from sklearn.cluster._k_means_common import _relocate_empty_clusters_sparse
-from sklearn.cluster._k_means_common import _euclidean_dense_dense_wrapper
-from sklearn.cluster._k_means_common import _euclidean_sparse_dense_wrapper
-from sklearn.cluster._k_means_common import _inertia_dense
-from sklearn.cluster._k_means_common import _inertia_sparse
-from sklearn.cluster._k_means_common import _is_same_clustering
-from sklearn.utils._testing import create_memmap_backed_data
+from sklearn.cluster import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
+from sklearn.cluster._k_means_common import (
+    _euclidean_dense_dense_wrapper,
+    _euclidean_sparse_dense_wrapper,
+    _inertia_dense,
+    _inertia_sparse,
+    _is_same_clustering,
+    _relocate_empty_clusters_dense,
+    _relocate_empty_clusters_sparse,
+)
+from sklearn.cluster._kmeans import _labels_inertia, _mini_batch_step
 from sklearn.datasets import make_blobs
-from io import StringIO
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import pairwise_distances, pairwise_distances_argmin
+from sklearn.metrics.cluster import v_measure_score
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_equal,
+    create_memmap_backed_data,
+)
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.fixes import threadpool_limits
 
 # TODO(1.4): Remove
 msg = (
@@ -346,6 +346,37 @@ def test_minibatch_kmeans_partial_fit_init(init):
         # "random" init requires many batches to recover the true labels.
         km.partial_fit(X)
     _check_fitted_model(km)
+
+
+@pytest.mark.parametrize(
+    "init, expected_n_init",
+    [
+        ("k-means++", 1),
+        ("random", "default"),
+        (
+            lambda X, n_clusters, random_state: random_state.uniform(
+                size=(n_clusters, X.shape[1])
+            ),
+            "default",
+        ),
+        ("array-like", 1),
+    ],
+)
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_kmeans_init_auto_with_initial_centroids(Estimator, init, expected_n_init):
+    """Check that `n_init="auto"` chooses the right number of initializations.
+    Non-regression test for #26657:
+    https://github.com/scikit-learn/scikit-learn/pull/26657
+    """
+    n_sample, n_features, n_clusters = 100, 10, 5
+    X = np.random.randn(n_sample, n_features)
+    if init == "array-like":
+        init = np.random.randn(n_clusters, n_features)
+    if expected_n_init == "default":
+        expected_n_init = 3 if Estimator is MiniBatchKMeans else 10
+
+    kmeans = Estimator(n_clusters=n_clusters, init=init, n_init="auto").fit(X)
+    assert kmeans._n_init == expected_n_init
 
 
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
@@ -1276,3 +1307,67 @@ def test_predict_does_not_change_cluster_centers(is_sparse):
 
     y_pred2 = kmeans.predict(X)
     assert_array_equal(y_pred1, y_pred2)
+
+
+@pytest.mark.parametrize("init", ["k-means++", "random"])
+def test_sample_weight_init(init, global_random_seed):
+    """Check that sample weight is used during init.
+
+    `_init_centroids` is shared across all classes inheriting from _BaseKMeans so
+    it's enough to check for KMeans.
+    """
+    rng = np.random.RandomState(global_random_seed)
+    X, _ = make_blobs(
+        n_samples=200, n_features=10, centers=10, random_state=global_random_seed
+    )
+    x_squared_norms = row_norms(X, squared=True)
+
+    kmeans = KMeans()
+    clusters_weighted = kmeans._init_centroids(
+        X=X,
+        x_squared_norms=x_squared_norms,
+        init=init,
+        sample_weight=rng.uniform(size=X.shape[0]),
+        n_centroids=5,
+        random_state=np.random.RandomState(global_random_seed),
+    )
+    clusters = kmeans._init_centroids(
+        X=X,
+        x_squared_norms=x_squared_norms,
+        init=init,
+        sample_weight=np.ones(X.shape[0]),
+        n_centroids=5,
+        random_state=np.random.RandomState(global_random_seed),
+    )
+    with pytest.raises(AssertionError):
+        assert_allclose(clusters_weighted, clusters)
+
+
+@pytest.mark.parametrize("init", ["k-means++", "random"])
+def test_sample_weight_zero(init, global_random_seed):
+    """Check that if sample weight is 0, this sample won't be chosen.
+
+    `_init_centroids` is shared across all classes inheriting from _BaseKMeans so
+    it's enough to check for KMeans.
+    """
+    rng = np.random.RandomState(global_random_seed)
+    X, _ = make_blobs(
+        n_samples=100, n_features=5, centers=5, random_state=global_random_seed
+    )
+    sample_weight = rng.uniform(size=X.shape[0])
+    sample_weight[::2] = 0
+    x_squared_norms = row_norms(X, squared=True)
+
+    kmeans = KMeans()
+    clusters_weighted = kmeans._init_centroids(
+        X=X,
+        x_squared_norms=x_squared_norms,
+        init=init,
+        sample_weight=sample_weight,
+        n_centroids=10,
+        random_state=np.random.RandomState(global_random_seed),
+    )
+    # No center should be one of the 0 sample weight point
+    # (i.e. be at a distance=0 from it)
+    d = euclidean_distances(X[::2], clusters_weighted)
+    assert not np.any(np.isclose(d, 0))

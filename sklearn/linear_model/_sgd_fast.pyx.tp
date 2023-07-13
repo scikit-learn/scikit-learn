@@ -24,21 +24,14 @@ dtypes = [
 ]
 
 }}
-
-#------------------------------------------------------------------------------
-
-"""
-SGD implementation
-WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
-"""
+"""SGD implementation"""
 
 from cython cimport floating
 import numpy as np
 from time import time
 
-from libc.math cimport exp, log, pow, fabs
+from libc.math cimport exp, log, pow, fabs, INFINITY
 cimport numpy as cnp
-from numpy.math cimport INFINITY
 cdef extern from "_sgd_fast_helpers.h":
     bint skl_isfinite32(float) nogil
     bint skl_isfinite64(double) nogil
