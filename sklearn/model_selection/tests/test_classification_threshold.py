@@ -19,7 +19,7 @@ from sklearn.metrics import (
     roc_curve,
 )
 from sklearn.metrics._scorer import _ContinuousScorer
-from sklearn.model_selection import CutOffClassifier
+from sklearn.model_selection import TunedThresholdClassifier
 from sklearn.model_selection._classification_threshold import _fit_and_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -297,12 +297,12 @@ def test_fit_and_score_fit_params(scorer, score_method, fit_params_type):
     )
 
 
-def test_cutoffclassifier_no_binary():
+def test_tunedthresholdclassifier_no_binary():
     """Check that we raise an informative error message for non-binary problem."""
     X, y = make_classification(n_classes=3, n_clusters_per_class=1)
     err_msg = "Only binary classification is supported."
     with pytest.raises(ValueError, match=err_msg):
-        CutOffClassifier(LogisticRegression()).fit(X, y)
+        TunedThresholdClassifier(LogisticRegression()).fit(X, y)
 
 
 @pytest.mark.parametrize(
@@ -325,13 +325,13 @@ def test_cutoffclassifier_no_binary():
         ),
     ],
 )
-def test_cutoffclassifier_conflict_cv_refit(params, err_type, err_msg):
+def test_tunedthresholdclassifier_conflict_cv_refit(params, err_type, err_msg):
     """Check that we raise an informative error message when `cv` and `refit`
     cannot be used together.
     """
     X, y = make_classification(n_samples=100, random_state=0)
     with pytest.raises(err_type, match=err_msg):
-        CutOffClassifier(LogisticRegression(), **params).fit(X, y)
+        TunedThresholdClassifier(LogisticRegression(), **params).fit(X, y)
 
 
 @pytest.mark.parametrize(
@@ -341,13 +341,15 @@ def test_cutoffclassifier_conflict_cv_refit(params, err_type, err_msg):
 @pytest.mark.parametrize(
     "response_method", ["predict_proba", "predict_log_proba", "decision_function"]
 )
-def test_cutoffclassifier_estimator_response_methods(estimator, response_method):
-    """Check that `CutOffClassifier` exposes the same response methods as the
+def test_tunedthresholdclassifier_estimator_response_methods(
+    estimator, response_method
+):
+    """Check that `TunedThresholdClassifier` exposes the same response methods as the
     underlying estimator.
     """
     X, y = make_classification(n_samples=100, random_state=0)
 
-    model = CutOffClassifier(estimator)
+    model = TunedThresholdClassifier(estimator)
     assert hasattr(model, response_method) == hasattr(estimator, response_method)
 
     model.fit(X, y)
@@ -363,8 +365,8 @@ def test_cutoffclassifier_estimator_response_methods(estimator, response_method)
 @pytest.mark.parametrize(
     "response_method", ["auto", "decision_function", "predict_proba"]
 )
-def test_cutoffclassifier_with_constraint_value(response_method):
-    """Check that `CutOffClassifier` is optimizing a given objective metric."""
+def test_tunedthresholdclassifier_with_constraint_value(response_method):
+    """Check that `TunedThresholdClassifier` is optimizing a given objective metric."""
     X, y = load_breast_cancer(return_X_y=True)
     # remove feature to degrade performances
     X = X[:, :5]
@@ -379,7 +381,7 @@ def test_cutoffclassifier_with_constraint_value(response_method):
 
     lr = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
     n_thresholds = 100
-    model = CutOffClassifier(
+    model = TunedThresholdClassifier(
         estimator=lr,
         objective_metric="balanced_accuracy",
         response_method=response_method,
@@ -399,13 +401,13 @@ def test_cutoffclassifier_with_constraint_value(response_method):
         ("max_tnr_at_tpr_constraint", "max_tpr_at_tnr_constraint"),
     ],
 )
-def test_cutoffclassifier_limit_metric_tradeoff(metrics):
+def test_tunedthresholdclassifier_limit_metric_tradeoff(metrics):
     """Check that an objective value of 0 give opposite predictions with tnr/tpr and
     precision/recall.
     """
     X, y = load_breast_cancer(return_X_y=True)
     estimator = make_pipeline(StandardScaler(), LogisticRegression())
-    model = CutOffClassifier(
+    model = TunedThresholdClassifier(
         estimator=estimator,
         objective_metric=metrics[0],
         constraint_value=0,
@@ -416,16 +418,16 @@ def test_cutoffclassifier_limit_metric_tradeoff(metrics):
     assert np.mean(y_pred_1 == y_pred_2) > 0.98
 
 
-def test_cutoffclassifier_metric_with_parameter():
+def test_tunedthresholdclassifier_metric_with_parameter():
     """Check that we can pass a metric with a parameter in addition check that
     `f_beta with beta=1` is equivalent to `f1`.
     """
     X, y = load_breast_cancer(return_X_y=True)
     lr = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
-    model_fbeta = CutOffClassifier(
+    model_fbeta = TunedThresholdClassifier(
         estimator=lr, objective_metric=make_scorer(fbeta_score, beta=1)
     ).fit(X, y)
-    model_f1 = CutOffClassifier(
+    model_f1 = TunedThresholdClassifier(
         estimator=lr, objective_metric=make_scorer(f1_score)
     ).fit(X, y)
 
@@ -449,7 +451,7 @@ def test_cutoffclassifier_metric_with_parameter():
         {"tp": 5, "tn": 1, "fp": -1, "fn": -1},
     ],
 )
-def test_cutoffclassifier_with_string_targets(response_method, metric):
+def test_tunedthresholdclassifier_with_string_targets(response_method, metric):
     """Check that targets represented by str are properly managed.
     Also, check with several metrics to be sure that `pos_label` is properly
     dispatched.
@@ -460,7 +462,7 @@ def test_cutoffclassifier_with_string_targets(response_method, metric):
     # encoded as 0.
     classes = np.array(["cancer", "healthy"], dtype=object)
     y = classes[y]
-    model = CutOffClassifier(
+    model = TunedThresholdClassifier(
         estimator=make_pipeline(StandardScaler(), LogisticRegression()),
         objective_metric=metric,
         constraint_value=0.9,
@@ -474,7 +476,7 @@ def test_cutoffclassifier_with_string_targets(response_method, metric):
 
 
 @pytest.mark.parametrize("with_sample_weight", [True, False])
-def test_cutoffclassifier_refit(with_sample_weight, global_random_seed):
+def test_tunedthresholdclassifier_refit(with_sample_weight, global_random_seed):
     """Check the behaviour of the `refit` parameter."""
     rng = np.random.RandomState(global_random_seed)
     X, y = make_classification(n_samples=100, random_state=0)
@@ -486,7 +488,7 @@ def test_cutoffclassifier_refit(with_sample_weight, global_random_seed):
 
     # check that `estimator_` if fitted on the full dataset when `refit=True`
     estimator = LogisticRegression()
-    model = CutOffClassifier(estimator, refit=True).fit(
+    model = TunedThresholdClassifier(estimator, refit=True).fit(
         X, y, sample_weight=sample_weight
     )
 
@@ -498,7 +500,7 @@ def test_cutoffclassifier_refit(with_sample_weight, global_random_seed):
     # check that `estimator_` was not altered when `refit=False` and `cv="prefit"`
     estimator = LogisticRegression().fit(X, y, sample_weight=sample_weight)
     coef = estimator.coef_.copy()
-    model = CutOffClassifier(estimator, cv="prefit", refit=False).fit(
+    model = TunedThresholdClassifier(estimator, cv="prefit", refit=False).fit(
         X, y, sample_weight=sample_weight
     )
 
@@ -510,7 +512,7 @@ def test_cutoffclassifier_refit(with_sample_weight, global_random_seed):
     cv = [
         (np.arange(50), np.arange(50, 100)),
     ]  # single split
-    model = CutOffClassifier(estimator, cv=cv, refit=False).fit(
+    model = TunedThresholdClassifier(estimator, cv=cv, refit=False).fit(
         X, y, sample_weight=sample_weight
     )
 
@@ -534,7 +536,7 @@ def test_cutoffclassifier_refit(with_sample_weight, global_random_seed):
     ],
 )
 @pytest.mark.parametrize("fit_params_type", ["list", "array"])
-def test_cutoffclassifier_fit_params(objective_metric, fit_params_type):
+def test_tunedthresholdclassifier_fit_params(objective_metric, fit_params_type):
     """Check that we pass `fit_params` to the classifier when calling `fit`."""
     X, y = make_classification(n_samples=100, random_state=0)
     fit_params = {
@@ -543,7 +545,7 @@ def test_cutoffclassifier_fit_params(objective_metric, fit_params_type):
     }
 
     classifier = CheckingClassifier(expected_fit_params=["a", "b"], random_state=0)
-    model = CutOffClassifier(
+    model = TunedThresholdClassifier(
         classifier, objective_metric=objective_metric, constraint_value=0.5
     )
     model.fit(X, y, **fit_params)
@@ -561,7 +563,7 @@ def test_cutoffclassifier_fit_params(objective_metric, fit_params_type):
 @pytest.mark.parametrize(
     "response_method", ["auto", "decision_function", "predict_proba"]
 )
-def test_cutoffclassifier_response_method_scorer_with_constraint_metric(
+def test_tunedthresholdclassifier_response_method_scorer_with_constraint_metric(
     objective_metric, constraint_value, response_method, global_random_seed
 ):
     """Check that we use the proper scorer and forwarding the requested response method
@@ -571,7 +573,7 @@ def test_cutoffclassifier_response_method_scorer_with_constraint_metric(
     classifier = LogisticRegression()
 
     n_thresholds = 100
-    model = CutOffClassifier(
+    model = TunedThresholdClassifier(
         classifier,
         objective_metric=objective_metric,
         constraint_value=constraint_value,
@@ -605,7 +607,7 @@ def test_cutoffclassifier_response_method_scorer_with_constraint_metric(
             assert -20 < model.decision_threshold_ < 0
 
 
-def test_cutoffclassifier_objective_metric_dict(global_random_seed):
+def test_tunedthresholdclassifier_objective_metric_dict(global_random_seed):
     """Check that we can pass a custom objective metric."""
     X, y = make_classification(n_samples=500, random_state=global_random_seed)
     classifier = LogisticRegression()
@@ -617,7 +619,7 @@ def test_cutoffclassifier_objective_metric_dict(global_random_seed):
     # affect a high gain to true negative and force the classifier to mainly
     # predict the negative class.
     costs_and_again = {"tp": 0, "tn": 10, "fp": 0, "fn": 0}
-    model = CutOffClassifier(
+    model = TunedThresholdClassifier(
         classifier, objective_metric=costs_and_again, n_thresholds=n_thresholds
     )
     model.fit(X, y)
@@ -630,7 +632,7 @@ def test_cutoffclassifier_objective_metric_dict(global_random_seed):
 
     # use the true positive now
     costs_and_again = {"tp": 10, "tn": 0, "fp": 0, "fn": 0}
-    model = CutOffClassifier(
+    model = TunedThresholdClassifier(
         classifier, objective_metric=costs_and_again, n_thresholds=n_thresholds
     )
     model.fit(X, y)
@@ -644,7 +646,7 @@ def test_cutoffclassifier_objective_metric_dict(global_random_seed):
     # flipping the `pos_label` to zero should force the classifier to always predict 0
     # and thus have a low threshold
     pos_label = 0
-    model = CutOffClassifier(
+    model = TunedThresholdClassifier(
         classifier,
         objective_metric=costs_and_again,
         n_thresholds=n_thresholds,
@@ -659,7 +661,7 @@ def test_cutoffclassifier_objective_metric_dict(global_random_seed):
     assert np.mean(model.predict(X) == 0) > 0.9
 
 
-def test_cutoffclassifier_sample_weight_costs_and_again():
+def test_tunedthresholdclassifier_sample_weight_costs_and_again():
     """Check that we dispatch the `sample_weight` to the scorer when computing the
     confusion matrix."""
     X, y = load_iris(return_X_y=True)
@@ -676,16 +678,20 @@ def test_cutoffclassifier_sample_weight_costs_and_again():
     estimator = LogisticRegression().fit(X, y)
     costs_and_again = {"tp": 1, "tn": 1, "fp": -1, "fn": -1}
 
-    model_repeat = CutOffClassifier(estimator, cv=cv, objective_metric=costs_and_again)
+    model_repeat = TunedThresholdClassifier(
+        estimator, cv=cv, objective_metric=costs_and_again
+    )
     model_repeat.fit(X_repeated, y_repeated, sample_weight=None)
 
-    model_sw = CutOffClassifier(estimator, cv=cv, objective_metric=costs_and_again)
+    model_sw = TunedThresholdClassifier(
+        estimator, cv=cv, objective_metric=costs_and_again
+    )
     model_sw.fit(X, y, sample_weight=sample_weight)
 
     assert model_repeat.objective_score_ == pytest.approx(model_sw.objective_score_)
 
 
-def test_cutoffclassifier_cv_zeros_sample_weights_equivalence():
+def test_tunedthresholdclassifier_cv_zeros_sample_weights_equivalence():
     """Check that passing removing some sample from the dataset `X` is
     equivalent to passing a `sample_weight` with a factor 0."""
     X, y = load_iris(return_X_y=True)
@@ -699,7 +705,7 @@ def test_cutoffclassifier_cv_zeros_sample_weights_equivalence():
     sample_weight[::2] = 1
 
     estimator = LogisticRegression()
-    model_without_weights = CutOffClassifier(estimator, cv=2)
+    model_without_weights = TunedThresholdClassifier(estimator, cv=2)
     model_with_weights = clone(model_without_weights)
 
     model_with_weights.fit(X, y, sample_weight=sample_weight)
@@ -714,14 +720,14 @@ def test_cutoffclassifier_cv_zeros_sample_weights_equivalence():
     assert_allclose(y_pred_with_weights, y_pred_without_weights)
 
 
-def test_cutoffclassifier_error_constant_learner():
+def test_tunedthresholdclassifier_error_constant_learner():
     """Check that we raise an error message when providing an estimator that predicts
     only a single class."""
     X, y = make_classification(random_state=0)
     estimator = DummyClassifier(strategy="constant", constant=1)
     err_msg = "The provided estimator makes constant predictions."
     with pytest.raises(ValueError, match=err_msg):
-        CutOffClassifier(estimator).fit(X, y)
+        TunedThresholdClassifier(estimator).fit(X, y)
 
 
 @pytest.mark.parametrize(
@@ -729,7 +735,9 @@ def test_cutoffclassifier_error_constant_learner():
     ["max_precision_at_recall_constraint", "max_recall_at_precision_constraint"],
 )
 @pytest.mark.parametrize("pos_label", [0, 1])
-def test_cutoffclassifier_pos_label_precision_recall(objective_metric, pos_label):
+def test_tunedthresholdclassifier_pos_label_precision_recall(
+    objective_metric, pos_label
+):
     """Check that `pos_label` is dispatched correctly by checking the precision and
     recall score found during the optimization and the one found at `predict` time."""
     X, y = make_classification(n_samples=5_000, weights=[0.6, 0.4], random_state=42)
@@ -738,7 +746,7 @@ def test_cutoffclassifier_pos_label_precision_recall(objective_metric, pos_label
     estimator = LogisticRegression().fit(X, y)
 
     constraint_value = 0.7
-    model = CutOffClassifier(
+    model = TunedThresholdClassifier(
         estimator,
         objective_metric=objective_metric,
         constraint_value=constraint_value,
@@ -762,7 +770,7 @@ def test_cutoffclassifier_pos_label_precision_recall(objective_metric, pos_label
     "objective_metric", ["max_tnr_at_tpr_constraint", "max_tpr_at_tnr_constraint"]
 )
 @pytest.mark.parametrize("pos_label", [0, 1])
-def test_cutoffclassifier_pos_label_tnr_tpr(objective_metric, pos_label):
+def test_tunedthresholdclassifier_pos_label_tnr_tpr(objective_metric, pos_label):
     """Check that `pos_label` is dispatched correctly by checking the TNR and TPR
     score found during the optimization and the one found at `predict` time."""
     X, y = make_classification(n_samples=5_000, weights=[0.6, 0.4], random_state=42)
@@ -771,7 +779,7 @@ def test_cutoffclassifier_pos_label_tnr_tpr(objective_metric, pos_label):
     estimator = LogisticRegression().fit(X, y)
 
     constraint_value = 0.7
-    model = CutOffClassifier(
+    model = TunedThresholdClassifier(
         estimator,
         objective_metric=objective_metric,
         constraint_value=constraint_value,
@@ -803,7 +811,7 @@ def test_cutoffclassifier_pos_label_tnr_tpr(objective_metric, pos_label):
     ["string", "scorer_without_pos_label", "scorer_with_pos_label"],
 )
 @pytest.mark.parametrize("pos_label", [0, 1])
-def test_cutoffclassifier_pos_label_single_metric(pos_label, metric_type):
+def test_tunedthresholdclassifier_pos_label_single_metric(pos_label, metric_type):
     """Check that `pos_label` is dispatched correctly when getting a scorer linked to
     a known metric. By default, the scorer in scikit-learn only have a default value
     for `pos_label` which is 1.
@@ -820,7 +828,7 @@ def test_cutoffclassifier_pos_label_single_metric(pos_label, metric_type):
     else:  # metric_type == "scorer_with_pos_label"
         objective_metric = make_scorer(precision_score, pos_label=pos_label)
 
-    model = CutOffClassifier(
+    model = TunedThresholdClassifier(
         estimator,
         objective_metric=objective_metric,
         cv="prefit",

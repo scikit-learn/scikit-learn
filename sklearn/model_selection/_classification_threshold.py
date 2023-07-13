@@ -151,7 +151,7 @@ def _fit_and_score(
     return scorer(classifier, X_val, y_val, sample_weight=sw_val)
 
 
-class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
+class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     """Decision threshold tuning for binary classification.
 
     This estimator post-tunes the decision threshold (cut-off point) that is
@@ -160,7 +160,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     class. The tuning is done by maximizing a binary metric, potentially
     constrained by a another metric.
 
-    Read more in the :ref:`User Guide <cutoffclassifier>`.
+    Read more in the :ref:`User Guide <TunedThresholdClassifier>`.
 
     .. versionadded:: 1.3
 
@@ -242,7 +242,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
 
             This option should only be used when the set used to fit `estimator` is
             different from the one used to tune the cut-off point (by calling
-            :meth:`CutOffClassifier.fit`).
+            :meth:`TunedThresholdClassifier.fit`).
 
     refit : "auto" or bool, default="auto"
         Whether or not to refit the classifier on the entire training set once
@@ -307,7 +307,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.metrics import classification_report
-    >>> from sklearn.model_selection import CutOffClassifier, train_test_split
+    >>> from sklearn.model_selection import TunedThresholdClassifier, train_test_split
     >>> X, y = make_classification(
     ...     n_samples=1_000, weights=[0.9, 0.1], class_sep=0.8, random_state=42
     ... )
@@ -325,7 +325,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
        macro avg       0.87      0.72      0.77       250
     weighted avg       0.93      0.93      0.92       250
     <BLANKLINE>
-    >>> classifier_tuned = CutOffClassifier(
+    >>> classifier_tuned = TunedThresholdClassifier(
     ...     classifier, objective_metric="max_precision_at_recall_constraint",
     ...     constraint_value=0.7,
     ... ).fit(X_train, y_train)
@@ -796,7 +796,7 @@ class CutOffClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
                 "check_sample_weights_invariance": (
                     "Due to the cross-validation and sample ordering, removing a sample"
                     " is not strictly equal to putting is weight to zero. Specific unit"
-                    " tests are added for CutOffClassifier specifically."
+                    " tests are added for TunedThresholdClassifier specifically."
                 ),
             },
         }

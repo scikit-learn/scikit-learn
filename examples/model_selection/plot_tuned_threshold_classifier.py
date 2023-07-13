@@ -15,7 +15,7 @@ In addition, a cost-matrix is provided that specifies the cost of
 misclassification. Specifically, misclassifying a "bad" credit as "good" is five
 times more costly than misclassifying a "good" credit as "bad".
 
-We use the :class:`~sklearn.model_selection.CutOffClassifier` to select the
+We use the :class:`~sklearn.model_selection.TunedThresholdClassifier` to select the
 cut-off point of the decision function that minimizes the provided business
 cost.
 
@@ -259,7 +259,7 @@ scoring["cost_gain"](model, X_test, y_test)
 # To find the optimal one, we need to compute the cost-gain using the business
 # metric for all possible cut-off points and choose the best. This strategy can
 # be quite tedious to implement by hand, but the
-# :class:`~sklearn.metrics.CutOffClassifier` class is here to help us. It
+# :class:`~sklearn.metrics.TunedThresholdClassifier` class is here to help us. It
 # automatically computes the cost-gain for all possible cut-off points and
 # optimizes for the `objective_metric`.
 #
@@ -268,14 +268,14 @@ scoring["cost_gain"](model, X_test, y_test)
 # Tuning the cut-off point
 # ------------------------
 #
-# We use :class:`~sklearn.model_selection.CutOffClassifier` to tune the cut-off
+# We use :class:`~sklearn.model_selection.TunedThresholdClassifier` to tune the cut-off
 # point. We need to provide the business metric to optimize as well as the
 # positive label. Internally, the optimum cut-off point is chosen such that it
 # maximizes the business metric via cross-validation. By default a 5-fold
 # stratified cross-validation is used.
-from sklearn.model_selection import CutOffClassifier
+from sklearn.model_selection import TunedThresholdClassifier
 
-model_tuned = CutOffClassifier(
+model_tuned = TunedThresholdClassifier(
     estimator=model,
     pos_label=pos_label,
     objective_metric=cost_gain_matrix,
@@ -376,13 +376,13 @@ scoring["cost_gain"](model_tuned, X_test, y_test)
 # We observe that the decision generalized on the testing set leading to a better
 # business score.
 #
-# .. _cutoffclassifier_no_cv:
+# .. _tunedthresholdclassifier_no_cv:
 #
 # Consideration regarding model refitting and cross-validation
 # ------------------------------------------------------------
 #
 # In the above experiment, we use the default setting of the
-# :class:`~sklearn.model_selection.CutOffClassifier`. In particular, the cut-off
+# :class:`~sklearn.model_selection.TunedThresholdClassifier`. In particular, the cut-off
 # point is tuned using a 5-fold stratified cross-validation. Also, the
 # underlying predictive model is refitted on the entire training data once the
 # cut-off point is chosen.
@@ -477,12 +477,12 @@ _ = fig.suptitle("Tuned GBDT model without refitting and using the entire datase
 # the same set as the model was trained on, and this is the reason for the observed
 # overfitting.
 #
-# This option should therefore be used with caution. One needs to make sure that the
-# data providing at fitting time to the
-# :class:`~sklearn.model_selection.CutOffClassifier` is not the same as the data used to
-# train the underlying classifier. This could happen sometimes when the idea is just
-# to tune the predictive model on a completely new validation set without a costly
-# complete refit.
+# This option should therefore be used with caution. One needs to make sure
+# that the data providing at fitting time to the
+# :class:`~sklearn.model_selection.TunedThresholdClassifier` is not the same as
+# the data used to train the underlying classifier. This could happen sometimes
+# when the idea is just to tune the predictive model on a completely new
+# validation set without a costly complete refit.
 #
 # In the case that cross-validation is too costly, a potential alternative is to use
 # a single train-test split by providing a floating number in range `[0, 1]` to the
