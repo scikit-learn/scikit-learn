@@ -88,6 +88,13 @@ Changelog
   ``**score_params`` which are passed to the underlying scorer.
   :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Feature| :class:`pipeline.Pipeline` now supports metadata routing according
+  to :ref:`metadata routing user guide <metadata_routing>`. :pr:`26789` by
+  `Adrin Jalali`_.
+
 :mod:`sklearn.tree`
 ...................
 
