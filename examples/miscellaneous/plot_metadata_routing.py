@@ -492,8 +492,17 @@ class ExampleTransformer(TransformerMixin, BaseEstimator):
         check_metadata(self, groups=groups)
         return X
 
+    def fit_transform(self, X, y, sample_weight=None, groups=None):
+        return self.fit(X, y, sample_weight).transform(X, groups)
+
 
 # %%
+# Note that in the above example, we have implemented ``fit_transform`` which
+# calls ``fit`` and ``transform`` with the appropriate metadata. This is only
+# required if ``transform`` accepts metadata, since the default ``fit_transform``
+# implementation in :class:`~base.TransformerMixin` doesn't pass metadata to
+# ``transform``.
+#
 # Now we can test our pipeline, and see if metadata is correctly passed around.
 # This example uses our simple pipeline, and our transformer, and our
 # consumer+router estimator which uses our simple classifier.
