@@ -238,7 +238,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         .. warning::
             Using `cv="prefit"` and passing the same dataset for fitting `estimator`
             and tuning the cut-off point is subject to undesired overfitting. You can
-            refer to :ref:`cutoffclassifier_no_cv` for an example.
+            refer to :ref:`tunedthresholdclassifier_no_cv` for an example.
 
             This option should only be used when the set used to fit `estimator` is
             different from the one used to tune the cut-off point (by calling
