@@ -1,7 +1,7 @@
 import typing
 
+from ._classification_threshold import CutOffClassifier
 from ._plot import LearningCurveDisplay, ValidationCurveDisplay
-from ._prediction import CutOffClassifier
 from ._search import GridSearchCV, ParameterGrid, ParameterSampler, RandomizedSearchCV
 from ._split import (
     BaseCrossValidator,
