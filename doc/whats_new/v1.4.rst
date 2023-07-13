@@ -79,7 +79,7 @@ Changelog
   result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.neighbors`
-.......................
+........................
 
 - |Fix| :class:`neighbors.NearestNeighbors` now correctly works with `p < 1` regardless
   of the `dtype` of `X`. :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
