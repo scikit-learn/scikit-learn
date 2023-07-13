@@ -22,7 +22,8 @@ cost.
 .. topic:: References
 
     .. [1] "Statlog (German Credit Data) Data Set", UCI Machine Learning Repository,
-       `Link <https://archive.ics.uci.edu/ml/datasets/Statlog+%28German+Credit+Data%29>`_.  # noqa
+       `Link
+       <https://archive.ics.uci.edu/ml/datasets/Statlog+%28German+Credit+Data%29>`_.
 """
 
 # %%
@@ -82,6 +83,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_sta
 # From these four metrics, scikit-learn does not provide a scorer for the FPR. We
 # therefore need to define a small custom function to compute it.
 import numpy as np
+
 from sklearn.metrics import confusion_matrix, make_scorer, precision_score, recall_score
 
 
@@ -155,7 +157,8 @@ scoring["cost_gain"] = make_scorer(
 # columns, we use the helper function
 # :func:`~sklearn.compose.make_column_selector` and the fact that the
 # categorical features are stored as `category` dtype.
-from sklearn.compose import ColumnTransformer, make_column_selector as selector
+from sklearn.compose import ColumnTransformer
+from sklearn.compose import make_column_selector as selector
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OrdinalEncoder
@@ -195,6 +198,7 @@ model.fit(X_train, y_train)
 # We evaluate the performance of our predictive model using the ROC and Precision-Recall
 # curves.
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import PrecisionRecallDisplay, RocCurveDisplay
 
 fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(14, 6))
