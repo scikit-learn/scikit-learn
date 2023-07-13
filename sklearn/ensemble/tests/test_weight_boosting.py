@@ -475,9 +475,9 @@ def test_multidimensional_X():
     """
     rng = np.random.RandomState(0)
 
-    X = rng.randn(50, 3, 3)
-    yc = rng.choice([0, 1], 50)
-    yr = rng.randn(50)
+    X = rng.randn(51, 3, 3)
+    yc = rng.choice([0, 1], 51)
+    yr = rng.randn(51)
 
     boost = AdaBoostClassifier(DummyClassifier(strategy="most_frequent"))
     boost.fit(X, yc)
@@ -663,3 +663,17 @@ def test_deprecated_base_estimator_parameters_can_be_set():
 
     with pytest.warns(FutureWarning, match="Parameter 'base_estimator' of"):
         clf.set_params(base_estimator__max_depth=2)
+
+
+# TODO(1.6): remove
+def test_deprecated_samme_r_algorithm():
+    adaboost_clf = AdaBoostClassifier(
+        estimator=DecisionTreeClassifier(max_leaf_nodes=4, random_state=1),
+        n_estimators=200,
+        random_state=42,
+    )
+    with pytest.warns(
+        FutureWarning,
+        match=re.escape("The `SAMME.R` algorithm (the default) is deprecated"),
+    ):
+        adaboost_clf.fit(X, y_class)

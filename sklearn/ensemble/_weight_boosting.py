@@ -40,7 +40,7 @@ from ..base import (
 from ..metrics import accuracy_score, r2_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import _safe_indexing, check_random_state
-from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from ..utils.extmath import softmax, stable_cumsum
 from ..utils.validation import (
     _check_sample_weight,
@@ -341,13 +341,15 @@ def _samme_proba(estimator, n_classes, X):
 class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     """An AdaBoost classifier.
 
-    An AdaBoost [1] classifier is a meta-estimator that begins by fitting a
+    An AdaBoost [1]_ classifier is a meta-estimator that begins by fitting a
     classifier on the original dataset and then fits additional copies of the
     classifier on the same dataset but where the weights of incorrectly
     classified instances are adjusted such that subsequent classifiers focus
     more on difficult cases.
 
-    This class implements the algorithm known as AdaBoost-SAMME [2].
+    # TODO(1.6) Adjust sentence, as SAMME.R will be deprecated.
+    This class implements the algorithm known as AdaBoost-SAMME.R as a
+    default algorithm. [2]_
 
     Read more in the :ref:`User Guide <adaboost>`.
 
@@ -382,6 +384,10 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         If 'SAMME' then use the SAMME discrete boosting algorithm.
         The SAMME.R algorithm typically converges faster than SAMME,
         achieving a lower test error with fewer boosting iterations.
+
+        .. deprecated:: 1.4
+            `SAMME.R` is deprecated and will be removed in 1.6.
+            'SAMME' will be the only algorithm then.
 
     random_state : int, RandomState instance or None, default=None
         Controls the random seed given at each `estimator` at each
@@ -474,7 +480,9 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
            on-Line Learning and an Application to Boosting", 1995.
 
-    .. [2] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
+    .. [2] :doi:`J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class adaboost."
+           Statistics and its Interface 2.3 (2009): 349-360.
+           <10.4310/SII.2009.v2.n3.a8>`
 
     Examples
     --------
@@ -492,11 +500,16 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     0.983...
     """
 
+    # TODO(1.6): Remove _parameter_constraints for "algorithm"
     _parameter_constraints: dict = {
         **BaseWeightBoosting._parameter_constraints,
-        "algorithm": [StrOptions({"SAMME", "SAMME.R"})],
+        "algorithm": [
+            StrOptions({"SAMME", "SAMME.R"}),
+            Hidden(StrOptions({"deprecated"})),
+        ],
     }
 
+    # TODO(1.6): Change default "algorithm" value to "SAMME"
     def __init__(
         self,
         estimator=None,
@@ -521,8 +534,18 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         """Check the estimator and set the estimator_ attribute."""
         super()._validate_estimator(default=DecisionTreeClassifier(max_depth=1))
 
-        #  SAMME-R requires predict_proba-enabled base estimators
-        if self.algorithm == "SAMME.R":
+        # TODO(1.6): Remove, as "SAMME.R" value for "algorithm" param will be
+        #  deprecated in 1.6
+        # SAMME-R requires predict_proba-enabled base estimators
+        if self.algorithm != "SAMME":
+            warnings.warn(
+                (
+                    "The `SAMME.R` algorithm (the default) is deprecated and will be"
+                    " removed in 1.6. Use the SAMME algorithm to circumvent this"
+                    " warning."
+                ),
+                FutureWarning,
+            )
             if not hasattr(self.estimator_, "predict_proba"):
                 raise TypeError(
                     "AdaBoostClassifier with algorithm='SAMME.R' requires "
@@ -531,11 +554,17 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
                     "Please change the base estimator or set "
                     "algorithm='SAMME' instead."
                 )
+
         if not has_fit_parameter(self.estimator_, "sample_weight"):
             raise ValueError(
                 f"{self.estimator.__class__.__name__} doesn't support sample_weight."
             )
 
+    # TODO(1.6): Redefine the scope of the `_boost` and `_boost_discrete`
+    # functions to be the same since SAMME will be the default value for the
+    # "algorithm" parameter in version 1.6. Thus, a distinguishing function is
+    # no longer needed. (Or adjust code here, if another algorithm, shall be
+    # used instead of SAMME.R.)
     def _boost(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost.
 
@@ -581,6 +610,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         else:  # elif self.algorithm == "SAMME":
             return self._boost_discrete(iboost, X, y, sample_weight, random_state)
 
+    # TODO(1.6): Remove function. The `_boost_real` function won't be used any
+    # longer, because the SAMME.R algorithm will be deprecated in 1.6.
     def _boost_real(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost using the SAMME.R real algorithm."""
         estimator = self._make_estimator(random_state=random_state)
@@ -773,6 +804,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
 
+        # TODO(1.6): Remove, because "algorithm" param will be deprecated in 1.6
         if self.algorithm == "SAMME.R":
             # The weights are all 1. for SAMME.R
             pred = sum(
@@ -823,6 +855,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         for weight, estimator in zip(self.estimator_weights_, self.estimators_):
             norm += weight
 
+            # TODO(1.6): Remove, because "algorithm" param will be deprecated in
+            # 1.6
             if self.algorithm == "SAMME.R":
                 # The weights are all 1. for SAMME.R
                 current_pred = _samme_proba(estimator, n_classes, X)
