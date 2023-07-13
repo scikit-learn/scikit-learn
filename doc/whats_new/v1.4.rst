@@ -43,6 +43,7 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+
 :mod:`sklearn.base`
 ...................
 
@@ -63,6 +64,12 @@ Changelog
   when using a custom initialization. The default value of this parameter will change
   from `None` to `auto` in version 1.6.
   :pr:`26634` by :user:`Alexandre Landeau <AlexL>` and :user:`Alexandre Vigny <avigny>`.
+
+- |Enhancement| :class:`decomposition.PCA` now supports the Array API for the
+  `full` and `randomized` solvers (with QR power iterations). See
+  :ref:`array_api` for more details.
+  :pr:`26315` by :user:`Mateusz Sokół <mtsokol>` and
+  :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.ensemble`
 .......................
