@@ -183,6 +183,13 @@ def test_clone_nan():
     assert clf.empty is clf2.empty
 
 
+def test_clone_dict():
+    # test that clone creates a clone of a dict
+    orig = {"a": MyEstimator()}
+    cloned = clone(orig)
+    assert orig["a"] is not cloned["a"]
+
+
 def test_clone_sparse_matrices():
     sparse_matrix_classes = [
         cls

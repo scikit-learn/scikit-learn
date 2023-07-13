@@ -710,14 +710,11 @@ def _fit_and_score(
     fit_params = _check_fit_params(X, fit_params, train)
 
     if parameters is not None:
-        # clone after setting parameters in case any parameters
-        # are estimators (like pipeline steps)
-        # because pipeline doesn't clone steps in fit
-        cloned_parameters = {}
-        for k, v in parameters.items():
-            cloned_parameters[k] = clone(v, safe=False)
-
-        estimator = estimator.set_params(**cloned_parameters)
+        # here we clone the parameters, since sometimes the parameters
+        # themselves might be estimators, e.g. when we search over different
+        # estimators in a pipeline.
+        # ref: https://github.com/scikit-learn/scikit-learn/pull/26786
+        estimator = estimator.set_params(**clone(parameters, safe=False))
 
     start_time = time.time()
 
