@@ -159,12 +159,11 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
         intp_t X_end,
     ) noexcept nogil:
         cdef:
-            intp_t idx, sample_index
+            intp_t idx
 
         for idx in range(X_start, X_end):
-            sample_index = X_start + idx
             self.weighted_histogram_mode(
-                sample_index=sample_index,
+                sample_index=idx,
                 k=deref(self.neigh_indices)[idx].size(),
                 indices=deref(self.neigh_indices)[idx].data(),
                 distances=deref(self.neigh_distances)[idx].data(),
