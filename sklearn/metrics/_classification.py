@@ -226,13 +226,14 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
         "labels": ["array-like", None],
+        "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
         "normalize": [StrOptions({"true", "pred", "all"}), None],
     },
     prefer_skip_nested_validation=True,
 )
 def confusion_matrix(
-    y_true, y_pred, *, labels=None, sample_weight=None, normalize=None
+    y_true, y_pred, *, labels=None, pos_label=1, sample_weight=None, normalize=None
 ):
     """Compute confusion matrix to evaluate the accuracy of a classification.
 
@@ -259,6 +260,11 @@ def confusion_matrix(
         or select a subset of labels.
         If ``None`` is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used in sorted order.
+
+    pos_label : int, float, bool or str, default=1
+        Only taken into account when the data is binary. Ignore otherwise.
+
+        .. versionadded:: 1.4
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -381,6 +387,9 @@ def confusion_matrix(
         elif normalize == "all":
             cm = cm / cm.sum()
         cm = np.nan_to_num(cm)
+
+    if n_labels == 2 and pos_label != labels[-1]:
+        cm = cm[::-1, ::-1]
 
     return cm
 
