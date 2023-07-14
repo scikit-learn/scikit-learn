@@ -108,7 +108,7 @@ Changelog
 ..............................
 
 - |MajorFeature| :class:`model_selection.TunedThresholdClassifier` calibrates
-  decision threshold function of a binary classifier by maximizing a
+  the decision threshold function of a binary classifier by maximizing a
   classification metric through cross-validation.
   :pr:`26120` by :user:`Guillaume Lemaitre <glemaitre>`.
 

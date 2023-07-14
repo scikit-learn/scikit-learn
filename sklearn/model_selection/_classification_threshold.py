@@ -71,7 +71,7 @@ def _fit_and_score(
     Parameters
     ----------
     classifier : estimator instance
-        The classifier to fit and used for scoring. If `classifier` is already fitted,
+        The classifier to fit and use for scoring. If `classifier` is already fitted,
         it will be used as is.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -163,7 +163,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
     Parameters
     ----------
     estimator : estimator instance
-        The classifier, fitted or not fitted, for which we want to optimize
+        The classifier, fitted or not, for which we want to optimize
         the decision threshold used during `predict`.
 
     strategy : {"optimum", "constant"}, default="optimum"
@@ -192,7 +192,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
 
     constraint_value : float, default=None
         The value associated with the `objective_metric` metric for which we
-        want to find the decision threshold when `objective_metric` is equal one of
+        want to find the decision threshold when `objective_metric` is either
         `"max_tnr_at_tpr_constraint"`, `"max_tpr_at_tnr_constraint"`,
         `"max_precision_at_recall_constraint"`, or
         `"max_recall_at_precision_constraint"`.
