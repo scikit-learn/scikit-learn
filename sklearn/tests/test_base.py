@@ -12,7 +12,13 @@ from numpy.testing import assert_allclose
 
 import sklearn
 from sklearn import config_context, datasets
-from sklearn.base import BaseEstimator, TransformerMixin, clone, is_classifier
+from sklearn.base import (
+    BaseEstimator,
+    OutlierMixin,
+    TransformerMixin,
+    clone,
+    is_classifier,
+)
 from sklearn.decomposition import PCA
 from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.model_selection import GridSearchCV
@@ -861,3 +867,55 @@ def test_dataframe_protocol(constructor_name, minversion):
     df_bad = _convert_container(data, constructor_name, columns_name=bad_names)
     with pytest.raises(ValueError, match="The feature names should match"):
         no_op.transform(df_bad)
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_transformer_fit_transform_with_metadata_in_transform():
+    """Test that having a transformer with metadata for transform raises a
+    warning when calling fit_transform."""
+
+    class CustomTransformer(BaseEstimator, TransformerMixin):
+        def fit(self, X, y=None, prop=None):
+            return self
+
+        def transform(self, X, prop=None):
+            return X
+
+    # passing the metadata to `fit_transform` should raise a warning since it
+    # could potentially be consumed by `transform`
+    with pytest.warns(UserWarning, match="`transform` method which consumes metadata"):
+        CustomTransformer().set_transform_request(prop=True).fit_transform(
+            [[1]], [1], prop=1
+        )
+
+    # not passing a metadata which can potentially be consumed by `transform` should
+    # not raise a warning
+    with warnings.catch_warnings(record=True) as record:
+        CustomTransformer().set_transform_request(prop=True).fit_transform([[1]], [1])
+        assert len(record) == 0
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_outlier_mixin_fit_predict_with_metadata_in_predict():
+    """Test that having an OutlierMixin with metadata for predict raises a
+    warning when calling fit_predict."""
+
+    class CustomOutlierDetector(BaseEstimator, OutlierMixin):
+        def fit(self, X, y=None, prop=None):
+            return self
+
+        def predict(self, X, prop=None):
+            return X
+
+    # passing the metadata to `fit_predict` should raise a warning since it
+    # could potentially be consumed by `predict`
+    with pytest.warns(UserWarning, match="`predict` method which consumes metadata"):
+        CustomOutlierDetector().set_predict_request(prop=True).fit_predict(
+            [[1]], [1], prop=1
+        )
+
+    # not passing a metadata which can potentially be consumed by `predict` should
+    # not raise a warning
+    with warnings.catch_warnings(record=True) as record:
+        CustomOutlierDetector().set_predict_request(prop=True).fit_predict([[1]], [1])
+        assert len(record) == 0
