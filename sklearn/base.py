@@ -935,7 +935,7 @@ class TransformerMixin(_SetOutputMixin):
                         " method which consumes metadata, but `fit_transform` does not"
                         " forward metadata to `transform`. Please implement a custom"
                         " `fit_transform` method to forward metadata to `transform` as"
-                        " well.Alternatively, you can explicitly do"
+                        " well. Alternatively, you can explicitly do"
                         " `set_transform_request`and set all values to `False` to"
                         " disable metadata routed to `transform`, if that's an option."
                     ),
