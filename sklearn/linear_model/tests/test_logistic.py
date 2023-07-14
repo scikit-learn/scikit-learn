@@ -2079,11 +2079,13 @@ def test_liblinear_not_stuck():
 @pytest.mark.usefixtures("enable_slep006")
 def test_lr_cv_scores_differ_when_sample_weight_is_requested():
     """Test `sample_weight` is correctly passed to the scorer in
-    `LogisticRegressionCV.fit` by checking the difference in scores
-    with the case when `sample_weight` is not requested.
+    `LogisticRegressionCV.fit` and `LogisticRegressionCV.score`
+    by checking the difference in scores with the case when
+    `sample_weight` is not requested.
     """
     rng = np.random.RandomState(10)
     X, y = make_classification(n_samples=10, random_state=rng)
+    X_t, y_t = make_classification(n_samples=10, random_state=rng)
     sample_weight = np.ones(len(y))
     sample_weight[: len(y) // 2] = 2
     kwargs = {"sample_weight": sample_weight}
@@ -2098,6 +2100,11 @@ def test_lr_cv_scores_differ_when_sample_weight_is_requested():
     lr_cv2.fit(X, y, **kwargs)
 
     assert not np.allclose(lr_cv1.scores_[1], lr_cv2.scores_[1])
+
+    score_1 = lr_cv1.score(X_t, y_t, **kwargs)
+    score_2 = lr_cv2.score(X_t, y_t, **kwargs)
+
+    assert not np.allclose(score_1, score_2)
 
 
 def test_lr_cv_scores_without_enabling_metadata_routing():
