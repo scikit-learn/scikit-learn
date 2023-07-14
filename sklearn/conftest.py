@@ -12,6 +12,7 @@ import pytest
 from _pytest.doctest import DoctestItem
 from threadpoolctl import threadpool_limits
 
+from sklearn import config_context
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.datasets import (
     fetch_20newsgroups,
@@ -33,6 +34,13 @@ if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     )
 
 scipy_datasets_require_network = sp_version >= parse_version("1.10")
+
+
+@pytest.fixture
+def enable_slep006():
+    """Enable SLEP006 for all tests."""
+    with config_context(enable_metadata_routing=True):
+        yield
 
 
 def raccoon_face_or_skip():

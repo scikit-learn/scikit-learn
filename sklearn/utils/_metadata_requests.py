@@ -380,7 +380,7 @@ class MethodMetadataRequest:
 class MetadataRequest:
     """Contains the metadata request info of a consumer.
 
-    Instances of :class:`MethodMetadataRequest` are used in this class for each
+    Instances of `MethodMetadataRequest` are used in this class for each
     available method under `metadatarequest.{method}`.
 
     Consumer-only classes such as simple estimators return a serialized
@@ -617,7 +617,7 @@ class MethodMapping:
         Returns
         -------
         obj : MethodMapping
-            A :class:`~utils.metadata_requests.MethodMapping` instance
+            A :class:`~sklearn.utils.metadata_routing.MethodMapping` instance
             constructed from the given string.
         """
         routing = cls()
@@ -643,10 +643,10 @@ class MetadataRouter:
     This class is used by router objects to store and handle metadata routing.
     Routing information is stored as a dictionary of the form ``{"object_name":
     RouteMappingPair(method_mapping, routing_info)}``, where ``method_mapping``
-    is an instance of :class:`~utils.metadata_requests.MethodMapping` and
+    is an instance of :class:`~sklearn.utils.metadata_routing.MethodMapping` and
     ``routing_info`` is either a
-    :class:`~utils.metadata_requests.MetadataRequest` or a
-    :class:`~utils.metadata_requests.MetadataRouter` instance.
+    :class:`~utils.metadata_routing.MetadataRequest` or a
+    :class:`~utils.metadata_routing.MetadataRouter` instance.
 
     .. versionadded:: 1.3
 
@@ -676,7 +676,7 @@ class MetadataRouter:
         This method is used if the router is also a consumer, and hence the
         router itself needs to be included in the routing. The passed object
         can be an estimator or a
-        :class:``~utils.metadata_requests.MetadataRequest``.
+        :class:`~utils.metadata_routing.MetadataRequest`.
 
         A router should add itself using this method instead of `add` since it
         should be treated differently than the other objects to which metadata
@@ -713,12 +713,12 @@ class MetadataRouter:
         ----------
         method_mapping : MethodMapping or str
             The mapping between the child and the parent's methods. If str, the
-            output of :func:`~utils.metadata_requests.MethodMapping.from_str`
+            output of :func:`~sklearn.utils.metadata_routing.MethodMapping.from_str`
             is used.
 
         **objs : dict
             A dictionary of objects from which metadata is extracted by calling
-            :func:`~utils.metadata_requests.get_routing_for_object` on them.
+            :func:`~sklearn.utils.metadata_routing.get_routing_for_object` on them.
 
         Returns
         -------
@@ -802,7 +802,7 @@ class MetadataRouter:
         Returns
         -------
         params : Bunch
-            A :class:`~utils.Bunch` of {prop: value} which can be given to the
+            A :class:`~sklearn.utils.Bunch` of {prop: value} which can be given to the
             corresponding method.
         """
         res = Bunch()
@@ -941,8 +941,8 @@ def get_routing_for_object(obj=None):
     """Get a ``Metadata{Router, Request}`` instance from the given object.
 
     This function returns a
-    :class:`~utils.metadata_request.MetadataRouter` or a
-    :class:`~utils.metadata_request.MetadataRequest` from the given input.
+    :class:`~sklearn.utils.metadata_routing.MetadataRouter` or a
+    :class:`~sklearn.utils.metadata_routing.MetadataRequest` from the given input.
 
     This function always returns a copy or an instance constructed from the
     input, such that changing the output of this function will not change the
@@ -954,12 +954,12 @@ def get_routing_for_object(obj=None):
     ----------
     obj : object
         - If the object is already a
-            :class:`~utils.metadata_requests.MetadataRequest` or a
-            :class:`~utils.metadata_requests.MetadataRouter`, return a copy
+            :class:`~sklearn.utils.metadata_routing.MetadataRequest` or a
+            :class:`~sklearn.utils.metadata_routing.MetadataRouter`, return a copy
             of that.
         - If the object provides a `get_metadata_routing` method, return a copy
             of the output of that method.
-        - Returns an empty :class:`~utils.metadata_requests.MetadataRequest`
+        - Returns an empty :class:`~sklearn.utils.metadata_routing.MetadataRequest`
             otherwise.
 
     Returns
