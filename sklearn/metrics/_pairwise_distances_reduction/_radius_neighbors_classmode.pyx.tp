@@ -203,7 +203,7 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
                 "you can try using larger radius, "
                 "giving a label for outliers, "
                 "or considering removing them from your dataset."
-                % np.where(self.outliers)[0].tolist()
+                % np.where(self.outliers)[0]
             )
 
         if self.outliers_exist and self.outlier_index < 0:
