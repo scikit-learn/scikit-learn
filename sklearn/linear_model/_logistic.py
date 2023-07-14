@@ -2150,6 +2150,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             raise ValueError(
                 "score_params is only supported if enable_metadata_routing=True."
                 " See the User Guide for more information."
+                " https://scikit-learn.org/stable/metadata_routing.html"
             )
 
         scoring = self._get_scorer()
