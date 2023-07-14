@@ -1,51 +1,11 @@
-{# We redefine <html/> for "basic/layout.html" to add a default `data-theme` attribute when
- # a default mode has been set. This also improves compatibility when JavaScript is disabled.
- #}
-{% set html_tag %}
-<html{% if not html5_doctype %} xmlns="http://www.w3.org/1999/xhtml"{% endif %}{% if language is not none %} lang="{{ language }}"{% endif %} {% if default_mode %}data-theme="{{ default_mode }}"{% endif %}>
-{% endset %}
 {% extends "layout.html" %}
 {% set title = 'scikit-learn: machine learning in Python' %}
+
 {%- import "static/webpack-macros.html" as _webpack with context %}
-{%- block css %}
-  {# The data-cfasync attribute disables CloudFlare's Rocket loader so that #}
-  {# mode/theme are correctly set before the browser renders the page. #}
-  {# https://github.com/pydata/pydata-sphinx-theme/pull/1045 #}
-  <script data-cfasync="false">
-    document.documentElement.dataset.mode = localStorage.getItem("mode") || "{{ default_mode }}";
-    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
-  </script>
-  {{ _webpack.head_pre_assets() }}
-  {{ _webpack.head_pre_icons() }}
-  {{- css() }}
-  {{ _webpack.head_js_preload() }}
-{%- endblock css %}
-{%- block extrahead %}
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <meta name="docsearch:language" content="{{ language }}"/>
-{%- endblock extrahead %}
-{% block content %}
-{# checkbox to toggle primary sidebar #}
-<input type="checkbox"
-        class="sidebar-toggle"
-        name="__primary"
-        id="__primary"/>
-<label class="overlay overlay-primary" for="__primary"></label>
-{# A search field pop-up that will only show when the search button is clicked #}
-<div class="search-button__wrapper">
-  <div class="search-button__overlay"></div>
-  <div class="search-button__search-container">{% include "../components/search-field.html" %}</div>
-</div>
+
 {% block docs_navbar %}
-<nav class="bd-header navbar navbar-expand-lg bd-navbar">
-  {%- include "sections/header.html" %}
-</nav>
-{% endblock docs_navbar %}
-<div class="bd-container sk-landing">
-{# Primary sidebar #}
-<div class="bd-sidebar-primary bd-sidebar{% if not sidebars %} hide-on-wide{% endif %}">
-{% include "sections/sidebar-primary.html" %}
-</div>
+    {{ super() }}
+
 <div class="container-fluid sk-landing-bg py-3">
   <div class="container sk-landing-container">
     <div class="row">
@@ -66,7 +26,9 @@
     </div>
   </div>
 </div>
+{% endblock docs_navbar %}
 
+{% block docs_main %}
 <div class="container sk-landing-container pt-3 body" role="main">
   <div class="row no-gutters">
     <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
@@ -274,6 +236,8 @@
     </div>
   </div>
 </div>
+{% endblock docs_main %}
+{%- block footer %}
 <div class="container-fluid py-3">
   <div class="container sk-landing-container">
         <a class="sk-footer-funding-link" href="about.html#funding">
@@ -296,6 +260,6 @@
   </div>
 </div>
 </div>
+{%- endblock footer %}
 {# Scripts placed at the end of the page to cut down on time to first content #}
 {%- block scripts_end %}{{ _webpack.body_post() }}{%- endblock scripts_end %}
-{% endblock %}

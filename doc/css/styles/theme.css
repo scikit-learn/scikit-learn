@@ -1,3 +1,34 @@
+/** Adapt boostrap colors ************************/
+:root {
+    /* Change colors on boostrap elements to use the theme's colors */
+    --bs-nav-pills-link-active-bg: var(--pst-color-primary);
+    --bs-nav-link-color:  var(--pst-color-primary);
+    --bs-nav-link-hover-color: var(--pst-color-link-hover);
+}
+
+.nav-pills .nav-link.active, .nav-pills .show>.nav-link {
+    background-color:var(--pst-color-primary);
+}
+
+.nav-link {
+    color:var(--pst-color-primary);
+}
+
+.nav-link:focus, .nav-link:hover {
+  color: var(--pst-color-link-hover);
+}
+
+div.card {
+  background-color: var(--pst-color-background);
+  border-color: var(--pst-color-muted-highlight);
+}
+
+/* clearfix */
+
+div.clearer {
+  clear: both;
+}
+
 /* Anchor links */
 
 a.headerlink {
@@ -44,18 +75,6 @@ strong {
   font-weight: bold;
 }
 
-a code {
-  color: inherit;
-}
-
-a code {
-  background-color: transparent;
-  font-weight: bold;
-  color: #2878A2;
-  border-radius: 0;
-  padding: 0;
-  white-space: nowrap;
-}
 
 img {
    max-width: 100%;
@@ -84,26 +103,6 @@ a.sk-landing-btn:hover {
 .sk-page-content div.logo {
   float: left;
   width: 200px;
-}
-
-@media screen and (min-width: 992px) {
-  .sk-page-content {
-    padding-left: 2rem!important;
-    padding-right: 2rem!important;
-  }
-}
-
-@media screen and (min-width: 1200px) {
-  .sk-px-xl-4 {
-    padding-left: 1.3rem!important;
-    padding-right: 1.3rem!important;
-  }
-}
-
-/* clearfix */
-
-div.clearer {
-  clear: both;
 }
 
 /* details / summary */
@@ -197,6 +196,7 @@ div.sk-landing-container .text-white {
 }
 
 ul.sk-landing-header-body {
+  color: black;
   margin-top: auto;
   margin-bottom: auto;
   font-size: 1.2rem;
@@ -272,76 +272,6 @@ a.sk-footer-funding-link:hover {
 
 p.text-right {
   text-align: right !important;
-}
-
-/* api docs */
-
-.class > dt, .function > dt, .method > dt {
-  padding: 0.5rem;
-  background-color: #f8f8f8;
-  font-weight: normal;
-  border: 1px solid rgba(0, 0, 0, 0.125);
-  border-left: 2px solid #ff9c34;
-  overflow: auto;
-  margin-bottom: 1rem;
-}
-
-.class > dt::after, .function > dt::after, .method > dt::after {
-  overflow: auto;
-}
-
-span.descname {
-  font-weight: bold;
-  background-color: transparent;
-  padding: 0;
-  font-family: monospace;
-}
-
-span.descclassname {
-  background-color: transparent;
-  font-family: monospace;
-}
-
-.viewcode-link {
-  float: right;
-}
-
-.classifier {
-  font-style: italic;
-}
-
-.classifier::before {
-  font-style: normal;
-  margin: 0 0.3em;
-  content: ":";
-  display: inline-block;
-}
-
-dd {
-  padding-left: 1rem;
-}
-
-dl.class > dd {
-  padding-left: 0;
-}
-
-@media screen and (min-width: 768px) {
-  dl.class > dd {
-    padding-left: 1rem;
-  }
-}
-
-.rubric {
-  font-weight: bold;
-  margin-top: 1rem;
-}
-
-ul.simple li p, ol.simple li p {
-  margin-bottom: 0;
-}
-
-ul.simple, ol.simple {
-  padding-left: 1.5rem;
 }
 
 /* info boxes */
