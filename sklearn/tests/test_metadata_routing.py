@@ -109,12 +109,26 @@ def record_metadata(obj, method, record_default=True, **kwargs):
     obj._records[method] = kwargs
 
 
-def check_recorded_metadata(obj, method, **kwargs):
-    """Check whether the expected metadata is passed to the object's method."""
+def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
+    """Check whether the expected metadata is passed to the object's method.
+
+    Parameters
+    ----------
+    split_params : tuple, default=empty
+        specifies any parameters which are to be checked as being a subset
+        of the original values.
+
+    """
     records = getattr(obj, "_records", dict()).get(method, dict())
     assert set(kwargs.keys()) == set(records.keys())
     for key, value in kwargs.items():
-        assert records[key] is value
+        recorded_value = records[key]
+        # The following condition is used to check for any specified parameters
+        # being a subset of the original values
+        if key in split_params and recorded_value is not None:
+            assert np.isin(recorded_value, value).all()
+        else:
+            assert recorded_value is value
 
 
 class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
@@ -714,6 +728,47 @@ def test_get_routing_for_object():
     mr = get_routing_for_object(Consumer())
     assert_request_is_empty(mr, exclude="fit")
     assert mr.fit.requests == {"prop": None}
+
+
+def test_metadata_request_consumes_method():
+    """Test that MetadataRequest().consumes() method works as expected."""
+    request = MetadataRouter(owner="test")
+    assert request.consumes(method="fit", params={"foo"}) == set()
+
+    request = MetadataRequest(owner="test")
+    request.fit.add_request(param="foo", alias=True)
+    assert request.consumes(method="fit", params={"foo"}) == {"foo"}
+
+    request = MetadataRequest(owner="test")
+    request.fit.add_request(param="foo", alias="bar")
+    assert request.consumes(method="fit", params={"bar", "foo"}) == {"bar"}
+
+
+def test_metadata_router_consumes_method():
+    """Test that MetadataRouter().consumes method works as expected."""
+    # having it here instead of parametrizing the test since `set_fit_request`
+    # is not available while collecting the tests.
+    cases = [
+        (
+            WeightedMetaRegressor(
+                estimator=RegressorMetadata().set_fit_request(sample_weight=True)
+            ),
+            {"sample_weight"},
+            {"sample_weight"},
+        ),
+        (
+            WeightedMetaRegressor(
+                estimator=RegressorMetadata().set_fit_request(
+                    sample_weight="my_weights"
+                )
+            ),
+            {"my_weights", "sample_weight"},
+            {"my_weights"},
+        ),
+    ]
+
+    for obj, input, output in cases:
+        assert obj.get_metadata_routing().consumes(method="fit", params=input) == output
 
 
 def test_metaestimator_warnings():

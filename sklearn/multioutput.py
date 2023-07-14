@@ -42,7 +42,7 @@ from .utils.metadata_routing import (
 from .utils.metaestimators import available_if
 from .utils.multiclass import check_classification_targets
 from .utils.parallel import Parallel, delayed
-from .utils.validation import _check_fit_params, check_is_fitted, has_fit_parameter
+from .utils.validation import _check_method_params, check_is_fitted, has_fit_parameter
 
 __all__ = [
     "MultiOutputRegressor",
@@ -265,7 +265,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
                     "Underlying estimator does not support sample weights."
                 )
 
-            fit_params_validated = _check_fit_params(X, fit_params)
+            fit_params_validated = _check_method_params(X, params=fit_params)
             routed_params = Bunch(estimator=Bunch(fit=fit_params_validated))
             if sample_weight is not None:
                 routed_params.estimator.fit["sample_weight"] = sample_weight
