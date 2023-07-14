@@ -25,7 +25,7 @@ from ..utils._response import _get_response_values_binary
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
-    _routing_enabled,
+    _raise_for_params,
     process_routing,
 )
 from ..utils.metaestimators import available_if
@@ -439,8 +439,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         self : object
             Returns an instance of self.
         """
-        if params and not _routing_enabled():
-            raise ValueError
+        _raise_for_params(params, self, None)
 
         self._validate_params()
         X, y = indexable(X, y)
