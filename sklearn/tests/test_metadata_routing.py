@@ -716,6 +716,47 @@ def test_get_routing_for_object():
     assert mr.fit.requests == {"prop": None}
 
 
+def test_metadata_request_consumes_method():
+    """Test that MetadataRequest().consumes() method works as expected."""
+    request = MetadataRouter(owner="test")
+    assert request.consumes(method="fit", params={"foo"}) == set()
+
+    request = MetadataRequest(owner="test")
+    request.fit.add_request(param="foo", alias=True)
+    assert request.consumes(method="fit", params={"foo"}) == {"foo"}
+
+    request = MetadataRequest(owner="test")
+    request.fit.add_request(param="foo", alias="bar")
+    assert request.consumes(method="fit", params={"bar", "foo"}) == {"bar"}
+
+
+def test_metadata_router_consumes_method():
+    """Test that MetadataRouter().consumes method works as expected."""
+    # having it here instead of parametrizing the test since `set_fit_request`
+    # is not available while collecting the tests.
+    cases = [
+        (
+            WeightedMetaRegressor(
+                estimator=RegressorMetadata().set_fit_request(sample_weight=True)
+            ),
+            {"sample_weight"},
+            {"sample_weight"},
+        ),
+        (
+            WeightedMetaRegressor(
+                estimator=RegressorMetadata().set_fit_request(
+                    sample_weight="my_weights"
+                )
+            ),
+            {"my_weights", "sample_weight"},
+            {"my_weights"},
+        ),
+    ]
+
+    for obj, input, output in cases:
+        assert obj.get_metadata_routing().consumes(method="fit", params=input) == output
+
+
 def test_metaestimator_warnings():
     class WeightedMetaRegressorWarn(WeightedMetaRegressor):
         __metadata_request__fit = {"sample_weight": metadata_routing.WARN}

@@ -41,7 +41,7 @@ Changelog
     or *Miscellaneous*.
     Entries should end with:
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
-    where 123456 is the *pull request* number, not the issue number.
+    where 123455 is the *pull request* number, not the issue number.
 
 
 :mod:`sklearn.base`
@@ -51,6 +51,12 @@ Changelog
   :meth:`base.OutlierMixin.fit_predict` now accept ``**kwargs`` which are
   passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
   Jalali`_.
+
+- |Enhancement| :meth:`base.TransformerMixin.fit_transform` and
+  :meth:`base.OutlierMixin.fit_predict` now raise a warning if ``transform`` /
+  ``predict`` consume metadata, but no custom ``fit_transform`` / ``fit_predict``
+  is defined in the class inheriting from them correspondingly. :pr:`26831` by
+  `Adrin Jalali`_.
 
 - |Enhancement| :func:`base.clone` now supports `dict` as input and creates a
   copy. :pr:`26786` by `Adrin Jalali`_.
@@ -114,6 +120,14 @@ Changelog
   not supported.
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`, initiated by
   :user:`Patrick O'Reilly <pat-oreilly>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :class:`~utils.metadata_routing.MetadataRequest` and
+  :class:`~utils.metadata_routing.MetadataRouter` now have a ``consumes`` method
+  which can be used to check whether a given set of parameters would be consumed.
+  :pr:`26831` by `Adrin Jalali`_.
 
 Code and Documentation Contributors
 -----------------------------------
