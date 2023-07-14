@@ -27,6 +27,7 @@ from .utils._tags import _safe_tags
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _raise_for_params,
     _routing_enabled,
     process_routing,
 )
@@ -742,11 +743,7 @@ class Pipeline(_BaseComposition):
         y_score : ndarray of shape (n_samples, n_classes)
             Result of calling `decision_function` on the final estimator.
         """
-        if params and not _routing_enabled():
-            raise ValueError(
-                "params is only supported if enable_metadata_routing=True."
-                " See the User Guide for more information."
-            )
+        _raise_for_params(params, self, "decision_function")
 
         # not branching here since params is only available if
         # enable_metadata_routing=True
@@ -881,11 +878,7 @@ class Pipeline(_BaseComposition):
         Xt : ndarray of shape (n_samples, n_transformed_features)
             Transformed data.
         """
-        if not _routing_enabled() and params:
-            raise ValueError(
-                "params is only supported if enable_metadata_routing=True."
-                " See the User Guide for more information."
-            )
+        _raise_for_params(params, self, "transform")
 
         # not branching here since params is only available if
         # enable_metadata_routing=True
@@ -928,11 +921,7 @@ class Pipeline(_BaseComposition):
             Inverse transformed data, that is, data in the original feature
             space.
         """
-        if not _routing_enabled() and params:
-            raise ValueError(
-                "params is only supported if enable_metadata_routing=True. See"
-                " the User Guide for more information."
-            )
+        _raise_for_params(params, self, "inverse_transform")
 
         # we don't have to branch here, since params is only non-empty if
         # enable_metadata_routing=True.
