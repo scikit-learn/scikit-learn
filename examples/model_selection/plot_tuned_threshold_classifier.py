@@ -32,12 +32,17 @@ cost.
 # -------------------------------
 #
 # We fetch the German credit dataset from OpenML.
+import numpy as np
+
 import sklearn
 from sklearn.datasets import fetch_openml
 
 sklearn.set_config(transform_output="pandas")
+sklearn.set_config(enable_metadata_routing=True)
+
 german_credit = fetch_openml(data_id=31, as_frame=True, parser="pandas")
 X, y = german_credit.data, german_credit.target
+pure_loss = np.abs(np.random.RandomState(0).randint(0, 5, size=len(y)))
 
 # %%
 # We check the feature types available in `X`.
@@ -66,7 +71,9 @@ pos_label = "bad"
 # To carry our analysis, we split our dataset using a single stratified split.
 from sklearn.model_selection import train_test_split
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=0)
+X_train, X_test, y_train, y_test, pure_loss_train, pure_loss_test = train_test_split(
+    X, y, pure_loss, stratify=y, random_state=0
+)
 
 # %%
 # We are ready to design our predictive model and the associated evaluation strategy.
@@ -122,28 +129,24 @@ scoring = {
 # cost-matrix which encodes that predicting a "bad" credit as "good" is 5 times more
 # costly than the opposite. We define a dictionary containing this information and a
 # score function that computes the cost.
-cost_gain_matrix = {"tp": 0, "tn": 0, "fp": -1, "fn": -5}
 
 
-def gain_cost_score(y, y_pred, **kwargs):
-    cm = confusion_matrix(y, y_pred)
-    classes = np.unique(y)
-    pos_label = kwargs.get("pos_label", classes[-1])
-    pos_label_idx = np.searchsorted(classes, pos_label)
-    if pos_label_idx == 0:
-        cm = cm[::-1, ::-1]
-    costs_and_gain = np.array(
-        [
-            [kwargs["cost_gain_matrix"]["tn"], kwargs["cost_gain_matrix"]["fp"]],
-            [kwargs["cost_gain_matrix"]["fn"], kwargs["cost_gain_matrix"]["tp"]],
-        ]
-    )
-    return (costs_and_gain * cm).sum()
+def gain_cost_score(y, y_pred, pos_label, pure_loss):
+    cost_and_gain = np.zeros_like(y)
+    mask_tp = (y == pos_label) & (y_pred == pos_label)
+    cost_and_gain[mask_tp] = 0
+    mask_fp = (y != pos_label) & (y_pred == pos_label)
+    cost_and_gain[mask_fp] = -pure_loss[mask_fp]
+    mask_fn = (y == pos_label) & (y_pred != pos_label)
+    cost_and_gain[mask_fn] = -1
+    mask_tn = (y != pos_label) & (y_pred != pos_label)
+    cost_and_gain[mask_tn] = 0
+    return cost_and_gain.sum()
 
 
 scoring["cost_gain"] = make_scorer(
-    gain_cost_score, pos_label=pos_label, cost_gain_matrix=cost_gain_matrix
-)
+    gain_cost_score, pos_label=pos_label
+).set_score_request(pure_loss=True)
 # %%
 # Vanilla predictive model
 # ------------------------
@@ -253,7 +256,7 @@ _ = fig.suptitle("Evaluation of the vanilla GBDT model")
 #
 # However, we recall that the original aim was to minimize the cost (or maximize the
 # gain) by the business metric. We can compute the value of the business metric:
-scoring["cost_gain"](model, X_test, y_test)
+scoring["cost_gain"](model, X_test, y_test, pure_loss=pure_loss_test)
 
 # %%
 # At this stage we don't know if any other cut-off can lead to a greater gain.
@@ -279,9 +282,9 @@ from sklearn.model_selection import TunedThresholdClassifier
 model_tuned = TunedThresholdClassifier(
     estimator=model,
     pos_label=pos_label,
-    objective_metric=cost_gain_matrix,
+    objective_metric=scoring["cost_gain"],
 )
-model_tuned.fit(X_train, y_train)
+model_tuned.fit(X_train, y_train, pure_loss=pure_loss_train)
 
 # %%
 # We plot the ROC and Precision-Recall curves for the vanilla model and the tuned model.
@@ -371,7 +374,7 @@ _ = fig.suptitle("Comparison of the cut-off point for the vanilla and tuned GBDT
 #
 # We can now check if choosing this cut-off point leads to a better score on the testing
 # set:
-scoring["cost_gain"](model_tuned, X_test, y_test)
+scoring["cost_gain"](model_tuned, X_test, y_test, pure_loss=pure_loss_test)
 
 # %%
 # We observe that the decision generalized on the testing set leading to a better
@@ -394,7 +397,7 @@ scoring["cost_gain"](model_tuned, X_test, y_test)
 # Also, the underlying classifier is not be refitted. Here, we can try to do such
 # experiment.
 model.fit(X_train, y_train)
-model_tuned.set_params(cv="prefit").fit(X_train, y_train)
+model_tuned.set_params(cv="prefit").fit(X_train, y_train, pure_loss=pure_loss_train)
 
 
 # %%
@@ -489,7 +492,7 @@ _ = fig.suptitle("Tuned GBDT model without refitting and using the entire datase
 # single train-test split by providing a floating number in range `[0, 1]` to the `cv`
 # parameter. It splits the data into a training and testing set. Let's explore this
 # option:
-model_tuned.set_params(cv=0.75).fit(X_train, y_train)
+model_tuned.set_params(cv=0.75).fit(X_train, y_train, pure_loss=pure_loss_train)
 
 # %%
 fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(21, 6))

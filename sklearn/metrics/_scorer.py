@@ -493,7 +493,38 @@ class _ContinuousScorer(_BaseScorer):
         super().__init__(score_func=score_func, sign=sign, kwargs=kwargs)
         self.response_method = response_method
 
-    def _score(self, method_caller, estimator, X, y_true, sample_weight=None):
+    @classmethod
+    def from_scorer(cls, scorer, response_method, pos_label):
+        """Create a continuous scorer from a normal scorer."""
+        # add `pos_label` if requested by the scorer function
+        scorer_kwargs = {**scorer._kwargs}
+        signature_scoring_func = signature(scorer._score_func)
+        if (
+            "pos_label" in signature_scoring_func.parameters
+            and "pos_label" not in scorer_kwargs
+        ):
+            if pos_label is None:
+                # Since the provided `pos_label` is the default, we need to
+                # use the default value of the scoring function that can be either
+                # `None` or `1`.
+                scorer_kwargs["pos_label"] = signature_scoring_func.parameters[
+                    "pos_label"
+                ].default
+            else:
+                scorer_kwargs["pos_label"] = pos_label
+        # transform a binary metric into a curve metric for all possible decision
+        # thresholds
+        instance = cls(
+            score_func=scorer._score_func,
+            sign=scorer._sign,
+            response_method=response_method,
+            kwargs=scorer_kwargs,
+        )
+        # transfer the metadata request
+        instance._metadata_request = scorer._get_metadata_request()
+        return instance
+
+    def _score(self, method_caller, estimator, X, y_true, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -507,8 +538,9 @@ class _ContinuousScorer(_BaseScorer):
         y_true : array-like of shape (n_samples,)
             Gold standard target values for X.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights.
+        **kwargs : dict
+            Other parameters passed to the scorer. Refer to
+            :func:`set_score_request` for more details.
 
         Returns
         -------
@@ -518,26 +550,22 @@ class _ContinuousScorer(_BaseScorer):
         pos_label = self._get_pos_label()
         y_score = method_caller(estimator, self.response_method, X, pos_label=pos_label)
 
-        if sample_weight is not None:
-            score_func = partial(self._score_func, sample_weight=sample_weight)
-        else:
-            score_func = self._score_func
-
         # TODO: this is pretty slow if we have a lot of `potential_thresholds`
         # We could parallelize but then we are inside a nested parallel loop where the
         # external parallelism is on the CV.
         # Another guess would be to interpolate the potential thresholds at this moment.
         # Easy for the probability case but not for the decision function case since it
         # is not bounded.
+        scoring_kwargs = {**self._kwargs, **kwargs}
         potential_thresholds = np.unique(y_score)
         score_thresholds = [
             self._sign
-            * score_func(
+            * self._score_func(
                 y_true,
                 _threshold_scores_to_class_labels(
                     y_score, th, estimator.classes_, self._get_pos_label()
                 ),
-                **self._kwargs,
+                **scoring_kwargs,
             )
             for th in potential_thresholds
         ]

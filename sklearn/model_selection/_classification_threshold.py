@@ -1,5 +1,4 @@
 from collections.abc import MutableMapping
-from inspect import signature
 from numbers import Integral, Real
 
 import numpy as np
@@ -14,7 +13,6 @@ from ..base import (
 from ..exceptions import NotFittedError
 from ..metrics import (
     check_scoring,
-    confusion_matrix,
     get_scorer_names,
     make_scorer,
     precision_recall_curve,
@@ -24,13 +22,17 @@ from ..metrics._scorer import _ContinuousScorer, _threshold_scores_to_class_labe
 from ..utils import _safe_indexing
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils._response import _get_response_values_binary
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _routing_enabled,
+    process_routing,
+)
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import type_of_target
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
-    _check_fit_params,
-    _check_pos_label_consistency,
-    _check_sample_weight,
+    _check_method_params,
     _num_samples,
     check_consistent_length,
     check_is_fitted,
@@ -56,12 +58,13 @@ def _fit_and_score(
     classifier,
     X,
     y,
-    sample_weight,
+    *,
     fit_params,
     train_idx,
     val_idx,
     scorer,
     score_method,
+    score_params,
 ):
     """Fit a classifier and compute the scores for different decision thresholds.
 
@@ -76,9 +79,6 @@ def _fit_and_score(
 
     y : array-like of shape (n_samples,)
         The entire target vector.
-
-    sample_weight : array-like of shape (n_samples,)
-        Some optional associated sample weights.
 
     fit_params : dict
         Parameters to pass to the `fit` method of the underlying classifier.
@@ -99,6 +99,9 @@ def _fit_and_score(
         The scoring method to use. Used to detect if we compute TPR/TNR or precision/
         recall.
 
+    score_params : dict
+        Parameters to pass to the `score` method of the underlying scorer.
+
     Returns
     -------
     thresholds : ndarray of shape (n_thresholds,)
@@ -109,35 +112,22 @@ def _fit_and_score(
         The scores computed for each decision threshold. When TPR/TNR or precision/
         recall are computed, `scores` is a tuple of two arrays.
     """
-    arrays = (X, y) if sample_weight is None else (X, y, sample_weight)
-    check_consistent_length(*arrays)
-
-    fit_parameters = signature(classifier.fit).parameters
-    supports_sw = "sample_weight" in fit_parameters
+    check_consistent_length(X, y)
 
     if train_idx is not None:
         X_train, X_val = _safe_indexing(X, train_idx), _safe_indexing(X, val_idx)
         y_train, y_val = _safe_indexing(y, train_idx), _safe_indexing(y, val_idx)
-        if sample_weight is not None:
-            sw_train, sw_val = (
-                _safe_indexing(sample_weight, train_idx),
-                _safe_indexing(sample_weight, val_idx),
-            )
-        else:
-            sw_train, sw_val = None, None
-        fit_params_train = _check_fit_params(X, fit_params, indices=train_idx)
-        if supports_sw:
-            classifier.fit(X_train, y_train, sample_weight=sw_train, **fit_params_train)
-        else:
-            classifier.fit(X_train, y_train, **fit_params_train)
+        fit_params_train = _check_method_params(X, fit_params, indices=train_idx)
+        score_params_val = _check_method_params(X, score_params, indices=val_idx)
+        classifier.fit(X_train, y_train, **fit_params_train)
     else:  # prefit estimator, only a validation set is provided
-        X_val, y_val, sw_val = X, y, sample_weight
+        X_val, y_val, score_params_val = X, y, score_params
         check_is_fitted(classifier, "classes_")
 
     if isinstance(score_method, str):
         if score_method in {"max_tpr_at_tnr_constraint", "max_tnr_at_tpr_constraint"}:
             fpr, tpr, potential_thresholds = scorer(
-                classifier, X_val, y_val, sample_weight=sw_val
+                classifier, X_val, y_val, **score_params_val
             )
             # For fpr=0/tpr=0, the threshold is set to `np.inf`. We need to remove it.
             fpr, tpr, potential_thresholds = fpr[1:], tpr[1:], potential_thresholds[1:]
@@ -148,13 +138,13 @@ def _fit_and_score(
             "max_recall_at_precision_constraint",
         }:
             precision, recall, potential_thresholds = scorer(
-                classifier, X_val, y_val, sample_weight=sw_val
+                classifier, X_val, y_val, **score_params_val
             )
             # thresholds are in increasing order
             # the last element of the precision and recall is not associated with any
             # threshold and should be discarded
             return potential_thresholds, (precision[:-1], recall[:-1])
-    return scorer(classifier, X_val, y_val, sample_weight=sw_val)
+    return scorer(classifier, X_val, y_val, **score_params_val)
 
 
 class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
@@ -199,10 +189,6 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
           recall of `constraint_value`;
         * `"max_recall_at_precision_constraint"`: find the decision threshold for a
           precision of `constraint_value`.
-        * a dictionary to be used as cost-sensitive matrix. The keys of the
-          dictionary should be: `("tp", "fp", "tn", "fn")`. The values of the
-          dictionary corresponds costs (negative values) and gains (positive
-          values).
 
     constraint_value : float, default=None
         The value associated with the `objective_metric` metric for which we
@@ -433,7 +419,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         # estimators in TunedThresholdClassifier.estimator is not validated yet
         prefer_skip_nested_validation=True
     )
-    def fit(self, X, y, sample_weight=None, **fit_params):
+    def fit(self, X, y, **params):
         """Fit the classifier and post-tune the decision threshold.
 
         Parameters
@@ -444,18 +430,18 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If `None`, then samples are equally weighted.
-
-        **fit_params : dict
+        **params : dict
             Parameters to pass to the `fit` method of the underlying
-            classifier.
+            classifier and to the `objective_metric` scorer.
 
         Returns
         -------
         self : object
             Returns an instance of self.
         """
+        if params and not _routing_enabled():
+            raise ValueError
+
         self._validate_params()
         X, y = indexable(X, y)
 
@@ -464,9 +450,6 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             raise ValueError(
                 f"Only binary classification is supported. Unknown label type: {y_type}"
             )
-
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
 
         if isinstance(self.cv, Real) and 0 < self.cv <= 1:
             cv = StratifiedShuffleSplit(
@@ -514,8 +497,10 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         else:
             constraint_value = "highest"
 
-        fit_parameters = signature(self.estimator.fit).parameters
-        supports_sw = "sample_weight" in fit_parameters
+        routed_params = process_routing(
+            obj=self, method="fit", other_params={}, **params
+        )
+        self._scorer = self._get_scorer()
 
         # in the following block, we:
         # - define the final classifier `self.estimator_` and train it if necessary
@@ -528,29 +513,21 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         else:
             self.estimator_ = clone(self.estimator)
             classifier = clone(self.estimator)
-            splits = cv.split(X, y)
+            splits = cv.split(X, y, **routed_params.splitter.split)
 
             if refit:
                 # train on the whole dataset
-                X_train, y_train, sw_train = X, y, sample_weight
-                fit_params_train = _check_fit_params(X, fit_params, indices=None)
+                X_train, y_train, fit_params_train = X, y, routed_params.estimator.fit
             else:
                 # single split cross-validation
-                train_idx, _ = next(cv.split(X, y))
+                train_idx, _ = next(cv.split(X, y, **routed_params.splitter.split))
                 X_train = _safe_indexing(X, train_idx)
                 y_train = _safe_indexing(y, train_idx)
-                if sample_weight is not None:
-                    sw_train = _safe_indexing(sample_weight, train_idx)
-                else:
-                    sw_train = None
-                fit_params_train = _check_fit_params(X, fit_params, indices=train_idx)
-
-            if sw_train is not None and supports_sw:
-                self.estimator_.fit(
-                    X_train, y_train, sample_weight=sw_train, **fit_params_train
+                fit_params_train = _check_method_params(
+                    X, routed_params.estimator.fit, indices=train_idx
                 )
-            else:
-                self.estimator_.fit(X_train, y_train, **fit_params_train)
+
+            self.estimator_.fit(X_train, y_train, **fit_params_train)
 
         if hasattr(self.estimator_, "n_features_in_"):
             self.n_features_in_ = self.estimator_.n_features_in_
@@ -564,109 +541,18 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             self.objective_score_, self.objective_scores_ = None, None
             return self
 
-        if isinstance(self.objective_metric, MutableMapping):
-            keys = set(self.objective_metric.keys())
-            if not keys == {"tp", "tn", "fp", "fn"}:
-                raise ValueError(
-                    "Invalid keys in `objective_metric`. Valid keys are "
-                    f"'tp', 'tn', 'fp', and 'fn'. Got {keys} instead."
-                )
-            pos_label = _check_pos_label_consistency(self.pos_label, y)
-
-            def cost_sensitive_score_func(y_true, y_pred, **kwargs):
-                costs_and_gain = np.array(
-                    [
-                        [kwargs["tn"], kwargs["fp"]],
-                        [kwargs["fn"], kwargs["tp"]],
-                    ]
-                )
-
-                sample_weight = kwargs.get("sample_weight", None)
-                cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-
-                pos_label, classes = kwargs["pos_label"], np.unique(y_true)
-                pos_label_idx = np.searchsorted(classes, pos_label)
-                if pos_label_idx == 0:
-                    # reorder the confusion matrix to be aligned with the cost-matrix
-                    cm = cm[::-1, ::-1]
-
-                return (costs_and_gain * cm).sum()
-
-            self._scorer = _ContinuousScorer(
-                score_func=cost_sensitive_score_func,
-                sign=1,
-                response_method=self._response_method,
-                kwargs={
-                    **self.objective_metric,
-                    "pos_label": pos_label,
-                },
-            )
-        elif self.objective_metric in {
-            "max_tnr_at_tpr_constraint",
-            "max_tpr_at_tnr_constraint",
-            "max_precision_at_recall_constraint",
-            "max_recall_at_precision_constraint",
-        }:
-            if self._response_method == "predict_proba":
-                params_scorer = {"needs_proba": True, "pos_label": self.pos_label}
-            elif (
-                isinstance(self._response_method, list)
-                and self._response_method[0] == "predict_proba"
-                and hasattr(classifier, "predict_proba")
-            ):
-                # TODO: this is due to a limitation in `make_scorer`: ideally, we should
-                # be able to pass a list of response methods to `make_scorer` and give
-                # priority to `predict_proba` other `decision_function`.
-                # Here, we manually check if the classifier provide `predict_proba` to
-                # use `needs_proba` instead and ensure that no error will be raised.
-                params_scorer = {"needs_proba": True, "pos_label": self.pos_label}
-            else:
-                params_scorer = {"needs_threshold": True, "pos_label": self.pos_label}
-
-            if "tpr" in self.objective_metric:  # tpr/tnr
-                score_func = roc_curve
-            else:  # precision/recall
-                score_func = precision_recall_curve
-            self._scorer = make_scorer(score_func, **params_scorer)
-        else:
-            scoring = check_scoring(classifier, scoring=self.objective_metric)
-            # add `pos_label` if requested by the scorer function
-            scorer_kwargs = {**scoring._kwargs}
-            signature_scoring_func = signature(scoring._score_func)
-            if (
-                "pos_label" in signature_scoring_func.parameters
-                and "pos_label" not in scorer_kwargs
-            ):
-                if self.pos_label is None:
-                    # Since the provided `pos_label` is the default, we need to
-                    # use the default value of the scoring function that can be either
-                    # `None` or `1`.
-                    scorer_kwargs["pos_label"] = signature_scoring_func.parameters[
-                        "pos_label"
-                    ].default
-                else:
-                    scorer_kwargs["pos_label"] = self.pos_label
-            # transform a binary metric into a curve metric for all possible decision
-            # thresholds
-            self._scorer = _ContinuousScorer(
-                score_func=scoring._score_func,
-                sign=scoring._sign,
-                response_method=self._response_method,
-                kwargs=scorer_kwargs,
-            )
-
         cv_thresholds, cv_scores = zip(
             *Parallel(n_jobs=self.n_jobs)(
                 delayed(_fit_and_score)(
                     classifier,
                     X,
                     y,
-                    sample_weight,
-                    fit_params,
-                    train_idx,
-                    val_idx,
-                    self._scorer,
-                    self.objective_metric,
+                    fit_params=routed_params.estimator.fit,
+                    train_idx=train_idx,
+                    val_idx=val_idx,
+                    scorer=self._scorer,
+                    score_method=self.objective_metric,
+                    score_params=routed_params.scorer.score,
                 )
                 for train_idx, val_idx in splits
             )
@@ -828,6 +714,72 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         """
         check_is_fitted(self, "estimator_")
         return self.estimator_.decision_function(X)
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add_self_request(self)
+            .add(
+                estimator=self.estimator,
+                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            )
+            .add(
+                splitter=self.cv,
+                method_mapping=MethodMapping().add(callee="split", caller="fit"),
+            )
+            .add(
+                scorer=self._get_scorer(),
+                method_mapping=MethodMapping().add(callee="score", caller="fit"),
+            )
+        )
+        return router
+
+    def _get_scorer(self):
+        """Get the scorer based on the objective metric used."""
+        if self.objective_metric in {
+            "max_tnr_at_tpr_constraint",
+            "max_tpr_at_tnr_constraint",
+            "max_precision_at_recall_constraint",
+            "max_recall_at_precision_constraint",
+        }:
+            if self._response_method == "predict_proba":
+                params_scorer = {"needs_proba": True, "pos_label": self.pos_label}
+            elif (
+                isinstance(self._response_method, list)
+                and self._response_method[0] == "predict_proba"
+                and hasattr(self.estimator, "predict_proba")
+            ):
+                # TODO: this is due to a limitation in `make_scorer`: ideally, we should
+                # be able to pass a list of response methods to `make_scorer` and give
+                # priority to `predict_proba` other `decision_function`.
+                # Here, we manually check if the classifier provide `predict_proba` to
+                # use `needs_proba` instead and ensure that no error will be raised.
+                params_scorer = {"needs_proba": True, "pos_label": self.pos_label}
+            else:
+                params_scorer = {"needs_threshold": True, "pos_label": self.pos_label}
+
+            if "tpr" in self.objective_metric:  # tpr/tnr
+                score_func = roc_curve
+            else:  # precision/recall
+                score_func = precision_recall_curve
+            scorer = make_scorer(score_func, **params_scorer)
+        else:
+            scoring = check_scoring(self.estimator, scoring=self.objective_metric)
+            scorer = _ContinuousScorer.from_scorer(
+                scoring, self._response_method, self.pos_label
+            )
+        return scorer
 
     def _more_tags(self):
         return {
