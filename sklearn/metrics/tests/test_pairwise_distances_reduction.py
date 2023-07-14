@@ -1466,3 +1466,38 @@ def test_argkmin_classmode_strategy_consistent():
         strategy="parallel_on_Y",
     )
     assert_array_equal(results_X, results_Y)
+
+
+def test_radius_neighbors_classmode_strategy_consistent():
+    rng = np.random.RandomState(1)
+    X = rng.rand(100, 10)
+    Y = rng.rand(100, 10)
+    radius = 5
+    metric = "manhattan"
+
+    weights = "uniform"
+    labels = rng.randint(low=0, high=10, size=100)
+    unique_labels = np.unique(labels)
+    results_X = RadiusNeighborsClassMode.compute(
+        X=X,
+        Y=Y,
+        radius=radius,
+        metric=metric,
+        weights=weights,
+        labels=labels,
+        unique_labels=unique_labels,
+        outlier_label=None,
+        strategy="parallel_on_X",
+    )
+    results_Y = RadiusNeighborsClassMode.compute(
+        X=X,
+        Y=Y,
+        radius=radius,
+        metric=metric,
+        weights=weights,
+        labels=labels,
+        unique_labels=unique_labels,
+        outlier_label=None,
+        strategy="parallel_on_Y",
+    )
+    assert_allclose(results_X, results_Y)

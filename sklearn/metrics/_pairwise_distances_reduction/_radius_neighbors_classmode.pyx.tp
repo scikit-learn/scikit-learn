@@ -3,7 +3,6 @@ import warnings
 from cython cimport floating, final, integral
 from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
-from libcpp.vector cimport vector
 
 from ...utils._typedefs cimport intp_t, float64_t
 
@@ -30,10 +29,11 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
         const intp_t[:] unique_labels
         intp_t outlier_index
         bint outlier_label_exists
-        vector[intp_t] outliers
+        bint outliers_exist
+        unsigned char[::1] outliers
+        object outlier_label
         float64_t[:, :] class_scores
         WeightingStrategy weight_type
-        object outlier_label
 
     @classmethod
     def compute(
@@ -102,7 +102,9 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
         self.unique_labels = unique_labels
         self.outlier_index = -1
         self.outlier_label_exists = False
+        self.outliers_exist = False
         self.outlier_label = outlier_label
+        self.outliers = np.zeros(self.n_samples_X, dtype=np.bool_)
 
         cdef intp_t idx
         if outlier_label is not None:
@@ -133,7 +135,8 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
             )
 
         if k == 0:
-            self.outliers.push_back(sample_index)
+            self.outliers_exist = True
+            self.outliers[sample_index] = True
             if self.outlier_index >= 0:
                 self.class_scores[sample_index][self.outlier_index] = score_incr
 
@@ -194,16 +197,16 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
         return
 
     def _finalize_results(self):
-        if not self.outlier_label_exists and self.outliers.size() > 0:
+        if self.outliers_exist and not self.outlier_label_exists:
             raise ValueError(
                 "No neighbors found for test samples %r, "
                 "you can try using larger radius, "
                 "giving a label for outliers, "
                 "or considering removing them from your dataset."
-                % self.outliers
+                % np.where(self.outliers)[0].tolist()
             )
 
-        if self.outliers.size() > 0 and self.outlier_index < 0:
+        if self.outliers_exist and self.outlier_index < 0:
             warnings.warn(
                 "Outlier label %s is not in training "
                 "classes. All class probabilities of "
