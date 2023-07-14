@@ -457,7 +457,6 @@ def test_tunedthresholdclassifier_metric_with_parameter():
         "max_recall_at_precision_constraint",
         make_scorer(balanced_accuracy_score),
         make_scorer(f1_score, pos_label="cancer"),
-        # {"tp": 5, "tn": 1, "fp": -1, "fn": -1},
     ],
 )
 def test_tunedthresholdclassifier_with_string_targets(response_method, metric):
@@ -621,90 +620,6 @@ def test_tunedthresholdclassifier_response_method_scorer_with_constraint_metric(
             assert 0 < model.decision_threshold_ < 20
         else:  # "max_tpr_at_tnr_constraint" or "max_recall_at_precision_constraint"
             assert -20 < model.decision_threshold_ < 0
-
-
-# def test_tunedthresholdclassifier_objective_metric_dict(global_random_seed):
-#     """Check that we can pass a custom objective metric."""
-#     X, y = make_classification(n_samples=500, random_state=global_random_seed)
-#     classifier = LogisticRegression()
-
-#     # we need to set a small number of thresholds to avoid ties and picking a too low
-#     # threshold.
-#     n_thresholds = 5
-
-#     # affect a high gain to true negative and force the classifier to mainly
-#     # predict the negative class.
-#     costs_and_again = {"tp": 0, "tn": 10, "fp": 0, "fn": 0}
-#     model = TunedThresholdClassifier(
-#         classifier, objective_metric=costs_and_again, n_thresholds=n_thresholds
-#     )
-#     model.fit(X, y)
-
-#     assert model.decision_thresholds_.shape == (n_thresholds,)
-#     assert model.objective_scores_.shape == (n_thresholds,)
-
-#     assert model.decision_threshold_ > 0.99
-#     assert np.mean(model.predict(X) == 0) > 0.9
-
-#     # use the true positive now
-#     costs_and_again = {"tp": 10, "tn": 0, "fp": 0, "fn": 0}
-#     model = TunedThresholdClassifier(
-#         classifier, objective_metric=costs_and_again, n_thresholds=n_thresholds
-#     )
-#     model.fit(X, y)
-
-#     assert model.decision_thresholds_.shape == (n_thresholds,)
-#     assert model.objective_scores_.shape == (n_thresholds,)
-
-#     assert model.decision_threshold_ < 0.01
-#     assert np.mean(model.predict(X) == 1) > 0.9
-
-#     # flipping the `pos_label` to zero should force the classifier to always predict 0
-#     # and thus have a low threshold
-#     pos_label = 0
-#     model = TunedThresholdClassifier(
-#         classifier,
-#         objective_metric=costs_and_again,
-#         n_thresholds=n_thresholds,
-#         pos_label=pos_label,
-#     )
-#     model.fit(X, y)
-
-#     assert model.decision_thresholds_.shape == (n_thresholds,)
-#     assert model.objective_scores_.shape == (n_thresholds,)
-
-#     assert model.decision_threshold_ < 0.01
-#     assert np.mean(model.predict(X) == 0) > 0.9
-
-
-# def test_tunedthresholdclassifier_sample_weight_costs_and_gain():
-#     """Check that we dispatch the `sample_weight` to the scorer when computing the
-#     confusion matrix."""
-#     X, y = load_iris(return_X_y=True)
-#     X, y = X[:100], y[:100]  # only 2 classes
-
-#     # create a dataset and repeat twice the sample of class #0
-#     X_repeated, y_repeated = np.vstack([X, X[y == 0]]), np.hstack([y, y[y == 0]])
-#     # create a sample weight vector that is equivalent to the repeated dataset
-#     sample_weight = np.ones_like(y)
-#     sample_weight[:50] *= 2
-
-#     # we use a prefit classifier to simplify the test
-#     cv = "prefit"
-#     estimator = LogisticRegression().fit(X, y)
-#     costs_and_again = {"tp": 1, "tn": 1, "fp": -1, "fn": -1}
-
-#     model_repeat = TunedThresholdClassifier(
-#         estimator, cv=cv, objective_metric=costs_and_again
-#     )
-#     model_repeat.fit(X_repeated, y_repeated, sample_weight=None)
-
-#     model_sw = TunedThresholdClassifier(
-#         estimator, cv=cv, objective_metric=costs_and_again
-#     )
-#     model_sw.fit(X, y, sample_weight=sample_weight)
-
-#     assert model_repeat.objective_score_ == pytest.approx(model_sw.objective_score_)
 
 
 @pytest.mark.usefixtures("enable_slep006")
