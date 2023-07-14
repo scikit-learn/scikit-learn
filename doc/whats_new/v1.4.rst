@@ -94,6 +94,16 @@ Changelog
 - |Fix| :func:`feature_selection.mutual_info_regression` now correctly computes the
   result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Enhancement| :class:`linear_model.LogisticRegressionCV` now supports
+  metadata routing. :meth:`linear_model.LogisticRegressionCV.fit` now
+  accepts ``**params`` which are passed to the underlying splitter and
+  scorer. :meth:`linear_model.LogisticRegressionCV.score` now accepts
+  ``**score_params`` which are passed to the underlying scorer.
+  :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
