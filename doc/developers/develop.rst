@@ -717,7 +717,7 @@ Developer API for `check_is_fitted`
 By default :func:`~sklearn.utils.validation.check_is_fitted` checks if there
 are any attributes in the instance with a trailing underscore, e.g. `coef_`.
 An estimator can change the behavior by implementing a `__sklearn_is_fitted__`
-taking no input and returning a boolean. If this method exists, 
+method taking no input and returning a boolean. If this method exists,
 :func:`~sklearn.utils.validation.check_is_fitted` simply returns its output.
 
 See :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
