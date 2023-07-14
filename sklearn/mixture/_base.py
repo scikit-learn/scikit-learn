@@ -268,10 +268,12 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         # to get the initial means.
         if not self.converged_ and self.max_iter > 0:
             warnings.warn(
-                "Best performing initialization did not converge. "
-                "Try different init parameters, "
-                "or increase max_iter, tol, "
-                "or check for degenerate data.",
+                (
+                    "Best performing initialization did not converge. "
+                    "Try different init parameters, "
+                    "or increase max_iter, tol, "
+                    "or check for degenerate data."
+                ),
                 ConvergenceWarning,
             )
 
