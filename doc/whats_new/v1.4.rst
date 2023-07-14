@@ -116,7 +116,7 @@ Changelog
 
 - |Enhancement| add a `pos_label` to :func:`metrics.confusion_matrix` such that
   we always report the TP/TN/FP/FN in the same position in the matrix.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`26839` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
