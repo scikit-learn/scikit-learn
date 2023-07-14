@@ -923,11 +923,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             self.best_params_ = results["params"][self.best_index_]
 
         if self.refit:
-            # we clone again after setting params in case some
-            # of the params are estimators as well.
-            self.best_estimator_ = clone(
-                clone(base_estimator).set_params(**self.best_params_)
+            # here we clone the estimator as well as the parameters, since
+            # sometimes the parameters themselves might be estimators, e.g.
+            # when we search over different estimators in a pipeline.
+            # ref: https://github.com/scikit-learn/scikit-learn/pull/26786
+            self.best_estimator_ = clone(base_estimator).set_params(
+                **clone(self.best_params_, safe=False)
             )
+
             refit_start_time = time.time()
             if y is not None:
                 self.best_estimator_.fit(X, y, **fit_params)
