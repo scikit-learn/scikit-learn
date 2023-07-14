@@ -2109,10 +2109,12 @@ def test_lr_cv_scores_differ_when_sample_weight_is_requested():
 
 def test_lr_cv_scores_without_enabling_metadata_routing():
     """Test that `sample_weight` is passed correctly to the scorer in
-    `LogisticRegressionCV.fit` even when `enable_metadata_routing=False`
+    `LogisticRegressionCV.fit` and `LogisticRegressionCV.score` even
+    when `enable_metadata_routing=False`
     """
     rng = np.random.RandomState(10)
     X, y = make_classification(n_samples=10, random_state=rng)
+    X_t, y_t = make_classification(n_samples=10, random_state=rng)
     sample_weight = np.ones(len(y))
     sample_weight[: len(y) // 2] = 2
     kwargs = {"sample_weight": sample_weight}
@@ -2121,14 +2123,17 @@ def test_lr_cv_scores_without_enabling_metadata_routing():
         scorer1 = get_scorer("accuracy")
         lr_cv1 = LogisticRegressionCV(scoring=scorer1)
         lr_cv1.fit(X, y, **kwargs)
+        score_1 = lr_cv1.score(X_t, y_t, **kwargs)
 
     with config_context(enable_metadata_routing=True):
         scorer2 = get_scorer("accuracy")
         scorer2.set_score_request(sample_weight=True)
         lr_cv2 = LogisticRegressionCV(scoring=scorer2)
         lr_cv2.fit(X, y, **kwargs)
+        score_2 = lr_cv2.score(X_t, y_t, **kwargs)
 
     assert_allclose(lr_cv1.scores_[1], lr_cv2.scores_[1])
+    assert_allclose(score_1, score_2)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
