@@ -2078,10 +2078,10 @@ def test_liblinear_not_stuck():
 
 @pytest.mark.usefixtures("enable_slep006")
 def test_lr_cv_scores_differ_when_sample_weight_is_requested():
-    """Test `sample_weight` is correctly passed to the scorer in
-    `LogisticRegressionCV.fit` and `LogisticRegressionCV.score`
-    by checking the difference in scores with the case when
-    `sample_weight` is not requested.
+    """Test that `sample_weight` is correctly passed to the scorer in
+    `LogisticRegressionCV.fit` and `LogisticRegressionCV.score` by
+    checking the difference in scores with the case when `sample_weight`
+    is not requested.
     """
     rng = np.random.RandomState(10)
     X, y = make_classification(n_samples=10, random_state=rng)
