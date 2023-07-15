@@ -130,13 +130,6 @@ Characteristic (ROC) statistics and 2 use the Precision-Recall statistics.
 For these options, the `constraint_value` parameter needs to be defined. In addition,
 you can use the `pos_label` parameter to indicate the label of the class of interest.
 
-The final strategy maximizes a custom utility function. This problem is also known as
-cost-sensitive learning. The utility function is defined by providing a dictionary
-containing the cost-gain associated with the entries of the confusion matrix. The keys
-are defined as `{"tn", "fp", "fn", "tp"}`. The class of interest is defined using the
-`pos_label` parameter. Refer to :ref:`cost_sensitive_learning_example` for an example
-depicting the use of such a utility function.
-
 Important notes regarding the internal cross-validation
 -------------------------------------------------------
 
