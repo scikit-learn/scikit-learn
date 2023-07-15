@@ -752,27 +752,16 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             "max_precision_at_recall_constraint",
             "max_recall_at_precision_constraint",
         }:
-            if self._response_method == "predict_proba":
-                params_scorer = {"needs_proba": True, "pos_label": self.pos_label}
-            elif (
-                isinstance(self._response_method, list)
-                and self._response_method[0] == "predict_proba"
-                and hasattr(self.estimator, "predict_proba")
-            ):
-                # TODO: this is due to a limitation in `make_scorer`: ideally, we should
-                # be able to pass a list of response methods to `make_scorer` and give
-                # priority to `predict_proba` other `decision_function`.
-                # Here, we manually check if the classifier provide `predict_proba` to
-                # use `needs_proba` instead and ensure that no error will be raised.
-                params_scorer = {"needs_proba": True, "pos_label": self.pos_label}
-            else:
-                params_scorer = {"needs_threshold": True, "pos_label": self.pos_label}
-
             if "tpr" in self.objective_metric:  # tpr/tnr
                 score_func = roc_curve
             else:  # precision/recall
                 score_func = precision_recall_curve
-            scorer = make_scorer(score_func, **params_scorer)
+            scorer = make_scorer(
+                score_func,
+                needs_threshold=True,
+                response_method=self._response_method,
+                pos_label=self.pos_label,
+            )
         else:
             scoring = check_scoring(self.estimator, scoring=self.objective_metric)
             scorer = _ContinuousScorer.from_scorer(

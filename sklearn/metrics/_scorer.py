@@ -25,6 +25,8 @@ from functools import partial
 from inspect import signature
 from traceback import format_exc
 
+import numpy as np
+
 from ..base import is_regressor
 from ..utils import Bunch
 from ..utils._param_validation import HasMethods, StrOptions, validate_params
