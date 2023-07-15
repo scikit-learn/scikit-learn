@@ -474,9 +474,6 @@ class _ThresholdScorer(_BaseScorer):
         else:
             if self._response_method is None:
                 response_method = ("decision_function", "predict_proba")
-            elif isinstance(self._response_method, list):
-                # Need immutable for potential caching
-                response_method = tuple(self._response_method)
             else:
                 response_method = self._response_method
             pos_label = self._get_pos_label()

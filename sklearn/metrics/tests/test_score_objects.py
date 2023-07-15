@@ -803,7 +803,23 @@ def test_multimetric_scorer_calls_method_once(
     assert decision_function_func.call_count == expected_decision_func_count
 
 
-def test_multimetric_scorer_calls_method_once_classifier_no_decision():
+@pytest.mark.parametrize(
+    "scorers",
+    [
+        (["roc_auc", "neg_log_loss"]),
+        (
+            {
+                "roc_auc": make_scorer(
+                    roc_auc_score,
+                    needs_threshold=True,
+                    response_method=["predict_proba", "decision_function"],
+                ),
+                "neg_log_loss": make_scorer(log_loss, needs_proba=True),
+            }
+        ),
+    ],
+)
+def test_multimetric_scorer_calls_method_once_classifier_no_decision(scorers):
     predict_proba_call_cnt = 0
 
     class MockKNeighborsClassifier(KNeighborsClassifier):
@@ -818,7 +834,6 @@ def test_multimetric_scorer_calls_method_once_classifier_no_decision():
     clf = MockKNeighborsClassifier(n_neighbors=1)
     clf.fit(X, y)
 
-    scorers = ["roc_auc", "neg_log_loss"]
     scorer_dict = _check_multimetric_scoring(clf, scorers)
     scorer = _MultimetricScorer(scorers=scorer_dict)
     scorer(clf, X, y)
