@@ -13,7 +13,7 @@ categorical prediction (class label). Scores are obtained from :term:`predict_pr
 class, while the latter returns a decision score for each class. The decision score is a
 measure of how strongly the sample is predicted to belong to the positive class (e.g.,
 the distance to the decision boundary). A decision rule is then defined by thresholding
-the scores and obtained the class label for each sample. Those labels are obtained with
+the scores, leading to a class label for each sample. Those labels are obtained with
 :term:`predict`.
 
 For binary classification in scikit-learn, class labels are obtained by associating the
@@ -41,17 +41,19 @@ all cases. The context and nature of the use case defines the expected behavior 
 classifier and thus, the strategy to convert soft predictions into hard predictions. We
 illustrate this point with an example.
 
-Let's imagine the deployment of a predictive model helping medical doctors to detect
-tumour. In a setting where this model was a tool to discard obvious cases and false
-positives don't lead to potentially harmful treatments, doctors might be interested in
-having a high recall (all cancer cases should be tagged as such) to not miss any patient
-with a cancer. However, that is at the cost of having more false positive predictions
-(i.e. lower precision). Thus, in terms of decision threshold, it may be better to
-classify a patient as having a cancer for a posterior probability estimate lower than
-0.5.
+Let's consider a scenario where a predictive model is being deployed to assist medical
+doctors in detecting tumors. In this setting, doctors will be most likely interested in
+correctly identifying all patients with cancer so that they can provide them with the
+right treatment. In other words, doctors prioritize achieving a high recall rate,
+meaning they want to identify all cases of cancer without missing any patients who have
+it. This emphasis on recall comes, of course, with the trade-off of potentially more
+false-positive predictions, reducing the precision of the model, but that is a risk
+doctors are willing to take. Consequently, when it comes to deciding whether to classify
+a patient as having cancer or not, it may be more beneficial to classify them as
+positive for cancer when the posterior probability estimate is lower than 0.5.
 
-Post-tuning of the decision threshold
-=====================================
+Post-tuning the decision threshold
+==================================
 
 One solution to address the problem stated in the introduction is to tune the decision
 threshold of the classifier once the model has been trained. The
@@ -73,7 +75,7 @@ utility metric defined by the business (in this case an insurance company).
    :align: center
 
 Options to tune the cut-off point
--------------------------------------------
+---------------------------------
 
 The cut-off point can be tuned through different strategies controlled by the parameter
 `objective_metric`.
@@ -88,7 +90,7 @@ In this example, we maximize the balanced accuracy.
     the label of the class of interested (i.e. `pos_label`). Thus, if this label is not
     the right one for your application, you need to define a scorer and pass the right
     `pos_label` (and additional parameters) using the
-    :func:`~sklearn.metrics.make_scorer`. Refer to :ref:`scoring` to get 
+    :func:`~sklearn.metrics.make_scorer`. Refer to :ref:`scoring` to get
     information to define your own scoring function. For instance, we show how to pass
     the information to the scorer that the label of interest is `0` when maximizing the
     :func:`~sklearn.metrics.f1_score`:
@@ -138,24 +140,23 @@ depicting the use of such a utility function.
 Important notes regarding the internal cross-validation
 -------------------------------------------------------
 
-By default :class:`~sklearn.model_selection.TunedThresholdClassifier` uses a
-5-fold stratified cross-validation to tune the cut-off point. The parameter
-`cv` allows to control the cross-validation strategy. It is possible to go
-around cross-validation by passing `cv="prefit"` and providing a fitted
-classifier. In this case, the cut-off point is tuned on the data provided to
-the `fit` method.
+By default :class:`~sklearn.model_selection.TunedThresholdClassifier` uses a 5-fold
+stratified cross-validation to tune the cut-off point. The parameter `cv` allows to
+control the cross-validation strategy. It is possible to bypass cross-validation by
+setting `cv="prefit"` and providing a fitted classifier. In this case, the cut-off point
+is tuned on the data provided to the `fit` method.
 
 However, you should be extremely careful when using this option. You should never use
 the same data for training the classifier and tuning the cut-off point at the risk of
-overfitting. Refer to :ref:`tunedthresholdclassifier_no_cv` for an example. If
-you are in a situation where you have limited resources, you should consider using
-a float number that will use a single split internally.
+overfitting. Refer to the following example section for more details (cf.
+:ref:`tunedthresholdclassifier_no_cv`). If you have limited resources, consider using a
+float number to limit to an internal single train-test split.
 
 The option `cv="prefit"` should only be used when the provided classifier was already
 trained, and you just want to find the best cut-off using a new validation set.
 
-Manually setting the decision thresholding
--------------------------------------------
+Manually setting the decision threshold
+---------------------------------------
 
 The previous sections discussed strategies to find an optimal decision threshold. It is
 also possible to manually set the decision threshold in
@@ -166,6 +167,6 @@ also possible to manually set the decision threshold in
 Examples
 --------
 
-- See
-  :ref:`sphx_glr_auto_examples_model_selection_plot_tuned_threshold_classifier.py`
-  example for an example of tuning the decision threshold of a classifier.
+- See the example entitled
+  :ref:`sphx_glr_auto_examples_model_selection_plot_tuned_threshold_classifier.py`,
+  to learn about tuning the decision threshold of a classifier.
