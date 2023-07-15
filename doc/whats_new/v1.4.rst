@@ -114,8 +114,11 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Enhancement| add a `pos_label` to :func:`metrics.confusion_matrix` such that
-  we always report the TP/TN/FP/FN in the same position in the matrix.
+- |Enhancement| |Fix| add a `pos_label` to :func:`metrics.confusion_matrix`
+  avoiding ambiguity regarding the position of the positive class label in the
+  matrix. An error is raised if the positive label cannot be set to `1`. An
+  error is also raised if the `pos_label` is set on other classification
+  problem than binary.
   :pr:`26839` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
