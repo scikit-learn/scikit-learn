@@ -25,8 +25,6 @@ from functools import partial
 from inspect import signature
 from traceback import format_exc
 
-import numpy as np
-
 from ..base import is_regressor
 from ..utils import Bunch
 from ..utils._param_validation import HasMethods, StrOptions, validate_params
@@ -41,6 +39,7 @@ from ..utils.metadata_routing import (
     process_routing,
 )
 from ..utils.multiclass import type_of_target
+from ..utils.validation import _check_response_method
 from . import (
     accuracy_score,
     average_precision_score,
@@ -131,7 +130,21 @@ class _MultimetricScorer:
                 **{name: Bunch(score=kwargs) for name in self._scorers}
             )
 
-        for name, scorer in self._scorers.items():
+        # to have the highest cache hit rate, we need to check if we have any
+        # _ThresholdScorer and choose a single response method based on the current
+        # estimator
+        scorers = copy.deepcopy(self._scorers)
+        for name, scorer in scorers.items():
+            if isinstance(scorer, _ThresholdScorer):
+                if scorer._response_method is None:
+                    response_method = ("decision_function", "predict_proba")
+                else:
+                    response_method = scorer._response_method
+                scorer._response_method = _check_response_method(
+                    estimator, response_method
+                ).__name__
+
+        for name, scorer in scorers.items():
             try:
                 if isinstance(scorer, _BaseScorer):
                     score = scorer._score(
@@ -402,6 +415,10 @@ class _ProbaScorer(_BaseScorer):
 
 
 class _ThresholdScorer(_BaseScorer):
+    def __init__(self, score_func, sign, kwargs, response_method=None):
+        super().__init__(score_func, sign, kwargs)
+        self._response_method = response_method
+
     def _score(self, method_caller, clf, X, y, **kwargs):
         """Evaluate decision function output for X relative to y_true.
 
@@ -449,20 +466,15 @@ class _ThresholdScorer(_BaseScorer):
             raise ValueError("{0} format is not supported".format(y_type))
 
         if is_regressor(clf):
-            y_pred = method_caller(clf, "predict", X)
+            response_method = self._response_method or "predict"
+            y_pred = method_caller(clf, response_method, X)
         else:
+            if self._response_method is None:
+                response_method = ("decision_function", "predict_proba")
+            else:
+                response_method = self._response_method
             pos_label = self._get_pos_label()
-            try:
-                y_pred = method_caller(clf, "decision_function", X, pos_label=pos_label)
-
-                if isinstance(y_pred, list):
-                    # For multi-output multi-class estimator
-                    y_pred = np.vstack([p for p in y_pred]).T
-
-            except (NotImplementedError, AttributeError):
-                y_pred = method_caller(clf, "predict_proba", X, pos_label=pos_label)
-                if isinstance(y_pred, list):
-                    y_pred = np.vstack([p[:, -1] for p in y_pred]).T
+            y_pred = method_caller(clf, response_method, X, pos_label=pos_label)
 
         scoring_kwargs = {**self._kwargs, **kwargs}
         return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
@@ -733,6 +745,11 @@ def _check_multimetric_scoring(estimator, scoring):
         "greater_is_better": ["boolean"],
         "needs_proba": ["boolean"],
         "needs_threshold": ["boolean"],
+        "response_method": [
+            None,
+            list,
+            StrOptions({"predict", "predict_proba", "decision_function"}),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -742,6 +759,7 @@ def make_scorer(
     greater_is_better=True,
     needs_proba=False,
     needs_threshold=False,
+    response_method=None,
     **kwargs,
 ):
     """Make a scorer from a performance metric or loss function.
@@ -791,6 +809,24 @@ def make_scorer(
         For example `average_precision` or the area under the roc curve
         can not be computed using discrete predictions alone.
 
+    response_method : {"predict_proba", "decision_function", "predict"} or \
+            list of such str, default=None
+
+        Specifies the response method to use get prediction from an estimator
+        (i.e. :term:`predict_proba`, :term:`decision_function` or
+        :term:`predict`). Possible choices are:
+
+        - if `str`, it corresponds to the name to the method to return;
+        - if a list of `str`, it provides the method names in order of
+          preference. The method returned corresponds to the first method in
+          the list and which is implemented by `estimator`.
+        - if `None`, the default order of methods is
+          `["predict_proba", "decision_function"]`.
+
+        Only used when `needs_threshold=True`.
+
+        .. versionadded:: 1.4
+
     **kwargs : additional arguments
         Additional parameters to be passed to `score_func`.
 
@@ -826,10 +862,11 @@ def make_scorer(
         raise ValueError(
             "Set either needs_proba or needs_threshold to True, but not both."
         )
-    if needs_proba:
-        cls = _ProbaScorer
-    elif needs_threshold:
+    if needs_threshold:
         cls = _ThresholdScorer
+        return cls(score_func, sign, kwargs, response_method)
+    elif needs_proba:
+        cls = _ProbaScorer
     else:
         cls = _PredictScorer
     return cls(score_func, sign, kwargs)

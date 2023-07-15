@@ -53,6 +53,7 @@ from sklearn.metrics._scorer import (
 )
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.multioutput import ClassifierChain
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
@@ -542,12 +543,15 @@ def test_thresholded_scorers_multilabel_indicator_data():
 
     # Multi-output multi-class decision_function
     # TODO Is there any yet?
-    clf = DecisionTreeClassifier()
-    clf.fit(X_train, y_train)
-    clf._predict_proba = clf.predict_proba
-    clf.predict_proba = None
-    clf.decision_function = lambda X: [p[:, 1] for p in clf._predict_proba(X)]
+    class TreeWithDecisionFunction(DecisionTreeClassifier):
+        # disable predict_proba
+        predict_proba = None
 
+        def decision_function(self, X):
+            return [p[:, 1] for p in DecisionTreeClassifier.predict_proba(self, X)]
+
+    clf = TreeWithDecisionFunction()
+    clf.fit(X_train, y_train)
     y_proba = clf.decision_function(X_test)
     score1 = get_scorer("roc_auc")(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, np.vstack([p for p in y_proba]).T)
@@ -800,7 +804,23 @@ def test_multimetric_scorer_calls_method_once(
     assert decision_function_func.call_count == expected_decision_func_count
 
 
-def test_multimetric_scorer_calls_method_once_classifier_no_decision():
+@pytest.mark.parametrize(
+    "scorers",
+    [
+        (["roc_auc", "neg_log_loss"]),
+        (
+            {
+                "roc_auc": make_scorer(
+                    roc_auc_score,
+                    needs_threshold=True,
+                    response_method=["predict_proba", "decision_function"],
+                ),
+                "neg_log_loss": make_scorer(log_loss, needs_proba=True),
+            }
+        ),
+    ],
+)
+def test_multimetric_scorer_calls_method_once_classifier_no_decision(scorers):
     predict_proba_call_cnt = 0
 
     class MockKNeighborsClassifier(KNeighborsClassifier):
@@ -815,7 +835,6 @@ def test_multimetric_scorer_calls_method_once_classifier_no_decision():
     clf = MockKNeighborsClassifier(n_neighbors=1)
     clf.fit(X, y)
 
-    scorers = ["roc_auc", "neg_log_loss"]
     scorer_dict = _check_multimetric_scoring(clf, scorers)
     scorer = _MultimetricScorer(scorers=scorer_dict)
     scorer(clf, X, y)
@@ -838,7 +857,7 @@ def test_multimetric_scorer_calls_method_once_regressor_threshold():
     clf = MockDecisionTreeRegressor()
     clf.fit(X, y)
 
-    scorers = {"neg_mse": "neg_mean_squared_error", "r2": "roc_auc"}
+    scorers = {"neg_mse": "neg_mean_squared_error", "r2": "r2"}
     scorer_dict = _check_multimetric_scoring(clf, scorers)
     scorer = _MultimetricScorer(scorers=scorer_dict)
     scorer(clf, X, y)
@@ -1426,3 +1445,20 @@ def test_kwargs_without_metadata_routing_error():
             ValueError, match="is only supported if enable_metadata_routing=True"
         ):
             scorer(clf, X, y, param="blah")
+
+
+def test_get_scorer_multilabel_indicator():
+    """Check that our scorer deal with multi-label indicator matrices.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/26817
+    """
+    X, Y = make_multilabel_classification(n_samples=72, n_classes=3, random_state=0)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, random_state=0)
+
+    base_lr = LogisticRegression(solver="lbfgs", random_state=0)
+    chain = ClassifierChain(base_lr, order="random", random_state=0)
+    chain.fit(X_train, Y_train)
+
+    score = get_scorer("average_precision")(chain, X_test, Y_test)
+    assert score > 0.8

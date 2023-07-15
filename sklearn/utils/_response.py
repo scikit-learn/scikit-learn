@@ -72,15 +72,17 @@ def _get_response_values(
     if is_classifier(estimator):
         prediction_method = _check_response_method(estimator, response_method)
         classes = estimator.classes_
-        target_type = "binary" if len(classes) <= 2 else "multiclass"
-
-        if pos_label is not None and pos_label not in classes.tolist():
-            raise ValueError(
-                f"pos_label={pos_label} is not a valid label: It should be "
-                f"one of {classes}"
-            )
-        elif pos_label is None and target_type == "binary":
-            pos_label = pos_label if pos_label is not None else classes[-1]
+        if isinstance(classes, list):
+            target_type = "multilabel-indicator"
+        else:
+            target_type = "binary" if len(classes) <= 2 else "multiclass"
+            if pos_label is not None and pos_label not in classes.tolist():
+                raise ValueError(
+                    f"pos_label={pos_label} is not a valid label: It should be "
+                    f"one of {classes}"
+                )
+            elif pos_label is None and target_type == "binary":
+                pos_label = pos_label if pos_label is not None else classes[-1]
 
         y_pred = prediction_method(X)
         if prediction_method.__name__ == "predict_proba":
@@ -94,10 +96,14 @@ def _get_response_values(
                         "classifier with two classes."
                     )
                     raise ValueError(err_msg)
+            elif target_type == "multilabel-indicator" and isinstance(y_pred, list):
+                y_pred = np.vstack([p[:, -1] for p in y_pred]).T
         elif prediction_method.__name__ == "decision_function":
             if target_type == "binary":
                 if pos_label == classes[0]:
                     y_pred *= -1
+            elif target_type == "multilabel-indicator" and isinstance(y_pred, list):
+                y_pred = np.vstack([p for p in y_pred]).T
     else:  # estimator is a regressor
         if response_method != "predict":
             raise ValueError(
