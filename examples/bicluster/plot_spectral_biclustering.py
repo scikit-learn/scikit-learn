@@ -47,7 +47,7 @@ _ = plt.show()
 
 # %%
 # We shuffle the data and the goal is to reconstruct it afterwards using
-# :class:`~sklearn.bicluster.SpectralBiclustering`.
+# :class:`~sklearn.cluster.SpectralBiclustering`.
 import numpy as np
 
 # Creating lists of shuffled row and column indices

@@ -115,7 +115,8 @@ class PredictionErrorDisplay:
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.plot.PredictionErrorDisplay`
+        display : :class:`~sklearn.metrics.PredictionErrorDisplay`
+
             Object that stores computed values.
         """
         check_matplotlib_support(f"{self.__class__.__name__}.plot")

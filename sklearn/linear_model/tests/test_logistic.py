@@ -13,6 +13,7 @@ from numpy.testing import (
 )
 from scipy import sparse
 
+from sklearn import config_context
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_classification
 from sklearn.exceptions import ConvergenceWarning
@@ -537,7 +538,17 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
         scorer = get_scorer(scoring + averaging)
         assert_array_almost_equal(
             _log_reg_scoring_path(
-                X, y, train, test, Cs=[1.0], scoring=scorer, **params
+                X,
+                y,
+                train,
+                test,
+                Cs=[1.0],
+                scoring=scorer,
+                pos_class=None,
+                max_squared_sum=None,
+                sample_weight=None,
+                score_params=None,
+                **params,
             )[2][0],
             scorer(lr, X[test], y[test]),
         )
@@ -2065,6 +2076,66 @@ def test_liblinear_not_stuck():
         clf.fit(X_prep, y)
 
 
+@pytest.mark.usefixtures("enable_slep006")
+def test_lr_cv_scores_differ_when_sample_weight_is_requested():
+    """Test that `sample_weight` is correctly passed to the scorer in
+    `LogisticRegressionCV.fit` and `LogisticRegressionCV.score` by
+    checking the difference in scores with the case when `sample_weight`
+    is not requested.
+    """
+    rng = np.random.RandomState(10)
+    X, y = make_classification(n_samples=10, random_state=rng)
+    X_t, y_t = make_classification(n_samples=10, random_state=rng)
+    sample_weight = np.ones(len(y))
+    sample_weight[: len(y) // 2] = 2
+    kwargs = {"sample_weight": sample_weight}
+
+    scorer1 = get_scorer("accuracy")
+    lr_cv1 = LogisticRegressionCV(scoring=scorer1)
+    lr_cv1.fit(X, y, **kwargs)
+
+    scorer2 = get_scorer("accuracy")
+    scorer2.set_score_request(sample_weight=True)
+    lr_cv2 = LogisticRegressionCV(scoring=scorer2)
+    lr_cv2.fit(X, y, **kwargs)
+
+    assert not np.allclose(lr_cv1.scores_[1], lr_cv2.scores_[1])
+
+    score_1 = lr_cv1.score(X_t, y_t, **kwargs)
+    score_2 = lr_cv2.score(X_t, y_t, **kwargs)
+
+    assert not np.allclose(score_1, score_2)
+
+
+def test_lr_cv_scores_without_enabling_metadata_routing():
+    """Test that `sample_weight` is passed correctly to the scorer in
+    `LogisticRegressionCV.fit` and `LogisticRegressionCV.score` even
+    when `enable_metadata_routing=False`
+    """
+    rng = np.random.RandomState(10)
+    X, y = make_classification(n_samples=10, random_state=rng)
+    X_t, y_t = make_classification(n_samples=10, random_state=rng)
+    sample_weight = np.ones(len(y))
+    sample_weight[: len(y) // 2] = 2
+    kwargs = {"sample_weight": sample_weight}
+
+    with config_context(enable_metadata_routing=False):
+        scorer1 = get_scorer("accuracy")
+        lr_cv1 = LogisticRegressionCV(scoring=scorer1)
+        lr_cv1.fit(X, y, **kwargs)
+        score_1 = lr_cv1.score(X_t, y_t, **kwargs)
+
+    with config_context(enable_metadata_routing=True):
+        scorer2 = get_scorer("accuracy")
+        scorer2.set_score_request(sample_weight=True)
+        lr_cv2 = LogisticRegressionCV(scoring=scorer2)
+        lr_cv2.fit(X, y, **kwargs)
+        score_2 = lr_cv2.score(X_t, y_t, **kwargs)
+
+    assert_allclose(lr_cv1.scores_[1], lr_cv2.scores_[1])
+    assert_allclose(score_1, score_2)
+
+
 @pytest.mark.parametrize("solver", SOLVERS)
 def test_zero_max_iter(solver):
     # Make sure we can inspect the state of LogisticRegression right after
@@ -2089,3 +2160,20 @@ def test_zero_max_iter(solver):
             np.full(shape=(X.shape[0], 2), fill_value=0.5),
         )
     assert clf.score(X, y) < 0.7
+
+
+def test_passing_params_without_enabling_metadata_routing():
+    """Test that the right error message is raised when metadata params
+    are passed while not supported when `enable_metadata_routing=False`."""
+    X, y = make_classification(n_samples=10, random_state=0)
+    lr_cv = LogisticRegressionCV()
+    msg = "params is only supported if enable_metadata_routing=True"
+
+    with config_context(enable_metadata_routing=False):
+        params = {"extra_param": 1.0}
+
+        with pytest.raises(ValueError, match=msg):
+            lr_cv.fit(X, y, **params)
+
+        with pytest.raises(ValueError, match=msg):
+            lr_cv.score(X, y, **params)
