@@ -262,7 +262,7 @@ def confusion_matrix(
         in ``y_true`` or ``y_pred`` are used in sorted order.
 
     pos_label : int, float, bool or str, default=1
-        Only taken into account when the data is binary. Ignore otherwise.
+        Only taken into account when the data is binary. Ignored otherwise.
 
         .. versionadded:: 1.4
 
