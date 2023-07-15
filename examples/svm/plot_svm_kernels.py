@@ -2,39 +2,38 @@
 =========================================================
 Plot classification boundaries with different SVM Kernels
 =========================================================
-This example visualizes how different kernels in a :class:`~sklearn.svm.SVC`
-(Support Vector Classifier) influence the classification boundaries in a binary,
-two-dimensional classification problem.
+This example shows how different kernels in a :class:`~sklearn.svm.SVC` (Support Vector
+Classifier) influence the classification boundaries in a binary, two-dimensional
+classification problem.
 
-Support Vector Classifiers (SVC) aim to find a hyperplane that effectively
-separates the classes in their training data by maximizing the margin between
-the outermost data points of each class. This is achieved by finding the best
-weight vector :math:`w` that defines the decision boundary hyperplane and
-minimizes the sum of hinge losses for misclassified samples, as measured by the
-:func:`~sklearn.metrics.hinge_loss` function. By default, regularization is
-applied with a parameter `C=1`, which allows for a certain degree of
-misclassification tolerance.
+SVCs aim to find a hyperplane that effectively separates the classes in their training
+data by maximizing the margin between the outermost data points of each class. This is
+achieved by finding the best weight vector :math:`w` that defines the decision boundary
+hyperplane and minimizes the sum of hinge losses for misclassified samples, as measured
+by the :func:`~sklearn.metrics.hinge_loss` function. By default, regularization is
+applied with the parameter `C=1`, which allows for a certain degree of misclassification
+tolerance.
 
-If the data is not linearly separable in the original feature space, a
-non-linear `kernel` parameter can be set. Depending on the kernel, the process
-involves adding new features or transforming existing features to enrich and
-potentially add meaning to the data. When a kernel other than `linear` is set,
-the SVC applies the kernel trick, which computes the similarity between pairs of
-data points using the kernel function without explicitly transforming the entire
-dataset. The kernel trick surpasses the otherwise necessary matrix
-transformation of the whole dataset by only considering the relations between
-all pairs of data points. The kernel function maps two vectors (each pair of
+If the data is not linearly separable in the original feature space, a non-linear kernel
+parameter can be set. Depending on the kernel, the process involves adding new features
+or transforming existing features to enrich and potentially add meaning to the data.
+When a kernel other than `"linear"` is set, the SVC applies the `kernel trick
+<https://en.wikipedia.org/wiki/Kernel_method#Mathematics:_the_kernel_trick>`__, which
+computes the similarity between pairs of data points using the kernel function without
+explicitly transforming the entire dataset. The kernel trick surpasses the otherwise
+necessary matrix transformation of the whole dataset by only considering the relations
+between all pairs of data points. The kernel function maps two vectors (each pair of
 observations) to their similarity using their dot product.
 
-The hyperplane can then be calculated using the kernel function as if the
-dataset were represented in a higher-dimensional space. Using a kernel function
-instead of an explicit matrix transformation improves performance, as the kernel
-function has a time complexity of :math:`O({n}^2)`, whereas matrix
-transformation scales according to the specific transformation being applied.
+The hyperplane can then be calculated using the kernel function as if the dataset were
+represented in a higher-dimensional space. Using a kernel function instead of an
+explicit matrix transformation improves performance, as the kernel function has a time
+complexity of :math:`O({n}^2)`, whereas matrix transformation scales according to the
+specific transformation being applied.
 
-In this example, we compare the most common kernel types of Support Vector
-Machines: the linear kernel (`linear`), the polynomial kernel (`poly`), the
-radial basis function kernel (`rbf`) and the sigmoid kernel (`sigmoid`).
+In this example, we compare the most common kernel types of Support Vector Machines: the
+linear kernel (`"linear"`), the polynomial kernel (`"poly"`), the radial basis function
+kernel (`"rbf"`) and the sigmoid kernel (`"sigmoid"`).
 """
 
 # Code source: Gaël Varoquaux
@@ -43,8 +42,8 @@ radial basis function kernel (`rbf`) and the sigmoid kernel (`sigmoid`).
 # %%
 # Creating a dataset
 # ------------------
-# We create a two-dimensional dataset with 16 samples and two targets. We plot
-# the samples with the colors matching their respective targets.
+# We create a two-dimensional classification dataset with 16 samples and two classes. We
+# plot the samples with the colors matching their respective targets.
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -73,26 +72,24 @@ y = np.array([0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1])
 
 # Plotting settings
 fig, ax = plt.subplots(figsize=(4, 3))
-ax.grid(True)
-x_min = -3
-x_max = 3
-y_min = -3
-y_max = 3
-plt.xlim(x_min, x_max)
-plt.ylim(y_min, y_max)
+x_min, x_max, y_min, y_max = -3, 3, -3, 3
+ax.set_xlim(x_min, x_max)
+ax.set_ylim(y_min, y_max)
 samples_colormap = np.array(["b", "r"])
 
 # Plot samples by color and add legend
-ax.scatter(X[:, 0], X[:, 1], s=150, c=samples_colormap[y], label=y, edgecolors="k")
-legend_labels = ["class 0", "class 1"]
-legend_handles = [
-    plt.Line2D([0], [0], marker="o", color="w", markerfacecolor=color, markersize=10)
-    for color in samples_colormap
-]
-ax.legend(legend_handles, legend_labels)
+scatter = ax.scatter(
+    X[:, 0], X[:, 1], s=150, c=samples_colormap[y], label=y, edgecolors="k"
+)
+cl0_label = plt.Line2D(
+    [], [], marker="o", color="black", markerfacecolor="b", markersize=10
+)
+cl1_label = plt.Line2D(
+    [], [], marker="o", color="black", markerfacecolor="r", markersize=10
+)
+ax.legend([cl0_label, cl1_label], ["Class 0", "Class 1"], loc="lower right")
 ax.set_title("Samples in two-dimensional feature space")
 _ = plt.show()
-
 
 # %%
 # We can see that the samples are not clearly separable by a straight line.
@@ -127,38 +124,35 @@ _ = plt.show()
 from matplotlib.colors import ListedColormap
 
 from sklearn import svm
+from sklearn.inspection import DecisionBoundaryDisplay
 
 
 def plot_training_data_with_decision_boundary(kernel):
     # Train the SVC
-    clf = svm.SVC(kernel=kernel, gamma=2)
-    clf.fit(X, y)
+    clf = svm.SVC(kernel=kernel, gamma=2).fit(X, y)
 
-    # Plotting settings
+    # Settings for plotting
     fig, ax = plt.subplots(figsize=(4, 3))
-    ax.grid(True)
-    x_min = -3
-    x_max = 3
-    y_min = -3
-    y_max = 3
-    plt.xlim(x_min, x_max)
-    plt.ylim(y_min, y_max)
+    x_min, x_max, y_min, y_max = -3, 3, -3, 3
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
     samples_colormap = np.array(["b", "r"])
 
-    # Extract the decision boundary
-    XX, YY = np.mgrid[x_min:x_max:200j, y_min:y_max:200j]
-    Z = clf.decision_function(np.c_[XX.ravel(), YY.ravel()])
-
-    # Put the result into a color plot
-    Z = Z.reshape(XX.shape)
-    plt.pcolormesh(XX, YY, Z > 0, cmap=ListedColormap(["lightblue", "lightpink"]))
-    plt.contour(
-        XX,
-        YY,
-        Z,
+    # Plot decision boundary and margins
+    common_params = {"estimator": clf, "X": X, "ax": ax}
+    DecisionBoundaryDisplay.from_estimator(
+        **common_params,
+        response_method="predict",
+        plot_method="pcolormesh",
+        cmap=ListedColormap(["lightblue", "lightpink"]),
+    )
+    DecisionBoundaryDisplay.from_estimator(
+        **common_params,
+        response_method="decision_function",
+        plot_method="contour",
+        levels=[-1, 0, 1],
         colors=["k", "k", "k"],
         linestyles=["--", "-", "--"],
-        levels=[-1, 0, 1],
     )
 
     # Plot huger circles around samples that serve as support vectors
@@ -171,14 +165,13 @@ def plot_training_data_with_decision_boundary(kernel):
     )
     # Plot samples by color and add legend
     ax.scatter(X[:, 0], X[:, 1], c=samples_colormap[y], s=150, edgecolors="k")
-    legend_labels = ["class 0", "class 1"]
-    legend_handles = [
-        plt.Line2D(
-            [0], [0], marker="o", color="w", markerfacecolor=color, markersize=10
-        )
-        for color in samples_colormap
-    ]
-    ax.legend(legend_handles, legend_labels)
+    class0_label = plt.Line2D(
+        [], [], marker="o", color="black", markerfacecolor="b", markersize=10
+    )
+    class1_label = plt.Line2D(
+        [], [], marker="o", color="black", markerfacecolor="r", markersize=10
+    )
+    ax.legend([class0_label, class1_label], ["Class 0", "Class 1"], loc="lower right")
     ax.set_title(f" Decision boundaries of {kernel} kernel in SVC")
 
     _ = plt.show()
@@ -304,3 +297,5 @@ plot_training_data_with_decision_boundary("sigmoid")
 # For a comprehensive evaluation, fine-tuning of SVC parameters using techniques
 # such as :class:`~sklearn.model_selection.GridSearchCV` is recommended to
 # capture the underlying structures within the data.
+
+# %%
