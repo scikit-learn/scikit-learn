@@ -541,12 +541,15 @@ def test_thresholded_scorers_multilabel_indicator_data():
 
     # Multi-output multi-class decision_function
     # TODO Is there any yet?
-    clf = DecisionTreeClassifier()
-    clf.fit(X_train, y_train)
-    clf._predict_proba = clf.predict_proba
-    clf.predict_proba = None
-    clf.decision_function = lambda X: [p[:, 1] for p in clf._predict_proba(X)]
+    class TreeWithDecisionFunction(DecisionTreeClassifier):
+        # disable predict_proba
+        predict_proba = None
 
+        def decision_function(self, X):
+            return [p[:, 1] for p in DecisionTreeClassifier.predict_proba(self, X)]
+
+    clf = TreeWithDecisionFunction()
+    clf.fit(X_train, y_train)
     y_proba = clf.decision_function(X_test)
     score1 = get_scorer("roc_auc")(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, np.vstack([p for p in y_proba]).T)
@@ -837,7 +840,7 @@ def test_multimetric_scorer_calls_method_once_regressor_threshold():
     clf = MockDecisionTreeRegressor()
     clf.fit(X, y)
 
-    scorers = {"neg_mse": "neg_mean_squared_error", "r2": "roc_auc"}
+    scorers = {"neg_mse": "neg_mean_squared_error", "r2": "r2"}
     scorer_dict = _check_multimetric_scoring(clf, scorers)
     scorer = _MultimetricScorer(scorers=scorer_dict)
     scorer(clf, X, y)

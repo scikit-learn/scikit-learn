@@ -111,6 +111,13 @@ Changelog
   to :ref:`metadata routing user guide <metadata_routing>`. :pr:`26789` by
   `Adrin Jalali`_.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| add a parameter `response_method` to define a list of priority
+  of response methods to use with metrics requiring the option `needs_threshold=True`.
+  :pr:`xxxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
