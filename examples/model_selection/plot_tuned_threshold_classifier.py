@@ -25,6 +25,11 @@ cost.
     .. [1] "Statlog (German Credit Data) Data Set", UCI Machine Learning Repository,
        `Link
        <https://archive.ics.uci.edu/ml/datasets/Statlog+%28German+Credit+Data%29>`_.
+
+    .. [2] `Charles Elkan, "The Foundations of Cost-Sensitive Learning",
+       International joint conference on artificial intelligence.
+       Vol. 17. No. 1. Lawrence Erlbaum Associates Ltd, 2001.
+       <https://cseweb.ucsd.edu//~elkan/rescale.pdf>`_
 """
 
 # %%
