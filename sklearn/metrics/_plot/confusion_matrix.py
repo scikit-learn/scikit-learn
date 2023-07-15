@@ -202,6 +202,7 @@ class ConfusionMatrixDisplay:
         y,
         *,
         labels=None,
+        pos_label=None,
         sample_weight=None,
         normalize=None,
         display_labels=None,
@@ -237,6 +238,15 @@ class ConfusionMatrixDisplay:
             reorder or select a subset of labels. If `None` is given, those
             that appear at least once in `y_true` or `y_pred` are used in
             sorted order.
+
+        pos_label : int, float, bool or str, default=None
+            The label of the positive class for binary classification.
+            When `pos_label=None`, if `y_true` is in `{-1, 1}` or `{0, 1}`,
+            `pos_label` is set to 1, otherwise an error will be raised.
+            An error is raised if `pos_label` is set and `y_true` is not a binary
+            classification problem.
+
+            .. versionadded:: 1.4
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
@@ -323,6 +333,7 @@ class ConfusionMatrixDisplay:
             y,
             y_pred,
             sample_weight=sample_weight,
+            pos_label=pos_label,
             labels=labels,
             normalize=normalize,
             display_labels=display_labels,
@@ -343,6 +354,7 @@ class ConfusionMatrixDisplay:
         y_pred,
         *,
         labels=None,
+        pos_label=None,
         sample_weight=None,
         normalize=None,
         display_labels=None,
@@ -375,6 +387,15 @@ class ConfusionMatrixDisplay:
             reorder or select a subset of labels. If `None` is given, those
             that appear at least once in `y_true` or `y_pred` are used in
             sorted order.
+
+        pos_label : int, float, bool or str, default=None
+            The label of the positive class for binary classification.
+            When `pos_label=None`, if `y_true` is in `{-1, 1}` or `{0, 1}`,
+            `pos_label` is set to 1, otherwise an error will be raised.
+            An error is raised if `pos_label` is set and `y_true` is not a binary
+            classification problem.
+
+            .. versionadded:: 1.4
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
@@ -465,6 +486,7 @@ class ConfusionMatrixDisplay:
             y_pred,
             sample_weight=sample_weight,
             labels=labels,
+            pos_label=pos_label,
             normalize=normalize,
         )
 
