@@ -653,6 +653,11 @@ def _check_multimetric_scoring(estimator, scoring):
         "greater_is_better": ["boolean"],
         "needs_proba": ["boolean"],
         "needs_threshold": ["boolean"],
+        "response_method": [
+            None,
+            list,
+            StrOptions({"predict", "predict_proba", "decision_function"}),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
