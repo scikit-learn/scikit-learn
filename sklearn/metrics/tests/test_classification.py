@@ -10,7 +10,7 @@ from scipy.spatial.distance import hamming as sp_hamming
 from scipy.stats import bernoulli
 
 from sklearn import datasets, svm
-from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import make_classification, make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import (
     accuracy_score,
@@ -451,6 +451,13 @@ def test_precision_recall_f_unused_pos_label():
         precision_recall_fscore_support(
             [1, 2, 1], [1, 2, 2], pos_label=2, average="macro"
         )
+
+
+def test_confusion_matrix_pos_label_error():
+    _, y = make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
+    err_msg = "`pos_label` should only be set when the target is binary."
+    with pytest.raises(ValueError, match=err_msg):
+        confusion_matrix(y, y, pos_label=1)
 
 
 @pytest.mark.parametrize("pos_label", [0, 1])
