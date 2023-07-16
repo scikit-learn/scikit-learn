@@ -326,14 +326,14 @@ def confusion_matrix(
     >>> (tn, fp, fn, tp)
     (0, 2, 1, 1)
     """
-    if len(y_true) == 0 and len(y_pred) == 0:
-        # early return for empty arrays avoiding all checks
-        n_classes = 0 if labels is None else len(labels)
-        return np.zeros((n_classes, n_classes), dtype=int)
-
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
+
+    if y_true.size == 0 and y_pred.size == 0:
+        # early return for empty arrays avoiding all checks
+        n_classes = 0 if labels is None else len(labels)
+        return np.zeros((n_classes, n_classes), dtype=int)
 
     if y_type == "binary":
         pos_label = _check_pos_label_consistency(pos_label, y_true)
@@ -696,7 +696,17 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     .. [3] `Wikipedia entry for the Cohen's kappa
             <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_.
     """
-    confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
+    y_type, y1, y2 = _check_targets(y1, y2)
+    if y_type == "binary":
+        # we can set `pos_label` to any class labels because the computation of MCC
+        # is symmetric and invariant to `pos_label` switch.
+        pos_label = y1[0]
+    else:
+        pos_label = None
+
+    confusion = confusion_matrix(
+        y1, y2, labels=labels, pos_label=pos_label, sample_weight=sample_weight
+    )
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
@@ -1942,11 +1952,18 @@ def class_likelihood_ratios(
             f"problems, got targets of type: {y_type}"
         )
 
+    if labels is None:
+        classes = np.unique(y_true)
+        pos_label = 1 if len(classes) < 2 else classes[1]
+    else:
+        pos_label = labels[-1]
+
     cm = confusion_matrix(
         y_true,
         y_pred,
         sample_weight=sample_weight,
         labels=labels,
+        pos_label=pos_label,
     )
 
     # Case when `y_test` contains a single class and `y_test == y_pred`.

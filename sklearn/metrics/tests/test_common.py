@@ -318,6 +318,8 @@ THRESHOLDED_METRICS_WITH_AVERAGING = {
 
 # Metrics with a "pos_label" argument
 METRICS_WITH_POS_LABEL = {
+    "unnormalized_confusion_matrix",
+    "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
     "det_curve",
