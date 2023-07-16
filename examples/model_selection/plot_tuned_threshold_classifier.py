@@ -37,8 +37,6 @@ cost.
 # -------------------------------
 #
 # We fetch the German credit dataset from OpenML.
-import numpy as np
-
 import sklearn
 from sklearn.datasets import fetch_openml
 
@@ -47,7 +45,6 @@ sklearn.set_config(enable_metadata_routing=True)
 
 german_credit = fetch_openml(data_id=31, as_frame=True, parser="pandas")
 X, y = german_credit.data, german_credit.target
-pure_loss = np.abs(np.random.RandomState(0).randint(0, 5, size=len(y)))
 
 # %%
 # We check the feature types available in `X`.
@@ -70,15 +67,13 @@ y.value_counts()
 # (e.g. precision and recall) require to provide the label of interest also called
 # the "positive label". Here, we define that our goal is to predict whether or not
 # a sample is a "bad" credit.
-pos_label = "bad"
+pos_label, neg_label = "bad", "good"
 
 # %%
 # To carry our analysis, we split our dataset using a single stratified split.
 from sklearn.model_selection import train_test_split
 
-X_train, X_test, y_train, y_test, pure_loss_train, pure_loss_test = train_test_split(
-    X, y, pure_loss, stratify=y, random_state=0
-)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=0)
 
 # %%
 # We are ready to design our predictive model and the associated evaluation strategy.
@@ -95,18 +90,11 @@ X_train, X_test, y_train, y_test, pure_loss_train, pure_loss_test = train_test_s
 #
 # From these four metrics, scikit-learn does not provide a scorer for the FPR. We
 # therefore need to define a small custom function to compute it.
-import numpy as np
-
-from sklearn.metrics import confusion_matrix, make_scorer, precision_score, recall_score
+from sklearn.metrics import confusion_matrix
 
 
-def fpr_score(y, y_pred, **kwargs):
-    cm = confusion_matrix(y, y_pred)
-    classes = np.unique(y)
-    pos_label = kwargs.get("pos_label", classes[-1])
-    pos_label_idx = np.searchsorted(classes, pos_label)
-    if pos_label_idx == 0:
-        cm = cm[::-1, ::-1]
+def fpr_score(y, y_pred, neg_label, pos_label):
+    cm = confusion_matrix(y, y_pred, labels=[neg_label, pos_label])
     tn, fp, _, _ = cm.ravel()
     tnr = tn / (tn + fp)
     return 1 - tnr
@@ -121,37 +109,33 @@ def fpr_score(y, y_pred, **kwargs):
 # :func:`~sklearn.metrics.make_scorer` where the information is passed. We store all
 # the custom scorers in a dictionary. To use them, we need to pass the fitted model,
 # the data and the target on which we want to evaluate the predictive model.
+from sklearn.metrics import make_scorer, precision_score, recall_score
+
 tpr_score = recall_score  # TPR and recall are the same metric
 scoring = {
     "precision": make_scorer(precision_score, pos_label=pos_label),
     "recall": make_scorer(recall_score, pos_label=pos_label),
-    "fpr": make_scorer(fpr_score, pos_label=pos_label),
+    "fpr": make_scorer(fpr_score, neg_label=neg_label, pos_label=pos_label),
     "tpr": make_scorer(tpr_score, pos_label=pos_label),
 }
 
 # %%
 # In addition, the original research [1]_ defines a business metric. They provide a
 # cost-matrix which encodes that predicting a "bad" credit as "good" is 5 times more
-# costly than the opposite. We define a dictionary containing this information and a
-# score function that computes the cost.
+# costly than the opposite. We define a python function that will weight the confusion
+# matrix and return the overall cost.
+import numpy as np
 
 
-def gain_cost_score(y, y_pred, pos_label, pure_loss):
-    cost_and_gain = np.zeros_like(y)
-    mask_tp = (y == pos_label) & (y_pred == pos_label)
-    cost_and_gain[mask_tp] = 0
-    mask_fp = (y != pos_label) & (y_pred == pos_label)
-    cost_and_gain[mask_fp] = -pure_loss[mask_fp]
-    mask_fn = (y == pos_label) & (y_pred != pos_label)
-    cost_and_gain[mask_fn] = -1
-    mask_tn = (y != pos_label) & (y_pred != pos_label)
-    cost_and_gain[mask_tn] = 0
-    return cost_and_gain.sum()
+def gain_cost_score(y, y_pred, neg_label, pos_label):
+    cm = confusion_matrix(y, y_pred, labels=[neg_label, pos_label])
+    cost_matrix = np.array([[0, -1], [-5, 0]])
+    return np.sum(cm * cost_matrix)
 
 
 scoring["cost_gain"] = make_scorer(
-    gain_cost_score, pos_label=pos_label
-).set_score_request(pure_loss=True)
+    gain_cost_score, neg_label=neg_label, pos_label=pos_label
+)
 # %%
 # Vanilla predictive model
 # ------------------------
@@ -261,7 +245,7 @@ _ = fig.suptitle("Evaluation of the vanilla GBDT model")
 #
 # However, we recall that the original aim was to minimize the cost (or maximize the
 # gain) by the business metric. We can compute the value of the business metric:
-scoring["cost_gain"](model, X_test, y_test, pure_loss=pure_loss_test)
+scoring["cost_gain"](model, X_test, y_test)
 
 # %%
 # At this stage we don't know if any other cut-off can lead to a greater gain.
@@ -289,7 +273,7 @@ model_tuned = TunedThresholdClassifier(
     pos_label=pos_label,
     objective_metric=scoring["cost_gain"],
 )
-model_tuned.fit(X_train, y_train, pure_loss=pure_loss_train)
+model_tuned.fit(X_train, y_train)
 
 # %%
 # We plot the ROC and Precision-Recall curves for the vanilla model and the tuned model.
@@ -379,7 +363,7 @@ _ = fig.suptitle("Comparison of the cut-off point for the vanilla and tuned GBDT
 #
 # We can now check if choosing this cut-off point leads to a better score on the testing
 # set:
-scoring["cost_gain"](model_tuned, X_test, y_test, pure_loss=pure_loss_test)
+scoring["cost_gain"](model_tuned, X_test, y_test)
 
 # %%
 # We observe that the decision generalized on the testing set leading to a better
@@ -402,7 +386,7 @@ scoring["cost_gain"](model_tuned, X_test, y_test, pure_loss=pure_loss_test)
 # Also, the underlying classifier is not be refitted. Here, we can try to do such
 # experiment.
 model.fit(X_train, y_train)
-model_tuned.set_params(cv="prefit").fit(X_train, y_train, pure_loss=pure_loss_train)
+model_tuned.set_params(cv="prefit").fit(X_train, y_train)
 
 
 # %%
@@ -497,7 +481,7 @@ _ = fig.suptitle("Tuned GBDT model without refitting and using the entire datase
 # single train-test split by providing a floating number in range `[0, 1]` to the `cv`
 # parameter. It splits the data into a training and testing set. Let's explore this
 # option:
-model_tuned.set_params(cv=0.75).fit(X_train, y_train, pure_loss=pure_loss_train)
+model_tuned.set_params(cv=0.75).fit(X_train, y_train)
 
 # %%
 fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(21, 6))
