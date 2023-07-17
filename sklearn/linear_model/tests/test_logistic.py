@@ -2167,7 +2167,7 @@ def test_passing_params_without_enabling_metadata_routing():
     are passed while not supported when `enable_metadata_routing=False`."""
     X, y = make_classification(n_samples=10, random_state=0)
     lr_cv = LogisticRegressionCV()
-    msg = "params is only supported if enable_metadata_routing=True"
+    msg = "is only supported if enable_metadata_routing=True"
 
     with config_context(enable_metadata_routing=False):
         params = {"extra_param": 1.0}
