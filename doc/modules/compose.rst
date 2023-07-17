@@ -238,9 +238,9 @@ object::
    Enabling caching triggers a clone of the transformers before fitting.
    Therefore, the transformer instance given to the pipeline cannot be
    inspected directly.
-   In following example, accessing the :class:`PCA` instance ``pca2``
-   will raise an ``AttributeError`` since ``pca2`` will be an unfitted
-   transformer.
+   In following example, accessing the :class:`~sklearn.decomposition.PCA`
+   instance ``pca2`` will raise an ``AttributeError`` since ``pca2`` will be an
+   unfitted transformer.
    Instead, use the attribute ``named_steps`` to inspect estimators within
    the pipeline::
 
