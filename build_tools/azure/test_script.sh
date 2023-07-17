@@ -75,7 +75,7 @@ if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
 fi
 
-if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
+if [[ "$SHOW_LONG_SUMMARY" == "true" ]]; then
     TEST_CMD="$TEST_CMD -ra"
 fi
 
