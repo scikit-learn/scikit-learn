@@ -629,7 +629,7 @@ def test_mean_squared_error_deprecation():
     # check the deprecation warning of mean_squared_error
     depr_msg = (
         "'squared' is deprecated in version 1.4 and "
-        "will be removed in 1.6 To calculate the "
+        "will be removed in 1.6. To calculate the "
         "root mean squared error, use the function"
         "'root_mean_squared_error'."
     )
