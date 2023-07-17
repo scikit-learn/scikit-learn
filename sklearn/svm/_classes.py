@@ -49,9 +49,9 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     penalties and loss functions and should scale better to large numbers of
     samples.
 
-    The main differences between LinearSVC and SVC lie in the loss function used
-    by default, and in the handling of intercept regularization between those
-    two implementations.
+    The main differences between LinearSVC and SVC lie in the loss function
+    used by default, and in the handling of intercept regularization between
+    those two implementations.
 
     This class supports both dense and sparse input and the multiclass support
     is handled according to a one-vs-the-rest scheme.
@@ -108,18 +108,19 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         used in calculations (i.e. data is expected to be already centered).
 
     intercept_scaling : float, default=1.0
-        When `fit_intercept` is True, the instance vector x becomes ``[x_1, ...,
-        x_n, intercept_scaling]``, i.e. a "synthetic" feature with a constant
-        value equal to `intercept_scaling` is appended to the instance vector.
-        The intercept becomes intercept_scaling * synthetic feature weight. Use
-        case: Liblinear internally penalizes the intercept, treating it like any
-        other term in the feature vector. To reduce the impact of the
-        regularization on the intercept, the `intercept_scaling` parameter can
-        be set to a value greater than 1. Then, the weights become `[w_x_1, ...,
-        w_x_n, w_intercept*intercept_scaling]`, where `w_x_1, ..., w_x_n`
-        represent the feature weights and the intercept weight is scaled by
-        `intercept_scaling`. This scaling allows the intercept term to have a
-        different regularization behavior compared to the other features.
+        When `fit_intercept` is True, the instance vector x becomes ``[x_1,
+        ..., x_n, intercept_scaling]``, i.e. a "synthetic" feature with a
+        constant value equal to `intercept_scaling` is appended to the instance
+        vector. The intercept becomes intercept_scaling * synthetic feature
+        weight. Note that liblinear internally penalizes the intercept,
+        treating it like any other term in the feature vector. To reduce the
+        impact of the regularization on the intercept, the `intercept_scaling`
+        parameter can be set to a value greater than 1. Then, the weights
+        become `[w_x_1, ..., w_x_n, w_intercept*intercept_scaling]`, where
+        `w_x_1, ..., w_x_n` represent the feature weights and the intercept
+        weight is scaled by `intercept_scaling`. This scaling allows the
+        intercept term to have a different regularization behavior compared to
+        the other features.
 
     class_weight : dict or 'balanced', default=None
         Set the parameter C of class i to ``class_weight[i]*C`` for
@@ -406,18 +407,19 @@ class LinearSVR(RegressorMixin, LinearModel):
         used in calculations (i.e. data is expected to be already centered).
 
     intercept_scaling : float, default=1.0
-        When `fit_intercept` is True, the instance vector x becomes ``[x_1, ...,
-        x_n, intercept_scaling]``, i.e. a "synthetic" feature with a constant
-        value equal to `intercept_scaling` is appended to the instance vector.
-        The intercept becomes intercept_scaling * synthetic feature weight. Use
-        case: Liblinear internally penalizes the intercept, treating it like any
-        other term in the feature vector. To reduce the impact of the
-        regularization on the intercept, the `intercept_scaling` parameter can
-        be set to a value greater than 1. Then, the weights become `[w_x_1, ...,
-        w_x_n, w_intercept*intercept_scaling]`, where `w_x_1, ..., w_x_n`
-        represent the feature weights and the intercept weight is scaled by
-        `intercept_scaling`. This scaling allows the intercept term to have a
-        different regularization behavior compared to the other features.
+        When `fit_intercept` is True, the instance vector x becomes ``[x_1,
+        ..., x_n, intercept_scaling]``, i.e. a "synthetic" feature with a
+        constant value equal to `intercept_scaling` is appended to the instance
+        vector. The intercept becomes intercept_scaling * synthetic feature
+        weight. Note that liblinear internally penalizes the intercept,
+        treating it like any other term in the feature vector. To reduce the
+        impact of the regularization on the intercept, the `intercept_scaling`
+        parameter can be set to a value greater than 1. Then, the weights
+        become `[w_x_1, ..., w_x_n, w_intercept*intercept_scaling]`, where
+        `w_x_1, ..., w_x_n` represent the feature weights and the intercept
+        weight is scaled by `intercept_scaling`. This scaling allows the
+        intercept term to have a different regularization behavior compared to
+        the other features.
 
     dual : "auto" or bool, default=True
         Select the algorithm to either solve the dual or primal
