@@ -15,7 +15,6 @@ from ..utils._param_validation import (
     validate_params,
 )
 from ..utils.validation import check_is_fitted
-from ._ball_tree import BallTree
 from ._base import VALID_METRICS, KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
 from ._unsupervised import NearestNeighbors
 
@@ -46,7 +45,7 @@ def _query_include_self(X, include_self, mode):
 
 @validate_params(
     {
-        "X": ["array-like", BallTree, KNeighborsMixin],
+        "X": ["array-like", KNeighborsMixin],
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "mode": [StrOptions({"connectivity", "distance"})],
         "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
@@ -55,7 +54,7 @@ def _query_include_self(X, include_self, mode):
         "include_self": ["boolean", StrOptions({"auto"})],
         "n_jobs": [Integral, None],
     },
-    prefer_skip_nested_validation=True,
+    prefer_skip_nested_validation=False,
 )
 def kneighbors_graph(
     X,
@@ -74,9 +73,8 @@ def kneighbors_graph(
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features) or BallTree
-        Sample data, in the form of a numpy array or a precomputed
-        :class:`BallTree`.
+    X : array-like of shape (n_samples, n_features)
+        Sample data, in the form of a numpy array
 
     n_neighbors : int
         Number of neighbors for each sample.
@@ -109,20 +107,20 @@ def kneighbors_graph(
         for mode='distance'.
 
     n_jobs : int, default=None
-        The number of parallel jobs to run for neighbors search. ``None`` means
-        1 unless in a :obj:`joblib.parallel_backend` context. ``-1`` means using
-        all processors. See :term:`Glossary <n_jobs>` for more details.
+        The number of parallel jobs to run for neighbors search.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------
     A : sparse matrix of shape (n_samples, n_samples)
-        Graph where A[i, j] is assigned the weight of edge that connects i to j.
-        The matrix is of CSR format.
+        Graph where A[i, j] is assigned the weight of edge that
+        connects i to j. The matrix is of CSR format.
 
     See Also
     --------
-    radius_neighbors_graph: Compute the (weighted) graph of Neighbors for points
-    in X.
+    radius_neighbors_graph: Compute the (weighted) graph of Neighbors for points in X.
 
     Examples
     --------
