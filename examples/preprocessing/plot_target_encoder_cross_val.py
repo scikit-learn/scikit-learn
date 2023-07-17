@@ -5,7 +5,7 @@ Target Encoder's Internal Cross fitting
 
 .. currentmodule:: sklearn.preprocessing
 
-The :class:`TargetEnocoder` replaces each category of a categorical feature with
+The :class:`TargetEncoder` replaces each category of a categorical feature with
 the mean of the target variable for that category. This method is useful
 in cases where there is a strong relationship between the categorical feature
 and the target. To prevent overfitting, :meth:`TargetEncoder.fit_transform` uses

@@ -380,7 +380,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             For int/None inputs, if the estimator is a classifier and `y` is
             either binary or multiclass,
             :class:`~sklearn.model_selection.StratifiedKFold` is used. In all
-            other cases, :class:`~sklearn.model_selectionKFold` is used. These
+            other cases, :class:`~sklearn.model_selection.KFold` is used. These
             splitters are instantiated with `shuffle=False` so the splits will
             be the same across calls.
 
@@ -772,7 +772,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             For int/None inputs, if the estimator is a classifier and `y` is
             either binary or multiclass,
             :class:`~sklearn.model_selection.StratifiedKFold` is used. In all
-            other cases, :class:`~sklearn.model_selectionKFold` is used. These
+            other cases, :class:`~sklearn.model_selection.KFold` is used. These
             splitters are instantiated with `shuffle=False` so the splits will
             be the same across calls.
 
