@@ -36,6 +36,7 @@ from .utils._param_validation import HasMethods, StrOptions
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _raise_for_params,
     _routing_enabled,
     process_routing,
 )
@@ -148,11 +149,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         self : object
             Returns a fitted instance.
         """
-        if partial_fit_params and not _routing_enabled():
-            raise ValueError(
-                "partial_fit_params is only supported if enable_metadata_routing=True."
-                " See the User Guide for more information."
-            )
+        _raise_for_params(partial_fit_params, self, "partial_fit")
 
         first_time = not hasattr(self, "estimators_")
 
@@ -919,11 +916,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         self : object
             Class instance.
         """
-        if fit_params and not _routing_enabled():
-            raise ValueError(
-                "fit_params is only supported if enable_metadata_routing=True. "
-                "See the User Guide for more information."
-            )
+        _raise_for_params(fit_params, self, "fit")
 
         super().fit(X, Y, **fit_params)
         self.classes_ = [

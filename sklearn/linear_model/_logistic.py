@@ -38,6 +38,7 @@ from ..utils.extmath import row_norms, softmax
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _raise_for_params,
     _routing_enabled,
     process_routing,
 )
@@ -1791,11 +1792,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self : object
             Fitted LogisticRegressionCV estimator.
         """
-        if params and not _routing_enabled():
-            raise ValueError(
-                "params is only supported if enable_metadata_routing=True."
-                " See the User Guide for more information."
-            )
+        _raise_for_params(params, self, "fit")
 
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
@@ -2146,12 +2143,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         score : float
             Score of self.predict(X) w.r.t. y.
         """
-        if score_params and not _routing_enabled():
-            raise ValueError(
-                "score_params is only supported if enable_metadata_routing=True."
-                " See the User Guide for more information."
-                " https://scikit-learn.org/stable/metadata_routing.html"
-            )
+        _raise_for_params(score_params, self, "score")
 
         scoring = self._get_scorer()
         if _routing_enabled():
