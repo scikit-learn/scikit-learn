@@ -127,11 +127,6 @@ scikit_learn_install() {
 main() {
     pre_python_environment_install
     python_environment_install_and_activate
-
-    if [[ "$UNAMESTR" == "Darwin" ]]; then
-        python -sS -c 'import platform; print("debug comes here"); print(platform.mac_ver()); print(platform.mac_ver()[0])'
-    fi
-
     scikit_learn_install
 }
 
