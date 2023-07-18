@@ -11,7 +11,7 @@ classification as well**.
 The comparison is made by varying the parameters that control the number of
 trees according to each estimator:
 
-- `n_estimators` controls the number of trees in the forest. It's a fixed numer.
+- `n_estimators` controls the number of trees in the forest. It's a fixed number.
 - `max_iter` is the the maximum number of iterations in a gradient boosting
   based model. The number of iterations corresponds to the number of trees for
   regression and binary classification problems. Furthermore, the actual number
@@ -202,7 +202,7 @@ fig.update_layout(
 # makes fitting and scoring slower. The RF model reaches such plateau earlier
 # and can never reach the test score of the largest HGBDT model.
 #
-# Note that the results shown on the above plot can change sightly across runs
+# Note that the results shown on the above plot can change slightly across runs
 # and even more significantly when running on other machines: try to run this
 # example on your own local machine.
 #

@@ -226,7 +226,7 @@ The keys are as follows:
 - routing_methods: list of all methods to check for routing
 - preserves_metadata: Whether the metaestimator passes the metadata to the
   sub-estimator without modification or not. If it does, we check that the
-  values are identical. If it doesn', no check is performed. TODO Maybe
+  values are identical. If it doesn't, no check is performed. TODO Maybe
   something smarter could be done if the data is modified.
 
 """

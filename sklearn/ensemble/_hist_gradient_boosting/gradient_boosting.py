@@ -382,7 +382,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         rng = check_random_state(self.random_state)
 
-        # When warm starting, we want to re-use the same seed that was used
+        # When warm starting, we want to reuse the same seed that was used
         # the first time fit was called (e.g. for subsampling or for the
         # train/val split).
         if not (self.warm_start and self._is_fitted()):
@@ -538,7 +538,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # we're going to compute scoring w.r.t the loss. As losses
                     # take raw predictions as input (unlike the scorers), we
                     # can optimize a bit and avoid repeating computing the
-                    # predictions of the previous trees. We'll re-use
+                    # predictions of the previous trees. We'll reuse
                     # raw_predictions (as it's needed for training anyway) for
                     # evaluating the training loss, and create
                     # raw_predictions_val for storing the raw predictions of
