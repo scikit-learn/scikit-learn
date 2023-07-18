@@ -238,11 +238,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 self.cv, shuffle=self.shuffle, random_state=self.random_state
             )
 
-        # If 'multiclass' multiply by `n_classes` else keep shape the same
+        # If 'multiclass' multiply axis 1 by `n_classes` else keep shape the same
         X_shape_multiplier = self.n_classes or 1
         X_out = np.empty(
             (X_ordinal.shape[0], X_ordinal.shape[1] * X_shape_multiplier),
-            dtype=np.float64
+            dtype=np.float64,
         )
         X_unknown_mask = ~X_known_mask
         for train_idx, test_idx in cv.split(X, y):
@@ -306,7 +306,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         X_shape_multiplier = self.n_classes or 1
         X_out = np.empty(
             (X_ordinal.shape[0], X_ordinal.shape[1] * X_shape_multiplier),
-            dtype=np.float64
+            dtype=np.float64,
         )
         self._transform_X_ordinal(
             X_out,
@@ -425,8 +425,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 # Repeating feature indicies for each class
                 # E.g., for 3 features, 2 classes: 0,1,2,0,1,2
                 multi_idx = f_idx - (n_features * (f_idx // n_features))
-                print(f'multi idx {multi_idx}')
-                print(f'xout shape {X_out.shape}, xordinal {X_ordinal.shape}, Xunknown {X_unknown_mask.shape}')
                 X_out[indices, f_idx] = encoding[X_ordinal[indices, multi_idx]]
                 X_out[X_unknown_mask[:, multi_idx], f_idx] = target_mean[multi_idx]
             else:
