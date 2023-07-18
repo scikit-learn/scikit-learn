@@ -62,6 +62,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             problem. The `target_type_` attribute gives the target type used by the
             encoder.
 
+        .. versionadded:: 1.4
+           Added the option 'multiclass'.
+
     smooth : "auto" or float, default="auto"
         The amount of mixing of the target mean conditioned on the value of the
         category with the global target mean. A larger `smooth` value will put
@@ -223,7 +226,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         """
         from ..model_selection import KFold, StratifiedKFold  # avoid circular import
 
-        X_ordinal, X_known_mask, y, n_categories = self._fit_encodings_all(X, y)
+        X_ordinal, X_known_mask, y_encoded, n_categories = self._fit_encodings_all(X, y)
 
         # The cv splitter is voluntarily restricted to *KFold to enforce non
         # overlapping validation folds, otherwise the fit_transform output will
@@ -235,21 +238,15 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 self.cv, shuffle=self.shuffle, random_state=self.random_state
             )
 
-        y_1d = y
-        n_classes = None
-        X_out = np.empty_like(X_ordinal, dtype=np.float64)
+        # If 'multiclass' multiply by `n_classes` else keep shape the same
+        X_shape_multiplier = self.n_classes or 1
+        X_out = np.empty(
+            (X_ordinal.shape[0], X_ordinal.shape[1] * X_shape_multiplier),
+            dtype=np.float64
+        )
         X_unknown_mask = ~X_known_mask
-        X_ordinal_trans = X_ordinal
-        if self.target_type_ == "multiclass":
-            y_1d = self._label_binarizer_.inverse_transform(y)
-            n_classes = self._label_binarizer_.classes_.shape[0]
-            X_out, X_ordinal_trans, X_unknown_mask = [
-                np.repeat(X, n_classes, axis=1)
-                for X in (X_out, X_ordinal, X_unknown_mask)
-            ]
-
-        for train_idx, test_idx in cv.split(X, y_1d):
-            X_train, y_train = X_ordinal[train_idx, :], y[train_idx]
+        for train_idx, test_idx in cv.split(X, y):
+            X_train, y_train = X_ordinal[train_idx, :], y_encoded[train_idx]
             y_train_mean = np.mean(y_train, axis=0)
 
             if self.target_type_ == "multiclass":
@@ -269,12 +266,12 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 )
             self._transform_X_ordinal(
                 X_out,
-                X_ordinal_trans,
+                X_ordinal,
                 X_unknown_mask,
                 test_idx,
                 encodings,
                 y_train_mean,
-                n_classes,
+                self.n_classes,
             )
         return X_out
 
@@ -300,13 +297,12 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             X, handle_unknown="ignore", force_all_finite="allow-nan"
         )
 
-        n_classes = None
-        if self.target_type_ == "multiclass":
-            n_classes = self._label_binarizer_.classes_.shape[0]
-            X_ordinal, X_valid = [
-                np.repeat(X, n_classes, axis=1) for X in (X_ordinal, X_valid)
-            ]
-        X_out = np.empty_like(X_ordinal, dtype=np.float64)
+        # If 'multiclass' multiply by `n_classes` else keep shape the same
+        X_shape_multiplier = self.n_classes or 1
+        X_out = np.empty(
+            (X_ordinal.shape[0], X_ordinal.shape[1] * X_shape_multiplier),
+            dtype=np.float64
+        )
         self._transform_X_ordinal(
             X_out,
             X_ordinal,
@@ -314,7 +310,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             slice(None),
             self.encodings_,
             self.target_mean_,
-            n_classes,
+            self.n_classes,
         )
         return X_out
 
@@ -341,13 +337,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:
             self.target_type_ = self.target_type
 
-        self._label_binarizer_ = None
+        self.n_classes = None
         if self.target_type_ == "binary":
             y = LabelEncoder().fit_transform(y)
         elif self.target_type_ == "multiclass":
             label_binarizer = LabelBinarizer()
-            y = label_binarizer.fit_transform(y)
-            self._label_binarizer_ = label_binarizer
+            y = LabelBinarizer().fit_transform(y)
+            self.n_classes = label_binarizer.classes_.shape[0]
         else:  # continuous
             y = _check_y(y, y_numeric=True, estimator=self)
 
@@ -381,7 +377,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         return X_ordinal, X_known_mask, y, n_categories
 
     def _learn_encodings(self, X_ordinal, y, n_categories, target_mean, save_encodings):
-        """Learn target encodings, optionally saving as attribute or returning."""
+        """Learn target encodings, optionally saving as attribute."""
         if self.smooth == "auto":
             y_variance = np.var(y)
             encodings = _fit_encoding_fast_auto_smooth(
@@ -399,22 +395,20 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 self.smooth,
                 target_mean,
             )
+
         if save_encodings:
             self.encodings_ = encodings
-        else:
-            return encodings
+        return encodings
 
     def _learn_multiclass_encodings(self, X_ordinal, y, n_categories, target_mean):
-        n_features = self.n_features_in_
-        n_classes = self._label_binarizer_.classes_.shape[0]
-        reorder_index = [
+        reorder_index = (
             idx
-            for start in range(n_features)
-            for idx in range(start, (n_classes * n_features), n_features)
-        ]
+            for start in range(self.n_features_in_)
+            for idx in range(start, (self.n_classes * self.n_features_in_), self.n_features_in_)
+        )
 
         encodings = []
-        for i in range(n_classes):
+        for i in range(self.n_classes):
             y_class = y[:, i]
             encoding = self._learn_encodings(
                 X_ordinal,
@@ -438,11 +432,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         n_classes,
     ):
         for f_idx, encoding in enumerate(encodings):
-            X_out[indices, f_idx] = encoding[X_ordinal[indices, f_idx]]
             if n_classes:  # multiclass
-                mean_idx = f_idx - (n_classes * (f_idx // n_classes))
-                X_out[X_unknown_mask[:, f_idx], f_idx] = target_mean[mean_idx]
+                # Repeating feature indicies for each class
+                # E.g., for 3 features, 2 classes: 0,1,2,0,1,2
+                multi_idx = f_idx - (n_classes * (f_idx // n_classes))
+                X_out[indices, f_idx] = encoding[X_ordinal[indices, multi_idx]]
+                X_out[X_unknown_mask[:, multi_idx], f_idx] = target_mean[multi_idx]
             else:
+                X_out[indices, f_idx] = encoding[X_ordinal[indices, f_idx]]
                 X_out[X_unknown_mask[:, f_idx], f_idx] = target_mean
 
     def _more_tags(self):

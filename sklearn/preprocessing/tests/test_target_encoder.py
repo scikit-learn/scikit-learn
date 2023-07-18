@@ -186,16 +186,15 @@ def test_errors(y, msg):
         enc.fit_transform(X, y)
 
 
-def test_use_regression_target(global_random_seed):
+def test_use_regression_target():
     """Custom target_type to avoid inferring the target type."""
-    rng = np.random.RandomState(global_random_seed)
     n_samples = 100
-    X = rng.randint(low=0, high=2, size=n_samples).reshape(-1, 1)
+    X = np.random.randint(low=0, high=2, size=n_samples).reshape(-1, 1)
 
     # XXX: When multiclass is supported, then the following `y`
     # is considered a multiclass problem and `TargetEncoder` will not error.
     # type_of_target would be 'multiclass'
-    y = rng.randint(low=0, high=5, size=n_samples)
+    y = np.random.randint(low=0, high=5, size=n_samples)
     y = y.astype(np.float64)
     enc = TargetEncoder()
     enc.fit_transform(X, y)
