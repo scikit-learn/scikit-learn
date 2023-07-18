@@ -11,12 +11,13 @@ base estimators built with a given learning algorithm in order to improve
 generalizability / robustness over a single estimator.
 
 Two very famous examples of ensemble methods are `gradient-boosted trees
-<gradient_boosting>`_ and `random forests <forest>`_.
+<gradient-boosting>`_ and
+`random forests <random-forests-and-other-randomized-tree-ensembles>`_.
 
 More generally, ensemble models can be applied to any base learner beyond
 trees, in averaging methods such as :ref:`Bagging methods <bagging>`,
-`model stacking <stacking>`_, or `Voting <voting_classifier>`_, or in
-boosting, as :ref:`AdaBoost <adaboost>`.
+`model stacking <stacked-generalization>`_, or `Voting <voting-classifier>`_,
+or in boosting, as :ref:`AdaBoost <adaboost>`.
 
 .. contents::
     :local:
