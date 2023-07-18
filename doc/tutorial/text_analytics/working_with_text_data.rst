@@ -520,7 +520,7 @@ Exercise 1: Language identification
 -----------------------------------
 
 - Write a text classification pipeline using a custom preprocessor and
-  ``CountVectorizer`` set up to use character based n-grams, using data from Wikipedia articles as the training set.
+  ``TfidfVectorizer`` set up to use character based n-grams, using data from Wikipedia articles as the training set.
 
 - Evaluate the performance on some held out test set.
 
