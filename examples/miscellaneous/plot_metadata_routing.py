@@ -368,7 +368,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
 # In ``get_metadata_routing``, we add ``self`` to the routing using
 # ``add_self_request`` to indicate this estimator is consuming
 # ``sample_weight`` as well as being a router; which also adds a
-# ``$self_request`` key to the routing info as illustrated bellow. Now let's
+# ``$self_request`` key to the routing info as illustrated below. Now let's
 # look at some examples:
 
 # %%

@@ -900,7 +900,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             self.medoids_ = np.empty((n_clusters, X.shape[1]), dtype=np.float64)
 
         # Need to handle iteratively seen each cluster may have a different
-        # number of samples, hence we can't create a homogenous 3D array.
+        # number of samples, hence we can't create a homogeneous 3D array.
         for idx in range(n_clusters):
             mask = self.labels_ == idx
             data = X[mask]
