@@ -126,7 +126,13 @@ conda_build_metadata_list = [
         "platform": "osx-64",
         "channel": "defaults",
         "conda_dependencies": common_dependencies + ["ccache"],
-        "package_constraints": {"blas": "[build=mkl]", "numpy": "<1.25"},
+        "package_constraints": {
+            "blas": "[build=mkl]",
+            # TODO: temporary pin for numpy to avoid what seems a loky issue,
+            # for more details see
+            # https://github.com/scikit-learn/scikit-learn/pull/26845#issuecomment-1639917135
+            "numpy": "<1.25",
+        },
     },
     {
         "build_name": "pylatest_conda_forge_mkl_no_coverage",
