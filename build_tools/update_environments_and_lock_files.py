@@ -126,9 +126,7 @@ conda_build_metadata_list = [
         "platform": "osx-64",
         "channel": "defaults",
         "conda_dependencies": common_dependencies + ["ccache"],
-        "package_constraints": {
-            "blas": "[build=mkl]",
-        },
+        "package_constraints": {"blas": "[build=mkl]", "numpy": "<1.25"},
     },
     {
         "build_name": "pylatest_conda_forge_mkl_no_coverage",
