@@ -31,7 +31,6 @@ macos_arm64_wheel_task:
 
   cibuildwheel_script:
     - bash build_tools/wheels/build_wheels.sh
-    - bash build_tools/cirrus/update_tracking_issue.sh true
 
   on_failure:
     update_tracker_script:
@@ -73,7 +72,6 @@ linux_arm64_wheel_task:
   cibuildwheel_script:
     - apt install -y python3 python-is-python3
     - bash build_tools/wheels/build_wheels.sh
-    - bash build_tools/cirrus/update_tracking_issue.sh true
 
   on_failure:
     update_tracker_script:
@@ -82,6 +80,17 @@ linux_arm64_wheel_task:
   wheels_artifacts:
     path: "wheelhouse/*"
 
+# Update tracker when all jobs are successful
+update_tracker_success:
+  depends_on:
+    - macos_arm64_wheel
+    - linux_arm64_wheel
+  container:
+    image: python:3.11
+  # Only update tracker for nightly builds
+  only_if: $CIRRUS_CRON == "nightly"
+  update_script:
+    - bash build_tools/cirrus/update_tracking_issue.sh true
 
 wheels_upload_task:
   depends_on:
