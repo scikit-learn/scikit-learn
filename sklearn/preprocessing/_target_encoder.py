@@ -250,12 +250,17 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             y_train_mean = np.mean(y_train, axis=0)
 
             if self.target_type_ == "multiclass":
-                encodings = self._learn_multiclass_encodings(
-                    X_ordinal,
-                    y_train,
-                    n_categories,
-                    y_train_mean,
-                )
+                encodings = []
+                for i in range(self.n_classes):
+                    y_class = y_train[:, i]
+                    encoding = self._learn_encodings(
+                        X_ordinal,
+                        y_class,
+                        n_categories,
+                        y_train_mean[i],
+                        save_encodings=False,
+                    )
+                    encodings += encoding
             else:
                 encodings = self._learn_encodings(
                     X_train,
@@ -271,7 +276,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 test_idx,
                 encodings,
                 y_train_mean,
-                self.n_classes,
+                self.n_features_in_,
             )
         return X_out
 
@@ -310,7 +315,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             slice(None),
             self.encodings_,
             self.target_mean_,
-            self.n_classes,
+            self.n_features_in_,
         )
         return X_out
 
@@ -358,12 +363,17 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             count=len(self.categories_),
         )
         if self.target_type_ == "multiclass":
-            encodings = self._learn_multiclass_encodings(
-                X_ordinal,
-                y,
-                n_categories,
-                self.target_mean_,
-            )
+            encodings = []
+            for i in range(self.n_classes):
+                y_class = y[:, i]
+                encoding = self._learn_encodings(
+                    X_ordinal,
+                    y_class,
+                    n_categories,
+                    self.target_mean_[i],
+                    save_encodings=False,
+                )
+                encodings += encoding
             self.encodings_ = encodings
         else:
             self._learn_encodings(
@@ -400,27 +410,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             self.encodings_ = encodings
         return encodings
 
-    def _learn_multiclass_encodings(self, X_ordinal, y, n_categories, target_mean):
-        reorder_index = (
-            idx
-            for start in range(self.n_features_in_)
-            for idx in range(start, (self.n_classes * self.n_features_in_), self.n_features_in_)
-        )
-
-        encodings = []
-        for i in range(self.n_classes):
-            y_class = y[:, i]
-            encoding = self._learn_encodings(
-                X_ordinal,
-                y_class,
-                n_categories,
-                target_mean[i],
-                save_encodings=False,
-            )
-            encodings += encoding
-        encodings = [encodings[idx] for idx in reorder_index]
-        return encodings
-
     @staticmethod
     def _transform_X_ordinal(
         X_out,
@@ -429,13 +418,15 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         indices,
         encodings,
         target_mean,
-        n_classes,
+        n_features,
     ):
         for f_idx, encoding in enumerate(encodings):
-            if n_classes:  # multiclass
+            if X_out.shape != X_ordinal.shape:  # multiclass
                 # Repeating feature indicies for each class
                 # E.g., for 3 features, 2 classes: 0,1,2,0,1,2
-                multi_idx = f_idx - (n_classes * (f_idx // n_classes))
+                multi_idx = f_idx - (n_features * (f_idx // n_features))
+                print(f'multi idx {multi_idx}')
+                print(f'xout shape {X_out.shape}, xordinal {X_ordinal.shape}, Xunknown {X_unknown_mask.shape}')
                 X_out[indices, f_idx] = encoding[X_ordinal[indices, multi_idx]]
                 X_out[X_unknown_mask[:, multi_idx], f_idx] = target_mean[multi_idx]
             else:
