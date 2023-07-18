@@ -29,13 +29,19 @@ from ..exceptions import FitFailedWarning
 from ..metrics import check_scoring, get_scorer_names
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..preprocessing import LabelEncoder
-from ..utils import _safe_indexing, check_random_state, indexable
+from ..utils import Bunch, _safe_indexing, check_random_state, indexable
 from ..utils._param_validation import (
     HasMethods,
     Integral,
     Interval,
     StrOptions,
     validate_params,
+)
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _routing_enabled,
+    process_routing,
 )
 from ..utils.metaestimators import _safe_split
 from ..utils.parallel import Parallel, delayed
@@ -89,6 +95,7 @@ def cross_validate(
     n_jobs=None,
     verbose=0,
     fit_params=None,
+    params=None,
     pre_dispatch="2*n_jobs",
     return_train_score=False,
     return_estimator=False,
@@ -166,6 +173,15 @@ def cross_validate(
 
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
+
+        .. deprecated:: 1.4
+            This parameter is deprecated will be removed in version 1.6.
+
+    params : dict, default=None
+        Parameters to pass the the underlying estimator's methods, the scorer,
+        and the CV splitter.
+
+        .. versionadded:: 1.4
 
     pre_dispatch : int or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
@@ -287,18 +303,60 @@ def cross_validate(
     >>> print(scores['train_r2'])
     [0.28009951 0.3908844  0.22784907]
     """
+    if params and fit_params:
+        raise ValueError(
+            "`params` and `fit_params` cannot both be provided. Pass parameters "
+            "via `params`. `fit_params` is deprecated and will be removed in "
+            "version 1.6."
+        )
+    elif fit_params:
+        warnings.warn(
+            (
+                "`fit_params` is deprecated and will be removed in version 1.6. "
+                "Pass parameters via `params` instead."
+            ),
+            FutureWarning,
+        )
+        params = fit_params
+
+    # kinda confused as why this is here, in other places we don't do such a
+    # check and conversion, we do check_array if needed.
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
     if callable(scoring):
-        scorers = scoring
+        scorer = scoring
     elif scoring is None or isinstance(scoring, str):
-        scorers = check_scoring(estimator, scoring)
+        scorer = check_scoring(estimator, scoring)
     else:
-        scorers = _check_multimetric_scoring(estimator, scoring)
+        scorer = _check_multimetric_scoring(estimator, scoring)
+        scorer = _MultimetricScorer(scorer, raise_exc=(error_score == "raise"))
 
-    indices = cv.split(X, y, groups)
+    if _routing_enabled():
+        router = (
+            MetadataRouter(owner="cross_validate")
+            .add(
+                splitter=cv,
+                method_mapping=MethodMapping().add(caller="fit", callee="split"),
+            )
+            .add(
+                estimator=estimator,
+                method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+            )
+            .add(
+                scorer=scorer,
+                method_mapping=MethodMapping().add(caller="fit", callee="score"),
+            )
+        )
+        routed_params = process_routing(router, method="fit", **params)
+    else:
+        routed_params = Bunch()
+        routed_params.splitter = Bunch(split={"groups": groups})
+        routed_params.estimator = Bunch(fit=params)
+        routed_params.scorer = Bunch(score={})
+
+    indices = cv.split(X, y, **routed_params.splitter.split)
     if return_indices:
         # materialize the indices since we need to store them in the returned dict
         indices = list(indices)
@@ -311,12 +369,13 @@ def cross_validate(
             clone(estimator),
             X,
             y,
-            scorers,
-            train,
-            test,
-            verbose,
-            None,
-            fit_params,
+            scorer=scorer,
+            train=train,
+            test=test,
+            verbose=verbose,
+            parameters=None,
+            fit_params=routed_params.estimator.fit,
+            score_params=routed_params.scorer.score,
             return_train_score=return_train_score,
             return_times=True,
             return_estimator=return_estimator,
@@ -595,12 +654,14 @@ def _fit_and_score(
     estimator,
     X,
     y,
+    *,
     scorer,
     train,
     test,
     verbose,
     parameters,
     fit_params,
+    score_params,
     return_train_score=False,
     return_parameters=False,
     return_n_test_samples=False,
@@ -626,10 +687,8 @@ def _fit_and_score(
 
     scorer : A single callable or dict mapping scorer name to the callable
         If it is a single callable, the return value for ``train_scores`` and
-        ``test_scores`` is a single float.
-
-        For a dict, it should be one mapping the scorer name to the scorer
-        callable object / function.
+        ``test_scores`` is a single float or a mapping of the scorer name to
+        the score given by that scorer (_MultimetricScorer).
 
         The callable object / fn should have signature
         ``scorer(estimator, X, y)``.
@@ -653,6 +712,9 @@ def _fit_and_score(
 
     fit_params : dict or None
         Parameters that will be passed to ``estimator.fit``.
+
+    score_params : dict or None
+        Parameters that will be passed to the scorer.
 
     return_train_score : bool, default=False
         Compute and return score on training set.
@@ -724,6 +786,9 @@ def _fit_and_score(
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
     fit_params = _check_method_params(X, params=fit_params, indices=train)
+    score_params = score_params if score_params is not None else {}
+    score_params_train = _check_method_params(X, params=score_params, indices=train)
+    score_params_test = _check_method_params(X, params=score_params, indices=test)
 
     if parameters is not None:
         # here we clone the parameters, since sometimes the parameters
@@ -764,10 +829,14 @@ def _fit_and_score(
         result["fit_error"] = None
 
         fit_time = time.time() - start_time
-        test_scores = _score(estimator, X_test, y_test, scorer, error_score)
+        test_scores = _score(
+            estimator, X_test, y_test, scorer, score_params_test, error_score
+        )
         score_time = time.time() - start_time - fit_time
         if return_train_score:
-            train_scores = _score(estimator, X_train, y_train, scorer, error_score)
+            train_scores = _score(
+                estimator, X_train, y_train, scorer, score_params_train, error_score
+            )
 
     if verbose > 1:
         total_time = score_time + fit_time
@@ -1726,10 +1795,10 @@ def learning_curve(
                 clone(estimator),
                 X,
                 y,
-                scorer,
-                train,
-                test,
-                verbose,
+                scorer=scorer,
+                train=train,
+                test=test,
+                verbose=verbose,
                 parameters=None,
                 fit_params=fit_params,
                 return_train_score=True,
@@ -2025,10 +2094,10 @@ def validation_curve(
             clone(estimator),
             X,
             y,
-            scorer,
-            train,
-            test,
-            verbose,
+            scorer=scorer,
+            train=train,
+            test=test,
+            verbose=verbose,
             parameters={param_name: v},
             fit_params=fit_params,
             return_train_score=True,
