@@ -14,6 +14,7 @@ from scipy.sparse import (
 )
 from scipy.special import comb
 
+from sklearn import config_context
 from sklearn.datasets import load_digits, make_classification
 from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import (
@@ -44,12 +45,19 @@ from sklearn.model_selection._split import (
 )
 from sklearn.svm import SVC
 from sklearn.tests.test_metadata_routing import assert_request_is_empty
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
     ignore_warnings,
+)
+from sklearn.utils.estimator_checks import (
+    _array_api_for_tests,
 )
 from sklearn.utils.validation import _num_samples
 
@@ -1257,6 +1265,41 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
 
     assert len(X_train) == exp_train
     assert len(X_test) == exp_test
+
+
+@pytest.mark.parametrize(
+    "array_namepsace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+def test_array_api_train_test_split(array_namepsace, device, dtype):
+    xp, device, dtype = _array_api_for_tests(array_namepsace, device, dtype)
+
+    X = np.arange(100).reshape((10, 10))
+    y = np.arange(10)
+
+    X_np = X.astype(dtype)
+    X_xp = xp.asarray(X_np, device=device)
+
+    y_np = y.astype(dtype)
+    y_xp = xp.asarray(y_np, device=device)
+
+    groups = np.hstack((np.ones(6), np.zeros(4)))
+
+    np_X_train, np_X_test, np_y_train, np_y_test = train_test_split(
+        X_np, y, random_state=0, stratify=groups
+    )
+    with config_context(array_api_dispatch=True):
+        xp_X_train, xp_X_test, xp_y_train, xp_y_test = train_test_split(
+            X_xp, y_xp, random_state=0
+        )
+
+    assert_allclose(
+        _convert_to_numpy(xp_X_train, xp=xp),
+        np_X_train,
+    )
+    assert_allclose(
+        _convert_to_numpy(xp_X_test, xp=xp),
+        np_X_test,
+    )
 
 
 def test_train_test_split():
