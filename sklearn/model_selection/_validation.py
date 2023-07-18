@@ -334,6 +334,14 @@ def cross_validate(
         scorers = _check_multimetric_scoring(estimator, scoring)
 
     if _routing_enabled():
+        if groups is not None and "groups" in params:
+            raise ValueError(
+                "The 'groups' parameter cannot be passed both via the "
+                "'groups' argument and via the 'params' argument."
+            )
+        if groups is not None:
+            params["groups"] = groups
+
         if scorers is dict:
             _scorer = _MultimetricScorer(scorers, raise_exc=(error_score == "raise"))
         else:

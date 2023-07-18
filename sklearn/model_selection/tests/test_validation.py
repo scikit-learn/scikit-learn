@@ -2424,3 +2424,27 @@ def test_cross_validate_return_indices(global_random_seed):
     for split_idx, (expected_train_idx, expected_test_idx) in enumerate(cv.split(X, y)):
         assert_array_equal(train_indices[split_idx], expected_train_idx)
         assert_array_equal(test_indices[split_idx], expected_test_idx)
+
+
+# Tests for metadata routing in cross_val*
+# ========================================
+
+
+def test_cross_validate_fit_param_deprecation():
+    with pytest.warns(FutureWarning, match="`fit_params` is deprecated"):
+        cross_validate(estimator=None, X=None, y=None, fit_params={})
+
+    with pytest.raises(
+        ValueError, match="`params` and `fit_params` cannot both be provided"
+    ):
+        cross_validate(estimator=None, X=None, y=None, fit_params={}, params={})
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_groups_in_params():
+    with pytest.raises(ValueError, match="The 'groups' parameter cannot be passed"):
+        cross_validate(estimator=None, X=None, y=None, groups=[], params={"groups": []})
+
+
+# End of metadata routing tests
+# =============================
