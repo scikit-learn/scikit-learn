@@ -706,7 +706,7 @@ def test_cross_val_score_fit_params():
         "dummy_obj": DUMMY_OBJ,
         "callback": assert_fit_params,
     }
-    cross_val_score(clf, X, y, fit_params=fit_params)
+    cross_val_score(clf, X, y, params=fit_params)
 
 
 def test_cross_val_score_score_func():
@@ -1160,7 +1160,7 @@ def test_cross_val_score_sparse_fit_params():
     X, y = iris.data, iris.target
     clf = MockClassifier()
     fit_params = {"sparse_sample_weight": coo_matrix(np.eye(X.shape[0]))}
-    a = cross_val_score(clf, X, y, fit_params=fit_params, cv=3)
+    a = cross_val_score(clf, X, y, params=fit_params, cv=3)
     assert_array_equal(a, np.ones(3))
 
 
@@ -2082,12 +2082,23 @@ def test_fit_and_score_failing():
     failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
     # dummy X data
     X = np.arange(1, 10)
-    fit_and_score_args = [failing_clf, X, None, dict(), None, None, 0, None, None]
+    fit_and_score_args = dict(
+        estimator=failing_clf,
+        X=X,
+        y=None,
+        scorer=dict(),
+        train=None,
+        test=None,
+        verbose=0,
+        parameters=None,
+        fit_params=None,
+        score_params=None,
+    )
     # passing error score to trigger the warning message
-    fit_and_score_kwargs = {"error_score": "raise"}
+    fit_and_score_args["error_score"] = "raise"
     # check if exception was raised, with default error_score='raise'
     with pytest.raises(ValueError, match="Failing classifier failed as required"):
-        _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
+        _fit_and_score(**fit_and_score_args)
 
     assert failing_clf.score() == 0.0  # FailingClassifier coverage
 
@@ -2097,14 +2108,21 @@ def test_fit_and_score_working():
     clf = SVC(kernel="linear", random_state=0)
     train, test = next(ShuffleSplit().split(X))
     # Test return_parameters option
-    fit_and_score_args = [clf, X, y, dict(), train, test, 0]
-    fit_and_score_kwargs = {
-        "parameters": {"max_iter": 100, "tol": 0.1},
-        "fit_params": None,
-        "return_parameters": True,
-    }
-    result = _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
-    assert result["parameters"] == fit_and_score_kwargs["parameters"]
+    fit_and_score_args = dict(
+        estimator=clf,
+        X=X,
+        y=y,
+        scorer=dict(),
+        train=train,
+        test=test,
+        verbose=0,
+        parameters={"max_iter": 100, "tol": 0.1},
+        fit_params=None,
+        score_params=None,
+        return_parameters=True,
+    )
+    result = _fit_and_score(**fit_and_score_args)
+    assert result["parameters"] == fit_and_score_args["parameters"]
 
 
 class DataDependentFailingClassifier(BaseEstimator):
@@ -2315,13 +2333,22 @@ def test_fit_and_score_verbosity(
     train, test = next(ShuffleSplit().split(X))
 
     # test print without train score
-    fit_and_score_args = [clf, X, y, scorer, train, test, verbose, None, None]
-    fit_and_score_kwargs = {
-        "return_train_score": train_score,
-        "split_progress": split_prg,
-        "candidate_progress": cdt_prg,
-    }
-    _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
+    fit_and_score_args = dict(
+        estimator=clf,
+        X=X,
+        y=y,
+        scorer=scorer,
+        train=train,
+        test=test,
+        verbose=verbose,
+        parameters=None,
+        fit_params=None,
+        score_params=None,
+        return_train_score=train_score,
+        split_progress=split_prg,
+        candidate_progress=cdt_prg,
+    )
+    _fit_and_score(**fit_and_score_args)
     out, _ = capsys.readouterr()
     outlines = out.split("\n")
     if len(outlines) > 2:
@@ -2336,9 +2363,15 @@ def test_score():
     def two_params_scorer(estimator, X_test):
         return None
 
-    fit_and_score_args = [None, None, None, two_params_scorer]
     with pytest.raises(ValueError, match=error_message):
-        _score(*fit_and_score_args, error_score=np.nan)
+        _score(
+            estimator=None,
+            X_test=None,
+            y_test=None,
+            scorer=two_params_scorer,
+            score_params=None,
+            error_score=np.nan,
+        )
 
 
 def test_callable_multimetric_confusion_matrix_cross_validate():

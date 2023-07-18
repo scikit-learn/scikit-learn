@@ -1808,7 +1808,7 @@ def test_nested_cv():
             error_score="raise",
         )
         cross_val_score(
-            gs, X=X, y=y, groups=groups, cv=outer_cv, fit_params={"groups": groups}
+            gs, X=X, y=y, groups=groups, cv=outer_cv, params={"groups": groups}
         )
 
 

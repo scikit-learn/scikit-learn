@@ -76,6 +76,7 @@ __all__ = [
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
         "fit_params": [dict, None],
+        "params": [dict, None],
         "pre_dispatch": [Integral, str],
         "return_train_score": ["boolean"],
         "return_estimator": ["boolean"],
@@ -326,14 +327,17 @@ def cross_validate(
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
     if callable(scoring):
-        scorer = scoring
+        scorers = scoring
     elif scoring is None or isinstance(scoring, str):
-        scorer = check_scoring(estimator, scoring)
+        scorers = check_scoring(estimator, scoring)
     else:
-        scorer = _check_multimetric_scoring(estimator, scoring)
-        scorer = _MultimetricScorer(scorer, raise_exc=(error_score == "raise"))
+        scorers = _check_multimetric_scoring(estimator, scoring)
 
     if _routing_enabled():
+        if scorers is dict:
+            _scorer = _MultimetricScorer(scorers, raise_exc=(error_score == "raise"))
+        else:
+            _scorer = scorers
         router = (
             MetadataRouter(owner="cross_validate")
             .add(
@@ -345,7 +349,7 @@ def cross_validate(
                 method_mapping=MethodMapping().add(caller="fit", callee="fit"),
             )
             .add(
-                scorer=scorer,
+                scorer=_scorer,
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
         )
@@ -369,7 +373,7 @@ def cross_validate(
             clone(estimator),
             X,
             y,
-            scorer=scorer,
+            scorer=scorers,
             train=train,
             test=test,
             verbose=verbose,
@@ -511,6 +515,7 @@ def cross_val_score(
     n_jobs=None,
     verbose=0,
     fit_params=None,
+    params=None,
     pre_dispatch="2*n_jobs",
     error_score=np.nan,
 ):
@@ -580,6 +585,15 @@ def cross_val_score(
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
+        .. deprecated:: 1.4
+            This parameter is deprecated will be removed in version 1.6.
+
+    params : dict, default=None
+        Parameters to pass the the underlying estimator's methods, the scorer,
+        and the CV splitter.
+
+        .. versionadded:: 1.4
+
     pre_dispatch : int or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
@@ -644,6 +658,7 @@ def cross_val_score(
         n_jobs=n_jobs,
         verbose=verbose,
         fit_params=fit_params,
+        params=params,
         pre_dispatch=pre_dispatch,
         error_score=error_score,
     )
@@ -878,7 +893,7 @@ def _fit_and_score(
     return result
 
 
-def _score(estimator, X_test, y_test, scorer, error_score="raise"):
+def _score(estimator, X_test, y_test, scorer, score_params, error_score="raise"):
     """Compute the score(s) of an estimator on a given test set.
 
     Will return a dict of floats if `scorer` is a dict, otherwise a single
@@ -888,11 +903,13 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
         # will cache method calls if needed. scorer() returns a dict
         scorer = _MultimetricScorer(scorers=scorer, raise_exc=(error_score == "raise"))
 
+    score_params = {} if score_params is None else score_params
+
     try:
         if y_test is None:
-            scores = scorer(estimator, X_test)
+            scores = scorer(estimator, X_test, **score_params)
         else:
-            scores = scorer(estimator, X_test, y_test)
+            scores = scorer(estimator, X_test, y_test, **score_params)
     except Exception:
         if isinstance(scorer, _MultimetricScorer):
             # If `_MultimetricScorer` raises exception, the `error_score`
@@ -1776,7 +1793,6 @@ def learning_curve(
                 test,
                 train_sizes_abs,
                 scorer,
-                verbose,
                 return_times,
                 error_score=error_score,
                 fit_params=fit_params,
@@ -1801,6 +1817,7 @@ def learning_curve(
                 verbose=verbose,
                 parameters=None,
                 fit_params=fit_params,
+                score_params=None,
                 return_train_score=True,
                 error_score=error_score,
                 return_times=return_times,
@@ -1902,7 +1919,6 @@ def _incremental_fit_estimator(
     test,
     train_sizes,
     scorer,
-    verbose,
     return_times,
     error_score,
     fit_params,
@@ -1932,8 +1948,10 @@ def _incremental_fit_estimator(
 
         start_score = time.time()
 
-        test_scores.append(_score(estimator, X_test, y_test, scorer, error_score))
-        train_scores.append(_score(estimator, X_train, y_train, scorer, error_score))
+        test_scores.append(_score(estimator, X_test, y_test, scorer, None, error_score))
+        train_scores.append(
+            _score(estimator, X_train, y_train, scorer, None, error_score)
+        )
 
         score_time = time.time() - start_score
         score_times.append(score_time)
@@ -2100,6 +2118,7 @@ def validation_curve(
             verbose=verbose,
             parameters={param_name: v},
             fit_params=fit_params,
+            score_params=None,
             return_train_score=True,
             error_score=error_score,
         )
