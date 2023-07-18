@@ -29,7 +29,10 @@ def _check_cython_version():
         # Re-raise with more informative error message instead:
         raise ModuleNotFoundError(message) from e
 
-    if LooseVersion(Cython.__version__) < CYTHON_MIN_VERSION or LooseVersion(Cython.__version__) >= CYTHON_MAX_VERSION:
+    if (
+        LooseVersion(Cython.__version__) < CYTHON_MIN_VERSION
+        or LooseVersion(Cython.__version__) >= CYTHON_MAX_VERSION
+    ):
         message += (' The current version of Cython is {} installed in {}.'
                     .format(Cython.__version__, Cython.__path__))
         raise ValueError(message)
