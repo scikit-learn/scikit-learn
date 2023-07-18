@@ -342,7 +342,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             y = LabelEncoder().fit_transform(y)
         elif self.target_type_ == "multiclass":
             label_binarizer = LabelBinarizer()
-            y = LabelBinarizer().fit_transform(y)
+            y = label_binarizer.fit_transform(y)
             self.n_classes = label_binarizer.classes_.shape[0]
         else:  # continuous
             y = _check_y(y, y_numeric=True, estimator=self)
