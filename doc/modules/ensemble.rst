@@ -16,8 +16,8 @@ Two very famous examples of ensemble methods are `gradient-boosted trees
 
 More generally, ensemble models can be applied to any base learner beyond
 trees, in averaging methods such as :ref:`Bagging methods <bagging>`,
-`model stacking <stacked-generalization>`_, or `Voting <voting-classifier>`_,
-or in boosting, as :ref:`AdaBoost <adaboost>`.
+:ref:`model stacking <stacking>`, or :ref:`Voting <voting_classifier>`, or in
+boosting, as :ref:`AdaBoost <adaboost>`.
 
 .. contents::
     :local:
