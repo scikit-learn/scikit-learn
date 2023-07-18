@@ -103,15 +103,15 @@ https://conda.anaconda.org/conda-forge/linux-64/xorg-libx11-1.8.4-h8ee46fc_1.con
 https://conda.anaconda.org/conda-forge/noarch/array-api-compat-1.2-pyhd8ed1ab_0.conda#3d34f2f6987f8d098ab00198c170a77e
 https://conda.anaconda.org/conda-forge/linux-64/brotli-1.0.9-h166bdaf_8.tar.bz2#2ff08978892a3e8b954397c461f18418
 https://conda.anaconda.org/conda-forge/noarch/certifi-2023.5.7-pyhd8ed1ab_0.conda#5d1b71c942b8421285934dad1d891ebc
-https://conda.anaconda.org/conda-forge/noarch/charset-normalizer-3.1.0-pyhd8ed1ab_0.conda#7fcff9f6f123696e940bda77bd4d6551
+https://conda.anaconda.org/conda-forge/noarch/charset-normalizer-3.2.0-pyhd8ed1ab_0.conda#313516e9a4b08b12dfb1e1cd390a96e3
 https://conda.anaconda.org/conda-forge/noarch/colorama-0.4.6-pyhd8ed1ab_0.tar.bz2#3faab06a954c2a04039983f2c4a50d99
 https://conda.anaconda.org/conda-forge/noarch/cycler-0.11.0-pyhd8ed1ab_0.tar.bz2#a50559fad0affdbb33729a68669ca1cb
-https://conda.anaconda.org/conda-forge/linux-64/cython-0.29.35-py311hb755f60_0.conda#17f4738a1ca6155a63d2a0cbd3e4a8b1
+https://conda.anaconda.org/conda-forge/linux-64/cython-0.29.36-py311hb755f60_0.conda#ad1d63e12924cdb39fef9571c58de69f
 https://conda.anaconda.org/conda-forge/linux-64/dbus-1.13.6-h5008d03_3.tar.bz2#ecfff944ba3960ecb334b9a2663d708d
-https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.1.1-pyhd8ed1ab_0.conda#7312299d7a0ea4993159229b7d2dceb2
-https://conda.anaconda.org/conda-forge/noarch/execnet-1.9.0-pyhd8ed1ab_0.tar.bz2#0e521f7a5e60d508b121d38b04874fb2
+https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.1.2-pyhd8ed1ab_0.conda#de4cb3384374e1411f0454edcf546cdb
+https://conda.anaconda.org/conda-forge/noarch/execnet-2.0.2-pyhd8ed1ab_0.conda#67de0d8241e1060a479e3c37793e26f9
 https://conda.anaconda.org/conda-forge/linux-64/fontconfig-2.14.2-h14ed4e7_0.conda#0f69b688f52ff6da70bccb7ff7001d1d
-https://conda.anaconda.org/conda-forge/linux-64/glib-tools-2.76.3-hfc55251_0.conda#8951eedf3cdf94dd733c1b5eee1f4880
+https://conda.anaconda.org/conda-forge/linux-64/glib-tools-2.76.4-hfc55251_0.conda#76ac435b8668f636a39fcb155c3543fd
 https://conda.anaconda.org/conda-forge/noarch/idna-3.4-pyhd8ed1ab_0.tar.bz2#34272b248891bddccc64479f9a7fffed
 https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.0.0-pyhd8ed1ab_0.conda#f800d2da156d08e289b14e87e43c1ae5
 https://conda.anaconda.org/conda-forge/linux-64/kiwisolver-1.4.4-py311h4dd048b_1.tar.bz2#46d451f575392c01dc193069bd89766d
@@ -133,7 +133,7 @@ https://conda.anaconda.org/conda-forge/noarch/pytz-2023.3-pyhd8ed1ab_0.conda#d30
 https://conda.anaconda.org/conda-forge/noarch/setuptools-67.7.2-pyhd8ed1ab_0.conda#3b68bc43ec6baa48f7354a446267eefe
 https://conda.anaconda.org/conda-forge/noarch/six-1.16.0-pyh6c4a22f_0.tar.bz2#e5f25f8dbc060e9a8d912e432202afc2
 https://conda.anaconda.org/conda-forge/linux-64/tbb-2021.9.0-hf52228f_0.conda#f495e42d3d2020b025705625edf35490
-https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.1.0-pyh8a188c0_0.tar.bz2#a2995ee828f65687ac5b1e71a2ab1e0c
+https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.2.0-pyha21a80b_0.conda#978d03388b62173b8e6f79162cf52b86
 https://conda.anaconda.org/conda-forge/noarch/toml-0.10.2-pyhd8ed1ab_0.tar.bz2#f832c45a477c78bebd107098db465095
 https://conda.anaconda.org/conda-forge/noarch/tomli-2.0.1-pyhd8ed1ab_0.tar.bz2#5844808ffab9ebdb694585b50ba02a96
 https://conda.anaconda.org/conda-forge/linux-64/tornado-6.3.2-py311h459d7ec_0.conda#12b1c374ee90a1aa11ea921858394dc8
@@ -181,4 +181,4 @@ https://conda.anaconda.org/conda-forge/linux-64/scipy-1.10.1-py311h64a7726_3.con
 https://conda.anaconda.org/conda-forge/linux-64/matplotlib-base-3.7.1-py311h8597a09_0.conda#70c3b734ffe82c16b6d121aaa11929a8
 https://conda.anaconda.org/conda-forge/linux-64/pyamg-5.0.0-py311hcb41070_0.conda#af2d6818c526791fb81686c554ab262b
 https://conda.anaconda.org/conda-forge/linux-64/pytorch-cpu-1.13.1-cpu_py311hdb170b5_1.conda#a805d5f103e493f207613283d8acbbe1
-https://conda.anaconda.org/conda-forge/linux-64/matplotlib-3.7.1-py311h38be061_0.conda#8fd462c8bcbba5a3affcb2d04e387476
+https://conda.anaconda.org/conda-forge/linux-64/matplotlib-3.7.2-py311h38be061_0.conda#c056ffab165096669389e5a4eea4dc4d
