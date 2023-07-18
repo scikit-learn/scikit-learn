@@ -15,6 +15,7 @@ import warnings
 import numpy as np
 
 from ..base import RegressorMixin, _fit_context
+from ..metrics import DistanceMetric
 from ..utils._param_validation import StrOptions
 from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, _get_weights
 
@@ -167,6 +168,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         **NeighborsBase._parameter_constraints,
         "weights": [StrOptions({"uniform", "distance"}), callable, None],
     }
+    _parameter_constraints["metric"].append(DistanceMetric)
     _parameter_constraints.pop("radius")
 
     def __init__(

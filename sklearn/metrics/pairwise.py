@@ -619,7 +619,7 @@ def _argmin_reduce(dist, start):
     return dist.argmin(axis=1)
 
 
-_VALID_METRICS: list = [
+_VALID_METRICS = [
     "euclidean",
     "l2",
     "l1",
