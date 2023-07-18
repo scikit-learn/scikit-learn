@@ -15,7 +15,7 @@ JOBLIB_MIN_VERSION = '0.11'
 THREADPOOLCTL_MIN_VERSION = '2.0.0'
 PYTEST_MIN_VERSION = '5.0.1'
 CYTHON_MIN_VERSION = '0.28.5'
-CYTHON_MAX_VERSION = '1.0.0'
+CYTHON_MAX_VERSION = '3.0.0'
 
 
 # 'build' and 'install' is included to have structured metadata for CI.
