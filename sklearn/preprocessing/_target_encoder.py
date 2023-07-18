@@ -1,15 +1,13 @@
+from numbers import Integral, Real
+
 import numpy as np
 
-from numbers import Real, Integral
-
-from ._encoders import _BaseEncoder
-from ..base import OneToOneFeatureMixin
-from ..base import _fit_context
-from ._target_encoder_fast import _fit_encoding_fast
-from ._target_encoder_fast import _fit_encoding_fast_auto_smooth
-from ..utils.validation import _check_y, check_consistent_length
-from ..utils.multiclass import type_of_target
+from ..base import OneToOneFeatureMixin, _fit_context
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.multiclass import type_of_target
+from ..utils.validation import _check_y, check_consistent_length
+from ._encoders import _BaseEncoder
+from ._target_encoder_fast import _fit_encoding_fast, _fit_encoding_fast_auto_smooth
 
 
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
@@ -29,7 +27,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     .. note::
         `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-        cross-validation scheme is used in `fit_transform` for encoding. See the
+        cross fitting scheme is used in `fit_transform` for encoding. See the
         :ref:`User Guide <target_encoder>` for details.
 
     .. versionadded:: 1.3
@@ -70,7 +68,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         If `"auto"`, then `smooth` is set to an empirical Bayes estimate.
 
     cv : int, default=5
-        Determines the number of folds in the cross-validation strategy used in
+        Determines the number of folds in the cross fitting strategy used in
         :meth:`fit_transform`. For classification targets, `StratifiedKFold` is used
         and for continuous targets, `KFold` is used.
 
@@ -206,7 +204,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-            cross-validation scheme is used in `fit_transform` for encoding. See the
+            cross fitting scheme is used in `fit_transform` for encoding. See the
             :ref:`User Guide <target_encoder>`. for details.
 
         Parameters
@@ -262,7 +260,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-            cross-validation scheme is used in `fit_transform` for encoding. See the
+            cross fitting scheme is used in `fit_transform` for encoding. See the
             :ref:`User Guide <target_encoder>`. for details.
 
         Parameters

@@ -1,8 +1,7 @@
 """All minimum dependencies for scikit-learn."""
-from collections import defaultdict
-import platform
 import argparse
-
+import platform
+from collections import defaultdict
 
 # scipy and cython should by in sync with pyproject.toml
 
@@ -41,8 +40,11 @@ dependent_packages = {
     "black": ("23.3.0", "tests"),
     "mypy": ("1.3", "tests"),
     "pyamg": ("4.0.0", "tests"),
-    "sphinx": ("4.0.1", "docs"),
-    "sphinx-gallery": ("0.7.0", "docs"),
+    "polars": ("0.18.2", "tests"),
+    "pyarrow": ("12.0.0", "tests"),
+    "sphinx": ("6.0.0", "docs"),
+    "sphinx-copybutton": ("0.5.2", "docs"),
+    "sphinx-gallery": ("0.10.1", "docs"),
     "numpydoc": ("1.2.0", "docs, tests"),
     "Pillow": ("7.1.2", "docs"),
     "pooch": ("1.6.0", "docs, examples, tests"),

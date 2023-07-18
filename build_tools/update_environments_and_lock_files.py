@@ -27,22 +27,24 @@ To run this script you need:
   sklearn/_min_dependencies.py
 - pip-tools
 
+To only update the environment and lock files for specific builds, you can use
+the command line argument `--select-build` which will take a regex. For example,
+to only update the documentation builds you can use:
+`python build_tools/update_environments_and_lock_files.py --select-build doc`
 """
 
-import re
-import subprocess
-import sys
-from pathlib import Path
-import shlex
 import json
 import logging
+import re
+import shlex
+import subprocess
+import sys
 from importlib.metadata import version
-
-from packaging.version import Version
+from pathlib import Path
 
 import click
-
 from jinja2 import Environment
+from packaging.version import Version
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -95,6 +97,8 @@ conda_build_metadata_list = [
             "ccache",
             "pytorch",
             "pytorch-cpu",
+            "polars",
+            "pyarrow",
             "array-api-compat",
         ],
         "package_constraints": {
@@ -249,6 +253,7 @@ conda_build_metadata_list = [
             "compilers",
             "sphinx",
             "sphinx-gallery",
+            "sphinx-copybutton",
             "numpydoc",
             "sphinx-prompt",
             "plotly",
@@ -265,6 +270,7 @@ conda_build_metadata_list = [
             "sphinx": "min",
             "pandas": "min",
             "sphinx-gallery": "min",
+            "sphinx-copybutton": "min",
             "numpydoc": "min",
             "sphinx-prompt": "min",
             "sphinxext-opengraph": "min",
@@ -283,6 +289,7 @@ conda_build_metadata_list = [
             "compilers",
             "sphinx",
             "sphinx-gallery",
+            "sphinx-copybutton",
             "numpydoc",
             "sphinx-prompt",
             "plotly",

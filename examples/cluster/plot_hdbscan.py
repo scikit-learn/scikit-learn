@@ -13,11 +13,11 @@ HDBSCAN's sensitivity to certain hyperparameters.
 We first define a couple utility functions for convenience.
 """
 # %%
+import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn.cluster import HDBSCAN, DBSCAN
+from sklearn.cluster import DBSCAN, HDBSCAN
 from sklearn.datasets import make_blobs
-import matplotlib.pyplot as plt
 
 
 def plot(X, labels, probabilities=None, parameters=None, ground_truth=False, ax=None):
@@ -113,7 +113,7 @@ for idx, scale in enumerate((1, 0.5, 3)):
 # ----------------------
 # HDBSCAN is much more than scale invariant though -- it is capable of
 # multi-scale clustering, which accounts for clusters with varying density.
-# Traditional DBSCAN assumes that any potential clusters are homogenous in
+# Traditional DBSCAN assumes that any potential clusters are homogeneous in
 # density. HDBSCAN is free from such constraints. To demonstrate this we
 # consider the following dataset
 centers = [[-0.85, -0.85], [-0.85, 0.85], [3, 3], [3, -3]]

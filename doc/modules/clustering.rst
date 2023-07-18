@@ -989,7 +989,59 @@ floats. A couple of mechanisms for getting around this are:
 
 .. topic:: Examples:
 
-  * :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
+    * :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
+
+|details-start|
+**Implementation**
+|details-split|
+
+The DBSCAN algorithm is deterministic, always generating the same clusters when
+given the same data in the same order.  However, the results can differ when
+data is provided in a different order. First, even though the core samples will
+always be assigned to the same clusters, the labels of those clusters will
+depend on the order in which those samples are encountered in the data. Second
+and more importantly, the clusters to which non-core samples are assigned can
+differ depending on the data order.  This would happen when a non-core sample
+has a distance lower than ``eps`` to two core samples in different clusters. By
+the triangular inequality, those two core samples must be more distant than
+``eps`` from each other, or they would be in the same cluster. The non-core
+sample is assigned to whichever cluster is generated first in a pass through the
+data, and so the results will depend on the data ordering.
+
+The current implementation uses ball trees and kd-trees to determine the
+neighborhood of points, which avoids calculating the full distance matrix (as
+was done in scikit-learn versions before 0.14). The possibility to use custom
+metrics is retained; for details, see
+:class:`~sklearn.neighbors.NearestNeighbors`.
+
+|details-end|
+
+
+|details-start|
+**Memory consumption for large sample sizes**
+|details-split|
+
+This implementation is by default not memory efficient because it constructs
+a full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
+be used (e.g., with sparse matrices). This matrix will consume :math:`n^2` floats.
+A couple of mechanisms for getting around this are:
+
+- Use :ref:`OPTICS <optics>` clustering in conjunction with the
+  `extract_dbscan` method. OPTICS clustering also calculates the full
+  pairwise matrix, but only keeps one row in memory at a time (memory
+  complexity n).
+
+- A sparse radius neighborhood graph (where missing entries are presumed to
+  be out of eps) can be precomputed in a memory-efficient way and dbscan
+  can be run over this with ``metric='precomputed'``.  See
+  :meth:`sklearn.neighbors.NearestNeighbors.radius_neighbors_graph`.
+
+- The dataset can be compressed, either by removing exact duplicates if
+  these occur in your data, or by using BIRCH. Then you only have a
+  relatively small number of representatives for a large number of points.
+  You can then provide a ``sample_weight`` when fitting DBSCAN.
+
+|details-end|
 
 
 |details-start|
