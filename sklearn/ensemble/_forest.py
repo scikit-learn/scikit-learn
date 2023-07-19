@@ -2290,7 +2290,7 @@ class ExtraTreesClassifier(ForestClassifier):
           `max_samples` should be in the interval `(0.0, 1.0]`.
 
         .. versionadded:: 0.22
-    
+
     max_bins : int, default=255
         The maximum number of bins to use for non-missing values.
 
