@@ -189,7 +189,7 @@ def _write_estimator_html(
         )
 
 
-def estimator_html_repr(estimator, theme=themes.DEFAULT_STYLE):
+def estimator_html_repr(estimator, theme=themes.LIGHT):
     """Build a HTML representation of an estimator.
 
     Read more in the :ref:`User Guide <visualizing_composite_estimators>`.
