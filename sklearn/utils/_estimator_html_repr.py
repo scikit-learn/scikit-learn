@@ -5,7 +5,6 @@ from io import StringIO
 from string import Template
 
 from .. import config_context
-
 from . import themes
 
 
