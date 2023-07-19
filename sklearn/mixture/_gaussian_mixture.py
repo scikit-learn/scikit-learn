@@ -353,7 +353,7 @@ def _flipudlr(array):
     return np.flipud(np.fliplr(array))
 
 
-def _compute_precision_cholesky_from_precision(precisions, covariance_type):
+def _compute_precision_cholesky_from_precisions(precisions, covariance_type):
     r"""Compute the Cholesky decomposition of the specified precisions using the precisions themselves.
 
     As implemented in :func:`_compute_precision_cholesky`, the `precisions_cholesky_` is
