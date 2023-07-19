@@ -357,7 +357,7 @@ def _compute_precision_cholesky_from_precision(precisions, covariance_type):
     r"""Compute the Cholesky decomposition of the specified precisions using the precisions themselves.
 
     As implemented in :func:`_compute_precision_cholesky`, the `precisions_cholesky_` is
-    an upper-triangular matrix for each Gaussian components, which can be expressed as
+    an upper-triangular matrix for each Gaussian component, which can be expressed as
     the $UU^T$ factorization of the precision matrix for each Gaussian component, where
     $U$ is an upper-triangular matrix.
 
