@@ -279,12 +279,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 )
             else:
                 self._transform_X_ordinal(
-                    X_out,
-                    X_ordinal,
-                    ~X_known_mask,
-                    test_idx,
-                    encodings,
-                    y_train_mean
+                    X_out, X_ordinal, ~X_known_mask, test_idx, encodings, y_train_mean
                 )
         return X_out
 
