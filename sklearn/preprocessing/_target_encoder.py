@@ -244,7 +244,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             (X_ordinal.shape[0], X_ordinal.shape[1] * X_shape_multiplier),
             dtype=np.float64,
         )
-        X_unknown_mask = ~X_known_mask
         for train_idx, test_idx in cv.split(X, y):
             X_train, y_train = X_ordinal[train_idx, :], y_encoded[train_idx]
             y_train_mean = np.mean(y_train, axis=0)
@@ -269,15 +268,24 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     y_train_mean,
                     save_encodings=False,
                 )
-            self._transform_X_ordinal(
-                X_out,
-                X_ordinal,
-                X_unknown_mask,
-                test_idx,
-                encodings,
-                y_train_mean,
-                self.n_features_in_,
-            )
+            if self.target_type_ == "multiclass":
+                self._transform_X_multiclass(
+                    X_out,
+                    X_ordinal,
+                    ~X_known_mask,
+                    test_idx,
+                    encodings,
+                    y_train_mean,
+                )
+            else:
+                self._transform_X_ordinal(
+                    X_out,
+                    X_ordinal,
+                    ~X_known_mask,
+                    test_idx,
+                    encodings,
+                    y_train_mean
+                )
         return X_out
 
     def transform(self, X):
@@ -298,7 +306,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         X_trans : ndarray of shape (n_samples, n_features)
             Transformed input.
         """
-        X_ordinal, X_valid = self._transform(
+        X_ordinal, X_known_mask = self._transform(
             X, handle_unknown="ignore", force_all_finite="allow-nan"
         )
 
@@ -308,15 +316,24 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             (X_ordinal.shape[0], X_ordinal.shape[1] * X_shape_multiplier),
             dtype=np.float64,
         )
-        self._transform_X_ordinal(
-            X_out,
-            X_ordinal,
-            ~X_valid,
-            slice(None),
-            self.encodings_,
-            self.target_mean_,
-            self.n_features_in_,
-        )
+        if self.target_type_ == "multiclass":
+            self._transform_X_multiclass(
+                X_out,
+                X_ordinal,
+                ~X_known_mask,
+                slice(None),
+                self.encodings_,
+                self.target_mean_,
+            )
+        else:
+            self._transform_X_ordinal(
+                X_out,
+                X_ordinal,
+                ~X_known_mask,
+                slice(None),
+                self.encodings_,
+                self.target_mean_,
+            )
         return X_out
 
     def _fit_encodings_all(self, X, y):
@@ -410,6 +427,45 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             self.encodings_ = encodings
         return encodings
 
+    def _transform_X_multiclass(
+        self,
+        X_out,
+        X_ordinal,
+        X_unknown_mask,
+        indices,
+        encodings,
+        target_mean,
+    ):
+        """Transform X_ordinal using encodings for multiclass.
+
+        `X_ordinal` and `X_unknown_mask` have column (axis=1) size `n_features`,
+        while column of `X_out` and length of `encodings` length is of size
+        `n_features * n_classes`. `multi_idx` deals with this by repeating
+        feature indicies for each class E.g., for 3 features, 2 classes:
+        0,1,2,0,1,2
+
+        Finally, we reorder `X_out` from grouping classes (c) together (as in
+        `encodings`):
+        f0_c0, f1_c0, f2_c0, f0_c1, f1_c1, f2_c1
+        to grouping features (ff) together:
+        f0_c0, f0_c1, f1_c0, f1_c1, f2_c0, f2_c1
+        """
+        n_classes = self.n_classes
+        n_features = self.n_features_in_
+        reorder_index = [
+            idx
+            for start in range(n_features)
+            for idx in range(start, (n_classes * n_features), n_features)
+        ]
+        for e_idx, encoding in enumerate(encodings):
+            # Repeat feature indicies for each class
+            multi_idx = e_idx - (n_features * (e_idx // n_features))
+            mean_idx = e_idx // n_features
+            X_out[indices, e_idx] = encoding[X_ordinal[indices, multi_idx]]
+            X_out[X_unknown_mask[:, multi_idx], e_idx] = target_mean[mean_idx]
+
+        X_out = X_out[:, reorder_index]
+
     @staticmethod
     def _transform_X_ordinal(
         X_out,
@@ -418,18 +474,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         indices,
         encodings,
         target_mean,
-        n_features,
     ):
+        """Transform X_ordinal using encodings."""
         for f_idx, encoding in enumerate(encodings):
-            if X_out.shape != X_ordinal.shape:  # multiclass
-                # Repeating feature indicies for each class
-                # E.g., for 3 features, 2 classes: 0,1,2,0,1,2
-                multi_idx = f_idx - (n_features * (f_idx // n_features))
-                X_out[indices, f_idx] = encoding[X_ordinal[indices, multi_idx]]
-                X_out[X_unknown_mask[:, multi_idx], f_idx] = target_mean[multi_idx]
-            else:
-                X_out[indices, f_idx] = encoding[X_ordinal[indices, f_idx]]
-                X_out[X_unknown_mask[:, f_idx], f_idx] = target_mean
+            X_out[indices, f_idx] = encoding[X_ordinal[indices, f_idx]]
+            X_out[X_unknown_mask[:, f_idx], f_idx] = target_mean
 
     def _more_tags(self):
         return {"requires_y": True}
