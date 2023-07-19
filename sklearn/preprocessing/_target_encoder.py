@@ -439,11 +439,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         deals with this by repeating feature indicies for each class.
         E.g., for 3 features, 2 classes: 0,1,2,0,1,2
 
-        Additionally, `X_out` needs to convert classes (c) being grouped
-        together in `encodings`:
-        f0_c0, f1_c0, f2_c0, f0_c1, f1_c1, f2_c1
-        to features (f) being together in `X_out`:
+        Additionally, `X_out` needs to order columns such that features (f)
+        are grouped together:
         f0_c0, f0_c1, f1_c0, f1_c1, f2_c0, f2_c1
+        instead of classes (c) being grouped together, as in `encodings`:
+        f0_c0, f1_c0, f2_c0, f0_c1, f1_c1, f2_c1
         This is handled by `out_indx`.
         """
 
@@ -470,7 +470,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         Parameters
         ----------
         input_features : array-like of str or None, default=None
-            Ignored.
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
