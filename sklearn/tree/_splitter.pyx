@@ -26,7 +26,8 @@ cimport numpy as cnp
 from ._criterion cimport Criterion
 
 import numpy as np
-from scipy.sparse import isspmatrix_csc
+
+from scipy.sparse import issparse
 
 from ._utils cimport RAND_R_MAX, log, rand_int, rand_uniform
 
@@ -103,15 +104,26 @@ cdef class BaseSplitter:
         here.
 
         It should return -1 upon errors.
+
+        Parameters
+        ----------
+        impurity : double
+            The impurity of the current node.
+        split : SplitRecord pointer
+            A pointer to a memory-allocated SplitRecord object which will be filled with the
+            split chosen.
+        n_constant_features : SIZE_t pointer
+            A pointer to a memory-allocated SIZE_t object which will be filled with the
+            number of constant features. Optional to use.
+        lower_bound : double
+            The lower bound of the monotonic constraint if used.
+        upper_bound : double
+            The upper bound of the monotonic constraint if used.
         """
         pass
 
     cdef void node_value(self, double* dest) noexcept nogil:
         """Copy the value of node samples[start:end] into dest."""
-        pass
-
-    cdef void clip_node_value(self, double* dest, double lower_bound, double upper_bound) noexcept nogil:
-        """Clip the value of node samples[start:end] into dest."""
         pass
 
     cdef double node_impurity(self) noexcept nogil:
@@ -1224,7 +1236,7 @@ cdef class SparsePartitioner:
         DTYPE_t[::1] feature_values,
         const unsigned char[::1] missing_values_in_feature_mask,
     ):
-        if not isspmatrix_csc(X):
+        if not (issparse(X) and X.format == "csc"):
             raise ValueError("X should be in csc format")
 
         self.samples = samples

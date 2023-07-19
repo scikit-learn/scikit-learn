@@ -22,6 +22,7 @@ from sklearn.datasets import (
     make_multilabel_classification,
 )
 from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression, Ridge, SGDClassifier
 from sklearn.metrics import (
@@ -38,6 +39,7 @@ from sklearn.model_selection import (
     GridSearchCV,
     GroupKFold,
     GroupShuffleSplit,
+    HalvingGridSearchCV,
     KFold,
     LeaveOneGroupOut,
     LeavePGroupsOut,
@@ -2420,3 +2422,31 @@ def test_search_cv_verbose_3(capsys, return_train_score):
     else:
         match = re.findall(r"score=[\d\.]+", captured)
     assert len(match) == 3
+
+
+@pytest.mark.parametrize(
+    "SearchCV, param_search",
+    [
+        (GridSearchCV, "param_grid"),
+        (RandomizedSearchCV, "param_distributions"),
+        (HalvingGridSearchCV, "param_grid"),
+    ],
+)
+def test_search_estimator_param(SearchCV, param_search):
+    # test that SearchCV object doesn't change the object given in the parameter grid
+    X, y = make_classification(random_state=42)
+
+    params = {"clf": [LinearSVC(dual="auto")], "clf__C": [0.01]}
+    orig_C = params["clf"][0].C
+
+    pipe = Pipeline([("trs", MinimalTransformer()), ("clf", None)])
+
+    param_grid_search = {param_search: params}
+    gs = SearchCV(pipe, refit=True, cv=2, scoring="accuracy", **param_grid_search).fit(
+        X, y
+    )
+
+    # testing that the original object in params is not changed
+    assert params["clf"][0].C == orig_C
+    # testing that the GS is setting the parameter of the step correctly
+    assert gs.best_estimator_.named_steps["clf"].C == 0.01

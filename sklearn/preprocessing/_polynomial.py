@@ -435,7 +435,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         n_samples, n_features = X.shape
         max_int32 = np.iinfo(np.int32).max
-        if sparse.isspmatrix_csr(X):
+        if sparse.issparse(X) and X.format == "csr":
             if self._max_degree > 3:
                 return self.transform(X.tocsc()).tocsr()
             to_stack = []
@@ -480,9 +480,9 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                         " transformer to produce fewer than 2^31 output features"
                     )
                 XP = sparse.hstack(to_stack, dtype=X.dtype, format="csr")
-        elif sparse.isspmatrix_csc(X) and self._max_degree < 4:
+        elif sparse.issparse(X) and X.format == "csc" and self._max_degree < 4:
             return self.transform(X.tocsr()).tocsc()
-        elif sparse.isspmatrix(X):
+        elif sparse.issparse(X):
             combinations = self._combinations(
                 n_features=n_features,
                 min_degree=self._min_degree,
@@ -1119,8 +1119,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                             XBS[mask, i * n_splines + k] = linear_extr
 
             if use_sparse:
-                if not sparse.isspmatrix_csr(XBS_sparse):
-                    XBS_sparse = XBS_sparse.tocsr()
+                XBS_sparse = XBS_sparse.tocsr()
                 output_list.append(XBS_sparse)
 
         if use_sparse:

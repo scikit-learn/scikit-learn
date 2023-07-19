@@ -917,7 +917,7 @@ class HashingVectorizer(
 
 def _document_frequency(X):
     """Count the number of non-zero values for each feature in sparse X."""
-    if sp.isspmatrix_csr(X):
+    if sp.issparse(X) and X.format == "csr":
         return np.bincount(X.indices, minlength=X.shape[1])
     else:
         return np.diff(X.indptr)
@@ -1545,7 +1545,7 @@ class TfidfTransformer(
           similarity between two vectors is their dot product when l2 norm has
           been applied.
         - 'l1': Sum of absolute values of vector elements is 1.
-          See :func:`preprocessing.normalize`.
+          See :func:`~sklearn.preprocessing.normalize`.
         - None: No normalization.
 
     use_idf : bool, default=True
@@ -1894,7 +1894,7 @@ class TfidfVectorizer(CountVectorizer):
           similarity between two vectors is their dot product when l2 norm has
           been applied.
         - 'l1': Sum of absolute values of vector elements is 1.
-          See :func:`preprocessing.normalize`.
+          See :func:`~sklearn.preprocessing.normalize`.
         - None: No normalization.
 
     use_idf : bool, default=True

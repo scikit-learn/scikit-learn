@@ -59,13 +59,6 @@ cdef class BaseCriterion:
         self,
         double* dest
     ) noexcept nogil
-    cdef void clip_node_value(
-        self,
-        double* dest,
-        double lower_bound,
-        double upper_bound
-    ) noexcept nogil
-    cdef double middle_value(self) noexcept nogil
     cdef double impurity_improvement(
         self,
         double impurity_parent,
@@ -73,21 +66,6 @@ cdef class BaseCriterion:
         double impurity_right
     ) noexcept nogil
     cdef double proxy_impurity_improvement(self) noexcept nogil
-    cdef bint check_monotonicity(
-            self,
-            cnp.int8_t monotonic_cst,
-            double lower_bound,
-            double upper_bound,
-    ) noexcept nogil
-    cdef inline bint _check_monotonicity(
-            self,
-            cnp.int8_t monotonic_cst,
-            double lower_bound,
-            double upper_bound,
-            double sum_left,
-            double sum_right,
-    ) noexcept nogil
-
     cdef void set_sample_pointers(
         self,
         SIZE_t start,
@@ -116,6 +94,28 @@ cdef class Criterion(BaseCriterion):
         self,
         vector[vector[DOUBLE_t]]& dest
     ) noexcept nogil
+
+    cdef bint check_monotonicity(
+            self,
+            cnp.int8_t monotonic_cst,
+            double lower_bound,
+            double upper_bound,
+    ) noexcept nogil
+    cdef inline bint _check_monotonicity(
+            self,
+            cnp.int8_t monotonic_cst,
+            double lower_bound,
+            double upper_bound,
+            double sum_left,
+            double sum_right,
+    ) noexcept nogil
+    cdef void clip_node_value(
+        self,
+        double* dest,
+        double lower_bound,
+        double upper_bound
+    ) noexcept nogil
+    cdef double middle_value(self) noexcept nogil
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""

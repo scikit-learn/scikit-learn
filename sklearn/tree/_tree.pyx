@@ -33,9 +33,11 @@ cimport numpy as cnp
 
 cnp.import_array()
 
-from scipy.sparse import csr_matrix, issparse, isspmatrix_csr
+from scipy.sparse import issparse
+from scipy.sparse import csr_matrix
 
-from ._utils cimport safe_realloc, sizet_ptr_to_ndarray
+from ._utils cimport safe_realloc
+from ._utils cimport sizet_ptr_to_ndarray
 
 
 cdef extern from "numpy/arrayobject.h":
@@ -631,7 +633,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         double lower_bound,
         double upper_bound,
         FrontierRecord* res
-    ) nogil except -1:
+    ) except -1 nogil:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
         cdef SplitRecord* split_ptr = <SplitRecord *>malloc(splitter.pointer_size())
@@ -950,7 +952,7 @@ cdef class BaseTree:
         """Finds the terminal region (=leaf node) for each sample in sparse X.
         """
         # Check input
-        if not isspmatrix_csr(X):
+        if not (issparse(X) and X.format == 'csr'):
             raise ValueError("X should be in csr_matrix format, got %s"
                              % type(X))
 
@@ -1082,7 +1084,7 @@ cdef class BaseTree:
         """Finds the decision path (=node) for each sample in X."""
 
         # Check input
-        if not isspmatrix_csr(X):
+        if not (issparse(X) and X.format == "csr"):
             raise ValueError("X should be in csr_matrix format, got %s"
                              % type(X))
 

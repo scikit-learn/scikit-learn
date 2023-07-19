@@ -64,13 +64,6 @@ cdef class BaseSplitter:
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current node
 
-    # Monotonicity constraints for each feature.
-    # The encoding is as follows:
-    #   -1: monotonic decrease
-    #    0: no constraint
-    #   +1: monotonic increase
-    cdef const cnp.int8_t[:] monotonic_cst
-    cdef bint with_monotonic_cst
     cdef const DOUBLE_t[:] sample_weight
 
     # The samples vector `samples` is maintained by the Splitter object such
@@ -105,18 +98,20 @@ cdef class BaseSplitter:
         double upper_bound,
     ) except -1 nogil
     cdef void node_value(self, double* dest) noexcept nogil
-    cdef void clip_node_value(
-        self,
-        double* dest,
-        double lower_bound,
-        double upper_bound
-    ) noexcept nogil
     cdef double node_impurity(self) noexcept nogil
     cdef int pointer_size(self) noexcept nogil
 
 cdef class Splitter(BaseSplitter):
     cdef public Criterion criterion      # Impurity criterion
     cdef const DOUBLE_t[:, ::1] y
+
+    # Monotonicity constraints for each feature.
+    # The encoding is as follows:
+    #   -1: monotonic decrease
+    #    0: no constraint
+    #   +1: monotonic increase
+    cdef const cnp.int8_t[:] monotonic_cst
+    cdef bint with_monotonic_cst
 
     cdef int init(
         self,
@@ -138,4 +133,11 @@ cdef class Splitter(BaseSplitter):
 
     cdef bint check_postsplit_conditions(
         self
+    ) noexcept nogil
+
+    cdef void clip_node_value(
+        self,
+        double* dest,
+        double lower_bound,
+        double upper_bound
     ) noexcept nogil

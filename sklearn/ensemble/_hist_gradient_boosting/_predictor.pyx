@@ -11,6 +11,7 @@ from .common cimport X_BINNED_DTYPE_C
 from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport node_struct
 from ._bitset cimport in_bitset_2d_memoryview
+from sklearn.utils._typedefs cimport intp_t
 
 
 def _predict_from_raw_data(  # raw data = non-binned data
@@ -189,7 +190,7 @@ def _compute_partial_dependence(
         node_struct * current_node  # pointer to avoid copying attributes
 
         unsigned int sample_idx
-        unsigned feature_idx
+        intp_t feature_idx
         unsigned stack_size
         Y_DTYPE_C left_sample_frac
         Y_DTYPE_C current_weight
