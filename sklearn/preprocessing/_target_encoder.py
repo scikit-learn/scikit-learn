@@ -5,7 +5,7 @@ import numpy as np
 from ..base import OneToOneFeatureMixin, _fit_context
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import type_of_target
-from ..utils.validation import _check_y, check_consistent_length
+from ..utils.validation import _check_feature_names_in, _check_y, check_consistent_length, check_is_fitted
 from ._encoders import _BaseEncoder
 from ._target_encoder_fast import _fit_encoding_fast, _fit_encoding_fast_auto_smooth
 
@@ -114,8 +114,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
 
-    n_classes_ : int or None
-        Number of classes if `target_type_` is 'multiclass', otherwise `None`.
+    classes_ : ndarray or None
+        If `target_type_` is 'multiclass', holds the label for each class,
+        otherwise `None`.
 
     See Also
     --------
@@ -184,7 +185,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.cv = cv
         self.shuffle = shuffle
         self.random_state = random_state
-        self.get_feature_names_out
+
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the :class:`TargetEncoder` to X and y.
@@ -241,19 +242,22 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 self.cv, shuffle=self.shuffle, random_state=self.random_state
             )
 
-        # If 'multiclass' multiply axis 1 by `n_classes` else keep shape the same
-        X_shape_multiplier = self.n_classes_ or 1
-        X_out = np.empty(
-            (X_ordinal.shape[0], X_ordinal.shape[1] * X_shape_multiplier),
-            dtype=np.float64,
-        )
+        # If 'multiclass' multiply axis=1 by num classes else keep shape the same
+        if self.target_type_ == "multiclass":
+            X_out = np.empty(
+                (X_ordinal.shape[0], X_ordinal.shape[1] * len(self.classes_)),
+                dtype=np.float64,
+            )
+        else:
+            X_out = np.empty_like(X_ordinal, dtype=np.float64)
+
         for train_idx, test_idx in cv.split(X, y):
             X_train, y_train = X_ordinal[train_idx, :], y_encoded[train_idx]
             y_train_mean = np.mean(y_train, axis=0)
 
             if self.target_type_ == "multiclass":
                 encodings = []
-                for i in range(self.n_classes_):
+                for i in range(len(self.classes_)):
                     y_class = y_train[:, i]
                     encoding = self._learn_encodings(
                         X_ordinal,
@@ -271,19 +275,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     y_train_mean,
                     save_encodings=False,
                 )
-            if self.target_type_ == "multiclass":
-                self._transform_X_multiclass(
-                    X_out,
-                    X_ordinal,
-                    ~X_known_mask,
-                    test_idx,
-                    encodings,
-                    y_train_mean,
-                )
-            else:
-                self._transform_X_ordinal(
-                    X_out, X_ordinal, ~X_known_mask, test_idx, encodings, y_train_mean
-                )
+            self._transform_X_ordinal(
+                X_out,
+                X_ordinal,
+                ~X_known_mask,
+                test_idx,
+                encodings,
+                y_train_mean,
+            )
         return X_out
 
     def transform(self, X):
@@ -308,30 +307,23 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             X, handle_unknown="ignore", force_all_finite="allow-nan"
         )
 
-        # If 'multiclass' multiply by `n_classes_` else keep shape the same
-        X_shape_multiplier = self.n_classes_ or 1
-        X_out = np.empty(
-            (X_ordinal.shape[0], X_ordinal.shape[1] * X_shape_multiplier),
-            dtype=np.float64,
-        )
+        # If 'multiclass' multiply axis=1 by num of classes else keep shape the same
         if self.target_type_ == "multiclass":
-            self._transform_X_multiclass(
-                X_out,
-                X_ordinal,
-                ~X_known_mask,
-                slice(None),
-                self.encodings_,
-                self.target_mean_,
+            X_out = np.empty(
+                (X_ordinal.shape[0], X_ordinal.shape[1] * len(self.classes_)),
+                dtype=np.float64,
             )
         else:
-            self._transform_X_ordinal(
-                X_out,
-                X_ordinal,
-                ~X_known_mask,
-                slice(None),
-                self.encodings_,
-                self.target_mean_,
-            )
+            X_out = np.empty_like(X_ordinal, dtype=np.float64)
+
+        self._transform_X_ordinal(
+            X_out,
+            X_ordinal,
+            ~X_known_mask,
+            slice(None),
+            self.encodings_,
+            self.target_mean_,
+        )
         return X_out
 
     def _fit_encodings_all(self, X, y):
@@ -357,13 +349,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:
             self.target_type_ = self.target_type
 
-        self.n_classes_ = None
+        self.classes_ = None
         if self.target_type_ == "binary":
             y = LabelEncoder().fit_transform(y)
         elif self.target_type_ == "multiclass":
             label_binarizer = LabelBinarizer()
             y = label_binarizer.fit_transform(y)
-            self.n_classes_ = label_binarizer.classes_.shape[0]
+            self.classes_ = label_binarizer.classes_
         else:  # continuous
             y = _check_y(y, y_numeric=True, estimator=self)
 
@@ -379,7 +371,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         )
         if self.target_type_ == "multiclass":
             encodings = []
-            for i in range(self.n_classes_):
+            for i in range(len(self.classes_)):
                 y_class = y[:, i]
                 encoding = self._learn_encodings(
                     X_ordinal,
@@ -425,7 +417,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             self.encodings_ = encodings
         return encodings
 
-    def _transform_X_multiclass(
+    def _transform_X_ordinal(
         self,
         X_out,
         X_ordinal,
@@ -434,50 +426,67 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         encodings,
         target_mean,
     ):
-        """Transform X_ordinal using encodings for multiclass.
+        """Transform X_ordinal using encodings.
 
-        `X_ordinal` and `X_unknown_mask` have column (axis=1) size `n_features`,
-        while column of `X_out` and length of `encodings` length is of size
-        `n_features * n_classes`. `multi_idx` deals with this by repeating
-        feature indicies for each class E.g., for 3 features, 2 classes:
-        0,1,2,0,1,2
+        In the multiclass case, `X_ordinal` and `X_unknown_mask` have column
+        (axis=1) size `n_features`, while column of `X_out` and length of
+        `encodings` length is of size `n_features * n_classes`. `multi_idx`
+        deals with this by repeating feature indicies for each class.
+        E.g., for 3 features, 2 classes: 0,1,2,0,1,2
 
-        Finally, we reorder `X_out` from grouping classes (c) together (as in
-        `encodings`):
+        Additionally, `X_out` needs to convert classes (c) being grouped
+        together in `encodings`:
         f0_c0, f1_c0, f2_c0, f0_c1, f1_c1, f2_c1
-        to grouping features (ff) together:
+        to features (f) being together in `X_out`:
         f0_c0, f0_c1, f1_c0, f1_c1, f2_c0, f2_c1
+        This is handled by `out_indx`.
         """
-        n_classes = self.n_classes_
-        n_features = self.n_features_in_
-        # Indicies to reorder columns from grouping classes to grouping features
-        reorder_index = [
-            idx
-            for start in range(n_features)
-            for idx in range(start, (n_classes * n_features), n_features)
-        ]
+
+        if self.target_type_ == "multiclass":
+            n_classes = len(self.classes_)
+            n_features = self.n_features_in_
+
         for e_idx, encoding in enumerate(encodings):
-            # Repeat feature indicies for each class
-            multi_idx = e_idx - (n_features * (e_idx // n_features))
-            mean_idx = e_idx // n_features
-            X_out[indices, e_idx] = encoding[X_ordinal[indices, multi_idx]]
-            X_out[X_unknown_mask[:, multi_idx], e_idx] = target_mean[mean_idx]
+            if self.target_type_ == "multiclass":
+                # `X_out` should have features grouped together
+                out_indx = (e_idx // n_classes) + ((e_idx % n_classes) * n_features)
+                # Repeat feature indicies for each class
+                feat_idx = e_idx - (n_features * (e_idx // n_features))
+                mean_idx = e_idx // n_features
+                X_out[indices, out_indx] = encoding[X_ordinal[indices, feat_idx]]
+                X_out[X_unknown_mask[:, feat_idx], e_idx] = target_mean[mean_idx]
+            else:
+                X_out[indices, e_idx] = encoding[X_ordinal[indices, e_idx]]
+                X_out[X_unknown_mask[:, e_idx], e_idx] = target_mean
 
-        X_out = X_out[:, reorder_index]
+    # def get_feature_names_out(self, input_features=None):
+    #     """Get output feature names for transformation.
 
-    @staticmethod
-    def _transform_X_ordinal(
-        X_out,
-        X_ordinal,
-        X_unknown_mask,
-        indices,
-        encodings,
-        target_mean,
-    ):
-        """Transform X_ordinal using encodings."""
-        for f_idx, encoding in enumerate(encodings):
-            X_out[indices, f_idx] = encoding[X_ordinal[indices, f_idx]]
-            X_out[X_unknown_mask[:, f_idx], f_idx] = target_mean
+    #     Parameters
+    #     ----------
+    #     input_features : array-like of str or None, default=None
+    #         Ignored.
+
+    #     Returns
+    #     -------
+    #     feature_names_out : ndarray of str objects
+    #         Transformed feature names. `feature_names_in_` is used unless it is
+    #         not defined, in which case the following input feature names are
+    #         generated: `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
+    #         When `type_of_target_` is "multiclass" the names are of the format
+    #         '<feature_name>_<class_name>'.
+    #     """
+    #     check_is_fitted(self, "n_features_in_")
+    #     feature_names = _check_feature_names_in(self, input_features)
+    #     if self.target_type_ == "multiclass":
+    #         feature_names = [
+    #             f"{feature_name}_{class_name}"
+    #             for feature_name in feature_names
+    #             for class_name in self.classes_
+    #         ]
+    #         return np.asarray(feature_names, dtype=object)
+    #     else:
+    #         return feature_names
 
     def _more_tags(self):
         return {"requires_y": True}
