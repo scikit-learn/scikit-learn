@@ -459,34 +459,34 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 X_out[indices, e_idx] = encoding[X_ordinal[indices, e_idx]]
                 X_out[X_unknown_mask[:, e_idx], e_idx] = target_mean
 
-    # def get_feature_names_out(self, input_features=None):
-    #     """Get output feature names for transformation.
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
 
-    #     Parameters
-    #     ----------
-    #     input_features : array-like of str or None, default=None
-    #         Ignored.
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Ignored.
 
-    #     Returns
-    #     -------
-    #     feature_names_out : ndarray of str objects
-    #         Transformed feature names. `feature_names_in_` is used unless it is
-    #         not defined, in which case the following input feature names are
-    #         generated: `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
-    #         When `type_of_target_` is "multiclass" the names are of the format
-    #         '<feature_name>_<class_name>'.
-    #     """
-    #     check_is_fitted(self, "n_features_in_")
-    #     feature_names = _check_feature_names_in(self, input_features)
-    #     if self.target_type_ == "multiclass":
-    #         feature_names = [
-    #             f"{feature_name}_{class_name}"
-    #             for feature_name in feature_names
-    #             for class_name in self.classes_
-    #         ]
-    #         return np.asarray(feature_names, dtype=object)
-    #     else:
-    #         return feature_names
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names. `feature_names_in_` is used unless it is
+            not defined, in which case the following input feature names are
+            generated: `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
+            When `type_of_target_` is "multiclass" the names are of the format
+            '<feature_name>_<class_name>'.
+        """
+        check_is_fitted(self, "n_features_in_")
+        feature_names = _check_feature_names_in(self, input_features)
+        if self.target_type_ == "multiclass":
+            feature_names = [
+                f"{feature_name}_{class_name}"
+                for feature_name in feature_names
+                for class_name in self.classes_
+            ]
+            return np.asarray(feature_names, dtype=object)
+        else:
+            return feature_names
 
     def _more_tags(self):
         return {"requires_y": True}
