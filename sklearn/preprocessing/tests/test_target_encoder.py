@@ -139,6 +139,26 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
 
 
 @pytest.mark.parametrize(
+    "classes",
+    [
+        [np.array([0, 1, 2], dtype=np.int64)],
+        [np.array(["cat", "dog", "snake"], dtype=object)],
+    ],
+)
+def test_encoding_multiclass(global_random_seed, classes):
+    """"""
+    X_train_array = np.array([[0] * 20 + [1] * 30 + [2] * 40], dtype=np.int64).T
+    X_test_array = np.array([[0, 1, 2]], dtype=np.int64).T
+    n_categories = 3
+    n_samples = X_train_array.shape[0]
+
+    rng = np.random.RandomState(global_random_seed)
+
+    y_int = rng.randint(low=0, high=3, size=n_samples)
+    y_train = classes[y_int]
+
+
+@pytest.mark.parametrize(
     "X, categories",
     [
         (

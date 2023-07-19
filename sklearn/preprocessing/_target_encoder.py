@@ -265,7 +265,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 for i in range(len(self.classes_)):
                     y_class = y_train[:, i]
                     encoding = self._learn_encodings(
-                        X_ordinal,
+                        X_train,
                         y_class,
                         n_categories,
                         y_train_mean[i],
