@@ -1331,10 +1331,11 @@ def check_sample_weights_not_overwritten(name, estimator_orig):
 def check_dtype_object(name, estimator_orig):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
-    X = _enforce_estimator_tags_X(estimator_orig, rng.uniform(size=(40, 10)))
+    X = rng.uniform(size=(40, 10))
+    y = (X[:, 0] * 4).astype(int)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
     X = X.astype(object)
     tags = _safe_tags(estimator_orig)
-    y = (X[:, 0] * 4).astype(int)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
