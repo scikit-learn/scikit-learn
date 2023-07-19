@@ -367,7 +367,7 @@ def _compute_precision_cholesky_from_precisions(precisions, covariance_type):
     elements reside on the anti-diagonal and all other elements are 0. In particular,
     the Cholesky decomposition of the transformed precision matrix is $J\Lambda J=LL^T$,
     where $L$ is a lower-triangular matrix. Because $\Lambda=UU^T$ and $J=J^{-1}=J^T$,
-    the `precisions_cholesky_` for each Gaussian components can be expressed as $JLJ$.
+    the `precisions_cholesky_` for each Gaussian component can be expressed as $JLJ$.
 
     Refer to #26415 for details.
 
