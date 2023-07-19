@@ -70,13 +70,11 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
 
     if categories == "auto":
         X_train = X_train_array
-    else:
-        X_train = categories[0][X_train_array]
-
-    if categories == "auto":
         X_test = X_test_array
     else:
+        X_train = categories[0][X_train_array]
         X_test = categories[0][X_test_array]
+
     X_test = np.concatenate((X_test, [[unknown_value]]))
 
     rng = np.random.RandomState(global_random_seed)
