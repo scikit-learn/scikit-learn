@@ -47,7 +47,11 @@ from sklearn.svm import SVC
 from sklearn.tests.test_metadata_routing import assert_request_is_empty
 from sklearn.utils._array_api import (
     _convert_to_numpy,
+    get_namespace,
     yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_api_device,
 )
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
@@ -1270,7 +1274,16 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
 @pytest.mark.parametrize(
     "array_namepsace, device, dtype", yield_namespace_device_dtype_combinations()
 )
-def test_array_api_train_test_split(array_namepsace, device, dtype):
+@pytest.mark.parametrize(
+    "shuffle,stratify",
+    (
+        (True, None),
+        (True, np.hstack((np.ones(6), np.zeros(4)))),
+        # stratification only works with shuffling
+        (False, None),
+    ),
+)
+def test_array_api_train_test_split(shuffle, stratify, array_namepsace, device, dtype):
     xp, device, dtype = _array_api_for_tests(array_namepsace, device, dtype)
 
     X = np.arange(100).reshape((10, 10))
@@ -1282,15 +1295,37 @@ def test_array_api_train_test_split(array_namepsace, device, dtype):
     y_np = y.astype(dtype)
     y_xp = xp.asarray(y_np, device=device)
 
-    groups = np.hstack((np.ones(6), np.zeros(4)))
-
     np_X_train, np_X_test, np_y_train, np_y_test = train_test_split(
-        X_np, y, random_state=0, stratify=groups
+        X_np, y, random_state=0, shuffle=shuffle, stratify=stratify
     )
     with config_context(array_api_dispatch=True):
+        if stratify is not None:
+            stratify_xp = xp.asarray(stratify)
+        else:
+            stratify_xp = stratify
         xp_X_train, xp_X_test, xp_y_train, xp_y_test = train_test_split(
-            X_xp, y_xp, random_state=0
+            X_xp, y_xp, shuffle=shuffle, stratify=stratify_xp, random_state=0
         )
+
+        # Check that namespace is preserved, has to happen with
+        # array_api_dispatch enabled.
+        assert get_namespace(xp_X_train)[0] == get_namespace(X_xp)[0]
+        assert get_namespace(xp_X_test)[0] == get_namespace(X_xp)[0]
+        assert get_namespace(xp_y_train)[0] == get_namespace(y_xp)[0]
+        assert get_namespace(xp_y_test)[0] == get_namespace(y_xp)[0]
+
+        print("namespace", get_namespace(xp_y_test)[0])
+
+    # Check device and dtype is preserved on output
+    assert array_api_device(xp_X_train) == array_api_device(X_xp)
+    assert array_api_device(xp_y_train) == array_api_device(y_xp)
+    assert array_api_device(xp_X_test) == array_api_device(X_xp)
+    assert array_api_device(xp_y_test) == array_api_device(y_xp)
+
+    assert xp_X_train.dtype == X_xp.dtype
+    assert xp_y_train.dtype == y_xp.dtype
+    assert xp_X_test.dtype == X_xp.dtype
+    assert xp_y_test.dtype == y_xp.dtype
 
     assert_allclose(
         _convert_to_numpy(xp_X_train, xp=xp),
