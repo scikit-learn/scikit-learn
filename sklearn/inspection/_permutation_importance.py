@@ -127,7 +127,8 @@ def _create_importances_bunch(baseline_score, permuted_score):
             Interval(Integral, 1, None, closed="left"),
             Interval(RealNotInt, 0, 1, closed="right"),
         ],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def permutation_importance(
     estimator,

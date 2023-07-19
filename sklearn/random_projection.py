@@ -58,7 +58,8 @@ __all__ = [
     {
         "n_samples": ["array-like", Interval(Real, 1, None, closed="left")],
         "eps": ["array-like", Interval(Real, 0, 1, closed="neither")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     """Find a 'safe' number of components to randomly project to.

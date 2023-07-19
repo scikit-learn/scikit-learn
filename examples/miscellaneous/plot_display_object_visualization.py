@@ -39,7 +39,7 @@ clf.fit(X_train, y_train)
 # Create :class:`ConfusionMatrixDisplay`
 ##############################################################################
 # With the fitted model, we compute the predictions of the model on the test
-# dataset. These predictions are used to compute the confustion matrix which
+# dataset. These predictions are used to compute the confusion matrix which
 # is plotted with the :class:`ConfusionMatrixDisplay`
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 

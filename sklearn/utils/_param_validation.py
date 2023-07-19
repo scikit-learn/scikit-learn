@@ -140,7 +140,7 @@ def make_constraint(constraint):
     raise ValueError(f"Unknown constraint type: {constraint}")
 
 
-def validate_params(parameter_constraints, *, prefer_skip_nested_validation=False):
+def validate_params(parameter_constraints, *, prefer_skip_nested_validation):
     """Decorator to validate types and values of functions and methods.
 
     Parameters
@@ -152,7 +152,7 @@ def validate_params(parameter_constraints, *, prefer_skip_nested_validation=Fals
         Note that the *args and **kwargs parameters are not validated and must not be
         present in the parameter_constraints dictionary.
 
-    prefer_skip_nested_validation : bool, default=False
+    prefer_skip_nested_validation : bool
         If True, the validation of parameters of inner estimators or functions
         called by the decorated function will be skipped.
 
@@ -687,7 +687,10 @@ class HasMethods(_Constraint):
         The method(s) that the object is expected to expose.
     """
 
-    @validate_params({"methods": [str, list]})
+    @validate_params(
+        {"methods": [str, list]},
+        prefer_skip_nested_validation=True,
+    )
     def __init__(self, methods):
         super().__init__()
         if isinstance(methods, str):

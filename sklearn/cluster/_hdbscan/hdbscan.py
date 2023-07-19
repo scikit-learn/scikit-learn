@@ -56,7 +56,7 @@ from ._linkage import (
 from ._reachability import mutual_reachability_graph
 from ._tree import HIERARCHY_dtype, labelling_at_cut, tree_to_labels
 
-FAST_METRICS = set(KDTree.valid_metrics() + BallTree.valid_metrics())
+FAST_METRICS = set(KDTree.valid_metrics + BallTree.valid_metrics)
 
 # Encodings are arbitrary but must be strictly negative.
 # The current encodings are chosen as extensions to the -1 noise label.
@@ -187,7 +187,7 @@ def _hdbscan_brute(
         feature array.
 
         - If metric is a string or callable, it must be one of
-          the options allowed by :func:`~sklearn.metrics.pairwise.pairwise_distances`
+          the options allowed by :func:`~sklearn.metrics.pairwise_distances`
           for its metric parameter.
 
         - If metric is "precomputed", X is assumed to be a distance matrix and
@@ -768,14 +768,12 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             n_jobs=self.n_jobs,
             **self._metric_params,
         )
-        if self.algorithm == "kdtree" and self.metric not in KDTree.valid_metrics():
+        if self.algorithm == "kdtree" and self.metric not in KDTree.valid_metrics:
             raise ValueError(
                 f"{self.metric} is not a valid metric for a KDTree-based algorithm."
                 " Please select a different metric."
             )
-        elif (
-            self.algorithm == "balltree" and self.metric not in BallTree.valid_metrics()
-        ):
+        elif self.algorithm == "balltree" and self.metric not in BallTree.valid_metrics:
             raise ValueError(
                 f"{self.metric} is not a valid metric for a BallTree-based algorithm."
                 " Please select a different metric."
@@ -805,7 +803,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 # We can't do much with sparse matrices ...
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = self.copy
-            elif self.metric in KDTree.valid_metrics():
+            elif self.metric in KDTree.valid_metrics:
                 # TODO: Benchmark KD vs Ball Tree efficiency
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "kd_tree"
@@ -902,7 +900,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             self.medoids_ = np.empty((n_clusters, X.shape[1]), dtype=np.float64)
 
         # Need to handle iteratively seen each cluster may have a different
-        # number of samples, hence we can't create a homogenous 3D array.
+        # number of samples, hence we can't create a homogeneous 3D array.
         for idx in range(n_clusters):
             mask = self.labels_ == idx
             data = X[mask]
