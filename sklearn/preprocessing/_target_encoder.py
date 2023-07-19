@@ -114,6 +114,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
 
+    n_classes_ : int or None
+        Number of classes if `target_type_` is 'multiclass', otherwise `None`.
+
     See Also
     --------
     OrdinalEncoder : Performs an ordinal (integer) encoding of the categorical features.
@@ -181,7 +184,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.cv = cv
         self.shuffle = shuffle
         self.random_state = random_state
-
+        self.get_feature_names_out
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the :class:`TargetEncoder` to X and y.
@@ -239,7 +242,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             )
 
         # If 'multiclass' multiply axis 1 by `n_classes` else keep shape the same
-        X_shape_multiplier = self.n_classes or 1
+        X_shape_multiplier = self.n_classes_ or 1
         X_out = np.empty(
             (X_ordinal.shape[0], X_ordinal.shape[1] * X_shape_multiplier),
             dtype=np.float64,
@@ -250,7 +253,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
             if self.target_type_ == "multiclass":
                 encodings = []
-                for i in range(self.n_classes):
+                for i in range(self.n_classes_):
                     y_class = y_train[:, i]
                     encoding = self._learn_encodings(
                         X_ordinal,
@@ -305,8 +308,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             X, handle_unknown="ignore", force_all_finite="allow-nan"
         )
 
-        # If 'multiclass' multiply by `n_classes` else keep shape the same
-        X_shape_multiplier = self.n_classes or 1
+        # If 'multiclass' multiply by `n_classes_` else keep shape the same
+        X_shape_multiplier = self.n_classes_ or 1
         X_out = np.empty(
             (X_ordinal.shape[0], X_ordinal.shape[1] * X_shape_multiplier),
             dtype=np.float64,
@@ -354,13 +357,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:
             self.target_type_ = self.target_type
 
-        self.n_classes = None
+        self.n_classes_ = None
         if self.target_type_ == "binary":
             y = LabelEncoder().fit_transform(y)
         elif self.target_type_ == "multiclass":
             label_binarizer = LabelBinarizer()
             y = label_binarizer.fit_transform(y)
-            self.n_classes = label_binarizer.classes_.shape[0]
+            self.n_classes_ = label_binarizer.classes_.shape[0]
         else:  # continuous
             y = _check_y(y, y_numeric=True, estimator=self)
 
@@ -376,7 +379,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         )
         if self.target_type_ == "multiclass":
             encodings = []
-            for i in range(self.n_classes):
+            for i in range(self.n_classes_):
                 y_class = y[:, i]
                 encoding = self._learn_encodings(
                     X_ordinal,
@@ -445,7 +448,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         to grouping features (ff) together:
         f0_c0, f0_c1, f1_c0, f1_c1, f2_c0, f2_c1
         """
-        n_classes = self.n_classes
+        n_classes = self.n_classes_
         n_features = self.n_features_in_
         # Indicies to reorder columns from grouping classes to grouping features
         reorder_index = [
