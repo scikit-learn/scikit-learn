@@ -363,7 +363,7 @@ def _compute_precision_cholesky_from_precision(precisions, covariance_type):
 
     In order to use the Cholesky decomposition to get $UU^T$, the precision matrix
     $\Lambda$ needs to be permutated such that its rows and columns are reversed, which
-    can be done by a similarity transformation with an exchange matrix $J$, where the 1
+    can be done by applying a similarity transformation with an exchange matrix $J$, where the 1
     elements reside on the anti-diagonal and all other elements are 0. In particular,
     the Cholesky decomposition of the transformed precision matrix is $J\Lambda J=LL^T$,
     where $L$ is a lower-triangular matrix. Because $\Lambda=UU^T$ and $J=J^{-1}=J^T$,
