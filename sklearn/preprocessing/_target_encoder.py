@@ -447,6 +447,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         """
         n_classes = self.n_classes
         n_features = self.n_features_in_
+        # Indicies to reorder columns from grouping classes to grouping features
         reorder_index = [
             idx
             for start in range(n_features)
