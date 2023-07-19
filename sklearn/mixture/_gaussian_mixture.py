@@ -375,7 +375,7 @@ def _compute_precision_cholesky_from_precision(precisions, covariance_type):
     ----------
     precisions : array-like
         The precision matrix of the current components.
-        The shape depends of the covariance_type.
+        The shape depends on the covariance_type.
 
     covariance_type : {'full', 'tied', 'diag', 'spherical'}
         The type of precision matrices.
