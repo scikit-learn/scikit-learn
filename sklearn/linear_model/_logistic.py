@@ -838,7 +838,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     dual : bool, default=False
         Dual (constrained) or primal (regularized, see also Equation
-        :math:numref:`logreg-regularized`) formulation. Dual formulation is only
+        :ref:`regularized logistic loss`) formulation. Dual formulation is only
         implemented for l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
