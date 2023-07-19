@@ -354,7 +354,7 @@ def _flipudlr(array):
 
 
 def _compute_precision_cholesky_from_precisions(precisions, covariance_type):
-    r"""Compute the Cholesky decomposition of the specified precisions using the precisions themselves.
+    r"""Compute the Cholesky decomposition of precisions using precisions themselves.
 
     As implemented in :func:`_compute_precision_cholesky`, the `precisions_cholesky_` is
     an upper-triangular matrix for each Gaussian component, which can be expressed as
@@ -363,11 +363,12 @@ def _compute_precision_cholesky_from_precisions(precisions, covariance_type):
 
     In order to use the Cholesky decomposition to get $UU^T$, the precision matrix
     $\Lambda$ needs to be permutated such that its rows and columns are reversed, which
-    can be done by applying a similarity transformation with an exchange matrix $J$, where the 1
-    elements reside on the anti-diagonal and all other elements are 0. In particular,
-    the Cholesky decomposition of the transformed precision matrix is $J\Lambda J=LL^T$,
-    where $L$ is a lower-triangular matrix. Because $\Lambda=UU^T$ and $J=J^{-1}=J^T$,
-    the `precisions_cholesky_` for each Gaussian component can be expressed as $JLJ$.
+    can be done by applying a similarity transformation with an exchange matrix $J$,
+    where the 1 elements reside on the anti-diagonal and all other elements are 0. In
+    particular, the Cholesky decomposition of the transformed precision matrix is
+    $J\Lambda J=LL^T$, where $L$ is a lower-triangular matrix. Because $\Lambda=UU^T$
+    and $J=J^{-1}=J^T$, the `precisions_cholesky_` for each Gaussian component can be
+    expressed as $JLJ$.
 
     Refer to #26415 for details.
 
