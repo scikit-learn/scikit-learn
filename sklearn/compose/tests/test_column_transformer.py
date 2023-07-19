@@ -294,8 +294,9 @@ def test_column_transformer_dataframe(constructor_name):
     )
     ct.fit_transform(X_df)
 
-    if constructor_name == "pandas":
-        # DataFrame protocol does not have 1d columns
+    if constructor_name == "dataframe":
+        # DataFrame protocol does not have 1d columns, so we only test on Pandas
+        # dataframes.
         ct = ColumnTransformer(
             [
                 (

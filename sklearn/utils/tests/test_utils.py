@@ -13,6 +13,7 @@ from sklearn.utils import (
     _approximate_mode,
     _determine_key_type,
     _get_column_indices,
+    _get_column_indices_interchange,
     _message_with_time,
     _print_elapsed_time,
     _safe_assign,
@@ -479,6 +480,7 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
     [
         (10, r"all features must be in \[0, 2\]"),
         ("whatever", "A given column is not a column of the dataframe"),
+        (object(), "No valid specification of the columns"),
     ],
 )
 def test_get_column_indices_error(key, err_msg):
@@ -760,3 +762,20 @@ def test_safe_assign(array_type):
     _safe_assign(X, values, column_indexer=column_indexer)
 
     assert_allclose_dense_sparse(X, _convert_container(values, array_type))
+
+
+def test_get_column_indices_interchange():
+    """Check _get_column_indices_interchange for edge cases."""
+    pd = pytest.importorskip("pandas", minversion="1.5")
+
+    df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
+    df_interchange = df.__dataframe__()
+    assert _get_column_indices_interchange(df_interchange, []) == []
+    assert _get_column_indices_interchange(df_interchange, slice(1, None)) == [1, 2]
+    assert _get_column_indices_interchange(df_interchange, slice(None, 2)) == [0, 1]
+    assert _get_column_indices_interchange(df_interchange, slice(1, 2)) == [1]
+    assert _get_column_indices_interchange(df_interchange, ["b", "c"]) == [1, 2]
+
+    msg = "A given column is not a column of the dataframe"
+    with pytest.raises(ValueError, match=msg):
+        _get_column_indices_interchange(df_interchange, ["not_a_column"])
