@@ -1780,8 +1780,13 @@ def test_is_polars_df_pandas_not_installed(monkeypatch):
 
     monkeypatch.setattr(builtins, "__import__", mocked_import)
 
-    assert not _is_polars_df(np.asarray([1, 2, 3]))
-    assert not _is_polars_df(1)
+    class NotAPolarsDataFrame:
+        def __init__(self):
+            self.columns = [1, 2, 3]
+            self.schema = "my_schema"
+
+    not_a_polars_df = NotAPolarsDataFrame()
+    assert not _is_polars_df(not_a_polars_df)
 
 
 def test__dataframe_module_as_str_error():
