@@ -21,6 +21,7 @@ from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.svm import LinearSVC, LinearSVR
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils import themes
 from sklearn.utils._estimator_html_repr import (
     _get_visual_block,
     _write_label_html,
@@ -117,7 +118,8 @@ def test_get_visual_block_column_transformer():
     assert est_html_info.name_details == (["num1", "num2"], [0, 3])
 
 
-def test_estimator_html_repr_pipeline():
+@pytest.mark.parametrize("theme", [None, themes.DARK])
+def test_estimator_html_repr_pipeline(theme):
     num_trans = Pipeline(
         steps=[("pass", "passthrough"), ("imputer", SimpleImputer(strategy="median"))]
     )
@@ -196,6 +198,12 @@ def test_estimator_html_repr_pipeline():
         for name, est in clf.estimators:
             assert f"<label>{html.escape(name)}</label>" in html_output
             assert f"<pre>{html.escape(str(est))}</pre>" in html_output
+
+    # verify theme changes
+    if theme is None:
+        assert "color: #696969" in html_output
+    elif theme == themes.DARK:
+        assert "color: #5f718c" in html_output
 
 
 @pytest.mark.parametrize("final_estimator", [None, LinearSVC()])

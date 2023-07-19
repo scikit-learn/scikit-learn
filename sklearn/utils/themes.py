@@ -1,8 +1,9 @@
 from string import Template
 
 
-# CssTemplate makes it easy to create CSS templates where `$$` is the delimiter.
 class CssTemplate(Template):
+    """Create parameterized CSS templates with `$$` as the variable prefix."""
+
     delimiter = "$$"
 
 
@@ -194,6 +195,7 @@ def theme_builder(
     color_5="#254147",
     color_6="#2d4f56",
 ):
+    """Generates a theme from a given color palette."""
     return _tmpl.substitute(
         color_1=color_1,
         color_2=color_2,
