@@ -778,7 +778,7 @@ class GaussianMixture(BaseMixture):
                 covariances, self.covariance_type
             )
         else:
-            self.precisions_cholesky_ = _compute_precision_cholesky_from_precision(
+            self.precisions_cholesky_ = _compute_precision_cholesky_from_precisions(
                 self.precisions_init, self.covariance_type
             )
 
