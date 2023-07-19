@@ -5,7 +5,12 @@ import numpy as np
 from ..base import OneToOneFeatureMixin, _fit_context
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import type_of_target
-from ..utils.validation import _check_feature_names_in, _check_y, check_consistent_length, check_is_fitted
+from ..utils.validation import (
+    _check_feature_names_in,
+    _check_y,
+    check_consistent_length,
+    check_is_fitted,
+)
 from ._encoders import _BaseEncoder
 from ._target_encoder_fast import _fit_encoding_fast, _fit_encoding_fast_auto_smooth
 
