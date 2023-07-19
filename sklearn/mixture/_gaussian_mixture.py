@@ -384,7 +384,7 @@ def _compute_precision_cholesky_from_precision(precisions, covariance_type):
     -------
     precisions_cholesky : array-like
         The cholesky decomposition of sample precisions of the current
-        components. The shape depends of the covariance_type.
+        components. The shape depends on the covariance_type.
     """
     if covariance_type == "full":
         precisions_cholesky = np.array(
