@@ -199,6 +199,9 @@ def estimator_html_repr(estimator, theme=themes.LIGHT):
     estimator : estimator object
         The estimator to visualize.
 
+    theme : theme string
+        The theme for the html style.
+
     Returns
     -------
     html: str
