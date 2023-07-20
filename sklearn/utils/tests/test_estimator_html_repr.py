@@ -161,10 +161,9 @@ def test_estimator_html_repr_pipeline(theme):
     )
 
     pipe = Pipeline(
-        [("preprocessor", preprocess), ("feat_u", feat_u), ("classifier", clf)],
-        theme=theme,
+        [("preprocessor", preprocess), ("feat_u", feat_u), ("classifier", clf)]
     )
-    html_output = estimator_html_repr(pipe)
+    html_output = estimator_html_repr(pipe, theme=theme)
 
     # top level estimators show estimator with changes
     assert html.escape(str(pipe)) in html_output
