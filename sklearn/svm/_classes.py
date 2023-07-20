@@ -72,12 +72,13 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         optimization problem. Prefer dual=False when n_samples > n_features.
         `dual="auto"` will choose the value of the parameter automatically,
         based on the values of `n_samples`, `n_features`, `loss`, `multi_class`
-        and `penalty`. If `n_samples` < `n_features` and optmizer supports
+        and `penalty`. If `n_samples` < `n_features` and optimizer supports
         chosen `loss`, `multi_class` and `penalty`, then dual will be set to True,
         otherwise it will be set to False.
 
         .. versionchanged:: 1.3
-           The default value will change from `True` to `"auto"` in 1.5.
+           The `"auto"` option is added in version 1.3 and will be the default
+           in version 1.5.
 
     tol : float, default=1e-4
         Tolerance for stopping criteria.
@@ -408,11 +409,12 @@ class LinearSVR(RegressorMixin, LinearModel):
         optimization problem. Prefer dual=False when n_samples > n_features.
         `dual="auto"` will choose the value of the parameter automatically,
         based on the values of `n_samples`, `n_features` and `loss`. If
-        `n_samples` < `n_features` and optmizer supports chosen `loss`,
+        `n_samples` < `n_features` and optimizer supports chosen `loss`,
         then dual will be set to True, otherwise it will be set to False.
 
         .. versionchanged:: 1.3
-           The default value will change from `True` to `"auto"` in 1.5.
+           The `"auto"` option is added in version 1.3 and will be the default
+           in version 1.5.
 
     verbose : int, default=0
         Enable verbose output. Note that this setting takes advantage of a

@@ -1200,7 +1200,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
                 (
                     "The default value of `n_components` will change from `None` to"
                     " `'auto'` in 1.6. Set the value of `n_components` to `None`"
-                    " explicitly to supress the warning."
+                    " explicitly to suppress the warning."
                 ),
                 FutureWarning,
             )

@@ -1846,7 +1846,7 @@ def test_normalizer_l1():
         X_norm = normalizer = Normalizer(norm="l2", copy=False).transform(X)
 
         assert X_norm is not X
-        assert sparse.isspmatrix_csr(X_norm)
+        assert sparse.issparse(X_norm) and X_norm.format == "csr"
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -1893,7 +1893,7 @@ def test_normalizer_l2():
         X_norm = normalizer = Normalizer(norm="l2", copy=False).transform(X)
 
         assert X_norm is not X
-        assert sparse.isspmatrix_csr(X_norm)
+        assert sparse.issparse(X_norm) and X_norm.format == "csr"
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -1941,7 +1941,7 @@ def test_normalizer_max():
         X_norm = normalizer = Normalizer(norm="l2", copy=False).transform(X)
 
         assert X_norm is not X
-        assert sparse.isspmatrix_csr(X_norm)
+        assert sparse.issparse(X_norm) and X_norm.format == "csr"
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -2205,21 +2205,21 @@ def test_add_dummy_feature():
 def test_add_dummy_feature_coo():
     X = sparse.coo_matrix([[1, 0], [0, 1], [0, 1]])
     X = add_dummy_feature(X)
-    assert sparse.isspmatrix_coo(X), X
+    assert sparse.issparse(X) and X.format == "coo", X
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
 def test_add_dummy_feature_csc():
     X = sparse.csc_matrix([[1, 0], [0, 1], [0, 1]])
     X = add_dummy_feature(X)
-    assert sparse.isspmatrix_csc(X), X
+    assert sparse.issparse(X) and X.format == "csc", X
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
 def test_add_dummy_feature_csr():
     X = sparse.csr_matrix([[1, 0], [0, 1], [0, 1]])
     X = add_dummy_feature(X)
-    assert sparse.isspmatrix_csr(X), X
+    assert sparse.issparse(X) and X.format == "csr", X
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
