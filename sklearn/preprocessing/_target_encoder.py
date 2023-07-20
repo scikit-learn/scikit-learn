@@ -456,31 +456,21 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         """Transform X_ordinal using encodings.
 
         In the multiclass case, `X_ordinal` and `X_unknown_mask` have column
-        (axis=1) size `n_features`, while column of `X_out` and length of
-        `encodings` length is of size `n_features * n_classes`. `multi_idx`
-        deals with this by repeating feature indicies for each class.
-        E.g., for 3 features, 2 classes: 0,1,2,0,1,2
+        (axis=1) size `n_features`, while `encodings` have length of size
+        `n_features * n_classes`. `feat_idx` deals with this by repeating
+        feature indicies by `n_classes` E.g., for 3 features, 2 classes:
+        0,0,1,1,2,2
 
-        Additionally, `X_out` needs to order columns such that features (f)
-        are grouped together:
-        f0_c0, f0_c1, f1_c0, f1_c1, f2_c0, f2_c1
-        instead of classes (c) being grouped together, as in `encodings`:
-        f0_c0, f1_c0, f2_c0, f0_c1, f1_c1, f2_c1
-        This is handled by `out_indx`.
+        Additionally, `target_mean` is of shape (`n_classes`,) so `mean_idx`
+        cycles through 0 to `n_classes` - 1, n_features times.
         """
-
-        if self.target_type_ == "multiclass":
-            n_classes = len(self.classes_)
-            n_features = self.n_features_in_
-
         for e_idx, encoding in enumerate(encodings):
             if self.target_type_ == "multiclass":
-                # `X_out` should have features grouped together
-                out_indx = (e_idx // n_classes) + ((e_idx % n_classes) * n_features)
-                # Repeat feature indicies for each class
-                feat_idx = e_idx - (n_features * (e_idx // n_features))
-                mean_idx = e_idx // n_features
-                X_out[indices, out_indx] = encoding[X_ordinal[indices, feat_idx]]
+                # Repeat feature indicies by n_classes
+                feat_idx = e_idx // len(self.classes_)
+                # Cycle through each class
+                mean_idx = e_idx % len(self.classes_)
+                X_out[indices, e_idx] = encoding[X_ordinal[indices, feat_idx]]
                 X_out[X_unknown_mask[:, feat_idx], e_idx] = target_mean[mean_idx]
             else:
                 X_out[indices, e_idx] = encoding[X_ordinal[indices, e_idx]]
