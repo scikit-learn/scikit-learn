@@ -1345,12 +1345,15 @@ def check_dtype_object(name, estimator_orig):
     if hasattr(estimator, "transform"):
         estimator.transform(X)
 
-    with raises(Exception, match="(?i)unknown", may_pass=True):
+    with raises(Exception, match="Unknown label type", may_pass=True):
         estimator.fit(X, y.astype(object))
 
     if "string" not in tags["X_types"]:
         X[0, 0] = {"foo": "bar"}
-        msg = "string.* number"
+        # This error is raised by:
+        # - `np.asarray` in `check_array`
+        # - `_unique_python` for encoders
+        msg = "argument must be .* string.* number"
         with raises(TypeError, match=msg):
             estimator.fit(X, y)
     else:
@@ -3542,12 +3545,14 @@ def _enforce_estimator_tags_y(estimator, y):
         # Create strictly positive y. The minimal increment above 0 is 1, as
         # y could be of integer dtype.
         y += 1 + abs(y.min())
-    # Estimators with a `binary_only` tag only accept up to two unique y values
-    # TargetEncoder accepts binary and continuous values. We therefore force
-    # y to be binary also.
-    if estimator.__class__.__name__ == "TargetEncoder" or (
-        _safe_tags(estimator, key="binary_only") and y.size > 0
-    ):
+    if _safe_tags(estimator, key="binary_only") and y.size > 0:
+        y = np.where(y == y.flat[0], y, y.flat[0] + 1)
+    if estimator.__class__.__name__ == "TargetEncoder":
+        # TargetEncoder is a special case where a transformer uses `y` but only accept
+        # binary classification and regression targets.
+        # TODO: remove this special case when multiclass support is added to
+        # TargetEncoder.
+        # xref: https://github.com/scikit-learn/scikit-learn/pull/26674
         y = np.where(y == y.flat[0], y, y.flat[0] + 1)
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
     # Convert into a 2-D y for those estimators.

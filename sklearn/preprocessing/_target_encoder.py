@@ -299,8 +299,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             inferred_type_of_target = type_of_target(y, input_name="y")
             if inferred_type_of_target not in accepted_target_types:
                 raise ValueError(
-                    f"Target type was inferred to be {inferred_type_of_target!r}. Only"
-                    f" {accepted_target_types} are supported."
+                    "Unknown label type: target type was inferred to be "
+                    f"{inferred_type_of_target!r}. Only {accepted_target_types} are "
+                    "supported."
                 )
             self.target_type_ = inferred_type_of_target
         else:
