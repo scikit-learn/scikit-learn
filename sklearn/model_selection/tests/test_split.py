@@ -1295,7 +1295,7 @@ def test_array_api_train_test_split(shuffle, stratify, array_namepsace, device, 
     y_np = y.astype(dtype)
     y_xp = xp.asarray(y_np, device=device)
 
-    np_X_train, np_X_test, np_y_train, np_y_test = train_test_split(
+    X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
         X_np, y, random_state=0, shuffle=shuffle, stratify=stratify
     )
     with config_context(array_api_dispatch=True):
@@ -1303,37 +1303,35 @@ def test_array_api_train_test_split(shuffle, stratify, array_namepsace, device, 
             stratify_xp = xp.asarray(stratify)
         else:
             stratify_xp = stratify
-        xp_X_train, xp_X_test, xp_y_train, xp_y_test = train_test_split(
+        X_train_xp, X_test_xp, y_train_xp, y_test_xp = train_test_split(
             X_xp, y_xp, shuffle=shuffle, stratify=stratify_xp, random_state=0
         )
 
         # Check that namespace is preserved, has to happen with
         # array_api_dispatch enabled.
-        assert get_namespace(xp_X_train)[0] == get_namespace(X_xp)[0]
-        assert get_namespace(xp_X_test)[0] == get_namespace(X_xp)[0]
-        assert get_namespace(xp_y_train)[0] == get_namespace(y_xp)[0]
-        assert get_namespace(xp_y_test)[0] == get_namespace(y_xp)[0]
-
-        print("namespace", get_namespace(xp_y_test)[0])
+        assert get_namespace(X_train_xp)[0] == get_namespace(X_xp)[0]
+        assert get_namespace(X_test_xp)[0] == get_namespace(X_xp)[0]
+        assert get_namespace(y_train_xp)[0] == get_namespace(y_xp)[0]
+        assert get_namespace(y_test_xp)[0] == get_namespace(y_xp)[0]
 
     # Check device and dtype is preserved on output
-    assert array_api_device(xp_X_train) == array_api_device(X_xp)
-    assert array_api_device(xp_y_train) == array_api_device(y_xp)
-    assert array_api_device(xp_X_test) == array_api_device(X_xp)
-    assert array_api_device(xp_y_test) == array_api_device(y_xp)
+    assert array_api_device(X_train_xp) == array_api_device(X_xp)
+    assert array_api_device(y_train_xp) == array_api_device(y_xp)
+    assert array_api_device(X_test_xp) == array_api_device(X_xp)
+    assert array_api_device(y_test_xp) == array_api_device(y_xp)
 
-    assert xp_X_train.dtype == X_xp.dtype
-    assert xp_y_train.dtype == y_xp.dtype
-    assert xp_X_test.dtype == X_xp.dtype
-    assert xp_y_test.dtype == y_xp.dtype
+    assert X_train_xp.dtype == X_xp.dtype
+    assert y_train_xp.dtype == y_xp.dtype
+    assert X_test_xp.dtype == X_xp.dtype
+    assert y_test_xp.dtype == y_xp.dtype
 
     assert_allclose(
-        _convert_to_numpy(xp_X_train, xp=xp),
-        np_X_train,
+        _convert_to_numpy(X_train_xp, xp=xp),
+        X_train_np,
     )
     assert_allclose(
-        _convert_to_numpy(xp_X_test, xp=xp),
-        np_X_test,
+        _convert_to_numpy(X_test_xp, xp=xp),
+        X_test_np,
     )
 
 
