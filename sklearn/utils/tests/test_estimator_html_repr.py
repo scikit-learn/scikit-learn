@@ -161,7 +161,8 @@ def test_estimator_html_repr_pipeline(theme):
     )
 
     pipe = Pipeline(
-        [("preprocessor", preprocess), ("feat_u", feat_u), ("classifier", clf)]
+        [("preprocessor", preprocess), ("feat_u", feat_u), ("classifier", clf)],
+        theme=theme,
     )
     html_output = estimator_html_repr(pipe)
 
