@@ -166,8 +166,6 @@ def test_unsupervised_kneighbors(
     # on their common metrics, with and without returning
     # distances
 
-    # Handle the case where metric is a dict containing mappings from `dtype`
-    # to the corresponding `DistanceMetric` objects
     metric = _parse_metric(metric, global_dtype)
 
     # Redefining the rng locally to use the same generated X
@@ -263,8 +261,6 @@ def test_neigh_predictions_algorithm_agnosticity(
     # The different algorithms must return identical predictions results
     # on their common metrics.
 
-    # Handle the case where metric is a dict containing mappings from `dtype`
-    # to the corresponding `DistanceMetric` objects
     metric = _parse_metric(metric, global_dtype)
     if isinstance(metric, DistanceMetric):
         if "Classifier" in NeighborsMixinSubclass.__name__:
@@ -1053,8 +1049,6 @@ def test_query_equidistant_kth_nn(algorithm):
 def test_radius_neighbors_sort_results(algorithm, metric):
     # Test radius_neighbors[_graph] output when sort_result is True
 
-    # Handle the case where metric is a dict containing mappings from `dtype`
-    # to the corresponding `DistanceMetric` objects
     metric = _parse_metric(metric, np.float64)
     if isinstance(metric, DistanceMetric):
         pytest.skip(
@@ -1633,8 +1627,6 @@ def test_nearest_neighbors_validate_params():
 def test_neighbors_metrics(
     global_dtype, metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
 ):
-    # Handle the case where metric is a dict containing mappings from `dtype`
-    # to the corresponding `DistanceMetric` objects
     metric = _parse_metric(metric, global_dtype)
 
     # Test computing the neighbors for various metrics
@@ -1771,8 +1763,6 @@ def test_callable_metric():
 def test_valid_brute_metric_for_auto_algorithm(
     global_dtype, metric, n_samples=20, n_features=12
 ):
-    # Handle the case where metric is a dict containing mappings from `dtype`
-    # to the corresponding `DistanceMetric` objects
     metric = _parse_metric(metric, global_dtype)
 
     X = rng.rand(n_samples, n_features).astype(global_dtype, copy=False)

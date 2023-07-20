@@ -579,12 +579,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     "Use sorted(sklearn.neighbors."
                     "VALID_METRICS_SPARSE['brute']) "
                     "to get valid options. "
-                    "Metric can also be a callable function."
-                    % (
-                        self.effective_metric_
-                        if isinstance(self.effective_metric_, str)
-                        else self.effective_metric_.__class__.__name__
-                    )
+                    "Metric can also be a callable function." % (self.effective_metric_)
                 )
             self._fit_X = X.copy()
             self._tree = None
