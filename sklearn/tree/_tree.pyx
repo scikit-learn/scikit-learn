@@ -1008,15 +1008,7 @@ cdef class BaseTree:
         cache_mgr = CategoryCacheMgr()
         cache_mgr.populate(self.nodes, self.node_count, self.n_categories)
         cdef vector[vector[UINT64_t]] cat_caches = cache_mgr.bits
-        # cdef vector[UINT64_t] cache = NULL
-
         cdef const INT32_t[:] n_categories = self.n_categories
-
-        # apply Cache to speed up categorical "apply"
-        # cache_mgr = CategoryCacheMgr()
-        # cache_mgr.populate(self.nodes, self.node_count, self.n_categories)
-        # cdef UINT64_t** cat_caches = cache_mgr.bits
-        # cdef UINT64_t* cache = NULL
 
         with nogil:
             for i in range(n_samples):
@@ -1034,9 +1026,6 @@ cdef class BaseTree:
                             node = &self.nodes[node.right_child]
                     elif goes_left(
                         X_i_node_feature,
-                        # node.split_value,
-                        # node.threshold,
-                        # self.n_categories[node.feature],
                         node,
                         n_categories,
                         cache
@@ -1082,7 +1071,6 @@ cdef class BaseTree:
         cache_mgr = CategoryCacheMgr()
         cache_mgr.populate(self.nodes, self.node_count, self.n_categories)
         cdef vector[vector[UINT64_t]] cat_caches = cache_mgr.bits
-        # cdef vector[UINT64_t] cache = NULL
 
         cdef const INT32_t[:] n_categories = self.n_categories
         # feature_to_sample as a data structure records the last seen sample
@@ -1114,9 +1102,6 @@ cdef class BaseTree:
 
                     if goes_left(
                         feature_value,
-                        # node.split_value,
-                        # node.threshold,
-                        # self.n_categories[node.feature],
                         node,
                         n_categories,
                         cache
@@ -1650,21 +1635,19 @@ cdef class Tree(BaseTree):
         self.n_classes = NULL
         safe_realloc(&self.n_classes, n_outputs)
 
-        self.n_categories = NULL
-        safe_realloc(&self.n_categories, n_features)
+        cdef SIZE_t k
 
         # n-categories is a 1D array of size n_features
-        # self.n_categories = np.empty(n_features, dtype=np.int32)
-        # self.n_categories = n_categories
+        self.n_categories = NULL
+        safe_realloc(&self.n_categories, n_features)
+        for k in range(n_features):
+            self.n_categories[k] = n_categories[k]
 
         self.max_n_classes = np.max(n_classes)
         self.value_stride = n_outputs * self.max_n_classes
 
-        cdef SIZE_t k
         for k in range(n_outputs):
             self.n_classes[k] = n_classes[k]
-        for k in range(n_features):
-            self.n_categories[k] = n_categories[k]
 
         # Inner structures
         self.max_depth = 0
