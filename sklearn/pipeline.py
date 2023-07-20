@@ -94,6 +94,9 @@ class Pipeline(_BaseComposition):
         If True, the time elapsed while fitting each step will be printed as it
         is completed.
 
+    theme : string, default=None
+        If given, will override the style of the pipeline representation.
+
     Attributes
     ----------
     named_steps : :class:`~sklearn.utils.Bunch`
