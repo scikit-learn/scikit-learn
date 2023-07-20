@@ -90,11 +90,12 @@ def _fix_connectivity(X, connectivity, affinity):
     connectivity = connectivity + connectivity.T
 
     # Convert connectivity matrix to LIL
-    if not sparse.isspmatrix_lil(connectivity):
-        if not sparse.isspmatrix(connectivity):
-            connectivity = sparse.lil_matrix(connectivity)
-        else:
-            connectivity = connectivity.tolil()
+    if not sparse.issparse(connectivity):
+        connectivity = sparse.lil_matrix(connectivity)
+
+    # `connectivity` is a sparse matrix at this point
+    if connectivity.format != "lil":
+        connectivity = connectivity.tolil()
 
     # Compute the number of nodes
     n_connected_components, labels = connected_components(connectivity)
