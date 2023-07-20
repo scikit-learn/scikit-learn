@@ -99,10 +99,10 @@ def set_config(
 
         .. versionadded:: 0.23
 
-    theme : string, default=None
-        If set, sets the CSS for the displayed diagram. Default is None.
+    theme : CssTemplate, default=None
+        If set, sets the CSS Template for the displayed diagram. Default is None.
 
-        .. versionadded:: 0.23
+        .. versionadded:: 1.4
 
     pairwise_dist_chunk_size : int, default=None
         The number of row vectors per chunk for the accelerated pairwise-
@@ -254,10 +254,10 @@ def config_context(
 
         .. versionadded:: 0.23
 
-    theme : string, default=None
-        If set, sets the CSS for the displayed diagram. Default is None.
+    theme : CssTemplate, default=None
+        If set, sets the CSS Template for the displayed diagram. Default is None.
 
-        .. versionadded:: 0.23
+        .. versionadded:: 1.4
 
     pairwise_dist_chunk_size : int, default=None
         The number of row vectors per chunk for the accelerated pairwise-

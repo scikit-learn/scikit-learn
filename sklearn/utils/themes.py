@@ -1,3 +1,4 @@
+"""Parameterized CSS template class for creating dynamic stylesheets."""
 from string import Template
 
 
@@ -186,7 +187,16 @@ _STYLE_TEMPLATE = """
 
 
 def theme_builder(template=CssTemplate(_STYLE_TEMPLATE), **kwargs):
-    """Generates a theme from a given color palette."""
+    """Generate a theme from a given color palette.
+
+    Args:
+        template (CssTemplate, optional): The CSS template to use.
+        Defaults to CssTemplate(_STYLE_TEMPLATE).
+        **kwargs: Key-value pairs representing the color palette variables.
+
+    Returns:
+        str: The generated theme with substituted color values.
+    """
     return template.substitute(**kwargs)
 
 
