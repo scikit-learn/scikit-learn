@@ -261,17 +261,12 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             y_train_mean = np.mean(y_train, axis=0)
 
             if self.target_type_ == "multiclass":
-                encodings = []
-                for i in range(len(self.classes_)):
-                    y_class = y_train[:, i]
-                    encoding = self._learn_encodings(
-                        X_train,
-                        y_class,
-                        n_categories,
-                        y_train_mean[i],
-                        save_encodings=False,
-                    )
-                    encodings += encoding
+                encodings = self._learn_multiclass_encodings(
+                    X_train,
+                    y_train,
+                    n_categories,
+                    y_train_mean,
+                )
             else:
                 encodings = self._learn_encodings(
                     X_train,
@@ -375,17 +370,12 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             count=len(self.categories_),
         )
         if self.target_type_ == "multiclass":
-            encodings = []
-            for i in range(len(self.classes_)):
-                y_class = y[:, i]
-                encoding = self._learn_encodings(
-                    X_ordinal,
-                    y_class,
-                    n_categories,
-                    self.target_mean_[i],
-                    save_encodings=False,
-                )
-                encodings += encoding
+            encodings = self._learn_multiclass_encodings(
+                X_ordinal,
+                y,
+                n_categories,
+                self.target_mean_,
+            )
             self.encodings_ = encodings
         else:
             self._learn_encodings(
@@ -420,6 +410,38 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         if save_encodings:
             self.encodings_ = encodings
+        return encodings
+
+    def _learn_multiclass_encodings(self, X_ordinal, y, n_categories, target_mean):
+        """Learn multiclass encodings.
+
+        Learn encodings for each class (c) then reorder encodings such that
+        the same features (f) are grouped together. `reorder_index` enables
+        converting from:
+        f0_c0, f0_c1, f1_c0, f1_c1, f2_c0, f2_c1
+        to:
+        f0_c0, f1_c0, f2_c0, f0_c1, f1_c1, f2_c1
+        """
+        n_features = self.n_features_in_
+        n_classes = len(self.classes_)
+        reorder_index = (
+            idx
+            for start in range(n_features)
+            for idx in range(start, (n_classes * n_features), n_features)
+        )
+
+        encodings = []
+        for i in range(n_classes):
+            y_class = y[:, i]
+            encoding = self._learn_encodings(
+                X_ordinal,
+                y_class,
+                n_categories,
+                target_mean[i],
+                save_encodings=False,
+            )
+            encodings += encoding
+        encodings = [encodings[idx] for idx in reorder_index]
         return encodings
 
     def _transform_X_ordinal(
