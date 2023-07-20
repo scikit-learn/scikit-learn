@@ -1357,10 +1357,15 @@ def _calculate_precisions(X, resp, covariance_type):
 
 
 @pytest.mark.parametrize("covariance_type", COVARIANCE_TYPE)
-def test_gaussian_mixture_precisions_init(covariance_type):
+def test_gaussian_mixture_precisions_init(covariance_type, global_random_seed):
     """Non-regression test for #26415."""
 
-    X, resp = _generate_data(seed=12345, n_samples=100, n_features=3, n_components=4)
+    X, resp = _generate_data(
+        seed=global_random_seed,
+        n_samples=100,
+        n_features=3,
+        n_components=4,
+    )
 
     precisions_init, desired_precisions_cholesky = _calculate_precisions(
         X, resp, covariance_type
