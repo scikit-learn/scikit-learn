@@ -692,7 +692,7 @@ def test_standard_check_array_of_inverse_transform():
 
 
 @pytest.mark.parametrize(
-    "array_namepsace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "check",
@@ -705,10 +705,10 @@ def test_standard_check_array_of_inverse_transform():
     ids=_get_check_estimator_ids,
 )
 def test_minmaxscaler_array_api_compliance(
-    estimator, check, array_namepsace, device, dtype
+    estimator, check, array_namespace, device, dtype
 ):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namepsace, device=device, dtype=dtype)
+    check(name, estimator, array_namespace, device=device, dtype=dtype)
 
 
 def test_min_max_scaler_iris():
