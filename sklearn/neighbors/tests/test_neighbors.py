@@ -25,8 +25,6 @@ from sklearn import (
 from sklearn.base import clone
 from sklearn.exceptions import DataConversionWarning, EfficiencyWarning, NotFittedError
 from sklearn.metrics._dist_metrics import (
-    METRIC_MAPPING32,
-    METRIC_MAPPING64,
     DistanceMetric,
 )
 from sklearn.metrics.pairwise import pairwise_distances
@@ -75,17 +73,6 @@ COMMON_VALID_METRICS = sorted(
     set.intersection(*map(set, neighbors.VALID_METRICS.values()))
 )  # type: ignore
 
-# This can be extended to cover all distance metric objects, however that is
-# probably unnecessary and would slow down tests significantly.
-DISTANCE_METRIC_OBJS = []
-for m in ("euclidean", "manhattan"):
-    d = {}
-    for dtype, MAPPING in zip(
-        (np.float64, np.float32), (METRIC_MAPPING64, METRIC_MAPPING32)
-    ):
-        d[dtype] = MAPPING[m]
-    DISTANCE_METRIC_OBJS.append(d)
-
 P = (1, 2, 3, 4, np.inf)
 JOBLIB_BACKENDS = list(joblib.parallel.BACKENDS.keys())
 
@@ -93,11 +80,24 @@ JOBLIB_BACKENDS = list(joblib.parallel.BACKENDS.keys())
 neighbors.kneighbors_graph = ignore_warnings(neighbors.kneighbors_graph)
 neighbors.radius_neighbors_graph = ignore_warnings(neighbors.radius_neighbors_graph)
 
+# A list containing metrics where the string specifies the use of the
+# DistanceMetric object directly (as resolved in _parse_metric)
+DISTANCE_METRIC_OBJS = ["DM_euclidean", "DM_manhattan"]
 
-def _parse_metric(metric, dtype=None):
-    if isinstance(metric, str):
-        return metric
-    return metric[dtype]()
+
+def _parse_metric(metric: str, dtype=None):
+    """
+    Helper function for properly building a type-specialized DistanceMetric instances.
+
+    Constructs a type-specialized DistanceMetric instance from a string
+    beginning with "DM_" while allowing a pass-through for other metric-specifying
+    strings. This is necessary since we wish to parameterize dtype independent of
+    metric, yet DistanceMetric requires it for construction.
+
+    """
+    if metric[:3] == "DM_":
+        return DistanceMetric.get_metric(metric[3:], dtype=dtype)
+    return metric
 
 
 def _generate_test_params_for(metric: str, n_features: int):
