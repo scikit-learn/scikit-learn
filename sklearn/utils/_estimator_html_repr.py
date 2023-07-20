@@ -189,7 +189,7 @@ def _write_estimator_html(
         )
 
 
-def estimator_html_repr(estimator, theme=themes.LIGHT):
+def estimator_html_repr(estimator, theme=None):
     """Build a HTML representation of an estimator.
 
     Read more in the :ref:`User Guide <visualizing_composite_estimators>`.
@@ -207,9 +207,8 @@ def estimator_html_repr(estimator, theme=themes.LIGHT):
     html: str
         HTML representation of estimator.
     """
-
-    if estimator.theme is not None:
-        theme = estimator.theme
+    if theme is None:
+        theme = themes.LIGHT
 
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()

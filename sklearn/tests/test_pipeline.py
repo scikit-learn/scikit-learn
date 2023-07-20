@@ -249,19 +249,6 @@ def test_pipeline_invalid_parameters():
     assert params == params2
 
 
-def test_pipeline_init_theme():
-    # Pipeline can accept a theme
-    pipe = Pipeline((("transf", Transf()), ("clf", FitParamT())), theme="my_theme")
-
-    assert "my_theme" == pipe.theme
-
-    made_pipe = make_pipeline(
-        (("transf", Transf()), ("clf", FitParamT())), theme="other_theme"
-    )
-
-    assert "other_theme" == made_pipe.theme
-
-
 def test_pipeline_init_tuple():
     # Pipeline accepts steps as tuple
     X = np.array([[1, 2]])

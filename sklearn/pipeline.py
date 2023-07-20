@@ -94,9 +94,6 @@ class Pipeline(_BaseComposition):
         If True, the time elapsed while fitting each step will be printed as it
         is completed.
 
-    theme : string, default=None
-        If given, will override the style of the pipeline representation.
-
     Attributes
     ----------
     named_steps : :class:`~sklearn.utils.Bunch`
@@ -154,11 +151,10 @@ class Pipeline(_BaseComposition):
         "verbose": ["boolean"],
     }
 
-    def __init__(self, steps, *, memory=None, verbose=False, theme=None):
+    def __init__(self, steps, *, memory=None, verbose=False):
         self.steps = steps
         self.memory = memory
         self.verbose = verbose
-        self.theme = theme
 
     def set_output(self, *, transform=None):
         """Set the output container when `"transform"` and `"fit_transform"` are called.
@@ -1197,7 +1193,7 @@ def _name_estimators(estimators):
     return list(zip(names, estimators))
 
 
-def make_pipeline(*steps, memory=None, verbose=False, theme=None):
+def make_pipeline(*steps, memory=None, verbose=False):
     """Construct a :class:`Pipeline` from the given estimators.
 
     This is a shorthand for the :class:`Pipeline` constructor; it does not
@@ -1223,9 +1219,6 @@ def make_pipeline(*steps, memory=None, verbose=False, theme=None):
         If True, the time elapsed while fitting each step will be printed as it
         is completed.
 
-    theme : string, default=None
-        If given, will override the style of the pipeline representation.
-
     Returns
     -------
     p : Pipeline
@@ -1245,9 +1238,7 @@ def make_pipeline(*steps, memory=None, verbose=False, theme=None):
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('gaussiannb', GaussianNB())])
     """
-    return Pipeline(
-        _name_estimators(steps), memory=memory, verbose=verbose, theme=theme
-    )
+    return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
 def _transform_one(transformer, X, y, weight, **fit_params):
