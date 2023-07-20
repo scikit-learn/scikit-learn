@@ -184,26 +184,10 @@ _STYLE_TEMPLATE = """
 }
 """.replace("  ", "").replace("\n", "")  # noqa
 
-_tmpl = CssTemplate(_STYLE_TEMPLATE)
 
-
-def theme_builder(
-    color_1="#27374D",
-    color_2="#526D82",
-    color_3="#9DB2BF",
-    color_4="#DDE6ED",
-    color_5="#254147",
-    color_6="#2d4f56",
-):
+def theme_builder(template=CssTemplate(_STYLE_TEMPLATE), **kwargs):
     """Generates a theme from a given color palette."""
-    return _tmpl.substitute(
-        color_1=color_1,
-        color_2=color_2,
-        color_3=color_3,
-        color_4=color_4,
-        color_5=color_5,
-        color_6=color_6,
-    )
+    return template.substitute(**kwargs)
 
 
 LIGHT = theme_builder(
