@@ -423,9 +423,9 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
             cdef float64_t dist_csr(
                 self,
                 const {{INPUT_DTYPE_t}}* x1_data,
-                const int32_t[:] x1_indices,
+                const int32_t* x1_indices,
                 const {{INPUT_DTYPE_t}}* x2_data,
-                const int32_t[:] x2_indices,
+                const int32_t* x2_indices,
             ) except -1 nogil:
 
         Where callers would use slicing on the original CSR data and indices
@@ -500,8 +500,8 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     cdef int pdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
-        const int32_t[:] x1_indices,
-        const int32_t[:] x1_indptr,
+        const int32_t[::1] x1_indices,
+        const int32_t[::1] x1_indptr,
         const intp_t size,
         float64_t[:, ::1] D,
     ) except -1 nogil:
@@ -537,11 +537,11 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     cdef int cdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
-        const int32_t[:] x1_indices,
-        const int32_t[:] x1_indptr,
+        const int32_t[::1] x1_indices,
+        const int32_t[::1] x1_indptr,
         const {{INPUT_DTYPE_t}}* x2_data,
-        const int32_t[:] x2_indices,
-        const int32_t[:] x2_indptr,
+        const int32_t[::1] x2_indices,
+        const int32_t[::1] x2_indptr,
         const intp_t size,
         float64_t[:, ::1] D,
     ) except -1 nogil:
@@ -642,13 +642,13 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
         cdef:
             intp_t n_X, n_features
             const {{INPUT_DTYPE_t}}[:] X_data
-            const int32_t[:] X_indices
-            const int32_t[:] X_indptr
+            const int32_t[::1] X_indices
+            const int32_t[::1] X_indptr
 
             intp_t n_Y
             const {{INPUT_DTYPE_t}}[:] Y_data
-            const int32_t[:] Y_indices
-            const int32_t[:] Y_indptr
+            const int32_t[::1] Y_indices
+            const int32_t[::1] Y_indptr
 
             float64_t[:, ::1] Darr
 
@@ -693,10 +693,10 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
             const {{INPUT_DTYPE_t}}[:] X_data = np.asarray(
                 X.data, dtype={{INPUT_DTYPE}},
             )
-            const int32_t[:] X_indices = np.asarray(
+            const int32_t[::1] X_indices = np.asarray(
                 X.indices, dtype=np.int32,
             )
-            const int32_t[:] X_indptr = np.asarray(
+            const int32_t[::1] X_indptr = np.asarray(
                 X.indptr, dtype=np.int32,
             )
 
@@ -704,7 +704,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
                 Y, dtype={{INPUT_DTYPE}}, order="C",
             )
             intp_t n_Y = Y_data.shape[0]
-            const int32_t[:] Y_indices = (
+            const int32_t[::1] Y_indices = (
                 np.arange(n_features, dtype=np.int32)
             )
 
@@ -758,7 +758,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
             const {{INPUT_DTYPE_t}}[:, ::1] X_data = np.asarray(
                 X, dtype={{INPUT_DTYPE}}, order="C",
             )
-            const int32_t[:] X_indices = np.arange(
+            const int32_t[::1] X_indices = np.arange(
                 n_features, dtype=np.int32,
             )
 
@@ -766,10 +766,10 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
             const {{INPUT_DTYPE_t}}[:] Y_data = np.asarray(
                 Y.data, dtype={{INPUT_DTYPE}},
             )
-            const int32_t[:] Y_indices = np.asarray(
+            const int32_t[::1] Y_indices = np.asarray(
                 Y.indices, dtype=np.int32,
             )
-            const int32_t[:] Y_indptr = np.asarray(
+            const int32_t[::1] Y_indptr = np.asarray(
                 Y.indptr, dtype=np.int32,
             )
 
