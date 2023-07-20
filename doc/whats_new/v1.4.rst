@@ -113,7 +113,7 @@ Changelog
 :mod:`sklearn.neighbors`
 ........................
 
-- |Fix| :class:`neighbors.NearestNeighbors` now correctly works with `p < 1` when
+- |Fix| :class:`neighbors.NearestNeighbors` now correctly works with `0 < p < 1` when
   `algorithm` selected is `"auto"` or `"brute"` regardless of the `dtype` of `X`.
   :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
