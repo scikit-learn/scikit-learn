@@ -478,8 +478,8 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
 @pytest.mark.parametrize(
     "key, err_msg",
     [
-        # (10, r"all features must be in \[0, 2\]"),
-        # ("whatever", "A given column is not a column of the dataframe"),
+        (10, r"all features must be in \[0, 2\]"),
+        ("whatever", "A given column is not a column of the dataframe"),
         (object(), "No valid specification of the columns"),
     ],
 )
