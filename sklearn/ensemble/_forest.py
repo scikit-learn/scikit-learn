@@ -160,7 +160,7 @@ def _parallel_build_trees(
     verbose=0,
     class_weight=None,
     n_samples_bootstrap=None,
-    feature_has_missing=None,
+    missing_values_in_feature_mask=None,
 ):
     """
     Private function used to fit a single tree in parallel."""
@@ -192,7 +192,7 @@ def _parallel_build_trees(
             y,
             sample_weight=curr_sample_weight,
             check_input=False,
-            feature_has_missing=feature_has_missing,
+            missing_values_in_feature_mask=missing_values_in_feature_mask,
         )
     else:
         tree._fit(
@@ -200,7 +200,7 @@ def _parallel_build_trees(
             y,
             sample_weight=sample_weight,
             check_input=False,
-            feature_has_missing=feature_has_missing,
+            missing_values_in_feature_mask=missing_values_in_feature_mask,
         )
 
     return tree
@@ -373,8 +373,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         # values. Only the criterion is required to determine if the tree supports
         # missing values.
         estimator = type(self.estimator)(criterion=self.criterion)
-        feature_has_missing = estimator._compute_missing_values_in_feature_mask(
-            X, estimator_name=self.__class__.__name__
+        missing_values_in_feature_mask = (
+            estimator._compute_missing_values_in_feature_mask(
+                X, estimator_name=self.__class__.__name__
+            )
         )
 
         if sample_weight is not None:
@@ -498,7 +500,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     verbose=self.verbose,
                     class_weight=self.class_weight,
                     n_samples_bootstrap=n_samples_bootstrap,
-                    feature_has_missing=feature_has_missing,
+                    missing_values_in_feature_mask=missing_values_in_feature_mask,
                 )
                 for i, t in enumerate(trees)
             )
