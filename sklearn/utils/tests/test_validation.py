@@ -1,6 +1,5 @@
 """Tests for input validation functions"""
 
-import builtins
 import numbers
 import re
 import warnings
@@ -1768,17 +1767,8 @@ def test_is_polars_df_other_libraries(constructor_name, minversion):
         assert _dataframe_module_as_str(df) == "polars"
 
 
-def test_is_polars_df_pandas_not_installed(monkeypatch):
-    """Check _is_polars_df when polars is not installed."""
-
-    import_orig = builtins.__import__
-
-    def mocked_import(name, *args, **kwargs):
-        if name == "polars":
-            raise ImportError()
-        return import_orig(name, *args, **kwargs)
-
-    monkeypatch.setattr(builtins, "__import__", mocked_import)
+def test_is_polars_df_pandas_not_installed():
+    """Check _is_polars_df for object that looks like a polars dataframe"""
 
     class NotAPolarsDataFrame:
         def __init__(self):

@@ -429,7 +429,7 @@ def _get_column_indices(X, key):
         return []
     elif key_dtype in ("bool", "int"):
         return _get_column_indices_bool_int(key, n_columns)
-    elif key_dtype == "str":
+    else:
         try:
             all_columns = X.columns
         except AttributeError:
@@ -467,26 +467,18 @@ def _get_column_indices(X, key):
 
         return column_indices
 
-    else:
-        raise ValueError(
-            "No valid specification of the columns. Only a "
-            "scalar, list or slice of all integers or all "
-            "strings, or boolean mask is allowed"
-        )
-
 
 def _get_column_indices_interchange(X_interchange, key):
     """Same as _get_column_indices but for interchange X."""
     n_columns = X_interchange.num_columns()
     key_dtype = _determine_key_type(key)
 
-    key_dtype = _determine_key_type(key)
     if isinstance(key, (list, tuple)) and not key:
         # we get an empty list
         return []
     elif key_dtype in ("bool", "int"):
         return _get_column_indices_bool_int(key, n_columns)
-    elif key_dtype == "str":
+    else:
         df_columns = list(X_interchange.column_names())
 
         if isinstance(key, slice):
@@ -506,12 +498,6 @@ def _get_column_indices_interchange(X_interchange, key):
             return [df_columns.index(col) for col in selected_columns]
         except ValueError as e:
             raise ValueError("A given column is not a column of the dataframe") from e
-    else:
-        raise ValueError(
-            "No valid specification of the columns. Only a "
-            "scalar, list or slice of all integers or all "
-            "strings, or boolean mask is allowed"
-        )
 
 
 @validate_params(
