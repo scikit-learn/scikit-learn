@@ -151,10 +151,11 @@ class Pipeline(_BaseComposition):
         "verbose": ["boolean"],
     }
 
-    def __init__(self, steps, *, memory=None, verbose=False):
+    def __init__(self, steps, *, memory=None, verbose=False, theme=None):
         self.steps = steps
         self.memory = memory
         self.verbose = verbose
+        self.theme = theme
 
     def set_output(self, *, transform=None):
         """Set the output container when `"transform"` and `"fit_transform"` are called.

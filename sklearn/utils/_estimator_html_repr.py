@@ -204,6 +204,10 @@ def estimator_html_repr(estimator, theme=themes.LIGHT):
     html: str
         HTML representation of estimator.
     """
+
+    if estimator.theme is not None:
+        theme = estimator.theme
+
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
         style_template = Template(theme)
