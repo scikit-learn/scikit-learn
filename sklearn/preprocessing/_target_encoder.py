@@ -418,18 +418,10 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         Learn encodings for each class (c) then reorder encodings such that
         the same features (f) are grouped together. `reorder_index` enables
         converting from:
-        f0_c0, f0_c1, f1_c0, f1_c1, f2_c0, f2_c1
-        to:
         f0_c0, f1_c0, f2_c0, f0_c1, f1_c1, f2_c1
+        to:
+        f0_c0, f0_c1, f1_c0, f1_c1, f2_c0, f2_c1
         """
-        n_features = self.n_features_in_
-        n_classes = len(self.classes_)
-        reorder_index = (
-            idx
-            for start in range(n_features)
-            for idx in range(start, (n_classes * n_features), n_features)
-        )
-
         encodings = []
         for i in range(n_classes):
             y_class = y[:, i]
@@ -441,6 +433,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 save_encodings=False,
             )
             encodings += encoding
+
+        n_features = self.n_features_in_
+        n_classes = len(self.classes_)
+        reorder_index = (
+            idx
+            for start in range(n_features)
+            for idx in range(start, (n_classes * n_features), n_features)
+        )
         encodings = [encodings[idx] for idx in reorder_index]
         return encodings
 
