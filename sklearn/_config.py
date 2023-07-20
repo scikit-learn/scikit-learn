@@ -99,8 +99,10 @@ def set_config(
 
         .. versionadded:: 0.23
 
-    theme : CssTemplate, default=None
-        If set, sets the CSS Template for the displayed diagram. Default is None.
+    theme : str, default=None
+        The CSS stylesheet for the displayed diagram. If provided, it sets the
+        custom CSS style for the diagram. If not specified, the default style will
+        be used. Default is None.
 
         .. versionadded:: 1.4
 
@@ -254,8 +256,10 @@ def config_context(
 
         .. versionadded:: 0.23
 
-    theme : CssTemplate, default=None
-        If set, sets the CSS Template for the displayed diagram. Default is None.
+    theme : str, default=None
+        The CSS stylesheet for the displayed diagram. If provided, it sets the
+        custom CSS style for the diagram. If not specified, the default style will
+        be used. Default is None.
 
         .. versionadded:: 1.4
 

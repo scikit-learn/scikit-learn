@@ -199,8 +199,10 @@ def estimator_html_repr(estimator, theme=None):
     estimator : estimator object
         The estimator to visualize.
 
-    theme : theme CssTemplate
-        The theme for the html style.
+    theme : str, optional
+        The CSS stylesheet for the displayed diagram. If provided, it sets
+        the custom CSS style for the diagram.
+        If not specified, the default style themes.LIGHT will be used.
 
     Returns
     -------
