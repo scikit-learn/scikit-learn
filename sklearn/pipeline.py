@@ -1194,7 +1194,7 @@ def _name_estimators(estimators):
     return list(zip(names, estimators))
 
 
-def make_pipeline(*steps, memory=None, verbose=False):
+def make_pipeline(*steps, memory=None, verbose=False, theme=None):
     """Construct a :class:`Pipeline` from the given estimators.
 
     This is a shorthand for the :class:`Pipeline` constructor; it does not
@@ -1220,6 +1220,9 @@ def make_pipeline(*steps, memory=None, verbose=False):
         If True, the time elapsed while fitting each step will be printed as it
         is completed.
 
+    theme : string, default=None
+        If given, will override the style of the pipeline representation.
+
     Returns
     -------
     p : Pipeline
@@ -1239,7 +1242,9 @@ def make_pipeline(*steps, memory=None, verbose=False):
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('gaussiannb', GaussianNB())])
     """
-    return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
+    return Pipeline(
+        _name_estimators(steps), memory=memory, verbose=verbose, theme=theme
+    )
 
 
 def _transform_one(transformer, X, y, weight, **fit_params):
