@@ -15,27 +15,15 @@ cimport numpy as cnp
 from libcpp.vector cimport vector
 
 from ._criterion cimport BaseCriterion, Criterion
-from ._tree cimport DOUBLE_t  # Type of y, sample_weight
-from ._tree cimport DTYPE_t  # Type of X
-from ._tree cimport INT32_t  # Signed 32 bit integer
-from ._tree cimport SIZE_t  # Type for indices and counters
-from ._tree cimport UINT32_t  # Unsigned 32 bit integer
+from ._utils cimport DOUBLE_t  # Type of y, sample_weight
+from ._utils cimport DTYPE_t  # Type of X
+from ._utils cimport INT32_t  # Signed 32 bit integer
+from ._utils cimport SIZE_t  # Type for indices and counters
+from ._utils cimport UINT32_t  # Unsigned 32 bit integer
+from ._utils cimport UINT64_t  # Unsigned 64 bit integer
 
+from ._utils cimport SplitValue, SplitRecord, Node
 
-cdef struct SplitRecord:
-    # Data to track sample split
-    SIZE_t feature         # Which feature to split on.
-    SIZE_t pos             # Split samples array at the given position,
-    #                      # i.e. count of samples below threshold for feature.
-    #                      # pos is >= end if the node is a leaf.
-    double threshold       # Threshold to split at.
-    double improvement     # Impurity improvement given parent node.
-    double impurity_left   # Impurity of the left split.
-    double impurity_right  # Impurity of the right split.
-    double lower_bound     # Lower bound on value of both children for monotonicity
-    double upper_bound     # Upper bound on value of both children for monotonicity
-    unsigned char missing_go_to_left  # Controls if missing values go to the left node.
-    SIZE_t n_missing       # Number of missing values for the feature being split on
 
 cdef class BaseSplitter:
     """Abstract interface for splitter."""
@@ -102,8 +90,15 @@ cdef class BaseSplitter:
     cdef int pointer_size(self) noexcept nogil
 
 cdef class Splitter(BaseSplitter):
-    cdef public Criterion criterion      # Impurity criterion
+    cdef public Criterion criterion     # Impurity criterion
     cdef const DOUBLE_t[:, ::1] y
+
+    cdef INT32_t[:] n_categories        # (n_features,) array giving number of
+    #                                   # categories (<0 for non-categorical)
+    cdef UINT64_t[:] cat_cache          # Cache buffer for fast categorical split evaluation
+    cdef bint breiman_shortcut          # Whether decision trees are allowed to use the
+    #                                   # Breiman shortcut for categorical features
+    #                                   # during binary classification.
 
     # Monotonicity constraints for each feature.
     # The encoding is as follows:
@@ -119,6 +114,7 @@ cdef class Splitter(BaseSplitter):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         const unsigned char[::1] missing_values_in_feature_mask,
+        const INT32_t[:] n_categories,
     ) except -1
 
     cdef void node_samples(self, vector[vector[DOUBLE_t]]& dest) noexcept nogil
@@ -140,4 +136,14 @@ cdef class Splitter(BaseSplitter):
         double* dest,
         double lower_bound,
         double upper_bound
+    ) noexcept nogil
+
+    cdef void _breiman_sort_categories(
+        self,
+        SIZE_t start,
+        SIZE_t end,
+        INT32_t ncat,
+        SIZE_t ncat_present,
+        const INT32_t *cat_offset,
+        SIZE_t *sorted_cat
     ) noexcept nogil

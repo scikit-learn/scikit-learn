@@ -16,26 +16,28 @@ cimport numpy as cnp
 from libcpp.unordered_map cimport unordered_map
 from libcpp.vector cimport vector
 
-ctypedef cnp.npy_float32 DTYPE_t          # Type of X
-ctypedef cnp.npy_float64 DOUBLE_t         # Type of y, sample_weight
-ctypedef cnp.npy_intp SIZE_t              # Type for indices and counters
-ctypedef cnp.npy_int32 INT32_t            # Signed 32 bit integer
-ctypedef cnp.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+from ._splitter cimport Splitter
+from ._utils cimport DOUBLE_t  # Type of y, sample_weight
+from ._utils cimport DTYPE_t  # Type of X
+from ._utils cimport INT32_t  # Signed 32 bit integer
+from ._utils cimport SIZE_t  # Type for indices and counters
+from ._utils cimport UINT32_t  # Unsigned 32 bit integer
+from ._utils cimport UINT64_t  # Unsigned 64 bit integer
+from ._utils cimport SplitValue, SplitRecord, Node
 
-from ._splitter cimport SplitRecord, Splitter
 
+cdef class CategoryCacheMgr:
+    # Class to manage the category cache memory during Tree.apply()
 
-cdef struct Node:
-    # Base storage structure for the nodes in a Tree object
+    cdef SIZE_t n_nodes
+    cdef vector[vector[UINT64_t]] bits
 
-    SIZE_t left_child                    # id of the left child of the node
-    SIZE_t right_child                   # id of the right child of the node
-    SIZE_t feature                       # Feature used for splitting the node
-    DOUBLE_t threshold                   # Threshold value at the node
-    DOUBLE_t impurity                    # Impurity of the node (i.e., the value of the criterion)
-    SIZE_t n_node_samples                # Number of samples at the node
-    DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
-    unsigned char missing_go_to_left     # Whether features have missing values
+    cdef void populate(
+        self,
+        Node* nodes,
+        SIZE_t n_nodes,
+        INT32_t[:] n_categories
+    ) noexcept
 
 
 cdef class BaseTree:
@@ -109,10 +111,13 @@ cdef class Tree(BaseTree):
     # - value = (capacity, n_outputs, max_n_classes) array of values
 
     # Input/Output layout for supervised tree
-    cdef public SIZE_t n_features        # Number of features in X
-    cdef SIZE_t* n_classes               # Number of classes in y[:, k]
-    cdef public SIZE_t n_outputs         # Number of outputs in y
-    cdef public SIZE_t max_n_classes     # max(n_classes)
+    cdef public SIZE_t n_features       # Number of features in X
+    cdef SIZE_t* n_classes              # Number of classes in y[:, k]
+    cdef public SIZE_t n_outputs        # Number of outputs in y
+    cdef public SIZE_t max_n_classes    # max(n_classes)
+
+    cdef INT32_t* n_categories          # (n_features,) array of number of categories per feature
+    #                                   # is <0 for non-categorial (i.e. -1)
 
     # Enables the use of tree to store distributions of the output to allow
     # arbitrary usage of the the leaves. This is used in the quantile
@@ -158,6 +163,7 @@ cdef class TreeBuilder:
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=*,
         const unsigned char[::1] missing_values_in_feature_mask=*,
+        const INT32_t[:] n_categories=*,
     )
 
     cdef _check_input(

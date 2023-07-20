@@ -2021,7 +2021,7 @@ def test_multioutput_quantiles(name):
     )
     est.fit(X_train, y_train)
 
-    y_pred = est.predict_quantiles(X_test, quantiles=[0.25, 0.5, 0.75])
+    y_pred = est.predict_quantiles(X_test, quantiles=np.array([0.25, 0.5, 0.75]))
     assert_array_almost_equal(y_pred[:, 1, :], y_test)
     assert_array_almost_equal(y_pred[:, 0, :], y_test)
     assert_array_almost_equal(y_pred[:, 2, :], y_test)

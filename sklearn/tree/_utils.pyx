@@ -13,6 +13,7 @@
 from libc.math cimport isnan
 from libc.math cimport log as ln
 from libc.stdlib cimport free, realloc
+from libcpp.vector cimport vector
 
 import numpy as np
 
@@ -61,6 +62,13 @@ cdef inline cnp.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
     return cnp.PyArray_SimpleNewFromData(1, shape, cnp.NPY_INTP, data).copy()
 
 
+cdef inline cnp.ndarray int32_ptr_to_ndarray(INT32_t* data, SIZE_t size):
+    """Encapsulate data into a 1D numpy array of int32's."""
+    cdef cnp.npy_intp shape[1]
+    shape[0] = <cnp.npy_intp> size
+    return cnp.PyArray_SimpleNewFromData(1, shape, cnp.NPY_INT32, data).copy()
+
+
 cdef inline SIZE_t rand_int(SIZE_t low, SIZE_t high,
                             UINT32_t* random_state) noexcept nogil:
     """Generate a random integer in [low; end)."""
@@ -76,6 +84,110 @@ cdef inline double rand_uniform(double low, double high,
 
 cdef inline double log(double x) noexcept nogil:
     return ln(x) / ln(2.0)
+
+
+cdef inline void setup_cat_cache(
+    vector[UINT64_t]& cachebits,
+    UINT64_t cat_split,
+    INT32_t n_categories
+) noexcept nogil:
+    """Populate the bits of the category cache from a split.
+
+    Attributes
+    ----------
+    cachebits : Reference of vector[UINT64_t]
+        This is a pointer to the output array. The size of the array should be
+        ``ceil(n_categories / 64)``. This function assumes the required
+        memory is allocated for the array by the caller.
+    cat_split : UINT64_t
+        If ``least significant bit == 0``:
+            It stores the split of the maximum 64 categories in its bits.
+            This is used in `BestSplitter`, and without loss of generality it
+            is assumed to be even, i.e. for any odd value there is an
+            equivalent even ``cat_split``.
+        If ``least significant bit == 1``:
+            It is a random split, and the 32 most significant bits of
+            ``cat_split`` contain the random seed of the split. The
+            ``n_categories`` lowest bits of ``cachebits`` are then filled with
+            random zeros and ones given the random seed.
+    n_categories : INT32_t
+        The number of categories.
+    """
+    cdef INT32_t j
+    cdef UINT32_t rng_seed, val
+
+    # cache_size is equal to cachebits.size()
+    cdef SIZE_t cache_size = (n_categories + 63) // 64
+
+    if n_categories > 0:
+        if cat_split & 1:
+            # RandomSplitter
+            for j in range(cache_size):
+                cachebits[j] = 0
+            rng_seed = cat_split >> 32
+            for j in range(n_categories):
+                val = rand_int(0, 2, &rng_seed)
+                if not val:
+                    continue
+                cachebits[j // 64] = bs_set(cachebits[j // 64], j % 64)
+        else:
+            # BestSplitter
+            # In practice, cache_size here should ALWAYS be 1
+            # XXX TODO: check cache_size == 1?
+            cachebits[0] = cat_split
+
+
+cdef inline bint goes_left(
+    DTYPE_t feature_value,
+    Node* node,
+    const INT32_t[:] n_categories,
+    vector[UINT64_t]& cachebits
+) noexcept nogil:
+    """Determine whether a sample goes to the left or right child node.
+
+    For numerical features, ``(-inf, split.threshold]`` is the left child, and
+    ``(split.threshold, inf)`` the right child.
+
+    For categorical features, if the corresponding bit for the category is set
+    in cachebits, the left child isused, and if not set, the right child. If
+    the given input category is larger than the ``n_categories``, the right
+    child is assumed.
+
+    Attributes
+    ----------
+    feature_value : DTYPE_t
+        The value of the feature for which the decision needs to be made.
+    split : SplitValue
+        The union (of DOUBLE_t and UINT64_t) indicating the split. However, it
+        is used (as a DOUBLE_t) only for numerical features.
+    n_categories : INT32_t
+        The number of categories present in the feature in question. The
+        feature is considered a numerical one and not a categorical one if
+        n_categories is negative.
+    cachebits : Reference of vector[UINT64_t]
+        The array containing the expantion of split.cat_split. The function
+        setup_cat_cache is the one filling it.
+
+    Returns
+    -------
+    result : bint
+        Indicating whether the left branch should be used.
+    """
+    cdef SIZE_t idx
+    cdef INT32_t n_categories_feature = n_categories[node.feature]
+
+    if n_categories_feature < 0:
+        # Non-categorical feature
+        return feature_value <= node.threshold
+    else:
+        # Categorical feature, using bit cache
+        if (<SIZE_t> feature_value) < n_categories_feature:
+            idx = (<SIZE_t> feature_value) // 64
+            offset = (<SIZE_t> feature_value) % 64
+            return bs_get(cachebits[idx], offset)
+        else:
+            return 0
+
 
 # =============================================================================
 # WeightedPQueue data structure
@@ -470,3 +582,29 @@ def _any_isnan_axis0(const DTYPE_t[:, :] X):
                     isnan_out[j] = True
                     break
     return np.asarray(isnan_out)
+
+
+cdef inline UINT64_t bs_set(UINT64_t value, SIZE_t i) noexcept nogil:
+    return value | (<UINT64_t> 1) << i
+
+cdef inline UINT64_t bs_reset(UINT64_t value, SIZE_t i) noexcept nogil:
+    return value & ~((<UINT64_t> 1) << i)
+
+cdef inline UINT64_t bs_flip(UINT64_t value, SIZE_t i) noexcept nogil:
+    return value ^ (<UINT64_t> 1) << i
+
+cdef inline UINT64_t bs_flip_all(UINT64_t value, SIZE_t n_low_bits) noexcept nogil:
+    return (~value) & ((~(<UINT64_t> 0)) >> (64 - n_low_bits))
+
+cdef inline bint bs_get(UINT64_t value, SIZE_t i) noexcept nogil:
+    return (value >> i) & (<UINT64_t> 1)
+
+cdef inline UINT64_t bs_from_template(UINT64_t template,
+                                      INT32_t *cat_offs,
+                                      SIZE_t ncats_present) noexcept nogil:
+    cdef SIZE_t i
+    cdef UINT64_t value = 0
+    for i in range(ncats_present):
+        value |= (template &
+                  ((<UINT64_t> 1) << i)) << cat_offs[i]
+    return value

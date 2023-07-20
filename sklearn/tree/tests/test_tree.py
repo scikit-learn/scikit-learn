@@ -2200,13 +2200,15 @@ def get_different_alignment_node_ndarray(node_ndarray):
 
 def reduce_tree_with_different_bitness(tree):
     new_dtype = np.int64 if _IS_32BIT else np.int32
-    tree_cls, (n_features, n_classes, n_outputs), state = tree.__reduce__()
+    tree_cls, (n_features, n_classes, n_outputs, n_categories), state = (
+        tree.__reduce__()
+    )
     new_n_classes = n_classes.astype(new_dtype, casting="same_kind")
 
     new_state = state.copy()
     new_state["nodes"] = get_different_bitness_node_ndarray(new_state["nodes"])
 
-    return (tree_cls, (n_features, new_n_classes, n_outputs), new_state)
+    return (tree_cls, (n_features, new_n_classes, n_outputs, n_categories), new_state)
 
 
 def test_different_bitness_pickle():
@@ -2371,7 +2373,9 @@ def test_splitter_serializable(Splitter):
     n_outputs, n_classes = 2, np.array([3, 2], dtype=np.intp)
 
     criterion = CRITERIA_CLF["gini"](n_outputs, n_classes)
-    splitter = Splitter(criterion, max_features, 5, 0.5, rng, monotonic_cst=None)
+    splitter = Splitter(
+        criterion, max_features, 5, 0.5, rng, monotonic_cst=None, breiman_shortcut=False
+    )
     splitter_serialize = pickle.dumps(splitter)
 
     splitter_back = pickle.loads(splitter_serialize)
