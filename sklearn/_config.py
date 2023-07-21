@@ -171,13 +171,6 @@ def set_config(
 
         .. versionadded:: 1.3
 
-    Examples
-    --------
-    >>> from sklearn import set_config
-    >>> from sklearn.utils.themes import LIGHT, DARK
-    >>> set_config(theme=DARK)
-    >>> set_config(theme=LIGHT)
-
     See Also
     --------
     config_context : Context manager for global scikit-learn configuration.
