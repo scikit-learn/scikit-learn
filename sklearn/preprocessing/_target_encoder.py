@@ -422,6 +422,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         to:
         f0_c0, f0_c1, f1_c0, f1_c1, f2_c0, f2_c1
         """
+        n_features = self.n_features_in_
+        n_classes = len(self.classes_)
+
         encodings = []
         for i in range(n_classes):
             y_class = y[:, i]
@@ -434,8 +437,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             )
             encodings += encoding
 
-        n_features = self.n_features_in_
-        n_classes = len(self.classes_)
         reorder_index = (
             idx
             for start in range(n_features)
