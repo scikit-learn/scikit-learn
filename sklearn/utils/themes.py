@@ -1,7 +1,7 @@
 """
 The :mod:`sklearn.utils.themes` module provides a
 CSS template class for creating dynamic stylesheets.
-It exposes themes for styling displayed diagrams.
+It exposes utilities and themes for styling displayed diagrams.
 """
 from string import Template
 
