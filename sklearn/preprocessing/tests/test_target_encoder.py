@@ -161,7 +161,8 @@ def test_encoding_multiclass(global_random_seed, smooth):
 
     # Manually compute encodings for cv splits to validate `fit_transform`
     expected_X_fit_transform = np.empty(
-        (X_train.shape[0], X_train.shape[1] * n_classes), dtype=np.float64,
+        (X_train.shape[0], X_train.shape[1] * n_classes),
+        dtype=np.float64,
     )
     for f_idx, cats in enumerate(categories):
         for c_idx in range(n_classes):
@@ -172,7 +173,7 @@ def test_encoding_multiclass(global_random_seed, smooth):
                 # f_idx:   0, 0, 0, 1, 1, 1
                 # c_idx:   0, 1, 2, 0, 1, 2
                 # exp_idx: 0, 1, 2, 3, 4, 5
-                exp_idx = (c_idx + (f_idx * n_classes))
+                exp_idx = c_idx + (f_idx * n_classes)
                 expected_X_fit_transform[test_idx, exp_idx] = current_encoding[
                     X_train[test_idx, f_idx]
                 ]
@@ -206,7 +207,8 @@ def test_encoding_multiclass(global_random_seed, smooth):
     X_test = np.array([[0, 1], [1, 2], [5, 6]])
     y_mean = np.mean(y_train_enc, axis=0)
     expected_X_test_transform = np.empty(
-        (X_test.shape[0], X_test.shape[1] * n_classes), dtype=np.float64,
+        (X_test.shape[0], X_test.shape[1] * n_classes),
+        dtype=np.float64,
     )
     n_rows = X_test.shape[0]
     f_idx = [0, 0, 0, 1, 1, 1]
@@ -295,12 +297,18 @@ def test_use_regression_target():
     assert enc.target_type_ == "continuous"
 
 
-def test_feature_names_out_set_output():
+@pytest.mark.parametrize(
+    "y, feature_names",
+    [
+        ([1, 2] * 10, ["A", "B"]),
+        ([1, 2, 3] * 6 + [1, 2], ["A_1", "A_2", "A_3", "B_1", "B_2", "B_3"]),
+    ],
+)
+def test_feature_names_out_set_output(y, feature_names):
     """Check TargetEncoder works with set_output."""
     pd = pytest.importorskip("pandas")
 
     X_df = pd.DataFrame({"A": ["a", "b"] * 10, "B": [1, 2] * 10})
-    y = [1, 2] * 10
 
     enc_default = TargetEncoder(cv=2, smooth=3.0, random_state=0)
     enc_default.set_output(transform="default")
@@ -311,7 +319,7 @@ def test_feature_names_out_set_output():
     X_pandas = enc_pandas.fit_transform(X_df, y)
 
     assert_allclose(X_pandas.to_numpy(), X_default)
-    assert_array_equal(enc_pandas.get_feature_names_out(), ["A", "B"])
+    assert_array_equal(enc_pandas.get_feature_names_out(), feature_names)
     assert_array_equal(enc_pandas.get_feature_names_out(), X_pandas.columns)
 
 
