@@ -12,7 +12,9 @@ from sklearn.cross_decomposition._pls import (
     _svd_flip_1d,
 )
 from sklearn.datasets import load_linnerud, make_regression
+from sklearn.ensemble import VotingRegressor
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import LinearRegression
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import svd_flip
 
@@ -624,7 +626,7 @@ def test_pls_set_output(Klass):
 
 
 def test_pls_regression_fit_1d_y():
-    """Check that when fitting with 1d y, prediction should also be 1d.
+    """Check that when fitting with 1d `y`, prediction should also be 1d.
 
     Non-regression test for Issue #26549.
     """
@@ -634,4 +636,10 @@ def test_pls_regression_fit_1d_y():
 
     plsr = PLSRegression().fit(X, y)
     y_pred = plsr.predict(X)
+    assert_allclose(y_pred, expected)
+
+    # Check that it works in VotingRegressor
+    lr = LinearRegression().fit(X, y)
+    vr = VotingRegressor([("lr", lr), ("plsr", plsr)])
+    y_pred = vr.fit(X, y).predict(X)
     assert_allclose(y_pred, expected)
