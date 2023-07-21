@@ -3547,13 +3547,6 @@ def _enforce_estimator_tags_y(estimator, y):
         y += 1 + abs(y.min())
     if _safe_tags(estimator, key="binary_only") and y.size > 0:
         y = np.where(y == y.flat[0], y, y.flat[0] + 1)
-    if estimator.__class__.__name__ == "TargetEncoder":
-        # TargetEncoder is a special case where a transformer uses `y` but only accept
-        # binary classification and regression targets.
-        # TODO: remove this special case when multiclass support is added to
-        # TargetEncoder.
-        # xref: https://github.com/scikit-learn/scikit-learn/pull/26674
-        y = np.where(y == y.flat[0], y, y.flat[0] + 1)
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
     # Convert into a 2-D y for those estimators.
     if _safe_tags(estimator, key="multioutput_only"):
