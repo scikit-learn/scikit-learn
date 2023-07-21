@@ -1849,7 +1849,8 @@ def test_missing_values_is_resilient(make_data, Forest):
 
 @pytest.mark.parametrize("Forest", [RandomForestClassifier, RandomForestRegressor])
 def test_missing_value_is_predictive(Forest):
-    """Check the forest learns when only the missing value is predictive."""
+    """Check that the forest learns when missing values are only present for
+    a predictive feature."""
     rng = np.random.RandomState(0)
     n_samples = 300
 
