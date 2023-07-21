@@ -808,17 +808,16 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # set n_features_in_ attribute
         self._check_n_features(X, reset=True)
         self._validate_transformers()
+        use_interchange_protocol = _use_interchange_protocol(X)
 
-        if _use_interchange_protocol(X):
+        if use_interchange_protocol:
             # Use string with interchange protocol to simplify code for dataframe
             # protocol
             dataframe_class_as_str = _dataframe_module_as_str(X, estimator=self)
             X = X.__dataframe__()
-            column_as_strings = True
             n_samples = X.num_rows()
         else:
             dataframe_class_as_str = None
-            column_as_strings = False
             n_samples = X.shape[0]
 
         self._validate_column_callables(X)
@@ -828,7 +827,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             X,
             y,
             _fit_transform_one,
-            column_as_strings=column_as_strings,
+            column_as_strings=use_interchange_protocol,
             dataframe_class_as_str=dataframe_class_as_str,
         )
 
