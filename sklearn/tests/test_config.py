@@ -115,6 +115,15 @@ def test_set_config():
         set_config(do_something_else=True)
 
 
+def test_set_config_theme():
+    assert get_config()["theme"] is None
+    with config_context(theme="my_theme"):
+        assert get_config()["theme"] == "my_theme"
+    assert get_config()["theme"] is None
+    set_config(theme="my_other_theme")
+    assert get_config()["theme"] == "my_other_theme"
+
+
 def set_assume_finite(assume_finite, sleep_duration):
     """Return the value of assume_finite after waiting `sleep_duration`."""
     with config_context(assume_finite=assume_finite):

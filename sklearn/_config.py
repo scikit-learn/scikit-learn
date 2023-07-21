@@ -186,8 +186,6 @@ def set_config(
         local_config["print_changed_only"] = print_changed_only
     if display is not None:
         local_config["display"] = display
-    if theme is not None:
-        local_config["theme"] = theme
     if pairwise_dist_chunk_size is not None:
         local_config["pairwise_dist_chunk_size"] = pairwise_dist_chunk_size
     if enable_cython_pairwise_dist is not None:
@@ -203,6 +201,7 @@ def set_config(
         local_config["enable_metadata_routing"] = enable_metadata_routing
     if skip_parameter_validation is not None:
         local_config["skip_parameter_validation"] = skip_parameter_validation
+    local_config["theme"] = theme
 
 
 @contextmanager
