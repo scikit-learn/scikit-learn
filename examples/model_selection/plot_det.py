@@ -82,6 +82,7 @@ classifiers = {
 # :func:`scipy.stats.norm`.
 
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import DetCurveDisplay, RocCurveDisplay
 
 fig, [ax_roc, ax_det] = plt.subplots(1, 2, figsize=(11, 5))

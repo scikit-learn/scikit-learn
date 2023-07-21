@@ -32,8 +32,9 @@ plot the biclusters found.
 #
 # As you can see, the data is distributed over 12 cluster cells and is
 # relatively well distinguishable.
-from sklearn.datasets import make_checkerboard
 from matplotlib import pyplot as plt
+
+from sklearn.datasets import make_checkerboard
 
 n_clusters = (4, 3)
 data, rows, columns = make_checkerboard(
@@ -46,7 +47,7 @@ _ = plt.show()
 
 # %%
 # We shuffle the data and the goal is to reconstruct it afterwards using
-# :class:`~sklearn.bicluster.SpectralBiclustering`.
+# :class:`~sklearn.cluster.SpectralBiclustering`.
 import numpy as np
 
 # Creating lists of shuffled row and column indices
@@ -56,7 +57,7 @@ col_idx_shuffled = rng.permutation(data.shape[1])
 
 # %%
 # We redefine the shuffled data and plot it. We observe that we lost the
-# strucuture of original data matrix.
+# structure of original data matrix.
 data = data[row_idx_shuffled][:, col_idx_shuffled]
 
 plt.matshow(data, cmap=plt.cm.Blues)

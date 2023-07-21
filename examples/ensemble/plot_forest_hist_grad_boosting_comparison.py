@@ -11,7 +11,7 @@ classification as well**.
 The comparison is made by varying the parameters that control the number of
 trees according to each estimator:
 
-- `n_estimators` controls the number of trees in the forest. It's a fixed numer.
+- `n_estimators` controls the number of trees in the forest. It's a fixed number.
 - `max_iter` is the the maximum number of iterations in a gradient boosting
   based model. The number of iterations corresponds to the number of trees for
   regression and binary classification problems. Furthermore, the actual number
@@ -78,8 +78,8 @@ print(f"Number of physical cores: {N_CORES}")
 # here to keep the example simple.
 
 import pandas as pd
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import RandomForestRegressor
+
+from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegressor
 from sklearn.model_selection import GridSearchCV, KFold
 
 models = {
@@ -123,8 +123,8 @@ for name, model in models.items():
 # Error bars correspond to one standard deviation as computed in the different
 # folds of the cross-validation.
 
-import plotly.express as px
 import plotly.colors as colors
+import plotly.express as px
 from plotly.subplots import make_subplots
 
 fig = make_subplots(
@@ -202,7 +202,7 @@ fig.update_layout(
 # makes fitting and scoring slower. The RF model reaches such plateau earlier
 # and can never reach the test score of the largest HGBDT model.
 #
-# Note that the results shown on the above plot can change sightly across runs
+# Note that the results shown on the above plot can change slightly across runs
 # and even more significantly when running on other machines: try to run this
 # example on your own local machine.
 #

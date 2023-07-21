@@ -46,23 +46,22 @@ from ...metrics import pairwise_distances
 from ...metrics._dist_metrics import DistanceMetric
 from ...neighbors import BallTree, KDTree, NearestNeighbors
 from ...utils._param_validation import Interval, StrOptions
-from ...utils.validation import _assert_all_finite, _allclose_dense_sparse
-from ._reachability import mutual_reachability_graph
+from ...utils.validation import _allclose_dense_sparse, _assert_all_finite
 from ._linkage import (
-    make_single_linkage,
-    mst_from_mutual_reachability,
-    mst_from_data_matrix,
     MST_edge_dtype,
+    make_single_linkage,
+    mst_from_data_matrix,
+    mst_from_mutual_reachability,
 )
-from ._tree import tree_to_labels, labelling_at_cut
-from ._tree import HIERARCHY_dtype
+from ._reachability import mutual_reachability_graph
+from ._tree import HIERARCHY_dtype, labelling_at_cut, tree_to_labels
 
-FAST_METRICS = set(KDTree.valid_metrics() + BallTree.valid_metrics())
+FAST_METRICS = set(KDTree.valid_metrics + BallTree.valid_metrics)
 
 # Encodings are arbitrary but must be strictly negative.
 # The current encodings are chosen as extensions to the -1 noise label.
 # Avoided enums so that the end user only deals with simple labels.
-_OUTLIER_ENCODING = {
+_OUTLIER_ENCODING: dict = {
     "infinite": {
         "label": -2,
         # The probability could also be 1, since infinite points are certainly
@@ -99,8 +98,8 @@ def _brute_mst(mutual_reachability, min_samples):
     Returns
     -------
     mst : ndarray of shape (n_samples - 1,), dtype=MST_edge_dtype
-        The MST representation of the mutual-reahability graph. The MST is
-        represented as a collecteion of edges.
+        The MST representation of the mutual-reachability graph. The MST is
+        represented as a collection of edges.
     """
     if not issparse(mutual_reachability):
         return mst_from_mutual_reachability(mutual_reachability)
@@ -140,8 +139,8 @@ def _process_mst(min_spanning_tree):
     Parameters
     ----------
     min_spanning_tree : ndarray of shape (n_samples - 1,), dtype=MST_edge_dtype
-        The MST representation of the mutual-reahability graph. The MST is
-        represented as a collecteion of edges.
+        The MST representation of the mutual-reachability graph. The MST is
+        represented as a collection of edges.
 
     Returns
     -------
@@ -188,7 +187,7 @@ def _hdbscan_brute(
         feature array.
 
         - If metric is a string or callable, it must be one of
-          the options allowed by :func:`~sklearn.metrics.pairwise.pairwise_distances`
+          the options allowed by :func:`~sklearn.metrics.pairwise_distances`
           for its metric parameter.
 
         - If metric is "precomputed", X is assumed to be a distance matrix and
@@ -655,7 +654,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         alpha=1.0,
         algorithm="auto",
         leaf_size=40,
-        n_jobs=4,
+        n_jobs=None,
         cluster_selection_method="eom",
         allow_single_cluster=False,
         store_centers=None,
@@ -722,10 +721,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
                 # Samples with missing data are denoted by the presence of
                 # `np.nan`
-                missing_index = list(np.isnan(reduced_X).nonzero()[0])
+                missing_index = np.isnan(reduced_X).nonzero()[0]
 
                 # Outlier samples are denoted by the presence of `np.inf`
-                infinite_index = list(np.isinf(reduced_X).nonzero()[0])
+                infinite_index = np.isinf(reduced_X).nonzero()[0]
 
                 # Continue with only finite samples
                 finite_index = _get_finite_row_indices(X)
@@ -769,14 +768,12 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             n_jobs=self.n_jobs,
             **self._metric_params,
         )
-        if self.algorithm == "kdtree" and self.metric not in KDTree.valid_metrics():
+        if self.algorithm == "kdtree" and self.metric not in KDTree.valid_metrics:
             raise ValueError(
                 f"{self.metric} is not a valid metric for a KDTree-based algorithm."
                 " Please select a different metric."
             )
-        elif (
-            self.algorithm == "balltree" and self.metric not in BallTree.valid_metrics()
-        ):
+        elif self.algorithm == "balltree" and self.metric not in BallTree.valid_metrics:
             raise ValueError(
                 f"{self.metric} is not a valid metric for a BallTree-based algorithm."
                 " Please select a different metric."
@@ -806,7 +803,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 # We can't do much with sparse matrices ...
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = self.copy
-            elif self.metric in KDTree.valid_metrics():
+            elif self.metric in KDTree.valid_metrics:
                 # TODO: Benchmark KD vs Ball Tree efficiency
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "kd_tree"
@@ -835,7 +832,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 self._single_linkage_tree_,
                 internal_to_raw,
                 # There may be overlap for points w/ both `np.inf` and `np.nan`
-                non_finite=set(infinite_index + missing_index),
+                non_finite=set(np.hstack([infinite_index, missing_index])),
             )
             new_labels = np.empty(self._raw_data.shape[0], dtype=np.int32)
             new_labels[finite_index] = self.labels_
@@ -903,7 +900,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             self.medoids_ = np.empty((n_clusters, X.shape[1]), dtype=np.float64)
 
         # Need to handle iteratively seen each cluster may have a different
-        # number of samples, hence we can't create a homogenous 3D array.
+        # number of samples, hence we can't create a homogeneous 3D array.
         for idx in range(n_clusters):
             mask = self.labels_ == idx
             data = X[mask]

@@ -1,15 +1,13 @@
+from numbers import Integral, Real
+
 import numpy as np
 
-from numbers import Real, Integral
-
-from ._encoders import _BaseEncoder
-from ..base import OneToOneFeatureMixin
-from ..base import _fit_context
-from ._target_encoder_fast import _fit_encoding_fast
-from ._target_encoder_fast import _fit_encoding_fast_auto_smooth
-from ..utils.validation import _check_y, check_consistent_length
-from ..utils.multiclass import type_of_target
+from ..base import OneToOneFeatureMixin, _fit_context
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.multiclass import type_of_target
+from ..utils.validation import _check_y, check_consistent_length
+from ._encoders import _BaseEncoder
+from ._target_encoder_fast import _fit_encoding_fast, _fit_encoding_fast_auto_smooth
 
 
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
@@ -29,14 +27,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     .. note::
         `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-        cross-validation scheme is used in `fit_transform` for encoding. See the
-        :ref:`User Guide <target_encoder>`. for details.
+        cross fitting scheme is used in `fit_transform` for encoding. See the
+        :ref:`User Guide <target_encoder>` for details.
 
     .. versionadded:: 1.3
 
     Parameters
     ----------
-    categories : "auto" or a list of array-like, default="auto"
+    categories : "auto" or list of shape (n_features,) of array-like, default="auto"
         Categories (unique values) per feature:
 
         - `"auto"` : Determine categories automatically from the training data.
@@ -44,7 +42,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
           passed categories should not mix strings and numeric values within a single
           feature, and should be sorted in case of numeric values.
 
-        The used categories is stored in the `categories_` fitted attribute.
+        The used categories are stored in the `categories_` fitted attribute.
 
     target_type : {"auto", "continuous", "binary"}, default="auto"
         Type of target.
@@ -56,26 +54,27 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         .. note::
             The type of target inferred with `"auto"` may not be the desired target
-            type used for modeling. For example, if the target consistent of integers
+            type used for modeling. For example, if the target consisted of integers
             between 0 and 100, then :func:`~sklearn.utils.multiclass.type_of_target`
             will infer the target as `"multiclass"`. In this case, setting
-            `target_type="continuous"` will understand the target as a regression
+            `target_type="continuous"` will specify the target as a regression
             problem. The `target_type_` attribute gives the target type used by the
             encoder.
 
     smooth : "auto" or float, default="auto"
-        The amount of mixing of the categorical encoding with the global target mean. A
-        larger `smooth` value will put more weight on the global target mean.
+        The amount of mixing of the target mean conditioned on the value of the
+        category with the global target mean. A larger `smooth` value will put
+        more weight on the global target mean.
         If `"auto"`, then `smooth` is set to an empirical Bayes estimate.
 
     cv : int, default=5
-        Determines the number of folds in the cross-validation strategy used in
+        Determines the number of folds in the cross fitting strategy used in
         :meth:`fit_transform`. For classification targets, `StratifiedKFold` is used
         and for continuous targets, `KFold` is used.
 
     shuffle : bool, default=True
         Whether to shuffle the data in :meth:`fit_transform` before splitting into
-        batches. Note that the samples within each split will not be shuffled.
+        folds. Note that the samples within each split will not be shuffled.
 
     random_state : int, RandomState instance or None, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
@@ -87,11 +86,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     Attributes
     ----------
     encodings_ : list of shape (n_features,) of ndarray
-        For feature `i`, `encodings_[i]` is the encoding matching the
+        Encodings learnt on all of `X`.
+        For feature `i`, `encodings_[i]` are the encodings matching the
         categories listed in `categories_[i]`.
 
     categories_ : list of shape (n_features,) of ndarray
-        The categories of each feature determined during fitting
+        The categories of each feature determined during fitting or specified
+        in `categories`
         (in order of the features in `X` and corresponding with the output
         of :meth:`transform`).
 
@@ -203,7 +204,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-            cross-validation scheme is used in `fit_transform` for encoding. See the
+            cross fitting scheme is used in `fit_transform` for encoding. See the
             :ref:`User Guide <target_encoder>`. for details.
 
         Parameters
@@ -259,7 +260,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-            cross-validation scheme is used in `fit_transform` for encoding. See the
+            cross fitting scheme is used in `fit_transform` for encoding. See the
             :ref:`User Guide <target_encoder>`. for details.
 
         Parameters
