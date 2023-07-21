@@ -280,19 +280,15 @@ def test_errors(y, msg):
 
 
 def test_use_regression_target():
-    """Custom target_type to avoid inferring the target type."""
-    n_samples = 100
-    X = np.random.randint(low=0, high=2, size=n_samples).reshape(-1, 1)
+    """Check inferred and specified `target_type` on regression target."""
+    X = np.array([[0, 1, 0, 1, 0, 1]]).T
+    y = np.array([1.0, 2.0, 3.0, 2.0, 3.0, 4.0])
 
-    # XXX: When multiclass is supported, then the following `y`
-    # is considered a multiclass problem and `TargetEncoder` will not error.
-    # type_of_target would be 'multiclass'
-    y = np.random.randint(low=0, high=5, size=n_samples)
-    y = y.astype(np.float64)
-    enc = TargetEncoder()
+    enc = TargetEncoder(cv=2)
     enc.fit_transform(X, y)
+    assert enc.target_type_ == "multiclass"
 
-    enc = TargetEncoder(target_type="continuous")
+    enc = TargetEncoder(cv=2, target_type="continuous")
     enc.fit_transform(X, y)
     assert enc.target_type_ == "continuous"
 
