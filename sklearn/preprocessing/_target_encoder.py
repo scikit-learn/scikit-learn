@@ -103,8 +103,10 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         Encodings learnt on all of `X`.
         For feature `i`, `encodings_[i]` are the encodings matching the
         categories listed in `categories_[i]`. When `target_type_` is
-        "multiclass", the encoding for feature `i` and class `j` are stored
-        in `encodings_[j + (i * n_classes)]`.
+        "multiclass", the encoding for feature `i` and class `j` is stored in
+        `encodings_[j + (i * len(classes_))]`. E.g., for 2 features (f) and
+        3 classes (c), encodings are ordered:
+        f0_c0, f0_c1, f0_c2, f1_c0, f1_c1, f1_c2,
 
     categories_ : list of shape (n_features,) of ndarray
         The categories of each feature determined during fitting or specified
