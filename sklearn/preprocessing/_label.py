@@ -56,8 +56,8 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
     --------
     `LabelEncoder` can be used to normalize labels.
 
-    >>> from sklearn import preprocessing
-    >>> le = preprocessing.LabelEncoder()
+    >>> from sklearn.preprocessing import LabelEncoder
+    >>> le = LabelEncoder()
     >>> le.fit([1, 2, 2, 6])
     LabelEncoder()
     >>> le.classes_
@@ -70,7 +70,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
     It can also be used to transform non-numerical labels (as long as they are
     hashable and comparable) to numerical labels.
 
-    >>> le = preprocessing.LabelEncoder()
+    >>> le = LabelEncoder()
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
     LabelEncoder()
     >>> list(le.classes_)
@@ -221,8 +221,8 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
     Examples
     --------
-    >>> from sklearn import preprocessing
-    >>> lb = preprocessing.LabelBinarizer()
+    >>> from sklearn.preprocessing import LabelBinarizer
+    >>> lb = LabelBinarizer()
     >>> lb.fit([1, 2, 6, 4, 2])
     LabelBinarizer()
     >>> lb.classes_
@@ -233,7 +233,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
     Binary targets transform to a column vector
 
-    >>> lb = preprocessing.LabelBinarizer()
+    >>> lb = LabelBinarizer()
     >>> lb.fit_transform(['yes', 'no', 'no', 'yes'])
     array([[1],
            [0],
