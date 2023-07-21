@@ -710,9 +710,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         X,
         y,
         func,
+        indexing_axis_1,
         fitted=False,
         column_as_strings=False,
-        dataframe_class_as_str=None,
     ):
         """
         Private function to fit and/or transform on demand.
@@ -721,16 +721,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         on the passed function.
         ``fitted=True`` ensures the fitted transformers are used.
         """
-        if isinstance(X, DataFrameInterchangeProtocol):
-            # use DataFrame protocol to extract columns and use column_as_strings=True
-            # for simplicity.
-            indexing_axis_1 = partial(
-                _dataframe_protocol_indexing_axis_1,
-                original_dataframe_class=dataframe_class_as_str,
-            )
-        else:
-            indexing_axis_1 = partial(_safe_indexing, axis=1)
-
         transformers = list(
             self._iter(
                 fitted=fitted, replace_strings=True, column_as_strings=column_as_strings
@@ -811,12 +801,18 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         use_interchange_protocol = _use_interchange_protocol(X)
 
         if use_interchange_protocol:
-            # Use string with interchange protocol to simplify code for dataframe
-            # protocol
+            # Get dataframe class now, so later we can reconstruct the dataframe
+            # with the original dataframe class.
             dataframe_class_as_str = _dataframe_module_as_str(X, estimator=self)
+            indexing_axis_1 = partial(
+                _dataframe_protocol_indexing_axis_1,
+                original_dataframe_class=dataframe_class_as_str,
+            )
+
             X = X.__dataframe__()
             n_samples = X.num_rows()
         else:
+            indexing_axis_1 = partial(_safe_indexing, axis=1)
             dataframe_class_as_str = None
             n_samples = X.shape[0]
 
@@ -828,7 +824,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             y,
             _fit_transform_one,
             column_as_strings=use_interchange_protocol,
-            dataframe_class_as_str=dataframe_class_as_str,
+            indexing_axis_1=indexing_axis_1,
         )
 
         if not result:
@@ -884,12 +880,16 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 raise ValueError(
                     "Using the dataframe protocol requires fitting on dataframes too."
                 )
-            dataframe_class_as_str = _dataframe_module_as_str(X, estimator=self)
+            indexing_axis_1 = partial(
+                _dataframe_protocol_indexing_axis_1,
+                original_dataframe_class=_dataframe_module_as_str(X, estimator=self),
+            )
+
             X = X.__dataframe__()
             n_samples = X.num_rows()
             columns = X.column_names()
         else:
-            dataframe_class_as_str = None
+            indexing_axis_1 = partial(_safe_indexing, axis=1)
             n_samples = X.shape[0]
             columns = getattr(X, "columns", None)
 
@@ -922,7 +922,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             _transform_one,
             fitted=True,
             column_as_strings=fit_dataframe_and_transform_dataframe,
-            dataframe_class_as_str=dataframe_class_as_str,
+            indexing_axis_1=indexing_axis_1,
         )
         self._validate_output(Xs)
 
