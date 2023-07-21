@@ -5,15 +5,13 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ._base import SelectorMixin
-from ..base import BaseEstimator, MetaEstimatorMixin, clone, is_classifier
-from ..base import _fit_context
-from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils._param_validation import RealNotInt
+from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
+from ..metrics import get_scorer_names
+from ..model_selection import check_cv, cross_val_score
+from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
-from ..model_selection import cross_val_score, check_cv
-from ..metrics import get_scorer_names
+from ._base import SelectorMixin
 
 
 class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -85,9 +83,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used. These splitters are instantiated
-        with `shuffle=False` so the splits will be the same across calls.
+        either binary or multiclass,
+        :class:`~sklearn.model_selection.StratifiedKFold` is used. In all other
+        cases, :class:`~sklearn.model_selection.KFold` is used. These splitters
+        are instantiated with `shuffle=False` so the splits will be the same
+        across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

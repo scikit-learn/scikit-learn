@@ -6,29 +6,39 @@ Metadata Routing Utility Tests
 # License: BSD 3 clause
 
 import re
+
 import numpy as np
 import pytest
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator
-from sklearn.base import ClassifierMixin
-from sklearn.base import RegressorMixin
-from sklearn.base import TransformerMixin
-from sklearn.base import MetaEstimatorMixin
-from sklearn.base import clone
+from sklearn.base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MetaEstimatorMixin,
+    RegressorMixin,
+    TransformerMixin,
+    clone,
+)
 from sklearn.linear_model import LinearRegression
-from sklearn.utils.validation import check_is_fitted
 from sklearn.utils import metadata_routing
-from sklearn.utils.metadata_routing import MetadataRequest
-from sklearn.utils.metadata_routing import get_routing_for_object
-from sklearn.utils.metadata_routing import MetadataRouter
-from sklearn.utils.metadata_routing import MethodMapping
-from sklearn.utils.metadata_routing import process_routing
-from sklearn.utils._metadata_requests import MethodMetadataRequest
-from sklearn.utils._metadata_requests import _MetadataRequester
-from sklearn.utils._metadata_requests import METHODS
-from sklearn.utils._metadata_requests import request_is_alias
-from sklearn.utils._metadata_requests import request_is_valid
+from sklearn.utils._metadata_requests import (
+    COMPOSITE_METHODS,
+    METHODS,
+    SIMPLE_METHODS,
+    MethodMetadataRequest,
+    MethodPair,
+    _MetadataRequester,
+    request_is_alias,
+    request_is_valid,
+)
+from sklearn.utils.metadata_routing import (
+    MetadataRequest,
+    MetadataRouter,
+    MethodMapping,
+    get_routing_for_object,
+    process_routing,
+)
+from sklearn.utils.validation import check_is_fitted
 
 rng = np.random.RandomState(42)
 N, M = 100, 4
@@ -58,7 +68,7 @@ def assert_request_is_empty(metadata_request, exclude=None):
         return
 
     exclude = [] if exclude is None else exclude
-    for method in METHODS:
+    for method in SIMPLE_METHODS:
         if method in exclude:
             continue
         mmr = getattr(metadata_request, method)
@@ -75,7 +85,7 @@ def assert_request_equal(request, dictionary):
         mmr = getattr(request, method)
         assert mmr.requests == requests
 
-    empty_methods = [method for method in METHODS if method not in dictionary]
+    empty_methods = [method for method in SIMPLE_METHODS if method not in dictionary]
     for method in empty_methods:
         assert not len(getattr(request, method).requests)
 
@@ -99,12 +109,26 @@ def record_metadata(obj, method, record_default=True, **kwargs):
     obj._records[method] = kwargs
 
 
-def check_recorded_metadata(obj, method, **kwargs):
-    """Check whether the expected metadata is passed to the object's method."""
+def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
+    """Check whether the expected metadata is passed to the object's method.
+
+    Parameters
+    ----------
+    split_params : tuple, default=empty
+        specifies any parameters which are to be checked as being a subset
+        of the original values.
+
+    """
     records = getattr(obj, "_records", dict()).get(method, dict())
     assert set(kwargs.keys()) == set(records.keys())
     for key, value in kwargs.items():
-        assert records[key] is value
+        recorded_value = records[key]
+        # The following condition is used to check for any specified parameters
+        # being a subset of the original values
+        if key in split_params and recorded_value is not None:
+            assert np.isin(recorded_value, value).all()
+        else:
+            assert recorded_value is value
 
 
 class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
@@ -671,9 +695,7 @@ def test_removing_non_existing_param_raises():
 def test_method_metadata_request():
     mmr = MethodMetadataRequest(owner="test", method="fit")
 
-    with pytest.raises(
-        ValueError, match="alias should be either a valid identifier or"
-    ):
+    with pytest.raises(ValueError, match="The alias you're setting for"):
         mmr.add_request(param="foo", alias=1.4)
 
     mmr.add_request(param="foo", alias=None)
@@ -706,6 +728,47 @@ def test_get_routing_for_object():
     mr = get_routing_for_object(Consumer())
     assert_request_is_empty(mr, exclude="fit")
     assert mr.fit.requests == {"prop": None}
+
+
+def test_metadata_request_consumes_method():
+    """Test that MetadataRequest().consumes() method works as expected."""
+    request = MetadataRouter(owner="test")
+    assert request.consumes(method="fit", params={"foo"}) == set()
+
+    request = MetadataRequest(owner="test")
+    request.fit.add_request(param="foo", alias=True)
+    assert request.consumes(method="fit", params={"foo"}) == {"foo"}
+
+    request = MetadataRequest(owner="test")
+    request.fit.add_request(param="foo", alias="bar")
+    assert request.consumes(method="fit", params={"bar", "foo"}) == {"bar"}
+
+
+def test_metadata_router_consumes_method():
+    """Test that MetadataRouter().consumes method works as expected."""
+    # having it here instead of parametrizing the test since `set_fit_request`
+    # is not available while collecting the tests.
+    cases = [
+        (
+            WeightedMetaRegressor(
+                estimator=RegressorMetadata().set_fit_request(sample_weight=True)
+            ),
+            {"sample_weight"},
+            {"sample_weight"},
+        ),
+        (
+            WeightedMetaRegressor(
+                estimator=RegressorMetadata().set_fit_request(
+                    sample_weight="my_weights"
+                )
+            ),
+            {"my_weights", "sample_weight"},
+            {"my_weights"},
+        ),
+    ]
+
+    for obj, input, output in cases:
+        assert obj.get_metadata_routing().consumes(method="fit", params=input) == output
 
 
 def test_metaestimator_warnings():
@@ -819,17 +882,9 @@ def test_methodmapping():
     assert mm_list[1] == ("fit", "fit")
 
     mm = MethodMapping.from_str("one-to-one")
-    assert (
-        str(mm)
-        == "[{'callee': 'fit', 'caller': 'fit'}, {'callee': 'partial_fit', 'caller':"
-        " 'partial_fit'}, {'callee': 'predict', 'caller': 'predict'}, {'callee':"
-        " 'predict_proba', 'caller': 'predict_proba'}, {'callee':"
-        " 'predict_log_proba', 'caller': 'predict_log_proba'}, {'callee':"
-        " 'decision_function', 'caller': 'decision_function'}, {'callee': 'score',"
-        " 'caller': 'score'}, {'callee': 'split', 'caller': 'split'}, {'callee':"
-        " 'transform', 'caller': 'transform'}, {'callee': 'inverse_transform',"
-        " 'caller': 'inverse_transform'}]"
-    )
+    for method in METHODS:
+        assert MethodPair(method, method) in mm._routes
+    assert len(mm._routes) == len(METHODS)
 
     mm = MethodMapping.from_str("score")
     assert repr(mm) == "[{'callee': 'score', 'caller': 'score'}]"
@@ -944,6 +999,12 @@ def test_method_generation():
         def fit(self, X, y):
             pass  # pragma: no cover
 
+        def fit_transform(self, X, y):
+            pass  # pragma: no cover
+
+        def fit_predict(self, X, y):
+            pass  # pragma: no cover
+
         def partial_fit(self, X, y):
             pass  # pragma: no cover
 
@@ -979,6 +1040,12 @@ def test_method_generation():
         def fit(self, X, y, sample_weight=None):
             pass  # pragma: no cover
 
+        def fit_transform(self, X, y, sample_weight=None):
+            pass  # pragma: no cover
+
+        def fit_predict(self, X, y, sample_weight=None):
+            pass  # pragma: no cover
+
         def partial_fit(self, X, y, sample_weight=None):
             pass  # pragma: no cover
 
@@ -1006,8 +1073,65 @@ def test_method_generation():
         def inverse_transform(self, X, sample_weight=None):
             pass  # pragma: no cover
 
-    for method in METHODS:
+    # composite methods shouldn't have a corresponding set method.
+    for method in COMPOSITE_METHODS:
+        assert not hasattr(SimpleEstimator(), f"set_{method}_request")
+
+    # simple methods should have a corresponding set method.
+    for method in SIMPLE_METHODS:
         assert hasattr(SimpleEstimator(), f"set_{method}_request")
+
+
+def test_composite_methods():
+    # Test the behavior and the values of methods (composite methods) whose
+    # request values are a union of requests by other methods (simple methods).
+    # fit_transform and fit_predict are the only composite methods we have in
+    # scikit-learn.
+    class SimpleEstimator(BaseEstimator):
+        # This class should have every set_{method}_request
+        def fit(self, X, y, foo=None, bar=None):
+            pass  # pragma: no cover
+
+        def predict(self, X, foo=None, bar=None):
+            pass  # pragma: no cover
+
+        def transform(self, X, other_param=None):
+            pass  # pragma: no cover
+
+    est = SimpleEstimator()
+    # Since no request is set for fit or predict or transform, the request for
+    # fit_transform and fit_predict should also be empty.
+    assert est.get_metadata_routing().fit_transform.requests == {
+        "bar": None,
+        "foo": None,
+        "other_param": None,
+    }
+    assert est.get_metadata_routing().fit_predict.requests == {"bar": None, "foo": None}
+
+    # setting the request on only one of them should raise an error
+    est.set_fit_request(foo=True, bar="test")
+    with pytest.raises(ValueError, match="Conflicting metadata requests for"):
+        est.get_metadata_routing().fit_predict
+
+    # setting the request on the other one should fail if not the same as the
+    # first method
+    est.set_predict_request(bar=True)
+    with pytest.raises(ValueError, match="Conflicting metadata requests for"):
+        est.get_metadata_routing().fit_predict
+
+    # now the requests are consistent and getting the requests for fit_predict
+    # shouldn't raise.
+    est.set_predict_request(foo=True, bar="test")
+    est.get_metadata_routing().fit_predict
+
+    # setting the request for a none-overlapping parameter would merge them
+    # together.
+    est.set_transform_request(other_param=True)
+    assert est.get_metadata_routing().fit_transform.requests == {
+        "bar": "test",
+        "foo": True,
+        "other_param": True,
+    }
 
 
 def test_no_feature_flag_raises_error():

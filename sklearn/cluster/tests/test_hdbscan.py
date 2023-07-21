@@ -8,6 +8,12 @@ from scipy import sparse, stats
 from scipy.spatial import distance
 
 from sklearn.cluster import HDBSCAN
+from sklearn.cluster._hdbscan._tree import (
+    CONDENSED_dtype,
+    _condense_tree,
+    _do_labelling,
+)
+from sklearn.cluster._hdbscan.hdbscan import _OUTLIER_ENCODING
 from sklearn.datasets import make_blobs
 from sklearn.metrics import fowlkes_mallows_score
 from sklearn.metrics.pairwise import _VALID_METRICS, euclidean_distances
@@ -15,12 +21,6 @@ from sklearn.neighbors import BallTree, KDTree
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
-from sklearn.cluster._hdbscan.hdbscan import _OUTLIER_ENCODING
-from sklearn.cluster._hdbscan._tree import (
-    _do_labelling,
-    _condense_tree,
-    CONDENSED_dtype,
-)
 
 n_clusters_true = 3
 X, y = make_blobs(n_samples=200, random_state=10)
@@ -165,7 +165,7 @@ def test_hdbscan_algorithms(algo, metric):
         metric_params=metric_params,
     )
 
-    if metric not in ALGOS_TREES[algo].valid_metrics():
+    if metric not in ALGOS_TREES[algo].valid_metrics:
         with pytest.raises(ValueError):
             hdb.fit(X)
     elif metric == "wminkowski":
@@ -424,7 +424,7 @@ def test_hdbscan_tree_invalid_metric():
 
     # The set of valid metrics for KDTree at the time of writing this test is a
     # strict subset of those supported in BallTree
-    metrics_not_kd = list(set(BallTree.valid_metrics()) - set(KDTree.valid_metrics()))
+    metrics_not_kd = list(set(BallTree.valid_metrics) - set(KDTree.valid_metrics))
     if len(metrics_not_kd) > 0:
         with pytest.raises(ValueError, match=msg):
             HDBSCAN(algorithm="kdtree", metric=metrics_not_kd[0]).fit(X)

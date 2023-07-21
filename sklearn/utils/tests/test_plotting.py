@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sklearn.utils._plotting import _validate_score_name, _interval_max_min_ratio
+from sklearn.utils._plotting import _interval_max_min_ratio, _validate_score_name
 
 
 def metric():

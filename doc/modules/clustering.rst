@@ -931,7 +931,7 @@ by black points below.
     which avoids calculating the full distance matrix
     (as was done in scikit-learn versions before 0.14).
     The possibility to use custom metrics is retained;
-    for details, see :class:`NearestNeighbors`.
+    for details, see :class:`~sklearn.neighbors.NearestNeighbors`.
 
 .. topic:: Memory consumption for large sample sizes
 

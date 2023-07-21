@@ -1,17 +1,17 @@
 import numpy as np
-from numpy.testing import assert_allclose
 import pytest
 import scipy.sparse as sp
+from numpy.testing import assert_allclose
 
 from sklearn.datasets import make_regression
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import create_memmap_backed_data
-
-from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
-
-from sklearn.linear_model import Lasso, ElasticNet, LassoCV, ElasticNetCV
+from sklearn.linear_model import ElasticNet, ElasticNetCV, Lasso, LassoCV
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    create_memmap_backed_data,
+    ignore_warnings,
+)
 
 
 def test_sparse_coef():
@@ -19,7 +19,7 @@ def test_sparse_coef():
     clf = ElasticNet()
     clf.coef_ = [1, 2, 3]
 
-    assert sp.isspmatrix(clf.sparse_coef_)
+    assert sp.issparse(clf.sparse_coef_)
     assert clf.sparse_coef_.toarray().tolist()[0] == clf.coef_
 
 

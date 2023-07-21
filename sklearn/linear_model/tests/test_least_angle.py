@@ -3,20 +3,29 @@ import warnings
 import numpy as np
 import pytest
 from scipy import linalg
+
+from sklearn import datasets, linear_model
 from sklearn.base import clone
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import (
+    Lars,
+    LarsCV,
+    LassoLars,
+    LassoLarsCV,
+    LassoLarsIC,
+    lars_path,
+)
+from sklearn.linear_model._least_angle import _lars_path_residues
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import TempMemmap
 from sklearn.utils import check_random_state
-from sklearn.exceptions import ConvergenceWarning
-from sklearn import linear_model, datasets
-from sklearn.linear_model._least_angle import _lars_path_residues
-from sklearn.linear_model import LassoLarsIC, lars_path
-from sklearn.linear_model import Lars, LassoLars, LarsCV, LassoLarsCV
+from sklearn.utils._testing import (
+    TempMemmap,
+    assert_allclose,
+    assert_array_almost_equal,
+    ignore_warnings,
+)
 
 # TODO: use another dataset that has multiple drops
 diabetes = datasets.load_diabetes()
@@ -59,8 +68,8 @@ def test_simple():
     # Principle of Lars is to keep covariances tied and decreasing
 
     # also test verbose output
-    from io import StringIO
     import sys
+    from io import StringIO
 
     old_stdout = sys.stdout
     try:
@@ -123,7 +132,7 @@ def test_lars_path_gram_equivalent(method, return_path):
 def test_x_none_gram_none_raises_value_error():
     # Test that lars_path with no X and Gram raises exception
     Xy = np.dot(X.T, y)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="X and Gram cannot both be unspecified"):
         linear_model.lars_path(None, y, Gram=None, Xy=Xy)
 
 
@@ -795,7 +804,7 @@ def test_lars_with_jitter(est):
 
 def test_X_none_gram_not_none():
     with pytest.raises(ValueError, match="X cannot be None if Gram is not None"):
-        lars_path(X=None, y=[1], Gram="not None")
+        lars_path(X=None, y=np.array([1]), Gram=True)
 
 
 def test_copy_X_with_auto_gram():

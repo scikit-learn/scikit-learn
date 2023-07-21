@@ -1,20 +1,18 @@
+import copy
 import itertools
 import pickle
-import copy
 
 import numpy as np
 import pytest
-
 import scipy.sparse as sp
 from scipy.spatial.distance import cdist
-from sklearn.metrics import DistanceMetric
 
+from sklearn.metrics import DistanceMetric
 from sklearn.metrics._dist_metrics import (
     BOOL_METRICS,
     DistanceMetric32,
     DistanceMetric64,
 )
-
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose, create_memmap_backed_data
 
