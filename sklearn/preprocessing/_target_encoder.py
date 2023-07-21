@@ -26,7 +26,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     binarized using the "one-vs-all" scheme via
     :class:`~sklearn.preprocessing.LabelBinarizer`, then the average target
     value for each class and each category is used for encoding, resulting in
-    n_classes * n_features encoded output features.
+    `len(classes_)` * `n_features_in_` encoded output features.
 
     :class:`TargetEncoder` considers missing values, such as `np.nan` or `None`,
     as another category and encodes them like any other category. Categories
