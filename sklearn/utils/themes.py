@@ -204,13 +204,6 @@ def theme_builder(template=CssTemplate(_STYLE_TEMPLATE), **kwargs):
     -------
     tmpl : str
         The generated stylesheet with substituted color values.
-
-    Examples
-    --------
-    >>> from sklearn import set_config
-    >>> from sklearn.utils.themes import LIGHT, DARK
-    >>> set_config(theme=DARK)
-    >>> set_config(theme=LIGHT)
     """
     return template.substitute(**kwargs)
 

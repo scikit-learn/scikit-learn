@@ -101,7 +101,8 @@ def set_config(
 
     theme : str, default=None
         The CSS stylesheet for the displayed diagram. If provided, it sets the
-        custom CSS style for the diagram. If not specified, the default style will
+        custom CSS style for the diagram. Preset styles can be found in
+        :mod:`sklearn.utils.themes`. If not specified, the default style will
         be used. Default is None.
 
         .. versionadded:: 1.4
@@ -169,6 +170,13 @@ def set_config(
         skipped but validation with `check_array` will continue to run.
 
         .. versionadded:: 1.3
+
+    Examples
+    --------
+    >>> from sklearn import set_config
+    >>> from sklearn.utils.themes import LIGHT, DARK
+    >>> set_config(theme=DARK)
+    >>> set_config(theme=LIGHT)
 
     See Also
     --------
@@ -258,7 +266,8 @@ def config_context(
 
     theme : str, default=None
         The CSS stylesheet for the displayed diagram. If provided, it sets the
-        custom CSS style for the diagram. If not specified, the default style will
+        custom CSS style for the diagram. Preset styles can be found in
+        :mod:`sklearn.utils.themes`. If not specified, the default style will
         be used. Default is None.
 
         .. versionadded:: 1.4

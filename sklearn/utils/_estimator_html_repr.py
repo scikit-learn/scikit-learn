@@ -208,6 +208,13 @@ def estimator_html_repr(estimator, theme=None):
     -------
     html: str
         HTML representation of estimator.
+
+    Examples
+    --------
+    >>> from sklearn.utils import estimator_html_repr
+    >>> from sklearn.utils.themes import LIGHT, DARK
+    >>> estimator_html_repr(pipe, theme=DARK)
+    >>> estimator_html_repr(pipe, theme=LIGHT)
     """
     if theme is None:
         theme = themes.LIGHT
