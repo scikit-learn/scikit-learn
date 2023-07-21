@@ -57,7 +57,7 @@ col_idx_shuffled = rng.permutation(data.shape[1])
 
 # %%
 # We redefine the shuffled data and plot it. We observe that we lost the
-# strucuture of original data matrix.
+# structure of original data matrix.
 data = data[row_idx_shuffled][:, col_idx_shuffled]
 
 plt.matshow(data, cmap=plt.cm.Blues)
