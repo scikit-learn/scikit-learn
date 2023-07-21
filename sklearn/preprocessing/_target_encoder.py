@@ -457,13 +457,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         """Transform X_ordinal using encodings.
 
         In the multiclass case, `X_ordinal` and `X_unknown_mask` have column
-        (axis=1) size `n_features`, while `encodings` have length of size
+        (axis=1) size `n_features`, while `encodings` has length of size
         `n_features * n_classes`. `feat_idx` deals with this by repeating
         feature indicies by `n_classes` E.g., for 3 features, 2 classes:
         0,0,1,1,2,2
 
         Additionally, `target_mean` is of shape (`n_classes`,) so `mean_idx`
-        cycles through 0 to `n_classes` - 1, n_features times.
+        cycles through 0 to `n_classes` - 1, `n_features` times.
         """
         for e_idx, encoding in enumerate(encodings):
             if self.target_type_ == "multiclass":
