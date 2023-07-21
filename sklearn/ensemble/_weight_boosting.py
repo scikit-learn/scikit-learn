@@ -761,7 +761,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         -------
         score : ndarray of shape of (n_samples, k)
             The decision function of the input samples. The order of
-            outputs is the same of that of the :term:`classes_` attribute.
+            outputs is the same as that of the :term:`classes_` attribute.
             Binary classification is a special cases with ``k == 1``,
             otherwise ``k==n_classes``. For binary classification,
             values closer to -1 or 1 mean more like the first or second
