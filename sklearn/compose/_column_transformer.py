@@ -53,29 +53,19 @@ def _use_interchange_protocol(X):
     return not _is_pandas_df(X) and hasattr(X, "__dataframe__")
 
 
-def _dataframe_protocol_indexing_axis_1(
-    df_interchange, columns, *, original_dataframe_class
-):
-    """Slice DataFrame using the dataframe interchange protocol along axis=1.
+def _make_indexing_axis_1(X, use_interchange_protocol, *, estimator):
+    """Return a callable that indexes along axis=1."""
+    if use_interchange_protocol:
+        original_dataframe_module = _dataframe_module_as_str(X, estimator=estimator)
 
-    Parameters
-    ----------
-    df_interchange : object
-        Object that is returned by the `__dataframe__` interchange protocol.
+        def indexing_axis_1(df_interchange, columns):
+            sliced_df = df_interchange.select_columns_by_name(list(columns))
+            return _interchange_to_dataframe(sliced_df, original_dataframe_module)
 
-    columns : list of strings
-        Column names to select.
+    else:
+        indexing_axis_1 = partial(_safe_indexing, axis=1)
 
-    original_dataframe_class : str
-        Library for the original dataframe class.
-
-    Returns
-    -------
-    dataframe : DataFrame
-        Dataframe with the `original_dataframe_class`
-    """
-    sliced_df = df_interchange.select_columns_by_name(list(columns))
-    return _interchange_to_dataframe(sliced_df, original_dataframe_class)
+    return indexing_axis_1
 
 
 class ColumnTransformer(TransformerMixin, _BaseComposition):
@@ -793,21 +783,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._check_n_features(X, reset=True)
         self._validate_transformers()
         use_interchange_protocol = _use_interchange_protocol(X)
+        indexing_axis_1 = _make_indexing_axis_1(
+            X, use_interchange_protocol, estimator=self
+        )
 
         if use_interchange_protocol:
-            # Get dataframe class now, so later we can reconstruct the dataframe
-            # with the original dataframe class.
-            dataframe_class_as_str = _dataframe_module_as_str(X, estimator=self)
-            indexing_axis_1 = partial(
-                _dataframe_protocol_indexing_axis_1,
-                original_dataframe_class=dataframe_class_as_str,
-            )
-
             X = X.__dataframe__()
             n_samples = X.num_rows()
         else:
-            indexing_axis_1 = partial(_safe_indexing, axis=1)
-            dataframe_class_as_str = None
             n_samples = X.shape[0]
 
         self._validate_column_callables(
@@ -870,22 +853,20 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         fit_dataframe_and_transform_dataframe = hasattr(self, "feature_names_in_") and (
             _is_pandas_df(X) or hasattr(X, "__dataframe__")
         )
+        use_interchange_protocol = _use_interchange_protocol(X)
+        indexing_axis_1 = _make_indexing_axis_1(
+            X, use_interchange_protocol, estimator=self
+        )
 
-        if _use_interchange_protocol(X):
+        if use_interchange_protocol:
             if not hasattr(self, "feature_names_in_"):
                 raise ValueError(
                     "Using the dataframe protocol requires fitting on dataframes too."
                 )
-            indexing_axis_1 = partial(
-                _dataframe_protocol_indexing_axis_1,
-                original_dataframe_class=_dataframe_module_as_str(X, estimator=self),
-            )
-
             X = X.__dataframe__()
             n_samples = X.num_rows()
             columns = X.column_names()
         else:
-            indexing_axis_1 = partial(_safe_indexing, axis=1)
             n_samples = X.shape[0]
             columns = getattr(X, "columns", None)
 
