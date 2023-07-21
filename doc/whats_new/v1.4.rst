@@ -19,6 +19,11 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- |Fix| The initialization of :class:`mixture.GaussianMixture` from user-provided
+  `precisions_init` for `covariance_type` of `full` or `tied` was not correct,
+  and has been fixed.
+  :pr:`26416` by :user:`Yang Tao <mchikyt3>`.
+
 Changes impacting all modules
 -----------------------------
 
