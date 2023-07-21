@@ -239,7 +239,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         Returns
         -------
-        X_trans : ndarray of shape (n_samples, n_features)
+        X_trans : ndarray of shape (n_samples, n_features) or (n_samples, (n_features * n_classes))
             Transformed input.
         """
         from ..model_selection import KFold, StratifiedKFold  # avoid circular import
@@ -309,7 +309,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         Returns
         -------
-        X_trans : ndarray of shape (n_samples, n_features)
+        X_trans : ndarray of shape (n_samples, n_features) or (n_samples, (n_features * n_classes))
             Transformed input.
         """
         X_ordinal, X_known_mask = self._transform(

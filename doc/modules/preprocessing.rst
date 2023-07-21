@@ -902,14 +902,6 @@ computed as an empirical Bayes estimate: :math:`m=\sigma_i^2/\tau^2`, where
 :math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
 :math:`\tau^2` is the global variance of `y`.
 
-For continuous targets, the formulation is similar to binary classification:
-
-.. math::
-    S_i = \lambda_i\frac{\sum_{k\in L_i}Y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}Y_k}{n}
-
-where :math:`L_i` is the set of observations with category :math:`i` and
-:math:`n_i` is the number of observations with category :math:`i`.
-
 For multiclass classification targets, the formulation is similar to binary
 classification:
 
@@ -922,6 +914,14 @@ where :math:`S_{ij}` is the encoding for category :math:`i` and class :math:`j`,
 :math:`n_{Y_j}` is the number of observations with :math:`Y=j`, :math:`n` is the
 number of observations, and :math:`\lambda_i` is a shrinkage factor for category
 :math:`i`.
+
+For continuous targets, the formulation is similar to binary classification:
+
+.. math::
+    S_i = \lambda_i\frac{\sum_{k\in L_i}Y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}Y_k}{n}
+
+where :math:`L_i` is the set of observations with category :math:`i` and
+:math:`n_i` is the number of observations with category :math:`i`.
 
 :meth:`~TargetEncoder.fit_transform` internally relies on a cross fitting
 scheme to prevent target information from leaking into the train-time
