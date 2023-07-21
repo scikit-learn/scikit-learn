@@ -118,8 +118,15 @@ def test_get_visual_block_column_transformer():
     assert est_html_info.name_details == (["num1", "num2"], [0, 3])
 
 
-@pytest.mark.parametrize("theme", [None, themes.LIGHT, themes.DARK])
-def test_estimator_html_repr_pipeline(theme):
+@pytest.mark.parametrize(
+    "theme,expected_html",
+    [
+        (None, "color: #696969"),
+        (themes.LIGHT, "color: #696969"),
+        (themes.DARK, "color: #5f718c"),
+    ],
+)
+def test_estimator_html_repr_pipeline(theme, expected_html):
     num_trans = Pipeline(
         steps=[("pass", "passthrough"), ("imputer", SimpleImputer(strategy="median"))]
     )
@@ -200,12 +207,7 @@ def test_estimator_html_repr_pipeline(theme):
             assert f"<pre>{html.escape(str(est))}</pre>" in html_output
 
     # verify theme changes
-    if theme is None:
-        assert "color: #696969" in html_output
-    elif theme == themes.LIGHT:
-        assert "color: #696969" in html_output
-    elif theme == themes.DARK:
-        assert "color: #5f718c" in html_output
+    assert expected_html in html_output
 
 
 @pytest.mark.parametrize("final_estimator", [None, LinearSVC()])
