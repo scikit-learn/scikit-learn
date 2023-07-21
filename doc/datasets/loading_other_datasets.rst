@@ -290,9 +290,9 @@ format usable by scikit-learn:
   context such as .mat and .arff
 * `numpy/routines.io <https://docs.scipy.org/doc/numpy/reference/routines.io.html>`_
   for standard loading of columnar data into numpy arrays
-* scikit-learn's :func:`datasets.load_svmlight_file` for the svmlight or libSVM
+* scikit-learn's :func:`load_svmlight_file` for the svmlight or libSVM
   sparse format
-* scikit-learn's :func:`datasets.load_files` for directories of text files where
+* scikit-learn's :func:`load_files` for directories of text files where
   the name of each directory is the name of each category and each file inside
   of each directory corresponds to one sample from that category
 

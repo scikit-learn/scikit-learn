@@ -31,7 +31,7 @@ from ..utils import (
     column_or_1d,
     compute_sample_weight,
 )
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _check_sample_weight, check_is_fitted
@@ -105,12 +105,7 @@ def _solve_sparse_cg(
             C = sp_linalg.LinearOperator(
                 (n_samples, n_samples), matvec=mv, dtype=X.dtype
             )
-            # FIXME atol
-            try:
-                coef, info = sp_linalg.cg(C, y_column, tol=tol, atol="legacy")
-            except TypeError:
-                # old scipy
-                coef, info = sp_linalg.cg(C, y_column, tol=tol)
+            coef, info = sp_linalg.cg(C, y_column, tol=tol, atol="legacy")
             coefs[i] = X1.rmatvec(coef)
         else:
             # linear ridge
@@ -119,14 +114,9 @@ def _solve_sparse_cg(
             C = sp_linalg.LinearOperator(
                 (n_features, n_features), matvec=mv, dtype=X.dtype
             )
-            # FIXME atol
-            try:
-                coefs[i], info = sp_linalg.cg(
-                    C, y_column, maxiter=max_iter, tol=tol, atol="legacy"
-                )
-            except TypeError:
-                # old scipy
-                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter, tol=tol)
+            coefs[i], info = sp_linalg.cg(
+                C, y_column, maxiter=max_iter, tol=tol, atol="legacy"
+            )
 
         if info < 0:
             raise ValueError("Failed with error code %d" % info)
@@ -369,6 +359,32 @@ def _get_valid_accept_sparse(is_X_sparse, solver):
         return ["csr", "csc", "coo"]
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix", sp_linalg.LinearOperator],
+        "y": ["array-like"],
+        "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
+        "sample_weight": [
+            Interval(Real, None, None, closed="neither"),
+            "array-like",
+            None,
+        ],
+        "solver": [
+            StrOptions(
+                {"auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"}
+            )
+        ],
+        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "verbose": ["verbose"],
+        "positive": ["boolean"],
+        "random_state": ["random_state"],
+        "return_n_iter": ["boolean"],
+        "return_intercept": ["boolean"],
+        "check_input": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def ridge_regression(
     X,
     y,
@@ -391,11 +407,11 @@ def ridge_regression(
 
     Parameters
     ----------
-    X : {ndarray, sparse matrix, LinearOperator} of shape \
+    X : {array-like, sparse matrix, LinearOperator} of shape \
         (n_samples, n_features)
         Training data.
 
-    y : ndarray of shape (n_samples,) or (n_samples, n_targets)
+    y : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values.
 
     alpha : float or array-like of shape (n_targets,)

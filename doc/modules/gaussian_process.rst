@@ -401,15 +401,17 @@ The specification of each hyperparameter is stored in the form of an instance of
 hyperparameter with name "x" must have the attributes self.x and self.x_bounds.
 
 The abstract base class for all kernels is :class:`Kernel`. Kernel implements a
-similar interface as :class:`Estimator`, providing the methods ``get_params()``,
-``set_params()``, and ``clone()``. This allows setting kernel values also via
-meta-estimators such as :class:`Pipeline` or :class:`GridSearch`. Note that due to the nested
+similar interface as :class:`~sklearn.base.BaseEstimator`, providing the
+methods ``get_params()``, ``set_params()``, and ``clone()``. This allows
+setting kernel values also via meta-estimators such as
+:class:`~sklearn.pipeline.Pipeline` or
+:class:`~sklearn.model_selection.GridSearchCV`. Note that due to the nested
 structure of kernels (by applying kernel operators, see below), the names of
-kernel parameters might become relatively complicated. In general, for a
-binary kernel operator, parameters of the left operand are prefixed with ``k1__``
-and parameters of the right operand with ``k2__``. An additional convenience
-method is ``clone_with_theta(theta)``, which returns a cloned version of the
-kernel but with the hyperparameters set to ``theta``. An illustrative example:
+kernel parameters might become relatively complicated. In general, for a binary
+kernel operator, parameters of the left operand are prefixed with ``k1__`` and
+parameters of the right operand with ``k2__``. An additional convenience method
+is ``clone_with_theta(theta)``, which returns a cloned version of the kernel
+but with the hyperparameters set to ``theta``. An illustrative example:
 
     >>> from sklearn.gaussian_process.kernels import ConstantKernel, RBF
     >>> kernel = ConstantKernel(constant_value=1.0, constant_value_bounds=(0.0, 10.0)) * RBF(length_scale=0.5, length_scale_bounds=(0.0, 10.0)) + RBF(length_scale=2.0, length_scale_bounds=(0.0, 10.0))
