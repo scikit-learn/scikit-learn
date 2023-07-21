@@ -218,8 +218,8 @@ def estimator_html_repr(estimator, theme=None):
     >>> from sklearn.pipeline import Pipeline
     >>> steps = [("reduce_dim", PCA(n_components=4))]
     >>> pipe = Pipeline(steps)
-    >>> estimator_html_repr(pipe)
-    >>> estimator_html_repr(pipe, theme=DARK)
+    >>> html = estimator_html_repr(pipe)
+    >>> html = estimator_html_repr(pipe, theme=DARK)
     """
     if theme is None:
         theme = themes.LIGHT
