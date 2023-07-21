@@ -641,12 +641,12 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     def _pairwise_sparse_sparse(self, X: csr_matrix , Y: csr_matrix):
         cdef:
             intp_t n_X, n_features
-            const {{INPUT_DTYPE_t}}[:] X_data
+            const {{INPUT_DTYPE_t}}[::1] X_data
             const int32_t[::1] X_indices
             const int32_t[::1] X_indptr
 
             intp_t n_Y
-            const {{INPUT_DTYPE_t}}[:] Y_data
+            const {{INPUT_DTYPE_t}}[::1] Y_data
             const int32_t[::1] Y_indices
             const int32_t[::1] Y_indptr
 
@@ -690,7 +690,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
         cdef:
             intp_t n_X = X.shape[0]
             intp_t n_features = X.shape[1]
-            const {{INPUT_DTYPE_t}}[:] X_data = np.asarray(
+            const {{INPUT_DTYPE_t}}[::1] X_data = np.asarray(
                 X.data, dtype={{INPUT_DTYPE}},
             )
             const int32_t[::1] X_indices = np.asarray(
@@ -763,7 +763,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
             )
 
             intp_t n_Y = Y.shape[0]
-            const {{INPUT_DTYPE_t}}[:] Y_data = np.asarray(
+            const {{INPUT_DTYPE_t}}[::1] Y_data = np.asarray(
                 Y.data, dtype={{INPUT_DTYPE}},
             )
             const int32_t[::1] Y_indices = np.asarray(
