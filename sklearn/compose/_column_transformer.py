@@ -26,7 +26,6 @@ from ..utils import (
 )
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
-from ..utils._protocols import DataFrameInterchangeProtocol
 from ..utils._set_output import _get_output_config, _safe_set_output
 from ..utils.metaestimators import _BaseComposition
 from ..utils.parallel import Parallel, delayed
@@ -477,14 +476,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     "specifiers. '%s' (type %s) doesn't." % (t, type(t))
                 )
 
-    def _validate_column_callables(self, X):
+    def _validate_column_callables(self, X, use_interchange_protocol=False):
         """
         Converts callable column specifications.
         """
         all_columns = []
         transformer_to_input_indices = {}
 
-        if isinstance(X, DataFrameInterchangeProtocol):
+        if use_interchange_protocol:
             get_column_indices = partial(_get_column_indices_interchange, X)
         else:
             get_column_indices = partial(_get_column_indices, X)
@@ -503,13 +502,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Validates ``remainder`` and defines ``_remainder`` targeting
         the remaining columns.
         """
-        if isinstance(X, DataFrameInterchangeProtocol):
-            self._n_features = X.num_columns()
-        else:
-            self._n_features = X.shape[1]
-
         cols = set(chain(*self._transformer_to_input_indices.values()))
-        remaining = sorted(set(range(self._n_features)) - cols)
+        remaining = sorted(set(range(self.n_features_in_)) - cols)
         self._remainder = ("remainder", self.remainder, remaining)
         self._transformer_to_input_indices["remainder"] = remaining
 
@@ -816,7 +810,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             dataframe_class_as_str = None
             n_samples = X.shape[0]
 
-        self._validate_column_callables(X)
+        self._validate_column_callables(
+            X, use_interchange_protocol=use_interchange_protocol
+        )
         self._validate_remainder(X)
 
         result = self._fit_transform(
