@@ -910,6 +910,19 @@ For continuous targets, the formulation is similar to binary classification:
 where :math:`L_i` is the set of observations with category :math:`i` and
 :math:`n_i` is the number of observations with category :math:`i`.
 
+For multiclass classification targets, the formulation is similar to binary
+classification:
+
+.. math::
+    S_{ij} = \lambda_i\frac{n_{iY_j}}{n_i} + (1 - \lambda_i)\frac{n_{Y_j}}{n}
+
+where :math:`S_{ij}` is the encoding for category :math:`i` and class :math:`j`,
+:math:`n_{iY_j}` is the number of observations with :math:`Y=j` and category
+:math:`i`, :math:`n_i` is the number of observations with category :math:`i`,
+:math:`n_{Y_j}` is the number of observations with :math:`Y=j`, :math:`n` is the
+number of observations, and :math:`\lambda_i` is a shrinkage factor for category
+:math:`i`.
+
 :meth:`~TargetEncoder.fit_transform` internally relies on a cross fitting
 scheme to prevent target information from leaking into the train-time
 representation, especially for non-informative high-cardinality categorical

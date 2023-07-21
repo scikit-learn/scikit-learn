@@ -119,7 +119,7 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |Enhancement| :class:`preprocessing.TargetEncoder` `target_type` now supports
+- |Enhancement| :class:`preprocessing.TargetEncoder` now supports `target_type`
   'multiclass'. :pr:`26674` by :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.model_selection`

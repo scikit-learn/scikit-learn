@@ -21,7 +21,12 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     Each category is encoded based on a shrunk estimate of the average target
     values for observations belonging to the category. The encoding scheme mixes
     the global target mean with the target mean conditioned on the value of the
-    category. [MIC]_
+    category. [MIC]_ When the target type is "multiclass", encodings are based
+    on the conditional probability estimate for each class. The target is first
+    binarized using the "one-vs-all" scheme via
+    :class:`~sklearn.preprocessing.LabelBinarizer`, then the average target
+    value for each class and each category is used for encoding, resulting in
+    n_classes * n_features encoded output features.
 
     :class:`TargetEncoder` considers missing values, such as `np.nan` or `None`,
     as another category and encodes them like any other category. Categories
@@ -97,7 +102,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     encodings_ : list of shape (n_features,) of ndarray
         Encodings learnt on all of `X`.
         For feature `i`, `encodings_[i]` are the encodings matching the
-        categories listed in `categories_[i]`.
+        categories listed in `categories_[i]`. When `target_type_` is
+        "multiclass", the encoding for feature `i` and class `j` are stored
+        in `encodings_[j + (i * n_classes)]`.
 
     categories_ : list of shape (n_features,) of ndarray
         The categories of each feature determined during fitting or specified
