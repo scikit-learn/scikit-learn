@@ -265,6 +265,8 @@ def make_plot(item_idx):
 make_plot(0)
 
 # %%
+# .. _standard_scaler_section:
+#
 # StandardScaler
 # --------------
 #
@@ -285,6 +287,8 @@ make_plot(0)
 make_plot(1)
 
 # %%
+# .. _minmax_scaler_section:
+#
 # MinMaxScaler
 # ------------
 #
@@ -301,6 +305,8 @@ make_plot(1)
 make_plot(2)
 
 # %%
+# .. _max_abs_scaler_section:
+#
 # MaxAbsScaler
 # ------------
 #
@@ -318,6 +324,8 @@ make_plot(2)
 make_plot(3)
 
 # %%
+# .. _robust_scaler_section:
+#
 # RobustScaler
 # ------------
 #
@@ -335,6 +343,8 @@ make_plot(3)
 make_plot(4)
 
 # %%
+# .. _power_transformer_section:
+#
 # PowerTransformer
 # ----------------
 #
@@ -353,6 +363,8 @@ make_plot(5)
 make_plot(6)
 
 # %%
+# .. _quantile_transformer_section:
+#
 # QuantileTransformer (uniform output)
 # ------------------------------------
 #
@@ -375,6 +387,8 @@ make_plot(6)
 make_plot(7)
 
 ##############################################################################
+# .. _quantile_transformer_normal_section:
+#
 # QuantileTransformer (Gaussian output)
 # -------------------------------------
 #
@@ -384,6 +398,8 @@ make_plot(7)
 make_plot(8)
 
 # %%
+# .. _normalizer_section:
+#
 # Normalizer
 # ----------
 #

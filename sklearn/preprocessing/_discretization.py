@@ -54,6 +54,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         - 'quantile': All bins in each feature have the same number of points.
         - 'kmeans': Values in each bin have the same nearest center of a 1D
           k-means cluster.
+        For an example visualization of the different strategies see:
+        :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`.
 
     dtype : {np.float32, np.float64}, default=None
         The desired data-type for the output. If None, output dtype is
@@ -117,6 +119,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     Notes
     -----
+
+    For a visualization of discretization on different datasets refer to
+    :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_classification.py`.
+    On the effect of discretization on linear models see:
+    :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization.py`.
+
     In bin edges for feature ``i``, the first and last values are used only for
     ``inverse_transform``. During transform, bin edges are extended to::
 

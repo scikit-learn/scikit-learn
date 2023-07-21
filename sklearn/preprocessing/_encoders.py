@@ -462,6 +462,8 @@ class OneHotEncoder(_BaseEncoder):
     instead.
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
+    For a comparison of different encoders, refer to:
+    :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`.
 
     Parameters
     ----------
@@ -1234,6 +1236,8 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     a single column of integers (0 to n_categories - 1) per feature.
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
+    For a comparison of different encoders, refer to:
+    :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`.
 
     .. versionadded:: 0.20
 

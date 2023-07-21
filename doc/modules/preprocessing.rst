@@ -10,10 +10,12 @@ The ``sklearn.preprocessing`` package provides several common
 utility functions and transformer classes to change raw feature vectors
 into a representation that is more suitable for the downstream estimators.
 
-In general, learning algorithms benefit from standardization of the data set. If
-some outliers are present in the set, robust scalers or transformers are more
-appropriate. The behaviors of the different scalers, transformers, and
-normalizers on a dataset containing marginal outliers is highlighted in
+In general, learning algorithms benefit from standardization of the data set.
+If some outliers are present in the set, robust scalers or transformers are
+more appropriate. Note the
+:ref:`sphx_glr_auto_examples_preprocessing_plot_scaling_importance.py` and the
+behaviors of the different scalers, transformers, and normalizers on a dataset
+containing marginal outliers are highlighted in
 :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`.
 
 
@@ -973,9 +975,13 @@ of continuous attributes to one with only nominal attributes.
 
 One-hot encoded discretized features can make a model more expressive, while
 maintaining interpretability. For instance, pre-processing with a discretizer
-can introduce nonlinearity to linear models. For more advanced possibilities,
-in particular smooth ones, see :ref:`generating_polynomial_features` further
-below.
+can introduce nonlinearity to linear models. For a visualization of
+discretization on different datasets refer to
+:ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_classification.py`.
+On the effect of discretization on linear models see:
+:ref:`sphx_glr_auto_examples_preprocessing_plot_discretization.py`. For more
+advanced possibilities, in particular smooth ones, see
+:ref:`generating_polynomial_features` further below.
 
 K-bins discretization
 ---------------------
