@@ -484,8 +484,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
         Y,
         k,
         weights,
-        class_membership,
-        unique_classes,
+        y_labels,
+        labels,
         metric="euclidean",
         chunk_size=None,
         metric_kwargs=None,
@@ -500,7 +500,7 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
 
         Y : ndarray of shape (n_samples_Y, n_features)
             The input array whose class membership are provided through the
-            `class_membership` parameter.
+            `y_labels` parameter.
 
         k : int
             The number of nearest neighbors to consider.
@@ -509,13 +509,13 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
             The weights applied over the `labels` of `Y` when computing the
             weighted mode of the labels.
 
-        class_membership : ndarray
+        y_labels : ndarray
             An array containing the index of the class membership of the
             associated samples in `Y`. This is used in labeling `X`.
 
-        unique_classes : ndarray
+        labels : ndarray
             An array containing all unique indices contained in the
-            corresponding `class_membership` array.
+            corresponding `y_labels` array.
 
         metric : str, default='euclidean'
             The distance metric to use. For a list of available metrics, see
@@ -587,8 +587,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
                 Y=Y,
                 k=k,
                 weights=weights,
-                class_membership=np.array(class_membership, dtype=np.intp),
-                unique_labels=np.array(unique_classes, dtype=np.intp),
+                y_labels=np.array(y_labels, dtype=np.intp),
+                unique_labels=np.array(labels, dtype=np.intp),
                 metric=metric,
                 chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,
@@ -601,8 +601,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
                 Y=Y,
                 k=k,
                 weights=weights,
-                class_membership=np.array(class_membership, dtype=np.intp),
-                unique_labels=np.array(unique_classes, dtype=np.intp),
+                y_labels=np.array(y_labels, dtype=np.intp),
+                unique_labels=np.array(labels, dtype=np.intp),
                 metric=metric,
                 chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,

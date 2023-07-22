@@ -329,8 +329,8 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                     self._fit_X,
                     k=self.n_neighbors,
                     weights=self.weights,
-                    class_membership=self._y,
-                    unique_classes=self.classes_,
+                    y_labels=self._y,
+                    labels=self.classes_,
                     metric=metric,
                     metric_kwargs=metric_kwargs,
                     # `strategy="parallel_on_X"` has in practice be shown
