@@ -148,6 +148,10 @@ might be a better approach than using `pickle` alone.
 These are helpful where you may want to use your model for prediction in a
 different environment from where the model was trained.
 
+|details-start|
+**ONNX**
+|details-split|
+
 ONNX is a binary serialization of the model. It has been developed to improve
 the usability of the interoperable representation of data models.
 It aims to facilitate the conversion of the data
@@ -156,6 +160,11 @@ portability on different computing architectures. More details are available
 from the `ONNX tutorial <https://onnx.ai/get-started.html>`_.
 To convert scikit-learn model to ONNX a specific tool `sklearn-onnx
 <http://onnx.ai/sklearn-onnx/>`_ has been developed.
+|details-end|
+
+|details-start|
+**PMML**
+|details-split|
 
 PMML is an implementation of the `XML
 <https://en.wikipedia.org/wiki/XML>`_ document standard
@@ -167,3 +176,4 @@ not help in production when performance is critical.
 To convert scikit-learn model to PMML you can use for example `sklearn2pmml
 <https://github.com/jpmml/sklearn2pmml>`_ distributed under the Affero GPLv3
 license.
+|details-end|
