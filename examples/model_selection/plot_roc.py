@@ -44,6 +44,7 @@ curves.
 # Here we binarize the output and add noisy features to make the problem harder.
 
 import numpy as np
+
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 
@@ -118,6 +119,7 @@ class_id
 
 # %%
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import RocCurveDisplay
 
 RocCurveDisplay.from_predictions(
@@ -139,13 +141,13 @@ plt.show()
 # ----------------------------------
 #
 # Micro-averaging aggregates the contributions from all the classes (using
-# :func:`np.ravel`) to compute the average metrics as follows:
+# :func:`numpy.ravel`) to compute the average metrics as follows:
 #
 # :math:`TPR=\frac{\sum_{c}TP_c}{\sum_{c}(TP_c + FN_c)}` ;
 #
 # :math:`FPR=\frac{\sum_{c}FP_c}{\sum_{c}(FP_c + TN_c)}` .
 #
-# We can briefly demo the effect of :func:`np.ravel`:
+# We can briefly demo the effect of :func:`numpy.ravel`:
 
 print(f"y_score:\n{y_score[0:2,:]}")
 print()
@@ -191,7 +193,7 @@ print(f"Micro-averaged One-vs-Rest ROC AUC score:\n{micro_roc_auc_ovr:.2f}")
 # :class:`~sklearn.metrics.roc_curve` and then the area under the curve with
 # :class:`~sklearn.metrics.auc` for the raveled true and predicted classes.
 
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import auc, roc_curve
 
 # store the fpr, tpr, and roc_auc for all averaging strategies
 fpr, tpr, roc_auc = dict(), dict(), dict()

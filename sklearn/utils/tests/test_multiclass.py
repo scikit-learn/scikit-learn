@@ -1,31 +1,35 @@
-import numpy as np
-import scipy.sparse as sp
 from itertools import product
+
+import numpy as np
 import pytest
+import scipy.sparse as sp
+from scipy.sparse import (
+    coo_matrix,
+    csc_matrix,
+    csr_matrix,
+    dok_matrix,
+    issparse,
+    lil_matrix,
+)
 
-from scipy.sparse import issparse
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import coo_matrix
-from scipy.sparse import dok_matrix
-from scipy.sparse import lil_matrix
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils.estimator_checks import _NotAnArray
-
-from sklearn.utils.multiclass import unique_labels
-from sklearn.utils.multiclass import is_multilabel
-from sklearn.utils.multiclass import type_of_target
-from sklearn.utils.multiclass import class_distribution
-from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.multiclass import _ovr_decision_function
-
-from sklearn.utils.metaestimators import _safe_split
+from sklearn import datasets
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
-from sklearn import datasets
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.estimator_checks import _NotAnArray
+from sklearn.utils.metaestimators import _safe_split
+from sklearn.utils.multiclass import (
+    _ovr_decision_function,
+    check_classification_targets,
+    class_distribution,
+    is_multilabel,
+    type_of_target,
+    unique_labels,
+)
 
 sparse_multilable_explicit_zero = csc_matrix(np.array([[0, 1], [1, 0]]))
 sparse_multilable_explicit_zero[:, 0] = 0

@@ -13,8 +13,8 @@ In this example we compare some estimators for the purpose of missing feature
 imputation with :class:`~impute.IterativeImputer`:
 
 * :class:`~linear_model.BayesianRidge`: regularized linear regression
-* :class:`~tree.RandomForestRegressor`: Forests of randomized trees regression
-* :func:`~pipeline.make_pipeline`(:class:`~kernel_approximation.Nystroem`,
+* :class:`~ensemble.RandomForestRegressor`: Forests of randomized trees regression
+* :func:`~pipeline.make_pipeline` (:class:`~kernel_approximation.Nystroem`,
   :class:`~linear_model.Ridge`): a pipeline with the expansion of a degree 2
   polynomial kernel and regularized linear regression
 * :class:`~neighbors.KNeighborsRegressor`: comparable to other KNN
@@ -44,21 +44,21 @@ complex and costly missing values imputation strategies.
 
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+
+from sklearn.datasets import fetch_california_housing
+from sklearn.ensemble import RandomForestRegressor
 
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.datasets import fetch_california_housing
-from sklearn.impute import SimpleImputer
-from sklearn.impute import IterativeImputer
-from sklearn.linear_model import BayesianRidge, Ridge
+from sklearn.impute import IterativeImputer, SimpleImputer
 from sklearn.kernel_approximation import Nystroem
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import BayesianRidge, Ridge
+from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import cross_val_score
 
 N_SPLITS = 5
 

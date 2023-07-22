@@ -15,19 +15,19 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
-from scipy.special import gammaln
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
+from scipy.special import gammaln
 
-from ._base import _BasePCA
+from ..base import _fit_context
 from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
+from ..utils._array_api import get_namespace
+from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.deprecation import deprecated
-from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
-from ..utils.extmath import stable_cumsum
+from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
 from ..utils.validation import check_is_fitted
-from ..utils._param_validation import Interval, StrOptions
-from ..utils._param_validation import RealNotInt
+from ._base import _BasePCA
 
 
 def _assess_dimension(spectrum, rank, n_samples):
@@ -109,8 +109,10 @@ def _infer_dimension(spectrum, n_samples):
 
     The returned value will be in [1, n_features - 1].
     """
-    ll = np.empty_like(spectrum)
-    ll[0] = -np.inf  # we don't want to return n_components = 0
+    xp, _ = get_namespace(spectrum)
+
+    ll = xp.empty_like(spectrum)
+    ll[0] = -xp.inf  # we don't want to return n_components = 0
     for rank in range(1, spectrum.shape[0]):
         ll[rank] = _assess_dimension(spectrum, rank, n_samples)
     return ll.argmax()
@@ -414,6 +416,7 @@ class PCA(_BasePCA):
     def n_features_(self):
         return self.n_features_in_
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model with X.
 
@@ -431,11 +434,10 @@ class PCA(_BasePCA):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         self._fit(X)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Fit the model with X and apply the dimensionality reduction on X.
 
@@ -458,8 +460,6 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        self._validate_params()
-
         U, S, Vt = self._fit(X)
         U = U[:, : self.n_components_]
 
@@ -474,6 +474,7 @@ class PCA(_BasePCA):
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
+        xp, is_array_api_compliant = get_namespace(X)
 
         # Raise an error for sparse input.
         # This is more informative than the generic one raised by check_array.
@@ -482,9 +483,14 @@ class PCA(_BasePCA):
                 "PCA does not support sparse input. See "
                 "TruncatedSVD for a possible alternative."
             )
+        # Raise an error for non-Numpy input and arpack solver.
+        if self.svd_solver == "arpack" and is_array_api_compliant:
+            raise ValueError(
+                "PCA with svd_solver='arpack' is not supported for Array API inputs."
+            )
 
         X = self._validate_data(
-            X, dtype=[np.float64, np.float32], ensure_2d=True, copy=self.copy
+            X, dtype=[xp.float64, xp.float32], ensure_2d=True, copy=self.copy
         )
 
         # Handle n_components==None
@@ -516,6 +522,8 @@ class PCA(_BasePCA):
 
     def _fit_full(self, X, n_components):
         """Fit the model by computing full SVD on X."""
+        xp, is_array_api_compliant = get_namespace(X)
+
         n_samples, n_features = X.shape
 
         if n_components == "mle":
@@ -531,10 +539,20 @@ class PCA(_BasePCA):
             )
 
         # Center data
-        self.mean_ = np.mean(X, axis=0)
+        self.mean_ = xp.mean(X, axis=0)
         X -= self.mean_
 
-        U, S, Vt = linalg.svd(X, full_matrices=False)
+        if not is_array_api_compliant:
+            # Use scipy.linalg with NumPy/SciPy inputs for the sake of not
+            # introducing unanticipated behavior changes. In the long run we
+            # could instead decide to always use xp.linalg.svd for all inputs,
+            # but that would make this code rely on numpy's SVD instead of
+            # scipy's. It's not 100% clear whether they use the same LAPACK
+            # solver by default though (assuming both are built against the
+            # same BLAS).
+            U, S, Vt = linalg.svd(X, full_matrices=False)
+        else:
+            U, S, Vt = xp.linalg.svd(X, full_matrices=False)
         # flip eigenvectors' sign to enforce deterministic output
         U, Vt = svd_flip(U, Vt)
 
@@ -542,9 +560,9 @@ class PCA(_BasePCA):
 
         # Get variance explained by singular values
         explained_variance_ = (S**2) / (n_samples - 1)
-        total_var = explained_variance_.sum()
+        total_var = xp.sum(explained_variance_)
         explained_variance_ratio_ = explained_variance_ / total_var
-        singular_values_ = S.copy()  # Store the singular values.
+        singular_values_ = xp.asarray(S, copy=True)  # Store the singular values.
 
         # Postprocess the number of components required
         if n_components == "mle":
@@ -556,16 +574,16 @@ class PCA(_BasePCA):
             # their variance is always greater than n_components float
             # passed. More discussion in issue: #15669
             ratio_cumsum = stable_cumsum(explained_variance_ratio_)
-            n_components = np.searchsorted(ratio_cumsum, n_components, side="right") + 1
+            n_components = xp.searchsorted(ratio_cumsum, n_components, side="right") + 1
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
-            self.noise_variance_ = explained_variance_[n_components:].mean()
+            self.noise_variance_ = xp.mean(explained_variance_[n_components:])
         else:
             self.noise_variance_ = 0.0
 
         self.n_samples_ = n_samples
-        self.components_ = components_[:n_components]
+        self.components_ = components_[:n_components, :]
         self.n_components_ = n_components
         self.explained_variance_ = explained_variance_[:n_components]
         self.explained_variance_ratio_ = explained_variance_ratio_[:n_components]
@@ -577,6 +595,8 @@ class PCA(_BasePCA):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
         on X.
         """
+        xp, _ = get_namespace(X)
+
         n_samples, n_features = X.shape
 
         if isinstance(n_components, str):
@@ -602,7 +622,7 @@ class PCA(_BasePCA):
         random_state = check_random_state(self.random_state)
 
         # Center data
-        self.mean_ = np.mean(X, axis=0)
+        self.mean_ = xp.mean(X, axis=0)
         X -= self.mean_
 
         if svd_solver == "arpack":
@@ -636,15 +656,14 @@ class PCA(_BasePCA):
         # Workaround in-place variance calculation since at the time numpy
         # did not have a way to calculate variance in-place.
         N = X.shape[0] - 1
-        np.square(X, out=X)
-        np.sum(X, axis=0, out=X[0])
-        total_var = (X[0] / N).sum()
+        X **= 2
+        total_var = xp.sum(xp.sum(X, axis=0) / N)
 
         self.explained_variance_ratio_ = self.explained_variance_ / total_var
-        self.singular_values_ = S.copy()  # Store the singular values.
+        self.singular_values_ = xp.asarray(S, copy=True)  # Store the singular values.
 
         if self.n_components_ < min(n_features, n_samples):
-            self.noise_variance_ = total_var - self.explained_variance_.sum()
+            self.noise_variance_ = total_var - xp.sum(self.explained_variance_)
             self.noise_variance_ /= min(n_features, n_samples) - n_components
         else:
             self.noise_variance_ = 0.0
@@ -669,12 +688,12 @@ class PCA(_BasePCA):
             Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
-
-        X = self._validate_data(X, dtype=[np.float64, np.float32], reset=False)
+        xp, _ = get_namespace(X)
+        X = self._validate_data(X, dtype=[xp.float64, xp.float32], reset=False)
         Xr = X - self.mean_
         n_features = X.shape[1]
         precision = self.get_precision()
-        log_like = -0.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
+        log_like = -0.5 * xp.sum(Xr * (Xr @ precision), axis=1)
         log_like -= 0.5 * (n_features * log(2.0 * np.pi) - fast_logdet(precision))
         return log_like
 
@@ -698,7 +717,8 @@ class PCA(_BasePCA):
         ll : float
             Average log-likelihood of the samples under the current model.
         """
-        return np.mean(self.score_samples(X))
+        xp, _ = get_namespace(X)
+        return float(xp.mean(self.score_samples(X)))
 
     def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
+        return {"preserves_dtype": [np.float64, np.float32], "array_api_support": True}

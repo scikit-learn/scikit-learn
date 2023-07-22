@@ -7,39 +7,36 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 import itertools
-from functools import partial
-
+import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
-import numbers
+from functools import partial
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import csr_matrix, issparse
 from joblib import effective_n_jobs
+from scipy.sparse import csr_matrix, issparse
 
-from ._ball_tree import BallTree
-from ._kd_tree import KDTree
-from ..base import BaseEstimator, MultiOutputMixin
-from ..base import is_classifier
+from ..base import BaseEstimator, MultiOutputMixin, is_classifier
+from ..exceptions import DataConversionWarning, EfficiencyWarning
 from ..metrics import pairwise_distances_chunked
-from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..metrics._pairwise_distances_reduction import (
     ArgKmin,
     RadiusNeighbors,
 )
+from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import (
+    _to_object_array,
     check_array,
     gen_even_slices,
-    _to_object_array,
 )
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
-from ..utils.validation import check_non_negative
 from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.parallel import delayed, Parallel
-from ..utils.fixes import parse_version, sp_base_version, sp_version
-from ..exceptions import DataConversionWarning, EfficiencyWarning
+from ..utils.fixes import parse_version, sp_base_version
+from ..utils.multiclass import check_classification_targets
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import check_is_fitted, check_non_negative
+from ._ball_tree import BallTree
+from ._kd_tree import KDTree
 
 SCIPY_METRICS = [
     "braycurtis",
@@ -51,7 +48,6 @@ SCIPY_METRICS = [
     "hamming",
     "jaccard",
     "mahalanobis",
-    "matching",
     "minkowski",
     "rogerstanimoto",
     "russellrao",
@@ -64,20 +60,17 @@ SCIPY_METRICS = [
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     SCIPY_METRICS += ["kulsinski"]
+if sp_base_version < parse_version("1.9"):
+    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
+    SCIPY_METRICS += ["matching"]
 
 VALID_METRICS = dict(
-    ball_tree=BallTree._valid_metrics,
-    kd_tree=KDTree._valid_metrics,
+    ball_tree=BallTree.valid_metrics,
+    kd_tree=KDTree.valid_metrics,
     # The following list comes from the
     # sklearn.metrics.pairwise doc string
     brute=sorted(set(PAIRWISE_DISTANCE_FUNCTIONS).union(SCIPY_METRICS)),
 )
-
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-if sp_version < parse_version("1.8.0.dev0"):
-    # Before scipy 1.8.0.dev0, wminkowski was the key to use
-    # the weighted minkowski metric.
-    VALID_METRICS["brute"].append("wminkowski")
 
 VALID_METRICS_SPARSE = dict(
     ball_tree=[],
@@ -202,7 +195,8 @@ def _check_precomputed(X):
         "graph": ["sparse matrix"],
         "copy": ["boolean"],
         "warn_when_not_sorted": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
     """Sort a sparse graph such that each row is stored with increasing values.
@@ -510,7 +504,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.effective_metric_params_ = self.metric_params.copy()
 
         effective_p = self.effective_metric_params_.get("p", self.p)
-        if self.metric in ["wminkowski", "minkowski"]:
+        if self.metric == "minkowski":
             self.effective_metric_params_["p"] = effective_p
 
         self.effective_metric_ = self.metric
@@ -603,8 +597,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self._fit_method = "brute"
             else:
                 if (
-                    # TODO(1.3): remove "wminkowski"
-                    self.effective_metric_ in ("wminkowski", "minkowski")
+                    self.effective_metric_ == "minkowski"
                     and self.effective_metric_params_["p"] < 1
                 ):
                     self._fit_method = "brute"
@@ -612,15 +605,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self.effective_metric_ == "minkowski"
                     and self.effective_metric_params_.get("w") is not None
                 ):
-                    # Be consistent with scipy 1.8 conventions: in scipy 1.8,
-                    # 'wminkowski' was removed in favor of passing a
-                    # weight vector directly to 'minkowski'.
-                    #
-                    # 'wminkowski' is not part of valid metrics for KDTree but
-                    # the 'minkowski' without weights is.
-                    #
-                    # Hence, we detect this case and choose BallTree
-                    # which supports 'wminkowski'.
+                    # 'minkowski' with weights is not supported by KDTree but is
+                    # supported byBallTree.
                     self._fit_method = "ball_tree"
                 elif self.effective_metric_ in VALID_METRICS["kd_tree"]:
                     self._fit_method = "kd_tree"
@@ -633,8 +619,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self._fit_method = "brute"
 
         if (
-            # TODO(1.3): remove "wminkowski"
-            self.effective_metric_ in ("wminkowski", "minkowski")
+            self.effective_metric_ == "minkowski"
             and self.effective_metric_params_["p"] < 1
         ):
             # For 0 < p < 1 Minkowski distances aren't valid distance

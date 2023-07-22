@@ -153,9 +153,10 @@ import warnings
 
 from ..metrics._dist_metrics cimport (
     DistanceMetric,
-    euclidean_dist,
-    euclidean_rdist,
-    euclidean_dist_to_rdist,
+    DistanceMetric64,
+    euclidean_dist64,
+    euclidean_rdist64,
+    euclidean_dist_to_rdist64,
 )
 
 from ._partition_nodes cimport partition_node_indices
@@ -231,13 +232,14 @@ leaf_size : positive int, default=40
     satisfy ``leaf_size <= n_points <= 2 * leaf_size``, except in
     the case that ``n_samples < leaf_size``.
 
-metric : str or DistanceMetric object, default='minkowski'
+metric : str or DistanceMetric64 object, default='minkowski'
     Metric to use for distance computation. Default is "minkowski", which
     results in the standard Euclidean distance when p = 2.
     A list of valid metrics for {BinaryTree} is given by
-    :meth:`{BinaryTree}.valid_metrics`.
+    :attr:`{BinaryTree}.valid_metrics`.
     See the documentation of `scipy.spatial.distance
-    <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and the    metrics listed in :class:`~sklearn.metrics.pairwise.distance_metrics` for
+    <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
+    the metrics listed in :class:`~sklearn.metrics.pairwise.distance_metrics` for
     more information on any distance metric.
 
 Additional keywords are passed to the distance metric class.
@@ -248,6 +250,8 @@ Attributes
 ----------
 data : memory view
     The training data
+valid_metrics: list of str
+    List of valid distance metrics.
 
 Examples
 --------
@@ -782,7 +786,7 @@ cdef class BinaryTree:
     cdef intp_t n_levels
     cdef intp_t n_nodes
 
-    cdef DistanceMetric dist_metric
+    cdef DistanceMetric64 dist_metric
     cdef int euclidean
 
     # variables to keep track of building & querying stats
@@ -791,7 +795,7 @@ cdef class BinaryTree:
     cdef int n_splits
     cdef int n_calls
 
-    _valid_metrics = VALID_METRIC_IDS
+    valid_metrics = VALID_METRIC_IDS
 
     # Use cinit to initialize all arrays to empty: this will prevent memory
     # errors and seg-faults in rare cases where __init__ is not called
@@ -832,7 +836,7 @@ cdef class BinaryTree:
 
         self.dist_metric = DistanceMetric.get_metric(metric, **kwargs)
         self.euclidean = (self.dist_metric.__class__.__name__
-                          == 'EuclideanDistance')
+                          == 'EuclideanDistance64')
 
         metric = self.dist_metric.__class__.__name__
         if metric not in VALID_METRICS:
@@ -922,7 +926,7 @@ cdef class BinaryTree:
         sample_weight = state[12]
 
         self.euclidean = (self.dist_metric.__class__.__name__
-                          == 'EuclideanDistance')
+                          == 'EuclideanDistance64')
         n_samples = self.data.shape[0]
         self._update_sample_weight(n_samples, sample_weight)
 
@@ -978,25 +982,12 @@ cdef class BinaryTree:
             self.node_bounds.base,
         )
 
-    @classmethod
-    def valid_metrics(cls):
-        """Get list of valid distance metrics.
-
-        .. versionadded:: 1.3
-
-        Returns
-        -------
-        valid_metrics: list of str
-            List of valid distance metrics.
-        """
-        return cls._valid_metrics
-
     cdef inline float64_t dist(self, float64_t* x1, float64_t* x2,
                                intp_t size) except -1 nogil:
         """Compute the distance between arrays x1 and x2"""
         self.n_calls += 1
         if self.euclidean:
-            return euclidean_dist(x1, x2, size)
+            return euclidean_dist64(x1, x2, size)
         else:
             return self.dist_metric.dist(x1, x2, size)
 
@@ -1011,7 +1002,7 @@ cdef class BinaryTree:
         """
         self.n_calls += 1
         if self.euclidean:
-            return euclidean_rdist(x1, x2, size)
+            return euclidean_rdist64(x1, x2, size)
         else:
             return self.dist_metric.rdist(x1, x2, size)
 

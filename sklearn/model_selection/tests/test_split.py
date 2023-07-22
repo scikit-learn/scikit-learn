@@ -1,52 +1,80 @@
 """Test the split module"""
-import warnings
-import pytest
 import re
+import warnings
+from itertools import combinations, combinations_with_replacement, permutations
+
 import numpy as np
-from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
+import pytest
 from scipy import stats
+from scipy.sparse import (
+    coo_matrix,
+    csc_matrix,
+    csr_matrix,
+    issparse,
+)
 from scipy.special import comb
-from itertools import combinations
-from itertools import combinations_with_replacement
-from itertools import permutations
 
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.validation import _num_samples
-from sklearn.utils._mocking import MockDataFrame
-
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import KFold
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import GroupKFold
-from sklearn.model_selection import TimeSeriesSplit
-from sklearn.model_selection import LeaveOneOut
-from sklearn.model_selection import LeaveOneGroupOut
-from sklearn.model_selection import LeavePOut
-from sklearn.model_selection import LeavePGroupsOut
-from sklearn.model_selection import ShuffleSplit
-from sklearn.model_selection import GroupShuffleSplit
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection import PredefinedSplit
-from sklearn.model_selection import check_cv
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import RepeatedKFold
-from sklearn.model_selection import RepeatedStratifiedKFold
-from sklearn.model_selection import StratifiedGroupKFold
-
+from sklearn.datasets import load_digits, make_classification
 from sklearn.dummy import DummyClassifier
-
-from sklearn.model_selection._split import _validate_shuffle_split
-from sklearn.model_selection._split import _build_repr
-from sklearn.model_selection._split import _yields_constant_splits
-
-from sklearn.datasets import load_digits
-from sklearn.datasets import make_classification
-
+from sklearn.model_selection import (
+    GridSearchCV,
+    GroupKFold,
+    GroupShuffleSplit,
+    KFold,
+    LeaveOneGroupOut,
+    LeaveOneOut,
+    LeavePGroupsOut,
+    LeavePOut,
+    PredefinedSplit,
+    RepeatedKFold,
+    RepeatedStratifiedKFold,
+    ShuffleSplit,
+    StratifiedGroupKFold,
+    StratifiedKFold,
+    StratifiedShuffleSplit,
+    TimeSeriesSplit,
+    check_cv,
+    cross_val_score,
+    train_test_split,
+)
+from sklearn.model_selection._split import (
+    _build_repr,
+    _validate_shuffle_split,
+    _yields_constant_splits,
+)
 from sklearn.svm import SVC
+from sklearn.tests.test_metadata_routing import assert_request_is_empty
+from sklearn.utils._mocking import MockDataFrame
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
+from sklearn.utils.validation import _num_samples
+
+NO_GROUP_SPLITTERS = [
+    KFold(),
+    StratifiedKFold(),
+    TimeSeriesSplit(),
+    LeaveOneOut(),
+    LeavePOut(p=2),
+    ShuffleSplit(),
+    StratifiedShuffleSplit(test_size=0.5),
+    PredefinedSplit([1, 1, 2, 2]),
+    RepeatedKFold(),
+    RepeatedStratifiedKFold(),
+]
+
+GROUP_SPLITTERS = [
+    GroupKFold(),
+    LeavePGroupsOut(n_groups=1),
+    StratifiedGroupKFold(),
+    LeaveOneGroupOut(),
+    GroupShuffleSplit(),
+]
+
+ALL_SPLITTERS = NO_GROUP_SPLITTERS + GROUP_SPLITTERS  # type: ignore
 
 X = np.ones(10)
 y = np.arange(10) // 2
@@ -1327,8 +1355,8 @@ def test_train_test_split_sparse():
     for InputFeatureType in sparse_types:
         X_s = InputFeatureType(X)
         X_train, X_test = train_test_split(X_s)
-        assert isinstance(X_train, csr_matrix)
-        assert isinstance(X_test, csr_matrix)
+        assert issparse(X_train) and X_train.format == "csr"
+        assert issparse(X_test) and X_test.format == "csr"
 
 
 def test_train_test_split_mock_pandas():
@@ -1765,7 +1793,11 @@ def test_nested_cv():
     cvs = [
         LeaveOneGroupOut(),
         StratifiedKFold(n_splits=2),
+        LeaveOneOut(),
         GroupKFold(n_splits=3),
+        StratifiedKFold(),
+        StratifiedGroupKFold(),
+        StratifiedShuffleSplit(n_splits=3, random_state=0),
     ]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
@@ -1894,3 +1926,25 @@ def test_random_state_shuffle_false(Klass):
 )
 def test_yields_constant_splits(cv, expected):
     assert _yields_constant_splits(cv) == expected
+
+
+@pytest.mark.parametrize("cv", ALL_SPLITTERS, ids=[str(cv) for cv in ALL_SPLITTERS])
+def test_splitter_get_metadata_routing(cv):
+    """Check get_metadata_routing returns the correct MetadataRouter."""
+    assert hasattr(cv, "get_metadata_routing")
+    metadata = cv.get_metadata_routing()
+    if cv in GROUP_SPLITTERS:
+        assert metadata.split.requests["groups"] is True
+    elif cv in NO_GROUP_SPLITTERS:
+        assert not metadata.split.requests
+
+    assert_request_is_empty(metadata, exclude=["split"])
+
+
+@pytest.mark.parametrize("cv", ALL_SPLITTERS, ids=[str(cv) for cv in ALL_SPLITTERS])
+def test_splitter_set_split_request(cv):
+    """Check set_split_request is defined for group splitters and not for others."""
+    if cv in GROUP_SPLITTERS:
+        assert hasattr(cv, "set_split_request")
+    elif cv in NO_GROUP_SPLITTERS:
+        assert not hasattr(cv, "set_split_request")

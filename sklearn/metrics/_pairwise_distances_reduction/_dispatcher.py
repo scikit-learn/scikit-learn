@@ -1,30 +1,24 @@
 from abc import abstractmethod
-
-import numpy as np
-
 from typing import List
 
-from scipy.sparse import isspmatrix_csr, issparse
-
-from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
-
-from ._base import _sqeuclidean_row_norms32, _sqeuclidean_row_norms64
-from ._argkmin import (
-    ArgKmin64,
-    ArgKmin32,
-)
-
-from ._argkmin_classmode import (
-    ArgKminClassMode64,
-    ArgKminClassMode32,
-)
-
-from ._radius_neighbors import (
-    RadiusNeighbors64,
-    RadiusNeighbors32,
-)
+import numpy as np
+from scipy.sparse import issparse
 
 from ... import get_config
+from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING64
+from ._argkmin import (
+    ArgKmin32,
+    ArgKmin64,
+)
+from ._argkmin_classmode import (
+    ArgKminClassMode32,
+    ArgKminClassMode64,
+)
+from ._base import _sqeuclidean_row_norms32, _sqeuclidean_row_norms64
+from ._radius_neighbors import (
+    RadiusNeighbors32,
+    RadiusNeighbors64,
+)
 
 
 def sqeuclidean_row_norms(X, num_threads):
@@ -76,7 +70,7 @@ class BaseDistancesReductionDispatcher:
             "hamming",
             *BOOL_METRICS,
         }
-        return sorted(({"sqeuclidean"} | set(METRIC_MAPPING.keys())) - excluded)
+        return sorted(({"sqeuclidean"} | set(METRIC_MAPPING64.keys())) - excluded)
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
@@ -102,11 +96,12 @@ class BaseDistancesReductionDispatcher:
         """
 
         def is_numpy_c_ordered(X):
-            return hasattr(X, "flags") and X.flags.c_contiguous
+            return hasattr(X, "flags") and getattr(X.flags, "c_contiguous", False)
 
         def is_valid_sparse_matrix(X):
             return (
-                isspmatrix_csr(X)
+                issparse(X)
+                and X.format == "csr"
                 and
                 # TODO: support CSR matrices without non-zeros elements
                 X.nnz > 0
@@ -163,7 +158,7 @@ class ArgKmin(BaseDistancesReductionDispatcher):
     ArgKmin is typically used to perform
     bruteforce k-nearest neighbors queries.
 
-    This class is not meant to be instanciated, one should only use
+    This class is not meant to be instantiated, one should only use
     its :meth:`compute` classmethod which handles allocation and
     deallocation consistently.
     """
@@ -301,7 +296,7 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
     The distance function `dist` depends on the values of the `metric`
     and `metric_kwargs` parameters.
 
-    This class is not meant to be instanciated, one should only use
+    This class is not meant to be instantiated, one should only use
     its :meth:`compute` classmethod which handles allocation and
     deallocation consistently.
     """
@@ -446,7 +441,7 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
     queries when the weighted mode of the labels for the k-nearest neighbors
     are required, such as in `predict` methods.
 
-    This class is not meant to be instanciated, one should only use
+    This class is not meant to be instantiated, one should only use
     its :meth:`compute` classmethod which handles allocation and
     deallocation consistently.
     """
