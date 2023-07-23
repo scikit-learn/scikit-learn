@@ -1,4 +1,5 @@
 """Partial dependence plots for regression and classification models."""
+#  Changed 'percentiles' keyword into 'quantiles'
 
 # Authors: Peter Prettenhofer
 #          Trevor Stephens
