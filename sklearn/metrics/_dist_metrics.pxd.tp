@@ -88,9 +88,9 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     cdef float64_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
-        const int32_t[:] x1_indices,
+        const int32_t* x1_indices,
         const {{INPUT_DTYPE_t}}* x2_data,
-        const int32_t[:] x2_indices,
+        const int32_t* x2_indices,
         const int32_t x1_start,
         const int32_t x1_end,
         const int32_t x2_start,
@@ -101,9 +101,9 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     cdef float64_t rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
-        const int32_t[:] x1_indices,
+        const int32_t* x1_indices,
         const {{INPUT_DTYPE_t}}* x2_data,
-        const int32_t[:] x2_indices,
+        const int32_t* x2_indices,
         const int32_t x1_start,
         const int32_t x1_end,
         const int32_t x2_start,
@@ -127,8 +127,8 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     cdef int pdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
-        const int32_t[:] x1_indices,
-        const int32_t[:] x1_indptr,
+        const int32_t[::1] x1_indices,
+        const int32_t[::1] x1_indptr,
         const intp_t size,
         float64_t[:, ::1] D,
     ) except -1 nogil
@@ -136,11 +136,11 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     cdef int cdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
-        const int32_t[:] x1_indices,
-        const int32_t[:] x1_indptr,
+        const int32_t[::1] x1_indices,
+        const int32_t[::1] x1_indptr,
         const {{INPUT_DTYPE_t}}* x2_data,
-        const int32_t[:] x2_indices,
-        const int32_t[:] x2_indptr,
+        const int32_t[::1] x2_indices,
+        const int32_t[::1] x2_indptr,
         const intp_t size,
         float64_t[:, ::1] D,
     ) except -1 nogil
