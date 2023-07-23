@@ -589,13 +589,6 @@ Changelog
 - |API| The `eps` parameter of the :func:`metrics.log_loss` has been deprecated and
   will be removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
 
-- |Enhancement| :meth:`metrics.RocCurveDisplay.from_estimator`,
-  :meth:`metrics.RocCurveDisplay.from_predictions`,
-  :meth:`metrics.PrecisionRecallDisplay.from_estimator`, and
-  :meth:`metrics.PrecisionRecallDisplay.from_predictions` now accept a new keyword
-  `despine` to remove the top and right spines of the plot in order to make it clearer.
-  :pr:`26367` by :user:`Yao Xiao <Charlie-XIAO>`.
-
 :mod:`sklearn.gaussian_process`
 ...............................
 
