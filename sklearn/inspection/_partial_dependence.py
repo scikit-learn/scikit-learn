@@ -44,12 +44,12 @@ __all__ = [
 ]
 
 
-def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
-    """Generate a grid of points based on the percentiles of X.
+def _grid_from_X(X, quantiles, is_categorical, grid_resolution):
+    """Generate a grid of points based on the quantiles of X.
 
     The grid is a cartesian product between the columns of ``values``. The
     ith column of ``values`` consists in ``grid_resolution`` equally-spaced
-    points between the percentiles of the jth column of X.
+    points between the quantiles of the jth column of X.
 
     If ``grid_resolution`` is bigger than the number of unique values in the
     j-th column of X or if the feature is a categorical feature (by inspecting
@@ -60,14 +60,14 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
     X : array-like of shape (n_samples, n_target_features)
         The data.
 
-    percentiles : tuple of float
-        The percentiles which are used to construct the extreme values of
+    quantiles : tuple of float
+        The quantiles which are used to construct the extreme values of
         the grid. Must be in [0, 1].
 
     is_categorical : list of bool
         For each feature, tells whether it is categorical or not. If a feature
         is categorical, then the values used will be the unique ones
-        (i.e. categories) instead of the percentiles.
+        (i.e. categories) instead of the quantiles.
 
     grid_resolution : int
         The number of equally spaced points to be placed on the grid for each
@@ -84,12 +84,12 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
         array ``values[j]`` is either ``grid_resolution``, or the number of
         unique values in ``X[:, j]``, whichever is smaller.
     """
-    if not isinstance(percentiles, Iterable) or len(percentiles) != 2:
-        raise ValueError("'percentiles' must be a sequence of 2 elements.")
-    if not all(0 <= x <= 1 for x in percentiles):
-        raise ValueError("'percentiles' values must be in [0, 1].")
-    if percentiles[0] >= percentiles[1]:
-        raise ValueError("percentiles[0] must be strictly less than percentiles[1].")
+    if not isinstance(quantiles, Iterable) or len(quantiles) != 2:
+        raise ValueError("'quantiles' must be a sequence of 2 elements.")
+    if not all(0 <= x <= 1 for x in quantiles):
+        raise ValueError("'quantiles' values must be in [0, 1].")
+    if quantiles[0] >= quantiles[1]:
+        raise ValueError("quantiles[0] must be strictly less than quantiles[1].")
 
     if grid_resolution <= 1:
         raise ValueError("'grid_resolution' must be strictly greater than 1.")
@@ -115,19 +115,19 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
             # - feature is categorical
             axis = uniques
         else:
-            # create axis based on percentiles and grid resolution
-            emp_percentiles = mquantiles(
-                _safe_indexing(X, feature, axis=1), prob=percentiles, axis=0
+            # create axis based on quantiles and grid resolution
+            emp_quantiles = mquantiles(
+                _safe_indexing(X, feature, axis=1), prob=quantiles, axis=0
             )
-            if np.allclose(emp_percentiles[0], emp_percentiles[1]):
+            if np.allclose(emp_quantiles[0], emp_quantiles[1]):
                 raise ValueError(
-                    "percentiles are too close to each other, "
-                    "unable to build the grid. Please choose percentiles "
+                    "quantiles are too close to each other, "
+                    "unable to build the grid. Please choose quantiles "
                     "that are further apart."
                 )
             axis = np.linspace(
-                emp_percentiles[0],
-                emp_percentiles[1],
+                emp_quantiles[0],
+                emp_quantiles[1],
                 num=grid_resolution,
                 endpoint=True,
             )
@@ -363,7 +363,7 @@ def _partial_dependence_brute(
         "categorical_features": ["array-like", None],
         "feature_names": ["array-like", None],
         "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
-        "percentiles": [tuple],
+        "quantiles": [tuple],
         "grid_resolution": [Interval(Integral, 1, None, closed="left")],
         "method": [StrOptions({"auto", "recursion", "brute"})],
         "kind": [StrOptions({"average", "individual", "both"})],
@@ -379,7 +379,7 @@ def partial_dependence(
     categorical_features=None,
     feature_names=None,
     response_method="auto",
-    percentiles=(0.05, 0.95),
+    quantiles=(0.05, 0.95),
     grid_resolution=100,
     method="auto",
     kind="average",
@@ -465,7 +465,7 @@ def partial_dependence(
         ``method`` is 'recursion', the response is always the output of
         :term:`decision_function`.
 
-    percentiles : tuple of float, default=(0.05, 0.95)
+    quantiles : tuple of float, default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the grid. Must be in [0, 1].
 
@@ -567,7 +567,7 @@ def partial_dependence(
     >>> y = [0, 1]
     >>> from sklearn.ensemble import GradientBoostingClassifier
     >>> gb = GradientBoostingClassifier(random_state=0).fit(X, y)
-    >>> partial_dependence(gb, features=[0], X=X, percentiles=(0, 1),
+    >>> partial_dependence(gb, features=[0], X=X, quantiles=(0, 1),
     ...                    grid_resolution=2) # doctest: +SKIP
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
     """
@@ -697,7 +697,7 @@ def partial_dependence(
 
     grid, values = _grid_from_X(
         _safe_indexing(X, features_indices, axis=1),
-        percentiles,
+        quantiles,
         is_categorical,
         grid_resolution,
     )
