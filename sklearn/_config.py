@@ -1,8 +1,8 @@
 """Global configuration state and functions for management
 """
 import os
-from contextlib import contextmanager as contextmanager
 import threading
+from contextlib import contextmanager as contextmanager
 
 _global_config = {
     "assume_finite": bool(os.environ.get("SKLEARN_ASSUME_FINITE", False)),
@@ -59,7 +59,7 @@ def set_config(
     enable_metadata_routing=None,
     skip_parameter_validation=None,
 ):
-    """Set global scikit-learn configuration
+    """Set global scikit-learn configuration.
 
     .. versionadded:: 0.19
 

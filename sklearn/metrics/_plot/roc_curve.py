@@ -1,6 +1,5 @@
-from .. import auc
-from .. import roc_curve
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
+from .._ranking import auc, roc_curve
 
 
 class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
@@ -128,7 +127,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.plot.RocCurveDisplay`
+        display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
         """
         self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
@@ -259,7 +258,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.plot.RocCurveDisplay`
+        display : :class:`~sklearn.metrics.RocCurveDisplay`
             The ROC Curve display.
 
         See Also

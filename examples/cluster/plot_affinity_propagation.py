@@ -10,8 +10,8 @@ Between Data Points", Science Feb. 2007
 """
 import numpy as np
 
-from sklearn.cluster import AffinityPropagation
 from sklearn import metrics
+from sklearn.cluster import AffinityPropagation
 from sklearn.datasets import make_blobs
 
 # %%

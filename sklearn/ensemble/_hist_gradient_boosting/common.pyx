@@ -19,7 +19,7 @@ HISTOGRAM_DTYPE = np.dtype([
 PREDICTOR_RECORD_DTYPE = np.dtype([
     ('value', Y_DTYPE),
     ('count', np.uint32),
-    ('feature_idx', np.uint32),
+    ('feature_idx', np.intp),
     ('num_threshold', X_DTYPE),
     ('missing_go_to_left', np.uint8),
     ('left', np.uint32),

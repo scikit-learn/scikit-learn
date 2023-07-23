@@ -1,16 +1,15 @@
-from numbers import Integral, Real
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 
-from ._base import _fit_liblinear, _get_liblinear_solver_type, BaseSVC, BaseLibSVM
-from ..base import BaseEstimator, RegressorMixin, OutlierMixin
-from ..base import _fit_context
-from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, LinearModel
+from ..base import BaseEstimator, OutlierMixin, RegressorMixin, _fit_context
+from ..linear_model._base import LinearClassifierMixin, LinearModel, SparseCoefMixin
 from ..utils import deprecated
-from ..utils.validation import _num_samples
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
-from ..utils._param_validation import Interval, StrOptions, Hidden
+from ..utils.validation import _num_samples
+from ._base import BaseLibSVM, BaseSVC, _fit_liblinear, _get_liblinear_solver_type
 
 
 def _validate_dual_parameter(dual, loss, penalty, multi_class, X):
@@ -73,12 +72,13 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         optimization problem. Prefer dual=False when n_samples > n_features.
         `dual="auto"` will choose the value of the parameter automatically,
         based on the values of `n_samples`, `n_features`, `loss`, `multi_class`
-        and `penalty`. If `n_samples` < `n_features` and optmizer supports
+        and `penalty`. If `n_samples` < `n_features` and optimizer supports
         chosen `loss`, `multi_class` and `penalty`, then dual will be set to True,
         otherwise it will be set to False.
 
         .. versionchanged:: 1.3
-           The default value will change from `True` to `"auto"` in 1.5.
+           The `"auto"` option is added in version 1.3 and will be the default
+           in version 1.5.
 
     tol : float, default=1e-4
         Tolerance for stopping criteria.
@@ -409,11 +409,12 @@ class LinearSVR(RegressorMixin, LinearModel):
         optimization problem. Prefer dual=False when n_samples > n_features.
         `dual="auto"` will choose the value of the parameter automatically,
         based on the values of `n_samples`, `n_features` and `loss`. If
-        `n_samples` < `n_features` and optmizer supports chosen `loss`,
+        `n_samples` < `n_features` and optimizer supports chosen `loss`,
         then dual will be set to True, otherwise it will be set to False.
 
         .. versionchanged:: 1.3
-           The default value will change from `True` to `"auto"` in 1.5.
+           The `"auto"` option is added in version 1.3 and will be the default
+           in version 1.5.
 
     verbose : int, default=0
         Enable verbose output. Note that this setting takes advantage of a
@@ -773,7 +774,7 @@ class SVC(BaseSVC):
         Indices of support vectors.
 
     support_vectors_ : ndarray of shape (n_SV, n_features)
-        Support vectors.
+        Support vectors. An empty array if kernel is precomputed.
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.

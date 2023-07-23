@@ -2,45 +2,26 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
+import warnings
+from copy import deepcopy
+
+import joblib
 import numpy as np
 import pytest
-import warnings
 from scipy import interpolate, sparse
-from copy import deepcopy
-import joblib
 
-from sklearn.base import is_classifier
-from sklearn.base import clone
-from sklearn.datasets import load_diabetes
-from sklearn.datasets import make_regression
-from sklearn.model_selection import (
-    GridSearchCV,
-    LeaveOneGroupOut,
-    train_test_split,
-)
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.base import clone, is_classifier
+from sklearn.datasets import load_diabetes, make_regression
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.utils._testing import TempMemmap
-
 from sklearn.linear_model import (
     ElasticNet,
     ElasticNetCV,
-    enet_path,
     Lars,
-    lars_path,
     Lasso,
     LassoCV,
     LassoLars,
     LassoLarsCV,
     LassoLarsIC,
-    lasso_path,
     LinearRegression,
     MultiTaskElasticNet,
     MultiTaskElasticNetCV,
@@ -51,10 +32,27 @@ from sklearn.linear_model import (
     RidgeClassifier,
     RidgeClassifierCV,
     RidgeCV,
+    enet_path,
+    lars_path,
+    lasso_path,
 )
-
 from sklearn.linear_model._coordinate_descent import _set_order
+from sklearn.model_selection import (
+    GridSearchCV,
+    LeaveOneGroupOut,
+    train_test_split,
+)
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_array
+from sklearn.utils._testing import (
+    TempMemmap,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 
 
 @pytest.mark.parametrize("order", ["C", "F"])
@@ -86,12 +84,10 @@ def test_set_order_sparse(order, input_order):
     X = X.asformat(sparse_format)
     y = X.asformat(sparse_format)
     X2, y2 = _set_order(X, y, order=order)
-    if order == "C":
-        assert sparse.isspmatrix_csr(X2)
-        assert sparse.isspmatrix_csr(y2)
-    elif order == "F":
-        assert sparse.isspmatrix_csc(X2)
-        assert sparse.isspmatrix_csc(y2)
+
+    format = "csc" if order == "F" else "csr"
+    assert sparse.issparse(X2) and X2.format == format
+    assert sparse.issparse(y2) and y2.format == format
 
 
 def test_lasso_zero():
@@ -274,8 +270,8 @@ def test_lasso_cv():
 
 
 def test_lasso_cv_with_some_model_selection():
-    from sklearn.model_selection import ShuffleSplit
     from sklearn import datasets
+    from sklearn.model_selection import ShuffleSplit
 
     diabetes = datasets.load_diabetes()
     X = diabetes.data
