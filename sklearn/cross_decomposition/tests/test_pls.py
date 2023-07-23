@@ -636,10 +636,11 @@ def test_pls_regression_fit_1d_y():
 
     plsr = PLSRegression().fit(X, y)
     y_pred = plsr.predict(X)
-    assert_allclose(y_pred, expected)
+    assert y_pred.shape == expected.shape
 
     # Check that it works in VotingRegressor
     lr = LinearRegression().fit(X, y)
     vr = VotingRegressor([("lr", lr), ("plsr", plsr)])
     y_pred = vr.fit(X, y).predict(X)
+    assert y_pred.shape == expected.shape
     assert_allclose(y_pred, expected)
