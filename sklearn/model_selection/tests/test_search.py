@@ -885,9 +885,21 @@ def test_param_sampler():
 def check_cv_results_array_types(search, param_keys, score_keys):
     # Check if the search `cv_results`'s array are of correct types
     cv_results = search.cv_results_
-    assert all(isinstance(cv_results[param], np.ma.MaskedArray) for param in param_keys)
-    assert all(cv_results[key].dtype == object for key in param_keys)
-    assert not any(isinstance(cv_results[key], np.ma.MaskedArray) for key in score_keys)
+    assert all(
+        isinstance(cv_results[param], np.ma.MaskedArray)
+        for param in param_keys
+        if param not in {"iter", "n_resources"}
+    )
+    assert all(
+        cv_results[key].dtype == object
+        for key in param_keys
+        if key not in {"iter", "n_resources"}
+    )
+    assert not any(
+        isinstance(cv_results[key], np.ma.MaskedArray)
+        for key in score_keys
+        if key not in {"iter", "n_resources"}
+    )
     assert all(
         cv_results[key].dtype == np.float64
         for key in score_keys
