@@ -59,7 +59,7 @@ python_environment_install_and_activate() {
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
 
-    elif [[ "$DISTRIB" == "pip-nogil" || "$DISTRIB" == "pip-python-dev" ]]; then
+    elif [[ "$DISTRIB" == "pip"* ]]; then
         python -m venv $VIRTUALENV
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
@@ -76,7 +76,7 @@ python_environment_install_and_activate() {
         echo "Installing pillow from latest sources"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
 
-    elif [[ "$DISTRIB" == "pip-nogil" || "$DISTRIB" == "pip-python-dev" ]]; then
+    elif [[ "$DISTRIB" == "pip"* ]]; then
         apt-get -yq update
         apt-get install -yq ccache
 

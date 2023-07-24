@@ -2,10 +2,8 @@
 
 set -e
 
-if [[ "$DISTRIB" =~ ^conda.* ]]; then
-    source activate $VIRTUALENV
-elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "pip-nogil" ]]; then
-    source $VIRTUALENV/bin/activate
-fi
+# Defines the show_installed_libraries and activate_environment functions.
+source build_tools/shared.sh
 
+activate_environment
 make test-doc
