@@ -734,7 +734,7 @@ class MetadataRouter:
 
     # this is here for us to use this attribute's value instead of doing
     # `isinstance`` in our checks, so that we avoid issues when people vendor
-    # this file instad of using it directly from scikit-learn.
+    # this file instead of using it directly from scikit-learn.
     _type = "metadata_router"
 
     def __init__(self, owner):
