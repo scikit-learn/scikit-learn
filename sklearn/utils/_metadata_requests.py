@@ -127,6 +127,40 @@ def _routing_enabled():
     return get_config().get("enable_metadata_routing", False)
 
 
+def _raise_for_params(params, owner, method):
+    """Raise an error if metadata routing is not enabled and params are passed.
+
+    .. versionadded:: 1.4
+
+    Parameters
+    ----------
+    params : dict
+        The metadata passed to a method.
+
+    owner : object
+        The object to which the method belongs.
+
+    method : str
+        The name of the method, e.g. "fit".
+
+    Raises
+    ------
+    ValueError
+        If metadata routing is not enabled and params are passed.
+    """
+    caller = (
+        f"{owner.__class__.__name__}.{method}" if method else owner.__class__.__name__
+    )
+    if not _routing_enabled() and params:
+        raise ValueError(
+            f"Passing extra keyword arguments to {caller} is only supported if"
+            " enable_metadata_routing=True, which you can set using"
+            " `sklearn.set_config`. See the User Guide"
+            " <https://scikit-learn.org/stable/metadata_routing.html> for more"
+            " details."
+        )
+
+
 # Request values
 # ==============
 # Each request value needs to be one of the following values, or an alias.
@@ -360,6 +394,28 @@ class MethodMetadataRequest:
             )
         return res
 
+    def _consumes(self, params):
+        """Check whether the given parameters are consumed by this method.
+
+        Parameters
+        ----------
+        params : iterable of str
+            An iterable of parameters to check.
+
+        Returns
+        -------
+        consumed : set of str
+            A set of parameters which are consumed by this method.
+        """
+        params = set(params)
+        res = set()
+        for prop, alias in self._requests.items():
+            if alias is True and prop in params:
+                res.add(prop)
+            elif isinstance(alias, str) and alias in params:
+                res.add(alias)
+        return res
+
     def _serialize(self):
         """Serialize the object.
 
@@ -407,6 +463,26 @@ class MetadataRequest:
                 method,
                 MethodMetadataRequest(owner=owner, method=method),
             )
+
+    def consumes(self, method, params):
+        """Check whether the given parameters are consumed by the given method.
+
+        .. versionadded:: 1.4
+
+        Parameters
+        ----------
+        method : str
+            The name of the method to check.
+
+        params : iterable of str
+            An iterable of parameters to check.
+
+        Returns
+        -------
+        consumed : set of str
+            A set of parameters which are consumed by the given method.
+        """
+        return getattr(self, method)._consumes(params=params)
 
     def __getattr__(self, name):
         # Called when the default attribute access fails with an AttributeError
@@ -658,7 +734,7 @@ class MetadataRouter:
 
     # this is here for us to use this attribute's value instead of doing
     # `isinstance`` in our checks, so that we avoid issues when people vendor
-    # this file instad of using it directly from scikit-learn.
+    # this file instead of using it directly from scikit-learn.
     _type = "metadata_router"
 
     def __init__(self, owner):
@@ -735,6 +811,37 @@ class MetadataRouter:
                 mapping=method_mapping, router=get_routing_for_object(obj)
             )
         return self
+
+    def consumes(self, method, params):
+        """Check whether the given parameters are consumed by the given method.
+
+        .. versionadded:: 1.4
+
+        Parameters
+        ----------
+        method : str
+            The name of the method to check.
+
+        params : iterable of str
+            An iterable of parameters to check.
+
+        Returns
+        -------
+        consumed : set of str
+            A set of parameters which are consumed by the given method.
+        """
+        res = set()
+        if self._self_request:
+            res = res | self._self_request.consumes(method=method, params=params)
+
+        for _, route_mapping in self._route_mappings.items():
+            for callee, caller in route_mapping.mapping:
+                if caller == method:
+                    res = res | route_mapping.router.consumes(
+                        method=callee, params=params
+                    )
+
+        return res
 
     def _get_param_names(self, *, method, return_alias, ignore_self_request):
         """Get names of all metadata that can be consumed or routed by specified \

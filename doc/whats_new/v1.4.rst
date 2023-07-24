@@ -19,6 +19,11 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- |Fix| The initialization of :class:`mixture.GaussianMixture` from user-provided
+  `precisions_init` for `covariance_type` of `full` or `tied` was not correct,
+  and has been fixed.
+  :pr:`26416` by :user:`Yang Tao <mchikyt3>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -41,7 +46,8 @@ Changelog
     or *Miscellaneous*.
     Entries should end with:
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
-    where 123456 is the *pull request* number, not the issue number.
+    where 123455 is the *pull request* number, not the issue number.
+
 
 :mod:`sklearn.base`
 ...................
@@ -50,6 +56,22 @@ Changelog
   :meth:`base.OutlierMixin.fit_predict` now accept ``**kwargs`` which are
   passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
   Jalali`_.
+
+- |Enhancement| :meth:`base.TransformerMixin.fit_transform` and
+  :meth:`base.OutlierMixin.fit_predict` now raise a warning if ``transform`` /
+  ``predict`` consume metadata, but no custom ``fit_transform`` / ``fit_predict``
+  is defined in the class inheriting from them correspondingly. :pr:`26831` by
+  `Adrin Jalali`_.
+
+- |Enhancement| :func:`base.clone` now supports `dict` as input and creates a
+  copy. :pr:`26786` by `Adrin Jalali`_.
+
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| :class:`cross_decomposition.PLSRegression` now automatically ravels the output
+  of `predict` if fitted with one dimensional `y`.
+  :pr:`26602` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -60,6 +82,12 @@ Changelog
   when using a custom initialization. The default value of this parameter will change
   from `None` to `auto` in version 1.6.
   :pr:`26634` by :user:`Alexandre Landeau <AlexL>` and :user:`Alexandre Vigny <avigny>`.
+
+- |Enhancement| :class:`decomposition.PCA` now supports the Array API for the
+  `full` and `randomized` solvers (with QR power iterations). See
+  :ref:`array_api` for more details.
+  :pr:`26315` by :user:`Mateusz Sokół <mtsokol>` and
+  :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -78,6 +106,32 @@ Changelog
 - |Fix| :func:`feature_selection.mutual_info_regression` now correctly computes the
   result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Enhancement| :class:`linear_model.LogisticRegressionCV` now supports
+  metadata routing. :meth:`linear_model.LogisticRegressionCV.fit` now
+  accepts ``**params`` which are passed to the underlying splitter and
+  scorer. :meth:`linear_model.LogisticRegressionCV.score` now accepts
+  ``**score_params`` which are passed to the underlying scorer.
+  :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
+
+:mod:`sklearn.pipeline`
+.......................
+
+- |Feature| :class:`pipeline.Pipeline` now supports metadata routing according
+  to :ref:`metadata routing user guide <metadata_routing>`. :pr:`26789` by
+  `Adrin Jalali`_.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| :class:`model_selection.GridSearchCV`,
+  :class:`model_selection.RandomizedSearchCV`, and
+  :class:`model_selection.HalvingGridSearchCV` now don't change the given
+  object in the parameter grid if it's an estimator. :pr:`26786` by `Adrin
+  Jalali`_.
+
 :mod:`sklearn.tree`
 ...................
 
@@ -88,6 +142,21 @@ Changelog
   not supported.
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`, initiated by
   :user:`Patrick O'Reilly <pat-oreilly>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Performance| Computing pairwise distances via :class:`metrics.DistanceMetric`
+  for CSR × CSR,  Dense × CSR, and CSR × Dense datasets is now 1.5x faster.
+  :pr:`26765` by :user:`Meekail Zain <micky774>`
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :class:`~utils.metadata_routing.MetadataRequest` and
+  :class:`~utils.metadata_routing.MetadataRouter` now have a ``consumes`` method
+  which can be used to check whether a given set of parameters would be consumed.
+  :pr:`26831` by `Adrin Jalali`_.
 
 Code and Documentation Contributors
 -----------------------------------
