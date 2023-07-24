@@ -75,10 +75,10 @@ New features
   function into a ``Pipeline``-compatible transformer object.
   By Joe Jevnik.
 
-- The new classes :class:`cross_validation.LabelKFold` and
-  :class:`cross_validation.LabelShuffleSplit` generate train-test folds,
-  respectively similar to :class:`cross_validation.KFold` and
-  :class:`cross_validation.ShuffleSplit`, except that the folds are
+- The new classes `cross_validation.LabelKFold` and
+  `cross_validation.LabelShuffleSplit` generate train-test folds,
+  respectively similar to `cross_validation.KFold` and
+  `cross_validation.ShuffleSplit`, except that the folds are
   conditioned on a label array. By `Brian McFee`_, :user:`Jean
   Kossaifi <JeanKossaifi>` and `Gilles Louppe`_.
 
@@ -97,7 +97,7 @@ New features
   :class:`decomposition.NMF`. Previous solver based on Projected Gradient is
   still available setting new parameter ``solver`` to ``pg``, but is
   deprecated and will be removed in 0.19, along with
-  :class:`decomposition.ProjectedGradientNMF` and parameters ``sparseness``,
+  `decomposition.ProjectedGradientNMF` and parameters ``sparseness``,
   ``eta``, ``beta`` and ``nls_max_iter``. New parameters ``alpha`` and
   ``l1_ratio`` control L1 and L2 regularization, and ``shuffle`` adds a
   shuffling step in the ``cd`` solver.
@@ -109,7 +109,7 @@ Enhancements
   Barnes-Hut method, leading to much faster fitting. By Christopher Erick Moody.
   (:issue:`4025`)
 
-- :class:`cluster.mean_shift_.MeanShift` now supports parallel execution,
+- :class:`cluster.MeanShift` now supports parallel execution,
   as implemented in the ``mean_shift`` function. By :user:`Martino
   Sorbaro <martinosorb>`.
 
@@ -119,7 +119,7 @@ Enhancements
 - :class:`dummy.DummyClassifier` now supports a prior fitting strategy.
   By `Arnaud Joly`_.
 
-- Added a ``fit_predict`` method for :class:`mixture.GMM` and subclasses.
+- Added a ``fit_predict`` method for `mixture.GMM` and subclasses.
   By :user:`Cory Lorenz <clorenz7>`.
 
 - Added the :func:`metrics.label_ranking_loss` metric.
@@ -133,7 +133,7 @@ Enhancements
 - Added option to use multi-output regression metrics without averaging.
   By Konstantin Shmelkov and :user:`Michael Eickenberg<eickenberg>`.
 
-- Added ``stratify`` option to :func:`cross_validation.train_test_split`
+- Added ``stratify`` option to `cross_validation.train_test_split`
   for stratified splitting. By Miroslav Batchkarov.
 
 - The :func:`tree.export_graphviz` function now supports aesthetic
@@ -172,8 +172,8 @@ Enhancements
   :func:`sklearn.metrics.pairwise.cosine_similarity`. By
   :user:`Jaidev Deshpande <jaidevd>`.
 
-- Add :func:`minmax_scale` to provide a function interface for
-  :class:`MinMaxScaler`. By :user:`Thomas Unterthiner <untom>`.
+- Add :func:`preprocessing.minmax_scale` to provide a function interface for
+  :class:`preprocessing.MinMaxScaler`. By :user:`Thomas Unterthiner <untom>`.
 
 - ``dump_svmlight_file`` now handles multi-label datasets.
   By Chih-Wei Chang.
@@ -183,12 +183,12 @@ Enhancements
 
 - The "Wisconsin Breast Cancer" classical two-class classification dataset
   is now included in scikit-learn, available with
-  :func:`sklearn.dataset.load_breast_cancer`.
+  :func:`datasets.load_breast_cancer`.
 
 - Upgraded to joblib 0.9.3 to benefit from the new automatic batching of
   short tasks. This makes it possible for scikit-learn to benefit from
   parallelism when many very short tasks are executed in parallel, for
-  instance by the :class:`grid_search.GridSearchCV` meta-estimator
+  instance by the `grid_search.GridSearchCV` meta-estimator
   with ``n_jobs > 1`` used with a large grid of parameters on a small
   dataset. By `Vlad Niculae`_, `Olivier Grisel`_ and `Loic Esteve`_.
 
@@ -196,7 +196,7 @@ Enhancements
   https://github.com/joblib/joblib/blob/master/CHANGES.rst#release-093
 
 - Improved speed (3 times per iteration) of
-  :class:`decomposition.DictLearning` with coordinate descent method
+  `decomposition.DictLearning` with coordinate descent method
   from :class:`linear_model.Lasso`. By :user:`Arthur Mensch <arthurmensch>`.
 
 - Parallel processing (threaded) for queries of nearest neighbors
@@ -264,7 +264,7 @@ Enhancements
 
 - Added :func:`metrics.pairwise.laplacian_kernel`.  By `Clyde Fare <https://github.com/Clyde-fare>`_.
 
-- :class:`covariance.GraphLasso` allows separate control of the convergence criterion
+- `covariance.GraphLasso` allows separate control of the convergence criterion
   for the Elastic-Net subproblem via  the ``enet_tol`` parameter.
 
 - Improved verbosity in :class:`decomposition.DictionaryLearning`.
@@ -283,7 +283,7 @@ Enhancements
 
 - Added the ``fit_predict`` method to :class:`pipeline.Pipeline`.
 
-- Added the :func:`preprocessing.min_max_scale` function.
+- Added the :func:`preprocessing.minmax_scale` function.
 
 Bug fixes
 .........
@@ -294,16 +294,16 @@ Bug fixes
 - Fixed the output shape of :class:`linear_model.RANSACRegressor` to
   ``(n_samples, )``. By `Andreas Müller`_.
 
-- Fixed bug in :class:`decomposition.DictLearning` when ``n_jobs < 0``. By
+- Fixed bug in `decomposition.DictLearning` when ``n_jobs < 0``. By
   `Andreas Müller`_.
 
-- Fixed bug where :class:`grid_search.RandomizedSearchCV` could consume a
+- Fixed bug where `grid_search.RandomizedSearchCV` could consume a
   lot of memory for large discrete grids. By `Joel Nothman`_.
 
 - Fixed bug in :class:`linear_model.LogisticRegressionCV` where `penalty` was ignored
   in the final fit. By `Manoj Kumar`_.
 
-- Fixed bug in :class:`ensemble.forest.ForestClassifier` while computing
+- Fixed bug in `ensemble.forest.ForestClassifier` while computing
   oob_score and X is a sparse.csc_matrix. By :user:`Ankur Ankan <ankurankan>`.
 
 - All regressors now consistently handle and warn when given ``y`` that is of
@@ -313,17 +313,17 @@ Bug fixes
 - Fix in :class:`cluster.KMeans` cluster reassignment for sparse input by
   `Lars Buitinck`_.
 
-- Fixed a bug in :class:`lda.LDA` that could cause asymmetric covariance
+- Fixed a bug in :class:`decomposition.LDA` that could cause asymmetric covariance
   matrices when using shrinkage. By `Martin Billinger`_.
 
-- Fixed :func:`cross_validation.cross_val_predict` for estimators with
+- Fixed `cross_validation.cross_val_predict` for estimators with
   sparse predictions. By Buddha Prakash.
 
 - Fixed the ``predict_proba`` method of :class:`linear_model.LogisticRegression`
   to use soft-max instead of one-vs-rest normalization. By `Manoj Kumar`_.
   (:issue:`5182`)
 
-- Fixed the :func:`partial_fit` method of :class:`linear_model.SGDClassifier`
+- Fixed the `partial_fit` method of :class:`linear_model.SGDClassifier`
   when called with ``average=True``. By :user:`Andrew Lamb <andylamb>`.
   (:issue:`5282`)
 
@@ -339,17 +339,17 @@ Bug fixes
   automatically changes the solver to 'sag' in this case.
   :issue:`5360` by `Tom Dupre la Tour`_.
 
-- Fixed a performance bug in :class:`decomposition.RandomizedPCA` on data
+- Fixed a performance bug in `decomposition.RandomizedPCA` on data
   with a large number of features and fewer samples. (:issue:`4478`)
   By `Andreas Müller`_, `Loic Esteve`_ and :user:`Giorgio Patrini <giorgiop>`.
 
-- Fixed bug in :class:`cross_decomposition.PLS` that yielded unstable and
+- Fixed bug in `cross_decomposition.PLS` that yielded unstable and
   platform dependent output, and failed on `fit_transform`.
   By :user:`Arthur Mensch <arthurmensch>`.
 
 - Fixes to the ``Bunch`` class used to store datasets.
 
-- Fixed :func:`ensemble.plot_partial_dependence` ignoring the
+- Fixed `ensemble.plot_partial_dependence` ignoring the
   ``percentiles`` parameter.
 
 - Providing a ``set`` as vocabulary in ``CountVectorizer`` no longer
@@ -361,8 +361,8 @@ Bug fixes
   :class:`linear_model.Lasso` and :class:`linear_model.ElasticNet`.
 
 - Fixed inconsistent memory layout in the coordinate descent solver
-  that affected :class:`linear_model.DictionaryLearning` and
-  :class:`covariance.GraphLasso`. (:issue:`5337`)
+  that affected `linear_model.DictionaryLearning` and
+  `covariance.GraphLasso`. (:issue:`5337`)
   By `Olivier Grisel`_.
 
 - :class:`manifold.LocallyLinearEmbedding` no longer ignores the ``reg``
@@ -396,7 +396,7 @@ API changes summary
   in :class:`preprocessing.StandardScaler` is deprecated and superseded
   by `scale_`; it won't be available in 0.19. By :user:`Giorgio Patrini <giorgiop>`.
 
-- :class:`svm.SVC`` and :class:`svm.NuSVC` now have an ``decision_function_shape``
+- :class:`svm.SVC` and :class:`svm.NuSVC` now have an ``decision_function_shape``
   parameter to make their decision function of shape ``(n_samples, n_classes)``
   by setting ``decision_function_shape='ovr'``. This will be the default behavior
   starting in 0.19. By `Andreas Müller`_.
@@ -407,7 +407,7 @@ API changes summary
   to be explicitly shaped ``(n_samples, n_features)``.
   By :user:`Vighnesh Birodkar <vighneshbirodkar>`.
 
-- :class:`lda.LDA` and :class:`qda.QDA` have been moved to
+- `lda.LDA` and `qda.QDA` have been moved to
   :class:`discriminant_analysis.LinearDiscriminantAnalysis` and
   :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
 
@@ -438,7 +438,7 @@ API changes summary
 - The ``decision_function`` on all regressors was deprecated and will be
   removed in 0.19.  Use ``predict`` instead.
 
-- :func:`datasets.load_lfw_pairs` is deprecated and will be removed in 0.19.
+- `datasets.load_lfw_pairs` is deprecated and will be removed in 0.19.
   Use :func:`datasets.fetch_lfw_pairs` instead.
 
 - The deprecated ``hmm`` module was removed.
@@ -446,9 +446,9 @@ API changes summary
 - The deprecated ``Bootstrap`` cross-validation iterator was removed.
 
 - The deprecated ``Ward`` and ``WardAgglomerative`` classes have been removed.
-  Use :class:`clustering.AgglomerativeClustering` instead.
+  Use :class:`cluster.AgglomerativeClustering` instead.
 
-- :func:`cross_validation.check_cv` is now a public function.
+- `cross_validation.check_cv` is now a public function.
 
 - The property ``residues_`` of :class:`linear_model.LinearRegression` is deprecated
   and will be removed in 0.19.

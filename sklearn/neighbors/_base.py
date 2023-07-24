@@ -65,8 +65,8 @@ if sp_base_version < parse_version("1.9"):
     SCIPY_METRICS += ["matching"]
 
 VALID_METRICS = dict(
-    ball_tree=BallTree._valid_metrics,
-    kd_tree=KDTree._valid_metrics,
+    ball_tree=BallTree.valid_metrics,
+    kd_tree=KDTree.valid_metrics,
     # The following list comes from the
     # sklearn.metrics.pairwise doc string
     brute=sorted(set(PAIRWISE_DISTANCE_FUNCTIONS).union(SCIPY_METRICS)),
@@ -195,7 +195,8 @@ def _check_precomputed(X):
         "graph": ["sparse matrix"],
         "copy": ["boolean"],
         "warn_when_not_sorted": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def sort_graph_by_row_values(graph, copy=False, warn_when_not_sorted=True):
     """Sort a sparse graph such that each row is stored with increasing values.

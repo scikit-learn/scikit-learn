@@ -90,11 +90,12 @@ def _fix_connectivity(X, connectivity, affinity):
     connectivity = connectivity + connectivity.T
 
     # Convert connectivity matrix to LIL
-    if not sparse.isspmatrix_lil(connectivity):
-        if not sparse.isspmatrix(connectivity):
-            connectivity = sparse.lil_matrix(connectivity)
-        else:
-            connectivity = connectivity.tolil()
+    if not sparse.issparse(connectivity):
+        connectivity = sparse.lil_matrix(connectivity)
+
+    # `connectivity` is a sparse matrix at this point
+    if connectivity.format != "lil":
+        connectivity = connectivity.tolil()
 
     # Compute the number of nodes
     n_connected_components, labels = connected_components(connectivity)
@@ -185,7 +186,8 @@ def _single_linkage_tree(
         "connectivity": ["array-like", "sparse matrix", None],
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "return_distance": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     """Ward clustering based on a Feature matrix.

@@ -6,7 +6,7 @@ Model-based and sequential feature selection
 This example illustrates and compares two approaches for feature selection:
 :class:`~sklearn.feature_selection.SelectFromModel` which is based on feature
 importance, and
-:class:`~sklearn.feature_selection.SequentialFeatureSelection` which relies
+:class:`~sklearn.feature_selection.SequentialFeatureSelector` which relies
 on a greedy approach.
 
 We use the Diabetes dataset, which consists of 10 features collected from 442
