@@ -895,11 +895,7 @@ def check_cv_results_array_types(search, param_keys, score_keys):
         for key in param_keys
         if key not in {"iter", "n_resources"}
     )
-    assert not any(
-        isinstance(cv_results[key], np.ma.MaskedArray)
-        for key in score_keys
-        if key not in {"iter", "n_resources"}
-    )
+    assert not any(isinstance(cv_results[key], np.ma.MaskedArray) for key in score_keys)
     assert all(
         cv_results[key].dtype == np.float64
         for key in score_keys

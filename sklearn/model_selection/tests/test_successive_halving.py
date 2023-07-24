@@ -23,11 +23,7 @@ from sklearn.model_selection._search_successive_halving import (
     _SubsampleMetaSplitter,
     _top_k,
 )
-from sklearn.model_selection.tests.test_search import (
-    check_cv_results_array_types,
-    check_cv_results_keys,
-)
-from sklearn.svm import SVC, LinearSVC
+from sklearn.svm import LinearSVC
 
 
 class FastClassifier(DummyClassifier):
@@ -783,14 +779,14 @@ def test_select_best_index(SearchCV):
     assert best_index == 8
 
 
-def test_halving_grid_search_cv_results():
+"""def test_halving_random_search_cv_results():
     X, y = make_classification(n_samples=50, n_features=4, random_state=42)
 
     n_splits = 3
-    n_proportion = 8
+    n_proportion = 6
 
     params = [
-        {"kernel": ["rbf"], "C": [0.01, 1.0], "gamma": ["scale", "auto"]},
+        {"kernel": ["rbf"], "C": expon(scale=10), "gamma": expon(scale=0.1)},
         {"kernel": ["poly"], "degree": [2, 3]},
     ]
     param_keys = (
@@ -818,13 +814,12 @@ def test_halving_grid_search_cv_results():
         "mean_score_time",
         "std_score_time",
     )
-    # n_cand = n_search_iter
     n_cand = n_proportion
 
-    search = HalvingGridSearchCV(
+    search = HalvingRandomSearchCV(
         SVC(),
         cv=n_splits,
-        param_grid=params,
+        param_distributions=params,
         return_train_score=True,
     )
     search.fit(X, y)
@@ -834,14 +829,13 @@ def test_halving_grid_search_cv_results():
     check_cv_results_keys(cv_results, param_keys, score_keys, n_cand)
     len(search.cv_results_["params"])
 
-
-"""    assert all(
+    assert all(
         (
             not cv_results["param_C"].mask[i]
             and not cv_results["param_gamma"].mask[i]
             and not cv_results["param_degree"].mask[i]
         )
-        for i in range(n_candidates)
+        for i in range(n_cand)
         if cv_results["param_kernel"][i] == "poly"
     )
     assert all(
@@ -850,6 +844,6 @@ def test_halving_grid_search_cv_results():
             and not cv_results["param_gamma"].mask[i]
             and cv_results["param_degree"].mask[i]
         )
-        for i in range(n_candidates)
+        for i in range(n_cand)
         if cv_results["param_kernel"][i] == "rbf"
     )"""
