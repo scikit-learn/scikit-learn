@@ -11,34 +11,49 @@ Logistic Regression
 #         Arthur Mensch <arthur.mensch@m4x.org
 
 import numbers
-from numbers import Integral, Real
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
-from scipy import optimize
 from joblib import effective_n_jobs
+from scipy import optimize
 
 from sklearn.metrics import get_scorer_names
 
-from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
+from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
+from ..base import _fit_context
+from ..metrics import get_scorer
+from ..model_selection import check_cv
+from ..preprocessing import LabelBinarizer, LabelEncoder
+from ..svm._base import _fit_liblinear
+from ..utils import (
+    Bunch,
+    check_array,
+    check_consistent_length,
+    check_random_state,
+    compute_class_weight,
+)
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import row_norms, softmax
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
+from ..utils.multiclass import check_classification_targets
+from ..utils.optimize import _check_optimize_result, _newton_cg
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import (
+    _check_method_params,
+    _check_sample_weight,
+    check_is_fitted,
+)
+from ._base import BaseEstimator, LinearClassifierMixin, SparseCoefMixin
+from ._glm.glm import NewtonCholeskySolver
 from ._linear_loss import LinearModelLoss
 from ._sag import sag_solver
-from ._glm.glm import NewtonCholeskySolver
-from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
-from ..preprocessing import LabelEncoder, LabelBinarizer
-from ..svm._base import _fit_liblinear
-from ..utils import check_array, check_consistent_length, compute_class_weight
-from ..utils import check_random_state
-from ..utils.extmath import softmax
-from ..utils.extmath import row_norms
-from ..utils.optimize import _newton_cg, _check_optimize_result
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.multiclass import check_classification_targets
-from ..utils.parallel import delayed, Parallel
-from ..utils._param_validation import StrOptions, Interval
-from ..model_selection import check_cv
-from ..metrics import get_scorer
-
 
 _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
     "Please also refer to the documentation for alternative solver options:\n"
@@ -506,6 +521,9 @@ def _logistic_regression_path(
                 w0 = np.concatenate([coef_.ravel(), intercept_])
             else:
                 w0 = coef_.ravel()
+            # n_iter_i is an array for each class. However, `target` is always encoded
+            # in {-1, 1}, so we only take the first element of n_iter_i.
+            n_iter_i = n_iter_i.item()
 
         elif solver in ["sag", "saga"]:
             if multi_class == "multinomial":
@@ -570,23 +588,25 @@ def _log_reg_scoring_path(
     y,
     train,
     test,
-    pos_class=None,
-    Cs=10,
-    scoring=None,
-    fit_intercept=False,
-    max_iter=100,
-    tol=1e-4,
-    class_weight=None,
-    verbose=0,
-    solver="lbfgs",
-    penalty="l2",
-    dual=False,
-    intercept_scaling=1.0,
-    multi_class="auto",
-    random_state=None,
-    max_squared_sum=None,
-    sample_weight=None,
-    l1_ratio=None,
+    *,
+    pos_class,
+    Cs,
+    scoring,
+    fit_intercept,
+    max_iter,
+    tol,
+    class_weight,
+    verbose,
+    solver,
+    penalty,
+    dual,
+    intercept_scaling,
+    multi_class,
+    random_state,
+    max_squared_sum,
+    sample_weight,
+    l1_ratio,
+    score_params,
 ):
     """Computes scores across logistic_regression_path
 
@@ -698,6 +718,9 @@ def _log_reg_scoring_path(
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
         combination of L1 and L2.
 
+    score_params : dict
+        Parameters to pass to the `score` method of the underlying scorer.
+
     Returns
     -------
     coefs : ndarray of shape (n_cs, n_features) or (n_cs, n_features + 1)
@@ -778,7 +801,9 @@ def _log_reg_scoring_path(
         if scoring is None:
             scores.append(log_reg.score(X_test, y_test))
         else:
-            scores.append(scoring(log_reg, X_test, y_test))
+            score_params = score_params or {}
+            score_params = _check_method_params(X=X, params=score_params, indices=test)
+            scores.append(scoring(log_reg, X_test, y_test, **score_params))
 
     return coefs, Cs, np.array(scores), n_iter
 
@@ -1129,6 +1154,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.l1_ratio = l1_ratio
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """
         Fit the model according to the given training data.
@@ -1158,9 +1184,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         -----
         The SAGA solver supports both float64 and float32 bit arrays.
         """
-
-        self._validate_params()
-
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
         if self.penalty != "elasticnet" and self.l1_ratio is not None:
@@ -1742,7 +1765,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self.random_state = random_state
         self.l1_ratios = l1_ratios
 
-    def fit(self, X, y, sample_weight=None):
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(self, X, y, sample_weight=None, **params):
         """Fit the model according to the given training data.
 
         Parameters
@@ -1758,13 +1782,17 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             Array of weights that are assigned to individual samples.
             If not provided, then each sample is given unit weight.
 
+        **params : dict
+            Parameters to pass to the underlying splitter and scorer.
+
+            .. versionadded:: 1.4
+
         Returns
         -------
         self : object
             Fitted LogisticRegressionCV estimator.
         """
-
-        self._validate_params()
+        _raise_for_params(params, self, "fit")
 
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
@@ -1827,9 +1855,23 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         else:
             max_squared_sum = None
 
+        if _routing_enabled():
+            routed_params = process_routing(
+                obj=self,
+                method="fit",
+                sample_weight=sample_weight,
+                other_params=params,
+            )
+        else:
+            routed_params = Bunch()
+            routed_params.splitter = Bunch(split={})
+            routed_params.scorer = Bunch(score=params)
+            if sample_weight is not None:
+                routed_params.scorer.score["sample_weight"] = sample_weight
+
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
-        folds = list(cv.split(X, y))
+        folds = list(cv.split(X, y, **routed_params.splitter.split))
 
         # Use the label encoded classes
         n_classes = len(encoded_labels)
@@ -1896,6 +1938,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 max_squared_sum=max_squared_sum,
                 sample_weight=sample_weight,
                 l1_ratio=l1_ratio,
+                score_params=routed_params.scorer.score,
             )
             for label in iter_encoded_labels
             for train, test in folds
@@ -2076,7 +2119,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         return self
 
-    def score(self, X, y, sample_weight=None):
+    def score(self, X, y, sample_weight=None, **score_params):
         """Score using the `scoring` option on the given test data and labels.
 
         Parameters
@@ -2090,15 +2133,69 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
+        **score_params : dict
+            Parameters to pass to the `score` method of the underlying scorer.
+
+            .. versionadded:: 1.4
+
         Returns
         -------
         score : float
             Score of self.predict(X) w.r.t. y.
         """
-        scoring = self.scoring or "accuracy"
-        scoring = get_scorer(scoring)
+        _raise_for_params(score_params, self, "score")
 
-        return scoring(self, X, y, sample_weight=sample_weight)
+        scoring = self._get_scorer()
+        if _routing_enabled():
+            routed_params = process_routing(
+                obj=self,
+                method="score",
+                sample_weight=sample_weight,
+                other_params=score_params,
+            )
+        else:
+            routed_params = Bunch()
+            routed_params.scorer = Bunch(score={})
+            if sample_weight is not None:
+                routed_params.scorer.score["sample_weight"] = sample_weight
+
+        return scoring(
+            self,
+            X,
+            y,
+            **routed_params.scorer.score,
+        )
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.4
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add_self_request(self)
+            .add(
+                splitter=self.cv,
+                method_mapping=MethodMapping().add(callee="split", caller="fit"),
+            )
+            .add(
+                scorer=self._get_scorer(),
+                method_mapping=MethodMapping()
+                .add(callee="score", caller="score")
+                .add(callee="score", caller="fit"),
+            )
+        )
+        return router
 
     def _more_tags(self):
         return {
@@ -2108,3 +2205,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 ),
             }
         }
+
+    def _get_scorer(self):
+        """Get the scorer based on the scoring method specified.
+        The default scoring method is `accuracy`.
+        """
+        scoring = self.scoring or "accuracy"
+        return get_scorer(scoring)

@@ -1,43 +1,46 @@
 import re
-import pytest
-import numpy as np
 import warnings
-from scipy.sparse import csr_matrix
+
+import numpy as np
+import pytest
 from scipy import stats
+from scipy.sparse import csr_matrix
 
-from sklearn import datasets
-from sklearn import svm
-
-from sklearn.utils.extmath import softmax
+from sklearn import datasets, svm
 from sklearn.datasets import make_multilabel_classification
-from sklearn.random_projection import _sparse_random_matrix
-from sklearn.utils.validation import check_array, check_consistent_length
-from sklearn.utils.validation import check_random_state
-
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import auc
-from sklearn.metrics import average_precision_score
-from sklearn.metrics import coverage_error
-from sklearn.metrics import det_curve
-from sklearn.metrics import label_ranking_average_precision_score
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import label_ranking_loss
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import roc_curve
-from sklearn.metrics._ranking import _ndcg_sample_scores, _dcg_sample_scores
-from sklearn.metrics import ndcg_score, dcg_score
-from sklearn.metrics import top_k_accuracy_score
-
 from sklearn.exceptions import UndefinedMetricWarning
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    auc,
+    average_precision_score,
+    coverage_error,
+    dcg_score,
+    det_curve,
+    label_ranking_average_precision_score,
+    label_ranking_loss,
+    ndcg_score,
+    precision_recall_curve,
+    roc_auc_score,
+    roc_curve,
+    top_k_accuracy_score,
+)
+from sklearn.metrics._ranking import _dcg_sample_scores, _ndcg_sample_scores
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
-
+from sklearn.random_projection import _sparse_random_matrix
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.extmath import softmax
+from sklearn.utils.validation import (
+    check_array,
+    check_consistent_length,
+    check_random_state,
+)
 
 ###############################################################################
 # Utilities for testing
@@ -418,13 +421,13 @@ def test_roc_curve_drop_intermediate():
     y_true = [0, 0, 0, 0, 1, 1]
     y_score = [0.0, 0.2, 0.5, 0.6, 0.7, 1.0]
     tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
-    assert_array_almost_equal(thresholds, [2.0, 1.0, 0.7, 0.0])
+    assert_array_almost_equal(thresholds, [np.inf, 1.0, 0.7, 0.0])
 
     # Test dropping thresholds with repeating scores
     y_true = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
     y_score = [0.0, 0.1, 0.6, 0.6, 0.7, 0.8, 0.9, 0.6, 0.7, 0.8, 0.9, 0.9, 1.0]
     tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
-    assert_array_almost_equal(thresholds, [2.0, 1.0, 0.9, 0.7, 0.6, 0.0])
+    assert_array_almost_equal(thresholds, [np.inf, 1.0, 0.9, 0.7, 0.6, 0.0])
 
 
 def test_roc_curve_fpr_tpr_increasing():
@@ -1160,13 +1163,16 @@ def test_average_precision_constant_values():
     assert average_precision_score(y_true, y_score) == 0.25
 
 
-def test_average_precision_score_pos_label_errors():
+def test_average_precision_score_binary_pos_label_errors():
     # Raise an error when pos_label is not in binary y_true
     y_true = np.array([0, 1])
     y_pred = np.array([0, 1])
     err_msg = r"pos_label=2 is not a valid label. It should be one of \[0, 1\]"
     with pytest.raises(ValueError, match=err_msg):
         average_precision_score(y_true, y_pred, pos_label=2)
+
+
+def test_average_precision_score_multilabel_pos_label_errors():
     # Raise an error for multilabel-indicator y_true with
     # pos_label other than 1
     y_true = np.array([[1, 0], [0, 1], [0, 1], [1, 0]])
@@ -1177,6 +1183,27 @@ def test_average_precision_score_pos_label_errors():
     )
     with pytest.raises(ValueError, match=err_msg):
         average_precision_score(y_true, y_pred, pos_label=0)
+
+
+def test_average_precision_score_multiclass_pos_label_errors():
+    # Raise an error for multiclass y_true with pos_label other than 1
+    y_true = np.array([0, 1, 2, 0, 1, 2])
+    y_pred = np.array(
+        [
+            [0.5, 0.2, 0.1],
+            [0.4, 0.5, 0.3],
+            [0.1, 0.2, 0.6],
+            [0.2, 0.3, 0.5],
+            [0.2, 0.3, 0.5],
+            [0.2, 0.3, 0.5],
+        ]
+    )
+    err_msg = (
+        "Parameter pos_label is fixed to 1 for multiclass y_true. "
+        "Do not set pos_label or set pos_label to 1."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        average_precision_score(y_true, y_pred, pos_label=3)
 
 
 def test_score_scale_invariance():
@@ -2199,3 +2226,17 @@ def test_ranking_metric_pos_label_types(metric, classes):
         assert not np.isnan(metric_1).any()
         assert not np.isnan(metric_2).any()
         assert not np.isnan(thresholds).any()
+
+
+def test_roc_curve_with_probablity_estimates(global_random_seed):
+    """Check that thresholds do not exceed 1.0 when `y_score` is a probability
+    estimate.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/26193
+    """
+    rng = np.random.RandomState(global_random_seed)
+    y_true = rng.randint(0, 2, size=10)
+    y_score = rng.rand(10)
+    _, _, thresholds = roc_curve(y_true, y_score)
+    assert np.isinf(thresholds[0])

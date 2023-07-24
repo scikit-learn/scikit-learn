@@ -6,7 +6,7 @@ Model-based and sequential feature selection
 This example illustrates and compares two approaches for feature selection:
 :class:`~sklearn.feature_selection.SelectFromModel` which is based on feature
 importance, and
-:class:`~sklearn.feature_selection.SequentialFeatureSelection` which relies
+:class:`~sklearn.feature_selection.SequentialFeatureSelector` which relies
 on a greedy approach.
 
 We use the Diabetes dataset, which consists of 10 features collected from 442
@@ -43,9 +43,10 @@ print(diabetes.DESCR)
 # were already standardized.
 # For a more complete example on the interpretations of the coefficients of
 # linear models, you may refer to
-# :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`.
+# :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`.  # noqa: E501
 import matplotlib.pyplot as plt
 import numpy as np
+
 from sklearn.linear_model import RidgeCV
 
 ridge = RidgeCV(alphas=np.logspace(-6, 6, num=5)).fit(X, y)
@@ -67,8 +68,9 @@ plt.show()
 #
 # Since we want to select only 2 features, we will set this threshold slightly
 # above the coefficient of third most important feature.
-from sklearn.feature_selection import SelectFromModel
 from time import time
+
+from sklearn.feature_selection import SelectFromModel
 
 threshold = np.sort(importance)[-3] + 0.01
 

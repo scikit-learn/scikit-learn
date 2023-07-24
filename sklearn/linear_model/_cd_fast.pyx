@@ -32,7 +32,9 @@ cdef enum:
     # Max value for our rand_r replacement (near the bottom).
     # We don't use RAND_MAX because it's different across platforms and
     # particularly tiny on Windows/MSVC.
-    RAND_R_MAX = 0x7FFFFFFF
+    # It corresponds to the maximum representable value for
+    # 32-bit signed integers (i.e. 2^31 - 1).
+    RAND_R_MAX = 2147483647
 
 
 cdef inline UINT32_t rand_int(UINT32_t end, UINT32_t* random_state) noexcept nogil:
@@ -89,6 +91,7 @@ cdef floating diff_abs_max(int n, const floating* a, floating* b) noexcept nogil
         if d > m:
             m = d
     return m
+
 
 def enet_coordinate_descent(
     floating[::1] w,
@@ -151,7 +154,6 @@ def enet_coordinate_descent(
     cdef floating const
     cdef floating A_norm2
     cdef unsigned int ii
-    cdef unsigned int i
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
@@ -207,9 +209,11 @@ def enet_coordinate_descent(
 
                 w_max = fmax(w_max, fabs(w[ii]))
 
-            if (w_max == 0.0 or
-                d_w_max / w_max < d_w_tol or
-                n_iter == max_iter - 1):
+            if (
+                w_max == 0.0
+                or d_w_max / w_max < d_w_tol
+                or n_iter == max_iter - 1
+            ):
                 # the biggest coordinate update of this iteration was smaller
                 # than the tolerance: check the duality gap as ultimate
                 # stopping criterion
@@ -605,7 +609,6 @@ def enet_coordinate_descent_gram(
         dtype = np.float64
 
     # get the data information into easy vars
-    cdef unsigned int n_samples = y.shape[0]
     cdef unsigned int n_features = Q.shape[0]
 
     # initial value "Q w" which will be kept of up to date in the iterations
@@ -637,9 +640,11 @@ def enet_coordinate_descent_gram(
     tol = tol * y_norm2
 
     if alpha == 0:
-        warnings.warn("Coordinate descent without L1 regularization may "
+        warnings.warn(
+            "Coordinate descent without L1 regularization may "
             "lead to unexpected results and is discouraged. "
-            "Set l1_ratio > 0 to add L1 regularization.")
+            "Set l1_ratio > 0 to add L1 regularization."
+        )
 
     with nogil:
         for n_iter in range(max_iter):
@@ -715,9 +720,12 @@ def enet_coordinate_descent_gram(
                     gap = R_norm2
 
                 # The call to asum is equivalent to the L1 norm of w
-                gap += (alpha * _asum(n_features, &w[0], 1) -
-                        const * y_norm2 +  const * q_dot_w +
-                        0.5 * beta * (1 + const ** 2) * w_norm2)
+                gap += (
+                    alpha * _asum(n_features, &w[0], 1)
+                    - const * y_norm2
+                    + const * q_dot_w
+                    + 0.5 * beta * (1 + const ** 2) * w_norm2
+                )
 
                 if gap < tol:
                     # return if we reached desired tolerance
@@ -732,6 +740,7 @@ def enet_coordinate_descent_gram(
                               ConvergenceWarning)
 
     return np.asarray(w), gap, tol, n_iter + 1
+
 
 def enet_coordinate_descent_multi_task(
     const floating[::1, :] W,
@@ -806,8 +815,10 @@ def enet_coordinate_descent_multi_task(
     cdef const floating* Y_ptr = &Y[0, 0]
 
     if l1_reg == 0:
-        warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"
-            " results and is discouraged.")
+        warnings.warn(
+            "Coordinate descent with l1_reg=0 may lead to unexpected"
+            " results and is discouraged."
+        )
 
     with nogil:
         # norm_cols_X = (np.asarray(X) ** 2).sum(axis=0)
@@ -920,7 +931,7 @@ def enet_coordinate_descent_multi_task(
                 R_norm = _nrm2(n_samples * n_tasks, &R[0, 0], 1)
                 w_norm = _nrm2(n_features * n_tasks, &W[0, 0], 1)
                 if (dual_norm_XtA > l1_reg):
-                    const =  l1_reg / dual_norm_XtA
+                    const = l1_reg / dual_norm_XtA
                     A_norm = R_norm * const
                     gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
                 else:
@@ -935,8 +946,11 @@ def enet_coordinate_descent_multi_task(
                 for ii in range(n_features):
                     l21_norm += _nrm2(n_tasks, &W[0, ii], 1)
 
-                gap += l1_reg * l21_norm - const * ry_sum + \
-                     0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
+                gap += (
+                    l1_reg * l21_norm
+                    - const * ry_sum
+                    + 0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
+                )
 
                 if gap < tol:
                     # return if we reached desired tolerance

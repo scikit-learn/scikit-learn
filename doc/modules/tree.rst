@@ -572,6 +572,65 @@ Mean Absolute Error:
 
 Note that it fits much slower than the MSE criterion.
 
+.. _tree_missing_value_support:
+
+Missing Values Support
+======================
+
+:class:`DecisionTreeClassifier` and :class:`DecisionTreeRegressor`
+have built-in support for missing values when `splitter='best'` and criterion is
+`'gini'`, `'entropy`', or `'log_loss'`, for classification or
+`'squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.
+
+For each potential threshold on the non-missing data, the splitter will evaluate
+the split with all the missing values going to the left node or the right node.
+
+Decisions are made as follows:
+
+    - By default when predicting, the samples with missing values are classified
+      with the class used in the split found during training::
+
+        >>> from sklearn.tree import DecisionTreeClassifier
+        >>> import numpy as np
+
+        >>> X = np.array([0, 1, 6, np.nan]).reshape(-1, 1)
+        >>> y = [0, 0, 1, 1]
+
+        >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+        >>> tree.predict(X)
+        array([0, 0, 1, 1])
+
+    - If the the criterion evaluation is the same for both nodes,
+      then the tie for missing value at predict time is broken by going to the
+      right node. The splitter also checks the split where all the missing
+      values go to one child and non-missing values go to the other::
+
+        >>> from sklearn.tree import DecisionTreeClassifier
+        >>> import numpy as np
+
+        >>> X = np.array([np.nan, -1, np.nan, 1]).reshape(-1, 1)
+        >>> y = [0, 0, 1, 1]
+
+        >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+
+        >>> X_test = np.array([np.nan]).reshape(-1, 1)
+        >>> tree.predict(X_test)
+        array([1])
+
+    - If no missing values are seen during training for a given feature, then during
+      prediction missing values are mapped to the child with the most samples::
+
+        >>> from sklearn.tree import DecisionTreeClassifier
+        >>> import numpy as np
+
+        >>> X = np.array([0, 1, 2, 3]).reshape(-1, 1)
+        >>> y = [0, 1, 1, 1]
+
+        >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+
+        >>> X_test = np.array([np.nan]).reshape(-1, 1)
+        >>> tree.predict(X_test)
+        array([1])
 
 .. _minimal_cost_complexity_pruning:
 
