@@ -56,8 +56,8 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
     --------
     `LabelEncoder` can be used to normalize labels.
 
-    >>> from sklearn import preprocessing
-    >>> le = preprocessing.LabelEncoder()
+    >>> from sklearn.preprocessing import LabelEncoder
+    >>> le = LabelEncoder()
     >>> le.fit([1, 2, 2, 6])
     LabelEncoder()
     >>> le.classes_
@@ -70,7 +70,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
     It can also be used to transform non-numerical labels (as long as they are
     hashable and comparable) to numerical labels.
 
-    >>> le = preprocessing.LabelEncoder()
+    >>> le = LabelEncoder()
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
     LabelEncoder()
     >>> list(le.classes_)
@@ -176,12 +176,12 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     At learning time, this simply consists in learning one regressor
     or binary classifier per class. In doing so, one needs to convert
     multi-class labels to binary labels (belong or does not belong
-    to the class). LabelBinarizer makes this process easy with the
+    to the class). `LabelBinarizer` makes this process easy with the
     transform method.
 
     At prediction time, one assigns the class for which the corresponding
-    model gave the greatest confidence. LabelBinarizer makes this easy
-    with the inverse_transform method.
+    model gave the greatest confidence. `LabelBinarizer` makes this easy
+    with the :meth:`inverse_transform` method.
 
     Read more in the :ref:`User Guide <preprocessing_targets>`.
 
@@ -204,13 +204,13 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
     y_type_ : str
         Represents the type of the target data as evaluated by
-        utils.multiclass.type_of_target. Possible type are 'continuous',
-        'continuous-multioutput', 'binary', 'multiclass',
+        :func:`~sklearn.utils.multiclass.type_of_target`. Possible type are
+        'continuous', 'continuous-multioutput', 'binary', 'multiclass',
         'multiclass-multioutput', 'multilabel-indicator', and 'unknown'.
 
     sparse_input_ : bool
-        True if the input data to transform is given as a sparse matrix, False
-        otherwise.
+        `True` if the input data to transform is given as a sparse matrix,
+         `False` otherwise.
 
     See Also
     --------
@@ -221,8 +221,8 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
     Examples
     --------
-    >>> from sklearn import preprocessing
-    >>> lb = preprocessing.LabelBinarizer()
+    >>> from sklearn.preprocessing import LabelBinarizer
+    >>> lb = LabelBinarizer()
     >>> lb.fit([1, 2, 6, 4, 2])
     LabelBinarizer()
     >>> lb.classes_
@@ -233,7 +233,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
     Binary targets transform to a column vector
 
-    >>> lb = preprocessing.LabelBinarizer()
+    >>> lb = LabelBinarizer()
     >>> lb.fit_transform(['yes', 'no', 'no', 'yes'])
     array([[1],
            [0],
@@ -374,9 +374,9 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         threshold : float, default=None
             Threshold used in the binary and multi-label cases.
 
-            Use 0 when ``Y`` contains the output of decision_function
+            Use 0 when ``Y`` contains the output of :term:`decision_function`
             (classifier).
-            Use 0.5 when ``Y`` contains the output of predict_proba.
+            Use 0.5 when ``Y`` contains the output of :term:`predict_proba`.
 
             If None, the threshold is assumed to be half way between
             neg_label and pos_label.
@@ -389,10 +389,10 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         Notes
         -----
         In the case when the binary labels are fractional
-        (probabilistic), inverse_transform chooses the class with the
+        (probabilistic), :meth:`inverse_transform` chooses the class with the
         greatest value. Typically, this allows to use the output of a
-        linear model's decision_function method directly as the input
-        of inverse_transform.
+        linear model's :term:`decision_function` method directly as the input
+        of :meth:`inverse_transform`.
         """
         check_is_fitted(self)
 
