@@ -223,11 +223,7 @@ alpha parameter, the fewer features selected.
    (:class:`LassoLarsIC`) tends, on the opposite, to set high values of
    alpha.
 
-|details-end|
-
-|details-start|
-**Reference**
-|details-split|
+.. topic:: References:
 
    Richard G. Baraniuk "Compressive Sensing", IEEE Signal
    Processing Magazine [120] July 2007
@@ -317,11 +313,15 @@ fit and requires no iterations.
 
     * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`
 
-.. topic:: References:
+|details-start|
+**Reference**
+|details-split|
 
    .. [sfs] Ferri et al, `Comparative study of techniques for
       large-scale feature selection
       <https://citeseerx.ist.psu.edu/doc_view/pid/5fedabbb3957bbb442802e012d829ee0629a01b6>`_.
+
+|details-end|
 
 Feature selection as part of a pipeline
 =======================================
