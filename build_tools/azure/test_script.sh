@@ -75,10 +75,6 @@ if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
 fi
 
-if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
-    TEST_CMD="$TEST_CMD -ra"
-fi
-
 if [[ -n "$SELECTED_TESTS" ]]; then
     TEST_CMD="$TEST_CMD -k $SELECTED_TESTS"
 
