@@ -99,6 +99,7 @@ sklearn/metrics/_pairwise_distances_reduction/_middle_term_computer.pxd
 sklearn/metrics/_pairwise_distances_reduction/_middle_term_computer.pyx
 sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pxd
 sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pyx
+sklearn/cluster/_hdbscan/linkage.pyx
 
 # Default JupyterLite content
 jupyterlite_contents
