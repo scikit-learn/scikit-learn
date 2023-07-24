@@ -243,7 +243,7 @@ class ConfusionMatrixDisplay:
             The label of the positive class for binary classification.
             When `pos_label=None`, if `y_true` is in `{-1, 1}` or `{0, 1}`,
             `pos_label` is set to 1, otherwise an error will be raised.
-            An error is raised if `pos_label` is set and `y_true` is not a binary
+            An error is also raised if `pos_label` is set and `y_true` is not a binary
             classification problem.
 
             .. versionadded:: 1.4
@@ -392,7 +392,7 @@ class ConfusionMatrixDisplay:
             The label of the positive class for binary classification.
             When `pos_label=None`, if `y_true` is in `{-1, 1}` or `{0, 1}`,
             `pos_label` is set to 1, otherwise an error will be raised.
-            An error is raised if `pos_label` is set and `y_true` is not a binary
+            An error is also raised if `pos_label` is set and `y_true` is not a binary
             classification problem.
 
             .. versionadded:: 1.4

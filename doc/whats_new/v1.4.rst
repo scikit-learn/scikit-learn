@@ -107,11 +107,11 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Enhancement| |Fix| add a `pos_label` to :func:`metrics.confusion_matrix`
+- |Enhancement| |Fix| Added a `pos_label` to :func:`metrics.confusion_matrix`
   avoiding ambiguity regarding the position of the positive class label in the
-  matrix. An error is raised if the positive label cannot be set to `1`. An
-  error is also raised if the `pos_label` is set on other classification
-  problem than binary. `pos_label` is also added to
+  matrix. An error is raised if the positive label cannot be set to `1` and
+  also if the `pos_label` is set on other classification
+  problems than binary. `pos_label` is also added to
   :meth:`metrics.ConfusionMatrixDisplay.from_estimator` and
   :meth:`metrics.ConfusionMatrixDisplay.from_predictions`.
   :pr:`26839` by :user:`Guillaume Lemaitre <glemaitre>`.

@@ -265,7 +265,7 @@ def confusion_matrix(
         The label of the positive class for binary classification.
         When `pos_label=None`, if `y_true` is in `{-1, 1}` or `{0, 1}`,
         `pos_label` is set to 1, otherwise an error will be raised.
-        An error is raised if `pos_label` is set and `y_true` is not a binary
+        An error is also raised if `pos_label` is set and `y_true` is not a binary
         classification problem.
 
         .. versionadded:: 1.4
@@ -2434,8 +2434,8 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type == "binary":
-        # We can set `pos_label` to any values since we are computing per-class
-        # statistics and average them.
+        # We can set `pos_label` to any value since we are computing per-class
+        # statistics and averaging them.
         pos_label = y_true[0]
     else:
         pos_label = None
