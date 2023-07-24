@@ -225,6 +225,7 @@ it is advisable to use a power of two as the ``n_features`` parameter;
 otherwise the features will not be mapped evenly to the columns.
 
 .. topic:: References:
+    
   * `MurmurHash3 <https://github.com/aappleby/smhasher>`_.
 
 |details-end|
@@ -397,8 +398,9 @@ last document::
 
 .. _stop_words:
 
-Using stop words
-................
+|details-start|
+**Using stop words**
+|details-split|
 
 Stop words are words like "and", "the", "him", which are presumed to be
 uninformative in representing the content of a text, and which may be
@@ -427,6 +429,9 @@ identify and warn about some kinds of inconsistencies.
                `"Stop Word Lists in Free Open-source Software Packages"
                <https://aclweb.org/anthology/W18-2502>`__.
                In *Proc. Workshop for NLP Open Source Software*.
+
+
+|details-end|
 
 .. _tfidf:
 
@@ -491,6 +496,10 @@ class::
 
 Again please see the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details on all the parameters.
+
+|details-start|
+Example
+|details-split|
 
 Let's take an example with the following counts. The first term is present
 100% of the time hence not very interesting. The two other features only
@@ -611,6 +620,7 @@ feature extractor with a classifier:
 
  * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
 
+|details-end|
 
 Decoding text files
 -------------------
@@ -638,6 +648,10 @@ by setting the ``decode_error`` parameter to either ``"ignore"``
 or ``"replace"``. See the documentation for the Python function
 ``bytes.decode`` for more details
 (type ``help(bytes.decode)`` at the Python prompt).
+
+|details-start|
+**Troubleshooting decoding text**
+|details-split|
 
 If you are having trouble decoding text, here are some things to try:
 
@@ -692,6 +706,7 @@ About Unicode <https://www.joelonsoftware.com/articles/Unicode.html>`_.
 
 .. _`ftfy`: https://github.com/LuminosoInsight/python-ftfy
 
+|details-end|
 
 Applications and examples
 -------------------------
@@ -933,6 +948,10 @@ parameters it is possible to derive from the class and override the
 ``build_preprocessor``, ``build_tokenizer`` and ``build_analyzer``
 factory methods instead of passing custom functions.
 
+|details-start|
+**Tips and tricks**
+|details-split|
+
 Some tips and tricks:
 
   * If documents are pre-tokenized by an external package, then store them in
@@ -986,6 +1005,8 @@ Some tips and tricks:
 
 Customizing the vectorizer can also be useful when handling Asian languages
 that do not use an explicit word separator such as whitespace.
+
+|details-end|
 
 .. _image_feature_extraction:
 
