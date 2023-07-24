@@ -231,9 +231,9 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef float64_t surrogate_dist(self, intp_t i, intp_t j) noexcept nogil:
         return self.distance_metric.rdist_csr(
             x1_data=&self.X_data[0],
-            x1_indices=self.X_indices,
+            x1_indices=&self.X_indices[0],
             x2_data=&self.Y_data[0],
-            x2_indices=self.Y_indices,
+            x2_indices=&self.Y_indices[0],
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
             x2_start=self.Y_indptr[j],
@@ -245,9 +245,9 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef float64_t dist(self, intp_t i, intp_t j) noexcept nogil:
         return self.distance_metric.dist_csr(
             x1_data=&self.X_data[0],
-            x1_indices=self.X_indices,
+            x1_indices=&self.X_indices[0],
             x2_data=&self.Y_data[0],
-            x2_indices=self.Y_indices,
+            x2_indices=&self.Y_indices[0],
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
             x2_start=self.Y_indptr[j],
@@ -324,11 +324,11 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef float64_t surrogate_dist(self, intp_t i, intp_t j) noexcept nogil:
         return self.distance_metric.rdist_csr(
             x1_data=&self.X_data[0],
-            x1_indices=self.X_indices,
+            x1_indices=&self.X_indices[0],
             # Increment the data pointer such that x2_start=0 is aligned with the
             # j-th row
             x2_data=&self.Y_data[0] + j * self.n_features,
-            x2_indices=self.Y_indices,
+            x2_indices=&self.Y_indices[0],
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
             x2_start=0,
@@ -341,11 +341,11 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
 
         return self.distance_metric.dist_csr(
             x1_data=&self.X_data[0],
-            x1_indices=self.X_indices,
+            x1_indices=&self.X_indices[0],
             # Increment the data pointer such that x2_start=0 is aligned with the
             # j-th row
             x2_data=&self.Y_data[0] + j * self.n_features,
-            x2_indices=self.Y_indices,
+            x2_indices=&self.Y_indices[0],
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
             x2_start=0,

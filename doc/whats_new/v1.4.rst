@@ -66,6 +66,13 @@ Changelog
 - |Enhancement| :func:`base.clone` now supports `dict` as input and creates a
   copy. :pr:`26786` by `Adrin Jalali`_.
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| :class:`cross_decomposition.PLSRegression` now automatically ravels the output
+  of `predict` if fitted with one dimensional `y`.
+  :pr:`26602` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -145,6 +152,13 @@ Changelog
   argument allowing for the use of accelerated third-party
   :class:`metric.DistanceMetric` objects.
   :pr:`26267` by :user:`Meekail Zain <micky774>`
+
+:mod:`sklearn.metrics`
+......................
+
+- |Performance| Computing pairwise distances via :class:`metrics.DistanceMetric`
+  for CSR × CSR,  Dense × CSR, and CSR × Dense datasets is now 1.5x faster.
+  :pr:`26765` by :user:`Meekail Zain <micky774>`
 
 :mod:`sklearn.utils`
 ....................
