@@ -1,5 +1,5 @@
 # To generate python_dev_lock.txt, use the following command:
-# docker run -v $PWD:/scikit-learn -it python:3.12.0b4 bash -c 'pip install pip-tools; pip-compile --upgrade /scikit-learn/build_tools/azure/python_dev_requirements.txt -o /scikit-learn/build_tools/azure/python_dev_lock.txt'
+# docker run -v $PWD:/scikit-learn -it python:3.12.0b4 bash -c 'pip install pip-tools; pip-compile --allow-unsafe --upgrade /scikit-learn/build_tools/azure/python_dev_requirements.txt -o /scikit-learn/build_tools/azure/python_dev_lock.txt'
 # TODO: remove --extra-index-url and --pre when there are numpy and scipy
 # releases that supports Python 3.12
 --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
