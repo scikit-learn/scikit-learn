@@ -288,21 +288,36 @@ def test_hdbscan_sparse():
     """
     Tests that HDBSCAN works correctly when passing sparse feature data.
     """
-    sparse_X = sparse.csr_matrix(X)
 
-    labels = HDBSCAN().fit(sparse_X).labels_
-    n_clusters = len(set(labels) - OUTLIER_SET)
+    dense_labels = HDBSCAN().fit(X).labels_
+    n_clusters = len(set(dense_labels) - OUTLIER_SET)
     assert n_clusters == 3
 
-    sparse_X_nan = sparse_X.copy()
-    sparse_X_nan[0, 0] = np.nan
-    labels = HDBSCAN().fit(sparse_X_nan).labels_
-    n_clusters = len(set(labels) - OUTLIER_SET)
+    X_sparse = sparse.csr_matrix(X)
+    sparse_labels = HDBSCAN().fit(X_sparse).labels_
+    n_clusters = len(set(sparse_labels) - OUTLIER_SET)
     assert n_clusters == 3
+    assert_array_equal(dense_labels, sparse_labels)
+
+    for outlier_val, outlier_type in zip((np.inf, np.nan), ("infinite", "missing")):
+        _X = X.copy()
+        _X[0, 0] = outlier_val
+        dense_labels = HDBSCAN().fit(_X).labels_
+        n_clusters = len(set(dense_labels) - OUTLIER_SET)
+        assert n_clusters == 3
+        assert dense_labels[0] == _OUTLIER_ENCODING[outlier_type]["label"]
+
+        _X_sparse = X_sparse.copy()
+        _X_sparse[0, 0] = outlier_val
+        sparse_labels = HDBSCAN().fit(_X_sparse).labels_
+        n_clusters = len(set(sparse_labels) - OUTLIER_SET)
+        assert n_clusters == 3
+        assert sparse_labels[0] == _OUTLIER_ENCODING[outlier_type]["label"]
+        assert_array_equal(dense_labels, sparse_labels)
 
     msg = "Sparse data matrices only support algorithm `brute`."
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(metric="euclidean", algorithm="balltree").fit(sparse_X)
+        HDBSCAN(metric="euclidean", algorithm="balltree").fit(_X_sparse)
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
