@@ -32,3 +32,6 @@ scipy==1.12.0.dev0
     # via -r /scikit-learn/build_tools/azure/python_dev_requirements.txt
 threadpoolctl==3.2.0
     # via -r /scikit-learn/build_tools/azure/python_dev_requirements.txt
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools
