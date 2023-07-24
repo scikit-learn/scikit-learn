@@ -732,7 +732,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 X = X[finite_index]
         elif issparse(X):
             # Handle sparse precomputed distance matrices separately
-            print(f"\nDEBUG *** {X.data=}")
             X = self._validate_data(
                 X,
                 accept_sparse=["csr", "lil"],

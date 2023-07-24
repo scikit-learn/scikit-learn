@@ -317,7 +317,7 @@ def test_hdbscan_sparse():
 
     msg = "Sparse data matrices only support algorithm `brute`."
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(metric="euclidean", algorithm="balltree").fit(_X_sparse)
+        HDBSCAN(metric="euclidean", algorithm="balltree").fit(X_sparse)
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
