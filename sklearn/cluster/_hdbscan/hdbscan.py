@@ -337,10 +337,10 @@ def _hdbscan_prims(
         n_jobs=n_jobs,
         p=None,
     ).fit(X)
-
+    # TODO: Resume when {KD, Ball}Tree support 32-bit
     neighbors_distances, _ = nbrs.kneighbors(X, min_samples, return_distance=True)
     core_distances = np.ascontiguousarray(neighbors_distances[:, -1])
-    dist_metric = DistanceMetric.get_metric(metric, **metric_params)
+    dist_metric = DistanceMetric.get_metric(metric, dtype=X.dtype, **metric_params)
 
     # Mutual reachability distance is implicit in mst_from_data_matrix
     min_spanning_tree = mst_from_data_matrix(X, core_distances, dist_metric, alpha)
@@ -735,7 +735,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             X = self._validate_data(
                 X,
                 accept_sparse=["csr", "lil"],
-                dtype=np.float64,
+                dtype=(np.float64, np.float32),
             )
         else:
             # Only non-sparse, precomputed distance matrices are handled here
@@ -743,7 +743,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
             # Perform data validation after removing infinite values (numpy.inf)
             # from the given distance matrix.
-            X = self._validate_data(X, force_all_finite=False, dtype=np.float64)
+            X = self._validate_data(
+                X, force_all_finite=False, dtype=(np.float64, np.float32)
+            )
             if np.isnan(X).any():
                 # TODO: Support np.nan in Cython implementation for precomputed
                 # dense HDBSCAN
