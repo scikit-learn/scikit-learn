@@ -254,7 +254,8 @@ def test_get_response_values_multilabel_indicator(response_method):
     if response_method == "predict_proba":
         assert np.logical_and(y_pred >= 0, y_pred <= 1).all()
     elif response_method == "decision_function":
+        # values returned by `decision_function` are not bounded in [0, 1]
         assert (y_pred < 0).sum() > 0
-        assert (y_pred > 0).sum() > 0
+        assert (y_pred > 1).sum() > 0
     else:  # response_method == "predict"
         assert np.logical_or(y_pred == 0, y_pred == 1).all()

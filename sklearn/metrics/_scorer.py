@@ -469,7 +469,10 @@ class _ThresholdScorer(_BaseScorer):
             raise ValueError("{0} format is not supported".format(y_type))
 
         if is_regressor(clf):
-            response_method = self._response_method or "predict"
+            if self._response_method is None:
+                response_method = "predict"
+            else:
+                response_method = self._response_method
             y_pred = method_caller(clf, response_method, X)
         else:
             if self._response_method is None:
