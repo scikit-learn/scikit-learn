@@ -649,6 +649,14 @@ def _randomized_eigsh(
     return eigvals, eigvecs
 
 
+@validate_params(
+    {
+        "a": ["array-like"],
+        "w": ["array-like"],
+        "axis": [Interval(Integral, None, None, closed="neither"), None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def weighted_mode(a, w, *, axis=0):
     """Return an array of the weighted modal (most common) value in the passed array.
 
