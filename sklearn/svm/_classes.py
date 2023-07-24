@@ -774,7 +774,7 @@ class SVC(BaseSVC):
         Indices of support vectors.
 
     support_vectors_ : ndarray of shape (n_SV, n_features)
-        Support vectors.
+        Support vectors. An empty array if kernel is precomputed.
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
