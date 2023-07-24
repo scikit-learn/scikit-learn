@@ -224,9 +224,7 @@ alpha parameter, the fewer features selected.
    (:class:`~sklearn.linear_model.LassoLarsIC`) tends, on the opposite, to set
    high values of alpha.
 
-.. topic:: References:
-
-   Richard G. Baraniuk "Compressive Sensing", IEEE Signal
+   **References** Richard G. Baraniuk "Compressive Sensing", IEEE Signal
    Processing Magazine [120] July 2007
    http://users.isr.ist.utl.pt/~aguiar/CS_notes.pdf
 
