@@ -701,7 +701,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 X,
                 accept_sparse=["csr", "lil"],
                 force_all_finite=False,
-                dtype=np.float64,
+                dtype=(np.float64, np.float32),
             )
             self._raw_data = X
             all_finite = True
