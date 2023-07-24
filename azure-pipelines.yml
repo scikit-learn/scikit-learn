@@ -118,9 +118,7 @@ jobs:
       )
     matrix:
       pylatest_pip_python_dev:
-        # TODO Needs to be updated when Python 3.12 release candidates become
-        # available, see https://peps.python.org/pep-0693/
-        DOCKER_CONTAINER: 'python:3.12.0b4'
+        DOCKER_CONTAINER: 'python:3.12-rc'
         DISTRIB: 'pip-python-dev'
         LOCK_FILE: './build_tools/azure/python_dev_lock.txt'
         COVERAGE: 'false'
