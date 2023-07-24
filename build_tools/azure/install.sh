@@ -59,7 +59,7 @@ python_environment_install_and_activate() {
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
 
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
+    elif [[ "$DISTRIB" == "pip-nogil" || "$DISTRIB" == "pip-python-dev" ]]; then
         python -m venv $VIRTUALENV
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
