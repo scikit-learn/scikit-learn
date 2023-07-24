@@ -406,6 +406,8 @@ def confusion_matrix(
         cm = np.nan_to_num(cm)
 
     if pos_label is not None and pos_label != labels[-1]:
+        # Reorder the confusion matrix such that TP is at index
+        # [1, 1].
         cm = cm[::-1, ::-1]
 
     return cm
