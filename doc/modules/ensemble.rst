@@ -982,8 +982,8 @@ larger than 10,000**. The early-stopping behaviour is controlled via the
 ``early_stopping``, ``scoring``, ``validation_fraction``,
 ``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
 using an arbitrary :term:`scorer`, or just the training or validation loss.
-Note that for technical reasons, using a scorer is significantly slower than
-using the loss. By default, early-stopping is performed if there are at least
+Note that for technical reasons, using a callable as a scorer is significantly slower
+than using the loss. By default, early-stopping is performed if there are at least
 10,000 samples in the training set, using the validation loss.
 
 Missing values support
