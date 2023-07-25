@@ -3,11 +3,8 @@
 implementation_specific_values = [
     # Values are the following ones:
     #
-    #       name_suffix, DistanceMetric, INPUT_DTYPE_t, INPUT_DTYPE
-    #
-    # We use DistanceMetric for float64 for backward naming compatibility.
-    #
-    ('64', 'DistanceMetric', 'float64_t', 'np.float64'),
+    # name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
+    ('64', 'DistanceMetric64', 'float64_t', 'np.float64'),
     ('32', 'DistanceMetric32', 'float32_t', 'np.float32')
 ]
 
@@ -17,7 +14,6 @@ import numpy as np
 from cython cimport final
 
 from ...utils._typedefs cimport float64_t, float32_t, intp_t
-from ...metrics._dist_metrics cimport DistanceMetric
 
 from scipy.sparse import issparse, csr_matrix
 
@@ -96,8 +92,9 @@ cdef class DatasetsPair{{name_suffix}}:
         if metric_kwargs is not None:
             metric_kwargs.pop("Y_norm_squared", None)
         cdef:
-            {{DistanceMetric}} distance_metric = {{DistanceMetric}}.get_metric(
+            {{DistanceMetric}} distance_metric = DistanceMetric.get_metric(
                 metric,
+                {{INPUT_DTYPE}},
                 **(metric_kwargs or {})
             )
 
@@ -234,9 +231,9 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef float64_t surrogate_dist(self, intp_t i, intp_t j) noexcept nogil:
         return self.distance_metric.rdist_csr(
             x1_data=&self.X_data[0],
-            x1_indices=self.X_indices,
+            x1_indices=&self.X_indices[0],
             x2_data=&self.Y_data[0],
-            x2_indices=self.Y_indices,
+            x2_indices=&self.Y_indices[0],
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
             x2_start=self.Y_indptr[j],
@@ -248,9 +245,9 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef float64_t dist(self, intp_t i, intp_t j) noexcept nogil:
         return self.distance_metric.dist_csr(
             x1_data=&self.X_data[0],
-            x1_indices=self.X_indices,
+            x1_indices=&self.X_indices[0],
             x2_data=&self.Y_data[0],
-            x2_indices=self.Y_indices,
+            x2_indices=&self.Y_indices[0],
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
             x2_start=self.Y_indptr[j],
@@ -327,11 +324,11 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef float64_t surrogate_dist(self, intp_t i, intp_t j) noexcept nogil:
         return self.distance_metric.rdist_csr(
             x1_data=&self.X_data[0],
-            x1_indices=self.X_indices,
+            x1_indices=&self.X_indices[0],
             # Increment the data pointer such that x2_start=0 is aligned with the
             # j-th row
             x2_data=&self.Y_data[0] + j * self.n_features,
-            x2_indices=self.Y_indices,
+            x2_indices=&self.Y_indices[0],
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
             x2_start=0,
@@ -344,11 +341,11 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
 
         return self.distance_metric.dist_csr(
             x1_data=&self.X_data[0],
-            x1_indices=self.X_indices,
+            x1_indices=&self.X_indices[0],
             # Increment the data pointer such that x2_start=0 is aligned with the
             # j-th row
             x2_data=&self.Y_data[0] + j * self.n_features,
-            x2_indices=self.Y_indices,
+            x2_indices=&self.Y_indices[0],
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
             x2_start=0,

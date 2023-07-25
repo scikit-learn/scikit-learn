@@ -88,8 +88,25 @@ the tensors directly::
 Estimators with support for `Array API`-compatible inputs
 =========================================================
 
+- :class:`decomposition.PCA` (with `svd_solver="full"`,
+  `svd_solver="randomized"` and `power_iteration_normalizer="QR"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 
 Coverage for more estimators is expected to grow over time. Please follow the
 dedicated `meta-issue on GitHub
 <https://github.com/scikit-learn/scikit-learn/issues/22352>`_ to track progress.
+
+Common estimator checks
+=======================
+
+Add the `array_api_support` tag to an estimator's set of tags to indicate that
+it supports the Array API. This will enable dedicated checks as part of the
+common tests to verify that the estimators result's are the same when using
+vanilla NumPy and Array API inputs.
+
+To run these checks you need to install
+`array_api_compat <https://github.com/data-apis/array-api-compat>`_ in your
+test environment. To run the full set of checks you need to install both
+`PyTorch <https://pytorch.org/>`_ and `CuPy <https://cupy.dev/>`_ and have
+a GPU. Checks that can not be executed or have missing dependencies will be
+automatically skipped.

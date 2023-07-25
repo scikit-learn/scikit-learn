@@ -1,52 +1,53 @@
-import numpy as np
-import scipy.sparse as sp
-from scipy import linalg
+import warnings
 from itertools import product
 
+import numpy as np
 import pytest
-import warnings
-
-from sklearn.utils import _IS_32BIT
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.exceptions import ConvergenceWarning
+import scipy.sparse as sp
+from scipy import linalg
 
 from sklearn import datasets
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import make_scorer
-from sklearn.metrics import get_scorer
-
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import ridge_regression
-from sklearn.linear_model import Ridge
-from sklearn.linear_model._ridge import _RidgeGCV
-from sklearn.linear_model import RidgeCV
-from sklearn.linear_model import RidgeClassifier
-from sklearn.linear_model import RidgeClassifierCV
-from sklearn.linear_model._ridge import _solve_cholesky
-from sklearn.linear_model._ridge import _solve_cholesky_kernel
-from sklearn.linear_model._ridge import _solve_svd
-from sklearn.linear_model._ridge import _solve_lbfgs
-from sklearn.linear_model._ridge import _check_gcv_mode
-from sklearn.linear_model._ridge import _X_CenterStackOp
-from sklearn.datasets import make_low_rank_matrix
-from sklearn.datasets import make_regression
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_multilabel_classification
-
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import KFold
-from sklearn.model_selection import GroupKFold
-from sklearn.model_selection import cross_val_predict
-from sklearn.model_selection import LeaveOneOut
-
+from sklearn.datasets import (
+    make_classification,
+    make_low_rank_matrix,
+    make_multilabel_classification,
+    make_regression,
+)
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import (
+    LinearRegression,
+    Ridge,
+    RidgeClassifier,
+    RidgeClassifierCV,
+    RidgeCV,
+    ridge_regression,
+)
+from sklearn.linear_model._ridge import (
+    _check_gcv_mode,
+    _RidgeGCV,
+    _solve_cholesky,
+    _solve_cholesky_kernel,
+    _solve_lbfgs,
+    _solve_svd,
+    _X_CenterStackOp,
+)
+from sklearn.metrics import get_scorer, make_scorer, mean_squared_error
+from sklearn.model_selection import (
+    GridSearchCV,
+    GroupKFold,
+    KFold,
+    LeaveOneOut,
+    cross_val_predict,
+)
 from sklearn.preprocessing import minmax_scale
-from sklearn.utils import check_random_state
-
+from sklearn.utils import _IS_32BIT, check_random_state
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 
 SOLVERS = ["svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga"]
 SPARSE_SOLVERS_WITH_INTERCEPT = ("sparse_cg", "sag")
@@ -104,7 +105,7 @@ def ols_ridge_dataset(global_random_seed, request):
         Last column of 1, i.e. intercept.
     y : ndarray
     coef_ols : ndarray of shape
-        Minimum norm OLS solutions, i.e. min ||X w - y||_2_2 (with mininum ||w||_2 in
+        Minimum norm OLS solutions, i.e. min ||X w - y||_2_2 (with minimum ||w||_2 in
         case of ambiguity)
         Last coefficient is intercept.
     coef_ridge : ndarray of shape (5,)
@@ -1518,27 +1519,6 @@ def test_ridgecv_alphas_scalar(Estimator):
     Estimator(alphas=1).fit(X, y)
 
 
-def test_raises_value_error_if_solver_not_supported():
-    # Tests whether a ValueError is raised if a non-identified solver
-    # is passed to ridge_regression
-
-    wrong_solver = "This is not a solver (MagritteSolveCV QuantumBitcoin)"
-
-    exception = ValueError
-    message = (
-        "Known solvers are 'sparse_cg', 'cholesky', 'svd'"
-        " 'lsqr', 'sag' or 'saga'. Got %s." % wrong_solver
-    )
-
-    def func():
-        X = np.eye(3)
-        y = np.ones(3)
-        ridge_regression(X, y, alpha=1.0, solver=wrong_solver)
-
-        with pytest.raises(exception, match=message):
-            func()
-
-
 def test_sparse_cg_max_iter():
     reg = Ridge(solver="sparse_cg", max_iter=1)
     reg.fit(X_diabetes, y_diabetes)
@@ -1978,7 +1958,9 @@ def test_lbfgs_solver_error():
 @pytest.mark.parametrize("sparseX", [False, True])
 @pytest.mark.parametrize("data", ["tall", "wide"])
 @pytest.mark.parametrize("solver", SOLVERS + ["lbfgs"])
-def test_ridge_sample_weight_consistency(fit_intercept, sparseX, data, solver):
+def test_ridge_sample_weight_consistency(
+    fit_intercept, sparseX, data, solver, global_random_seed
+):
     """Test that the impact of sample_weight is consistent.
 
     Note that this test is stricter than the common test
@@ -1989,6 +1971,9 @@ def test_ridge_sample_weight_consistency(fit_intercept, sparseX, data, solver):
         if solver == "svd" or (solver in ("cholesky", "saga") and fit_intercept):
             pytest.skip("unsupported configuration")
 
+    # XXX: this test is quite sensitive to the seed used to generate the data:
+    # ideally we would like the test to pass for any global_random_seed but this is not
+    # the case at the moment.
     rng = np.random.RandomState(42)
     n_samples = 12
     if data == "tall":
@@ -2005,6 +1990,7 @@ def test_ridge_sample_weight_consistency(fit_intercept, sparseX, data, solver):
         alpha=1.0,
         solver=solver,
         positive=(solver == "lbfgs"),
+        random_state=global_random_seed,  # for sag/saga
         tol=1e-12,
     )
 

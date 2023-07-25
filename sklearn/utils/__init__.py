@@ -1,46 +1,43 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
-from collections.abc import Sequence
-from contextlib import contextmanager
-from itertools import compress
-from itertools import islice
 import math
 import numbers
 import platform
 import struct
 import timeit
-from contextlib import suppress
-
 import warnings
+from collections.abc import Sequence
+from contextlib import contextmanager, suppress
+from itertools import compress, islice
+
 import numpy as np
 from scipy.sparse import issparse
 
-from .murmurhash import murmurhash3_32
-from .class_weight import compute_class_weight, compute_sample_weight
-from . import _joblib
+from .. import get_config
 from ..exceptions import DataConversionWarning
+from . import _joblib, metadata_routing
+from ._bunch import Bunch
+from ._estimator_html_repr import estimator_html_repr
+from ._param_validation import Integral, Interval, validate_params
+from .class_weight import compute_class_weight, compute_sample_weight
 from .deprecation import deprecated
 from .discovery import all_estimators
 from .fixes import parse_version, threadpool_info
-from ._estimator_html_repr import estimator_html_repr
+from .murmurhash import murmurhash3_32
 from .validation import (
+    _is_arraylike_not_scalar,
     as_float_array,
     assert_all_finite,
-    check_random_state,
-    column_or_1d,
     check_array,
     check_consistent_length,
-    check_X_y,
-    indexable,
-    check_symmetric,
+    check_random_state,
     check_scalar,
-    _is_arraylike_not_scalar,
+    check_symmetric,
+    check_X_y,
+    column_or_1d,
+    indexable,
 )
-from .. import get_config
-from ._bunch import Bunch
-from ._param_validation import validate_params, Interval
-
 
 # Do not deprecate parallel_backend and register_parallel_backend as they are
 # needed to tune `scikit-learn` behavior and have different effect if called
@@ -75,6 +72,7 @@ __all__ = [
     "DataConversionWarning",
     "estimator_html_repr",
     "Bunch",
+    "metadata_routing",
 ]
 
 IS_PYPY = platform.python_implementation() == "PyPy"
@@ -114,6 +112,13 @@ def _in_unstable_openblas_configuration():
     return False
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "mask": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def safe_mask(X, mask):
     """Return a mask which is safe to use on X.
 
@@ -122,7 +127,7 @@ def safe_mask(X, mask):
     X : {array-like, sparse matrix}
         Data on which to apply mask.
 
-    mask : ndarray
+    mask : array-like
         Mask to be used on X.
 
     Returns
@@ -400,7 +405,7 @@ def _get_column_indices(X, key):
     """Get feature column indices for input data X and key.
 
     For accepted values of `key`, see the docstring of
-    :func:`_safe_indexing_column`.
+    :func:`_safe_indexing`.
     """
     n_columns = X.shape[1]
 
@@ -471,7 +476,8 @@ def _get_column_indices(X, key):
         "n_samples": [Interval(numbers.Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
         "stratify": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=None):
     """Resample arrays or sparse matrices in a consistent way.
@@ -739,7 +745,8 @@ def _chunk_generator(gen, chunksize):
         "n": [Interval(numbers.Integral, 1, None, closed="left")],
         "batch_size": [Interval(numbers.Integral, 1, None, closed="left")],
         "min_batch_size": [Interval(numbers.Integral, 0, None, closed="left")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def gen_batches(n, batch_size, *, min_batch_size=0):
     """Generator to create slices containing `batch_size` elements from 0 to `n`.
@@ -789,6 +796,14 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
         yield slice(start, n)
 
 
+@validate_params(
+    {
+        "n": [Interval(Integral, 1, None, closed="left")],
+        "n_packs": [Interval(Integral, 1, None, closed="left")],
+        "n_samples": [Interval(Integral, 1, None, closed="left"), None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def gen_even_slices(n, n_packs, *, n_samples=None):
     """Generator to create `n_packs` evenly spaced slices going up to `n`.
 
@@ -828,8 +843,6 @@ def gen_even_slices(n, n_packs, *, n_samples=None):
     [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
     """
     start = 0
-    if n_packs < 1:
-        raise ValueError("gen_even_slices got n_packs=%s, must be >=1" % n_packs)
     for pack_num in range(n_packs):
         this_n = n // n_packs
         if pack_num < n % n_packs:

@@ -10,22 +10,26 @@ Authors: Shane Grigsby <refuge@rocktalus.com>
 License: BSD 3 clause
 """
 
+import warnings
 from numbers import Integral, Real
 
-import warnings
 import numpy as np
+from scipy.sparse import SparseEfficiencyWarning, issparse
 
+from ..base import BaseEstimator, ClusterMixin, _fit_context
 from ..exceptions import DataConversionWarning
-from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
-from ..metrics.pairwise import _VALID_METRICS
-from ..utils import gen_batches, get_chunk_n_rows
-from ..utils._param_validation import Interval, HasMethods, StrOptions, validate_params
-from ..utils._param_validation import RealNotInt
-from ..utils.validation import check_memory
-from ..neighbors import NearestNeighbors
-from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
-from scipy.sparse import issparse, SparseEfficiencyWarning
+from ..metrics.pairwise import _VALID_METRICS, PAIRWISE_BOOLEAN_FUNCTIONS
+from ..neighbors import NearestNeighbors
+from ..utils import gen_batches, get_chunk_n_rows
+from ..utils._param_validation import (
+    HasMethods,
+    Interval,
+    RealNotInt,
+    StrOptions,
+    validate_params,
+)
+from ..utils.validation import check_memory
 
 
 class OPTICS(ClusterMixin, BaseEstimator):
@@ -134,8 +138,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree`.
-        - 'kd_tree' will use :class:`KDTree`.
+        - 'ball_tree' will use :class:`~sklearn.neighbors.BallTree`.
+        - 'kd_tree' will use :class:`~sklearn.neighbors.KDTree`.
         - 'brute' will use a brute-force search.
         - 'auto' (default) will attempt to decide the most appropriate
           algorithm based on the values passed to :meth:`fit` method.
@@ -144,10 +148,10 @@ class OPTICS(ClusterMixin, BaseEstimator):
         this parameter, using brute force.
 
     leaf_size : int, default=30
-        Leaf size passed to :class:`BallTree` or :class:`KDTree`. This can
-        affect the speed of the construction and query, as well as the memory
-        required to store the tree. The optimal value depends on the
-        nature of the problem.
+        Leaf size passed to :class:`~sklearn.neighbors.BallTree` or
+        :class:`~sklearn.neighbors.KDTree`. This can affect the speed of the
+        construction and query, as well as the memory required to store the
+        tree. The optimal value depends on the nature of the problem.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
@@ -288,6 +292,10 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self.memory = memory
         self.n_jobs = n_jobs
 
+    @_fit_context(
+        # Optics.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Perform OPTICS clustering.
 
@@ -311,8 +319,6 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
-        self._validate_params()
-
         dtype = bool if self.metric in PAIRWISE_BOOLEAN_FUNCTIONS else float
         if dtype == bool and X.dtype != bool:
             msg = (
@@ -441,7 +447,8 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
         "algorithm": [StrOptions({"auto", "brute", "ball_tree", "kd_tree"})],
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
         "n_jobs": [Integral, None],
-    }
+    },
+    prefer_skip_nested_validation=False,  # metric is not validated yet
 )
 def compute_optics_graph(
     X, *, min_samples, max_eps, metric, p, metric_params, algorithm, leaf_size, n_jobs
@@ -496,7 +503,7 @@ def compute_optics_graph(
         .. note::
            `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
-    p : int, default=2
+    p : float, default=2
         Parameter for the Minkowski metric from
         :class:`~sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
@@ -508,20 +515,20 @@ def compute_optics_graph(
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree`.
-        - 'kd_tree' will use :class:`KDTree`.
+        - 'ball_tree' will use :class:`~sklearn.neighbors.BallTree`.
+        - 'kd_tree' will use :class:`~sklearn.neighbors.KDTree`.
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
-          based on the values passed to :meth:`fit` method. (default)
+          based on the values passed to `fit` method. (default)
 
         Note: fitting on sparse input will override the setting of
         this parameter, using brute force.
 
     leaf_size : int, default=30
-        Leaf size passed to :class:`BallTree` or :class:`KDTree`. This can
-        affect the speed of the construction and query, as well as the memory
-        required to store the tree. The optimal value depends on the
-        nature of the problem.
+        Leaf size passed to :class:`~sklearn.neighbors.BallTree` or
+        :class:`~sklearn.neighbors.KDTree`. This can affect the speed of the
+        construction and query, as well as the memory required to store the
+        tree. The optimal value depends on the nature of the problem.
 
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
@@ -680,7 +687,8 @@ def _set_reach_dist(
         "core_distances": [np.ndarray],
         "ordering": [np.ndarray],
         "eps": [Interval(Real, 0, None, closed="both")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     """Perform DBSCAN extraction for an arbitrary epsilon.
@@ -736,7 +744,8 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
         ],
         "xi": [Interval(Real, 0, 1, closed="both")],
         "predecessor_correction": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def cluster_optics_xi(
     *,

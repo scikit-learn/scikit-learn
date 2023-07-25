@@ -6,27 +6,25 @@ Testing for Isolation Forest algorithm (sklearn.ensemble.iforest).
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
-import pytest
 import warnings
-
-import numpy as np
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_allclose
-
-from sklearn.model_selection import ParameterGrid
-from sklearn.ensemble import IsolationForest
-from sklearn.ensemble._iforest import _average_path_length
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_diabetes, load_iris, make_classification
-from sklearn.utils import check_random_state
-from sklearn.metrics import roc_auc_score
-
-from scipy.sparse import csc_matrix, csr_matrix
 from unittest.mock import Mock, patch
 
+import numpy as np
+import pytest
+from scipy.sparse import csc_matrix, csr_matrix
+
+from sklearn.datasets import load_diabetes, load_iris, make_classification
+from sklearn.ensemble import IsolationForest
+from sklearn.ensemble._iforest import _average_path_length
+from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import ParameterGrid, train_test_split
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 
 # load iris & diabetes dataset
 iris = load_iris()
