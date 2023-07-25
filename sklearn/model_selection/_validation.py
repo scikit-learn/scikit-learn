@@ -124,6 +124,12 @@ def cross_validate(
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
+        .. deprecated:: 1.4
+            ``groups`` is deprecated as a direct argument and will be removed
+            in version 1.6. Pass ``groups`` along other metadata via ``params``
+            argument instead. E.g.:
+            ``cross_validate(..., params={'groups': groups})``.
+
     scoring : str, callable, list, tuple, or dict, default=None
         Strategy to evaluate the performance of the cross-validated model on
         the test set.
@@ -304,13 +310,13 @@ def cross_validate(
     >>> print(scores['train_r2'])
     [0.28009951 0.3908844  0.22784907]
     """
-    if params and fit_params:
+    if params is not None and fit_params is not None:
         raise ValueError(
             "`params` and `fit_params` cannot both be provided. Pass parameters "
             "via `params`. `fit_params` is deprecated and will be removed in "
             "version 1.6."
         )
-    elif fit_params:
+    elif fit_params is not None:
         warnings.warn(
             (
                 "`fit_params` is deprecated and will be removed in version 1.6. "
@@ -319,6 +325,24 @@ def cross_validate(
             FutureWarning,
         )
         params = fit_params
+
+    params = {} if params is None else params
+
+    if groups is not None and "groups" in params:
+        raise ValueError(
+            "The 'groups' parameter cannot be passed both via the "
+            "'groups' argument and via the 'params' argument. Pass `groups` "
+            "only via the `params` argument."
+        )
+    elif groups is not None:
+        warnings.warn(
+            (
+                "`groups` is deprecated as a direct argument and will be removed in"
+                " version 1.6. Pass `groups` along other metadata via `params` argument"
+                " instead. E.g.: `cross_validate(..., params={'groups': groups})`."
+            ),
+            FutureWarning,
+        )
 
     # kinda confused as why this is here, in other places we don't do such a
     # check and conversion, we do check_array if needed.
@@ -361,9 +385,12 @@ def cross_validate(
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
         )
-        routed_params = process_routing(router, method="fit", **params)
+        routed_params = process_routing(
+            router, method="fit", other_params=None, **params
+        )
     else:
         routed_params = Bunch()
+        groups = params.pop("groups", None) if groups is None else groups
         routed_params.splitter = Bunch(split={"groups": groups})
         routed_params.estimator = Bunch(fit=params)
         routed_params.scorer = Bunch(score={})

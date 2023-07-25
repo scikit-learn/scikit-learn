@@ -143,16 +143,13 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         return self
 
     def predict(self, X, sample_weight="default", metadata="default"):
-        pass  # pragma: no cover
+        if self.registry is not None:
+            self.registry.append(self)
 
-        # when needed, uncomment the implementation
-        # if self.registry is not None:
-        #     self.registry.append(self)
-
-        # record_metadata_not_default(
-        #     self, "predict", sample_weight=sample_weight, metadata=metadata
-        # )
-        # return np.zeros(shape=(len(X),))
+        record_metadata_not_default(
+            self, "predict", sample_weight=sample_weight, metadata=metadata
+        )
+        return np.zeros(shape=(len(X),))
 
     def predict_proba(self, X, sample_weight="default", metadata="default"):
         if self.registry is not None:
@@ -198,11 +195,11 @@ class ConsumingSplitter(BaseCrossValidator, GroupsConsumerMixin):
     def __init__(self, registry=None):
         self.registry = registry
 
-    def split(self, X, y=None, groups="default"):
+    def split(self, X, y=None, groups="default", metadata="default"):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_default(self, "split", groups=groups)
+        record_metadata_not_default(self, "split", groups=groups, metadata=metadata)
 
         split_index = len(X) - 10
         train_indices = range(0, split_index)

@@ -1449,10 +1449,11 @@ def process_routing(obj, method, other_params, **kwargs):
         corresponding methods or corresponding child objects. The object names
         are those defined in `obj.get_metadata_routing()`.
     """
-    if not hasattr(obj, "get_metadata_routing"):
+    if not (hasattr(obj, "get_metadata_routing") or isinstance(obj, MetadataRouter)):
         raise AttributeError(
-            f"This {repr(obj.__class__.__name__)} has not implemented the routing"
-            " method `get_metadata_routing`."
+            f"The given object ({repr(obj.__class__.__name__)}) needs to either"
+            " implement the routing method `get_metadata_routing` or be a"
+            " `MetadataRouter` instance."
         )
     if method not in METHODS:
         raise TypeError(

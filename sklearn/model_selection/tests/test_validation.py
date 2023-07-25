@@ -73,6 +73,11 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder, scale
 from sklearn.svm import SVC, LinearSVC
+from sklearn.tests.test_metaestimators_metadata_routing import (
+    ConsumingClassifier,
+    ConsumingScorer,
+    ConsumingSplitter,
+)
 from sklearn.utils import shuffle
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils._testing import (
@@ -2432,18 +2437,63 @@ def test_cross_validate_return_indices(global_random_seed):
 
 def test_cross_validate_fit_param_deprecation():
     with pytest.warns(FutureWarning, match="`fit_params` is deprecated"):
-        cross_validate(estimator=None, X=None, y=None, fit_params={})
+        cross_validate(estimator=ConsumingClassifier(), X=X, y=y, cv=2, fit_params={})
 
     with pytest.raises(
         ValueError, match="`params` and `fit_params` cannot both be provided"
     ):
-        cross_validate(estimator=None, X=None, y=None, fit_params={}, params={})
+        cross_validate(
+            estimator=ConsumingClassifier(), X=X, y=y, fit_params={}, params={}
+        )
 
 
 @pytest.mark.usefixtures("enable_slep006")
 def test_groups_in_params():
     with pytest.raises(ValueError, match="The 'groups' parameter cannot be passed"):
-        cross_validate(estimator=None, X=None, y=None, groups=[], params={"groups": []})
+        cross_validate(
+            estimator=ConsumingClassifier(),
+            X=X,
+            y=y,
+            groups=[],
+            params={"groups": []},
+        )
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_cross_validate_routing():
+    scorer = ConsumingScorer().set_score_request(
+        sample_weight="score_weights", metadata="score_metadata"
+    )
+    splitter = ConsumingSplitter().set_split_request(
+        groups="split_groups", metadata="split_metadata"
+    )
+    estimator = ConsumingClassifier().set_fit_request(
+        sample_weight="fit_sample_weight", metadata="fit_metadata"
+    )
+    n_samples = len(X)
+    rng = np.random.RandomState(0)
+    score_weights = rng.rand(n_samples)
+    score_metadata = rng.rand(n_samples)
+    split_groups = rng.randint(0, 3, n_samples)
+    split_metadata = rng.rand(n_samples)
+    fit_sample_weight = rng.rand(n_samples)
+    fit_metadata = rng.rand(n_samples)
+
+    cross_validate(
+        estimator,
+        X=X,
+        y=y,
+        scoring=scorer,
+        cv=splitter,
+        params=dict(
+            score_weights=score_weights,
+            score_metadata=score_metadata,
+            split_groups=split_groups,
+            split_metadata=split_metadata,
+            fit_sample_weight=fit_sample_weight,
+            fit_metadata=fit_metadata,
+        ),
+    )
 
 
 # End of metadata routing tests
