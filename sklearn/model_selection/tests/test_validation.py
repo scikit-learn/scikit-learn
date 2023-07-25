@@ -2448,14 +2448,13 @@ def test_cross_validate_fit_param_deprecation():
 
 
 @pytest.mark.usefixtures("enable_slep006")
-def test_groups_in_params():
-    with pytest.raises(ValueError, match="The 'groups' parameter cannot be passed"):
+def test_groups_with_routing_validation():
+    with pytest.raises(ValueError, match="`groups` can only be passed if"):
         cross_validate(
             estimator=ConsumingClassifier(),
             X=X,
             y=y,
             groups=[],
-            params={"groups": []},
         )
 
 

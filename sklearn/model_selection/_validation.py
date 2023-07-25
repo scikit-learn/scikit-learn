@@ -124,9 +124,10 @@ def cross_validate(
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
-        .. deprecated:: 1.4
-            ``groups`` is deprecated as a direct argument and will be removed
-            in version 1.6. Pass ``groups`` along other metadata via ``params``
+        .. versionchanged:: 1.4
+            ``groups`` can only be passed if metadata routing is not enabled
+            via ``sklearn.set_config(enable_metadata_routing=True)``. When routing
+            is enabled, pass ``groups`` along other metadata via ``params``
             argument instead. E.g.:
             ``cross_validate(..., params={'groups': groups})``.
 
@@ -328,20 +329,12 @@ def cross_validate(
 
     params = {} if params is None else params
 
-    if groups is not None and "groups" in params:
+    if groups is not None and _routing_enabled():
         raise ValueError(
-            "The 'groups' parameter cannot be passed both via the "
-            "'groups' argument and via the 'params' argument. Pass `groups` "
-            "only via the `params` argument."
-        )
-    elif groups is not None:
-        warnings.warn(
-            (
-                "`groups` is deprecated as a direct argument and will be removed in"
-                " version 1.6. Pass `groups` along other metadata via `params` argument"
-                " instead. E.g.: `cross_validate(..., params={'groups': groups})`."
-            ),
-            FutureWarning,
+            "`groups` can only be passed if metadata routing is not enabled via"
+            " `sklearn.set_config(enable_metadata_routing=True)`. When routing is"
+            " enabled, pass `groups` along other metadata via `params` argument"
+            " instead. E.g.: `cross_validate(..., params={'groups': groups})`."
         )
 
     # kinda confused as why this is here, in other places we don't do such a
@@ -358,14 +351,6 @@ def cross_validate(
         scorers = _check_multimetric_scoring(estimator, scoring)
 
     if _routing_enabled():
-        if groups is not None and "groups" in params:
-            raise ValueError(
-                "The 'groups' parameter cannot be passed both via the "
-                "'groups' argument and via the 'params' argument."
-            )
-        if groups is not None:
-            params["groups"] = groups
-
         if scorers is dict:
             _scorer = _MultimetricScorer(scorers, raise_exc=(error_score == "raise"))
         else:
@@ -390,7 +375,6 @@ def cross_validate(
         )
     else:
         routed_params = Bunch()
-        groups = params.pop("groups", None) if groups is None else groups
         routed_params.splitter = Bunch(split={"groups": groups})
         routed_params.estimator = Bunch(fit=params)
         routed_params.scorer = Bunch(score={})
@@ -534,6 +518,7 @@ def _warn_or_raise_about_fit_failures(results, error_score):
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
         "fit_params": [dict, None],
+        "params": [dict, None],
         "pre_dispatch": [Integral, str, None],
         "error_score": [StrOptions({"raise"}), Real],
     },
