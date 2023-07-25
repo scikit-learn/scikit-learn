@@ -303,6 +303,7 @@ def test_hdbscan_sparse():
     assert_array_equal(dense_labels, sparse_labels)
 
     # Compare that the sparse and dense non-precomputed routines return the same labels
+    # where the 0th observation contains the outlier.
     for outlier_val, outlier_type in zip((np.inf, np.nan), ("infinite", "missing")):
         X_dense = X.copy()
         X_dense[0, 0] = outlier_val
