@@ -205,26 +205,27 @@ alpha parameter, the fewer features selected.
 **L1-recovery and compressive sensing**
 |details-split|
 
-   For a good choice of alpha, the :ref:`lasso` can fully recover the
-   exact set of non-zero variables using only few observations, provided
-   certain specific conditions are met. In particular, the number of
-   samples should be "sufficiently large", or L1 models will perform at
-   random, where "sufficiently large" depends on the number of non-zero
-   coefficients, the logarithm of the number of features, the amount of
-   noise, the smallest absolute value of non-zero coefficients, and the
-   structure of the design matrix X. In addition, the design matrix must
-   display certain specific properties, such as not being too correlated.
+For a good choice of alpha, the :ref:`lasso` can fully recover the
+exact set of non-zero variables using only few observations, provided
+certain specific conditions are met. In particular, the number of
+samples should be "sufficiently large", or L1 models will perform at
+random, where "sufficiently large" depends on the number of non-zero
+coefficients, the logarithm of the number of features, the amount of
+noise, the smallest absolute value of non-zero coefficients, and the
+structure of the design matrix X. In addition, the design matrix must
+display certain specific properties, such as not being too correlated.
 
-   There is no general rule to select an alpha parameter for recovery of
-   non-zero coefficients. It can by set by cross-validation
-   (:class:`~sklearn.linear_model.LassoCV` or
-   :class:`~sklearn.linear_model.LassoLarsCV`), though this may lead to
-   under-penalized models: including a small number of non-relevant variables
-   is not detrimental to prediction score. BIC
-   (:class:`~sklearn.linear_model.LassoLarsIC`) tends, on the opposite, to set
-   high values of alpha.
+There is no general rule to select an alpha parameter for recovery of
+non-zero coefficients. It can by set by cross-validation
+(:class:`~sklearn.linear_model.LassoCV` or
+:class:`~sklearn.linear_model.LassoLarsCV`), though this may lead to
+under-penalized models: including a small number of non-relevant variables
+is not detrimental to prediction score. BIC
+(:class:`~sklearn.linear_model.LassoLarsIC`) tends, on the opposite, to set
+high values of alpha.
 
-   **References** Richard G. Baraniuk "Compressive Sensing", IEEE Signal
+.. topic:: Reference
+   Richard G. Baraniuk "Compressive Sensing", IEEE Signal
    Processing Magazine [120] July 2007
    http://users.isr.ist.utl.pt/~aguiar/CS_notes.pdf
 
