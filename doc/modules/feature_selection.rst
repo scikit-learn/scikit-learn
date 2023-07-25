@@ -225,7 +225,7 @@ is not detrimental to prediction score. BIC
 high values of alpha.
 
 .. topic:: Reference
-  
+
    Richard G. Baraniuk "Compressive Sensing", IEEE Signal
    Processing Magazine [120] July 2007
    http://users.isr.ist.utl.pt/~aguiar/CS_notes.pdf
