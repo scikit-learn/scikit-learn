@@ -137,6 +137,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         "tol": [Interval(Real, 0.0, None, closed="left")],
     }
     _parameter_constraints.pop("splitter")
+    _parameter_constraints.pop("monotonic_cst")
 
     @abstractmethod
     def __init__(

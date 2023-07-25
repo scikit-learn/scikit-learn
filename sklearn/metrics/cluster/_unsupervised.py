@@ -84,8 +84,7 @@ def silhouette_score(
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by :func:`metrics.pairwise.pairwise_distances
-        <sklearn.metrics.pairwise.pairwise_distances>`. If ``X`` is
+        allowed by :func:`~sklearn.metrics.pairwise_distances`. If ``X`` is
         the distance array itself, use ``metric="precomputed"``.
 
     sample_size : int, default=None
@@ -230,7 +229,7 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`.
+        allowed by :func:`~sklearn.metrics.pairwise_distances`.
         If ``X`` is the distance array itself, use "precomputed" as the metric.
         Precomputed distance matrices must have 0 along the diagonal.
 

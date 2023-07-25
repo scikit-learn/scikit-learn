@@ -53,7 +53,7 @@ from .utils.metadata_routing import (
 from .utils.multiclass import check_classification_targets
 from .utils.parallel import Parallel, delayed
 from .utils.validation import (
-    _check_fit_params,
+    _check_method_params,
     _check_pos_label_consistency,
     _check_sample_weight,
     _num_samples,
@@ -532,7 +532,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Returns
         -------
         routing : MetadataRouter
-            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
         router = (
@@ -612,7 +612,7 @@ def _fit_classifier_calibrator_pair(
     -------
     calibrated_classifier : _CalibratedClassifier instance
     """
-    fit_params_train = _check_fit_params(X, fit_params, train)
+    fit_params_train = _check_method_params(X, params=fit_params, indices=train)
     X_train, y_train = _safe_indexing(X, train), _safe_indexing(y, train)
     X_test, y_test = _safe_indexing(X, test), _safe_indexing(y, test)
 

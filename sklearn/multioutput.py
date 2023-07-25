@@ -36,13 +36,14 @@ from .utils._param_validation import HasMethods, StrOptions
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _raise_for_params,
     _routing_enabled,
     process_routing,
 )
 from .utils.metaestimators import available_if
 from .utils.multiclass import check_classification_targets
 from .utils.parallel import Parallel, delayed
-from .utils.validation import _check_fit_params, check_is_fitted, has_fit_parameter
+from .utils.validation import _check_method_params, check_is_fitted, has_fit_parameter
 
 __all__ = [
     "MultiOutputRegressor",
@@ -148,11 +149,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         self : object
             Returns a fitted instance.
         """
-        if partial_fit_params and not _routing_enabled():
-            raise ValueError(
-                "partial_fit_params is only supported if enable_metadata_routing=True."
-                " See the User Guide for more information."
-            )
+        _raise_for_params(partial_fit_params, self, "partial_fit")
 
         first_time = not hasattr(self, "estimators_")
 
@@ -265,7 +262,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
                     "Underlying estimator does not support sample weights."
                 )
 
-            fit_params_validated = _check_fit_params(X, fit_params)
+            fit_params_validated = _check_method_params(X, params=fit_params)
             routed_params = Bunch(estimator=Bunch(fit=fit_params_validated))
             if sample_weight is not None:
                 routed_params.estimator.fit["sample_weight"] = sample_weight
@@ -322,7 +319,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         Returns
         -------
         routing : MetadataRouter
-            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
         router = MetadataRouter(owner=self.__class__.__name__).add(
@@ -859,7 +856,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     See Also
     --------
     RegressorChain : Equivalent for regression.
-    MultioutputClassifier : Classifies each output independently rather than
+    MultiOutputClassifier : Classifies each output independently rather than
         chaining.
 
     References
@@ -919,11 +916,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         self : object
             Class instance.
         """
-        if fit_params and not _routing_enabled():
-            raise ValueError(
-                "fit_params is only supported if enable_metadata_routing=True. "
-                "See the User Guide for more information."
-            )
+        _raise_for_params(fit_params, self, "fit")
 
         super().fit(X, Y, **fit_params)
         self.classes_ = [
@@ -1006,7 +999,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Returns
         -------
         routing : MetadataRouter
-            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
         router = MetadataRouter(owner=self.__class__.__name__).add(
@@ -1155,7 +1148,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         Returns
         -------
         routing : MetadataRouter
-            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
         router = MetadataRouter(owner=self.__class__.__name__).add(

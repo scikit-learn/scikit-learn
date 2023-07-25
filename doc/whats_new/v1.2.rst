@@ -76,7 +76,7 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |Fix| :attr:`preprocessing.OneHotEncoder.drop_idx_` now properly 
+- |Fix| `preprocessing.OneHotEncoder.drop_idx_` now properly
   references the dropped category in the `categories_` attribute
   when there are infrequent categories. :pr:`25589` by `Thomas Fan`_.
 
@@ -118,9 +118,10 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- |Fix| The fitted components in :class:`MiniBatchDictionaryLearning` might differ. The
-  online updates of the sufficient statistics now properly take the sizes of the batches
-  into account.
+- |Fix| The fitted components in
+  :class:`decomposition.MiniBatchDictionaryLearning` might differ. The online
+  updates of the sufficient statistics now properly take the sizes of the
+  batches into account.
   :pr:`25354` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Fix| The `categories_` attribute of :class:`preprocessing.OneHotEncoder` now
@@ -227,7 +228,7 @@ Changelog
 
 - |Fix| Improves error message in :class:`neural_network.MLPClassifier` and
   :class:`neural_network.MLPRegressor`, when `early_stopping=True` and
-  :meth:`partial_fit` is called. :pr:`25694` by `Thomas Fan`_.
+  `partial_fit` is called. :pr:`25694` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -255,7 +256,7 @@ Changelog
   boolean. The type is maintained, instead of converting to `float64.`
   :pr:`25147` by :user:`Tim Head <betatim>`.
 
-- |API| :func:`utils.fixes.delayed` is deprecated in 1.2.1 and will be removed
+- |API| `utils.fixes.delayed` is deprecated in 1.2.1 and will be removed
   in 1.5. Instead, import :func:`utils.parallel.delayed` and use it in
   conjunction with the newly introduced :func:`utils.parallel.Parallel`
   to ensure proper propagation of the scikit-learn configuration to
@@ -294,7 +295,7 @@ random sampling procedures.
   to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
   :pr:`23619` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |Enhancement| The default value for `eps` :func:`metrics.logloss` has changed
+- |Enhancement| The default value for `eps` :func:`metrics.log_loss` has changed
   from `1e-15` to `"auto"`. `"auto"` sets `eps` to `np.finfo(y_pred.dtype).eps`.
   :pr:`24354` by :user:`Safiuddin Khaja <Safikh>` and :user:`gsiisg <gsiisg>`.
 
@@ -306,7 +307,7 @@ random sampling procedures.
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
 - |Fix| The condition for early stopping has now been changed in
-  :func:`linear_model._sgd_fast._plain_sgd` which is used by
+  `linear_model._sgd_fast._plain_sgd` which is used by
   :class:`linear_model.SGDRegressor` and :class:`linear_model.SGDClassifier`. The old
   condition did not disambiguate between
   training and validation set and had an effect of overscaling the error tolerance.
@@ -319,7 +320,7 @@ random sampling procedures.
 
 - |API| The default value of `tol` was changed from `1e-3` to `1e-4` for
   :func:`linear_model.ridge_regression`, :class:`linear_model.Ridge` and
-  :class:`linear_model.`RidgeClassifier`.
+  :class:`linear_model.RidgeClassifier`.
   :pr:`24465` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 Changes impacting all modules
@@ -358,8 +359,8 @@ Changes impacting all modules
   - :class:`sklearn.semi_supervised.LabelPropagation`
   - :class:`sklearn.semi_supervised.LabelSpreading`
 
-  For instance :class:`sklearn.neighbors.NearestNeighbors.kneighbors` and
-  :class:`sklearn.neighbors.NearestNeighbors.radius_neighbors`
+  For instance :meth:`sklearn.neighbors.NearestNeighbors.kneighbors` and
+  :meth:`sklearn.neighbors.NearestNeighbors.radius_neighbors`
   can respectively be up to ×20 and ×5 faster than previously on a laptop.
 
   Moreover, implementations of those two algorithms are now suitable
@@ -796,7 +797,7 @@ Changelog
   (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
   :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
 
-- |Enhancement| Adds an `"auto"` option to `eps` in :func:`metrics.logloss`.
+- |Enhancement| Adds an `"auto"` option to `eps` in :func:`metrics.log_loss`.
   This option will automatically set the `eps` value depending on the data
   type of `y_pred`. In addition, the default value of `eps` is changed from
   `1e-15` to the new `"auto"` option.
@@ -887,7 +888,7 @@ Changelog
   :pr:`10468` by :user:`Ruben <icfly2>` and :pr:`22993` by
   :user:`Jovan Stojanovic <jovan-stojanovic>`.
 
-- |Enhancement| :class:`neighbors.NeighborsBase` now accepts
+- |Enhancement| `neighbors.NeighborsBase` now accepts
   Minkowski semi-metric (i.e. when :math:`0 < p < 1` for
   `metric="minkowski"`) for `algorithm="auto"` or `algorithm="brute"`.
   :pr:`24750` by :user:`Rudresh Veerkhare <RudreshVeerkhare>`
@@ -970,7 +971,7 @@ Changelog
 - |Enhancement| :func:`utils.validation.column_or_1d` now accepts a `dtype`
   parameter to specific `y`'s dtype. :pr:`22629` by `Thomas Fan`_.
 
-- |Enhancement| :func:`utils.extmath.cartesian` now accepts arrays with different
+- |Enhancement| `utils.extmath.cartesian` now accepts arrays with different
   `dtype` and will cast the output to the most permissive `dtype`.
   :pr:`25067` by :user:`Guillaume Lemaitre <glemaitre>`.
 

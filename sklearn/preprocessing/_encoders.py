@@ -176,11 +176,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         warn_on_unknown=False,
         ignore_category_indices=None,
     ):
-        self._check_feature_names(X, reset=False)
-        self._check_n_features(X, reset=False)
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite
         )
+        self._check_feature_names(X, reset=False)
+        self._check_n_features(X, reset=False)
 
         X_int = np.zeros((n_samples, n_features), dtype=int)
         X_mask = np.ones((n_samples, n_features), dtype=bool)
@@ -437,7 +437,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             X_int[rows_to_update, i] = np.take(mapping, X_int[rows_to_update, i])
 
     def _more_tags(self):
-        return {"X_types": ["categorical"]}
+        return {"X_types": ["2darray", "categorical"], "allow_nan": True}
 
 
 class OneHotEncoder(_BaseEncoder):
