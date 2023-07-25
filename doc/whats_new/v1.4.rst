@@ -66,6 +66,13 @@ Changelog
 - |Enhancement| :func:`base.clone` now supports `dict` as input and creates a
   copy. :pr:`26786` by `Adrin Jalali`_.
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| :class:`cross_decomposition.PLSRegression` now automatically ravels the output
+  of `predict` if fitted with one dimensional `y`.
+  :pr:`26602` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
