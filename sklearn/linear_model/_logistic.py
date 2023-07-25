@@ -837,8 +837,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            in 1.4. Use `None` instead.
 
     dual : bool, default=False
-        Dual or primal formulation. Dual formulation is only implemented for
-        l2 penalty with liblinear solver. Prefer dual=False when
+        Dual (constrained) or primal (regularized, see also
+        :ref:`this equation <regularized-logistic-loss>`) formulation. Dual formulation
+        is only implemented for l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
     tol : float, default=1e-4
@@ -1455,8 +1456,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     dual : bool, default=False
-        Dual or primal formulation. Dual formulation is only implemented for
-        l2 penalty with liblinear solver. Prefer dual=False when
+        Dual (constrained) or primal (regularized, see also
+        :ref:`this equation <regularized-logistic-loss>`) formulation. Dual formulation
+        is only implemented for l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
     penalty : {'l1', 'l2', 'elasticnet'}, default='l2'
