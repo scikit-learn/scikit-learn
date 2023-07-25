@@ -20,8 +20,6 @@ from sklearn.tests.metadata_routing_common import (
     ConsumingScorer,
     ConsumingSplitter,
     _Registry,
-)
-from sklearn.tests.test_metadata_routing import (
     assert_request_is_empty,
     check_recorded_metadata,
 )

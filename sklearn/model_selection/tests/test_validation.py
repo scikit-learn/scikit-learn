@@ -73,7 +73,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder, scale
 from sklearn.svm import SVC, LinearSVC
-from sklearn.tests.test_metaestimators_metadata_routing import (
+from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
     ConsumingScorer,
     ConsumingSplitter,
