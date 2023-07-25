@@ -1,8 +1,8 @@
 """GaussianMixtureIC"""
 
-# Author: Thomas Athey <tathey1@jhmi.edu>
-# Modified by: Benjamin Pedigo <bpedigo@jhu.edu>
-#              Tingshan Liu <tliu68@jhmi.edu>
+# Authors: Tingshan Liu <tliu68@jhmi.edu>
+#          Thomas Athey <tathey1@jhmi.edu>
+#          Benjamin Pedigo <bpedigo@jhu.edu>
 
 
 import numpy as np
@@ -277,13 +277,10 @@ class GaussianMixtureIC(ClusterMixin, BaseEstimator):
         X = self._validate_data(X, dtype=[np.float64, np.float32], ensure_min_samples=1)
 
         # check n_components against sample size
-        n_comps = [self.max_components, self.min_components]
-        names = ["max_components", "min_components"]
-        for i in range(len(names)):
-            if n_comps[i] > X.shape[0]:
-                msg = names[i] + "must be <= n_samples, but" + names[i]
-                msg += "= {}, n_samples = {}".format(n_comps[i], X.shape[0])
-                raise ValueError(msg)
+        if self.max_components > X.shape[0]:
+            msg = "max_components must be <= n_samples, but max_components"
+            msg += "= {}, n_samples = {}".format(self.max_components, X.shape[0])
+            raise ValueError(msg)
 
         param_grid = {
             "covariance_type": covariance_type,
