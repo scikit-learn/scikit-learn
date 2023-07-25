@@ -25,6 +25,7 @@ from sklearn.tests.metadata_routing_common import (
     NonConsumingClassifier,
     WeightedMetaClassifier,
     WeightedMetaRegressor,
+    _Registry,
     assert_request_equal,
     assert_request_is_empty,
     check_recorded_metadata,
@@ -142,6 +143,23 @@ def test_assert_request_is_empty():
         .add_self_request(WeightedMetaRegressor(estimator=None))
         .add(method_mapping="fit", estimator=ConsumingRegressor())
     )
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        ConsumingClassifier(registry=_Registry()),
+        ConsumingRegressor(registry=_Registry()),
+        ConsumingTransformer(registry=_Registry()),
+        NonConsumingClassifier(registry=_Registry()),
+        WeightedMetaClassifier(estimator=ConsumingClassifier(), registry=_Registry()),
+        WeightedMetaRegressor(estimator=ConsumingRegressor(), registry=_Registry()),
+    ],
+)
+def test_estimator_puts_self_in_registry(estimator):
+    """Check that an estimator puts itself in the registry upon fit."""
+    estimator.fit(X, y)
+    assert estimator in estimator.registry
 
 
 @pytest.mark.parametrize(

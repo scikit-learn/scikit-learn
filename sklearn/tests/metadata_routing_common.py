@@ -163,7 +163,13 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
 class NonConsumingClassifier(ClassifierMixin, BaseEstimator):
     """A classifier which accepts no metadata on any method."""
 
+    def __init__(self, registry=None):
+        self.registry = registry
+
     def fit(self, X, y):
+        if self.registry is not None:
+            self.registry.append(self)
+
         self.classes_ = [0, 1]
         return self
 
@@ -330,10 +336,14 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
 class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
     """A meta-regressor which is also a consumer."""
 
-    def __init__(self, estimator):
+    def __init__(self, estimator, registry=None):
         self.estimator = estimator
+        self.registry = registry
 
     def fit(self, X, y, sample_weight=None, **fit_params):
+        if self.registry is not None:
+            self.registry.append(self)
+
         record_metadata(self, "fit", sample_weight=sample_weight)
         params = process_routing(self, "fit", fit_params, sample_weight=sample_weight)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
@@ -355,10 +365,14 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
 class WeightedMetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """A meta-estimator which also consumes sample_weight itself in ``fit``."""
 
-    def __init__(self, estimator):
+    def __init__(self, estimator, registry=None):
         self.estimator = estimator
+        self.registry = registry
 
     def fit(self, X, y, sample_weight=None, **kwargs):
+        if self.registry is not None:
+            self.registry.append(self)
+
         record_metadata(self, "fit", sample_weight=sample_weight)
         params = process_routing(self, "fit", kwargs, sample_weight=sample_weight)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
