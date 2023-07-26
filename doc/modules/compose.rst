@@ -66,10 +66,8 @@ it takes a variable number of estimators and returns a pipeline,
 filling in the names automatically::
 
     >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.naive_bayes import MultinomialNB
-    >>> from sklearn.preprocessing import Binarizer
-    >>> make_pipeline(Binarizer(), MultinomialNB())
-    Pipeline(steps=[('binarizer', Binarizer()), ('multinomialnb', MultinomialNB())])
+    >>> make_pipeline(PCA(), SVC())
+    Pipeline(steps=[('pca', PCA()), ('svc', SVC())])
 
 Accessing steps
 ...............
