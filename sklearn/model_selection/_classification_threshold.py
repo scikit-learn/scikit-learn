@@ -558,7 +558,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             )
         )
 
-        if any(len(th) == 1 for th in cv_thresholds):
+        if any(np.isclose(th[0], th[-1]) for th in cv_thresholds):
             raise ValueError(
                 "The provided estimator makes constant predictions. Therefore, it is "
                 "impossible to optimize the decision threshold."

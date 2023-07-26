@@ -1222,7 +1222,11 @@ def test_continuous_scorer():
     X, y = make_classification(random_state=0)
     estimator = LogisticRegression().fit(X, y)
     scorer = _ContinuousScorer(
-        balanced_accuracy_score, sign=1, response_method="predict_proba", kwargs={}
+        balanced_accuracy_score,
+        sign=1,
+        response_method="predict_proba",
+        n_thresholds=10,
+        kwargs={},
     )
     thresholds, scores = scorer(estimator, X, y)
 
@@ -1238,6 +1242,7 @@ def test_continuous_scorer():
         balanced_accuracy_score,
         sign=1,
         response_method="predict_proba",
+        n_thresholds=10,
         kwargs={"adjusted": True},
     )
     thresholds, scores = scorer(estimator, X, y)
@@ -1250,6 +1255,7 @@ def test_continuous_scorer():
         balanced_accuracy_score,
         sign=-1,
         response_method="predict_proba",
+        n_thresholds=10,
         kwargs={"adjusted": True},
     )
     thresholds, scores = scorer(estimator, X, y)
@@ -1269,6 +1275,7 @@ def test_continuous_scorer_pos_label(global_random_seed):
         recall_score,
         sign=1,
         response_method="predict_proba",
+        n_thresholds=1000,
         kwargs={"pos_label": 1},
     )
     thresholds_pos_label_1, scores_pos_label_1 = scorer(estimator, X, y)
@@ -1277,6 +1284,7 @@ def test_continuous_scorer_pos_label(global_random_seed):
         recall_score,
         sign=1,
         response_method="predict_proba",
+        n_thresholds=1000,
         kwargs={"pos_label": 0},
     )
     thresholds_pos_label_0, scores_pos_label_0 = scorer(estimator, X, y)
