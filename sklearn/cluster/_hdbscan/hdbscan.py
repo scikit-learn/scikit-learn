@@ -771,7 +771,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 (
                     "`algorithm='kdtree'`has been deprecated in 1.4 and will be renamed"
                     " to'kd_tree'`in 1.6. To keep the past behaviour, set"
-                    " `algorithm=kd_tree`."
+                    " `algorithm='kd_tree'`."
                 ),
                 FutureWarning,
             )
@@ -783,7 +783,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 (
                     "`algorithm='balltree'`has been deprecated in 1.4 and will be"
                     " renamed to'ball_tree'`in 1.6. To keep the past behaviour, set"
-                    " `algorithm=ball_tree`."
+                    " `algorithm='ball_tree'`."
                 ),
                 FutureWarning,
             )
