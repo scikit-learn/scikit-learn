@@ -23,6 +23,7 @@ import warnings
 from collections import Counter
 from functools import partial
 from inspect import signature
+from numbers import Integral
 from traceback import format_exc
 
 import numpy as np
@@ -503,12 +504,13 @@ def _threshold_scores_to_class_labels(y_score, threshold, classes, pos_label):
 class _ContinuousScorer(_BaseScorer):
     """Scorer taking a continuous response and output a score for each threshold."""
 
-    def __init__(self, score_func, sign, response_method, kwargs):
+    def __init__(self, score_func, sign, response_method, n_thresholds, kwargs):
         super().__init__(score_func=score_func, sign=sign, kwargs=kwargs)
         self.response_method = response_method
+        self.n_thresholds = n_thresholds
 
     @classmethod
-    def from_scorer(cls, scorer, response_method, pos_label):
+    def from_scorer(cls, scorer, response_method, n_thresholds, pos_label):
         """Create a continuous scorer from a normal scorer."""
         # add `pos_label` if requested by the scorer function
         scorer_kwargs = {**scorer._kwargs}
@@ -532,6 +534,7 @@ class _ContinuousScorer(_BaseScorer):
             score_func=scorer._score_func,
             sign=scorer._sign,
             response_method=response_method,
+            n_thresholds=n_thresholds,
             kwargs=scorer_kwargs,
         )
         # transfer the metadata request
@@ -571,7 +574,13 @@ class _ContinuousScorer(_BaseScorer):
         # Easy for the probability case but not for the decision function case since it
         # is not bounded.
         scoring_kwargs = {**self._kwargs, **kwargs}
-        potential_thresholds = np.unique(y_score)
+        # potential_thresholds = np.unique(y_score)
+        if isinstance(self.n_thresholds, Integral):
+            potential_thresholds = np.linspace(
+                np.min(y_score), np.max(y_score), self.n_thresholds
+            )
+        else:
+            potential_thresholds = np.array(self.n_thresholds, copy=False)
         score_thresholds = [
             self._sign
             * self._score_func(

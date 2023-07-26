@@ -197,7 +197,9 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     def __len__(self):
         """Return the number of estimators in the ensemble."""
-        return len(self.estimators_)
+        if hasattr(self, "estimators_"):
+            return len(self.estimators_)
+        return True
 
     def __getitem__(self, index):
         """Return the index'th estimator in the ensemble."""

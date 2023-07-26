@@ -221,6 +221,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
     n_thresholds : int, default=100
         The number of decision threshold to use when discretizing the output
         of the classifier `method`.
+        # TODO: update to array-like
 
     cv : int, float, cross-validation generator, iterable or "prefit", default=None
         Determines the cross-validation splitting strategy to train classifier.
@@ -375,7 +376,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         "constant_threshold": [Real],
         "pos_label": [Real, str, "boolean", None],
         "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
-        "n_thresholds": [Interval(Integral, 1, None, closed="left")],
+        "n_thresholds": [Interval(Integral, 1, None, closed="left"), "array-like"],
         "cv": [
             "cv_object",
             StrOptions({"prefit"}),
@@ -566,9 +567,12 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         # find the global min and max thresholds across all folds
         min_threshold = np.min([th.min() for th in cv_thresholds])
         max_threshold = np.max([th.max() for th in cv_thresholds])
-        self.decision_thresholds_ = np.linspace(
-            min_threshold, max_threshold, num=self.n_thresholds
-        )
+        if isinstance(self.n_thresholds, Integral):
+            self.decision_thresholds_ = np.linspace(
+                min_threshold, max_threshold, num=self.n_thresholds
+            )
+        else:
+            self.decision_thresholds_ = np.array(self.n_thresholds, copy=False)
 
         def _mean_interpolated_score(threshold_interpolated, cv_thresholds, cv_scores):
             return np.mean(
@@ -583,6 +587,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             self.objective_scores_ = _mean_interpolated_score(
                 self.decision_thresholds_, cv_thresholds, cv_scores
             )
+            self.cv_thresholds_, self.cv_scores_ = cv_thresholds, cv_scores
             best_idx = self.objective_scores_.argmax()
             self.objective_score_ = self.objective_scores_[best_idx]
             self.decision_threshold_ = self.decision_thresholds_[best_idx]
@@ -765,7 +770,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         else:
             scoring = check_scoring(self.estimator, scoring=self.objective_metric)
             scorer = _ContinuousScorer.from_scorer(
-                scoring, self._response_method, self.pos_label
+                scoring, self._response_method, self.n_thresholds, self.pos_label
             )
         return scorer
 
