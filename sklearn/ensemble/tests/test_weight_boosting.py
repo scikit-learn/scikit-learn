@@ -667,13 +667,9 @@ def test_deprecated_base_estimator_parameters_can_be_set():
 
 # TODO(1.6): remove
 def test_deprecated_samme_r_algorithm():
-    adaboost_clf = AdaBoostClassifier(
-        estimator=DecisionTreeClassifier(max_leaf_nodes=4, random_state=1),
-        n_estimators=200,
-        random_state=42,
-    )
+    adaboost_clf = AdaBoostClassifier(n_estimators=1)
     with pytest.warns(
         FutureWarning,
-        match=re.escape("The `SAMME.R` algorithm (the default) is deprecated"),
+        match=re.escape("The SAMME.R algorithm (the default) is deprecated"),
     ):
         adaboost_clf.fit(X, y_class)

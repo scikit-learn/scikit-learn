@@ -40,7 +40,7 @@ from ..base import (
 from ..metrics import accuracy_score, r2_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import _safe_indexing, check_random_state
-from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
+from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils.extmath import softmax, stable_cumsum
 from ..utils.validation import (
     _check_sample_weight,
@@ -347,11 +347,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     classified instances are adjusted such that subsequent classifiers focus
     more on difficult cases.
 
-    ..
-        TODO(1.6) Adjust sentence, as SAMME.R will be deprecated.
-
-    This class implements the algorithm known as AdaBoost-SAMME.R as a
-    default algorithm. [2]_
+    This class implements the algorithm based on [2]_.
 
     Read more in the :ref:`User Guide <adaboost>`.
 
@@ -388,8 +384,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         achieving a lower test error with fewer boosting iterations.
 
         .. deprecated:: 1.4
-            `SAMME.R` is deprecated and will be removed in version 1.6.
-            'SAMME' will be the only algorithm then.
+            `"SAMME.R"` is deprecated and will be removed in version 1.6.
+            '"SAMME"' will become the default.
 
     random_state : int, RandomState instance or None, default=None
         Controls the random seed given at each `estimator` at each
@@ -493,21 +489,21 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     >>> X, y = make_classification(n_samples=1000, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
-    >>> clf = AdaBoostClassifier(n_estimators=100, random_state=0)
+    >>> clf = AdaBoostClassifier(n_estimators=100, algorithm="SAMME", random_state=0)
     >>> clf.fit(X, y)
-    AdaBoostClassifier(n_estimators=100, random_state=0)
+    AdaBoostClassifier(algorithm='SAMME', n_estimators=100, random_state=0)
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
     >>> clf.score(X, y)
-    0.983...
+    0.96...
     """
 
-    # TODO(1.6): Remove _parameter_constraints for "algorithm"
+    # TODO(1.6): Modify _parameter_constraints for "algorithm" to only check
+    # for "SAMME"
     _parameter_constraints: dict = {
         **BaseWeightBoosting._parameter_constraints,
         "algorithm": [
             StrOptions({"SAMME", "SAMME.R"}),
-            Hidden(StrOptions({"deprecated"})),
         ],
     }
 
@@ -537,12 +533,12 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         super()._validate_estimator(default=DecisionTreeClassifier(max_depth=1))
 
         # TODO(1.6): Remove, as "SAMME.R" value for "algorithm" param will be
-        #  deprecated in 1.6
+        # removed in 1.6
         # SAMME-R requires predict_proba-enabled base estimators
         if self.algorithm != "SAMME":
             warnings.warn(
                 (
-                    "The `SAMME.R` algorithm (the default) is deprecated and will be"
+                    "The SAMME.R algorithm (the default) is deprecated and will be"
                     " removed in 1.6. Use the SAMME algorithm to circumvent this"
                     " warning."
                 ),
