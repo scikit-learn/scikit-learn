@@ -240,7 +240,7 @@ def check_categorical_onehot(X):
 
     assert_allclose(Xtr1.toarray(), Xtr2)
 
-    assert sparse.isspmatrix_csr(Xtr1)
+    assert sparse.issparse(Xtr1) and Xtr1.format == "csr"
     return Xtr1.toarray()
 
 

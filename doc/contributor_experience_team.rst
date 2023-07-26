@@ -41,4 +41,8 @@
     <a href='https://github.com/albertcthomas'><img src='https://avatars.githubusercontent.com/u/15966638?v=4' class='avatar' /></a> <br />
     <p>Albert Thomas</p>
     </div>
+    <div>
+    <a href='https://github.com/marenwestermann'><img src='https://avatars.githubusercontent.com/u/17019042?v=4' class='avatar' /></a> <br />
+    <p>Maren Westermann</p>
+    </div>
     </div>

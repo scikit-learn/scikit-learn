@@ -187,7 +187,7 @@ def _hdbscan_brute(
         feature array.
 
         - If metric is a string or callable, it must be one of
-          the options allowed by :func:`~sklearn.metrics.pairwise.pairwise_distances`
+          the options allowed by :func:`~sklearn.metrics.pairwise_distances`
           for its metric parameter.
 
         - If metric is "precomputed", X is assumed to be a distance matrix and
@@ -932,7 +932,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             self.medoids_ = np.empty((n_clusters, X.shape[1]), dtype=np.float64)
 
         # Need to handle iteratively seen each cluster may have a different
-        # number of samples, hence we can't create a homogenous 3D array.
+        # number of samples, hence we can't create a homogeneous 3D array.
         for idx in range(n_clusters):
             mask = self.labels_ == idx
             data = X[mask]
