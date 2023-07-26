@@ -124,6 +124,7 @@ def test_get_visual_block_column_transformer():
         (None, "color: #696969"),
         (themes.LIGHT, "color: #696969"),
         (themes.DARK, "color: #5f718c"),
+        (themes.AUTO, "prefers-color-scheme"),
     ],
 )
 def test_estimator_html_repr_pipeline(theme, expected_html):

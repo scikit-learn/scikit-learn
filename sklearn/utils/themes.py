@@ -12,6 +12,14 @@ class CssTemplate(Template):
     delimiter = "$$"
 
 
+_AUTO_TEMPLATE = """
+$$light
+
+@media (prefers-color-scheme: dark) {
+    $$dark
+}
+""".replace("  ", "").replace("\n", "")  # noqa
+
 _STYLE_TEMPLATE = """
 #$id {
   color: $$color_1;
@@ -225,3 +233,5 @@ DARK = theme_builder(
     color_5="#475974",
     color_6="#788aa6",
 )
+
+AUTO = theme_builder(template=CssTemplate(_AUTO_TEMPLATE), light=LIGHT, dark=DARK)

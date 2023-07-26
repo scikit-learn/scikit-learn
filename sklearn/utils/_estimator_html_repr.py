@@ -202,7 +202,7 @@ def estimator_html_repr(estimator, theme=None):
     theme : str, optional
         The CSS stylesheet for the displayed diagram. If provided, it sets
         the custom CSS style for the diagram.
-        If not specified, the default style themes.LIGHT will be used.
+        If not specified, the default style themes.AUTO will be used.
 
     Returns
     -------
@@ -212,7 +212,7 @@ def estimator_html_repr(estimator, theme=None):
     Examples
     --------
     >>> from sklearn.utils import estimator_html_repr
-    >>> from sklearn.utils.themes import LIGHT, DARK
+    >>> from sklearn.utils.themes import AUTO, LIGHT, DARK
     >>> from sklearn import set_config
     >>> from sklearn.decomposition import PCA
     >>> from sklearn.pipeline import Pipeline
@@ -222,7 +222,7 @@ def estimator_html_repr(estimator, theme=None):
     >>> html = estimator_html_repr(pipe, theme=DARK)
     """
     if theme is None:
-        theme = themes.LIGHT
+        theme = themes.AUTO
 
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
