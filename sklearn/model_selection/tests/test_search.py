@@ -885,16 +885,8 @@ def test_param_sampler():
 def check_cv_results_array_types(search, param_keys, score_keys):
     # Check if the search `cv_results`'s array are of correct types
     cv_results = search.cv_results_
-    assert all(
-        isinstance(cv_results[param], np.ma.MaskedArray)
-        for param in param_keys
-        if param not in {"iter", "n_resources"}
-    )
-    assert all(
-        cv_results[key].dtype == object
-        for key in param_keys
-        if key not in {"iter", "n_resources"}
-    )
+    assert all(isinstance(cv_results[param], np.ma.MaskedArray) for param in param_keys)
+    assert all(cv_results[key].dtype == object for key in param_keys)
     assert not any(isinstance(cv_results[key], np.ma.MaskedArray) for key in score_keys)
     assert all(
         cv_results[key].dtype == np.float64
@@ -908,11 +900,10 @@ def check_cv_results_array_types(search, param_keys, score_keys):
         assert cv_results["rank_test_%s" % key].dtype == np.int32
 
 
-def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
+def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand, extra_keys=()):
     # Test the search.cv_results_ contains all the required results
-    assert_array_equal(
-        sorted(cv_results.keys()), sorted(param_keys + score_keys + ("params",))
-    )
+    all_keys = param_keys + score_keys + extra_keys
+    assert_array_equal(sorted(cv_results.keys()), sorted(all_keys + ("params",)))
     assert all(cv_results[key].shape == (n_cand,) for key in param_keys + score_keys)
 
 
