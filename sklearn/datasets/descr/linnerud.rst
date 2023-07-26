@@ -22,7 +22,7 @@ twenty middle-aged men in a fitness club:
 **References**
 |details-split|
 
-  * Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
-    Editions Technic.
+* Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
+  Editions Technic.
 
 |details-end|
