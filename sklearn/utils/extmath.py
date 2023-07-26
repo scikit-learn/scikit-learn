@@ -20,7 +20,7 @@ from scipy import linalg, sparse
 
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from . import check_random_state
-from ._array_api import _is_numpy_namespace, device, get_namespace, device
+from ._array_api import _is_numpy_namespace, device, get_namespace
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
