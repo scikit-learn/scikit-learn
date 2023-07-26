@@ -69,6 +69,11 @@ class Pipeline(_BaseComposition):
     to another estimator, or a transformer removed by setting it to
     `'passthrough'` or `None`.
 
+    For examples use cases of `Pipeline` combined with
+    :class:`~sklearn.model_selection.GridSearchCV`, refer to
+    :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py` and
+    :ref:`sphx_glr_auto_examples_compose_plot_digits_pipe.py`.
+
     Read more in the :ref:`User Guide <pipeline>`.
 
     .. versionadded:: 0.5
@@ -1294,7 +1299,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     setting to 'drop' or disabled by setting to 'passthrough' (features are
     passed without transformation).
 
-    Read more in the :ref:`User Guide <feature_union>`.
+    For an example on usage, see
+    :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`. Read more in
+    the :ref:`User Guide <feature_union>`.
 
     .. versionadded:: 0.13
 
