@@ -134,8 +134,8 @@ def dbscan(
     Another way to reduce memory and computation time is to remove
     (near-)duplicate points and use ``sample_weight`` instead.
 
-    :func:`cluster.optics <sklearn.cluster.optics>` provides a similar
-    clustering with lower memory usage.
+    :class:`~sklearn.cluster.OPTICS` provides a similar clustering with lower
+    memory usage.
 
     References
     ----------
@@ -172,6 +172,9 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     Finds core samples of high density and expands clusters from them.
     Good for data which contains clusters of similar density.
 
+    The worst case memory complexity of DBSCAN is :math:`O({n}^2)`, which can
+    occur when the `eps` param is large and `min_samples` is low.
+
     Read more in the :ref:`User Guide <dbscan>`.
 
     Parameters
@@ -184,8 +187,11 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         and distance function.
 
     min_samples : int, default=5
-        The number of samples (or total weight) in a neighborhood for a point
-        to be considered as a core point. This includes the point itself.
+        The number of samples (or total weight) in a neighborhood for a point to
+        be considered as a core point. This includes the point itself. If
+        `min_samples` is set to a higher value, DBSCAN will find denser clusters,
+        whereas if it is set to a lower value, the found clusters will be more
+        sparse.
 
     metric : str, or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
@@ -274,7 +280,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     Another way to reduce memory and computation time is to remove
     (near-)duplicate points and use ``sample_weight`` instead.
 
-    :class:`cluster.OPTICS` provides a similar clustering with lower memory
+    :class:`~sklearn.cluster.OPTICS` provides a similar clustering with lower memory
     usage.
 
     References
