@@ -77,6 +77,8 @@ from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
     ConsumingScorer,
     ConsumingSplitter,
+    _Registry,
+    check_recorded_metadata,
 )
 from sklearn.utils import shuffle
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
@@ -2460,13 +2462,16 @@ def test_groups_with_routing_validation():
 
 @pytest.mark.usefixtures("enable_slep006")
 def test_cross_validate_routing():
-    scorer = ConsumingScorer().set_score_request(
+    scorer_registry = _Registry()
+    scorer = ConsumingScorer(registry=scorer_registry).set_score_request(
         sample_weight="score_weights", metadata="score_metadata"
     )
-    splitter = ConsumingSplitter().set_split_request(
+    splitter_registry = _Registry()
+    splitter = ConsumingSplitter(registry=splitter_registry).set_split_request(
         groups="split_groups", metadata="split_metadata"
     )
-    estimator = ConsumingClassifier().set_fit_request(
+    estimator_registry = _Registry()
+    estimator = ConsumingClassifier(registry=estimator_registry).set_fit_request(
         sample_weight="fit_sample_weight", metadata="fit_metadata"
     )
     n_samples = len(X)
@@ -2482,7 +2487,7 @@ def test_cross_validate_routing():
         estimator,
         X=X,
         y=y,
-        scoring=scorer,
+        scoring=dict(my_scorer=scorer, accuracy="accuracy"),
         cv=splitter,
         params=dict(
             score_weights=score_weights,
@@ -2493,6 +2498,15 @@ def test_cross_validate_routing():
             fit_metadata=fit_metadata,
         ),
     )
+
+    for _scorer in scorer_registry:
+        check_recorded_metadata(
+            obj=_scorer,
+            method="score",
+            split_params=("sample_weight", "metadata"),
+            score_weights=score_weights,
+            score_metadata=score_metadata,
+        )
 
 
 # End of metadata routing tests

@@ -186,8 +186,8 @@ def cross_validate(
             This parameter is deprecated will be removed in version 1.6.
 
     params : dict, default=None
-        Parameters to pass the the underlying estimator's methods, the scorer,
-        and the CV splitter.
+        Parameters to pass to the the underlying estimator's methods, the
+        scorer, and the CV splitter.
 
         .. versionadded:: 1.4
 
@@ -351,8 +351,10 @@ def cross_validate(
         scorers = _check_multimetric_scoring(estimator, scoring)
 
     if _routing_enabled():
-        if scorers is dict:
-            _scorer = _MultimetricScorer(scorers, raise_exc=(error_score == "raise"))
+        if isinstance(scorers, dict):
+            _scorer = _MultimetricScorer(
+                scorers=scorers, raise_exc=(error_score == "raise")
+            )
         else:
             _scorer = scorers
         router = (
