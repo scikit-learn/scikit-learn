@@ -536,17 +536,18 @@ def test_labelling_thresholding():
 # TODO(1.6): Remove
 def test_hdbscan_warning_on_deprecated_algorithm_name():
     # Test that warning message is shown when algorithm='kdtree'
-    kdtree_warning_message = (
+    msg = (
         "`algorithm='kdtree'`has been deprecated in 1.4 and will be renamed"
         " to'kd_tree'`in 1.6. To keep the past behaviour, set `algorithm='kd_tree'`."
     )
-    with pytest.warns(FutureWarning, match=kdtree_warning_message):
+    with pytest.warns(FutureWarning, match=msg):
         HDBSCAN(algorithm="kdtree").fit(X)
 
     # Test that warning message is shown when algorithm='balltree'
-    balltree_warning_message = (
+    msg = (
         "`algorithm='balltree'`has been deprecated in 1.4 and will be renamed"
-        " to'ball_tree'`in 1.6. To keep the past behaviour, set `algorithm='ball_tree'`."
+        " to'ball_tree'`in 1.6. To keep the past behaviour, set"
+        " `algorithm='ball_tree'`."
     )
-    with pytest.warns(FutureWarning, match=balltree_warning_message):
+    with pytest.warns(FutureWarning, match=msg):
         HDBSCAN(algorithm="balltree").fit(X)
