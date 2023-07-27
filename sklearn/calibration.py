@@ -14,7 +14,7 @@ from math import log
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.optimize import fmin_bfgs
+from scipy.optimize import fmin, fmin_bfgs
 from scipy.special import expit, xlogy
 
 from sklearn.utils import Bunch
@@ -889,7 +889,15 @@ def _sigmoid_calibration(predictions, y, sample_weight=None):
         return np.array([dA, dB])
 
     AB0 = np.array([0.0, log((prior0 + 1.0) / (prior1 + 1.0))])
-    AB_ = fmin_bfgs(objective, AB0, fprime=grad, disp=False)
+    BFGS_OUT = fmin_bfgs(objective, AB0, fprime=grad, disp=False, full_output=True)
+    AB_ = BFGS_OUT[0]
+
+    # Check if warnflag = "Gradient and/or function calls not changing"
+    # i.e. there is an issue of convergence.
+    if BFGS_OUT[-1] == 2:
+        # Fallback to Nelder-Mead
+        AB_ = fmin(objective, AB0, disp=False)
+
     return AB_[0], AB_[1]
 
 

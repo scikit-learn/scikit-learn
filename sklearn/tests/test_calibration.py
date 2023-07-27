@@ -25,12 +25,13 @@ from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.isotonic import IsotonicRegression
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.metrics import brier_score_loss
 from sklearn.model_selection import (
     KFold,
     LeaveOneOut,
     cross_val_predict,
+    cross_val_score,
     train_test_split,
 )
 from sklearn.naive_bayes import MultinomialNB
@@ -996,3 +997,34 @@ def test_calibration_with_non_sample_aligned_fit_param(data):
     CalibratedClassifierCV(estimator=TestClassifier()).fit(
         *data, fit_param=np.ones(len(data[1]) + 1)
     )
+
+
+def test_calibrated_classifier_cv_works_with_large_confidence_scores(
+    global_random_seed,
+):
+    """Test that :class:`CalibratedClassifierCV` works with large confidence
+    scores when using the `sigmoid` method, particularly with the
+    :class:`SGDClassifier`.
+
+    Non-regression test for issue #26766.
+    """
+    r = 0.67
+    n = 1000
+    random_noise = np.random.default_rng(global_random_seed).normal(size=n)
+
+    y_train = np.array([1] * int(n * r) + [0] * (n - int(n * r)))
+    X_train = 1e5 * y_train.reshape((-1, 1)) + random_noise
+
+    clf_sigmoid = CalibratedClassifierCV(
+        SGDClassifier(loss="squared_hinge", random_state=global_random_seed),
+        method="sigmoid",
+    )
+    score_sigmoid = cross_val_score(clf_sigmoid, X_train, y_train, scoring="roc_auc")
+
+    clf_isotonic = CalibratedClassifierCV(
+        SGDClassifier(loss="squared_hinge", random_state=global_random_seed),
+        method="isotonic",
+    )
+    score_isotonic = cross_val_score(clf_isotonic, X_train, y_train, scoring="roc_auc")
+
+    assert_allclose(score_sigmoid, score_isotonic)
