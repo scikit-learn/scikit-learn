@@ -1350,7 +1350,10 @@ def check_dtype_object(name, estimator_orig):
 
     if "string" not in tags["X_types"]:
         X[0, 0] = {"foo": "bar"}
-        msg = "argument must be a string.* number"
+        # This error is raised by:
+        # - `np.asarray` in `check_array`
+        # - `_unique_python` for encoders
+        msg = "argument must be .* string.* number"
         with raises(TypeError, match=msg):
             estimator.fit(X, y)
     else:
@@ -3542,7 +3545,6 @@ def _enforce_estimator_tags_y(estimator, y):
         # Create strictly positive y. The minimal increment above 0 is 1, as
         # y could be of integer dtype.
         y += 1 + abs(y.min())
-    # Estimators with a `binary_only` tag only accept up to two unique y values
     if _safe_tags(estimator, key="binary_only") and y.size > 0:
         y = np.where(y == y.flat[0], y, y.flat[0] + 1)
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
@@ -3562,7 +3564,8 @@ def _enforce_estimator_tags_X(estimator, X, kernel=linear_kernel):
     if _safe_tags(estimator, key="requires_positive_X"):
         X = X - X.min()
     if "categorical" in _safe_tags(estimator, key="X_types"):
-        X = (X - X.min()).astype(np.int32)
+        dtype = np.float64 if _safe_tags(estimator, key="allow_nan") else np.int32
+        X = np.round((X - X.min())).astype(dtype)
 
     if estimator.__class__.__name__ == "SkewedChi2Sampler":
         # SkewedChi2Sampler requires X > -skewdness in transform
