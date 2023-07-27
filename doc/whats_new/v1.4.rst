@@ -66,6 +66,11 @@ Changelog
 - |Enhancement| :func:`base.clone` now supports `dict` as input and creates a
   copy. :pr:`26786` by `Adrin Jalali`_.
 
+- |API|:func:`~utils.metadata_routing.process_routing` now has a different
+  signature. The first two (the object and the method) are positional only,
+  and all metadata are passed as keyword arguments. :pr:`26909` by `Adrin
+  Jalali`_.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
