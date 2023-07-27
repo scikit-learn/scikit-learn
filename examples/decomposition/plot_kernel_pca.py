@@ -4,7 +4,7 @@ Kernel PCA
 ==========
 
 This example shows the difference between the Principal Components Analysis
-(:class:`~sklearn.decomposition.PCA`) and its kernalized version
+(:class:`~sklearn.decomposition.PCA`) and its kernelized version
 (:class:`~sklearn.decomposition.KernelPCA`).
 
 On the one hand, we show that :class:`~sklearn.decomposition.KernelPCA` is able

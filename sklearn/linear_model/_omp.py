@@ -332,7 +332,7 @@ def orthogonal_mp(
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
-        Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
+        Maximum squared norm of the residual. If not None, overrides n_nonzero_coefs.
 
     precompute : 'auto' or bool, default=False
         Whether to perform precomputations. Improves performance when n_targets
@@ -447,6 +447,20 @@ def orthogonal_mp(
         return np.squeeze(coef)
 
 
+@validate_params(
+    {
+        "Gram": ["array-like"],
+        "Xy": ["array-like"],
+        "n_nonzero_coefs": [Interval(Integral, 0, None, closed="neither"), None],
+        "tol": [Interval(Real, 0, None, closed="left"), None],
+        "norms_squared": ["array-like", None],
+        "copy_Gram": ["boolean"],
+        "copy_Xy": ["boolean"],
+        "return_path": ["boolean"],
+        "return_n_iter": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def orthogonal_mp_gram(
     Gram,
     Xy,
@@ -468,30 +482,31 @@ def orthogonal_mp_gram(
 
     Parameters
     ----------
-    Gram : ndarray of shape (n_features, n_features)
-        Gram matrix of the input data: X.T * X.
+    Gram : array-like of shape (n_features, n_features)
+        Gram matrix of the input data: `X.T * X`.
 
-    Xy : ndarray of shape (n_features,) or (n_features, n_targets)
-        Input targets multiplied by X: X.T * y.
+    Xy : array-like of shape (n_features,) or (n_features, n_targets)
+        Input targets multiplied by `X`: `X.T * y`.
 
     n_nonzero_coefs : int, default=None
-        Desired number of non-zero entries in the solution. If None (by
+        Desired number of non-zero entries in the solution. If `None` (by
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
-        Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
+        Maximum squared norm of the residual. If not `None`,
+        overrides `n_nonzero_coefs`.
 
     norms_squared : array-like of shape (n_targets,), default=None
-        Squared L2 norms of the lines of y. Required if tol is not None.
+        Squared L2 norms of the lines of `y`. Required if `tol` is not None.
 
     copy_Gram : bool, default=True
-        Whether the gram matrix must be copied by the algorithm. A false
+        Whether the gram matrix must be copied by the algorithm. A `False`
         value is only helpful if it is already Fortran-ordered, otherwise a
         copy is made anyway.
 
     copy_Xy : bool, default=True
-        Whether the covariance vector Xy must be copied by the algorithm.
-        If False, it may be overwritten.
+        Whether the covariance vector `Xy` must be copied by the algorithm.
+        If `False`, it may be overwritten.
 
     return_path : bool, default=False
         Whether to return every value of the nonzero coefficients along the
@@ -505,11 +520,11 @@ def orthogonal_mp_gram(
     coef : ndarray of shape (n_features,) or (n_features, n_targets)
         Coefficients of the OMP solution. If `return_path=True`, this contains
         the whole coefficient path. In this case its shape is
-        (n_features, n_features) or (n_features, n_targets, n_features) and
+        `(n_features, n_features)` or `(n_features, n_targets, n_features)` and
         iterating over the last axis yields coefficients in increasing order
         of active features.
 
-    n_iters : array-like or int
+    n_iters : list or int
         Number of active features across every target. Returned only if
         `return_n_iter` is set to True.
 
@@ -611,7 +626,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
-        Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
+        Maximum squared norm of the residual. If not None, overrides n_nonzero_coefs.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -934,7 +949,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, :class:`KFold` is used.
+        For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
