@@ -133,7 +133,6 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.calibration.calibration_curve",
     "sklearn.cluster.cluster_optics_dbscan",
     "sklearn.cluster.compute_optics_graph",
-    "sklearn.cluster.dbscan",
     "sklearn.cluster.estimate_bandwidth",
     "sklearn.cluster.kmeans_plusplus",
     "sklearn.cluster.cluster_optics_xi",
