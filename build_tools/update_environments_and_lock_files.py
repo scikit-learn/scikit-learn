@@ -27,6 +27,10 @@ To run this script you need:
   sklearn/_min_dependencies.py
 - pip-tools
 
+To only update the environment and lock files for specific builds, you can use
+the command line argument `--select-build` which will take a regex. For example,
+to only update the documentation builds you can use:
+`python build_tools/update_environments_and_lock_files.py --select-build doc`
 """
 
 import json
@@ -124,6 +128,10 @@ conda_build_metadata_list = [
         "conda_dependencies": common_dependencies + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
+            # TODO: temporary pin for numpy to avoid what seems a loky issue,
+            # for more details see
+            # https://github.com/scikit-learn/scikit-learn/pull/26845#issuecomment-1639917135
+            "numpy": "<1.25",
         },
     },
     {
@@ -548,15 +556,15 @@ def check_conda_version():
     # Avoid issues with glibc (https://github.com/conda/conda-lock/issues/292)
     # or osx (https://github.com/conda/conda-lock/issues/408) virtual package.
     # The glibc one has been fixed in conda 23.1.0 and the osx has been fixed
-    # in main and will be fixed when conda > 23.5.0 is released.
+    # in main and will be fixed when conda >= 23.6 is released.
     conda_info_output = execute_command(["conda", "info", "--json"])
 
     conda_info = json.loads(conda_info_output)
     conda_version = Version(conda_info["conda_version"])
 
-    if Version("22.9.0") < conda_version <= Version("23.5.0"):
+    if Version("22.9.0") < conda_version < Version("23.6"):
         raise RuntimeError(
-            f"conda version should be <= 22.9.0 or > 23.5.0, got: {conda_version}"
+            f"conda version should be <= 22.9.0 or >= 23.6 got: {conda_version}"
         )
 
 

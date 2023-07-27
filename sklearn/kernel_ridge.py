@@ -51,7 +51,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     kernel : str or callable, default="linear"
         Kernel mapping used internally. This parameter is directly passed to
-        :class:`~sklearn.metrics.pairwise.pairwise_kernel`.
+        :class:`~sklearn.metrics.pairwise.pairwise_kernels`.
         If `kernel` is a string, it must be one of the metrics
         in `pairwise.PAIRWISE_KERNEL_FUNCTIONS` or "precomputed".
         If `kernel` is "precomputed", X is assumed to be a kernel matrix.

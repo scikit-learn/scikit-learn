@@ -65,7 +65,7 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
-- |Fix| Fixed bug in :class:`ensemble.MultinomialDeviance` where the
+- |Fix| Fixed bug in `ensemble.MultinomialDeviance` where the
   average of logloss was incorrectly calculated as sum of logloss.
   :pr:`17694` by :user:`Markus Rempfler <rempfler>` and
   :user:`Tsutomu Kusanagi <t-kusanagi2>`.
@@ -210,7 +210,7 @@ random sampling procedures.
 - |Fix| :class:`preprocessing.StandardScaler` with `partial_fit` and sparse
   input.
 - |Fix| :class:`preprocessing.Normalizer` with norm='max'
-- |Fix| Any model using the :func:`svm.libsvm` or the :func:`svm.liblinear` solver,
+- |Fix| Any model using the `svm.libsvm` or the `svm.liblinear` solver,
   including :class:`svm.LinearSVC`, :class:`svm.LinearSVR`,
   :class:`svm.NuSVC`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`,
   :class:`svm.SVC`, :class:`svm.SVR`, :class:`linear_model.LogisticRegression`.
@@ -269,7 +269,7 @@ Changelog
   could not have a `np.int64` type. :pr:`16484`
   by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
-- |Fix| :class:`cluster.AgglomerativeCluClustering` add specific error when
+- |Fix| :class:`cluster.AgglomerativeClustering` add specific error when
   distance matrix is not square and `affinity=precomputed`.
   :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
 
@@ -320,10 +320,11 @@ Changelog
   by :user:`Stephanie Andrews <gitsteph>` and
   :user:`Reshama Shaikh <reshamas>`.
 
-- |Feature| embedded dataset loaders :func:`load_breast_cancer`,
-  :func:`load_diabetes`, :func:`load_digits`, :func:`load_iris`,
-  :func:`load_linnerud` and :func:`load_wine` now support loading as a pandas
-  ``DataFrame`` by setting `as_frame=True`. :pr:`15980` by :user:`wconnell` and
+- |Feature| embedded dataset loaders :func:`datasets.load_breast_cancer`,
+  :func:`datasets.load_diabetes`, :func:`datasets.load_digits`,
+  :func:`datasets.load_iris`, :func:`datasets.load_linnerud` and
+  :func:`datasets.load_wine` now support loading as a pandas ``DataFrame`` by
+  setting `as_frame=True`. :pr:`15980` by :user:`wconnell` and
   :user:`Reshama Shaikh <reshamas>`.
 
 - |Enhancement| Added ``return_centers`` parameter  in
@@ -353,8 +354,8 @@ Changelog
   :func:`decomposition.non_negative_factorization` now preserves float32 dtype.
   :pr:`16280` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
-- |Enhancement| :func:`TruncatedSVD.transform` is now faster on given sparse
-  ``csc`` matrices. :pr:`16837` by :user:`wornbb`.
+- |Enhancement| :func:`decomposition.TruncatedSVD.transform` is now faster on
+  given sparse ``csc`` matrices. :pr:`16837` by :user:`wornbb`.
 
 - |Fix| :class:`decomposition.PCA` with a float `n_components` parameter, will
   exclusively choose the components that explain the variance greater than
@@ -484,7 +485,7 @@ Changelog
 .........................
 
 - |Feature| :func:`inspection.partial_dependence` and
-  :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
+  `inspection.plot_partial_dependence` now support the fast 'recursion'
   method for :class:`ensemble.RandomForestRegressor` and
   :class:`tree.DecisionTreeRegressor`. :pr:`15864` by
   `Nicolas Hug`_.
@@ -565,7 +566,7 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Enhancement| :func:`metrics.pairwise.pairwise_distances_chunked` now allows
+- |Enhancement| :func:`metrics.pairwise_distances_chunked` now allows
   its ``reduce_func`` to not have a return value, enabling in-place operations.
   :pr:`16397` by `Joel Nothman`_.
 
@@ -584,7 +585,7 @@ Changelog
 
 - |API| Changed the formatting of values in
   :meth:`metrics.ConfusionMatrixDisplay.plot` and
-  :func:`metrics.plot_confusion_matrix` to pick the shorter format (either '2g'
+  `metrics.plot_confusion_matrix` to pick the shorter format (either '2g'
   or 'd'). :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and
   `Thomas Fan`_.
 
@@ -607,7 +608,7 @@ Changelog
   `method="predict_proba"` when `y=None`. :pr:`15918` by
   :user:`Luca Kubin <lkubin>`.
 
-- |Fix| :func:`model_selection.fit_grid_point` is deprecated in 0.23 and will
+- |Fix| `model_selection.fit_grid_point` is deprecated in 0.23 and will
   be removed in 0.25. :pr:`16401` by
   :user:`Arie Pratama Sutiono <ariepratama>`
 
@@ -703,7 +704,7 @@ Changelog
   crude "modulo" postprocessor used to get a random number in a bounded
   interval was replaced by the tweaked Lemire method as suggested by `this blog
   post <http://www.pcg-random.org/posts/bounded-rands.html>`_.
-  Any model using the :func:`svm.libsvm` or the :func:`svm.liblinear` solver,
+  Any model using the `svm.libsvm` or the `svm.liblinear` solver,
   including :class:`svm.LinearSVC`, :class:`svm.LinearSVR`,
   :class:`svm.NuSVC`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`,
   :class:`svm.SVC`, :class:`svm.SVR`, :class:`linear_model.LogisticRegression`,
@@ -756,7 +757,7 @@ Changelog
   matrix from a pandas DataFrame that contains only `SparseArray` columns.
   :pr:`16728` by `Thomas Fan`_.
 
-- |Enhancement| :func:`utils.validation.check_array` supports pandas'
+- |Enhancement| :func:`utils.check_array` supports pandas'
   nullable integer dtype with missing values when `force_all_finite` is set to
   `False` or `'allow-nan'` in which case the data is converted to floating
   point values where `pd.NA` values are replaced by `np.nan`. As a consequence,
@@ -776,7 +777,7 @@ Changelog
   in the MRO for `_get_tags()` to work properly.
   :pr:`16950` by `Nicolas Hug`_.
 
-- |FIX| :func:`utils.all_estimators` now only returns public estimators.
+- |FIX| `utils.all_estimators` now only returns public estimators.
   :pr:`15380` by `Thomas Fan`_.
 
 Miscellaneous

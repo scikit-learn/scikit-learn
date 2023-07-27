@@ -207,9 +207,9 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     See Also
     --------
-    rand_score: Rand Score.
-    adjusted_rand_score: Adjusted Rand Score.
-    adjusted_mutual_info_score: Adjusted Mutual Information.
+    rand_score : Rand Score.
+    adjusted_rand_score : Adjusted Rand Score.
+    adjusted_mutual_info_score : Adjusted Mutual Information.
 
     References
     ----------
@@ -838,9 +838,10 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
 
     contingency : {array-like, sparse matrix} of shape \
             (n_classes_true, n_classes_pred), default=None
-        A contingency matrix given by the :func:`contingency_matrix` function.
-        If value is ``None``, it will be computed, otherwise the given value is
-        used, with ``labels_true`` and ``labels_pred`` ignored.
+        A contingency matrix given by the
+        :func:`~sklearn.metrics.cluster.contingency_matrix` function. If value
+        is ``None``, it will be computed, otherwise the given value is used,
+        with ``labels_true`` and ``labels_pred`` ignored.
 
     Returns
     -------
