@@ -45,7 +45,7 @@ def test__wrap_in_pandas_container_error_validation():
     """Check errors in _wrap_in_pandas_container."""
     X = np.asarray([[1, 0, 3], [0, 0, 1]])
     X_csr = csr_matrix(X)
-    match = "The output of the transformer used is a scipy sparse martix."
+    match = "The output of the transformer used is a scipy sparse matrix."
     with pytest.raises(ValueError, match=match):
         _wrap_in_pandas_container(X_csr, columns=["a", "b", "c"])
 
