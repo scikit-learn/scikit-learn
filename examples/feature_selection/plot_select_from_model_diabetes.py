@@ -153,8 +153,9 @@ print(f"Done in {toc_bwd - tic_bwd:.3f}s")
 #
 # We begin by loading the Breast Cancer dataset, consisting of 30 different
 # features and 569 samples.
-from sklearn.datasets import load_breast_cancer
 import numpy as np
+
+from sklearn.datasets import load_breast_cancer
 
 breast_cancer_data = load_breast_cancer()
 X, y = breast_cancer_data.data, breast_cancer_data.target
@@ -166,9 +167,9 @@ print(breast_cancer_data.DESCR)
 # estimator with :class:`~sklearn.feature_selection.SequentialFeatureSelector`
 # to perform the feature selection.
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import roc_auc_score
 
 for tol in [-1e-2, -1e-3, -1e-4]:
     start = time()
