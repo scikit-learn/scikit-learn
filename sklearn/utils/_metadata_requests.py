@@ -1412,6 +1412,10 @@ class _MetadataRequester:
 # given metadata. This is to minimize the boilerplate required in routers.
 
 
+# Here the first two arguments are positional only which makes everything
+# passed as keyword argument a metadata. The first two args also have an `_`
+# prefix to reduce the chances of name collisions with the passed metadata, and
+# since they're positional only, users will never type those underscores.
 def process_routing(_obj, _method, /, **kwargs):
     """Validate and route input parameters.
 
@@ -1420,7 +1424,7 @@ def process_routing(_obj, _method, /, **kwargs):
 
     Assuming this signature: ``fit(self, X, y, sample_weight=None, **fit_params)``,
     a call to this function would be:
-    ``process_routing(self, fit_params, sample_weight=sample_weight)``.
+    ``process_routing(self, sample_weight=sample_weight, **fit_params)``.
 
     .. versionadded:: 1.3
 
