@@ -23,6 +23,12 @@ Changelog
   :attr:`sklearn.neighbors.KDTree.valid_metrics` as public class attributes.
   :pr:`26754` by :user:`Julien Jerphanion <jjerphan>`.
 
+:mod:`sklearn.tree`
+...................
+
+- |Fix| :func:`tree.plot_tree` now accepts `class_names=True` as documented.
+  :pr:`26903` by :user:`Thomas Roehr <2maz>`
+
 .. _changes_1_3:
 
 Version 1.3.0
@@ -757,9 +763,6 @@ Changelog
 - |Fix| :func:`tree.export_graphviz` and :func:`tree.export_text` now accepts
   `feature_names` and `class_names` as array-like rather than lists.
   :pr:`26289` by :user:`Yao Xiao <Charlie-XIAO>`
-
-- |Fix| :func:`tree.plot_tree` now accepts `class_names=True` as documented.
-  :pr:`26903` by :user:`Thomas Roehr <2maz>`
 
 :mod:`sklearn.utils`
 ....................
