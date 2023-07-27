@@ -758,6 +758,9 @@ Changelog
   `feature_names` and `class_names` as array-like rather than lists.
   :pr:`26289` by :user:`Yao Xiao <Charlie-XIAO>`
 
+- |Fix| :func:`tree.plot_tree` now accepts `class_names=True` as documented.
+  :pr:`26903` by :user:`Thomas Roehr <2maz>`
+
 :mod:`sklearn.utils`
 ....................
 
