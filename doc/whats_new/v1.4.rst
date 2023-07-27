@@ -92,6 +92,12 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |MajorFeature| :class:`ensemble.RandomForestClassifier` and
+  :class:`ensemble.RandomForestRegressor` support missing values when
+  the criterion is `gini`, `entropy`, or `log_loss`,
+  for classification or `squared_error`, `friedman_mse`, or `poisson`
+  for regression. :pr:`26391` by `Thomas Fan`_.
+
 - |Feature| :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`
   and :class:`ensemble.ExtraTreesRegressor` now support monotonic constraints,
