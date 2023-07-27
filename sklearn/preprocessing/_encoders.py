@@ -519,7 +519,7 @@ class OneHotEncoder(_BaseEncoder):
            `sparse_output` instead.
 
     sparse_output : bool, default=True
-        Will return sparse matrixin the "Compressed Sparse Row" (CSR) format if
+        Will return sparse matrix in "Compressed Sparse Row" (CSR) format if
         set ro True, else will return an array.
 
         .. versionadded:: 1.2
