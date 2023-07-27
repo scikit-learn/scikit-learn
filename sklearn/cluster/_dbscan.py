@@ -17,7 +17,7 @@ from scipy import sparse
 from ..base import BaseEstimator, ClusterMixin, _fit_context
 from ..metrics.pairwise import _VALID_METRICS
 from ..neighbors import NearestNeighbors
-from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import _check_sample_weight
 from ._dbscan_inner import dbscan_inner
 
