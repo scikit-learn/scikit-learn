@@ -13,7 +13,33 @@ __all__ = [
     "SkipTestWarning",
     "UndefinedMetricWarning",
     "PositiveSpectrumWarning",
+    "UnsetMetadataPassedError",
 ]
+
+
+class UnsetMetadataPassedError(ValueError):
+    """Exception class to raise if a metadata is passed which is not explicitly \
+        requested.
+
+    .. versionadded:: 1.3
+
+    Parameters
+    ----------
+    message : str
+        The message
+
+    unrequested_params : dict
+        A dictionary of parameters and their values which are provided but not
+        requested.
+
+    routed_params : dict
+        A dictionary of routed parameters.
+    """
+
+    def __init__(self, *, message, unrequested_params, routed_params):
+        super().__init__(message)
+        self.unrequested_params = unrequested_params
+        self.routed_params = routed_params
 
 
 class NotFittedError(ValueError, AttributeError):
@@ -128,3 +154,38 @@ class PositiveSpectrumWarning(UserWarning):
 
     .. versionadded:: 0.22
     """
+
+
+class InconsistentVersionWarning(UserWarning):
+    """Warning raised when an estimator is unpickled with a inconsistent version.
+
+    Parameters
+    ----------
+    estimator_name : str
+        Estimator name.
+
+    current_sklearn_version : str
+        Current scikit-learn version.
+
+    original_sklearn_version : str
+        Original scikit-learn version.
+    """
+
+    def __init__(
+        self, *, estimator_name, current_sklearn_version, original_sklearn_version
+    ):
+        self.estimator_name = estimator_name
+        self.current_sklearn_version = current_sklearn_version
+        self.original_sklearn_version = original_sklearn_version
+
+    def __str__(self):
+        return (
+            f"Trying to unpickle estimator {self.estimator_name} from version"
+            f" {self.original_sklearn_version} when "
+            f"using version {self.current_sklearn_version}. This might lead to breaking"
+            " code or "
+            "invalid results. Use at your own risk. "
+            "For more info please refer to:\n"
+            "https://scikit-learn.org/stable/model_persistence.html"
+            "#security-maintainability-limitations"
+        )

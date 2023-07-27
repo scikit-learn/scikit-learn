@@ -5,13 +5,15 @@
 # License: BSD 3 clause
 
 from numbers import Integral
+
 import numpy as np
 from scipy import linalg, sparse
 
-from ._base import _BasePCA
+from ..base import _fit_context
 from ..utils import gen_batches
 from ..utils._param_validation import Interval
-from ..utils.extmath import svd_flip, _incremental_mean_and_var
+from ..utils.extmath import _incremental_mean_and_var, svd_flip
+from ._base import _BasePCA
 
 
 class IncrementalPCA(_BasePCA):
@@ -73,7 +75,7 @@ class IncrementalPCA(_BasePCA):
         Principal axes in feature space, representing the directions of
         maximum variance in the data. Equivalently, the right singular
         vectors of the centered input data, parallel to its eigenvectors.
-        The components are sorted by ``explained_variance_``.
+        The components are sorted by decreasing ``explained_variance_``.
 
     explained_variance_ : ndarray of shape (n_components,)
         Variance explained by each of the selected components.
@@ -179,7 +181,7 @@ class IncrementalPCA(_BasePCA):
     (1797, 7)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "whiten": ["boolean"],
         "copy": ["boolean"],
@@ -192,6 +194,7 @@ class IncrementalPCA(_BasePCA):
         self.copy = copy
         self.batch_size = batch_size
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model with X, using minibatches of size batch_size.
 
@@ -209,8 +212,6 @@ class IncrementalPCA(_BasePCA):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         self.components_ = None
         self.n_samples_seen_ = 0
         self.mean_ = 0.0
@@ -243,6 +244,7 @@ class IncrementalPCA(_BasePCA):
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None, check_input=True):
         """Incremental fit with X. All of X is processed as a single batch.
 
@@ -264,9 +266,6 @@ class IncrementalPCA(_BasePCA):
             Returns the instance itself.
         """
         first_pass = not hasattr(self, "components_")
-
-        if first_pass:
-            self._validate_params()
 
         if check_input:
             if sparse.issparse(X):

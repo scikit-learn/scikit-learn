@@ -19,10 +19,12 @@ that are linked tend to fluctuate in relation to each other during a day.
 #
 # The data is from 2003 - 2008. This is reasonably calm: (not too long ago so
 # that we get high-tech firms, and before the 2008 crash). This kind of
-# historical data can be obtained from APIs like the quandl.com and
-# alphavantage.co .
+# historical data can be obtained from APIs like the
+# `data.nasdaq.com <https://data.nasdaq.com/>`_ and
+# `alphavantage.co <https://www.alphavantage.co/>`_.
 
 import sys
+
 import numpy as np
 import pandas as pd
 
@@ -112,8 +114,8 @@ variation = close_prices - open_prices
 #
 # We use sparse inverse covariance estimation to find which quotes are
 # correlated conditionally on the others. Specifically, sparse inverse
-# covariance gives us a graph, that is a list of connection. For each
-# symbol, the symbols that it is connected too are those useful to explain
+# covariance gives us a graph, that is a list of connections. For each
+# symbol, the symbols that it is connected to are those useful to explain
 # its fluctuations.
 
 from sklearn import covariance
@@ -228,7 +230,6 @@ ax.add_collection(lc)
 # Add a label to each node. The challenge here is that we want to
 # position the labels to avoid overlap with other labels
 for index, (name, label, (x, y)) in enumerate(zip(names, labels, embedding.T)):
-
     dx = x - embedding[0]
     dx[index] = 1
     dy = y - embedding[1]

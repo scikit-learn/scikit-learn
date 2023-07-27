@@ -3,23 +3,19 @@
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
+from numbers import Integral
 
 import numpy as np
-import numbers
-
 from scipy.linalg import norm
 from scipy.sparse import dia_matrix, issparse
 from scipy.sparse.linalg import eigsh, svds
 
-from . import KMeans, MiniBatchKMeans
-from ..base import BaseEstimator, BiclusterMixin
-from ..utils import check_random_state
-from ..utils import check_scalar
-
+from ..base import BaseEstimator, BiclusterMixin, _fit_context
+from ..utils import check_random_state, check_scalar
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import make_nonnegative, randomized_svd, safe_sparse_dot
-
 from ..utils.validation import assert_all_finite
-
+from ._kmeans import KMeans, MiniBatchKMeans
 
 __all__ = ["SpectralCoclustering", "SpectralBiclustering"]
 
@@ -85,6 +81,15 @@ def _log_normalize(X):
 class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for spectral biclustering."""
 
+    _parameter_constraints: dict = {
+        "svd_method": [StrOptions({"randomized", "arpack"})],
+        "n_svd_vecs": [Interval(Integral, 0, None, closed="left"), None],
+        "mini_batch": ["boolean"],
+        "init": [StrOptions({"k-means++", "random"}), np.ndarray],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+
     @abstractmethod
     def __init__(
         self,
@@ -104,16 +109,11 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_init = n_init
         self.random_state = random_state
 
+    @abstractmethod
     def _check_parameters(self, n_samples):
-        legal_svd_methods = ("randomized", "arpack")
-        if self.svd_method not in legal_svd_methods:
-            raise ValueError(
-                "Unknown SVD method: '{0}'. svd_method must be one of {1}.".format(
-                    self.svd_method, legal_svd_methods
-                )
-            )
-        check_scalar(self.n_init, "n_init", target_type=numbers.Integral, min_val=1)
+        """Validate parameters depending on the input data."""
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Create a biclustering for X.
 
@@ -243,7 +243,7 @@ class SpectralCoclustering(BaseSpectral):
         Whether to use mini-batch k-means, which is faster but may get
         different results.
 
-    init : {'k-means++', 'random', or ndarray of shape \
+    init : {'k-means++', 'random'}, or ndarray of shape \
             (n_clusters, n_features), default='k-means++'
         Method for initialization of k-means algorithm; defaults to
         'k-means++'.
@@ -316,6 +316,11 @@ class SpectralCoclustering(BaseSpectral):
     SpectralCoclustering(n_clusters=2, random_state=0)
     """
 
+    _parameter_constraints: dict = {
+        **BaseSpectral._parameter_constraints,
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+    }
+
     def __init__(
         self,
         n_clusters=3,
@@ -332,14 +337,11 @@ class SpectralCoclustering(BaseSpectral):
         )
 
     def _check_parameters(self, n_samples):
-        super()._check_parameters(n_samples)
-        check_scalar(
-            self.n_clusters,
-            "n_clusters",
-            target_type=numbers.Integral,
-            min_val=1,
-            max_val=n_samples,
-        )
+        if self.n_clusters > n_samples:
+            raise ValueError(
+                f"n_clusters should be <= n_samples={n_samples}. Got"
+                f" {self.n_clusters} instead."
+            )
 
     def _fit(self, X):
         normalized_data, row_diag, col_diag = _scale_normalize(X)
@@ -385,7 +387,7 @@ class SpectralBiclustering(BaseSpectral):
         default is 'bistochastic'.
 
         .. warning::
-           if `method='log'`, the data must be sparse.
+           if `method='log'`, the data must not be sparse.
 
     n_components : int, default=6
         Number of singular vectors to check.
@@ -411,7 +413,7 @@ class SpectralBiclustering(BaseSpectral):
         Whether to use mini-batch k-means, which is faster but may get
         different results.
 
-    init : {'k-means++', 'random'} or ndarray of (n_clusters, n_features), \
+    init : {'k-means++', 'random'} or ndarray of shape (n_clusters, n_features), \
             default='k-means++'
         Method for initialization of k-means algorithm; defaults to
         'k-means++'.
@@ -479,10 +481,18 @@ class SpectralBiclustering(BaseSpectral):
     >>> clustering.row_labels_
     array([1, 1, 1, 0, 0, 0], dtype=int32)
     >>> clustering.column_labels_
-    array([0, 1], dtype=int32)
+    array([1, 0], dtype=int32)
     >>> clustering
     SpectralBiclustering(n_clusters=2, random_state=0)
     """
+
+    _parameter_constraints: dict = {
+        **BaseSpectral._parameter_constraints,
+        "n_clusters": [Interval(Integral, 1, None, closed="left"), tuple],
+        "method": [StrOptions({"bistochastic", "scale", "log"})],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "n_best": [Interval(Integral, 1, None, closed="left")],
+    }
 
     def __init__(
         self,
@@ -506,36 +516,26 @@ class SpectralBiclustering(BaseSpectral):
         self.n_best = n_best
 
     def _check_parameters(self, n_samples):
-        super()._check_parameters(n_samples)
-        legal_methods = ("bistochastic", "scale", "log")
-        if self.method not in legal_methods:
-            raise ValueError(
-                "Unknown method: '{0}'. method must be one of {1}.".format(
-                    self.method, legal_methods
+        if isinstance(self.n_clusters, Integral):
+            if self.n_clusters > n_samples:
+                raise ValueError(
+                    f"n_clusters should be <= n_samples={n_samples}. Got"
+                    f" {self.n_clusters} instead."
                 )
-            )
-        try:
-            check_scalar(
-                self.n_clusters,
-                "n_clusters",
-                target_type=numbers.Integral,
-                min_val=1,
-                max_val=n_samples,
-            )
-        except (ValueError, TypeError):
+        else:  # tuple
             try:
                 n_row_clusters, n_column_clusters = self.n_clusters
                 check_scalar(
                     n_row_clusters,
                     "n_row_clusters",
-                    target_type=numbers.Integral,
+                    target_type=Integral,
                     min_val=1,
                     max_val=n_samples,
                 )
                 check_scalar(
                     n_column_clusters,
                     "n_column_clusters",
-                    target_type=numbers.Integral,
+                    target_type=Integral,
                     min_val=1,
                     max_val=n_samples,
                 )
@@ -548,16 +548,11 @@ class SpectralBiclustering(BaseSpectral):
                     " And the values are should be in the"
                     " range: (1, n_samples)"
                 ) from e
-        check_scalar(
-            self.n_components, "n_components", target_type=numbers.Integral, min_val=1
-        )
-        check_scalar(
-            self.n_best,
-            "n_best",
-            target_type=numbers.Integral,
-            min_val=1,
-            max_val=self.n_components,
-        )
+
+        if self.n_best > self.n_components:
+            raise ValueError(
+                f"n_best={self.n_best} must be <= n_components={self.n_components}."
+            )
 
     def _fit(self, X):
         n_sv = self.n_components

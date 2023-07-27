@@ -41,10 +41,10 @@ number of Gaussian components instead of a continuous noisy sine curve.
 
 import itertools
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy import linalg
-import matplotlib.pyplot as plt
-import matplotlib as mpl
 
 from sklearn import mixture
 
@@ -67,7 +67,7 @@ def plot_results(X, Y, means, covariances, index, title):
         # Plot an ellipse to show the Gaussian component
         angle = np.arctan(u[1] / u[0])
         angle = 180.0 * angle / np.pi  # convert to degrees
-        ell = mpl.patches.Ellipse(mean, v[0], v[1], 180.0 + angle, color=color)
+        ell = mpl.patches.Ellipse(mean, v[0], v[1], angle=180.0 + angle, color=color)
         ell.set_clip_box(splot.bbox)
         ell.set_alpha(0.5)
         splot.add_artist(ell)

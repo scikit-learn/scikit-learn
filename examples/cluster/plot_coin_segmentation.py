@@ -27,15 +27,14 @@ There are three options to assign labels:
 
 import time
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import gaussian_filter
-import matplotlib.pyplot as plt
 from skimage.data import coins
 from skimage.transform import rescale
 
-from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
-
+from sklearn.feature_extraction import image
 
 # load the coins as a numpy array
 orig_coins = coins()
@@ -44,9 +43,7 @@ orig_coins = coins()
 # Applying a Gaussian filter for smoothing prior to down-scaling
 # reduces aliasing artifacts.
 smoothened_coins = gaussian_filter(orig_coins, sigma=2)
-rescaled_coins = rescale(
-    smoothened_coins, 0.2, mode="reflect", anti_aliasing=False, multichannel=False
-)
+rescaled_coins = rescale(smoothened_coins, 0.2, mode="reflect", anti_aliasing=False)
 
 # Convert the image into a graph with the value of the gradient on the
 # edges.

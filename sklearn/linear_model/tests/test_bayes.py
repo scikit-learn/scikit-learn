@@ -8,107 +8,17 @@ from math import log
 import numpy as np
 import pytest
 
-
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_less
-from sklearn.utils import check_random_state
-from sklearn.linear_model import BayesianRidge, ARDRegression
-from sklearn.linear_model import Ridge
 from sklearn import datasets
+from sklearn.linear_model import ARDRegression, BayesianRidge, Ridge
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_less,
+)
 from sklearn.utils.extmath import fast_logdet
 
 diabetes = datasets.load_diabetes()
-
-
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"n_iter": 0}, ValueError, "n_iter == 0, must be >= 1."),
-        ({"n_iter": 2.5}, TypeError, "n_iter must be an instance of int, not float."),
-        ({"tol": -1}, ValueError, "tol == -1, must be > 0"),
-        ({"tol": "-1"}, TypeError, "tol must be an instance of float, not str."),
-        (
-            {"alpha_1": "-1"},
-            TypeError,
-            "alpha_1 must be an instance of float, not str.",
-        ),
-        (
-            {"alpha_2": "-1"},
-            TypeError,
-            "alpha_2 must be an instance of float, not str.",
-        ),
-        (
-            {"lambda_1": "-1"},
-            TypeError,
-            "lambda_1 must be an instance of float, not str.",
-        ),
-        (
-            {"lambda_2": "-1"},
-            TypeError,
-            "lambda_2 must be an instance of float, not str.",
-        ),
-        (
-            {"alpha_init": "-1"},
-            TypeError,
-            "alpha_init must be an instance of float, not str.",
-        ),
-        (
-            {"lambda_init": "-1"},
-            TypeError,
-            "lambda_init must be an instance of float, not str.",
-        ),
-        (
-            {"compute_score": 2},
-            TypeError,
-            "compute_score must be an instance of {numpy.bool_, bool}, not int.",
-        ),
-        (
-            {"compute_score": 0.5},
-            TypeError,
-            "compute_score must be an instance of {numpy.bool_, bool}, not float.",
-        ),
-        (
-            {"fit_intercept": 2},
-            TypeError,
-            "fit_intercept must be an instance of {numpy.bool_, bool}, not int.",
-        ),
-        (
-            {"fit_intercept": 0.5},
-            TypeError,
-            "fit_intercept must be an instance of {numpy.bool_, bool}, not float.",
-        ),
-        (
-            {"normalize": -1},
-            ValueError,
-            "Leave 'normalize' to its default value or set it to True or False",
-        ),
-        (
-            {"copy_X": 2},
-            TypeError,
-            "copy_X must be an instance of {numpy.bool_, bool}, not int.",
-        ),
-        (
-            {"copy_X": 0.5},
-            TypeError,
-            "copy_X must be an instance of {numpy.bool_, bool}, not float.",
-        ),
-        ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0"),
-        ({"verbose": 2}, ValueError, "verbose == 2, must be <= 1"),
-        (
-            {"verbose": 0.5},
-            TypeError,
-            "verbose must be an instance of {int, numpy.bool_, bool}, not float.",
-        ),
-    ],
-)
-def test_bayesian_ridge_scalar_params_validation(params, err_type, err_msg):
-    """Check the scalar parameters of BayesianRidge."""
-    X = np.array([[1], [2], [6], [8], [10]])
-    y = np.array([1, 2, 6, 8, 10])
-    clf = BayesianRidge(**params)
-    with pytest.raises(err_type, match=err_msg):
-        clf.fit(X, y)
 
 
 def test_bayesian_ridge_scores():
@@ -163,7 +73,7 @@ def test_bayesian_ridge_score_values():
         alpha_2=alpha_2,
         lambda_1=lambda_1,
         lambda_2=lambda_2,
-        n_iter=1,
+        max_iter=1,
         fit_intercept=False,
         compute_score=True,
     )
@@ -264,7 +174,7 @@ def test_update_of_sigma_in_ard():
     # of the ARDRegression algorithm. See issue #10128.
     X = np.array([[1, 0], [0, 0]])
     y = np.array([0, 0])
-    clf = ARDRegression(n_iter=1)
+    clf = ARDRegression(max_iter=1)
     clf.fit(X, y)
     # With the inputs above, ARDRegression prunes both of the two coefficients
     # in the first iteration. Hence, the expected shape of `sigma_` is (0, 0).
@@ -355,18 +265,6 @@ def test_update_sigma(global_random_seed):
     np.testing.assert_allclose(sigma, sigma_woodbury)
 
 
-# FIXME: 'normalize' to be removed in 1.2 in LinearRegression
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
-def test_ard_regression_predict_normalize_true():
-    """Check that we can predict with `normalize=True` and `return_std=True`.
-    Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/18605
-    """
-    clf = ARDRegression(normalize=True)
-    clf.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    clf.predict([[1, 1]], return_std=True)
-
-
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
 def test_dtype_match(dtype, Estimator):
@@ -394,3 +292,33 @@ def test_dtype_correctness(Estimator):
     coef_32 = model.fit(X.astype(np.float32), y).coef_
     coef_64 = model.fit(X.astype(np.float64), y).coef_
     np.testing.assert_allclose(coef_32, coef_64, rtol=1e-4)
+
+
+# TODO(1.5) remove
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_bayesian_ridge_ard_n_iter_deprecated(Estimator):
+    """Check the deprecation warning of `n_iter`."""
+    depr_msg = (
+        "'n_iter' was renamed to 'max_iter' in version 1.3 and will be removed in 1.5"
+    )
+    X, y = diabetes.data, diabetes.target
+    model = Estimator(n_iter=5)
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        model.fit(X, y)
+
+
+# TODO(1.5) remove
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_bayesian_ridge_ard_max_iter_and_n_iter_both_set(Estimator):
+    """Check that a ValueError is raised when both `max_iter` and `n_iter` are set."""
+    err_msg = (
+        "Both `n_iter` and `max_iter` attributes were set. Attribute"
+        " `n_iter` was deprecated in version 1.3 and will be removed in"
+        " 1.5. To avoid this error, only set the `max_iter` attribute."
+    )
+    X, y = diabetes.data, diabetes.target
+    model = Estimator(n_iter=5, max_iter=5)
+
+    with pytest.raises(ValueError, match=err_msg):
+        model.fit(X, y)

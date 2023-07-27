@@ -3,23 +3,18 @@ Tests for DBSCAN clustering algorithm
 """
 
 import pickle
-
-import numpy as np
-
 import warnings
 
-from scipy.spatial import distance
-from scipy import sparse
-
+import numpy as np
 import pytest
+from scipy import sparse
+from scipy.spatial import distance
 
-from sklearn.utils._testing import assert_array_equal
-from sklearn.neighbors import NearestNeighbors
-from sklearn.cluster import DBSCAN
-from sklearn.cluster import dbscan
+from sklearn.cluster import DBSCAN, dbscan
 from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.metrics.pairwise import pairwise_distances
-
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils._testing import assert_array_equal
 
 n_clusters = 3
 X = generate_clustered_data(n_clusters=n_clusters)
@@ -286,7 +281,7 @@ def test_boundaries():
     assert 0 not in core
 
 
-def test_weighted_dbscan():
+def test_weighted_dbscan(global_random_seed):
     # ensure sample_weight is validated
     with pytest.raises(ValueError):
         dbscan([[0], [1]], sample_weight=[2])
@@ -320,7 +315,7 @@ def test_weighted_dbscan():
     )
 
     # for non-negative sample_weight, cores should be identical to repetition
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     sample_weight = rng.randint(0, 5, X.shape[0])
     core1, label1 = dbscan(X, sample_weight=sample_weight)
     assert len(label1) == len(X)

@@ -6,18 +6,18 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ._kmeans import _BaseKMeans
-from ._kmeans import _kmeans_single_elkan
-from ._kmeans import _kmeans_single_lloyd
-from ._kmeans import _labels_inertia_threadpool_limit
-from ._k_means_common import _inertia_dense
-from ._k_means_common import _inertia_sparse
-from ..utils.extmath import row_norms
+from ..base import _fit_context
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_sample_weight
-from ..utils.validation import check_random_state
 from ..utils._param_validation import StrOptions
+from ..utils.extmath import row_norms
+from ..utils.validation import _check_sample_weight, check_is_fitted, check_random_state
+from ._k_means_common import _inertia_dense, _inertia_sparse
+from ._kmeans import (
+    _BaseKMeans,
+    _kmeans_single_elkan,
+    _kmeans_single_lloyd,
+    _labels_inertia_threadpool_limit,
+)
 
 
 class _BisectingTree:
@@ -190,21 +190,21 @@ class BisectingKMeans(_BaseKMeans):
     --------
     >>> from sklearn.cluster import BisectingKMeans
     >>> import numpy as np
-    >>> X = np.array([[1, 2], [1, 4], [1, 0],
-    ...               [10, 2], [10, 4], [10, 0],
-    ...               [10, 6], [10, 8], [10, 10]])
+    >>> X = np.array([[1, 1], [10, 1], [3, 1],
+    ...               [10, 0], [2, 1], [10, 2],
+    ...               [10, 8], [10, 9], [10, 10]])
     >>> bisect_means = BisectingKMeans(n_clusters=3, random_state=0).fit(X)
     >>> bisect_means.labels_
-    array([2, 2, 2, 0, 0, 0, 1, 1, 1], dtype=int32)
+    array([0, 2, 0, 2, 0, 2, 1, 1, 1], dtype=int32)
     >>> bisect_means.predict([[0, 0], [12, 3]])
-    array([2, 0], dtype=int32)
+    array([0, 2], dtype=int32)
     >>> bisect_means.cluster_centers_
-    array([[10.,  2.],
-           [10.,  8.],
-           [ 1., 2.]])
+    array([[ 2., 1.],
+           [10., 9.],
+           [10., 1.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseKMeans._parameter_constraints,
         "init": [StrOptions({"k-means++", "random"}), callable],
         "copy_x": ["boolean"],
@@ -226,7 +226,6 @@ class BisectingKMeans(_BaseKMeans):
         algorithm="lloyd",
         bisecting_strategy="biggest_inertia",
     ):
-
         super().__init__(
             n_clusters=n_clusters,
             init=init,
@@ -309,7 +308,12 @@ class BisectingKMeans(_BaseKMeans):
         # Repeating `n_init` times to obtain best clusters
         for _ in range(self.n_init):
             centers_init = self._init_centroids(
-                X, x_squared_norms, self.init, self._random_state, n_centroids=2
+                X,
+                x_squared_norms=x_squared_norms,
+                init=self.init,
+                random_state=self._random_state,
+                n_centroids=2,
+                sample_weight=sample_weight,
             )
 
             labels, inertia, centers, _ = self._kmeans_single(
@@ -319,7 +323,6 @@ class BisectingKMeans(_BaseKMeans):
                 max_iter=self.max_iter,
                 verbose=self.verbose,
                 tol=self.tol,
-                x_squared_norms=x_squared_norms,
                 n_threads=self._n_threads,
             )
 
@@ -338,10 +341,13 @@ class BisectingKMeans(_BaseKMeans):
                 X, best_centers, best_labels, sample_weight
             )
         else:  # bisecting_strategy == "largest_cluster"
-            scores = np.bincount(best_labels)
+            # Using minlength to make sure that we have the counts for both labels even
+            # if all samples are labelled 0.
+            scores = np.bincount(best_labels, minlength=2)
 
         cluster_to_bisect.split(best_labels, best_centers, scores)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
         """Compute bisecting k-means clustering.
 
@@ -360,15 +366,14 @@ class BisectingKMeans(_BaseKMeans):
 
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight.
+            are assigned equal weight. `sample_weight` is not used during
+            initialization if `init` is a callable.
 
         Returns
         -------
         self
             Fitted estimator.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X,
             accept_sparse="csr",
@@ -463,13 +468,11 @@ class BisectingKMeans(_BaseKMeans):
         # sample weights are unused but necessary in cython helpers
         sample_weight = np.ones_like(x_squared_norms)
 
-        labels = self._predict_recursive(
-            X, x_squared_norms, sample_weight, self._bisecting_tree
-        )
+        labels = self._predict_recursive(X, sample_weight, self._bisecting_tree)
 
         return labels
 
-    def _predict_recursive(self, X, x_squared_norms, sample_weight, cluster_node):
+    def _predict_recursive(self, X, sample_weight, cluster_node):
         """Predict recursively by going down the hierarchical tree.
 
         Parameters
@@ -477,9 +480,6 @@ class BisectingKMeans(_BaseKMeans):
         X : {ndarray, csr_matrix} of shape (n_samples, n_features)
             The data points, currently assigned to `cluster_node`, to predict between
             the subclusters of this node.
-
-        x_squared_norms : ndarray of shape (n_samples,)
-            Squared euclidean norm of each data point.
 
         sample_weight : ndarray of shape (n_samples,)
             The weights for each observation in X.
@@ -504,7 +504,6 @@ class BisectingKMeans(_BaseKMeans):
         cluster_labels = _labels_inertia_threadpool_limit(
             X,
             sample_weight,
-            x_squared_norms,
             centers,
             self._n_threads,
             return_inertia=False,
@@ -515,11 +514,11 @@ class BisectingKMeans(_BaseKMeans):
         labels = np.full(X.shape[0], -1, dtype=np.int32)
 
         labels[mask] = self._predict_recursive(
-            X[mask], x_squared_norms[mask], sample_weight[mask], cluster_node.left
+            X[mask], sample_weight[mask], cluster_node.left
         )
 
         labels[~mask] = self._predict_recursive(
-            X[~mask], x_squared_norms[~mask], sample_weight[~mask], cluster_node.right
+            X[~mask], sample_weight[~mask], cluster_node.right
         )
 
         return labels

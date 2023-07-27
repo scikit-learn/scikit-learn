@@ -1,9 +1,8 @@
 import numpy as np
 import pytest
-from joblib import Parallel
-from sklearn.utils.fixes import delayed
 
 from sklearn.neighbors._kd_tree import KDTree
+from sklearn.utils.parallel import Parallel, delayed
 
 DIMENSION = 3
 

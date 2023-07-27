@@ -3,11 +3,11 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import MetaEstimatorMixin, clone, BaseEstimator
-from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils.validation import check_is_fitted
-from ..utils.metaestimators import available_if
+from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
 from ..utils import safe_mask
+from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils.metaestimators import available_if
+from ..utils.validation import check_is_fitted
 
 __all__ = ["SelfTrainingClassifier"]
 
@@ -28,7 +28,7 @@ def _estimator_has(attr):
 class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     """Self-training classifier.
 
-    This class allows a given supervised classifier to function as a
+    This :term:`metaestimator` allows a given supervised classifier to function as a
     semi-supervised classifier, allowing it to learn from unlabeled data. It
     does this by iteratively predicting pseudo-labels for the unlabeled data
     and adding them to the training set.
@@ -144,7 +144,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     _estimator_type = "classifier"
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         # We don't require `predic_proba` here to allow passing a meta-estimator
         # that only exposes `predict_proba` after fitting.
         "base_estimator": [HasMethods(["fit"])],
@@ -171,6 +171,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self.max_iter = max_iter
         self.verbose = verbose
 
+    @_fit_context(
+        # SelfTrainingClassifier.base_estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """
         Fit self-training classifier using `X`, `y` as training data.
@@ -189,8 +193,6 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         # we need row slicing support for sparce matrices, but costly finiteness check
         # can be delegated to the base estimator.
         X, y = self._validate_data(
@@ -215,9 +217,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             self.k_best > X.shape[0] - np.sum(has_label)
         ):
             warnings.warn(
-                "k_best is larger than the amount of unlabeled "
-                "samples. All unlabeled samples will be labeled in "
-                "the first iteration",
+                (
+                    "k_best is larger than the amount of unlabeled "
+                    "samples. All unlabeled samples will be labeled in "
+                    "the first iteration"
+                ),
                 UserWarning,
             )
 

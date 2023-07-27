@@ -2,17 +2,31 @@
 #
 # License: BSD 3 clause
 
-import numpy as np
 import warnings
+from numbers import Integral, Real
 
-from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
-from ..base import MultiOutputMixin
-from ..utils import check_random_state, check_consistent_length
-from ..utils.random import sample_without_replacement
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ._base import LinearRegression
-from ..utils.validation import has_fit_parameter
+import numpy as np
+
+from ..base import (
+    BaseEstimator,
+    MetaEstimatorMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+    clone,
+)
 from ..exceptions import ConvergenceWarning
+from ..utils import check_consistent_length, check_random_state
+from ..utils._param_validation import (
+    HasMethods,
+    Interval,
+    Options,
+    RealNotInt,
+    StrOptions,
+)
+from ..utils.random import sample_without_replacement
+from ..utils.validation import _check_sample_weight, check_is_fitted, has_fit_parameter
+from ._base import LinearRegression
 
 _EPSILON = np.spacing(1)
 
@@ -87,17 +101,11 @@ class RANSACRegressor(
         relative number `ceil(min_samples * X.shape[0])` for
         `min_samples < 1`. This is typically chosen as the minimal number of
         samples necessary to estimate the given `estimator`. By default a
-        ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
+        :class:`~sklearn.linear_model.LinearRegression` estimator is assumed and
         `min_samples` is chosen as ``X.shape[1] + 1``. This parameter is highly
         dependent upon the model, so if a `estimator` other than
-        :class:`linear_model.LinearRegression` is used, the user is
-        encouraged to provide a value.
-
-        .. deprecated:: 1.0
-           Not setting `min_samples` explicitly will raise an error in version
-           1.2 for models other than
-           :class:`~sklearn.linear_model.LinearRegression`. To keep the old
-           default behavior, set `min_samples=X.shape[1] + 1` explicitly.
+        :class:`~sklearn.linear_model.LinearRegression` is used, the user must
+        provide a value.
 
     residual_threshold : float, default=None
         Maximum residual for a data sample to be classified as an inlier.
@@ -159,25 +167,10 @@ class RANSACRegressor(
 
         .. versionadded:: 0.18
 
-        .. deprecated:: 1.0
-            The loss 'squared_loss' was deprecated in v1.0 and will be removed
-            in version 1.2. Use `loss='squared_error'` which is equivalent.
-
-        .. deprecated:: 1.0
-            The loss 'absolute_loss' was deprecated in v1.0 and will be removed
-            in version 1.2. Use `loss='absolute_error'` which is equivalent.
-
     random_state : int, RandomState instance, default=None
         The generator used to initialize the centers.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
-
-    base_estimator : object, default="deprecated"
-        Use `estimator` instead.
-
-        .. deprecated:: 1.1
-            `base_estimator` is deprecated and will be removed in 1.3.
-            Use `estimator` instead.
 
     Attributes
     ----------
@@ -244,6 +237,34 @@ class RANSACRegressor(
     array([-31.9417...])
     """  # noqa: E501
 
+    _parameter_constraints: dict = {
+        "estimator": [HasMethods(["fit", "score", "predict"]), None],
+        "min_samples": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(RealNotInt, 0, 1, closed="both"),
+            None,
+        ],
+        "residual_threshold": [Interval(Real, 0, None, closed="left"), None],
+        "is_data_valid": [callable, None],
+        "is_model_valid": [callable, None],
+        "max_trials": [
+            Interval(Integral, 0, None, closed="left"),
+            Options(Real, {np.inf}),
+        ],
+        "max_skips": [
+            Interval(Integral, 0, None, closed="left"),
+            Options(Real, {np.inf}),
+        ],
+        "stop_n_inliers": [
+            Interval(Integral, 0, None, closed="left"),
+            Options(Real, {np.inf}),
+        ],
+        "stop_score": [Interval(Real, None, None, closed="both")],
+        "stop_probability": [Interval(Real, 0, 1, closed="both")],
+        "loss": [StrOptions({"absolute_error", "squared_error"}), callable],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         estimator=None,
@@ -259,9 +280,7 @@ class RANSACRegressor(
         stop_probability=0.99,
         loss="absolute_error",
         random_state=None,
-        base_estimator="deprecated",
     ):
-
         self.estimator = estimator
         self.min_samples = min_samples
         self.residual_threshold = residual_threshold
@@ -274,8 +293,11 @@ class RANSACRegressor(
         self.stop_probability = stop_probability
         self.random_state = random_state
         self.loss = loss
-        self.base_estimator = base_estimator
 
+    @_fit_context(
+        # RansacRegressor.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None):
         """Fit estimator using RANSAC algorithm.
 
@@ -316,14 +338,6 @@ class RANSACRegressor(
         )
         check_consistent_length(X, y)
 
-        if self.base_estimator != "deprecated":
-            warnings.warn(
-                "`base_estimator` was renamed to `estimator` in version 1.1 and "
-                "will be removed in 1.3.",
-                FutureWarning,
-            )
-            self.estimator = self.base_estimator
-
         if self.estimator is not None:
             estimator = clone(self.estimator)
         else:
@@ -331,31 +345,20 @@ class RANSACRegressor(
 
         if self.min_samples is None:
             if not isinstance(estimator, LinearRegression):
-                # FIXME: in 1.2, turn this warning into an error
-                warnings.warn(
-                    "From version 1.2, `min_samples` needs to be explicitly "
-                    "set otherwise an error will be raised. To keep the "
-                    "current behavior, you need to set `min_samples` to "
-                    f"`X.shape[1] + 1 that is {X.shape[1] + 1}",
-                    FutureWarning,
+                raise ValueError(
+                    "`min_samples` needs to be explicitly set when estimator "
+                    "is not a LinearRegression."
                 )
             min_samples = X.shape[1] + 1
         elif 0 < self.min_samples < 1:
             min_samples = np.ceil(self.min_samples * X.shape[0])
         elif self.min_samples >= 1:
-            if self.min_samples % 1 != 0:
-                raise ValueError("Absolute number of samples must be an integer value.")
             min_samples = self.min_samples
-        else:
-            raise ValueError("Value for `min_samples` must be scalar and positive.")
         if min_samples > X.shape[0]:
             raise ValueError(
                 "`min_samples` may not be larger than number "
                 "of samples: n_samples = %d." % (X.shape[0])
             )
-
-        if self.stop_probability < 0 or self.stop_probability > 1:
-            raise ValueError("`stop_probability` must be in range [0, 1].")
 
         if self.residual_threshold is None:
             # MAD (median absolute deviation)
@@ -363,30 +366,14 @@ class RANSACRegressor(
         else:
             residual_threshold = self.residual_threshold
 
-        # TODO: Remove absolute_loss in v1.2.
-        if self.loss in ("absolute_error", "absolute_loss"):
-            if self.loss == "absolute_loss":
-                warnings.warn(
-                    "The loss 'absolute_loss' was deprecated in v1.0 and will "
-                    "be removed in version 1.2. Use `loss='absolute_error'` "
-                    "which is equivalent.",
-                    FutureWarning,
-                )
+        if self.loss == "absolute_error":
             if y.ndim == 1:
                 loss_function = lambda y_true, y_pred: np.abs(y_true - y_pred)
             else:
                 loss_function = lambda y_true, y_pred: np.sum(
                     np.abs(y_true - y_pred), axis=1
                 )
-        # TODO: Remove squared_loss in v1.2.
-        elif self.loss in ("squared_error", "squared_loss"):
-            if self.loss == "squared_loss":
-                warnings.warn(
-                    "The loss 'squared_loss' was deprecated in v1.0 and will "
-                    "be removed in version 1.2. Use `loss='squared_error'` "
-                    "which is equivalent.",
-                    FutureWarning,
-                )
+        elif self.loss == "squared_error":
             if y.ndim == 1:
                 loss_function = lambda y_true, y_pred: (y_true - y_pred) ** 2
             else:
@@ -396,13 +383,6 @@ class RANSACRegressor(
 
         elif callable(self.loss):
             loss_function = self.loss
-
-        else:
-            raise ValueError(
-                "loss should be 'absolute_error', 'squared_error' or a "
-                "callable. Got %s. "
-                % self.loss
-            )
 
         random_state = check_random_state(self.random_state)
 
@@ -550,10 +530,12 @@ class RANSACRegressor(
                 + self.n_skips_invalid_model_
             ) > self.max_skips:
                 warnings.warn(
-                    "RANSAC found a valid consensus set but exited"
-                    " early due to skipping more iterations than"
-                    " `max_skips`. See estimator attributes for"
-                    " diagnostics (n_skips*).",
+                    (
+                        "RANSAC found a valid consensus set but exited"
+                        " early due to skipping more iterations than"
+                        " `max_skips`. See estimator attributes for"
+                        " diagnostics (n_skips*)."
+                    ),
                     ConvergenceWarning,
                 )
 

@@ -41,10 +41,10 @@ X = np.dot(S, A.T)  # Generate observations
 # Fit ICA and PCA models
 # ----------------------
 
-from sklearn.decomposition import FastICA, PCA
+from sklearn.decomposition import PCA, FastICA
 
 # Compute ICA
-ica = FastICA(n_components=3)
+ica = FastICA(n_components=3, whiten="arbitrary-variance")
 S_ = ica.fit_transform(X)  # Reconstruct signals
 A_ = ica.mixing_  # Get estimated mixing matrix
 

@@ -20,10 +20,11 @@ thresholds in DBSCAN.
 #          Adrin Jalali <adrin.jalali@gmail.com>
 # License: BSD 3 clause
 
-from sklearn.cluster import OPTICS, cluster_optics_dbscan
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
+
+from sklearn.cluster import OPTICS, cluster_optics_dbscan
 
 # Generate sample data
 
@@ -88,10 +89,10 @@ ax2.plot(X[clust.labels_ == -1, 0], X[clust.labels_ == -1, 1], "k+", alpha=0.1)
 ax2.set_title("Automatic Clustering\nOPTICS")
 
 # DBSCAN at 0.5
-colors = ["g", "greenyellow", "olive", "r", "b", "c"]
-for klass, color in zip(range(0, 6), colors):
+colors = ["g.", "r.", "b.", "c."]
+for klass, color in zip(range(0, 4), colors):
     Xk = X[labels_050 == klass]
-    ax3.plot(Xk[:, 0], Xk[:, 1], color, alpha=0.3, marker=".")
+    ax3.plot(Xk[:, 0], Xk[:, 1], color, alpha=0.3)
 ax3.plot(X[labels_050 == -1, 0], X[labels_050 == -1, 1], "k+", alpha=0.1)
 ax3.set_title("Clustering at 0.5 epsilon cut\nDBSCAN")
 

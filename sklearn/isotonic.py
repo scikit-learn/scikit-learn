@@ -3,23 +3,30 @@
 #          Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # License: BSD 3 clause
 
+import math
+import warnings
+from numbers import Real
+
 import numpy as np
 from scipy import interpolate
 from scipy.stats import spearmanr
-from numbers import Real
-import warnings
-import math
 
-from .base import BaseEstimator, TransformerMixin, RegressorMixin
-from .utils import check_array, check_consistent_length
-from .utils.validation import _check_sample_weight
-from .utils._param_validation import Interval, StrOptions
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
-
+from .base import BaseEstimator, RegressorMixin, TransformerMixin, _fit_context
+from .utils import check_array, check_consistent_length
+from .utils._param_validation import Interval, StrOptions, validate_params
+from .utils.validation import _check_sample_weight, check_is_fitted
 
 __all__ = ["check_increasing", "isotonic_regression", "IsotonicRegression"]
 
 
+@validate_params(
+    {
+        "x": ["array-like"],
+        "y": ["array-like"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def check_increasing(x, y):
     """Determine whether y is monotonically correlated with x.
 
@@ -79,6 +86,16 @@ def check_increasing(x, y):
     return increasing_bool
 
 
+@validate_params(
+    {
+        "y": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "y_min": [Interval(Real, None, None, closed="both"), None],
+        "y_max": [Interval(Real, None, None, closed="both"), None],
+        "increasing": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def isotonic_regression(
     y, *, sample_weight=None, y_min=None, y_max=None, increasing=True
 ):
@@ -109,7 +126,7 @@ def isotonic_regression(
 
     Returns
     -------
-    y_ : list of floats
+    y_ : ndarray of shape (n_samples,)
         Isotonic fit of y.
 
     References
@@ -228,7 +245,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     array([1.8628..., 3.7256...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "y_min": [Interval(Real, None, None, closed="both"), None],
         "y_max": [Interval(Real, None, None, closed="both"), None],
         "increasing": ["boolean", StrOptions({"auto"})],
@@ -310,6 +327,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             # prediction speed).
             return X, y
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
 
@@ -338,7 +356,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         X is stored for future use, as :meth:`transform` needs X to interpolate
         new input data.
         """
-        self._validate_params()
         check_params = dict(accept_sparse=False, ensure_2d=False)
         X = check_array(
             X, input_name="X", dtype=[np.float64, np.float32], **check_params
@@ -360,23 +377,16 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         self._build_f(X, y)
         return self
 
-    def transform(self, T):
-        """Transform new data by linear interpolation.
+    def _transform(self, T):
+        """`_transform` is called by both `transform` and `predict` methods.
 
-        Parameters
-        ----------
-        T : array-like of shape (n_samples,) or (n_samples, 1)
-            Data to transform.
+        Since `transform` is wrapped to output arrays of specific types (e.g.
+        NumPy arrays, pandas DataFrame), we cannot make `predict` call `transform`
+        directly.
 
-            .. versionchanged:: 0.24
-               Also accepts 2d array with 1 feature.
-
-        Returns
-        -------
-        y_pred : ndarray of shape (n_samples,)
-            The transformed data.
+        The above behaviour could be changed in the future, if we decide to output
+        other type of arrays when calling `predict`.
         """
-
         if hasattr(self, "X_thresholds_"):
             dtype = self.X_thresholds_.dtype
         else:
@@ -397,6 +407,24 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         return res
 
+    def transform(self, T):
+        """Transform new data by linear interpolation.
+
+        Parameters
+        ----------
+        T : array-like of shape (n_samples,) or (n_samples, 1)
+            Data to transform.
+
+            .. versionchanged:: 0.24
+               Also accepts 2d array with 1 feature.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,)
+            The transformed data.
+        """
+        return self._transform(T)
+
     def predict(self, T):
         """Predict new data by linear interpolation.
 
@@ -410,10 +438,10 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         y_pred : ndarray of shape (n_samples,)
             Transformed data.
         """
-        return self.transform(T)
+        return self._transform(T)
 
     # We implement get_feature_names_out here instead of using
-    # `_ClassNamePrefixFeaturesOutMixin`` because `input_features` are ignored.
+    # `ClassNamePrefixFeaturesOutMixin`` because `input_features` are ignored.
     # `input_features` are ignored because `IsotonicRegression` accepts 1d
     # arrays and the semantics of `feature_names_in_` are not clear for 1d arrays.
     def get_feature_names_out(self, input_features=None):
@@ -429,6 +457,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             An ndarray with one string i.e. ["isotonicregression0"].
         """
+        check_is_fitted(self, "f_")
         class_name = self.__class__.__name__.lower()
         return np.asarray([f"{class_name}0"], dtype=object)
 

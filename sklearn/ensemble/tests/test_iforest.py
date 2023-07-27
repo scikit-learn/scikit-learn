@@ -6,27 +6,25 @@ Testing for Isolation Forest algorithm (sklearn.ensemble.iforest).
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
-import pytest
 import warnings
-
-import numpy as np
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_allclose
-
-from sklearn.model_selection import ParameterGrid
-from sklearn.ensemble import IsolationForest
-from sklearn.ensemble._iforest import _average_path_length
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_diabetes, load_iris, make_classification
-from sklearn.utils import check_random_state
-from sklearn.metrics import roc_auc_score
-
-from scipy.sparse import csc_matrix, csr_matrix
 from unittest.mock import Mock, patch
 
+import numpy as np
+import pytest
+from scipy.sparse import csc_matrix, csr_matrix
+
+from sklearn.datasets import load_diabetes, load_iris, make_classification
+from sklearn.ensemble import IsolationForest
+from sklearn.ensemble._iforest import _average_path_length
+from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import ParameterGrid, train_test_split
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 
 # load iris & diabetes dataset
 iris = load_iris()
@@ -316,18 +314,6 @@ def test_iforest_with_uniform_data():
     assert all(iforest.predict(np.ones((100, 10))) == 1)
 
 
-# FIXME: remove in 1.2
-def test_n_features_deprecation():
-    # Check that we raise the proper deprecation warning if accessing
-    # `n_features_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = IsolationForest().fit(X, y)
-
-    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
-        est.n_features_
-
-
 def test_iforest_with_n_jobs_does_not_segfault():
     """Check that Isolation Forest does not segfault with n_jobs=2
 
@@ -336,3 +322,36 @@ def test_iforest_with_n_jobs_does_not_segfault():
     X, _ = make_classification(n_samples=85_000, n_features=100, random_state=0)
     X = csc_matrix(X)
     IsolationForest(n_estimators=10, max_samples=256, n_jobs=2).fit(X)
+
+
+# TODO(1.4): remove in 1.4
+def test_base_estimator_property_deprecated():
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    model = IsolationForest()
+    model.fit(X, y)
+
+    warn_msg = (
+        "Attribute `base_estimator_` was deprecated in version 1.2 and "
+        "will be removed in 1.4. Use `estimator_` instead."
+    )
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model.base_estimator_
+
+
+def test_iforest_preserve_feature_names():
+    """Check that feature names are preserved when contamination is not "auto".
+
+    Feature names are required for consistency checks during scoring.
+
+    Non-regression test for Issue #25844
+    """
+    pd = pytest.importorskip("pandas")
+    rng = np.random.RandomState(0)
+
+    X = pd.DataFrame(data=rng.randn(4), columns=["a"])
+    model = IsolationForest(random_state=0, contamination=0.05)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        model.fit(X)

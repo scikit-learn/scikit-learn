@@ -1,32 +1,31 @@
-import pytest
+import io
 import warnings
 
 import numpy as np
+import pytest
 from scipy import sparse
 from scipy.stats import kstest
 
-import io
-
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn import tree
+from sklearn.datasets import load_diabetes
+from sklearn.dummy import DummyRegressor
+from sklearn.exceptions import ConvergenceWarning
 
 # make IterativeImputer available
 from sklearn.experimental import enable_iterative_imputer  # noqa
-
-from sklearn.datasets import load_diabetes
-from sklearn.impute import MissingIndicator
-from sklearn.impute import SimpleImputer, IterativeImputer
-from sklearn.dummy import DummyRegressor
-from sklearn.linear_model import BayesianRidge, ARDRegression, RidgeCV
-from sklearn.pipeline import Pipeline
-from sklearn.pipeline import make_union
-from sklearn.model_selection import GridSearchCV
-from sklearn import tree
-from sklearn.random_projection import _sparse_random_matrix
-from sklearn.exceptions import ConvergenceWarning
+from sklearn.impute import IterativeImputer, KNNImputer, MissingIndicator, SimpleImputer
 from sklearn.impute._base import _most_frequent
+from sklearn.linear_model import ARDRegression, BayesianRidge, RidgeCV
+from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline, make_union
+from sklearn.random_projection import _sparse_random_matrix
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 
 def _assert_array_equal_and_same_dtype(x, y):
@@ -93,25 +92,11 @@ def test_imputation_shape(strategy):
     assert X_imputed.shape == (10, 2)
 
 
-@pytest.mark.parametrize("strategy", ["const", 101, None])
-def test_imputation_error_invalid_strategy(strategy):
-    X = np.ones((3, 5))
-    X[0, 0] = np.nan
-
-    with pytest.raises(ValueError, match=str(strategy)):
-        imputer = SimpleImputer(strategy=strategy)
-        imputer.fit_transform(X)
-
-
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
 def test_imputation_deletion_warning(strategy):
     X = np.ones((3, 5))
     X[:, 0] = np.nan
-    imputer = SimpleImputer(strategy=strategy, verbose=1)
-
-    # TODO: Remove in 1.3
-    with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
-        imputer.fit(X)
+    imputer = SimpleImputer(strategy=strategy).fit(X)
 
     with pytest.warns(UserWarning, match="Skipping"):
         imputer.transform(X)
@@ -119,7 +104,6 @@ def test_imputation_deletion_warning(strategy):
 
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
 def test_imputation_deletion_warning_feature_names(strategy):
-
     pd = pytest.importorskip("pandas")
 
     missing_values = np.nan
@@ -132,11 +116,7 @@ def test_imputation_deletion_warning_feature_names(strategy):
         columns=feature_names,
     )
 
-    imputer = SimpleImputer(strategy=strategy, verbose=1)
-
-    # TODO: Remove in 1.3
-    with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
-        imputer.fit(X)
+    imputer = SimpleImputer(strategy=strategy).fit(X)
 
     # check SimpleImputer returning feature name attribute correctly
     assert_array_equal(imputer.feature_names_in_, feature_names)
@@ -917,20 +897,6 @@ def test_iterative_imputer_additive_matrix():
     assert_allclose(X_test_filled, X_test_est, rtol=1e-3, atol=0.01)
 
 
-@pytest.mark.parametrize(
-    "max_iter, tol, error_type, warning",
-    [
-        (-1, 1e-3, ValueError, "should be a positive integer"),
-        (1, -1e-3, ValueError, "should be a non-negative float"),
-    ],
-)
-def test_iterative_imputer_error_param(max_iter, tol, error_type, warning):
-    X = np.zeros((100, 2))
-    imputer = IterativeImputer(max_iter=max_iter, tol=tol)
-    with pytest.raises(error_type, match=warning):
-        imputer.fit_transform(X)
-
-
 def test_iterative_imputer_early_stopping():
     rng = np.random.RandomState(0)
     n = 50
@@ -1529,6 +1495,55 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
     )
 
 
+@pytest.mark.parametrize(
+    "initial_strategy", ["mean", "median", "most_frequent", "constant"]
+)
+def test_iterative_imputer_keep_empty_features(initial_strategy):
+    """Check the behaviour of the iterative imputer with different initial strategy
+    and keeping empty features (i.e. features containing only missing values).
+    """
+    X = np.array([[1, np.nan, 2], [3, np.nan, np.nan]])
+
+    imputer = IterativeImputer(
+        initial_strategy=initial_strategy, keep_empty_features=True
+    )
+    X_imputed = imputer.fit_transform(X)
+    assert_allclose(X_imputed[:, 1], 0)
+    X_imputed = imputer.transform(X)
+    assert_allclose(X_imputed[:, 1], 0)
+
+
+def test_iterative_imputer_constant_fill_value():
+    """Check that we propagate properly the parameter `fill_value`."""
+    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])
+
+    fill_value = 100
+    imputer = IterativeImputer(
+        missing_values=-1,
+        initial_strategy="constant",
+        fill_value=fill_value,
+        max_iter=0,
+    )
+    imputer.fit_transform(X)
+    assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)
+
+
+@pytest.mark.parametrize("keep_empty_features", [True, False])
+def test_knn_imputer_keep_empty_features(keep_empty_features):
+    """Check the behaviour of `keep_empty_features` for `KNNImputer`."""
+    X = np.array([[1, np.nan, 2], [3, np.nan, np.nan]])
+
+    imputer = KNNImputer(keep_empty_features=keep_empty_features)
+
+    for method in ["fit_transform", "transform"]:
+        X_imputed = getattr(imputer, method)(X)
+        if keep_empty_features:
+            assert X_imputed.shape == X.shape
+            assert_array_equal(X_imputed[:, 1], 0)
+        else:
+            assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)
+
+
 def test_simple_impute_pd_na():
     pd = pytest.importorskip("pandas")
 
@@ -1632,3 +1647,51 @@ def test_imputer_transform_preserves_numeric_dtype(dtype_test):
     X_test = np.asarray([[np.nan, np.nan, np.nan]], dtype=dtype_test)
     X_trans = imp.transform(X_test)
     assert X_trans.dtype == dtype_test
+
+
+@pytest.mark.parametrize("array_type", ["array", "sparse"])
+@pytest.mark.parametrize("keep_empty_features", [True, False])
+def test_simple_imputer_constant_keep_empty_features(array_type, keep_empty_features):
+    """Check the behaviour of `keep_empty_features` with `strategy='constant'.
+    For backward compatibility, a column full of missing values will always be
+    fill and never dropped.
+    """
+    X = np.array([[np.nan, 2], [np.nan, 3], [np.nan, 6]])
+    X = _convert_container(X, array_type)
+    fill_value = 10
+    imputer = SimpleImputer(
+        strategy="constant",
+        fill_value=fill_value,
+        keep_empty_features=keep_empty_features,
+    )
+
+    for method in ["fit_transform", "transform"]:
+        X_imputed = getattr(imputer, method)(X)
+        assert X_imputed.shape == X.shape
+        constant_feature = (
+            X_imputed[:, 0].A if array_type == "sparse" else X_imputed[:, 0]
+        )
+        assert_array_equal(constant_feature, fill_value)
+
+
+@pytest.mark.parametrize("array_type", ["array", "sparse"])
+@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
+@pytest.mark.parametrize("keep_empty_features", [True, False])
+def test_simple_imputer_keep_empty_features(strategy, array_type, keep_empty_features):
+    """Check the behaviour of `keep_empty_features` with all strategies but
+    'constant'.
+    """
+    X = np.array([[np.nan, 2], [np.nan, 3], [np.nan, 6]])
+    X = _convert_container(X, array_type)
+    imputer = SimpleImputer(strategy=strategy, keep_empty_features=keep_empty_features)
+
+    for method in ["fit_transform", "transform"]:
+        X_imputed = getattr(imputer, method)(X)
+        if keep_empty_features:
+            assert X_imputed.shape == X.shape
+            constant_feature = (
+                X_imputed[:, 0].A if array_type == "sparse" else X_imputed[:, 0]
+            )
+            assert_array_equal(constant_feature, 0)
+        else:
+            assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)

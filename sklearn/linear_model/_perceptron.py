@@ -2,8 +2,8 @@
 # License: BSD 3 clause
 from numbers import Real
 
+from ..utils._param_validation import Interval, StrOptions
 from ._stochastic_gradient import BaseSGDClassifier
-from ..utils._param_validation import StrOptions, Interval
 
 
 class Perceptron(BaseSGDClassifier):
@@ -136,7 +136,7 @@ class Perceptron(BaseSGDClassifier):
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
 
     See Also
     --------
@@ -166,7 +166,7 @@ class Perceptron(BaseSGDClassifier):
     0.939...
     """
 
-    _parameter_constraints = {**BaseSGDClassifier._parameter_constraints}
+    _parameter_constraints: dict = {**BaseSGDClassifier._parameter_constraints}
     _parameter_constraints.pop("loss")
     _parameter_constraints.pop("average")
     _parameter_constraints.update(
