@@ -132,6 +132,13 @@ Changelog
   object in the parameter grid if it's an estimator. :pr:`26786` by `Adrin
   Jalali`_.
 
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| Neighbors based estimators now correctly work when `metric="minkowski"` and the
+  metric parameter `p` is in the range `0 < p < 1`, regardless of the `dtype` of `X`.
+  :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
 :mod:`sklearn.tree`
 ...................
 
