@@ -893,7 +893,7 @@ def _sigmoid_calibration(predictions, y, sample_weight=None):
     AB_ = BFGS_OUT[0]
 
     # Check if warnflag = "Gradient and/or function calls not changing"
-    # i.e. there is an issue of convergence.
+    # i.e. there is a problem of convergence.
     if BFGS_OUT[-1] == 2:
         # Fallback to Nelder-Mead
         AB_ = fmin(objective, AB0, disp=False)
