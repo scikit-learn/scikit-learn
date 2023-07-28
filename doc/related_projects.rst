@@ -71,9 +71,6 @@ enhance the functionality of scikit-learn's estimators.
 - `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
   organize, log and reproduce experiments
 
-- `REP <https://github.com/yandex/REP>`_ Environment for conducting data-driven
-  research in a consistent and reproducible way
-
 - `Scikit-Learn Laboratory
   <https://skll.readthedocs.io/en/latest/index.html>`_  A command-line
   wrapper around scikit-learn that makes it easy to run machine learning
