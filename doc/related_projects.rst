@@ -313,9 +313,6 @@ Recommendation Engine packages
 - `OpenRec <https://github.com/ylongqi/openrec>`_ TensorFlow-based
   neural-network inspired recommendation algorithms.
 
-- `Spotlight <https://github.com/maciejkula/spotlight>`_ Pytorch-based
-  implementation of deep recommender models.
-
 - `Surprise Lib <https://surpriselib.com/>`_ Library for explicit feedback
   datasets.
 
