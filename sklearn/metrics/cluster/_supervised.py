@@ -98,6 +98,7 @@ def _generalized_average(U, V, average_method):
         "eps": [Interval(Real, 0, None, closed="left"), None],
         "sparse": ["boolean"],
         "dtype": "no_validation",  # delegate the validation to SciPy
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -461,6 +462,7 @@ def adjusted_rand_score(labels_true, labels_pred):
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
         "beta": [Interval(Real, 0, None, closed="left")],
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -507,6 +509,10 @@ def homogeneity_completeness_v_measure(
         If ``beta`` is greater than 1, ``completeness`` is weighted more
         strongly in the calculation. If ``beta`` is less than 1,
         ``homogeneity`` is weighted more strongly.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        The weights for each observation in labels_true. If ``None``, all
+        observations are assigned equal weight (default behavior).
 
     Returns
     -------
@@ -561,6 +567,7 @@ def homogeneity_completeness_v_measure(
     {
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -587,6 +594,9 @@ def homogeneity_score(labels_true, labels_pred, sample_weight=None):
 
     labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate.
+
+    sample_weight: array-like of shape (n_samples,), default=None
+        The weights for each observation in labels_true.
 
     Returns
     -------
@@ -639,6 +649,7 @@ def homogeneity_score(labels_true, labels_pred, sample_weight=None):
     {
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -665,6 +676,9 @@ def completeness_score(labels_true, labels_pred, sample_weight=None):
 
     labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate.
+
+    sample_weight: array-like of shape (n_samples,), default=None
+        The weights for each observation in labels_true.
 
     Returns
     -------
@@ -718,6 +732,7 @@ def completeness_score(labels_true, labels_pred, sample_weight=None):
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
         "beta": [Interval(Real, 0, None, closed="left")],
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -756,6 +771,9 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0, sample_weight=None):
         If ``beta`` is greater than 1, ``completeness`` is weighted more
         strongly in the calculation. If ``beta`` is less than 1,
         ``homogeneity`` is weighted more strongly.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        The weights for each observation in labels_true.
 
     Returns
     -------
@@ -824,6 +842,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0, sample_weight=None):
         "labels_true": ["array-like", None],
         "labels_pred": ["array-like", None],
         "contingency": ["array-like", "sparse matrix", None],
+        "sample_weight": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -871,6 +890,9 @@ def mutual_info_score(
         :func:`~sklearn.metrics.cluster.contingency_matrix` function. If value
         is ``None``, it will be computed, otherwise the given value is used,
         with ``labels_true`` and ``labels_pred`` ignored.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        The weights for each observation in labels_true.
 
     Returns
     -------
@@ -1279,6 +1301,7 @@ def entropy(labels, sample_weight=None):
         The labels.
 
     sample_weight : array-like of shape (n_samples,), dtype=float, default=None
+        The weights for each observation in labels.
 
     Returns
     -------
