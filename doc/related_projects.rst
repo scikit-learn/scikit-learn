@@ -85,9 +85,6 @@ enhance the functionality of scikit-learn's estimators.
   debugging/inspecting machine learning models and explaining their
   predictions.
 
-- `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes model visualization
-  utilities.
-
 - `sklearn-evaluation <https://github.com/ploomber/sklearn-evaluation>`_
   Machine learning model evaluation made easy: plots, tables, HTML reports,
   experiment tracking and Jupyter notebook analysis. Visual analysis, model
