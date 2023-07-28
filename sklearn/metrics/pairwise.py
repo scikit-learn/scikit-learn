@@ -1211,7 +1211,7 @@ def paired_manhattan_distances(X, Y):
     {"X": ["array-like",], "Y": ["array-like",]},
     prefer_skip_nested_validation=True,
 )
-def _paired_haversine_distances(X, Y):
+def paired_haversine_distances(X, Y):
     """Compute the Haversine distance between paired samples in X and Y.
 
     The Haversine (or great circle) distance is the angular distance between
