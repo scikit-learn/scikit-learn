@@ -497,9 +497,7 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
         else:
             constraint_value = "highest"
 
-        routed_params = process_routing(
-            obj=self, method="fit", other_params={}, **params
-        )
+        routed_params = process_routing(self, "fit", **params)
         self._scorer = self._get_scorer()
 
         # in the following block, we:
