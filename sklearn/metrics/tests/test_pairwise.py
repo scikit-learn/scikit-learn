@@ -46,7 +46,7 @@ from sklearn.metrics.pairwise import (
     paired_distances,
     paired_euclidean_distances,
     paired_manhattan_distances,
-    paired_haversine_distances,
+    _paired_haversine_distances,
     pairwise_distances,
     pairwise_distances_argmin,
     pairwise_distances_argmin_min,
@@ -124,7 +124,7 @@ def test_pairwise_distances(global_dtype):
     X = rng.randn(5, 2)
     Y = np.tile(X[0, :], (5, 1))
     S = haversine_distances(X, Y[0].reshape(1, -1)).ravel()
-    S2 = paired_haversine_distances(X, Y).ravel()
+    S2 = _paired_haversine_distances(X, Y).ravel()
     assert_allclose(S, S2)
 
     # "cityblock" uses scikit-learn metric, cityblock (function) is
@@ -1212,7 +1212,7 @@ def test_paired_haversine_distances():
             r" \(5, 3\)"
         ),
     ):
-        paired_haversine_distances(X, Y)
+        _paired_haversine_distances(X, Y)
 
 
 def test_chi_square_kernel():
