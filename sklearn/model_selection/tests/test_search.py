@@ -974,7 +974,7 @@ def test_grid_search_cv_results():
         if cv_results["param_kernel"][i] == "poly"
     ]
     assert all(poly_results)
-    assert len(poly_results)
+    assert len(poly_results) == 2
 
     rbf_results = [
         (
@@ -986,7 +986,7 @@ def test_grid_search_cv_results():
         if cv_results["param_kernel"][i] == "rbf"
     ]
     assert all(rbf_results)
-    assert len(rbf_results)
+    assert len(rbf_results) == 4
 
 
 def test_random_search_cv_results():
