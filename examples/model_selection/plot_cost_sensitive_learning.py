@@ -1,7 +1,7 @@
 """
-==================================================
-Post-tuning the cut-off point of decision function
-==================================================
+===============================================================
+Post-tuning decision threshold based on cost-sensitive learning
+===============================================================
 
 Once a classifier is trained, the output of the :term:`predict` method output class
 label predictions corresponding to a thresholding of either the :term:`decision
@@ -33,15 +33,23 @@ cost.
 """
 
 # %%
+# Cost-sensitive learning with constant gains and costs
+# -----------------------------------------------------
+#
+# In this first section, we illustrate the use of the
+# :class:`~sklearn.model_selection.TunedThresholdClassifier` in a setting of
+# cost-sensitive learning when the gains and costs associated to each entry of the
+# confusion matrix are constant. We use the problematic presented in [2]_ using the
+# "Statlog" German credit dataset [1]_.
+#
 # "Statlog" German credit dataset
-# -------------------------------
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
 # We fetch the German credit dataset from OpenML.
 import sklearn
 from sklearn.datasets import fetch_openml
 
 sklearn.set_config(transform_output="pandas")
-sklearn.set_config(enable_metadata_routing=True)
 
 german_credit = fetch_openml(data_id=31, as_frame=True, parser="pandas")
 X, y = german_credit.data, german_credit.target
@@ -79,7 +87,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_sta
 # We are ready to design our predictive model and the associated evaluation strategy.
 #
 # Evaluation metrics
-# ------------------
+# ^^^^^^^^^^^^^^^^^^
 #
 # In this section, we define a set of metrics that we use later. To see
 # the effect of tuning the cut-off point, we evaluate the predictive model using
@@ -122,7 +130,7 @@ scoring = {
 # %%
 # In addition, the original research [1]_ defines a business metric. They provide a
 # cost-matrix which encodes that predicting a "bad" credit as "good" is 5 times more
-# costly than the opposite. We define a python function that will weight the confusion
+# costly than the opposite. We define a python function that weight the confusion
 # matrix and return the overall cost.
 import numpy as np
 
@@ -138,17 +146,13 @@ scoring["cost_gain"] = make_scorer(
 )
 # %%
 # Vanilla predictive model
-# ------------------------
+# ^^^^^^^^^^^^^^^^^^^^^^^^
 #
-# Design of the predictive model
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
-# In this section we design our predictive model consisting of a
-# :class:`~sklearn.ensemble.HistGradientBoostingClassifier`. We encode the
-# categorical features with an :class:`~sklearn.preprocessing.OrdinalEncoder`
-# but the numerical features are kept as they are. To identify the categorical
-# columns, we use the helper function
-# :func:`~sklearn.compose.make_column_selector` and the fact that the
+# We first design our predictive model consisting of a
+# :class:`~sklearn.ensemble.HistGradientBoostingClassifier`. We encode the categorical
+# features with an :class:`~sklearn.preprocessing.OrdinalEncoder` but the numerical
+# features are kept as they are. To identify the categorical columns, we use the helper
+# function :func:`~sklearn.compose.make_column_selector` and the fact that the
 # categorical features are stored as `category` dtype.
 from sklearn.compose import ColumnTransformer
 from sklearn.compose import make_column_selector as selector
@@ -185,9 +189,6 @@ model = Pipeline(
 model.fit(X_train, y_train)
 
 # %%
-# Evaluation of the predictive model
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
 # We evaluate the performance of our predictive model using the ROC and Precision-Recall
 # curves.
 import matplotlib.pyplot as plt
@@ -245,7 +246,7 @@ _ = fig.suptitle("Evaluation of the vanilla GBDT model")
 #
 # However, we recall that the original aim was to minimize the cost (or maximize the
 # gain) by the business metric. We can compute the value of the business metric:
-scoring["cost_gain"](model, X_test, y_test)
+print(f"Business defined metric: {scoring['cost_gain'](model, X_test, y_test)}")
 
 # %%
 # At this stage we don't know if any other cut-off can lead to a greater gain.
@@ -259,7 +260,7 @@ scoring["cost_gain"](model, X_test, y_test)
 # .. _cost_sensitive_learning_example:
 #
 # Tuning the cut-off point
-# ------------------------
+# ^^^^^^^^^^^^^^^^^^^^^^^^
 #
 # We use :class:`~sklearn.model_selection.TunedThresholdClassifier` to tune the cut-off
 # point. We need to provide the business metric to optimize as well as the
@@ -268,12 +269,12 @@ scoring["cost_gain"](model, X_test, y_test)
 # stratified cross-validation is used.
 from sklearn.model_selection import TunedThresholdClassifier
 
-model_tuned = TunedThresholdClassifier(
+tuned_model = TunedThresholdClassifier(
     estimator=model,
     pos_label=pos_label,
     objective_metric=scoring["cost_gain"],
 )
-model_tuned.fit(X_train, y_train)
+tuned_model.fit(X_train, y_train)
 
 # %%
 # We plot the ROC and Precision-Recall curves for the vanilla model and the tuned model.
@@ -285,7 +286,7 @@ markerstyles = ("o", ">")
 colors = ("tab:blue", "tab:orange")
 names = ("Vanilla GBDT", "Tuned GBDT")
 for idx, (est, linestyle, marker, color, name) in enumerate(
-    zip((model, model_tuned), linestyles, markerstyles, colors, names)
+    zip((model, tuned_model), linestyles, markerstyles, colors, names)
 ):
     decision_threshold = getattr(est, "decision_threshold_", 0.5)
     PrecisionRecallDisplay.from_estimator(
@@ -332,11 +333,11 @@ axs[1].set_title("ROC curve")
 axs[1].legend()
 
 axs[2].plot(
-    model_tuned.decision_thresholds_, model_tuned.objective_scores_, color="tab:orange"
+    tuned_model.decision_thresholds_, tuned_model.objective_scores_, color="tab:orange"
 )
 axs[2].plot(
-    model_tuned.decision_threshold_,
-    model_tuned.objective_score_,
+    tuned_model.decision_threshold_,
+    tuned_model.objective_score_,
     "o",
     markersize=10,
     color="tab:orange",
@@ -363,7 +364,7 @@ _ = fig.suptitle("Comparison of the cut-off point for the vanilla and tuned GBDT
 #
 # We can now check if choosing this cut-off point leads to a better score on the testing
 # set:
-scoring["cost_gain"](model_tuned, X_test, y_test)
+print(f"Business defined metric: {scoring['cost_gain'](tuned_model, X_test, y_test)}")
 
 # %%
 # We observe that the decision generalized on the testing set leading to a better
@@ -372,7 +373,7 @@ scoring["cost_gain"](model_tuned, X_test, y_test)
 # .. _tunedthresholdclassifier_no_cv:
 #
 # Consideration regarding model refitting and cross-validation
-# ------------------------------------------------------------
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
 # In the above experiment, we use the default setting of the
 # :class:`~sklearn.model_selection.TunedThresholdClassifier`. In particular, the cut-off
@@ -386,7 +387,7 @@ scoring["cost_gain"](model_tuned, X_test, y_test)
 # Also, the underlying classifier is not be refitted. Here, we can try to do such
 # experiment.
 model.fit(X_train, y_train)
-model_tuned.set_params(cv="prefit").fit(X_train, y_train)
+tuned_model.set_params(cv="prefit").fit(X_train, y_train)
 
 
 # %%
@@ -398,7 +399,7 @@ markerstyles = ("o", ">")
 colors = ("tab:blue", "tab:orange")
 names = ("Vanilla GBDT", "Tuned GBDT")
 for idx, (est, linestyle, marker, color, name) in enumerate(
-    zip((model, model_tuned), linestyles, markerstyles, colors, names)
+    zip((model, tuned_model), linestyles, markerstyles, colors, names)
 ):
     decision_threshold = getattr(est, "decision_threshold_", 0.5)
     PrecisionRecallDisplay.from_estimator(
@@ -445,11 +446,11 @@ axs[1].set_title("ROC curve")
 axs[1].legend()
 
 axs[2].plot(
-    model_tuned.decision_thresholds_, model_tuned.objective_scores_, color="tab:orange"
+    tuned_model.decision_thresholds_, tuned_model.objective_scores_, color="tab:orange"
 )
 axs[2].plot(
-    model_tuned.decision_threshold_,
-    model_tuned.objective_score_,
+    tuned_model.decision_threshold_,
+    tuned_model.objective_score_,
     "o",
     markersize=10,
     color="tab:orange",
@@ -481,7 +482,7 @@ _ = fig.suptitle("Tuned GBDT model without refitting and using the entire datase
 # single train-test split by providing a floating number in range `[0, 1]` to the `cv`
 # parameter. It splits the data into a training and testing set. Let's explore this
 # option:
-model_tuned.set_params(cv=0.75).fit(X_train, y_train)
+tuned_model.set_params(cv=0.75).fit(X_train, y_train)
 
 # %%
 fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(21, 6))
@@ -491,7 +492,7 @@ markerstyles = ("o", ">")
 colors = ("tab:blue", "tab:orange")
 names = ("Vanilla GBDT", "Tuned GBDT")
 for idx, (est, linestyle, marker, color, name) in enumerate(
-    zip((model, model_tuned), linestyles, markerstyles, colors, names)
+    zip((model, tuned_model), linestyles, markerstyles, colors, names)
 ):
     decision_threshold = getattr(est, "decision_threshold_", 0.5)
     PrecisionRecallDisplay.from_estimator(
@@ -538,11 +539,11 @@ axs[1].set_title("ROC curve")
 axs[1].legend()
 
 axs[2].plot(
-    model_tuned.decision_thresholds_, model_tuned.objective_scores_, color="tab:orange"
+    tuned_model.decision_thresholds_, tuned_model.objective_scores_, color="tab:orange"
 )
 axs[2].plot(
-    model_tuned.decision_threshold_,
-    model_tuned.objective_score_,
+    tuned_model.decision_threshold_,
+    tuned_model.objective_score_,
     "o",
     markersize=10,
     color="tab:orange",
@@ -566,3 +567,190 @@ _ = fig.suptitle("Tuned GBDT model without refitting and using the entire datase
 # As expected, these curves differ from those of the vanilla model, given that we
 # trained the underlying classifier on a subset of the data provided during fitting and
 # reserved a validation set for tuning the cut-off point.
+#
+# Cost-sensitive learning when gains and costs are not constant
+# -------------------------------------------------------------
+#
+# As stated in [2]_, gains and costs are generally not constant in real-world problems.
+# In this section, we use a similar example as in [2]_ by using credit cards
+# records.
+#
+# The credit card dataset
+# ^^^^^^^^^^^^^^^^^^^^^^^
+credit_card = fetch_openml(data_id=1597, as_frame=True, parser="pandas")
+credit_card.frame
+
+# %%
+# The dataset contains information about credit card records from which some are
+# fraudulent and others are legitimate. The goal is therefore to predict whether or
+# not a credit card record is fraudulent.
+#
+# In addition, we have extra information regarding the amount of each card transaction.
+# This information is used to define the business metric later.
+columns_to_drop = ["Class", "Amount"]
+data = credit_card.frame.drop(columns=columns_to_drop)
+target = credit_card.frame["Class"].astype(int)
+amount = credit_card.frame["Amount"].to_numpy()
+
+# %%
+# First, we check the class distribution of the datasets.
+target.value_counts(normalize=True)
+
+# %%
+# The dataset is highly imbalanced with fraudulent transaction representing only 0.17%
+# of the data. Additionally, we check the distribution of the amount of the fraudulent
+# transactions.
+fraud = target == 1
+amount_fraud = amount[fraud]
+_, ax = plt.subplots()
+ax.hist(amount_fraud, bins=100)
+ax.set_title("Amount of fraud transaction")
+_ = ax.set_xlabel("Amount ($)")
+
+# %%
+# Now, we create the business metric that depends on the amount of each transaction. We
+# define the cost matrix similarly to [2]_. Accepting a legitimate transaction provides
+# a gain of 2% of the amount of the transaction. However, accepting a fraudulent
+# transaction result in a loss of the amount of the transaction. As stated in [2]_, the
+# gain and loss related to refusals (of fraudulent and legitimate transactions) are not
+# trivial to define. Here, we define that a refusal of a legitimate transaction is
+# estimated to a loss of $5 while the refusal of a fraudulent transaction is estimated
+# to a gain of $50 dollars and the amount of the transaction. Therefore, we define the
+# following function to compute the total benefit of a given decision:
+
+
+def business_metric(y_true, y_pred, amount):
+    mask_true_positive = (y_true == 1) & (y_pred == 1)
+    mask_true_negative = (y_true == 0) & (y_pred == 0)
+    mask_false_positive = (y_true == 0) & (y_pred == 1)
+    mask_false_negative = (y_true == 1) & (y_pred == 0)
+    fraudulent_refuse = (mask_true_positive.sum() * 50) + amount[
+        mask_true_positive
+    ].sum()
+    fraudulent_accept = -amount[mask_false_negative].sum()
+    legitimate_refuse = mask_false_positive.sum() * -5
+    legitimate_accept = (amount[mask_true_negative] * 0.02).sum()
+    return fraudulent_refuse + fraudulent_accept + legitimate_refuse + legitimate_accept
+
+
+# %%
+# From this business metric, we create a scikit-learn scorer that given a fitted
+# classifier and a test set compute the business metric. In this regard, we use
+# the :func:`~sklearn.metrics.make_scorer` factory. The variable `amount` is an
+# additional metadata to be passed to the scorer and we need to use
+# :ref:`metadata routing <metadata_routing>` to take into account this information.
+sklearn.set_config(enable_metadata_routing=True)
+business_scorer = make_scorer(business_metric).set_score_request(amount=True)
+
+# %%
+# We first start to train a dummy classifier to have some baseline results.
+from sklearn.model_selection import train_test_split
+
+data_train, data_test, target_train, target_test, amount_train, amount_test = (
+    train_test_split(
+        data, target, amount, stratify=target, test_size=0.5, random_state=42
+    )
+)
+
+# %%
+from sklearn.dummy import DummyClassifier
+
+easy_going_classifier = DummyClassifier(strategy="constant", constant=0)
+easy_going_classifier.fit(data_train, target_train)
+benefit_cost = business_scorer(
+    easy_going_classifier, data_test, target_test, amount=amount_test
+)
+print(f"Benefit/cost of our easy-going classifier: ${benefit_cost:,.2f}")
+
+# %%
+# A classifier that predict all transactions as legitimate would create a profit of
+# around $220,000. We make the same evaluation for a classifier that predicts all
+# transactions as fraudulent.
+intolerant_classifier = DummyClassifier(strategy="constant", constant=1)
+intolerant_classifier.fit(data_train, target_train)
+benefit_cost = business_scorer(
+    intolerant_classifier, data_test, target_test, amount=amount_test
+)
+print(f"Benefit/cost of our intolerant classifier: ${benefit_cost:,.2f}")
+
+# %%
+# Such a classifier create a loss of around $670,000. A predictive model should allow
+# us to make a profit larger than $220,000. It is interesting to compare this business
+# metric with another "standard" statistical metric such as the balanced accuracy.
+from sklearn.metrics import get_scorer
+
+balanced_accuracy_scorer = get_scorer("balanced_accuracy")
+print(
+    "Balanced accuracy of our easy-going classifier: "
+    f"{balanced_accuracy_scorer(easy_going_classifier, data_test, target_test):.3f}"
+)
+print(
+    "Balanced accuracy of our intolerant classifier: "
+    f"{balanced_accuracy_scorer(intolerant_classifier, data_test, target_test):.3f}"
+)
+
+# %%
+# This is not a surprise that the balanced accuracy is at 0.5 for both classifiers.
+# However, we need to be careful in the rest of the evaluation: we potentially can
+# obtain a model with a decent balanced accuracy but that does not make any profit.
+# In this case, the model would be useless for our business.
+#
+# Let's now create a predictive model using a logistic regression without tuning the
+# decision threshold.
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
+model = make_pipeline(StandardScaler(), LogisticRegression(random_state=42)).fit(
+    data_train, target_train
+)
+
+print(
+    "Benefit/cost of our logistic regression: "
+    f"${business_scorer(model, data_test, target_test, amount=amount_test):,.2f}"
+)
+print(
+    "Balanced accuracy of our logistic regression: "
+    f"{balanced_accuracy_scorer(model, data_test, target_test):.3f}"
+)
+
+# %%
+# By observing the balanced accuracy, we see that our predictive model is learning
+# some associations between the features and the target. The business metric also shows
+# that our model is beating the baseline in terms of profit and it would be already
+# beneficial to use it instead of ignoring the fraud detection problem.
+#
+# Now the question is: is our model optimum for the type of decision that we want to do?
+# Up to now, we did not optimize the decision threshold. We use the
+# :class:`~sklearn.model_selection.TunedThresholdClassifier` to optimize the decision
+# given our business scorer.
+tuned_model = TunedThresholdClassifier(
+    estimator=model,
+    objective_metric=business_scorer,
+    n_thresholds=100,
+    n_jobs=2,
+)
+
+# %%
+# Since our business scorer requires the amount of each transaction, we need to pass
+# this information in the `fit` method. The
+# :class:`~sklearn.model_selection.TunedThresholdClassifier` is in charge of
+# automatically dispatching this metadata to the underlying scorer.
+tuned_model.fit(data_train, target_train, amount=amount_train)
+
+# %%
+print(
+    "Benefit/cost of our logistic regression: "
+    f"${business_scorer(tuned_model, data_test, target_test, amount=amount_test):,.2f}"
+)
+print(
+    "Balanced accuracy of our logistic regression: "
+    f"{balanced_accuracy_scorer(tuned_model, data_test, target_test):.3f}"
+)
+
+# %%
+# We observe that tuning the decision threshold increases the profit of our model.
+# Eventually, the balanced accuracy also increased. Note that it might not always be
+# the case because the statistical metric is not necessarily a surrogate of the
+# business metric. It is therefore important, whenever possible, optimize the decision
+# threshold with respect to the business metric.

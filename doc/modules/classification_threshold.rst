@@ -160,6 +160,7 @@ also possible to manually set the decision threshold in
 Examples
 --------
 
+TODO: add more examples
 - See the example entitled
   :ref:`sphx_glr_auto_examples_model_selection_plot_tuned_threshold_classifier.py`,
   to learn about tuning the decision threshold of a classifier.
