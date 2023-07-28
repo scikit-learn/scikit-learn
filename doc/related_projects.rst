@@ -208,9 +208,6 @@ Note scikit-learn own modern gradient boosting estimators
 
 **Deep neural networks etc.**
 
-- `Keras <https://www.tensorflow.org/api_docs/python/tf/keras>`_ High-level API for
-  TensorFlow with a scikit-learn inspired API.
-
 - `skorch <https://github.com/dnouri/skorch>`_ A scikit-learn compatible
   neural network library that wraps PyTorch.
 
