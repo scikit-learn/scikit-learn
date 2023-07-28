@@ -185,9 +185,6 @@ and tasks.
 - `Keras <https://www.tensorflow.org/api_docs/python/tf/keras>`_ High-level API for
   TensorFlow with a scikit-learn inspired API.
 
-- `lasagne <https://github.com/Lasagne/Lasagne>`_ A lightweight library to
-  build and train neural networks in Theano.
-
 - `skorch <https://github.com/dnouri/skorch>`_ A scikit-learn compatible
   neural network library that wraps PyTorch.
 
