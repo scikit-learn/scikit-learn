@@ -61,10 +61,14 @@ enhance the functionality of scikit-learn's estimators.
   It incorporates multiple modeling libraries under one API, and
   the objects that EvalML creates use an sklearn-compatible API.
 
-**Experimentation frameworks**
+**Experimentation and model registry frameworks**
+
+- `MLFlow <https://mlflow.org/>`_ MLflow is an open source platform to manage the ML
+  lifecycle, including experimentation, reproducibility, deployment, and a central
+  model registry.
 
 - `Neptune <https://neptune.ai/>`_ Metadata store for MLOps,
-  built for teams that run a lot of experiments.‌ It gives you a single
+  built for teams that run a lot of experiments. It gives you a single
   place to log, store, display, organize, compare, and query all your
   model building metadata.
 
