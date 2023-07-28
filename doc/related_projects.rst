@@ -256,6 +256,8 @@ and tasks.
 - `categorical-encoding
   <https://github.com/scikit-learn-contrib/categorical-encoding>`_ A
   library of sklearn compatible categorical variable encoders.
+  As of scikit-learn version 1.3.0, there is
+  :class:`sklearn.preprocessing.TargetEncoder`.
 
 - `imbalanced-learn
   <https://github.com/scikit-learn-contrib/imbalanced-learn>`_ Various
