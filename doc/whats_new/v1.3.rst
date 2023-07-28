@@ -595,13 +595,6 @@ Changelog
 - |API| The `eps` parameter of the :func:`metrics.log_loss` has been deprecated and
   will be removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`. 
 
- - |API| adding :func:`metric.paired_haversine_distances` to compute pairwise haversine distances.
-  :pr:`22705` by :user:`Jona Sassenhagen <jona-sassenhagen>` and :user:`Charles Patel <acharles7>`.
-
-
-- |API| adding :func:`metric._paired_haversine_distances` to compute pairwise haversine distances.
-  :pr:`22705` by :user:`Jona Sassenhagen <jona-sassenhagen>` and :user:`Charles Patel <acharles7>`.
-
 :mod:`sklearn.gaussian_process`
 ...............................
 
