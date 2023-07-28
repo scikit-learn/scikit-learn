@@ -66,14 +66,14 @@ Changelog
 - |Enhancement| :func:`base.clone` now supports `dict` as input and creates a
   copy. :pr:`26786` by `Adrin Jalali`_.
 
-:mod:`sklearn.cluster`
-............................
-
 - |API|:func:`~utils.metadata_routing.process_routing` now has a different
   signature. The first two (the object and the method) are positional only,
   and all metadata are passed as keyword arguments. :pr:`26909` by `Adrin
   Jalali`_.
-  
+
+:mod:`sklearn.cluster`
+............................
+
 - |API| : `kdtree` and `balltree` values are now deprecated and are renamed as
   `kd_tree` and `ball_tree` respectively for the `algorithm` parameter of
   :class:`cluster.HDBSCAN` ensuring consistency in naming convention.
