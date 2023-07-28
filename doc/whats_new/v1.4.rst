@@ -75,6 +75,11 @@ Changelog
 - |Enhancement| :func:`base.clone` now supports `dict` as input and creates a
   copy. :pr:`26786` by `Adrin Jalali`_.
 
+- |API|:func:`~utils.metadata_routing.process_routing` now has a different
+  signature. The first two (the object and the method) are positional only,
+  and all metadata are passed as keyword arguments. :pr:`26909` by `Adrin
+  Jalali`_.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
@@ -100,6 +105,12 @@ Changelog
 
 :mod:`sklearn.ensemble`
 .......................
+
+- |MajorFeature| :class:`ensemble.RandomForestClassifier` and
+  :class:`ensemble.RandomForestRegressor` support missing values when
+  the criterion is `gini`, `entropy`, or `log_loss`,
+  for classification or `squared_error`, `friedman_mse`, or `poisson`
+  for regression. :pr:`26391` by `Thomas Fan`_.
 
 - |Feature| :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`
