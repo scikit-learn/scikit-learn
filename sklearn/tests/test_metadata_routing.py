@@ -74,7 +74,7 @@ class SimplePipeline(BaseEstimator):
 
     def fit(self, X, y, **fit_params):
         self.steps_ = []
-        params = process_routing(self, "fit", fit_params)
+        params = process_routing(self, "fit", **fit_params)
         X_transformed = X
         for i, step in enumerate(self.steps[:-1]):
             transformer = clone(step).fit(
@@ -93,7 +93,7 @@ class SimplePipeline(BaseEstimator):
     def predict(self, X, **predict_params):
         check_is_fitted(self)
         X_transformed = X
-        params = process_routing(self, "predict", predict_params)
+        params = process_routing(self, "predict", **predict_params)
         for i, step in enumerate(self.steps_[:-1]):
             X_transformed = step.transform(X, **params.get(f"step_{i}").transform)
 
@@ -230,7 +230,7 @@ def test_default_requests():
 
 def test_process_routing_invalid_method():
     with pytest.raises(TypeError, match="Can only route and process input"):
-        process_routing(ConsumingClassifier(), "invalid_method", {})
+        process_routing(ConsumingClassifier(), "invalid_method", **{})
 
 
 def test_process_routing_invalid_object():
@@ -238,7 +238,7 @@ def test_process_routing_invalid_object():
         pass
 
     with pytest.raises(AttributeError, match="has not implemented the routing"):
-        process_routing(InvalidObject(), "fit", {})
+        process_routing(InvalidObject(), "fit", **{})
 
 
 def test_simple_metadata_routing():
