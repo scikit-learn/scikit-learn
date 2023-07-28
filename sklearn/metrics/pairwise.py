@@ -1208,7 +1208,7 @@ def paired_manhattan_distances(X, Y):
 
 
 @validate_params(
-    {"X": ["array-like",], "Y": ["array-like",]},
+    {"X": ["array-like"], "Y": ["array-like"]},
     prefer_skip_nested_validation=True,
 )
 def _paired_haversine_distances(X, Y):

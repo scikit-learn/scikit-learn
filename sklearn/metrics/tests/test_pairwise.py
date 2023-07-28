@@ -30,6 +30,7 @@ from sklearn.metrics.pairwise import (
     PAIRWISE_DISTANCE_FUNCTIONS,
     PAIRWISE_KERNEL_FUNCTIONS,
     _euclidean_distances_upcast,
+    _paired_haversine_distances,
     additive_chi2_kernel,
     check_paired_arrays,
     check_pairwise_arrays,
@@ -46,7 +47,6 @@ from sklearn.metrics.pairwise import (
     paired_distances,
     paired_euclidean_distances,
     paired_manhattan_distances,
-    _paired_haversine_distances,
     pairwise_distances,
     pairwise_distances_argmin,
     pairwise_distances_argmin_min,
@@ -120,7 +120,7 @@ def test_pairwise_distances(global_dtype):
     S2 = haversine_distances(X, Y)
     assert_allclose(S, S2)
 
-    # test that the two functions computing haversine give the same results where they should
+    # test that the two functions computing haversine give the same results
     X = rng.randn(5, 2)
     Y = np.tile(X[0, :], (5, 1))
     S = haversine_distances(X, Y[0].reshape(1, -1)).ravel()
