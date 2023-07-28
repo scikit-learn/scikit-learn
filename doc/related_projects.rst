@@ -334,9 +334,6 @@ Domain specific packages
 
 - `AstroML <https://www.astroml.org/>`_  Machine learning for astronomy.
 
-- `MSMBuilder <http://msmbuilder.org/>`_  Machine learning for protein
-  conformational dynamics time series.
-
 Translations of scikit-learn documentation
 ------------------------------------------
 
