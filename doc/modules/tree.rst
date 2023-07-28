@@ -28,7 +28,7 @@ Some advantages of decision trees are:
     - Requires little data preparation. Other techniques often require data
       normalization, dummy variables need to be created and blank values to
       be removed. Some tree and algorithm combinations even support 
-      :ref:`missing values <_tree_missing_value_support>`.
+      :ref:`missing values <tree_missing_value_support>`.
 
     - The cost of using the tree (i.e., predicting data) is logarithmic in the
       number of data points used to train the tree.
