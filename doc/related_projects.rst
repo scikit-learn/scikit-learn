@@ -164,14 +164,17 @@ and tasks.
   models can all be used in the same way, using fit() and predict() functions, similar
   to scikit-learn.
 
-- `sktime <https://github.com/alan-turing-institute/sktime>`_ A scikit-learn compatible toolbox for machine learning with time series including time series classification/regression and (supervised/panel) forecasting.
+- `sktime <https://github.com/alan-turing-institute/sktime>`_ A scikit-learn compatible
+  toolbox for machine learning with time series including time series
+  classification/regression and (supervised/panel) forecasting.
 
 - `skforecast <https://github.com/JoaquinAmatRodrigo/skforecast>`_ A python library
   that eases using scikit-learn regressors as multi-step forecasters. It also works
   with any regressor compatible with the scikit-learn API.
 
-- `tslearn <https://github.com/tslearn-team/tslearn>`_ A machine learning library for time series
-  that offers tools for pre-processing and feature extraction as well as dedicated models for clustering, classification and regression.
+- `tslearn <https://github.com/tslearn-team/tslearn>`_ A machine learning library for
+  time series that offers tools for pre-processing and feature extraction as well as
+  dedicated models for clustering, classification and regression.
 
 **Structured learning**
 
