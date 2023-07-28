@@ -21,24 +21,24 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
-from os.path import exists
-from os import makedirs, remove
-import tarfile
-
-import numpy as np
 import logging
+import tarfile
+from os import makedirs, remove
+from os.path import exists
 
 import joblib
+import numpy as np
 
-from . import get_data_home
-from ._base import _convert_data_dataframe
-from ._base import _fetch_remote
-from ._base import _pkl_filepath
-from ._base import RemoteFileMetadata
-from ._base import load_descr
 from ..utils import Bunch
 from ..utils._param_validation import validate_params
-
+from . import get_data_home
+from ._base import (
+    RemoteFileMetadata,
+    _convert_data_dataframe,
+    _fetch_remote,
+    _pkl_filepath,
+    load_descr,
+)
 
 # The original data can be found at:
 # https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
@@ -57,7 +57,8 @@ logger = logging.getLogger(__name__)
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_california_housing(
     *, data_home=None, download_if_missing=True, return_X_y=False, as_frame=False

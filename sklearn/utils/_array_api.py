@@ -1,12 +1,52 @@
 """Tools to support array_api."""
-from functools import wraps
+import itertools
 import math
+from functools import wraps
 
 import numpy
 import scipy.special as special
 
 from .._config import get_config
 from .fixes import parse_version
+
+
+def yield_namespace_device_dtype_combinations():
+    """Yield supported namespace, device, dtype tuples for testing.
+
+    Use this to test that an estimator works with all combinations.
+
+    Returns
+    -------
+    array_namespace : str
+        The name of the Array API namespace.
+
+    device : str
+        The name of the device on which to allocate the arrays. Can be None to
+        indicate that the default value should be used.
+
+    dtype : str
+        The name of the data type to use for arrays. Can be None to indicate
+        that the default value should be used.
+    """
+    for array_namespace in [
+        # The following is used to test the array_api_compat wrapper when
+        # array_api_dispatch is enabled: in particular, the arrays used in the
+        # tests are regular numpy arrays without any "device" attribute.
+        "numpy",
+        # Stricter NumPy-based Array API implementation. The
+        # numpy.array_api.Array instances always a dummy "device" attribute.
+        "numpy.array_api",
+        "cupy",
+        "cupy.array_api",
+        "torch",
+    ]:
+        if array_namespace == "torch":
+            for device, dtype in itertools.product(
+                ("cpu", "cuda"), ("float64", "float32")
+            ):
+                yield array_namespace, device, dtype
+        else:
+            yield array_namespace, None, None
 
 
 def _check_array_api_dispatch(array_api_dispatch):
@@ -70,6 +110,13 @@ def size(x):
 def _is_numpy_namespace(xp):
     """Return True if xp is backed by NumPy."""
     return xp.__name__ in {"numpy", "array_api_compat.numpy", "numpy.array_api"}
+
+
+def _union1d(a, b, xp):
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.union1d(a, b))
+    assert a.ndim == b.ndim == 1
+    return xp.unique_values(xp.concat([xp.unique_values(a), xp.unique_values(b)]))
 
 
 def isdtype(dtype, kind, *, xp):
@@ -355,6 +402,62 @@ def _expit(X):
         return xp.asarray(special.expit(numpy.asarray(X)))
 
     return 1.0 / (1.0 + xp.exp(-X))
+
+
+def _add_to_diagonal(array, value, xp):
+    # Workaround for the lack of support for xp.reshape(a, shape, copy=False) in
+    # numpy.array_api: https://github.com/numpy/numpy/issues/23410
+    value = xp.asarray(value, dtype=array.dtype)
+    if _is_numpy_namespace(xp):
+        array_np = numpy.asarray(array)
+        array_np.flat[:: array.shape[0] + 1] += value
+        return xp.asarray(array_np)
+    elif value.ndim == 1:
+        for i in range(array.shape[0]):
+            array[i, i] += value[i]
+    else:
+        # scalar value
+        for i in range(array.shape[0]):
+            array[i, i] += value
+
+
+def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
+    # XXX: this function accepts Array API input but returns a Python scalar
+    # float. The call to float() is convenient because it removes the need to
+    # move back results from device to host memory (e.g. calling `.cpu()` on a
+    # torch tensor). However, this might interact in unexpected ways (break?)
+    # with lazy Array API implementations. See:
+    # https://github.com/data-apis/array-api/issues/642
+    if xp is None:
+        xp, _ = get_namespace(sample_score)
+    if normalize and _is_numpy_namespace(xp):
+        sample_score_np = numpy.asarray(sample_score)
+        if sample_weight is not None:
+            sample_weight_np = numpy.asarray(sample_weight)
+        else:
+            sample_weight_np = None
+        return float(numpy.average(sample_score_np, weights=sample_weight_np))
+
+    if not xp.isdtype(sample_score.dtype, "real floating"):
+        sample_score = xp.astype(sample_score, xp.float64)
+
+    if sample_weight is not None:
+        sample_weight = xp.asarray(sample_weight)
+        if not xp.isdtype(sample_weight.dtype, "real floating"):
+            sample_weight = xp.astype(sample_weight, xp.float64)
+
+    if normalize:
+        if sample_weight is not None:
+            scale = xp.sum(sample_weight)
+        else:
+            scale = sample_score.shape[0]
+        if scale != 0:
+            sample_score = sample_score / scale
+
+    if sample_weight is not None:
+        return float(sample_score @ sample_weight)
+    else:
+        return float(xp.sum(sample_score))
 
 
 def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):

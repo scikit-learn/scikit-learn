@@ -1,18 +1,19 @@
-from itertools import product
-import warnings
-
-import pytest
 import re
+import warnings
+from itertools import product
+
+import joblib
 import numpy as np
+import pytest
 from scipy.sparse import (
     bsr_matrix,
     coo_matrix,
     csc_matrix,
     csr_matrix,
-    dok_matrix,
     dia_matrix,
-    lil_matrix,
+    dok_matrix,
     issparse,
+    lil_matrix,
 )
 
 from sklearn import (
@@ -22,36 +23,31 @@ from sklearn import (
     neighbors,
 )
 from sklearn.base import clone
-from sklearn.exceptions import DataConversionWarning
-from sklearn.exceptions import EfficiencyWarning
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import DataConversionWarning, EfficiencyWarning, NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.tests.test_dist_metrics import BOOL_METRICS
 from sklearn.metrics.tests.test_pairwise_distances_reduction import (
     assert_radius_neighbors_results_equality,
 )
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.neighbors import (
     VALID_METRICS_SPARSE,
     KNeighborsRegressor,
 )
 from sklearn.neighbors._base import (
-    _is_sorted_by_data,
-    _check_precomputed,
-    sort_graph_by_row_values,
     KNeighborsMixin,
+    _check_precomputed,
+    _is_sorted_by_data,
+    sort_graph_by_row_values,
 )
 from sklearn.pipeline import make_pipeline
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
+    ignore_warnings,
 )
-from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.fixes import parse_version, sp_version
 from sklearn.utils.validation import check_random_state
-from sklearn.utils.fixes import sp_version, parse_version
-
-import joblib
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -2197,3 +2193,36 @@ def test_regressor_predict_on_arraylikes():
     est = KNeighborsRegressor(n_neighbors=1, algorithm="brute", weights=_weights)
     est.fit(X, y)
     assert_allclose(est.predict([[0, 2.5]]), [6])
+
+
+def test_predict_dataframe():
+    """Check that KNN predict works with dataframes
+
+    non-regression test for issue #26768
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame(np.array([[1, 2], [3, 4], [5, 6], [7, 8]]), columns=["a", "b"])
+    y = np.array([1, 2, 3, 4])
+
+    knn = neighbors.KNeighborsClassifier(n_neighbors=2).fit(X, y)
+    knn.predict(X)
+
+
+def test_nearest_neighbours_works_with_p_less_than_1():
+    """Check that NearestNeighbors works with :math:`p \\in (0,1)` when `algorithm`
+    is `"auto"` or `"brute"` regardless of the dtype of X.
+
+    Non-regression test for issue #26548
+    """
+    X = np.array([[1.0, 0.0], [0.0, 0.0], [0.0, 1.0]])
+    neigh = neighbors.NearestNeighbors(
+        n_neighbors=3, algorithm="brute", metric_params={"p": 0.5}
+    )
+    neigh.fit(X)
+
+    y = neigh.radius_neighbors(X[0].reshape(1, -1), radius=4, return_distance=False)
+    assert_allclose(y[0], [0, 1, 2])
+
+    y = neigh.kneighbors(X[0].reshape(1, -1), return_distance=False)
+    assert_allclose(y[0], [0, 1, 2])

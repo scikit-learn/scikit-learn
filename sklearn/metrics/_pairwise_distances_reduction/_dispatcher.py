@@ -1,30 +1,24 @@
 from abc import abstractmethod
-
-import numpy as np
-
 from typing import List
 
-from scipy.sparse import isspmatrix_csr, issparse
-
-from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING64
-
-from ._base import _sqeuclidean_row_norms32, _sqeuclidean_row_norms64
-from ._argkmin import (
-    ArgKmin64,
-    ArgKmin32,
-)
-
-from ._argkmin_classmode import (
-    ArgKminClassMode64,
-    ArgKminClassMode32,
-)
-
-from ._radius_neighbors import (
-    RadiusNeighbors64,
-    RadiusNeighbors32,
-)
+import numpy as np
+from scipy.sparse import issparse
 
 from ... import get_config
+from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING64
+from ._argkmin import (
+    ArgKmin32,
+    ArgKmin64,
+)
+from ._argkmin_classmode import (
+    ArgKminClassMode32,
+    ArgKminClassMode64,
+)
+from ._base import _sqeuclidean_row_norms32, _sqeuclidean_row_norms64
+from ._radius_neighbors import (
+    RadiusNeighbors32,
+    RadiusNeighbors64,
+)
 
 
 def sqeuclidean_row_norms(X, num_threads):
@@ -102,11 +96,12 @@ class BaseDistancesReductionDispatcher:
         """
 
         def is_numpy_c_ordered(X):
-            return hasattr(X, "flags") and X.flags.c_contiguous
+            return hasattr(X, "flags") and getattr(X.flags, "c_contiguous", False)
 
         def is_valid_sparse_matrix(X):
             return (
-                isspmatrix_csr(X)
+                issparse(X)
+                and X.format == "csr"
                 and
                 # TODO: support CSR matrices without non-zeros elements
                 X.nnz > 0
@@ -461,7 +456,7 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
             The input array to be labelled.
 
         Y : ndarray of shape (n_samples_Y, n_features)
-            The input array whose labels are provided through the `labels`
+            The input array whose labels are provided through the `Y_labels`
             parameter.
 
         metric : str, default='euclidean'
@@ -489,8 +484,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
         Y,
         k,
         weights,
-        labels,
-        unique_labels,
+        Y_labels,
+        unique_Y_labels,
         metric="euclidean",
         chunk_size=None,
         metric_kwargs=None,
@@ -504,23 +499,23 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
             The input array to be labelled.
 
         Y : ndarray of shape (n_samples_Y, n_features)
-            The input array whose labels are provided through the `labels`
-            parameter.
+            The input array whose class membership are provided through the
+            `Y_labels` parameter.
 
         k : int
             The number of nearest neighbors to consider.
 
         weights : ndarray
-            The weights applied over the `labels` of `Y` when computing the
+            The weights applied over the `Y_labels` of `Y` when computing the
             weighted mode of the labels.
 
-        class_membership : ndarray
+        Y_labels : ndarray
             An array containing the index of the class membership of the
             associated samples in `Y`. This is used in labeling `X`.
 
-        unique_classes : ndarray
+        unique_Y_labels : ndarray
             An array containing all unique indices contained in the
-            corresponding `class_membership` array.
+            corresponding `Y_labels` array.
 
         metric : str, default='euclidean'
             The distance metric to use. For a list of available metrics, see
@@ -592,8 +587,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
                 Y=Y,
                 k=k,
                 weights=weights,
-                class_membership=np.array(labels, dtype=np.intp),
-                unique_labels=np.array(unique_labels, dtype=np.intp),
+                Y_labels=np.array(Y_labels, dtype=np.intp),
+                unique_Y_labels=np.array(unique_Y_labels, dtype=np.intp),
                 metric=metric,
                 chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,
@@ -606,8 +601,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
                 Y=Y,
                 k=k,
                 weights=weights,
-                class_membership=np.array(labels, dtype=np.intp),
-                unique_labels=np.array(unique_labels, dtype=np.intp),
+                Y_labels=np.array(Y_labels, dtype=np.intp),
+                unique_Y_labels=np.array(unique_Y_labels, dtype=np.intp),
                 metric=metric,
                 chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,

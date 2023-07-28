@@ -35,7 +35,7 @@ jobs:
     - bash: |
         source build_tools/shared.sh
         # Include pytest compatibility with mypy
-        pip install pytest flake8 $(get_dep mypy min) $(get_dep black min) cython-lint
+        pip install pytest ruff $(get_dep mypy min) $(get_dep black min) cython-lint
       displayName: Install linters
     - bash: |
         ./build_tools/linting.sh
@@ -127,9 +127,9 @@ jobs:
     vmImage: ubuntu-22.04
   variables:
     # Need to match Python version and Emscripten version for the correct
-    # Pyodide version. For Pyodide version 0.23.2, see
-    # https://github.com/pyodide/pyodide/blob/0.23.2/Makefile.envs
-    PYODIDE_VERSION: '0.23.2'
+    # Pyodide version. For example, for Pyodide version 0.23.4, see
+    # https://github.com/pyodide/pyodide/blob/0.23.4/Makefile.envs
+    PYODIDE_VERSION: '0.23.4'
     EMSCRIPTEN_VERSION: '3.1.32'
     PYTHON_VERSION: '3.11.2'
 
@@ -171,7 +171,6 @@ jobs:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock'
         COVERAGE: 'true'
-        SHOW_SHORT_SUMMARY: 'true'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
 
 # Check compilation with Ubuntu 22.04 LTS (Jammy Jellyfish) and scipy from conda-forge
