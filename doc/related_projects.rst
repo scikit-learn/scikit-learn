@@ -182,9 +182,6 @@ and tasks.
 
 **Deep neural networks etc.**
 
-- `nolearn <https://github.com/dnouri/nolearn>`_ A number of wrappers and
-  abstractions around existing neural network libraries
-
 - `Keras <https://www.tensorflow.org/api_docs/python/tf/keras>`_ High-level API for
   TensorFlow with a scikit-learn inspired API.
 
