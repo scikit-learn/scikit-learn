@@ -176,6 +176,19 @@ and tasks.
   time series that offers tools for pre-processing and feature extraction as well as
   dedicated models for clustering, classification and regression.
 
+**Gradient (tree) boosting**
+
+Note scikit-learn own modern gradient boosting estimators
+:class:`sklearn.ensemble.HistGradientBoostingClassifier` and
+:class:`sklearn.ensemble.HistGradientBoostingRegressor`.
+
+- `XGBoost <https://github.com/dmlc/xgboost>`_ XGBoost is an optimized distributed
+  gradient boosting library designed to be highly efficient, flexible and portable.
+
+- `LightGBM <https://lightgbm.readthedocs.io>`_ LightGBM is a gradient boosting
+  framework that uses tree based learning algorithms. It is designed to be distributed
+  and efficient.
+
 **Structured learning**
 
 - `HMMLearn <https://github.com/hmmlearn/hmmlearn>`_ Implementation of hidden
@@ -219,9 +232,6 @@ and tasks.
   custom transformers, models and metrics, focusing on solving practical industry tasks.
 
 **Other regression and classification**
-
-- `xgboost <https://github.com/dmlc/xgboost>`_ Optimised gradient boosted decision
-  tree library.
 
 - `ML-Ensemble <https://mlens.readthedocs.io/>`_ Generalized
   ensemble learning (stacking, blending, subsemble, deep ensembles,
