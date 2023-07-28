@@ -229,8 +229,6 @@ and tasks.
 - `seglearn <https://github.com/dmbee/seglearn>`_ Time series and sequence
   learning using sliding window segmentation.
 
-- `libOPF <https://github.com/jppbsi/LibOPF>`_ Optimal path forest classifier
-
 - `fastFM <https://github.com/ibayer/fastFM>`_ Fast factorization machine
   implementation compatible with scikit-learn
 
