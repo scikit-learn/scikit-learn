@@ -156,12 +156,18 @@ project. The following are projects providing interfaces similar to
 scikit-learn for additional learning algorithms, infrastructures
 and tasks.
 
-**Structured learning**
+**Time series and forecasting**
 
 - `tslearn <https://github.com/tslearn-team/tslearn>`_ A machine learning library for time series
   that offers tools for pre-processing and feature extraction as well as dedicated models for clustering, classification and regression.
 
 - `sktime <https://github.com/alan-turing-institute/sktime>`_ A scikit-learn compatible toolbox for machine learning with time series including time series classification/regression and (supervised/panel) forecasting.
+
+- `skforecast <https://github.com/JoaquinAmatRodrigo/skforecast>`_ A python library
+  that eases using scikit-learn regressors as multi-step forecasters. It also works
+  with any regressor compatible with the scikit-learn API.
+
+**Structured learning**
 
 - `HMMLearn <https://github.com/hmmlearn/hmmlearn>`_ Implementation of hidden
   markov models that was previously part of scikit-learn.
@@ -177,9 +183,6 @@ and tasks.
   (`CRFsuite <http://www.chokkan.org/software/crfsuite/>`_ wrapper with
   sklearn-like API).
 
-- `skforecast <https://github.com/JoaquinAmatRodrigo/skforecast>`_ A python library
-  that eases using scikit-learn regressors as multi-step forecasters. It also works
-  with any regressor compatible with the scikit-learn API.
 
 **Deep neural networks etc.**
 
