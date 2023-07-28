@@ -1,8 +1,8 @@
-from contextlib import closing
-from io import StringIO
-from inspect import isclass
-from string import Template
 import html
+from contextlib import closing
+from inspect import isclass
+from io import StringIO
+from string import Template
 
 from .. import config_context
 
@@ -191,7 +191,6 @@ def _write_estimator_html(
 _STYLE = """
 #$id {
   color: black;
-  background-color: white;
 }
 #$id pre{
   padding: 0;
@@ -364,11 +363,7 @@ _STYLE = """
 #$id div.sk-text-repr-fallback {
   display: none;
 }
-""".replace(
-    "  ", ""
-).replace(
-    "\n", ""
-)  # noqa
+""".replace("  ", "").replace("\n", "")  # noqa
 
 
 def estimator_html_repr(estimator):

@@ -6,25 +6,25 @@
 
 import itertools
 import numbers
-import numpy as np
 from abc import ABCMeta, abstractmethod
-from numbers import Integral, Real
-from warnings import warn
 from functools import partial
+from numbers import Integral
+from warnings import warn
 
-from ._base import BaseEnsemble, _partition_estimators
-from ..base import ClassifierMixin, RegressorMixin
-from ..metrics import r2_score, accuracy_score
+import numpy as np
+
+from ..base import ClassifierMixin, RegressorMixin, _fit_context
+from ..metrics import accuracy_score, r2_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, column_or_1d
-from ..utils import indices_to_mask
+from ..utils import check_random_state, column_or_1d, indices_to_mask
+from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
+from ..utils._tags import _safe_tags
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
+from ..utils.parallel import Parallel, delayed
 from ..utils.random import sample_without_replacement
-from ..utils._param_validation import Interval, HasMethods, StrOptions
-from ..utils.validation import has_fit_parameter, check_is_fitted, _check_sample_weight
-from ..utils.parallel import delayed, Parallel
-
+from ..utils.validation import _check_sample_weight, check_is_fitted, has_fit_parameter
+from ._base import BaseEnsemble, _partition_estimators
 
 __all__ = ["BaggingClassifier", "BaggingRegressor"]
 
@@ -247,11 +247,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "max_samples": [
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, 1, closed="right"),
+            Interval(RealNotInt, 0, 1, closed="right"),
         ],
         "max_features": [
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, 1, closed="right"),
+            Interval(RealNotInt, 0, 1, closed="right"),
         ],
         "bootstrap": ["boolean"],
         "bootstrap_features": ["boolean"],
@@ -299,6 +299,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self.random_state = random_state
         self.verbose = verbose
 
+    @_fit_context(
+        # BaseBagging.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None):
         """Build a Bagging ensemble of estimators from the training set (X, y).
 
@@ -322,9 +326,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-
-        self._validate_params()
-
         # Convert data (X is required to be 2d and indexable)
         X, y = self._validate_data(
             X,
@@ -739,7 +740,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         verbose=0,
         base_estimator="deprecated",
     ):
-
         super().__init__(
             estimator=estimator,
             n_estimators=n_estimators,
@@ -980,6 +980,14 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         decisions = sum(all_decisions) / self.n_estimators
 
         return decisions
+
+    def _more_tags(self):
+        if self.estimator is None:
+            estimator = DecisionTreeClassifier()
+        else:
+            estimator = self.estimator
+
+        return {"allow_nan": _safe_tags(estimator, "allow_nan")}
 
 
 class BaggingRegressor(RegressorMixin, BaseBagging):
@@ -1261,3 +1269,10 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
         self.oob_prediction_ = predictions
         self.oob_score_ = r2_score(y, predictions)
+
+    def _more_tags(self):
+        if self.estimator is None:
+            estimator = DecisionTreeRegressor()
+        else:
+            estimator = self.estimator
+        return {"allow_nan": _safe_tags(estimator, "allow_nan")}

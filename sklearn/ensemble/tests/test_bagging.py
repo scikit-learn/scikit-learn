@@ -4,33 +4,33 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 
 # Author: Gilles Louppe
 # License: BSD 3 clause
-from itertools import product
+from itertools import cycle, product
 
-import numpy as np
 import joblib
+import numpy as np
 import pytest
+from scipy.sparse import csc_matrix, csr_matrix
 
 from sklearn.base import BaseEstimator
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.model_selection import GridSearchCV, ParameterGrid
-from sklearn.ensemble import BaggingClassifier, BaggingRegressor
-from sklearn.linear_model import Perceptron, LogisticRegression
-from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.svm import SVC, SVR
-from sklearn.random_projection import SparseRandomProjection
-from sklearn.pipeline import make_pipeline
-from sklearn.feature_selection import SelectKBest
-from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
-from sklearn.utils import check_random_state
+from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.ensemble import (
+    BaggingClassifier,
+    BaggingRegressor,
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
+from sklearn.feature_selection import SelectKBest
+from sklearn.linear_model import LogisticRegression, Perceptron
+from sklearn.model_selection import GridSearchCV, ParameterGrid, train_test_split
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, scale
-from itertools import cycle
-
-from scipy.sparse import csc_matrix, csr_matrix
+from sklearn.random_projection import SparseRandomProjection
+from sklearn.svm import SVC, SVR
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
 
 rng = check_random_state(0)
 
@@ -210,7 +210,6 @@ def test_sparse_regression():
         X_train_sparse = sparse_format(X_train)
         X_test_sparse = sparse_format(X_test)
         for params in parameter_sets:
-
             # Trained on sparse format
             sparse_classifier = BaggingRegressor(
                 estimator=CustomSVR(), random_state=1, **params
@@ -829,7 +828,7 @@ def test_bagging_regressor_with_missing_inputs():
             [2, None, 6],
             [2, np.nan, 6],
             [2, np.inf, 6],
-            [2, np.NINF, 6],
+            [2, -np.inf, 6],
         ]
     )
     y_values = [
@@ -870,7 +869,7 @@ def test_bagging_classifier_with_missing_inputs():
             [2, None, 6],
             [2, np.nan, 6],
             [2, np.inf, 6],
-            [2, np.NINF, 6],
+            [2, -np.inf, 6],
         ]
     )
     y = np.array([3, 6, 6, 6, 6])
@@ -980,3 +979,17 @@ def test_deprecated_base_estimator_has_decision_function():
     with pytest.warns(FutureWarning, match=warn_msg):
         y_decision = clf.fit(X, y).decision_function(X)
     assert y_decision.shape == (150, 3)
+
+
+@pytest.mark.parametrize(
+    "bagging, expected_allow_nan",
+    [
+        (BaggingClassifier(HistGradientBoostingClassifier(max_iter=1)), True),
+        (BaggingRegressor(HistGradientBoostingRegressor(max_iter=1)), True),
+        (BaggingClassifier(LogisticRegression()), False),
+        (BaggingRegressor(SVR()), False),
+    ],
+)
+def test_bagging_allow_nan_tag(bagging, expected_allow_nan):
+    """Check that bagging inherits allow_nan tag."""
+    assert bagging._get_tags()["allow_nan"] == expected_allow_nan

@@ -1,17 +1,17 @@
-import pytest
-
 import numpy as np
+import pytest
 import scipy.sparse as sp
 
 from sklearn.base import clone
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.stats import _weighted_percentile
-
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.exceptions import NotFittedError
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
+from sklearn.utils.stats import _weighted_percentile
 
 
 @ignore_warnings
@@ -124,10 +124,10 @@ def test_most_frequent_and_prior_strategy_multioutput():
         _check_behavior_2d(clf)
 
 
-def test_stratified_strategy():
+def test_stratified_strategy(global_random_seed):
     X = [[0]] * 5  # ignored
     y = [1, 2, 1, 1, 2]
-    clf = DummyClassifier(strategy="stratified", random_state=0)
+    clf = DummyClassifier(strategy="stratified", random_state=global_random_seed)
     clf.fit(X, y)
 
     X = [[0]] * 500
@@ -138,11 +138,11 @@ def test_stratified_strategy():
     _check_predict_proba(clf, X, y)
 
 
-def test_stratified_strategy_multioutput():
+def test_stratified_strategy_multioutput(global_random_seed):
     X = [[0]] * 5  # ignored
     y = np.array([[2, 1], [2, 2], [1, 1], [1, 2], [1, 1]])
 
-    clf = DummyClassifier(strategy="stratified", random_state=0)
+    clf = DummyClassifier(strategy="stratified", random_state=global_random_seed)
     clf.fit(X, y)
 
     X = [[0]] * 500
@@ -157,10 +157,10 @@ def test_stratified_strategy_multioutput():
     _check_behavior_2d(clf)
 
 
-def test_uniform_strategy():
+def test_uniform_strategy(global_random_seed):
     X = [[0]] * 4  # ignored
     y = [1, 2, 1, 1]
-    clf = DummyClassifier(strategy="uniform", random_state=0)
+    clf = DummyClassifier(strategy="uniform", random_state=global_random_seed)
     clf.fit(X, y)
 
     X = [[0]] * 500
@@ -171,10 +171,10 @@ def test_uniform_strategy():
     _check_predict_proba(clf, X, y)
 
 
-def test_uniform_strategy_multioutput():
+def test_uniform_strategy_multioutput(global_random_seed):
     X = [[0]] * 4  # ignored
     y = np.array([[2, 1], [2, 2], [1, 2], [1, 1]])
-    clf = DummyClassifier(strategy="uniform", random_state=0)
+    clf = DummyClassifier(strategy="uniform", random_state=global_random_seed)
     clf.fit(X, y)
 
     X = [[0]] * 500
@@ -216,24 +216,27 @@ def test_classifier_score_with_None(y, y_test):
 @pytest.mark.parametrize(
     "strategy", ["stratified", "most_frequent", "prior", "uniform", "constant"]
 )
-def test_classifier_prediction_independent_of_X(strategy):
+def test_classifier_prediction_independent_of_X(strategy, global_random_seed):
     y = [0, 2, 1, 1]
     X1 = [[0]] * 4
-    clf1 = DummyClassifier(strategy=strategy, random_state=0, constant=0)
+    clf1 = DummyClassifier(
+        strategy=strategy, random_state=global_random_seed, constant=0
+    )
     clf1.fit(X1, y)
     predictions1 = clf1.predict(X1)
 
     X2 = [[1]] * 4
-    clf2 = DummyClassifier(strategy=strategy, random_state=0, constant=0)
+    clf2 = DummyClassifier(
+        strategy=strategy, random_state=global_random_seed, constant=0
+    )
     clf2.fit(X2, y)
     predictions2 = clf2.predict(X2)
 
     assert_array_equal(predictions1, predictions2)
 
 
-def test_mean_strategy_regressor():
-
-    random_state = np.random.RandomState(seed=1)
+def test_mean_strategy_regressor(global_random_seed):
+    random_state = np.random.RandomState(seed=global_random_seed)
 
     X = [[0]] * 4  # ignored
     y = random_state.randn(4)
@@ -243,9 +246,8 @@ def test_mean_strategy_regressor():
     assert_array_equal(reg.predict(X), [np.mean(y)] * len(X))
 
 
-def test_mean_strategy_multioutput_regressor():
-
-    random_state = np.random.RandomState(seed=1)
+def test_mean_strategy_multioutput_regressor(global_random_seed):
+    random_state = np.random.RandomState(seed=global_random_seed)
 
     X_learn = random_state.randn(10, 10)
     y_learn = random_state.randn(10, 5)
@@ -271,9 +273,8 @@ def test_regressor_exceptions():
         reg.predict([])
 
 
-def test_median_strategy_regressor():
-
-    random_state = np.random.RandomState(seed=1)
+def test_median_strategy_regressor(global_random_seed):
+    random_state = np.random.RandomState(seed=global_random_seed)
 
     X = [[0]] * 5  # ignored
     y = random_state.randn(5)
@@ -283,9 +284,8 @@ def test_median_strategy_regressor():
     assert_array_equal(reg.predict(X), [np.median(y)] * len(X))
 
 
-def test_median_strategy_multioutput_regressor():
-
-    random_state = np.random.RandomState(seed=1)
+def test_median_strategy_multioutput_regressor(global_random_seed):
+    random_state = np.random.RandomState(seed=global_random_seed)
 
     X_learn = random_state.randn(10, 10)
     y_learn = random_state.randn(10, 5)
@@ -305,9 +305,8 @@ def test_median_strategy_multioutput_regressor():
     _check_behavior_2d(est)
 
 
-def test_quantile_strategy_regressor():
-
-    random_state = np.random.RandomState(seed=1)
+def test_quantile_strategy_regressor(global_random_seed):
+    random_state = np.random.RandomState(seed=global_random_seed)
 
     X = [[0]] * 5  # ignored
     y = random_state.randn(5)
@@ -329,9 +328,8 @@ def test_quantile_strategy_regressor():
     assert_array_equal(reg.predict(X), [np.percentile(y, q=30)] * len(X))
 
 
-def test_quantile_strategy_multioutput_regressor():
-
-    random_state = np.random.RandomState(seed=1)
+def test_quantile_strategy_multioutput_regressor(global_random_seed):
+    random_state = np.random.RandomState(seed=global_random_seed)
 
     X_learn = random_state.randn(10, 10)
     y_learn = random_state.randn(10, 5)
@@ -364,7 +362,6 @@ def test_quantile_strategy_multioutput_regressor():
 
 
 def test_quantile_invalid():
-
     X = [[0]] * 5  # ignored
     y = [0] * 5  # ignored
 
@@ -382,9 +379,8 @@ def test_quantile_strategy_empty_train():
         est.fit([], [])
 
 
-def test_constant_strategy_regressor():
-
-    random_state = np.random.RandomState(seed=1)
+def test_constant_strategy_regressor(global_random_seed):
+    random_state = np.random.RandomState(seed=global_random_seed)
 
     X = [[0]] * 5  # ignored
     y = random_state.randn(5)
@@ -401,9 +397,8 @@ def test_constant_strategy_regressor():
     assert not isinstance(reg.constant, np.ndarray)
 
 
-def test_constant_strategy_multioutput_regressor():
-
-    random_state = np.random.RandomState(seed=1)
+def test_constant_strategy_multioutput_regressor(global_random_seed):
+    random_state = np.random.RandomState(seed=global_random_seed)
 
     X_learn = random_state.randn(10, 10)
     y_learn = random_state.randn(10, 5)
@@ -444,8 +439,8 @@ def test_constants_not_specified_regressor():
         est.fit(X, y)
 
 
-def test_constant_size_multioutput_regressor():
-    random_state = np.random.RandomState(seed=1)
+def test_constant_size_multioutput_regressor(global_random_seed):
+    random_state = np.random.RandomState(seed=global_random_seed)
     X = random_state.randn(10, 10)
     y = random_state.randn(10, 5)
 
@@ -547,11 +542,11 @@ def test_constant_strategy_sparse_target():
     )
 
 
-def test_uniform_strategy_sparse_target_warning():
+def test_uniform_strategy_sparse_target_warning(global_random_seed):
     X = [[0]] * 5  # ignored
     y = sp.csc_matrix(np.array([[2, 1], [2, 2], [1, 4], [4, 2], [1, 1]]))
 
-    clf = DummyClassifier(strategy="uniform", random_state=0)
+    clf = DummyClassifier(strategy="uniform", random_state=global_random_seed)
     with pytest.warns(UserWarning, match="the uniform strategy would not save memory"):
         clf.fit(X, y)
 
@@ -565,11 +560,11 @@ def test_uniform_strategy_sparse_target_warning():
         assert_almost_equal(p[4], 1 / 3, decimal=1)
 
 
-def test_stratified_strategy_sparse_target():
+def test_stratified_strategy_sparse_target(global_random_seed):
     X = [[0]] * 5  # ignored
     y = sp.csc_matrix(np.array([[4, 1], [0, 0], [1, 1], [1, 4], [1, 1]]))
 
-    clf = DummyClassifier(strategy="stratified", random_state=0)
+    clf = DummyClassifier(strategy="stratified", random_state=global_random_seed)
     clf.fit(X, y)
 
     X = [[0]] * 500
@@ -599,8 +594,8 @@ def test_most_frequent_and_prior_strategy_sparse_target():
         assert_array_equal(y_pred.toarray(), y_expected)
 
 
-def test_dummy_regressor_sample_weight(n_samples=10):
-    random_state = np.random.RandomState(seed=1)
+def test_dummy_regressor_sample_weight(global_random_seed, n_samples=10):
+    random_state = np.random.RandomState(seed=global_random_seed)
 
     X = [[0]] * n_samples
     y = random_state.rand(n_samples)

@@ -44,6 +44,7 @@ curves.
 # Here we binarize the output and add noisy features to make the problem harder.
 
 import numpy as np
+
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 
@@ -118,6 +119,7 @@ class_id
 
 # %%
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import RocCurveDisplay
 
 RocCurveDisplay.from_predictions(
@@ -125,8 +127,8 @@ RocCurveDisplay.from_predictions(
     y_score[:, class_id],
     name=f"{class_of_interest} vs the rest",
     color="darkorange",
+    plot_chance_level=True,
 )
-plt.plot([0, 1], [0, 1], "k--", label="chance level (AUC = 0.5)")
 plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
@@ -139,13 +141,13 @@ plt.show()
 # ----------------------------------
 #
 # Micro-averaging aggregates the contributions from all the classes (using
-# :func:`np.ravel`) to compute the average metrics as follows:
+# :func:`numpy.ravel`) to compute the average metrics as follows:
 #
 # :math:`TPR=\frac{\sum_{c}TP_c}{\sum_{c}(TP_c + FN_c)}` ;
 #
 # :math:`FPR=\frac{\sum_{c}FP_c}{\sum_{c}(FP_c + TN_c)}` .
 #
-# We can briefly demo the effect of :func:`np.ravel`:
+# We can briefly demo the effect of :func:`numpy.ravel`:
 
 print(f"y_score:\n{y_score[0:2,:]}")
 print()
@@ -161,8 +163,8 @@ RocCurveDisplay.from_predictions(
     y_score.ravel(),
     name="micro-average OvR",
     color="darkorange",
+    plot_chance_level=True,
 )
-plt.plot([0, 1], [0, 1], "k--", label="chance level (AUC = 0.5)")
 plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
@@ -191,7 +193,7 @@ print(f"Micro-averaged One-vs-Rest ROC AUC score:\n{micro_roc_auc_ovr:.2f}")
 # :class:`~sklearn.metrics.roc_curve` and then the area under the curve with
 # :class:`~sklearn.metrics.auc` for the raveled true and predicted classes.
 
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import auc, roc_curve
 
 # store the fpr, tpr, and roc_auc for all averaging strategies
 fpr, tpr, roc_auc = dict(), dict(), dict()
@@ -281,9 +283,9 @@ for class_id, color in zip(range(n_classes), colors):
         name=f"ROC curve for {target_names[class_id]}",
         color=color,
         ax=ax,
+        plot_chance_level=(class_id == 2),
     )
 
-plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
 plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
@@ -324,7 +326,6 @@ pair_scores = []
 mean_tpr = dict()
 
 for ix, (label_a, label_b) in enumerate(pair_list):
-
     a_mask = y_test == label_a
     b_mask = y_test == label_b
     ab_mask = np.logical_or(a_mask, b_mask)
@@ -364,8 +365,8 @@ for ix, (label_a, label_b) in enumerate(pair_list):
         y_score[ab_mask, idx_b],
         ax=ax,
         name=f"{label_b} as positive class",
+        plot_chance_level=True,
     )
-    plt.plot([0, 1], [0, 1], "k--", label="chance level (AUC = 0.5)")
     plt.axis("square")
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
@@ -413,7 +414,7 @@ plt.plot(
     linestyle=":",
     linewidth=4,
 )
-plt.plot([0, 1], [0, 1], "k--", label="chance level (AUC = 0.5)")
+plt.plot([0, 1], [0, 1], "k--", label="Chance level (AUC = 0.5)")
 plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")

@@ -11,30 +11,36 @@ functions to validate the model.
 # License: BSD 3 clause
 
 
-import warnings
 import numbers
 import time
-from functools import partial
-from traceback import format_exc
-from contextlib import suppress
+import warnings
 from collections import Counter
+from contextlib import suppress
+from functools import partial
+from numbers import Real
+from traceback import format_exc
 
 import numpy as np
 import scipy.sparse as sp
 from joblib import logger
 
-from ..base import is_classifier, clone
-from ..utils import indexable, check_random_state, _safe_indexing
-from ..utils.validation import _check_fit_params
-from ..utils.validation import _num_samples
-from ..utils.parallel import delayed, Parallel
-from ..utils.metaestimators import _safe_split
-from ..metrics import check_scoring
-from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
+from ..base import clone, is_classifier
 from ..exceptions import FitFailedWarning
-from ._split import check_cv
+from ..metrics import check_scoring, get_scorer_names
+from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..preprocessing import LabelEncoder
-
+from ..utils import _safe_indexing, check_random_state, indexable
+from ..utils._param_validation import (
+    HasMethods,
+    Integral,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+from ..utils.metaestimators import _safe_split
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import _check_method_params, _num_samples
+from ._split import check_cv
 
 __all__ = [
     "cross_validate",
@@ -46,6 +52,32 @@ __all__ = [
 ]
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods("fit")],
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", None],
+        "groups": ["array-like", None],
+        "scoring": [
+            StrOptions(set(get_scorer_names())),
+            callable,
+            list,
+            tuple,
+            dict,
+            None,
+        ],
+        "cv": ["cv_object"],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+        "fit_params": [dict, None],
+        "pre_dispatch": [Integral, str],
+        "return_train_score": ["boolean"],
+        "return_estimator": ["boolean"],
+        "return_indices": ["boolean"],
+        "error_score": [StrOptions({"raise"}), Real],
+    },
+    prefer_skip_nested_validation=False,  # estimator is not validated yet
+)
 def cross_validate(
     estimator,
     X,
@@ -60,6 +92,7 @@ def cross_validate(
     pre_dispatch="2*n_jobs",
     return_train_score=False,
     return_estimator=False,
+    return_indices=False,
     error_score=np.nan,
 ):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
@@ -71,7 +104,7 @@ def cross_validate(
     estimator : estimator object implementing 'fit'
         The object to use to fit the data.
 
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data to fit. Can be for example a list, or an array.
 
     y : array-like of shape (n_samples,) or (n_samples, n_outputs), default=None
@@ -140,11 +173,6 @@ def cross_validate(
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
             - An int, giving the exact number of total jobs that are
               spawned
 
@@ -168,6 +196,11 @@ def cross_validate(
         Whether to return the estimators fitted on each split.
 
         .. versionadded:: 0.20
+
+    return_indices : bool, default=False
+        Whether to return the train-test indices selected for each split.
+
+        .. versionadded:: 1.3
 
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
@@ -207,6 +240,11 @@ def cross_validate(
                 The estimator objects for each cv split.
                 This is available only if ``return_estimator`` parameter
                 is set to ``True``.
+            ``indices``
+                The train/test positional indices for each cv split. A dictionary
+                is returned where the keys are either `"train"` or `"test"`
+                and the associated values are a list of integer-dtyped NumPy
+                arrays with the indices. Available only if `return_indices=True`.
 
     See Also
     --------
@@ -260,6 +298,11 @@ def cross_validate(
     else:
         scorers = _check_multimetric_scoring(estimator, scoring)
 
+    indices = cv.split(X, y, groups)
+    if return_indices:
+        # materialize the indices since we need to store them in the returned dict
+        indices = list(indices)
+
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
@@ -279,12 +322,12 @@ def cross_validate(
             return_estimator=return_estimator,
             error_score=error_score,
         )
-        for train, test in cv.split(X, y, groups)
+        for train, test in indices
     )
 
     _warn_or_raise_about_fit_failures(results, error_score)
 
-    # For callabe scoring, the return type is only know after calling. If the
+    # For callable scoring, the return type is only know after calling. If the
     # return type is a dictionary, the error scores can now be inserted with
     # the correct key.
     if callable(scoring):
@@ -298,6 +341,10 @@ def cross_validate(
 
     if return_estimator:
         ret["estimator"] = results["estimator"]
+
+    if return_indices:
+        ret["indices"] = {}
+        ret["indices"]["train"], ret["indices"]["test"] = zip(*indices)
 
     test_scores_dict = _normalize_score_results(results["test_scores"])
     if return_train_score:
@@ -378,6 +425,22 @@ def _warn_or_raise_about_fit_failures(results, error_score):
             warnings.warn(some_fits_failed_message, FitFailedWarning)
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods("fit")],
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", None],
+        "groups": ["array-like", None],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "cv": ["cv_object"],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+        "fit_params": [dict, None],
+        "pre_dispatch": [Integral, str, None],
+        "error_score": [StrOptions({"raise"}), Real],
+    },
+    prefer_skip_nested_validation=False,  # estimator is not validated yet
+)
 def cross_val_score(
     estimator,
     X,
@@ -401,7 +464,7 @@ def cross_val_score(
     estimator : estimator object implementing 'fit'
         The object to use to fit the data.
 
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data to fit. Can be for example a list, or an array.
 
     y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
@@ -547,7 +610,6 @@ def _fit_and_score(
     candidate_progress=None,
     error_score=np.nan,
 ):
-
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -661,17 +723,14 @@ def _fit_and_score(
 
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = _check_fit_params(X, fit_params, train)
+    fit_params = _check_method_params(X, params=fit_params, indices=train)
 
     if parameters is not None:
-        # clone after setting parameters in case any parameters
-        # are estimators (like pipeline steps)
-        # because pipeline doesn't clone steps in fit
-        cloned_parameters = {}
-        for k, v in parameters.items():
-            cloned_parameters[k] = clone(v, safe=False)
-
-        estimator = estimator.set_params(**cloned_parameters)
+        # here we clone the parameters, since sometimes the parameters
+        # themselves might be estimators, e.g. when we search over different
+        # estimators in a pipeline.
+        # ref: https://github.com/scikit-learn/scikit-learn/pull/26786
+        estimator = estimator.set_params(**clone(parameters, safe=False))
 
     start_time = time.time()
 
@@ -776,9 +835,11 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
             else:
                 scores = error_score
                 warnings.warn(
-                    "Scoring failed. The score on this train-test partition for "
-                    f"these parameters will be set to {error_score}. Details: \n"
-                    f"{format_exc()}",
+                    (
+                        "Scoring failed. The score on this train-test partition for "
+                        f"these parameters will be set to {error_score}. Details: \n"
+                        f"{format_exc()}"
+                    ),
                     UserWarning,
                 )
 
@@ -792,9 +853,11 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
             for name, str_e in exception_messages:
                 scores[name] = error_score
                 warnings.warn(
-                    "Scoring failed. The score on this train-test partition for "
-                    f"these parameters will be set to {error_score}. Details: \n"
-                    f"{str_e}",
+                    (
+                        "Scoring failed. The score on this train-test partition for "
+                        f"these parameters will be set to {error_score}. Details: \n"
+                        f"{str_e}"
+                    ),
                     UserWarning,
                 )
 
@@ -818,6 +881,30 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
     return scores
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods(["fit", "predict"])],
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", None],
+        "groups": ["array-like", None],
+        "cv": ["cv_object"],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+        "fit_params": [dict, None],
+        "pre_dispatch": [Integral, str, None],
+        "method": [
+            StrOptions(
+                {
+                    "predict",
+                    "predict_proba",
+                    "predict_log_proba",
+                    "decision_function",
+                }
+            )
+        ],
+    },
+    prefer_skip_nested_validation=False,  # estimator is not validated yet
+)
 def cross_val_predict(
     estimator,
     X,
@@ -846,10 +933,11 @@ def cross_val_predict(
 
     Parameters
     ----------
-    estimator : estimator object implementing 'fit' and 'predict'
-        The object to use to fit the data.
+    estimator : estimator
+        The estimator instance to use to fit the data. It must implement a `fit`
+        method and the method given by the `method` parameter.
 
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data to fit. Can be, for example a list, or an array at least 2d.
 
     y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
@@ -1057,7 +1145,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params, method):
     """
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = _check_fit_params(X, fit_params, train)
+    fit_params = _check_method_params(X, params=fit_params, indices=train)
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
@@ -1184,6 +1272,22 @@ def _check_is_permutation(indices, n_samples):
     return True
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods("fit")],
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", None],
+        "groups": ["array-like", None],
+        "cv": ["cv_object"],
+        "n_permutations": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "random_state": ["random_state"],
+        "verbose": ["verbose"],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "fit_params": [dict, None],
+    },
+    prefer_skip_nested_validation=False,  # estimator is not validated yet
+)
 def permutation_test_score(
     estimator,
     X,
@@ -1347,7 +1451,7 @@ def _permutation_test_score(estimator, X, y, groups, cv, scorer, fit_params):
     for train, test in cv.split(X, y, groups):
         X_train, y_train = _safe_split(estimator, X, y, train)
         X_test, y_test = _safe_split(estimator, X, y, test, train)
-        fit_params = _check_fit_params(X, fit_params, train)
+        fit_params = _check_method_params(X, params=fit_params, indices=train)
         estimator.fit(X_train, y_train, **fit_params)
         avg_score.append(scorer(estimator, X_test, y_test))
     return np.mean(avg_score)
@@ -1365,6 +1469,27 @@ def _shuffle(y, groups, random_state):
     return _safe_indexing(y, indices)
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods(["fit"])],
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", None],
+        "groups": ["array-like", None],
+        "train_sizes": ["array-like"],
+        "cv": ["cv_object"],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "exploit_incremental_learning": ["boolean"],
+        "n_jobs": [Integral, None],
+        "pre_dispatch": [Integral, str],
+        "verbose": ["verbose"],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+        "error_score": [StrOptions({"raise"}), Real],
+        "return_times": ["boolean"],
+        "fit_params": [dict, None],
+    },
+    prefer_skip_nested_validation=False,  # estimator is not validated yet
+)
 def learning_curve(
     estimator,
     X,
@@ -1399,18 +1524,20 @@ def learning_curve(
 
     Parameters
     ----------
-    estimator : object type that implements the "fit" and "predict" methods
-        An object of that type which is cloned for each validation.
+    estimator : object type that implements the "fit" method
+        An object of that type which is cloned for each validation. It must
+        also implement "predict" unless `scoring` is a callable that doesn't
+        rely on "predict" to compute a score.
 
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Training vector, where `n_samples` is the number of samples and
         `n_features` is the number of features.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs) or None
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
-    groups : array-like of  shape (n_samples,), default=None
+    groups : array-like of shape (n_samples,), default=None
         Group labels for the samples used while splitting the dataset into
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
@@ -1751,6 +1878,24 @@ def _incremental_fit_estimator(
     return np.array(ret).T
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods(["fit"])],
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", None],
+        "param_name": [str],
+        "param_range": ["array-like"],
+        "groups": ["array-like", None],
+        "cv": ["cv_object"],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "n_jobs": [Integral, None],
+        "pre_dispatch": [Integral, str],
+        "verbose": ["verbose"],
+        "error_score": [StrOptions({"raise"}), Real],
+        "fit_params": [dict, None],
+    },
+    prefer_skip_nested_validation=False,  # estimator is not validated yet
+)
 def validation_curve(
     estimator,
     X,
@@ -1780,10 +1925,12 @@ def validation_curve(
 
     Parameters
     ----------
-    estimator : object type that implements the "fit" and "predict" methods
-        An object of that type which is cloned for each validation.
+    estimator : object type that implements the "fit" method
+        An object of that type which is cloned for each validation. It must
+        also implement "predict" unless `scoring` is a callable that doesn't
+        rely on "predict" to compute a score.
 
-    X : array-like of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Training vector, where `n_samples` is the number of samples and
         `n_features` is the number of features.
 
@@ -1924,8 +2071,10 @@ def _aggregate_score_dicts(scores):
      'b': array([10, 2, 3, 10])}
     """
     return {
-        key: np.asarray([score[key] for score in scores])
-        if isinstance(scores[0][key], numbers.Number)
-        else [score[key] for score in scores]
+        key: (
+            np.asarray([score[key] for score in scores])
+            if isinstance(scores[0][key], numbers.Number)
+            else [score[key] for score in scores]
+        )
         for key in scores[0]
     }

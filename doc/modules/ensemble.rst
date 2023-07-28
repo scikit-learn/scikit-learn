@@ -1,105 +1,851 @@
 .. _ensemble:
 
-================
-Ensemble methods
-================
+===========================================================================
+Ensembles: Gradient boosting, random forests, bagging, voting, stacking
+===========================================================================
 
 .. currentmodule:: sklearn.ensemble
 
-The goal of **ensemble methods** is to combine the predictions of several
+**Ensemble methods** combine the predictions of several
 base estimators built with a given learning algorithm in order to improve
 generalizability / robustness over a single estimator.
 
-Two families of ensemble methods are usually distinguished:
+Two very famous examples of ensemble methods are :ref:`gradient-boosted trees
+<gradient_boosting>` and :ref:`random forests <forest>`.
 
-- In **averaging methods**, the driving principle is to build several
-  estimators independently and then to average their predictions. On average,
-  the combined estimator is usually better than any of the single base
-  estimator because its variance is reduced.
+More generally, ensemble models can be applied to any base learner beyond
+trees, in averaging methods such as :ref:`Bagging methods <bagging>`,
+:ref:`model stacking <stacking>`, or :ref:`Voting <voting_classifier>`, or in
+boosting, as :ref:`AdaBoost <adaboost>`.
 
-  **Examples:** :ref:`Bagging methods <bagging>`, :ref:`Forests of randomized trees <forest>`, ...
+.. contents::
+    :local:
+    :depth: 1
 
-- By contrast, in **boosting methods**, base estimators are built sequentially
-  and one tries to reduce the bias of the combined estimator. The motivation is
-  to combine several weak models to produce a powerful ensemble.
+.. _gradient_boosting:
 
-  **Examples:** :ref:`AdaBoost <adaboost>`, :ref:`Gradient Tree Boosting <gradient_boosting>`, ...
-
-
-.. _bagging:
-
-Bagging meta-estimator
+Gradient-boosted trees
 ======================
 
-In ensemble algorithms, bagging methods form a class of algorithms which build
-several instances of a black-box estimator on random subsets of the original
-training set and then aggregate their individual predictions to form a final
-prediction. These methods are used as a way to reduce the variance of a base
-estimator (e.g., a decision tree), by introducing randomization into its
-construction procedure and then making an ensemble out of it. In many cases,
-bagging methods constitute a very simple way to improve with respect to a
-single model, without making it necessary to adapt the underlying base
-algorithm. As they provide a way to reduce overfitting, bagging methods work
-best with strong and complex models (e.g., fully developed decision trees), in
-contrast with boosting methods which usually work best with weak models (e.g.,
-shallow decision trees).
+`Gradient Tree Boosting <https://en.wikipedia.org/wiki/Gradient_boosting>`_
+or Gradient Boosted Decision Trees (GBDT) is a generalization
+of boosting to arbitrary differentiable loss functions, see the seminal work of
+[Friedman2001]_. GBDT is an excellent model for both regression and
+classification, in particular for tabular data.
 
-Bagging methods come in many flavours but mostly differ from each other by the
-way they draw random subsets of the training set:
+.. topic:: :class:`GradientBoostingClassifier` vs :class:`HistGradientBoostingClassifier`
 
-  * When random subsets of the dataset are drawn as random subsets of the
-    samples, then this algorithm is known as Pasting [B1999]_.
+  Scikit-learn provides two implementations of gradient-boosted trees:
+  :class:`HistGradientBoostingClassifier` vs
+  :class:`GradientBoostingClassifier` for classification, and the
+  corresponding classes for regression. The former can be **orders of
+  magnitude faster** than the latter when the number of samples is
+  larger than tens of thousands of samples.
 
-  * When samples are drawn with replacement, then the method is known as
-    Bagging [B1996]_.
+  Missing values and categorical data are natively supported by the
+  Hist... version, removing the need for additional preprocessing such as
+  imputation.
 
-  * When random subsets of the dataset are drawn as random subsets of
-    the features, then the method is known as Random Subspaces [H1998]_.
+  :class:`GradientBoostingClassifier` and
+  :class:`GradientBoostingRegressor`, might be preferred for small sample
+  sizes since binning may lead to split points that are too approximate
+  in this setting.
 
-  * Finally, when base estimators are built on subsets of both samples and
-    features, then the method is known as Random Patches [LG2012]_.
+.. _histogram_based_gradient_boosting:
 
-In scikit-learn, bagging methods are offered as a unified
-:class:`BaggingClassifier` meta-estimator  (resp. :class:`BaggingRegressor`),
-taking as input a user-specified estimator along with parameters
-specifying the strategy to draw random subsets. In particular, ``max_samples``
-and ``max_features`` control the size of the subsets (in terms of samples and
-features), while ``bootstrap`` and ``bootstrap_features`` control whether
-samples and features are drawn with or without replacement. When using a subset
-of the available samples the generalization accuracy can be estimated with the
-out-of-bag samples by setting ``oob_score=True``. As an example, the
-snippet below illustrates how to instantiate a bagging ensemble of
-:class:`KNeighborsClassifier` estimators, each built on random subsets of
-50% of the samples and 50% of the features.
+Histogram-Based Gradient Boosting
+----------------------------------
 
-    >>> from sklearn.ensemble import BaggingClassifier
-    >>> from sklearn.neighbors import KNeighborsClassifier
-    >>> bagging = BaggingClassifier(KNeighborsClassifier(),
-    ...                             max_samples=0.5, max_features=0.5)
+Scikit-learn 0.21 introduced two new implementations of
+gradient boosted trees, namely :class:`HistGradientBoostingClassifier`
+and :class:`HistGradientBoostingRegressor`, inspired by
+`LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
+
+These histogram-based estimators can be **orders of magnitude faster**
+than :class:`GradientBoostingClassifier` and
+:class:`GradientBoostingRegressor` when the number of samples is larger
+than tens of thousands of samples.
+
+They also have built-in support for missing values, which avoids the need
+for an imputer.
+
+These fast estimators first bin the input samples ``X`` into
+integer-valued bins (typically 256 bins) which tremendously reduces the
+number of splitting points to consider, and allows the algorithm to
+leverage integer-based data structures (histograms) instead of relying on
+sorted continuous values when building the trees. The API of these
+estimators is slightly different, and some of the features from
+:class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
+are not yet supported, for instance some loss functions.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_bias_variance.py`
+ * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+
+Usage
+^^^^^
+
+Most of the parameters are unchanged from
+:class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`.
+One exception is the ``max_iter`` parameter that replaces ``n_estimators``, and
+controls the number of iterations of the boosting process::
+
+  >>> from sklearn.ensemble import HistGradientBoostingClassifier
+  >>> from sklearn.datasets import make_hastie_10_2
+
+  >>> X, y = make_hastie_10_2(random_state=0)
+  >>> X_train, X_test = X[:2000], X[2000:]
+  >>> y_train, y_test = y[:2000], y[2000:]
+
+  >>> clf = HistGradientBoostingClassifier(max_iter=100).fit(X_train, y_train)
+  >>> clf.score(X_test, y_test)
+  0.8965
+
+Available losses for regression are 'squared_error',
+'absolute_error', which is less sensitive to outliers, and
+'poisson', which is well suited to model counts and frequencies. For
+classification, 'log_loss' is the only option. For binary classification it uses the
+binary log loss, also known as binomial deviance or binary cross-entropy. For
+`n_classes >= 3`, it uses the multi-class log loss function, with multinomial deviance
+and categorical cross-entropy as alternative names. The appropriate loss version is
+selected based on :term:`y` passed to :term:`fit`.
+
+The size of the trees can be controlled through the ``max_leaf_nodes``,
+``max_depth``, and ``min_samples_leaf`` parameters.
+
+The number of bins used to bin the data is controlled with the ``max_bins``
+parameter. Using less bins acts as a form of regularization. It is
+generally recommended to use as many bins as possible (256), which is the default.
+
+The ``l2_regularization`` parameter is a regularizer on the loss function and
+corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
+
+Note that **early-stopping is enabled by default if the number of samples is
+larger than 10,000**. The early-stopping behaviour is controlled via the
+``early_stopping``, ``scoring``, ``validation_fraction``,
+``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
+using an arbitrary :term:`scorer`, or just the training or validation loss.
+Note that for technical reasons, using a scorer is significantly slower than
+using the loss. By default, early-stopping is performed if there are at least
+10,000 samples in the training set, and uses the validation loss.
+
+Missing values support
+^^^^^^^^^^^^^^^^^^^^^^
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` have built-in support for missing
+values (NaNs).
+
+During training, the tree grower learns at each split point whether samples
+with missing values should go to the left or right child, based on the
+potential gain. When predicting, samples with missing values are assigned to
+the left or right child consequently::
+
+  >>> from sklearn.ensemble import HistGradientBoostingClassifier
+  >>> import numpy as np
+
+  >>> X = np.array([0, 1, 2, np.nan]).reshape(-1, 1)
+  >>> y = [0, 0, 1, 1]
+
+  >>> gbdt = HistGradientBoostingClassifier(min_samples_leaf=1).fit(X, y)
+  >>> gbdt.predict(X)
+  array([0, 0, 1, 1])
+
+When the missingness pattern is predictive, the splits can be performed on
+whether the feature value is missing or not::
+
+  >>> X = np.array([0, np.nan, 1, 2, np.nan]).reshape(-1, 1)
+  >>> y = [0, 1, 0, 0, 1]
+  >>> gbdt = HistGradientBoostingClassifier(min_samples_leaf=1,
+  ...                                       max_depth=2,
+  ...                                       learning_rate=1,
+  ...                                       max_iter=1).fit(X, y)
+  >>> gbdt.predict(X)
+  array([0, 1, 0, 0, 1])
+
+If no missing values were encountered for a given feature during training,
+then samples with missing values are mapped to whichever child has the most
+samples.
+
+.. _sw_hgbdt:
+
+Sample weight support
+^^^^^^^^^^^^^^^^^^^^^
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` support sample weights during
+:term:`fit`.
+
+The following toy example demonstrates that samples with a sample weight of zero are ignored:
+
+    >>> X = [[1, 0],
+    ...      [1, 0],
+    ...      [1, 0],
+    ...      [0, 1]]
+    >>> y = [0, 0, 1, 0]
+    >>> # ignore the first 2 training samples by setting their weight to 0
+    >>> sample_weight = [0, 0, 1, 1]
+    >>> gb = HistGradientBoostingClassifier(min_samples_leaf=1)
+    >>> gb.fit(X, y, sample_weight=sample_weight)
+    HistGradientBoostingClassifier(...)
+    >>> gb.predict([[1, 0]])
+    array([1])
+    >>> gb.predict_proba([[1, 0]])[0, 1]
+    0.99...
+
+As you can see, the `[1, 0]` is comfortably classified as `1` since the first
+two samples are ignored due to their sample weights.
+
+Implementation detail: taking sample weights into account amounts to
+multiplying the gradients (and the hessians) by the sample weights. Note that
+the binning stage (specifically the quantiles computation) does not take the
+weights into account.
+
+.. _categorical_support_gbdt:
+
+Categorical Features Support
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` have native support for categorical
+features: they can consider splits on non-ordered, categorical data.
+
+For datasets with categorical features, using the native categorical support
+is often better than relying on one-hot encoding
+(:class:`~sklearn.preprocessing.OneHotEncoder`), because one-hot encoding
+requires more tree depth to achieve equivalent splits. It is also usually
+better to rely on the native categorical support rather than to treat
+categorical features as continuous (ordinal), which happens for ordinal-encoded
+categorical data, since categories are nominal quantities where order does not
+matter.
+
+To enable categorical support, a boolean mask can be passed to the
+`categorical_features` parameter, indicating which feature is categorical. In
+the following, the first feature will be treated as categorical and the
+second feature as numerical::
+
+  >>> gbdt = HistGradientBoostingClassifier(categorical_features=[True, False])
+
+Equivalently, one can pass a list of integers indicating the indices of the
+categorical features::
+
+  >>> gbdt = HistGradientBoostingClassifier(categorical_features=[0])
+
+The cardinality of each categorical feature must be less than the `max_bins`
+parameter, and each categorical feature is expected to be encoded in
+`[0, max_bins - 1]`. To that end, it might be useful to pre-process the data
+with an :class:`~sklearn.preprocessing.OrdinalEncoder` as done in
+:ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`.
+
+If there are missing values during training, the missing values will be
+treated as a proper category. If there are no missing values during training,
+then at prediction time, missing values are mapped to the child node that has
+the most samples (just like for continuous features). When predicting,
+categories that were not seen during fit time will be treated as missing
+values.
+
+**Split finding with categorical features**: The canonical way of considering
+categorical splits in a tree is to consider
+all of the :math:`2^{K - 1} - 1` partitions, where :math:`K` is the number of
+categories. This can quickly become prohibitive when :math:`K` is large.
+Fortunately, since gradient boosting trees are always regression trees (even
+for classification problems), there exist a faster strategy that can yield
+equivalent splits. First, the categories of a feature are sorted according to
+the variance of the target, for each category `k`. Once the categories are
+sorted, one can consider *continuous partitions*, i.e. treat the categories
+as if they were ordered continuous values (see Fisher [Fisher1958]_ for a
+formal proof). As a result, only :math:`K - 1` splits need to be considered
+instead of :math:`2^{K - 1} - 1`. The initial sorting is a
+:math:`\mathcal{O}(K \log(K))` operation, leading to a total complexity of
+:math:`\mathcal{O}(K \log(K) + K)`, instead of :math:`\mathcal{O}(2^K)`.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`
+
+.. _monotonic_cst_gbdt:
+
+Monotonic Constraints
+^^^^^^^^^^^^^^^^^^^^^
+
+Depending on the problem at hand, you may have prior knowledge indicating
+that a given feature should in general have a positive (or negative) effect
+on the target value. For example, all else being equal, a higher credit
+score should increase the probability of getting approved for a loan.
+Monotonic constraints allow you to incorporate such prior knowledge into the
+model.
+
+For a predictor :math:`F` with two features:
+
+ - a **monotonic increase constraint** is a constraint of the form:
+    .. math::
+        x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)
+
+ - a **monotonic decrease constraint** is a constraint of the form:
+    .. math::
+        x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)
+
+You can specify a monotonic constraint on each feature using the
+`monotonic_cst` parameter. For each feature, a value of 0 indicates no
+constraint, while 1 and -1 indicate a monotonic increase and
+monotonic decrease constraint, respectively::
+
+  >>> from sklearn.ensemble import HistGradientBoostingRegressor
+
+  ... # monotonic increase, monotonic decrease, and no constraint on the 3 features
+  >>> gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1, 0])
+
+In a binary classification context, imposing a monotonic increase (decrease) constraint means that higher values of the feature are supposed
+to have a positive (negative) effect on the probability of samples
+to belong to the positive class.
+
+Nevertheless, monotonic constraints only marginally constrain feature effects on the output.
+For instance, monotonic increase and decrease constraints cannot be used to enforce the
+following modelling constraint:
+
+    .. math::
+        x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')
+
+Also, monotonic constraints are not supported for multiclass classification.
+
+.. note::
+    Since categories are unordered quantities, it is not possible to enforce
+    monotonic constraints on categorical features.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
+
+.. _interaction_cst_hgbt:
+
+Interaction constraints
+^^^^^^^^^^^^^^^^^^^^^^^
+
+A priori, the histogram gradient boosted trees are allowed to use any feature
+to split a node into child nodes. This creates so called interactions between
+features, i.e. usage of different features as split along a branch. Sometimes,
+one wants to restrict the possible interactions, see [Mayer2022]_. This can be
+done by the parameter ``interaction_cst``, where one can specify the indices
+of features that are allowed to interact.
+For instance, with 3 features in total, ``interaction_cst=[{0}, {1}, {2}]``
+forbids all interactions.
+The constraints ``[{0, 1}, {1, 2}]`` specifies two groups of possibly
+interacting features. Features 0 and 1 may interact with each other, as well
+as features 1 and 2. But note that features 0 and 2 are forbidden to interact.
+The following depicts a tree and the possible splits of the tree:
+
+.. code-block:: none
+
+      1      <- Both constraint groups could be applied from now on
+     / \
+    1   2    <- Left split still fulfills both constraint groups.
+   / \ / \      Right split at feature 2 has only group {1, 2} from now on.
+
+LightGBM uses the same logic for overlapping groups.
+
+Note that features not listed in ``interaction_cst`` are automatically
+assigned an interaction group for themselves. With again 3 features, this
+means that ``[{0}]`` is equivalent to ``[{0}, {1, 2}]``.
 
 .. topic:: References
 
-  .. [B1999] L. Breiman, "Pasting small votes for classification in large
-         databases and on-line", Machine Learning, 36(1), 85-103, 1999.
+  .. [Mayer2022] M. Mayer, S.C. Bourassa, M. Hoesli, and D.F. Scognamiglio.
+     2022. :doi:`Machine Learning Applications to Land and Structure Valuation
+     <10.3390/jrfm15050193>`.
+     Journal of Risk and Financial Management 15, no. 5: 193
 
-  .. [B1996] L. Breiman, "Bagging predictors", Machine Learning, 24(2),
-         123-140, 1996.
+Low-level parallelism
+^^^^^^^^^^^^^^^^^^^^^
 
-  .. [H1998] T. Ho, "The random subspace method for constructing decision
-         forests", Pattern Analysis and Machine Intelligence, 20(8), 832-844,
-         1998.
 
-  .. [LG2012] G. Louppe and P. Geurts, "Ensembles on Random Patches",
-         Machine Learning and Knowledge Discovery in Databases, 346-361, 2012.
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` use OpenMP
+for parallelization through Cython. For more details on how to control the
+number of threads, please refer to our :ref:`parallelism` notes.
+
+The following parts are parallelized:
+
+- mapping samples from real values to integer-valued bins (finding the bin
+  thresholds is however sequential)
+- building histograms is parallelized over features
+- finding the best split point at a node is parallelized over features
+- during fit, mapping samples into the left and right children is
+  parallelized over samples
+- gradient and hessians computations are parallelized over samples
+- predicting is parallelized over samples
+
+.. _Why_it's_faster:
+
+Why it's faster
+^^^^^^^^^^^^^^^
+
+The bottleneck of a gradient boosting procedure is building the decision
+trees. Building a traditional decision tree (as in the other GBDTs
+:class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`)
+requires sorting the samples at each node (for
+each feature). Sorting is needed so that the potential gain of a split point
+can be computed efficiently. Splitting a single node has thus a complexity
+of :math:`\mathcal{O}(n_\text{features} \times n \log(n))` where :math:`n`
+is the number of samples at the node.
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor`, in contrast, do not require sorting the
+feature values and instead use a data-structure called a histogram, where the
+samples are implicitly ordered. Building a histogram has a
+:math:`\mathcal{O}(n)` complexity, so the node splitting procedure has a
+:math:`\mathcal{O}(n_\text{features} \times n)` complexity, much smaller
+than the previous one. In addition, instead of considering :math:`n` split
+points, we consider only ``max_bins`` split points, which might be much
+smaller.
+
+In order to build histograms, the input data `X` needs to be binned into
+integer-valued bins. This binning procedure does require sorting the feature
+values, but it only happens once at the very beginning of the boosting process
+(not at each node, like in :class:`GradientBoostingClassifier` and
+:class:`GradientBoostingRegressor`).
+
+Finally, many parts of the implementation of
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` are parallelized.
+
+.. topic:: References
+
+  .. [XGBoost] Tianqi Chen, Carlos Guestrin, :arxiv:`"XGBoost: A Scalable Tree
+     Boosting System" <1603.02754>`
+
+  .. [LightGBM] Ke et. al. `"LightGBM: A Highly Efficient Gradient
+     BoostingDecision Tree" <https://papers.nips.cc/paper/
+     6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_
+
+  .. [Fisher1958] Fisher, W.D. (1958). `"On Grouping for Maximum Homogeneity"
+     <http://csiss.ncgia.ucsb.edu/SPACE/workshops/2004/SAC/files/fisher.pdf>`_
+     Journal of the American Statistical Association, 53, 789-798.
+
+
+
+:class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
+----------------------------------------------------------------------------
+
+The usage and the parameters of :class:`GradientBoostingClassifier` and
+:class:`GradientBoostingRegressor` are described below. The 2 most important
+parameters of these estimators are `n_estimators` and `learning_rate`.
+
+Classification
+^^^^^^^^^^^^^^^
+
+:class:`GradientBoostingClassifier` supports both binary and multi-class
+classification.
+The following example shows how to fit a gradient boosting classifier
+with 100 decision stumps as weak learners::
+
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+
+    >>> X, y = make_hastie_10_2(random_state=0)
+    >>> X_train, X_test = X[:2000], X[2000:]
+    >>> y_train, y_test = y[:2000], y[2000:]
+
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+    ...     max_depth=1, random_state=0).fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)
+    0.913...
+
+The number of weak learners (i.e. regression trees) is controlled by the
+parameter ``n_estimators``; :ref:`The size of each tree
+<gradient_boosting_tree_size>` can be controlled either by setting the tree
+depth via ``max_depth`` or by setting the number of leaf nodes via
+``max_leaf_nodes``. The ``learning_rate`` is a hyper-parameter in the range
+(0.0, 1.0] that controls overfitting via :ref:`shrinkage
+<gradient_boosting_shrinkage>` .
+
+.. note::
+
+   Classification with more than 2 classes requires the induction
+   of ``n_classes`` regression trees at each iteration,
+   thus, the total number of induced trees equals
+   ``n_classes * n_estimators``. For datasets with a large number
+   of classes we strongly recommend to use
+   :class:`HistGradientBoostingClassifier` as an alternative to
+   :class:`GradientBoostingClassifier` .
+
+Regression
+^^^^^^^^^^^
+
+:class:`GradientBoostingRegressor` supports a number of
+:ref:`different loss functions <gradient_boosting_loss>`
+for regression which can be specified via the argument
+``loss``; the default loss function for regression is squared error
+(``'squared_error'``).
+
+::
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import mean_squared_error
+    >>> from sklearn.datasets import make_friedman1
+    >>> from sklearn.ensemble import GradientBoostingRegressor
+
+    >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
+    >>> X_train, X_test = X[:200], X[200:]
+    >>> y_train, y_test = y[:200], y[200:]
+    >>> est = GradientBoostingRegressor(
+    ...     n_estimators=100, learning_rate=0.1, max_depth=1, random_state=0,
+    ...     loss='squared_error'
+    ... ).fit(X_train, y_train)
+    >>> mean_squared_error(y_test, est.predict(X_test))
+    5.00...
+
+The figure below shows the results of applying :class:`GradientBoostingRegressor`
+with least squares loss and 500 base learners to the diabetes dataset
+(:func:`sklearn.datasets.load_diabetes`).
+The plot shows the train and test error at each iteration.
+The train error at each iteration is stored in the
+`train_score_` attribute of the gradient boosting model.
+The test error at each iterations can be obtained
+via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
+generator that yields the predictions at each stage. Plots like these can be used
+to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
+
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regression_001.png
+   :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
+   :align: center
+   :scale: 75
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py`
+
+.. _gradient_boosting_warm_start:
+
+Fitting additional weak-learners
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Both :class:`GradientBoostingRegressor` and :class:`GradientBoostingClassifier`
+support ``warm_start=True`` which allows you to add more estimators to an already
+fitted model.
+
+::
+
+  >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and new nr of trees
+  >>> _ = est.fit(X_train, y_train) # fit additional 100 trees to est
+  >>> mean_squared_error(y_test, est.predict(X_test))
+  3.84...
+
+.. _gradient_boosting_tree_size:
+
+Controlling the tree size
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The size of the regression tree base learners defines the level of variable
+interactions that can be captured by the gradient boosting model. In general,
+a tree of depth ``h`` can capture interactions of order ``h`` .
+There are two ways in which the size of the individual regression trees can
+be controlled.
+
+If you specify ``max_depth=h`` then complete binary trees
+of depth ``h`` will be grown. Such trees will have (at most) ``2**h`` leaf nodes
+and ``2**h - 1`` split nodes.
+
+Alternatively, you can control the tree size by specifying the number of
+leaf nodes via the parameter ``max_leaf_nodes``. In this case,
+trees will be grown using best-first search where nodes with the highest improvement
+in impurity will be expanded first.
+A tree with ``max_leaf_nodes=k`` has ``k - 1`` split nodes and thus can
+model interactions of up to order ``max_leaf_nodes - 1`` .
+
+We found that ``max_leaf_nodes=k`` gives comparable results to ``max_depth=k-1``
+but is significantly faster to train at the expense of a slightly higher
+training error.
+The parameter ``max_leaf_nodes`` corresponds to the variable ``J`` in the
+chapter on gradient boosting in [Friedman2001]_ and is related to the parameter
+``interaction.depth`` in R's gbm package where ``max_leaf_nodes == interaction.depth + 1`` .
+
+Mathematical formulation
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+We first present GBRT for regression, and then detail the classification
+case.
+
+Regression
+...........
+
+GBRT regressors are additive models whose prediction :math:`\hat{y}_i` for a
+given input :math:`x_i` is of the following form:
+
+  .. math::
+
+    \hat{y}_i = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
+
+where the :math:`h_m` are estimators called *weak learners* in the context
+of boosting. Gradient Tree Boosting uses :ref:`decision tree regressors
+<tree>` of fixed size as weak learners. The constant M corresponds to the
+`n_estimators` parameter.
+
+Similar to other boosting algorithms, a GBRT is built in a greedy fashion:
+
+  .. math::
+
+    F_m(x) = F_{m-1}(x) + h_m(x),
+
+where the newly added tree :math:`h_m` is fitted in order to minimize a sum
+of losses :math:`L_m`, given the previous ensemble :math:`F_{m-1}`:
+
+  .. math::
+
+    h_m =  \arg\min_{h} L_m = \arg\min_{h} \sum_{i=1}^{n}
+    l(y_i, F_{m-1}(x_i) + h(x_i)),
+
+where :math:`l(y_i, F(x_i))` is defined by the `loss` parameter, detailed
+in the next section.
+
+By default, the initial model :math:`F_{0}` is chosen as the constant that
+minimizes the loss: for a least-squares loss, this is the empirical mean of
+the target values. The initial model can also be specified via the ``init``
+argument.
+
+Using a first-order Taylor approximation, the value of :math:`l` can be
+approximated as follows:
+
+  .. math::
+
+    l(y_i, F_{m-1}(x_i) + h_m(x_i)) \approx
+    l(y_i, F_{m-1}(x_i))
+    + h_m(x_i)
+    \left[ \frac{\partial l(y_i, F(x_i))}{\partial F(x_i)} \right]_{F=F_{m - 1}}.
+
+.. note::
+
+  Briefly, a first-order Taylor approximation says that
+  :math:`l(z) \approx l(a) + (z - a) \frac{\partial l}{\partial z}(a)`.
+  Here, :math:`z` corresponds to :math:`F_{m - 1}(x_i) + h_m(x_i)`, and
+  :math:`a` corresponds to :math:`F_{m-1}(x_i)`
+
+The quantity :math:`\left[ \frac{\partial l(y_i, F(x_i))}{\partial F(x_i)}
+\right]_{F=F_{m - 1}}` is the derivative of the loss with respect to its
+second parameter, evaluated at :math:`F_{m-1}(x)`. It is easy to compute for
+any given :math:`F_{m - 1}(x_i)` in a closed form since the loss is
+differentiable. We will denote it by :math:`g_i`.
+
+Removing the constant terms, we have:
+
+  .. math::
+
+    h_m \approx \arg\min_{h} \sum_{i=1}^{n} h(x_i) g_i
+
+This is minimized if :math:`h(x_i)` is fitted to predict a value that is
+proportional to the negative gradient :math:`-g_i`. Therefore, at each
+iteration, **the estimator** :math:`h_m` **is fitted to predict the negative
+gradients of the samples**. The gradients are updated at each iteration.
+This can be considered as some kind of gradient descent in a functional
+space.
+
+.. note::
+
+  For some losses, e.g. ``'absolute_error'`` where the gradients
+  are :math:`\pm 1`, the values predicted by a fitted :math:`h_m` are not
+  accurate enough: the tree can only output integer values. As a result, the
+  leaves values of the tree :math:`h_m` are modified once the tree is
+  fitted, such that the leaves values minimize the loss :math:`L_m`. The
+  update is loss-dependent: for the absolute error loss, the value of
+  a leaf is updated to the median of the samples in that leaf.
+
+Classification
+..............
+
+Gradient boosting for classification is very similar to the regression case.
+However, the sum of the trees :math:`F_M(x_i) = \sum_m h_m(x_i)` is not
+homogeneous to a prediction: it cannot be a class, since the trees predict
+continuous values.
+
+The mapping from the value :math:`F_M(x_i)` to a class or a probability is
+loss-dependent. For the log-loss, the probability that
+:math:`x_i` belongs to the positive class is modeled as :math:`p(y_i = 1 |
+x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid or expit function.
+
+For multiclass classification, K trees (for K classes) are built at each of
+the :math:`M` iterations. The probability that :math:`x_i` belongs to class
+k is modeled as a softmax of the :math:`F_{M,k}(x_i)` values.
+
+Note that even for a classification task, the :math:`h_m` sub-estimator is
+still a regressor, not a classifier. This is because the sub-estimators are
+trained to predict (negative) *gradients*, which are always continuous
+quantities.
+
+.. _gradient_boosting_loss:
+
+Loss Functions
+^^^^^^^^^^^^^^
+
+The following loss functions are supported and can be specified using
+the parameter ``loss``:
+
+  * Regression
+
+    * Squared error (``'squared_error'``): The natural choice for regression
+      due to its superior computational properties. The initial model is
+      given by the mean of the target values.
+    * Absolute error (``'absolute_error'``): A robust loss function for
+      regression. The initial model is given by the median of the
+      target values.
+    * Huber (``'huber'``): Another robust loss function that combines
+      least squares and least absolute deviation; use ``alpha`` to
+      control the sensitivity with regards to outliers (see [Friedman2001]_ for
+      more details).
+    * Quantile (``'quantile'``): A loss function for quantile regression.
+      Use ``0 < alpha < 1`` to specify the quantile. This loss function
+      can be used to create prediction intervals
+      (see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`).
+
+  * Classification
+
+    * Binary log-loss (``'log-loss'``): The binomial
+      negative log-likelihood loss function for binary classification. It provides
+      probability estimates.  The initial model is given by the
+      log odds-ratio.
+    * Multi-class log-loss (``'log-loss'``): The multinomial
+      negative log-likelihood loss function for multi-class classification with
+      ``n_classes`` mutually exclusive classes. It provides
+      probability estimates.  The initial model is given by the
+      prior probability of each class. At each iteration ``n_classes``
+      regression trees have to be constructed which makes GBRT rather
+      inefficient for data sets with a large number of classes.
+    * Exponential loss (``'exponential'``): The same loss function
+      as :class:`AdaBoostClassifier`. Less robust to mislabeled
+      examples than ``'log-loss'``; can only be used for binary
+      classification.
+
+.. _gradient_boosting_shrinkage:
+
+Shrinkage via learning rate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+[Friedman2001]_ proposed a simple regularization strategy that scales
+the contribution of each weak learner by a constant factor :math:`\nu`:
+
+.. math::
+
+    F_m(x) = F_{m-1}(x) + \nu h_m(x)
+
+The parameter :math:`\nu` is also called the **learning rate** because
+it scales the step length the gradient descent procedure; it can
+be set via the ``learning_rate`` parameter.
+
+The parameter ``learning_rate`` strongly interacts with the parameter
+``n_estimators``, the number of weak learners to fit. Smaller values
+of ``learning_rate`` require larger numbers of weak learners to maintain
+a constant training error. Empirical evidence suggests that small
+values of ``learning_rate`` favor better test error. [HTF]_
+recommend to set the learning rate to a small constant
+(e.g. ``learning_rate <= 0.1``) and choose ``n_estimators`` by early
+stopping. For a more detailed discussion of the interaction between
+``learning_rate`` and ``n_estimators`` see [R2007]_.
+
+Subsampling
+^^^^^^^^^^^^
+
+[Friedman2002]_ proposed stochastic gradient boosting, which combines gradient
+boosting with bootstrap averaging (bagging). At each iteration
+the base classifier is trained on a fraction ``subsample`` of
+the available training data. The subsample is drawn without replacement.
+A typical value of ``subsample`` is 0.5.
+
+The figure below illustrates the effect of shrinkage and subsampling
+on the goodness-of-fit of the model. We can clearly see that shrinkage
+outperforms no-shrinkage. Subsampling with shrinkage can further increase
+the accuracy of the model. Subsampling without shrinkage, on the other hand,
+does poorly.
+
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regularization_001.png
+   :target: ../auto_examples/ensemble/plot_gradient_boosting_regularization.html
+   :align: center
+   :scale: 75
+
+Another strategy to reduce the variance is by subsampling the features
+analogous to the random splits in :class:`RandomForestClassifier`.
+The number of subsampled features can be controlled via the ``max_features``
+parameter.
+
+.. note:: Using a small ``max_features`` value can significantly decrease the runtime.
+
+Stochastic gradient boosting allows to compute out-of-bag estimates of the
+test deviance by computing the improvement in deviance on the examples that are
+not included in the bootstrap sample (i.e. the out-of-bag examples).
+The improvements are stored in the attribute `oob_improvement_`.
+``oob_improvement_[i]`` holds the improvement in terms of the loss on the OOB samples
+if you add the i-th stage to the current predictions.
+Out-of-bag estimates can be used for model selection, for example to determine
+the optimal number of iterations. OOB estimates are usually very pessimistic thus
+we recommend to use cross-validation instead and only use OOB if cross-validation
+is too time consuming.
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`
+
+Interpretation with feature importance
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Individual decision trees can be interpreted easily by simply
+visualizing the tree structure. Gradient boosting models, however,
+comprise hundreds of regression trees thus they cannot be easily
+interpreted by visual inspection of the individual trees. Fortunately,
+a number of techniques have been proposed to summarize and interpret
+gradient boosting models.
+
+Often features do not contribute equally to predict the target
+response; in many situations the majority of the features are in fact
+irrelevant.
+When interpreting a model, the first question usually is: what are
+those important features and how do they contributing in predicting
+the target response?
+
+Individual decision trees intrinsically perform feature selection by selecting
+appropriate split points. This information can be used to measure the
+importance of each feature; the basic idea is: the more often a
+feature is used in the split points of a tree the more important that
+feature is. This notion of importance can be extended to decision tree
+ensembles by simply averaging the impurity-based feature importance of each tree (see
+:ref:`random_forest_feature_importance` for more details).
+
+The feature importance scores of a fit gradient boosting model can be
+accessed via the ``feature_importances_`` property::
+
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+
+    >>> X, y = make_hastie_10_2(random_state=0)
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+    ...     max_depth=1, random_state=0).fit(X, y)
+    >>> clf.feature_importances_
+    array([0.10..., 0.10..., 0.11..., ...
+
+Note that this computation of feature importance is based on entropy, and it
+is distinct from :func:`sklearn.inspection.permutation_importance` which is
+based on permutation of the features.
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
+
+.. topic:: References
+
+  .. [Friedman2001] Friedman, J.H. (2001). :doi:`Greedy function approximation: A gradient
+      boosting machine <10.1214/aos/1013203451>`.
+      Annals of Statistics, 29, 1189-1232.
+
+  .. [Friedman2002] Friedman, J.H. (2002). `Stochastic gradient boosting.
+     <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_.
+     Computational Statistics & Data Analysis, 38, 367-378.
+
+  .. [R2007] G. Ridgeway (2006). `Generalized Boosted Models: A guide to the gbm
+     package <https://cran.r-project.org/web/packages/gbm/vignettes/gbm.pdf>`_
 
 .. _forest:
 
-Forests of randomized trees
-===========================
+Random forests and other randomized tree ensembles
+===================================================
 
 The :mod:`sklearn.ensemble` module includes two averaging algorithms based
 on randomized :ref:`decision trees <tree>`: the RandomForest algorithm
@@ -149,6 +895,38 @@ an overall better model.
 In contrast to the original publication [B2001]_, the scikit-learn
 implementation combines classifiers by averaging their probabilistic
 prediction, instead of letting each classifier vote for a single class.
+
+A competitive alternative to random forests are
+:ref:`histogram_based_gradient_boosting` (HGBT) models:
+
+-  Building trees: Random forests typically rely on deep trees (that overfit
+   individually) which uses much computational resources, as they require
+   several splittings and evaluations of candidate splits. Boosting models
+   build shallow trees (that underfit individually) which are faster to fit
+   and predict.
+
+-  Sequential boosting: In HGBT, the decision trees are built sequentially,
+   where each tree is trained to correct the errors made by the previous ones.
+   This allows them to iteratively improve the model's performance using
+   relatively few trees. In contrast, random forests use a majority vote to
+   predict the outcome, which can require a larger number of trees to achieve
+   the same level of accuracy.
+
+-  Efficient binning: HGBT uses an efficient binning algorithm that can handle
+   large datasets with a high number of features. The binning algorithm can
+   pre-process the data to speed up the subsequent tree construction (see
+   :ref:`Why it's faster <Why_it's_faster>`). In contrast, the scikit-learn
+   implementation of random forests does not use binning and relies on exact
+   splitting, which can be computationally expensive.
+
+Overall, the computational cost of HGBT versus RF depends on the specific
+characteristics of the dataset and the modeling task. It's a good idea
+to try both models and compare their performance and computational efficiency
+on your specific problem to determine which model is the best fit.
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`
 
 Extremely Randomized Trees
 --------------------------
@@ -358,923 +1136,77 @@ estimation.
    representations of feature space, also these approaches focus also on
    dimensionality reduction.
 
+.. _bagging:
 
-.. _adaboost:
-
-AdaBoost
-========
-
-The module :mod:`sklearn.ensemble` includes the popular boosting algorithm
-AdaBoost, introduced in 1995 by Freund and Schapire [FS1995]_.
-
-The core principle of AdaBoost is to fit a sequence of weak learners (i.e.,
-models that are only slightly better than random guessing, such as small
-decision trees) on repeatedly modified versions of the data. The predictions
-from all of them are then combined through a weighted majority vote (or sum) to
-produce the final prediction. The data modifications at each so-called boosting
-iteration consist of applying weights :math:`w_1`, :math:`w_2`, ..., :math:`w_N`
-to each of the training samples. Initially, those weights are all set to
-:math:`w_i = 1/N`, so that the first step simply trains a weak learner on the
-original data. For each successive iteration, the sample weights are
-individually modified and the learning algorithm is reapplied to the reweighted
-data. At a given step, those training examples that were incorrectly predicted
-by the boosted model induced at the previous step have their weights increased,
-whereas the weights are decreased for those that were predicted correctly. As
-iterations proceed, examples that are difficult to predict receive
-ever-increasing influence. Each subsequent weak learner is thereby forced to
-concentrate on the examples that are missed by the previous ones in the sequence
-[HTF]_.
-
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_adaboost_hastie_10_2_001.png
-   :target: ../auto_examples/ensemble/plot_adaboost_hastie_10_2.html
-   :align: center
-   :scale: 75
-
-AdaBoost can be used both for classification and regression problems:
-
-  - For multi-class classification, :class:`AdaBoostClassifier` implements
-    AdaBoost-SAMME and AdaBoost-SAMME.R [ZZRH2009]_.
-
-  - For regression, :class:`AdaBoostRegressor` implements AdaBoost.R2 [D1997]_.
-
-Usage
------
-
-The following example shows how to fit an AdaBoost classifier with 100 weak
-learners::
-
-    >>> from sklearn.model_selection import cross_val_score
-    >>> from sklearn.datasets import load_iris
-    >>> from sklearn.ensemble import AdaBoostClassifier
-
-    >>> X, y = load_iris(return_X_y=True)
-    >>> clf = AdaBoostClassifier(n_estimators=100)
-    >>> scores = cross_val_score(clf, X, y, cv=5)
-    >>> scores.mean()
-    0.9...
-
-The number of weak learners is controlled by the parameter ``n_estimators``. The
-``learning_rate`` parameter controls the contribution of the weak learners in
-the final combination. By default, weak learners are decision stumps. Different
-weak learners can be specified through the ``estimator`` parameter.
-The main parameters to tune to obtain good results are ``n_estimators`` and
-the complexity of the base estimators (e.g., its depth ``max_depth`` or
-minimum required number of samples to consider a split ``min_samples_split``).
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_hastie_10_2.py` compares the
-   classification error of a decision stump, decision tree, and a boosted
-   decision stump using AdaBoost-SAMME and AdaBoost-SAMME.R.
-
- * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py` shows the performance
-   of AdaBoost-SAMME and AdaBoost-SAMME.R on a multi-class problem.
-
- * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py` shows the decision boundary
-   and decision function values for a non-linearly separable two-class problem
-   using AdaBoost-SAMME.
-
- * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_regression.py` demonstrates regression
-   with the AdaBoost.R2 algorithm.
-
-.. topic:: References
-
- .. [FS1995] Y. Freund, and R. Schapire, "A Decision-Theoretic Generalization of
-             On-Line Learning and an Application to Boosting", 1997.
-
- .. [ZZRH2009] J. Zhu, H. Zou, S. Rosset, T. Hastie. "Multi-class AdaBoost",
-               2009.
-
- .. [D1997] H. Drucker. "Improving Regressors using Boosting Techniques", 1997.
-
- .. [HTF] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
-              Statistical Learning Ed. 2", Springer, 2009.
-
-
-.. _gradient_boosting:
-
-Gradient Tree Boosting
+Bagging meta-estimator
 ======================
 
-`Gradient Tree Boosting <https://en.wikipedia.org/wiki/Gradient_boosting>`_
-or Gradient Boosted Decision Trees (GBDT) is a generalization
-of boosting to arbitrary differentiable loss functions, see the seminal work of
-[Friedman2001]_. GBDT is an accurate and effective off-the-shelf procedure that can be
-used for both regression and classification problems in a
-variety of areas including Web search ranking and ecology.
+In ensemble algorithms, bagging methods form a class of algorithms which build
+several instances of a black-box estimator on random subsets of the original
+training set and then aggregate their individual predictions to form a final
+prediction. These methods are used as a way to reduce the variance of a base
+estimator (e.g., a decision tree), by introducing randomization into its
+construction procedure and then making an ensemble out of it. In many cases,
+bagging methods constitute a very simple way to improve with respect to a
+single model, without making it necessary to adapt the underlying base
+algorithm. As they provide a way to reduce overfitting, bagging methods work
+best with strong and complex models (e.g., fully developed decision trees), in
+contrast with boosting methods which usually work best with weak models (e.g.,
+shallow decision trees).
 
-The module :mod:`sklearn.ensemble` provides methods
-for both classification and regression via gradient boosted decision
-trees.
+Bagging methods come in many flavours but mostly differ from each other by the
+way they draw random subsets of the training set:
 
-.. note::
+  * When random subsets of the dataset are drawn as random subsets of the
+    samples, then this algorithm is known as Pasting [B1999]_.
 
-  Scikit-learn 0.21 introduces two new implementations of
-  gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
-  and :class:`HistGradientBoostingRegressor`, inspired by
-  `LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
+  * When samples are drawn with replacement, then the method is known as
+    Bagging [B1996]_.
 
-  These histogram-based estimators can be **orders of magnitude faster**
-  than :class:`GradientBoostingClassifier` and
-  :class:`GradientBoostingRegressor` when the number of samples is larger
-  than tens of thousands of samples.
+  * When random subsets of the dataset are drawn as random subsets of
+    the features, then the method is known as Random Subspaces [H1998]_.
 
-  They also have built-in support for missing values, which avoids the need
-  for an imputer.
+  * Finally, when base estimators are built on subsets of both samples and
+    features, then the method is known as Random Patches [LG2012]_.
 
-  These estimators are described in more detail below in
-  :ref:`histogram_based_gradient_boosting`.
+In scikit-learn, bagging methods are offered as a unified
+:class:`BaggingClassifier` meta-estimator  (resp. :class:`BaggingRegressor`),
+taking as input a user-specified estimator along with parameters
+specifying the strategy to draw random subsets. In particular, ``max_samples``
+and ``max_features`` control the size of the subsets (in terms of samples and
+features), while ``bootstrap`` and ``bootstrap_features`` control whether
+samples and features are drawn with or without replacement. When using a subset
+of the available samples the generalization accuracy can be estimated with the
+out-of-bag samples by setting ``oob_score=True``. As an example, the
+snippet below illustrates how to instantiate a bagging ensemble of
+:class:`~sklearn.neighbors.KNeighborsClassifier` estimators, each built on random
+subsets of 50% of the samples and 50% of the features.
 
-  The following guide focuses on :class:`GradientBoostingClassifier` and
-  :class:`GradientBoostingRegressor`, which might be preferred for small
-  sample sizes since binning may lead to split points that are too approximate
-  in this setting.
-
-
-The usage and the parameters of :class:`GradientBoostingClassifier` and
-:class:`GradientBoostingRegressor` are described below. The 2 most important
-parameters of these estimators are `n_estimators` and `learning_rate`.
-
-Classification
----------------
-
-:class:`GradientBoostingClassifier` supports both binary and multi-class
-classification.
-The following example shows how to fit a gradient boosting classifier
-with 100 decision stumps as weak learners::
-
-    >>> from sklearn.datasets import make_hastie_10_2
-    >>> from sklearn.ensemble import GradientBoostingClassifier
-
-    >>> X, y = make_hastie_10_2(random_state=0)
-    >>> X_train, X_test = X[:2000], X[2000:]
-    >>> y_train, y_test = y[:2000], y[2000:]
-
-    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
-    ...     max_depth=1, random_state=0).fit(X_train, y_train)
-    >>> clf.score(X_test, y_test)
-    0.913...
-
-The number of weak learners (i.e. regression trees) is controlled by the
-parameter ``n_estimators``; :ref:`The size of each tree
-<gradient_boosting_tree_size>` can be controlled either by setting the tree
-depth via ``max_depth`` or by setting the number of leaf nodes via
-``max_leaf_nodes``. The ``learning_rate`` is a hyper-parameter in the range
-(0.0, 1.0] that controls overfitting via :ref:`shrinkage
-<gradient_boosting_shrinkage>` .
-
-.. note::
-
-   Classification with more than 2 classes requires the induction
-   of ``n_classes`` regression trees at each iteration,
-   thus, the total number of induced trees equals
-   ``n_classes * n_estimators``. For datasets with a large number
-   of classes we strongly recommend to use
-   :class:`HistGradientBoostingClassifier` as an alternative to
-   :class:`GradientBoostingClassifier` .
-
-Regression
-----------
-
-:class:`GradientBoostingRegressor` supports a number of
-:ref:`different loss functions <gradient_boosting_loss>`
-for regression which can be specified via the argument
-``loss``; the default loss function for regression is squared error
-(``'squared_error'``).
-
-::
-
-    >>> import numpy as np
-    >>> from sklearn.metrics import mean_squared_error
-    >>> from sklearn.datasets import make_friedman1
-    >>> from sklearn.ensemble import GradientBoostingRegressor
-
-    >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
-    >>> X_train, X_test = X[:200], X[200:]
-    >>> y_train, y_test = y[:200], y[200:]
-    >>> est = GradientBoostingRegressor(
-    ...     n_estimators=100, learning_rate=0.1, max_depth=1, random_state=0,
-    ...     loss='squared_error'
-    ... ).fit(X_train, y_train)
-    >>> mean_squared_error(y_test, est.predict(X_test))
-    5.00...
-
-The figure below shows the results of applying :class:`GradientBoostingRegressor`
-with least squares loss and 500 base learners to the diabetes dataset
-(:func:`sklearn.datasets.load_diabetes`).
-The plot shows the train and test error at each iteration.
-The train error at each iteration is stored in the
-:attr:`~GradientBoostingRegressor.train_score_` attribute
-of the gradient boosting model. The test error at each iterations can be obtained
-via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
-generator that yields the predictions at each stage. Plots like these can be used
-to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
-
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regression_001.png
-   :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
-   :align: center
-   :scale: 75
+    >>> from sklearn.ensemble import BaggingClassifier
+    >>> from sklearn.neighbors import KNeighborsClassifier
+    >>> bagging = BaggingClassifier(KNeighborsClassifier(),
+    ...                             max_samples=0.5, max_features=0.5)
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
- * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py`
-
-.. _gradient_boosting_warm_start:
-
-Fitting additional weak-learners
---------------------------------
-
-Both :class:`GradientBoostingRegressor` and :class:`GradientBoostingClassifier`
-support ``warm_start=True`` which allows you to add more estimators to an already
-fitted model.
-
-::
-
-  >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and new nr of trees
-  >>> _ = est.fit(X_train, y_train) # fit additional 100 trees to est
-  >>> mean_squared_error(y_test, est.predict(X_test))
-  3.84...
-
-.. _gradient_boosting_tree_size:
-
-Controlling the tree size
--------------------------
-
-The size of the regression tree base learners defines the level of variable
-interactions that can be captured by the gradient boosting model. In general,
-a tree of depth ``h`` can capture interactions of order ``h`` .
-There are two ways in which the size of the individual regression trees can
-be controlled.
-
-If you specify ``max_depth=h`` then complete binary trees
-of depth ``h`` will be grown. Such trees will have (at most) ``2**h`` leaf nodes
-and ``2**h - 1`` split nodes.
-
-Alternatively, you can control the tree size by specifying the number of
-leaf nodes via the parameter ``max_leaf_nodes``. In this case,
-trees will be grown using best-first search where nodes with the highest improvement
-in impurity will be expanded first.
-A tree with ``max_leaf_nodes=k`` has ``k - 1`` split nodes and thus can
-model interactions of up to order ``max_leaf_nodes - 1`` .
-
-We found that ``max_leaf_nodes=k`` gives comparable results to ``max_depth=k-1``
-but is significantly faster to train at the expense of a slightly higher
-training error.
-The parameter ``max_leaf_nodes`` corresponds to the variable ``J`` in the
-chapter on gradient boosting in [Friedman2001]_ and is related to the parameter
-``interaction.depth`` in R's gbm package where ``max_leaf_nodes == interaction.depth + 1`` .
-
-Mathematical formulation
--------------------------
-
-We first present GBRT for regression, and then detail the classification
-case.
-
-Regression
-^^^^^^^^^^
-
-GBRT regressors are additive models whose prediction :math:`\hat{y}_i` for a
-given input :math:`x_i` is of the following form:
-
-  .. math::
-
-    \hat{y}_i = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
-
-where the :math:`h_m` are estimators called *weak learners* in the context
-of boosting. Gradient Tree Boosting uses :ref:`decision tree regressors
-<tree>` of fixed size as weak learners. The constant M corresponds to the
-`n_estimators` parameter.
-
-Similar to other boosting algorithms, a GBRT is built in a greedy fashion:
-
-  .. math::
-
-    F_m(x) = F_{m-1}(x) + h_m(x),
-
-where the newly added tree :math:`h_m` is fitted in order to minimize a sum
-of losses :math:`L_m`, given the previous ensemble :math:`F_{m-1}`:
-
-  .. math::
-
-    h_m =  \arg\min_{h} L_m = \arg\min_{h} \sum_{i=1}^{n}
-    l(y_i, F_{m-1}(x_i) + h(x_i)),
-
-where :math:`l(y_i, F(x_i))` is defined by the `loss` parameter, detailed
-in the next section.
-
-By default, the initial model :math:`F_{0}` is chosen as the constant that
-minimizes the loss: for a least-squares loss, this is the empirical mean of
-the target values. The initial model can also be specified via the ``init``
-argument.
-
-Using a first-order Taylor approximation, the value of :math:`l` can be
-approximated as follows:
-
-  .. math::
-
-    l(y_i, F_{m-1}(x_i) + h_m(x_i)) \approx
-    l(y_i, F_{m-1}(x_i))
-    + h_m(x_i)
-    \left[ \frac{\partial l(y_i, F(x_i))}{\partial F(x_i)} \right]_{F=F_{m - 1}}.
-
-.. note::
-
-  Briefly, a first-order Taylor approximation says that
-  :math:`l(z) \approx l(a) + (z - a) \frac{\partial l}{\partial z}(a)`.
-  Here, :math:`z` corresponds to :math:`F_{m - 1}(x_i) + h_m(x_i)`, and
-  :math:`a` corresponds to :math:`F_{m-1}(x_i)`
-
-The quantity :math:`\left[ \frac{\partial l(y_i, F(x_i))}{\partial F(x_i)}
-\right]_{F=F_{m - 1}}` is the derivative of the loss with respect to its
-second parameter, evaluated at :math:`F_{m-1}(x)`. It is easy to compute for
-any given :math:`F_{m - 1}(x_i)` in a closed form since the loss is
-differentiable. We will denote it by :math:`g_i`.
-
-Removing the constant terms, we have:
-
-  .. math::
-
-    h_m \approx \arg\min_{h} \sum_{i=1}^{n} h(x_i) g_i
-
-This is minimized if :math:`h(x_i)` is fitted to predict a value that is
-proportional to the negative gradient :math:`-g_i`. Therefore, at each
-iteration, **the estimator** :math:`h_m` **is fitted to predict the negative
-gradients of the samples**. The gradients are updated at each iteration.
-This can be considered as some kind of gradient descent in a functional
-space.
-
-.. note::
-
-  For some losses, e.g. ``'absolute_error'`` where the gradients
-  are :math:`\pm 1`, the values predicted by a fitted :math:`h_m` are not
-  accurate enough: the tree can only output integer values. As a result, the
-  leaves values of the tree :math:`h_m` are modified once the tree is
-  fitted, such that the leaves values minimize the loss :math:`L_m`. The
-  update is loss-dependent: for the absolute error loss, the value of
-  a leaf is updated to the median of the samples in that leaf.
-
-Classification
-^^^^^^^^^^^^^^
-
-Gradient boosting for classification is very similar to the regression case.
-However, the sum of the trees :math:`F_M(x_i) = \sum_m h_m(x_i)` is not
-homogeneous to a prediction: it cannot be a class, since the trees predict
-continuous values.
-
-The mapping from the value :math:`F_M(x_i)` to a class or a probability is
-loss-dependent. For the log-loss, the probability that
-:math:`x_i` belongs to the positive class is modeled as :math:`p(y_i = 1 |
-x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid or expit function.
-
-For multiclass classification, K trees (for K classes) are built at each of
-the :math:`M` iterations. The probability that :math:`x_i` belongs to class
-k is modeled as a softmax of the :math:`F_{M,k}(x_i)` values.
-
-Note that even for a classification task, the :math:`h_m` sub-estimator is
-still a regressor, not a classifier. This is because the sub-estimators are
-trained to predict (negative) *gradients*, which are always continuous
-quantities.
-
-.. _gradient_boosting_loss:
-
-Loss Functions
---------------
-
-The following loss functions are supported and can be specified using
-the parameter ``loss``:
-
-  * Regression
-
-    * Squared error (``'squared_error'``): The natural choice for regression
-      due to its superior computational properties. The initial model is
-      given by the mean of the target values.
-    * Absolute error (``'absolute_error'``): A robust loss function for
-      regression. The initial model is given by the median of the
-      target values.
-    * Huber (``'huber'``): Another robust loss function that combines
-      least squares and least absolute deviation; use ``alpha`` to
-      control the sensitivity with regards to outliers (see [Friedman2001]_ for
-      more details).
-    * Quantile (``'quantile'``): A loss function for quantile regression.
-      Use ``0 < alpha < 1`` to specify the quantile. This loss function
-      can be used to create prediction intervals
-      (see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`).
-
-  * Classification
-
-    * Binary log-loss (``'log-loss'``): The binomial
-      negative log-likelihood loss function for binary classification. It provides
-      probability estimates.  The initial model is given by the
-      log odds-ratio.
-    * Multi-class log-loss (``'log-loss'``): The multinomial
-      negative log-likelihood loss function for multi-class classification with
-      ``n_classes`` mutually exclusive classes. It provides
-      probability estimates.  The initial model is given by the
-      prior probability of each class. At each iteration ``n_classes``
-      regression trees have to be constructed which makes GBRT rather
-      inefficient for data sets with a large number of classes.
-    * Exponential loss (``'exponential'``): The same loss function
-      as :class:`AdaBoostClassifier`. Less robust to mislabeled
-      examples than ``'log-loss'``; can only be used for binary
-      classification.
-
-.. _gradient_boosting_shrinkage:
-
-Shrinkage via learning rate
----------------------------
-
-[Friedman2001]_ proposed a simple regularization strategy that scales
-the contribution of each weak learner by a constant factor :math:`\nu`:
-
-.. math::
-
-    F_m(x) = F_{m-1}(x) + \nu h_m(x)
-
-The parameter :math:`\nu` is also called the **learning rate** because
-it scales the step length the gradient descent procedure; it can
-be set via the ``learning_rate`` parameter.
-
-The parameter ``learning_rate`` strongly interacts with the parameter
-``n_estimators``, the number of weak learners to fit. Smaller values
-of ``learning_rate`` require larger numbers of weak learners to maintain
-a constant training error. Empirical evidence suggests that small
-values of ``learning_rate`` favor better test error. [HTF]_
-recommend to set the learning rate to a small constant
-(e.g. ``learning_rate <= 0.1``) and choose ``n_estimators`` by early
-stopping. For a more detailed discussion of the interaction between
-``learning_rate`` and ``n_estimators`` see [R2007]_.
-
-Subsampling
------------
-
-[Friedman2002]_ proposed stochastic gradient boosting, which combines gradient
-boosting with bootstrap averaging (bagging). At each iteration
-the base classifier is trained on a fraction ``subsample`` of
-the available training data. The subsample is drawn without replacement.
-A typical value of ``subsample`` is 0.5.
-
-The figure below illustrates the effect of shrinkage and subsampling
-on the goodness-of-fit of the model. We can clearly see that shrinkage
-outperforms no-shrinkage. Subsampling with shrinkage can further increase
-the accuracy of the model. Subsampling without shrinkage, on the other hand,
-does poorly.
-
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regularization_001.png
-   :target: ../auto_examples/ensemble/plot_gradient_boosting_regularization.html
-   :align: center
-   :scale: 75
-
-Another strategy to reduce the variance is by subsampling the features
-analogous to the random splits in :class:`RandomForestClassifier`.
-The number of subsampled features can be controlled via the ``max_features``
-parameter.
-
-.. note:: Using a small ``max_features`` value can significantly decrease the runtime.
-
-Stochastic gradient boosting allows to compute out-of-bag estimates of the
-test deviance by computing the improvement in deviance on the examples that are
-not included in the bootstrap sample (i.e. the out-of-bag examples).
-The improvements are stored in the attribute
-:attr:`~GradientBoostingRegressor.oob_improvement_`. ``oob_improvement_[i]`` holds
-the improvement in terms of the loss on the OOB samples if you add the i-th stage
-to the current predictions.
-Out-of-bag estimates can be used for model selection, for example to determine
-the optimal number of iterations. OOB estimates are usually very pessimistic thus
-we recommend to use cross-validation instead and only use OOB if cross-validation
-is too time consuming.
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`
- * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py`
- * :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`
-
-Interpretation with feature importance
---------------------------------------
-
-Individual decision trees can be interpreted easily by simply
-visualizing the tree structure. Gradient boosting models, however,
-comprise hundreds of regression trees thus they cannot be easily
-interpreted by visual inspection of the individual trees. Fortunately,
-a number of techniques have been proposed to summarize and interpret
-gradient boosting models.
-
-Often features do not contribute equally to predict the target
-response; in many situations the majority of the features are in fact
-irrelevant.
-When interpreting a model, the first question usually is: what are
-those important features and how do they contributing in predicting
-the target response?
-
-Individual decision trees intrinsically perform feature selection by selecting
-appropriate split points. This information can be used to measure the
-importance of each feature; the basic idea is: the more often a
-feature is used in the split points of a tree the more important that
-feature is. This notion of importance can be extended to decision tree
-ensembles by simply averaging the impurity-based feature importance of each tree (see
-:ref:`random_forest_feature_importance` for more details).
-
-The feature importance scores of a fit gradient boosting model can be
-accessed via the ``feature_importances_`` property::
-
-    >>> from sklearn.datasets import make_hastie_10_2
-    >>> from sklearn.ensemble import GradientBoostingClassifier
-
-    >>> X, y = make_hastie_10_2(random_state=0)
-    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
-    ...     max_depth=1, random_state=0).fit(X, y)
-    >>> clf.feature_importances_
-    array([0.10..., 0.10..., 0.11..., ...
-
-Note that this computation of feature importance is based on entropy, and it
-is distinct from :func:`sklearn.inspection.permutation_importance` which is
-based on permutation of the features.
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_bias_variance.py`
 
 .. topic:: References
 
-  .. [Friedman2001] Friedman, J.H. (2001). :doi:`Greedy function approximation: A gradient
-      boosting machine <10.1214/aos/1013203451>`.
-      Annals of Statistics, 29, 1189-1232.
+  .. [B1999] L. Breiman, "Pasting small votes for classification in large
+         databases and on-line", Machine Learning, 36(1), 85-103, 1999.
 
-  .. [Friedman2002] Friedman, J.H. (2002). `Stochastic gradient boosting.
-     <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_.
-     Computational Statistics & Data Analysis, 38, 367-378.
+  .. [B1996] L. Breiman, "Bagging predictors", Machine Learning, 24(2),
+         123-140, 1996.
 
-  .. [R2007] G. Ridgeway (2006). `Generalized Boosted Models: A guide to the gbm
-     package <https://cran.r-project.org/web/packages/gbm/vignettes/gbm.pdf>`_
+  .. [H1998] T. Ho, "The random subspace method for constructing decision
+         forests", Pattern Analysis and Machine Intelligence, 20(8), 832-844,
+         1998.
 
-.. _histogram_based_gradient_boosting:
+  .. [LG2012] G. Louppe and P. Geurts, "Ensembles on Random Patches",
+         Machine Learning and Knowledge Discovery in Databases, 346-361, 2012.
 
-Histogram-Based Gradient Boosting
-=================================
 
-Scikit-learn 0.21 introduced two new implementations of
-gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
-and :class:`HistGradientBoostingRegressor`, inspired by
-`LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
-
-These histogram-based estimators can be **orders of magnitude faster**
-than :class:`GradientBoostingClassifier` and
-:class:`GradientBoostingRegressor` when the number of samples is larger
-than tens of thousands of samples.
-
-They also have built-in support for missing values, which avoids the need
-for an imputer.
-
-These fast estimators first bin the input samples ``X`` into
-integer-valued bins (typically 256 bins) which tremendously reduces the
-number of splitting points to consider, and allows the algorithm to
-leverage integer-based data structures (histograms) instead of relying on
-sorted continuous values when building the trees. The API of these
-estimators is slightly different, and some of the features from
-:class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
-are not yet supported, for instance some loss functions.
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
-
-Usage
------
-
-Most of the parameters are unchanged from
-:class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`.
-One exception is the ``max_iter`` parameter that replaces ``n_estimators``, and
-controls the number of iterations of the boosting process::
-
-  >>> from sklearn.ensemble import HistGradientBoostingClassifier
-  >>> from sklearn.datasets import make_hastie_10_2
-
-  >>> X, y = make_hastie_10_2(random_state=0)
-  >>> X_train, X_test = X[:2000], X[2000:]
-  >>> y_train, y_test = y[:2000], y[2000:]
-
-  >>> clf = HistGradientBoostingClassifier(max_iter=100).fit(X_train, y_train)
-  >>> clf.score(X_test, y_test)
-  0.8965
-
-Available losses for regression are 'squared_error',
-'absolute_error', which is less sensitive to outliers, and
-'poisson', which is well suited to model counts and frequencies. For
-classification, 'log_loss' is the only option. For binary classification it uses the
-binary log loss, also kown as binomial deviance or binary cross-entropy. For
-`n_classes >= 3`, it uses the multi-class log loss function, with multinomial deviance
-and categorical cross-entropy as alternative names. The appropriate loss version is
-selected based on :term:`y` passed to :term:`fit`.
-
-The size of the trees can be controlled through the ``max_leaf_nodes``,
-``max_depth``, and ``min_samples_leaf`` parameters.
-
-The number of bins used to bin the data is controlled with the ``max_bins``
-parameter. Using less bins acts as a form of regularization. It is
-generally recommended to use as many bins as possible, which is the default.
-
-The ``l2_regularization`` parameter is a regularizer on the loss function and
-corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
-
-Note that **early-stopping is enabled by default if the number of samples is
-larger than 10,000**. The early-stopping behaviour is controlled via the
-``early_stopping``, ``scoring``, ``validation_fraction``,
-``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
-using an arbitrary :term:`scorer`, or just the training or validation loss.
-Note that for technical reasons, using a scorer is significantly slower than
-using the loss. By default, early-stopping is performed if there are at least
-10,000 samples in the training set, using the validation loss.
-
-Missing values support
-----------------------
-
-:class:`HistGradientBoostingClassifier` and
-:class:`HistGradientBoostingRegressor` have built-in support for missing
-values (NaNs).
-
-During training, the tree grower learns at each split point whether samples
-with missing values should go to the left or right child, based on the
-potential gain. When predicting, samples with missing values are assigned to
-the left or right child consequently::
-
-  >>> from sklearn.ensemble import HistGradientBoostingClassifier
-  >>> import numpy as np
-
-  >>> X = np.array([0, 1, 2, np.nan]).reshape(-1, 1)
-  >>> y = [0, 0, 1, 1]
-
-  >>> gbdt = HistGradientBoostingClassifier(min_samples_leaf=1).fit(X, y)
-  >>> gbdt.predict(X)
-  array([0, 0, 1, 1])
-
-When the missingness pattern is predictive, the splits can be done on
-whether the feature value is missing or not::
-
-  >>> X = np.array([0, np.nan, 1, 2, np.nan]).reshape(-1, 1)
-  >>> y = [0, 1, 0, 0, 1]
-  >>> gbdt = HistGradientBoostingClassifier(min_samples_leaf=1,
-  ...                                       max_depth=2,
-  ...                                       learning_rate=1,
-  ...                                       max_iter=1).fit(X, y)
-  >>> gbdt.predict(X)
-  array([0, 1, 0, 0, 1])
-
-If no missing values were encountered for a given feature during training,
-then samples with missing values are mapped to whichever child has the most
-samples.
-
-.. _sw_hgbdt:
-
-Sample weight support
----------------------
-
-:class:`HistGradientBoostingClassifier` and
-:class:`HistGradientBoostingRegressor` sample support weights during
-:term:`fit`.
-
-The following toy example demonstrates how the model ignores the samples with
-zero sample weights:
-
-    >>> X = [[1, 0],
-    ...      [1, 0],
-    ...      [1, 0],
-    ...      [0, 1]]
-    >>> y = [0, 0, 1, 0]
-    >>> # ignore the first 2 training samples by setting their weight to 0
-    >>> sample_weight = [0, 0, 1, 1]
-    >>> gb = HistGradientBoostingClassifier(min_samples_leaf=1)
-    >>> gb.fit(X, y, sample_weight=sample_weight)
-    HistGradientBoostingClassifier(...)
-    >>> gb.predict([[1, 0]])
-    array([1])
-    >>> gb.predict_proba([[1, 0]])[0, 1]
-    0.99...
-
-As you can see, the `[1, 0]` is comfortably classified as `1` since the first
-two samples are ignored due to their sample weights.
-
-Implementation detail: taking sample weights into account amounts to
-multiplying the gradients (and the hessians) by the sample weights. Note that
-the binning stage (specifically the quantiles computation) does not take the
-weights into account.
-
-.. _categorical_support_gbdt:
-
-Categorical Features Support
-----------------------------
-
-:class:`HistGradientBoostingClassifier` and
-:class:`HistGradientBoostingRegressor` have native support for categorical
-features: they can consider splits on non-ordered, categorical data.
-
-For datasets with categorical features, using the native categorical support
-is often better than relying on one-hot encoding
-(:class:`~sklearn.preprocessing.OneHotEncoder`), because one-hot encoding
-requires more tree depth to achieve equivalent splits. It is also usually
-better to rely on the native categorical support rather than to treat
-categorical features as continuous (ordinal), which happens for ordinal-encoded
-categorical data, since categories are nominal quantities where order does not
-matter.
-
-To enable categorical support, a boolean mask can be passed to the
-`categorical_features` parameter, indicating which feature is categorical. In
-the following, the first feature will be treated as categorical and the
-second feature as numerical::
-
-  >>> gbdt = HistGradientBoostingClassifier(categorical_features=[True, False])
-
-Equivalently, one can pass a list of integers indicating the indices of the
-categorical features::
-
-  >>> gbdt = HistGradientBoostingClassifier(categorical_features=[0])
-
-The cardinality of each categorical feature should be less than the `max_bins`
-parameter, and each categorical feature is expected to be encoded in
-`[0, max_bins - 1]`. To that end, it might be useful to pre-process the data
-with an :class:`~sklearn.preprocessing.OrdinalEncoder` as done in
-:ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`.
-
-If there are missing values during training, the missing values will be
-treated as a proper category. If there are no missing values during training,
-then at prediction time, missing values are mapped to the child node that has
-the most samples (just like for continuous features). When predicting,
-categories that were not seen during fit time will be treated as missing
-values.
-
-**Split finding with categorical features**: The canonical way of considering
-categorical splits in a tree is to consider
-all of the :math:`2^{K - 1} - 1` partitions, where :math:`K` is the number of
-categories. This can quickly become prohibitive when :math:`K` is large.
-Fortunately, since gradient boosting trees are always regression trees (even
-for classification problems), there exist a faster strategy that can yield
-equivalent splits. First, the categories of a feature are sorted according to
-the variance of the target, for each category `k`. Once the categories are
-sorted, one can consider *continuous partitions*, i.e. treat the categories
-as if they were ordered continuous values (see Fisher [Fisher1958]_ for a
-formal proof). As a result, only :math:`K - 1` splits need to be considered
-instead of :math:`2^{K - 1} - 1`. The initial sorting is a
-:math:`\mathcal{O}(K \log(K))` operation, leading to a total complexity of
-:math:`\mathcal{O}(K \log(K) + K)`, instead of :math:`\mathcal{O}(2^K)`.
-
-.. topic:: Examples:
-
-  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`
-
-.. _monotonic_cst_gbdt:
-
-Monotonic Constraints
----------------------
-
-Depending on the problem at hand, you may have prior knowledge indicating
-that a given feature should in general have a positive (or negative) effect
-on the target value. For example, all else being equal, a higher credit
-score should increase the probability of getting approved for a loan.
-Monotonic constraints allow you to incorporate such prior knowledge into the
-model.
-
-For a predictor :math:`F` with two features:
-
- - a **monotonic increase constraint** is a constraint of the form:
-    .. math::
-        x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)
-
- - a **monotonic decrease constraint** is a constraint of the form:
-    .. math::
-        x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)
-
-You can specify a monotonic constraint on each feature using the
-`monotonic_cst` parameter. For each feature, a value of 0 indicates no
-constraint, while 1 and -1 indicate a monotonic increase and
-monotonic decrease constraint, respectively::
-
-  >>> from sklearn.ensemble import HistGradientBoostingRegressor
-
-  ... # monotonic increase, monotonic decrease, and no constraint on the 3 features
-  >>> gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1, 0])
-
-In a binary classification context, imposing a monotonic increase (decrease) constraint means that higher values of the feature are supposed
-to have a positive (negative) effect on the probability of samples
-to belong to the positive class.
-
-Nevertheless, monotonic constraints only marginally constrain feature effects on the output.
-For instance, monotonic increase and decrease constraints cannot be used to enforce the
-following modelling constraint:
-
-    .. math::
-        x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')
-
-Also, monotonic constraints are not supported for multiclass classification.
-
-.. note::
-    Since categories are unordered quantities, it is not possible to enforce
-    monotonic constraints on categorical features.
-
-.. topic:: Examples:
-
-  * :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
-
-.. _interaction_cst_hgbt:
-
-Interaction constraints
------------------------
-
-A priori, the histogram gradient boosting trees are allowed to use any feature
-to split a node into child nodes. This creates so called interactions between
-features, i.e. usage of different features as split along a branch. Sometimes,
-one wants to restrict the possible interactions, see [Mayer2022]_. This can be
-done by the parameter ``interaction_cst``, where one can specify the indices
-of features that are allowed to interact.
-For instance, with 3 features in total, ``interaction_cst=[{0}, {1}, {2}]``
-forbids all interactions.
-The constraints ``[{0, 1}, {1, 2}]`` specifies two groups of possibly
-interacting features. Features 0 and 1 may interact with each other, as well
-as features 1 and 2. But note that features 0 and 2 are forbidden to interact.
-The following depicts a tree and the possible splits of the tree:
-
-.. code-block:: none
-
-      1      <- Both constraint groups could be applied from now on
-     / \
-    1   2    <- Left split still fulfills both constraint groups.
-   / \ / \      Right split at feature 2 has only group {1, 2} from now on.
-
-LightGBM uses the same logic for overlapping groups.
-
-Note that features not listed in ``interaction_cst`` are automatically
-assigned an interaction group for themselves. With again 3 features, this
-means that ``[{0}]`` is equivalent to ``[{0}, {1, 2}]``.
-
-.. topic:: References
-
-  .. [Mayer2022] M. Mayer, S.C. Bourassa, M. Hoesli, and D.F. Scognamiglio.
-     2022. :doi:`Machine Learning Applications to Land and Structure Valuation
-     <10.3390/jrfm15050193>`.
-     Journal of Risk and Financial Management 15, no. 5: 193
-
-Low-level parallelism
----------------------
-
-:class:`HistGradientBoostingClassifier` and
-:class:`HistGradientBoostingRegressor` have implementations that use OpenMP
-for parallelization through Cython. For more details on how to control the
-number of threads, please refer to our :ref:`parallelism` notes.
-
-The following parts are parallelized:
-
-- mapping samples from real values to integer-valued bins (finding the bin
-  thresholds is however sequential)
-- building histograms is parallelized over features
-- finding the best split point at a node is parallelized over features
-- during fit, mapping samples into the left and right children is
-  parallelized over samples
-- gradient and hessians computations are parallelized over samples
-- predicting is parallelized over samples
-
-Why it's faster
----------------
-
-The bottleneck of a gradient boosting procedure is building the decision
-trees. Building a traditional decision tree (as in the other GBDTs
-:class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`)
-requires sorting the samples at each node (for
-each feature). Sorting is needed so that the potential gain of a split point
-can be computed efficiently. Splitting a single node has thus a complexity
-of :math:`\mathcal{O}(n_\text{features} \times n \log(n))` where :math:`n`
-is the number of samples at the node.
-
-:class:`HistGradientBoostingClassifier` and
-:class:`HistGradientBoostingRegressor`, in contrast, do not require sorting the
-feature values and instead use a data-structure called a histogram, where the
-samples are implicitly ordered. Building a histogram has a
-:math:`\mathcal{O}(n)` complexity, so the node splitting procedure has a
-:math:`\mathcal{O}(n_\text{features} \times n)` complexity, much smaller
-than the previous one. In addition, instead of considering :math:`n` split
-points, we here consider only ``max_bins`` split points, which is much
-smaller.
-
-In order to build histograms, the input data `X` needs to be binned into
-integer-valued bins. This binning procedure does require sorting the feature
-values, but it only happens once at the very beginning of the boosting process
-(not at each node, like in :class:`GradientBoostingClassifier` and
-:class:`GradientBoostingRegressor`).
-
-Finally, many parts of the implementation of
-:class:`HistGradientBoostingClassifier` and
-:class:`HistGradientBoostingRegressor` are parallelized.
-
-.. topic:: References
-
-  .. [XGBoost] Tianqi Chen, Carlos Guestrin, :arxiv:`"XGBoost: A Scalable Tree
-     Boosting System" <1603.02754>`
-
-  .. [LightGBM] Ke et. al. `"LightGBM: A Highly Efficient Gradient
-     BoostingDecision Tree" <https://papers.nips.cc/paper/
-     6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_
-
-  .. [Fisher1958] Fisher, W.D. (1958). `"On Grouping for Maximum Homogeneity"
-     <http://csiss.ncgia.ucsb.edu/SPACE/workshops/2004/SAC/files/fisher.pdf>`_
-     Journal of the American Statistical Association, 53, 789-798.
 
 .. _voting_classifier:
 
@@ -1609,3 +1541,97 @@ computationally expensive.
 
    .. [W1992] Wolpert, David H. "Stacked generalization." Neural networks 5.2
       (1992): 241-259.
+
+
+
+.. _adaboost:
+
+AdaBoost
+========
+
+The module :mod:`sklearn.ensemble` includes the popular boosting algorithm
+AdaBoost, introduced in 1995 by Freund and Schapire [FS1995]_.
+
+The core principle of AdaBoost is to fit a sequence of weak learners (i.e.,
+models that are only slightly better than random guessing, such as small
+decision trees) on repeatedly modified versions of the data. The predictions
+from all of them are then combined through a weighted majority vote (or sum) to
+produce the final prediction. The data modifications at each so-called boosting
+iteration consists of applying weights :math:`w_1`, :math:`w_2`, ..., :math:`w_N`
+to each of the training samples. Initially, those weights are all set to
+:math:`w_i = 1/N`, so that the first step simply trains a weak learner on the
+original data. For each successive iteration, the sample weights are
+individually modified and the learning algorithm is reapplied to the reweighted
+data. At a given step, those training examples that were incorrectly predicted
+by the boosted model induced at the previous step have their weights increased,
+whereas the weights are decreased for those that were predicted correctly. As
+iterations proceed, examples that are difficult to predict receive
+ever-increasing influence. Each subsequent weak learner is thereby forced to
+concentrate on the examples that are missed by the previous ones in the sequence
+[HTF]_.
+
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_adaboost_hastie_10_2_001.png
+   :target: ../auto_examples/ensemble/plot_adaboost_hastie_10_2.html
+   :align: center
+   :scale: 75
+
+AdaBoost can be used both for classification and regression problems:
+
+  - For multi-class classification, :class:`AdaBoostClassifier` implements
+    AdaBoost-SAMME and AdaBoost-SAMME.R [ZZRH2009]_.
+
+  - For regression, :class:`AdaBoostRegressor` implements AdaBoost.R2 [D1997]_.
+
+Usage
+-----
+
+The following example shows how to fit an AdaBoost classifier with 100 weak
+learners::
+
+    >>> from sklearn.model_selection import cross_val_score
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.ensemble import AdaBoostClassifier
+
+    >>> X, y = load_iris(return_X_y=True)
+    >>> clf = AdaBoostClassifier(n_estimators=100)
+    >>> scores = cross_val_score(clf, X, y, cv=5)
+    >>> scores.mean()
+    0.9...
+
+The number of weak learners is controlled by the parameter ``n_estimators``. The
+``learning_rate`` parameter controls the contribution of the weak learners in
+the final combination. By default, weak learners are decision stumps. Different
+weak learners can be specified through the ``estimator`` parameter.
+The main parameters to tune to obtain good results are ``n_estimators`` and
+the complexity of the base estimators (e.g., its depth ``max_depth`` or
+minimum required number of samples to consider a split ``min_samples_split``).
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_hastie_10_2.py` compares the
+   classification error of a decision stump, decision tree, and a boosted
+   decision stump using AdaBoost-SAMME and AdaBoost-SAMME.R.
+
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py` shows the performance
+   of AdaBoost-SAMME and AdaBoost-SAMME.R on a multi-class problem.
+
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py` shows the decision boundary
+   and decision function values for a non-linearly separable two-class problem
+   using AdaBoost-SAMME.
+
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_regression.py` demonstrates regression
+   with the AdaBoost.R2 algorithm.
+
+.. topic:: References
+
+ .. [FS1995] Y. Freund, and R. Schapire, "A Decision-Theoretic Generalization of
+             On-Line Learning and an Application to Boosting", 1997.
+
+ .. [ZZRH2009] J. Zhu, H. Zou, S. Rosset, T. Hastie. "Multi-class AdaBoost",
+               2009.
+
+ .. [D1997] H. Drucker. "Improving Regressors using Boosting Techniques", 1997.
+
+ .. [HTF] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
+              Statistical Learning Ed. 2", Springer, 2009.
+

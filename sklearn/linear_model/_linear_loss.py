@@ -3,6 +3,7 @@ Loss functions for linear models with raw_prediction = X @ coef
 """
 import numpy as np
 from scipy import sparse
+
 from ..utils.extmath import squared_norm
 
 
@@ -440,7 +441,7 @@ class LinearModelLoss:
         )
 
         # For non-canonical link functions and far away from the optimum, the pointwise
-        # hessian can be negative. We take care that 75% ot the hessian entries are
+        # hessian can be negative. We take care that 75% of the hessian entries are
         # positive.
         hessian_warning = np.mean(hess_pointwise <= 0) > 0.25
         hess_pointwise = np.abs(hess_pointwise)

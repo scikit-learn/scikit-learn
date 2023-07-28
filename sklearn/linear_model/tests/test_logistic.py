@@ -2,36 +2,43 @@ import itertools
 import os
 import warnings
 from functools import partial
+
 import numpy as np
-from numpy.testing import assert_allclose, assert_almost_equal
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+import pytest
+from numpy.testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 from scipy import sparse
 
-import pytest
-
+from sklearn import config_context
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_classification
-from sklearn.metrics import log_loss
-from sklearn.metrics import get_scorer
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_score
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.utils import compute_class_weight, _IS_32BIT
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils import shuffle
-from sklearn.linear_model import SGDClassifier
-from sklearn.preprocessing import scale
-from sklearn.utils._testing import skip_if_no_parallel
-
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model._logistic import (
+    LogisticRegression as LogisticRegressionDefault,
+)
+from sklearn.linear_model._logistic import (
+    LogisticRegressionCV as LogisticRegressionCVDefault,
+)
 from sklearn.linear_model._logistic import (
     _log_reg_scoring_path,
     _logistic_regression_path,
-    LogisticRegression as LogisticRegressionDefault,
-    LogisticRegressionCV as LogisticRegressionCVDefault,
 )
+from sklearn.metrics import get_scorer, log_loss
+from sklearn.model_selection import (
+    GridSearchCV,
+    StratifiedKFold,
+    cross_val_score,
+    train_test_split,
+)
+from sklearn.preprocessing import LabelEncoder, StandardScaler, scale
+from sklearn.svm import l1_min_c
+from sklearn.utils import _IS_32BIT, compute_class_weight, shuffle
+from sklearn.utils._testing import ignore_warnings, skip_if_no_parallel
 
 pytestmark = pytest.mark.filterwarnings(
     "error::sklearn.exceptions.ConvergenceWarning:sklearn.*"
@@ -225,6 +232,15 @@ def test_check_solver_option(LR):
         lr = LR(penalty="none", solver="liblinear")
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
+
+
+@pytest.mark.parametrize("LR", [LogisticRegression, LogisticRegressionCV])
+def test_elasticnet_l1_ratio_err_helpful(LR):
+    # Check that an informative error message is raised when penalty="elasticnet"
+    # but l1_ratio is not specified.
+    model = LR(penalty="elasticnet", solver="saga")
+    with pytest.raises(ValueError, match=r".*l1_ratio.*"):
+        model.fit(np.array([[1, 2], [3, 4]]), np.array([0, 1]))
 
 
 @pytest.mark.parametrize("solver", ["lbfgs", "newton-cg", "sag", "saga"])
@@ -522,7 +538,17 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
         scorer = get_scorer(scoring + averaging)
         assert_array_almost_equal(
             _log_reg_scoring_path(
-                X, y, train, test, Cs=[1.0], scoring=scorer, **params
+                X,
+                y,
+                train,
+                test,
+                Cs=[1.0],
+                scoring=scorer,
+                pos_class=None,
+                max_squared_sum=None,
+                sample_weight=None,
+                score_params=None,
+                **params,
             )[2][0],
             scorer(lr, X[test], y[test]),
         )
@@ -733,7 +759,6 @@ def test_logistic_regression_sample_weights():
     sample_weight = y + 1
 
     for LR in [LogisticRegression, LogisticRegressionCV]:
-
         kw = {"random_state": 42, "fit_intercept": False, "multi_class": "ovr"}
         if LR is LogisticRegressionCV:
             kw.update({"Cs": 3, "cv": 3})
@@ -1909,7 +1934,6 @@ def test_scores_attribute_layout_elasticnet():
 
     for i, C in enumerate(Cs):
         for j, l1_ratio in enumerate(l1_ratios):
-
             lr = LogisticRegression(
                 penalty="elasticnet",
                 solver="saga",
@@ -1985,15 +2009,16 @@ def test_sample_weight_not_modified(multi_class, class_weight):
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
-def test_large_sparse_matrix(solver):
+def test_large_sparse_matrix(solver, global_random_seed):
     # Solvers either accept large sparse matrices, or raise helpful error.
     # Non-regression test for pull-request #21093.
 
     # generate sparse matrix with int64 indices
-    X = sparse.rand(20, 10, format="csr")
+    X = sparse.rand(20, 10, format="csr", random_state=global_random_seed)
     for attr in ["indices", "indptr"]:
         setattr(X, attr, getattr(X, attr).astype("int64"))
-    y = np.random.randint(2, size=X.shape[0])
+    rng = np.random.RandomState(global_random_seed)
+    y = rng.randint(2, size=X.shape[0])
 
     if solver in ["liblinear", "sag", "saga"]:
         msg = "Only sparse matrices with 32-bit integer indices"
@@ -2024,3 +2049,131 @@ def test_warning_on_penalty_string_none():
     )
     with pytest.warns(FutureWarning, match=warning_message):
         lr.fit(iris.data, target)
+
+
+def test_liblinear_not_stuck():
+    # Non-regression https://github.com/scikit-learn/scikit-learn/issues/18264
+    X = iris.data.copy()
+    y = iris.target.copy()
+    X = X[y != 2]
+    y = y[y != 2]
+    X_prep = StandardScaler().fit_transform(X)
+
+    C = l1_min_c(X, y, loss="log") * 10 ** (10 / 29)
+    clf = LogisticRegression(
+        penalty="l1",
+        solver="liblinear",
+        tol=1e-6,
+        max_iter=100,
+        intercept_scaling=10000.0,
+        random_state=0,
+        C=C,
+    )
+
+    # test that the fit does not raise a ConvergenceWarning
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+        clf.fit(X_prep, y)
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_lr_cv_scores_differ_when_sample_weight_is_requested():
+    """Test that `sample_weight` is correctly passed to the scorer in
+    `LogisticRegressionCV.fit` and `LogisticRegressionCV.score` by
+    checking the difference in scores with the case when `sample_weight`
+    is not requested.
+    """
+    rng = np.random.RandomState(10)
+    X, y = make_classification(n_samples=10, random_state=rng)
+    X_t, y_t = make_classification(n_samples=10, random_state=rng)
+    sample_weight = np.ones(len(y))
+    sample_weight[: len(y) // 2] = 2
+    kwargs = {"sample_weight": sample_weight}
+
+    scorer1 = get_scorer("accuracy")
+    lr_cv1 = LogisticRegressionCV(scoring=scorer1)
+    lr_cv1.fit(X, y, **kwargs)
+
+    scorer2 = get_scorer("accuracy")
+    scorer2.set_score_request(sample_weight=True)
+    lr_cv2 = LogisticRegressionCV(scoring=scorer2)
+    lr_cv2.fit(X, y, **kwargs)
+
+    assert not np.allclose(lr_cv1.scores_[1], lr_cv2.scores_[1])
+
+    score_1 = lr_cv1.score(X_t, y_t, **kwargs)
+    score_2 = lr_cv2.score(X_t, y_t, **kwargs)
+
+    assert not np.allclose(score_1, score_2)
+
+
+def test_lr_cv_scores_without_enabling_metadata_routing():
+    """Test that `sample_weight` is passed correctly to the scorer in
+    `LogisticRegressionCV.fit` and `LogisticRegressionCV.score` even
+    when `enable_metadata_routing=False`
+    """
+    rng = np.random.RandomState(10)
+    X, y = make_classification(n_samples=10, random_state=rng)
+    X_t, y_t = make_classification(n_samples=10, random_state=rng)
+    sample_weight = np.ones(len(y))
+    sample_weight[: len(y) // 2] = 2
+    kwargs = {"sample_weight": sample_weight}
+
+    with config_context(enable_metadata_routing=False):
+        scorer1 = get_scorer("accuracy")
+        lr_cv1 = LogisticRegressionCV(scoring=scorer1)
+        lr_cv1.fit(X, y, **kwargs)
+        score_1 = lr_cv1.score(X_t, y_t, **kwargs)
+
+    with config_context(enable_metadata_routing=True):
+        scorer2 = get_scorer("accuracy")
+        scorer2.set_score_request(sample_weight=True)
+        lr_cv2 = LogisticRegressionCV(scoring=scorer2)
+        lr_cv2.fit(X, y, **kwargs)
+        score_2 = lr_cv2.score(X_t, y_t, **kwargs)
+
+    assert_allclose(lr_cv1.scores_[1], lr_cv2.scores_[1])
+    assert_allclose(score_1, score_2)
+
+
+@pytest.mark.parametrize("solver", SOLVERS)
+def test_zero_max_iter(solver):
+    # Make sure we can inspect the state of LogisticRegression right after
+    # initialization (before the first weight update).
+    X, y = load_iris(return_X_y=True)
+    y = y == 2
+    with ignore_warnings(category=ConvergenceWarning):
+        clf = LogisticRegression(solver=solver, max_iter=0).fit(X, y)
+    if solver not in ["saga", "sag"]:
+        # XXX: sag and saga have n_iter_ = [1]...
+        assert clf.n_iter_ == 0
+
+    if solver != "lbfgs":
+        # XXX: lbfgs has already started to update the coefficients...
+        assert_allclose(clf.coef_, np.zeros_like(clf.coef_))
+        assert_allclose(
+            clf.decision_function(X),
+            np.full(shape=X.shape[0], fill_value=clf.intercept_),
+        )
+        assert_allclose(
+            clf.predict_proba(X),
+            np.full(shape=(X.shape[0], 2), fill_value=0.5),
+        )
+    assert clf.score(X, y) < 0.7
+
+
+def test_passing_params_without_enabling_metadata_routing():
+    """Test that the right error message is raised when metadata params
+    are passed while not supported when `enable_metadata_routing=False`."""
+    X, y = make_classification(n_samples=10, random_state=0)
+    lr_cv = LogisticRegressionCV()
+    msg = "is only supported if enable_metadata_routing=True"
+
+    with config_context(enable_metadata_routing=False):
+        params = {"extra_param": 1.0}
+
+        with pytest.raises(ValueError, match=msg):
+            lr_cv.fit(X, y, **params)
+
+        with pytest.raises(ValueError, match=msg):
+            lr_cv.score(X, y, **params)

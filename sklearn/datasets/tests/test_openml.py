@@ -8,28 +8,26 @@ from io import BytesIO
 from urllib.error import HTTPError
 
 import numpy as np
-import scipy.sparse
 import pytest
+import scipy.sparse
 
 import sklearn
 from sklearn import config_context
+from sklearn.datasets import fetch_openml as fetch_openml_orig
+from sklearn.datasets._openml import (
+    _OPENML_PREFIX,
+    _get_local_path,
+    _open_openml_url,
+    _retry_with_clean_cache,
+)
 from sklearn.utils import Bunch, check_pandas_support
-from sklearn.utils.fixes import _open_binary
 from sklearn.utils._testing import (
     SkipTest,
     assert_allclose,
     assert_array_equal,
     fails_if_pypy,
 )
-
-from sklearn.datasets import fetch_openml as fetch_openml_orig
-from sklearn.datasets._openml import (
-    _OPENML_PREFIX,
-    _open_openml_url,
-    _get_local_path,
-    _retry_with_clean_cache,
-)
-
+from sklearn.utils.fixes import _open_binary
 
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
 # if True, urlopen will be monkey patched to only use local files
@@ -73,10 +71,10 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
     # monkey patches the urlopen function. Important note: Do NOT use this
     # in combination with a regular cache directory, as the files that are
     # stored as cache should not be mixed up with real openml datasets
-    url_prefix_data_description = "https://openml.org/api/v1/json/data/"
-    url_prefix_data_features = "https://openml.org/api/v1/json/data/features/"
-    url_prefix_download_data = "https://openml.org/data/v1/"
-    url_prefix_data_list = "https://openml.org/api/v1/json/data/list/"
+    url_prefix_data_description = "https://api.openml.org/api/v1/json/data/"
+    url_prefix_data_features = "https://api.openml.org/api/v1/json/data/features/"
+    url_prefix_download_data = "https://api.openml.org/data/v1/"
+    url_prefix_data_list = "https://api.openml.org/api/v1/json/data/list/"
 
     path_suffix = ".gz"
     read_fn = gzip.open
@@ -85,7 +83,9 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
 
     def _file_name(url, suffix):
         output = (
-            re.sub(r"\W", "-", url[len("https://openml.org/") :]) + suffix + path_suffix
+            re.sub(r"\W", "-", url[len("https://api.openml.org/") :])
+            + suffix
+            + path_suffix
         )
         # Shorten the filenames to have better compatibility with windows 10
         # and filenames > 260 characters
@@ -186,6 +186,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
 
 ###############################################################################
 # Test the behaviour of `fetch_openml` depending of the input parameters.
+
 
 # Known failure of PyPy for OpenML. See the following issue:
 # https://github.com/scikit-learn/scikit-learn/issues/18906
@@ -375,7 +376,7 @@ def test_fetch_openml_consistency_parser(monkeypatch, data_id):
         pandas_series = frame_pandas[series.name]
         if pd.api.types.is_numeric_dtype(pandas_series):
             return series.astype(pandas_series.dtype)
-        elif pd.api.types.is_categorical_dtype(pandas_series):
+        elif isinstance(pandas_series.dtype, pd.CategoricalDtype):
             # Compare categorical features by converting categorical liac uses
             # strings to denote the categories, we rename the categories to make
             # them comparable to the pandas parser. Fixing this behavior in
@@ -600,7 +601,7 @@ def test_fetch_openml_difference_parsers(monkeypatch):
 
 ###############################################################################
 # Test the ARFF parsing on several dataset to check if detect the correct
-# types (categories, intgers, floats).
+# types (categories, integers, floats).
 
 
 @pytest.fixture(scope="module")
@@ -917,12 +918,10 @@ def datasets_missing_values():
         (1119, "liac-arff", 9, 6, 0),
         (1119, "pandas", 9, 0, 6),
         # miceprotein
-        # 1 column has only missing values with object dtype
-        (40966, "liac-arff", 1, 76, 0),
-        # with casting it will be transformed to either float or Int64
+        (40966, "liac-arff", 1, 77, 0),
         (40966, "pandas", 1, 77, 0),
         # titanic
-        (40945, "liac-arff", 3, 5, 0),
+        (40945, "liac-arff", 3, 6, 0),
         (40945, "pandas", 3, 3, 3),
     ],
 )
@@ -974,13 +973,20 @@ def test_fetch_openml_types_inference(
 ###############################################################################
 # Test some more specific behaviour
 
+
 # TODO(1.4): remove this filterwarning decorator
 @pytest.mark.filterwarnings("ignore:The default value of `parser` will change")
 @pytest.mark.parametrize(
     "params, err_msg",
     [
-        ({"parser": "unknown"}, "`parser` must be one of"),
-        ({"as_frame": "unknown"}, "`as_frame` must be one of"),
+        (
+            {"parser": "unknown"},
+            "The 'parser' parameter of fetch_openml must be a str among",
+        ),
+        (
+            {"as_frame": "unknown"},
+            "The 'as_frame' parameter of fetch_openml must be an instance",
+        ),
     ],
 )
 def test_fetch_openml_validation_parameter(monkeypatch, params, err_msg):
@@ -1005,7 +1011,7 @@ def test_fetch_openml_requires_pandas_error(monkeypatch, params):
         check_pandas_support("test_fetch_openml_requires_pandas")
     except ImportError:
         _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-        err_msg = "requires pandas to be installed. Alternatively, explicitely"
+        err_msg = "requires pandas to be installed. Alternatively, explicitly"
         with pytest.raises(ImportError, match=err_msg):
             fetch_openml(data_id=data_id, **params)
     else:
@@ -1210,8 +1216,10 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response, dataset_params):
             40945,
             {"data_id": 40945, "as_frame": False},
             ValueError,
-            "STRING attributes are not supported for array representation. Try"
-            " as_frame=True",
+            (
+                "STRING attributes are not supported for array representation. Try"
+                " as_frame=True"
+            ),
         ),
         (
             2,
@@ -1256,17 +1264,17 @@ def test_fetch_openml_error(
         (
             {"data_id": -1, "name": None, "version": "version"},
             ValueError,
-            "Dataset data_id=-1 and version=version passed, but you can only",
+            "The 'version' parameter of fetch_openml must be an int in the range",
         ),
         (
             {"data_id": -1, "name": "nAmE"},
             ValueError,
-            "Dataset data_id=-1 and name=name passed, but you can only",
+            "The 'data_id' parameter of fetch_openml must be an int in the range",
         ),
         (
             {"data_id": -1, "name": "nAmE", "version": "version"},
             ValueError,
-            "Dataset data_id=-1 and name=name passed, but you can only",
+            "The 'version' parameter of fetch_openml must be an int",
         ),
         (
             {},
@@ -1346,6 +1354,34 @@ def test_dataset_with_openml_warning(monkeypatch, gzip_response):
     msg = "OpenML raised a warning on the dataset. It might be unusable. Warning:"
     with pytest.warns(UserWarning, match=msg):
         fetch_openml(data_id=data_id, cache=False, as_frame=False, parser="liac-arff")
+
+
+def test_fetch_openml_overwrite_default_params_read_csv(monkeypatch):
+    """Check that we can overwrite the default parameters of `read_csv`."""
+    pytest.importorskip("pandas")
+    data_id = 1590
+    _monkey_patch_webbased_functions(monkeypatch, data_id=data_id, gzip_response=False)
+
+    common_params = {
+        "data_id": data_id,
+        "as_frame": True,
+        "cache": False,
+        "parser": "pandas",
+    }
+
+    # By default, the initial spaces are skipped. We checked that setting the parameter
+    # `skipinitialspace` to False will have an effect.
+    adult_without_spaces = fetch_openml(**common_params)
+    adult_with_spaces = fetch_openml(
+        **common_params, read_csv_kwargs={"skipinitialspace": False}
+    )
+    assert all(
+        cat.startswith(" ") for cat in adult_with_spaces.frame["class"].cat.categories
+    )
+    assert not any(
+        cat.startswith(" ")
+        for cat in adult_without_spaces.frame["class"].cat.categories
+    )
 
 
 ###############################################################################
@@ -1498,7 +1534,7 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, pars
         modified_gzip.write(data)
 
     # Requests are already mocked by monkey_patch_webbased_functions.
-    # We want to re-use that mock for all requests except file download,
+    # We want to reuse that mock for all requests except file download,
     # hence creating a thin mock over the original mock
     mocked_openml_url = sklearn.datasets._openml.urlopen
 
@@ -1617,8 +1653,25 @@ def test_fetch_openml_leading_whitespace(monkeypatch):
     )
 
 
+def test_fetch_openml_quotechar_escapechar(monkeypatch):
+    """Check that we can handle escapechar and single/double quotechar.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/25478
+    """
+    pd = pytest.importorskip("pandas")
+    data_id = 42074
+    _monkey_patch_webbased_functions(monkeypatch, data_id=data_id, gzip_response=False)
+
+    common_params = {"as_frame": True, "cache": False, "data_id": data_id}
+    adult_pandas = fetch_openml(parser="pandas", **common_params)
+    adult_liac_arff = fetch_openml(parser="liac-arff", **common_params)
+    pd.testing.assert_frame_equal(adult_pandas.frame, adult_liac_arff.frame)
+
+
 ###############################################################################
 # Deprecation-changed parameters
+
 
 # TODO(1.4): remove this test
 def test_fetch_openml_deprecation_parser(monkeypatch):

@@ -26,12 +26,12 @@ Installing a nightly build is the quickest way to:
 
 - check whether a bug you encountered has been fixed since the last release.
 
-You can install the nightly build of scikit-learn using the `scipy-wheels-nightly`
+You can install the nightly build of scikit-learn using the `scientific-python-nightly-wheels`
 index from the PyPI registry of `anaconda.org`:
 
 .. prompt:: bash $
 
-  pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
+  pip install --pre --extra-index https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scikit-learn
 
 Note that first uninstalling scikit-learn might be required to be able to
 install nightly builds of scikit-learn.
@@ -90,7 +90,7 @@ feature, code or documentation improvement).
 
    .. prompt:: bash $
 
-     pip install --verbose --no-build-isolation --editable .
+     pip install -v --no-use-pep517 --no-build-isolation -e .
 
 #. Check that the installed scikit-learn has a version number ending with
    `.dev0`:
@@ -104,11 +104,14 @@ feature, code or documentation improvement).
 
 .. note::
 
-    You will have to run the ``pip install --no-build-isolation --editable .``
+    You will have to run the ``pip install -v --no-use-pep517 --no-build-isolation -e .``
     command every time the source code of a Cython file is updated
-    (ending in `.pyx` or `.pxd`). Use the ``--no-build-isolation`` flag to
-    avoid compiling the whole project each time, only the files you have
-    modified.
+    (ending in `.pyx` or `.pxd`). This can happen when you edit them or when you
+    use certain git commands such as `git pull`. Use the ``--no-build-isolation`` flag
+    to avoid compiling the whole project each time, only the files you have
+    modified. Include the ``--no-use-pep517`` flag because the ``--no-build-isolation``
+    option might not work otherwise (this is due to a bug which will be fixed in the
+    future).
 
 Dependencies
 ------------
@@ -179,12 +182,12 @@ Editable mode
 
 If you run the development version, it is cumbersome to reinstall the package
 each time you update the sources. Therefore it is recommended that you install
-in with the ``pip install --no-build-isolation --editable .`` command, which
-allows you to edit the code in-place. This builds the extension in place and
+in with the ``pip install -v --no-use-pep517 --no-build-isolation -e .`` command,
+which allows you to edit the code in-place. This builds the extension in place and
 creates a link to the development directory (see `the pip docs
 <https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>`_).
 
-As the doc aboves explains, this is fundamentally similar to using the command
+As the doc above explains, this is fundamentally similar to using the command
 ``python setup.py develop``. (see `the setuptool docs
 <https://setuptools.pypa.io/en/latest/userguide/development_mode.html>`_).
 It is however preferred to use pip.
@@ -241,7 +244,7 @@ Finally, build scikit-learn from this command prompt:
 
 .. prompt:: bash $
 
-    pip install --verbose --no-build-isolation --editable .
+    pip install -v --no-use-pep517 --no-build-isolation -e .
 
 .. _compiler_macos:
 
@@ -283,7 +286,7 @@ scikit-learn from source:
         joblib threadpoolctl pytest compilers llvm-openmp
     conda activate sklearn-dev
     make clean
-    pip install --verbose --no-build-isolation --editable .
+    pip install -v --no-use-pep517 --no-build-isolation -e .
 
 .. note::
 
@@ -363,7 +366,7 @@ Finally, build scikit-learn in verbose mode (to check for the presence of the
 .. prompt:: bash $
 
     make clean
-    pip install --verbose --no-build-isolation --editable .
+    pip install -v --no-use-pep517 --no-build-isolation -e .
 
 .. _compiler_linux:
 
@@ -423,7 +426,7 @@ in the user folder using conda:
     conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
         joblib threadpoolctl pytest compilers
     conda activate sklearn-dev
-    pip install --verbose --no-build-isolation --editable .
+    pip install -v --no-use-pep517 --no-build-isolation -e .
 
 .. _compiler_freebsd:
 
@@ -452,7 +455,7 @@ Finally, build the package using the standard command:
 
 .. prompt:: bash $
 
-    pip install --verbose --no-build-isolation --editable .
+    pip install -v --no-use-pep517 --no-build-isolation -e .
 
 For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
@@ -466,6 +469,45 @@ the base system and these steps will not be necessary.
 .. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
 .. _Miniforge3: https://github.com/conda-forge/miniforge#miniforge3
 
+Alternative compilers
+=====================
+
+The following command will build scikit-learn using your default C/C++ compiler.
+
+.. prompt:: bash $
+
+    pip install --verbose --editable .
+
+If you want to build scikit-learn with another compiler handled by ``setuptools``,
+use the following command:
+
+.. prompt:: bash $
+
+    python setup.py build_ext --compiler=<compiler> -i build_clib --compiler=<compiler>
+
+To see the list of available compilers run:
+
+.. prompt:: bash $
+
+    python setup.py build_ext --help-compiler
+
+If your compiler is not listed here, you can specify it through some environment
+variables (does not work on windows). This `section
+<https://setuptools.pypa.io/en/stable/userguide/ext_modules.html#compiler-and-linker-options>`_
+of the setuptools documentation explains in details which environment variables
+are used by ``setuptools``, and at which stage of the compilation, to set the
+compiler and linker options.
+
+When setting these environment variables, it is advised to first check their
+``sysconfig`` counterparts variables and adapt them to your compiler. For instance::
+
+    import sysconfig
+    print(sysconfig.get_config_var('CC'))
+    print(sysconfig.get_config_var('LDFLAGS'))
+
+In addition, since Scikit-learn uses OpenMP, you need to include the appropriate OpenMP
+flag of your compiler into the ``CFLAGS`` and ``CPPFLAGS`` environment variables.
+
 Parallel builds
 ===============
 
@@ -474,7 +516,7 @@ and environment variable as follows before calling the ``pip install`` or
 ``python setup.py build_ext`` commands::
 
     export SKLEARN_BUILD_PARALLEL=3
-    pip install --verbose --no-build-isolation --editable .
+    pip install -v --no-use-pep517 --no-build-isolation -e .
 
 On a machine with 2 CPU cores, it can be beneficial to use a parallelism level
 of 3 to overlap IO bound tasks (reading and writing files on disk) with CPU
