@@ -245,6 +245,7 @@ and tasks.
 
 - `hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_ HDBSCAN and Robust Single
   Linkage clustering algorithms for robust variable density clustering.
+  As of scikit-learn version 1.3.0, there is :class:`sklearn.cluster.HDBSCAN`.
 
 - `spherecluster <https://github.com/clara-labs/spherecluster>`_ Spherical
   K-means and mixture of von Mises Fisher clustering routines for data on the
