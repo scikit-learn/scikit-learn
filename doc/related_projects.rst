@@ -220,10 +220,6 @@ and tasks.
 - `py-earth <https://github.com/scikit-learn-contrib/py-earth>`_ Multivariate
   adaptive regression splines
 
-- `Kernel Regression <https://github.com/jmetzen/kernel_regression>`_
-  Implementation of Nadaraya-Watson kernel regression with automatic bandwidth
-  selection
-
 - `gplearn <https://github.com/trevorstephens/gplearn>`_ Genetic Programming
   for symbolic regression tasks.
 
