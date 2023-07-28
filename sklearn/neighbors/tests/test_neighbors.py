@@ -2207,3 +2207,22 @@ def test_predict_dataframe():
 
     knn = neighbors.KNeighborsClassifier(n_neighbors=2).fit(X, y)
     knn.predict(X)
+
+
+def test_nearest_neighbours_works_with_p_less_than_1():
+    """Check that NearestNeighbors works with :math:`p \\in (0,1)` when `algorithm`
+    is `"auto"` or `"brute"` regardless of the dtype of X.
+
+    Non-regression test for issue #26548
+    """
+    X = np.array([[1.0, 0.0], [0.0, 0.0], [0.0, 1.0]])
+    neigh = neighbors.NearestNeighbors(
+        n_neighbors=3, algorithm="brute", metric_params={"p": 0.5}
+    )
+    neigh.fit(X)
+
+    y = neigh.radius_neighbors(X[0].reshape(1, -1), radius=4, return_distance=False)
+    assert_allclose(y[0], [0, 1, 2])
+
+    y = neigh.kneighbors(X[0].reshape(1, -1), return_distance=False)
+    assert_allclose(y[0], [0, 1, 2])

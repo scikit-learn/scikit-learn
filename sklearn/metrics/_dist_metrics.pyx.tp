@@ -65,6 +65,118 @@ def get_valid_metric_ids(L):
             if (val.__name__ in L) or (val in L)]
 
 cdef class DistanceMetric:
+    """Uniform interface for fast distance metric functions.
+
+    The `DistanceMetric` class provides a convenient way to compute pairwise distances
+    between samples. It supports various distance metrics, such as Euclidean distance,
+    Manhattan distance, and more.
+
+    The `pairwise` method can be used to compute pairwise distances between samples in
+    the input arrays. It returns a distance matrix representing the distances between
+    all pairs of samples.
+
+    The :meth:`get_metric` method allows you to retrieve a specific metric using its
+    string identifier.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import DistanceMetric
+    >>> dist = DistanceMetric.get_metric('euclidean')
+    >>> X = [[1, 2], [3, 4], [5, 6]]
+    >>> Y = [[7, 8], [9, 10]]
+    >>> dist.pairwise(X,Y)
+    array([[7.81..., 10.63...]
+           [5.65...,  8.48...]
+           [1.41...,  4.24...]])
+
+    Available Metrics
+
+    The following lists the string metric identifiers and the associated
+    distance metric classes:
+
+    **Metrics intended for real-valued vector spaces:**
+
+    ==============  ====================  ========  ===============================
+    identifier      class name            args      distance function
+    --------------  --------------------  --------  -------------------------------
+    "euclidean"     EuclideanDistance     -         ``sqrt(sum((x - y)^2))``
+    "manhattan"     ManhattanDistance     -         ``sum(|x - y|)``
+    "chebyshev"     ChebyshevDistance     -         ``max(|x - y|)``
+    "minkowski"     MinkowskiDistance     p, w      ``sum(w * |x - y|^p)^(1/p)``
+    "seuclidean"    SEuclideanDistance    V         ``sqrt(sum((x - y)^2 / V))``
+    "mahalanobis"   MahalanobisDistance   V or VI   ``sqrt((x - y)' V^-1 (x - y))``
+    ==============  ====================  ========  ===============================
+
+    **Metrics intended for two-dimensional vector spaces:**  Note that the haversine
+    distance metric requires data in the form of [latitude, longitude] and both
+    inputs and outputs are in units of radians.
+
+    ============  ==================  ===============================================================
+    identifier    class name          distance function
+    ------------  ------------------  ---------------------------------------------------------------
+    "haversine"   HaversineDistance   ``2 arcsin(sqrt(sin^2(0.5*dx) + cos(x1)cos(x2)sin^2(0.5*dy)))``
+    ============  ==================  ===============================================================
+
+
+    **Metrics intended for integer-valued vector spaces:**  Though intended
+    for integer-valued vectors, these are also valid metrics in the case of
+    real-valued vectors.
+
+    =============  ====================  ========================================
+    identifier     class name            distance function
+    -------------  --------------------  ----------------------------------------
+    "hamming"      HammingDistance       ``N_unequal(x, y) / N_tot``
+    "canberra"     CanberraDistance      ``sum(|x - y| / (|x| + |y|))``
+    "braycurtis"   BrayCurtisDistance    ``sum(|x - y|) / (sum(|x|) + sum(|y|))``
+    =============  ====================  ========================================
+
+    **Metrics intended for boolean-valued vector spaces:**  Any nonzero entry
+    is evaluated to "True".  In the listings below, the following
+    abbreviations are used:
+
+     - N  : number of dimensions
+     - NTT : number of dims in which both values are True
+     - NTF : number of dims in which the first value is True, second is False
+     - NFT : number of dims in which the first value is False, second is True
+     - NFF : number of dims in which both values are False
+     - NNEQ : number of non-equal dimensions, NNEQ = NTF + NFT
+     - NNZ : number of nonzero dimensions, NNZ = NTF + NFT + NTT
+
+    =================  =======================  ===============================
+    identifier         class name               distance function
+    -----------------  -----------------------  -------------------------------
+    "jaccard"          JaccardDistance          NNEQ / NNZ
+    "matching"         MatchingDistance         NNEQ / N
+    "dice"             DiceDistance             NNEQ / (NTT + NNZ)
+    "kulsinski"        KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
+    "rogerstanimoto"   RogersTanimotoDistance   2 * NNEQ / (N + NNEQ)
+    "russellrao"       RussellRaoDistance       (N - NTT) / N
+    "sokalmichener"    SokalMichenerDistance    2 * NNEQ / (N + NNEQ)
+    "sokalsneath"      SokalSneathDistance      NNEQ / (NNEQ + 0.5 * NTT)
+    =================  =======================  ===============================
+
+    **User-defined distance:**
+
+    ===========    ===============    =======
+    identifier     class name         args
+    -----------    ---------------    -------
+    "pyfunc"       PyFuncDistance     func
+    ===========    ===============    =======
+
+    Here ``func`` is a function which takes two one-dimensional numpy
+    arrays, and returns a distance.  Note that in order to be used within
+    the BallTree, the distance must be a true metric:
+    i.e. it must satisfy the following properties
+
+    1) Non-negativity: d(x, y) >= 0
+    2) Identity: d(x, y) = 0 if and only if x == y
+    3) Symmetry: d(x, y) = d(y, x)
+    4) Triangle Inequality: d(x, y) + d(y, z) >= d(x, z)
+
+    Because of the Python object overhead involved in calling the python
+    function, this will be fairly slow, but it will have the same
+    scaling as other distances.
+    """
     @classmethod
     def get_metric(cls, metric, dtype=np.float64, **kwargs):
         """Get the given distance metric from the string identifier.
@@ -74,11 +186,24 @@ cdef class DistanceMetric:
         Parameters
         ----------
         metric : str or class name
-            The distance metric to use
+            The string identifier or class name of the desired distance metric.
+            See the documentation of the `DistanceMetric` class for a list of
+            available metrics.
+
         dtype : {np.float32, np.float64}, default=np.float64
-            The dtype of the data on which the metric will be applied
+            The data type of the input on which the metric will be applied.
+            This affects the precision of the computed distances.
+            By default, it is set to `np.float64`.
+
         **kwargs
-            additional arguments will be passed to the requested metric
+            Additional keyword arguments that will be passed to the requested metric.
+            These arguments can be used to customize the behavior of the specific
+            metric.
+
+        Returns
+        -------
+        metric_obj : instance of the requested metric
+            An instance of the requested distance metric class.
         """
         if dtype == np.float32:
             specialized_class = DistanceMetric32
@@ -1271,19 +1396,27 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     Parameters
     ----------
-    p : int
+    p : float
         The order of the p-norm of the difference (see above).
+
+        .. versionchanged:: 1.4.0
+            Minkowski distance allows `p` to be `0<p<1`.
+
+
     w : (N,) array-like (optional)
         The weight vector.
 
-    Minkowski Distance requires p >= 1 and finite. For p = infinity,
-    use ChebyshevDistance.
+    Minkowski Distance requires p > 0 and finite.
+    When :math:`p \in (0,1)`, it isn't a true metric but is permissible when
+    the triangular inequality isn't necessary.
+    For p = infinity, use ChebyshevDistance.
     Note that for p=1, ManhattanDistance is more efficient, and for
     p=2, EuclideanDistance is more efficient.
+
     """
     def __init__(self, p, w=None):
-        if p < 1:
-            raise ValueError("p must be greater than 1")
+        if p <= 0:
+            raise ValueError("p must be greater than 0")
         elif np.isinf(p):
             raise ValueError("MinkowskiDistance requires finite p. "
                              "For p=inf, use ChebyshevDistance.")
