@@ -69,13 +69,13 @@ def test_outlier_data(outlier_type):
     assert_array_equal(clean_model.labels_, model.labels_[clean_indices])
 
 
-def test_hdbscan_distance_matrix():
+def test_hdbscan_distance_matrix(global_dtype):
     """
     Tests that HDBSCAN works with precomputed distance matrices, and throws the
     appropriate errors when needed.
     """
     D = euclidean_distances(X)
-    D_original = D.copy()
+    D_original = D.copy().astype(global_dtype)
     labels = HDBSCAN(metric="precomputed", copy=True).fit_predict(D)
 
     assert_allclose(D, D_original)
@@ -118,12 +118,12 @@ def test_hdbscan_sparse_distance_matrix(sparse_constructor):
     assert n_clusters == n_clusters_true
 
 
-def test_hdbscan_feature_array():
+def test_hdbscan_feature_array(global_dtype):
     """
     Tests that HDBSCAN works with feature array, including an arbitrary
     goodness of fit check. Note that the check is a simple heuristic.
     """
-    labels = HDBSCAN().fit_predict(X)
+    labels = HDBSCAN().fit_predict(X.astype(global_dtype))
     n_clusters = len(set(labels) - OUTLIER_SET)
     assert n_clusters == n_clusters_true
 
