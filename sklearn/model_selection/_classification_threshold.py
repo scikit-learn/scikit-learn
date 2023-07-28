@@ -218,10 +218,10 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
           If the method is not implemented by the classifier, it will raise an
           error.
 
-    n_thresholds : int, default=100
-        The number of decision threshold to use when discretizing the output
-        of the classifier `method`.
-        # TODO: update to array-like
+    n_thresholds : int or array-like, default=100
+        The number of decision threshold to use when discretizing the output of the
+        classifier `method`. Pass an array-like to manually specify the thresholds
+        to use.
 
     cv : int, float, cross-validation generator, iterable or "prefit", default=None
         Determines the cross-validation splitting strategy to train classifier.
