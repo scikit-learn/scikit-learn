@@ -1254,55 +1254,26 @@ class _MetadataRequester:
     .. versionadded:: 1.3
     """
 
-    if TYPE_CHECKING:
+    if TYPE_CHECKING:  # pragma: no cover
         # This code is never run in runtime, but it's here for type checking.
         # Type checkers fail to understand that the `set_{method}_request`
         # methods are dynamically generated, and they complain that they are
         # not defined. We define them here to make type checkers happy.
         # During type checking analyzers assume this to be True.
         # The following list of defined methods mirrors the list of methods
-        # in this list:
-        # SIMPLE_METHODS = [
-        #     "fit",
-        #     "partial_fit",
-        #     "predict",
-        #     "predict_proba",
-        #     "predict_log_proba",
-        #     "decision_function",
-        #     "score",
-        #     "split",
-        #     "transform",
-        #     "inverse_transform",
-        # ]
-        def set_fit_request(self, **kwargs):
-            pass  # pragma: no cover
-
-        def set_partial_fit_request(self, **kwargs):
-            pass  # pragma: no cover
-
-        def set_predict_request(self, **kwargs):
-            pass  # pragma: no cover
-
-        def set_predict_proba_request(self, **kwargs):
-            pass  # pragma: no cover
-
-        def set_predict_log_proba_request(self, **kwargs):
-            pass  # pragma: no cover
-
-        def set_decision_function_request(self, **kwargs):
-            pass  # pragma: no cover
-
-        def set_score_request(self, **kwargs):
-            pass  # pragma: no cover
-
-        def set_split_request(self, **kwargs):
-            pass  # pragma: no cover
-
-        def set_transform_request(self, **kwargs):
-            pass  # pragma: no cover
-
-        def set_inverse_transform_request(self, **kwargs):
-            pass  # pragma: no cover
+        # in SIMPLE_METHODS.
+        # fmt: off
+        def set_fit_request(self, **kwargs): pass
+        def set_partial_fit_request(self, **kwargs): pass
+        def set_predict_request(self, **kwargs): pass
+        def set_predict_proba_request(self, **kwargs): pass
+        def set_predict_log_proba_request(self, **kwargs): pass
+        def set_decision_function_request(self, **kwargs): pass
+        def set_score_request(self, **kwargs): pass
+        def set_split_request(self, **kwargs): pass
+        def set_transform_request(self, **kwargs): pass
+        def set_inverse_transform_request(self, **kwargs): pass
+        # fmt: on
 
     def __init_subclass__(cls, **kwargs):
         """Set the ``set_{method}_request`` methods.
