@@ -179,8 +179,8 @@ and tasks.
 **Gradient (tree) boosting**
 
 Note scikit-learn own modern gradient boosting estimators
-:class:`sklearn.ensemble.HistGradientBoostingClassifier` and
-:class:`sklearn.ensemble.HistGradientBoostingRegressor`.
+:class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
 
 - `XGBoost <https://github.com/dmlc/xgboost>`_ XGBoost is an optimized distributed
   gradient boosting library designed to be highly efficient, flexible and portable.
@@ -271,7 +271,7 @@ Note scikit-learn own modern gradient boosting estimators
 
 - `hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_ HDBSCAN and Robust Single
   Linkage clustering algorithms for robust variable density clustering.
-  As of scikit-learn version 1.3.0, there is :class:`sklearn.cluster.HDBSCAN`.
+  As of scikit-learn version 1.3.0, there is :class:`~sklearn.cluster.HDBSCAN`.
 
 - `spherecluster <https://github.com/clara-labs/spherecluster>`_ Spherical
   K-means and mixture of von Mises Fisher clustering routines for data on the
@@ -283,7 +283,7 @@ Note scikit-learn own modern gradient boosting estimators
   <https://github.com/scikit-learn-contrib/categorical-encoding>`_ A
   library of sklearn compatible categorical variable encoders.
   As of scikit-learn version 1.3.0, there is
-  :class:`sklearn.preprocessing.TargetEncoder`.
+  :class:`~sklearn.preprocessing.TargetEncoder`.
 
 - `imbalanced-learn
   <https://github.com/scikit-learn-contrib/imbalanced-learn>`_ Various
