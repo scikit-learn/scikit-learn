@@ -34,6 +34,10 @@ Changes impacting all modules
   to work with our estimators and functions.
   :pr:`26464` by `Thomas Fan`_.
 
+- |API| For classifiers and classification metrics, labels encoded as bytes
+  is deprecated and will raise an error in v1.6.
+  :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
+
 Changelog
 ---------
 
@@ -175,6 +179,14 @@ Changelog
   :class:`~utils.metadata_routing.MetadataRouter` now have a ``consumes`` method
   which can be used to check whether a given set of parameters would be consumed.
   :pr:`26831` by `Adrin Jalali`_.
+
+:mod:`sklearn.multiclass`
+..............................
+
+- |API| Raise informative warning message in :func:`type_of_target` when
+  represented as bytes. For classifiers and classification metrics, labels encoded
+  as bytes is deprecated and will raise an error in v1.6.
+  :pr:`18555` by :user:`Kaushik Amar Das <cozek>`.
 
 Code and Documentation Contributors
 -----------------------------------

@@ -8,7 +8,6 @@ from scipy.sparse import csr_matrix
 
 from sklearn import datasets, svm
 from sklearn.datasets import make_multilabel_classification
-
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
@@ -29,15 +28,14 @@ from sklearn.metrics import (
 from sklearn.metrics._ranking import _dcg_sample_scores, _ndcg_sample_scores
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
-
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.utils._testing import (
+    _convert_container,
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    _convert_container
-    ignore_warnings
+    ignore_warnings,
 )
 from sklearn.utils.extmath import softmax
 from sklearn.utils.validation import (

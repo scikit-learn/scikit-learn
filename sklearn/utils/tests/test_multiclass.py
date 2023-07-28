@@ -16,10 +16,10 @@ from sklearn import datasets
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
 from sklearn.utils._testing import (
+    _convert_container,
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
-    _convert_container
 )
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.utils.metaestimators import _safe_split
@@ -499,7 +499,7 @@ def test_ovr_decision_function():
     assert_allclose(dec_values, dec_values_one, atol=1e-6)
 
 
-# TODO(1.5): Change to ValueError when byte labels is deprecated.
+# TODO(1.6): Change to ValueError when byte labels is deprecated.
 @pytest.mark.parametrize("input_type", ["list", "array"])
 def test_labels_in_bytes_format(input_type):
     # check that we raise an error with bytes encoded labels
@@ -507,8 +507,8 @@ def test_labels_in_bytes_format(input_type):
     # https://github.com/scikit-learn/scikit-learn/issues/16980
     target = _convert_container([b"a", b"b"], input_type)
     err_msg = (
-        "Support for labels represented as bytes is deprecated in v1.3 and will"
-        " error in v1.5. Convert the labels to a string or integer format."
+        "Support for labels represented as bytes is deprecated in v1.4 and will"
+        " error in v1.6. Convert the labels to a string or integer format."
     )
     with pytest.warns(FutureWarning, match=err_msg):
         type_of_target(target)

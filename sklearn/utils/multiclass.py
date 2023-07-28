@@ -342,8 +342,8 @@ def type_of_target(y, input_name=""):
         if isinstance(y[0], bytes):
             warnings.warn(
                 (
-                    "Support for labels represented as bytes is deprecated in v1.3 and"
-                    " will error in v1.5. Convert the labels to a string or integer"
+                    "Support for labels represented as bytes is deprecated in v1.4 and"
+                    " will error in v1.6. Convert the labels to a string or integer"
                     " format."
                 ),
                 FutureWarning,
