@@ -121,10 +121,10 @@ def test_pairwise_distances(global_dtype):
     assert_allclose(S, S2)
 
     # test that the two functions computing haversine give the same results
-    X = rng.randn(5, 2)
-    Y = np.tile(X[0, :], (5, 1))
-    S = haversine_distances(X, Y[0].reshape(1, -1)).ravel()
-    S2 = _paired_haversine_distances(X, Y).ravel()
+    X_pairs = rng.randn(5, 2)
+    Y_pairs = np.tile(X_pairs[0, :], (5, 1))
+    S = haversine_distances(X_pairs, Y_pairs[0].reshape(1, -1)).ravel()
+    S2 = _paired_haversine_distances(X_pairs, Y_pairs).ravel()
     assert_allclose(S, S2)
 
     # "cityblock" uses scikit-learn metric, cityblock (function) is
