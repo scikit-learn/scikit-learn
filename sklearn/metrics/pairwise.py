@@ -1233,8 +1233,8 @@ def _paired_haversine_distances(X, Y):
 
     Returns
     -------
-    distance : ndarray of shape (n_samples, )
-        The distances between the points in X and Y.
+    distance : ndarray of shape (n_samples,)
+        The distances between the pair of rows vectors from X and Y.
 
     Notes
     -----
