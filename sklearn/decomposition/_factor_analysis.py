@@ -58,6 +58,11 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
     `loading` matrix, the transformation of the latent variables to the
     observed ones, using SVD based approach.
 
+    For examples of usage see:
+    - :ref:`sphx_glr_auto_examples_decomposition_plot_varimax_fa.py`
+    - :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
+    - :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
+
     Read more in the :ref:`User Guide <FA>`.
 
     .. versionadded:: 0.13

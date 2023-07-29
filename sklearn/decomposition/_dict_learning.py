@@ -1323,6 +1323,9 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
         X ~= code * dictionary
 
+    For an example of usage see:
+    - :ref:`sphx_glr_auto_examples_decomposition_plot_sparse_coding.py`
+
     Read more in the :ref:`User Guide <SparseCoder>`.
 
     Parameters
@@ -1537,6 +1540,9 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     ||.||_Fro stands for the Frobenius norm and ||.||_1,1 stands for
     the entry-wise matrix norm which is the sum of the absolute values
     of all the entries in the matrix.
+
+    Example of usage:
+    - :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
 
     Read more in the :ref:`User Guide <DictionaryLearning>`.
 

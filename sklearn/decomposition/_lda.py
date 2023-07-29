@@ -167,6 +167,9 @@ class LatentDirichletAllocation(
 
     The implementation is based on [1]_ and [2]_.
 
+    For an example of usage see:
+    - :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
+
     .. versionadded:: 0.17
 
     Read more in the :ref:`User Guide <LatentDirichletAllocation>`.

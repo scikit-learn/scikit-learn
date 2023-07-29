@@ -53,6 +53,8 @@ data based on the amount of variance it explains. As such it implements a
 
 .. topic:: Examples:
 
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_3d.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
 

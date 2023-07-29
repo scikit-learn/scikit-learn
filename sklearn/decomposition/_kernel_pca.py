@@ -41,6 +41,10 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
     components to extract. It can also use a randomized truncated SVD by the
     method proposed in [3]_, see `eigen_solver`.
 
+    For examples of usage see:
+    - :ref:`sphx_glr_auto_examples_applications_plot_digits_denoising.py`
+    - :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`
+
     Read more in the :ref:`User Guide <kernel_PCA>`.
 
     Parameters

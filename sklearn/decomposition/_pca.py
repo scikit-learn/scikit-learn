@@ -135,6 +135,12 @@ class PCA(_BasePCA):
     Notice that this class does not support sparse input. See
     :class:`TruncatedSVD` for an alternative with sparse data.
 
+    For examples of usage see:
+    - :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py`
+    - :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`
+    - :ref:`sphx_glr_auto_examples_decomposition_plot_pca_3d.py`
+    - :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
+
     Read more in the :ref:`User Guide <PCA>`.
 
     Parameters

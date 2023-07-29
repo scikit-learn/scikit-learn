@@ -1403,6 +1403,11 @@ class NMF(_BaseNMF):
     the NMF literature, the naming convention is usually the opposite since the data
     matrix X is transposed.
 
+    For examples of usage see:
+    - :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
+    - :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
+    - :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
+
     Read more in the :ref:`User Guide <NMF>`.
 
     Parameters
@@ -1841,6 +1846,10 @@ class MiniBatchNMF(_BaseNMF):
     Note that the transformed data is named `W` and the components matrix is
     named `H`. In the NMF literature, the naming convention is usually the opposite
     since the data matrix `X` is transposed.
+
+    For examples of usage see:
+    - :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
+    - :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_1_0.py`
 
     Read more in the :ref:`User Guide <MiniBatchNMF>`.
 
