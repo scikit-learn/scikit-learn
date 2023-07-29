@@ -993,9 +993,8 @@ class OneHotEncoder(_BaseEncoder):
         """
         Transform X using one-hot encoding.
 
-        By default will return a sparse matrix of type
-        `'scipy.sparse._csr.csr_matrix'` (CSR format). If `sparse_output` is
-        set to `False`, an array will be returned.
+        If `sparse_output=True` (default), it will return a
+        :class:`scipy.sparse._csr.csr_matrix` (CSR format).
 
         If there are infrequent categories for a feature, set by specifying
         `max_categories` or `min_frequency`, the infrequent categories will be
