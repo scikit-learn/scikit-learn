@@ -168,7 +168,7 @@ Changelog
   for CSR × CSR,  Dense × CSR, and CSR × Dense datasets is now 1.5x faster.
   :pr:`26765` by :user:`Meekail Zain <micky774>`
 
-- |Feature| adding :func:`metrics.pairwise.paired_distances` now supports `metric='haversine'`.
+- |Feature| :func:`metrics.pairwise.paired_distances` now supports `metric='haversine'`.
   :pr:`22705` by :user:`Jona Sassenhagen <jona-sassenhagen>` and :user:`Charles Patel <acharles7>`.
 
 :mod:`sklearn.utils`
