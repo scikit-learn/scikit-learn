@@ -54,7 +54,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         - 'quantile': All bins in each feature have the same number of points.
         - 'kmeans': Values in each bin have the same nearest center of a 1D
           k-means cluster.
-        For an example visualization of the different strategies see:
+
+        For an example of the different strategies see:
         :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`.
 
     dtype : {np.float32, np.float64}, default=None

@@ -24,7 +24,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     `target_mean_`.
 
     For the internal functioning of TargetEncoder see:
-    :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder_cross_val.py
+    :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder_cross_val.py`
     and for a comparison of different encoders, refer to:
     :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`. Read
     more in the :ref:`User Guide <target_encoder>`.

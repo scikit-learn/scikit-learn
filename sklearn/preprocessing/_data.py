@@ -681,12 +681,12 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     all features are centered around 0 and have variance in the same
     order. If a feature has a variance that is orders of magnitude larger
     than others, it might dominate the objective function and make the
-    estimator unable to learn from other features correctly as expected.This
-    is because StandardScaler is sensitive to outliers, and the features may
-    scale differently from each other in the presence of outliers. For an
-    example visualization, refer to the :ref:`standard_scaler_section` section
-    in the :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`
-    example.
+    estimator unable to learn from other features correctly as expected.
+
+    StandardScaler is sensitive to outliers, and the features may scale
+    differently from each other in the presence of outliers. For an example
+    visualization, refer to the :ref:`standard_scaler_section` section in the
+    :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py` example.
 
     This scaler can also be applied to sparse CSR or CSC matrices by passing
     `with_mean=False` to avoid breaking the sparsity structure of the data.
