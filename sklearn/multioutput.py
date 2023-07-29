@@ -163,10 +163,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         if _routing_enabled():
             routed_params = process_routing(
-                obj=self,
-                method="partial_fit",
-                other_params=partial_fit_params,
+                self,
+                "partial_fit",
                 sample_weight=sample_weight,
+                **partial_fit_params,
             )
         else:
             if sample_weight is not None and not has_fit_parameter(
@@ -249,10 +249,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         if _routing_enabled():
             routed_params = process_routing(
-                obj=self,
-                method="fit",
-                other_params=fit_params,
+                self,
+                "fit",
                 sample_weight=sample_weight,
+                **fit_params,
             )
         else:
             if sample_weight is not None and not has_fit_parameter(
@@ -706,9 +706,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         del Y_pred_chain
 
         if _routing_enabled():
-            routed_params = process_routing(
-                obj=self, method="fit", other_params=fit_params
-            )
+            routed_params = process_routing(self, "fit", **fit_params)
         else:
             routed_params = Bunch(estimator=Bunch(fit=fit_params))
 
