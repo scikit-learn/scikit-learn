@@ -1012,7 +1012,7 @@ class OneHotEncoder(_BaseEncoder):
         transform_output = _get_output_config("transform", estimator=self)["dense"]
         if transform_output == "pandas" and self.sparse_output:
             raise ValueError(
-                "Pandas output is not support when sparse_output=True. Set"
+                "Pandas output does not support sparse data. Set"
                 " sparse_output=False to output pandas DataFrames or disable pandas"
                 " output."
             )
