@@ -36,7 +36,6 @@ BOOLEAN_METRICS = [
 BALL_TREE_CLASSES = [
     BallTree64,
     BallTree32,
-    BallTree,
 ]
 
 
@@ -48,6 +47,10 @@ def brute_force_neighbors(X, Y, k, metric, **kwargs):
     ind = np.argsort(D, axis=1)[:, :k]
     dist = D[np.arange(Y.shape[0])[:, None], ind]
     return dist, ind
+
+
+def test_BallTree_is_BallTree64_subclass():
+    assert issubclass(BallTree, BallTree64)
 
 
 @pytest.mark.parametrize("metric", itertools.chain(BOOLEAN_METRICS, DISCRETE_METRICS))

@@ -13,8 +13,11 @@ METRICS = {"euclidean": {}, "manhattan": {}, "chebyshev": {}, "minkowski": dict(
 KD_TREE_CLASSES = [
     KDTree64,
     KDTree32,
-    KDTree,
 ]
+
+
+def test_KDTree_is_KDTree64_subclass():
+    assert issubclass(KDTree, KDTree64)
 
 
 @pytest.mark.parametrize("BinarySearchTree", KD_TREE_CLASSES)
