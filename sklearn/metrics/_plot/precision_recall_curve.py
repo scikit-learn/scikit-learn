@@ -10,7 +10,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     It is recommend to use
     :func:`~sklearn.metrics.PrecisionRecallDisplay.from_estimator` or
     :func:`~sklearn.metrics.PrecisionRecallDisplay.from_predictions` to create
-    a :class:`~sklearn.metrics.PredictionRecallDisplay`. All parameters are
+    a :class:`~sklearn.metrics.PrecisionRecallDisplay`. All parameters are
     stored as attributes.
 
     Read more in the :ref:`User Guide <visualizations>`.
@@ -69,7 +69,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
     Notes
     -----
-    The average precision (cf. :func:`~sklearn.metrics.average_precision`) in
+    The average precision (cf. :func:`~sklearn.metrics.average_precision_score`) in
     scikit-learn is computed without any interpolation. To be consistent with
     this metric, the precision-recall curve is plotted without any
     interpolation as well (step-wise style).
@@ -164,7 +164,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         Notes
         -----
-        The average precision (cf. :func:`~sklearn.metrics.average_precision`)
+        The average precision (cf. :func:`~sklearn.metrics.average_precision_score`)
         in scikit-learn is computed without any interpolation. To be consistent
         with this metric, the precision-recall curve is plotted without any
         interpolation as well (step-wise style).
@@ -312,7 +312,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         Notes
         -----
-        The average precision (cf. :func:`~sklearn.metrics.average_precision`)
+        The average precision (cf. :func:`~sklearn.metrics.average_precision_score`)
         in scikit-learn is computed without any interpolation. To be consistent
         with this metric, the precision-recall curve is plotted without any
         interpolation as well (step-wise style).
@@ -434,7 +434,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
 
         Notes
         -----
-        The average precision (cf. :func:`~sklearn.metrics.average_precision`)
+        The average precision (cf. :func:`~sklearn.metrics.average_precision_score`)
         in scikit-learn is computed without any interpolation. To be consistent
         with this metric, the precision-recall curve is plotted without any
         interpolation as well (step-wise style).
