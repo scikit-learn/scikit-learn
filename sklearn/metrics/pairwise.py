@@ -1215,7 +1215,7 @@ def _paired_haversine_distances(X, Y):
     """Compute the Haversine distance between paired samples in X and Y.
 
     The Haversine (or great circle) distance is the angular distance between
-    two points on the surface of a sphere. The first coordinate of each point
+    two points on the surface of a sphere. The first dimension of each point
     is assumed to be the latitude, the second is the longitude, given
     in radians. The dimension of the data must be 2.
 
@@ -1233,8 +1233,8 @@ def _paired_haversine_distances(X, Y):
 
     Returns
     -------
-    distance : ndarray of shape (n_samples, )
-        The distances between the points in X and Y.
+    distance : ndarray of shape (n_samples,)
+        The distances between the pair of rows vectors from X and Y.
 
     Notes
     -----
