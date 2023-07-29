@@ -155,7 +155,7 @@ Changelog
 
 - |Fix| :class:`preprocessing.OneHotEncoder` shows a more informative error message
   when `sparse_output=True` and the output is configured to be pandas.
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`26931` by `Thomas Fan`_.
 
 :mod:`sklearn.tree`
 ...................
