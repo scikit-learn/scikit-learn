@@ -1412,7 +1412,11 @@ class _MetadataRequester:
 # given metadata. This is to minimize the boilerplate required in routers.
 
 
-def process_routing(obj, method, other_params, **kwargs):
+# Here the first two arguments are positional only which makes everything
+# passed as keyword argument a metadata. The first two args also have an `_`
+# prefix to reduce the chances of name collisions with the passed metadata, and
+# since they're positional only, users will never type those underscores.
+def process_routing(_obj, _method, /, **kwargs):
     """Validate and route input parameters.
 
     This function is used inside a router's method, e.g. :term:`fit`,
@@ -1420,26 +1424,21 @@ def process_routing(obj, method, other_params, **kwargs):
 
     Assuming this signature: ``fit(self, X, y, sample_weight=None, **fit_params)``,
     a call to this function would be:
-    ``process_routing(self, fit_params, sample_weight=sample_weight)``.
+    ``process_routing(self, sample_weight=sample_weight, **fit_params)``.
 
     .. versionadded:: 1.3
 
     Parameters
     ----------
-    obj : object
+    _obj : object
         An object implementing ``get_metadata_routing``. Typically a
         meta-estimator.
 
-    method : str
+    _method : str
         The name of the router's method in which this function is called.
 
-    other_params : dict
-        A dictionary of extra parameters passed to the router's method,
-        e.g. ``**fit_params`` passed to a meta-estimator's :term:`fit`.
-
     **kwargs : dict
-        Parameters explicitly accepted and included in the router's method
-        signature.
+        Metadata to be routed.
 
     Returns
     -------
@@ -1449,27 +1448,19 @@ def process_routing(obj, method, other_params, **kwargs):
         corresponding methods or corresponding child objects. The object names
         are those defined in `obj.get_metadata_routing()`.
     """
-    if not hasattr(obj, "get_metadata_routing"):
+    if not hasattr(_obj, "get_metadata_routing"):
         raise AttributeError(
-            f"This {repr(obj.__class__.__name__)} has not implemented the routing"
+            f"This {repr(_obj.__class__.__name__)} has not implemented the routing"
             " method `get_metadata_routing`."
         )
-    if method not in METHODS:
+    if _method not in METHODS:
         raise TypeError(
             f"Can only route and process input on these methods: {METHODS}, "
-            f"while the passed method is: {method}."
+            f"while the passed method is: {_method}."
         )
 
-    # We take the extra params (**fit_params) which is passed as `other_params`
-    # and add the explicitly passed parameters (passed as **kwargs) to it. This
-    # is equivalent to a code such as this in a router:
-    # if sample_weight is not None:
-    #     fit_params["sample_weight"] = sample_weight
-    all_params = other_params if other_params is not None else dict()
-    all_params.update(kwargs)
-
-    request_routing = get_routing_for_object(obj)
-    request_routing.validate_metadata(params=all_params, method=method)
-    routed_params = request_routing.route_params(params=all_params, caller=method)
+    request_routing = get_routing_for_object(_obj)
+    request_routing.validate_metadata(params=kwargs, method=_method)
+    routed_params = request_routing.route_params(params=kwargs, caller=_method)
 
     return routed_params
