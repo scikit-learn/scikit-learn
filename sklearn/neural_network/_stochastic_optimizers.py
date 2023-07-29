@@ -73,6 +73,9 @@ class BaseOptimizer:
 class SGDOptimizer(BaseOptimizer):
     """Stochastic gradient descent optimizer with momentum
 
+    For example usage and comparison with Adam optimizer, see
+    :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`
+
     Parameters
     ----------
     params : list, length = len(coefs_) + len(intercepts_)
@@ -197,6 +200,9 @@ class SGDOptimizer(BaseOptimizer):
 
 class AdamOptimizer(BaseOptimizer):
     """Stochastic gradient descent optimizer with Adam
+
+    For example usage and comparison with SGD optimizer, see
+    :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`
 
     Note: All default values are from the original Adam paper
 
