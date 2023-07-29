@@ -459,10 +459,6 @@ section[id]::before {
   content: "";
 }
 
-section > section[id]::before {
-  height: 64px;
-}
-
 div.sk-page-content {
   background-color: white;
   position: relative;
@@ -676,6 +672,7 @@ div.sk-page-content h2 {
   background-color: #BED4EB;
   border-radius: 0.3rem;
   font-size: 1.5rem;
+  margin-top: calc(max(2rem, .7vh));
   margin-bottom: 1rem;
   word-wrap: break-word;
 }
@@ -686,6 +683,7 @@ div.sk-page-content h3 {
   border-radius: 0.3rem;
   font-size: 1.2rem;
   word-wrap: break-word;
+  margin-top: 1.5rem;
 }
 
 div.sk-page-content h4 {
@@ -1002,6 +1000,14 @@ table.docutils p {
 div.sphx-glr-thumbcontainer {
   min-height: 250px;
   font-size: 0.9rem;
+}
+
+.sphx-glr-example-title > :target::before {
+  display: block;
+  content: "";
+  margin-top: -150px;
+  height: 150px;
+  visibility: hidden;
 }
 
 .sphx-glr-script-out .highlight pre {
