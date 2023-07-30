@@ -1,22 +1,24 @@
 from functools import partial
+from itertools import chain
 
-import pytest
 import numpy as np
+import pytest
 
-from sklearn.metrics.cluster import adjusted_mutual_info_score
-from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.cluster import completeness_score
-from sklearn.metrics.cluster import fowlkes_mallows_score
-from sklearn.metrics.cluster import homogeneity_score
-from sklearn.metrics.cluster import mutual_info_score
-from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.metrics.cluster import v_measure_score
-from sklearn.metrics.cluster import silhouette_score
-from sklearn.metrics.cluster import calinski_harabasz_score
-from sklearn.metrics.cluster import davies_bouldin_score
-
+from sklearn.metrics.cluster import (
+    adjusted_mutual_info_score,
+    adjusted_rand_score,
+    calinski_harabasz_score,
+    completeness_score,
+    davies_bouldin_score,
+    fowlkes_mallows_score,
+    homogeneity_score,
+    mutual_info_score,
+    normalized_mutual_info_score,
+    rand_score,
+    silhouette_score,
+    v_measure_score,
+)
 from sklearn.utils._testing import assert_allclose
-
 
 # Dictionaries of metrics
 # ------------------------
@@ -33,19 +35,20 @@ from sklearn.utils._testing import assert_allclose
 SUPERVISED_METRICS = {
     "adjusted_mutual_info_score": adjusted_mutual_info_score,
     "adjusted_rand_score": adjusted_rand_score,
+    "rand_score": rand_score,
     "completeness_score": completeness_score,
     "homogeneity_score": homogeneity_score,
     "mutual_info_score": mutual_info_score,
     "normalized_mutual_info_score": normalized_mutual_info_score,
     "v_measure_score": v_measure_score,
-    "fowlkes_mallows_score": fowlkes_mallows_score
+    "fowlkes_mallows_score": fowlkes_mallows_score,
 }
 
 UNSUPERVISED_METRICS = {
     "silhouette_score": silhouette_score,
-    "silhouette_manhattan": partial(silhouette_score, metric='manhattan'),
+    "silhouette_manhattan": partial(silhouette_score, metric="manhattan"),
     "calinski_harabasz_score": calinski_harabasz_score,
-    "davies_bouldin_score": davies_bouldin_score
+    "davies_bouldin_score": davies_bouldin_score,
 }
 
 # Lists of metrics with common properties
@@ -58,18 +61,27 @@ UNSUPERVISED_METRICS = {
 # Symmetric with respect to their input arguments y_true and y_pred.
 # Symmetric metrics only apply to supervised clusters.
 SYMMETRIC_METRICS = [
-    "adjusted_rand_score", "v_measure_score",
-    "mutual_info_score", "adjusted_mutual_info_score",
-    "normalized_mutual_info_score", "fowlkes_mallows_score"
+    "adjusted_rand_score",
+    "rand_score",
+    "v_measure_score",
+    "mutual_info_score",
+    "adjusted_mutual_info_score",
+    "normalized_mutual_info_score",
+    "fowlkes_mallows_score",
 ]
 
 NON_SYMMETRIC_METRICS = ["homogeneity_score", "completeness_score"]
 
 # Metrics whose upper bound is 1
 NORMALIZED_METRICS = [
-    "adjusted_rand_score", "homogeneity_score", "completeness_score",
-    "v_measure_score", "adjusted_mutual_info_score", "fowlkes_mallows_score",
-    "normalized_mutual_info_score"
+    "adjusted_rand_score",
+    "rand_score",
+    "homogeneity_score",
+    "completeness_score",
+    "v_measure_score",
+    "adjusted_mutual_info_score",
+    "fowlkes_mallows_score",
+    "normalized_mutual_info_score",
 ]
 
 
@@ -79,15 +91,15 @@ y2 = rng.randint(3, size=30)
 
 
 def test_symmetric_non_symmetric_union():
-    assert (sorted(SYMMETRIC_METRICS + NON_SYMMETRIC_METRICS) ==
-            sorted(SUPERVISED_METRICS))
+    assert sorted(SYMMETRIC_METRICS + NON_SYMMETRIC_METRICS) == sorted(
+        SUPERVISED_METRICS
+    )
 
 
 # 0.22 AMI and NMI changes
-@pytest.mark.filterwarnings('ignore::FutureWarning')
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
-    'metric_name, y1, y2',
-    [(name, y1, y2) for name in SYMMETRIC_METRICS]
+    "metric_name, y1, y2", [(name, y1, y2) for name in SYMMETRIC_METRICS]
 )
 def test_symmetry(metric_name, y1, y2):
     metric = SUPERVISED_METRICS[metric_name]
@@ -95,8 +107,7 @@ def test_symmetry(metric_name, y1, y2):
 
 
 @pytest.mark.parametrize(
-    'metric_name, y1, y2',
-    [(name, y1, y2) for name in NON_SYMMETRIC_METRICS]
+    "metric_name, y1, y2", [(name, y1, y2) for name in NON_SYMMETRIC_METRICS]
 )
 def test_non_symmetry(metric_name, y1, y2):
     metric = SUPERVISED_METRICS[metric_name]
@@ -104,7 +115,7 @@ def test_non_symmetry(metric_name, y1, y2):
 
 
 # 0.22 AMI and NMI changes
-@pytest.mark.filterwarnings('ignore::FutureWarning')
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metric_name", NORMALIZED_METRICS)
 def test_normalized_output(metric_name):
     upper_bound_1 = [0, 0, 0, 1, 1, 1]
@@ -118,16 +129,15 @@ def test_normalized_output(metric_name):
 
     lower_bound_1 = [0, 0, 0, 0, 0, 0]
     lower_bound_2 = [0, 1, 2, 3, 4, 5]
-    score = np.array([metric(lower_bound_1, lower_bound_2),
-                      metric(lower_bound_2, lower_bound_1)])
+    score = np.array(
+        [metric(lower_bound_1, lower_bound_2), metric(lower_bound_2, lower_bound_1)]
+    )
     assert not (score < 0).any()
 
 
 # 0.22 AMI and NMI changes
-@pytest.mark.filterwarnings('ignore::FutureWarning')
-@pytest.mark.parametrize(
-    "metric_name", dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
-)
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("metric_name", chain(SUPERVISED_METRICS, UNSUPERVISED_METRICS))
 def test_permute_labels(metric_name):
     # All clustering metrics do not change score due to permutations of labels
     # that is when 0 and 1 exchanged.
@@ -147,10 +157,8 @@ def test_permute_labels(metric_name):
 
 
 # 0.22 AMI and NMI changes
-@pytest.mark.filterwarnings('ignore::FutureWarning')
-@pytest.mark.parametrize(
-    "metric_name", dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
-)
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("metric_name", chain(SUPERVISED_METRICS, UNSUPERVISED_METRICS))
 # For all clustering metrics Input parameters can be both
 # in the form of arrays lists, positive, negative or string
 def test_format_invariance(metric_name):
@@ -159,21 +167,22 @@ def test_format_invariance(metric_name):
 
     def generate_formats(y):
         y = np.array(y)
-        yield y, 'array of ints'
-        yield y.tolist(), 'list of ints'
-        yield [str(x) + "-a" for x in y.tolist()], 'list of strs'
-        yield (np.array([str(x) + "-a" for x in y.tolist()], dtype=object),
-               'array of strs')
-        yield y - 1, 'including negative ints'
-        yield y + 1, 'strictly positive ints'
+        yield y, "array of ints"
+        yield y.tolist(), "list of ints"
+        yield [str(x) + "-a" for x in y.tolist()], "list of strs"
+        yield (
+            np.array([str(x) + "-a" for x in y.tolist()], dtype=object),
+            "array of strs",
+        )
+        yield y - 1, "including negative ints"
+        yield y + 1, "strictly positive ints"
 
     if metric_name in SUPERVISED_METRICS:
         metric = SUPERVISED_METRICS[metric_name]
         score_1 = metric(y_true, y_pred)
         y_true_gen = generate_formats(y_true)
         y_pred_gen = generate_formats(y_pred)
-        for (y_true_fmt, fmt_name), (y_pred_fmt, _) in zip(y_true_gen,
-                                                           y_pred_gen):
+        for (y_true_fmt, fmt_name), (y_pred_fmt, _) in zip(y_true_gen, y_pred_gen):
             assert score_1 == metric(y_true_fmt, y_pred_fmt)
     else:
         metric = UNSUPERVISED_METRICS[metric_name]
@@ -181,7 +190,7 @@ def test_format_invariance(metric_name):
         score_1 = metric(X, y_true)
         assert score_1 == metric(X.astype(float), y_true)
         y_true_gen = generate_formats(y_true)
-        for (y_true_fmt, fmt_name) in y_true_gen:
+        for y_true_fmt, fmt_name in y_true_gen:
             assert score_1 == metric(X, y_true_fmt)
 
 
@@ -193,19 +202,18 @@ def test_single_sample(metric):
 
 
 @pytest.mark.parametrize(
-    "metric_name, metric_func",
-    dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS).items()
+    "metric_name, metric_func", dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS).items()
 )
 def test_inf_nan_input(metric_name, metric_func):
     if metric_name in SUPERVISED_METRICS:
-        invalids = [([0, 1], [np.inf, np.inf]),
-                    ([0, 1], [np.nan, np.nan]),
-                    ([0, 1], [np.nan, np.inf])]
+        invalids = [
+            ([0, 1], [np.inf, np.inf]),
+            ([0, 1], [np.nan, np.nan]),
+            ([0, 1], [np.nan, np.inf]),
+        ]
     else:
         X = np.random.randint(10, size=(2, 10))
-        invalids = [(X, [np.inf, np.inf]),
-                    (X, [np.nan, np.nan]),
-                    (X, [np.nan, np.inf])]
-    with pytest.raises(ValueError, match='contains NaN, infinity'):
+        invalids = [(X, [np.inf, np.inf]), (X, [np.nan, np.nan]), (X, [np.nan, np.inf])]
+    with pytest.raises(ValueError, match=r"contains (NaN|infinity)"):
         for args in invalids:
             metric_func(*args)

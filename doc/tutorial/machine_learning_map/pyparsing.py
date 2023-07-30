@@ -2836,7 +2836,7 @@ class QuotedString(Token):
     def __init__( self, quoteChar, escChar=None, escQuote=None, multiline=False, unquoteResults=True, endQuoteChar=None, convertWhitespaceEscapes=True):
         super(QuotedString,self).__init__()
 
-        # remove white space from quote chars - wont work anyway
+        # remove white space from quote chars - won't work anyway
         quoteChar = quoteChar.strip()
         if not quoteChar:
             warnings.warn("quoteChar cannot be the empty string",SyntaxWarning,stacklevel=2)
@@ -3842,7 +3842,7 @@ class _MultipleMatch(ParseElementEnhance):
             try_not_ender(instring, loc)
         loc, tokens = self_expr_parse( instring, loc, doActions, callPreParse=False )
         try:
-            hasIgnoreExprs = (not not self.ignoreExprs)
+            hasIgnoreExprs = bool(self.ignoreExprs)
             while 1:
                 if check_ender:
                     try_not_ender(instring, loc)

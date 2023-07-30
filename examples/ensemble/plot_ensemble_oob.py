@@ -19,11 +19,6 @@ error stabilizes.
        Learning Ed. 2", p592-593, Springer, 2009.
 
 """
-import matplotlib.pyplot as plt
-
-from collections import OrderedDict
-from sklearn.datasets import make_classification
-from sklearn.ensemble import RandomForestClassifier
 
 # Author: Kian Ho <hui.kian.ho@gmail.com>
 #         Gilles Louppe <g.louppe@gmail.com>
@@ -31,31 +26,55 @@ from sklearn.ensemble import RandomForestClassifier
 #
 # License: BSD 3 Clause
 
-print(__doc__)
+from collections import OrderedDict
+
+import matplotlib.pyplot as plt
+
+from sklearn.datasets import make_classification
+from sklearn.ensemble import RandomForestClassifier
 
 RANDOM_STATE = 123
 
 # Generate a binary classification dataset.
-X, y = make_classification(n_samples=500, n_features=25,
-                           n_clusters_per_class=1, n_informative=15,
-                           random_state=RANDOM_STATE)
+X, y = make_classification(
+    n_samples=500,
+    n_features=25,
+    n_clusters_per_class=1,
+    n_informative=15,
+    random_state=RANDOM_STATE,
+)
 
 # NOTE: Setting the `warm_start` construction parameter to `True` disables
 # support for parallelized ensembles but is necessary for tracking the OOB
 # error trajectory during training.
 ensemble_clfs = [
-    ("RandomForestClassifier, max_features='sqrt'",
-        RandomForestClassifier(warm_start=True, oob_score=True,
-                               max_features="sqrt",
-                               random_state=RANDOM_STATE)),
-    ("RandomForestClassifier, max_features='log2'",
-        RandomForestClassifier(warm_start=True, max_features='log2',
-                               oob_score=True,
-                               random_state=RANDOM_STATE)),
-    ("RandomForestClassifier, max_features=None",
-        RandomForestClassifier(warm_start=True, max_features=None,
-                               oob_score=True,
-                               random_state=RANDOM_STATE))
+    (
+        "RandomForestClassifier, max_features='sqrt'",
+        RandomForestClassifier(
+            warm_start=True,
+            oob_score=True,
+            max_features="sqrt",
+            random_state=RANDOM_STATE,
+        ),
+    ),
+    (
+        "RandomForestClassifier, max_features='log2'",
+        RandomForestClassifier(
+            warm_start=True,
+            max_features="log2",
+            oob_score=True,
+            random_state=RANDOM_STATE,
+        ),
+    ),
+    (
+        "RandomForestClassifier, max_features=None",
+        RandomForestClassifier(
+            warm_start=True,
+            max_features=None,
+            oob_score=True,
+            random_state=RANDOM_STATE,
+        ),
+    ),
 ]
 
 # Map a classifier name to a list of (<n_estimators>, <error rate>) pairs.
@@ -63,10 +82,10 @@ error_rate = OrderedDict((label, []) for label, _ in ensemble_clfs)
 
 # Range of `n_estimators` values to explore.
 min_estimators = 15
-max_estimators = 175
+max_estimators = 150
 
 for label, clf in ensemble_clfs:
-    for i in range(min_estimators, max_estimators + 1):
+    for i in range(min_estimators, max_estimators + 1, 5):
         clf.set_params(n_estimators=i)
         clf.fit(X, y)
 

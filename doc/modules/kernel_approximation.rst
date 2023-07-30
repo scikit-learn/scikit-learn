@@ -108,7 +108,7 @@ The additive chi squared kernel as used here is given by
 
         k(x, y) = \sum_i \frac{2x_iy_i}{x_i+y_i}
 
-This is not exactly the same as :func:`sklearn.metrics.additive_chi2_kernel`.
+This is not exactly the same as :func:`sklearn.metrics.pairwise.additive_chi2_kernel`.
 The authors of [VZ2010]_ prefer the version above as it is always positive
 definite.
 Since the kernel is additive, it is possible to treat all components
@@ -191,7 +191,7 @@ determined by ``n_components``.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_plot_scalable_poly_kernels.py`
+    * :ref:`sphx_glr_auto_examples_kernel_approximation_plot_scalable_poly_kernels.py`
 
 .. _tensor_sketch_kernel_approx:
 
@@ -234,23 +234,23 @@ or store training examples.
 .. topic:: References:
 
     .. [RR2007] `"Random features for large-scale kernel machines"
-      <https://www.robots.ox.ac.uk/~vgg/rg/papers/randomfeatures.pdf>`_
+      <https://papers.nips.cc/paper/2007/hash/013a006f03dbc5392effeb8f18fda755-Abstract.html>`_
       Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
     .. [LS2010] `"Random Fourier approximations for skewed multiplicative histogram kernels"
-      <http://www.maths.lth.se/matematiklth/personal/sminchis/papers/lis_dagm10.pdf>`_
-      Random Fourier approximations for skewed multiplicative histogram kernels
-      - Lecture Notes for Computer Sciencd (DAGM)
+      <https://www.researchgate.net/publication/221114584_Random_Fourier_Approximations_for_Skewed_Multiplicative_Histogram_Kernels>`_
+      Li, F., Ionescu, C., and Sminchisescu, C.
+      - Pattern Recognition,  DAGM 2010, Lecture Notes in Computer Science.
     .. [VZ2010] `"Efficient additive kernels via explicit feature maps"
       <https://www.robots.ox.ac.uk/~vgg/publications/2011/Vedaldi11/vedaldi11.pdf>`_
       Vedaldi, A. and Zisserman, A. - Computer Vision and Pattern Recognition 2010
     .. [VVZ2010] `"Generalized RBF feature maps for Efficient Detection"
       <https://www.robots.ox.ac.uk/~vgg/publications/2010/Sreekanth10/sreekanth10.pdf>`_
       Vempati, S. and Vedaldi, A. and Zisserman, A. and Jawahar, CV - 2010
-    .. [PP2013] `"Fast and scalable polynomial kernels via explicit feature maps"
-      <https://doi.org/10.1145/2487575.2487591>`_
+    .. [PP2013] :doi:`"Fast and scalable polynomial kernels via explicit feature maps"
+      <10.1145/2487575.2487591>`
       Pham, N., & Pagh, R. - 2013
     .. [CCF2002] `"Finding frequent items in data streams"
-      <http://www.cs.princeton.edu/courses/archive/spring04/cos598B/bib/CharikarCF.pdf>`_
+      <https://www.cs.princeton.edu/courses/archive/spring04/cos598B/bib/CharikarCF.pdf>`_
       Charikar, M., Chen, K., & Farach-Colton - 2002
     .. [WIKICS] `"Wikipedia: Count sketch"
       <https://en.wikipedia.org/wiki/Count_sketch>`_

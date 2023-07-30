@@ -171,7 +171,7 @@ General Concepts
         one-hot encode categorical features.
         See also :ref:`preprocessing_categorical_features` and the
         `categorical-encoding
-        <https://contrib.scikit-learn.org/categorical-encoding>`_
+        <https://github.com/scikit-learn-contrib/category_encoders>`_
         package for tools related to encoding categorical features.
 
     clone
@@ -186,6 +186,13 @@ General Concepts
         :class:`~pipeline.Pipeline` and
         :class:`~pipeline.FeatureUnion`.)
 
+        If the estimator's `random_state` parameter is an integer (or if the
+        estimator doesn't have a `random_state` parameter), an *exact clone*
+        is returned: the clone and the original estimator will give the exact
+        same results. Otherwise, *statistical clone* is returned: the clone
+        might yield different results from the original estimator. More
+        details can be found in :ref:`randomness`.
+
     common tests
         This refers to the tests run on almost every estimator class in
         Scikit-learn to check they comply with basic API conventions.  They are
@@ -198,9 +205,32 @@ General Concepts
         exceptional behaviours on the estimator using semantic :term:`estimator
         tags`.
 
+    cross-fitting
+    cross fitting
+        A resampling method that iteratively partitions data into mutually
+        exclusive subsets to fit two stages. During the first stage, the
+        mutually exclusive subsets enable predictions or transformations to be
+        computed on data not seen during training. The computed data is then
+        used in the second stage. The objective is to avoid having any
+        overfitting in the first stage introduce bias into the input data
+        distribution of the second stage.
+        For examples of its use, see: :class:`~preprocessing.TargetEncoder`,
+        :class:`~ensemble.StackingClassifier`,
+        :class:`~ensemble.StackingRegressor` and
+        :class:`~calibration.CalibratedClassifierCV`.
+
+    cross-validation
+    cross validation
+        A resampling method that iteratively partitions data into mutually
+        exclusive 'train' and 'test' subsets so model performance can be
+        evaluated on unseen data. This conserves data as avoids the need to hold
+        out a 'validation' dataset and accounts for variability as multiple
+        rounds of cross validation are generally performed.
+        See :ref:`User Guide <cross_validation>` for more details.
+
     deprecation
         We use deprecation to slowly violate our :term:`backwards
-        compatibility` assurances, usually to to:
+        compatibility` assurances, usually to:
 
         * change the default value of a parameter; or
         * remove a parameter, attribute, method, class, etc.
@@ -248,6 +278,13 @@ General Concepts
         or vectorizing.  Our estimators do not work with struct arrays, for
         instance.
 
+        Our documentation can sometimes give information about the dtype
+        precision, e.g. `np.int32`, `np.int64`, etc. When the precision is
+        provided, it refers to the NumPy dtype. If an arbitrary precision is
+        used, the documentation will refer to dtype `integer` or `floating`.
+        Note that in this case, the precision can be platform dependent.
+        The `numeric` dtype refers to accepting both `integer` and `floating`.
+
         TODO: Mention efficiency and precision issues; casting policy.
 
     duck typing
@@ -270,7 +307,7 @@ General Concepts
               >>> from sklearn.model_selection import GridSearchCV
               >>> from sklearn.linear_model import SGDClassifier
               >>> clf = GridSearchCV(SGDClassifier(),
-              ...                    param_grid={'loss': ['log', 'hinge']})
+              ...                    param_grid={'loss': ['log_loss', 'hinge']})
 
           This means that we can only check for duck-typed attributes after
           fitting, and that we must be careful to make :term:`meta-estimators`
@@ -321,11 +358,17 @@ General Concepts
         * sometimes in the :ref:`User Guide <user_guide>` (built from ``doc/``)
           alongside a technical description of the estimator.
 
+    experimental
+        An experimental tool is already usable but its public API, such as
+        default parameter values or fitted attributes, is still subject to
+        change in future versions without the usual :term:`deprecation`
+        warning policy.
+
     evaluation metric
     evaluation metrics
         Evaluation metrics give a measure of how well a model performs.  We may
-        use this term specifically to refer to the functions in :mod:`metrics`
-        (disregarding :mod:`metrics.pairwise`), as distinct from the
+        use this term specifically to refer to the functions in :mod:`~sklearn.metrics`
+        (disregarding :mod:`~sklearn.metrics.pairwise`), as distinct from the
         :term:`score` method and the :term:`scoring` API used in cross
         validation. See :ref:`model_evaluation`.
 
@@ -340,7 +383,7 @@ General Concepts
         the scoring API.
 
         Note that some estimators can calculate metrics that are not included
-        in :mod:`metrics` and are estimator-specific, notably model
+        in :mod:`~sklearn.metrics` and are estimator-specific, notably model
         likelihoods.
 
     estimator tags
@@ -362,17 +405,6 @@ General Concepts
                 :class:`base.ClassifierMixin`, but needs to be more explicitly
                 adopted on a :term:`meta-estimator`.  Its value should usually be
                 checked by way of a helper such as :func:`base.is_classifier`.
-
-            ``_pairwise``
-                This boolean attribute indicates whether the data (``X``) passed to
-                :func:`fit` and similar methods consists of pairwise measures over
-                samples rather than a feature representation for each sample.  It
-                is usually ``True`` where an estimator has a ``metric`` or
-                ``affinity`` or ``kernel`` parameter with value 'precomputed'.
-                Its primary purpose is that when a :term:`meta-estimator`
-                extracts a sub-sample of data intended for a pairwise estimator,
-                the data needs to be indexed on both axes, while other data is
-                indexed only on the first axis.
 
         For more detailed info, see :ref:`estimator_tags`.
 
@@ -485,8 +517,8 @@ General Concepts
         applying a :term:`transformer` to the entirety of a dataset rather
         than each training portion in a cross validation split.
 
-        We aim to provide interfaces (such as :mod:`pipeline` and
-        :mod:`model_selection`) that shield the user from data leakage.
+        We aim to provide interfaces (such as :mod:`~sklearn.pipeline` and
+        :mod:`~sklearn.model_selection`) that shield the user from data leakage.
 
     memmapping
     memory map
@@ -566,7 +598,7 @@ General Concepts
     params
         We mostly use *parameter* to refer to the aspects of an estimator that
         can be specified in its construction. For example, ``max_depth`` and
-        ``random_state`` are parameters of :class:`RandomForestClassifier`.
+        ``random_state`` are parameters of :class:`~ensemble.RandomForestClassifier`.
         Parameters to an estimator's constructor are stored unmodified as
         attributes on the estimator instance, and conventionally start with an
         alphabetic character and end with an alphanumeric character.  Each
@@ -586,10 +618,10 @@ General Concepts
         meta-estimator.  Ordinarily, these nested parameters are denoted by
         using a :term:`double underscore` (``__``) to separate between the
         estimator-as-parameter and its parameter.  Thus ``clf =
-        BaggingClassifier(base_estimator=DecisionTreeClassifier(max_depth=3))``
-        has a deep parameter ``base_estimator__max_depth`` with value ``3``,
-        which is accessible with ``clf.base_estimator.max_depth`` or
-        ``clf.get_params()['base_estimator__max_depth']``.
+        BaggingClassifier(estimator=DecisionTreeClassifier(max_depth=3))``
+        has a deep parameter ``estimator__max_depth`` with value ``3``,
+        which is accessible with ``clf.estimator.max_depth`` or
+        ``clf.get_params()['estimator__max_depth']``.
 
         The list of parameters and their current values can be retrieved from
         an :term:`estimator instance` using its :term:`get_params` method.
@@ -611,16 +643,15 @@ General Concepts
         implementations of distance metrics (as well as improper metrics like
         Cosine Distance) through :func:`metrics.pairwise_distances`, and of
         kernel functions (a constrained class of similarity functions) in
-        :func:`metrics.pairwise_kernels`.  These can compute pairwise distance
+        :func:`metrics.pairwise.pairwise_kernels`.  These can compute pairwise distance
         matrices that are symmetric and hence store data redundantly.
 
         See also :term:`precomputed` and :term:`metric`.
 
         Note that for most distance metrics, we rely on implementations from
         :mod:`scipy.spatial.distance`, but may reimplement for efficiency in
-        our context.  The :mod:`neighbors` module also duplicates some metric
-        implementations for integration with efficient binary tree search data
-        structures.
+        our context. The :class:`metrics.DistanceMetric` interface is used to implement
+        distance metrics for integration with efficient neighbors search.
 
     pd
         A shorthand for `Pandas <https://pandas.pydata.org>`_ due to the
@@ -639,9 +670,9 @@ General Concepts
         sample and each column to a training sample.
 
         Use of precomputed X is usually indicated by setting a ``metric``,
-        ``affinity`` or ``kernel`` parameter to the string 'precomputed'.  An
-        estimator should mark itself as being :term:`_pairwise` if this is the
-        case.
+        ``affinity`` or ``kernel`` parameter to the string 'precomputed'. If
+        this is the case, then the estimator should set the `pairwise`
+        estimator tag as True.
 
     rectangular
         Data that can be represented as a matrix with :term:`samples` on the
@@ -686,7 +717,7 @@ General Concepts
         decision-making process outlined in :ref:`governance`.
         For all votes, a proposal must have been made public and discussed before the
         vote. Such a proposal must be a consolidated document, in the form of a
-        ‘Scikit-Learn Enhancement Proposal’ (SLEP), rather than a long discussion on an
+        "Scikit-Learn Enhancement Proposal" (SLEP), rather than a long discussion on an
         issue. A SLEP must be submitted as a pull-request to
         `enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_ using the
         `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_.
@@ -739,6 +770,15 @@ General Concepts
         sparse matrix, instead maintaining sparsity or raising an error if not
         possible (i.e. if an estimator does not / cannot support sparse
         matrices).
+
+    stateless
+        An estimator is stateless if it does not store any information that is
+        obtained during :term:`fit`. This information can be either parameters
+        learned during :term:`fit` or statistics computed from the
+        training data. An estimator is stateless if it has no :term:`attributes`
+        apart from ones set in `__init__`. Calling :term:`fit` for these
+        estimators will only validate the public :term:`attributes` passed
+        in `__init__`.
 
     supervised
     supervised learning
@@ -827,7 +867,13 @@ Class APIs and Estimator Types
         * :term:`predict` if :term:`inductive`
 
     density estimator
-        TODO
+        An :term:`unsupervised` estimation of input probability density
+        function. Commonly used techniques are:
+
+        * :ref:`kernel_density` - uses a kernel function, controlled by the
+          bandwidth parameter to represent density;
+        * :ref:`Gaussian mixture <mixture>` - uses mixture of Gaussian models
+          to represent density.
 
     estimator
     estimators
@@ -867,7 +913,7 @@ Class APIs and Estimator Types
 
         * :term:`fit`
         * :term:`transform`
-        * :term:`get_feature_names`
+        * :term:`get_feature_names_out`
 
     meta-estimator
     meta-estimators
@@ -897,7 +943,7 @@ Class APIs and Estimator Types
         possible to identify which methods are provided by the underlying
         estimator until the meta-estimator has been :term:`fitted` (see also
         :term:`duck typing`), for which
-        :func:`utils.metaestimators.if_delegate_has_method` may help.  It
+        :func:`utils.metaestimators.available_if` may help.  It
         should also provide (or modify) the :term:`estimator tags` and
         :term:`classes_` attribute provided by the base estimator.
 
@@ -986,7 +1032,10 @@ such as:
         results in the previous steps of the cross-validation process. This
         generally leads to speed improvements. An exception is the
         :class:`RidgeCV <linear_model.RidgeCV>` class, which can instead
-        perform efficient Leave-One-Out CV.
+        perform efficient Leave-One-Out (LOO) CV. By default, all these
+        estimators, apart from :class:`RidgeCV <linear_model.RidgeCV>` with an
+        LOO-CV, will be refitted on the full training dataset after finding the
+        best combination of hyper-parameters.
 
     scorer
         A non-estimator callable object which evaluates an estimator on given
@@ -996,9 +1045,41 @@ such as:
 
 Further examples:
 
-* :class:`neighbors.DistanceMetric`
+* :class:`metrics.DistanceMetric`
 * :class:`gaussian_process.kernels.Kernel`
 * ``tree.Criterion``
+
+.. _glossary_metadata_routing:
+
+Metadata Routing
+================
+
+.. glossary::
+
+    consumer
+        An object which consumes :term:`metadata`. This object is usually an
+        :term:`estimator`, a :term:`scorer`, or a :term:`CV splitter`. Consuming
+        metadata means using it in calculations, e.g. using
+        :term:`sample_weight` to calculate a certain type of score. Being a
+        consumer doesn't mean that the object always receives a certain
+        metadata, rather it means it can use it if it is provided.
+
+    metadata
+        Data which is related to the given :term:`X` and :term:`y` data, but
+        is not directly a part of the data, e.g. :term:`sample_weight` or
+        :term:`groups`, and is passed along to different objects and methods,
+        e.g. to a :term:`scorer` or a :term:`CV splitter`.
+
+    router
+        An object which routes metadata to :term:`consumers <consumer>`. This
+        object is usually a :term:`meta-estimator`, e.g.
+        :class:`~pipeline.Pipeline` or :class:`~model_selection.GridSearchCV`.
+        Some routers can also be a consumer. This happens for example when a
+        meta-estimator uses the given :term:`groups`, and it also passes it
+        along to some of its sub-objects, such as a :term:`CV splitter`.
+
+Please refer to :ref:`Metadta Routing User Guide <metadata_routing>` for more
+information.
 
 .. _glossary_target_types:
 
@@ -1037,7 +1118,9 @@ Target Types
         identified as 'multiclass'.
 
     continuous multioutput
+    continuous multi-output
     multioutput continuous
+    multi-output continuous
         A regression problem where each sample's target consists of ``n_outputs``
         :term:`outputs`, each one a finite floating point number, for a
         fixed int ``n_outputs > 1`` in a particular dataset.
@@ -1052,6 +1135,7 @@ Target Types
         'multiclass-multioutput'.
 
     multiclass
+    multi-class
         A classification problem consisting of more than two classes.  A
         multiclass target may be represented as a 1-dimensional array of
         strings or integers.  A 2d column vector of integers (i.e. a
@@ -1064,7 +1148,7 @@ Target Types
         For semi-supervised classification, :term:`unlabeled` samples should
         have the special label -1 in ``y``.
 
-        Within sckit-learn, all estimators supporting binary classification
+        Within scikit-learn, all estimators supporting binary classification
         also support multiclass classification, using One-vs-Rest by default.
 
         A :class:`preprocessing.LabelEncoder` helps to canonicalize multiclass
@@ -1075,7 +1159,9 @@ Target Types
         identically to 'multiclass'.
 
     multiclass multioutput
+    multi-class multi-output
     multioutput multiclass
+    multi-output multi-class
         A classification problem where each sample's target consists of
         ``n_outputs`` :term:`outputs`, each a class label, for a fixed int
         ``n_outputs > 1`` in a particular dataset.  Each output has a
@@ -1091,7 +1177,7 @@ Target Types
         XXX: For simplicity, we may not always support string class labels
         for multiclass multioutput, and integer class labels should be used.
 
-        :mod:`multioutput` provides estimators which estimate multi-output
+        :mod:`~sklearn.multioutput` provides estimators which estimate multi-output
         problems using multiple single-output estimators.  This may not fully
         account for dependencies among the different outputs, which methods
         natively handling the multioutput case (e.g. decision trees, nearest
@@ -1101,6 +1187,7 @@ Target Types
         'multiclass-multioutput' for multiclass multioutput input.
 
     multilabel
+    multi-label
         A :term:`multiclass multioutput` target where each output is
         :term:`binary`.  This may be represented as a 2d (dense) array or
         sparse matrix of integers, such that each column is a separate binary
@@ -1153,18 +1240,19 @@ Methods
             predicted class.  Columns are ordered according to
             :term:`classes_`.
         multilabel classification
-            Scikit-learn is inconsistent in its representation of multilabel
-            decision functions.  Some estimators represent it like multiclass
-            multioutput, i.e. a list of 2d arrays, each with two columns. Others
-            represent it with a single 2d array, whose columns correspond to
-            the individual binary classification decisions. The latter
-            representation is ambiguously identical to the multiclass
-            classification format, though its semantics differ: it should be
-            interpreted, like in the binary case, by thresholding at 0.
+            Scikit-learn is inconsistent in its representation of :term:`multilabel`
+            decision functions. It may be represented one of two ways:
 
-            TODO: `This gist
-            <https://gist.github.com/jnothman/4807b1b0266613c20ba4d1f88d0f8cf5>`_
-            highlights the use of the different formats for multilabel.
+            - List of 2d arrays, each array of shape: (`n_samples`, 2), like in
+              multiclass multioutput. List is of length `n_labels`.
+
+            - Single 2d array of shape (`n_samples`, `n_labels`), with each
+              'column' in the array corresponding to the individual binary
+              classification decisions. This is identical to the
+              multiclass classification format, though its semantics differ: it
+              should be interpreted, like in the binary case, by thresholding at
+              0.
+
         multioutput classification
             A list of 2d arrays, corresponding to each multiclass decision
             function.
@@ -1222,13 +1310,16 @@ Methods
         (i.e. training and test data together) before further modelling, as
         this results in :term:`data leakage`.
 
-    ``get_feature_names``
+    ``get_feature_names_out``
         Primarily for :term:`feature extractors`, but also used for other
         transformers to provide string names for each column in the output of
-        the estimator's :term:`transform` method.  It outputs a list of
-        strings and may take a list of strings as input, corresponding
+        the estimator's :term:`transform` method.  It outputs an array of
+        strings and may take an array-like of strings as input, corresponding
         to the names of input columns from which output column names can
-        be generated.  By default input features are named x0, x1, ....
+        be generated.  If `input_features` is not passed in, then the
+        `feature_names_in_` attribute will be used. If the
+        `feature_names_in_` attribute is not defined, then the
+        input names are named `[x0, x1, ..., x(n_features_in_ - 1)]`.
 
     ``get_n_splits``
         On a :term:`CV splitter` (not an estimator), returns the number of
@@ -1356,7 +1447,11 @@ Methods
         often the likelihood of the data under the model.
 
     ``score_samples``
-        TODO
+        A method that returns a score for each given sample. The exact
+        definition of *score* varies from one class to another. In the case of
+        density estimation, it can be the log density model on the data, and in
+        the case of outlier detection, it can be the opposite of the outlier
+        factor of the data.
 
         If the estimator was not already :term:`fitted`, calling this method
         should raise a :class:`exceptions.NotFittedError`.
@@ -1434,7 +1529,7 @@ functions or non-estimator constructors.
         1: 1}, {0: 1, 1: 1}]`` instead of ``[{1:1}, {2:5}, {3:1}, {4:1}]``.
 
         The ``class_weight`` parameter is validated and interpreted with
-        :func:`utils.compute_class_weight`.
+        :func:`utils.class_weight.compute_class_weight`.
 
     ``cv``
         Determines a cross validation splitting strategy, as used in
@@ -1460,10 +1555,17 @@ functions or non-estimator constructors.
         With some exceptions (especially where not using cross validation at
         all is an option), the default is 5-fold.
 
-        ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
+        ``cv`` values are validated and interpreted with
+        :func:`model_selection.check_cv`.
 
     ``kernel``
-        TODO
+        Specifies the kernel function to be used by Kernel Method algorithms.
+        For example, the estimators :class:`svm.SVC` and
+        :class:`gaussian_process.GaussianProcessClassifier` both have a
+        ``kernel`` parameter that takes the name of the kernel to use as string
+        or a callable kernel function used to compute the kernel matrix. For
+        more reference, see the :ref:`kernel_approximation` and the
+        :ref:`gaussian_process` user guides.
 
     ``max_iter``
         For estimators involving iterative optimization, this determines the
@@ -1526,6 +1628,9 @@ functions or non-estimator constructors.
         generally be interpreted as ``n_jobs=1``, unless the current
         :class:`joblib.Parallel` backend context specifies otherwise.
 
+        Note that even if ``n_jobs=1``, low-level parallelism (via Numpy and OpenMP)
+        might be used in some configuration.
+
         For more details on the use of ``joblib`` and its interactions with
         scikit-learn, please refer to our :ref:`parallelism notes
         <parallelism>`.
@@ -1561,6 +1666,7 @@ functions or non-estimator constructors.
             number of different distinct random seeds. Popular integer
             random seeds are 0 and `42
             <https://en.wikipedia.org/wiki/Answer_to_the_Ultimate_Question_of_Life%2C_the_Universe%2C_and_Everything>`_.
+            Integer values must be in the range `[0, 2**32 - 1]`.
 
         A :class:`numpy.random.RandomState` instance
             Use the provided random state, only affecting other users
@@ -1571,6 +1677,9 @@ functions or non-estimator constructors.
         :func:`utils.check_random_state` is used internally to validate the
         input ``random_state`` and return a :class:`~numpy.random.RandomState`
         instance.
+
+        For more details on how to control the randomness of scikit-learn
+        objects and avoid common pitfalls, you may refer to :ref:`randomness`.
 
     ``scoring``
         Specifies the score function to be maximized (usually by :ref:`cross
@@ -1613,10 +1722,24 @@ functions or non-estimator constructors.
         in a subsequent call to :term:`fit`.
 
         Note that this is only applicable for some models and some
-        parameters, and even some orders of parameter values. For example,
-        ``warm_start`` may be used when building random forests to add more
-        trees to the forest (increasing ``n_estimators``) but not to reduce
-        their number.
+        parameters, and even some orders of parameter values. In general, there
+        is an interaction between ``warm_start`` and the parameter controlling
+        the number of iterations of the estimator.
+
+        For estimators imported from :mod:`~sklearn.ensemble`,
+        ``warm_start`` will interact with ``n_estimators`` or ``max_iter``.
+        For these models, the number of iterations, reported via
+        ``len(estimators_)`` or ``n_iter_``, corresponds the total number of
+        estimators/iterations learnt since the initialization of the model.
+        Thus, if a model was already initialized with `N`` estimators, and `fit`
+        is called with ``n_estimators`` or ``max_iter`` set to `M`, the model
+        will train `M - N` new estimators.
+
+        Other models, usually using gradient-based solvers, have a different
+        behavior. They all expose a ``max_iter`` parameter. The reported
+        ``n_iter_`` corresponds to the number of iteration done during the last
+        call to ``fit`` and will be at most ``max_iter``. Thus, we do not
+        consider the state of the estimator since the initialization.
 
         :term:`partial_fit` also retains the model between calls, but differs:
         with ``warm_start`` the parameters change and the data is
@@ -1660,7 +1783,7 @@ See concept :term:`attribute`.
         predictors.
 
     ``coef_``
-        The weight/coefficient matrix of a generalised linear model
+        The weight/coefficient matrix of a generalized linear model
         :term:`predictor`, of shape ``(n_features,)`` for binary classification
         and single-output regression, ``(n_classes, n_features)`` for
         multiclass classification and ``(n_targets, n_features)`` for

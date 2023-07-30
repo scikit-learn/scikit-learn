@@ -1,17 +1,14 @@
 import numpy as np
 import pytest
-
-from sklearn.utils._testing import assert_array_equal
-
 from scipy.sparse import bsr_matrix, csc_matrix, csr_matrix
 
 from sklearn.feature_selection import VarianceThreshold
+from sklearn.utils._testing import assert_array_equal
 
-data = [[0, 1, 2, 3, 4],
-        [0, 2, 2, 3, 5],
-        [1, 1, 2, 4, 0]]
+data = [[0, 1, 2, 3, 4], [0, 2, 2, 3, 5], [1, 1, 2, 4, 0]]
 
 data2 = [[-0.13725701]] * 10
+
 
 def test_zero_variance():
     # Test VarianceThreshold with default setting, zero variance.
@@ -29,13 +26,17 @@ def test_zero_variance():
 def test_variance_threshold():
     # Test VarianceThreshold with custom variance.
     for X in [data, csr_matrix(data)]:
-        X = VarianceThreshold(threshold=.4).fit_transform(X)
+        X = VarianceThreshold(threshold=0.4).fit_transform(X)
         assert (len(data), 1) == X.shape
 
 
-@pytest.mark.skipif(np.var(data2) == 0,
-                    reason=('This test is not valid for this platform, '
-                            'as it relies on numerical instabilities.'))
+@pytest.mark.skipif(
+    np.var(data2) == 0,
+    reason=(
+        "This test is not valid for this platform, "
+        "as it relies on numerical instabilities."
+    ),
+)
 def test_zero_variance_floating_point_error():
     # Test that VarianceThreshold(0.0).fit eliminates features that have
     # the same value in every sample, even when floating point errors
@@ -51,9 +52,9 @@ def test_zero_variance_floating_point_error():
 def test_variance_nan():
     arr = np.array(data, dtype=np.float64)
     # add single NaN and feature should still be included
-    arr[0, 0] = np.NaN
+    arr[0, 0] = np.nan
     # make all values in feature NaN and feature should be rejected
-    arr[:, 1] = np.NaN
+    arr[:, 1] = np.nan
 
     for X in [arr, csr_matrix(arr), csc_matrix(arr), bsr_matrix(arr)]:
         sel = VarianceThreshold().fit(X)

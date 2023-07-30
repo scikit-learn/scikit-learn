@@ -21,14 +21,14 @@ quantitative measure of disease progression one year after baseline.
       - sex
       - bmi     body mass index
       - bp      average blood pressure
-      - s1      tc, T-Cells (a type of white blood cells)
+      - s1      tc, total serum cholesterol
       - s2      ldl, low-density lipoproteins
       - s3      hdl, high-density lipoproteins
-      - s4      tch, thyroid stimulating hormone
-      - s5      ltg, lamotrigine
+      - s4      tch, total cholesterol / HDL
+      - s5      ltg, possibly log of serum triglycerides level
       - s6      glu, blood sugar level
 
-Note: Each of these 10 feature variables have been mean centered and scaled by the standard deviation times `n_samples` (i.e. the sum of squares of each column totals 1).
+Note: Each of these 10 feature variables have been mean centered and scaled by the standard deviation times the square root of `n_samples` (i.e. the sum of squares of each column totals 1).
 
 Source URL:
 https://www4.stat.ncsu.edu/~boos/var.select/diabetes.html

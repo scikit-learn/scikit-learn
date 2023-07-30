@@ -14,7 +14,7 @@ def test_imports_strategies():
     # recommended and can lead to many complications).
 
     good_import = """
-    from sklearn.experimental import enable_successive_halving
+    from sklearn.experimental import enable_halving_search_cv
     from sklearn.model_selection import HalvingGridSearchCV
     from sklearn.model_selection import HalvingRandomSearchCV
     """
@@ -22,22 +22,20 @@ def test_imports_strategies():
 
     good_import_with_model_selection_first = """
     import sklearn.model_selection
-    from sklearn.experimental import enable_successive_halving
+    from sklearn.experimental import enable_halving_search_cv
     from sklearn.model_selection import HalvingGridSearchCV
     from sklearn.model_selection import HalvingRandomSearchCV
     """
-    assert_run_python_script(
-        textwrap.dedent(good_import_with_model_selection_first)
-    )
+    assert_run_python_script(textwrap.dedent(good_import_with_model_selection_first))
 
     bad_imports = """
     import pytest
 
-    with pytest.raises(ImportError):
+    with pytest.raises(ImportError, match='HalvingGridSearchCV is experimental'):
         from sklearn.model_selection import HalvingGridSearchCV
 
     import sklearn.experimental
-    with pytest.raises(ImportError):
-        from sklearn.model_selection import HalvingGridSearchCV
+    with pytest.raises(ImportError, match='HalvingRandomSearchCV is experimental'):
+        from sklearn.model_selection import HalvingRandomSearchCV
     """
     assert_run_python_script(textwrap.dedent(bad_imports))

@@ -7,21 +7,32 @@ Multi-dimensional Scaling (MDS).
 
 # weighted MDS option added by Baihan Lin <doerlbh@gmail.com>
 
-import numpy as np
-from joblib import Parallel, delayed, effective_n_jobs
-
 import warnings
+from numbers import Integral, Real
 
-from ..base import BaseEstimator
-from ..metrics import euclidean_distances
-from ..utils import check_random_state, check_array, check_symmetric
+import numpy as np
+from joblib import effective_n_jobs
+
+from ..base import BaseEstimator, _fit_context
 from ..isotonic import IsotonicRegression
-from ..utils.validation import _deprecate_positional_args
+from ..metrics import euclidean_distances
+from ..utils import check_array, check_random_state, check_symmetric
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils.parallel import Parallel, delayed
 
 
-def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
-                   max_iter=300, verbose=0, eps=1e-3, random_state=None,
-                   weight=None):
+def _smacof_single(
+    dissimilarities,
+    metric=True,
+    n_components=2,
+    init=None,
+    max_iter=300,
+    verbose=0,
+    eps=1e-3,
+    random_state=None,
+    normalized_stress=False,
+    weight=None,
+):
     """Computes multidimensional scaling using SMACOF algorithm.
 
     Parameters
@@ -31,6 +42,8 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
 
     metric : bool, default=True
         Compute metric or nonmetric SMACOF algorithm.
+        When ``False`` (i.e. non-metric MDS), dissimilarities with 0 are considered as
+        missing values.
 
     n_components : int, default=2
         Number of dimensions in which to immerse the dissimilarities. If an
@@ -50,16 +63,24 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
 
     eps : float, default=1e-3
         Relative tolerance with respect to stress at which to declare
-        convergence.
+        convergence. The value of `eps` should be tuned separately depending
+        on whether or not `normalized_stress` is being used.
 
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
+
+    normalized_stress : bool, default=False
+        Whether use and return normed stress value (Stress-1) instead of raw
+        stress calculated by default. Only supported in non-metric MDS. The
+        caller must ensure that if `normalized_stress=True` then `metric=False`
 
     weight : ndarray of shape (n_samples, n_samples), default=None
         symmetric weighting matrix of similarities.
-        In default, all weights are 1.
+        In default, weight is set to None, suggesting all weights are 1.
+
+        .. versionadded:: 1.2
 
     Returns
     -------
@@ -69,9 +90,23 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
     stress : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
+        If `normalized_stress=True`, and `metric=False` returns Stress-1.
+        A value of 0 indicates "perfect" fit, 0.025 excellent, 0.05 good,
+        0.1 fair, and 0.2 poor [1]_.
 
     n_iter : int
         The number of iterations corresponding to the best stress.
+
+    References
+    ----------
+    .. [1] "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
+           Psychometrika, 29 (1964)
+
+    .. [2] "Multidimensional scaling by optimizing goodness of fit to a nonmetric
+           hypothesis" Kruskal, J. Psychometrika, 29, (1964)
+
+    .. [3] "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
+           Groenen P. Springer Series in Statistics (1997)
     """
     dissimilarities = check_symmetric(dissimilarities, raise_exception=True)
 
@@ -82,14 +117,15 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
     sim_flat_w = sim_flat[sim_flat != 0]
     if init is None:
         # Randomly choose initial configuration
-        X = random_state.rand(n_samples * n_components)
+        X = random_state.uniform(size=n_samples * n_components)
         X = X.reshape((n_samples, n_components))
     else:
         # overrides the parameter p
         n_components = init.shape[1]
         if n_samples != init.shape[0]:
-            raise ValueError("init matrix should be of shape (%d, %d)" %
-                             (n_samples, n_components))
+            raise ValueError(
+                "init matrix should be of shape (%d, %d)" % (n_samples, n_components)
+            )
         X = init
 
     old_stress = None
@@ -110,50 +146,74 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
             disparities = dis_flat.copy()
             disparities[sim_flat != 0] = disparities_flat
             disparities = disparities.reshape((n_samples, n_samples))
-            disparities *= np.sqrt((n_samples * (n_samples - 1) / 2) /
-                                   (disparities ** 2).sum())
+            disparities *= np.sqrt(
+                (n_samples * (n_samples - 1) / 2) / (disparities**2).sum()
+            )
 
         # Compute stress
-        stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
-
+        stress = (weight.ravel() * (dis.ravel() - disparities.ravel()) ** 2).sum() / 2
+        if normalized_stress:
+            stress = np.sqrt(stress / ((weight.ravel() * disparities.ravel() ** 2).sum() / 2))
         # Update X using the Guttman transform
         dis[dis == 0] = 1e-5
+        ratio = disparities / dis
+        B = - ratio
+        B[np.arange(len(B)), np.arange(len(B))] += ratio.sum(axis=1)
+        X = 1.0 / n_samples * np.dot(B, X)
         if weight is None:
-            ratio = disparities / dis
-            B = - ratio
-            B[np.arange(len(B)), np.arange(len(B))] += ratio.sum(axis=1)
-            X = 1. / n_samples * np.dot(B, X)
-        else:
-            ratio = weight * disparities / dis
-            B = - ratio
-            B[np.arange(len(B)), np.arange(len(B))] += ratio.sum(axis=1)
-            V = np.zeros((n_samples, n_samples))
-            for nn in range(n_samples):
-                for mm in range(nn, n_samples):
-                    v = np.zeros((n_samples, 1))
-                    v[nn], v[mm] = 1, -1
-                    V += weight[nn, mm] * np.dot(v, v.T)
-            X = np.dot(np.linalg.pinv(V), np.dot(B, X))
+            weight = np.ones(disparities.shape)
 
-        dis = np.sqrt((X ** 2).sum(axis=1)).sum()
+        dis = np.sqrt((X**2).sum(axis=1)).sum()
         if verbose >= 2:
-            print('it: %d, stress %s' % (it, stress))
+            print("it: %d, stress %s" % (it, stress))
         if old_stress is not None:
-            if(old_stress - stress / dis) < eps:
+            if (old_stress - stress / dis) < eps:
                 if verbose:
-                    print('breaking at iteration %d with stress %s' % (it,
-                                                                       stress))
+                    print("breaking at iteration %d with stress %s" % (it, stress))
                 break
         old_stress = stress / dis
 
     return X, stress, it + 1
 
 
-@_deprecate_positional_args
-def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
-           n_init=8, n_jobs=None, max_iter=300, verbose=0, eps=1e-3,
-           random_state=None, return_n_iter=False, weight=None):
-    """Computes multidimensional scaling using the SMACOF algorithm.
+@validate_params(
+    {
+        "dissimilarities": ["array-like"],
+        "metric": ["boolean"],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "init": ["array-like", None],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "verbose": ["verbose"],
+        "eps": [Interval(Real, 0, None, closed="left")],
+        "random_state": ["random_state"],
+        "return_n_iter": ["boolean"],
+        "normalized_stress": [
+            "boolean",
+            StrOptions({"auto"}),
+            Hidden(StrOptions({"warn"})),
+        ],
+    },
+    prefer_skip_nested_validation=True,
+)
+def smacof(
+    dissimilarities,
+    *,
+    metric=True,
+    n_components=2,
+    init=None,
+    n_init=8,
+    n_jobs=None,
+    max_iter=300,
+    verbose=0,
+    eps=1e-3,
+    random_state=None,
+    return_n_iter=False,
+    normalized_stress="warn",
+    weight=None,
+):
+    """Compute multidimensional scaling using the SMACOF algorithm.
 
     The SMACOF (Scaling by MAjorizing a COmplicated Function) algorithm is a
     multidimensional scaling algorithm which minimizes an objective function
@@ -162,7 +222,8 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
     stress, and is more powerful than traditional techniques such as gradient
     descent.
 
-    The SMACOF algorithm for metric MDS can summarized by the following steps:
+    The SMACOF algorithm for metric MDS can be summarized by the following
+    steps:
 
     1. Set an initial start configuration, randomly or not.
     2. Compute the stress
@@ -174,11 +235,13 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
 
     Parameters
     ----------
-    dissimilarities : ndarray of shape (n_samples, n_samples)
+    dissimilarities : array-like of shape (n_samples, n_samples)
         Pairwise dissimilarities between the points. Must be symmetric.
 
     metric : bool, default=True
         Compute metric or nonmetric SMACOF algorithm.
+        When ``False`` (i.e. non-metric MDS), dissimilarities with 0 are considered as
+        missing values.
 
     n_components : int, default=2
         Number of dimensions in which to immerse the dissimilarities. If an
@@ -186,7 +249,7 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
         ``init`` is used to determine the dimensionality of the embedding
         space.
 
-    init : ndarray of shape (n_samples, n_components), default=None
+    init : array-like of shape (n_samples, n_components), default=None
         Starting configuration of the embedding to initialize the algorithm. By
         default, the algorithm is initialized with a randomly chosen array.
 
@@ -213,19 +276,26 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
 
     eps : float, default=1e-3
         Relative tolerance with respect to stress at which to declare
-        convergence.
+        convergence. The value of `eps` should be tuned separately depending
+        on whether or not `normalized_stress` is being used.
 
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
+    normalized_stress : bool or "auto" default=False
+        Whether use and return normed stress value (Stress-1) instead of raw
+        stress calculated by default. Only supported in non-metric MDS.
+
     weight : ndarray of shape (n_samples, n_samples), default=None
         symmetric weighting matrix of similarities.
-        In default, all weights are 1.
+        In default, weight is set to None, suggesting all weights are 1.
+
+        .. versionadded:: 1.2
 
     Returns
     -------
@@ -235,33 +305,56 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
     stress : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
+        If `normalized_stress=True`, and `metric=False` returns Stress-1.
+        A value of 0 indicates "perfect" fit, 0.025 excellent, 0.05 good,
+        0.1 fair, and 0.2 poor [1]_.
 
     n_iter : int
         The number of iterations corresponding to the best stress. Returned
         only if ``return_n_iter`` is set to ``True``.
 
-    Notes
-    -----
-    "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
-    Groenen P. Springer Series in Statistics (1997)
+    References
+    ----------
+    .. [1] "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
+           Psychometrika, 29 (1964)
 
-    "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
-    Psychometrika, 29 (1964)
+    .. [2] "Multidimensional scaling by optimizing goodness of fit to a nonmetric
+           hypothesis" Kruskal, J. Psychometrika, 29, (1964)
 
-    "Multidimensional scaling by optimizing goodness of fit to a nonmetric
-    hypothesis" Kruskal, J. Psychometrika, 29, (1964)
+    .. [3] "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
+           Groenen P. Springer Series in Statistics (1997)
     """
 
     dissimilarities = check_array(dissimilarities)
     random_state = check_random_state(random_state)
 
-    if hasattr(init, '__array__'):
+    # TODO(1.4): Remove
+    if normalized_stress == "warn":
+        warnings.warn(
+            (
+                "The default value of `normalized_stress` will change to `'auto'` in"
+                " version 1.4. To suppress this warning, manually set the value of"
+                " `normalized_stress`."
+            ),
+            FutureWarning,
+        )
+        normalized_stress = False
+
+    if normalized_stress == "auto":
+        normalized_stress = not metric
+
+    if normalized_stress and metric:
+        raise ValueError(
+            "Normalized stress is not supported for metric MDS. Either set"
+            " `normalized_stress=False` or use `metric=False`."
+        )
+    if hasattr(init, "__array__"):
         init = np.asarray(init).copy()
         if not n_init == 1:
             warnings.warn(
-                'Explicit initial positions passed: '
-                'performing only one init of the MDS instead of %d'
-                % n_init)
+                "Explicit initial positions passed: "
+                "performing only one init of the MDS instead of %d" % n_init
+            )
             n_init = 1
 
     best_pos, best_stress = None, None
@@ -269,11 +362,17 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
     if effective_n_jobs(n_jobs) == 1:
         for it in range(n_init):
             pos, stress, n_iter_ = _smacof_single(
-                dissimilarities, metric=metric,
-                n_components=n_components, init=init,
-                max_iter=max_iter, verbose=verbose,
-                eps=eps, random_state=random_state,
-                weight=weight)
+                dissimilarities,
+                metric=metric,
+                n_components=n_components,
+                init=init,
+                max_iter=max_iter,
+                verbose=verbose,
+                eps=eps,
+                random_state=random_state,
+                normalized_stress=normalized_stress,
+                weight=weight,
+            )
             if best_stress is None or stress < best_stress:
                 best_stress = stress
                 best_pos = pos.copy()
@@ -282,10 +381,19 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
         seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
         results = Parallel(n_jobs=n_jobs, verbose=max(verbose - 1, 0))(
             delayed(_smacof_single)(
-                dissimilarities, metric=metric, n_components=n_components,
-                init=init, max_iter=max_iter, verbose=verbose, eps=eps,
-                random_state=seed, weight=weight)
-            for seed in seeds)
+                dissimilarities,
+                metric=metric,
+                n_components=n_components,
+                init=init,
+                max_iter=max_iter,
+                verbose=verbose,
+                eps=eps,
+                random_state=seed,
+                normalized_stress=normalized_stress,
+                weight=weight,
+            )
+            for seed in seeds
+        )
         positions, stress, n_iters = zip(*results)
         best = np.argmin(stress)
         best_stress = stress[best]
@@ -310,6 +418,8 @@ class MDS(BaseEstimator):
 
     metric : bool, default=True
         If ``True``, perform metric MDS; otherwise, perform nonmetric MDS.
+        When ``False`` (i.e. non-metric MDS), dissimilarities with 0 are considered as
+        missing values.
 
     n_init : int, default=4
         Number of times the SMACOF algorithm will be run with different
@@ -324,7 +434,8 @@ class MDS(BaseEstimator):
 
     eps : float, default=1e-3
         Relative tolerance with respect to stress at which to declare
-        convergence.
+        convergence. The value of `eps` should be tuned separately depending
+        on whether or not `normalized_stress` is being used.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. If multiple
@@ -338,7 +449,7 @@ class MDS(BaseEstimator):
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     dissimilarity : {'euclidean', 'precomputed'}, default='euclidean'
         Dissimilarity measure to use:
@@ -350,6 +461,12 @@ class MDS(BaseEstimator):
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
 
+    normalized_stress : bool or "auto" default=False
+        Whether use and return normed stress value (Stress-1) instead of raw
+        stress calculated by default. Only supported in non-metric MDS.
+
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     embedding_ : ndarray of shape (n_samples, n_components)
@@ -358,6 +475,9 @@ class MDS(BaseEstimator):
     stress_ : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
+        If `normalized_stress=True`, and `metric=False` returns Stress-1.
+        A value of 0 indicates "perfect" fit, 0.025 excellent, 0.05 good,
+        0.1 fair, and 0.2 poor [1]_.
 
     dissimilarity_matrix_ : ndarray of shape (n_samples, n_samples)
         Pairwise dissimilarities between the points. Symmetric matrix that:
@@ -367,8 +487,41 @@ class MDS(BaseEstimator):
         - or constructs a dissimilarity matrix from data using
           Euclidean distances.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         The number of iterations corresponding to the best stress.
+
+    See Also
+    --------
+    sklearn.decomposition.PCA : Principal component analysis that is a linear
+        dimensionality reduction method.
+    sklearn.decomposition.KernelPCA : Non-linear dimensionality reduction using
+        kernels and PCA.
+    TSNE : T-distributed Stochastic Neighbor Embedding.
+    Isomap : Manifold learning based on Isometric Mapping.
+    LocallyLinearEmbedding : Manifold learning using Locally Linear Embedding.
+    SpectralEmbedding : Spectral embedding for non-linear dimensionality.
+
+    References
+    ----------
+    .. [1] "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
+       Psychometrika, 29 (1964)
+
+    .. [2] "Multidimensional scaling by optimizing goodness of fit to a nonmetric
+       hypothesis" Kruskal, J. Psychometrika, 29, (1964)
+
+    .. [3] "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
+       Groenen P. Springer Series in Statistics (1997)
 
     Examples
     --------
@@ -377,27 +530,43 @@ class MDS(BaseEstimator):
     >>> X, _ = load_digits(return_X_y=True)
     >>> X.shape
     (1797, 64)
-    >>> embedding = MDS(n_components=2)
+    >>> embedding = MDS(n_components=2, normalized_stress='auto')
     >>> X_transformed = embedding.fit_transform(X[:100])
     >>> X_transformed.shape
     (100, 2)
-
-    References
-    ----------
-    "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
-    Groenen P. Springer Series in Statistics (1997)
-
-    "Nonmetric multidimensional scaling: a numerical method" Kruskal, J.
-    Psychometrika, 29 (1964)
-
-    "Multidimensional scaling by optimizing goodness of fit to a nonmetric
-    hypothesis" Kruskal, J. Psychometrika, 29, (1964)
-
     """
-    @_deprecate_positional_args
-    def __init__(self, n_components=2, *, metric=True, n_init=4,
-                 max_iter=300, verbose=0, eps=1e-3, n_jobs=None,
-                 random_state=None, dissimilarity="euclidean"):
+
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "metric": ["boolean"],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "verbose": ["verbose"],
+        "eps": [Interval(Real, 0.0, None, closed="left")],
+        "n_jobs": [None, Integral],
+        "random_state": ["random_state"],
+        "dissimilarity": [StrOptions({"euclidean", "precomputed"})],
+        "normalized_stress": [
+            "boolean",
+            StrOptions({"auto"}),
+            Hidden(StrOptions({"warn"})),
+        ],
+    }
+
+    def __init__(
+        self,
+        n_components=2,
+        *,
+        metric=True,
+        n_init=4,
+        max_iter=300,
+        verbose=0,
+        eps=1e-3,
+        n_jobs=None,
+        random_state=None,
+        dissimilarity="euclidean",
+        normalized_stress="warn",
+    ):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
         self.metric = metric
@@ -407,14 +576,14 @@ class MDS(BaseEstimator):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.random_state = random_state
+        self.normalized_stress = normalized_stress
 
-    @property
-    def _pairwise(self):
-        return self.dissimilarity == "precomputed"
+    def _more_tags(self):
+        return {"pairwise": self.dissimilarity == "precomputed"}
 
     def fit(self, X, y=None, init=None, weight=None):
         """
-        Computes the position of the points in the embedding space.
+        Compute the position of the points in the embedding space.
 
         Parameters
         ----------
@@ -424,22 +593,29 @@ class MDS(BaseEstimator):
             be the dissimilarity matrix.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
-        init : ndarray of shape (n_samples,), default=None
+        init : ndarray of shape (n_samples, n_components), default=None
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
 
         weight : ndarray of shape (n_samples, n_samples), default=None
             symmetric weighting matrix of similarities.
-            In default, all weights are 1.
+            In default, weight is set to None, suggesting all weights are 1.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
         """
         self.fit_transform(X, init=init, weight=weight)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None, init=None, weight=None):
         """
-        Fit the data from X, and returns the embedded coordinates.
+        Fit the data from `X`, and returns the embedded coordinates.
 
         Parameters
         ----------
@@ -449,35 +625,50 @@ class MDS(BaseEstimator):
             be the dissimilarity matrix.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
-        init : ndarray of shape (n_samples,), default=None
+        init : ndarray of shape (n_samples, n_components), default=None
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
+
         weight : ndarray of shape (n_samples, n_samples), default=None
             symmetric weighting matrix of similarities.
-            In default, all weights are 1.
+            In default, weight is set to None, suggesting all weights are 1.
+
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_components)
+            X transformed in the new space.
         """
         X = self._validate_data(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
-            warnings.warn("The MDS API has changed. ``fit`` now constructs an"
-                          " dissimilarity matrix from data. To use a custom "
-                          "dissimilarity matrix, set "
-                          "``dissimilarity='precomputed'``.")
+            warnings.warn(
+                "The MDS API has changed. ``fit`` now constructs an"
+                " dissimilarity matrix from data. To use a custom "
+                "dissimilarity matrix, set "
+                "``dissimilarity='precomputed'``."
+            )
 
         if self.dissimilarity == "precomputed":
             self.dissimilarity_matrix_ = X
         elif self.dissimilarity == "euclidean":
             self.dissimilarity_matrix_ = euclidean_distances(X)
-        else:
-            raise ValueError("Proximity must be 'precomputed' or 'euclidean'."
-                             " Got %s instead" % str(self.dissimilarity))
 
         self.embedding_, self.stress_, self.n_iter_ = smacof(
-            self.dissimilarity_matrix_, metric=self.metric,
-            n_components=self.n_components, init=init, n_init=self.n_init,
-            n_jobs=self.n_jobs, max_iter=self.max_iter, verbose=self.verbose,
-            eps=self.eps, random_state=self.random_state,
-            return_n_iter=True, weight=weight)
+            self.dissimilarity_matrix_,
+            metric=self.metric,
+            n_components=self.n_components,
+            init=init,
+            n_init=self.n_init,
+            n_jobs=self.n_jobs,
+            max_iter=self.max_iter,
+            verbose=self.verbose,
+            eps=self.eps,
+            random_state=self.random_state,
+            return_n_iter=True,
+            normalized_stress=self.normalized_stress,
+            weight=weight,
+        )
 
         return self.embedding_
