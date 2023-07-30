@@ -153,11 +153,13 @@ def _smacof_single(
         # Compute stress
         stress = (weight.ravel() * (dis.ravel() - disparities.ravel()) ** 2).sum() / 2
         if normalized_stress:
-            stress = np.sqrt(stress / ((weight.ravel() * disparities.ravel() ** 2).sum() / 2))
+            stress = np.sqrt(
+                stress / ((weight.ravel() * disparities.ravel() ** 2).sum() / 2)
+            )
         # Update X using the Guttman transform
         dis[dis == 0] = 1e-5
         ratio = disparities / dis
-        B = - ratio
+        B = -ratio
         B[np.arange(len(B)), np.arange(len(B))] += ratio.sum(axis=1)
         X = 1.0 / n_samples * np.dot(B, X)
         if weight is None:
