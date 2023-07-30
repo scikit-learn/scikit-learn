@@ -139,7 +139,7 @@ Changelog
 
 - |Enhancement| Improves warnings in :class:`preprocessing.FunctionTransfomer` when
   `func` returns a pandas dataframe and the output is configured to be pandas.
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`26944` by `Thomas Fan`_.
 
 :mod:`sklearn.model_selection`
 ..............................
