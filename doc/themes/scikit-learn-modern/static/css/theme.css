@@ -668,6 +668,12 @@ div.sk-page-content h1 {
   word-wrap: break-word;
 }
 
+/* General sibling selector: does not apply to first h1, to avoid gap in
+ * top of page */
+div.sk-page-content ~ h1 {
+    margin-top: calc(max(2.5rem, 1vh));
+}
+
 div.sk-page-content h2 {
   padding: 0.5rem;
   background-color: #BED4EB;
