@@ -1,5 +1,3 @@
-# cython: profile=True, boundscheck=False, wraparound=False, cdivision=True
-#
 # Author: Andreas Mueller
 #
 # Licence: BSD 3 clause
@@ -8,35 +6,34 @@
 # fused types and when the array may be read-only (for instance when it's
 # provided by the user). This is fixed in cython > 0.3.
 
-import numpy as np
-cimport numpy as np
-cimport cython
 from cython cimport floating
 from cython.parallel import prange, parallel
-from libc.math cimport sqrt
 from libc.stdlib cimport calloc, free
-from libc.string cimport memset, memcpy
+from libc.string cimport memset
 
+from ..utils._openmp_helpers cimport omp_lock_t
+from ..utils._openmp_helpers cimport omp_init_lock
+from ..utils._openmp_helpers cimport omp_destroy_lock
+from ..utils._openmp_helpers cimport omp_set_lock
+from ..utils._openmp_helpers cimport omp_unset_lock
 from ..utils.extmath import row_norms
-from ._k_means_fast import CHUNK_SIZE
-from ._k_means_fast cimport _relocate_empty_clusters_dense
-from ._k_means_fast cimport _relocate_empty_clusters_sparse
-from ._k_means_fast cimport _euclidean_dense_dense
-from ._k_means_fast cimport _euclidean_sparse_dense
-from ._k_means_fast cimport _average_centers
-from ._k_means_fast cimport _center_shift
-
-
-np.import_array()
+from ._k_means_common import CHUNK_SIZE
+from ._k_means_common cimport _relocate_empty_clusters_dense
+from ._k_means_common cimport _relocate_empty_clusters_sparse
+from ._k_means_common cimport _euclidean_dense_dense
+from ._k_means_common cimport _euclidean_sparse_dense
+from ._k_means_common cimport _average_centers
+from ._k_means_common cimport _center_shift
 
 
 def init_bounds_dense(
-        np.ndarray[floating, ndim=2, mode='c'] X,  # IN
-        floating[:, ::1] centers,                  # IN
-        floating[:, ::1] center_half_distances,    # IN
-        int[::1] labels,                           # OUT
-        floating[::1] upper_bounds,                # OUT
-        floating[:, ::1] lower_bounds):            # OUT
+        const floating[:, ::1] X,                      # IN
+        const floating[:, ::1] centers,                # IN
+        const floating[:, ::1] center_half_distances,  # IN
+        int[::1] labels,                               # OUT
+        floating[::1] upper_bounds,                    # OUT
+        floating[:, ::1] lower_bounds,                 # OUT
+        int n_threads):
     """Initialize upper and lower bounds for each sample for dense input data.
 
     Given X, centers and the pairwise distances divided by 2.0 between the
@@ -74,6 +71,9 @@ def init_bounds_dense(
     lower_bounds : ndarray, of shape(n_samples, n_clusters), dtype=floating
         The lower bound on the distance between each sample and each cluster
         center. This array is modified in place.
+
+    n_threads : int
+        The number of threads to be used by openmp.
     """
     cdef:
         int n_samples = X.shape[0]
@@ -83,7 +83,9 @@ def init_bounds_dense(
         floating min_dist, dist
         int best_cluster, i, j
 
-    for i in prange(n_samples, schedule='static', nogil=True):
+    for i in prange(
+        n_samples, num_threads=n_threads, schedule='static', nogil=True
+    ):
         best_cluster = 0
         min_dist = _euclidean_dense_dense(&X[i, 0], &centers[0, 0],
                                           n_features, False)
@@ -101,12 +103,13 @@ def init_bounds_dense(
 
 
 def init_bounds_sparse(
-        X,                                       # IN
-        floating[:, ::1] centers,                # IN
-        floating[:, ::1] center_half_distances,  # IN
-        int[::1] labels,                         # OUT
-        floating[::1] upper_bounds,              # OUT
-        floating[:, ::1] lower_bounds):          # OUT
+        X,                                             # IN
+        const floating[:, ::1] centers,                # IN
+        const floating[:, ::1] center_half_distances,  # IN
+        int[::1] labels,                               # OUT
+        floating[::1] upper_bounds,                    # OUT
+        floating[:, ::1] lower_bounds,                 # OUT
+        int n_threads):
     """Initialize upper and lower bounds for each sample for sparse input data.
 
     Given X, centers and the pairwise distances divided by 2.0 between the
@@ -144,11 +147,13 @@ def init_bounds_sparse(
     lower_bounds : ndarray of shape(n_samples, n_clusters), dtype=floating
         The lower bound on the distance between each sample and each cluster
         center. This array is modified in place.
+
+    n_threads : int
+        The number of threads to be used by openmp.
     """
     cdef:
         int n_samples = X.shape[0]
         int n_clusters = centers.shape[0]
-        int n_features = X.shape[1]
 
         floating[::1] X_data = X.data
         int[::1] X_indices = X.indices
@@ -159,7 +164,9 @@ def init_bounds_sparse(
 
         floating[::1] centers_squared_norms = row_norms(centers, squared=True)
 
-    for i in prange(n_samples, schedule='static', nogil=True):
+    for i in prange(
+        n_samples, num_threads=n_threads, schedule='static', nogil=True
+    ):
         best_cluster = 0
         min_dist = _euclidean_sparse_dense(
             X_data[X_indptr[i]: X_indptr[i + 1]],
@@ -182,17 +189,17 @@ def init_bounds_sparse(
 
 
 def elkan_iter_chunked_dense(
-        np.ndarray[floating, ndim=2, mode='c'] X,  # IN
-        floating[::1] sample_weight,               # IN
-        floating[:, ::1] centers_old,              # IN
-        floating[:, ::1] centers_new,              # OUT
-        floating[::1] weight_in_clusters,          # OUT
-        floating[:, ::1] center_half_distances,    # IN
-        floating[::1] distance_next_center,        # IN
-        floating[::1] upper_bounds,                # INOUT
-        floating[:, ::1] lower_bounds,             # INOUT
-        int[::1] labels,                           # INOUT
-        floating[::1] center_shift,                # OUT
+        const floating[:, ::1] X,                      # IN
+        const floating[::1] sample_weight,             # IN
+        const floating[:, ::1] centers_old,            # IN
+        floating[:, ::1] centers_new,                  # OUT
+        floating[::1] weight_in_clusters,              # OUT
+        const floating[:, ::1] center_half_distances,  # IN
+        const floating[::1] distance_next_center,      # IN
+        floating[::1] upper_bounds,                    # INOUT
+        floating[:, ::1] lower_bounds,                 # INOUT
+        int[::1] labels,                               # INOUT
+        floating[::1] center_shift,                    # OUT
         int n_threads,
         bint update_centers=True):
     """Single iteration of K-means Elkan algorithm with dense input.
@@ -257,17 +264,19 @@ def elkan_iter_chunked_dense(
         int n_clusters = centers_new.shape[0]
 
         # hard-coded number of samples per chunk. Splitting in chunks is
-        # necessary to get parallelism. Chunk size chosed to be same as lloyd's
+        # necessary to get parallelism. Chunk size chosen to be same as lloyd's
         int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_rem = n_samples % n_samples_chunk
-        int chunk_idx, n_samples_chunk_eff
+        int chunk_idx
         int start, end
 
         int i, j, k
 
         floating *centers_new_chunk
         floating *weight_in_clusters_chunk
+
+        omp_lock_t lock
 
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
@@ -278,6 +287,7 @@ def elkan_iter_chunked_dense(
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
+        omp_init_lock(&lock)
 
     with nogil, parallel(num_threads=n_threads):
         # thread local buffers
@@ -292,7 +302,7 @@ def elkan_iter_chunked_dense(
                 end = start + n_samples_chunk
 
             _update_chunk_dense(
-                &X[start, 0],
+                X[start: end],
                 sample_weight[start: end],
                 centers_old,
                 center_half_distances,
@@ -304,19 +314,22 @@ def elkan_iter_chunked_dense(
                 weight_in_clusters_chunk,
                 update_centers)
 
-        # reduction from local buffers. The gil is necessary for that to avoid
-        # race conditions.
+        # reduction from local buffers.
         if update_centers:
-            with gil:
-                for j in range(n_clusters):
-                    weight_in_clusters[j] += weight_in_clusters_chunk[j]
-                    for k in range(n_features):
-                        centers_new[j, k] += centers_new_chunk[j * n_features + k]
+            # The lock is necessary to avoid race conditions when aggregating
+            # info from different thread-local buffers.
+            omp_set_lock(&lock)
+            for j in range(n_clusters):
+                weight_in_clusters[j] += weight_in_clusters_chunk[j]
+                for k in range(n_features):
+                    centers_new[j, k] += centers_new_chunk[j * n_features + k]
+            omp_unset_lock(&lock)
 
         free(centers_new_chunk)
         free(weight_in_clusters_chunk)
 
     if update_centers:
+        omp_destroy_lock(&lock)
         _relocate_empty_clusters_dense(X, sample_weight, centers_old,
                                        centers_new, weight_in_clusters, labels)
 
@@ -334,20 +347,17 @@ def elkan_iter_chunked_dense(
 
 
 cdef void _update_chunk_dense(
-        floating *X,                             # IN
-        # expecting C alinged 2D array. XXX: Can be
-        # replaced by const memoryview when cython min
-        # version is >= 0.3
-        floating[::1] sample_weight,             # IN
-        floating[:, ::1] centers_old,            # IN
-        floating[:, ::1] center_half_distances,  # IN
-        floating[::1] distance_next_center,      # IN
-        int[::1] labels,                         # INOUT
-        floating[::1] upper_bounds,              # INOUT
-        floating[:, ::1] lower_bounds,           # INOUT
-        floating *centers_new,                   # OUT
-        floating *weight_in_clusters,            # OUT
-        bint update_centers) nogil:
+        const floating[:, ::1] X,                      # IN
+        const floating[::1] sample_weight,             # IN
+        const floating[:, ::1] centers_old,            # IN
+        const floating[:, ::1] center_half_distances,  # IN
+        const floating[::1] distance_next_center,      # IN
+        int[::1] labels,                               # INOUT
+        floating[::1] upper_bounds,                    # INOUT
+        floating[:, ::1] lower_bounds,                 # INOUT
+        floating *centers_new,                         # OUT
+        floating *weight_in_clusters,                  # OUT
+        bint update_centers) noexcept nogil:
     """K-means combined EM step for one dense data chunk.
 
     Compute the partial contribution of a single data chunk to the labels and
@@ -375,26 +385,30 @@ cdef void _update_chunk_dense(
                 # If this holds, then center_index is a good candidate for the
                 # sample to be relabelled, and we need to confirm this by
                 # recomputing the upper and lower bounds.
-                if (j != label
+                if (
+                    j != label
                     and (upper_bound > lower_bounds[i, j])
-                    and (upper_bound > center_half_distances[label, j])):
+                    and (upper_bound > center_half_distances[label, j])
+                ):
 
                     # Recompute upper bound by calculating the actual distance
                     # between the sample and its current assigned center.
                     if not bounds_tight:
                         upper_bound = _euclidean_dense_dense(
-                            X + i * n_features, &centers_old[label, 0], n_features, False)
+                            &X[i, 0], &centers_old[label, 0], n_features, False)
                         lower_bounds[i, label] = upper_bound
                         bounds_tight = 1
 
                     # If the condition still holds, then compute the actual
                     # distance between the sample and center. If this is less
                     # than the previous distance, reassign label.
-                    if (upper_bound > lower_bounds[i, j]
-                        or (upper_bound > center_half_distances[label, j])):
+                    if (
+                        upper_bound > lower_bounds[i, j]
+                        or (upper_bound > center_half_distances[label, j])
+                    ):
 
                         distance = _euclidean_dense_dense(
-                            X + i * n_features, &centers_old[j, 0], n_features, False)
+                            &X[i, 0], &centers_old[j, 0], n_features, False)
                         lower_bounds[i, j] = distance
                         if distance < upper_bound:
                             label = j
@@ -406,21 +420,21 @@ cdef void _update_chunk_dense(
         if update_centers:
             weight_in_clusters[label] += sample_weight[i]
             for k in range(n_features):
-                centers_new[label * n_features + k] += X[i * n_features + k] * sample_weight[i]
+                centers_new[label * n_features + k] += X[i, k] * sample_weight[i]
 
 
 def elkan_iter_chunked_sparse(
-        X,                                       # IN
-        floating[::1] sample_weight,             # IN
-        floating[:, ::1] centers_old,            # IN
-        floating[:, ::1] centers_new,            # OUT
-        floating[::1] weight_in_clusters,        # OUT
-        floating[:, ::1] center_half_distances,  # IN
-        floating[::1] distance_next_center,      # IN
-        floating[::1] upper_bounds,              # INOUT
-        floating[:, ::1] lower_bounds,           # INOUT
-        int[::1] labels,                         # INOUT
-        floating[::1] center_shift,              # OUT
+        X,                                             # IN
+        const floating[::1] sample_weight,             # IN
+        const floating[:, ::1] centers_old,            # IN
+        floating[:, ::1] centers_new,                  # OUT
+        floating[::1] weight_in_clusters,              # OUT
+        const floating[:, ::1] center_half_distances,  # IN
+        const floating[::1] distance_next_center,      # IN
+        floating[::1] upper_bounds,                    # INOUT
+        floating[:, ::1] lower_bounds,                 # INOUT
+        int[::1] labels,                               # INOUT
+        floating[::1] center_shift,                    # OUT
         int n_threads,
         bint update_centers=True):
     """Single iteration of K-means Elkan algorithm with sparse input.
@@ -489,11 +503,11 @@ def elkan_iter_chunked_sparse(
         int[::1] X_indptr = X.indptr
 
         # hard-coded number of samples per chunk. Splitting in chunks is
-        # necessary to get parallelism. Chunk size chosed to be same as lloyd's
+        # necessary to get parallelism. Chunk size chosen to be same as lloyd's
         int n_samples_chunk = CHUNK_SIZE if n_samples > CHUNK_SIZE else n_samples
         int n_chunks = n_samples // n_samples_chunk
         int n_samples_rem = n_samples % n_samples_chunk
-        int chunk_idx, n_samples_chunk_eff
+        int chunk_idx
         int start, end
 
         int i, j, k
@@ -502,6 +516,8 @@ def elkan_iter_chunked_sparse(
 
         floating *centers_new_chunk
         floating *weight_in_clusters_chunk
+
+        omp_lock_t lock
 
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
@@ -512,6 +528,7 @@ def elkan_iter_chunked_sparse(
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
+        omp_init_lock(&lock)
 
     with nogil, parallel(num_threads=n_threads):
         # thread local buffers
@@ -528,7 +545,7 @@ def elkan_iter_chunked_sparse(
             _update_chunk_sparse(
                 X_data[X_indptr[start]: X_indptr[end]],
                 X_indices[X_indptr[start]: X_indptr[end]],
-                X_indptr[start: end],
+                X_indptr[start: end+1],
                 sample_weight[start: end],
                 centers_old,
                 centers_squared_norms,
@@ -541,19 +558,22 @@ def elkan_iter_chunked_sparse(
                 weight_in_clusters_chunk,
                 update_centers)
 
-        # reduction from local buffers. The gil is necessary for that to avoid
-        # race conditions.
+        # reduction from local buffers.
         if update_centers:
-            with gil:
-                for j in range(n_clusters):
-                    weight_in_clusters[j] += weight_in_clusters_chunk[j]
-                    for k in range(n_features):
-                        centers_new[j, k] += centers_new_chunk[j * n_features + k]
+            # The lock is necessary to avoid race conditions when aggregating
+            # info from different thread-local buffers.
+            omp_set_lock(&lock)
+            for j in range(n_clusters):
+                weight_in_clusters[j] += weight_in_clusters_chunk[j]
+                for k in range(n_features):
+                    centers_new[j, k] += centers_new_chunk[j * n_features + k]
+            omp_unset_lock(&lock)
 
         free(centers_new_chunk)
         free(weight_in_clusters_chunk)
 
     if update_centers:
+        omp_destroy_lock(&lock)
         _relocate_empty_clusters_sparse(
             X_data, X_indices, X_indptr, sample_weight,
             centers_old, centers_new, weight_in_clusters, labels)
@@ -572,20 +592,20 @@ def elkan_iter_chunked_sparse(
 
 
 cdef void _update_chunk_sparse(
-        floating[::1] X_data,                    # IN
-        int[::1] X_indices,                      # IN
-        int[::1] X_indptr,                       # IN
-        floating[::1] sample_weight,             # IN
-        floating[:, ::1] centers_old,            # IN
-        floating[::1] centers_squared_norms,     # IN
-        floating[:, ::1] center_half_distances,  # IN
-        floating[::1] distance_next_center,      # IN
-        int[::1] labels,                         # INOUT
-        floating[::1] upper_bounds,              # INOUT
-        floating[:, ::1] lower_bounds,           # INOUT
-        floating *centers_new,                   # OUT
-        floating *weight_in_clusters,            # OUT
-        bint update_centers) nogil:
+        const floating[::1] X_data,                    # IN
+        const int[::1] X_indices,                      # IN
+        const int[::1] X_indptr,                       # IN
+        const floating[::1] sample_weight,             # IN
+        const floating[:, ::1] centers_old,            # IN
+        const floating[::1] centers_squared_norms,     # IN
+        const floating[:, ::1] center_half_distances,  # IN
+        const floating[::1] distance_next_center,      # IN
+        int[::1] labels,                               # INOUT
+        floating[::1] upper_bounds,                    # INOUT
+        floating[:, ::1] lower_bounds,                 # INOUT
+        floating *centers_new,                         # OUT
+        floating *weight_in_clusters,                  # OUT
+        bint update_centers) noexcept nogil:
     """K-means combined EM step for one sparse data chunk.
 
     Compute the partial contribution of a single data chunk to the labels and
@@ -614,9 +634,11 @@ cdef void _update_chunk_sparse(
                 # If this holds, then center_index is a good candidate for the
                 # sample to be relabelled, and we need to confirm this by
                 # recomputing the upper and lower bounds.
-                if (j != label
+                if (
+                    j != label
                     and (upper_bound > lower_bounds[i, j])
-                    and (upper_bound > center_half_distances[label, j])):
+                    and (upper_bound > center_half_distances[label, j])
+                ):
 
                     # Recompute upper bound by calculating the actual distance
                     # between the sample and its current assigned center.
@@ -631,8 +653,10 @@ cdef void _update_chunk_sparse(
                     # If the condition still holds, then compute the actual
                     # distance between the sample and center. If this is less
                     # than the previous distance, reassign label.
-                    if (upper_bound > lower_bounds[i, j]
-                        or (upper_bound > center_half_distances[label, j])):
+                    if (
+                        upper_bound > lower_bounds[i, j]
+                        or (upper_bound > center_half_distances[label, j])
+                    ):
                         distance = _euclidean_sparse_dense(
                             X_data[X_indptr[i] - s: X_indptr[i + 1] - s],
                             X_indices[X_indptr[i] - s: X_indptr[i + 1] - s],

@@ -11,11 +11,12 @@ puts more emphasis on getting these points right. The effect might often be
 subtle.
 To emphasize the effect here, we particularly weight outliers, making the
 deformation of the decision boundary very visible.
-"""
-print(__doc__)
 
-import numpy as np
+"""
+
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import svm
 
 
@@ -28,10 +29,17 @@ def plot_decision_function(classifier, sample_weight, axis, title):
 
     # plot the line, the points, and the nearest vectors to the plane
     axis.contourf(xx, yy, Z, alpha=0.75, cmap=plt.cm.bone)
-    axis.scatter(X[:, 0], X[:, 1], c=y, s=100 * sample_weight, alpha=0.9,
-                 cmap=plt.cm.bone, edgecolors='black')
+    axis.scatter(
+        X[:, 0],
+        X[:, 1],
+        c=y,
+        s=100 * sample_weight,
+        alpha=0.9,
+        cmap=plt.cm.bone,
+        edgecolors="black",
+    )
 
-    axis.axis('off')
+    axis.axis("off")
     axis.set_title(title)
 
 
@@ -45,19 +53,20 @@ sample_weight_constant = np.ones(len(X))
 sample_weight_last_ten[15:] *= 5
 sample_weight_last_ten[9] *= 15
 
-# for reference, first fit without sample weights
+# Fit the models.
 
-# fit the model
-clf_weights = svm.SVC(gamma=1)
-clf_weights.fit(X, y, sample_weight=sample_weight_last_ten)
-
+# This model does not take into account sample weights.
 clf_no_weights = svm.SVC(gamma=1)
 clf_no_weights.fit(X, y)
 
+# This other model takes into account some dedicated sample weights.
+clf_weights = svm.SVC(gamma=1)
+clf_weights.fit(X, y, sample_weight=sample_weight_last_ten)
+
 fig, axes = plt.subplots(1, 2, figsize=(14, 6))
-plot_decision_function(clf_no_weights, sample_weight_constant, axes[0],
-                       "Constant weights")
-plot_decision_function(clf_weights, sample_weight_last_ten, axes[1],
-                       "Modified weights")
+plot_decision_function(
+    clf_no_weights, sample_weight_constant, axes[0], "Constant weights"
+)
+plot_decision_function(clf_weights, sample_weight_last_ten, axes[1], "Modified weights")
 
 plt.show()

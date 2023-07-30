@@ -17,12 +17,13 @@ case a warning is raised when computing the ROC curve.
 """
 
 from time import time
-import numpy as np
-import matplotlib.pyplot as plt
 
+import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.datasets import fetch_covtype, fetch_kddcup99, fetch_openml
 from sklearn.ensemble import IsolationForest
-from sklearn.metrics import roc_curve, auc
-from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_openml
+from sklearn.metrics import auc, roc_curve
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle as sh
 
@@ -48,34 +49,34 @@ fig_roc, ax_roc = plt.subplots(1, 1, figsize=(8, 5))
 with_decision_function_histograms = False
 
 # datasets available = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
-datasets = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
+datasets = ["http", "smtp", "SA", "SF", "shuttle", "forestcover"]
 
 # Loop over all datasets for fitting and scoring the estimator:
 for dat in datasets:
-
     # Loading and vectorizing the data:
-    print('====== %s ======' % dat)
-    print('--- Fetching data...')
-    if dat in ['http', 'smtp', 'SF', 'SA']:
-        dataset = fetch_kddcup99(subset=dat, shuffle=True,
-                                 percent10=True, random_state=random_state)
+    print("====== %s ======" % dat)
+    print("--- Fetching data...")
+    if dat in ["http", "smtp", "SF", "SA"]:
+        dataset = fetch_kddcup99(
+            subset=dat, shuffle=True, percent10=True, random_state=random_state
+        )
         X = dataset.data
         y = dataset.target
 
-    if dat == 'shuttle':
-        dataset = fetch_openml('shuttle')
+    if dat == "shuttle":
+        dataset = fetch_openml("shuttle", as_frame=False, parser="pandas")
         X = dataset.data
-        y = dataset.target
+        y = dataset.target.astype(np.int64)
         X, y = sh(X, y, random_state=random_state)
         # we remove data with label 4
         # normal data are then those of class 1
-        s = (y != 4)
+        s = y != 4
         X = X[s, :]
         y = y[s]
         y = (y != 1).astype(int)
-        print('----- ')
+        print("----- ")
 
-    if dat == 'forestcover':
+    if dat == "forestcover":
         dataset = fetch_covtype(shuffle=True, random_state=random_state)
         X = dataset.data
         y = dataset.target
@@ -87,26 +88,26 @@ for dat in datasets:
         y = (y != 2).astype(int)
         print_outlier_ratio(y)
 
-    print('--- Vectorizing data...')
+    print("--- Vectorizing data...")
 
-    if dat == 'SF':
+    if dat == "SF":
         lb = LabelBinarizer()
         x1 = lb.fit_transform(X[:, 1].astype(str))
         X = np.c_[X[:, :1], x1, X[:, 2:]]
-        y = (y != b'normal.').astype(int)
+        y = (y != b"normal.").astype(int)
         print_outlier_ratio(y)
 
-    if dat == 'SA':
+    if dat == "SA":
         lb = LabelBinarizer()
         x1 = lb.fit_transform(X[:, 1].astype(str))
         x2 = lb.fit_transform(X[:, 2].astype(str))
         x3 = lb.fit_transform(X[:, 3].astype(str))
         X = np.c_[X[:, :1], x1, x2, x3, X[:, 4:]]
-        y = (y != b'normal.').astype(int)
+        y = (y != b"normal.").astype(int)
         print_outlier_ratio(y)
 
-    if dat in ('http', 'smtp'):
-        y = (y != b'normal.').astype(int)
+    if dat in ("http", "smtp"):
+        y = (y != b"normal.").astype(int)
         print_outlier_ratio(y)
 
     n_samples, n_features = X.shape
@@ -118,32 +119,36 @@ for dat in datasets:
     y_train = y[:n_samples_train]
     y_test = y[n_samples_train:]
 
-    print('--- Fitting the IsolationForest estimator...')
+    print("--- Fitting the IsolationForest estimator...")
     model = IsolationForest(n_jobs=-1, random_state=random_state)
     tstart = time()
     model.fit(X_train)
     fit_time = time() - tstart
     tstart = time()
 
-    scoring = - model.decision_function(X_test)  # the lower, the more abnormal
+    scoring = -model.decision_function(X_test)  # the lower, the more abnormal
 
     print("--- Preparing the plot elements...")
     if with_decision_function_histograms:
         fig, ax = plt.subplots(3, sharex=True, sharey=True)
         bins = np.linspace(-0.5, 0.5, 200)
-        ax[0].hist(scoring, bins, color='black')
-        ax[0].set_title('Decision function for %s dataset' % dat)
-        ax[1].hist(scoring[y_test == 0], bins, color='b', label='normal data')
+        ax[0].hist(scoring, bins, color="black")
+        ax[0].set_title("Decision function for %s dataset" % dat)
+        ax[1].hist(scoring[y_test == 0], bins, color="b", label="normal data")
         ax[1].legend(loc="lower right")
-        ax[2].hist(scoring[y_test == 1], bins, color='r', label='outliers')
+        ax[2].hist(scoring[y_test == 1], bins, color="r", label="outliers")
         ax[2].legend(loc="lower right")
 
     # Show ROC Curves
     predict_time = time() - tstart
     fpr, tpr, thresholds = roc_curve(y_test, scoring)
     auc_score = auc(fpr, tpr)
-    label = ('%s (AUC: %0.3f, train_time= %0.2fs, '
-             'test_time= %0.2fs)' % (dat, auc_score, fit_time, predict_time))
+    label = "%s (AUC: %0.3f, train_time= %0.2fs, test_time= %0.2fs)" % (
+        dat,
+        auc_score,
+        fit_time,
+        predict_time,
+    )
     # Print AUC score and train/test time:
     print(label)
     ax_roc.plot(fpr, tpr, lw=1, label=label)
@@ -151,9 +156,9 @@ for dat in datasets:
 
 ax_roc.set_xlim([-0.05, 1.05])
 ax_roc.set_ylim([-0.05, 1.05])
-ax_roc.set_xlabel('False Positive Rate')
-ax_roc.set_ylabel('True Positive Rate')
-ax_roc.set_title('Receiver operating characteristic (ROC) curves')
+ax_roc.set_xlabel("False Positive Rate")
+ax_roc.set_ylabel("True Positive Rate")
+ax_roc.set_title("Receiver operating characteristic (ROC) curves")
 ax_roc.legend(loc="lower right")
 fig_roc.tight_layout()
 plt.show()

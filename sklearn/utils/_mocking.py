@@ -1,7 +1,9 @@
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
-from .validation import _num_samples, check_array, check_is_fitted
+from ..utils._metadata_requests import RequestMethod
+from .metaestimators import available_if
+from .validation import _check_sample_weight, _num_samples, check_array, check_is_fitted
 
 
 class ArraySlicingWrapper:
@@ -24,6 +26,7 @@ class MockDataFrame:
     ----------
     array
     """
+
     # have shape and length but don't support indexing.
 
     def __init__(self, array):
@@ -48,6 +51,9 @@ class MockDataFrame:
 
     def __ne__(self, other):
         return not self == other
+
+    def take(self, indices, axis=0):
+        return MockDataFrame(self.array.take(indices, axis=axis))
 
 
 class CheckingClassifier(ClassifierMixin, BaseEstimator):
@@ -77,6 +83,9 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     foo_param : int, default=0
         A `foo` param. When `foo > 1`, the output of :meth:`score` will be 1
         otherwise it is 0.
+
+    expected_sample_weight : bool, default=False
+        Whether to check if a valid `sample_weight` was passed to `fit`.
 
     expected_fit_params : list of str, default=None
         A list of the expected parameters given when calling `fit`.
@@ -111,15 +120,25 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     CheckingClassifier(...)
     """
 
-    def __init__(self, *, check_y=None, check_y_params=None,
-                 check_X=None, check_X_params=None, methods_to_check="all",
-                 foo_param=0, expected_fit_params=None):
+    def __init__(
+        self,
+        *,
+        check_y=None,
+        check_y_params=None,
+        check_X=None,
+        check_X_params=None,
+        methods_to_check="all",
+        foo_param=0,
+        expected_sample_weight=None,
+        expected_fit_params=None,
+    ):
         self.check_y = check_y
         self.check_y_params = check_y_params
         self.check_X = check_X
         self.check_X_params = check_X_params
         self.methods_to_check = methods_to_check
         self.foo_param = foo_param
+        self.expected_sample_weight = expected_sample_weight
         self.expected_fit_params = expected_fit_params
 
     def _check_X_y(self, X, y=None, should_be_fitted=True):
@@ -157,19 +176,22 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
                 y = checked_y
         return X, y
 
-    def fit(self, X, y, **fit_params):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit classifier.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples, n_outputs) or (n_samples,), \
                 default=None
             Target relative to X for classification or regression;
             None for unsupervised learning.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
 
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
@@ -182,21 +204,23 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         if self.methods_to_check == "all" or "fit" in self.methods_to_check:
             X, y = self._check_X_y(X, y, should_be_fitted=False)
         self.n_features_in_ = np.shape(X)[1]
-        self.classes_ = np.unique(
-            check_array(y, ensure_2d=False, allow_nd=True)
-        )
+        self.classes_ = np.unique(check_array(y, ensure_2d=False, allow_nd=True))
         if self.expected_fit_params:
             missing = set(self.expected_fit_params) - set(fit_params)
             if missing:
                 raise AssertionError(
-                    f'Expected fit parameter(s) {list(missing)} not seen.'
+                    f"Expected fit parameter(s) {list(missing)} not seen."
                 )
             for key, value in fit_params.items():
                 if _num_samples(value) != _num_samples(X):
                     raise AssertionError(
-                        f'Fit parameter {key} has length {_num_samples(value)}'
-                        f'; expected {_num_samples(X)}.'
+                        f"Fit parameter {key} has length {_num_samples(value)}"
+                        f"; expected {_num_samples(X)}."
                     )
+        if self.expected_sample_weight:
+            if sample_weight is None:
+                raise AssertionError("Expected sample_weight to be passed")
+            _check_sample_weight(sample_weight, X)
 
         return self
 
@@ -213,8 +237,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         preds : ndarray of shape (n_samples,)
             Predictions of the first class seens in `classes_`.
         """
-        if (self.methods_to_check == "all" or
-                "predict" in self.methods_to_check):
+        if self.methods_to_check == "all" or "predict" in self.methods_to_check:
             X, y = self._check_X_y(X)
         return self.classes_[np.zeros(_num_samples(X), dtype=int)]
 
@@ -234,8 +257,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         proba : ndarray of shape (n_samples, n_classes)
             The probabilities for each sample and class.
         """
-        if (self.methods_to_check == "all" or
-                "predict_proba" in self.methods_to_check):
+        if self.methods_to_check == "all" or "predict_proba" in self.methods_to_check:
             X, y = self._check_X_y(X)
         proba = np.zeros((_num_samples(X), len(self.classes_)))
         proba[:, 0] = 1
@@ -255,8 +277,10 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
                 else (n_samples, n_classes)
             Confidence score.
         """
-        if (self.methods_to_check == "all" or
-                "decision_function" in self.methods_to_check):
+        if (
+            self.methods_to_check == "all"
+            or "decision_function" in self.methods_to_check
+        ):
             X, y = self._check_X_y(X)
         if len(self.classes_) == 2:
             # for binary classifier, the confidence score is related to
@@ -273,8 +297,8 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Input data, where n_samples is the number of samples and
-            n_features is the number of features.
+            Input data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Y : array-like of shape (n_samples, n_output) or (n_samples,)
             Target relative to X for classification or regression;
@@ -289,13 +313,21 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         if self.methods_to_check == "all" or "score" in self.methods_to_check:
             self._check_X_y(X, Y)
         if self.foo_param > 1:
-            score = 1.
+            score = 1.0
         else:
-            score = 0.
+            score = 0.0
         return score
 
     def _more_tags(self):
-        return {'_skip_test': True, 'X_types': ['1dlabel']}
+        return {"_skip_test": True, "X_types": ["1dlabel"]}
+
+
+# Deactivate key validation for CheckingClassifier because we want to be able to
+# call fit with arbitrary fit_params and record them. Without this change, we
+# would get an error because those arbitrary params are not expected.
+CheckingClassifier.set_fit_request = RequestMethod(  # type: ignore
+    name="fit", keys=[], validate_keys=False
+)
 
 
 class NoSampleWeightWrapper(BaseEstimator):
@@ -320,4 +352,45 @@ class NoSampleWeightWrapper(BaseEstimator):
         return self.est.predict_proba(X)
 
     def _more_tags(self):
-        return {'_skip_test': True}
+        return {"_skip_test": True}
+
+
+def _check_response(method):
+    def check(self):
+        return self.response_methods is not None and method in self.response_methods
+
+    return check
+
+
+class _MockEstimatorOnOffPrediction(BaseEstimator):
+    """Estimator for which we can turn on/off the prediction methods.
+
+    Parameters
+    ----------
+    response_methods: list of \
+            {"predict", "predict_proba", "decision_function"}, default=None
+        List containing the response implemented by the estimator. When, the
+        response is in the list, it will return the name of the response method
+        when called. Otherwise, an `AttributeError` is raised. It allows to
+        use `getattr` as any conventional estimator. By default, no response
+        methods are mocked.
+    """
+
+    def __init__(self, response_methods=None):
+        self.response_methods = response_methods
+
+    def fit(self, X, y):
+        self.classes_ = np.unique(y)
+        return self
+
+    @available_if(_check_response("predict"))
+    def predict(self, X):
+        return "predict"
+
+    @available_if(_check_response("predict_proba"))
+    def predict_proba(self, X):
+        return "predict_proba"
+
+    @available_if(_check_response("decision_function"))
+    def decision_function(self, X):
+        return "decision_function"

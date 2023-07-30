@@ -80,9 +80,8 @@ Then run:
         ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">pip install -U scikit-learn</span
         ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">pip install -U scikit-learn</span
         ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">pip3 install -U scikit-learn</span
-        ><span class="sk-expandable" data-packager="conda" data-venv="">conda create -n sklearn-env</span
-        ><span class="sk-expandable" data-packager="conda" data-venv="">conda activate sklearn-env</span
-        ><span class="sk-expandable" data-packager="conda">conda install -c conda-forge scikit-learn </span
+        ><span class="sk-expandable" data-packager="conda">conda create -n sklearn-env -c conda-forge scikit-learn</span
+        ><span class="sk-expandable" data-packager="conda">conda activate sklearn-env</span
        ></code></pre></div>
 
 In order to check your installation you can use
@@ -142,13 +141,10 @@ purpose.
     Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.
     Scikit-learn 0.21 supported Python 3.5-3.7.
     Scikit-learn 0.22 supported Python 3.5-3.8.
-    Scikit-learn now requires Python 3.6 or newer.
+    Scikit-learn 0.23 - 0.24 require Python 3.6 or newer.
+    Scikit-learn 1.0 supported Python 3.7-3.10.
+    Scikit-learn 1.1 and later requires Python 3.8 or newer.
 
-
-.. note::
-
-   For installing on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
-   are required.
 
 .. _install_on_apple_silicon_m1:
 
@@ -157,7 +153,7 @@ Installing on Apple Silicon M1 hardware
 
 The recently introduced `macos/arm64` platform (sometimes also known as
 `macos/aarch64`) requires the open source community to upgrade the build
-configuation and automation to properly support it.
+configuration and automation to properly support it.
 
 At the time of writing (January 2021), the only way to get a working
 installation of scikit-learn on this hardware is to install scikit-learn and its
@@ -187,6 +183,19 @@ dependencies (numpy, scipy) that scikit-learn requires.
 The following is an incomplete list of OS and python distributions
 that provide their own version of scikit-learn.
 
+Alpine Linux
+------------
+
+Alpine Linux's package is provided through the `official repositories
+<https://pkgs.alpinelinux.org/packages?name=py3-scikit-learn>`__ as
+``py3-scikit-learn`` for Python.
+It can be installed by typing the following command:
+
+.. prompt:: bash $
+
+  sudo apk add py3-scikit-learn
+
+
 Arch Linux
 ----------
 
@@ -203,7 +212,7 @@ It can be installed by typing the following command:
 Debian/Ubuntu
 -------------
 
-The Debian/Ubuntu package is splitted in three different packages called
+The Debian/Ubuntu package is split in three different packages called
 ``python3-sklearn`` (python modules), ``python3-sklearn-lib`` (low-level
 implementations and bindings), ``python3-sklearn-doc`` (documentation).
 Only the Python 3 version is available in the Debian Buster (the more recent
@@ -233,7 +242,7 @@ NetBSD
 scikit-learn is available via `pkgsrc-wip
 <http://pkgsrc-wip.sourceforge.net/>`_:
 
-    http://pkgsrc.se/math/py-scikit-learn
+    https://pkgsrc.se/math/py-scikit-learn
 
 
 MacPorts for Mac OSX
@@ -246,7 +255,7 @@ command:
 
 .. prompt:: bash $
 
-  sudo port install py36-scikit-learn
+  sudo port install py39-scikit-learn
 
 
 Anaconda and Enthought Deployment Manager for all supported platforms
@@ -260,26 +269,35 @@ python library for Windows, Mac OSX and Linux.
 Anaconda offers scikit-learn as part of its free distribution.
 
 
-Intel conda channel
--------------------
+Intel Extension for Scikit-learn
+--------------------------------
 
-Intel maintains a dedicated conda channel that ships scikit-learn:
+Intel maintains an optimized x86_64 package, available in PyPI (via `pip`),
+and in the `main`, `conda-forge` and `intel` conda channels:
 
 .. prompt:: bash $
 
-  conda install -c intel scikit-learn
+  conda install scikit-learn-intelex
 
-This version of scikit-learn comes with alternative solvers for some common
-estimators. Those solvers come from the DAAL C++ library and are optimized for
-multi-core Intel CPUs.
+This package has an Intel optimized version of many estimators. Whenever 
+an alternative implementation doesn't exist, scikit-learn implementation 
+is used as a fallback. Those optimized solvers come from the oneDAL 
+C++ library and are optimized for the x86_64 architecture, and are 
+optimized for multi-core Intel CPUs.
 
 Note that those solvers are not enabled by default, please refer to the
-`daal4py <https://intelpython.github.io/daal4py/sklearn.html>`_ documentation
-for more details.
+`scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/what-is-patching.html>`_ 
+documentation for more details on usage scenarios. Direct export example:
+
+.. prompt:: bash $
+
+  from sklearnex.neighbors import NearestNeighbors
 
 Compatibility with the standard scikit-learn solvers is checked by running the
 full scikit-learn test suite via automated continuous integration as reported
-on https://github.com/IntelPython/daal4py.
+on https://github.com/intel/scikit-learn-intelex. If you observe any issue
+with `scikit-learn-intelex`, please report the issue on their
+`issue tracker <https://github.com/intel/scikit-learn-intelex/issues>`__.
 
 
 WinPython for Windows
@@ -305,7 +323,7 @@ size limit of Windows if Python is installed in a nested location such as the
     Collecting scikit-learn
     ...
     Installing collected packages: scikit-learn
-    ERROR: Could not install packages due to an EnvironmentError: [Errno 2] No such file or directory: 'C:\\Users\\username\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.7_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python37\\site-packages\\sklearn\\datasets\\tests\\data\\openml\\292\\api-v1-json-data-list-data_name-australian-limit-2-data_version-1-status-deactivated.json.gz'
+    ERROR: Could not install packages due to an OSError: [Errno 2] No such file or directory: 'C:\\Users\\username\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.7_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python37\\site-packages\\sklearn\\datasets\\tests\\data\\openml\\292\\api-v1-json-data-list-data_name-australian-limit-2-data_version-1-status-deactivated.json.gz'
 
 In this case it is possible to lift that limit in the Windows registry by
 using the ``regedit`` tool:

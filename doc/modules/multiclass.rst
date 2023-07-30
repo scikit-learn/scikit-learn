@@ -102,6 +102,7 @@ can provide additional strategies beyond what is built-in:
   - :class:`neural_network.MLPClassifier`
   - :class:`neighbors.RadiusNeighborsClassifier`
   - :class:`ensemble.RandomForestClassifier`
+  - :class:`linear_model.RidgeClassifier`
   - :class:`linear_model.RidgeClassifierCV`
 
 
@@ -200,7 +201,7 @@ Below is an example of multiclass learning using OvR::
   >>> from sklearn.multiclass import OneVsRestClassifier
   >>> from sklearn.svm import LinearSVC
   >>> X, y = datasets.load_iris(return_X_y=True)
-  >>> OneVsRestClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
+  >>> OneVsRestClassifier(LinearSVC(dual="auto", random_state=0)).fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -252,7 +253,7 @@ Below is an example of multiclass learning using OvO::
   >>> from sklearn.multiclass import OneVsOneClassifier
   >>> from sklearn.svm import LinearSVC
   >>> X, y = datasets.load_iris(return_X_y=True)
-  >>> OneVsOneClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
+  >>> OneVsOneClassifier(LinearSVC(dual="auto", random_state=0)).fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -295,7 +296,7 @@ used. It is a percentage of the total number of classes.
 A number between 0 and 1 will require fewer classifiers than
 one-vs-the-rest. In theory, ``log2(n_classes) / n_classes`` is sufficient to
 represent each class unambiguously. However, in practice, it may not lead to
-good accuracy since ``log2(n_classes)`` is much smaller than n_classes.
+good accuracy since ``log2(n_classes)`` is much smaller than `n_classes`.
 
 A number greater than 1 will require more classifiers than
 one-vs-the-rest. In this case, some classifiers will in theory correct for
@@ -310,7 +311,7 @@ Below is an example of multiclass learning using Output-Codes::
   >>> from sklearn.multiclass import OutputCodeClassifier
   >>> from sklearn.svm import LinearSVC
   >>> X, y = datasets.load_iris(return_X_y=True)
-  >>> clf = OutputCodeClassifier(LinearSVC(random_state=0),
+  >>> clf = OutputCodeClassifier(LinearSVC(dual="auto", random_state=0),
   ...                            code_size=2, random_state=0)
   >>> clf.fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -400,33 +401,11 @@ to be able to estimate a series of target functions (f1,f2,f3...,fn)
 that are trained on a single X predictor matrix to predict a series
 of responses (y1,y2,y3...,yn).
 
-Below is an example of multilabel classification:
-
-    >>> from sklearn.datasets import make_classification
-    >>> from sklearn.multioutput import MultiOutputClassifier
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sklearn.utils import shuffle
-    >>> import numpy as np
-    >>> X, y1 = make_classification(n_samples=10, n_features=100, n_informative=30, n_classes=3, random_state=1)
-    >>> y2 = shuffle(y1, random_state=1)
-    >>> y3 = shuffle(y1, random_state=2)
-    >>> Y = np.vstack((y1, y2, y3)).T
-    >>> n_samples, n_features = X.shape # 10,100
-    >>> n_outputs = Y.shape[1] # 3
-    >>> n_classes = 3
-    >>> forest = RandomForestClassifier(random_state=1)
-    >>> multi_target_forest = MultiOutputClassifier(forest, n_jobs=-1)
-    >>> multi_target_forest.fit(X, Y).predict(X)
-    array([[2, 2, 0],
-           [1, 2, 1],
-           [2, 1, 0],
-           [0, 0, 2],
-           [0, 2, 1],
-           [0, 0, 2],
-           [1, 1, 0],
-           [1, 1, 1],
-           [0, 0, 2],
-           [2, 0, 0]])
+You can find a usage example for
+:class:`~sklearn.multioutput.MultiOutputClassifier`
+as part of the section on :ref:`multiclass_multioutput_classification`
+since it is a generalization of multilabel classification to
+multiclass outputs instead of binary outputs.
 
 .. _classifierchain:
 
@@ -487,6 +466,36 @@ as a special case. Multitask classification is similar to the multioutput
 classification task with different model formulations. For more information,
 see the relevant estimator documentation.
 
+Below is an example of multiclass-multioutput classification:
+
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.multioutput import MultiOutputClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.utils import shuffle
+    >>> import numpy as np
+    >>> X, y1 = make_classification(n_samples=10, n_features=100,
+    ...                             n_informative=30, n_classes=3,
+    ...                             random_state=1)
+    >>> y2 = shuffle(y1, random_state=1)
+    >>> y3 = shuffle(y1, random_state=2)
+    >>> Y = np.vstack((y1, y2, y3)).T
+    >>> n_samples, n_features = X.shape # 10,100
+    >>> n_outputs = Y.shape[1] # 3
+    >>> n_classes = 3
+    >>> forest = RandomForestClassifier(random_state=1)
+    >>> multi_target_forest = MultiOutputClassifier(forest, n_jobs=2)
+    >>> multi_target_forest.fit(X, Y).predict(X)
+    array([[2, 2, 0],
+           [1, 2, 1],
+           [2, 1, 0],
+           [0, 0, 2],
+           [0, 2, 1],
+           [0, 0, 2],
+           [1, 1, 0],
+           [1, 1, 1],
+           [0, 0, 2],
+           [2, 0, 0]])
+
 .. warning::
     At present, no metric in :mod:`sklearn.metrics`
     supports the multiclass-multioutput classification task.
@@ -524,7 +533,7 @@ Target format
 -------------
 
 A valid representation of :term:`multioutput` `y` is a dense matrix of shape
-``(n_samples, n_classes)`` of floats. A column wise concatenation of
+``(n_samples, n_output)`` of floats. A column wise concatenation of
 :term:`continuous` variables. An example of ``y`` for 3 samples:
 
   >>> y = np.array([[31.4, 94], [40.5, 109], [25.0, 30]])

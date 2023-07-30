@@ -1,26 +1,34 @@
-version: 2
+version: 2.1
 
 jobs:
+  lint:
+    docker:
+      - image: cimg/python:3.8.12
+    steps:
+      - checkout
+      - run:
+          name: dependencies
+          command: |
+            source build_tools/shared.sh
+            # Include pytest compatibility with mypy
+            pip install pytest ruff $(get_dep mypy min) $(get_dep black min) cython-lint
+      - run:
+          name: linting
+          command: ./build_tools/linting.sh
+
   doc-min-dependencies:
     docker:
-      - image: circleci/python:3.7.3-stretch
+      - image: cimg/python:3.8.12
     environment:
-      - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
+      - OPENBLAS_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3.6
-      - NUMPY_VERSION: 'min'
-      - SCIPY_VERSION: 'min'
-      - MATPLOTLIB_VERSION: 'min'
-      - CYTHON_VERSION: 'min'
-      - SCIKIT_IMAGE_VERSION: 'min'
-      - SPHINX_VERSION: 'min'
-      - PANDAS_VERSION: 'min'
+      - LOCK_FILE: build_tools/circle/doc_min_dependencies_linux-64_conda.lock
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v1-doc-min-deps-datasets-{{ .Branch }}
       - restore_cache:
           keys:
             - doc-min-deps-ccache-{{ .Branch }}
@@ -32,7 +40,7 @@ jobs:
             - ~/.ccache
             - ~/.cache/pip
       - save_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v1-doc-min-deps-datasets-{{ .Branch }}
           paths:
             - ~/scikit_learn_data
       - store_artifacts:
@@ -44,24 +52,17 @@ jobs:
 
   doc:
     docker:
-      - image: circleci/python:3.7.3-stretch
+      - image: cimg/python:3.8.12
     environment:
-      - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
+      - OPENBLAS_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3
-      - NUMPY_VERSION: 'latest'
-      - SCIPY_VERSION: 'latest'
-      - MATPLOTLIB_VERSION: 'latest'
-      - CYTHON_VERSION: 'latest'
-      - SCIKIT_IMAGE_VERSION: 'latest'
-      - SPHINX_VERSION: 'min'
-      - PANDAS_VERSION: 'latest'
+      - LOCK_FILE: build_tools/circle/doc_linux-64_conda.lock
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v1-doc-datasets-{{ .Branch }}
       - restore_cache:
           keys:
             - doc-ccache-{{ .Branch }}
@@ -73,7 +74,7 @@ jobs:
             - ~/.ccache
             - ~/.cache/pip
       - save_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v1-doc-datasets-{{ .Branch }}
           paths:
             - ~/scikit_learn_data
       - store_artifacts:
@@ -88,43 +89,9 @@ jobs:
           root: doc/_build/html
           paths: .
 
-  lint:
-    docker:
-      - image: circleci/python:3.6
-    steps:
-      - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
-      - run:
-          name: dependencies
-          command: sudo pip install flake8
-      - run:
-          name: linting
-          command: ./build_tools/circle/linting.sh
-
-  pypy3:
-    docker:
-      - image: condaforge/miniforge3
-    environment:
-      # Avoid the interactive dialog when installing tzdata
-      - DEBIAN_FRONTEND: noninteractive
-    steps:
-      - restore_cache:
-          keys:
-            - pypy3-ccache-{{ .Branch }}
-            - pypy3-ccache
-      - run: apt-get -yq update && apt-get -yq install git ssh
-      - checkout
-      - run: conda init bash && source ~/.bashrc
-      - run: ./build_tools/circle/build_test_pypy.sh
-      - save_cache:
-          key: pypy3-ccache-{{ .Branch }}-{{ .BuildNum }}
-          paths:
-            - ~/.ccache
-            - ~/.cache/pip
-
   deploy:
     docker:
-      - image: circleci/python:3.6
+      - image: cimg/python:3.8.12
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -150,21 +117,6 @@ workflows:
       - doc-min-dependencies:
           requires:
             - lint
-      - pypy3:
-          filters:
-            branches:
-              only:
-                - 0.20.X
       - deploy:
           requires:
             - doc
-  pypy:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - main
-    jobs:
-      - pypy3

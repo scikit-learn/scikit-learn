@@ -19,17 +19,14 @@ The ``# noqa`` comment comment can be removed: it just tells linters like
 flake8 to ignore the import, which appears as unused.
 """
 
+from .. import model_selection
 from ..model_selection._search_successive_halving import (
+    HalvingGridSearchCV,
     HalvingRandomSearchCV,
-    HalvingGridSearchCV
 )
 
-from .. import model_selection
-
 # use settattr to avoid mypy errors when monkeypatching
-setattr(model_selection, "HalvingRandomSearchCV",
-        HalvingRandomSearchCV)
-setattr(model_selection, "HalvingGridSearchCV",
-        HalvingGridSearchCV)
+setattr(model_selection, "HalvingRandomSearchCV", HalvingRandomSearchCV)
+setattr(model_selection, "HalvingGridSearchCV", HalvingGridSearchCV)
 
-model_selection.__all__ += ['HalvingRandomSearchCV', 'HalvingGridSearchCV']
+model_selection.__all__ += ["HalvingRandomSearchCV", "HalvingGridSearchCV"]

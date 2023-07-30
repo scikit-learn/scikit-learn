@@ -3,9 +3,9 @@
 # License: BSD 3 clause
 
 import numpy as np
+from numpy.testing import assert_array_almost_equal, assert_array_equal
+
 from sklearn.utils.murmurhash import murmurhash3_32
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_equal
 
 
 def test_mmhash3_int():
@@ -28,41 +28,37 @@ def test_mmhash3_int_array():
     keys = keys.reshape((3, 2, 1))
 
     for seed in [0, 42]:
-        expected = np.array([murmurhash3_32(int(k), seed)
-                             for k in keys.flat])
+        expected = np.array([murmurhash3_32(int(k), seed) for k in keys.flat])
         expected = expected.reshape(keys.shape)
         assert_array_equal(murmurhash3_32(keys, seed), expected)
 
     for seed in [0, 42]:
-        expected = np.array([murmurhash3_32(k, seed, positive=True)
-                             for k in keys.flat])
+        expected = np.array([murmurhash3_32(k, seed, positive=True) for k in keys.flat])
         expected = expected.reshape(keys.shape)
-        assert_array_equal(murmurhash3_32(keys, seed, positive=True),
-                           expected)
+        assert_array_equal(murmurhash3_32(keys, seed, positive=True), expected)
 
 
 def test_mmhash3_bytes():
-    assert murmurhash3_32(b'foo', 0) == -156908512
-    assert murmurhash3_32(b'foo', 42) == -1322301282
+    assert murmurhash3_32(b"foo", 0) == -156908512
+    assert murmurhash3_32(b"foo", 42) == -1322301282
 
-    assert murmurhash3_32(b'foo', 0, positive=True) == 4138058784
-    assert murmurhash3_32(b'foo', 42, positive=True) == 2972666014
+    assert murmurhash3_32(b"foo", 0, positive=True) == 4138058784
+    assert murmurhash3_32(b"foo", 42, positive=True) == 2972666014
 
 
 def test_mmhash3_unicode():
-    assert murmurhash3_32('foo', 0) == -156908512
-    assert murmurhash3_32('foo', 42) == -1322301282
+    assert murmurhash3_32("foo", 0) == -156908512
+    assert murmurhash3_32("foo", 42) == -1322301282
 
-    assert murmurhash3_32('foo', 0, positive=True) == 4138058784
-    assert murmurhash3_32('foo', 42, positive=True) == 2972666014
+    assert murmurhash3_32("foo", 0, positive=True) == 4138058784
+    assert murmurhash3_32("foo", 42, positive=True) == 2972666014
 
 
 def test_no_collision_on_byte_range():
     previous_hashes = set()
     for i in range(100):
-        h = murmurhash3_32(' ' * i, 0)
-        assert h not in previous_hashes, \
-            "Found collision on growing empty string"
+        h = murmurhash3_32(" " * i, 0)
+        assert h not in previous_hashes, "Found collision on growing empty string"
 
 
 def test_uniform_distribution():
@@ -73,6 +69,6 @@ def test_uniform_distribution():
         bins[murmurhash3_32(i, positive=True) % n_bins] += 1
 
     means = bins / n_samples
-    expected = np.full(n_bins, 1. / n_bins)
+    expected = np.full(n_bins, 1.0 / n_bins)
 
     assert_array_almost_equal(means / expected, np.ones(n_bins), 2)

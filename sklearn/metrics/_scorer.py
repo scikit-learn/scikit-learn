@@ -18,46 +18,80 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from collections.abc import Iterable
-from functools import partial
+import copy
+import warnings
 from collections import Counter
+from functools import partial
+from inspect import signature
+from traceback import format_exc
 
 import numpy as np
 
-from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
-               mean_squared_error, mean_squared_log_error,
-               mean_poisson_deviance, mean_gamma_deviance, accuracy_score,
-               top_k_accuracy_score, f1_score, roc_auc_score,
-               average_precision_score, precision_score, recall_score,
-               log_loss, balanced_accuracy_score, explained_variance_score,
-               brier_score_loss, jaccard_score, mean_absolute_percentage_error)
-
-from .cluster import adjusted_rand_score
-from .cluster import rand_score
-from .cluster import homogeneity_score
-from .cluster import completeness_score
-from .cluster import v_measure_score
-from .cluster import mutual_info_score
-from .cluster import adjusted_mutual_info_score
-from .cluster import normalized_mutual_info_score
-from .cluster import fowlkes_mallows_score
-
-from ..utils.multiclass import type_of_target
-from ..utils.validation import _deprecate_positional_args
 from ..base import is_regressor
+from ..utils import Bunch
+from ..utils._param_validation import HasMethods, StrOptions, validate_params
+from ..utils._response import _get_response_values
+from ..utils.metadata_routing import (
+    MetadataRequest,
+    MetadataRouter,
+    _MetadataRequester,
+    _raise_for_params,
+    _routing_enabled,
+    get_routing_for_object,
+    process_routing,
+)
+from ..utils.multiclass import type_of_target
+from . import (
+    accuracy_score,
+    average_precision_score,
+    balanced_accuracy_score,
+    brier_score_loss,
+    class_likelihood_ratios,
+    explained_variance_score,
+    f1_score,
+    jaccard_score,
+    log_loss,
+    matthews_corrcoef,
+    max_error,
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    mean_gamma_deviance,
+    mean_poisson_deviance,
+    mean_squared_error,
+    mean_squared_log_error,
+    median_absolute_error,
+    precision_score,
+    r2_score,
+    recall_score,
+    roc_auc_score,
+    top_k_accuracy_score,
+)
+from .cluster import (
+    adjusted_mutual_info_score,
+    adjusted_rand_score,
+    completeness_score,
+    fowlkes_mallows_score,
+    homogeneity_score,
+    mutual_info_score,
+    normalized_mutual_info_score,
+    rand_score,
+    v_measure_score,
+)
 
 
-def _cached_call(cache, estimator, method, *args, **kwargs):
+def _cached_call(cache, estimator, response_method, *args, **kwargs):
     """Call estimator with method and args and kwargs."""
-    if cache is None:
-        return getattr(estimator, method)(*args, **kwargs)
+    if cache is not None and response_method in cache:
+        return cache[response_method]
 
-    try:
-        return cache[method]
-    except KeyError:
-        result = getattr(estimator, method)(*args, **kwargs)
-        cache[method] = result
-        return result
+    result, _ = _get_response_values(
+        estimator, *args, response_method=response_method, **kwargs
+    )
+
+    if cache is not None:
+        cache[response_method] = result
+
+    return result
 
 
 class _MultimetricScorer:
@@ -72,9 +106,16 @@ class _MultimetricScorer:
     ----------
     scorers : dict
         Dictionary mapping names to callable scorers.
+
+    raise_exc : bool, default=True
+        Whether to raise the exception in `__call__` or not. If set to `False`
+        a formatted string of the exception details is passed as result of
+        the failing scorer.
     """
-    def __init__(self, **scorers):
+
+    def __init__(self, *, scorers, raise_exc=True):
         self._scorers = scorers
+        self._raise_exc = raise_exc
 
     def __call__(self, estimator, *args, **kwargs):
         """Evaluate predicted target values."""
@@ -82,13 +123,28 @@ class _MultimetricScorer:
         cache = {} if self._use_cache(estimator) else None
         cached_call = partial(_cached_call, cache)
 
+        if _routing_enabled():
+            routed_params = process_routing(self, "score", **kwargs)
+        else:
+            # they all get the same args, and they all get them all
+            routed_params = Bunch(
+                **{name: Bunch(score=kwargs) for name in self._scorers}
+            )
+
         for name, scorer in self._scorers.items():
-            if isinstance(scorer, _BaseScorer):
-                score = scorer._score(cached_call, estimator,
-                                      *args, **kwargs)
-            else:
-                score = scorer(estimator, *args, **kwargs)
-            scores[name] = score
+            try:
+                if isinstance(scorer, _BaseScorer):
+                    score = scorer._score(
+                        cached_call, estimator, *args, **routed_params.get(name).score
+                    )
+                else:
+                    score = scorer(estimator, *args, **routed_params.get(name).score)
+                scores[name] = score
+            except Exception as e:
+                if self._raise_exc:
+                    raise e
+                else:
+                    scores[name] = format_exc()
         return scores
 
     def _use_cache(self, estimator):
@@ -109,71 +165,64 @@ class _MultimetricScorer:
 
         counter = Counter([type(v) for v in self._scorers.values()])
 
-        if any(counter[known_type] > 1 for known_type in
-               [_PredictScorer, _ProbaScorer, _ThresholdScorer]):
+        if any(
+            counter[known_type] > 1
+            for known_type in [_PredictScorer, _ProbaScorer, _ThresholdScorer]
+        ):
             return True
 
         if counter[_ThresholdScorer]:
             if is_regressor(estimator) and counter[_PredictScorer]:
                 return True
-            elif (counter[_ProbaScorer] and
-                  not hasattr(estimator, "decision_function")):
+            elif counter[_ProbaScorer] and not hasattr(estimator, "decision_function"):
                 return True
         return False
 
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
 
-class _BaseScorer:
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.3
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        return MetadataRouter(owner=self.__class__.__name__).add(
+            **self._scorers, method_mapping="score"
+        )
+
+
+class _BaseScorer(_MetadataRequester):
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
 
-    @staticmethod
-    def _check_pos_label(pos_label, classes):
-        if pos_label not in list(classes):
-            raise ValueError(
-                f"pos_label={pos_label} is not a valid label: {classes}"
-            )
-
-    def _select_proba_binary(self, y_pred, classes):
-        """Select the column of the positive label in `y_pred` when
-        probabilities are provided.
-
-        Parameters
-        ----------
-        y_pred : ndarray of shape (n_samples, n_classes)
-            The prediction given by `predict_proba`.
-
-        classes : ndarray of shape (n_classes,)
-            The class labels for the estimator.
-
-        Returns
-        -------
-        y_pred : ndarray of shape (n_samples,)
-            Probability predictions of the positive class.
-        """
-        if y_pred.shape[1] == 2:
-            pos_label = self._kwargs.get("pos_label", classes[1])
-            self._check_pos_label(pos_label, classes)
-            col_idx = np.flatnonzero(classes == pos_label)[0]
-            return y_pred[:, col_idx]
-
-        err_msg = (
-            f"Got predict_proba of shape {y_pred.shape}, but need "
-            f"classifier with two classes for {self._score_func.__name__} "
-            f"scoring"
-        )
-        raise ValueError(err_msg)
+    def _get_pos_label(self):
+        if "pos_label" in self._kwargs:
+            return self._kwargs["pos_label"]
+        score_func_params = signature(self._score_func).parameters
+        if "pos_label" in score_func_params:
+            return score_func_params["pos_label"].default
+        return None
 
     def __repr__(self):
-        kwargs_string = "".join([", %s=%s" % (str(k), str(v))
-                                 for k, v in self._kwargs.items()])
-        return ("make_scorer(%s%s%s%s)"
-                % (self._score_func.__name__,
-                   "" if self._sign > 0 else ", greater_is_better=False",
-                   self._factory_args(), kwargs_string))
+        kwargs_string = "".join(
+            [", %s=%s" % (str(k), str(v)) for k, v in self._kwargs.items()]
+        )
+        return "make_scorer(%s%s%s%s)" % (
+            self._score_func.__name__,
+            "" if self._sign > 0 else ", greater_is_better=False",
+            self._factory_args(),
+            kwargs_string,
+        )
 
-    def __call__(self, estimator, X, y_true, sample_weight=None):
+    def __call__(self, estimator, X, y_true, sample_weight=None, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -191,21 +240,76 @@ class _BaseScorer:
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
+        **kwargs : dict
+            Other parameters passed to the scorer. Refer to
+            :func:`set_score_request` for more details.
+
+            Only available if `enable_metadata_routing=True`. See the
+            :ref:`User Guide <metadata_routing>`.
+
+            .. versionadded:: 1.3
+
         Returns
         -------
         score : float
             Score function applied to prediction of estimator on X.
         """
-        return self._score(partial(_cached_call, None), estimator, X, y_true,
-                           sample_weight=sample_weight)
+        _raise_for_params(kwargs, self, None)
+
+        _kwargs = copy.deepcopy(kwargs)
+        if sample_weight is not None:
+            _kwargs["sample_weight"] = sample_weight
+
+        return self._score(partial(_cached_call, None), estimator, X, y_true, **_kwargs)
 
     def _factory_args(self):
         """Return non-default make_scorer arguments for repr."""
         return ""
 
+    def _warn_overlap(self, message, kwargs):
+        """Warn if there is any overlap between ``self._kwargs`` and ``kwargs``.
+
+        This method is intended to be used to check for overlap between
+        ``self._kwargs`` and ``kwargs`` passed as metadata.
+        """
+        _kwargs = set() if self._kwargs is None else set(self._kwargs.keys())
+        overlap = _kwargs.intersection(kwargs.keys())
+        if overlap:
+            warnings.warn(
+                f"{message} Overlapping parameters are: {overlap}", UserWarning
+            )
+
+    def set_score_request(self, **kwargs):
+        """Set requested parameters by the scorer.
+
+        Please see :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.3
+
+        Parameters
+        ----------
+        kwargs : dict
+            Arguments should be of the form ``param_name=alias``, and `alias`
+            can be one of ``{True, False, None, str}``.
+        """
+        self._warn_overlap(
+            message=(
+                "You are setting metadata request for parameters which are "
+                "already set as kwargs for this metric. These set values will be "
+                "overridden by passed metadata if provided. Please pass them either "
+                "as metadata or kwargs to `make_scorer`."
+            ),
+            kwargs=kwargs,
+        )
+        self._metadata_request = MetadataRequest(owner=self.__class__.__name__)
+        for param, alias in kwargs.items():
+            self._metadata_request.score.add_request(param=param, alias=alias)
+        return self
+
 
 class _PredictScorer(_BaseScorer):
-    def _score(self, method_caller, estimator, X, y_true, sample_weight=None):
+    def _score(self, method_caller, estimator, X, y_true, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -224,27 +328,32 @@ class _PredictScorer(_BaseScorer):
         y_true : array-like
             Gold standard target values for X.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights.
+        **kwargs : dict
+            Other parameters passed to the scorer. Refer to
+            :func:`set_score_request` for more details.
+
+            .. versionadded:: 1.3
 
         Returns
         -------
         score : float
             Score function applied to prediction of estimator on X.
         """
-
+        self._warn_overlap(
+            message=(
+                "There is an overlap between set kwargs of this scorer instance and"
+                " passed metadata. Please pass them either as kwargs to `make_scorer`"
+                " or metadata, but not both."
+            ),
+            kwargs=kwargs,
+        )
         y_pred = method_caller(estimator, "predict", X)
-        if sample_weight is not None:
-            return self._sign * self._score_func(y_true, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
-        else:
-            return self._sign * self._score_func(y_true, y_pred,
-                                                 **self._kwargs)
+        scoring_kwargs = {**self._kwargs, **kwargs}
+        return self._sign * self._score_func(y_true, y_pred, **scoring_kwargs)
 
 
 class _ProbaScorer(_BaseScorer):
-    def _score(self, method_caller, clf, X, y, sample_weight=None):
+    def _score(self, method_caller, clf, X, y, **kwargs):
         """Evaluate predicted probabilities for X relative to y_true.
 
         Parameters
@@ -264,35 +373,36 @@ class _ProbaScorer(_BaseScorer):
             Gold standard target values for X. These must be class labels,
             not probabilities.
 
-        sample_weight : array-like, default=None
-            Sample weights.
+        **kwargs : dict
+            Other parameters passed to the scorer. Refer to
+            :func:`set_score_request` for more details.
+
+            .. versionadded:: 1.3
 
         Returns
         -------
         score : float
             Score function applied to prediction of estimator on X.
         """
+        self._warn_overlap(
+            message=(
+                "There is an overlap between set kwargs of this scorer instance and"
+                " passed metadata. Please pass them either as kwargs to `make_scorer`"
+                " or metadata, but not both."
+            ),
+            kwargs=kwargs,
+        )
 
-        y_type = type_of_target(y)
-        y_pred = method_caller(clf, "predict_proba", X)
-        if y_type == "binary" and y_pred.shape[1] <= 2:
-            # `y_type` could be equal to "binary" even in a multi-class
-            # problem: (when only 2 class are given to `y_true` during scoring)
-            # Thus, we need to check for the shape of `y_pred`.
-            y_pred = self._select_proba_binary(y_pred, clf.classes_)
-        if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
-        else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+        y_pred = method_caller(clf, "predict_proba", X, pos_label=self._get_pos_label())
+        scoring_kwargs = {**self._kwargs, **kwargs}
+        return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
 
     def _factory_args(self):
         return ", needs_proba=True"
 
 
 class _ThresholdScorer(_BaseScorer):
-    def _score(self, method_caller, clf, X, y, sample_weight=None):
+    def _score(self, method_caller, clf, X, y, **kwargs):
         """Evaluate decision function output for X relative to y_true.
 
         Parameters
@@ -314,14 +424,25 @@ class _ThresholdScorer(_BaseScorer):
             Gold standard target values for X. These must be class labels,
             not decision function values.
 
-        sample_weight : array-like, default=None
-            Sample weights.
+        **kwargs : dict
+            Other parameters passed to the scorer. Refer to
+            :func:`set_score_request` for more details.
+
+            .. versionadded:: 1.3
 
         Returns
         -------
         score : float
             Score function applied to prediction of estimator on X.
         """
+        self._warn_overlap(
+            message=(
+                "There is an overlap between set kwargs of this scorer instance and"
+                " passed metadata. Please pass them either as kwargs to `make_scorer`"
+                " or metadata, but not both."
+            ),
+            kwargs=kwargs,
+        )
 
         y_type = type_of_target(y)
         if y_type not in ("binary", "multilabel-indicator"):
@@ -330,134 +451,98 @@ class _ThresholdScorer(_BaseScorer):
         if is_regressor(clf):
             y_pred = method_caller(clf, "predict", X)
         else:
+            pos_label = self._get_pos_label()
             try:
-                y_pred = method_caller(clf, "decision_function", X)
+                y_pred = method_caller(clf, "decision_function", X, pos_label=pos_label)
 
                 if isinstance(y_pred, list):
                     # For multi-output multi-class estimator
                     y_pred = np.vstack([p for p in y_pred]).T
-                elif y_type == "binary" and "pos_label" in self._kwargs:
-                    self._check_pos_label(
-                        self._kwargs["pos_label"], clf.classes_
-                    )
-                    if self._kwargs["pos_label"] == clf.classes_[0]:
-                        # The implicit positive class of the binary classifier
-                        # does not match `pos_label`: we need to invert the
-                        # predictions
-                        y_pred *= -1
 
             except (NotImplementedError, AttributeError):
-                y_pred = method_caller(clf, "predict_proba", X)
-
-                if y_type == "binary":
-                    y_pred = self._select_proba_binary(y_pred, clf.classes_)
-                elif isinstance(y_pred, list):
+                y_pred = method_caller(clf, "predict_proba", X, pos_label=pos_label)
+                if isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
-        if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
-        else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+        scoring_kwargs = {**self._kwargs, **kwargs}
+        return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
 
     def _factory_args(self):
         return ", needs_threshold=True"
 
 
+@validate_params(
+    {
+        "scoring": [str, callable, None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def get_scorer(scoring):
     """Get a scorer from string.
 
     Read more in the :ref:`User Guide <scoring_parameter>`.
+    :func:`~sklearn.metrics.get_scorer_names` can be used to retrieve the names
+    of all available scorers.
 
     Parameters
     ----------
-    scoring : str or callable
+    scoring : str, callable or None
         Scoring method as string. If callable it is returned as is.
+        If None, returns None.
 
     Returns
     -------
     scorer : callable
         The scorer.
+
+    Notes
+    -----
+    When passed a string, this function always returns a copy of the scorer
+    object. Calling `get_scorer` twice for the same scorer results in two
+    separate scorer objects.
     """
     if isinstance(scoring, str):
         try:
-            scorer = SCORERS[scoring]
+            scorer = copy.deepcopy(_SCORERS[scoring])
         except KeyError:
-            raise ValueError('%r is not a valid scoring value. '
-                             'Use sorted(sklearn.metrics.SCORERS.keys()) '
-                             'to get valid options.' % scoring)
+            raise ValueError(
+                "%r is not a valid scoring value. "
+                "Use sklearn.metrics.get_scorer_names() "
+                "to get valid options." % scoring
+            )
     else:
         scorer = scoring
     return scorer
 
 
-def _passthrough_scorer(estimator, *args, **kwargs):
-    """Function that wraps estimator.score"""
-    return estimator.score(*args, **kwargs)
+class _PassthroughScorer:
+    def __init__(self, estimator):
+        self._estimator = estimator
 
+    def __call__(self, estimator, *args, **kwargs):
+        """Method that wraps estimator.score"""
+        return estimator.score(*args, **kwargs)
 
-@_deprecate_positional_args
-def check_scoring(estimator, scoring=None, *, allow_none=False):
-    """Determine scorer from user options.
+    def get_metadata_routing(self):
+        """Get requested data properties.
 
-    A TypeError will be thrown if the estimator cannot be scored.
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
 
-    Parameters
-    ----------
-    estimator : estimator object implementing 'fit'
-        The object to use to fit the data.
+        .. versionadded:: 1.3
 
-    scoring : str or callable, default=None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
-
-    allow_none : bool, default=False
-        If no scoring is specified and the estimator has no score function, we
-        can either return None or raise an exception.
-
-    Returns
-    -------
-    scoring : callable
-        A scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
-    """
-    if not hasattr(estimator, 'fit'):
-        raise TypeError("estimator should be an estimator implementing "
-                        "'fit' method, %r was passed" % estimator)
-    if isinstance(scoring, str):
-        return get_scorer(scoring)
-    elif callable(scoring):
-        # Heuristic to ensure user has not passed a metric
-        module = getattr(scoring, '__module__', None)
-        if hasattr(module, 'startswith') and \
-           module.startswith('sklearn.metrics.') and \
-           not module.startswith('sklearn.metrics._scorer') and \
-           not module.startswith('sklearn.metrics.tests.'):
-            raise ValueError('scoring value %r looks like it is a metric '
-                             'function rather than a scorer. A scorer should '
-                             'require an estimator as its first parameter. '
-                             'Please use `make_scorer` to convert a metric '
-                             'to a scorer.' % scoring)
-        return get_scorer(scoring)
-    elif scoring is None:
-        if hasattr(estimator, 'score'):
-            return _passthrough_scorer
-        elif allow_none:
-            return None
-        else:
-            raise TypeError(
-                "If no scoring is specified, the estimator passed should "
-                "have a 'score' method. The estimator %r does not."
-                % estimator)
-    elif isinstance(scoring, Iterable):
-        raise ValueError("For evaluating multiple scores, use "
-                         "sklearn.model_selection.cross_validate instead. "
-                         "{0} was passed.".format(scoring))
-    else:
-        raise ValueError("scoring value should either be a callable, string or"
-                         " None. %r was passed" % scoring)
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        # This scorer doesn't do any validation or routing, it only exposes the
+        # score requests to the parent object. This object behaves as a
+        # consumer rather than a router.
+        res = MetadataRequest(owner=self._estimator.__class__.__name__)
+        res.score = get_routing_for_object(self._estimator).score
+        return res
 
 
 def _check_multimetric_scoring(estimator, scoring):
@@ -489,54 +574,78 @@ def _check_multimetric_scoring(estimator, scoring):
     err_msg_generic = (
         f"scoring is invalid (got {scoring!r}). Refer to the "
         "scoring glossary for details: "
-        "https://scikit-learn.org/stable/glossary.html#term-scoring")
+        "https://scikit-learn.org/stable/glossary.html#term-scoring"
+    )
 
     if isinstance(scoring, (list, tuple, set)):
-        err_msg = ("The list/tuple elements must be unique "
-                   "strings of predefined scorers. ")
-        invalid = False
+        err_msg = (
+            "The list/tuple elements must be unique strings of predefined scorers. "
+        )
         try:
             keys = set(scoring)
-        except TypeError:
-            invalid = True
-        if invalid:
-            raise ValueError(err_msg)
+        except TypeError as e:
+            raise ValueError(err_msg) from e
 
         if len(keys) != len(scoring):
-            raise ValueError(f"{err_msg} Duplicate elements were found in"
-                             f" the given list. {scoring!r}")
+            raise ValueError(
+                f"{err_msg} Duplicate elements were found in"
+                f" the given list. {scoring!r}"
+            )
         elif len(keys) > 0:
             if not all(isinstance(k, str) for k in keys):
                 if any(callable(k) for k in keys):
-                    raise ValueError(f"{err_msg} One or more of the elements "
-                                     "were callables. Use a dict of score "
-                                     "name mapped to the scorer callable. "
-                                     f"Got {scoring!r}")
+                    raise ValueError(
+                        f"{err_msg} One or more of the elements "
+                        "were callables. Use a dict of score "
+                        "name mapped to the scorer callable. "
+                        f"Got {scoring!r}"
+                    )
                 else:
-                    raise ValueError(f"{err_msg} Non-string types were found "
-                                     f"in the given list. Got {scoring!r}")
-            scorers = {scorer: check_scoring(estimator, scoring=scorer)
-                       for scorer in scoring}
+                    raise ValueError(
+                        f"{err_msg} Non-string types were found "
+                        f"in the given list. Got {scoring!r}"
+                    )
+            scorers = {
+                scorer: check_scoring(estimator, scoring=scorer) for scorer in scoring
+            }
         else:
             raise ValueError(f"{err_msg} Empty list was given. {scoring!r}")
 
     elif isinstance(scoring, dict):
         keys = set(scoring)
         if not all(isinstance(k, str) for k in keys):
-            raise ValueError("Non-string types were found in the keys of "
-                             f"the given dict. scoring={scoring!r}")
+            raise ValueError(
+                "Non-string types were found in the keys of "
+                f"the given dict. scoring={scoring!r}"
+            )
         if len(keys) == 0:
             raise ValueError(f"An empty dict was passed. {scoring!r}")
-        scorers = {key: check_scoring(estimator, scoring=scorer)
-                   for key, scorer in scoring.items()}
+        scorers = {
+            key: check_scoring(estimator, scoring=scorer)
+            for key, scorer in scoring.items()
+        }
     else:
         raise ValueError(err_msg_generic)
     return scorers
 
 
-@_deprecate_positional_args
-def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
-                needs_threshold=False, **kwargs):
+@validate_params(
+    {
+        "score_func": [callable],
+        "greater_is_better": ["boolean"],
+        "needs_proba": ["boolean"],
+        "needs_threshold": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
+def make_scorer(
+    score_func,
+    *,
+    greater_is_better=True,
+    needs_proba=False,
+    needs_threshold=False,
+    **kwargs,
+):
     """Make a scorer from a performance metric or loss function.
 
     This factory function wraps scoring functions for use in
@@ -544,8 +653,8 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
     :func:`~sklearn.model_selection.cross_val_score`.
     It takes a score function, such as :func:`~sklearn.metrics.accuracy_score`,
     :func:`~sklearn.metrics.mean_squared_error`,
-    :func:`~sklearn.metrics.adjusted_rand_index` or
-    :func:`~sklearn.metrics.average_precision`
+    :func:`~sklearn.metrics.adjusted_rand_score` or
+    :func:`~sklearn.metrics.average_precision_score`
     and returns a callable that scores an estimator's output.
     The signature of the call is `(estimator, X, y)` where `estimator`
     is the model to be evaluated, `X` is the data and `y` is the
@@ -560,37 +669,48 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
         ``score_func(y, y_pred, **kwargs)``.
 
     greater_is_better : bool, default=True
-        Whether score_func is a score function (default), meaning high is good,
-        or a loss function, meaning low is good. In the latter case, the
-        scorer object will sign-flip the outcome of the score_func.
+        Whether `score_func` is a score function (default), meaning high is
+        good, or a loss function, meaning low is good. In the latter case, the
+        scorer object will sign-flip the outcome of the `score_func`.
 
     needs_proba : bool, default=False
-        Whether score_func requires predict_proba to get probability estimates
-        out of a classifier.
+        Whether `score_func` requires `predict_proba` to get probability
+        estimates out of a classifier.
 
         If True, for binary `y_true`, the score function is supposed to accept
         a 1D `y_pred` (i.e., probability of the positive class, shape
         `(n_samples,)`).
 
     needs_threshold : bool, default=False
-        Whether score_func takes a continuous decision certainty.
+        Whether `score_func` takes a continuous decision certainty.
         This only works for binary classification using estimators that
-        have either a decision_function or predict_proba method.
+        have either a `decision_function` or `predict_proba` method.
 
         If True, for binary `y_true`, the score function is supposed to accept
         a 1D `y_pred` (i.e., probability of the positive class or the decision
         function, shape `(n_samples,)`).
 
-        For example ``average_precision`` or the area under the roc curve
+        For example `average_precision` or the area under the roc curve
         can not be computed using discrete predictions alone.
 
     **kwargs : additional arguments
-        Additional parameters to be passed to score_func.
+        Additional parameters to be passed to `score_func`.
 
     Returns
     -------
     scorer : callable
         Callable object that returns a scalar score; greater is better.
+
+    Notes
+    -----
+    If `needs_proba=False` and `needs_threshold=False`, the score
+    function is supposed to accept the output of :term:`predict`. If
+    `needs_proba=True`, the score function is supposed to accept the
+    output of :term:`predict_proba` (For binary `y_true`, the score function is
+    supposed to accept probability of the positive class). If
+    `needs_threshold=True`, the score function is supposed to accept the
+    output of :term:`decision_function` or :term:`predict_proba` when
+    :term:`decision_function` is not present.
 
     Examples
     --------
@@ -602,21 +722,12 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer)
-
-    Notes
-    -----
-    If `needs_proba=False` and `needs_threshold=False`, the score
-    function is supposed to accept the output of :term:`predict`. If
-    `needs_proba=True`, the score function is supposed to accept the
-    output of :term:`predict_proba` (For binary `y_true`, the score function is
-    supposed to accept probability of the positive class). If
-    `needs_threshold=True`, the score function is supposed to accept the
-    output of :term:`decision_function`.
     """
     sign = 1 if greater_is_better else -1
     if needs_proba and needs_threshold:
-        raise ValueError("Set either needs_proba or needs_threshold to True,"
-                         " but not both.")
+        raise ValueError(
+            "Set either needs_proba or needs_threshold to True, but not both."
+        )
     if needs_proba:
         cls = _ProbaScorer
     elif needs_threshold:
@@ -629,22 +740,23 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
 # Standard regression scores
 explained_variance_scorer = make_scorer(explained_variance_score)
 r2_scorer = make_scorer(r2_score)
-max_error_scorer = make_scorer(max_error,
-                               greater_is_better=False)
-neg_mean_squared_error_scorer = make_scorer(mean_squared_error,
-                                            greater_is_better=False)
-neg_mean_squared_log_error_scorer = make_scorer(mean_squared_log_error,
-                                                greater_is_better=False)
-neg_mean_absolute_error_scorer = make_scorer(mean_absolute_error,
-                                             greater_is_better=False)
+max_error_scorer = make_scorer(max_error, greater_is_better=False)
+neg_mean_squared_error_scorer = make_scorer(mean_squared_error, greater_is_better=False)
+neg_mean_squared_log_error_scorer = make_scorer(
+    mean_squared_log_error, greater_is_better=False
+)
+neg_mean_absolute_error_scorer = make_scorer(
+    mean_absolute_error, greater_is_better=False
+)
 neg_mean_absolute_percentage_error_scorer = make_scorer(
     mean_absolute_percentage_error, greater_is_better=False
 )
-neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
-                                               greater_is_better=False)
-neg_root_mean_squared_error_scorer = make_scorer(mean_squared_error,
-                                                 greater_is_better=False,
-                                                 squared=False)
+neg_median_absolute_error_scorer = make_scorer(
+    median_absolute_error, greater_is_better=False
+)
+neg_root_mean_squared_error_scorer = make_scorer(
+    mean_squared_error, greater_is_better=False, squared=False
+)
 neg_mean_poisson_deviance_scorer = make_scorer(
     mean_poisson_deviance, greater_is_better=False
 )
@@ -656,35 +768,47 @@ neg_mean_gamma_deviance_scorer = make_scorer(
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
+matthews_corrcoef_scorer = make_scorer(matthews_corrcoef)
+
+
+def positive_likelihood_ratio(y_true, y_pred):
+    return class_likelihood_ratios(y_true, y_pred)[0]
+
+
+def negative_likelihood_ratio(y_true, y_pred):
+    return class_likelihood_ratios(y_true, y_pred)[1]
+
+
+positive_likelihood_ratio_scorer = make_scorer(positive_likelihood_ratio)
+neg_negative_likelihood_ratio_scorer = make_scorer(
+    negative_likelihood_ratio, greater_is_better=False
+)
 
 # Score functions that need decision values
-top_k_accuracy_scorer = make_scorer(top_k_accuracy_score,
-                                    greater_is_better=True,
-                                    needs_threshold=True)
-roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
-                             needs_threshold=True)
-average_precision_scorer = make_scorer(average_precision_score,
-                                       needs_threshold=True)
-roc_auc_ovo_scorer = make_scorer(roc_auc_score, needs_proba=True,
-                                 multi_class='ovo')
-roc_auc_ovo_weighted_scorer = make_scorer(roc_auc_score, needs_proba=True,
-                                          multi_class='ovo',
-                                          average='weighted')
-roc_auc_ovr_scorer = make_scorer(roc_auc_score, needs_proba=True,
-                                 multi_class='ovr')
-roc_auc_ovr_weighted_scorer = make_scorer(roc_auc_score, needs_proba=True,
-                                          multi_class='ovr',
-                                          average='weighted')
+top_k_accuracy_scorer = make_scorer(
+    top_k_accuracy_score, greater_is_better=True, needs_threshold=True
+)
+roc_auc_scorer = make_scorer(
+    roc_auc_score, greater_is_better=True, needs_threshold=True
+)
+average_precision_scorer = make_scorer(average_precision_score, needs_threshold=True)
+roc_auc_ovo_scorer = make_scorer(roc_auc_score, needs_proba=True, multi_class="ovo")
+roc_auc_ovo_weighted_scorer = make_scorer(
+    roc_auc_score, needs_proba=True, multi_class="ovo", average="weighted"
+)
+roc_auc_ovr_scorer = make_scorer(roc_auc_score, needs_proba=True, multi_class="ovr")
+roc_auc_ovr_weighted_scorer = make_scorer(
+    roc_auc_score, needs_proba=True, multi_class="ovr", average="weighted"
+)
 
 # Score function for probabilistic classification
-neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
-                                  needs_proba=True)
-neg_brier_score_scorer = make_scorer(brier_score_loss,
-                                     greater_is_better=False,
-                                     needs_proba=True)
-brier_score_loss_scorer = make_scorer(brier_score_loss,
-                                      greater_is_better=False,
-                                      needs_proba=True)
+neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False, needs_proba=True)
+neg_brier_score_scorer = make_scorer(
+    brier_score_loss, greater_is_better=False, needs_proba=True
+)
+brier_score_loss_scorer = make_scorer(
+    brier_score_loss, greater_is_better=False, needs_proba=True
+)
 
 
 # Clustering scores
@@ -699,45 +823,131 @@ normalized_mutual_info_scorer = make_scorer(normalized_mutual_info_score)
 fowlkes_mallows_scorer = make_scorer(fowlkes_mallows_score)
 
 
-SCORERS = dict(explained_variance=explained_variance_scorer,
-               r2=r2_scorer,
-               max_error=max_error_scorer,
-               neg_median_absolute_error=neg_median_absolute_error_scorer,
-               neg_mean_absolute_error=neg_mean_absolute_error_scorer,
-               neg_mean_absolute_percentage_error=neg_mean_absolute_percentage_error_scorer,  # noqa
-               neg_mean_squared_error=neg_mean_squared_error_scorer,
-               neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
-               neg_root_mean_squared_error=neg_root_mean_squared_error_scorer,
-               neg_mean_poisson_deviance=neg_mean_poisson_deviance_scorer,
-               neg_mean_gamma_deviance=neg_mean_gamma_deviance_scorer,
-               accuracy=accuracy_scorer,
-               top_k_accuracy=top_k_accuracy_scorer,
-               roc_auc=roc_auc_scorer,
-               roc_auc_ovr=roc_auc_ovr_scorer,
-               roc_auc_ovo=roc_auc_ovo_scorer,
-               roc_auc_ovr_weighted=roc_auc_ovr_weighted_scorer,
-               roc_auc_ovo_weighted=roc_auc_ovo_weighted_scorer,
-               balanced_accuracy=balanced_accuracy_scorer,
-               average_precision=average_precision_scorer,
-               neg_log_loss=neg_log_loss_scorer,
-               neg_brier_score=neg_brier_score_scorer,
-               # Cluster metrics that use supervised evaluation
-               adjusted_rand_score=adjusted_rand_scorer,
-               rand_score=rand_scorer,
-               homogeneity_score=homogeneity_scorer,
-               completeness_score=completeness_scorer,
-               v_measure_score=v_measure_scorer,
-               mutual_info_score=mutual_info_scorer,
-               adjusted_mutual_info_score=adjusted_mutual_info_scorer,
-               normalized_mutual_info_score=normalized_mutual_info_scorer,
-               fowlkes_mallows_score=fowlkes_mallows_scorer)
+_SCORERS = dict(
+    explained_variance=explained_variance_scorer,
+    r2=r2_scorer,
+    max_error=max_error_scorer,
+    matthews_corrcoef=matthews_corrcoef_scorer,
+    neg_median_absolute_error=neg_median_absolute_error_scorer,
+    neg_mean_absolute_error=neg_mean_absolute_error_scorer,
+    neg_mean_absolute_percentage_error=neg_mean_absolute_percentage_error_scorer,  # noqa
+    neg_mean_squared_error=neg_mean_squared_error_scorer,
+    neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
+    neg_root_mean_squared_error=neg_root_mean_squared_error_scorer,
+    neg_mean_poisson_deviance=neg_mean_poisson_deviance_scorer,
+    neg_mean_gamma_deviance=neg_mean_gamma_deviance_scorer,
+    accuracy=accuracy_scorer,
+    top_k_accuracy=top_k_accuracy_scorer,
+    roc_auc=roc_auc_scorer,
+    roc_auc_ovr=roc_auc_ovr_scorer,
+    roc_auc_ovo=roc_auc_ovo_scorer,
+    roc_auc_ovr_weighted=roc_auc_ovr_weighted_scorer,
+    roc_auc_ovo_weighted=roc_auc_ovo_weighted_scorer,
+    balanced_accuracy=balanced_accuracy_scorer,
+    average_precision=average_precision_scorer,
+    neg_log_loss=neg_log_loss_scorer,
+    neg_brier_score=neg_brier_score_scorer,
+    positive_likelihood_ratio=positive_likelihood_ratio_scorer,
+    neg_negative_likelihood_ratio=neg_negative_likelihood_ratio_scorer,
+    # Cluster metrics that use supervised evaluation
+    adjusted_rand_score=adjusted_rand_scorer,
+    rand_score=rand_scorer,
+    homogeneity_score=homogeneity_scorer,
+    completeness_score=completeness_scorer,
+    v_measure_score=v_measure_scorer,
+    mutual_info_score=mutual_info_scorer,
+    adjusted_mutual_info_score=adjusted_mutual_info_scorer,
+    normalized_mutual_info_score=normalized_mutual_info_scorer,
+    fowlkes_mallows_score=fowlkes_mallows_scorer,
+)
 
 
-for name, metric in [('precision', precision_score),
-                     ('recall', recall_score), ('f1', f1_score),
-                     ('jaccard', jaccard_score)]:
-    SCORERS[name] = make_scorer(metric, average='binary')
-    for average in ['macro', 'micro', 'samples', 'weighted']:
-        qualified_name = '{0}_{1}'.format(name, average)
-        SCORERS[qualified_name] = make_scorer(metric, pos_label=None,
-                                              average=average)
+def get_scorer_names():
+    """Get the names of all available scorers.
+
+    These names can be passed to :func:`~sklearn.metrics.get_scorer` to
+    retrieve the scorer object.
+
+    Returns
+    -------
+    list of str
+        Names of all available scorers.
+    """
+    return sorted(_SCORERS.keys())
+
+
+for name, metric in [
+    ("precision", precision_score),
+    ("recall", recall_score),
+    ("f1", f1_score),
+    ("jaccard", jaccard_score),
+]:
+    _SCORERS[name] = make_scorer(metric, average="binary")
+    for average in ["macro", "micro", "samples", "weighted"]:
+        qualified_name = "{0}_{1}".format(name, average)
+        _SCORERS[qualified_name] = make_scorer(metric, pos_label=None, average=average)
+
+
+@validate_params(
+    {
+        "estimator": [HasMethods("fit")],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "allow_none": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
+def check_scoring(estimator, scoring=None, *, allow_none=False):
+    """Determine scorer from user options.
+
+    A TypeError will be thrown if the estimator cannot be scored.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    scoring : str or callable, default=None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+        If None, the provided estimator object's `score` method is used.
+
+    allow_none : bool, default=False
+        If no scoring is specified and the estimator has no score function, we
+        can either return None or raise an exception.
+
+    Returns
+    -------
+    scoring : callable
+        A scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+    """
+    if isinstance(scoring, str):
+        return get_scorer(scoring)
+    if callable(scoring):
+        # Heuristic to ensure user has not passed a metric
+        module = getattr(scoring, "__module__", None)
+        if (
+            hasattr(module, "startswith")
+            and module.startswith("sklearn.metrics.")
+            and not module.startswith("sklearn.metrics._scorer")
+            and not module.startswith("sklearn.metrics.tests.")
+        ):
+            raise ValueError(
+                "scoring value %r looks like it is a metric "
+                "function rather than a scorer. A scorer should "
+                "require an estimator as its first parameter. "
+                "Please use `make_scorer` to convert a metric "
+                "to a scorer." % scoring
+            )
+        return get_scorer(scoring)
+    if scoring is None:
+        if hasattr(estimator, "score"):
+            return _PassthroughScorer(estimator)
+        elif allow_none:
+            return None
+        else:
+            raise TypeError(
+                "If no scoring is specified, the estimator passed should "
+                "have a 'score' method. The estimator %r does not." % estimator
+            )

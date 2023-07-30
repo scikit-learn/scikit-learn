@@ -182,7 +182,7 @@ scoring method.
 .. topic:: **Exercise**
 
     On the digits dataset, plot the cross-validation score of a :class:`SVC`
-    estimator with an linear kernel as a function of parameter ``C`` (use a
+    estimator with a linear kernel as a function of parameter ``C`` (use a
     logarithmic grid of points, from 1 to 10).
 
         .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py

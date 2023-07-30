@@ -7,7 +7,7 @@
 Version 0.24.2
 ==============
 
-**TBD 2021**
+**April 2021**
 
 Changelog
 ---------
@@ -15,9 +15,25 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
-- |Fix| :meth:`compose.ColumnTransformer.get_feature_names` does not call
-  :term:`get_feature_names` on transformers with an empty column selection.
+- |Fix| `compose.ColumnTransformer.get_feature_names` does not call
+  `get_feature_names` on transformers with an empty column selection.
   :pr:`19579` by `Thomas Fan`_.
+
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| Fixed a regression in :class:`cross_decomposition.CCA`. :pr:`19646`
+  by `Thomas Fan`_.
+
+- |Fix| :class:`cross_decomposition.PLSRegression` raises warning for
+  constant y residuals instead of a `StopIteration` error. :pr:`19922`
+  by `Thomas Fan`_.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`decomposition.KernelPCA`'s
+  ``inverse_transform``.  :pr:`19732` by :user:`Kei Ishikawa <kstoneriv3>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -26,6 +42,31 @@ Changelog
   with `sample_weight` parameter and `least_absolute_deviation` loss function.
   :pr:`19407` by :user:`Vadim Ushtanit <vadim-ushtanit>`.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| Fixed a bug to support multiple strings for a category when
+  `sparse=False` in :class:`feature_extraction.DictVectorizer`.
+  :pr:`19982` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| Avoid explicitly forming inverse covariance matrix in
+  :class:`gaussian_process.GaussianProcessRegressor` when set to output
+  standard deviation. With certain covariance matrices this inverse is unstable
+  to compute explicitly. Calling Cholesky solver mitigates this issue in
+  computation.
+  :pr:`19939` by :user:`Ian Halvic <iwhalvic>`.
+
+- |Fix| Avoid division by zero when scaling constant target in
+  :class:`gaussian_process.GaussianProcessRegressor`. It was due to a std. dev.
+  equal to 0. Now, such case is detected and the std. dev. is affected to 1
+  avoiding a division by zero and thus the presence of NaN values in the
+  normalized target.
+  :pr:`19703` by :user:`sobkevich`, :user:`Boris Villazón-Terrazas <boricles>`
+  and :user:`Alexandr Fonari <afonari>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -33,12 +74,37 @@ Changelog
   sample_weight object is not modified anymore. :pr:`19182` by
   :user:`Yosuke KOBAYASHI <m7142yosuke>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| :func:`metrics.top_k_accuracy_score` now supports multiclass
+  problems where only two classes appear in `y_true` and all the classes
+  are specified in `labels`.
+  :pr:`19721` by :user:`Joris Clement <flyingdutchman23>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
 - |Fix| :class:`model_selection.RandomizedSearchCV` and
   :class:`model_selection.GridSearchCV` now correctly shows the score for
   single metrics and verbose > 2. :pr:`19659` by `Thomas Fan`_.
+
+- |Fix| Some values in the `cv_results_` attribute of
+  :class:`model_selection.HalvingRandomSearchCV` and
+  :class:`model_selection.HalvingGridSearchCV` were not properly converted to
+  numpy arrays. :pr:`19211` by `Nicolas Hug`_.
+
+- |Fix| The `fit` method of the successive halving parameter search
+  (:class:`model_selection.HalvingGridSearchCV`, and
+  :class:`model_selection.HalvingRandomSearchCV`) now correctly handles the
+  `groups` parameter. :pr:`19847` by :user:`Xiaoyu Chai <xiaoyuchai>`.
+
+:mod:`sklearn.multioutput`
+..........................
+
+- |Fix| :class:`multioutput.MultiOutputRegressor` now works with estimators
+  that dynamically define `predict` during fitting, such as
+  :class:`ensemble.StackingRegressor`. :pr:`19308` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -48,6 +114,17 @@ Changelog
   `'use_encoded_value'` strategies.
   :pr:`19234` by `Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Fix encoder categories having dtype='S'
+  :class:`preprocessing.OneHotEncoder` and
+  :class:`preprocessing.OrdinalEncoder`.
+  :pr:`19727` by :user:`Andrew Delong <andrewdelong>`.
+
+- |Fix| :meth:`preprocessing.OrdinalEncoder.transform` correctly handles
+  unknown values for string dtypes. :pr:`19888` by `Thomas Fan`_.
+
+- |Fix| :meth:`preprocessing.OneHotEncoder.fit` no longer alters the `drop`
+  parameter. :pr:`19924` by `Thomas Fan`_.
+
 :mod:`sklearn.semi_supervised`
 ..............................
 
@@ -56,9 +133,9 @@ Changelog
   :pr:`19271` by :user:`Zhaowei Wang <ThuWangzw>`.
 
 :mod:`sklearn.tree`
-.......................
+...................
 
-- |Fix| Fix a bug in `fit` of :class:`tree.BaseDecisionTree` that caused
+- |Fix| Fix a bug in `fit` of `tree.BaseDecisionTree` that caused
   segmentation faults under certain conditions. `fit` now deep copies the
   `Criterion` object to prevent shared concurrent accesses.
   :pr:`19580` by :user:`Samuel Brice <samdbrice>` and
@@ -138,6 +215,9 @@ random sampling procedures.
   a `random_state` parameter.
 
 - |Fix| :class:`linear_model.Perceptron` when `penalty='elasticnet'`.
+
+- |Fix| Change in the random sampling procedures for the center initialization
+  of :class:`cluster.KMeans`.
 
 Details are listed in the changelog below.
 
@@ -240,12 +320,6 @@ Changelog
 - |Fix| Increases the stability of :class:`cross_decomposition.CCA` :pr:`18746`
   by `Thomas Fan`_.
 
-- |API| For :class:`cross_decomposition.NMF`,
-  the `init` value, when 'init=None' and
-  n_components <= min(n_samples, n_features) will be changed from
-  `'nndsvd'` to `'nndsvda'` in 1.1 (renaming of 0.26).
-  :pr:`18525` by :user:`Chiara Marmo <cmarmo>`.
-
 - |API| The bounds of the `n_components` parameter is now restricted:
 
   - into `[1, min(n_samples, n_features, n_targets)]`, for
@@ -290,13 +364,13 @@ Changelog
   unless data is sparse.
   :pr:`17396` by :user:`Jiaxiang <fujiaxiang>`.
 
-- |Enhancement| :func:`datasets.fetch_covtype` now now supports the optional
+- |Enhancement| :func:`datasets.fetch_covtype` now supports the optional
   argument `as_frame`; when it is set to True, the returned Bunch object's
   `data` and `frame` members are pandas DataFrames, and the `target` member is
   a pandas Series.
   :pr:`17491` by :user:`Alex Liang <tianchuliang>`.
 
-- |Enhancement| :func:`datasets.fetch_kddcup99` now now supports the optional
+- |Enhancement| :func:`datasets.fetch_kddcup99` now supports the optional
   argument `as_frame`; when it is set to True, the returned Bunch object's
   `data` and `frame` members are pandas DataFrames, and the `target` member is
   a pandas Series.
@@ -314,6 +388,12 @@ Changelog
 
 :mod:`sklearn.decomposition`
 ............................
+
+- |API| For :class:`decomposition.NMF`,
+  the `init` value, when 'init=None' and
+  n_components <= min(n_samples, n_features) will be changed from
+  `'nndsvd'` to `'nndsvda'` in 1.1 (renaming of 0.26).
+  :pr:`18525` by :user:`Chiara Marmo <cmarmo>`.
 
 - |Enhancement| :func:`decomposition.FactorAnalysis` now supports the optional
   argument `rotation`, which can take the value `None`, `'varimax'` or
@@ -338,8 +418,9 @@ Changelog
   parameter.
   :pr:`17679` by :user:`Xavier Dupré <sdpython>`.
 
-- |Fix| :meth:`TruncatedSVD.fit_transform` consistently returns the same
-  as :meth:`TruncatedSVD.fit` followed by :meth:`TruncatedSVD.transform`.
+- |Fix| :meth:`decomposition.TruncatedSVD.fit_transform` consistently returns
+  the same as :meth:`decomposition.TruncatedSVD.fit` followed by
+  :meth:`decomposition.TruncatedSVD.transform`.
   :pr:`18528` by :user:`Albert Villanova del Moral <albertvillanova>` and
   :user:`Ruifeng Zheng <zhengruifeng>`.
 
@@ -394,8 +475,8 @@ Changelog
 :mod:`sklearn.exceptions`
 .........................
 
-- |API| :class:`exceptions.ChangedBehaviorWarning` and
-  :class:`exceptions.NonBLASDotWarning` are deprecated and will be removed in
+- |API| `exceptions.ChangedBehaviorWarning` and
+  `exceptions.NonBLASDotWarning` are deprecated and will be removed in
   1.1 (renaming of 0.26).
   :pr:`17804` by `Adrin Jalali`_.
 
@@ -406,7 +487,7 @@ Changelog
   values for one categorical feature. :pr:`17367` by :user:`Peng Yu <yupbank>`
   and :user:`Chiara Marmo <cmarmo>`.
 
-- |Fix| :class:`feature_extraction.CountVectorizer` raises an issue if a
+- |Fix| :class:`feature_extraction.text.CountVectorizer` raises an issue if a
   custom token pattern which capture more than one group is provided.
   :pr:`15427` by :user:`Gangesh Gudmalwar <ggangesh>` and
   :user:`Erin R Hoffman <hoffm386>`.
@@ -440,7 +521,7 @@ Changelog
 ...............................
 
 - |Enhancement| A new method
-  :meth:`gaussian_process.Kernel._check_bounds_params` is called after
+  `gaussian_process.kernel._check_bounds_params` is called after
   fitting a Gaussian Process and raises a ``ConvergenceWarning`` if the bounds
   of the hyperparameters are too tight.
   :issue:`12638` by :user:`Sylvain Lannuzel <SylvainLan>`.
@@ -475,7 +556,7 @@ Changelog
 .........................
 
 - |Feature| :func:`inspection.partial_dependence` and
-  :func:`inspection.plot_partial_dependence` now support calculating and
+  `inspection.plot_partial_dependence` now support calculating and
   plotting Individual Conditional Expectation (ICE) curves controlled by the
   ``kind`` parameter.
   :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
@@ -572,7 +653,7 @@ Changelog
   generalization of :func:`metrics.top_k_accuracy_score`, the difference is
   that a prediction is considered correct as long as the true label is
   associated with one of the `k` highest predicted scores.
-  :func:`accuracy_score` is the special case of `k = 1`.
+  :func:`metrics.accuracy_score` is the special case of `k = 1`.
   :pr:`16625` by :user:`Geoffrey Bolmier <gbolmier>`.
 
 - |Feature| Added :func:`metrics.det_curve` to compute Detection Error Tradeoff
@@ -580,7 +661,7 @@ Changelog
   :pr:`10591` by :user:`Jeremy Karnowski <jkarnows>` and
   :user:`Daniel Mohns <dmohns>`.
 
-- |Feature| Added :func:`metrics.plot_det_curve` and
+- |Feature| Added `metrics.plot_det_curve` and
   :class:`metrics.DetCurveDisplay` to ease the plot of DET curves.
   :pr:`18176` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -594,25 +675,21 @@ Changelog
   Rand index.
   :pr:`17412` by :user:`Uwe F Mayer <ufmayer>`.
 
-- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
+- |Feature| `metrics.plot_confusion_matrix` now supports making colorbar
   optional in the matplotlib plot by setting `colorbar=False`. :pr:`17192` by
   :user:`Avi Gupta <avigupta2612>`
-
-- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
-  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
-  :user:`Avi Gupta <avigupta2612>`.
 
 - |Enhancement| Add `sample_weight` parameter to
   :func:`metrics.median_absolute_error`. :pr:`17225` by
   :user:`Lucy Liu <lucyleeow>`.
 
 - |Enhancement| Add `pos_label` parameter in
-  :func:`metrics.plot_precision_recall_curve` in order to specify the positive
+  `metrics.plot_precision_recall_curve` in order to specify the positive
   class to be used when computing the precision and recall statistics.
   :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| Add `pos_label` parameter in
-  :func:`metrics.plot_roc_curve` in order to specify the positive
+  `metrics.plot_roc_curve` in order to specify the positive
   class to be used when computing the roc auc statistics.
   :pr:`17651` by :user:`Clara Matos <claramatos>`.
 
@@ -633,7 +710,7 @@ Changelog
   :user:`Joseph Willard <josephwillard>`
 
 - |Fix| bug in :func:`metrics.hinge_loss` where error occurs when
-  ``y_true`` is missing some labels that are provided explictly in the
+  ``y_true`` is missing some labels that are provided explicitly in the
   ``labels`` parameter.
   :pr:`17935` by :user:`Cary Goltermann <Ultramann>`.
 
@@ -644,7 +721,7 @@ Changelog
   classifiers directly with string labeled target classes.
   :pr:`18114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Fixed bug in :func:`metrics.plot_confusion_matrix` where error occurs
+- |Fix| Fixed bug in `metrics.plot_confusion_matrix` where error occurs
   when `y_true` contains labels that were not previously seen by the classifier
   while the `labels` and `display_labels` parameters are set to `None`.
   :pr:`18405` by :user:`Thomas J. Fan <thomasjpfan>` and
@@ -754,7 +831,7 @@ Changelog
 ........................
 
 - |Efficiency| Speed up ``seuclidean``, ``wminkowski``, ``mahalanobis`` and
-  ``haversine`` metrics in :class:`neighbors.DistanceMetric` by avoiding
+  ``haversine`` metrics in `neighbors.DistanceMetric` by avoiding
   unexpected GIL acquiring in Cython when setting ``n_jobs>1`` in
   :class:`neighbors.KNeighborsClassifier`,
   :class:`neighbors.KNeighborsRegressor`,
@@ -764,13 +841,13 @@ Changelog
   and by validating data out of loops.
   :pr:`17038` by :user:`Wenbo Zhao <webber26232>`.
 
-- |Efficiency| :class:`neighbors.NeighborsBase` benefits of an improved
+- |Efficiency| `neighbors.NeighborsBase` benefits of an improved
   `algorithm = 'auto'` heuristic. In addition to the previous set of rules,
   now, when the number of features exceeds 15, `brute` is selected, assuming
   the data intrinsic dimensionality is too high for tree-based methods.
   :pr:`17148` by :user:`Geoffrey Bolmier <gbolmier>`.
 
-- |Fix| :class:`neighbors.BinaryTree`
+- |Fix| `neighbors.BinaryTree`
   will raise a `ValueError` when fitting on data array having points with
   different dimensions.
   :pr:`18691` by :user:`Chiara Marmo <cmarmo>`.
@@ -803,7 +880,7 @@ Changelog
   :class:`neural_network.MLPRegressor`.
   :pr:`17759` by :user:`Srimukh Sripada <d3b0unce>`.
 
-- |Fix| Fix method  :func:`fit` of :class:`neural_network.MLPClassifier`
+- |Fix| Fix method  :meth:`neural_network.MLPClassifier.fit`
   not iterating to ``max_iter`` if warm started.
   :pr:`18269` by :user:`Norbert Preining <norbusan>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
@@ -881,7 +958,7 @@ Changelog
 
 - |Enhancement| invoke SciPy BLAS API for SVM kernel function in ``fit``,
   ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`,
-  :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`OneClassSVM`.
+  :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`.
   :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
 
 :mod:`sklearn.tree`
@@ -908,10 +985,10 @@ Changelog
   with different sample order :pr:`17598` by :user:`Jason Ngo <ngojason9>`.
 
 - |Enhancement| Add support for weights in
-  :func:`utils.sparse_func.incr_mean_variance_axis`.
+  `utils.sparse_func.incr_mean_variance_axis`.
   By :user:`Maria Telenczuk <maikia>` and :user:`Alex Gramfort <agramfort>`.
 
-- |Fix| Raise ValueError with clear error message in :func:`check_array`
+- |Fix| Raise ValueError with clear error message in :func:`utils.check_array`
   for sparse DataFrames with mixed types.
   :pr:`17992` by :user:`Thomas J. Fan <thomasjpfan>` and
   :user:`Alex Shacked <alexshacked>`.
@@ -921,7 +998,7 @@ Changelog
   :pr:`17644` by :user:`Qi Zhang <qzhang90>`.
 
 - |Fix| Check that we raise proper error when axis=1 and the
-  dimensions do not match in :func:`utils.sparse_func.incr_mean_variance_axis`.
+  dimensions do not match in `utils.sparse_func.incr_mean_variance_axis`.
   By :user:`Alex Gramfort <agramfort>`.
 
 Miscellaneous

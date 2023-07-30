@@ -3,14 +3,15 @@
 #
 # License: BSD 3 clause
 
-import matplotlib.pyplot as plt
-from joblib import Memory
-import numpy as np
 import gc
 import time
 
-from sklearn.linear_model import (LogisticRegression, SGDClassifier)
+import matplotlib.pyplot as plt
+import numpy as np
+from joblib import Memory
+
 from sklearn.datasets import fetch_rcv1
+from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.linear_model._sag import get_auto_step_size
 
 try:
@@ -18,16 +19,16 @@ try:
 except ImportError:
     lightning_clf = None
 
-m = Memory(cachedir='.', verbose=0)
+m = Memory(cachedir=".", verbose=0)
 
 
 # compute logistic loss
 def get_loss(w, intercept, myX, myy, C):
     n_samples = myX.shape[0]
     w = w.ravel()
-    p = np.mean(np.log(1. + np.exp(-myy * (myX.dot(w) + intercept))))
-    print("%f + %f" % (p, w.dot(w) / 2. / C / n_samples))
-    p += w.dot(w) / 2. / C / n_samples
+    p = np.mean(np.log(1.0 + np.exp(-myy * (myX.dot(w) + intercept))))
+    print("%f + %f" % (p, w.dot(w) / 2.0 / C / n_samples))
+    p += w.dot(w) / 2.0 / C / n_samples
     return p
 
 
@@ -39,7 +40,7 @@ def bench_one(name, clf_type, clf_params, n_iter):
     clf = clf_type(**clf_params)
     try:
         clf.set_params(max_iter=n_iter, random_state=42)
-    except:
+    except Exception:
         clf.set_params(n_iter=n_iter, random_state=42)
 
     st = time.time()
@@ -48,13 +49,13 @@ def bench_one(name, clf_type, clf_params, n_iter):
 
     try:
         C = 1.0 / clf.alpha / n_samples
-    except:
+    except Exception:
         C = clf.C
 
     try:
         intercept = clf.intercept_
-    except:
-        intercept = 0.
+    except Exception:
+        intercept = 0.0
 
     train_loss = get_loss(clf.coef_, intercept, X, y, C)
     train_score = clf.score(X, y)
@@ -65,8 +66,15 @@ def bench_one(name, clf_type, clf_params, n_iter):
 
 
 def bench(clfs):
-    for (name, clf, iter_range, train_losses, train_scores,
-         test_scores, durations) in clfs:
+    for (
+        name,
+        clf,
+        iter_range,
+        train_losses,
+        train_scores,
+        test_scores,
+        durations,
+    ) in clfs:
         print("training %s" % name)
         clf_type = type(clf)
         clf_params = clf.get_params()
@@ -75,7 +83,8 @@ def bench(clfs):
             gc.collect()
 
             train_loss, train_score, test_score, duration = bench_one(
-                name, clf_type, clf_params, n_iter)
+                name, clf_type, clf_params, n_iter
+            )
 
             train_losses.append(train_loss)
             train_scores.append(train_score)
@@ -94,8 +103,8 @@ def bench(clfs):
 
 def plot_train_losses(clfs):
     plt.figure()
-    for (name, _, _, train_losses, _, _, durations) in clfs:
-        plt.plot(durations, train_losses, '-o', label=name)
+    for name, _, _, train_losses, _, _, durations in clfs:
+        plt.plot(durations, train_losses, "-o", label=name)
         plt.legend(loc=0)
         plt.xlabel("seconds")
         plt.ylabel("train loss")
@@ -103,8 +112,8 @@ def plot_train_losses(clfs):
 
 def plot_train_scores(clfs):
     plt.figure()
-    for (name, _, _, _, train_scores, _, durations) in clfs:
-        plt.plot(durations, train_scores, '-o', label=name)
+    for name, _, _, _, train_scores, _, durations in clfs:
+        plt.plot(durations, train_scores, "-o", label=name)
         plt.legend(loc=0)
         plt.xlabel("seconds")
         plt.ylabel("train score")
@@ -113,8 +122,8 @@ def plot_train_scores(clfs):
 
 def plot_test_scores(clfs):
     plt.figure()
-    for (name, _, _, _, _, test_scores, durations) in clfs:
-        plt.plot(durations, test_scores, '-o', label=name)
+    for name, _, _, _, _, test_scores, durations in clfs:
+        plt.plot(durations, test_scores, "-o", label=name)
         plt.legend(loc=0)
         plt.xlabel("seconds")
         plt.ylabel("test score")
@@ -124,16 +133,16 @@ def plot_test_scores(clfs):
 def plot_dloss(clfs):
     plt.figure()
     pobj_final = []
-    for (name, _, _, train_losses, _, _, durations) in clfs:
+    for name, _, _, train_losses, _, _, durations in clfs:
         pobj_final.append(train_losses[-1])
 
     indices = np.argsort(pobj_final)
     pobj_best = pobj_final[indices[0]]
 
-    for (name, _, _, train_losses, _, _, durations) in clfs:
+    for name, _, _, train_losses, _, _, durations in clfs:
         log_pobj = np.log(abs(np.array(train_losses) - pobj_best)) / np.log(10)
 
-        plt.plot(durations, log_pobj, '-o', label=name)
+        plt.plot(durations, log_pobj, "-o", label=name)
         plt.legend(loc=0)
         plt.xlabel("seconds")
         plt.ylabel("log(best - train_loss)")
@@ -141,19 +150,20 @@ def plot_dloss(clfs):
 
 def get_max_squared_sum(X):
     """Get the maximum row-wise sum of squares"""
-    return np.sum(X ** 2, axis=1).max()
+    return np.sum(X**2, axis=1).max()
+
 
 rcv1 = fetch_rcv1()
 X = rcv1.data
 n_samples, n_features = X.shape
 
 # consider the binary classification problem 'CCAT' vs the rest
-ccat_idx = rcv1.target_names.tolist().index('CCAT')
+ccat_idx = rcv1.target_names.tolist().index("CCAT")
 y = rcv1.target.tocsc()[:, ccat_idx].toarray().ravel().astype(np.float64)
 y[y == 0] = -1
 
 # parameters
-C = 1.
+C = 1.0
 fit_intercept = True
 tol = 1.0e-14
 
@@ -166,51 +176,116 @@ liblinear_dual_iter_range = list(range(1, 85, 6))
 sag_iter_range = list(range(1, 37, 3))
 
 clfs = [
-    ("LR-liblinear",
-     LogisticRegression(C=C, tol=tol,
-                        solver="liblinear", fit_intercept=fit_intercept,
-                        intercept_scaling=1),
-     liblinear_iter_range, [], [], [], []),
-    ("LR-liblinear-dual",
-     LogisticRegression(C=C, tol=tol, dual=True,
-                        solver="liblinear", fit_intercept=fit_intercept,
-                        intercept_scaling=1),
-     liblinear_dual_iter_range, [], [], [], []),
-    ("LR-SAG",
-     LogisticRegression(C=C, tol=tol,
-                        solver="sag", fit_intercept=fit_intercept),
-     sag_iter_range, [], [], [], []),
-    ("LR-newton-cg",
-     LogisticRegression(C=C, tol=tol, solver="newton-cg",
-                        fit_intercept=fit_intercept),
-     newton_iter_range, [], [], [], []),
-    ("LR-lbfgs",
-     LogisticRegression(C=C, tol=tol,
-                        solver="lbfgs", fit_intercept=fit_intercept),
-     lbfgs_iter_range, [], [], [], []),
-    ("SGD",
-     SGDClassifier(alpha=1.0 / C / n_samples, penalty='l2', loss='log',
-                   fit_intercept=fit_intercept, verbose=0),
-     sgd_iter_range, [], [], [], [])]
+    (
+        "LR-liblinear",
+        LogisticRegression(
+            C=C,
+            tol=tol,
+            solver="liblinear",
+            fit_intercept=fit_intercept,
+            intercept_scaling=1,
+        ),
+        liblinear_iter_range,
+        [],
+        [],
+        [],
+        [],
+    ),
+    (
+        "LR-liblinear-dual",
+        LogisticRegression(
+            C=C,
+            tol=tol,
+            dual=True,
+            solver="liblinear",
+            fit_intercept=fit_intercept,
+            intercept_scaling=1,
+        ),
+        liblinear_dual_iter_range,
+        [],
+        [],
+        [],
+        [],
+    ),
+    (
+        "LR-SAG",
+        LogisticRegression(C=C, tol=tol, solver="sag", fit_intercept=fit_intercept),
+        sag_iter_range,
+        [],
+        [],
+        [],
+        [],
+    ),
+    (
+        "LR-newton-cg",
+        LogisticRegression(
+            C=C, tol=tol, solver="newton-cg", fit_intercept=fit_intercept
+        ),
+        newton_iter_range,
+        [],
+        [],
+        [],
+        [],
+    ),
+    (
+        "LR-lbfgs",
+        LogisticRegression(C=C, tol=tol, solver="lbfgs", fit_intercept=fit_intercept),
+        lbfgs_iter_range,
+        [],
+        [],
+        [],
+        [],
+    ),
+    (
+        "SGD",
+        SGDClassifier(
+            alpha=1.0 / C / n_samples,
+            penalty="l2",
+            loss="log_loss",
+            fit_intercept=fit_intercept,
+            verbose=0,
+        ),
+        sgd_iter_range,
+        [],
+        [],
+        [],
+        [],
+    ),
+]
 
 
 if lightning_clf is not None and not fit_intercept:
-    alpha = 1. / C / n_samples
+    alpha = 1.0 / C / n_samples
     # compute the same step_size than in LR-sag
     max_squared_sum = get_max_squared_sum(X)
-    step_size = get_auto_step_size(max_squared_sum, alpha, "log",
-                                   fit_intercept)
+    step_size = get_auto_step_size(max_squared_sum, alpha, "log", fit_intercept)
 
     clfs.append(
-        ("Lightning-SVRG",
-         lightning_clf.SVRGClassifier(alpha=alpha, eta=step_size,
-                                      tol=tol, loss="log"),
-         sag_iter_range, [], [], [], []))
+        (
+            "Lightning-SVRG",
+            lightning_clf.SVRGClassifier(
+                alpha=alpha, eta=step_size, tol=tol, loss="log"
+            ),
+            sag_iter_range,
+            [],
+            [],
+            [],
+            [],
+        )
+    )
     clfs.append(
-        ("Lightning-SAG",
-         lightning_clf.SAGClassifier(alpha=alpha, eta=step_size,
-                                     tol=tol, loss="log"),
-         sag_iter_range, [], [], [], []))
+        (
+            "Lightning-SAG",
+            lightning_clf.SAGClassifier(
+                alpha=alpha, eta=step_size, tol=tol, loss="log"
+            ),
+            sag_iter_range,
+            [],
+            [],
+            [],
+            [],
+        )
+    )
 
     # We keep only 200 features, to have a dense dataset,
     # and compare to lightning SAG, which seems incorrect in the sparse case.
