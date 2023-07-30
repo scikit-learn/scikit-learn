@@ -27,7 +27,7 @@ Changelog
 ............................
 
 - |Fix| :class:`preprocessing.LabelEncoder` correctly accepts `y` as a keyword
-  argument. :pr:`xxxxx` by `Thomas Fan`_.
+  argument. :pr:`26940` by `Thomas Fan`_.
 
 :mod:`sklearn.tree`
 ...................
