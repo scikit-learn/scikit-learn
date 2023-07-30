@@ -69,9 +69,10 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
-- |Feature| Adds polars input support to :class:`compose.ColumnTransformer` through the
-  `DataFrame Interchange Protocol <https://data-apis.org/dataframe-protocol/latest/purpose_and_scope.html>`__.
-  :pr:`26683` by `Thomas Fan`_.
+- |Feature| Adds `polars <https://www.pola.rs>`__ input support to
+  :class:`compose.ColumnTransformer` through the `DataFrame Interchange Protocol
+  <https://data-apis.org/dataframe-protocol/latest/purpose_and_scope.html>`__.
+  The minimum support version for polars is `0.18.2`. :pr:`26683` by `Thomas Fan`_.
 
 :mod:`sklearn.decomposition`
 ............................

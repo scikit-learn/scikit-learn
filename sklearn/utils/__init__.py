@@ -469,7 +469,7 @@ def _get_column_indices(X, key):
 
 
 def _get_column_indices_interchange(X_interchange, key):
-    """Same as _get_column_indices but for interchange X."""
+    """Same as _get_column_indices but for X with __dataframe__ protocol."""
     n_columns = X_interchange.num_columns()
     key_dtype = _determine_key_type(key)
 
@@ -479,15 +479,15 @@ def _get_column_indices_interchange(X_interchange, key):
     elif key_dtype in ("bool", "int"):
         return _get_column_indices_bool_int(key, n_columns)
     else:
-        df_columns = list(X_interchange.column_names())
+        column_names = list(X_interchange.column_names())
 
         if isinstance(key, slice):
             start, stop = key.start, key.stop
             if start is not None:
-                start = df_columns.index(start)
+                start = column_names.index(start)
 
             if stop is not None:
-                stop = df_columns.index(stop) + 1
+                stop = column_names.index(stop) + 1
             else:
                 stop = n_columns + 1
             return list(islice(range(n_columns), start, stop))
@@ -495,7 +495,7 @@ def _get_column_indices_interchange(X_interchange, key):
         selected_columns = [key] if np.isscalar(key) else key
 
         try:
-            return [df_columns.index(col) for col in selected_columns]
+            return [column_names.index(col) for col in selected_columns]
         except ValueError as e:
             raise ValueError("A given column is not a column of the dataframe") from e
 

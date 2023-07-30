@@ -196,15 +196,16 @@ def test_column_transformer_dataframe(constructor_name):
         ([True, False], X_res_first),
     ]
     if constructor_name == "dataframe":
+        # Scalars are only supported for pandas dataframes.
         cases.extend(
             [
+                # scalar
+                (0, X_res_first),
+                ("first", X_res_first),
                 (
                     dataframe_lib.Series([True, False], index=["first", "second"]),
                     X_res_first,
                 ),
-                # scalar
-                (0, X_res_first),
-                ("first", X_res_first),
             ]
         )
 

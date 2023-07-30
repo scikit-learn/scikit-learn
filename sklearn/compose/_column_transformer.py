@@ -693,6 +693,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self,
         X,
         y,
+        *,
         func,
         indexing_axis_1,
         fitted=False,
@@ -801,7 +802,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         result = self._fit_transform(
             X,
             y,
-            _fit_transform_one,
+            func=_fit_transform_one,
             column_as_strings=use_interchange_protocol,
             indexing_axis_1=indexing_axis_1,
         )
@@ -865,10 +866,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 )
             X = X.__dataframe__()
             n_samples = X.num_rows()
-            columns = X.column_names()
+            column_names = X.column_names()
         else:
             n_samples = X.shape[0]
-            columns = getattr(X, "columns", None)
+            column_names = getattr(X, "columns", None)
 
         if fit_dataframe_and_transform_dataframe:
             named_transformers = self.named_transformers_
@@ -885,7 +886,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             all_indices = set(chain(*non_dropped_indices))
             all_names = set(self.feature_names_in_[ind] for ind in all_indices)
 
-            diff = all_names - set(columns)
+            diff = all_names - set(column_names)
             if diff:
                 raise ValueError(f"columns are missing: {diff}")
         else:
@@ -896,7 +897,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Xs = self._fit_transform(
             X,
             None,
-            _transform_one,
+            func=_transform_one,
             fitted=True,
             column_as_strings=fit_dataframe_and_transform_dataframe,
             indexing_axis_1=indexing_axis_1,
@@ -996,7 +997,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
 
 def _check_X(X):
-    """Use check_array only on lists and other non-array-likes / sparse"""
+    """Use check_array only when necessary, e.g. on lists and other non-array-likes."""
     if hasattr(X, "__array__") or hasattr(X, "__dataframe__") or sparse.issparse(X):
         return X
     return check_array(X, force_all_finite="allow-nan", dtype=object)

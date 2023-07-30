@@ -1791,11 +1791,11 @@ def test__dataframe_module_as_str_error():
 )
 @pytest.mark.parametrize("to_dataframe_library", ["pandas", "polars"])
 def test_polars_interchange_func(constructor_name, minversion, to_dataframe_library):
-    columns_name = ["a", "b", "c"]
+    column_names = ["a", "b", "c"]
     df = _convert_container(
         [[1, 4, 2], [3, 3, 6]],
         constructor_name,
-        columns_name=columns_name,
+        columns_name=column_names,
         minversion=minversion,
     )
 
@@ -1803,7 +1803,7 @@ def test_polars_interchange_func(constructor_name, minversion, to_dataframe_libr
     df_new = _interchange_to_dataframe(df.__dataframe__(), to_dataframe_library)
     assert isinstance(df_new, lib.DataFrame)
 
-    assert_array_equal(df_new.__dataframe__().column_names(), columns_name)
+    assert_array_equal(df_new.__dataframe__().column_names(), column_names)
 
 
 def test_get_feature_names_numpy():

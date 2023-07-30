@@ -779,6 +779,7 @@ def test_get_column_indices_interchange():
         (slice("a", "b"), [0, 1]),
         (slice("a", None), [0, 1, 2]),
         (slice(None, "a"), [0]),
+        (["c", "a"], [2, 0]),
         ([], []),
     ]
     for key, result in key_results:
