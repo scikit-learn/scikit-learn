@@ -70,8 +70,8 @@ posterior probability greater than 0.5 while the tuned classifier predicts the c
 interest for a very low probability (around 0.02). This cut-off point optimizes a
 utility metric defined by the business (in this case an insurance company).
 
-.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_tuned_threshold_classifier_002.png
-   :target: ../auto_examples/model_selection/plot_tuned_threshold_classifier.html
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cost_sensitive_learning_002.png
+   :target: ../auto_examples/model_selection/plot_cost_sensitive_learning.html
    :align: center
 
 Options to tune the cut-off point
@@ -160,7 +160,9 @@ also possible to manually set the decision threshold in
 Examples
 --------
 
-TODO: add more examples
 - See the example entitled
-  :ref:`sphx_glr_auto_examples_model_selection_plot_tuned_threshold_classifier.py`,
-  to learn about tuning the decision threshold of a classifier.
+  :ref:`sphx_glr_auto_examples_model_selection_plot_tuned_decision_threshold.py`,
+  to get insights on the post-tuning of the decision threshold.
+- See the example entitled
+  :ref:`sphx_glr_auto_examples_model_selection_plot_cost_sensitive_learning.py`,
+  to learn about cost-sensitive learning and decision threshold tuning.

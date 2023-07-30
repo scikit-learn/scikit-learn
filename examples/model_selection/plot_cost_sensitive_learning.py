@@ -59,9 +59,6 @@ X, y = german_credit.data, german_credit.target
 X.info()
 
 # %%
-X.head()
-
-# %%
 # Many features are categorical and usually string-encoded. We need to encode
 # these categories when we develop our predictive model. Let's check the targets.
 y.value_counts()
@@ -249,13 +246,12 @@ _ = fig.suptitle("Evaluation of the vanilla GBDT model")
 print(f"Business defined metric: {scoring['cost_gain'](model, X_test, y_test)}")
 
 # %%
-# At this stage we don't know if any other cut-off can lead to a greater gain.
-# To find the optimal one, we need to compute the cost-gain using the business
-# metric for all possible cut-off points and choose the best. This strategy can
-# be quite tedious to implement by hand, but the
-# :class:`~sklearn.metrics.TunedThresholdClassifier` class is here to help us. It
-# automatically computes the cost-gain for all possible cut-off points and
-# optimizes for the `objective_metric`.
+# At this stage we don't know if any other cut-off can lead to a greater gain. To find
+# the optimal one, we need to compute the cost-gain using the business metric for all
+# possible cut-off points and choose the best. This strategy can be quite tedious to
+# implement by hand, but the :class:`~sklearn.model_selection.TunedThresholdClassifier`
+# class is here to help us. It automatically computes the cost-gain for all possible
+# cut-off points and optimizes for the `objective_metric`.
 #
 # .. _cost_sensitive_learning_example:
 #
@@ -578,7 +574,7 @@ _ = fig.suptitle("Tuned GBDT model without refitting and using the entire datase
 # The credit card dataset
 # ^^^^^^^^^^^^^^^^^^^^^^^
 credit_card = fetch_openml(data_id=1597, as_frame=True, parser="pandas")
-credit_card.frame
+credit_card.frame.info()
 
 # %%
 # The dataset contains information about credit card records from which some are

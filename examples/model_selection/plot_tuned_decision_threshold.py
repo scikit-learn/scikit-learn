@@ -176,7 +176,7 @@ _ = ax.set_title(
 # the most appropriate metric for the problem at hand. The choice of the "right" metric
 # is usually problem-dependent and might require some domain knowledge. Refer to the
 # example entitled,
-# :ref:`sphx_glr_auto_examples_model_selection_plot_tuned_threshold_classifier.py`,
+# :ref:`sphx_glr_auto_examples_model_selection_plot_cost_sensitive_learning.py`,
 # for more details.
 #
 # Tuning the decision threshold under constraint
@@ -356,7 +356,7 @@ axs[1].plot(
 )
 axs[1].legend()
 axs[1].set_title("ROC curves")
-disp.plot(ax=axs[0])
+_ = disp.plot(ax=axs[0])
 
 # %%
 # We start with the right-hand side plot. It depicts the ROC curves as in the previous
