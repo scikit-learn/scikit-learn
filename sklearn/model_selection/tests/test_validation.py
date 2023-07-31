@@ -2461,6 +2461,18 @@ def test_groups_with_routing_validation():
 
 
 @pytest.mark.usefixtures("enable_slep006")
+def test_passed_unrequested_metadata():
+    err_msg = re.escape("['metadata'] are passed to cross validation")
+    with pytest.raises(ValueError, match=err_msg):
+        cross_validate(
+            estimator=ConsumingClassifier(),
+            X=X,
+            y=y,
+            params=dict(metadata=[]),
+        )
+
+
+@pytest.mark.usefixtures("enable_slep006")
 def test_cross_validate_routing():
     scorer_registry = _Registry()
     scorer = ConsumingScorer(registry=scorer_registry).set_score_request(
@@ -2499,13 +2511,34 @@ def test_cross_validate_routing():
         ),
     )
 
+    assert len(scorer_registry)
     for _scorer in scorer_registry:
         check_recorded_metadata(
             obj=_scorer,
             method="score",
             split_params=("sample_weight", "metadata"),
-            score_weights=score_weights,
-            score_metadata=score_metadata,
+            sample_weight=score_weights,
+            metadata=score_metadata,
+        )
+
+    assert len(splitter_registry)
+    for _splitter in splitter_registry:
+        check_recorded_metadata(
+            obj=_splitter,
+            method="split",
+            split_params=("groups", "metadata"),
+            groups=split_groups,
+            metadata=split_metadata,
+        )
+
+    assert len(estimator_registry)
+    for _estimator in estimator_registry:
+        check_recorded_metadata(
+            obj=_estimator,
+            method="fit",
+            split_params=("sample_weight", "metadata"),
+            sample_weight=fit_sample_weight,
+            metadata=fit_metadata,
         )
 
 

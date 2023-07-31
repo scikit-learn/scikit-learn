@@ -25,7 +25,7 @@ import scipy.sparse as sp
 from joblib import logger
 
 from ..base import clone, is_classifier
-from ..exceptions import FitFailedWarning
+from ..exceptions import FitFailedWarning, UnsetMetadataPassedError
 from ..metrics import check_scoring, get_scorer_names
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..preprocessing import LabelEncoder
@@ -372,9 +372,22 @@ def cross_validate(
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
         )
-        routed_params = process_routing(
-            router, method="fit", other_params=None, **params
-        )
+        try:
+            routed_params = process_routing(
+                router, method="fit", other_params=None, **params
+            )
+        except UnsetMetadataPassedError as e:
+            raise UnsetMetadataPassedError(
+                message=(
+                    f"{sorted(e.unrequested_params.keys())} are passed to cross"
+                    " validation but are not explicitly requested or unrequested. See"
+                    " the Metadata Routing User guide"
+                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
+                    " information."
+                ),
+                unrequested_params=e.unrequested_params,
+                routed_params=e.routed_params,
+            )
     else:
         routed_params = Bunch()
         routed_params.splitter = Bunch(split={"groups": groups})

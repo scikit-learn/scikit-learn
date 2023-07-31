@@ -10,7 +10,7 @@ from sklearn.base import (
     TransformerMixin,
     clone,
 )
-from sklearn.metrics._scorer import _ThresholdScorer, mean_squared_error
+from sklearn.metrics._scorer import _PredictScorer, mean_squared_error
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.model_selection._split import GroupsConsumerMixin
 from sklearn.utils._metadata_requests import (
@@ -273,7 +273,7 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
         return X
 
 
-class ConsumingScorer(_ThresholdScorer):
+class ConsumingScorer(_PredictScorer):
     def __init__(self, registry=None):
         super().__init__(score_func=mean_squared_error, sign=1, kwargs={})
         self.registry = registry
@@ -298,7 +298,7 @@ class ConsumingSplitter(BaseCrossValidator, GroupsConsumerMixin):
 
         record_metadata_not_default(self, "split", groups=groups, metadata=metadata)
 
-        split_index = len(X) - 10
+        split_index = len(X) // 2
         train_indices = list(range(0, split_index))
         test_indices = list(range(split_index, len(X)))
         yield test_indices, train_indices
@@ -307,7 +307,8 @@ class ConsumingSplitter(BaseCrossValidator, GroupsConsumerMixin):
         pass  # pragma: no cover
 
     def _iter_test_indices(self, X=None, y=None, groups=None):
-        pass  # pragma: no cover
+        split_index = len(X) // 2
+        yield list(range(split_index, len(X)))
 
 
 class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
