@@ -3,32 +3,34 @@ The :mod:`sklearn.utils.themes` module provides a
 CSS template class for creating dynamic stylesheets.
 It exposes utilities and themes for styling displayed diagrams.
 """
-from string import Template
 
-
-class CssTemplate(Template):
-    """Create parameterized CSS templates with `$$` as the variable prefix."""
-
-    delimiter = "$$"
-
-
-_AUTO_TEMPLATE = """
-$$light
-
-@media (prefers-color-scheme: dark) {
-    $$dark
-}
-""".replace("  ", "").replace("\n", "")  # noqa
-
-_STYLE_TEMPLATE = """
+AUTO = """
 #$id {
-  color: $$color_1;
+  --sklearn-color-1: black;
+  --sklearn-color-2: #f0f8ff;
+  --sklearn-color-3: #696969;
+  --sklearn-color-4: white;
+  --sklearn-color-5: #d4ebff;
+  --sklearn-color-6: gray;
+
+  @media (prefers-color-scheme: dark) {
+    --sklearn-color-1: white;
+    --sklearn-color-2: #424242;
+    --sklearn-color-3: #696969;
+    --sklearn-color-4: black;
+    --sklearn-color-5: #616161;
+    --sklearn-color-6: #616161;
+  }
+}
+
+#$id {
+  color: var(--sklearn-color-1);
 }
 #$id pre{
   padding: 0;
 }
 #$id div.sk-toggleable {
-  background-color: $$color_4;
+  background-color: var(--sklearn-color-4);
 }
 #$id label.sk-toggleable__label {
   cursor: pointer;
@@ -43,26 +45,26 @@ _STYLE_TEMPLATE = """
   content: "▸";
   float: left;
   margin-right: 0.25em;
-  color: $$color_3;
+  color: var(--sklearn-color-3);
 }
 #$id label.sk-toggleable__label-arrow:hover:before {
-  color: $$color_1;
+  color: var(--sklearn-color-1);
 }
 #$id div.sk-estimator:hover label.sk-toggleable__label-arrow:before {
-  color: $$color_1;
+  color: var(--sklearn-color-1);
 }
 #$id div.sk-toggleable__content {
   max-height: 0;
   max-width: 0;
   overflow: hidden;
   text-align: left;
-  background-color: $$color_2;
+  background-color: var(--sklearn-color-2);
 }
 #$id div.sk-toggleable__content pre {
   margin: 0.2em;
-  color: $$color_1;
+  color: var(--sklearn-color-1);
   border-radius: 0.25em;
-  background-color: $$color_2;
+  background-color: var(--sklearn-color-2);
 }
 #$id input.sk-toggleable__control:checked~div.sk-toggleable__content {
   max-height: 200px;
@@ -73,10 +75,10 @@ _STYLE_TEMPLATE = """
   content: "▾";
 }
 #$id div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
-  background-color: $$color_5;
+  background-color: var(--sklearn-color-5);
 }
 #$id div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {
-  background-color: $$color_5;
+  background-color: var(--sklearn-color-5);
 }
 #$id input.sk-hidden--visually {
   border: 0;
@@ -91,28 +93,28 @@ _STYLE_TEMPLATE = """
 }
 #$id div.sk-estimator {
   font-family: monospace;
-  background-color: $$color_2;
-  border: 1px dotted $$color_1;
+  background-color: var(--sklearn-color-2);
+  border: 1px dotted var(--sklearn-color-1);
   border-radius: 0.25em;
   box-sizing: border-box;
   margin-bottom: 0.5em;
 }
 #$id div.sk-estimator:hover {
-  background-color: $$color_5;
+  background-color: var(--sklearn-color-5);
 }
 #$id div.sk-parallel-item::after {
   content: "";
   width: 100%;
-  border-bottom: 1px solid $$color_6;
+  border-bottom: 1px solid var(--sklearn-color-6);
   flex-grow: 1;
 }
 #$id div.sk-label:hover label.sk-toggleable__label {
-  background-color: $$color_5;
+  background-color: var(--sklearn-color-5);
 }
 #$id div.sk-serial::before {
   content: "";
   position: absolute;
-  border-left: 1px solid $$color_6;
+  border-left: 1px solid var(--sklearn-color-6);
   box-sizing: border-box;
   top: 0;
   bottom: 0;
@@ -123,7 +125,7 @@ _STYLE_TEMPLATE = """
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: $$color_4;
+  background-color: var(--sklearn-color-4);
   padding-right: 0.2em;
   padding-left: 0.2em;
   position: relative;
@@ -136,13 +138,13 @@ _STYLE_TEMPLATE = """
   display: flex;
   align-items: stretch;
   justify-content: center;
-  background-color: $$color_4;
+  background-color: var(--sklearn-color-4);
   position: relative;
 }
 #$id div.sk-item::before, #$id div.sk-parallel-item::before {
   content: "";
   position: absolute;
-  border-left: 1px solid $$color_6;
+  border-left: 1px solid var(--sklearn-color-6);
   box-sizing: border-box;
   top: 0;
   bottom: 0;
@@ -154,7 +156,7 @@ _STYLE_TEMPLATE = """
   flex-direction: column;
   z-index: 1;
   position: relative;
-  background-color: $$color_4;
+  background-color: var(--sklearn-color-4);
 }
 #$id div.sk-parallel-item:first-child::after {
   align-self: flex-end;
@@ -168,11 +170,11 @@ _STYLE_TEMPLATE = """
   width: 0;
 }
 #$id div.sk-dashed-wrapped {
-  border: 1px dashed $$color_6;
+  border: 1px dashed var(--sklearn-color-6);
   margin: 0 0.4em 0.5em 0.4em;
   box-sizing: border-box;
   padding-bottom: 0.4em;
-  background-color: $$color_4;
+  background-color: var(--sklearn-color-4);
 }
 #$id div.sk-label label {
   font-family: monospace;
@@ -196,42 +198,3 @@ _STYLE_TEMPLATE = """
   display: none;
 }
 """.replace("  ", "").replace("\n", "")  # noqa
-
-
-def theme_builder(template=CssTemplate(_STYLE_TEMPLATE), **kwargs):
-    """Generate a theme stylesheet from a given color palette.
-
-    Parameters
-    ----------
-    template : CssTemplate, optional
-        The stylesheet template to use. Defaults to CssTemplate(_STYLE_TEMPLATE).
-    **kwargs : dict
-        Key-value pairs representing the stylesheet variables.
-
-    Returns
-    -------
-    tmpl : str
-        The generated stylesheet with substituted color values.
-    """
-    return template.substitute(**kwargs)
-
-
-LIGHT = theme_builder(
-    color_1="black",
-    color_2="#f0f8ff",
-    color_3="#696969",
-    color_4="white",
-    color_5="#d4ebff",
-    color_6="gray",
-)
-
-DARK = theme_builder(
-    color_1="#788aa6",
-    color_2="#2f435c",
-    color_3="#5f718c",
-    color_4="#182d45",
-    color_5="#475974",
-    color_6="#788aa6",
-)
-
-AUTO = theme_builder(template=CssTemplate(_AUTO_TEMPLATE), light=LIGHT, dark=DARK)

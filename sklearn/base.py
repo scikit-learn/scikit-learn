@@ -662,13 +662,13 @@ class BaseEstimator(_MetadataRequester):
         `hasattr(estimator, "_repr_html_") return `True` or `False` depending
         on `get_config()["display"]`.
         """
-        return estimator_html_repr(self, theme=get_config()["theme"])
+        return estimator_html_repr(self)
 
     def _repr_mimebundle_(self, **kwargs):
         """Mime bundle used by jupyter kernels to display estimator"""
         output = {"text/plain": repr(self)}
         if get_config()["display"] == "diagram":
-            output["text/html"] = estimator_html_repr(self, theme=get_config()["theme"])
+            output["text/html"] = estimator_html_repr(self)
         return output
 
 

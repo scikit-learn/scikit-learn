@@ -49,15 +49,6 @@ Changelog
     where 123455 is the *pull request* number, not the issue number.
 
 
-:mod:`sklearn`
-..............
-
-- |Feature| Added a new option `theme`, to the function
-  :func:`sklearn.set_config` and context manager :func:`sklearn.config_context`, that
-  allows setting the style of displayable diagrams. Styles can be chosen
-  from `sklearn.utils.themes`.
-  :pr:`26862` by :user:`Andrew Goh Yisheng <9y5>`.
-
 :mod:`sklearn.base`
 ...................
 

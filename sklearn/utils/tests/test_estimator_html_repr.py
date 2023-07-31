@@ -121,9 +121,7 @@ def test_get_visual_block_column_transformer():
 @pytest.mark.parametrize(
     "theme,expected_html",
     [
-        (None, "color: #696969"),
-        (themes.LIGHT, "color: #696969"),
-        (themes.DARK, "color: #5f718c"),
+        (None, "prefers-color-scheme"),
         (themes.AUTO, "prefers-color-scheme"),
     ],
 )

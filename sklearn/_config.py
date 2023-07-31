@@ -9,7 +9,6 @@ _global_config = {
     "working_memory": int(os.environ.get("SKLEARN_WORKING_MEMORY", 1024)),
     "print_changed_only": True,
     "display": "diagram",
-    "theme": None,
     "pairwise_dist_chunk_size": int(
         os.environ.get("SKLEARN_PAIRWISE_DIST_CHUNK_SIZE", 256)
     ),
@@ -53,7 +52,6 @@ def set_config(
     working_memory=None,
     print_changed_only=None,
     display=None,
-    theme=None,
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
@@ -98,14 +96,6 @@ def set_config(
         text. Default is 'diagram'.
 
         .. versionadded:: 0.23
-
-    theme : str, default=None
-        The CSS stylesheet for the displayed diagram. If provided, it sets the
-        custom CSS style for the diagram. Preset styles can be found in
-        :mod:`sklearn.utils.themes`. If not specified, the default style will
-        be used. Default is None.
-
-        .. versionadded:: 1.4
 
     pairwise_dist_chunk_size : int, default=None
         The number of row vectors per chunk for the accelerated pairwise-
@@ -201,7 +191,6 @@ def set_config(
         local_config["enable_metadata_routing"] = enable_metadata_routing
     if skip_parameter_validation is not None:
         local_config["skip_parameter_validation"] = skip_parameter_validation
-    local_config["theme"] = theme
 
 
 @contextmanager
@@ -211,7 +200,6 @@ def config_context(
     working_memory=None,
     print_changed_only=None,
     display=None,
-    theme=None,
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
@@ -255,14 +243,6 @@ def config_context(
         The default value is 'diagram'.
 
         .. versionadded:: 0.23
-
-    theme : str, default=None
-        The CSS stylesheet for the displayed diagram. If provided, it sets the
-        custom CSS style for the diagram. Preset styles can be found in
-        :mod:`sklearn.utils.themes`. If not specified, the default style will
-        be used. Default is None.
-
-        .. versionadded:: 1.4
 
     pairwise_dist_chunk_size : int, default=None
         The number of row vectors per chunk for the accelerated pairwise-
@@ -361,7 +341,6 @@ def config_context(
         working_memory=working_memory,
         print_changed_only=print_changed_only,
         display=display,
-        theme=theme,
         pairwise_dist_chunk_size=pairwise_dist_chunk_size,
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
         array_api_dispatch=array_api_dispatch,

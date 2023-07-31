@@ -45,13 +45,6 @@ pipe
 set_config(display="diagram")
 
 # %%
-# To view the diagram in a dark theme, set `theme=DARK`
-from sklearn.utils.themes import DARK
-
-set_config(theme=DARK)
-pipe
-
-# %%
 # Displaying a Pipeline Chaining Multiple Preprocessing Steps & Classifier
 ################################################################################
 # This section constructs a :class:`~sklearn.pipeline.Pipeline` with multiple

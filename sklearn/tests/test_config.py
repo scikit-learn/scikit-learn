@@ -15,7 +15,6 @@ def test_config_context():
         "working_memory": 1024,
         "print_changed_only": True,
         "display": "diagram",
-        "theme": None,
         "array_api_dispatch": False,
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
@@ -34,7 +33,6 @@ def test_config_context():
             "working_memory": 1024,
             "print_changed_only": True,
             "display": "diagram",
-            "theme": None,
             "array_api_dispatch": False,
             "pairwise_dist_chunk_size": 256,
             "enable_cython_pairwise_dist": True,
@@ -70,7 +68,6 @@ def test_config_context():
         "working_memory": 1024,
         "print_changed_only": True,
         "display": "diagram",
-        "theme": None,
         "array_api_dispatch": False,
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
@@ -113,15 +110,6 @@ def test_set_config():
     # No unknown arguments
     with pytest.raises(TypeError):
         set_config(do_something_else=True)
-
-
-def test_set_config_theme():
-    assert get_config()["theme"] is None
-    with config_context(theme="my_theme"):
-        assert get_config()["theme"] == "my_theme"
-    assert get_config()["theme"] is None
-    set_config(theme="my_other_theme")
-    assert get_config()["theme"] == "my_other_theme"
 
 
 def set_assume_finite(assume_finite, sleep_duration):
