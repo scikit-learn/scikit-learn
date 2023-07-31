@@ -23,6 +23,12 @@ Changelog
   :attr:`sklearn.neighbors.KDTree.valid_metrics` as public class attributes.
   :pr:`26754` by :user:`Julien Jerphanion <jjerphan>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.LabelEncoder` correctly accepts `y` as a keyword
+  argument. :pr:`26940` by `Thomas Fan`_.
+
 :mod:`sklearn.tree`
 ...................
 
