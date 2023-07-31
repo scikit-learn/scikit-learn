@@ -220,7 +220,8 @@ def _sparse_encode_precomputed(
         "check_input": ["boolean"],
         "verbose": ["verbose"],
         "positive": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 # XXX : could be moved to the linear_model module
 def sparse_encode(
@@ -735,7 +736,8 @@ def dict_learning_online(
     dict_init : ndarray of shape (n_components, n_features), default=None
         Initial values for the dictionary for warm restart scenarios.
         If `None`, the initial values for the dictionary are created
-        with an SVD decomposition of the data via :func:`~sklearn.utils.randomized_svd`.
+        with an SVD decomposition of the data via
+        :func:`~sklearn.utils.extmath.randomized_svd`.
 
     callback : callable, default=None
         A callable that gets invoked at the end of each iteration.
@@ -1079,7 +1081,8 @@ def dict_learning_online(
         "method": [StrOptions({"lars", "cd"})],
         "return_n_iter": ["boolean"],
         "method_max_iter": [Interval(Integral, 0, None, closed="left")],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def dict_learning(
     X,

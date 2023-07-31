@@ -187,10 +187,6 @@ def test_pairwise_distances(global_dtype):
     S2 = pairwise_distances(X, metric=minkowski, **kwds)
     assert_allclose(S, S2)
 
-    # Test that a value error is raised if the metric is unknown
-    with pytest.raises(ValueError):
-        pairwise_distances(X, Y, metric="blah")
-
 
 # TODO(1.4): Remove test when `sum_over_features` parameter is removed
 @pytest.mark.parametrize("sum_over_features", [True, False])
@@ -739,9 +735,6 @@ def test_pairwise_distances_chunked(global_dtype):
     # "cityblock" uses scikit-learn metric, cityblock (function) is
     # scipy.spatial.
     check_pairwise_distances_chunked(X, Y, working_memory=1, metric="cityblock")
-    # Test that a value error is raised if the metric is unknown
-    with pytest.raises(ValueError):
-        next(pairwise_distances_chunked(X, Y, metric="blah"))
 
     # Test precomputed returns all at once
     D = pairwise_distances(X)

@@ -36,6 +36,7 @@ Base classes
    base.TransformerMixin
    base.MetaEstimatorMixin
    base.OneToOneFeatureMixin
+   base.OutlierMixin
    base.ClassNamePrefixFeaturesOutMixin
    feature_selection.SelectorMixin
 

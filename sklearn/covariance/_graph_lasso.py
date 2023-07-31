@@ -217,7 +217,8 @@ def alpha_max(emp_cov):
         "cov_init": ["array-like", None],
         "return_costs": ["boolean"],
         "return_n_iter": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def graphical_lasso(
     emp_cov,
@@ -736,7 +737,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs :class:`KFold` is used.
+        For integer/None inputs :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

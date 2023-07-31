@@ -132,7 +132,7 @@ def test_lars_path_gram_equivalent(method, return_path):
 def test_x_none_gram_none_raises_value_error():
     # Test that lars_path with no X and Gram raises exception
     Xy = np.dot(X.T, y)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="X and Gram cannot both be unspecified"):
         linear_model.lars_path(None, y, Gram=None, Xy=Xy)
 
 
@@ -804,7 +804,7 @@ def test_lars_with_jitter(est):
 
 def test_X_none_gram_not_none():
     with pytest.raises(ValueError, match="X cannot be None if Gram is not None"):
-        lars_path(X=None, y=[1], Gram="not None")
+        lars_path(X=None, y=np.array([1]), Gram=True)
 
 
 def test_copy_X_with_auto_gram():

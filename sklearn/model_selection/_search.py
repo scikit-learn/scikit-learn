@@ -34,7 +34,7 @@ from ..utils._tags import _safe_tags
 from ..utils.metaestimators import available_if
 from ..utils.parallel import Parallel, delayed
 from ..utils.random import sample_without_replacement
-from ..utils.validation import _check_fit_params, check_is_fitted, indexable
+from ..utils.validation import _check_method_params, check_is_fitted, indexable
 from ._split import check_cv
 from ._validation import (
     _aggregate_score_dicts,
@@ -804,7 +804,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             refit_metric = self.refit
 
         X, y, groups = indexable(X, y, groups)
-        fit_params = _check_fit_params(X, fit_params)
+        fit_params = _check_method_params(X, params=fit_params)
 
         cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
         n_splits = cv_orig.get_n_splits(X, y, groups)
@@ -923,11 +923,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             self.best_params_ = results["params"][self.best_index_]
 
         if self.refit:
-            # we clone again after setting params in case some
-            # of the params are estimators as well.
-            self.best_estimator_ = clone(
-                clone(base_estimator).set_params(**self.best_params_)
+            # here we clone the estimator as well as the parameters, since
+            # sometimes the parameters themselves might be estimators, e.g.
+            # when we search over different estimators in a pipeline.
+            # ref: https://github.com/scikit-learn/scikit-learn/pull/26786
+            self.best_estimator_ = clone(base_estimator).set_params(
+                **clone(self.best_params_, safe=False)
             )
+
             refit_start_time = time.time()
             if y is not None:
                 self.best_estimator_.fit(X, y, **fit_params)
