@@ -678,7 +678,7 @@ def test_nan_label_encoder():
     "encoder", [LabelEncoder(), LabelBinarizer(), MultiLabelBinarizer()]
 )
 def test_label_encoders_do_not_have_set_output(encoder):
-    """Check that label encoders does not define set_output and works with y as a kwarg.
+    """Check that label encoders do not define set_output and work with y as a kwarg.
 
     Non-regression test for #26854.
     """
