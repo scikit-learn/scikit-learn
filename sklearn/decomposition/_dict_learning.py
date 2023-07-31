@@ -1538,9 +1538,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     the entry-wise matrix norm which is the sum of the absolute values
     of all the entries in the matrix.
 
-    Example of usage:
-    - :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
-
     Read more in the :ref:`User Guide <DictionaryLearning>`.
 
     Parameters
