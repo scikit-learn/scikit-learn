@@ -22,7 +22,6 @@ jobs:
     # Set in azure-pipelines.yml
     DISTRIB: ''
     DOCKER_CONTAINER: ''
-    SHOW_SHORT_SUMMARY: 'false'
     CREATE_ISSUE_ON_TRACKER: 'true'
     CCACHE_DIR: $(Pipeline.Workspace)/ccache
     CCACHE_COMPRESS: '1'

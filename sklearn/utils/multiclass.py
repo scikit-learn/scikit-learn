@@ -6,18 +6,15 @@ Multi-class / multi-label utility function
 ==========================================
 
 """
+import warnings
 from collections.abc import Sequence
 from itertools import chain
-import warnings
-
-from scipy.sparse import issparse
-from scipy.sparse import dok_matrix
-from scipy.sparse import lil_matrix
 
 import numpy as np
+from scipy.sparse import issparse
 
-from .validation import check_array, _assert_all_finite
 from ..utils._array_api import get_namespace
+from .validation import _assert_all_finite, check_array
 
 
 def _unique_multiclass(y):
@@ -179,7 +176,7 @@ def is_multilabel(y):
         return False
 
     if issparse(y):
-        if isinstance(y, (dok_matrix, lil_matrix)):
+        if y.format in ("dok", "lil"):
             y = y.tocsr()
         labels = xp.unique_values(y.data)
         return (

@@ -2,26 +2,25 @@ import itertools
 import re
 import warnings
 from collections import defaultdict
+from math import floor, log10
 
 import numpy as np
 import pytest
 import threadpoolctl
-from math import log10, floor
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
+from sklearn.metrics import euclidean_distances
 from sklearn.metrics._pairwise_distances_reduction import (
-    BaseDistancesReductionDispatcher,
     ArgKmin,
     ArgKminClassMode,
+    BaseDistancesReductionDispatcher,
     RadiusNeighbors,
     sqeuclidean_row_norms,
 )
-from sklearn.metrics import euclidean_distances
-from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils._testing import (
-    assert_array_equal,
     assert_allclose,
+    assert_array_equal,
     create_memmap_backed_data,
 )
 
@@ -48,25 +47,15 @@ def _get_metric_params_list(metric: str, n_features: int, seed: int = 1):
     rng = np.random.RandomState(seed)
 
     if metric == "minkowski":
-        minkowski_kwargs = [dict(p=1.5), dict(p=2), dict(p=3), dict(p=np.inf)]
-        if sp_version >= parse_version("1.8.0.dev0"):
-            # TODO: remove the test once we no longer support scipy < 1.8.0.
-            # Recent scipy versions accept weights in the Minkowski metric directly:
-            # type: ignore
-            minkowski_kwargs.append(dict(p=3, w=rng.rand(n_features)))
+        minkowski_kwargs = [
+            dict(p=1.5),
+            dict(p=2),
+            dict(p=3),
+            dict(p=np.inf),
+            dict(p=3, w=rng.rand(n_features)),
+        ]
 
         return minkowski_kwargs
-
-    # TODO: remove this case for "wminkowski" once we no longer support scipy < 1.8.0.
-    if metric == "wminkowski":
-        weights = rng.random_sample(n_features)
-        weights /= weights.sum()
-        wminkowski_kwargs = [dict(p=1.5, w=weights)]
-        if sp_version < parse_version("1.8.0.dev0"):
-            # wminkowski was removed in scipy 1.8.0 but should work for previous
-            # versions.
-            wminkowski_kwargs.append(dict(p=3, w=rng.rand(n_features)))
-        return wminkowski_kwargs
 
     if metric == "seuclidean":
         return [dict(V=rng.rand(n_features))]
@@ -660,8 +649,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
     metric = "manhattan"
 
     weights = "uniform"
-    labels = rng.randint(low=0, high=10, size=100)
-    unique_labels = np.unique(labels)
+    Y_labels = rng.randint(low=0, high=10, size=100)
+    unique_Y_labels = np.unique(Y_labels)
 
     msg = (
         "Only float64 or float32 datasets pairs are supported at this time, "
@@ -674,8 +663,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             k=k,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
         )
 
     msg = (
@@ -689,8 +678,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             k=k,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
         )
 
     with pytest.raises(ValueError, match="k == -1, must be >= 1."):
@@ -700,8 +689,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             k=-1,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
         )
 
     with pytest.raises(ValueError, match="k == 0, must be >= 1."):
@@ -711,8 +700,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             k=0,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
         )
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
@@ -722,8 +711,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             k=k,
             metric="wrong metric",
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
         )
 
     with pytest.raises(
@@ -735,8 +724,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             k=k,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
         )
 
     with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
@@ -746,8 +735,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             k=k,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
         )
 
     non_existent_weights_strategy = "non_existent_weights_strategy"
@@ -762,8 +751,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             k=k,
             metric=metric,
             weights=non_existent_weights_strategy,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
         )
 
     # TODO: introduce assertions on UserWarnings once the Euclidean specialisation
@@ -1116,8 +1105,6 @@ def test_strategies_consistency(
 # "Concrete Dispatchers"-specific tests
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("n_features", [50, 500])
 @pytest.mark.parametrize("translation", [0, 1e6])
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
@@ -1192,8 +1179,6 @@ def test_pairwise_distances_argkmin(
         )
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize("n_features", [50, 500])
 @pytest.mark.parametrize("translation", [0, 1e6])
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
@@ -1347,16 +1332,16 @@ def test_argkmin_classmode_strategy_consistent():
     metric = "manhattan"
 
     weights = "uniform"
-    labels = rng.randint(low=0, high=10, size=100)
-    unique_labels = np.unique(labels)
+    Y_labels = rng.randint(low=0, high=10, size=100)
+    unique_Y_labels = np.unique(Y_labels)
     results_X = ArgKminClassMode.compute(
         X=X,
         Y=Y,
         k=k,
         metric=metric,
         weights=weights,
-        labels=labels,
-        unique_labels=unique_labels,
+        Y_labels=Y_labels,
+        unique_Y_labels=unique_Y_labels,
         strategy="parallel_on_X",
     )
     results_Y = ArgKminClassMode.compute(
@@ -1365,8 +1350,8 @@ def test_argkmin_classmode_strategy_consistent():
         k=k,
         metric=metric,
         weights=weights,
-        labels=labels,
-        unique_labels=unique_labels,
+        Y_labels=Y_labels,
+        unique_Y_labels=unique_Y_labels,
         strategy="parallel_on_Y",
     )
     assert_array_equal(results_X, results_Y)

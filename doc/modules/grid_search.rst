@@ -81,7 +81,7 @@ evaluated and the best combination is retained.
       of Grid Search coupling parameters from a text documents feature
       extractor (n-gram count vectorizer and TF-IDF transformer) with a
       classifier (here a linear SVM trained with SGD with either elastic
-      net or L2 penalty) using a :class:`pipeline.Pipeline` instance.
+      net or L2 penalty) using a :class:`~sklearn.pipeline.Pipeline` instance.
 
     - See :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
       for an example of Grid Search within a cross validation loop on the iris
