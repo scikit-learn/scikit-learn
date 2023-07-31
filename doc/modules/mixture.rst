@@ -72,27 +72,25 @@ full covariance.
 **Pros and cons of class GaussianMixture**
 |details-split|
 
-Pros
-....
+.. topic:: Pros:
 
-:Speed: It is the fastest algorithm for learning mixture models
+    :Speed: It is the fastest algorithm for learning mixture models
 
-:Agnostic: As this algorithm maximizes only the likelihood, it
-  will not bias the means towards zero, or bias the cluster sizes to
-  have specific structures that might or might not apply.
+    :Agnostic: As this algorithm maximizes only the likelihood, it
+      will not bias the means towards zero, or bias the cluster sizes to
+      have specific structures that might or might not apply.
 
-Cons
-....
+.. topic:: Cons:
 
-:Singularities: When one has insufficiently many points per
-   mixture, estimating the covariance matrices becomes difficult,
-   and the algorithm is known to diverge and find solutions with
-   infinite likelihood unless one regularizes the covariances artificially.
+    :Singularities: When one has insufficiently many points per
+      mixture, estimating the covariance matrices becomes difficult,
+      and the algorithm is known to diverge and find solutions with
+      infinite likelihood unless one regularizes the covariances artificially.
 
-:Number of components: This algorithm will always use all the
-   components it has access to, needing held-out data
-   or information theoretical criteria to decide how many components to use
-   in the absence of external cues.
+    :Number of components: This algorithm will always use all the
+      components it has access to, needing held-out data
+      or information theoretical criteria to decide how many components to use
+      in the absence of external cues.
 
 |details-end|
 
@@ -119,9 +117,9 @@ model.
     * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py` for an example
       of model selection performed with classical Gaussian mixture.
 
-.. _expectation_maximization:
-
 |details-end|
+
+.. _expectation_maximization:
 
 |details-start|
 **Estimation algorithm expectation-maximization**
@@ -183,9 +181,9 @@ random
     * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_init.py` for an example of
       using different initializations in Gaussian Mixture.
 
-.. _bgmm:
-
 |details-end|
+
+.. _bgmm:
 
 Variational Bayesian Gaussian Mixture
 =====================================
@@ -298,43 +296,41 @@ from the two resulting mixtures.
 **Pros and cons of variational inference with BayesianGaussianMixture**
 |details-split|
 
-Pros
-.....
+.. topic:: Pros:
 
-:Automatic selection: when ``weight_concentration_prior`` is small enough and
-   ``n_components`` is larger than what is found necessary by the model, the
-   Variational Bayesian mixture model has a natural tendency to set some mixture
-   weights values close to zero. This makes it possible to let the model choose
-   a suitable number of effective components automatically. Only an upper bound
-   of this number needs to be provided. Note however that the "ideal" number of
-   active components is very application specific and is typically ill-defined
-   in a data exploration setting.
+    :Automatic selection: when ``weight_concentration_prior`` is small enough and
+      ``n_components`` is larger than what is found necessary by the model, the
+      Variational Bayesian mixture model has a natural tendency to set some mixture
+      weights values close to zero. This makes it possible to let the model choose
+      a suitable number of effective components automatically. Only an upper bound
+      of this number needs to be provided. Note however that the "ideal" number of
+      active components is very application specific and is typically ill-defined
+      in a data exploration setting.
 
-:Less sensitivity to the number of parameters: unlike finite models, which will
-   almost always use all components as much as they can, and hence will produce
-   wildly different solutions for different numbers of components, the
-   variational inference with a Dirichlet process prior
-   (``weight_concentration_prior_type='dirichlet_process'``) won't change much
-   with changes to the parameters, leading to more stability and less tuning.
+    :Less sensitivity to the number of parameters: unlike finite models, which will
+      almost always use all components as much as they can, and hence will produce
+      wildly different solutions for different numbers of components, the
+      variational inference with a Dirichlet process prior
+      (``weight_concentration_prior_type='dirichlet_process'``) won't change much
+      with changes to the parameters, leading to more stability and less tuning.
 
-:Regularization: due to the incorporation of prior information,
-   variational solutions have less pathological special cases than
-   expectation-maximization solutions.
+    :Regularization: due to the incorporation of prior information,
+      variational solutions have less pathological special cases than
+      expectation-maximization solutions.
 
 
-Cons
-.....
+.. topic:: Cons:
 
-:Speed: the extra parametrization necessary for variational inference makes
-   inference slower, although not by much.
+    :Speed: the extra parametrization necessary for variational inference makes
+      inference slower, although not by much.
 
-:Hyperparameters: this algorithm needs an extra hyperparameter
-   that might need experimental tuning via cross-validation.
+    :Hyperparameters: this algorithm needs an extra hyperparameter
+      that might need experimental tuning via cross-validation.
 
-:Bias: there are many implicit biases in the inference algorithms (and also in
-   the Dirichlet process if used), and whenever there is a mismatch between
-   these biases and the data it might be possible to fit better models using a
-   finite mixture.
+    :Bias: there are many implicit biases in the inference algorithms (and also in
+      the Dirichlet process if used), and whenever there is a mismatch between
+      these biases and the data it might be possible to fit better models using a
+      finite mixture.
 
 |details-end|
 
