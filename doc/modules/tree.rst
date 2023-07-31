@@ -27,8 +27,8 @@ Some advantages of decision trees are:
 
     - Requires little data preparation. Other techniques often require data
       normalization, dummy variables need to be created and blank values to
-      be removed. Note however that this module does not support missing
-      values.
+      be removed. Some tree and algorithm combinations support 
+      :ref:`missing values <tree_missing_value_support>`.
 
     - The cost of using the tree (i.e., predicting data) is logarithmic in the
       number of data points used to train the tree.
@@ -508,7 +508,7 @@ Log Loss or Entropy:
   leaf :math:`m` as their probability. Using the **Shannon entropy as tree node
   splitting criterion is equivalent to minimizing the log loss** (also known as
   cross-entropy and multinomial deviance) between the true labels :math:`y_i`
-  and the probalistic predictions :math:`T_k(x_i)` of the tree model :math:`T` for class :math:`k`.
+  and the probabilistic predictions :math:`T_k(x_i)` of the tree model :math:`T` for class :math:`k`.
 
   To see this, first recall that the log loss of a tree model :math:`T`
   computed on a dataset :math:`D` is defined as follows:
@@ -572,6 +572,65 @@ Mean Absolute Error:
 
 Note that it fits much slower than the MSE criterion.
 
+.. _tree_missing_value_support:
+
+Missing Values Support
+======================
+
+:class:`DecisionTreeClassifier` and :class:`DecisionTreeRegressor`
+have built-in support for missing values when `splitter='best'` and criterion is
+`'gini'`, `'entropy`', or `'log_loss'`, for classification or
+`'squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.
+
+For each potential threshold on the non-missing data, the splitter will evaluate
+the split with all the missing values going to the left node or the right node.
+
+Decisions are made as follows:
+
+    - By default when predicting, the samples with missing values are classified
+      with the class used in the split found during training::
+
+        >>> from sklearn.tree import DecisionTreeClassifier
+        >>> import numpy as np
+
+        >>> X = np.array([0, 1, 6, np.nan]).reshape(-1, 1)
+        >>> y = [0, 0, 1, 1]
+
+        >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+        >>> tree.predict(X)
+        array([0, 0, 1, 1])
+
+    - If the the criterion evaluation is the same for both nodes,
+      then the tie for missing value at predict time is broken by going to the
+      right node. The splitter also checks the split where all the missing
+      values go to one child and non-missing values go to the other::
+
+        >>> from sklearn.tree import DecisionTreeClassifier
+        >>> import numpy as np
+
+        >>> X = np.array([np.nan, -1, np.nan, 1]).reshape(-1, 1)
+        >>> y = [0, 0, 1, 1]
+
+        >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+
+        >>> X_test = np.array([np.nan]).reshape(-1, 1)
+        >>> tree.predict(X_test)
+        array([1])
+
+    - If no missing values are seen during training for a given feature, then during
+      prediction missing values are mapped to the child with the most samples::
+
+        >>> from sklearn.tree import DecisionTreeClassifier
+        >>> import numpy as np
+
+        >>> X = np.array([0, 1, 2, 3]).reshape(-1, 1)
+        >>> y = [0, 1, 1, 1]
+
+        >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+
+        >>> X_test = np.array([np.nan]).reshape(-1, 1)
+        >>> tree.predict(X_test)
+        array([1])
 
 .. _minimal_cost_complexity_pruning:
 

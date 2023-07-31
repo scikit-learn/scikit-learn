@@ -1,30 +1,34 @@
 """Testing for the VotingClassifier and VotingRegressor"""
 
-import pytest
 import re
-import numpy as np
 
-from sklearn.utils._testing import assert_almost_equal, assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.exceptions import NotFittedError
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import GaussianNB
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import VotingClassifier, VotingRegressor
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.model_selection import GridSearchCV
+import numpy as np
+import pytest
+
 from sklearn import datasets
-from sklearn.model_selection import cross_val_score, train_test_split
-from sklearn.datasets import make_multilabel_classification
-from sklearn.svm import SVC
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.datasets import make_multilabel_classification
 from sklearn.dummy import DummyRegressor
+from sklearn.ensemble import (
+    RandomForestClassifier,
+    RandomForestRegressor,
+    VotingClassifier,
+    VotingRegressor,
+)
+from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 # Load datasets
 iris = datasets.load_iris()
@@ -552,7 +556,6 @@ def test_none_estimator_with_weights(X, y, voter):
     ids=["VotingRegressor", "VotingClassifier"],
 )
 def test_n_features_in(est):
-
     X = [[1, 2], [3, 4], [5, 6]]
     y = [0, 1, 2]
 
@@ -581,7 +584,6 @@ def test_n_features_in(est):
     ],
 )
 def test_voting_verbose(estimator, capsys):
-
     X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
     y = np.array([1, 1, 2, 2])
 

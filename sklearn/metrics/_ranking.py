@@ -21,32 +21,33 @@ the lower the better.
 
 import warnings
 from functools import partial
-from numbers import Real, Integral
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
-from ..utils import assert_all_finite
-from ..utils import check_consistent_length
-from ..utils.validation import _check_sample_weight
-from ..utils import column_or_1d, check_array
-from ..utils.multiclass import type_of_target
-from ..utils.extmath import stable_cumsum
-from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import validate_params, StrOptions
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
-from ..utils._encode import _encode, _unique
-
-from ._base import (
-    _average_binary_score,
-    _average_multiclass_ovo_score,
-    _check_pos_label_consistency,
+from ..utils import (
+    assert_all_finite,
+    check_array,
+    check_consistent_length,
+    column_or_1d,
 )
+from ..utils._encode import _encode, _unique
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.extmath import stable_cumsum
+from ..utils.multiclass import type_of_target
+from ..utils.sparsefuncs import count_nonzero
+from ..utils.validation import _check_pos_label_consistency, _check_sample_weight
+from ._base import _average_binary_score, _average_multiclass_ovo_score
 
 
-@validate_params({"x": ["array-like"], "y": ["array-like"]})
+@validate_params(
+    {"x": ["array-like"], "y": ["array-like"]},
+    prefer_skip_nested_validation=True,
+)
 def auc(x, y):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule.
 
@@ -119,7 +120,8 @@ def auc(x, y):
         "average": [StrOptions({"micro", "samples", "weighted", "macro"}), None],
         "pos_label": [Real, str, "boolean"],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def average_precision_score(
     y_true, y_score, *, average="macro", pos_label=1, sample_weight=None
@@ -138,9 +140,6 @@ def average_precision_score(
     from computing the area under the precision-recall curve with the
     trapezoidal rule, which uses linear interpolation and can be too
     optimistic.
-
-    Note: this implementation is restricted to the binary classification task
-    or multilabel classification task.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
@@ -211,6 +210,17 @@ def average_precision_score(
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> average_precision_score(y_true, y_scores)
     0.83...
+    >>> y_true = np.array([0, 0, 1, 1, 2, 2])
+    >>> y_scores = np.array([
+    ...     [0.7, 0.2, 0.1],
+    ...     [0.4, 0.3, 0.3],
+    ...     [0.1, 0.8, 0.1],
+    ...     [0.2, 0.3, 0.5],
+    ...     [0.4, 0.4, 0.2],
+    ...     [0.1, 0.2, 0.7],
+    ... ])
+    >>> average_precision_score(y_true, y_scores)
+    0.77...
     """
 
     def _binary_uninterpolated_average_precision(
@@ -225,21 +235,32 @@ def average_precision_score(
         return -np.sum(np.diff(recall) * np.array(precision)[:-1])
 
     y_type = type_of_target(y_true, input_name="y_true")
-    if y_type == "multilabel-indicator" and pos_label != 1:
-        raise ValueError(
-            "Parameter pos_label is fixed to 1 for "
-            "multilabel-indicator y_true. Do not set "
-            "pos_label or set pos_label to 1."
-        )
-    elif y_type == "binary":
-        # Convert to Python primitive type to avoid NumPy type / Python str
-        # comparison. See https://github.com/numpy/numpy/issues/6784
-        present_labels = np.unique(y_true).tolist()
+
+    # Convert to Python primitive type to avoid NumPy type / Python str
+    # comparison. See https://github.com/numpy/numpy/issues/6784
+    present_labels = np.unique(y_true).tolist()
+
+    if y_type == "binary":
         if len(present_labels) == 2 and pos_label not in present_labels:
             raise ValueError(
                 f"pos_label={pos_label} is not a valid label. It should be "
                 f"one of {present_labels}"
             )
+
+    elif y_type == "multilabel-indicator" and pos_label != 1:
+        raise ValueError(
+            "Parameter pos_label is fixed to 1 for multilabel-indicator y_true. "
+            "Do not set pos_label or set pos_label to 1."
+        )
+
+    elif y_type == "multiclass":
+        if pos_label != 1:
+            raise ValueError(
+                "Parameter pos_label is fixed to 1 for multiclass y_true. "
+                "Do not set pos_label or set pos_label to 1."
+            )
+        y_true = label_binarize(y_true, classes=present_labels)
+
     average_precision = partial(
         _binary_uninterpolated_average_precision, pos_label=pos_label
     )
@@ -252,9 +273,10 @@ def average_precision_score(
     {
         "y_true": ["array-like"],
         "y_score": ["array-like"],
-        "pos_label": [Integral, str, None],
+        "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     """Compute error rates for different probability thresholds.
@@ -278,7 +300,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
-    pos_label : int or str, default=None
+    pos_label : int, float, bool or str, default=None
         The label of the positive class.
         When ``pos_label=None``, if `y_true` is in {-1, 1} or {0, 1},
         ``pos_label`` is set to 1, otherwise an error will be raised.
@@ -291,7 +313,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     fpr : ndarray of shape (n_thresholds,)
         False positive rate (FPR) such that element i is the false positive
         rate of predictions with score >= thresholds[i]. This is occasionally
-        referred to as false acceptance propability or fall-out.
+        referred to as false acceptance probability or fall-out.
 
     fnr : ndarray of shape (n_thresholds,)
         False negative rate (FNR) such that element i is the false negative
@@ -382,6 +404,18 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "average": [StrOptions({"micro", "macro", "samples", "weighted"}), None],
+        "sample_weight": ["array-like", None],
+        "max_fpr": [Interval(Real, 0.0, 1, closed="right"), None],
+        "multi_class": [StrOptions({"raise", "ovr", "ovo"})],
+        "labels": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def roc_auc_score(
     y_true,
     y_score,
@@ -440,7 +474,7 @@ def roc_auc_score(
         Otherwise, this determines the type of averaging performed on the data.
         Note: multiclass ROC AUC currently only handles the 'macro' and
         'weighted' averages. For multiclass targets, `average=None` is only
-        implemented for `multi_class='ovo'` and `average='micro'` is only
+        implemented for `multi_class='ovr'` and `average='micro'` is only
         implemented for `multi_class='ovr'`.
 
         ``'micro'``:
@@ -814,7 +848,19 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     return fps, tps, y_score[threshold_idxs]
 
 
-def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight=None):
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "probas_pred": ["array-like"],
+        "pos_label": [Real, str, "boolean", None],
+        "sample_weight": ["array-like", None],
+        "drop_intermediate": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
+def precision_recall_curve(
+    y_true, probas_pred, *, pos_label=None, sample_weight=None, drop_intermediate=False
+):
     """Compute precision-recall pairs for different probability thresholds.
 
     Note: this implementation is restricted to the binary classification task.
@@ -839,22 +885,29 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples,)
+    y_true : array-like of shape (n_samples,)
         True binary labels. If labels are not either {-1, 1} or {0, 1}, then
         pos_label should be explicitly given.
 
-    probas_pred : ndarray of shape (n_samples,)
+    probas_pred : array-like of shape (n_samples,)
         Target scores, can either be probability estimates of the positive
         class, or non-thresholded measure of decisions (as returned by
         `decision_function` on some classifiers).
 
-    pos_label : int or str, default=None
+    pos_label : int, float, bool or str, default=None
         The label of the positive class.
         When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
         ``pos_label`` is set to 1, otherwise an error will be raised.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+    drop_intermediate : bool, default=False
+        Whether to drop some suboptimal thresholds which would not appear
+        on a plotted precision-recall curve. This is useful in order to create
+        lighter precision-recall curves.
+
+        .. versionadded:: 1.3
 
     Returns
     -------
@@ -899,6 +952,21 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
         y_true, probas_pred, pos_label=pos_label, sample_weight=sample_weight
     )
 
+    if drop_intermediate and len(fps) > 2:
+        # Drop thresholds corresponding to points where true positives (tps)
+        # do not change from the previous or subsequent point. This will keep
+        # only the first and last point for each tps value. All points
+        # with the same tps value have the same recall and thus x coordinate.
+        # They appear as a vertical line on the plot.
+        optimal_idxs = np.where(
+            np.concatenate(
+                [[True], np.logical_or(np.diff(tps[:-1]), np.diff(tps[1:])), [True]]
+            )
+        )[0]
+        fps = fps[optimal_idxs]
+        tps = tps[optimal_idxs]
+        thresholds = thresholds[optimal_idxs]
+
     ps = tps + fps
     # Initialize the result array with zeros to make sure that precision[ps == 0]
     # does not contain uninitialized values.
@@ -928,7 +996,8 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
         "drop_intermediate": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def roc_curve(
     y_true, y_score, *, pos_label=None, sample_weight=None, drop_intermediate=True
@@ -976,10 +1045,10 @@ def roc_curve(
         Increasing true positive rates such that element `i` is the true
         positive rate of predictions with score >= `thresholds[i]`.
 
-    thresholds : ndarray of shape = (n_thresholds,)
+    thresholds : ndarray of shape (n_thresholds,)
         Decreasing thresholds on the decision function used to compute
         fpr and tpr. `thresholds[0]` represents no instances being predicted
-        and is arbitrarily set to `max(y_score) + 1`.
+        and is arbitrarily set to `np.inf`.
 
     See Also
     --------
@@ -995,6 +1064,10 @@ def roc_curve(
     Since the thresholds are sorted from low to high values, they
     are reversed upon returning them to ensure they correspond to both ``fpr``
     and ``tpr``, which are sorted in reversed order during their calculation.
+
+    An arbitrary threshold is added for the case `tpr=0` and `fpr=0` to
+    ensure that the curve starts at `(0, 0)`. This threshold corresponds to the
+    `np.inf`.
 
     References
     ----------
@@ -1016,7 +1089,7 @@ def roc_curve(
     >>> tpr
     array([0. , 0.5, 0.5, 1. , 1. ])
     >>> thresholds
-    array([1.8 , 0.8 , 0.4 , 0.35, 0.1 ])
+    array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
     """
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
@@ -1043,7 +1116,8 @@ def roc_curve(
     # to make sure that the curve starts at (0, 0)
     tps = np.r_[0, tps]
     fps = np.r_[0, fps]
-    thresholds = np.r_[thresholds[0] + 1, thresholds]
+    # get dtype of `y_score` even if it is an array-like
+    thresholds = np.r_[np.inf, thresholds]
 
     if fps[-1] <= 0:
         warnings.warn(
@@ -1066,6 +1140,14 @@ def roc_curve(
     return fpr, tpr, thresholds
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_score": ["array-like"],
+        "sample_weight": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None):
     """Compute ranking-based average precision.
 
@@ -1083,10 +1165,10 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
 
     Parameters
     ----------
-    y_true : {ndarray, sparse matrix} of shape (n_samples, n_labels)
+    y_true : {array-like, sparse matrix} of shape (n_samples, n_labels)
         True binary labels in binary indicator format.
 
-    y_score : ndarray of shape (n_samples, n_labels)
+    y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
@@ -1157,6 +1239,14 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     return out
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "sample_weight": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def coverage_error(y_true, y_score, *, sample_weight=None):
     """Coverage error measure.
 
@@ -1175,10 +1265,10 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples, n_labels)
+    y_true : array-like of shape (n_samples, n_labels)
         True binary labels in binary indicator format.
 
-    y_score : ndarray of shape (n_samples, n_labels)
+    y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
@@ -1216,6 +1306,14 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     return np.average(coverage, weights=sample_weight)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_score": ["array-like"],
+        "sample_weight": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     """Compute Ranking loss measure.
 
@@ -1234,10 +1332,10 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
 
     Parameters
     ----------
-    y_true : {ndarray, sparse matrix} of shape (n_samples, n_labels)
+    y_true : {array-like, sparse matrix} of shape (n_samples, n_labels)
         True binary labels in binary indicator format.
 
-    y_score : ndarray of shape (n_samples, n_labels)
+    y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
@@ -1423,6 +1521,17 @@ def _check_dcg_target_type(y_true):
         )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "k": [Interval(Integral, 1, None, closed="left"), None],
+        "log_base": [Interval(Real, 0.0, None, closed="neither")],
+        "sample_weight": ["array-like", None],
+        "ignore_ties": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def dcg_score(
     y_true, y_score, *, k=None, log_base=2, sample_weight=None, ignore_ties=False
 ):
@@ -1439,11 +1548,11 @@ def dcg_score(
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples, n_labels)
+    y_true : array-like of shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
         to be ranked.
 
-    y_score : ndarray of shape (n_samples, n_labels)
+    y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
@@ -1456,7 +1565,7 @@ def dcg_score(
         Base of the logarithm used for the discount. A low value means a
         sharper discount (top results are more important).
 
-    sample_weight : ndarray of shape (n_samples,), default=None
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights. If `None`, all samples are given the same weight.
 
     ignore_ties : bool, default=False
@@ -1581,6 +1690,16 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     return gain
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "k": [Interval(Integral, 1, None, closed="left"), None],
+        "sample_weight": ["array-like", None],
+        "ignore_ties": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False):
     """Compute Normalized Discounted Cumulative Gain.
 
@@ -1594,7 +1713,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples, n_labels)
+    y_true : array-like of shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
         to be ranked. Negative values in `y_true` may result in an output
         that is not between 0 and 1.
@@ -1602,7 +1721,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         .. versionchanged:: 1.2
             These negative values are deprecated, and will raise an error in v1.4.
 
-    y_score : ndarray of shape (n_samples, n_labels)
+    y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
@@ -1611,7 +1730,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         Only consider the highest k scores in the ranking. If `None`, use all
         outputs.
 
-    sample_weight : ndarray of shape (n_samples,), default=None
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights. If `None`, all samples are given the same weight.
 
     ignore_ties : bool, default=False
@@ -1685,15 +1804,34 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     if y_true.min() < 0:
         # TODO(1.4): Replace warning w/ ValueError
         warnings.warn(
-            "ndcg_score should not be used on negative y_true values. ndcg_score will"
-            " raise a ValueError on negative y_true values starting from version 1.4.",
+            (
+                "ndcg_score should not be used on negative y_true values. ndcg_score"
+                " will raise a ValueError on negative y_true values starting from"
+                " version 1.4."
+            ),
             FutureWarning,
+        )
+    if y_true.ndim > 1 and y_true.shape[1] <= 1:
+        raise ValueError(
+            "Computing NDCG is only meaningful when there is more than 1 document. "
+            f"Got {y_true.shape[1]} instead."
         )
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
     return np.average(gain, weights=sample_weight)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "k": [Interval(Integral, 1, None, closed="left")],
+        "normalize": ["boolean"],
+        "sample_weight": ["array-like", None],
+        "labels": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def top_k_accuracy_score(
     y_true, y_score, *, k=2, normalize=True, sample_weight=None, labels=None
 ):
@@ -1829,8 +1967,10 @@ def top_k_accuracy_score(
 
     if k >= n_classes:
         warnings.warn(
-            f"'k' ({k}) greater than or equal to 'n_classes' ({n_classes}) "
-            "will result in a perfect score and is therefore meaningless.",
+            (
+                f"'k' ({k}) greater than or equal to 'n_classes' ({n_classes}) "
+                "will result in a perfect score and is therefore meaningless."
+            ),
             UndefinedMetricWarning,
         )
 

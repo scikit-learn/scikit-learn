@@ -2,27 +2,30 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    =
+SPHINXOPTS    = -T
 SPHINXBUILD  ?= sphinx-build
 PAPER         =
 BUILDDIR      = _build
-
-# Disable multiple jobs on OSX
-ifeq ($(shell uname), Darwin)
-	SPHINX_NUMJOBS ?= 1
-else
-	SPHINX_NUMJOBS ?= auto
-endif
 
 ifneq ($(EXAMPLES_PATTERN),)
     EXAMPLES_PATTERN_OPTS := -D sphinx_gallery_conf.filename_pattern="$(EXAMPLES_PATTERN)"
 endif
 
+ifeq ($(CI), true)
+    # On CircleCI using -j2 does not seem to speed up the html-noplot build
+    SPHINX_NUMJOBS_NOPLOT_DEFAULT=1
+else ifeq ($(shell uname), Darwin)
+    # Avoid stalling issues on MacOS
+    SPHINX_NUMJOBS_NOPLOT_DEFAULT=1
+else
+    SPHINX_NUMJOBS_NOPLOT_DEFAULT=auto
+endif
+
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -T -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS)\
-    -j$(SPHINX_NUMJOBS) $(EXAMPLES_PATTERN_OPTS) .
+ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS)\
+    $(EXAMPLES_PATTERN_OPTS) .
 
 
 .PHONY: help clean html dirhtml ziphtml pickle json latex latexpdf changes linkcheck doctest optipng
@@ -48,17 +51,27 @@ clean:
 	-rm -rf generated/*
 	-rm -rf modules/generated/
 
+# Default to SPHINX_NUMJOBS=1 for full documentation build. Using
+# SPHINX_NUMJOBS!=1 may actually slow down the build, or cause weird issues in
+# the CI (job stalling or EOFError), see
+# https://github.com/scikit-learn/scikit-learn/pull/25836 or
+# https://github.com/scikit-learn/scikit-learn/pull/25809
+html: SPHINX_NUMJOBS ?= 1
 html:
 	# These two lines make the build a bit more lengthy, and the
 	# the embedding of images more robust
 	rm -rf $(BUILDDIR)/html/_images
 	#rm -rf _build/doctrees/
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html/stable
+	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) -j$(SPHINX_NUMJOBS) $(BUILDDIR)/html/stable
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html/stable"
 
+# Default to SPHINX_NUMJOBS=auto (except on MacOS and CI) since this makes
+# html-noplot build faster
+html-noplot: SPHINX_NUMJOBS ?= $(SPHINX_NUMJOBS_NOPLOT_DEFAULT)
 html-noplot:
-	$(SPHINXBUILD) -D plot_gallery=0 -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html/stable
+	$(SPHINXBUILD) -D plot_gallery=0 -b html $(ALLSPHINXOPTS) -j$(SPHINX_NUMJOBS) \
+    $(BUILDDIR)/html/stable
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html/stable."
 

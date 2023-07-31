@@ -66,10 +66,8 @@ it takes a variable number of estimators and returns a pipeline,
 filling in the names automatically::
 
     >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.naive_bayes import MultinomialNB
-    >>> from sklearn.preprocessing import Binarizer
-    >>> make_pipeline(Binarizer(), MultinomialNB())
-    Pipeline(steps=[('binarizer', Binarizer()), ('multinomialnb', MultinomialNB())])
+    >>> make_pipeline(PCA(), SVC())
+    Pipeline(steps=[('pca', PCA()), ('svc', SVC())])
 
 Accessing steps
 ...............
@@ -198,7 +196,7 @@ after calling ``fit``.
 This feature is used to avoid computing the fit transformers within a pipeline
 if the parameters and input data are identical. A typical example is the case of
 a grid search in which the transformers can be fitted only once and reused for
-each configuration.
+each configuration. The last step will never be cached, even if it is a transformer.
 
 The parameter ``memory`` is needed in order to cache the transformers.
 ``memory`` can be either a string containing the directory where to cache the
@@ -238,9 +236,9 @@ object::
    Enabling caching triggers a clone of the transformers before fitting.
    Therefore, the transformer instance given to the pipeline cannot be
    inspected directly.
-   In following example, accessing the :class:`PCA` instance ``pca2``
-   will raise an ``AttributeError`` since ``pca2`` will be an unfitted
-   transformer.
+   In following example, accessing the :class:`~sklearn.decomposition.PCA`
+   instance ``pca2`` will raise an ``AttributeError`` since ``pca2`` will be an
+   unfitted transformer.
    Instead, use the attribute ``named_steps`` to inspect estimators within
    the pipeline::
 

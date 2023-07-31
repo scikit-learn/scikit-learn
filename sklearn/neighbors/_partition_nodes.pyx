@@ -63,12 +63,12 @@ cdef extern from *:
 
 
 cdef int partition_node_indices(
-        DTYPE_t *data,
-        ITYPE_t *node_indices,
-        ITYPE_t split_dim,
-        ITYPE_t split_index,
-        ITYPE_t n_features,
-        ITYPE_t n_points) except -1:
+        float64_t *data,
+        intp_t *node_indices,
+        intp_t split_dim,
+        intp_t split_index,
+        intp_t n_features,
+        intp_t n_points) except -1:
     """Partition points in the node into two equal-sized groups.
 
     Upon return, the values in node_indices will be rearranged such that

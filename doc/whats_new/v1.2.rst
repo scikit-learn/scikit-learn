@@ -7,25 +7,63 @@
 Version 1.2.2
 =============
 
-**In development**
-
-The following estimators and functions, when fit with the same data and
-parameters, may produce different models from the previous version. This often
-occurs due to changes in the modelling logic (bug fixes or enhancements), or in
-random sampling procedures.
-
-Changed models
---------------
-
--
-
-Changes impacting all modules
------------------------------
-
--
+**March 2023**
 
 Changelog
 ---------
+
+:mod:`sklearn.base`
+...................
+
+- |Fix| When `set_output(transform="pandas")`, :class:`base.TransformerMixin` maintains
+  the index if the :term:`transform` output is already a DataFrame. :pr:`25747` by
+  `Thomas Fan`_.
+
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| A deprecation warning is raised when using the `base_estimator__` prefix to
+  set parameters of the estimator used in :class:`calibration.CalibratedClassifierCV`.
+  :pr:`25477` by :user:`Tim Head <betatim>`.
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.BisectingKMeans`, preventing `fit` to randomly
+  fail due to a permutation of the labels when running multiple inits.
+  :pr:`25563` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixes a bug in :class:`compose.ColumnTransformer` which now supports
+  empty selection of columns when `set_output(transform="pandas")`.
+  :pr:`25570` by `Thomas Fan`_.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| A deprecation warning is raised when using the `base_estimator__` prefix
+  to set parameters of the estimator used in :class:`ensemble.AdaBoostClassifier`,
+  :class:`ensemble.AdaBoostRegressor`, :class:`ensemble.BaggingClassifier`,
+  and :class:`ensemble.BaggingRegressor`.
+  :pr:`25477` by :user:`Tim Head <betatim>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| Fixed a regression where a negative `tol` would not be accepted any more by
+  :class:`feature_selection.SequentialFeatureSelector`.
+  :pr:`25664` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| Raise a more informative error message in :func:`inspection.partial_dependence`
+  when dealing with mixed data type categories that cannot be sorted by
+  :func:`numpy.unique`. This problem usually happen when categories are `str` and
+  missing values are present using `np.nan`.
+  :pr:`25774` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.isotonic`
 .......................
@@ -34,6 +72,36 @@ Changelog
   :meth:`isotonic.IsotonicRegression.predict` would return a pandas DataFrame
   when the global configuration sets `transform_output="pandas"`.
   :pr:`25500` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| `preprocessing.OneHotEncoder.drop_idx_` now properly
+  references the dropped category in the `categories_` attribute
+  when there are infrequent categories. :pr:`25589` by `Thomas Fan`_.
+
+- |Fix| :class:`preprocessing.OrdinalEncoder` now correctly supports
+  `encoded_missing_value` or `unknown_value` set to a categories' cardinality
+  when there is missing values in the training data. :pr:`25704` by `Thomas Fan`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed a regression in :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier` and
+  :class:`tree.ExtraTreeRegressor` where an error was no longer raised in version
+  1.2 when `min_sample_split=1`.
+  :pr:`25744` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Fixes a bug in :func:`utils.check_array` which now correctly performs
+  non-finite validation with the Array API specification. :pr:`25619` by
+  `Thomas Fan`_.
+
+- |Fix| :func:`utils.multiclass.type_of_target` can identify pandas
+  nullable data types as classification targets. :pr:`25638` by `Thomas Fan`_.
 
 .. _changes_1_2_1:
 
@@ -50,9 +118,10 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- |Fix| The fitted components in :class:`MiniBatchDictionaryLearning` might differ. The
-  online updates of the sufficient statistics now properly take the sizes of the batches
-  into account.
+- |Fix| The fitted components in
+  :class:`decomposition.MiniBatchDictionaryLearning` might differ. The online
+  updates of the sufficient statistics now properly take the sizes of the
+  batches into account.
   :pr:`25354` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |Fix| The `categories_` attribute of :class:`preprocessing.OneHotEncoder` now
@@ -70,7 +139,7 @@ Changes impacting all modules
   :pr:`25129` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |Fix| Fix a bug where the current configuration was ignored in estimators using
-  `n_jobs > 1`. This bug was triggered for tasks dispatched by the auxillary
+  `n_jobs > 1`. This bug was triggered for tasks dispatched by the auxiliary
   thread of `joblib` as :func:`sklearn.get_config` used to access an empty thread
   local configuration instead of the configuration visible from the thread where
   `joblib.Parallel` was first called.
@@ -92,10 +161,14 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
-- |Fix| Fix an inconsistency in :func:`datasets.fetch_openml` between liac-arff
+- |Fix| Fixes an inconsistency in :func:`datasets.fetch_openml` between liac-arff
   and pandas parser when a leading space is introduced after the delimiter.
   The ARFF specs requires to ignore the leading space.
   :pr:`25312` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Fixes a bug in :func:`datasets.fetch_openml` when using `parser="pandas"`
+  where single quote and backslash escape characters were not properly handled.
+  :pr:`25511` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -153,6 +226,10 @@ Changelog
   no longer raise warnings when fitting data with feature names.
   :pr:`24873` by :user:`Tim Head <betatim>`.
 
+- |Fix| Improves error message in :class:`neural_network.MLPClassifier` and
+  :class:`neural_network.MLPRegressor`, when `early_stopping=True` and
+  `partial_fit` is called. :pr:`25694` by `Thomas Fan`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -179,7 +256,7 @@ Changelog
   boolean. The type is maintained, instead of converting to `float64.`
   :pr:`25147` by :user:`Tim Head <betatim>`.
 
-- |API| :func:`utils.fixes.delayed` is deprecated in 1.2.1 and will be removed
+- |API| `utils.fixes.delayed` is deprecated in 1.2.1 and will be removed
   in 1.5. Instead, import :func:`utils.parallel.delayed` and use it in
   conjunction with the newly introduced :func:`utils.parallel.Parallel`
   to ensure proper propagation of the scikit-learn configuration to
@@ -218,7 +295,7 @@ random sampling procedures.
   to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
   :pr:`23619` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |Enhancement| The default value for `eps` :func:`metrics.logloss` has changed
+- |Enhancement| The default value for `eps` :func:`metrics.log_loss` has changed
   from `1e-15` to `"auto"`. `"auto"` sets `eps` to `np.finfo(y_pred.dtype).eps`.
   :pr:`24354` by :user:`Safiuddin Khaja <Safikh>` and :user:`gsiisg <gsiisg>`.
 
@@ -230,7 +307,7 @@ random sampling procedures.
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
 - |Fix| The condition for early stopping has now been changed in
-  :func:`linear_model._sgd_fast._plain_sgd` which is used by
+  `linear_model._sgd_fast._plain_sgd` which is used by
   :class:`linear_model.SGDRegressor` and :class:`linear_model.SGDClassifier`. The old
   condition did not disambiguate between
   training and validation set and had an effect of overscaling the error tolerance.
@@ -243,7 +320,7 @@ random sampling procedures.
 
 - |API| The default value of `tol` was changed from `1e-3` to `1e-4` for
   :func:`linear_model.ridge_regression`, :class:`linear_model.Ridge` and
-  :class:`linear_model.`RidgeClassifier`.
+  :class:`linear_model.RidgeClassifier`.
   :pr:`24465` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 Changes impacting all modules
@@ -282,8 +359,8 @@ Changes impacting all modules
   - :class:`sklearn.semi_supervised.LabelPropagation`
   - :class:`sklearn.semi_supervised.LabelSpreading`
 
-  For instance :class:`sklearn.neighbors.NearestNeighbors.kneighbors` and
-  :class:`sklearn.neighbors.NearestNeighbors.radius_neighbors`
+  For instance :meth:`sklearn.neighbors.NearestNeighbors.kneighbors` and
+  :meth:`sklearn.neighbors.NearestNeighbors.radius_neighbors`
   can respectively be up to ×20 and ×5 faster than previously on a laptop.
 
   Moreover, implementations of those two algorithms are now suitable
@@ -383,7 +460,7 @@ Changelog
   :pr:`23038` by :user:`Meekail Zain <micky774>`.
 
 - |Enhancement| :class:`cluster.SpectralClustering` and
-  :func:`cluster.spectral_clustering` now propogates the `eigen_tol` parameter
+  :func:`cluster.spectral_clustering` now propagates the `eigen_tol` parameter
   to all choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
   and begins deprecation to change the default from `eigen_tol=0` to
   `eigen_tol="auto"` in version 1.3.
@@ -679,7 +756,7 @@ Changelog
 
 - |Enhancement| Adds `eigen_tol` parameter to
   :class:`manifold.SpectralEmbedding`. Both :func:`manifold.spectral_embedding`
-  and :class:`manifold.SpectralEmbedding` now propogate `eigen_tol` to all
+  and :class:`manifold.SpectralEmbedding` now propagate `eigen_tol` to all
   choices of `eigen_solver`. Includes a new option `eigen_tol="auto"`
   and begins deprecation to change the default from `eigen_tol=0` to
   `eigen_tol="auto"` in version 1.3.
@@ -692,7 +769,7 @@ Changelog
   :class:`manifold.MDS` and :func:`manifold.smacof`. Note that
   `normalized_stress` is only valid for non-metric MDS, therefore the `"auto"`
   option enables `normalized_stress` when `metric=False` and disables it when
-  `metric=True`. `"auto"` will become the default value foor `normalized_stress`
+  `metric=True`. `"auto"` will become the default value for `normalized_stress`
   in version 1.4.
   :pr:`23834` by :user:`Meekail Zain <micky774>`
 
@@ -720,7 +797,7 @@ Changelog
   (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
   :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
 
-- |Enhancement| Adds an `"auto"` option to `eps` in :func:`metrics.logloss`.
+- |Enhancement| Adds an `"auto"` option to `eps` in :func:`metrics.log_loss`.
   This option will automatically set the `eps` value depending on the data
   type of `y_pred`. In addition, the default value of `eps` is changed from
   `1e-15` to the new `"auto"` option.
@@ -811,7 +888,7 @@ Changelog
   :pr:`10468` by :user:`Ruben <icfly2>` and :pr:`22993` by
   :user:`Jovan Stojanovic <jovan-stojanovic>`.
 
-- |Enhancement| :class:`neighbors.NeighborsBase` now accepts
+- |Enhancement| `neighbors.NeighborsBase` now accepts
   Minkowski semi-metric (i.e. when :math:`0 < p < 1` for
   `metric="minkowski"`) for `algorithm="auto"` or `algorithm="brute"`.
   :pr:`24750` by :user:`Rudresh Veerkhare <RudreshVeerkhare>`
@@ -894,8 +971,8 @@ Changelog
 - |Enhancement| :func:`utils.validation.column_or_1d` now accepts a `dtype`
   parameter to specific `y`'s dtype. :pr:`22629` by `Thomas Fan`_.
 
-- |Enhancement| :func:`utils.extmath.cartesian` now accepts arrays with different
-  `dtype` and will cast the ouptut to the most permissive `dtype`.
+- |Enhancement| `utils.extmath.cartesian` now accepts arrays with different
+  `dtype` and will cast the output to the most permissive `dtype`.
   :pr:`25067` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
@@ -921,57 +998,69 @@ Code and Documentation Contributors
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.1, including:
 
-2357juan, 3lLobo, Adam J. Stewart, Adam Li, Aditya Anulekh, Adrin Jalali, Aiko,
-Akshita Prasanth, Alessandro Miola, Alex, Alexandr, Alexandre Perez-Lebel, aman
-kumar, Amit Bera, Andreas Grivas, Andreas Mueller, András Simon,
-angela-maennel, Aniket Shirsat, Antony Lee, anupam, Apostolos Tsetoglou,
-Aravindh R, Artur Hermano, Arturo Amor, Ashwin Mathur, avm19, b0rxington, Badr
+2357juan, 3lLobo, Adam J. Stewart, Adam Kania, Adam Li, Aditya Anulekh, Admir
+Demiraj, adoublet, Adrin Jalali, Ahmedbgh, Aiko, Akshita Prasanth, Ala-Na,
+Alessandro Miola, Alex, Alexandr, Alexandre Perez-Lebel, Alex Buzenet, Ali H.
+El-Kassas, aman kumar, Amit Bera, András Simon, Andreas Grivas, Andreas
+Mueller, Andrew Wang, angela-maennel, Aniket Shirsat, Anthony22-dev, Antony
+Lee, anupam, Apostolos Tsetoglou, Aravindh R, Artur Hermano, Arturo Amor,
+as-90, ashah002, Ashwin Mathur, avm19, Azaria Gebremichael, b0rxington, Badr
 MOUFAD, Bardiya Ak, Bartłomiej Gońda, BdeGraaff, Benjamin Bossan, Benjamin
 Carter, berkecanrizai, Bernd Fritzke, Bhoomika, Biswaroop Mitra, Brandon TH
-Chen, Brett Cannon, Bsh, carlo, Carlos Ramos Carreño, ceh, chalulu, Charles
-Zablit, Chiara Marmo, Christian Lorentzen, Christian Ritter, christianwaldmann,
-Christine P. Chai, Claudio Salvatore Arcidiacono, Clément Verrier,
-crispinlogan, Da-Lan, DanGonite57, Daniela Fernandes, DanielGaerber, darioka,
-Darren Nguyen, David Gilbertson, David Poznik, david-cortes, Denis, Dev Khant,
-Dhanshree Arora, Diadochokinetic, diederikwp, Dimitri Papadopoulos Orfanos,
-drewhogg, Duarte OC, Dwight Lindquist, Eden Brekke, Edoardo Abati, Eleanore
-Denies, EliaSchiavon, ErmolaevPA, Fabrizio Damicelli, fcharras, Flynn,
+Chen, Brett Cannon, Bsh, cache-missing, carlo, Carlos Ramos Carreño, ceh,
+chalulu, Changyao Chen, Charles Zablit, Chiara Marmo, Christian Lorentzen,
+Christian Ritter, Christian Veenhuis, christianwaldmann, Christine P. Chai,
+Claudio Salvatore Arcidiacono, Clément Verrier, crispinlogan, Da-Lan,
+DanGonite57, Daniela Fernandes, DanielGaerber, darioka, Darren Nguyen,
+davidblnc, david-cortes, David Gilbertson, David Poznik, Dayne, Dea María
+Léon, Denis, Dev Khant, Dhanshree Arora, Diadochokinetic, diederikwp, Dimitri
+Papadopoulos Orfanos, Dimitris Litsidis, drewhogg, Duarte OC, Dwight Lindquist,
+Eden Brekke, Edern, Edoardo Abati, Eleanore Denies, EliaSchiavon, Emir,
+ErmolaevPA, Fabrizio Damicelli, fcharras, Felipe Siola, Flynn,
 francesco-tuveri, Franck Charras, ftorres16, Gael Varoquaux, Geevarghese
-George, GeorgiaMayDay, Gianr Lazz, Gleb Levitski, Glòria Macià Muñoz, Guillaume
-Lemaitre, Guillem García Subies, Guitared, gunesbayir, Hansin Ahuja, Hao Chun
-Chang, Harsh Agrawal, harshit5674, hasan-yaman, Henry Sorsky, henrymooresc,
-Hristo Vrigazov, htsedebenham, humahn, i-aki-y, Ido M, Iglesys, Iliya Zhechev,
-Irene, Ivan Sedykh, ivanllt, jakirkham, Jason G, Jiten Sidhpura, jkarolczak,
-John Koumentis, John P, John Pangas, johnthagen, Jordan Fleming, Joshua Choo
-Yun Keat, Jovan Stojanovic, João David, Juan Carlos Alfaro Jiménez, Juan Felipe
-Arias, juanfe88, Julien Jerphanion, jygerardy, Jérémie du Boisberranger,
-Kanishk Sachdev, Kanissh, Kendall, Kenneth Prabakaran, Kento Nozawa, kernc,
-Kevin Roice, Kian Eliasi, Kilian Kluge, Kilian Lieret, Kirandevraj, Kraig,
-krishna kumar, krishna vamsi, Kshitij Kapadni, Kshitij Mathur, Lauren Burke,
-lingyi1110, Lisa Casino, Loic Esteve, Luciano Mantovani, Lucy Liu, Léonard
-Binet, m. bou, Maascha, Madhura Jayaratne, madinak, Maksym, Malte S. Kurz,
-Mansi Agrawal, Marco Edward Gorelli, Marco Wurps, Maren Westermann, Maria
-Telenczuk, martin-kokos, mathurinm, mauroantonioserrano, Maxi Marufo, Maxim
-Smolskiy, Maxwell, Meekail Zain, Mehgarg, mehmetcanakbay, Mia Bajić, Michael
-Flaks, Michael Hornstein, Michel de Ruiter, Michelle Paradis, Misa Ogura,
-Moritz Wilksch, mrastgoo, Naipawat Poolsawat, Naoise Holohan, Nass, Nathan
-Jacobi, Nguyễn Văn Diễn, Nihal Thukarama Rao, Nikita Jare, Nima Sarajpoor,
-nima10khodaveisi, nitinramvelraj, Nwanna-Joseph, Nymark Kho, o-holman, Olivier
-Grisel, Olle Lukowski, Omar Hassoun, Omar Salman, osman tamer, Oyindamola
-Olatunji, PAB, Pandata, Paulo Sergio  Soares, Petar Mlinarić, Peter Jansson,
-Peter Steinbach, Philipp Jung, Piet Brömmel, priyam kakati, puhuk, Rachel
-Freeland, Rachit Keerti Das, Rafal Wojdyla, Rahil Parikh, ram vikram singh,
+George, genvalen, GeorgiaMayDay, Gianr Lazz, Gleb Levitski, Glòria Macià
+Muñoz, Guillaume Lemaitre, Guillem García Subies, Guitared, gunesbayir,
+Haesun Park, Hansin Ahuja, Hao Chun Chang, Harsh Agrawal, harshit5674,
+hasan-yaman, henrymooresc, Henry Sorsky, Hristo Vrigazov, htsedebenham, humahn,
+i-aki-y, Ian Thompson, Ido M, Iglesys, Iliya Zhechev, Irene, ivanllt, Ivan
+Sedykh, Jack McIvor, jakirkham, JanFidor, Jason G, Jérémie du Boisberranger,
+Jiten Sidhpura, jkarolczak, João David, JohnathanPi, John Koumentis, John P,
+John Pangas, johnthagen, Jordan Fleming, Joshua Choo Yun Keat, Jovan
+Stojanovic, Juan Carlos Alfaro Jiménez, juanfe88, Juan Felipe Arias,
+JuliaSchoepp, Julien Jerphanion, jygerardy, ka00ri, Kanishk Sachdev, Kanissh,
+Kaushik Amar Das, Kendall, Kenneth Prabakaran, Kento Nozawa, kernc, Kevin
+Roice, Kian Eliasi, Kilian Kluge, Kilian Lieret, Kirandevraj, Kraig, krishna
+kumar, krishna vamsi, Kshitij Kapadni, Kshitij Mathur, Lauren Burke, Léonard
+Binet, lingyi1110, Lisa Casino, Logan Thomas, Loic Esteve, Luciano Mantovani,
+Lucy Liu, Maascha, Madhura Jayaratne, madinak, Maksym, Malte S. Kurz, Mansi
+Agrawal, Marco Edward Gorelli, Marco Wurps, Maren Westermann, Maria Telenczuk,
+Mario Kostelac, martin-kokos, Marvin Krawutschke, Masanori Kanazu, mathurinm,
+Matt Haberland, mauroantonioserrano, Max Halford, Maxi Marufo, maximeSaur,
+Maxim Smolskiy, Maxwell, m. bou, Meekail Zain, Mehgarg, mehmetcanakbay, Mia
+Bajić, Michael Flaks, Michael Hornstein, Michel de Ruiter, Michelle Paradis,
+Mikhail Iljin, Misa Ogura, Moritz Wilksch, mrastgoo, Naipawat Poolsawat, Naoise
+Holohan, Nass, Nathan Jacobi, Nawazish Alam, Nguyễn Văn Diễn, Nicola
+Fanelli, Nihal Thukarama Rao, Nikita Jare, nima10khodaveisi, Nima Sarajpoor,
+nitinramvelraj, NNLNR, npache, Nwanna-Joseph, Nymark Kho, o-holman, Olivier
+Grisel, Olle Lukowski, Omar Hassoun, Omar Salman, osman tamer, ouss1508,
+Oyindamola Olatunji, PAB, Pandata, partev, Paulo Sergio  Soares, Petar
+Mlinarić, Peter Jansson, Peter Steinbach, Philipp Jung, Piet Brömmel, Pooja
+M, Pooja Subramaniam, priyam kakati, puhuk, Rachel Freeland, Rachit Keerti Das,
+Rafal Wojdyla, Raghuveer Bhat, Rahil Parikh, Ralf Gommers, ram vikram singh,
 Ravi Makhija, Rehan Guha, Reshama Shaikh, Richard Klima, Rob Crockett, Robert
 Hommes, Robert Juergens, Robin Lenz, Rocco Meli, Roman4oo, Ross Barnowski,
 Rowan Mankoo, Rudresh Veerkhare, Rushil Desai, Sabri Monaf Sabri, Safikh,
 Safiuddin Khaja, Salahuddin, Sam Adam Day, Sandra Yojana Meneses, Sandro
-Ephrem, Sangam, SangamSwadik, SarahRemus, SavkoMax, Scott Gigante, Scott
-Gustafson, Sean Atukorala, sec65, SELEE, seljaks, Shane, shellyfung, Shinsuke
-Mori, Shoaib Khan, Shogo Hida, Shrankhla Srivastava, Shuangchi He, Simon,
-Srinath Kailasa, Stefanie Molin, stellalin7, Steve Schmerler, Steven Van
-Vaerenbergh, Stéphane Collot, Sven Stehle, the-syd-sre, TheDevPanda, Thomas
-Bonald, Thomas Germer, Thomas J. Fan, Ti-Ion, Tim Head, Timofei Kornev,
-toastedyeast, Tobias Pitters, Tom Dupré la Tour, Tom Mathews, Tom McTiernan,
-tspeng, Tyler Egashira, Valentin Laurent, Varun Jain, Vera Komeyer, Vicente
-Reyes-Puerta, Vincent M, Vishal, wattai, wchathura, WEN Hao, x110, Xiao Yuan,
-Xunius, yanhong-zhao-ef, Z Adil Khwaja
+Ephrem, Sangam, SangamSwadik, SANJAI_3, SarahRemus, Sashka Warner, SavkoMax,
+Scott Gigante, Scott Gustafson, Sean Atukorala, sec65, SELEE, seljaks, Shady el
+Gewily, Shane, shellyfung, Shinsuke Mori, Shiva chauhan, Shoaib Khan, Shogo
+Hida, Shrankhla Srivastava, Shuangchi He, Simon, sonnivs, Sortofamudkip,
+Srinath Kailasa, Stanislav (Stanley) Modrak, Stefanie Molin, stellalin7,
+Stéphane Collot, Steven Van Vaerenbergh, Steve Schmerler, Sven Stehle, Tabea
+Kossen, TheDevPanda, the-syd-sre, Thijs van Weezel, Thomas Bonald, Thomas
+Germer, Thomas J. Fan, Ti-Ion, Tim Head, Timofei Kornev, toastedyeast, Tobias
+Pitters, Tom Dupré la Tour, tomiock, Tom Mathews, Tom McTiernan, tspeng, Tyler
+Egashira, Valentin Laurent, Varun Jain, Vera Komeyer, Vicente Reyes-Puerta,
+Vinayak Mehta, Vincent M, Vishal, Vyom Pathak, wattai, wchathura, WEN Hao,
+William M, x110, Xiao Yuan, Xunius, yanhong-zhao-ef, Yusuf Raji, Z Adil Khwaja,
+zeeshan lone

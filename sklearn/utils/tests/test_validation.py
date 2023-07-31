@@ -1,64 +1,78 @@
 """Tests for input validation functions"""
 
 import numbers
-import warnings
 import re
-
-from tempfile import NamedTemporaryFile
+import warnings
 from itertools import product
 from operator import itemgetter
+from tempfile import NamedTemporaryFile
 
-import pytest
-from pytest import importorskip
 import numpy as np
+import pytest
 import scipy.sparse as sp
+from pytest import importorskip
 
-from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import SkipTest
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import _convert_container
-from sklearn.utils import as_float_array, check_array, check_symmetric
-from sklearn.utils import check_X_y
-from sklearn.utils import deprecated
-from sklearn.utils._mocking import MockDataFrame
-from sklearn.utils.fixes import parse_version
-from sklearn.utils.estimator_checks import _NotAnArray
-from sklearn.random_projection import _sparse_random_matrix
-from sklearn.linear_model import ARDRegression
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.svm import SVR
+import sklearn
+from sklearn._config import config_context
+from sklearn.base import BaseEstimator
 from sklearn.datasets import make_blobs
-from sklearn.utils import _safe_indexing
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
+from sklearn.linear_model import ARDRegression
+
+# TODO: add this estimator into the _mocking module in a further refactoring
+from sklearn.metrics.tests.test_score_objects import EstimatorWithFit
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.random_projection import _sparse_random_matrix
+from sklearn.svm import SVR
+from sklearn.utils import (
+    _safe_indexing,
+    as_float_array,
+    check_array,
+    check_symmetric,
+    check_X_y,
+    deprecated,
+)
+from sklearn.utils._mocking import (
+    MockDataFrame,
+    _MockEstimatorOnOffPrediction,
+)
+from sklearn.utils._testing import (
+    SkipTest,
+    TempMemmap,
+    _convert_container,
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    assert_array_equal,
+    assert_no_warnings,
+    ignore_warnings,
+    skip_if_array_api_compat_not_configured,
+)
+from sklearn.utils.estimator_checks import _NotAnArray
+from sklearn.utils.fixes import parse_version
 from sklearn.utils.validation import (
-    has_fit_parameter,
-    check_is_fitted,
-    check_consistent_length,
-    assert_all_finite,
-    check_memory,
-    check_non_negative,
-    _num_samples,
-    check_scalar,
+    FLOAT_DTYPES,
+    _allclose_dense_sparse,
+    _check_feature_names_in,
+    _check_method_params,
     _check_psd_eigenvalues,
+    _check_response_method,
+    _check_sample_weight,
     _check_y,
     _deprecate_positional_args,
-    _check_sample_weight,
-    _allclose_dense_sparse,
-    _num_features,
-    FLOAT_DTYPES,
     _get_feature_names,
-    _check_feature_names_in,
-    _check_fit_params,
+    _is_fitted,
+    _is_pandas_df,
+    _num_features,
+    _num_samples,
+    assert_all_finite,
+    check_consistent_length,
+    check_is_fitted,
+    check_memory,
+    check_non_negative,
+    check_scalar,
+    has_fit_parameter,
 )
-from sklearn.base import BaseEstimator
-import sklearn
-
-from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
-
-from sklearn.utils._testing import TempMemmap
 
 
 def test_as_float_array():
@@ -624,7 +638,7 @@ def test_check_array_accept_large_sparse_raise_exception(X_64bit):
     # When large sparse are not allowed
     msg = (
         "Only sparse matrices with 32-bit integer indices "
-        "are accepted. Got int64 indices."
+        "are accepted. Got int64 indices. Please do report"
     )
     with pytest.raises(ValueError, match=msg):
         check_array(X_64bit, accept_sparse=True, accept_large_sparse=False)
@@ -839,23 +853,32 @@ def test_check_is_fitted_attributes():
     msg = "not fitted"
     est = MyEstimator()
 
+    assert not _is_fitted(est, attributes=["a_", "b_"])
     with pytest.raises(NotFittedError, match=msg):
         check_is_fitted(est, attributes=["a_", "b_"])
+    assert not _is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
     with pytest.raises(NotFittedError, match=msg):
         check_is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
+    assert not _is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
     with pytest.raises(NotFittedError, match=msg):
         check_is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
 
     est.a_ = "a"
+    assert not _is_fitted(est, attributes=["a_", "b_"])
     with pytest.raises(NotFittedError, match=msg):
         check_is_fitted(est, attributes=["a_", "b_"])
+    assert not _is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
     with pytest.raises(NotFittedError, match=msg):
         check_is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
+    assert _is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
     check_is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
 
     est.b_ = "b"
+    assert _is_fitted(est, attributes=["a_", "b_"])
     check_is_fitted(est, attributes=["a_", "b_"])
+    assert _is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
     check_is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
+    assert _is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
     check_is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
 
 
@@ -1480,9 +1503,9 @@ def test_deprecate_positional_args_warns_for_class():
 
 
 @pytest.mark.parametrize("indices", [None, [1, 3]])
-def test_check_fit_params(indices):
+def test_check_method_params(indices):
     X = np.random.randn(4, 2)
-    fit_params = {
+    _params = {
         "list": [1, 2, 3, 4],
         "array": np.array([1, 2, 3, 4]),
         "sparse-col": sp.csc_matrix([1, 2, 3, 4]).T,
@@ -1491,16 +1514,16 @@ def test_check_fit_params(indices):
         "scalar-str": "xxx",
         "None": None,
     }
-    result = _check_fit_params(X, fit_params, indices)
+    result = _check_method_params(X, params=_params, indices=indices)
     indices_ = indices if indices is not None else list(range(X.shape[0]))
 
     for key in ["sparse-row", "scalar-int", "scalar-str", "None"]:
-        assert result[key] is fit_params[key]
+        assert result[key] is _params[key]
 
-    assert result["list"] == _safe_indexing(fit_params["list"], indices_)
-    assert_array_equal(result["array"], _safe_indexing(fit_params["array"], indices_))
+    assert result["list"] == _safe_indexing(_params["list"], indices_)
+    assert_array_equal(result["array"], _safe_indexing(_params["array"], indices_))
     assert_allclose_dense_sparse(
-        result["sparse-col"], _safe_indexing(fit_params["sparse-col"], indices_)
+        result["sparse-col"], _safe_indexing(_params["sparse-col"], indices_)
     )
 
 
@@ -1675,6 +1698,54 @@ def test_get_feature_names_pandas():
     assert_array_equal(feature_names, columns)
 
 
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
+)
+def test_get_feature_names_dataframe_protocol(constructor_name, minversion):
+    """Uses the dataframe exchange protocol to get feature names."""
+    data = [[1, 4, 2], [3, 3, 6]]
+    columns = ["col_0", "col_1", "col_2"]
+    df = _convert_container(
+        data, constructor_name, columns_name=columns, minversion=minversion
+    )
+    feature_names = _get_feature_names(df)
+
+    assert_array_equal(feature_names, columns)
+
+
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
+)
+def test_is_pandas_df_other_libraries(constructor_name, minversion):
+    df = _convert_container(
+        [[1, 4, 2], [3, 3, 6]],
+        constructor_name,
+        minversion=minversion,
+    )
+    if constructor_name in ("pyarrow", "polars"):
+        assert not _is_pandas_df(df)
+    else:
+        assert _is_pandas_df(df)
+
+
+def test_is_pandas_df():
+    """Check behavior of is_pandas_df when pandas is installed."""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame([[1, 2, 3]])
+    assert _is_pandas_df(df)
+    assert not _is_pandas_df(np.asarray([1, 2, 3]))
+    assert not _is_pandas_df(1)
+
+
+def test_is_pandas_df_pandas_not_installed(hide_available_pandas):
+    """Check _is_pandas_df when pandas is not installed."""
+
+    assert not _is_pandas_df(np.asarray([1, 2, 3]))
+    assert not _is_pandas_df(1)
+
+
 def test_get_feature_names_numpy():
     """Get feature names return None for numpy arrays."""
     X = np.array([[1, 2, 3], [4, 5, 6]])
@@ -1751,6 +1822,57 @@ def test_check_feature_names_in_pandas():
         est.get_feature_names_out(["x1", "x2", "x3"])
 
 
+def test_check_response_method_unknown_method():
+    """Check the error message when passing an unknown response method."""
+    err_msg = (
+        "RandomForestRegressor has none of the following attributes: unknown_method."
+    )
+    with pytest.raises(AttributeError, match=err_msg):
+        _check_response_method(RandomForestRegressor(), "unknown_method")
+
+
+@pytest.mark.parametrize(
+    "response_method", ["decision_function", "predict_proba", "predict"]
+)
+def test_check_response_method_not_supported_response_method(response_method):
+    """Check the error message when a response method is not supported by the
+    estimator."""
+    err_msg = (
+        f"EstimatorWithFit has none of the following attributes: {response_method}."
+    )
+    with pytest.raises(AttributeError, match=err_msg):
+        _check_response_method(EstimatorWithFit(), response_method)
+
+
+def test_check_response_method_list_str():
+    """Check that we can pass a list of ordered method."""
+    method_implemented = ["predict_proba"]
+    my_estimator = _MockEstimatorOnOffPrediction(method_implemented)
+
+    X = "mocking_data"
+
+    # raise an error when no methods are defined
+    response_method = ["decision_function", "predict"]
+    err_msg = (
+        "_MockEstimatorOnOffPrediction has none of the following attributes: "
+        f"{', '.join(response_method)}."
+    )
+    with pytest.raises(AttributeError, match=err_msg):
+        _check_response_method(my_estimator, response_method)(X)
+
+    # check that we don't get issue when one of the method is defined
+    response_method = ["decision_function", "predict_proba"]
+    method_name_predicting = _check_response_method(my_estimator, response_method)(X)
+    assert method_name_predicting == "predict_proba"
+
+    # check the order of the methods returned
+    method_implemented = ["predict_proba", "predict"]
+    my_estimator = _MockEstimatorOnOffPrediction(method_implemented)
+    response_method = ["decision_function", "predict", "predict_proba"]
+    method_name_predicting = _check_response_method(my_estimator, response_method)(X)
+    assert method_name_predicting == "predict"
+
+
 def test_boolean_series_remains_boolean():
     """Regression test for gh-25145"""
     pd = importorskip("pandas")
@@ -1759,3 +1881,70 @@ def test_boolean_series_remains_boolean():
 
     assert res.dtype == expected.dtype
     assert_array_equal(res, expected)
+
+
+@pytest.mark.parametrize("input_values", [[0, 1, 0, 1, 0, np.nan], [0, 1, 0, 1, 0, 1]])
+def test_pandas_array_returns_ndarray(input_values):
+    """Check pandas array with extensions dtypes returns a numeric ndarray.
+
+    Non-regression test for gh-25637.
+    """
+    pd = importorskip("pandas")
+    input_series = pd.array(input_values, dtype="Int32")
+    result = check_array(
+        input_series,
+        dtype=None,
+        ensure_2d=False,
+        allow_nd=False,
+        force_all_finite=False,
+    )
+    assert np.issubdtype(result.dtype.kind, np.floating)
+    assert_allclose(result, input_values)
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
+def test_check_array_array_api_has_non_finite(array_namespace):
+    """Checks that Array API arrays checks non-finite correctly."""
+    xp = pytest.importorskip(array_namespace)
+
+    X_nan = xp.asarray([[xp.nan, 1, 0], [0, xp.nan, 3]], dtype=xp.float32)
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match="Input contains NaN."):
+            check_array(X_nan)
+
+    X_inf = xp.asarray([[xp.inf, 1, 0], [0, xp.inf, 3]], dtype=xp.float32)
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(ValueError, match="infinity or a value too large"):
+            check_array(X_inf)
+
+
+@pytest.mark.parametrize(
+    "extension_dtype, regular_dtype",
+    [
+        ("boolean", "bool"),
+        ("Int64", "int64"),
+        ("Float64", "float64"),
+        ("category", "object"),
+    ],
+)
+@pytest.mark.parametrize("include_object", [True, False])
+def test_check_array_multiple_extensions(
+    extension_dtype, regular_dtype, include_object
+):
+    """Check pandas extension arrays give the same result as non-extension arrays."""
+    pd = pytest.importorskip("pandas")
+    X_regular = pd.DataFrame(
+        {
+            "a": pd.Series([1, 0, 1, 0], dtype=regular_dtype),
+            "c": pd.Series([9, 8, 7, 6], dtype="int64"),
+        }
+    )
+    if include_object:
+        X_regular["b"] = pd.Series(["a", "b", "c", "d"], dtype="object")
+
+    X_extension = X_regular.assign(a=X_regular["a"].astype(extension_dtype))
+
+    X_regular_checked = check_array(X_regular, dtype=None)
+    X_extension_checked = check_array(X_extension, dtype=None)
+    assert_array_equal(X_regular_checked, X_extension_checked)

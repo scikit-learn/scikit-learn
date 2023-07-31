@@ -1,14 +1,14 @@
 import numpy as np
-from numpy.testing import assert_allclose, assert_array_equal
 import pytest
+from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn._loss.link import (
     _LINKS,
-    _inclusive_low_high,
-    MultinomialLogit,
+    HalfLogitLink,
     Interval,
+    MultinomialLogit,
+    _inclusive_low_high,
 )
-
 
 LINK_FUNCTIONS = list(_LINKS.values())
 
@@ -71,6 +71,8 @@ def test_link_inverse_identity(link, global_random_seed):
         raw_prediction = rng.uniform(low=-20, high=20, size=(n_samples, n_classes))
         if isinstance(link, MultinomialLogit):
             raw_prediction = link.symmetrize_raw_prediction(raw_prediction)
+    elif isinstance(link, HalfLogitLink):
+        raw_prediction = rng.uniform(low=-10, high=10, size=(n_samples))
     else:
         raw_prediction = rng.uniform(low=-20, high=20, size=(n_samples))
 
@@ -93,7 +95,7 @@ def test_link_out_argument(link):
     else:
         # So far, the valid interval of raw_prediction is (-inf, inf) and
         # we do not need to distinguish.
-        raw_prediction = rng.normal(loc=0, scale=10, size=(n_samples))
+        raw_prediction = rng.uniform(low=-10, high=10, size=(n_samples))
 
     y_pred = link.inverse(raw_prediction, out=None)
     out = np.empty_like(raw_prediction)

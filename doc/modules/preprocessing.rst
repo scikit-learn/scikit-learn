@@ -729,14 +729,15 @@ separate categories::
 See :ref:`dict_feature_extraction` for categorical features that are
 represented as a dict, not as scalars.
 
-.. _one_hot_encoder_infrequent_categories:
+.. _encoder_infrequent_categories:
 
 Infrequent categories
 ---------------------
 
-:class:`OneHotEncoder` supports aggregating infrequent categories into a single
-output for each feature. The parameters to enable the gathering of infrequent
-categories are `min_frequency` and `max_categories`.
+:class:`OneHotEncoder` and :class:`OrdinalEncoder` support aggregating
+infrequent categories into a single output for each feature. The parameters to
+enable the gathering of infrequent categories are `min_frequency` and
+`max_categories`.
 
 1. `min_frequency` is either an  integer greater or equal to 1, or a float in
    the interval `(0.0, 1.0)`. If `min_frequency` is an integer, categories with
@@ -750,11 +751,47 @@ categories are `min_frequency` and `max_categories`.
    input feature. `max_categories` includes the feature that combines
    infrequent categories.
 
-In the following example, the categories, `'dog', 'snake'` are considered
-infrequent::
+In the following example with :class:`OrdinalEncoder`, the categories `'dog' and
+'snake'` are considered infrequent::
 
    >>> X = np.array([['dog'] * 5 + ['cat'] * 20 + ['rabbit'] * 10 +
    ...               ['snake'] * 3], dtype=object).T
+   >>> enc = preprocessing.OrdinalEncoder(min_frequency=6).fit(X)
+   >>> enc.infrequent_categories_
+   [array(['dog', 'snake'], dtype=object)]
+   >>> enc.transform(np.array([['dog'], ['cat'], ['rabbit'], ['snake']]))
+   array([[2.],
+          [0.],
+          [1.],
+          [2.]])
+
+:class:`OrdinalEncoder`'s `max_categories` do **not** take into account missing
+or unknown categories. Setting `unknown_value` or `encoded_missing_value` to an
+integer will increase the number of unique integer codes by one each. This can
+result in up to `max_categories + 2` integer codes. In the following example,
+"a" and "d" are considered infrequent and grouped together into a single
+category, "b" and "c" are their own categories, unknown values are encoded as 3
+and missing values are encoded as 4.
+
+  >>> X_train = np.array(
+  ...     [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3 + [np.nan]],
+  ...     dtype=object).T
+  >>> enc = preprocessing.OrdinalEncoder(
+  ...     handle_unknown="use_encoded_value", unknown_value=3,
+  ...     max_categories=3, encoded_missing_value=4)
+  >>> _ = enc.fit(X_train)
+  >>> X_test = np.array([["a"], ["b"], ["c"], ["d"], ["e"], [np.nan]], dtype=object)
+  >>> enc.transform(X_test)
+  array([[2.],
+         [0.],
+         [1.],
+         [2.],
+         [3.],
+         [4.]])
+
+Similarity, :class:`OneHotEncoder` can be configured to group together infrequent
+categories::
+
    >>> enc = preprocessing.OneHotEncoder(min_frequency=6, sparse_output=False).fit(X)
    >>> enc.infrequent_categories_
    [array(['dog', 'snake'], dtype=object)]
@@ -829,6 +866,99 @@ lexicon order.
    >>> enc = preprocessing.OneHotEncoder(max_categories=3).fit(X)
    >>> enc.infrequent_categories_
    [array(['b', 'c'], dtype=object)]
+
+.. _target_encoder:
+
+Target Encoder
+--------------
+
+.. currentmodule:: sklearn.preprocessing
+
+The :class:`TargetEncoder` uses the target mean conditioned on the categorical
+feature for encoding unordered categories, i.e. nominal categories [PAR]_
+[MIC]_. This encoding scheme is useful with categorical features with high
+cardinality, where one-hot encoding would inflate the feature space making it
+more expensive for a downstream model to process. A classical example of high
+cardinality categories are location based such as zip code or region. For the
+binary classification target, the target encoding is given by:
+
+.. math::
+    S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_Y}{n}
+
+where :math:`S_i` is the encoding for category :math:`i`, :math:`n_{iY}` is the
+number of observations with :math:`Y=1` and category :math:`i`, :math:`n_i` is
+the number of observations with category :math:`i`, :math:`n_Y` is the number of
+observations with :math:`Y=1`, :math:`n` is the number of observations, and
+:math:`\lambda_i` is a shrinkage factor for category :math:`i`. The shrinkage
+factor is given by:
+
+.. math::
+    \lambda_i = \frac{n_i}{m + n_i}
+
+where :math:`m` is a smoothing factor, which is controlled with the `smooth`
+parameter in :class:`TargetEncoder`. Large smoothing factors will put more
+weight on the global mean. When `smooth="auto"`, the smoothing factor is
+computed as an empirical Bayes estimate: :math:`m=\sigma_i^2/\tau^2`, where
+:math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
+:math:`\tau^2` is the global variance of `y`.
+
+For continuous targets, the formulation is similar to binary classification:
+
+.. math::
+    S_i = \lambda_i\frac{\sum_{k\in L_i}Y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}Y_k}{n}
+
+where :math:`L_i` is the set of observations with category :math:`i` and
+:math:`n_i` is the number of observations with category :math:`i`.
+
+:meth:`~TargetEncoder.fit_transform` internally relies on a :term:`cross fitting`
+scheme to prevent target information from leaking into the train-time
+representation, especially for non-informative high-cardinality categorical
+variables, and help prevent the downstream model from overfitting spurious
+correlations. Note that as a result, `fit(X, y).transform(X)` does not equal
+`fit_transform(X, y)`. In :meth:`~TargetEncoder.fit_transform`, the training
+data is split into *k* folds (determined by the `cv` parameter) and each fold is
+encoded using the encodings learnt using the other *k-1* folds. The following
+diagram shows the :term:`cross fitting` scheme in
+:meth:`~TargetEncoder.fit_transform` with the default `cv=5`:
+
+.. image:: ../images/target_encoder_cross_validation.svg
+   :width: 600
+   :align: center
+
+:meth:`~TargetEncoder.fit_transform` also learns a 'full data' encoding using
+the whole training set. This is never used in
+:meth:`~TargetEncoder.fit_transform` but is saved to the attribute `encodings_`,
+for use when :meth:`~TargetEncoder.transform` is called. Note that the encodings
+learned for each fold during the :term:`cross fitting` scheme are not saved to
+an attribute.
+
+The :meth:`~TargetEncoder.fit` method does **not** use any :term:`cross fitting`
+schemes and learns one encoding on the entire training set, which is used to
+encode categories in :meth:`~TargetEncoder.transform`.
+This encoding is the same as the 'full data'
+encoding learned in :meth:`~TargetEncoder.fit_transform`.
+
+.. note::
+  :class:`TargetEncoder` considers missing values, such as `np.nan` or `None`,
+  as another category and encodes them like any other category. Categories
+  that are not seen during `fit` are encoded with the target mean, i.e.
+  `target_mean_`.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`
+  * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder_cross_val.py`
+
+.. topic:: References
+
+  .. [MIC] :doi:`Micci-Barreca, Daniele. "A preprocessing scheme for high-cardinality
+     categorical attributes in classification and prediction problems"
+     SIGKDD Explor. Newsl. 3, 1 (July 2001), 27–32. <10.1145/507533.507538>`
+
+  .. [PAR] :doi:`Pargent, F., Pfisterer, F., Thomas, J. et al. "Regularized target
+     encoding outperforms traditional methods in supervised machine learning with
+     high cardinality features" Comput Stat 37, 2671–2692 (2022)
+     <10.1007/s00180-022-01207-6>`
 
 .. _preprocessing_discretization:
 
