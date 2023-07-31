@@ -672,3 +672,17 @@ def test_nan_label_encoder():
 
     y_trans = le.transform([np.nan])
     assert_array_equal(y_trans, [2])
+
+
+@pytest.mark.parametrize(
+    "encoder", [LabelEncoder(), LabelBinarizer(), MultiLabelBinarizer()]
+)
+def test_label_encoders_do_not_have_set_output(encoder):
+    """Check that label encoders do not define set_output and work with y as a kwarg.
+
+    Non-regression test for #26854.
+    """
+    assert not hasattr(encoder, "set_output")
+    y_encoded_with_kwarg = encoder.fit_transform(y=["a", "b", "c"])
+    y_encoded_positional = encoder.fit_transform(["a", "b", "c"])
+    assert_array_equal(y_encoded_with_kwarg, y_encoded_positional)
