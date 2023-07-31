@@ -413,7 +413,9 @@ it will allow the estimator RNG to vary for each fold.
     illustration purpose: what matters is what we pass to the
     :class:`~sklearn.ensemble.RandomForestClassifier` estimator.
 
+| details-start |
 **Cloning**
+| details-split |
 
 Another subtle side effect of passing `RandomState` instances is how
 :func:`~sklearn.base.clone` will work::
@@ -446,6 +448,8 @@ influence each other.
     (:class:`~sklearn.model_selection.GridSearchCV`,
     :class:`~sklearn.ensemble.StackingClassifier`,
     :class:`~sklearn.calibration.CalibratedClassifierCV`, etc.).
+
+| details-end |
 
 CV splitters
 ............
