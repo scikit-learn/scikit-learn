@@ -21,11 +21,11 @@ where
     - :math:`\Omega` is a `penalty` function of our model parameters
 
 If we consider the loss function to be the individual error per sample, then the
-data-fit term, or the sum of the error for each sample, will increase as we add
-more samples. The penalization term, however, will not increase.
+data-fit term, or the sum of the error for each sample, increases as we add more
+samples. The penalization term, however, does not increase.
 
 When using, for example, :ref:`cross validation <cross_validation>`, to set the
-amount of regularization with `C`, there will be a different amount of samples
+amount of regularization with `C`, there would be a different amount of samples
 between the main problem and the smaller problems within the folds of the cross
 validation.
 
@@ -46,8 +46,8 @@ optimally adjust C to account for the different amount of training samples?"
 # parameter `C` to account for the number of samples when using either L1 or L2
 # penalty. For such purpose we create a synthetic dataset with a large number of
 # features, out of which only a few will be informative. We therefore expect the
-# regularization to shrink the coefficients towards zero (L2 penalty) or
-# exactly zero (L1 penalty).
+# regularization to shrink the coefficients towards zero (L2 penalty) or exactly
+# zero (L1 penalty).
 
 from sklearn.datasets import make_classification
 
@@ -123,13 +123,13 @@ for label in labels:
 for train_size_idx, label in enumerate(labels):
     train_size = train_sizes[train_size_idx]
     results_scaled = results[[label]].assign(
-        C_scaled=Cs * float(n_samples * train_size)
+        C_scaled=Cs * float(n_samples * np.sqrt(train_size))
     )
     results_scaled.plot(x="C_scaled", ax=axes[1], logx=True, label=label)
     best_C_scaled = results_scaled["C_scaled"].loc[results[label].idxmax()]
     axes[1].axvline(x=best_C_scaled, linestyle="--", color="grey", alpha=0.7)
 
-axes[1].set_title("Scaling C by 1 / n_samples")
+axes[1].set_title("Scaling C by sqrt(1 / n_samples)")
 
 _ = fig.suptitle("Effect of scaling C with L1 penalty")
 
@@ -138,9 +138,14 @@ _ = fig.suptitle("Effect of scaling C with L1 penalty")
 # learned by the models are zero, leading to severe underfitting. Indeed, the
 # accuracy in this region is at the chance level.
 #
-# Using the default scale results in a (somewhat) stable optimal value of `C`,
+# Using the default scale results in a somewhat stable optimal value of `C`,
 # whereas the transition out of the underfitting region depends on the number of
-# training samples. The reparametrization shows the inverse behaviour.
+# training samples. The reparametrization leads to even more stable results.
+#
+# See e.g. theorem 3 of :arxiv:`On the prediction performance of the Lasso
+# <1402.1700>` or :arxiv:`Simultaneous analysis of Lasso and Dantzig selector
+# <0801.1095>` where the regularization parameter is always assumed to be
+# proportional to 1 / sqrt(n_samples).
 #
 # L2-penalty case
 # ---------------
@@ -184,12 +189,12 @@ for label in labels:
 # plot results by scaling C
 for train_size_idx, label in enumerate(labels):
     results_scaled = results[[label]].assign(
-        C_scaled=Cs * float(n_samples * train_sizes[train_size_idx])
+        C_scaled=Cs * float(n_samples * np.sqrt(train_sizes[train_size_idx]))
     )
     results_scaled.plot(x="C_scaled", ax=axes[1], logx=True, label=label)
     best_C_scaled = results_scaled["C_scaled"].loc[results[label].idxmax()]
     axes[1].axvline(x=best_C_scaled, linestyle="--", color="grey", alpha=0.8)
-axes[1].set_title("Scaling C by 1 / n_samples")
+axes[1].set_title("Scaling C by sqrt(1 / n_samples)")
 
 fig.suptitle("Effect of scaling C with L2 penalty")
 plt.show()
@@ -200,5 +205,6 @@ plt.show()
 # out of the overfitting region occurs in a more spread range and the accuracy
 # does not seem to be degraded up to chance level.
 #
-# Try increasing the value to `n_splits=1_000` for better results, as this is
-# not shown here due to the limitations on the documentation builder.
+# Try increasing the value to `n_splits=1_000` for better results in the L2
+# case, which is not shown here due to the limitations on the documentation
+# builder.
