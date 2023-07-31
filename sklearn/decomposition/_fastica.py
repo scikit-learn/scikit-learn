@@ -357,11 +357,6 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
     The implementation is based on [1]_.
 
-    For examples of usage see:
-    - :ref:`sphx_glr_auto_examples_decomposition_plot_ica_blind_source_separation.py`
-    - :ref:`sphx_glr_auto_examples_decomposition_plot_ica_vs_pca.py`
-    - :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
-
     Read more in the :ref:`User Guide <ICA>`.
 
     Parameters

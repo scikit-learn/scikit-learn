@@ -1323,9 +1323,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
         X ~= code * dictionary
 
-    For an example of usage see:
-    - :ref:`sphx_glr_auto_examples_decomposition_plot_sparse_coding.py`
-
     Read more in the :ref:`User Guide <SparseCoder>`.
 
     Parameters

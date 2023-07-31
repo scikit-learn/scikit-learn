@@ -137,9 +137,9 @@ class PCA(_BasePCA):
 
     For examples of usage see:
     - :ref:`sphx_glr_auto_examples_decomposition_plot_pca_iris.py`
-    - :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`
     - :ref:`sphx_glr_auto_examples_decomposition_plot_pca_3d.py`
-    - :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
+    - :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`
+    - :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
 
     Read more in the :ref:`User Guide <PCA>`.
 
