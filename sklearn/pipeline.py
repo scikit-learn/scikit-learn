@@ -53,12 +53,16 @@ def _final_estimator_has(attr):
 
 class Pipeline(_BaseComposition):
     """
-    Pipeline of transforms with a final estimator.
+    A sequence of data transformers, which can be optionally complemented with
+    a final predictor.
 
-    Sequentially apply a list of transforms and a final estimator.
+    `Pipeline` allows you to sequentially apply a list of transformers to
+    preprocess the data and, if desired, conclude the sequence with a final
+    :term:`predictor` for predictive modeling.
+
     Intermediate steps of the pipeline must be 'transforms', that is, they
     must implement `fit` and `transform` methods.
-    The final estimator only needs to implement `fit`.
+    The final :term:`estimator` only needs to implement `fit`.
     The transformers in the pipeline can be cached using ``memory`` argument.
 
     The purpose of the pipeline is to assemble several steps that can be
@@ -75,10 +79,10 @@ class Pipeline(_BaseComposition):
 
     Parameters
     ----------
-    steps : list of tuple
-        List of (name, transform) tuples (implementing `fit`/`transform`) that
-        are chained in sequential order. The last transform must be an
-        estimator.
+    steps : list of tuples
+        List of (name, transform) tuples (implementing `fit` and `transform`)
+        that are chained in sequential order. The last step can only implement
+        `fit`.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. The last step
@@ -408,8 +412,9 @@ class Pipeline(_BaseComposition):
     def fit(self, X, y=None, **params):
         """Fit the model.
 
-        Fit all the transformers one after the other and transform the
-        data. Finally, fit the transformed data using the final estimator.
+        Fit all the transformers sequentially to the input data and transforms
+        it. Finally, fit the final estimator using the transformed data from
+        the previous steps.
 
         Parameters
         ----------
@@ -472,9 +477,8 @@ class Pipeline(_BaseComposition):
     def fit_transform(self, X, y=None, **params):
         """Fit the model and transform with the final estimator.
 
-        Fits all the transformers one after the other and transform the
-        data. Then uses `fit_transform` on transformed data with the final
-        estimator.
+        Fit all the transformers sequentially to the input data and transform
+        it. Only valid if the final estimator implements `fit_transform`.
 
         Parameters
         ----------
