@@ -114,7 +114,7 @@ Changelog
 - |Efficiency| Improves runtime and memory usage for
   :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`26957` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_selection`
 ................................
