@@ -777,7 +777,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     all of the available features provided to the model plus the predictions
     of models that are earlier in the chain.
 
-    For an example of how to use ClassifierChain and benefit from its
+    For an example of how to use ``ClassifierChain`` and benefit from its
     ensemble, see
     :ref:`ClassifierChain on a yeast dataset <sphx_glr_auto_examples_multioutput_plot_classifier_chain_yeast.py>`
     example.
