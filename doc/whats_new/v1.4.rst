@@ -150,6 +150,13 @@ Changelog
   metric parameter `p` is in the range `0 < p < 1`, regardless of the `dtype` of `X`.
   :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.OneHotEncoder` shows a more informative error message
+  when `sparse_output=True` and the output is configured to be pandas.
+  :pr:`26931` by `Thomas Fan`_.
+
 :mod:`sklearn.tree`
 ...................
 
