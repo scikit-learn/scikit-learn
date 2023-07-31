@@ -31,8 +31,8 @@ def _compute_mi_cc(x, y, n_neighbors):
     Returns
     -------
     mi : float
-        Estimated mutual information. If it turned out to be negative it is
-        replace by 0.
+        Estimated mutual information in nats (natural logarithm). If it 
+        turned out to be negative it is replaced by 0.
 
     Notes
     -----
@@ -96,8 +96,8 @@ def _compute_mi_cd(c, d, n_neighbors):
     Returns
     -------
     mi : float
-        Estimated mutual information. If it turned out to be negative it is
-        replace by 0.
+        Estimated mutual information in nats (natural logarithm). If it 
+        turned out to be negative it is replaced by 0.
 
     Notes
     -----
@@ -245,8 +245,8 @@ def _estimate_mi(
     Returns
     -------
     mi : ndarray, shape (n_features,)
-        Estimated mutual information between each feature and the target.
-        A negative value will be replaced by 0.
+        Estimated mutual information between each feature and the target in
+        nats (natural logarithm). A negative value will be replaced by 0.
 
     References
     ----------
@@ -370,8 +370,8 @@ def mutual_info_regression(
     Returns
     -------
     mi : ndarray, shape (n_features,)
-        Estimated mutual information between each feature and the target.
-
+        Estimated mutual information between each feature and the target in
+        nats (natural logarithm).
     Notes
     -----
     1. The term "discrete features" is used instead of naming them
@@ -460,7 +460,8 @@ def mutual_info_classif(
     Returns
     -------
     mi : ndarray, shape (n_features,)
-        Estimated mutual information between each feature and the target.
+        Estimated mutual information between each feature and the target in
+        nats (natural logarithm).
 
     Notes
     -----
