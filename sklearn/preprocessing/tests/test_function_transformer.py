@@ -471,3 +471,9 @@ def test_set_output_func():
     msg = "When set_output is configured to be 'pandas'"
     with pytest.warns(UserWarning, match=msg):
         ft_np.fit_transform(X)
+
+    # default transform does not warn
+    ft_np.set_output(transform="default")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        ft_np.fit_transform(X)
