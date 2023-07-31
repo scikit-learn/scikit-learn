@@ -1,7 +1,6 @@
-from pytest import xfail, hookimpl
+from pytest import hookimpl, xfail
 
 from sklearn import config_context
-
 from sklearn.exceptions import NotSupportedByEngineError
 
 

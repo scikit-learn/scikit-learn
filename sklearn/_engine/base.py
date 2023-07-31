@@ -1,9 +1,8 @@
-from functools import lru_cache, wraps
-from importlib.metadata import entry_points
-from importlib import import_module
 import inspect
-
 import warnings
+from functools import lru_cache, wraps
+from importlib import import_module
+from importlib.metadata import entry_points
 
 from sklearn._config import get_config
 

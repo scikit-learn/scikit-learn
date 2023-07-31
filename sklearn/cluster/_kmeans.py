@@ -18,15 +18,15 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 
+from .._engine import convert_attributes
 from ..base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     ClusterMixin,
-    TransformerMixin,
     EngineAwareMixin,
+    TransformerMixin,
     _fit_context,
 )
-from .._engine import convert_attributes
 from ..exceptions import ConvergenceWarning
 from ..metrics.pairwise import _euclidean_distances, euclidean_distances
 from ..utils import check_array, check_random_state
@@ -1743,8 +1743,10 @@ class KMeans(_BaseKMeans, EngineAwareMixin):
         else:
             # Caller explicitly passed sample_weight, so we warn.
             warnings.warn(
-                "'sample_weight' was deprecated in version 1.3 and "
-                "will be removed in 1.5.",
+                (
+                    "'sample_weight' was deprecated in version 1.3 and "
+                    "will be removed in 1.5."
+                ),
                 FutureWarning,
             )
         X, sample_weight = engine.prepare_prediction(X, sample_weight)

@@ -1,9 +1,9 @@
 """Global configuration state and functions for management
 """
-import os
 import inspect
+import os
 import threading
-from contextlib import contextmanager as contextmanager
+from contextlib import contextmanager
 
 _global_config = {
     "assume_finite": bool(os.environ.get("SKLEARN_ASSUME_FINITE", False)),

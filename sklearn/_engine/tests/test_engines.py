@@ -1,16 +1,16 @@
 import re
 from collections import namedtuple
-import pytest
 
 import numpy as np
+import pytest
 
-from sklearn._engine import convert_attributes
-from sklearn._engine import list_engine_provider_names
-from sklearn._engine import get_engine_classes
-from sklearn._engine.base import _parse_entry_point
-from sklearn._engine.base import _get_engine_classes
-from sklearn._engine.base import EngineSpec
 from sklearn._config import config_context
+from sklearn._engine import (
+    convert_attributes,
+    get_engine_classes,
+    list_engine_provider_names,
+)
+from sklearn._engine.base import EngineSpec, _get_engine_classes, _parse_entry_point
 from sklearn.base import EngineAwareMixin
 
 

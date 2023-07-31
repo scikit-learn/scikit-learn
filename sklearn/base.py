@@ -15,6 +15,7 @@ import numpy as np
 
 from . import __version__
 from ._config import config_context, get_config
+from ._engine import get_engine_classes
 from .exceptions import InconsistentVersionWarning
 from .utils import _IS_32BIT
 from .utils._estimator_html_repr import estimator_html_repr
@@ -35,7 +36,6 @@ from .utils.validation import (
     check_is_fitted,
     check_X_y,
 )
-from ._engine import get_engine_classes
 
 
 def clone(estimator, *, safe=True):
