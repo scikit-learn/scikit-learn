@@ -27,6 +27,23 @@ random sampling procedures.
 Changes impacting all modules
 -----------------------------
 
+- |Enhancement| Experimental engine API (no backward compatibility guarantees)
+  to allow for external packages to contribute alternative implementations for
+  the core computational routines of some selected scikit-learn estimators.
+
+  Currently, the following estimators allow alternative implementations:
+
+  - :class:`~sklearn.cluster.KMeans` (only for the LLoyd algorithm).
+  - TODO: add more when available.
+
+  External engine providers include:
+
+  - https://github.com/soda-inria/sklearn-numba-dpex that provided a KMeans
+    engine optimized for OpenCL enabled GPUs.
+  - TODO: add more here
+
+  :pr:`25535` by :user:`ogrisel`, :user:`fcharras` and :user:`betatim`.
+
 - |Enhancement| All estimators now recognizes the column names from any dataframe
   that adopts the
   `DataFrame Interchange Protocol <https://data-apis.org/dataframe-protocol/latest/purpose_and_scope.html>`__.

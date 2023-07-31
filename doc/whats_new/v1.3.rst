@@ -92,23 +92,6 @@ Changed displays
 Changes impacting all modules
 -----------------------------
 
-- |Enhancement| Experimental engine API (no backward compatibility guarantees)
-  to allow for external packages to contribute alternative implementations for
-  the core computational routines of some selected scikit-learn estimators.
-
-  Currently, the following estimators allow alternative implementations:
-
-  - :class:`~sklearn.cluster.KMeans` (only for the LLoyd algorithm).
-  - TODO: add more when available.
-
-  External engine providers include:
-
-  - https://github.com/soda-inria/sklearn-numba-dpex that provided a KMeans
-    engine optimized for OpenCL enabled GPUs.
-  - TODO: add more here
-
-  :pr:`25535` by :user:`ogrisel`, :user:`fcharras` and :user:`betatim`.
-
 - |Enhancement| The `get_feature_names_out` method of the following classes now
   raises a `NotFittedError` if the instance is not fitted. This ensures the error is
   consistent in all estimators with the `get_feature_names_out` method.
