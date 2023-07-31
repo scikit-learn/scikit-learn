@@ -118,6 +118,10 @@ results.plot(x="C", ax=axes[0], logx=True)
 axes[0].set_ylabel("CV score")
 axes[0].set_title("No scaling")
 
+for label in labels:
+    best_C = results.loc[results[label].idxmax(), "C"]
+    axes[0].axvline(x=best_C, linestyle="--", color="grey", alpha=0.7)
+
 # plot results by scaling C
 for train_size_idx, label in enumerate(labels):
     train_size = train_sizes[train_size_idx]
@@ -125,6 +129,9 @@ for train_size_idx, label in enumerate(labels):
         C_scaled=Cs * float(n_samples * train_size)
     )
     results_scaled.plot(x="C_scaled", ax=axes[1], logx=True, label=label)
+    best_C_scaled = results_scaled["C_scaled"].loc[results[label].idxmax()]
+    axes[1].axvline(x=best_C_scaled, linestyle="--", color="grey", alpha=0.7)
+
 axes[1].set_title("Scaling C by 1 / n_samples")
 
 _ = fig.suptitle("Effect of scaling C with L1 penalty")
@@ -173,19 +180,28 @@ results.plot(x="C", ax=axes[0], logx=True)
 axes[0].set_ylabel("CV score")
 axes[0].set_title("No scaling")
 
+for label in labels:
+    best_C = results.loc[results[label].idxmax(), "C"]
+    axes[0].axvline(x=best_C, linestyle="--", color="grey", alpha=0.8)
+
 # plot results by scaling C
 for train_size_idx, label in enumerate(labels):
     results_scaled = results[[label]].assign(
         C_scaled=Cs * float(n_samples * train_sizes[train_size_idx])
     )
     results_scaled.plot(x="C_scaled", ax=axes[1], logx=True, label=label)
+    best_C_scaled = results_scaled["C_scaled"].loc[results[label].idxmax()]
+    axes[1].axvline(x=best_C_scaled, linestyle="--", color="grey", alpha=0.8)
 axes[1].set_title("Scaling C by 1 / n_samples")
 
 fig.suptitle("Effect of scaling C with L2 penalty")
 plt.show()
 
 # %%
-# For the L2 penalty case, the reparametrization seems to have a smaller
-# impact on the stability of the optimal value for the regularization. The
-# transition out of the overfitting region occurs in a more spread range
-# and the accuracy does not seem to be degraded up to chance level.
+# For the L2 penalty case, the reparametrization seems to have a smaller impact
+# on the stability of the optimal value for the regularization. The transition
+# out of the overfitting region occurs in a more spread range and the accuracy
+# does not seem to be degraded up to chance level.
+#
+# Try increasing the value to `n_splits=1_000` for better results, as this is
+# not shown here due to the limitations on the documentation builder.
