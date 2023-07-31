@@ -3,9 +3,8 @@ r"""
 Scaling the regularization parameter for SVCs
 ==============================================
 
-The following example illustrates the effect of scaling the
-regularization parameter when using :ref:`svm` for
-:ref:`classification <svm_classification>`.
+The following example illustrates the effect of scaling the regularization
+parameter when using :ref:`svm` for :ref:`classification <svm_classification>`.
 For SVC classification, we are interested in a risk minimization for the
 equation:
 
@@ -21,20 +20,18 @@ where
       and our model parameters.
     - :math:`\Omega` is a `penalty` function of our model parameters
 
-If we consider the loss function to be the individual error per
-sample, then the data-fit term, or the sum of the error for each sample, will
-increase as we add more samples. The penalization term, however, will not
-increase.
+If we consider the loss function to be the individual error per sample, then the
+data-fit term, or the sum of the error for each sample, will increase as we add
+more samples. The penalization term, however, will not increase.
 
-When using, for example, :ref:`cross validation <cross_validation>`, to
-set the amount of regularization with `C`, there will be a
-different amount of samples between the main problem and the smaller problems
-within the folds of the cross validation.
+When using, for example, :ref:`cross validation <cross_validation>`, to set the
+amount of regularization with `C`, there will be a different amount of samples
+between the main problem and the smaller problems within the folds of the cross
+validation.
 
-Since our loss function is dependent on the amount of samples, the latter
-will influence the selected value of `C`.
-The question that arises is "How do we optimally adjust C to
-account for the different amount of training samples?"
+Since our loss function is dependent on the amount of samples, the latter will
+influence the selected value of `C`. The question that arises is "How do we
+optimally adjust C to account for the different amount of training samples?"
 """
 
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
