@@ -89,7 +89,7 @@ train_sizes = np.linspace(0.3, 0.7, 3)
 labels = [f"fraction: {train_size}" for train_size in train_sizes]
 shuffle_params = {
     "test_size": 0.3,
-    "n_splits": 100,
+    "n_splits": 150,
     "random_state": 1,
 }
 
