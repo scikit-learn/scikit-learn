@@ -291,9 +291,8 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     unit variance scaling.
 
     MinMaxScaler doesn't reduce the effect of outliers; it only linearily
-    scales them down. For an example visualization, refer to the
-    :ref:`minmax_scaler_section` section in the
-    :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py` example.
+    scales them down. For an example visualization, refer to :ref:`Compare
+    MinMaxScaler with other scalers <plot_all_scaling_minmax_scaler_section>`.
 
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
@@ -685,8 +684,8 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     StandardScaler is sensitive to outliers, and the features may scale
     differently from each other in the presence of outliers. For an example
-    visualization, refer to the :ref:`standard_scaler_section` section in the
-    :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py` example.
+    visualization, refer to :ref:`Compare StandardScaler with other scalers
+    <plot_all_scaling_standard_scaler_section>`.
 
     This scaler can also be applied to sparse CSR or CSC matrices by passing
     `with_mean=False` to avoid breaking the sparsity structure of the data.
@@ -1083,9 +1082,8 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     This scaler can also be applied to sparse CSR or CSC matrices.
 
     MaxAbsScaler doesn't reduce the effect of outliers; it only linearily
-    scales them down. For an example visualization, refer to the
-    :ref:`max_abs_scaler_section` section in the
-    :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py` example.
+    scales them down. For an example visualization, refer to :ref:`Compare
+    MaxAbsScaler with other scalers <plot_all_scaling_max_abs_scaler_section>`.
 
     .. versionadded:: 0.17
 
@@ -1398,9 +1396,8 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     scaling to unit variance. However, outliers can often influence the sample
     mean / variance in a negative way. In such cases, the median and the
     interquartile range often give better results. For an example visualization
-    and comparison to other scalers, refer to the :ref:`robust_scaler_section`
-    section in the
-    :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py` example.
+    and comparison to other scalers, refer to :ref:`Compare RobustScaler with
+    other scalers <plot_all_scaling_robust_scaler_section>`.
 
     .. versionadded:: 0.17
 
@@ -1905,9 +1902,9 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     of the vectors and is the base similarity metric for the Vector
     Space Model commonly used by the Information Retrieval community.
 
-    For an example visualization, refer to the :ref:`normalizer_section`
-    section in the
-    :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py` example.
+    For an example visualization, refer to :ref:`Compare Normalizer with other
+    scalers <plot_all_scaling_normalizer_section>`.
+
     Read more in the :ref:`User Guide <preprocessing_normalization>`.
 
     Parameters
@@ -2439,10 +2436,9 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
     correlations between variables measured at the same scale but renders
     variables measured at different scales more directly comparable.
 
-    For example visualizations, refer to the
-    :ref:`quantile_transformer_section` section and the following
-    section in the
-    :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py` example.
+    For example visualizations, refer to :ref:`Compare QuantileTransformer with
+    other scalers <plot_all_scaling_quantile_transformer_section>`.
+
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
     .. versionadded:: 0.19
@@ -3012,13 +3008,13 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     By default, zero-mean, unit-variance normalization is applied to the
     transformed data.
 
-    For an example visualization, refer to the :ref:`power_transformer_section`
-    section in the
-    :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py` example. To
-    see the effect of Box-Cox and Yeo-Johnson transformations on different
+    For an example visualization, refer to :ref:`Compare PowerTransformer with
+    other scalers <plot_all_scaling_power_transformer_section>`. To see the
+    effect of Box-Cox and Yeo-Johnson transformations on different
     distributions, see:
-    :ref:`sphx_glr_auto_examples_preprocessing_plot_map_data_to_normal.py`. Read
-    more in the :ref:`User Guide <preprocessing_transformer>`.
+    :ref:`sphx_glr_auto_examples_preprocessing_plot_map_data_to_normal.py`.
+
+    Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
     .. versionadded:: 0.20
 
