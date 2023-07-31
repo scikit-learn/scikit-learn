@@ -37,7 +37,7 @@ solves a problem of the form:
    :align: center
    :scale: 50%
 
-:class:`LinearRegression` will take in its ``fit`` method arrays X, y
+:class:`LinearRegression` will take in its ``fit`` method arrays ``X``, ``y``
 and will store the coefficients :math:`w` of the linear model in its
 ``coef_`` member::
 
@@ -114,7 +114,7 @@ of shrinkage and thus the coefficients become more robust to collinearity.
 
 
 As with other linear models, :class:`Ridge` will take in its ``fit`` method
-arrays X, y and will store the coefficients :math:`w` of the linear model in
+arrays ``X``, ``y`` and will store the coefficients :math:`w` of the linear model in
 its ``coef_`` member::
 
     >>> from sklearn import linear_model
