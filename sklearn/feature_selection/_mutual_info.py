@@ -31,7 +31,7 @@ def _compute_mi_cc(x, y, n_neighbors):
     Returns
     -------
     mi : float
-        Estimated mutual information in nats (natural logarithm). If it 
+        Estimated mutual information in nats (natural logarithm). If it
         turned out to be negative it is replaced by 0.
 
     Notes
@@ -96,7 +96,7 @@ def _compute_mi_cd(c, d, n_neighbors):
     Returns
     -------
     mi : float
-        Estimated mutual information in nats (natural logarithm). If it 
+        Estimated mutual information in nats (natural logarithm). If it
         turned out to be negative it is replaced by 0.
 
     Notes
