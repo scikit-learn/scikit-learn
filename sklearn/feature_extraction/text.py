@@ -602,6 +602,9 @@ class HashingVectorizer(
 
     The hash function employed is the signed 32-bit version of Murmurhash3.
 
+    For an example of document clustering and comparision with TfidfVectorizer,
+    see :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
+
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
     Parameters
@@ -1754,6 +1757,9 @@ class TfidfVectorizer(CountVectorizer):
 
     Equivalent to :class:`CountVectorizer` followed by
     :class:`TfidfTransformer`.
+
+    For an example of document clustering and comparision with HashingVectorizer,
+    see :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
