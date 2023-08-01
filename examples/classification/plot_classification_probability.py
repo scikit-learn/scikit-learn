@@ -15,6 +15,10 @@ The logistic regression with One-Vs-Rest is not a multiclass classifier out of
 the box. As a result it has more trouble in separating class 2 and 3 than the
 other estimators.
 
+See
+    :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py`
+    for an example on how to use the API.
+
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
