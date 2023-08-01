@@ -19,6 +19,9 @@ information on this dataset.
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
+# %%
+# Setup: Import the data and prepare the plot
+# -------------------------------------------------
 import matplotlib.pyplot as plt
 
 # unused but required import for doing 3d projections with matplotlib < 3.2
@@ -35,6 +38,10 @@ y = iris.target
 x_min, x_max = X[:, 0].min() - 0.5, X[:, 0].max() + 0.5
 y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5
 
+
+# %%
+# Scatter Plot of the Iris datasett
+# -------------------------------------------------
 plt.figure(2, figsize=(8, 6))
 plt.clf()
 
@@ -49,10 +56,11 @@ plt.xticks(())
 plt.yticks(())
 
 # %%
-# Plot a PCA representation of the iris dataset
+# Plot a PCA representation
 # -------------------------------------------------------------
-# To get a better understanding of interaction of the dimensions
-# plot the first three PCA dimensions
+# Let's apply a PCA to the iris dataset and then plot the first three
+# dimensions.
+# This will give us a better understanding of our analysis results.
 fig = plt.figure(1, figsize=(8, 6))
 ax = fig.add_subplot(111, projection="3d", elev=-150, azim=110)
 
@@ -76,3 +84,5 @@ ax.set_zlabel("3rd eigenvector")
 ax.zaxis.set_ticklabels([])
 
 plt.show()
+
+# %%
