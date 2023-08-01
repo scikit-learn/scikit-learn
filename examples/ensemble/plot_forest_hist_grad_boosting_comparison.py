@@ -12,7 +12,7 @@ The comparison is made by varying the parameters that control the number of
 trees according to each estimator:
 
 - `n_estimators` controls the number of trees in the forest. It's a fixed number.
-- `max_iter` is the the maximum number of iterations in a gradient boosting
+- `max_iter` is the maximum number of iterations in a gradient boosting
   based model. The number of iterations corresponds to the number of trees for
   regression and binary classification problems. Furthermore, the actual number
   of trees required by the model depends on the stopping criteria.
@@ -210,7 +210,7 @@ fig.update_layout(
 # models uniformly dominate the Random Forest models in the "test score vs
 # training speed trade-off" (the HGBDT curve should be on the top left of the RF
 # curve, without ever crossing). The "test score vs prediction speed" trade-off
-# can also be more disputed but it's most often favorable to HGBDT. It's always
+# can also be more disputed, but it's most often favorable to HGBDT. It's always
 # a good idea to check both kinds of model (with hyper-parameter tuning) and
 # compare their performance on your specific problem to determine which model is
 # the best fit but **HGBT almost always offers a more favorable speed-accuracy
