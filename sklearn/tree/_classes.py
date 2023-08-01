@@ -1126,6 +1126,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     """A decision tree regressor.
 
+    For an example of how to use ``DecisionTreeRegressor``, see
+    :ref:`sphx_glr_auto_examples_tree_plot_tree_regression.py` example.
+
     Read more in the :ref:`User Guide <tree>`.
 
     Parameters
