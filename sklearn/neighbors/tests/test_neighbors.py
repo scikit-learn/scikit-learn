@@ -82,7 +82,7 @@ neighbors.radius_neighbors_graph = ignore_warnings(neighbors.radius_neighbors_gr
 
 # A list containing metrics where the string specifies the use of the
 # DistanceMetric object directly (as resolved in _parse_metric)
-DISTANCE_METRIC_OBJS = ["DM_euclidean", "DM_manhattan"]
+DISTANCE_METRIC_OBJS = ["DM_euclidean"]
 
 
 def _parse_metric(metric: str, dtype=None):
