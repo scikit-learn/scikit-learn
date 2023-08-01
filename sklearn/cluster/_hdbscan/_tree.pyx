@@ -36,6 +36,9 @@ import cython
 
 import numpy as np
 
+cdef extern from "numpy/arrayobject.h":
+    intp_t * PyArray_SHAPE(cnp.PyArrayObject *)
+
 cdef cnp.float64_t INFTY = np.inf
 cdef cnp.intp_t NOISE = -1
 
@@ -130,7 +133,7 @@ cpdef cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] _condense_tree(
         A single linkage hierarchy in scipy.cluster.hierarchy format.
 
     min_cluster_size : int, optional (default 10)
-        The minimum size of clusters to consider. Clusters smaler than this
+        The minimum size of clusters to consider. Clusters smaller than this
         are pruned from the tree.
 
     Returns
@@ -240,25 +243,26 @@ cdef dict _compute_stability(
         cnp.float64_t[::1] result, births
         cnp.intp_t[:] parents = condensed_tree['parent']
 
-        cnp.intp_t parent, cluster_size, result_index
+        cnp.intp_t parent, cluster_size, result_index, idx
         cnp.float64_t lambda_val
         CONDENSED_t condensed_node
-        cnp.float64_t[:, :] result_pre_dict
         cnp.intp_t largest_child = condensed_tree['child'].max()
         cnp.intp_t smallest_cluster = np.min(parents)
         cnp.intp_t num_clusters = np.max(parents) - smallest_cluster + 1
+        dict stability_dict = {}
 
     largest_child = max(largest_child, smallest_cluster)
     births = np.full(largest_child + 1, np.nan, dtype=np.float64)
 
-    births = np.full(largest_child + 1, np.nan, dtype=np.float64)
-    for condensed_node in condensed_tree:
+    for idx in range(PyArray_SHAPE(<cnp.PyArrayObject*> condensed_tree)[0]):
+        condensed_node = condensed_tree[idx]
         births[condensed_node.child] = condensed_node.value
 
     births[smallest_cluster] = 0.0
 
     result = np.zeros(num_clusters, dtype=np.float64)
-    for condensed_node in condensed_tree:
+    for idx in range(PyArray_SHAPE(<cnp.PyArrayObject*> condensed_tree)[0]):
+        condensed_node = condensed_tree[idx]
         parent = condensed_node.parent
         lambda_val = condensed_node.value
         cluster_size = condensed_node.cluster_size
@@ -266,14 +270,10 @@ cdef dict _compute_stability(
         result_index = parent - smallest_cluster
         result[result_index] += (lambda_val - births[parent]) * cluster_size
 
-    result_pre_dict = np.vstack(
-        (
-            np.arange(smallest_cluster, np.max(parents) + 1),
-            result
-        )
-    ).T
+    for idx in range(num_clusters):
+        stability_dict[idx + smallest_cluster] = result[idx]
 
-    return dict(result_pre_dict)
+    return stability_dict
 
 
 cdef list bfs_from_cluster_tree(

@@ -5,27 +5,28 @@
 
 import math
 import re
-import pytest
+
 import numpy as np
+import pytest
 import scipy.sparse as sp
 from scipy.special import logsumexp
 
 from sklearn._loss.loss import HalfMultinomialLoss
+from sklearn.base import clone
+from sklearn.datasets import load_iris, make_blobs, make_classification
+from sklearn.linear_model import LogisticRegression, Ridge
+from sklearn.linear_model._base import make_dataset
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.linear_model._sag import get_auto_step_size
 from sklearn.linear_model._sag_fast import _multinomial_grad_loss_all_samples
-from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.linear_model._base import make_dataset
-
+from sklearn.preprocessing import LabelBinarizer, LabelEncoder
+from sklearn.utils import check_random_state, compute_class_weight
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+)
 from sklearn.utils.extmath import row_norms
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils import compute_class_weight
-from sklearn.utils import check_random_state
-from sklearn.preprocessing import LabelEncoder, LabelBinarizer
-from sklearn.datasets import make_blobs, load_iris, make_classification
-from sklearn.base import clone
 
 iris = load_iris()
 
@@ -95,7 +96,7 @@ def sag(
 
     for epoch in range(n_iter):
         for k in range(n_samples):
-            idx = int(rng.rand(1) * n_samples)
+            idx = int(rng.rand() * n_samples)
             # idx = k
             entry = X[idx]
             seen.add(idx)
@@ -167,7 +168,7 @@ def sag_sparse(
     for epoch in range(n_iter):
         for k in range(n_samples):
             # idx = k
-            idx = int(rng.rand(1) * n_samples)
+            idx = int(rng.rand() * n_samples)
             entry = X[idx]
             seen.add(idx)
 

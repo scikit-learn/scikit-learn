@@ -1,22 +1,21 @@
+import copy
 import itertools
 import pickle
-import copy
 
 import numpy as np
 import pytest
-
 import scipy.sparse as sp
 from scipy.spatial.distance import cdist
-from sklearn.metrics import DistanceMetric
 
+from sklearn.metrics import DistanceMetric
 from sklearn.metrics._dist_metrics import (
     BOOL_METRICS,
-    # Unexposed private DistanceMetric for 32 bit
     DistanceMetric32,
+    DistanceMetric64,
 )
-
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose, create_memmap_backed_data
+from sklearn.utils.fixes import parse_version, sp_version
 
 
 def dist_func(x1, x2, p):
@@ -44,18 +43,17 @@ Y_bool = (Y64 < 0.7).astype(np.float64)  # not too sparse
 V = rng.random_sample((d, d))
 VI = np.dot(V, V.T)
 
-
 METRICS_DEFAULT_PARAMS = [
     ("euclidean", {}),
     ("cityblock", {}),
-    ("minkowski", dict(p=(1, 1.5, 2, 3))),
+    ("minkowski", dict(p=(0.5, 1, 1.5, 2, 3))),
     ("chebyshev", {}),
     ("seuclidean", dict(V=(rng.random_sample(d),))),
     ("mahalanobis", dict(VI=(VI,))),
     ("hamming", {}),
     ("canberra", {}),
     ("braycurtis", {}),
-    ("minkowski", dict(p=(1, 1.5, 3), w=(rng.random_sample(d),))),
+    ("minkowski", dict(p=(0.5, 1, 1.5, 3), w=(rng.random_sample(d),))),
 ]
 
 
@@ -64,9 +62,6 @@ METRICS_DEFAULT_PARAMS = [
 )
 @pytest.mark.parametrize("X, Y", [(X64, Y64), (X32, Y32), (X_mmap, Y_mmap)])
 def test_cdist(metric_param_grid, X, Y):
-    DistanceMetricInterface = (
-        DistanceMetric if X.dtype == Y.dtype == np.float64 else DistanceMetric32
-    )
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
     X_csr, Y_csr = sp.csr_matrix(X), sp.csr_matrix(Y)
@@ -81,9 +76,16 @@ def test_cdist(metric_param_grid, X, Y):
             # with scipy
             rtol_dict = {"rtol": 1e-6}
 
+        # TODO: Remove when scipy minimum version >= 1.7.0
+        # scipy supports 0<p<1 for minkowski metric >= 1.7.0
+        if metric == "minkowski":
+            p = kwargs["p"]
+            if sp_version < parse_version("1.7.0") and p < 1:
+                pytest.skip("scipy does not support 0<p<1 for minkowski metric < 1.7.0")
+
         D_scipy_cdist = cdist(X, Y, metric, **kwargs)
 
-        dm = DistanceMetricInterface.get_metric(metric, **kwargs)
+        dm = DistanceMetric.get_metric(metric, X.dtype, **kwargs)
 
         # DistanceMetric.pairwise must be consistent for all
         # combinations of formats in {sparse, dense}.
@@ -141,9 +143,6 @@ def test_cdist_bool_metric(metric, X_bool, Y_bool):
 )
 @pytest.mark.parametrize("X", [X64, X32, X_mmap])
 def test_pdist(metric_param_grid, X):
-    DistanceMetricInterface = (
-        DistanceMetric if X.dtype == np.float64 else DistanceMetric32
-    )
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
     X_csr = sp.csr_matrix(X)
@@ -158,9 +157,15 @@ def test_pdist(metric_param_grid, X):
             # with scipy
             rtol_dict = {"rtol": 1e-6}
 
+        # TODO: Remove when scipy minimum version >= 1.7.0
+        # scipy supports 0<p<1 for minkowski metric >= 1.7.0
+        if metric == "minkowski":
+            p = kwargs["p"]
+            if sp_version < parse_version("1.7.0") and p < 1:
+                pytest.skip("scipy does not support 0<p<1 for minkowski metric < 1.7.0")
         D_scipy_pdist = cdist(X, X, metric, **kwargs)
 
-        dm = DistanceMetricInterface.get_metric(metric, **kwargs)
+        dm = DistanceMetric.get_metric(metric, X.dtype, **kwargs)
         D_sklearn = dm.pairwise(X)
         assert D_sklearn.flags.c_contiguous
         assert_allclose(D_sklearn, D_scipy_pdist, **rtol_dict)
@@ -189,8 +194,8 @@ def test_distance_metrics_dtype_consistency(metric_param_grid):
 
     for vals in itertools.product(*param_grid.values()):
         kwargs = dict(zip(keys, vals))
-        dm64 = DistanceMetric.get_metric(metric, **kwargs)
-        dm32 = DistanceMetric32.get_metric(metric, **kwargs)
+        dm64 = DistanceMetric.get_metric(metric, np.float64, **kwargs)
+        dm32 = DistanceMetric.get_metric(metric, np.float32, **kwargs)
 
         D64 = dm64.pairwise(X64)
         D32 = dm32.pairwise(X32)
@@ -230,9 +235,6 @@ def test_pdist_bool_metrics(metric, X_bool):
 )
 @pytest.mark.parametrize("X", [X64, X32])
 def test_pickle(writable_kwargs, metric_param_grid, X):
-    DistanceMetricInterface = (
-        DistanceMetric if X.dtype == np.float64 else DistanceMetric32
-    )
     metric, param_grid = metric_param_grid
     keys = param_grid.keys()
     for vals in itertools.product(*param_grid.values()):
@@ -242,7 +244,7 @@ def test_pickle(writable_kwargs, metric_param_grid, X):
                 if isinstance(val, np.ndarray):
                     val.setflags(write=writable_kwargs)
         kwargs = dict(zip(keys, vals))
-        dm = DistanceMetricInterface.get_metric(metric, **kwargs)
+        dm = DistanceMetric.get_metric(metric, X.dtype, **kwargs)
         D1 = dm.pairwise(X)
         dm2 = pickle.loads(pickle.dumps(dm))
         D2 = dm2.pairwise(X)
@@ -261,10 +263,6 @@ def test_pickle_bool_metrics(metric, X_bool):
 
 @pytest.mark.parametrize("X, Y", [(X64, Y64), (X32, Y32), (X_mmap, Y_mmap)])
 def test_haversine_metric(X, Y):
-    DistanceMetricInterface = (
-        DistanceMetric if X.dtype == np.float64 else DistanceMetric32
-    )
-
     # The Haversine DistanceMetric only works on 2 features.
     X = np.asarray(X[:, :2])
     Y = np.asarray(Y[:, :2])
@@ -286,7 +284,7 @@ def test_haversine_metric(X, Y):
         for j, yj in enumerate(Y):
             D_reference[i, j] = haversine_slow(xi, yj)
 
-    haversine = DistanceMetricInterface.get_metric("haversine")
+    haversine = DistanceMetric.get_metric("haversine", X.dtype)
 
     D_sklearn = haversine.pairwise(X, Y)
     assert_allclose(
@@ -389,3 +387,32 @@ def test_minkowski_metric_validate_weights_size():
     )
     with pytest.raises(ValueError, match=msg):
         dm.pairwise(X64, Y64)
+
+
+@pytest.mark.parametrize("metric, metric_kwargs", METRICS_DEFAULT_PARAMS)
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+def test_get_metric_dtype(metric, metric_kwargs, dtype):
+    specialized_cls = {
+        np.float32: DistanceMetric32,
+        np.float64: DistanceMetric64,
+    }[dtype]
+
+    # We don't need the entire grid, just one for a sanity check
+    metric_kwargs = {k: v[0] for k, v in metric_kwargs.items()}
+    generic_type = type(DistanceMetric.get_metric(metric, dtype, **metric_kwargs))
+    specialized_type = type(specialized_cls.get_metric(metric, **metric_kwargs))
+
+    assert generic_type is specialized_type
+
+
+def test_get_metric_bad_dtype():
+    dtype = np.int32
+    msg = r"Unexpected dtype .* provided. Please select a dtype from"
+    with pytest.raises(ValueError, match=msg):
+        DistanceMetric.get_metric("manhattan", dtype)
+
+
+def test_minkowski_metric_validate_bad_p_parameter():
+    msg = "p must be greater than 0"
+    with pytest.raises(ValueError, match=msg):
+        DistanceMetric.get_metric("minkowski", p=0)

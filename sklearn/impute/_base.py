@@ -10,16 +10,13 @@ import numpy as np
 import numpy.ma as ma
 from scipy import sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
-from ..utils._param_validation import StrOptions, MissingValues
+from ..base import BaseEstimator, TransformerMixin, _fit_context
+from ..utils import _is_pandas_na, is_scalar_nan
+from ..utils._mask import _get_mask
+from ..utils._param_validation import MissingValues, StrOptions
 from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median
-from ..utils.validation import check_is_fitted
-from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _check_feature_names_in
-from ..utils._mask import _get_mask
-from ..utils import _is_pandas_na
-from ..utils import is_scalar_nan
+from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
 
 
 def _check_inputs_dtype(X, missing_values):
@@ -348,6 +345,7 @@ class SimpleImputer(_BaseImputer):
 
         return X
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the imputer on `X`.
 
@@ -365,8 +363,6 @@ class SimpleImputer(_BaseImputer):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         X = self._validate_input(X, in_fit=True)
 
         # default fill_value is 0 for numerical input and "missing_value"
@@ -699,8 +695,10 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
     """Binary indicators for missing values.
 
     Note that this component typically should not be used in a vanilla
-    :class:`Pipeline` consisting of transformers and a classifier, but rather
-    could be added using a :class:`FeatureUnion` or :class:`ColumnTransformer`.
+    :class:`~sklearn.pipeline.Pipeline` consisting of transformers and a
+    classifier, but rather could be added using a
+    :class:`~sklearn.pipeline.FeatureUnion` or
+    :class:`~sklearn.compose.ColumnTransformer`.
 
     Read more in the :ref:`User Guide <impute>`.
 
@@ -927,6 +925,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         return missing_features_info[0]
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the transformer on `X`.
 
@@ -944,7 +943,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         self._fit(X, y)
 
         return self
@@ -990,6 +988,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         return imputer_mask
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Generate missing values indicator for `X`.
 
@@ -1008,7 +1007,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             The missing indicator for input data. The data type of `Xt`
             will be boolean.
         """
-        self._validate_params()
         imputer_mask = self._fit(X, y)
 
         if self.features_.size < self._n_features:

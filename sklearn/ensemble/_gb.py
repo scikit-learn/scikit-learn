@@ -20,19 +20,13 @@ The module structure is the following:
 #          Arnaud Joly, Jacob Schreiber
 # License: BSD 3 clause
 
-from abc import ABCMeta
-from abc import abstractmethod
+import warnings
+from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 from time import time
-import warnings
 
 import numpy as np
-from scipy.sparse import csr_matrix
-from scipy.sparse import issparse
-
-from ..model_selection import train_test_split
-from ..tree import DecisionTreeRegressor
-from ..tree._tree import DTYPE, DOUBLE
+from scipy.sparse import csr_matrix, issparse
 
 from .._loss.loss import (
     _LOSSES,
@@ -45,27 +39,21 @@ from .._loss.loss import (
     HuberLoss,
     PinballLoss,
 )
-from ..base import ClassifierMixin
-from ..base import RegressorMixin
-from ..base import is_classifier
-from ..dummy import DummyRegressor, DummyClassifier
+from ..base import ClassifierMixin, RegressorMixin, _fit_context, is_classifier
+from ..dummy import DummyClassifier, DummyRegressor
 from ..exceptions import NotFittedError
+from ..model_selection import train_test_split
 from ..preprocessing import LabelEncoder
-from ..tree._tree import TREE_LEAF
-from ..utils import check_random_state
-from ..utils import check_array
-from ..utils import column_or_1d
+from ..tree import DecisionTreeRegressor
+from ..tree._tree import DOUBLE, DTYPE, TREE_LEAF
+from ..utils import check_array, check_random_state, column_or_1d
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils.fixes import percentile
-from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.stats import _weighted_percentile
-
+from ..utils.validation import _check_sample_weight, check_is_fitted
 from ._base import BaseEnsemble
-from ._gradient_boosting import predict_stages
-from ._gradient_boosting import predict_stage
-from ._gradient_boosting import _random_sample_mask
-
+from ._gradient_boosting import _random_sample_mask, predict_stage, predict_stages
 
 _LOSSES = _LOSSES.copy()
 _LOSSES.update(
@@ -361,6 +349,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         "tol": [Interval(Real, 0.0, None, closed="left")],
     }
     _parameter_constraints.pop("splitter")
+    _parameter_constraints.pop("monotonic_cst")
 
     @abstractmethod
     def __init__(
@@ -591,6 +580,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """Check that the estimator is initialized, raising an error if not."""
         check_is_fitted(self)
 
+    @_fit_context(
+        # GradientBoosting*.init is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
@@ -627,8 +620,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         if not self.warm_start:
             self._clear_state()
 

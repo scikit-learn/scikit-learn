@@ -1,0 +1,103 @@
+# This linter job on GH actions is used to trigger the commenter bot
+# in bot-lint-comment.yml file. It stores the output of the linter to be used
+# by the commenter bot.
+name: linter
+
+on:
+  - pull_request_target
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    # setting any permission will set everything else to none for GITHUB_TOKEN
+    permissions:
+      pull-requests: none
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          source build_tools/shared.sh
+          # Include pytest compatibility with mypy
+          pip install pytest ruff $(get_dep mypy min) $(get_dep black min) cython-lint
+          # we save the versions of the linters to be used in the error message later.
+          python -c "from importlib.metadata import version; print(f\"ruff={version('ruff')}\")" >> /tmp/versions.txt
+          python -c "from importlib.metadata import version; print(f\"mypy={version('mypy')}\")" >> /tmp/versions.txt
+          python -c "from importlib.metadata import version; print(f\"black={version('black')}\")" >> /tmp/versions.txt
+          python -c "from importlib.metadata import version; print(f\"cython-lint={version('cython-lint')}\")" >> /tmp/versions.txt
+
+      - name: Run linting
+        id: lint-script
+        # We download the linting script from main, since this workflow is run
+        # from main itself.
+        run: |
+          curl https://raw.githubusercontent.com/${{ github.repository }}/main/build_tools/linting.sh --retry 5 -o ./build_tools/linting.sh
+          set +e
+          ./build_tools/linting.sh &> /tmp/linting_output.txt
+          cat /tmp/linting_output.txt
+
+      - name: Upload Artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: lint-log
+          path: |
+            /tmp/linting_output.txt
+            /tmp/versions.txt
+          retention-days: 1
+
+  comment:
+    needs: lint
+    if: always()
+    runs-on: ubuntu-latest
+
+    # We need these permissions to be able to post / update comments
+    permissions:
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: python -m pip install requests
+
+      - name: Download artifact
+        id: download-artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: lint-log
+
+      - name: Print log
+        run: cat linting_output.txt
+
+      - name: Process Comments
+        id: process-comments
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BRANCH_SHA: ${{ github.event.pull_request.head.sha }}
+          RUN_ID: ${{ github.run_id }}
+          LOG_FILE: linting_output.txt
+          VERSIONS_FILE: versions.txt
+        run: python ./build_tools/get_comment.py

@@ -16,31 +16,33 @@ classification.
 # - Replace link module of GLMs.
 
 import numbers
+
 import numpy as np
 from scipy.special import xlogy
-from ._loss import (
-    CyHalfSquaredError,
-    CyAbsoluteError,
-    CyPinballLoss,
-    CyHuberLoss,
-    CyHalfPoissonLoss,
-    CyHalfGammaLoss,
-    CyHalfTweedieLoss,
-    CyHalfTweedieLossIdentity,
-    CyHalfBinomialLoss,
-    CyHalfMultinomialLoss,
-    CyExponentialLoss,
-)
-from .link import (
-    Interval,
-    IdentityLink,
-    LogLink,
-    LogitLink,
-    HalfLogitLink,
-    MultinomialLogit,
-)
+
 from ..utils import check_scalar
 from ..utils.stats import _weighted_percentile
+from ._loss import (
+    CyAbsoluteError,
+    CyExponentialLoss,
+    CyHalfBinomialLoss,
+    CyHalfGammaLoss,
+    CyHalfMultinomialLoss,
+    CyHalfPoissonLoss,
+    CyHalfSquaredError,
+    CyHalfTweedieLoss,
+    CyHalfTweedieLossIdentity,
+    CyHuberLoss,
+    CyPinballLoss,
+)
+from .link import (
+    HalfLogitLink,
+    IdentityLink,
+    Interval,
+    LogitLink,
+    LogLink,
+    MultinomialLogit,
+)
 
 
 # Note: The shape of raw_prediction for multiclass classifications are
