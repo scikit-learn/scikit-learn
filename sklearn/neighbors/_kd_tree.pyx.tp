@@ -332,4 +332,5 @@ cdef inline float64_t max_dist_dual{{name_suffix}}(
 
 
 class KDTree(KDTree64):
+    __doc__ = CLASS_DOC.format(BinaryTree="KDTree")
     pass

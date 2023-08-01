@@ -280,4 +280,5 @@ cdef inline float64_t max_rdist_dual{{name_suffix}}(
 
 
 class BallTree(BallTree64):
+    __doc__ = CLASS_DOC.format(BinaryTree="BallTree")
     pass
