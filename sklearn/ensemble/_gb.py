@@ -1285,7 +1285,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         The number of trees that are built at each iteration. For regressors, this is
         always 1.
 
-        .. versionadded:: 1.3.0
+        .. versionadded:: 1.4.0
 
     feature_importances_ : ndarray of shape (n_features,)
         The impurity-based feature importances.
@@ -1905,7 +1905,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         The number of trees that are built at each iteration. For regressors, this is
         always 1.
 
-        .. versionadded:: 1.3.0
+        .. versionadded:: 1.4.0
 
     feature_importances_ : ndarray of shape (n_features,)
         The impurity-based feature importances.
