@@ -59,6 +59,10 @@ __all__ = [
 
 
 def _check_params_groups_deprecation(fit_params, params, groups):
+    """A helper function to check deprecations on `groups` and `fit_params`.
+
+    To be removed when set_config(enable_metadata_routing=False) is not possible.
+    """
     if params is not None and fit_params is not None:
         raise ValueError(
             "`params` and `fit_params` cannot both be provided. Pass parameters "
@@ -344,9 +348,7 @@ def cross_validate(
     """
     params = _check_params_groups_deprecation(fit_params, params, groups)
 
-    # kinda confused as why this is here, in other places we don't do such a
-    # check and conversion, we do check_array if needed.
-    X, y, groups = indexable(X, y, groups)
+    X, y = indexable(X, y)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
@@ -763,8 +765,10 @@ def _fit_and_score(
 
     scorer : A single callable or dict mapping scorer name to the callable
         If it is a single callable, the return value for ``train_scores`` and
-        ``test_scores`` is a single float or a mapping of the scorer name to
-        the score given by that scorer (_MultimetricScorer).
+        ``test_scores`` is a single float.
+
+        For a dict, it should be one mapping the scorer name to the scorer
+        callable object / function.
 
         The callable object / fn should have signature
         ``scorer(estimator, X, y)``.
@@ -1940,6 +1944,7 @@ def learning_curve(
                 verbose=verbose,
                 parameters=None,
                 fit_params=fit_params,
+                # TODO(SLEP6): support score params here
                 score_params=None,
                 return_train_score=True,
                 error_score=error_score,
@@ -2071,6 +2076,7 @@ def _incremental_fit_estimator(
 
         start_score = time.time()
 
+        # TODO(SLEP6): support score params in the following two calls
         test_scores.append(_score(estimator, X_test, y_test, scorer, None, error_score))
         train_scores.append(
             _score(estimator, X_train, y_train, scorer, None, error_score)
@@ -2241,6 +2247,7 @@ def validation_curve(
             verbose=verbose,
             parameters={param_name: v},
             fit_params=fit_params,
+            # TODO(SLEP6): support score params here
             score_params=None,
             return_train_score=True,
             error_score=error_score,
