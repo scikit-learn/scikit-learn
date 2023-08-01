@@ -826,7 +826,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "kd_tree"
                 kwargs["leaf_size"] = self.leaf_size
-            elif self.algorithm == "ball_tree":
+            else:
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "ball_tree"
                 kwargs["leaf_size"] = self.leaf_size
