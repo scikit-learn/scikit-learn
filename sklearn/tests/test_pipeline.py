@@ -17,7 +17,7 @@ from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.dummy import DummyRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_selection import SelectKBest, f_classif
@@ -1826,6 +1826,36 @@ def test_routing_passed_metadata_not_supported(method):
         ValueError, match="is only supported if enable_metadata_routing=True"
     ):
         getattr(pipe, method)([[1]], sample_weight=[1], prop="a")
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_pipeline_with_estimator_with_len():
+    """Test that pipeline works with estimators that have a `__len__` method."""
+
+    class LenTransformer(TransformerMixin, BaseEstimator):
+        def __init__(self, value):
+            self.value = value
+
+        def fit(self, X, y=None):
+            return self
+
+        def transform(self, X):
+            return X
+
+        def __len__(self):
+            return self.value
+
+    pipe = Pipeline(
+        [("trs", LenTransformer(value=False)), ("estimator", RandomForestClassifier())]
+    )
+    pipe.fit([[1]], [1])
+    pipe.predict([[1]])
+
+    pipe = Pipeline(
+        [("trs", LenTransformer(value=True)), ("estimator", RandomForestClassifier())]
+    )
+    pipe.fit([[1]], [1])
+    pipe.predict([[1]])
 
 
 # End of routing tests
