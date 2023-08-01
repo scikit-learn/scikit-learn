@@ -20,7 +20,6 @@ cdef class DatasetsPair{{name_suffix}}:
         {{DistanceMetric}} distance_metric
         intp_t n_features
 
-
     cdef intp_t n_samples_X(self) noexcept nogil
 
     cdef intp_t n_samples_Y(self) noexcept nogil
