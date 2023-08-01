@@ -1404,7 +1404,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     _parameter_constraints: dict = {
         **BaseGradientBoosting._parameter_constraints,
-        "loss": [StrOptions({"log_loss", "exponential"})],
+        "loss": [StrOptions({"log_loss", "exponential"}), BaseLoss],
         "init": [StrOptions({"zero"}), None, HasMethods(["fit", "predict_proba"])],
     }
 
@@ -1498,8 +1498,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         elif self.loss == "exponential":
             if self.n_classes_ > 2:
                 raise ValueError(
-                    f"loss='{self.loss}' is not suitable for a binary classification "
-                    "problem. Please use loss='log_loss' instead."
+                    f"loss='{self.loss}' is only suitable for a binary classification "
+                    f"problem, you have n_classes={self.n_classes_}. "
+                    "Please use loss='log_loss' instead."
                 )
             else:
                 return ExponentialLoss(sample_weight=sample_weight)
@@ -2008,7 +2009,10 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     _parameter_constraints: dict = {
         **BaseGradientBoosting._parameter_constraints,
-        "loss": [StrOptions({"squared_error", "absolute_error", "huber", "quantile"})],
+        "loss": [
+            StrOptions({"squared_error", "absolute_error", "huber", "quantile"}),
+            BaseLoss,
+        ],
         "init": [StrOptions({"zero"}), None, HasMethods(["fit", "predict"])],
         "alpha": [Interval(Real, 0.0, 1.0, closed="neither")],
     }

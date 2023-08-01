@@ -11,6 +11,7 @@ from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from scipy.special import expit
 
 from sklearn import datasets
+from sklearn._loss import HalfSquaredError
 from sklearn.base import clone
 from sklearn.datasets import make_classification, make_regression
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -53,6 +54,32 @@ iris = datasets.load_iris()
 perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
+
+
+def test_exponential_n_classes_gt_2():
+    """Test exponential loss raises for n_classes > 2."""
+    clf = GradientBoostingClassifier(loss="exponential")
+    msg = "loss='exponential' is only suitable for a binary classification"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(iris.data, iris.target)
+
+
+# Valid string cases are covered by _parameter_constraints.
+@pytest.mark.parametrize(
+    ["loss", "est", "err_msg"],
+    [
+        (HalfSquaredError(), GradientBoostingRegressor, None),
+        (24, GradientBoostingRegressor, "The 'loss' parameter of .* must be a str.*"),
+    ],
+)
+def test_get_loss(loss, est, err_msg):
+    """Test _get_loss method."""
+    est = est(loss=loss)
+    if err_msg:
+        with pytest.raises(ValueError, match=err_msg):
+            est.fit(X, y)
+    else:
+        est.fit(X, y)
 
 
 @pytest.mark.parametrize("loss", ("log_loss", "exponential"))
