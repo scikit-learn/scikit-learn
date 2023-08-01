@@ -1588,6 +1588,26 @@ def test_ohe_drop_first_explicit_categories(handle_unknown):
     assert_allclose(X_trans, X_expected)
 
 
+def test_ohe_more_informative_error_message():
+    """Raise informative error message when pandas output and sparse_output=True."""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"a": [1, 2, 3], "b": ["z", "b", "b"]}, columns=["a", "b"])
+
+    ohe = OneHotEncoder(sparse_output=True)
+    ohe.set_output(transform="pandas")
+
+    msg = (
+        "Pandas output does not support sparse data. Set "
+        "sparse_output=False to output pandas DataFrames or disable pandas output"
+    )
+    with pytest.raises(ValueError, match=msg):
+        ohe.fit_transform(df)
+
+    ohe.fit(df)
+    with pytest.raises(ValueError, match=msg):
+        ohe.transform(df)
+
+
 def test_ordinal_encoder_passthrough_missing_values_float_errors_dtype():
     """Test ordinal encoder with nan passthrough fails when dtype=np.int32."""
 

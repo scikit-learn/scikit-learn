@@ -124,7 +124,7 @@ class _MultimetricScorer:
         cached_call = partial(_cached_call, cache)
 
         if _routing_enabled():
-            routed_params = process_routing(self, "score", kwargs)
+            routed_params = process_routing(self, "score", **kwargs)
         else:
             # they all get the same args, and they all get them all
             routed_params = Bunch(
