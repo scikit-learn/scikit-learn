@@ -780,6 +780,9 @@ class PLSCanonical(_PLS):
 class CCA(_PLS):
     """Canonical Correlation Analysis, also known as "Mode B" PLS.
 
+    For an example on usage, see
+    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`.
+
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
     Parameters
