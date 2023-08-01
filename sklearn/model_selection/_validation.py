@@ -58,6 +58,36 @@ __all__ = [
 ]
 
 
+def _check_params_groups_deprecation(fit_params, params, groups):
+    if params is not None and fit_params is not None:
+        raise ValueError(
+            "`params` and `fit_params` cannot both be provided. Pass parameters "
+            "via `params`. `fit_params` is deprecated and will be removed in "
+            "version 1.6."
+        )
+    elif fit_params is not None:
+        warnings.warn(
+            (
+                "`fit_params` is deprecated and will be removed in version 1.6. "
+                "Pass parameters via `params` instead."
+            ),
+            FutureWarning,
+        )
+        params = fit_params
+
+    params = {} if params is None else params
+
+    if groups is not None and _routing_enabled():
+        raise ValueError(
+            "`groups` can only be passed if metadata routing is not enabled via"
+            " `sklearn.set_config(enable_metadata_routing=True)`. When routing is"
+            " enabled, pass `groups` along other metadata via `params` argument"
+            " instead."
+        )
+
+    return params
+
+
 @validate_params(
     {
         "estimator": [HasMethods("fit")],
@@ -183,10 +213,11 @@ def cross_validate(
         Parameters to pass to the fit method of the estimator.
 
         .. deprecated:: 1.4
-            This parameter is deprecated will be removed in version 1.6.
+            This parameter is deprecated will be removed in version 1.6. Use
+            ``params`` instead.
 
     params : dict, default=None
-        Parameters to pass to the the underlying estimator's methods, the
+        Parameters to pass to the the underlying estimator's ``fit``, the
         scorer, and the CV splitter.
 
         .. versionadded:: 1.4
@@ -311,31 +342,7 @@ def cross_validate(
     >>> print(scores['train_r2'])
     [0.28009951 0.3908844  0.22784907]
     """
-    if params is not None and fit_params is not None:
-        raise ValueError(
-            "`params` and `fit_params` cannot both be provided. Pass parameters "
-            "via `params`. `fit_params` is deprecated and will be removed in "
-            "version 1.6."
-        )
-    elif fit_params is not None:
-        warnings.warn(
-            (
-                "`fit_params` is deprecated and will be removed in version 1.6. "
-                "Pass parameters via `params` instead."
-            ),
-            FutureWarning,
-        )
-        params = fit_params
-
-    params = {} if params is None else params
-
-    if groups is not None and _routing_enabled():
-        raise ValueError(
-            "`groups` can only be passed if metadata routing is not enabled via"
-            " `sklearn.set_config(enable_metadata_routing=True)`. When routing is"
-            " enabled, pass `groups` along other metadata via `params` argument"
-            " instead. E.g.: `cross_validate(..., params={'groups': groups})`."
-        )
+    params = _check_params_groups_deprecation(fit_params, params, groups)
 
     # kinda confused as why this is here, in other places we don't do such a
     # check and conversion, we do check_array if needed.
@@ -351,12 +358,19 @@ def cross_validate(
         scorers = _check_multimetric_scoring(estimator, scoring)
 
     if _routing_enabled():
+        # `cross_validate` will create a `_MultiMetricScorer` if `scoring` is a
+        # dict at a later stage. We need the same object for the purpose of
+        # routing. However, creating it here and passing it around would create
+        # a much larger diff since the dict is used in many places.
         if isinstance(scorers, dict):
             _scorer = _MultimetricScorer(
                 scorers=scorers, raise_exc=(error_score == "raise")
             )
         else:
             _scorer = scorers
+        # For estimators, a MetadataRouter is created in get_metadata_routing
+        # methods. For these router methods, we create the router to use
+        # `process_routing` on it.
         router = (
             MetadataRouter(owner="cross_validate")
             .add(
@@ -365,6 +379,8 @@ def cross_validate(
             )
             .add(
                 estimator=estimator,
+                # TODO(SLEP6): also pass metadata to the predict method for
+                # scoring?
                 method_mapping=MethodMapping().add(caller="fit", callee="fit"),
             )
             .add(
@@ -373,10 +389,12 @@ def cross_validate(
             )
         )
         try:
-            routed_params = process_routing(
-                router, method="fit", other_params=None, **params
-            )
+            routed_params = process_routing(router, "fit", **params)
         except UnsetMetadataPassedError as e:
+            # The default exception would mention `fit` since in the above
+            # `process_routing` code, we pass `fit` as the caller. However,
+            # the user is not calling `fit` directly, so we change the message
+            # to make it more suitable for this case.
             raise UnsetMetadataPassedError(
                 message=(
                     f"{sorted(e.unrequested_params.keys())} are passed to cross"
@@ -576,6 +594,13 @@ def cross_val_score(
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
+        .. versionchanged:: 1.4
+            ``groups`` can only be passed if metadata routing is not enabled
+            via ``sklearn.set_config(enable_metadata_routing=True)``. When routing
+            is enabled, pass ``groups`` along other metadata via ``params``
+            argument instead. E.g.:
+            ``cross_val_score(..., params={'groups': groups})``.
+
     scoring : str or callable, default=None
         A str (see model evaluation documentation) or
         a scorer callable object / function with signature
@@ -621,10 +646,11 @@ def cross_val_score(
         Parameters to pass to the fit method of the estimator.
 
         .. deprecated:: 1.4
-            This parameter is deprecated will be removed in version 1.6.
+            This parameter is deprecated will be removed in version 1.6. Use
+            ``params`` instead.
 
     params : dict, default=None
-        Parameters to pass the the underlying estimator's methods, the scorer,
+        Parameters to pass the the underlying estimator's ``fit``, the scorer,
         and the CV splitter.
 
         .. versionadded:: 1.4
@@ -1012,6 +1038,7 @@ def _score(estimator, X_test, y_test, scorer, score_params, error_score="raise")
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
         "fit_params": [dict, None],
+        "params": [dict, None],
         "pre_dispatch": [Integral, str, None],
         "method": [
             StrOptions(
@@ -1036,6 +1063,7 @@ def cross_val_predict(
     n_jobs=None,
     verbose=0,
     fit_params=None,
+    params=None,
     pre_dispatch="2*n_jobs",
     method="predict",
 ):
@@ -1071,6 +1099,13 @@ def cross_val_predict(
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
+        .. versionchanged:: 1.4
+            ``groups`` can only be passed if metadata routing is not enabled
+            via ``sklearn.set_config(enable_metadata_routing=True)``. When routing
+            is enabled, pass ``groups`` along other metadata via ``params``
+            argument instead. E.g.:
+            ``cross_val_predict(..., params={'groups': groups})``.
+
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -1103,6 +1138,16 @@ def cross_val_predict(
 
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
+
+        .. deprecated:: 1.4
+            This parameter is deprecated will be removed in version 1.6. Use
+            ``params`` instead.
+
+    params : dict, default=None
+        Parameters to pass to the the underlying estimator's ``fit`` and the
+        CV splitter.
+
+        .. versionadded:: 1.4
 
     pre_dispatch : int or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
@@ -1163,10 +1208,50 @@ def cross_val_predict(
     >>> lasso = linear_model.Lasso()
     >>> y_pred = cross_val_predict(lasso, X, y, cv=3)
     """
-    X, y, groups = indexable(X, y, groups)
+    params = _check_params_groups_deprecation(fit_params, params, groups)
+    X, y = indexable(X, y)
+
+    if _routing_enabled():
+        # For estimators, a MetadataRouter is created in get_metadata_routing
+        # methods. For these router methods, we create the router to use
+        # `process_routing` on it.
+        router = (
+            MetadataRouter(owner="cross_validate")
+            .add(
+                splitter=cv,
+                method_mapping=MethodMapping().add(caller="fit", callee="split"),
+            )
+            .add(
+                estimator=estimator,
+                # TODO(SLEP6): also pass metadata for the predict method.
+                method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+            )
+        )
+        try:
+            routed_params = process_routing(router, "fit", **params)
+        except UnsetMetadataPassedError as e:
+            # The default exception would mention `fit` since in the above
+            # `process_routing` code, we pass `fit` as the caller. However,
+            # the user is not calling `fit` directly, so we change the message
+            # to make it more suitable for this case.
+            raise UnsetMetadataPassedError(
+                message=(
+                    f"{sorted(e.unrequested_params.keys())} are passed to cross"
+                    " validation but are not explicitly requested or unrequested. See"
+                    " the Metadata Routing User guide"
+                    " <https://scikit-learn.org/stable/metadata_routing.html> for more"
+                    " information."
+                ),
+                unrequested_params=e.unrequested_params,
+                routed_params=e.routed_params,
+            )
+    else:
+        routed_params = Bunch()
+        routed_params.splitter = Bunch(split={"groups": groups})
+        routed_params.estimator = Bunch(fit=params)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    splits = list(cv.split(X, y, groups))
+    splits = list(cv.split(X, y, **routed_params.splitter.split))
 
     test_indices = np.concatenate([test for _, test in splits])
     if not _check_is_permutation(test_indices, _num_samples(X)):
@@ -1194,7 +1279,13 @@ def cross_val_predict(
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
     predictions = parallel(
         delayed(_fit_and_predict)(
-            clone(estimator), X, y, train, test, verbose, fit_params, method
+            clone(estimator),
+            X,
+            y,
+            train,
+            test,
+            routed_params.estimator.fit,
+            method,
         )
         for train, test in splits
     )
@@ -1224,7 +1315,7 @@ def cross_val_predict(
         return predictions[inv_test_indices]
 
 
-def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params, method):
+def _fit_and_predict(estimator, X, y, train, test, fit_params, method):
     """Fit estimator and predict values for a given dataset split.
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -1249,9 +1340,6 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params, method):
 
     test : array-like of shape (n_test_samples,)
         Indices of test samples.
-
-    verbose : int
-        The verbosity level.
 
     fit_params : dict or None
         Parameters that will be passed to ``estimator.fit``.

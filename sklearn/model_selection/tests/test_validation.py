@@ -2450,9 +2450,12 @@ def test_cross_validate_fit_param_deprecation():
 
 
 @pytest.mark.usefixtures("enable_slep006")
-def test_groups_with_routing_validation():
+@pytest.mark.parametrize(
+    "cv_method", [cross_validate, cross_val_score, cross_val_predict]
+)
+def test_groups_with_routing_validation(cv_method):
     with pytest.raises(ValueError, match="`groups` can only be passed if"):
-        cross_validate(
+        cv_method(
             estimator=ConsumingClassifier(),
             X=X,
             y=y,
@@ -2461,10 +2464,13 @@ def test_groups_with_routing_validation():
 
 
 @pytest.mark.usefixtures("enable_slep006")
-def test_passed_unrequested_metadata():
+@pytest.mark.parametrize(
+    "cv_method", [cross_validate, cross_val_score, cross_val_predict]
+)
+def test_passed_unrequested_metadata(cv_method):
     err_msg = re.escape("['metadata'] are passed to cross validation")
     with pytest.raises(ValueError, match=err_msg):
-        cross_validate(
+        cv_method(
             estimator=ConsumingClassifier(),
             X=X,
             y=y,
@@ -2473,7 +2479,10 @@ def test_passed_unrequested_metadata():
 
 
 @pytest.mark.usefixtures("enable_slep006")
-def test_cross_validate_routing():
+@pytest.mark.parametrize(
+    "cv_method", [cross_validate, cross_val_score, cross_val_predict]
+)
+def test_cross_validate_routing(cv_method):
     scorer_registry = _Registry()
     scorer = ConsumingScorer(registry=scorer_registry).set_score_request(
         sample_weight="score_weights", metadata="score_metadata"
@@ -2495,23 +2504,39 @@ def test_cross_validate_routing():
     fit_sample_weight = rng.rand(n_samples)
     fit_metadata = rng.rand(n_samples)
 
-    cross_validate(
+    extra_params = {
+        cross_validate: dict(scoring=dict(my_scorer=scorer, accuracy="accuracy")),
+        # cross_val_score doesn't support multiple scorers
+        cross_val_score: dict(scoring=scorer),
+        # cross_val_predict doesn't need a scorer
+        cross_val_predict: dict(),
+    }
+
+    params = dict(
+        split_groups=split_groups,
+        split_metadata=split_metadata,
+        fit_sample_weight=fit_sample_weight,
+        fit_metadata=fit_metadata,
+    )
+
+    if cv_method is not cross_val_predict:
+        params.update(
+            score_weights=score_weights,
+            score_metadata=score_metadata,
+        )
+
+    cv_method(
         estimator,
         X=X,
         y=y,
-        scoring=dict(my_scorer=scorer, accuracy="accuracy"),
         cv=splitter,
-        params=dict(
-            score_weights=score_weights,
-            score_metadata=score_metadata,
-            split_groups=split_groups,
-            split_metadata=split_metadata,
-            fit_sample_weight=fit_sample_weight,
-            fit_metadata=fit_metadata,
-        ),
+        **extra_params[cv_method],
+        params=params,
     )
 
-    assert len(scorer_registry)
+    if cv_method is not cross_val_predict:
+        # cross_val_predict doesn't need a scorer
+        assert len(scorer_registry)
     for _scorer in scorer_registry:
         check_recorded_metadata(
             obj=_scorer,

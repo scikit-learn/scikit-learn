@@ -302,13 +302,17 @@ class ConsumingSplitter(BaseCrossValidator, GroupsConsumerMixin):
         train_indices = list(range(0, split_index))
         test_indices = list(range(split_index, len(X)))
         yield test_indices, train_indices
+        yield train_indices, test_indices
 
     def get_n_splits(self, X=None, y=None, groups=None):
         pass  # pragma: no cover
 
     def _iter_test_indices(self, X=None, y=None, groups=None):
         split_index = len(X) // 2
-        yield list(range(split_index, len(X)))
+        train_indices = list(range(0, split_index))
+        test_indices = list(range(split_index, len(X)))
+        yield test_indices
+        yield train_indices
 
 
 class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
