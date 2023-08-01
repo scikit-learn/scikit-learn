@@ -28,8 +28,8 @@ X, y = shuffle(X, y, random_state=7)
 X = StandardScaler().fit_transform(X)
 
 ALGORITHMS = [
-    "kdtree",
-    "balltree",
+    "kd_tree",
+    "ball_tree",
     "brute",
     "auto",
 ]
@@ -149,8 +149,8 @@ def test_hdbscan_algorithms(algo, metric):
         return
 
     ALGOS_TREES = {
-        "kdtree": KDTree,
-        "balltree": BallTree,
+        "kd_tree": KDTree,
+        "ball_tree": BallTree,
     }
     metric_params = {
         "mahalanobis": {"V": np.eye(X.shape[1])},
@@ -317,7 +317,7 @@ def test_hdbscan_sparse():
 
     msg = "Sparse data matrices only support algorithm `brute`."
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(metric="euclidean", algorithm="balltree").fit(X_sparse)
+        HDBSCAN(metric="euclidean", algorithm="ball_tree").fit(X_sparse)
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
@@ -368,7 +368,7 @@ def test_hdbscan_allow_single_cluster_with_epsilon():
         cluster_selection_epsilon=0.18,
         cluster_selection_method="eom",
         allow_single_cluster=True,
-        algorithm="kdtree",
+        algorithm="kd_tree",
     ).fit_predict(no_structure)
     unique_labels, counts = np.unique(labels, return_counts=True)
     assert len(unique_labels) == 2
@@ -433,16 +433,16 @@ def test_hdbscan_tree_invalid_metric():
 
     # Callables are not supported for either
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(algorithm="kdtree", metric=metric_callable).fit(X)
+        HDBSCAN(algorithm="kd_tree", metric=metric_callable).fit(X)
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(algorithm="balltree", metric=metric_callable).fit(X)
+        HDBSCAN(algorithm="ball_tree", metric=metric_callable).fit(X)
 
     # The set of valid metrics for KDTree at the time of writing this test is a
     # strict subset of those supported in BallTree
     metrics_not_kd = list(set(BallTree.valid_metrics) - set(KDTree.valid_metrics))
     if len(metrics_not_kd) > 0:
         with pytest.raises(ValueError, match=msg):
-            HDBSCAN(algorithm="kdtree", metric=metrics_not_kd[0]).fit(X)
+            HDBSCAN(algorithm="kd_tree", metric=metrics_not_kd[0]).fit(X)
 
 
 def test_hdbscan_too_many_min_samples():
@@ -546,3 +546,23 @@ def test_labelling_thresholding():
     # and the largest value is exactly MAX_LAMBDA.
     num_noise = condensed_tree["value"] < MAX_LAMBDA
     assert sum(num_noise) == sum(labels == -1)
+
+
+# TODO(1.6): Remove
+def test_hdbscan_warning_on_deprecated_algorithm_name():
+    # Test that warning message is shown when algorithm='kdtree'
+    msg = (
+        "`algorithm='kdtree'`has been deprecated in 1.4 and will be renamed"
+        " to'kd_tree'`in 1.6. To keep the past behaviour, set `algorithm='kd_tree'`."
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        HDBSCAN(algorithm="kdtree").fit(X)
+
+    # Test that warning message is shown when algorithm='balltree'
+    msg = (
+        "`algorithm='balltree'`has been deprecated in 1.4 and will be renamed"
+        " to'ball_tree'`in 1.6. To keep the past behaviour, set"
+        " `algorithm='ball_tree'`."
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        HDBSCAN(algorithm="balltree").fit(X)
