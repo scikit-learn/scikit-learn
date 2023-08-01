@@ -26,7 +26,7 @@ from numbers import Integral, Real
 from time import time
 
 import numpy as np
-from scipy.sparse import csr_matrix, issparse
+from scipy.sparse import csc_matrix, csr_matrix, issparse
 
 from .._loss.loss import (
     _LOSSES,
@@ -416,6 +416,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         sample_weight,
         sample_mask,
         random_state,
+        X_csc=None,
+        X_csr=None,
     ):
         """Fit another stage of ``n_trees_per_iteration_`` trees."""
         # FIXME: Replace assert by raise ValueError.
@@ -461,13 +463,15 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 # no inplace multiplication!
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
+            X = X_csc if X_csc is not None else X
             tree.fit(X, residual, sample_weight=sample_weight, check_input=False)
 
             # update tree leaves
+            X_for_tree_update = X_csr if X_csr is not None else X
             _update_terminal_regions(
                 self._loss,
                 tree.tree_,
-                X,
+                X_for_tree_update,
                 y,
                 residual,
                 raw_predictions,
@@ -644,20 +648,15 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
-            (
-                X_train,
-                X_val,
-                y_train,
-                y_val,
-                sample_weight_train,
-                sample_weight_val,
-            ) = train_test_split(
-                X,
-                y,
-                sample_weight,
-                random_state=self.random_state,
-                test_size=self.validation_fraction,
-                stratify=stratify,
+            X_train, X_val, y_train, y_val, sample_weight_train, sample_weight_val = (
+                train_test_split(
+                    X,
+                    y,
+                    sample_weight,
+                    random_state=self.random_state,
+                    test_size=self.validation_fraction,
+                    stratify=stratify,
+                )
             )
             if is_classifier(self):
                 if self.n_classes_ != np.unique(y_train).shape[0]:
@@ -805,8 +804,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             verbose_reporter = VerboseReporter(verbose=self.verbose)
             verbose_reporter.init(self, begin_at_stage)
 
-        if issparse(X):
-            X = csr_matrix(X)
+        X_csc = csc_matrix(X) if issparse(X) else None
+        X_csr = csr_matrix(X) if issparse(X) else None
 
         if self.n_iter_no_change is not None:
             loss_history = np.full(self.n_iter_no_change, np.inf)
@@ -853,6 +852,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_weight,
                 sample_mask,
                 random_state,
+                X_csc=X_csc,
+                X_csr=X_csr,
             )
 
             # track loss

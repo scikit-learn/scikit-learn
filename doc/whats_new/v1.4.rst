@@ -71,6 +71,15 @@ Changelog
   and all metadata are passed as keyword arguments. :pr:`26909` by `Adrin
   Jalali`_.
 
+:mod:`sklearn.cluster`
+............................
+
+- |API| : `kdtree` and `balltree` values are now deprecated and are renamed as
+  `kd_tree` and `ball_tree` respectively for the `algorithm` parameter of
+  :class:`cluster.HDBSCAN` ensuring consistency in naming convention.
+  `kdtree` and `balltree` values will be removed in 1.6.
+  :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
@@ -115,6 +124,11 @@ Changelog
   for binary and in particular for multiclass problems thanks to the private loss
   function module.
   :pr:`26278` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Efficiency| Improves runtime and memory usage for
+  :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
+  :pr:`26957` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_selection`
 ................................
