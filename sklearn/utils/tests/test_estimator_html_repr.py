@@ -21,7 +21,6 @@ from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.svm import LinearSVC, LinearSVR
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils import themes
 from sklearn.utils._estimator_html_repr import (
     _get_visual_block,
     _write_label_html,
@@ -118,14 +117,7 @@ def test_get_visual_block_column_transformer():
     assert est_html_info.name_details == (["num1", "num2"], [0, 3])
 
 
-@pytest.mark.parametrize(
-    "theme,expected_html",
-    [
-        (None, "prefers-color-scheme"),
-        (themes.AUTO, "prefers-color-scheme"),
-    ],
-)
-def test_estimator_html_repr_pipeline(theme, expected_html):
+def test_estimator_html_repr_pipeline():
     num_trans = Pipeline(
         steps=[("pass", "passthrough"), ("imputer", SimpleImputer(strategy="median"))]
     )
@@ -169,7 +161,7 @@ def test_estimator_html_repr_pipeline(theme, expected_html):
     pipe = Pipeline(
         [("preprocessor", preprocess), ("feat_u", feat_u), ("classifier", clf)]
     )
-    html_output = estimator_html_repr(pipe, theme=theme)
+    html_output = estimator_html_repr(pipe)
 
     # top level estimators show estimator with changes
     assert html.escape(str(pipe)) in html_output
@@ -205,8 +197,8 @@ def test_estimator_html_repr_pipeline(theme, expected_html):
             assert f"<label>{html.escape(name)}</label>" in html_output
             assert f"<pre>{html.escape(str(est))}</pre>" in html_output
 
-    # verify theme changes
-    assert expected_html in html_output
+    # verify that prefers-color-scheme is implemented
+    assert "prefers-color-scheme" in html_output
 
 
 @pytest.mark.parametrize("final_estimator", [None, LinearSVC()])
