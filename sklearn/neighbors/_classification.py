@@ -37,6 +37,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
     Read more in the :ref:`User Guide <classification>`.
 
+
     Parameters
     ----------
     n_neighbors : int, default=5
@@ -172,6 +173,9 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     [0]
     >>> print(neigh.predict_proba([[0.9]]))
     [[0.666... 0.333...]]
+
+    See :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`
+    for an example on how to use the API.
     """
 
     _parameter_constraints: dict = {**NeighborsBase._parameter_constraints}
