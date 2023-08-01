@@ -1197,7 +1197,7 @@ def test_scorer_no_op_multiclass_select_proba():
     scorer(lr, X_test, y_test)
 
 
-@pytest.mark.parametrize("name", get_scorer_names(), ids=get_scorer_names())
+@pytest.mark.parametrize("name", get_scorer_names())
 def test_scorer_set_score_request_raises(name):
     """Test that set_score_request is only available when feature flag is on."""
     # Make sure they expose the routing methods.
