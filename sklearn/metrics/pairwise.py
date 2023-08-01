@@ -45,7 +45,7 @@ from ._pairwise_distances_reduction import (
     PairwiseDistances,
 )
 from ._pairwise_distances_reduction._pairwise_distances import _precompute_metric_params
-from ._pairwise_fast import _chi2_kernel_fast
+from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
 
 # Utility Functions
@@ -1095,19 +1095,6 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
 
     X, Y = check_pairwise_arrays(X, Y)
 
-    if issparse(X):
-        X = csr_matrix(X, copy=False)
-        # This also sorts indices in-place.
-        X.sum_duplicates()
-
-    if issparse(Y):
-        Y = csr_matrix(Y, copy=False)
-        # This also sorts indices in-place.
-        Y.sum_duplicates()
-
-    if sum_over_features and PairwiseDistances.is_usable_for(X, Y, metric="manhattan"):
-        return PairwiseDistances.compute(X, Y, metric="manhattan")
-
     # XXX: the following code is still used for list-of-lists of numbers which
     # aren't converted to numpy arrays in validation steps done in `check_array`
     # and for supporting `sum_over_features` which we should probably remove.
@@ -1119,6 +1106,26 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
     if issparse(X) or issparse(Y):
         if not sum_over_features:
             raise TypeError("sum_over_features=False not supported for sparse matrices")
+
+    if issparse(X):
+        X = csr_matrix(X, copy=False)
+        # This also sorts indices in-place.
+        X.sum_duplicates()
+
+    if issparse(Y):
+        Y = csr_matrix(Y, copy=False)
+        # This also sorts indices in-place.
+        Y.sum_duplicates()
+
+    # We preserve the specialization for the sparse-sparse case in order to
+    # avoid a regression
+    if issparse(X) and issparse(Y):
+        D = np.zeros((X.shape[0], Y.shape[0]))
+        _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices, Y.indptr, D)
+        return D
+
+    if sum_over_features and PairwiseDistances.is_usable_for(X, Y, metric="manhattan"):
+        return PairwiseDistances.compute(X, Y, metric="manhattan")
 
     if sum_over_features:
         return distance.cdist(X, Y, "cityblock")

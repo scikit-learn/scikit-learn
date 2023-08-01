@@ -175,7 +175,7 @@ cdef class PairwiseDistances{{name_suffix}}:
         # computations of terms on the diagonal which must equal zero.
         # We enforce it by zeroing the diagonal.
         distance_matrix = np.asarray(self.pairwise_distances_matrix)
-        if self.datasets_pair.X_is_Y:
+        if self.X_is_Y:
             np.fill_diagonal(distance_matrix, 0.)
 
         return distance_matrix
