@@ -1086,7 +1086,11 @@ class NuSVC(BaseSVC):
     Pipeline(steps=[('standardscaler', StandardScaler()), ('nusvc', NuSVC())])
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
+
+    See :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py` for a more detailed example.
     """
+
+
 
     _impl = "nu_svc"
 
