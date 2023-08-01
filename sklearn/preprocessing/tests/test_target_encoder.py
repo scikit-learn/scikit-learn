@@ -108,7 +108,10 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
         ]
 
     target_encoder = TargetEncoder(
-        smooth=smooth, categories=categories, cv=n_splits, random_state=random_state,
+        smooth=smooth,
+        categories=categories,
+        cv=n_splits,
+        random_state=random_state,
     )
 
     X_fit_transform = target_encoder.fit_transform(X_train, y_train)
