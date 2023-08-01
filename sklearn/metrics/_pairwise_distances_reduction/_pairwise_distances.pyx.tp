@@ -85,6 +85,7 @@ cdef class PairwiseDistances{{name_suffix}}:
         pdr = PairwiseDistances{{name_suffix}}(
             datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
             strategy=strategy,
+            X_is_Y=X is Y,
         )
 
         # Limit the number of threads in second level of nested parallelism for BLAS
@@ -102,11 +103,13 @@ cdef class PairwiseDistances{{name_suffix}}:
         self,
         DatasetsPair{{name_suffix}} datasets_pair,
         strategy=None,
+        bint X_is_Y=False,
         sort_results=False,
     ):
         self.datasets_pair = datasets_pair
         self.n_samples_X = datasets_pair.n_samples_X()
         self.n_samples_Y = datasets_pair.n_samples_Y()
+        self.X_is_Y = X_is_Y
 
         self.effective_n_threads = _openmp_effective_n_threads()
 

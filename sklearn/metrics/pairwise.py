@@ -44,6 +44,7 @@ from ._pairwise_distances_reduction import (
     ArgKmin,
     PairwiseDistances,
 )
+from ._pairwise_distances_reduction._pairwise_distances import _precompute_metric_params
 from ._pairwise_fast import _chi2_kernel_fast
 
 
@@ -1904,29 +1905,6 @@ def _check_chunk_size(reduced, chunk_size):
             "Expected same length as input: %d."
             % (actual_size if is_tuple else actual_size[0], chunk_size)
         )
-
-
-def _precompute_metric_params(X, Y, metric=None, **kwds):
-    """Precompute data-derived metric parameters if not provided."""
-    if metric == "seuclidean" and "V" not in kwds:
-        if X is Y:
-            V = np.var(X, axis=0, ddof=1)
-        else:
-            raise ValueError(
-                "The 'V' parameter is required for the seuclidean metric "
-                "when Y is passed."
-            )
-        return {"V": V}
-    if metric == "mahalanobis" and "VI" not in kwds:
-        if X is Y:
-            VI = np.linalg.inv(np.cov(X.T)).T
-        else:
-            raise ValueError(
-                "The 'VI' parameter is required for the mahalanobis metric "
-                "when Y is passed."
-            )
-        return {"VI": VI}
-    return {}
 
 
 @validate_params(
