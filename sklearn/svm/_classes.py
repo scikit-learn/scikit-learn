@@ -621,6 +621,10 @@ class SVC(BaseSVC):
     other, see the corresponding section in the narrative documentation:
     :ref:`svm_kernels`.
 
+    For a visual example of how changing the regularization parameter
+    ``C`` affects the decision boundary, see
+    :ref:`sphx-glr-auto-examples-svm-plot-svm-margin.py`.
+
     Read more in the :ref:`User Guide <svm_classification>`.
 
     Parameters
