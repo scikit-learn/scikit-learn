@@ -71,6 +71,15 @@ Changelog
   and all metadata are passed as keyword arguments. :pr:`26909` by `Adrin
   Jalali`_.
 
+:mod:`sklearn.cluster`
+............................
+
+- |API| : `kdtree` and `balltree` values are now deprecated and are renamed as
+  `kd_tree` and `ball_tree` respectively for the `algorithm` parameter of
+  :class:`cluster.HDBSCAN` ensuring consistency in naming convention.
+  `kdtree` and `balltree` values will be removed in 1.6.
+  :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
