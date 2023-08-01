@@ -120,6 +120,11 @@ Changelog
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
   initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
 
+- |Efficiency| Improves runtime and memory usage for
+  :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
+  :pr:`26957` by `Thomas Fan`_.
+
 :mod:`sklearn.feature_selection`
 ................................
 
