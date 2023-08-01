@@ -444,7 +444,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 )
             )
             if is_classifier(self):
-                if self._n_classes != np.unique(y).shape[0]:
+                if self._n_classes != np.unique(y_train).shape[0]:
                     # We choose to error here. The problem is that the init
                     # estimator would be trained on y, which has some missing
                     # classes now, so its predictions would not have the
