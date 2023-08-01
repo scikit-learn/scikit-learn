@@ -405,7 +405,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     @abstractmethod
     def _get_loss(self, sample_weight):
-        pass
+        """Get loss object from sklearn._loss.loss."""
 
     def _fit_stage(
         self,
