@@ -104,7 +104,7 @@ jobs:
             platform_id: macosx_x86_64
 
           # MacOS arm64
-          # The latest macos arm64 Python build is on Cirrus CI
+          # The latest Python version is built and tested on CirrusCI
           - os: macos-latest
             python: 38
             platform_id: macosx_arm64
