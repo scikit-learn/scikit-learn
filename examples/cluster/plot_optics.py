@@ -8,6 +8,10 @@ Demo of OPTICS clustering algorithm
 Finds core samples of high density and expands clusters from them.
 This example uses data that is generated so that the clusters have
 different densities.
+
+For an example of usage, see
+:ref:`sphx_glr_auto_examples_cluster_plot_optics.py`.
+
 The :class:`~cluster.OPTICS` is first used with its Xi cluster detection
 method, and then setting specific thresholds on the reachability, which
 corresponds to :class:`~cluster.DBSCAN`. We can see that the different
