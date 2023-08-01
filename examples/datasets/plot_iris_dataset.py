@@ -48,6 +48,9 @@ plt.ylim(y_min, y_max)
 plt.xticks(())
 plt.yticks(())
 
+# %%
+# Plot a PCA representation of the iris dataset
+# -------------------------------------------------------------
 # To get a better understanding of interaction of the dimensions
 # plot the first three PCA dimensions
 fig = plt.figure(1, figsize=(8, 6))
@@ -64,7 +67,7 @@ ax.scatter(
     s=40,
 )
 
-ax.set_title("First three PCA directions")
+ax.set_title("First three PCA dimensions")
 ax.set_xlabel("1st eigenvector")
 ax.xaxis.set_ticklabels([])
 ax.set_ylabel("2nd eigenvector")
