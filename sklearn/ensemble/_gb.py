@@ -99,7 +99,8 @@ def _init_raw_predictions(X, estimator, loss, use_predict_proba):
         into float64.
     """
     # TODO: Use loss.fit_intercept_only where appropriate instead of
-    # DummyRegressor.
+    # DummyRegressor which is the default given by the `init` parameter,
+    # see also _init_state.
     if use_predict_proba:
         try:
             predictions = estimator.predict_proba(X)
