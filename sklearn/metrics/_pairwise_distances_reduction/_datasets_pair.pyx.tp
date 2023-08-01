@@ -53,7 +53,7 @@ cdef class DatasetsPair{{name_suffix}}:
         cls,
         X,
         Y,
-        str metric="euclidean",
+        metric="euclidean",
         dict metric_kwargs=None,
     ) -> DatasetsPair{{name_suffix}}:
         """Return the DatasetsPair implementation for the given arguments.
@@ -70,7 +70,7 @@ cdef class DatasetsPair{{name_suffix}}:
             If provided as a ndarray, it must be C-contiguous.
             If provided as a sparse matrix, it must be in CSR format.
 
-        metric : str, default='euclidean'
+        metric : str or DistanceMetric object, default='euclidean'
             The distance metric to compute between rows of X and Y.
             The default metric is a fast implementation of the Euclidean
             metric. For a list of available metrics, see the documentation
