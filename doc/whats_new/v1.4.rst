@@ -182,6 +182,16 @@ Changelog
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`, initiated by
   :user:`Patrick O'Reilly <pat-oreilly>`.
 
+
+:mod:`sklearn.neighbors`
+........................
+
+- |API| :class:`neighbors.KNeighborsRegressor` now accepts
+  :class:`metric.DistanceMetric` objects directly via the `metric` keyword
+  argument allowing for the use of accelerated third-party
+  :class:`metric.DistanceMetric` objects.
+  :pr:`26267` by :user:`Meekail Zain <micky774>`
+
 :mod:`sklearn.metrics`
 ......................
 
