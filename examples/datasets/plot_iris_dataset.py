@@ -40,8 +40,8 @@ y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5
 
 
 # %%
-# Scatter Plot of the Iris datasett
-# -------------------------------------------------
+# Scatter Plot of the Iris dataset
+# --------------------------------
 plt.figure(2, figsize=(8, 6))
 plt.clf()
 
@@ -57,7 +57,7 @@ plt.yticks(())
 
 # %%
 # Plot a PCA representation
-# -------------------------------------------------------------
+# -------------------------
 # Let's apply a PCA to the iris dataset and then plot the first three
 # dimensions.
 # This will give us a better understanding of our analysis results.
