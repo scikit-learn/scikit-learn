@@ -48,7 +48,7 @@ plt.ylim(y_min, y_max)
 plt.xticks(())
 plt.yticks(())
 
-# To getter a better understanding of interaction of the dimensions
+# To get a better understanding of interaction of the dimensions
 # plot the first three PCA dimensions
 fig = plt.figure(1, figsize=(8, 6))
 ax = fig.add_subplot(111, projection="3d", elev=-150, azim=110)
