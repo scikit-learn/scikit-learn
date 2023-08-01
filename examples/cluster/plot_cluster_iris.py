@@ -16,6 +16,9 @@ The plot shows:
 
 - bottom right: The ground truth.
 
+For an example of usage see:
+- :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`
+
 """
 
 # Code source: Gaël Varoquaux
