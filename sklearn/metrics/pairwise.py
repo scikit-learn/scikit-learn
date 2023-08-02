@@ -2234,9 +2234,6 @@ def pairwise_distances(
     ):
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif pwd_backend_is_usable:
-        # This is an adaptor for one "sqeuclidean" specification.
-        # For this backend, we can directly use "sqeuclidean".
-
         if issparse(X):
             X = csr_matrix(X, copy=False)
             # This also sorts indices in-place.

@@ -46,7 +46,6 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         intp_t n_samples_X, X_n_samples_chunk, X_n_chunks, X_n_samples_last_chunk
         intp_t n_samples_Y, Y_n_samples_chunk, Y_n_chunks, Y_n_samples_last_chunk
 
-        bint X_is_Y
         bint execute_in_parallel_on_Y
 
     @final
