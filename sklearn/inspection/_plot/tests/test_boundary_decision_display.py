@@ -54,7 +54,7 @@ def test_check_boundary_response_method_auto():
             pass
 
     a_inst = A()
-    method = _check_boundary_response_method(a_inst, "auto")
+    method = _check_boundary_response_method(a_inst, "auto", None)
     assert method == a_inst.decision_function
 
     class B:
@@ -62,7 +62,7 @@ def test_check_boundary_response_method_auto():
             pass
 
     b_inst = B()
-    method = _check_boundary_response_method(b_inst, "auto")
+    method = _check_boundary_response_method(b_inst, "auto", None)
     assert method == b_inst.predict_proba
 
     class C:
@@ -73,7 +73,7 @@ def test_check_boundary_response_method_auto():
             pass
 
     c_inst = C()
-    method = _check_boundary_response_method(c_inst, "auto")
+    method = _check_boundary_response_method(c_inst, "auto", None)
     assert method == c_inst.decision_function
 
     class D:
@@ -81,7 +81,7 @@ def test_check_boundary_response_method_auto():
             pass
 
     d_inst = D()
-    method = _check_boundary_response_method(d_inst, "auto")
+    method = _check_boundary_response_method(d_inst, "auto", None)
     assert method == d_inst.predict
 
 
@@ -92,10 +92,7 @@ def test_multiclass_error(pyplot, response_method):
     X = X[:, [0, 1]]
     lr = LogisticRegression().fit(X, y)
 
-    msg = (
-        "Multiclass classifiers are only supported when response_method is 'predict' or"
-        " 'auto'"
-    )
+    msg = "you must define the class label to be selected"
     with pytest.raises(ValueError, match=msg):
         DecisionBoundaryDisplay.from_estimator(lr, X, response_method=response_method)
 
@@ -120,6 +117,39 @@ def test_multiclass(pyplot, response_method):
         np.linspace(x1_min, x1_max, grid_resolution),
     )
     response = lr.predict(np.c_[xx0.ravel(), xx1.ravel()])
+    assert_allclose(disp.response, response.reshape(xx0.shape))
+    assert_allclose(disp.xx0, xx0)
+    assert_allclose(disp.xx1, xx1)
+
+
+@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
+@pytest.mark.parametrize("class_label", [0, 1, 2])
+def test_multiclass_class_label(pyplot, response_method, class_label):
+    """Check multiclass with decision function and probabilities provide the expected
+    results."""
+    grid_resolution = 10
+    eps = 1.0
+    X, y = make_classification(n_classes=3, n_informative=3, random_state=0)
+    X = X[:, [0, 1]]
+    lr = LogisticRegression(random_state=0).fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        lr,
+        X,
+        response_method=response_method,
+        class_label=class_label,
+        grid_resolution=grid_resolution,
+        eps=1.0,
+    )
+
+    x0_min, x0_max = X[:, 0].min() - eps, X[:, 0].max() + eps
+    x1_min, x1_max = X[:, 1].min() - eps, X[:, 1].max() + eps
+    xx0, xx1 = np.meshgrid(
+        np.linspace(x0_min, x0_max, grid_resolution),
+        np.linspace(x1_min, x1_max, grid_resolution),
+    )
+    response = getattr(lr, response_method)(np.c_[xx0.ravel(), xx1.ravel()])
+    response = response[:, class_label]
     assert_allclose(disp.response, response.reshape(xx0.shape))
     assert_allclose(disp.xx0, xx0)
     assert_allclose(disp.xx1, xx1)

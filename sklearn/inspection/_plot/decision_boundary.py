@@ -12,7 +12,7 @@ from ...utils.validation import (
 )
 
 
-def _check_boundary_response_method(estimator, response_method):
+def _check_boundary_response_method(estimator, response_method, class_label):
     """Return prediction method from the `response_method` for decision boundary.
 
     Parameters
@@ -37,13 +37,18 @@ def _check_boundary_response_method(estimator, response_method):
         raise ValueError(msg)
 
     if has_classes and len(estimator.classes_) > 2:
-        if response_method not in {"auto", "predict"}:
+        if response_method in {"predict_proba", "decision_function"} and (
+            class_label is None or class_label not in estimator.classes_
+        ):
             msg = (
-                "Multiclass classifiers are only supported when response_method is"
-                " 'predict' or 'auto'"
+                "When `response_method` is set to 'predict_proba' or "
+                "'decision_function' and the target is multiclass, you must define "
+                "the class label to be selected as class of interest. Got "
+                f"class_label={class_label} instead. Potential choices are: "
+                f"{estimator.classes_}."
             )
             raise ValueError(msg)
-        methods_list = ["predict"]
+        methods_list = ["predict"] if response_method == "auto" else [response_method]
     elif response_method == "auto":
         methods_list = ["decision_function", "predict_proba", "predict"]
     else:
@@ -206,6 +211,7 @@ class DecisionBoundaryDisplay:
         eps=1.0,
         plot_method="contourf",
         response_method="auto",
+        class_label=None,
         xlabel=None,
         ylabel=None,
         ax=None,
@@ -247,6 +253,13 @@ class DecisionBoundaryDisplay:
             :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
             For multiclass problems, :term:`predict` is selected when
             `response_method="auto"`.
+
+        class_label : int, float or str, default=None
+            When `response_method` return several columns (i.e. `"predict_proba"` and
+            `"decision_function"`), `class_label` specifies which column to use for
+            plotting.
+
+            .. versionadded:: 1.4
 
         xlabel : str, default=None
             The label used for the x-axis. If `None`, an attempt is made to
@@ -342,7 +355,9 @@ class DecisionBoundaryDisplay:
         else:
             X_grid = np.c_[xx0.ravel(), xx1.ravel()]
 
-        pred_func = _check_boundary_response_method(estimator, response_method)
+        pred_func = _check_boundary_response_method(
+            estimator, response_method, class_label
+        )
         response = pred_func(X_grid)
 
         # convert classes predictions into integers
@@ -355,8 +370,11 @@ class DecisionBoundaryDisplay:
             if is_regressor(estimator):
                 raise ValueError("Multi-output regressors are not supported")
 
-            # TODO: Support pos_label
-            response = response[:, 1]
+            if class_label is None:
+                response = response[:, 1]
+            else:
+                target_index = np.flatnonzero(estimator.classes_ == class_label)[0]
+                response = response[:, target_index]
 
         if xlabel is None:
             xlabel = X.columns[0] if hasattr(X, "columns") else ""

@@ -22,10 +22,12 @@ other estimators.
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import cm
 
 from sklearn import datasets
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
+from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn.svm import SVC
@@ -35,6 +37,7 @@ X = iris.data[:, 0:2]  # we only take the first two features for visualization
 y = iris.target
 
 n_features = X.shape[1]
+n_classes = len(np.unique(y))
 
 C = 10
 kernel = 1.0 * RBF([1.0, 1.0])  # for GPC
@@ -56,13 +59,7 @@ classifiers = {
 
 n_classifiers = len(classifiers)
 
-plt.figure(figsize=(3 * 2, n_classifiers * 2))
-plt.subplots_adjust(bottom=0.2, top=0.95)
-
-xx = np.linspace(3, 9, 100)
-yy = np.linspace(1, 5, 100).T
-xx, yy = np.meshgrid(xx, yy)
-Xfull = np.c_[xx.ravel(), yy.ravel()]
+fig, axs = plt.subplots(nrows=n_classifiers, ncols=n_classes, figsize=(6, 14))
 
 for index, (name, classifier) in enumerate(classifiers.items()):
     classifier.fit(X, y)
@@ -71,25 +68,29 @@ for index, (name, classifier) in enumerate(classifiers.items()):
     accuracy = accuracy_score(y, y_pred)
     print("Accuracy (train) for %s: %0.1f%% " % (name, accuracy * 100))
 
-    # View probabilities:
-    probas = classifier.predict_proba(Xfull)
-    n_classes = np.unique(y_pred).size
-    for k in range(n_classes):
-        plt.subplot(n_classifiers, n_classes, index * n_classes + k + 1)
-        plt.title("Class %d" % k)
-        if k == 0:
-            plt.ylabel(name)
-        imshow_handle = plt.imshow(
-            probas[:, k].reshape((100, 100)), extent=(3, 9, 1, 5), origin="lower"
+    for k in classifier.classes_:
+        disp = DecisionBoundaryDisplay.from_estimator(
+            classifier,
+            X,
+            plot_method="pcolormesh",
+            response_method="predict_proba",
+            class_label=k,
+            ax=axs[index, k],
         )
-        plt.xticks(())
-        plt.yticks(())
+        axs[index, k].set(
+            xticks=(), yticks=(), ylabel=name if k == 0 else None, title=f"Class #{k}"
+        )
         idx = y_pred == k
         if idx.any():
-            plt.scatter(X[idx, 0], X[idx, 1], marker="o", c="w", edgecolor="k")
+            axs[index, k].scatter(
+                X[idx, 0], X[idx, 1], marker="o", c="w", edgecolor="k"
+            )
 
-ax = plt.axes([0.15, 0.04, 0.7, 0.05])
-plt.title("Probability")
-plt.colorbar(imshow_handle, cax=ax, orientation="horizontal")
+fig.colorbar(
+    cm.ScalarMappable(norm=None, cmap="viridis"),
+    ax=axs,
+    orientation="horizontal",
+    label="Probability",
+)
 
 plt.show()

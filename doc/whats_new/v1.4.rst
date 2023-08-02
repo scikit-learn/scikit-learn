@@ -131,6 +131,14 @@ Changelog
 - |Fix| :func:`feature_selection.mutual_info_regression` now correctly computes the
   result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Enhancement| :class:`inspection.DecisionBoundaryDisplay` can be used with
+  `response_method` set to `"predict_proba"` or `"decision_function"` for multiclass
+  problem and by setting `class_label` to select the class to plot.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
