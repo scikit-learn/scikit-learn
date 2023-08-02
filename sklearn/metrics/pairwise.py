@@ -1074,29 +1074,15 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
 
     if issparse(X) or issparse(Y):
         if not sum_over_features:
-            raise TypeError("sum_over_features=False not supported for sparse matrices")
+            raise TypeError(
+                "sum_over_features=%r not supported for sparse matrices"
+                % sum_over_features
+            )
 
-    if issparse(X):
         X = csr_matrix(X, copy=False)
-        # This also sorts indices in-place.
-        X.sum_duplicates()
-
-    if issparse(Y):
         Y = csr_matrix(Y, copy=False)
-        # This also sorts indices in-place.
+        X.sum_duplicates()  # this also sorts indices in-place
         Y.sum_duplicates()
-
-    # We preserve the specialization for the sparse-sparse case in order to
-    # avoid a regression
-    if issparse(X) or issparse(Y):
-        X = csr_matrix(X, copy=False)
-        # This also sorts indices in-place.
-        X.sum_duplicates()
-
-        Y = csr_matrix(Y, copy=False)
-        # This also sorts indices in-place.
-        Y.sum_duplicates()
-
         D = np.zeros((X.shape[0], Y.shape[0]))
         _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices, Y.indptr, D)
         return D
