@@ -176,6 +176,23 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
     """
 
     @classmethod
+    def valid_metrics(cls) -> List[str]:
+        excluded = {
+            # PyFunc cannot be supported because it necessitates interacting with
+            # the CPython interpreter to call user defined functions.
+            "pyfunc",
+            "mahalanobis",  # is numerically unstable
+            # In order to support discrete distance metrics, we need to have a
+            # stable simultaneous sort which preserves the order of the indices
+            # because there generally is a lot of occurrences for a given values
+            # of distances in this case.
+            # TODO: implement a stable simultaneous_sort.
+            "hamming",
+            *BOOL_METRICS,
+        }
+        return sorted(set(METRIC_MAPPING64.keys()) - excluded)
+
+    @classmethod
     def compute(
         cls,
         X,

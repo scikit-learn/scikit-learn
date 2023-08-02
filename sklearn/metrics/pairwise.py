@@ -2206,7 +2206,12 @@ def pairwise_distances(
             "Unknown metric %s. Valid metrics are %s, or 'precomputed', or a callable"
             % (metric, _VALID_METRICS)
         )
-    pwd_backend_is_usable = PairwiseDistances.is_usable_for(X, Y, metric=metric)
+
+    pwd_backend_is_usable = (
+        PairwiseDistances.is_usable_for(X, Y, metric=metric)
+        # Ensure that we do not accept sqeuclidean request as well
+        and not (kwds.get("squared", False) and metric == "euclidean")
+    )
     multi_threaded_preferred = _openmp_effective_n_threads() > 1 and n_jobs > 1
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
@@ -2231,11 +2236,6 @@ def pairwise_distances(
     elif pwd_backend_is_usable:
         # This is an adaptor for one "sqeuclidean" specification.
         # For this backend, we can directly use "sqeuclidean".
-        if kwds.get("squared", False) and metric == "euclidean":
-            # TODO: use 'sqeuclidean' instead of 'euclidean'
-            # with EuclideanPairwiseDistances
-            metric = "sqeuclidean"
-            kwds = {}
 
         if issparse(X):
             X = csr_matrix(X, copy=False)
