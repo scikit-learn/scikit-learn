@@ -64,6 +64,15 @@ _LOSSES.update(
 )
 
 
+def _safe_divide(numerator, denominator):
+    """Prevents overflow and division by zero."""
+    with np.errstate(divide="raise"):
+        try:
+            return numerator / denominator
+        except FloatingPointError:
+            return 0.0
+
+
 def _init_raw_predictions(X, estimator, loss, use_predict_proba):
     """Return the initial raw predictions.
 
@@ -187,13 +196,7 @@ def _update_terminal_regions(
                 numerator = np.average(residual_, weights=sw)
                 # denominator = hessian = prob * (1 - prob)
                 denominator = np.average(prob * (1 - prob), weights=sw)
-
-                # prevents overflow and division by zero
-                sw_sum = indices.shape[0] if sw is None else np.sum(sw)
-                if abs(denominator * sw_sum) < 1e-150:
-                    tree.value[leaf, 0, 0] = 0.0
-                else:
-                    tree.value[leaf, 0, 0] = numerator / denominator
+                tree.value[leaf, 0, 0] = _safe_divide(numerator, denominator)
             elif isinstance(loss, HalfMultinomialLoss):
                 # we take advantage that: y - prob = residual
                 residual_ = residual.take(indices, axis=0)
@@ -209,13 +212,7 @@ def _update_terminal_regions(
                 numerator *= (K - 1) / K
                 # denominator = (diagonal) hessian = prob * (1 - prob)
                 denominator = np.average(prob * (1 - prob), weights=sw)
-
-                # prevents overflow and division by zero
-                sw_sum = indices.shape[0] if sw is None else np.sum(sw)
-                if abs(denominator * sw_sum) < 1e-150:
-                    tree.value[leaf, 0, 0] = 0.0
-                else:
-                    tree.value[leaf, 0, 0] = numerator / denominator
+                tree.value[leaf, 0, 0] = _safe_divide(numerator, denominator)
             elif isinstance(loss, ExponentialLoss):
                 z = 2.0 * y_ - 1.0  # z is -1 or +1
                 raw_pred = raw_prediction[indices, k]
@@ -223,13 +220,7 @@ def _update_terminal_regions(
                 numerator = np.average(z * np.exp(-z * raw_pred), weights=sw)
                 # denominator = hessian
                 denominator = np.average(np.exp(-z * raw_pred), weights=sw)
-
-                # prevents overflow and division by zero
-                sw_sum = indices.shape[0] if sw is None else np.sum(sw)
-                if abs(denominator * sw_sum) < 1e-150:
-                    tree.value[leaf, 0, 0] = 0.0
-                else:
-                    tree.value[leaf, 0, 0] = numerator / denominator
+                tree.value[leaf, 0, 0] = _safe_divide(numerator, denominator)
             else:
                 update = loss.fit_intercept_only(
                     y_true=y_ - raw_prediction[indices, k],
