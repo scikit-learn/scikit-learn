@@ -344,12 +344,9 @@ _ = ax.legend()
 # Keep in mind that one can still improve the calibration of our model by:
 #
 # - collecting more data-points (in case the model is overfitting);
-# - better tuning of the model hyper-parameters (see
-#   :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`)
-#   and make sure the model is not over-fitting;
-# - engineering more predictive features from the same data. This is especially
-#   useful for linear quantile regression (not covered in this tutorial);
-# - try other kinds of quantile regression models, such as Quantile Forests.
+# - better tuning of the model hyperparameters (see
+#   :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`);
+# - engineering more predictive features from the same data.
 #
 # Monotonic Constraints
 # =====================
