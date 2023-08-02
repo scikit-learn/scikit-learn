@@ -365,20 +365,23 @@ _ = ax.legend()
 # price and demand in New South Wales, but also decrease with price and demand
 # in Victoria, in order to benefit both populations.
 #
-# To create the monotonic constraints, we use :class:`numpy.select` to assign
-# `1` to the positions corresponding to columns "nswdemand" and "nswprice", `-1`
-# to the positions corresponding to columns "vicdemand" and "vicprice", and `0`
-# elsewhere. We then visualize the partial dependence on said features:
+# If the training data has feature names, it’s possible to specify the monotonic
+# constraints by passing a dictionary with the convention:
+# - 1: monotonic increase
+# - 0: no constraint
+# - -1: monotonic decrease
 
 from sklearn.inspection import PartialDependenceDisplay
 
-conditions = [
-    (X.columns == "nswdemand") | (X.columns == "nswprice"),
-    (X.columns == "vicdemand") | (X.columns == "vicprice"),
-]
-choices = [1, -1]
-monotonic_cst = np.select(conditions, choices, default=0)
-
+monotonic_cst = {
+    "date": 0,
+    "day": 0,
+    "period": 0,
+    "nswdemand": 1,
+    "nswprice": 1,
+    "vicdemand": -1,
+    "vicprice": -1,
+}
 gbdt_no_cst = HistGradientBoostingRegressor().fit(X, y)
 gbdt_cst = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst).fit(X, y)
 
