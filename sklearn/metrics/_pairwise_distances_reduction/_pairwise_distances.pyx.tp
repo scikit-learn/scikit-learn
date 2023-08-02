@@ -55,6 +55,7 @@ cdef class PairwiseDistances{{name_suffix}}:
         str metric="euclidean",
         dict metric_kwargs=None,
         str strategy=None,
+        intp_t n_jobs=-1,
     ):
         """Compute the pairwise-distances matrix.
 
@@ -86,6 +87,7 @@ cdef class PairwiseDistances{{name_suffix}}:
             datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
             strategy=strategy,
             X_is_Y=X is Y,
+            n_jobs=n_jobs,
         )
 
         # Limit the number of threads in second level of nested parallelism for BLAS
@@ -105,6 +107,7 @@ cdef class PairwiseDistances{{name_suffix}}:
         strategy=None,
         bint X_is_Y=False,
         sort_results=False,
+        intp_t n_jobs=-1,
     ):
         self.datasets_pair = datasets_pair
         self.n_samples_X = datasets_pair.n_samples_X()
@@ -112,7 +115,8 @@ cdef class PairwiseDistances{{name_suffix}}:
         self.X_is_Y = X_is_Y
 
         self.effective_n_threads = _openmp_effective_n_threads()
-
+        if n_jobs != -1:
+            self.effective_n_threads = min(self.effective_n_threads, n_jobs)
         if strategy is None:
             strategy = get_config().get("pairwise_dist_parallel_strategy", 'auto')
 

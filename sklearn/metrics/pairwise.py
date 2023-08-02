@@ -28,6 +28,7 @@ from ..utils import (
     is_scalar_nan,
 )
 from ..utils._mask import _get_mask
+from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._param_validation import (
     Hidden,
     Interval,
@@ -360,17 +361,6 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     float32, norms needs to be recomputed on upcast chunks.
     TODO: use a float64 accumulator in row_norms to avoid the latter.
     """
-    metric = "sqeuclidean" if squared else "euclidean"
-    if PairwiseDistances.is_usable_for(X, Y, metric):
-        metric_kwargs = {}
-        if X_norm_squared is not None:
-            metric_kwargs["X_norm_squared"] = np.ravel(X_norm_squared)
-
-        if Y_norm_squared is not None:
-            metric_kwargs["Y_norm_squared"] = np.ravel(Y_norm_squared)
-
-        return PairwiseDistances.compute(X, Y, metric, metric_kwargs=metric_kwargs)
-
     # XXX: the following code is still used for list-of-lists of numbers which
     # aren't converted to numpy arrays in validation steps done in `check_array`.
     # TODO: convert list-of-lists to numpy arrays in `check_array`.
@@ -1003,10 +993,6 @@ def haversine_distances(X, Y=None):
     array([[    0.        , 11099.54035582],
            [11099.54035582,     0.        ]])
     """
-
-    if PairwiseDistances.is_usable_for(X, Y, metric="haversine"):
-        return PairwiseDistances.compute(X, Y, metric="haversine")
-
     # XXX: the following code is still used for list-of-lists of numbers which
     # aren't converted to numpy arrays in validation steps done in `check_array`.
     # TODO: convert list-of-lists to numpy arrays in `check_array`.
@@ -1119,13 +1105,18 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
 
     # We preserve the specialization for the sparse-sparse case in order to
     # avoid a regression
-    if issparse(X) and issparse(Y):
+    if issparse(X) or issparse(Y):
+        X = csr_matrix(X, copy=False)
+        # This also sorts indices in-place.
+        X.sum_duplicates()
+
+        Y = csr_matrix(Y, copy=False)
+        # This also sorts indices in-place.
+        Y.sum_duplicates()
+
         D = np.zeros((X.shape[0], Y.shape[0]))
         _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices, Y.indptr, D)
         return D
-
-    if sum_over_features and PairwiseDistances.is_usable_for(X, Y, metric="manhattan"):
-        return PairwiseDistances.compute(X, Y, metric="manhattan")
 
     if sum_over_features:
         return distance.cdist(X, Y, "cityblock")
@@ -2232,8 +2223,29 @@ def pairwise_distances(
             "Unknown metric %s. Valid metrics are %s, or 'precomputed', or a callable"
             % (metric, _VALID_METRICS)
         )
+    pwd_backend_is_usable = PairwiseDistances.is_usable_for(X, Y, metric=metric)
+    multi_threaded_preferred = _openmp_effective_n_threads() > 1 and n_jobs > 1
+    if metric == "precomputed":
+        X, _ = check_pairwise_arrays(
+            X, Y, precomputed=True, force_all_finite=force_all_finite
+        )
 
-    if PairwiseDistances.is_usable_for(X, Y, metric=metric, metric_kwargs=kwds):
+        whom = (
+            "`pairwise_distances`. Precomputed distance "
+            " need to have non-negative values."
+        )
+        check_non_negative(X, whom=whom)
+        return X
+    # Prefer specialized path, except for when multi-threaded computation via
+    # PairwiseDistances is available.
+    # TODO(1.4) Remove check for `sum_over_features` upon deprecation completion
+    elif metric in PAIRWISE_DISTANCE_FUNCTIONS and not (
+        pwd_backend_is_usable
+        and multi_threaded_preferred
+        and kwds.get("sum_over_features", True)
+    ):
+        func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
+    elif pwd_backend_is_usable:
         # This is an adaptor for one "sqeuclidean" specification.
         # For this backend, we can directly use "sqeuclidean".
         if kwds.get("squared", False) and metric == "euclidean":
@@ -2252,21 +2264,9 @@ def pairwise_distances(
             # This also sorts indices in-place.
             Y.sum_duplicates()
 
-        return PairwiseDistances.compute(X, Y, metric=metric, metric_kwargs=kwds)
-
-    if metric == "precomputed":
-        X, _ = check_pairwise_arrays(
-            X, Y, precomputed=True, force_all_finite=force_all_finite
+        return PairwiseDistances.compute(
+            X, Y, metric=metric, metric_kwargs=kwds, n_jobs=n_jobs
         )
-
-        whom = (
-            "`pairwise_distances`. Precomputed distance "
-            " need to have non-negative values."
-        )
-        check_non_negative(X, whom=whom)
-        return X
-    elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
-        func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):
         func = partial(
             _pairwise_callable, metric=metric, force_all_finite=force_all_finite, **kwds

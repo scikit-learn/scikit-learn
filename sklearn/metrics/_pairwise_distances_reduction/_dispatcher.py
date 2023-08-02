@@ -5,7 +5,6 @@ import numpy as np
 from scipy.sparse import issparse
 
 from ... import get_config
-from ...utils._openmp_helpers import _openmp_effective_n_threads
 from .._dist_metrics import (
     BOOL_METRICS,
     METRIC_MAPPING64,
@@ -177,55 +176,6 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
     """
 
     @classmethod
-    def is_usable_for(cls, X, Y, metric, metric_kwargs=None) -> bool:
-        """Return True if the dispatcher can be used for the
-        given parameters.
-
-        Parameters
-        ----------
-        X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
-            Input data.
-
-        Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features)
-            Input data.
-
-        metric : str, default='euclidean'
-            The distance metric to use.
-            For a list of available metrics, see the documentation of
-            :class:`~sklearn.metrics.DistanceMetric`.
-
-        metric_kwargs : dict, default=None
-            Keyword arguments to pass to specified metric function.
-
-        Returns
-        -------
-        True if the dispatcher can be used, else False.
-        """
-        effective_n_threads = _openmp_effective_n_threads()
-
-        def is_euclidean(metric, metric_kwargs):
-            metric_kwargs = metric_kwargs or dict()
-            euclidean_metrics = [
-                "euclidean",
-                "sqeuclidean",
-                "l2",
-            ]
-            # TODO: pass `p` as a standalone argument instead of a metric_kwargs.
-            return metric in euclidean_metrics or (
-                metric == "minkowski" and metric_kwargs.get("p", 2) == 2
-            )
-
-        Y = X if Y is None else Y
-
-        is_usable = (
-            super().is_usable_for(X, Y, metric)
-            and not is_euclidean(metric, metric_kwargs)
-            and effective_n_threads != 1
-        )
-
-        return is_usable
-
-    @classmethod
     def compute(
         cls,
         X,
@@ -233,6 +183,7 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
         metric="euclidean",
         metric_kwargs=None,
         strategy=None,
+        n_jobs=-1,
     ):
         """Return pairwise distances matrix for the given arguments.
 
@@ -279,6 +230,15 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
               - None (default) looks-up in scikit-learn configuration for
                 `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
 
+        n_jobs : int, default=None
+            The number of jobs to use for the computation. This works by breaking
+            down the pairwise matrix into n_jobs even slices and computing them in
+            parallel.
+
+            ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+            ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+            for more details.
+
         Returns
         -------
         pairwise_distances_matrix : ndarray of shape (n_samples_X, n_samples_Y)
@@ -296,6 +256,7 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
         This allows entirely decoupling the API entirely from the
         implementation details whilst maintaining RAII.
         """
+        n_jobs = 1 if n_jobs is None else n_jobs
         Y = X if Y is None else Y
         if X.dtype == Y.dtype == np.float64:
             return PairwiseDistances64.compute(
@@ -304,6 +265,7 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
                 metric=metric,
                 metric_kwargs=metric_kwargs,
                 strategy=strategy,
+                n_jobs=n_jobs,
             )
 
         if X.dtype == Y.dtype == np.float32:
@@ -313,6 +275,7 @@ class PairwiseDistances(BaseDistancesReductionDispatcher):
                 metric=metric,
                 metric_kwargs=metric_kwargs,
                 strategy=strategy,
+                n_jobs=n_jobs,
             )
 
         raise ValueError(
