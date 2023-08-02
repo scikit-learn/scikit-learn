@@ -14,6 +14,7 @@ from ..utils import _safe_indexing, check_array, is_scalar_nan
 from ..utils._encode import _check_unknown, _encode, _get_counts, _unique
 from ..utils._mask import _get_mask
 from ..utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
+from ..utils._set_output import _get_output_config
 from ..utils.validation import (
     _check_feature_names_in,
     _is_arraylike_not_scalar,
@@ -1086,6 +1087,14 @@ class OneHotEncoder(_BaseEncoder):
             returned.
         """
         check_is_fitted(self)
+        transform_output = _get_output_config("transform", estimator=self)["dense"]
+        if transform_output == "pandas" and self.sparse_output:
+            raise ValueError(
+                "Pandas output does not support sparse data. Set sparse_output=False to"
+                " output pandas DataFrames or disable pandas output via"
+                ' `ohe.set_output(transform="default").'
+            )
+
         # validation of X happens in _check_X called by _transform
         warn_on_unknown = self.drop is not None and self.handle_unknown in {
             "ignore",
