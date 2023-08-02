@@ -195,7 +195,7 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Performance| Computing pairwise distances via :class:`metrics.DistanceMetric`
+- |Efficiency| Computing pairwise distances via :class:`metrics.DistanceMetric`
   for CSR × CSR,  Dense × CSR, and CSR × Dense datasets is now 1.5x faster.
   :pr:`26765` by :user:`Meekail Zain <micky774>`
 
