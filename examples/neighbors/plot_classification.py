@@ -5,7 +5,7 @@ Nearest Neighbors Classification
 
 This example shows how to use :class:`~sklearn.neighbors.KNeighborsClassifier`.
 We train such a classifier on the iris dataset and observe the difference of the
-decision boundary obtained in regards of the parameter `weights`.
+decision boundary obtained with regards to the parameter `weights`.
 """
 
 # %%
