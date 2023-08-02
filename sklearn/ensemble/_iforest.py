@@ -202,7 +202,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     For a more detailed example please see
     :ref:`sphx_glr_auto_examples_ensemble_plot_isolation_forest.py`.
-
     """
 
     _parameter_constraints: dict = {
