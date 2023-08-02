@@ -22,6 +22,13 @@ from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from ..utils._set_output import _get_output_config, _safe_set_output
 from ..utils.metaestimators import _BaseComposition
 from ..utils.parallel import Parallel, delayed
+# from ..utils.metadata_routing import (
+#     process_routing,
+#     _routing_enabled,
+#     MetadataRouter,
+#     MethodMapping,
+#     METHODS
+# )
 from ..utils.validation import (
     _check_feature_names_in,
     _num_samples,
@@ -712,7 +719,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # estimators in ColumnTransformer.transformers are not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, **params):
         """Fit all transformers, transform the data and concatenate results.
 
         Parameters
@@ -723,6 +730,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         y : array-like of shape (n_samples,), default=None
             Targets for supervised learning.
+
+        **params : dict, default=None
+            Parameters to be passed to the underlying transformers' ``fit`` and
+            ``transform`` methods.
+
+            .. versionadded:: 1.4
 
         Returns
         -------
@@ -741,6 +754,24 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._validate_transformers()
         self._validate_column_callables(X)
         self._validate_remainder(X)
+
+        # if _routing_enabled():
+        #     pass
+        # elif params:
+        #     raise TypeError(
+        #         "Extra params are only supported if metadata routing is enabled, which"
+        #         " you can enable using"
+        #         " `sklearn.set_config(enable_metadata_routing=True). Passed extra"
+        #         f" params: {set(params)}"
+        #     )
+        # else:
+        #     routed_params = Bunch(
+        #         **{
+        #             name: Bunch(**{method: {} for method in METHODS})
+        #             for name, step in self._transformers
+        #             if step is not None
+        #         }
+        #     )
 
         result = self._fit_transform(X, y, _fit_transform_one)
 
