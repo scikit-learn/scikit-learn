@@ -1527,7 +1527,7 @@ def test_pairwise_distances_is_usable_for(
     ) == (_openmp_effective_n_threads() != 1)
 
     with threadpoolctl.threadpool_limits(limits=1, user_api=None):
-        assert PairwiseDistances.is_usable_for(X, X, metric="manhattan")
+        assert not PairwiseDistances.is_usable_for(X, X, metric="manhattan")
 
     with threadpoolctl.threadpool_limits(limits=2, user_api=None):
         assert PairwiseDistances.is_usable_for(X, X, metric="manhattan")
