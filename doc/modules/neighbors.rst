@@ -190,7 +190,7 @@ distance can be supplied to compute the weights.
    :target: ../auto_examples/neighbors/plot_classification.html
    :scale: 75
 
-.. centered:: |classification_1| |classification_2|
+.. centered:: |classification_1|
 
 .. topic:: Examples:
 
