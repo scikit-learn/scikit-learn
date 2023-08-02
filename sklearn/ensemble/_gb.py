@@ -242,13 +242,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 # no inplace multiplication!
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
-            X = X_csr if X_csr is not None else X
+            X = X_csc if X_csc is not None else X
             tree.fit(X, residual, sample_weight=sample_weight, check_input=False)
 
             # update tree leaves
+            X_for_tree_update = X_csr if X_csr is not None else X
             loss.update_terminal_regions(
                 tree.tree_,
-                X,
+                X_for_tree_update,
                 y,
                 residual,
                 raw_predictions,
@@ -433,16 +434,18 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
-            X, X_val, y, y_val, sample_weight, sample_weight_val = train_test_split(
-                X,
-                y,
-                sample_weight,
-                random_state=self.random_state,
-                test_size=self.validation_fraction,
-                stratify=stratify,
+            X_train, X_val, y_train, y_val, sample_weight_train, sample_weight_val = (
+                train_test_split(
+                    X,
+                    y,
+                    sample_weight,
+                    random_state=self.random_state,
+                    test_size=self.validation_fraction,
+                    stratify=stratify,
+                )
             )
             if is_classifier(self):
-                if self._n_classes != np.unique(y).shape[0]:
+                if self._n_classes != np.unique(y_train).shape[0]:
                     # We choose to error here. The problem is that the init
                     # estimator would be trained on y, which has some missing
                     # classes now, so its predictions would not have the
@@ -453,6 +456,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         "seed."
                     )
         else:
+            X_train, y_train, sample_weight_train = X, y, sample_weight
             X_val = y_val = sample_weight_val = None
 
         if not self._is_initialized():
@@ -462,19 +466,21 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # fit initial model and initialize raw predictions
             if self.init_ == "zero":
                 raw_predictions = np.zeros(
-                    shape=(X.shape[0], self._loss.K), dtype=np.float64
+                    shape=(X_train.shape[0], self._loss.K), dtype=np.float64
                 )
             else:
                 # XXX clean this once we have a support_sample_weight tag
                 if sample_weight_is_none:
-                    self.init_.fit(X, y)
+                    self.init_.fit(X_train, y_train)
                 else:
                     msg = (
                         "The initial estimator {} does not support sample "
                         "weights.".format(self.init_.__class__.__name__)
                     )
                     try:
-                        self.init_.fit(X, y, sample_weight=sample_weight)
+                        self.init_.fit(
+                            X_train, y_train, sample_weight=sample_weight_train
+                        )
                     except TypeError as e:
                         if "unexpected keyword argument 'sample_weight'" in str(e):
                             # regular estimator without SW support
@@ -492,7 +498,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         else:  # regular estimator whose input checking failed
                             raise
 
-                raw_predictions = self._loss.get_init_raw_predictions(X, self.init_)
+                raw_predictions = self._loss.get_init_raw_predictions(
+                    X_train, self.init_
+                )
 
             begin_at_stage = 0
 
@@ -512,22 +520,22 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # The requirements of _raw_predict
             # are more constrained than fit. It accepts only CSR
             # matrices. Finite values have already been checked in _validate_data.
-            X = check_array(
-                X,
+            X_train = check_array(
+                X_train,
                 dtype=DTYPE,
                 order="C",
                 accept_sparse="csr",
                 force_all_finite=False,
             )
-            raw_predictions = self._raw_predict(X)
+            raw_predictions = self._raw_predict(X_train)
             self._resize_state()
 
         # fit the boosting stages
         n_stages = self._fit_stages(
-            X,
-            y,
+            X_train,
+            y_train,
             raw_predictions,
-            sample_weight,
+            sample_weight_train,
             self._rng,
             X_val,
             y_val,
