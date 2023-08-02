@@ -53,6 +53,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <optics>`.
 
+    For an example of usage, see
+    :ref:`sphx_glr_auto_examples_cluster_optics.py`.
+
     Parameters
     ----------
     min_samples : int > 1 or float between 0 and 1, default=5
