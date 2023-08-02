@@ -22,6 +22,8 @@ or with conda::
 """
 
 # %%
+# .. _quantile_support_hgbdt:
+#
 # Quantile loss in :class:`ensemble.HistGradientBoostingRegressor`
 # ----------------------------------------------------------------
 # :class:`~ensemble.HistGradientBoostingRegressor` can model quantiles with

@@ -129,6 +129,8 @@ Note that for technical reasons, using a scorer is significantly slower than
 using the loss. By default, early-stopping is performed if there are at least
 10,000 samples in the training set, and uses the validation loss.
 
+.. _nan_support_hgbt:
+
 Missing values support
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1634,4 +1636,3 @@ minimum required number of samples to consider a split ``min_samples_split``).
 
  .. [HTF] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
               Statistical Learning Ed. 2", Springer, 2009.
-
