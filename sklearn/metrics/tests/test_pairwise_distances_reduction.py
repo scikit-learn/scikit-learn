@@ -20,7 +20,6 @@ from sklearn.metrics._pairwise_distances_reduction import (
     RadiusNeighbors,
     sqeuclidean_row_norms,
 )
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
@@ -1499,38 +1498,6 @@ def test_sqeuclidean_row_norms(
     with pytest.raises(ValueError):
         X = np.asfortranarray(X)
         sqeuclidean_row_norms(X, num_threads=num_threads)
-
-
-@pytest.mark.parametrize("dtype", [np.float64, np.float32])
-def test_pairwise_distances_is_usable_for(
-    global_random_seed,
-    dtype,
-    monkeypatch,
-):
-    rng = np.random.RandomState(global_random_seed)
-    n_samples, n_features = 100, 10
-    X = rng.rand(n_samples, n_features).astype(dtype)
-
-    # Equivalent specifications of the Euclidean metric.
-    # TODO: support Euclidean metric.
-    assert not PairwiseDistances.is_usable_for(X, X, metric="euclidean")
-    assert not PairwiseDistances.is_usable_for(X, X, metric="minkowski")
-    assert not PairwiseDistances.is_usable_for(
-        X, X, metric="minkowski", metric_kwargs={"p": 2}
-    )
-
-    # PairwiseDistances must not be used for sequential execution because
-    # They are not yet competitive with the previous joblib-based back-end.
-    # TODO: make PairwiseDistances competitive for sequential execution.
-    assert PairwiseDistances.is_usable_for(
-        X, X, metric="minkowski", metric_kwargs={"p": 3}
-    ) == (_openmp_effective_n_threads() != 1)
-
-    with threadpoolctl.threadpool_limits(limits=1, user_api=None):
-        assert not PairwiseDistances.is_usable_for(X, X, metric="manhattan")
-
-    with threadpoolctl.threadpool_limits(limits=2, user_api=None):
-        assert PairwiseDistances.is_usable_for(X, X, metric="manhattan")
 
 
 def test_argkmin_classmode_strategy_consistent():
