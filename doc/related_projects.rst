@@ -138,7 +138,7 @@ enhance the functionality of scikit-learn's estimators.
 
 - `micromlgen <https://github.com/eloquentarduino/micromlgen>`_
   MicroML brings Machine Learning algorithms to microcontrollers.
-  Supports several scikit-learn classifiers by transpiles them to C code.
+  Supports several scikit-learn classifiers by transpiling them to C code.
 
 - `emlearn <https://emlearn.org>`_
   Implements scikit-learn estimators in C99 for embedded devices and microcontrollers.
