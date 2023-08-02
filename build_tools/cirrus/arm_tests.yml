@@ -22,5 +22,4 @@ linux_aarch64_test_task:
     bash build_tools/cirrus/update_tracking_issue.sh true
 
   on_failure:
-    update_tracker_script:
-      - bash build_tools/cirrus/update_tracking_issue.sh false
+    update_tracker_script: bash build_tools/cirrus/update_tracking_issue.sh false

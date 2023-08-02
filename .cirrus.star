@@ -29,4 +29,7 @@ def main(ctx):
     if "[cd build]" in commit_msg or "[cd build cirrus]" in commit_msg:
         return fs.read(arm_wheel_yaml)
 
+    if "[cirrus arm]" in commit_msg:
+        return fs.read(arm_tests_yaml)
+
     return []
