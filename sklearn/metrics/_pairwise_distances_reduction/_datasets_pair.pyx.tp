@@ -53,7 +53,7 @@ cdef class DatasetsPair{{name_suffix}}:
         cls,
         X,
         Y,
-        str metric="euclidean",
+        metric="euclidean",
         dict metric_kwargs=None,
     ) -> DatasetsPair{{name_suffix}}:
         """Return the DatasetsPair implementation for the given arguments.
@@ -70,7 +70,7 @@ cdef class DatasetsPair{{name_suffix}}:
             If provided as a ndarray, it must be C-contiguous.
             If provided as a sparse matrix, it must be in CSR format.
 
-        metric : str, default='euclidean'
+        metric : str or DistanceMetric object, default='euclidean'
             The distance metric to compute between rows of X and Y.
             The default metric is a fast implementation of the Euclidean
             metric. For a list of available metrics, see the documentation
@@ -231,9 +231,9 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef float64_t surrogate_dist(self, intp_t i, intp_t j) noexcept nogil:
         return self.distance_metric.rdist_csr(
             x1_data=&self.X_data[0],
-            x1_indices=self.X_indices,
+            x1_indices=&self.X_indices[0],
             x2_data=&self.Y_data[0],
-            x2_indices=self.Y_indices,
+            x2_indices=&self.Y_indices[0],
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
             x2_start=self.Y_indptr[j],
@@ -245,9 +245,9 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef float64_t dist(self, intp_t i, intp_t j) noexcept nogil:
         return self.distance_metric.dist_csr(
             x1_data=&self.X_data[0],
-            x1_indices=self.X_indices,
+            x1_indices=&self.X_indices[0],
             x2_data=&self.Y_data[0],
-            x2_indices=self.Y_indices,
+            x2_indices=&self.Y_indices[0],
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
             x2_start=self.Y_indptr[j],
@@ -324,11 +324,11 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef float64_t surrogate_dist(self, intp_t i, intp_t j) noexcept nogil:
         return self.distance_metric.rdist_csr(
             x1_data=&self.X_data[0],
-            x1_indices=self.X_indices,
+            x1_indices=&self.X_indices[0],
             # Increment the data pointer such that x2_start=0 is aligned with the
             # j-th row
             x2_data=&self.Y_data[0] + j * self.n_features,
-            x2_indices=self.Y_indices,
+            x2_indices=&self.Y_indices[0],
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
             x2_start=0,
@@ -341,11 +341,11 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
 
         return self.distance_metric.dist_csr(
             x1_data=&self.X_data[0],
-            x1_indices=self.X_indices,
+            x1_indices=&self.X_indices[0],
             # Increment the data pointer such that x2_start=0 is aligned with the
             # j-th row
             x2_data=&self.Y_data[0] + j * self.n_features,
-            x2_indices=self.Y_indices,
+            x2_indices=&self.Y_indices[0],
             x1_start=self.X_indptr[i],
             x1_end=self.X_indptr[i + 1],
             x2_start=0,
