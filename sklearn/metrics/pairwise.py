@@ -2206,7 +2206,7 @@ def pairwise_distances(
             "Unknown metric %s. Valid metrics are %s, or 'precomputed', or a callable"
             % (metric, _VALID_METRICS)
         )
-
+    n_jobs = effective_n_jobs(n_jobs)
     pwd_backend_is_usable = (
         PairwiseDistances.is_usable_for(X, Y, metric=metric)
         # Ensure that we do not accept sqeuclidean request as well
