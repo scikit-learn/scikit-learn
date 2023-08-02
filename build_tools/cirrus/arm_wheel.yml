@@ -16,12 +16,8 @@ macos_arm64_wheel_task:
     # See `maint_tools/update_tracking_issue.py` for details on the permissions the token requires.
     BOT_GITHUB_TOKEN: ENCRYPTED[9b50205e2693f9e4ce9a3f0fcb897a259289062fda2f5a3b8aaa6c56d839e0854a15872f894a70fca337dd4787274e0f]
   matrix:
-    - env:
-        CIBW_BUILD: cp38-macosx_arm64
-    - env:
-        CIBW_BUILD: cp39-macosx_arm64
-    - env:
-        CIBW_BUILD: cp310-macosx_arm64
+    # Only the latest Python version is built and tested on CirrusCI, the other
+    # macos arm64 builds are on GitHub Actions
     - env:
         CIBW_BUILD: cp311-macosx_arm64
 
