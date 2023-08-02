@@ -2212,7 +2212,11 @@ def pairwise_distances(
         # Ensure that we do not accept sqeuclidean request as well
         and not (kwds.get("squared", False) and metric == "euclidean")
     )
-    multi_threaded_preferred = _openmp_effective_n_threads() > 1 and n_jobs > 1
+    # Heuristic based on overhead of generic method vs specialization
+    min_threading = 6 if metric == "manhattan" else 2
+    multi_threaded_preferred = (
+        _openmp_effective_n_threads() >= 2 and n_jobs >= min_threading
+    )
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
             X, Y, precomputed=True, force_all_finite=force_all_finite
