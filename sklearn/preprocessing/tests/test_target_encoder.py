@@ -203,7 +203,7 @@ def test_encoding_multiclass(global_random_seed, smooth):
     for i in range(n_features * n_classes):
         assert_allclose(target_encoder.encodings_[i], expected_encodings[i])
 
-    # Include final unknown value
+    # Include unknown values [5, 6] at the end
     X_test = np.array([[0, 1], [1, 2], [5, 6]])
     y_mean = np.mean(y_train_enc, axis=0)
     expected_X_test_transform = np.empty(
