@@ -10,19 +10,17 @@ The module contains:
     * Several algorithms to sample integers without replacement.
     * Fast rand_r alternative based on xor shifts
 """
-cimport cython
-
 import numpy as np
-cimport numpy as np
-np.import_array()
+cimport numpy as cnp
+cnp.import_array()
 
 from . import check_random_state
 
 cdef UINT32_t DEFAULT_SEED = 1
 
 
-cpdef _sample_without_replacement_check_input(np.int_t n_population,
-                                              np.int_t n_samples):
+cpdef _sample_without_replacement_check_input(cnp.int_t n_population,
+                                              cnp.int_t n_samples):
     """ Check that input are consistent for sample_without_replacement"""
     if n_population < 0:
         raise ValueError('n_population should be greater than 0, got %s.'
@@ -35,8 +33,8 @@ cpdef _sample_without_replacement_check_input(np.int_t n_population,
 
 
 cpdef _sample_without_replacement_with_tracking_selection(
-        np.int_t n_population,
-        np.int_t n_samples,
+        cnp.int_t n_population,
+        cnp.int_t n_samples,
         random_state=None):
     r"""Sample integers without replacement.
 
@@ -78,9 +76,9 @@ cpdef _sample_without_replacement_with_tracking_selection(
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
-    cdef np.int_t i
-    cdef np.int_t j
-    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ), dtype=int)
+    cdef cnp.int_t i
+    cdef cnp.int_t j
+    cdef cnp.int_t[::1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -96,11 +94,11 @@ cpdef _sample_without_replacement_with_tracking_selection(
         selected.add(j)
         out[i] = j
 
-    return out
+    return np.asarray(out)
 
 
-cpdef _sample_without_replacement_with_pool(np.int_t n_population,
-                                            np.int_t n_samples,
+cpdef _sample_without_replacement_with_pool(cnp.int_t n_population,
+                                            cnp.int_t n_samples,
                                             random_state=None):
     """Sample integers without replacement.
 
@@ -133,12 +131,10 @@ cpdef _sample_without_replacement_with_pool(np.int_t n_population,
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
-    cdef np.int_t i
-    cdef np.int_t j
-    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ), dtype=int)
-
-    cdef np.ndarray[np.int_t, ndim=1] pool = np.empty((n_population, ),
-                                                      dtype=int)
+    cdef cnp.int_t i
+    cdef cnp.int_t j
+    cdef cnp.int_t[::1] out = np.empty((n_samples,), dtype=int)
+    cdef cnp.int_t[::1] pool = np.empty((n_population,), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -152,16 +148,16 @@ cpdef _sample_without_replacement_with_pool(np.int_t n_population,
     for i in range(n_samples):
         j = rng_randint(n_population - i)  # invariant: non-selected at [0,n-i)
         out[i] = pool[j]
-        pool[j] = pool[n_population - i - 1]  # move non-selected item into
-                                              # vacancy
+        pool[j] = pool[n_population - i - 1]  # move non-selected item into vacancy
 
-    return out
+    return np.asarray(out)
 
 
 cpdef _sample_without_replacement_with_reservoir_sampling(
-    np.int_t n_population,
-    np.int_t n_samples,
-    random_state=None):
+    cnp.int_t n_population,
+    cnp.int_t n_samples,
+    random_state=None
+):
     """Sample integers without replacement.
 
     Select n_samples integers from the set [0, n_population) without
@@ -195,9 +191,9 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
-    cdef np.int_t i
-    cdef np.int_t j
-    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ), dtype=int)
+    cdef cnp.int_t i
+    cdef cnp.int_t j
+    cdef cnp.int_t[::1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -214,11 +210,11 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
         if j < n_samples:
             out[j] = i
 
-    return out
+    return np.asarray(out)
 
 
-cpdef sample_without_replacement(np.int_t n_population,
-                                 np.int_t n_samples,
+cpdef sample_without_replacement(cnp.int_t n_population,
+                                 cnp.int_t n_samples,
                                  method="auto",
                                  random_state=None):
     """Sample integers without replacement.

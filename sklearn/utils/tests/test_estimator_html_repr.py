@@ -1,34 +1,31 @@
-from contextlib import closing
 import html
+from contextlib import closing
 from io import StringIO
 
 import pytest
 
 from sklearn import config_context
-from sklearn.linear_model import LogisticRegression
-from sklearn.neural_network import MLPClassifier
-from sklearn.impute import SimpleImputer
-from sklearn.decomposition import PCA
-from sklearn.decomposition import TruncatedSVD
-from sklearn.pipeline import Pipeline
-from sklearn.pipeline import FeatureUnion
+from sklearn.cluster import AgglomerativeClustering, Birch
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import VotingClassifier
+from sklearn.decomposition import PCA, TruncatedSVD
+from sklearn.ensemble import StackingClassifier, StackingRegressor, VotingClassifier
 from sklearn.feature_selection import SelectPercentile
-from sklearn.cluster import Birch
-from sklearn.cluster import AgglomerativeClustering
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.svm import LinearSVC
-from sklearn.svm import LinearSVR
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.gaussian_process.kernels import ExpSineSquared
+from sklearn.impute import SimpleImputer
+from sklearn.kernel_ridge import KernelRidge
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.multiclass import OneVsOneClassifier
-from sklearn.ensemble import StackingClassifier
-from sklearn.ensemble import StackingRegressor
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RationalQuadratic
-from sklearn.utils._estimator_html_repr import _write_label_html
-from sklearn.utils._estimator_html_repr import _get_visual_block
-from sklearn.utils._estimator_html_repr import estimator_html_repr
+from sklearn.neural_network import MLPClassifier
+from sklearn.pipeline import FeatureUnion, Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.svm import LinearSVC, LinearSVR
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils._estimator_html_repr import (
+    _get_visual_block,
+    _write_label_html,
+    estimator_html_repr,
+)
 
 
 @pytest.mark.parametrize("checked", [True, False])
@@ -202,7 +199,7 @@ def test_estimator_html_repr_pipeline():
 
 
 @pytest.mark.parametrize("final_estimator", [None, LinearSVC()])
-def test_stacking_classsifer(final_estimator):
+def test_stacking_classifier(final_estimator):
     estimators = [
         ("mlp", MLPClassifier(alpha=0.001)),
         ("tree", DecisionTreeClassifier()),
@@ -264,13 +261,16 @@ def test_ovo_classifier_duck_typing_meta():
 
 
 def test_duck_typing_nested_estimator():
-    # Test duck typing metaestimators with GP
-    kernel = RationalQuadratic(length_scale=1.0, alpha=0.1)
-    gp = GaussianProcessRegressor(kernel=kernel)
-    html_output = estimator_html_repr(gp)
+    # Test duck typing metaestimators with random search
+    kernel_ridge = KernelRidge(kernel=ExpSineSquared())
+    param_distributions = {"alpha": [1, 2]}
 
-    assert f"<pre>{html.escape(str(kernel))}" in html_output
-    assert f"<pre>{html.escape(str(gp))}" in html_output
+    kernel_ridge_tuned = RandomizedSearchCV(
+        kernel_ridge,
+        param_distributions=param_distributions,
+    )
+    html_output = estimator_html_repr(kernel_ridge_tuned)
+    assert "estimator: KernelRidge</label>" in html_output
 
 
 @pytest.mark.parametrize("print_changed_only", [True, False])
@@ -292,3 +292,36 @@ def test_fallback_exists():
         f'<div class="sk-text-repr-fallback"><pre>{html.escape(str(pca))}'
         in html_output
     )
+
+
+def test_show_arrow_pipeline():
+    """Show arrow in pipeline for top level in pipeline"""
+    pipe = Pipeline([("scale", StandardScaler()), ("log_Reg", LogisticRegression())])
+
+    html_output = estimator_html_repr(pipe)
+    assert (
+        'class="sk-toggleable__label sk-toggleable__label-arrow">Pipeline'
+        in html_output
+    )
+
+
+def test_invalid_parameters_in_stacking():
+    """Invalidate stacking configuration uses default repr.
+
+    Non-regression test for #24009.
+    """
+    stacker = StackingClassifier(estimators=[])
+
+    html_output = estimator_html_repr(stacker)
+    assert html.escape(str(stacker)) in html_output
+
+
+def test_estimator_get_params_return_cls():
+    """Check HTML repr works where a value in get_params is a class."""
+
+    class MyEstimator:
+        def get_params(self, deep=False):
+            return {"inner_cls": LogisticRegression}
+
+    est = MyEstimator()
+    assert "MyEstimator" in estimator_html_repr(est)

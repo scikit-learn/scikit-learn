@@ -50,9 +50,10 @@ Conclusion
 
 References
 ----------
-(1) Finding structure with randomness: Stochastic algorithms for constructing
-    approximate matrix decompositions
-    Halko, et al., 2009 https://arxiv.org/abs/0909.4061
+(1) :arxiv:`"Finding structure with randomness:
+    Stochastic algorithms for constructing approximate matrix decompositions."
+    <0909.4061>`
+    Halko, et al., (2009)
 
 (2) A randomized algorithm for the decomposition of matrices
     Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
@@ -64,28 +65,29 @@ References
 
 # Author: Giorgio Patrini
 
+import gc
+import os.path
+import pickle
+from collections import defaultdict
+from time import time
+
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
-import matplotlib.pyplot as plt
 
-import gc
-import pickle
-from time import time
-from collections import defaultdict
-import os.path
-
-from sklearn.utils._arpack import _init_arpack_v0
-from sklearn.utils import gen_batches
-from sklearn.utils.validation import check_random_state
-from sklearn.utils.extmath import randomized_svd
-from sklearn.datasets import make_low_rank_matrix, make_sparse_uncorrelated
 from sklearn.datasets import (
-    fetch_lfw_people,
-    fetch_openml,
     fetch_20newsgroups_vectorized,
+    fetch_lfw_people,
     fetch_olivetti_faces,
+    fetch_openml,
     fetch_rcv1,
+    make_low_rank_matrix,
+    make_sparse_uncorrelated,
 )
+from sklearn.utils import gen_batches
+from sklearn.utils._arpack import _init_arpack_v0
+from sklearn.utils.extmath import randomized_svd
+from sklearn.utils.validation import check_random_state
 
 try:
     import fbpca
@@ -106,7 +108,7 @@ enable_spectral_norm = False
 
 # Determine when to switch to batch computation for matrix norms,
 # in case the reconstructed (dense) matrix is too large
-MAX_MEMORY = int(2e9)
+MAX_MEMORY = int(4e9)
 
 # The following datasets can be downloaded manually from:
 # CIFAR 10: https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
@@ -152,7 +154,7 @@ def get_data(dataset_name):
     elif dataset_name == "rcv1":
         X = fetch_rcv1().data
     elif dataset_name == "CIFAR":
-        if handle_missing_dataset(CIFAR_FOLDER) == "skip":
+        if handle_missing_dataset(CIFAR_FOLDER) == 0:
             return
         X1 = [unpickle("%sdata_batch_%d" % (CIFAR_FOLDER, i + 1)) for i in range(5)]
         X = np.vstack(X1)
@@ -190,7 +192,7 @@ def get_data(dataset_name):
         del row
         del col
     else:
-        X = fetch_openml(dataset_name).data
+        X = fetch_openml(dataset_name, parser="auto").data
     return X
 
 
@@ -280,9 +282,9 @@ def svd_timing(
         U, mu, V = randomized_svd(
             X,
             n_comps,
-            n_oversamples,
-            n_iter,
-            power_iteration_normalizer,
+            n_oversamples=n_oversamples,
+            n_iter=n_iter,
+            power_iteration_normalizer=power_iteration_normalizer,
             random_state=random_state,
             transpose=False,
         )
@@ -322,8 +324,11 @@ def norm_diff(A, norm=2, msg=True, random_state=None):
 
 
 def scalable_frobenius_norm_discrepancy(X, U, s, V):
-    # if the input is not too big, just call scipy
-    if X.shape[0] * X.shape[1] < MAX_MEMORY:
+    if not sp.sparse.issparse(X) or (
+        X.shape[0] * X.shape[1] * X.dtype.itemsize < MAX_MEMORY
+    ):
+        # if the input is not sparse or sparse but not too big,
+        # U.dot(np.diag(s).dot(V)) will fit in RAM
         A = X - U.dot(np.diag(s).dot(V))
         return norm_diff(A, norm="fro")
 
@@ -338,7 +343,6 @@ def scalable_frobenius_norm_discrepancy(X, U, s, V):
 
 
 def bench_a(X, dataset_name, power_iter, n_oversamples, n_comps):
-
     all_time = defaultdict(list)
     if enable_spectral_norm:
         all_spectral = defaultdict(list)
@@ -394,7 +398,6 @@ def bench_a(X, dataset_name, power_iter, n_oversamples, n_comps):
 
 
 def bench_b(power_list):
-
     n_samples, n_features = 1000, 10000
     data_params = {
         "n_samples": n_samples,
@@ -497,7 +500,7 @@ def bench_c(datasets, n_comps):
 if __name__ == "__main__":
     random_state = check_random_state(1234)
 
-    power_iter = np.linspace(0, 6, 7, dtype=int)
+    power_iter = np.arange(0, 6)
     n_comps = 50
 
     for dataset_name in datasets:

@@ -1,16 +1,11 @@
-import pytest
-
 import numpy as np
 import scipy.sparse as sp
 
 from sklearn.datasets import make_regression
-from sklearn.linear_model import Ridge
 from sklearn.kernel_ridge import KernelRidge
+from sklearn.linear_model import Ridge
 from sklearn.metrics.pairwise import pairwise_kernels
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.utils._testing import assert_array_almost_equal
-
+from sklearn.utils._testing import assert_array_almost_equal, ignore_warnings
 
 X, y = make_regression(n_features=10, random_state=0)
 Xcsr = sp.csr_matrix(X)
@@ -92,11 +87,3 @@ def test_kernel_ridge_multi_output():
     pred3 = KernelRidge(kernel="linear", alpha=1).fit(X, y).predict(X)
     pred3 = np.array([pred3, pred3]).T
     assert_array_almost_equal(pred2, pred3)
-
-
-# TODO: Remove in 1.1
-def test_kernel_ridge_pairwise_is_deprecated():
-    k_ridge = KernelRidge(kernel="precomputed")
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        k_ridge._pairwise

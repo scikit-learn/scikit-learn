@@ -33,7 +33,7 @@ need not be stored) and storing feature names in addition to values.
 :class:`DictVectorizer` implements what is called one-of-K or "one-hot"
 coding for categorical (aka nominal, discrete) features. Categorical
 features are "attribute-value" pairs where the value is restricted
-to a list of discrete of possibilities without ordering (e.g. topic
+to a list of discrete possibilities without ordering (e.g. topic
 identifiers, types of objects, tags, names...).
 
 In the following, "city" is a categorical attribute while "temperature"
@@ -607,7 +607,7 @@ As usual the best way to adjust the feature extraction parameters
 is to use a cross-validated grid search, for instance by pipelining the
 feature extractor with a classifier:
 
- * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
+ * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
 
 
 Decoding text files
@@ -846,7 +846,7 @@ Note that the dimensionality does not affect the CPU training time of
 algorithms which operate on CSR matrices (``LinearSVC(dual=True)``,
 ``Perceptron``, ``SGDClassifier``, ``PassiveAggressive``) but it does for
 algorithms that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
-etc).
+etc.).
 
 Let's try again with the default setting::
 
@@ -995,7 +995,7 @@ Patch extraction
 The :func:`extract_patches_2d` function extracts patches from an image stored
 as a two-dimensional array, or three-dimensional with color information along
 the third axis. For rebuilding an image from all its patches, use
-:func:`reconstruct_from_patches_2d`. For example let use generate a 4x4 pixel
+:func:`reconstruct_from_patches_2d`. For example let us generate a 4x4 pixel
 picture with 3 color channels (e.g. in RGB format)::
 
     >>> import numpy as np
@@ -1033,7 +1033,7 @@ on overlapping areas::
 
 The :class:`PatchExtractor` class works in the same way as
 :func:`extract_patches_2d`, only it supports multiple images as input. It is
-implemented as an estimator, so it can be used in pipelines. See::
+implemented as a scikit-learn transformer, so it can be used in pipelines. See::
 
     >>> five_images = np.arange(5 * 4 * 4 * 3).reshape(5, 4, 4, 3)
     >>> patches = image.PatchExtractor(patch_size=(2, 2)).transform(five_images)

@@ -19,10 +19,10 @@ show how to retrieve:
 import numpy as np
 from matplotlib import pyplot as plt
 
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_iris
-from sklearn.tree import DecisionTreeClassifier
 from sklearn import tree
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
 
 ##############################################################################
 # Train tree classifier
@@ -60,7 +60,7 @@ clf.fit(X_train, y_train)
 #     node
 #   - ``feature[i]``: feature used for splitting node ``i``
 #   - ``threshold[i]``: threshold value at node ``i``
-#   - ``n_node_samples[i]``: the number of of training samples reaching node
+#   - ``n_node_samples[i]``: the number of training samples reaching node
 #     ``i``
 #   - ``impurity[i]``: the impurity at node ``i``
 #

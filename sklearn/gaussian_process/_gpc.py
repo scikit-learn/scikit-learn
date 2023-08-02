@@ -4,21 +4,23 @@
 #
 # License: BSD 3 clause
 
+from numbers import Integral
 from operator import itemgetter
 
 import numpy as np
-from scipy.linalg import cholesky, cho_solve, solve
 import scipy.optimize
+from scipy.linalg import cho_solve, cholesky, solve
 from scipy.special import erf, expit
 
-from ..base import BaseEstimator, ClassifierMixin, clone
-from .kernels import RBF, CompoundKernel, ConstantKernel as C
-from ..utils.validation import check_is_fitted
-from ..utils import check_random_state
-from ..utils.optimize import _check_optimize_result
+from ..base import BaseEstimator, ClassifierMixin, _fit_context, clone
+from ..multiclass import OneVsOneClassifier, OneVsRestClassifier
 from ..preprocessing import LabelEncoder
-from ..multiclass import OneVsRestClassifier, OneVsOneClassifier
-
+from ..utils import check_random_state
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.optimize import _check_optimize_result
+from ..utils.validation import check_is_fitted
+from .kernels import RBF, CompoundKernel, Kernel
+from .kernels import ConstantKernel as C
 
 # Values required for approximating the logistic sigmoid by
 # error functions. coefs are obtained via:
@@ -35,9 +37,7 @@ COEFS = np.array(
 class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     """Binary Gaussian process classification based on Laplace approximation.
 
-    The implementation is based on Algorithm 3.1, 3.2, and 5.1 of
-    ``Gaussian Processes for Machine Learning'' (GPML) by Rasmussen and
-    Williams.
+    The implementation is based on Algorithm 3.1, 3.2, and 5.1 from [RW2006]_.
 
     Internally, the Laplace approximation is used for approximating the
     non-Gaussian posterior by a Gaussian.
@@ -143,6 +143,11 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``
 
+    References
+    ----------
+    .. [RW2006] `Carl E. Rasmussen and Christopher K.I. Williams,
+       "Gaussian Processes for Machine Learning",
+       MIT Press 2006 <https://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
     """
 
     def __init__(
@@ -320,7 +325,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         gamma = LAMBDAS * f_star
         integrals = (
             np.sqrt(np.pi / alpha)
-            * erf(gamma * np.sqrt(alpha / (alpha + LAMBDAS ** 2)))
+            * erf(gamma * np.sqrt(alpha / (alpha + LAMBDAS**2)))
             / (2 * np.sqrt(var_f_star * 2 * np.pi))
         )
         pi_star = (COEFS * integrals).sum(axis=0) + 0.5 * COEFS.sum()
@@ -482,9 +487,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     """Gaussian process classification (GPC) based on Laplace approximation.
 
-    The implementation is based on Algorithm 3.1, 3.2, and 5.1 of
-    Gaussian Processes for Machine Learning (GPML) by Rasmussen and
-    Williams.
+    The implementation is based on Algorithm 3.1, 3.2, and 5.1 from [RW2006]_.
 
     Internally, the Laplace approximation is used for approximating the
     non-Gaussian posterior by a Gaussian.
@@ -503,9 +506,10 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     kernel : kernel instance, default=None
         The kernel specifying the covariance function of the GP. If None is
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
-        the kernel's hyperparameters are optimized during fitting.
+        the kernel's hyperparameters are optimized during fitting. Also kernel
+        cannot be a `CompoundKernel`.
 
-    optimizer : 'fmin_l_bfgs_b' or callable, default='fmin_l_bfgs_b'
+    optimizer : 'fmin_l_bfgs_b', callable or None, default='fmin_l_bfgs_b'
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
         defined optimizer passed as a callable. If a callable is passed, it
@@ -618,6 +622,12 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     --------
     GaussianProcessRegressor : Gaussian process regression (GPR).
 
+    References
+    ----------
+    .. [RW2006] `Carl E. Rasmussen and Christopher K.I. Williams,
+       "Gaussian Processes for Machine Learning",
+       MIT Press 2006 <https://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
+
     Examples
     --------
     >>> from sklearn.datasets import load_iris
@@ -633,6 +643,18 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     array([[0.83548752, 0.03228706, 0.13222543],
            [0.79064206, 0.06525643, 0.14410151]])
     """
+
+    _parameter_constraints: dict = {
+        "kernel": [Kernel, None],
+        "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable, None],
+        "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
+        "max_iter_predict": [Interval(Integral, 1, None, closed="left")],
+        "warm_start": ["boolean"],
+        "copy_X_train": ["boolean"],
+        "random_state": ["random_state"],
+        "multi_class": [StrOptions({"one_vs_rest", "one_vs_one"})],
+        "n_jobs": [Integral, None],
+    }
 
     def __init__(
         self,
@@ -657,6 +679,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self.multi_class = multi_class
         self.n_jobs = n_jobs
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit Gaussian process classification model.
 
@@ -673,6 +696,9 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
+        if isinstance(self.kernel, CompoundKernel):
+            raise ValueError("kernel cannot be a CompoundKernel")
+
         if self.kernel is None or self.kernel.requires_vector_input:
             X, y = self._validate_data(
                 X, y, multi_output=False, ensure_2d=True, dtype="numeric"

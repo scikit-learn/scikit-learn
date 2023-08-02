@@ -100,6 +100,10 @@ between bias and variance in the result.  A large bandwidth leads to a very
 smooth (i.e. high-bias) density distribution.  A small bandwidth leads
 to an unsmooth (i.e. high-variance) density distribution.
 
+The parameter `bandwidth` controls this smoothing. One can either set
+manually this parameter or use Scott's and Silvermann's estimation
+methods.
+
 :class:`~sklearn.neighbors.KernelDensity` implements several common kernel
 forms, which are shown in the following figure:
 

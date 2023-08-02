@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Ordering Points To Identify the Clustering Structure (OPTICS)
 
 These routines execute the OPTICS algorithm, and implement various
@@ -12,15 +11,25 @@ License: BSD 3 clause
 """
 
 import warnings
-import numpy as np
+from numbers import Integral, Real
 
+import numpy as np
+from scipy.sparse import SparseEfficiencyWarning, issparse
+
+from ..base import BaseEstimator, ClusterMixin, _fit_context
 from ..exceptions import DataConversionWarning
-from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
-from ..utils import gen_batches, get_chunk_n_rows
-from ..utils.validation import check_memory
-from ..neighbors import NearestNeighbors
-from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
+from ..metrics.pairwise import _VALID_METRICS, PAIRWISE_BOOLEAN_FUNCTIONS
+from ..neighbors import NearestNeighbors
+from ..utils import gen_batches, get_chunk_n_rows
+from ..utils._param_validation import (
+    HasMethods,
+    Interval,
+    RealNotInt,
+    StrOptions,
+    validate_params,
+)
+from ..utils.validation import check_memory
 
 
 class OPTICS(ClusterMixin, BaseEstimator):
@@ -68,7 +77,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
         should take two arrays as input and return one value indicating the
         distance between them. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string. If metric is
-        "precomputed", X is assumed to be a distance matrix and must be square.
+        "precomputed", `X` is assumed to be a distance matrix and must be
+        square.
 
         Valid values for metric are:
 
@@ -81,10 +91,14 @@ class OPTICS(ClusterMixin, BaseEstimator):
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
 
+        Sparse matrices are only supported by scikit-learn metrics.
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    p : int, default=2
+        .. note::
+           `'kulsinski'` is deprecated from SciPy 1.9 and will removed in SciPy 1.11.
+
+    p : float, default=2
         Parameter for the Minkowski metric from
         :class:`~sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
@@ -124,20 +138,20 @@ class OPTICS(ClusterMixin, BaseEstimator):
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`KDTree`
+        - 'ball_tree' will use :class:`~sklearn.neighbors.BallTree`.
+        - 'kd_tree' will use :class:`~sklearn.neighbors.KDTree`.
         - 'brute' will use a brute-force search.
-        - 'auto' will attempt to decide the most appropriate algorithm
-          based on the values passed to :meth:`fit` method. (default)
+        - 'auto' (default) will attempt to decide the most appropriate
+          algorithm based on the values passed to :meth:`fit` method.
 
         Note: fitting on sparse input will override the setting of
         this parameter, using brute force.
 
     leaf_size : int, default=30
-        Leaf size passed to :class:`BallTree` or :class:`KDTree`. This can
-        affect the speed of the construction and query, as well as the memory
-        required to store the tree. The optimal value depends on the
-        nature of the problem.
+        Leaf size passed to :class:`~sklearn.neighbors.BallTree` or
+        :class:`~sklearn.neighbors.KDTree`. This can affect the speed of the
+        construction and query, as well as the memory required to store the
+        tree. The optimal value depends on the nature of the problem.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
@@ -221,6 +235,30 @@ class OPTICS(ClusterMixin, BaseEstimator):
     array([0, 0, 0, 1, 1, 1])
     """
 
+    _parameter_constraints: dict = {
+        "min_samples": [
+            Interval(Integral, 2, None, closed="left"),
+            Interval(RealNotInt, 0, 1, closed="both"),
+        ],
+        "max_eps": [Interval(Real, 0, None, closed="both")],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "p": [Interval(Real, 1, None, closed="left")],
+        "metric_params": [dict, None],
+        "cluster_method": [StrOptions({"dbscan", "xi"})],
+        "eps": [Interval(Real, 0, None, closed="both"), None],
+        "xi": [Interval(Real, 0, 1, closed="both")],
+        "predecessor_correction": ["boolean"],
+        "min_cluster_size": [
+            Interval(Integral, 2, None, closed="left"),
+            Interval(RealNotInt, 0, 1, closed="right"),
+            None,
+        ],
+        "algorithm": [StrOptions({"auto", "brute", "ball_tree", "kd_tree"})],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "memory": [str, HasMethods("cache"), None],
+        "n_jobs": [Integral, None],
+    }
+
     def __init__(
         self,
         *,
@@ -254,6 +292,10 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self.memory = memory
         self.n_jobs = n_jobs
 
+    @_fit_context(
+        # Optics.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Perform OPTICS clustering.
 
@@ -263,10 +305,11 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features), or \
-                (n_samples, n_samples) if metric=’precomputed’
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features), or \
+                (n_samples, n_samples) if metric='precomputed'
             A feature array, or array of distances between samples if
-            metric='precomputed'.
+            metric='precomputed'. If a sparse matrix is provided, it will be
+            converted into CSR format.
 
         y : Ignored
             Not used, present for API consistency by convention.
@@ -285,14 +328,14 @@ class OPTICS(ClusterMixin, BaseEstimator):
             )
             warnings.warn(msg, DataConversionWarning)
 
-        X = self._validate_data(X, dtype=dtype)
+        X = self._validate_data(X, dtype=dtype, accept_sparse="csr")
+        if self.metric == "precomputed" and issparse(X):
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", SparseEfficiencyWarning)
+                # Set each diagonal to an explicit value so each point is its
+                # own neighbor
+                X.setdiag(X.diagonal())
         memory = check_memory(self.memory)
-
-        if self.cluster_method not in ["dbscan", "xi"]:
-            raise ValueError(
-                "cluster_method should be one of 'dbscan' or 'xi' but is %s"
-                % self.cluster_method
-            )
 
         (
             self.ordering_,
@@ -346,12 +389,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
 
 def _validate_size(size, n_samples, param_name):
-    if size <= 0 or (size != int(size) and size > 1):
-        raise ValueError(
-            "%s must be a positive integer or a float between 0 and 1. Got %r"
-            % (param_name, size)
-        )
-    elif size > n_samples:
+    if size > n_samples:
         raise ValueError(
             "%s must be no greater than the number of samples (%d). Got %d"
             % (param_name, n_samples, size)
@@ -395,6 +433,23 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
     return core_distances
 
 
+@validate_params(
+    {
+        "X": [np.ndarray, "sparse matrix"],
+        "min_samples": [
+            Interval(Integral, 2, None, closed="left"),
+            Interval(RealNotInt, 0, 1, closed="both"),
+        ],
+        "max_eps": [Interval(Real, 0, None, closed="both")],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "p": [Interval(Real, 0, None, closed="right"), None],
+        "metric_params": [dict, None],
+        "algorithm": [StrOptions({"auto", "brute", "ball_tree", "kd_tree"})],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+    },
+    prefer_skip_nested_validation=False,  # metric is not validated yet
+)
 def compute_optics_graph(
     X, *, min_samples, max_eps, metric, p, metric_params, algorithm, leaf_size, n_jobs
 ):
@@ -404,10 +459,10 @@ def compute_optics_graph(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features), or \
-            (n_samples, n_samples) if metric=’precomputed’.
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features), or \
+            (n_samples, n_samples) if metric='precomputed'
         A feature array, or array of distances between samples if
-        metric='precomputed'
+        metric='precomputed'.
 
     min_samples : int > 1 or float between 0 and 1
         The number of samples in a neighborhood for a point to be considered
@@ -445,7 +500,10 @@ def compute_optics_graph(
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    p : int, default=2
+        .. note::
+           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
+
+    p : float, default=2
         Parameter for the Minkowski metric from
         :class:`~sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
@@ -457,20 +515,20 @@ def compute_optics_graph(
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`KDTree`
+        - 'ball_tree' will use :class:`~sklearn.neighbors.BallTree`.
+        - 'kd_tree' will use :class:`~sklearn.neighbors.KDTree`.
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
-          based on the values passed to :meth:`fit` method. (default)
+          based on the values passed to `fit` method. (default)
 
         Note: fitting on sparse input will override the setting of
         this parameter, using brute force.
 
     leaf_size : int, default=30
-        Leaf size passed to :class:`BallTree` or :class:`KDTree`. This can
-        affect the speed of the construction and query, as well as the memory
-        required to store the tree. The optimal value depends on the
-        nature of the problem.
+        Leaf size passed to :class:`~sklearn.neighbors.BallTree` or
+        :class:`~sklearn.neighbors.KDTree`. This can affect the speed of the
+        construction and query, as well as the memory required to store the
+        tree. The optimal value depends on the nature of the problem.
 
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
@@ -568,8 +626,10 @@ def compute_optics_graph(
             )
     if np.all(np.isinf(reachability_)):
         warnings.warn(
-            "All reachability values are inf. Set a larger"
-            " max_eps or all data will be considered outliers.",
+            (
+                "All reachability values are inf. Set a larger"
+                " max_eps or all data will be considered outliers."
+            ),
             UserWarning,
         )
     return ordering, core_distances_, reachability_, predecessor_
@@ -603,15 +663,16 @@ def _set_reach_dist(
     # Only compute distances to unprocessed neighbors:
     if metric == "precomputed":
         dists = X[point_index, unproc]
+        if issparse(dists):
+            dists.sort_indices()
+            dists = dists.data
     else:
         _params = dict() if metric_params is None else metric_params.copy()
         if metric == "minkowski" and "p" not in _params:
             # the same logic as neighbors, p is ignored if explicitly set
             # in the dict params
             _params["p"] = p
-        dists = pairwise_distances(
-            P, np.take(X, unproc, axis=0), metric=metric, n_jobs=None, **_params
-        ).ravel()
+        dists = pairwise_distances(P, X[unproc], metric, n_jobs=None, **_params).ravel()
 
     rdists = np.maximum(dists, core_distances_[point_index])
     np.around(rdists, decimals=np.finfo(rdists.dtype).precision, out=rdists)
@@ -620,6 +681,15 @@ def _set_reach_dist(
     predecessor_[unproc[improved]] = point_index
 
 
+@validate_params(
+    {
+        "reachability": [np.ndarray],
+        "core_distances": [np.ndarray],
+        "ordering": [np.ndarray],
+        "eps": [Interval(Real, 0, None, closed="both")],
+    },
+    prefer_skip_nested_validation=True,
+)
 def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     """Perform DBSCAN extraction for an arbitrary epsilon.
 
@@ -629,13 +699,13 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
 
     Parameters
     ----------
-    reachability : array of shape (n_samples,)
+    reachability : ndarray of shape (n_samples,)
         Reachability distances calculated by OPTICS (``reachability_``).
 
-    core_distances : array of shape (n_samples,)
+    core_distances : ndarray of shape (n_samples,)
         Distances at which points become core (``core_distances_``).
 
-    ordering : array of shape (n_samples,)
+    ordering : ndarray of shape (n_samples,)
         OPTICS ordered point indices (``ordering_``).
 
     eps : float
@@ -658,6 +728,25 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     return labels
 
 
+@validate_params(
+    {
+        "reachability": [np.ndarray],
+        "predecessor": [np.ndarray],
+        "ordering": [np.ndarray],
+        "min_samples": [
+            Interval(Integral, 2, None, closed="left"),
+            Interval(RealNotInt, 0, 1, closed="both"),
+        ],
+        "min_cluster_size": [
+            Interval(Integral, 2, None, closed="left"),
+            Interval(RealNotInt, 0, 1, closed="both"),
+            None,
+        ],
+        "xi": [Interval(Real, 0, 1, closed="both")],
+        "predecessor_correction": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def cluster_optics_xi(
     *,
     reachability,
@@ -673,13 +762,13 @@ def cluster_optics_xi(
     Parameters
     ----------
     reachability : ndarray of shape (n_samples,)
-        Reachability distances calculated by OPTICS (`reachability_`)
+        Reachability distances calculated by OPTICS (`reachability_`).
 
     predecessor : ndarray of shape (n_samples,)
         Predecessors calculated by OPTICS.
 
     ordering : ndarray of shape (n_samples,)
-        OPTICS ordered point indices (`ordering_`)
+        OPTICS ordered point indices (`ordering_`).
 
     min_samples : int > 1 or float between 0 and 1
         The same as the min_samples given to OPTICS. Up and down steep regions
@@ -906,7 +995,7 @@ def _xi_cluster(
         downward = ratio > 1
         upward = ratio < 1
 
-    # the following loop is is almost exactly as Figure 19 of the paper.
+    # the following loop is almost exactly as Figure 19 of the paper.
     # it jumps over the areas which are not either steep down or up areas
     for steep_index in iter(np.flatnonzero(steep_upward | steep_downward)):
         # just continue if steep_index has been a part of a discovered xward

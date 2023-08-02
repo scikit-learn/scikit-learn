@@ -1,21 +1,27 @@
 """Permutation importance for estimators."""
 import numbers
+
 import numpy as np
-from joblib import Parallel
 
 from ..ensemble._bagging import _generate_indices
-from ..metrics import check_scoring
+from ..metrics import check_scoring, get_scorer_names
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..model_selection._validation import _aggregate_score_dicts
-from ..utils import Bunch, _safe_indexing
-from ..utils import check_random_state
-from ..utils import check_array
-from ..utils.fixes import delayed
+from ..utils import Bunch, _safe_indexing, check_array, check_random_state
+from ..utils._param_validation import (
+    HasMethods,
+    Integral,
+    Interval,
+    RealNotInt,
+    StrOptions,
+    validate_params,
+)
+from ..utils.parallel import Parallel, delayed
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
     if sample_weight is not None:
-        return scorer(estimator, X, y, sample_weight)
+        return scorer(estimator, X, y, sample_weight=sample_weight)
     return scorer(estimator, X, y)
 
 
@@ -33,7 +39,7 @@ def _calculate_permutation_scores(
     """Calculate score when `col_idx` is permuted."""
     random_state = check_random_state(random_state)
 
-    # Work on a copy of X to to ensure thread-safety in case of threading based
+    # Work on a copy of X to ensure thread-safety in case of threading based
     # parallelism. Furthermore, making a copy is also useful when the joblib
     # backend is 'loky' (default) or the old 'multiprocessing': in those cases,
     # if X is large it will be automatically be backed by a readonly memory map
@@ -58,7 +64,7 @@ def _calculate_permutation_scores(
         if hasattr(X_permuted, "iloc"):
             col = X_permuted.iloc[shuffling_idx, col_idx]
             col.index = X_permuted.index
-            X_permuted.iloc[:, col_idx] = col
+            X_permuted[X_permuted.columns[col_idx]] = col
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
         scores.append(_weights_scorer(scorer, estimator, X_permuted, y, sample_weight))
@@ -100,6 +106,30 @@ def _create_importances_bunch(baseline_score, permuted_score):
     )
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods(["fit"])],
+        "X": ["array-like"],
+        "y": ["array-like", None],
+        "scoring": [
+            StrOptions(set(get_scorer_names())),
+            callable,
+            list,
+            tuple,
+            dict,
+            None,
+        ],
+        "n_repeats": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "random_state": ["random_state"],
+        "sample_weight": ["array-like", None],
+        "max_samples": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(RealNotInt, 0, 1, closed="right"),
+        ],
+    },
+    prefer_skip_nested_validation=True,
+)
 def permutation_importance(
     estimator,
     X,
@@ -212,8 +242,8 @@ def permutation_importance(
 
     References
     ----------
-    .. [BRE] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
-             2001. https://doi.org/10.1023/A:1010933404324
+    .. [BRE] :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
+             2001. <10.1023/A:1010933404324>`
 
     Examples
     --------
@@ -243,8 +273,8 @@ def permutation_importance(
 
     if not isinstance(max_samples, numbers.Integral):
         max_samples = int(max_samples * X.shape[0])
-    elif not (0 < max_samples <= X.shape[0]):
-        raise ValueError("max_samples must be in (0, n_samples]")
+    elif max_samples > X.shape[0]:
+        raise ValueError("max_samples must be <= n_samples")
 
     if callable(scoring):
         scorer = scoring
@@ -252,7 +282,7 @@ def permutation_importance(
         scorer = check_scoring(estimator, scoring=scoring)
     else:
         scorers_dict = _check_multimetric_scoring(estimator, scoring)
-        scorer = _MultimetricScorer(**scorers_dict)
+        scorer = _MultimetricScorer(scorers=scorers_dict)
 
     baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
 

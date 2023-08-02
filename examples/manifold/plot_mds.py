@@ -14,13 +14,12 @@ shifted to avoid overlapping.
 # License: BSD
 
 import numpy as np
-
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
 
 from sklearn import manifold
-from sklearn.metrics import euclidean_distances
 from sklearn.decomposition import PCA
+from sklearn.metrics import euclidean_distances
 
 EPSILON = np.finfo(np.float32).eps
 n_samples = 20
@@ -45,6 +44,7 @@ mds = manifold.MDS(
     random_state=seed,
     dissimilarity="precomputed",
     n_jobs=1,
+    normalized_stress="auto",
 )
 pos = mds.fit(similarities).embedding_
 
@@ -57,12 +57,13 @@ nmds = manifold.MDS(
     random_state=seed,
     n_jobs=1,
     n_init=1,
+    normalized_stress="auto",
 )
 npos = nmds.fit_transform(similarities, init=pos)
 
 # Rescale the data
-pos *= np.sqrt((X_true ** 2).sum()) / np.sqrt((pos ** 2).sum())
-npos *= np.sqrt((X_true ** 2).sum()) / np.sqrt((npos ** 2).sum())
+pos *= np.sqrt((X_true**2).sum()) / np.sqrt((pos**2).sum())
+npos *= np.sqrt((X_true**2).sum()) / np.sqrt((npos**2).sum())
 
 # Rotate the data
 clf = PCA(n_components=2)

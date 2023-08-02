@@ -1,49 +1,58 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 from scipy import sparse
 
 from sklearn.base import BaseEstimator, clone
-from sklearn.dummy import DummyClassifier
-from sklearn.model_selection import LeaveOneOut, train_test_split
-
-from sklearn.utils._testing import (
-    assert_array_almost_equal,
-    assert_almost_equal,
-    assert_array_equal,
-    ignore_warnings,
+from sklearn.calibration import (
+    CalibratedClassifierCV,
+    CalibrationDisplay,
+    _CalibratedClassifier,
+    _sigmoid_calibration,
+    _SigmoidCalibration,
+    calibration_curve,
 )
-from sklearn.utils.extmath import softmax
-from sklearn.exceptions import NotFittedError
-from sklearn.datasets import make_classification, make_blobs, load_iris
-from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import KFold, cross_val_predict
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.datasets import load_iris, make_blobs, make_classification
+from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import (
     RandomForestClassifier,
-    RandomForestRegressor,
     VotingClassifier,
 )
-from sklearn.linear_model import LogisticRegression, LinearRegression
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import LinearSVC
-from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.isotonic import IsotonicRegression
+from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.impute import SimpleImputer
+from sklearn.isotonic import IsotonicRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import brier_score_loss
-from sklearn.calibration import CalibratedClassifierCV, _CalibratedClassifier
-from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
-from sklearn.calibration import calibration_curve, CalibrationDisplay
+from sklearn.model_selection import (
+    KFold,
+    LeaveOneOut,
+    cross_val_predict,
+    train_test_split,
+)
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.svm import LinearSVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils._mocking import CheckingClassifier
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.extmath import softmax
+
+N_SAMPLES = 200
 
 
 @pytest.fixture(scope="module")
 def data():
-    X, y = make_classification(n_samples=200, n_features=6, random_state=42)
+    X, y = make_classification(n_samples=N_SAMPLES, n_features=6, random_state=42)
     return X, y
 
 
@@ -51,7 +60,7 @@ def data():
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration(data, method, ensemble):
     # Test calibration objects with isotonic and sigmoid
-    n_samples = 100
+    n_samples = N_SAMPLES // 2
     X, y = data
     sample_weight = np.random.RandomState(seed=42).uniform(size=y.size)
 
@@ -62,7 +71,7 @@ def test_calibration(data, method, ensemble):
     X_test, y_test = X[n_samples:], y[n_samples:]
 
     # Naive-Bayes
-    clf = MultinomialNB().fit(X_train, y_train, sample_weight=sw_train)
+    clf = MultinomialNB(force_alpha=True).fit(X_train, y_train, sample_weight=sw_train)
     prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
     cal_clf = CalibratedClassifierCV(clf, cv=y.size + 1, ensemble=ensemble)
@@ -108,35 +117,13 @@ def test_calibration(data, method, ensemble):
             )
 
 
-@pytest.mark.parametrize("ensemble", [True, False])
-def test_calibration_bad_method(data, ensemble):
-    # Check only "isotonic" and "sigmoid" are accepted as methods
-    X, y = data
-    clf = LinearSVC()
-    clf_invalid_method = CalibratedClassifierCV(clf, method="foo", ensemble=ensemble)
-    with pytest.raises(ValueError):
-        clf_invalid_method.fit(X, y)
-
-
-@pytest.mark.parametrize("ensemble", [True, False])
-def test_calibration_regressor(data, ensemble):
-    # `base-estimator` should provide either decision_function or
-    # predict_proba (most regressors, for instance, should fail)
-    X, y = data
-    clf_base_regressor = CalibratedClassifierCV(
-        RandomForestRegressor(), ensemble=ensemble
-    )
-    with pytest.raises(RuntimeError):
-        clf_base_regressor.fit(X, y)
-
-
 def test_calibration_default_estimator(data):
-    # Check base_estimator default is LinearSVC
+    # Check estimator default is LinearSVC
     X, y = data
     calib_clf = CalibratedClassifierCV(cv=2)
     calib_clf.fit(X, y)
 
-    base_est = calib_clf.calibrated_classifiers_[0].base_estimator
+    base_est = calib_clf.calibrated_classifiers_[0].estimator
     assert isinstance(base_est, LinearSVC)
 
 
@@ -159,17 +146,15 @@ def test_calibration_cv_splitter(data, ensemble):
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_sample_weight(data, method, ensemble):
-    n_samples = 100
+    n_samples = N_SAMPLES // 2
     X, y = data
 
     sample_weight = np.random.RandomState(seed=42).uniform(size=len(y))
     X_train, y_train, sw_train = X[:n_samples], y[:n_samples], sample_weight[:n_samples]
     X_test = X[n_samples:]
 
-    base_estimator = LinearSVC(random_state=42)
-    calibrated_clf = CalibratedClassifierCV(
-        base_estimator, method=method, ensemble=ensemble
-    )
+    estimator = LinearSVC(dual="auto", random_state=42)
+    calibrated_clf = CalibratedClassifierCV(estimator, method=method, ensemble=ensemble)
     calibrated_clf.fit(X_train, y_train, sample_weight=sw_train)
     probs_with_sw = calibrated_clf.predict_proba(X_test)
 
@@ -189,16 +174,16 @@ def test_parallel_execution(data, method, ensemble):
     X, y = data
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-    base_estimator = LinearSVC(random_state=42)
+    estimator = make_pipeline(StandardScaler(), LinearSVC(dual="auto", random_state=42))
 
     cal_clf_parallel = CalibratedClassifierCV(
-        base_estimator, method=method, n_jobs=2, ensemble=ensemble
+        estimator, method=method, n_jobs=2, ensemble=ensemble
     )
     cal_clf_parallel.fit(X_train, y_train)
     probs_parallel = cal_clf_parallel.predict_proba(X_test)
 
     cal_clf_sequential = CalibratedClassifierCV(
-        base_estimator, method=method, n_jobs=1, ensemble=ensemble
+        estimator, method=method, n_jobs=1, ensemble=ensemble
     )
     cal_clf_sequential.fit(X_train, y_train)
     probs_sequential = cal_clf_sequential.predict_proba(X_test)
@@ -218,7 +203,7 @@ def test_calibration_multiclass(method, ensemble, seed):
 
     # Test calibration for multiclass with classifier that implements
     # only decision function.
-    clf = LinearSVC(random_state=7)
+    clf = LinearSVC(dual="auto", random_state=7)
     X, y = make_blobs(
         n_samples=500, n_features=100, random_state=seed, centers=10, cluster_std=15.0
     )
@@ -288,7 +273,7 @@ def test_calibration_zero_probability():
     clf = DummyClassifier().fit(X, y)
     calibrator = ZeroCalibrator()
     cal_clf = _CalibratedClassifier(
-        base_estimator=clf, calibrators=[calibrator], classes=clf.classes_
+        estimator=clf, calibrators=[calibrator], classes=clf.classes_
     )
 
     probas = cal_clf.predict_proba(X)
@@ -315,7 +300,7 @@ def test_calibration_prefit():
     X_test, y_test = X[2 * n_samples :], y[2 * n_samples :]
 
     # Naive-Bayes
-    clf = MultinomialNB()
+    clf = MultinomialNB(force_alpha=True)
     # Check error if clf not prefit
     unfit_clf = CalibratedClassifierCV(clf, cv="prefit")
     with pytest.raises(NotFittedError):
@@ -349,7 +334,7 @@ def test_calibration_ensemble_false(data, method):
     # Test that `ensemble=False` is the same as using predictions from
     # `cross_val_predict` to train calibrator.
     X, y = data
-    clf = LinearSVC(random_state=7)
+    clf = LinearSVC(dual="auto", random_state=7)
 
     cal_clf = CalibratedClassifierCV(clf, method=method, cv=3, ensemble=False)
     cal_clf.fit(X, y)
@@ -391,20 +376,14 @@ def test_calibration_curve():
     y_true = np.array([0, 0, 0, 1, 1, 1])
     y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
     prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=2)
-    prob_true_unnormalized, prob_pred_unnormalized = calibration_curve(
-        y_true, y_pred * 2, n_bins=2, normalize=True
-    )
     assert len(prob_true) == len(prob_pred)
     assert len(prob_true) == 2
     assert_almost_equal(prob_true, [0, 1])
     assert_almost_equal(prob_pred, [0.1, 0.9])
-    assert_almost_equal(prob_true, prob_true_unnormalized)
-    assert_almost_equal(prob_pred, prob_pred_unnormalized)
 
-    # probabilities outside [0, 1] should not be accepted when normalize
-    # is set to False
+    # Probabilities outside [0, 1] should not be accepted at all.
     with pytest.raises(ValueError):
-        calibration_curve([1.1], [-0.1], normalize=False)
+        calibration_curve([1], [-0.1])
 
     # test that quantiles work as expected
     y_true2 = np.array([0, 0, 0, 0, 1, 1])
@@ -444,7 +423,7 @@ def test_calibration_prob_sum(ensemble):
     # issue #7796
     num_classes = 2
     X, y = make_classification(n_samples=10, n_features=5, n_classes=num_classes)
-    clf = LinearSVC(C=1.0, random_state=7)
+    clf = LinearSVC(dual="auto", C=1.0, random_state=7)
     clf_prob = CalibratedClassifierCV(
         clf, method="sigmoid", cv=LeaveOneOut(), ensemble=ensemble
     )
@@ -462,7 +441,7 @@ def test_calibration_less_classes(ensemble):
     # class label
     X = np.random.randn(10, 5)
     y = np.arange(10)
-    clf = LinearSVC(C=1.0, random_state=7)
+    clf = LinearSVC(dual="auto", C=1.0, random_state=7)
     cal_clf = CalibratedClassifierCV(
         clf, method="sigmoid", cv=LeaveOneOut(), ensemble=ensemble
     )
@@ -481,7 +460,6 @@ def test_calibration_less_classes(ensemble):
             assert np.allclose(proba, 1 / proba.shape[0])
 
 
-@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize(
     "X",
     [
@@ -558,8 +536,8 @@ def test_calibration_dict_pipeline(dict_data, dict_data_pipeline):
 @pytest.mark.parametrize(
     "clf, cv",
     [
-        pytest.param(LinearSVC(C=1), 2),
-        pytest.param(LinearSVC(C=1), "prefit"),
+        pytest.param(LinearSVC(dual="auto", C=1), 2),
+        pytest.param(LinearSVC(dual="auto", C=1), "prefit"),
     ],
 )
 def test_calibration_attributes(clf, cv):
@@ -583,28 +561,12 @@ def test_calibration_inconsistent_prefit_n_features_in():
     # Check that `n_features_in_` from prefit base estimator
     # is consistent with training set
     X, y = make_classification(n_samples=10, n_features=5, n_classes=2, random_state=7)
-    clf = LinearSVC(C=1).fit(X, y)
+    clf = LinearSVC(dual="auto", C=1).fit(X, y)
     calib_clf = CalibratedClassifierCV(clf, cv="prefit")
 
     msg = "X has 3 features, but LinearSVC is expecting 5 features as input."
     with pytest.raises(ValueError, match=msg):
         calib_clf.fit(X[:, :3], y)
-
-
-# FIXME: remove in 1.1
-def test_calibrated_classifier_cv_deprecation(data):
-    # Check that we raise the proper deprecation warning if accessing
-    # `calibrators_` from the `_CalibratedClassifier`.
-    X, y = data
-    calib_clf = CalibratedClassifierCV(cv=2).fit(X, y)
-
-    with pytest.warns(FutureWarning):
-        calibrators = calib_clf.calibrated_classifiers_[0].calibrators_
-
-    for clf1, clf2 in zip(
-        calibrators, calib_clf.calibrated_classifiers_[0].calibrators
-    ):
-        assert clf1 is clf2
 
 
 def test_calibration_votingclassifier():
@@ -618,7 +580,7 @@ def test_calibration_votingclassifier():
     )
     vote.fit(X, y)
 
-    calib_clf = CalibratedClassifierCV(base_estimator=vote, cv="prefit")
+    calib_clf = CalibratedClassifierCV(estimator=vote, cv="prefit")
     # smoke test: should not raise an error
     calib_clf.fit(X, y)
 
@@ -632,42 +594,6 @@ def iris_data():
 def iris_data_binary(iris_data):
     X, y = iris_data
     return X[y < 2], y[y < 2]
-
-
-def test_calibration_display_validation(pyplot, iris_data, iris_data_binary):
-    X, y = iris_data
-    X_binary, y_binary = iris_data_binary
-
-    reg = LinearRegression().fit(X, y)
-    msg = "'estimator' should be a fitted classifier"
-    with pytest.raises(ValueError, match=msg):
-        CalibrationDisplay.from_estimator(reg, X, y)
-
-    clf = LinearSVC().fit(X, y)
-    msg = "response method predict_proba is not defined in"
-    with pytest.raises(ValueError, match=msg):
-        CalibrationDisplay.from_estimator(clf, X, y)
-
-    clf = LogisticRegression()
-    with pytest.raises(NotFittedError):
-        CalibrationDisplay.from_estimator(clf, X, y)
-
-
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
-def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
-    X, y = iris_data
-    clf = DecisionTreeClassifier()
-    clf.fit(X, y)
-    y_prob = clf.predict_proba(X)
-
-    if constructor_name == "from_estimator":
-        msg = "to be a binary classifier, but got"
-        with pytest.raises(ValueError, match=msg):
-            CalibrationDisplay.from_estimator(clf, X, y)
-    else:
-        msg = "y should be a 1d array, got an array of shape"
-        with pytest.raises(ValueError, match=msg):
-            CalibrationDisplay.from_predictions(y, y_prob)
 
 
 @pytest.mark.parametrize("n_bins", [5, 10])
@@ -705,7 +631,12 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
 
     assert viz.ax_.get_xlabel() == "Mean predicted probability (Positive class: 1)"
     assert viz.ax_.get_ylabel() == "Fraction of positives (Positive class: 1)"
-    assert viz.line_.get_label() == "LogisticRegression"
+
+    expected_legend_labels = ["LogisticRegression", "Perfectly calibrated"]
+    legend_labels = viz.ax_.get_legend().get_texts()
+    assert len(legend_labels) == len(expected_legend_labels)
+    for labels in legend_labels:
+        assert labels.get_text() in expected_legend_labels
 
 
 def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
@@ -714,8 +645,12 @@ def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
     clf = make_pipeline(StandardScaler(), LogisticRegression())
     clf.fit(X, y)
     viz = CalibrationDisplay.from_estimator(clf, X, y)
-    assert clf.__class__.__name__ in viz.line_.get_label()
-    assert viz.estimator_name == clf.__class__.__name__
+
+    expected_legend_labels = [viz.estimator_name, "Perfectly calibrated"]
+    legend_labels = viz.ax_.get_legend().get_texts()
+    assert len(legend_labels) == len(expected_legend_labels)
+    for labels in legend_labels:
+        assert labels.get_text() in expected_legend_labels
 
 
 @pytest.mark.parametrize(
@@ -728,7 +663,13 @@ def test_calibration_display_default_labels(pyplot, name, expected_label):
 
     viz = CalibrationDisplay(prob_true, prob_pred, y_prob, estimator_name=name)
     viz.plot()
-    assert viz.line_.get_label() == expected_label
+
+    expected_legend_labels = [] if name is None else [name]
+    expected_legend_labels.append("Perfectly calibrated")
+    legend_labels = viz.ax_.get_legend().get_texts()
+    assert len(legend_labels) == len(expected_legend_labels)
+    for labels in legend_labels:
+        assert labels.get_text() in expected_legend_labels
 
 
 def test_calibration_display_label_class_plot(pyplot):
@@ -743,7 +684,12 @@ def test_calibration_display_label_class_plot(pyplot):
     assert viz.estimator_name == name
     name = "name two"
     viz.plot(name=name)
-    assert viz.line_.get_label() == name
+
+    expected_legend_labels = [name, "Perfectly calibrated"]
+    legend_labels = viz.ax_.get_legend().get_texts()
+    assert len(legend_labels) == len(expected_legend_labels)
+    for labels in legend_labels:
+        assert labels.get_text() in expected_legend_labels
 
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
@@ -766,11 +712,19 @@ def test_calibration_display_name_multiple_calls(
     assert viz.estimator_name == clf_name
     pyplot.close("all")
     viz.plot()
-    assert clf_name == viz.line_.get_label()
+
+    expected_legend_labels = [clf_name, "Perfectly calibrated"]
+    legend_labels = viz.ax_.get_legend().get_texts()
+    assert len(legend_labels) == len(expected_legend_labels)
+    for labels in legend_labels:
+        assert labels.get_text() in expected_legend_labels
+
     pyplot.close("all")
     clf_name = "another_name"
     viz.plot(name=clf_name)
-    assert clf_name == viz.line_.get_label()
+    assert len(legend_labels) == len(expected_legend_labels)
+    for labels in legend_labels:
+        assert labels.get_text() in expected_legend_labels
 
 
 def test_calibration_display_ref_line(pyplot, iris_data_binary):
@@ -848,7 +802,12 @@ def test_calibration_display_pos_label(
         viz.ax_.get_ylabel()
         == f"Fraction of positives (Positive class: {expected_pos_label})"
     )
-    assert viz.line_.get_label() == "LogisticRegression"
+
+    expected_legend_labels = [lr.__class__.__name__, "Perfectly calibrated"]
+    legend_labels = viz.ax_.get_legend().get_texts()
+    assert len(legend_labels) == len(expected_legend_labels)
+    for labels in legend_labels:
+        assert labels.get_text() in expected_legend_labels
 
 
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
@@ -872,9 +831,9 @@ def test_calibrated_classifier_cv_double_sample_weights_equivalence(method, ense
     y_twice[::2] = y
     y_twice[1::2] = y
 
-    base_estimator = LogisticRegression()
+    estimator = LogisticRegression()
     calibrated_clf_without_weights = CalibratedClassifierCV(
-        base_estimator,
+        estimator,
         method=method,
         ensemble=ensemble,
         cv=2,
@@ -890,8 +849,8 @@ def test_calibrated_classifier_cv_double_sample_weights_equivalence(method, ense
         calibrated_clf_without_weights.calibrated_classifiers_,
     ):
         assert_allclose(
-            est_with_weights.base_estimator.coef_,
-            est_without_weights.base_estimator.coef_,
+            est_with_weights.estimator.coef_,
+            est_without_weights.estimator.coef_,
         )
 
     # Check that the predictions are the same
@@ -899,6 +858,65 @@ def test_calibrated_classifier_cv_double_sample_weights_equivalence(method, ense
     y_pred_without_weights = calibrated_clf_without_weights.predict_proba(X)
 
     assert_allclose(y_pred_with_weights, y_pred_without_weights)
+
+
+@pytest.mark.parametrize("fit_params_type", ["list", "array"])
+def test_calibration_with_fit_params(fit_params_type, data):
+    """Tests that fit_params are passed to the underlying base estimator.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12384
+    """
+    X, y = data
+    fit_params = {
+        "a": _convert_container(y, fit_params_type),
+        "b": _convert_container(y, fit_params_type),
+    }
+
+    clf = CheckingClassifier(expected_fit_params=["a", "b"])
+    pc_clf = CalibratedClassifierCV(clf)
+
+    pc_clf.fit(X, y, **fit_params)
+
+
+@pytest.mark.parametrize(
+    "sample_weight",
+    [
+        [1.0] * N_SAMPLES,
+        np.ones(N_SAMPLES),
+    ],
+)
+def test_calibration_with_sample_weight_base_estimator(sample_weight, data):
+    """Tests that sample_weight is passed to the underlying base
+    estimator.
+    """
+    X, y = data
+    clf = CheckingClassifier(expected_sample_weight=True)
+    pc_clf = CalibratedClassifierCV(clf)
+
+    pc_clf.fit(X, y, sample_weight=sample_weight)
+
+
+def test_calibration_without_sample_weight_base_estimator(data):
+    """Check that even if the estimator doesn't support
+    sample_weight, fitting with sample_weight still works.
+
+    There should be a warning, since the sample_weight is not passed
+    on to the estimator.
+    """
+    X, y = data
+    sample_weight = np.ones_like(y)
+
+    class ClfWithoutSampleWeight(CheckingClassifier):
+        def fit(self, X, y, **fit_params):
+            assert "sample_weight" not in fit_params
+            return super().fit(X, y, **fit_params)
+
+    clf = ClfWithoutSampleWeight()
+    pc_clf = CalibratedClassifierCV(clf)
+
+    with pytest.warns(UserWarning):
+        pc_clf.fit(X, y, sample_weight=sample_weight)
 
 
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
@@ -916,9 +934,9 @@ def test_calibrated_classifier_cv_zeros_sample_weights_equivalence(method, ensem
     sample_weight = np.zeros_like(y)
     sample_weight[::2] = 1
 
-    base_estimator = LogisticRegression()
+    estimator = LogisticRegression()
     calibrated_clf_without_weights = CalibratedClassifierCV(
-        base_estimator,
+        estimator,
         method=method,
         ensemble=ensemble,
         cv=2,
@@ -934,8 +952,8 @@ def test_calibrated_classifier_cv_zeros_sample_weights_equivalence(method, ensem
         calibrated_clf_without_weights.calibrated_classifiers_,
     ):
         assert_allclose(
-            est_with_weights.base_estimator.coef_,
-            est_without_weights.base_estimator.coef_,
+            est_with_weights.estimator.coef_,
+            est_without_weights.estimator.coef_,
         )
 
     # Check that the predictions are the same
@@ -943,3 +961,38 @@ def test_calibrated_classifier_cv_zeros_sample_weights_equivalence(method, ensem
     y_pred_without_weights = calibrated_clf_without_weights.predict_proba(X)
 
     assert_allclose(y_pred_with_weights, y_pred_without_weights)
+
+
+# TODO(1.4): Remove
+def test_calibrated_classifier_error_base_estimator(data):
+    """Check that we raise an error is a user set both `base_estimator` and
+    `estimator`."""
+    calibrated_classifier = CalibratedClassifierCV(
+        base_estimator=LogisticRegression(), estimator=LogisticRegression()
+    )
+    with pytest.raises(ValueError, match="Both `base_estimator` and `estimator`"):
+        calibrated_classifier.fit(*data)
+
+
+# TODO(1.4): Remove
+def test_calibrated_classifier_deprecation_base_estimator(data):
+    """Check that we raise a warning regarding the deprecation of
+    `base_estimator`."""
+    calibrated_classifier = CalibratedClassifierCV(base_estimator=LogisticRegression())
+    warn_msg = "`base_estimator` was renamed to `estimator`"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        calibrated_classifier.fit(*data)
+
+
+def test_calibration_with_non_sample_aligned_fit_param(data):
+    """Check that CalibratedClassifierCV does not enforce sample alignment
+    for fit parameters."""
+
+    class TestClassifier(LogisticRegression):
+        def fit(self, X, y, sample_weight=None, fit_param=None):
+            assert fit_param is not None
+            return super().fit(X, y, sample_weight=sample_weight)
+
+    CalibratedClassifierCV(estimator=TestClassifier()).fit(
+        *data, fit_param=np.ones(len(data[1]) + 1)
+    )

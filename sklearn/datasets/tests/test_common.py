@@ -2,8 +2,8 @@
 import inspect
 import os
 
-import pytest
 import numpy as np
+import pytest
 
 import sklearn.datasets
 
@@ -115,7 +115,6 @@ def _generate_func_supporting_param(param, dataset_type=("load", "fetch")):
 @pytest.mark.parametrize(
     "name, dataset_func", _generate_func_supporting_param("return_X_y")
 )
-@pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
 def test_common_check_return_X_y(name, dataset_func):
     bunch = dataset_func()
     check_return_X_y(bunch, dataset_func)

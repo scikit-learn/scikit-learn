@@ -9,24 +9,20 @@ The dataset page is available at
 # License: BSD 3 clause
 
 import logging
-
-from os import remove, makedirs
-from os.path import exists, join
 from gzip import GzipFile
+from os import makedirs, remove
+from os.path import exists, join
 
+import joblib
 import numpy as np
 import scipy.sparse as sp
-import joblib
 
-from . import get_data_home
-from ._base import _pkl_filepath
-from ._base import _fetch_remote
-from ._base import RemoteFileMetadata
-from ._base import load_descr
-from ._svmlight_format_io import load_svmlight_files
-from ..utils import shuffle as shuffle_
 from ..utils import Bunch
-
+from ..utils import shuffle as shuffle_
+from ..utils._param_validation import StrOptions, validate_params
+from . import get_data_home
+from ._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath, load_descr
+from ._svmlight_format_io import load_svmlight_files
 
 # The original vectorized data can be found at:
 #    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt0.dat.gz
@@ -76,6 +72,17 @@ TOPICS_METADATA = RemoteFileMetadata(
 logger = logging.getLogger(__name__)
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "subset": [StrOptions({"train", "test", "all"})],
+        "download_if_missing": ["boolean"],
+        "random_state": ["random_state"],
+        "shuffle": ["boolean"],
+        "return_X_y": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def fetch_rcv1(
     *,
     data_home=None,
@@ -115,7 +122,7 @@ def fetch_rcv1(
         This follows the official LYRL2004 chronological split.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     random_state : int, RandomState instance or None, default=None
@@ -136,21 +143,24 @@ def fetch_rcv1(
     Returns
     -------
     dataset : :class:`~sklearn.utils.Bunch`
-        Dictionary-like object, with the following attributes.
+        Dictionary-like object. Returned only if `return_X_y` is False.
+        `dataset` has the following attributes:
 
-        data : sparse matrix of shape (804414, 47236), dtype=np.float64
+        - data : sparse matrix of shape (804414, 47236), dtype=np.float64
             The array has 0.16% of non zero values. Will be of CSR format.
-        target : sparse matrix of shape (804414, 103), dtype=np.uint8
+        - target : sparse matrix of shape (804414, 103), dtype=np.uint8
             Each sample has a value of 1 in its categories, and 0 in others.
             The array has 3.15% of non zero values. Will be of CSR format.
-        sample_id : ndarray of shape (804414,), dtype=np.uint32,
+        - sample_id : ndarray of shape (804414,), dtype=np.uint32,
             Identification number of each sample, as ordered in dataset.data.
-        target_names : ndarray of shape (103,), dtype=object
+        - target_names : ndarray of shape (103,), dtype=object
             Names of each target (RCV1 topics), as ordered in dataset.target.
-        DESCR : str
+        - DESCR : str
             Description of the RCV1 dataset.
 
-    (data, target) : tuple if ``return_X_y`` is True
+    (data, target) : tuple
+        A tuple consisting of `dataset.data` and `dataset.target`, as
+        described above. Returned only if `return_X_y` is True.
 
         .. versionadded:: 0.20
     """

@@ -27,14 +27,14 @@ X = iris.data
 y = iris.target
 
 # %%
-# We will also generate some random feature data (i.e., 2200 features),
+# We will also generate some random feature data (i.e., 20 features),
 # uncorrelated with the class labels in the iris dataset.
 
 import numpy as np
 
-n_uncorrelated_features = 2200
+n_uncorrelated_features = 20
 rng = np.random.RandomState(seed=0)
-# Use same number of samples as in iris and 2200 features
+# Use same number of samples as in iris and 20 features
 X_rand = rng.normal(size=(X.shape[0], n_uncorrelated_features))
 
 # %%
@@ -58,9 +58,8 @@ X_rand = rng.normal(size=(X.shape[0], n_uncorrelated_features))
 # the percentage of permutations for which the score obtained is greater
 # that the score obtained using the original data.
 
+from sklearn.model_selection import StratifiedKFold, permutation_test_score
 from sklearn.svm import SVC
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import permutation_test_score
 
 clf = SVC(kernel="linear", random_state=7)
 cv = StratifiedKFold(2, shuffle=True, random_state=0)
@@ -95,7 +94,7 @@ ax.axvline(score_iris, ls="--", color="r")
 score_label = f"Score on original\ndata: {score_iris:.2f}\n(p-value: {pvalue_iris:.3f})"
 ax.text(0.7, 10, score_label, fontsize=12)
 ax.set_xlabel("Accuracy score")
-_ = ax.set_ylabel("Probability")
+_ = ax.set_ylabel("Probability density")
 
 # %%
 # Random data
@@ -116,7 +115,7 @@ ax.axvline(score_rand, ls="--", color="r")
 score_label = f"Score on original\ndata: {score_rand:.2f}\n(p-value: {pvalue_rand:.3f})"
 ax.text(0.14, 7.5, score_label, fontsize=12)
 ax.set_xlabel("Accuracy score")
-ax.set_ylabel("Probability")
+ax.set_ylabel("Probability density")
 plt.show()
 
 # %%

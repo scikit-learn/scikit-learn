@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 ======================
 Feature discretization
@@ -34,20 +33,19 @@ set.
 #
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.colors import ListedColormap
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import make_moons, make_circles, make_classification
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import GridSearchCV
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import KBinsDiscretizer
-from sklearn.svm import SVC, LinearSVC
+
+from sklearn.datasets import make_circles, make_classification, make_moons
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import KBinsDiscretizer, StandardScaler
+from sklearn.svm import SVC, LinearSVC
+from sklearn.utils._testing import ignore_warnings
 
 h = 0.02  # step size in the mesh
 
@@ -61,33 +59,53 @@ def get_name(estimator):
 
 
 # list of (estimator, param_grid), where param_grid is used in GridSearchCV
+# The parameter spaces in this example are limited to a narrow band to reduce
+# its runtime. In a real use case, a broader search space for the algorithms
+# should be used.
 classifiers = [
-    (LogisticRegression(random_state=0), {"C": np.logspace(-2, 7, 10)}),
-    (LinearSVC(random_state=0), {"C": np.logspace(-2, 7, 10)}),
+    (
+        make_pipeline(StandardScaler(), LogisticRegression(random_state=0)),
+        {"logisticregression__C": np.logspace(-1, 1, 3)},
+    ),
+    (
+        make_pipeline(StandardScaler(), LinearSVC(random_state=0, dual="auto")),
+        {"linearsvc__C": np.logspace(-1, 1, 3)},
+    ),
     (
         make_pipeline(
-            KBinsDiscretizer(encode="onehot"), LogisticRegression(random_state=0)
+            StandardScaler(),
+            KBinsDiscretizer(encode="onehot"),
+            LogisticRegression(random_state=0),
         ),
         {
-            "kbinsdiscretizer__n_bins": np.arange(2, 10),
-            "logisticregression__C": np.logspace(-2, 7, 10),
+            "kbinsdiscretizer__n_bins": np.arange(5, 8),
+            "logisticregression__C": np.logspace(-1, 1, 3),
         },
     ),
     (
-        make_pipeline(KBinsDiscretizer(encode="onehot"), LinearSVC(random_state=0)),
+        make_pipeline(
+            StandardScaler(),
+            KBinsDiscretizer(encode="onehot"),
+            LinearSVC(random_state=0, dual="auto"),
+        ),
         {
-            "kbinsdiscretizer__n_bins": np.arange(2, 10),
-            "linearsvc__C": np.logspace(-2, 7, 10),
+            "kbinsdiscretizer__n_bins": np.arange(5, 8),
+            "linearsvc__C": np.logspace(-1, 1, 3),
         },
     ),
     (
-        GradientBoostingClassifier(n_estimators=50, random_state=0),
-        {"learning_rate": np.logspace(-4, 0, 10)},
+        make_pipeline(
+            StandardScaler(), GradientBoostingClassifier(n_estimators=5, random_state=0)
+        ),
+        {"gradientboostingclassifier__learning_rate": np.logspace(-2, 0, 5)},
     ),
-    (SVC(random_state=0), {"C": np.logspace(-2, 7, 10)}),
+    (
+        make_pipeline(StandardScaler(), SVC(random_state=0)),
+        {"svc__C": np.logspace(-1, 1, 3)},
+    ),
 ]
 
-names = [get_name(e) for e, g in classifiers]
+names = [get_name(e).replace("StandardScaler + ", "") for e, _ in classifiers]
 
 n_samples = 100
 datasets = [
@@ -107,15 +125,14 @@ fig, axes = plt.subplots(
     nrows=len(datasets), ncols=len(classifiers) + 1, figsize=(21, 9)
 )
 
-cm = plt.cm.PiYG
+cm_piyg = plt.cm.PiYG
 cm_bright = ListedColormap(["#b30065", "#178000"])
 
 # iterate over datasets
 for ds_cnt, (X, y) in enumerate(datasets):
-    print("\ndataset %d\n---------" % ds_cnt)
+    print(f"\ndataset {ds_cnt}\n---------")
 
-    # preprocess dataset, split into training and test part
-    X = StandardScaler().fit_transform(X)
+    # split into training and test part
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.5, random_state=42
     )
@@ -148,18 +165,18 @@ for ds_cnt, (X, y) in enumerate(datasets):
         with ignore_warnings(category=ConvergenceWarning):
             clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
-        print("%s: %.2f" % (name, score))
+        print(f"{name}: {score:.2f}")
 
         # plot the decision boundary. For that, we will assign a color to each
         # point in the mesh [x_min, x_max]*[y_min, y_max].
         if hasattr(clf, "decision_function"):
-            Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
+            Z = clf.decision_function(np.column_stack([xx.ravel(), yy.ravel()]))
         else:
-            Z = clf.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1]
+            Z = clf.predict_proba(np.column_stack([xx.ravel(), yy.ravel()]))[:, 1]
 
         # put the result into a color plot
         Z = Z.reshape(xx.shape)
-        ax.contourf(xx, yy, Z, cmap=cm, alpha=0.8)
+        ax.contourf(xx, yy, Z, cmap=cm_piyg, alpha=0.8)
 
         # plot the training points
         ax.scatter(
@@ -184,7 +201,7 @@ for ds_cnt, (X, y) in enumerate(datasets):
         ax.text(
             0.95,
             0.06,
-            ("%.2f" % score).lstrip("0"),
+            (f"{score:.2f}").lstrip("0"),
             size=15,
             bbox=dict(boxstyle="round", alpha=0.8, facecolor="white"),
             transform=ax.transAxes,

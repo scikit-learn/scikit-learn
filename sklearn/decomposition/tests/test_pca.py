@@ -1,16 +1,26 @@
+import re
+import warnings
+
 import numpy as np
+import pytest
 import scipy as sp
 from numpy.testing import assert_array_equal
 
-import pytest
-
-from sklearn.utils._testing import assert_allclose
-
-from sklearn import datasets
-from sklearn.decomposition import PCA
+from sklearn import config_context, datasets
+from sklearn.base import clone
 from sklearn.datasets import load_iris
-from sklearn.decomposition._pca import _assess_dimension
-from sklearn.decomposition._pca import _infer_dimension
+from sklearn.decomposition import PCA
+from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils.estimator_checks import (
+    _array_api_for_tests,
+    _get_check_estimator_ids,
+    check_array_api_input_and_values,
+)
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
@@ -44,9 +54,9 @@ def test_no_empty_slice_warning():
     n_features = n_components + 2  # anything > n_comps triggered it in 0.16
     X = np.random.uniform(-1, 1, size=(n_components, n_features))
     pca = PCA(n_components=n_components)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         pca.fit(X)
-    assert not record.list
 
 
 @pytest.mark.parametrize("copy", [True, False])
@@ -95,7 +105,7 @@ def test_whitening(solver, copy):
     X_ = X.copy()
     pca = PCA(
         n_components=n_components, whiten=False, copy=copy, svd_solver=solver
-    ).fit(X_)
+    ).fit(X_.copy())
     X_unwhitened = pca.transform(X_)
     assert X_unwhitened.shape == (n_samples, n_components)
 
@@ -171,10 +181,10 @@ def test_pca_singular_values(svd_solver):
 
     # compare to the Frobenius norm
     assert_allclose(
-        np.sum(pca.singular_values_ ** 2), np.linalg.norm(X_trans, "fro") ** 2
+        np.sum(pca.singular_values_**2), np.linalg.norm(X_trans, "fro") ** 2
     )
     # Compare to the 2-norms of the score vectors
-    assert_allclose(pca.singular_values_, np.sqrt(np.sum(X_trans ** 2, axis=0)))
+    assert_allclose(pca.singular_values_, np.sqrt(np.sum(X_trans**2, axis=0)))
 
     # set the singular values and see what er get back
     n_samples, n_features = 100, 110
@@ -182,7 +192,7 @@ def test_pca_singular_values(svd_solver):
 
     pca = PCA(n_components=3, svd_solver=svd_solver, random_state=rng)
     X_trans = pca.fit_transform(X)
-    X_trans /= np.sqrt(np.sum(X_trans ** 2, axis=0))
+    X_trans /= np.sqrt(np.sum(X_trans**2, axis=0))
     X_trans[:, 0] *= 3.142
     X_trans[:, 1] *= 2.718
     X_hat = np.dot(X_trans, pca.components_)
@@ -200,7 +210,7 @@ def test_pca_check_projection(svd_solver):
     Xt = 0.1 * rng.randn(1, p) + np.array([3, 4, 5])
 
     Yt = PCA(n_components=2, svd_solver=svd_solver).fit(X).transform(Xt)
-    Yt /= np.sqrt((Yt ** 2).sum())
+    Yt /= np.sqrt((Yt**2).sum())
 
     assert_allclose(np.abs(Yt[0][0]), 1.0, rtol=5e-3)
 
@@ -245,36 +255,20 @@ def test_pca_inverse(svd_solver, whiten):
         ("arpack", 2, r"must be strictly less than min"),
         (
             "auto",
-            -1,
-            (
-                r"n_components={}L? must be between {}L? and "
-                r"min\(n_samples, n_features\)={}L? with "
-                r"svd_solver=\'{}\'"
-            ),
-        ),
-        (
-            "auto",
             3,
             (
-                r"n_components={}L? must be between {}L? and "
-                r"min\(n_samples, n_features\)={}L? with "
-                r"svd_solver=\'{}\'"
+                r"n_components=3 must be between 0 and min\(n_samples, "
+                r"n_features\)=2 with svd_solver='full'"
             ),
         ),
-        ("auto", 1.0, "must be of type int"),
     ],
 )
 def test_pca_validation(svd_solver, data, n_components, err_msg):
     # Ensures that solver-specific extreme inputs for the n_components
     # parameter raise errors
     smallest_d = 2  # The smallest dimension
-    lower_limit = {"randomized": 1, "arpack": 1, "full": 0, "auto": 0}
     pca_fitted = PCA(n_components, svd_solver=svd_solver)
 
-    solver_reported = "full" if svd_solver == "auto" else svd_solver
-    err_msg = err_msg.format(
-        n_components, lower_limit[svd_solver], smallest_d, solver_reported
-    )
     with pytest.raises(ValueError, match=err_msg):
         pca_fitted.fit(data)
 
@@ -412,7 +406,7 @@ def test_pca_score(svd_solver):
     pca.fit(X)
 
     ll1 = pca.score(X)
-    h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1 ** 2) * p
+    h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1**2) * p
     assert_allclose(ll1 / h, 1, rtol=5e-2)
 
     ll2 = pca.score(rng.randn(n, p) * 0.2 + np.array([3, 4, 5]))
@@ -474,9 +468,15 @@ def test_pca_zero_noise_variance_edge_cases(svd_solver):
     pca = PCA(n_components=p, svd_solver=svd_solver)
     pca.fit(X)
     assert pca.noise_variance_ == 0
+    # Non-regression test for gh-12489
+    # ensure no divide-by-zero error for n_components == n_features < n_samples
+    pca.score(X)
 
     pca.fit(X.T)
     assert pca.noise_variance_ == 0
+    # Non-regression test for gh-12489
+    # ensure no divide-by-zero error for n_components == n_samples < n_features
+    pca.score(X.T)
 
 
 @pytest.mark.parametrize(
@@ -509,13 +509,6 @@ def test_pca_sparse_input(svd_solver):
 
     pca = PCA(n_components=3, svd_solver=svd_solver)
     with pytest.raises(TypeError):
-        pca.fit(X)
-
-
-def test_pca_bad_solver():
-    X = np.random.RandomState(0).rand(5, 4)
-    pca = PCA(n_components=3, svd_solver="bad_argument")
-    with pytest.raises(ValueError):
         pca.fit(X)
 
 
@@ -659,9 +652,136 @@ def test_assess_dimesion_rank_one():
         assert _assess_dimension(s, rank, n_samples) == -np.inf
 
 
+def test_pca_randomized_svd_n_oversamples():
+    """Check that exposing and setting `n_oversamples` will provide accurate results
+    even when `X` as a large number of features.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20589
+    """
+    rng = np.random.RandomState(0)
+    n_features = 100
+    X = rng.randn(1_000, n_features)
+
+    # The default value of `n_oversamples` will lead to inaccurate results
+    # We force it to the number of features.
+    pca_randomized = PCA(
+        n_components=1,
+        svd_solver="randomized",
+        n_oversamples=n_features,
+        random_state=0,
+    ).fit(X)
+    pca_full = PCA(n_components=1, svd_solver="full").fit(X)
+    pca_arpack = PCA(n_components=1, svd_solver="arpack", random_state=0).fit(X)
+
+    assert_allclose(np.abs(pca_full.components_), np.abs(pca_arpack.components_))
+    assert_allclose(np.abs(pca_randomized.components_), np.abs(pca_arpack.components_))
+
+
 def test_feature_names_out():
     """Check feature names out for PCA."""
     pca = PCA(n_components=2).fit(iris.data)
 
     names = pca.get_feature_names_out()
     assert_array_equal([f"pca{i}" for i in range(2)], names)
+
+
+@pytest.mark.parametrize("copy", [True, False])
+def test_variance_correctness(copy):
+    """Check the accuracy of PCA's internal variance calculation"""
+    rng = np.random.RandomState(0)
+    X = rng.randn(1000, 200)
+    pca = PCA().fit(X)
+    pca_var = pca.explained_variance_ / pca.explained_variance_ratio_
+    true_var = np.var(X, ddof=1, axis=0).sum()
+    np.testing.assert_allclose(pca_var, true_var)
+
+
+def check_array_api_get_precision(name, estimator, array_namepsace, device, dtype):
+    xp, device, dtype = _array_api_for_tests(array_namepsace, device, dtype)
+    iris_np = iris.data.astype(dtype)
+    iris_xp = xp.asarray(iris_np, device=device)
+
+    estimator.fit(iris_np)
+    precision_np = estimator.get_precision()
+    covariance_np = estimator.get_covariance()
+
+    with config_context(array_api_dispatch=True):
+        estimator_xp = clone(estimator).fit(iris_xp)
+        precision_xp = estimator_xp.get_precision()
+        assert precision_xp.shape == (4, 4)
+        assert precision_xp.dtype == iris_xp.dtype
+
+        assert_allclose(
+            _convert_to_numpy(precision_xp, xp=xp),
+            precision_np,
+            atol=np.finfo(dtype).eps * 100,
+        )
+        covariance_xp = estimator_xp.get_covariance()
+        assert covariance_xp.shape == (4, 4)
+        assert covariance_xp.dtype == iris_xp.dtype
+
+        assert_allclose(
+            _convert_to_numpy(covariance_xp, xp=xp),
+            covariance_np,
+            atol=np.finfo(dtype).eps * 100,
+        )
+
+
+@pytest.mark.parametrize(
+    "array_namepsace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "check",
+    [check_array_api_input_and_values, check_array_api_get_precision],
+    ids=_get_check_estimator_ids,
+)
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        PCA(n_components=2, svd_solver="full"),
+        PCA(n_components=2, svd_solver="full", whiten=True),
+        PCA(
+            n_components=2,
+            svd_solver="randomized",
+            power_iteration_normalizer="QR",
+            random_state=0,  # how to use global_random_seed here?
+        ),
+    ],
+    ids=_get_check_estimator_ids,
+)
+def test_pca_array_api_compliance(estimator, check, array_namepsace, device, dtype):
+    name = estimator.__class__.__name__
+    check(name, estimator, array_namepsace, device=device, dtype=dtype)
+
+
+def test_array_api_error_and_warnings_on_unsupported_params():
+    pytest.importorskip("array_api_compat")
+    xp = pytest.importorskip("numpy.array_api")
+    iris_xp = xp.asarray(iris.data)
+
+    pca = PCA(n_components=2, svd_solver="arpack", random_state=0)
+    expected_msg = re.escape(
+        "PCA with svd_solver='arpack' is not supported for Array API inputs."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        with config_context(array_api_dispatch=True):
+            pca.fit(iris_xp)
+
+    pca.set_params(svd_solver="randomized", power_iteration_normalizer="LU")
+    expected_msg = re.escape(
+        "Array API does not support LU factorization. Set"
+        " `power_iteration_normalizer='QR'` instead."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        with config_context(array_api_dispatch=True):
+            pca.fit(iris_xp)
+
+    pca.set_params(svd_solver="randomized", power_iteration_normalizer="auto")
+    expected_msg = re.escape(
+        "Array API does not support LU factorization, falling back to QR instead. Set"
+        " `power_iteration_normalizer='QR'` explicitly to silence this warning."
+    )
+    with pytest.warns(UserWarning, match=expected_msg):
+        with config_context(array_api_dispatch=True):
+            pca.fit(iris_xp)

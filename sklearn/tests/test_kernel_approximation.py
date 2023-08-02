@@ -1,20 +1,28 @@
 import re
 
 import numpy as np
-from scipy.sparse import csr_matrix
 import pytest
+from scipy.sparse import csr_matrix
 
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-
-from sklearn.metrics.pairwise import kernel_metrics
-from sklearn.kernel_approximation import RBFSampler
-from sklearn.kernel_approximation import AdditiveChi2Sampler
-from sklearn.kernel_approximation import SkewedChi2Sampler
-from sklearn.kernel_approximation import Nystroem
-from sklearn.kernel_approximation import PolynomialCountSketch
 from sklearn.datasets import make_classification
-from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel, chi2_kernel
+from sklearn.kernel_approximation import (
+    AdditiveChi2Sampler,
+    Nystroem,
+    PolynomialCountSketch,
+    RBFSampler,
+    SkewedChi2Sampler,
+)
+from sklearn.metrics.pairwise import (
+    chi2_kernel,
+    kernel_metrics,
+    polynomial_kernel,
+    rbf_kernel,
+)
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 # generate data
 rng = np.random.RandomState(0)
@@ -24,19 +32,10 @@ X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
 
 
-@pytest.mark.parametrize("degree", [-1, 0])
-def test_polynomial_count_sketch_raises_if_degree_lower_than_one(degree):
-    with pytest.raises(ValueError, match=f"degree={degree} should be >=1."):
-        ps_transform = PolynomialCountSketch(degree=degree)
-        ps_transform.fit(X, Y)
-
-
-@pytest.mark.parametrize("X", [X, csr_matrix(X)])
-@pytest.mark.parametrize("Y", [Y, csr_matrix(Y)])
 @pytest.mark.parametrize("gamma", [0.1, 1, 2.5])
-@pytest.mark.parametrize("degree", [1, 2, 3])
-@pytest.mark.parametrize("coef0", [0, 1, 2.5])
-def test_polynomial_count_sketch(X, Y, gamma, degree, coef0):
+@pytest.mark.parametrize("degree, n_components", [(1, 500), (2, 500), (3, 5000)])
+@pytest.mark.parametrize("coef0", [0, 2.5])
+def test_polynomial_count_sketch(gamma, degree, coef0, n_components):
     # test that PolynomialCountSketch approximates polynomial
     # kernel on random data
 
@@ -45,7 +44,11 @@ def test_polynomial_count_sketch(X, Y, gamma, degree, coef0):
 
     # approximate kernel mapping
     ps_transform = PolynomialCountSketch(
-        n_components=5000, gamma=gamma, coef0=coef0, degree=degree, random_state=42
+        n_components=n_components,
+        gamma=gamma,
+        coef0=coef0,
+        degree=degree,
+        random_state=42,
     )
     X_trans = ps_transform.fit_transform(X)
     Y_trans = ps_transform.transform(Y)
@@ -56,6 +59,29 @@ def test_polynomial_count_sketch(X, Y, gamma, degree, coef0):
     np.abs(error, out=error)
     assert np.max(error) <= 0.1  # nothing too far off
     assert np.mean(error) <= 0.05  # mean is fairly close
+
+
+@pytest.mark.parametrize("gamma", [0.1, 1.0])
+@pytest.mark.parametrize("degree", [1, 2, 3])
+@pytest.mark.parametrize("coef0", [0, 2.5])
+def test_polynomial_count_sketch_dense_sparse(gamma, degree, coef0):
+    """Check that PolynomialCountSketch results are the same for dense and sparse
+    input.
+    """
+    ps_dense = PolynomialCountSketch(
+        n_components=500, gamma=gamma, degree=degree, coef0=coef0, random_state=42
+    )
+    Xt_dense = ps_dense.fit_transform(X)
+    Yt_dense = ps_dense.transform(Y)
+
+    ps_sparse = PolynomialCountSketch(
+        n_components=500, gamma=gamma, degree=degree, coef0=coef0, random_state=42
+    )
+    Xt_sparse = ps_sparse.fit_transform(csr_matrix(X))
+    Yt_sparse = ps_sparse.transform(csr_matrix(Y))
+
+    assert_allclose(Xt_dense, Xt_sparse)
+    assert_allclose(Yt_dense, Yt_sparse)
 
 
 def _linear_kernel(X, Y):
@@ -95,34 +121,49 @@ def test_additive_chi2_sampler():
     Y_neg[0, 0] = -1
     msg = "Negative values in data passed to"
     with pytest.raises(ValueError, match=msg):
-        transform.transform(Y_neg)
+        transform.fit(Y_neg)
 
-    # test error on invalid sample_steps
-    transform = AdditiveChi2Sampler(sample_steps=4)
+
+@pytest.mark.parametrize("method", ["fit", "fit_transform", "transform"])
+@pytest.mark.parametrize("sample_steps", range(1, 4))
+def test_additive_chi2_sampler_sample_steps(method, sample_steps):
+    """Check that the input sample step doesn't raise an error
+    and that sample interval doesn't change after fit.
+    """
+    transformer = AdditiveChi2Sampler(sample_steps=sample_steps)
+    getattr(transformer, method)(X)
+
+    sample_interval = 0.5
+    transformer = AdditiveChi2Sampler(
+        sample_steps=sample_steps,
+        sample_interval=sample_interval,
+    )
+    getattr(transformer, method)(X)
+    transformer.sample_interval == sample_interval
+
+
+# TODO(1.5): remove
+def test_additive_chi2_sampler_future_warnings():
+    """Check that we raise a FutureWarning when accessing to `sample_interval_`."""
+    transformer = AdditiveChi2Sampler()
+    transformer.fit(X)
+    msg = re.escape(
+        "The ``sample_interval_`` attribute was deprecated in version 1.3 and "
+        "will be removed 1.5."
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        assert transformer.sample_interval_ is not None
+
+
+@pytest.mark.parametrize("method", ["fit", "fit_transform", "transform"])
+def test_additive_chi2_sampler_wrong_sample_steps(method):
+    """Check that we raise a ValueError on invalid sample_steps"""
+    transformer = AdditiveChi2Sampler(sample_steps=4)
     msg = re.escape(
         "If sample_steps is not in [1, 2, 3], you need to provide sample_interval"
     )
     with pytest.raises(ValueError, match=msg):
-        transform.fit(X)
-
-    # test that the sample interval is set correctly
-    sample_steps_available = [1, 2, 3]
-    for sample_steps in sample_steps_available:
-
-        # test that the sample_interval is initialized correctly
-        transform = AdditiveChi2Sampler(sample_steps=sample_steps)
-        assert transform.sample_interval is None
-
-        # test that the sample_interval is changed in the fit method
-        transform.fit(X)
-        assert transform.sample_interval_ is not None
-
-    # test that the sample_interval is set correctly
-    sample_interval = 0.3
-    transform = AdditiveChi2Sampler(sample_steps=4, sample_interval=sample_interval)
-    assert transform.sample_interval == sample_interval
-    transform.fit(X)
-    assert transform.sample_interval_ == sample_interval
+        getattr(transformer, method)(X)
 
 
 def test_skewed_chi2_sampler():
@@ -194,6 +235,72 @@ def test_rbf_sampler():
     np.abs(error, out=error)
     assert np.max(error) <= 0.1  # nothing too far off
     assert np.mean(error) <= 0.05  # mean is fairly close
+
+
+def test_rbf_sampler_fitted_attributes_dtype(global_dtype):
+    """Check that the fitted attributes are stored accordingly to the
+    data type of X."""
+    rbf = RBFSampler()
+
+    X = np.array([[1, 2], [3, 4], [5, 6]], dtype=global_dtype)
+
+    rbf.fit(X)
+
+    assert rbf.random_offset_.dtype == global_dtype
+    assert rbf.random_weights_.dtype == global_dtype
+
+
+def test_rbf_sampler_dtype_equivalence():
+    """Check the equivalence of the results with 32 and 64 bits input."""
+    rbf32 = RBFSampler(random_state=42)
+    X32 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+    rbf32.fit(X32)
+
+    rbf64 = RBFSampler(random_state=42)
+    X64 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float64)
+    rbf64.fit(X64)
+
+    assert_allclose(rbf32.random_offset_, rbf64.random_offset_)
+    assert_allclose(rbf32.random_weights_, rbf64.random_weights_)
+
+
+def test_rbf_sampler_gamma_scale():
+    """Check the inner value computed when `gamma='scale'`."""
+    X, y = [[0.0], [1.0]], [0, 1]
+    rbf = RBFSampler(gamma="scale")
+    rbf.fit(X, y)
+    assert rbf._gamma == pytest.approx(4)
+
+
+def test_skewed_chi2_sampler_fitted_attributes_dtype(global_dtype):
+    """Check that the fitted attributes are stored accordingly to the
+    data type of X."""
+    skewed_chi2_sampler = SkewedChi2Sampler()
+
+    X = np.array([[1, 2], [3, 4], [5, 6]], dtype=global_dtype)
+
+    skewed_chi2_sampler.fit(X)
+
+    assert skewed_chi2_sampler.random_offset_.dtype == global_dtype
+    assert skewed_chi2_sampler.random_weights_.dtype == global_dtype
+
+
+def test_skewed_chi2_sampler_dtype_equivalence():
+    """Check the equivalence of the results with 32 and 64 bits input."""
+    skewed_chi2_sampler_32 = SkewedChi2Sampler(random_state=42)
+    X_32 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+    skewed_chi2_sampler_32.fit(X_32)
+
+    skewed_chi2_sampler_64 = SkewedChi2Sampler(random_state=42)
+    X_64 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float64)
+    skewed_chi2_sampler_64.fit(X_64)
+
+    assert_allclose(
+        skewed_chi2_sampler_32.random_offset_, skewed_chi2_sampler_64.random_offset_
+    )
+    assert_allclose(
+        skewed_chi2_sampler_32.random_weights_, skewed_chi2_sampler_64.random_weights_
+    )
 
 
 def test_input_validation():
@@ -346,3 +453,47 @@ def test_nystroem_component_indices():
     )
     feature_map_nystroem.fit(X)
     assert feature_map_nystroem.component_indices_.shape == (10,)
+
+
+@pytest.mark.parametrize(
+    "Estimator", [PolynomialCountSketch, RBFSampler, SkewedChi2Sampler, Nystroem]
+)
+def test_get_feature_names_out(Estimator):
+    """Check get_feature_names_out"""
+    est = Estimator().fit(X)
+    X_trans = est.transform(X)
+
+    names_out = est.get_feature_names_out()
+    class_name = Estimator.__name__.lower()
+    expected_names = [f"{class_name}{i}" for i in range(X_trans.shape[1])]
+    assert_array_equal(names_out, expected_names)
+
+
+def test_additivechi2sampler_get_feature_names_out():
+    """Check get_feature_names_out for AdditiveChi2Sampler."""
+    rng = np.random.RandomState(0)
+    X = rng.random_sample(size=(300, 3))
+
+    chi2_sampler = AdditiveChi2Sampler(sample_steps=3).fit(X)
+    input_names = ["f0", "f1", "f2"]
+    suffixes = [
+        "f0_sqrt",
+        "f1_sqrt",
+        "f2_sqrt",
+        "f0_cos1",
+        "f1_cos1",
+        "f2_cos1",
+        "f0_sin1",
+        "f1_sin1",
+        "f2_sin1",
+        "f0_cos2",
+        "f1_cos2",
+        "f2_cos2",
+        "f0_sin2",
+        "f1_sin2",
+        "f2_sin2",
+    ]
+
+    names_out = chi2_sampler.get_feature_names_out(input_features=input_names)
+    expected_names = [f"additivechi2sampler_{suffix}" for suffix in suffixes]
+    assert_array_equal(names_out, expected_names)

@@ -26,14 +26,14 @@ dimensional data.
 
 import time
 import warnings
+from itertools import cycle, islice
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn import cluster, datasets, mixture
 from sklearn.neighbors import kneighbors_graph
 from sklearn.preprocessing import StandardScaler
-from itertools import cycle, islice
 
 np.random.seed(0)
 
@@ -41,7 +41,7 @@ np.random.seed(0)
 # Generate datasets. We choose the size big enough to see the scalability
 # of the algorithms, but not too big to avoid too long running times
 # ============
-n_samples = 1500
+n_samples = 500
 noisy_circles = datasets.make_circles(n_samples=n_samples, factor=0.5, noise=0.05)
 noisy_moons = datasets.make_moons(n_samples=n_samples, noise=0.05)
 blobs = datasets.make_blobs(n_samples=n_samples, random_state=8)
@@ -74,11 +74,14 @@ default_base = {
     "eps": 0.3,
     "damping": 0.9,
     "preference": -200,
-    "n_neighbors": 10,
+    "n_neighbors": 3,
     "n_clusters": 3,
-    "min_samples": 20,
+    "min_samples": 7,
     "xi": 0.05,
     "min_cluster_size": 0.1,
+    "allow_single_cluster": True,
+    "hdbscan_min_cluster_size": 15,
+    "hdbscan_min_samples": 3,
 }
 
 datasets = [
@@ -89,18 +92,27 @@ datasets = [
             "preference": -240,
             "quantile": 0.2,
             "n_clusters": 2,
-            "min_samples": 20,
-            "xi": 0.25,
+            "min_samples": 7,
+            "xi": 0.08,
         },
     ),
-    (noisy_moons, {"damping": 0.75, "preference": -220, "n_clusters": 2}),
+    (
+        noisy_moons,
+        {
+            "damping": 0.75,
+            "preference": -220,
+            "n_clusters": 2,
+            "min_samples": 7,
+            "xi": 0.1,
+        },
+    ),
     (
         varied,
         {
             "eps": 0.18,
             "n_neighbors": 2,
-            "min_samples": 5,
-            "xi": 0.035,
+            "min_samples": 7,
+            "xi": 0.01,
             "min_cluster_size": 0.2,
         },
     ),
@@ -109,12 +121,12 @@ datasets = [
         {
             "eps": 0.15,
             "n_neighbors": 2,
-            "min_samples": 20,
+            "min_samples": 7,
             "xi": 0.1,
             "min_cluster_size": 0.2,
         },
     ),
-    (blobs, {}),
+    (blobs, {"min_samples": 7, "xi": 0.1, "min_cluster_size": 0.2}),
     (no_structure, {}),
 ]
 
@@ -142,7 +154,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
     # Create cluster objects
     # ============
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
-    two_means = cluster.MiniBatchKMeans(n_clusters=params["n_clusters"])
+    two_means = cluster.MiniBatchKMeans(n_clusters=params["n_clusters"], n_init="auto")
     ward = cluster.AgglomerativeClustering(
         n_clusters=params["n_clusters"], linkage="ward", connectivity=connectivity
     )
@@ -152,6 +164,11 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         affinity="nearest_neighbors",
     )
     dbscan = cluster.DBSCAN(eps=params["eps"])
+    hdbscan = cluster.HDBSCAN(
+        min_samples=params["hdbscan_min_samples"],
+        min_cluster_size=params["hdbscan_min_cluster_size"],
+        allow_single_cluster=params["allow_single_cluster"],
+    )
     optics = cluster.OPTICS(
         min_samples=params["min_samples"],
         xi=params["xi"],
@@ -162,7 +179,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
     )
     average_linkage = cluster.AgglomerativeClustering(
         linkage="average",
-        affinity="cityblock",
+        metric="cityblock",
         n_clusters=params["n_clusters"],
         connectivity=connectivity,
     )
@@ -179,6 +196,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         ("Ward", ward),
         ("Agglomerative\nClustering", average_linkage),
         ("DBSCAN", dbscan),
+        ("HDBSCAN", hdbscan),
         ("OPTICS", optics),
         ("BIRCH", birch),
         ("Gaussian\nMixture", gmm),

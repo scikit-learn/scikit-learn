@@ -13,19 +13,17 @@ web page of Sam Roweis:
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
 # License: BSD 3 clause
 
-from os.path import exists
 from os import makedirs, remove
+from os.path import exists
 
-import numpy as np
-from scipy.io.matlab import loadmat
 import joblib
+import numpy as np
+from scipy.io import loadmat
 
+from ..utils import Bunch, check_random_state
+from ..utils._param_validation import validate_params
 from . import get_data_home
-from ._base import _fetch_remote
-from ._base import RemoteFileMetadata
-from ._base import _pkl_filepath
-from ._base import load_descr
-from ..utils import check_random_state, Bunch
+from ._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath, load_descr
 
 # The original data can be found at:
 # https://cs.nyu.edu/~roweis/data/olivettifaces.mat
@@ -36,6 +34,16 @@ FACES = RemoteFileMetadata(
 )
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "shuffle": ["boolean"],
+        "random_state": ["random_state"],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def fetch_olivetti_faces(
     *,
     data_home=None,
@@ -73,7 +81,7 @@ def fetch_olivetti_faces(
         See :term:`Glossary <random_state>`.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     return_X_y : bool, default=False
@@ -101,6 +109,8 @@ def fetch_olivetti_faces(
             Description of the modified Olivetti Faces Dataset.
 
     (data, target) : tuple if `return_X_y=True`
+        Tuple with the `data` and `target` objects described above.
+
         .. versionadded:: 0.22
     """
     data_home = get_data_home(data_home=data_home)
@@ -109,7 +119,7 @@ def fetch_olivetti_faces(
     filepath = _pkl_filepath(data_home, "olivetti.pkz")
     if not exists(filepath):
         if not download_if_missing:
-            raise IOError("Data not found and `download_if_missing` is False")
+            raise OSError("Data not found and `download_if_missing` is False")
 
         print("downloading Olivetti faces from %s to %s" % (FACES.url, data_home))
         mat_path = _fetch_remote(FACES, dirname=data_home)

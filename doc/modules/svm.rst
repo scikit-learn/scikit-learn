@@ -139,15 +139,19 @@ function of shape ``(n_samples, n_classes)``.
 On the other hand, :class:`LinearSVC` implements "one-vs-the-rest"
 multi-class strategy, thus training `n_classes` models.
 
-    >>> lin_clf = svm.LinearSVC()
+    >>> lin_clf = svm.LinearSVC(dual="auto")
     >>> lin_clf.fit(X, Y)
-    LinearSVC()
+    LinearSVC(dual='auto')
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
 
 See :ref:`svm_mathematical_formulation` for a complete description of
 the decision function.
+
+|details-start|
+**Details on multi-class strategies**
+|details-split|
 
 Note that the :class:`LinearSVC` also implements an alternative multi-class
 strategy, the so-called multi-class SVM formulated by Crammer and Singer
@@ -175,9 +179,11 @@ The shape of ``dual_coef_`` is ``(n_classes-1, n_SV)`` with
 a somewhat hard to grasp layout.
 The columns correspond to the support vectors involved in any
 of the ``n_classes * (n_classes - 1) / 2`` "one-vs-one" classifiers.
-Each of the support vectors is used in ``n_classes - 1`` classifiers.
-The ``n_classes - 1`` entries in each row correspond to the dual coefficients
-for these classifiers.
+Each support vector ``v`` has a dual coefficient in each of the
+``n_classes - 1`` classifiers comparing the class of ``v`` against another class.
+Note that some, but not all, of these dual coefficients, may be zero.
+The ``n_classes - 1`` entries in each column are these dual coefficients,
+ordered by the opposing class.
 
 This might be clearer with an example: consider a three class problem with
 class 0 having three support vectors
@@ -188,21 +194,16 @@ the coefficient of support vector :math:`v^{j}_i` in the classifier between
 classes :math:`i` and :math:`k` :math:`\alpha^{j}_{i,k}`.
 Then ``dual_coef_`` looks like this:
 
-+------------------------+------------------------+------------------+
-|:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{0}_{0,2}`|Coefficients      |
-+------------------------+------------------------+for SVs of class 0|
-|:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{1}_{0,2}`|                  |
-+------------------------+------------------------+                  |
-|:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{2}_{0,2}`|                  |
-+------------------------+------------------------+------------------+
-|:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{0}_{1,2}`|Coefficients      |
-+------------------------+------------------------+for SVs of class 1|
-|:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{1}_{1,2}`|                  |
-+------------------------+------------------------+------------------+
-|:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{0}_{2,1}`|Coefficients      |
-+------------------------+------------------------+for SVs of class 2|
-|:math:`\alpha^{1}_{2,0}`|:math:`\alpha^{1}_{2,1}`|                  |
-+------------------------+------------------------+------------------+
++------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+
+|:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{1}_{0,1}`|:math:`\alpha^{2}_{0,1}`|:math:`\alpha^{0}_{1,0}`|:math:`\alpha^{1}_{1,0}`|:math:`\alpha^{0}_{2,0}`|:math:`\alpha^{1}_{2,0}`|
++------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+
+|:math:`\alpha^{0}_{0,2}`|:math:`\alpha^{1}_{0,2}`|:math:`\alpha^{2}_{0,2}`|:math:`\alpha^{0}_{1,2}`|:math:`\alpha^{1}_{1,2}`|:math:`\alpha^{0}_{2,1}`|:math:`\alpha^{1}_{2,1}`|
++------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+------------------------+
+|Coefficients                                                              |Coefficients                                     |Coefficients                                     |
+|for SVs of class 0                                                        |for SVs of class 1                               |for SVs of class 2                               |
++--------------------------------------------------------------------------+-------------------------------------------------+-------------------------------------------------+
+
+|details-end|
 
 .. topic:: Examples:
 
@@ -397,10 +398,10 @@ Tips on Practical Use
   * **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
     choice.  If you have a lot of noisy observations you should decrease it:
     decreasing C corresponds to more regularization.
-    
+
     :class:`LinearSVC` and :class:`LinearSVR` are less sensitive to ``C`` when
-    it becomes large, and prediction results stop improving after a certain 
-    threshold. Meanwhile, larger ``C`` values will take more time to train, 
+    it becomes large, and prediction results stop improving after a certain
+    threshold. Meanwhile, larger ``C`` values will take more time to train,
     sometimes up to 10 times longer, as shown in [#3]_.
 
   * Support Vector Machine algorithms are not scale invariant, so **it
@@ -415,10 +416,10 @@ Tips on Practical Use
         >>> from sklearn.svm import SVC
 
         >>> clf = make_pipeline(StandardScaler(), SVC())
-    
+
     See section :ref:`preprocessing` for more details on scaling and
     normalization.
-  
+
   .. _shrinking_svm:
 
   * Regarding the `shrinking` parameter, quoting [#4]_: *We found that if the
@@ -434,7 +435,7 @@ Tips on Practical Use
     positive and few negative), set ``class_weight='balanced'`` and/or try
     different penalty parameters ``C``.
 
-  * **Randomness of the underlying implementations**: The underlying 
+  * **Randomness of the underlying implementations**: The underlying
     implementations of :class:`SVC` and :class:`NuSVC` use a random number
     generator only to shuffle the data for probability estimation (when
     ``probability`` is set to ``True``). This randomness can be controlled
@@ -488,6 +489,8 @@ Different kernels are specified by the `kernel` parameter::
     >>> rbf_svc.kernel
     'rbf'
 
+See also :ref:`kernel_approximation` for a solution to use RBF kernels that is much faster and more scalable.
+
 Parameters of the RBF Kernel
 ----------------------------
 
@@ -508,9 +511,9 @@ is advised to use :class:`~sklearn.model_selection.GridSearchCV` with
  * :ref:`sphx_glr_auto_examples_svm_plot_rbf_parameters.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
 
-
-Custom Kernels
---------------
+|details-start|
+**Custom Kernels**
+|details-split|
 
 You can define your own kernels by either giving the kernel as a
 python function or by precomputing the Gram matrix.
@@ -560,7 +563,7 @@ test vectors must be provided:
 
     >>> import numpy as np
     >>> from sklearn.datasets import make_classification
-    >>> from sklearn.model_selection import train_test_split 
+    >>> from sklearn.model_selection import train_test_split
     >>> from sklearn import svm
     >>> X, y = make_classification(n_samples=10, random_state=0)
     >>> X_train , X_test , y_train, y_test = train_test_split(X, y, random_state=0)
@@ -574,6 +577,7 @@ test vectors must be provided:
     >>> clf.predict(gram_test)
     array([0, 1, 0])
 
+|details-end|
 
 .. _svm_mathematical_formulation:
 
@@ -670,14 +674,15 @@ term :math:`b`
     estimator used is :class:`~sklearn.linear_model.Ridge` regression,
     the relation between them is given as :math:`C = \frac{1}{alpha}`.
 
-LinearSVC
----------
+|details-start|
+**LinearSVC**
+|details-split|
 
 The primal problem can be equivalently formulated as
 
 .. math::
 
-    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}\max(0, 1 - y_i (w^T \phi(x_i) + b)),
+    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}^{n}\max(0, 1 - y_i (w^T \phi(x_i) + b)),
 
 where we make use of the `hinge loss
 <https://en.wikipedia.org/wiki/Hinge_loss>`_. This is the form that is
@@ -686,10 +691,13 @@ does not involve inner products between samples, so the famous kernel trick
 cannot be applied. This is why only the linear kernel is supported by
 :class:`LinearSVC` (:math:`\phi` is the identity function).
 
+|details-end|
+
 .. _nu_svc:
 
-NuSVC
------
+|details-start|
+**NuSVC**
+|details-split|
 
 The :math:`\nu`-SVC formulation [#7]_ is a reparameterization of the
 :math:`C`-SVC and therefore mathematically equivalent.
@@ -702,6 +710,7 @@ to a sample that lies on the wrong side of its margin boundary: it is either
 misclassified, or it is correctly classified but does not lie beyond the
 margin.
 
+|details-end|
 
 SVR
 ---
@@ -750,18 +759,21 @@ which holds the difference :math:`\alpha_i - \alpha_i^*`, ``support_vectors_`` w
 holds the support vectors, and ``intercept_`` which holds the independent
 term :math:`b`
 
-LinearSVR
----------
+|details-start|
+**LinearSVR**
+|details-split|
 
 The primal problem can be equivalently formulated as
 
 .. math::
 
-    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}\max(0, |y_i - (w^T \phi(x_i) + b)| - \varepsilon),
+    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}^{n}\max(0, |y_i - (w^T \phi(x_i) + b)| - \varepsilon),
 
 where we make use of the epsilon-insensitive loss, i.e. errors of less than
 :math:`\varepsilon` are ignored. This is the form that is directly optimized
 by :class:`LinearSVR`.
+
+|details-end|
 
 .. _svm_implementation_details:
 
@@ -787,7 +799,7 @@ used, please refer to their respective papers.
       classification by pairwise coupling"
       <https://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_, JMLR
       5:975-1005, 2004.
- 
+
    .. [#3] Fan, Rong-En, et al.,
       `"LIBLINEAR: A library for large linear classification."
       <https://www.csie.ntu.edu.tw/~cjlin/papers/liblinear.pdf>`_,
@@ -800,14 +812,14 @@ used, please refer to their respective papers.
       <https://www.microsoft.com/en-us/research/uploads/prod/2006/01/Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf>`_,
       chapter 7 Sparse Kernel Machines
 
-   .. [#6] `"A Tutorial on Support Vector Regression"
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.114.4288>`_,
+   .. [#6] :doi:`"A Tutorial on Support Vector Regression"
+      <10.1023/B:STCO.0000035301.49549.88>`
       Alex J. Smola, Bernhard Schölkopf - Statistics and Computing archive
       Volume 14 Issue 3, August 2004, p. 199-222.
 
    .. [#7] Schölkopf et. al `New Support Vector Algorithms
       <https://www.stat.purdue.edu/~yuzhu/stat598m3/Papers/NewSVM.pdf>`_
-    
+
    .. [#8] Crammer and Singer `On the Algorithmic Implementation ofMulticlass
       Kernel-based Vector Machines
       <http://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_,

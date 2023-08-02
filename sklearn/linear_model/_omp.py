@@ -7,17 +7,18 @@
 
 import warnings
 from math import sqrt
+from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
-from joblib import Parallel
 
-from ._base import LinearModel, _pre_fit, _deprecate_normalize
-from ..base import RegressorMixin, MultiOutputMixin
-from ..utils import as_float_array, check_array
-from ..utils.fixes import delayed
+from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
+from ..utils import as_float_array, check_array
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils.parallel import Parallel, delayed
+from ._base import LinearModel, _deprecate_normalize, _pre_fit
 
 premature = (
     "Orthogonal matching pursuit ended prematurely due to linear"
@@ -280,6 +281,19 @@ def _gram_omp(
         return gamma, indices[:n_active], n_active
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "y": [np.ndarray],
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
+        "tol": [Interval(Real, 0, None, closed="left"), None],
+        "precompute": ["boolean", StrOptions({"auto"})],
+        "copy_X": ["boolean"],
+        "return_path": ["boolean"],
+        "return_n_iter": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def orthogonal_mp(
     X,
     y,
@@ -307,7 +321,7 @@ def orthogonal_mp(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Input data. Columns are assumed to have unit norm.
 
     y : ndarray of shape (n_samples,) or (n_samples, n_targets)
@@ -318,7 +332,7 @@ def orthogonal_mp(
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
-        Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
+        Maximum squared norm of the residual. If not None, overrides n_nonzero_coefs.
 
     precompute : 'auto' or bool, default=False
         Whether to perform precomputations. Improves performance when n_targets
@@ -342,7 +356,7 @@ def orthogonal_mp(
         Coefficients of the OMP solution. If `return_path=True`, this contains
         the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
-        iterating over the last axis yields coefficients in increasing order
+        iterating over the last axis generates coefficients in increasing order
         of active features.
 
     n_iters : array-like or int
@@ -351,23 +365,22 @@ def orthogonal_mp(
 
     See Also
     --------
-    OrthogonalMatchingPursuit
-    orthogonal_mp_gram
-    lars_path
-    sklearn.decomposition.sparse_encode
+    OrthogonalMatchingPursuit : Orthogonal Matching Pursuit model.
+    orthogonal_mp_gram : Solve OMP problems using Gram matrix and the product X.T * y.
+    lars_path : Compute Least Angle Regression or Lasso path using LARS algorithm.
+    sklearn.decomposition.sparse_encode : Sparse coding.
 
     Notes
     -----
     Orthogonal matching pursuit was introduced in S. Mallat, Z. Zhang,
     Matching pursuits with time-frequency dictionaries, IEEE Transactions on
     Signal Processing, Vol. 41, No. 12. (December 1993), pp. 3397-3415.
-    (http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf)
+    (https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf)
 
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
-
     """
     X = check_array(X, order="F", copy=copy_X)
     copy_X = False
@@ -380,10 +393,6 @@ def orthogonal_mp(
         # default for n_nonzero_coefs is 0.1 * n_features
         # but at least one.
         n_nonzero_coefs = max(int(0.1 * X.shape[1]), 1)
-    if tol is not None and tol < 0:
-        raise ValueError("Epsilon cannot be negative")
-    if tol is None and n_nonzero_coefs <= 0:
-        raise ValueError("The number of atoms must be positive")
     if tol is None and n_nonzero_coefs > X.shape[1]:
         raise ValueError(
             "The number of atoms cannot be more than the number of features"
@@ -395,7 +404,7 @@ def orthogonal_mp(
         G = np.asfortranarray(G)
         Xy = np.dot(X.T, y)
         if tol is not None:
-            norms_squared = np.sum((y ** 2), axis=0)
+            norms_squared = np.sum((y**2), axis=0)
         else:
             norms_squared = None
         return orthogonal_mp_gram(
@@ -438,6 +447,20 @@ def orthogonal_mp(
         return np.squeeze(coef)
 
 
+@validate_params(
+    {
+        "Gram": ["array-like"],
+        "Xy": ["array-like"],
+        "n_nonzero_coefs": [Interval(Integral, 0, None, closed="neither"), None],
+        "tol": [Interval(Real, 0, None, closed="left"), None],
+        "norms_squared": ["array-like", None],
+        "copy_Gram": ["boolean"],
+        "copy_Xy": ["boolean"],
+        "return_path": ["boolean"],
+        "return_n_iter": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def orthogonal_mp_gram(
     Gram,
     Xy,
@@ -459,30 +482,31 @@ def orthogonal_mp_gram(
 
     Parameters
     ----------
-    Gram : ndarray of shape (n_features, n_features)
-        Gram matrix of the input data: X.T * X.
+    Gram : array-like of shape (n_features, n_features)
+        Gram matrix of the input data: `X.T * X`.
 
-    Xy : ndarray of shape (n_features,) or (n_features, n_targets)
-        Input targets multiplied by X: X.T * y.
+    Xy : array-like of shape (n_features,) or (n_features, n_targets)
+        Input targets multiplied by `X`: `X.T * y`.
 
     n_nonzero_coefs : int, default=None
-        Desired number of non-zero entries in the solution. If None (by
+        Desired number of non-zero entries in the solution. If `None` (by
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
-        Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
+        Maximum squared norm of the residual. If not `None`,
+        overrides `n_nonzero_coefs`.
 
     norms_squared : array-like of shape (n_targets,), default=None
-        Squared L2 norms of the lines of y. Required if tol is not None.
+        Squared L2 norms of the lines of `y`. Required if `tol` is not None.
 
     copy_Gram : bool, default=True
-        Whether the gram matrix must be copied by the algorithm. A false
+        Whether the gram matrix must be copied by the algorithm. A `False`
         value is only helpful if it is already Fortran-ordered, otherwise a
         copy is made anyway.
 
     copy_Xy : bool, default=True
-        Whether the covariance vector Xy must be copied by the algorithm.
-        If False, it may be overwritten.
+        Whether the covariance vector `Xy` must be copied by the algorithm.
+        If `False`, it may be overwritten.
 
     return_path : bool, default=False
         Whether to return every value of the nonzero coefficients along the
@@ -496,33 +520,34 @@ def orthogonal_mp_gram(
     coef : ndarray of shape (n_features,) or (n_features, n_targets)
         Coefficients of the OMP solution. If `return_path=True`, this contains
         the whole coefficient path. In this case its shape is
-        (n_features, n_features) or (n_features, n_targets, n_features) and
+        `(n_features, n_features)` or `(n_features, n_targets, n_features)` and
         iterating over the last axis yields coefficients in increasing order
         of active features.
 
-    n_iters : array-like or int
+    n_iters : list or int
         Number of active features across every target. Returned only if
         `return_n_iter` is set to True.
 
     See Also
     --------
-    OrthogonalMatchingPursuit
-    orthogonal_mp
-    lars_path
-    sklearn.decomposition.sparse_encode
+    OrthogonalMatchingPursuit : Orthogonal Matching Pursuit model (OMP).
+    orthogonal_mp : Solves n_targets Orthogonal Matching Pursuit problems.
+    lars_path : Compute Least Angle Regression or Lasso path using
+        LARS algorithm.
+    sklearn.decomposition.sparse_encode : Generic sparse coding.
+        Each column of the result is the solution to a Lasso problem.
 
     Notes
     -----
     Orthogonal matching pursuit was introduced in G. Mallat, Z. Zhang,
     Matching pursuits with time-frequency dictionaries, IEEE Transactions on
     Signal Processing, Vol. 41, No. 12. (December 1993), pp. 3397-3415.
-    (http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf)
+    (https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf)
 
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
-
     """
     Gram = check_array(Gram, order="F", copy=copy_Gram)
     Xy = np.asarray(Xy)
@@ -554,9 +579,9 @@ def orthogonal_mp_gram(
         )
 
     if return_path:
-        coef = np.zeros((len(Gram), Xy.shape[1], len(Gram)))
+        coef = np.zeros((len(Gram), Xy.shape[1], len(Gram)), dtype=Gram.dtype)
     else:
-        coef = np.zeros((len(Gram), Xy.shape[1]))
+        coef = np.zeros((len(Gram), Xy.shape[1]), dtype=Gram.dtype)
 
     n_iters = []
     for k in range(Xy.shape[1]):
@@ -601,14 +626,14 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
-        Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
+        Maximum squared norm of the residual. If not None, overrides n_nonzero_coefs.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : bool, default=True
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -616,9 +641,11 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
+        .. versionchanged:: 1.2
+           default changed from True to False in 1.2.
+
+        .. deprecated:: 1.2
+            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     precompute : 'auto' or bool, default='auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
@@ -671,7 +698,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     Orthogonal matching pursuit was introduced in G. Mallat, Z. Zhang,
     Matching pursuits with time-frequency dictionaries, IEEE Transactions on
     Signal Processing, Vol. 41, No. 12. (December 1993), pp. 3397-3415.
-    (http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf)
+    (https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf)
 
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
@@ -683,12 +710,20 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> from sklearn.linear_model import OrthogonalMatchingPursuit
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(noise=4, random_state=0)
-    >>> reg = OrthogonalMatchingPursuit(normalize=False).fit(X, y)
+    >>> reg = OrthogonalMatchingPursuit().fit(X, y)
     >>> reg.score(X, y)
     0.9991...
     >>> reg.predict(X[:1,])
     array([-78.3854...])
     """
+
+    _parameter_constraints: dict = {
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
+        "tol": [Interval(Real, 0, None, closed="left"), None],
+        "fit_intercept": ["boolean"],
+        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "precompute": [StrOptions({"auto"}), "boolean"],
+    }
 
     def __init__(
         self,
@@ -705,6 +740,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self.normalize = normalize
         self.precompute = precompute
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
@@ -722,7 +758,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
             Returns an instance of self.
         """
         _normalize = _deprecate_normalize(
-            self.normalize, default=True, estimator_name=self.__class__.__name__
+            self.normalize, estimator_name=self.__class__.__name__
         )
 
         X, y = self._validate_data(X, y, multi_output=True, y_numeric=True)
@@ -753,7 +789,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
                 return_n_iter=True,
             )
         else:
-            norms_sq = np.sum(y ** 2, axis=0) if self.tol is not None else None
+            norms_sq = np.sum(y**2, axis=0) if self.tol is not None else None
 
             coef_, self.n_iter_ = orthogonal_mp_gram(
                 Gram,
@@ -777,7 +813,7 @@ def _omp_path_residues(
     y_test,
     copy=True,
     fit_intercept=True,
-    normalize=True,
+    normalize=False,
     max_iter=100,
 ):
     """Compute the residues on left-out data for a full LARS path.
@@ -805,7 +841,7 @@ def _omp_path_residues(
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : bool, default=True
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -813,9 +849,11 @@ def _omp_path_residues(
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
+        .. versionchanged:: 1.2
+           default changed from True to False in 1.2.
+
+        .. deprecated:: 1.2
+            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     max_iter : int, default=100
         Maximum numbers of iterations to perform, therefore maximum features
@@ -844,7 +882,7 @@ def _omp_path_residues(
         y_test -= y_mean
 
     if normalize:
-        norms = np.sqrt(np.sum(X_train ** 2, axis=0))
+        norms = np.sqrt(np.sum(X_train**2, axis=0))
         nonzeros = np.flatnonzero(norms)
         X_train[:, nonzeros] /= norms[nonzeros]
 
@@ -884,7 +922,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : bool, default=True
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -892,9 +930,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
+        .. versionchanged:: 1.2
+           default changed from True to False in 1.2.
+
+        .. deprecated:: 1.2
+            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     max_iter : int, default=None
         Maximum numbers of iterations to perform, therefore maximum features
@@ -909,7 +949,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, :class:`KFold` is used.
+        For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -967,13 +1007,18 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     sklearn.decomposition.sparse_encode : Generic sparse coding.
         Each column of the result is the solution to a Lasso problem.
 
+    Notes
+    -----
+    In `fit`, once the optimal number of non-zero coefficients is found through
+    cross-validation, the model is fit again using the entire training set.
+
     Examples
     --------
     >>> from sklearn.linear_model import OrthogonalMatchingPursuitCV
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_features=100, n_informative=10,
     ...                        noise=4, random_state=0)
-    >>> reg = OrthogonalMatchingPursuitCV(cv=5, normalize=False).fit(X, y)
+    >>> reg = OrthogonalMatchingPursuitCV(cv=5).fit(X, y)
     >>> reg.score(X, y)
     0.9991...
     >>> reg.n_nonzero_coefs_
@@ -981,6 +1026,16 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     >>> reg.predict(X[:1,])
     array([-78.3854...])
     """
+
+    _parameter_constraints: dict = {
+        "copy": ["boolean"],
+        "fit_intercept": ["boolean"],
+        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
+        "cv": ["cv_object"],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+    }
 
     def __init__(
         self,
@@ -1001,6 +1056,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self.n_jobs = n_jobs
         self.verbose = verbose
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
@@ -1017,9 +1073,8 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
-
         _normalize = _deprecate_normalize(
-            self.normalize, default=True, estimator_name=self.__class__.__name__
+            self.normalize, estimator_name=self.__class__.__name__
         )
 
         X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2)
@@ -1055,7 +1110,12 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
             fit_intercept=self.fit_intercept,
             normalize=_normalize,
         )
-        omp.fit(X, y)
+
+        # avoid duplicating warning for deprecated normalize
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=FutureWarning)
+            omp.fit(X, y)
+
         self.coef_ = omp.coef_
         self.intercept_ = omp.intercept_
         self.n_iter_ = omp.n_iter_

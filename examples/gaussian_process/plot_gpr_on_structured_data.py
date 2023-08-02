@@ -38,13 +38,12 @@ four correct classifications and fails on one.
 
 """
 
+# %%
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.gaussian_process.kernels import Kernel, Hyperparameter
-from sklearn.gaussian_process.kernels import GenericKernelMixin
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process import GaussianProcessClassifier
+
 from sklearn.base import clone
+from sklearn.gaussian_process import GaussianProcessClassifier, GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import GenericKernelMixin, Hyperparameter, Kernel
 
 
 class SequenceKernel(GenericKernelMixin, Kernel):
@@ -102,10 +101,11 @@ class SequenceKernel(GenericKernelMixin, Kernel):
 
 kernel = SequenceKernel()
 
-"""
-Sequence similarity matrix under the kernel
-===========================================
-"""
+# %%
+# Sequence similarity matrix under the kernel
+# ===========================================
+
+import matplotlib.pyplot as plt
 
 X = np.array(["AGCT", "AGC", "AACT", "TAA", "AAA", "GAACA"])
 
@@ -113,15 +113,15 @@ K = kernel(X)
 D = kernel.diag(X)
 
 plt.figure(figsize=(8, 5))
-plt.imshow(np.diag(D ** -0.5).dot(K).dot(np.diag(D ** -0.5)))
+plt.imshow(np.diag(D**-0.5).dot(K).dot(np.diag(D**-0.5)))
 plt.xticks(np.arange(len(X)), X)
 plt.yticks(np.arange(len(X)), X)
 plt.title("Sequence similarity under the kernel")
+plt.show()
 
-"""
-Regression
-==========
-"""
+# %%
+# Regression
+# ==========
 
 X = np.array(["AGCT", "AGC", "AACT", "TAA", "AAA", "GAACA"])
 Y = np.array([1.0, 1.0, 2.0, 2.0, 3.0, 3.0])
@@ -136,11 +136,11 @@ plt.bar(training_idx, Y[training_idx], width=0.2, color="r", alpha=1, label="tra
 plt.xticks(np.arange(len(X)), X)
 plt.title("Regression on sequences")
 plt.legend()
+plt.show()
 
-"""
-Classification
-==============
-"""
+# %%
+# Classification
+# ==============
 
 X_train = np.array(["AGCT", "CGA", "TAAC", "TCG", "CTTT", "TGCT"])
 # whether there are 'A's in the sequence
@@ -176,7 +176,7 @@ plt.scatter(
     [1.0 if c else -1.0 for c in gp.predict(X_test)],
     s=100,
     marker="x",
-    edgecolor=(0, 1.0, 0.3),
+    facecolor="b",
     linewidth=2,
     label="prediction",
 )
@@ -184,5 +184,4 @@ plt.xticks(np.arange(len(X_train) + len(X_test)), np.concatenate((X_train, X_tes
 plt.yticks([-1, 1], [False, True])
 plt.title("Classification on sequences")
 plt.legend()
-
 plt.show()

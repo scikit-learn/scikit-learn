@@ -66,10 +66,8 @@ it takes a variable number of estimators and returns a pipeline,
 filling in the names automatically::
 
     >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.naive_bayes import MultinomialNB
-    >>> from sklearn.preprocessing import Binarizer
-    >>> make_pipeline(Binarizer(), MultinomialNB())
-    Pipeline(steps=[('binarizer', Binarizer()), ('multinomialnb', MultinomialNB())])
+    >>> make_pipeline(PCA(), SVC())
+    Pipeline(steps=[('pca', PCA()), ('svc', SVC())])
 
 Accessing steps
 ...............
@@ -163,7 +161,7 @@ You can also provide custom feature names for the input data using
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
- * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
+ * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
  * :ref:`sphx_glr_auto_examples_compose_plot_digits_pipe.py`
  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
@@ -198,11 +196,11 @@ after calling ``fit``.
 This feature is used to avoid computing the fit transformers within a pipeline
 if the parameters and input data are identical. A typical example is the case of
 a grid search in which the transformers can be fitted only once and reused for
-each configuration.
+each configuration. The last step will never be cached, even if it is a transformer.
 
 The parameter ``memory`` is needed in order to cache the transformers.
 ``memory`` can be either a string containing the directory where to cache the
-transformers or a `joblib.Memory <https://pythonhosted.org/joblib/memory.html>`_
+transformers or a `joblib.Memory <https://joblib.readthedocs.io/en/latest/memory.html>`_
 object::
 
     >>> from tempfile import mkdtemp
@@ -238,9 +236,9 @@ object::
    Enabling caching triggers a clone of the transformers before fitting.
    Therefore, the transformer instance given to the pipeline cannot be
    inspected directly.
-   In following example, accessing the :class:`PCA` instance ``pca2``
-   will raise an ``AttributeError`` since ``pca2`` will be an unfitted
-   transformer.
+   In following example, accessing the :class:`~sklearn.decomposition.PCA`
+   instance ``pca2`` will raise an ``AttributeError`` since ``pca2`` will be an
+   unfitted transformer.
    Instead, use the attribute ``named_steps`` to inspect estimators within
    the pipeline::
 
@@ -567,14 +565,18 @@ will use the column names to select the columns::
 Visualizing Composite Estimators
 ================================
 
-Estimators can be displayed with a HTML representation when shown in a
-jupyter notebook. This can be useful to diagnose or visualize a Pipeline with
-many estimators. This visualization is activated by setting the
-`display` option in :func:`~sklearn.set_config`::
+Estimators are displayed with an HTML representation when shown in a
+jupyter notebook. This is useful to diagnose or visualize a Pipeline with
+many estimators. This visualization is activated by default::
+
+  >>> column_trans  # doctest: +SKIP
+
+It can be deactivated by setting the `display` option in :func:`~sklearn.set_config`
+to 'text'::
 
   >>> from sklearn import set_config
-  >>> set_config(display='diagram')   # doctest: +SKIP
-  >>> # displays HTML representation in a jupyter context
+  >>> set_config(display='text')  # doctest: +SKIP
+  >>> # displays text representation in a jupyter context
   >>> column_trans  # doctest: +SKIP
 
 An example of the HTML output can be seen in the

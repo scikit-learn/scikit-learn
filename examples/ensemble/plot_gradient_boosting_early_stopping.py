@@ -38,17 +38,18 @@ memory usage and prediction latency.
 
 import time
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn import ensemble
-from sklearn import datasets
+from sklearn import datasets, ensemble
 from sklearn.model_selection import train_test_split
 
-data_list = [datasets.load_iris(), datasets.load_digits()]
-data_list = [(d.data, d.target) for d in data_list]
-data_list += [datasets.make_hastie_10_2()]
-names = ["Iris Data", "Digits Data", "Hastie Data"]
+data_list = [
+    datasets.load_iris(return_X_y=True),
+    datasets.make_classification(n_samples=800, random_state=0),
+    datasets.make_hastie_10_2(n_samples=2000, random_state=0),
+]
+names = ["Iris Data", "Classification Data", "Hastie Data"]
 
 n_gb = []
 score_gb = []
@@ -57,7 +58,7 @@ n_gbes = []
 score_gbes = []
 time_gbes = []
 
-n_estimators = 500
+n_estimators = 200
 
 for X, y in data_list:
     X_train, X_test, y_train, y_test = train_test_split(

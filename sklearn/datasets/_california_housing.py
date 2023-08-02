@@ -21,23 +21,24 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
-from os.path import exists
-from os import makedirs, remove
-import tarfile
-
-import numpy as np
 import logging
+import tarfile
+from os import makedirs, remove
+from os.path import exists
 
 import joblib
+import numpy as np
 
-from . import get_data_home
-from ._base import _convert_data_dataframe
-from ._base import _fetch_remote
-from ._base import _pkl_filepath
-from ._base import RemoteFileMetadata
-from ._base import load_descr
 from ..utils import Bunch
-
+from ..utils._param_validation import validate_params
+from . import get_data_home
+from ._base import (
+    RemoteFileMetadata,
+    _convert_data_dataframe,
+    _fetch_remote,
+    _pkl_filepath,
+    load_descr,
+)
 
 # The original data can be found at:
 # https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
@@ -50,6 +51,15 @@ ARCHIVE = RemoteFileMetadata(
 logger = logging.getLogger(__name__)
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def fetch_california_housing(
     *, data_home=None, download_if_missing=True, return_X_y=False, as_frame=False
 ):
@@ -71,11 +81,10 @@ def fetch_california_housing(
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
-
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
 
@@ -111,6 +120,10 @@ def fetch_california_housing(
             .. versionadded:: 0.23
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarray. The first containing a 2D array of
+        shape (n_samples, n_features) with each row representing one
+        sample and each column representing the features. The second
+        ndarray of shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
 
@@ -126,7 +139,7 @@ def fetch_california_housing(
     filepath = _pkl_filepath(data_home, "cal_housing.pkz")
     if not exists(filepath):
         if not download_if_missing:
-            raise IOError("Data not found and `download_if_missing` is False")
+            raise OSError("Data not found and `download_if_missing` is False")
 
         logger.info(
             "Downloading Cal. housing from {} to {}".format(ARCHIVE.url, data_home)

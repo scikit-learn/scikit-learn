@@ -215,9 +215,9 @@ It loses even more if we also strip this metadata from the training data:
   >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
   0.76995...
 
-Some other classifiers cope better with this harder version of the task. Try
-running :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` with and without
-the ``--filter`` option to compare the results.
+Some other classifiers cope better with this harder version of the task. Try the
+:ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
+example with and without the `remove` option to compare the results.
 
 .. topic:: Data Considerations
 
@@ -226,7 +226,7 @@ the ``--filter`` option to compare the results.
   discussion sparked by the death of George Floyd and a national reckoning over
   race and colonialism, the Cleveland Indians have decided to change their
   name." Team owner Paul Dolan "did make it clear that the team will not make
-  its informal nickname -- the Tribe -- its new team name." "It’s not going to
+  its informal nickname -- the Tribe -- its new team name." "It's not going to
   be a half-step away from the Indians," Dolan said."We will not have a Native
   American-themed name."
 
@@ -248,6 +248,10 @@ the ``--filter`` option to compare the results.
 
 .. topic:: Examples
 
-   * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
+   * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
 
    * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
+
+   * :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`
+
+   * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`

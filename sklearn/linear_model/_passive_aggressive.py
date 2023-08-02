@@ -1,9 +1,10 @@
 # Authors: Rob Zinkov, Mathieu Blondel
 # License: BSD 3 clause
+from numbers import Real
 
-from ._stochastic_gradient import BaseSGDClassifier
-from ._stochastic_gradient import BaseSGDRegressor
-from ._stochastic_gradient import DEFAULT_EPSILON
+from ..base import _fit_context
+from ..utils._param_validation import Interval, StrOptions
+from ._stochastic_gradient import DEFAULT_EPSILON, BaseSGDClassifier, BaseSGDRegressor
 
 
 class PassiveAggressiveClassifier(BaseSGDClassifier):
@@ -23,7 +24,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     max_iter : int, default=1000
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        :meth:`partial_fit` method.
+        :meth:`PassiveAggressive.partial_fit` method.
 
         .. versionadded:: 0.19
 
@@ -139,7 +140,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
 
     loss_function_ : callable
         Loss function used by the algorithm.
@@ -171,6 +172,12 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
+
+    _parameter_constraints: dict = {
+        **BaseSGDClassifier._parameter_constraints,
+        "loss": [StrOptions({"hinge", "squared_hinge"})],
+        "C": [Interval(Real, 0, None, closed="right")],
+    }
 
     def __init__(
         self,
@@ -212,6 +219,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         self.C = C
         self.loss = loss
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y, classes=None):
         """Fit linear model with Passive Aggressive algorithm.
 
@@ -236,19 +244,22 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         self : object
             Fitted estimator.
         """
-        self._validate_params(for_partial_fit=True)
-        if self.class_weight == "balanced":
-            raise ValueError(
-                "class_weight 'balanced' is not supported for "
-                "partial_fit. For 'balanced' weights, use "
-                "`sklearn.utils.compute_class_weight` with "
-                "`class_weight='balanced'`. In place of y you "
-                "can use a large enough subset of the full "
-                "training set target to properly estimate the "
-                "class frequency distributions. Pass the "
-                "resulting weights as the class_weight "
-                "parameter."
-            )
+        if not hasattr(self, "classes_"):
+            self._more_validate_params(for_partial_fit=True)
+
+            if self.class_weight == "balanced":
+                raise ValueError(
+                    "class_weight 'balanced' is not supported for "
+                    "partial_fit. For 'balanced' weights, use "
+                    "`sklearn.utils.compute_class_weight` with "
+                    "`class_weight='balanced'`. In place of y you "
+                    "can use a large enough subset of the full "
+                    "training set target to properly estimate the "
+                    "class frequency distributions. Pass the "
+                    "resulting weights as the class_weight "
+                    "parameter."
+                )
+
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._partial_fit(
             X,
@@ -264,6 +275,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             intercept_init=None,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, coef_init=None, intercept_init=None):
         """Fit linear model with Passive Aggressive algorithm.
 
@@ -286,7 +298,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
+        self._more_validate_params()
+
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._fit(
             X,
@@ -414,7 +427,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
 
     See Also
     --------
@@ -444,6 +457,13 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-0.02306214]
     """
+
+    _parameter_constraints: dict = {
+        **BaseSGDRegressor._parameter_constraints,
+        "loss": [StrOptions({"epsilon_insensitive", "squared_epsilon_insensitive"})],
+        "C": [Interval(Real, 0, None, closed="right")],
+        "epsilon": [Interval(Real, 0, None, closed="left")],
+    }
 
     def __init__(
         self,
@@ -483,6 +503,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         self.C = C
         self.loss = loss
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y):
         """Fit linear model with Passive Aggressive algorithm.
 
@@ -499,7 +520,9 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         self : object
             Fitted estimator.
         """
-        self._validate_params(for_partial_fit=True)
+        if not hasattr(self, "coef_"):
+            self._more_validate_params(for_partial_fit=True)
+
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
         return self._partial_fit(
             X,
@@ -514,6 +537,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             intercept_init=None,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, coef_init=None, intercept_init=None):
         """Fit linear model with Passive Aggressive algorithm.
 
@@ -536,7 +560,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
+        self._more_validate_params()
+
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
         return self._fit(
             X,

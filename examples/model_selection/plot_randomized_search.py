@@ -20,18 +20,17 @@ simultaneously using grid search, but pick only the ones deemed most important.
 
 """
 
-import numpy as np
-
 from time import time
-import scipy.stats as stats
-from sklearn.utils.fixes import loguniform
 
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+import numpy as np
+import scipy.stats as stats
+
 from sklearn.datasets import load_digits
 from sklearn.linear_model import SGDClassifier
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 
 # get some data
-X, y = load_digits(return_X_y=True)
+X, y = load_digits(return_X_y=True, n_class=3)
 
 # build a classifier
 clf = SGDClassifier(loss="hinge", penalty="elasticnet", fit_intercept=True)
@@ -57,11 +56,11 @@ def report(results, n_top=3):
 param_dist = {
     "average": [True, False],
     "l1_ratio": stats.uniform(0, 1),
-    "alpha": loguniform(1e-4, 1e0),
+    "alpha": stats.loguniform(1e-2, 1e0),
 }
 
 # run randomized search
-n_iter_search = 20
+n_iter_search = 15
 random_search = RandomizedSearchCV(
     clf, param_distributions=param_dist, n_iter=n_iter_search
 )
@@ -78,7 +77,7 @@ report(random_search.cv_results_)
 param_grid = {
     "average": [True, False],
     "l1_ratio": np.linspace(0, 1, num=10),
-    "alpha": np.power(10, np.arange(-4, 1, dtype=float)),
+    "alpha": np.power(10, np.arange(-2, 1, dtype=float)),
 }
 
 # run grid search

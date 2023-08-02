@@ -1,39 +1,40 @@
-from copy import copy
-from itertools import chain
-import warnings
 import string
 import timeit
+import warnings
+from copy import copy
+from itertools import chain
 
-import pytest
 import numpy as np
+import pytest
 import scipy.sparse as sp
 
-from sklearn.utils._testing import (
-    assert_array_equal,
-    assert_allclose_dense_sparse,
-    assert_no_warnings,
-    _convert_container,
-)
-from sklearn.utils import check_random_state
-from sklearn.utils import _determine_key_type
-from sklearn.utils import deprecated
-from sklearn.utils import gen_batches
-from sklearn.utils import _get_column_indices
-from sklearn.utils import resample
-from sklearn.utils import safe_mask
-from sklearn.utils import column_or_1d
-from sklearn.utils import _safe_indexing
-from sklearn.utils import shuffle
-from sklearn.utils import gen_even_slices
-from sklearn.utils import _message_with_time, _print_elapsed_time
-from sklearn.utils import get_chunk_n_rows
-from sklearn.utils import is_scalar_nan
-from sklearn.utils import _to_object_array
-from sklearn.utils import _approximate_mode
-from sklearn.utils.fixes import parse_version
-from sklearn.utils._mocking import MockDataFrame
-from sklearn.utils._testing import SkipTest
 from sklearn import config_context
+from sklearn.utils import (
+    _approximate_mode,
+    _determine_key_type,
+    _get_column_indices,
+    _message_with_time,
+    _print_elapsed_time,
+    _safe_assign,
+    _safe_indexing,
+    _to_object_array,
+    check_random_state,
+    column_or_1d,
+    deprecated,
+    gen_even_slices,
+    get_chunk_n_rows,
+    is_scalar_nan,
+    resample,
+    safe_mask,
+    shuffle,
+)
+from sklearn.utils._mocking import MockDataFrame
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_allclose_dense_sparse,
+    assert_array_equal,
+    assert_no_warnings,
+)
 
 # toy array
 X_toy = np.arange(9).reshape((3, 3))
@@ -55,19 +56,6 @@ def test_make_rng():
 
     with pytest.raises(ValueError):
         check_random_state("some invalid seed")
-
-
-def test_gen_batches():
-    # Make sure gen_batches errors on invalid batch_size
-
-    assert_array_equal(list(gen_batches(4, 2)), [slice(0, 2, None), slice(2, 4, None)])
-    msg_zero = "gen_batches got batch_size=0, must be positive"
-    with pytest.raises(ValueError, match=msg_zero):
-        next(gen_batches(4, 0))
-
-    msg_float = "gen_batches got batch_size=0.5, must be an integer"
-    with pytest.raises(TypeError, match=msg_float):
-        next(gen_batches(4, 0.5))
 
 
 def test_deprecated():
@@ -471,15 +459,17 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
     # Using safe_indexing with an array-like indexer gives a copy of the
     # DataFrame -> ensure it doesn't raise a warning if modified
     pd = pytest.importorskip("pandas")
-    if parse_version(pd.__version__) < parse_version("0.25.0"):
-        raise SkipTest(
-            "Older pandas version still raise a SettingWithCopyWarning warning"
-        )
+
     X = pd.DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
     subset = _safe_indexing(X, [0, 1], axis=0)
-    with pytest.warns(None) as record:
+    if hasattr(pd.errors, "SettingWithCopyWarning"):
+        SettingWithCopyWarning = pd.errors.SettingWithCopyWarning
+    else:
+        # backward compatibility for pandas < 1.5
+        SettingWithCopyWarning = pd.core.common.SettingWithCopyWarning
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", SettingWithCopyWarning)
         subset.iloc[0, 0] = 10
-    assert len(record) == 0, f"{[str(rec.message) for rec in record]}"
     # The original dataframe is unaffected by the assignment on the subset:
     assert X.iloc[0, 0] == 1
 
@@ -555,34 +545,22 @@ def test_gen_even_slices():
     joined_range = list(chain(*[some_range[slice] for slice in gen_even_slices(10, 3)]))
     assert_array_equal(some_range, joined_range)
 
-    # check that passing negative n_chunks raises an error
-    slices = gen_even_slices(10, -1)
-    with pytest.raises(ValueError, match="gen_even_slices got n_packs=-1, must be >=1"):
-        next(slices)
-
 
 @pytest.mark.parametrize(
-    ("row_bytes", "max_n_rows", "working_memory", "expected", "warn_msg"),
+    ("row_bytes", "max_n_rows", "working_memory", "expected"),
     [
-        (1024, None, 1, 1024, None),
-        (1024, None, 0.99999999, 1023, None),
-        (1023, None, 1, 1025, None),
-        (1025, None, 1, 1023, None),
-        (1024, None, 2, 2048, None),
-        (1024, 7, 1, 7, None),
-        (1024 * 1024, None, 1, 1, None),
-        (
-            1024 * 1024 + 1,
-            None,
-            1,
-            1,
-            "Could not adhere to working_memory config. Currently 1MiB, 2MiB required.",
-        ),
+        (1024, None, 1, 1024),
+        (1024, None, 0.99999999, 1023),
+        (1023, None, 1, 1025),
+        (1025, None, 1, 1023),
+        (1024, None, 2, 2048),
+        (1024, 7, 1, 7),
+        (1024 * 1024, None, 1, 1),
     ],
 )
-def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected, warn_msg):
-    warning = None if warn_msg is None else UserWarning
-    with pytest.warns(warning, match=warn_msg) as w:
+def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         actual = get_chunk_n_rows(
             row_bytes=row_bytes,
             max_n_rows=max_n_rows,
@@ -591,15 +569,39 @@ def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected, warn_
 
     assert actual == expected
     assert type(actual) is type(expected)
-    if warn_msg is None:
-        assert len(w) == 0
     with config_context(working_memory=working_memory):
-        with pytest.warns(warning, match=warn_msg) as w:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
             actual = get_chunk_n_rows(row_bytes=row_bytes, max_n_rows=max_n_rows)
         assert actual == expected
         assert type(actual) is type(expected)
-        if warn_msg is None:
-            assert len(w) == 0
+
+
+def test_get_chunk_n_rows_warns():
+    """Check that warning is raised when working_memory is too low."""
+    row_bytes = 1024 * 1024 + 1
+    max_n_rows = None
+    working_memory = 1
+    expected = 1
+
+    warn_msg = (
+        "Could not adhere to working_memory config. Currently 1MiB, 2MiB required."
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        actual = get_chunk_n_rows(
+            row_bytes=row_bytes,
+            max_n_rows=max_n_rows,
+            working_memory=working_memory,
+        )
+
+    assert actual == expected
+    assert type(actual) is type(expected)
+
+    with config_context(working_memory=working_memory):
+        with pytest.warns(UserWarning, match=warn_msg):
+            actual = get_chunk_n_rows(row_bytes=row_bytes, max_n_rows=max_n_rows)
+        assert actual == expected
+        assert type(actual) is type(expected)
 
 
 @pytest.mark.parametrize(
@@ -706,7 +708,6 @@ def dummy_func():
 
 
 def test_deprecation_joblib_api(tmpdir):
-
     # Only parallel_backend and register_parallel_backend are not deprecated in
     # sklearn.utils
     from sklearn.utils import parallel_backend, register_parallel_backend
@@ -725,3 +726,37 @@ def test_to_object_array(sequence):
     assert isinstance(out, np.ndarray)
     assert out.dtype.kind == "O"
     assert out.ndim == 1
+
+
+@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
+def test_safe_assign(array_type):
+    """Check that `_safe_assign` works as expected."""
+    rng = np.random.RandomState(0)
+    X_array = rng.randn(10, 5)
+
+    row_indexer = [1, 2]
+    values = rng.randn(len(row_indexer), X_array.shape[1])
+    X = _convert_container(X_array, array_type)
+    _safe_assign(X, values, row_indexer=row_indexer)
+
+    assigned_portion = _safe_indexing(X, row_indexer, axis=0)
+    assert_allclose_dense_sparse(
+        assigned_portion, _convert_container(values, array_type)
+    )
+
+    column_indexer = [1, 2]
+    values = rng.randn(X_array.shape[0], len(column_indexer))
+    X = _convert_container(X_array, array_type)
+    _safe_assign(X, values, column_indexer=column_indexer)
+
+    assigned_portion = _safe_indexing(X, column_indexer, axis=1)
+    assert_allclose_dense_sparse(
+        assigned_portion, _convert_container(values, array_type)
+    )
+
+    row_indexer, column_indexer = None, None
+    values = rng.randn(*X.shape)
+    X = _convert_container(X_array, array_type)
+    _safe_assign(X, values, column_indexer=column_indexer)
+
+    assert_allclose_dense_sparse(X, _convert_container(values, array_type))

@@ -7,12 +7,14 @@ from itertools import combinations
 import numpy as np
 import pytest
 
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.decomposition import FactorAnalysis
-from sklearn.utils._testing import ignore_warnings
 from sklearn.decomposition._factor_analysis import _ortho_rotation
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    ignore_warnings,
+)
 
 
 # Ignore warnings from switching to more power iterations in randomized_svd
@@ -34,12 +36,6 @@ def test_factor_analysis():
     # wlog, mean is 0
     X = np.dot(h, W) + noise
 
-    with pytest.raises(ValueError):
-        FactorAnalysis(svd_method="foo")
-    fa_fail = FactorAnalysis()
-    fa_fail.svd_method = "foo"
-    with pytest.raises(ValueError):
-        fa_fail.fit(X)
     fas = []
     for method in ["randomized", "lapack"]:
         fa = FactorAnalysis(n_components=n_components, svd_method=method)
@@ -100,9 +96,6 @@ def test_factor_analysis():
     for rot1, rot2 in combinations([None, "varimax", "quartimax"], 2):
         assert not np.allclose(results[rot1], results[rot2])
         assert np.allclose(projections[rot1], projections[rot2], atol=3)
-
-    with pytest.raises(ValueError):
-        FactorAnalysis(rotation="not_implemented").fit_transform(X)
 
     # test against R's psych::principal with rotate="varimax"
     # (i.e., the values below stem from rotating the components in R)

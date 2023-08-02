@@ -11,13 +11,13 @@
 # See _tree.pyx for details.
 
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 
-ctypedef np.npy_float32 DTYPE_t          # Type of X
-ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
-ctypedef np.npy_intp SIZE_t              # Type for indices and counters
-ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
-ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+ctypedef cnp.npy_float32 DTYPE_t          # Type of X
+ctypedef cnp.npy_float64 DOUBLE_t         # Type of y, sample_weight
+ctypedef cnp.npy_intp SIZE_t              # Type for indices and counters
+ctypedef cnp.npy_int32 INT32_t            # Signed 32 bit integer
+ctypedef cnp.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
 from ._splitter cimport Splitter
 from ._splitter cimport SplitRecord
@@ -32,6 +32,7 @@ cdef struct Node:
     DOUBLE_t impurity                    # Impurity of the node (i.e., the value of the criterion)
     SIZE_t n_node_samples                # Number of samples at the node
     DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
+    unsigned char missing_go_to_left     # Whether features have missing values
 
 
 cdef class Tree:
@@ -58,23 +59,25 @@ cdef class Tree:
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
-                          double weighted_n_node_samples) nogil except -1
-    cdef int _resize(self, SIZE_t capacity) nogil except -1
-    cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
+                          double weighted_n_node_samples,
+                          unsigned char missing_go_to_left) except -1 nogil
+    cdef int _resize(self, SIZE_t capacity) except -1 nogil
+    cdef int _resize_c(self, SIZE_t capacity=*) except -1 nogil
 
-    cdef np.ndarray _get_value_ndarray(self)
-    cdef np.ndarray _get_node_ndarray(self)
+    cdef cnp.ndarray _get_value_ndarray(self)
+    cdef cnp.ndarray _get_node_ndarray(self)
 
-    cpdef np.ndarray predict(self, object X)
+    cpdef cnp.ndarray predict(self, object X)
 
-    cpdef np.ndarray apply(self, object X)
-    cdef np.ndarray _apply_dense(self, object X)
-    cdef np.ndarray _apply_sparse_csr(self, object X)
+    cpdef cnp.ndarray apply(self, object X)
+    cdef cnp.ndarray _apply_dense(self, object X)
+    cdef cnp.ndarray _apply_sparse_csr(self, object X)
 
     cpdef object decision_path(self, object X)
     cdef object _decision_path_dense(self, object X)
     cdef object _decision_path_sparse_csr(self, object X)
 
+    cpdef compute_node_depths(self)
     cpdef compute_feature_importances(self, normalize=*)
 
 
@@ -98,6 +101,18 @@ cdef class TreeBuilder:
     cdef SIZE_t max_depth               # Maximal tree depth
     cdef double min_impurity_decrease   # Impurity threshold for early stopping
 
-    cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=*)
-    cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight)
+    cpdef build(
+        self,
+        Tree tree,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight=*,
+        const unsigned char[::1] missing_values_in_feature_mask=*,
+    )
+
+    cdef _check_input(
+        self,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight,
+    )

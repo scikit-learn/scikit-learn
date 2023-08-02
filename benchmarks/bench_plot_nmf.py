@@ -6,27 +6,24 @@ Benchmarks of Non-Negative Matrix Factorization
 #          Anthony Di Franco (projected gradient, Python and NumPy port)
 # License: BSD 3 clause
 
-from time import time
+import numbers
 import sys
 import warnings
-import numbers
+from time import time
 
-import numpy as np
 import matplotlib.pyplot as plt
-from joblib import Memory
+import numpy as np
 import pandas
+from joblib import Memory
 
-from sklearn.utils._testing import ignore_warnings
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import NMF
-from sklearn.decomposition._nmf import _initialize_nmf
-from sklearn.decomposition._nmf import _beta_divergence
-from sklearn.decomposition._nmf import _check_init
+from sklearn.decomposition._nmf import _beta_divergence, _check_init, _initialize_nmf
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.extmath import safe_sparse_dot, squared_norm
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.utils import check_array
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.extmath import safe_sparse_dot, squared_norm
 from sklearn.utils.validation import check_is_fitted, check_non_negative
-
 
 mem = Memory(cachedir=".", verbose=0)
 
@@ -162,7 +159,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter, nls_max_iter, alpha, l1_rati
         proj_grad_W = squared_norm(gradW * np.logical_or(gradW < 0, W > 0))
         proj_grad_H = squared_norm(gradH * np.logical_or(gradH < 0, H > 0))
 
-        if (proj_grad_W + proj_grad_H) / init_grad < tol ** 2:
+        if (proj_grad_W + proj_grad_H) / init_grad < tol**2:
             break
 
         # update W
@@ -219,7 +216,8 @@ class _PGNMF(NMF):
             tol=tol,
             max_iter=max_iter,
             random_state=random_state,
-            alpha=alpha,
+            alpha_W=alpha,
+            alpha_H=alpha,
             l1_ratio=l1_ratio,
         )
         self.nls_max_iter = nls_max_iter

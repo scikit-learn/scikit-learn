@@ -14,23 +14,25 @@ Courtesy of Jock A. Blackard and Colorado State University.
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 # License: BSD 3 clause
 
-from gzip import GzipFile
 import logging
+import os
+from gzip import GzipFile
 from os.path import exists, join
-from os import remove, makedirs
+from tempfile import TemporaryDirectory
 
-import numpy as np
 import joblib
+import numpy as np
 
+from ..utils import Bunch, check_random_state
+from ..utils._param_validation import validate_params
 from . import get_data_home
-from ._base import _convert_data_dataframe
-from ._base import _fetch_remote
-from ._base import RemoteFileMetadata
-from ._base import load_descr
-from ..utils import Bunch
-from ._base import _pkl_filepath
-from ..utils import check_random_state
-
+from ._base import (
+    RemoteFileMetadata,
+    _convert_data_dataframe,
+    _fetch_remote,
+    _pkl_filepath,
+    load_descr,
+)
 
 # The original data can be found in:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
@@ -61,6 +63,17 @@ FEATURE_NAMES += [f"Soil_Type_{i}" for i in range(40)]
 TARGET_NAMES = ["Cover_Type"]
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "download_if_missing": ["boolean"],
+        "random_state": ["random_state"],
+        "shuffle": ["boolean"],
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def fetch_covtype(
     *,
     data_home=None,
@@ -90,7 +103,7 @@ def fetch_covtype(
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : bool, default=True
-        If False, raise a IOError if the data is not locally available
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
     random_state : int, RandomState instance or None, default=None
@@ -137,35 +150,43 @@ def fetch_covtype(
             The names of the target columns.
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarray. The first containing a 2D array of
+        shape (n_samples, n_features) with each row representing one
+        sample and each column representing the features. The second
+        ndarray of shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
-
     """
-
     data_home = get_data_home(data_home=data_home)
     covtype_dir = join(data_home, "covertype")
     samples_path = _pkl_filepath(covtype_dir, "samples")
     targets_path = _pkl_filepath(covtype_dir, "targets")
-    available = exists(samples_path)
+    available = exists(samples_path) and exists(targets_path)
 
     if download_if_missing and not available:
-        if not exists(covtype_dir):
-            makedirs(covtype_dir)
-        logger.info("Downloading %s" % ARCHIVE.url)
+        os.makedirs(covtype_dir, exist_ok=True)
 
-        archive_path = _fetch_remote(ARCHIVE, dirname=covtype_dir)
-        Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=",")
-        # delete archive
-        remove(archive_path)
+        # Creating temp_dir as a direct subdirectory of the target directory
+        # guarantees that both reside on the same filesystem, so that we can use
+        # os.rename to atomically move the data files to their target location.
+        with TemporaryDirectory(dir=covtype_dir) as temp_dir:
+            logger.info(f"Downloading {ARCHIVE.url}")
+            archive_path = _fetch_remote(ARCHIVE, dirname=temp_dir)
+            Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=",")
 
-        X = Xy[:, :-1]
-        y = Xy[:, -1].astype(np.int32, copy=False)
+            X = Xy[:, :-1]
+            y = Xy[:, -1].astype(np.int32, copy=False)
 
-        joblib.dump(X, samples_path, compress=9)
-        joblib.dump(y, targets_path, compress=9)
+            samples_tmp_path = _pkl_filepath(temp_dir, "samples")
+            joblib.dump(X, samples_tmp_path, compress=9)
+            os.rename(samples_tmp_path, samples_path)
+
+            targets_tmp_path = _pkl_filepath(temp_dir, "targets")
+            joblib.dump(y, targets_tmp_path, compress=9)
+            os.rename(targets_tmp_path, targets_path)
 
     elif not available and not download_if_missing:
-        raise IOError("Data not found and `download_if_missing` is False")
+        raise OSError("Data not found and `download_if_missing` is False")
     try:
         X, y
     except NameError:

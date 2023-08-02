@@ -3,35 +3,36 @@ Todo: cross-check the F-value with stats model
 """
 import itertools
 import warnings
+
 import numpy as np
-from numpy.testing import assert_allclose
-from scipy import stats, sparse
-
 import pytest
+from numpy.testing import assert_allclose
+from scipy import sparse, stats
 
-from sklearn.utils._testing import assert_almost_equal, _convert_container
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils import safe_mask
-
-from sklearn.datasets import make_classification, make_regression
+from sklearn.datasets import load_iris, make_classification, make_regression
 from sklearn.feature_selection import (
+    GenericUnivariateSelect,
+    SelectFdr,
+    SelectFpr,
+    SelectFwe,
+    SelectKBest,
+    SelectPercentile,
     chi2,
     f_classif,
     f_oneway,
     f_regression,
-    GenericUnivariateSelect,
     mutual_info_classif,
     mutual_info_regression,
     r_regression,
-    SelectPercentile,
-    SelectKBest,
-    SelectFpr,
-    SelectFdr,
-    SelectFwe,
 )
-
+from sklearn.utils import safe_mask
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 
 ##############################################################################
 # Test the score functions
@@ -167,6 +168,135 @@ def test_f_regression_center():
     F2, _ = f_regression(X, Y, center=False)
     assert_allclose(F1 * (n_samples - 1.0) / (n_samples - 2.0), F2)
     assert_almost_equal(F2[0], 0.232558139)  # value from statsmodels OLS
+
+
+@pytest.mark.parametrize(
+    "X, y, expected_corr_coef, force_finite",
+    [
+        (
+            # A feature in X is constant - forcing finite
+            np.array([[2, 1], [2, 0], [2, 10], [2, 4]]),
+            np.array([0, 1, 1, 0]),
+            np.array([0.0, 0.32075]),
+            True,
+        ),
+        (
+            # The target y is constant - forcing finite
+            np.array([[5, 1], [3, 0], [2, 10], [8, 4]]),
+            np.array([0, 0, 0, 0]),
+            np.array([0.0, 0.0]),
+            True,
+        ),
+        (
+            # A feature in X is constant - not forcing finite
+            np.array([[2, 1], [2, 0], [2, 10], [2, 4]]),
+            np.array([0, 1, 1, 0]),
+            np.array([np.nan, 0.32075]),
+            False,
+        ),
+        (
+            # The target y is constant - not forcing finite
+            np.array([[5, 1], [3, 0], [2, 10], [8, 4]]),
+            np.array([0, 0, 0, 0]),
+            np.array([np.nan, np.nan]),
+            False,
+        ),
+    ],
+)
+def test_r_regression_force_finite(X, y, expected_corr_coef, force_finite):
+    """Check the behaviour of `force_finite` for some corner cases with `r_regression`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/15672
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        corr_coef = r_regression(X, y, force_finite=force_finite)
+    np.testing.assert_array_almost_equal(corr_coef, expected_corr_coef)
+
+
+@pytest.mark.parametrize(
+    "X, y, expected_f_statistic, expected_p_values, force_finite",
+    [
+        (
+            # A feature in X is constant - forcing finite
+            np.array([[2, 1], [2, 0], [2, 10], [2, 4]]),
+            np.array([0, 1, 1, 0]),
+            np.array([0.0, 0.2293578]),
+            np.array([1.0, 0.67924985]),
+            True,
+        ),
+        (
+            # The target y is constant - forcing finite
+            np.array([[5, 1], [3, 0], [2, 10], [8, 4]]),
+            np.array([0, 0, 0, 0]),
+            np.array([0.0, 0.0]),
+            np.array([1.0, 1.0]),
+            True,
+        ),
+        (
+            # Feature in X correlated with y - forcing finite
+            np.array([[0, 1], [1, 0], [2, 10], [3, 4]]),
+            np.array([0, 1, 2, 3]),
+            np.array([np.finfo(np.float64).max, 0.845433]),
+            np.array([0.0, 0.454913]),
+            True,
+        ),
+        (
+            # Feature in X anti-correlated with y - forcing finite
+            np.array([[3, 1], [2, 0], [1, 10], [0, 4]]),
+            np.array([0, 1, 2, 3]),
+            np.array([np.finfo(np.float64).max, 0.845433]),
+            np.array([0.0, 0.454913]),
+            True,
+        ),
+        (
+            # A feature in X is constant - not forcing finite
+            np.array([[2, 1], [2, 0], [2, 10], [2, 4]]),
+            np.array([0, 1, 1, 0]),
+            np.array([np.nan, 0.2293578]),
+            np.array([np.nan, 0.67924985]),
+            False,
+        ),
+        (
+            # The target y is constant - not forcing finite
+            np.array([[5, 1], [3, 0], [2, 10], [8, 4]]),
+            np.array([0, 0, 0, 0]),
+            np.array([np.nan, np.nan]),
+            np.array([np.nan, np.nan]),
+            False,
+        ),
+        (
+            # Feature in X correlated with y - not forcing finite
+            np.array([[0, 1], [1, 0], [2, 10], [3, 4]]),
+            np.array([0, 1, 2, 3]),
+            np.array([np.inf, 0.845433]),
+            np.array([0.0, 0.454913]),
+            False,
+        ),
+        (
+            # Feature in X anti-correlated with y - not forcing finite
+            np.array([[3, 1], [2, 0], [1, 10], [0, 4]]),
+            np.array([0, 1, 2, 3]),
+            np.array([np.inf, 0.845433]),
+            np.array([0.0, 0.454913]),
+            False,
+        ),
+    ],
+)
+def test_f_regression_corner_case(
+    X, y, expected_f_statistic, expected_p_values, force_finite
+):
+    """Check the behaviour of `force_finite` for some corner cases with `f_regression`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/15672
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        f_statistic, p_values = f_regression(X, y, force_finite=force_finite)
+    np.testing.assert_array_almost_equal(f_statistic, expected_f_statistic)
+    np.testing.assert_array_almost_equal(p_values, expected_p_values)
 
 
 def test_f_classif_multi_class():
@@ -311,13 +441,23 @@ def test_select_kbest_all():
     univariate_filter = SelectKBest(f_classif, k="all")
     X_r = univariate_filter.fit(X, y).transform(X)
     assert_array_equal(X, X_r)
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/24949
+    X_r2 = (
+        GenericUnivariateSelect(f_classif, mode="k_best", param="all")
+        .fit(X, y)
+        .transform(X)
+    )
+    assert_array_equal(X_r, X_r2)
 
 
-def test_select_kbest_zero():
+@pytest.mark.parametrize("dtype_in", [np.float32, np.float64])
+def test_select_kbest_zero(dtype_in):
     # Test whether k=0 correctly returns no features.
     X, y = make_classification(
         n_samples=20, n_features=10, shuffle=False, random_state=0
     )
+    X = X.astype(dtype_in)
 
     univariate_filter = SelectKBest(f_classif, k=0)
     univariate_filter.fit(X, y)
@@ -327,6 +467,7 @@ def test_select_kbest_zero():
     with pytest.warns(UserWarning, match="No features were selected"):
         X_selected = univariate_filter.transform(X)
     assert X_selected.shape == (20, 0)
+    assert X_selected.dtype == dtype_in
 
 
 def test_select_heuristics_classif():
@@ -421,21 +562,6 @@ def test_select_percentile_regression_full():
     support = univariate_filter.get_support()
     gtruth = np.ones(20)
     assert_array_equal(support, gtruth)
-
-
-def test_invalid_percentile():
-    X, y = make_regression(
-        n_samples=10, n_features=20, n_informative=2, shuffle=False, random_state=0
-    )
-
-    with pytest.raises(ValueError):
-        SelectPercentile(percentile=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        SelectPercentile(percentile=101).fit(X, y)
-    with pytest.raises(ValueError):
-        GenericUnivariateSelect(mode="percentile", param=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        GenericUnivariateSelect(mode="percentile", param=101).fit(X, y)
 
 
 def test_select_kbest_regression():
@@ -697,32 +823,12 @@ def test_nans():
         assert_array_equal(select.get_support(indices=True), np.array([1, 2]))
 
 
-def test_score_func_error():
-    X = [[0, 1, 0], [0, -1, -1], [0, 0.5, 0.5]]
-    y = [1, 0, 1]
-
-    for SelectFeatures in [
-        SelectKBest,
-        SelectPercentile,
-        SelectFwe,
-        SelectFdr,
-        SelectFpr,
-        GenericUnivariateSelect,
-    ]:
-        with pytest.raises(TypeError):
-            SelectFeatures(score_func=10).fit(X, y)
-
-
 def test_invalid_k():
     X = [[0, 1, 0], [0, -1, -1], [0, 0.5, 0.5]]
     y = [1, 0, 1]
 
     with pytest.raises(ValueError):
-        SelectKBest(k=-1).fit(X, y)
-    with pytest.raises(ValueError):
         SelectKBest(k=4).fit(X, y)
-    with pytest.raises(ValueError):
-        GenericUnivariateSelect(mode="k_best", param=-1).fit(X, y)
     with pytest.raises(ValueError):
         GenericUnivariateSelect(mode="k_best", param=4).fit(X, y)
 
@@ -839,3 +945,41 @@ def test_mutual_info_regression():
     gtruth = np.zeros(10)
     gtruth[:2] = 1
     assert_array_equal(support, gtruth)
+
+
+def test_dataframe_output_dtypes():
+    """Check that the output datafarme dtypes are the same as the input.
+
+    Non-regression test for gh-24860.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X, y = load_iris(return_X_y=True, as_frame=True)
+    X = X.astype(
+        {
+            "petal length (cm)": np.float32,
+            "petal width (cm)": np.float64,
+        }
+    )
+    X["petal_width_binned"] = pd.cut(X["petal width (cm)"], bins=10)
+
+    column_order = X.columns
+
+    def selector(X, y):
+        ranking = {
+            "sepal length (cm)": 1,
+            "sepal width (cm)": 2,
+            "petal length (cm)": 3,
+            "petal width (cm)": 4,
+            "petal_width_binned": 5,
+        }
+        return np.asarray([ranking[name] for name in column_order])
+
+    univariate_filter = SelectKBest(selector, k=3).set_output(transform="pandas")
+    output = univariate_filter.fit_transform(X, y)
+
+    assert_array_equal(
+        output.columns, ["petal length (cm)", "petal width (cm)", "petal_width_binned"]
+    )
+    for name, dtype in output.dtypes.items():
+        assert dtype == X.dtypes[name]

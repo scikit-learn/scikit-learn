@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =============================================================
 Compare the effect of different scalers on data with outliers
@@ -46,22 +45,22 @@ of the results_.
 #          Thomas Unterthiner
 # License: BSD 3 clause
 
-import numpy as np
-
 import matplotlib as mpl
-from matplotlib import pyplot as plt
+import numpy as np
 from matplotlib import cm
-
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import minmax_scale
-from sklearn.preprocessing import MaxAbsScaler
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import RobustScaler
-from sklearn.preprocessing import Normalizer
-from sklearn.preprocessing import QuantileTransformer
-from sklearn.preprocessing import PowerTransformer
+from matplotlib import pyplot as plt
 
 from sklearn.datasets import fetch_california_housing
+from sklearn.preprocessing import (
+    MaxAbsScaler,
+    MinMaxScaler,
+    Normalizer,
+    PowerTransformer,
+    QuantileTransformer,
+    RobustScaler,
+    StandardScaler,
+    minmax_scale,
+)
 
 dataset = fetch_california_housing()
 X_full, y_full = dataset.data, dataset.target
@@ -69,7 +68,7 @@ feature_names = dataset.feature_names
 
 feature_mapping = {
     "MedInc": "Median income in block",
-    "HousAge": "Median house age in block",
+    "HouseAge": "Median house age in block",
     "AveRooms": "Average number of rooms",
     "AveBedrms": "Average number of bedrooms",
     "Population": "Block population",
@@ -307,8 +306,12 @@ make_plot(2)
 #
 # :class:`~sklearn.preprocessing.MaxAbsScaler` is similar to
 # :class:`~sklearn.preprocessing.MinMaxScaler` except that the
-# values are mapped in the range [0, 1]. On positive only data, both scalers
-# behave similarly.
+# values are mapped across several ranges depending on whether negative
+# OR positive values are present. If only positive values are present, the
+# range is [0, 1]. If only negative values are present, the range is [-1, 0].
+# If both negative and positive values are present, the range is [-1, 1].
+# On positive only data, both :class:`~sklearn.preprocessing.MinMaxScaler`
+# and :class:`~sklearn.preprocessing.MaxAbsScaler` behave similarly.
 # :class:`~sklearn.preprocessing.MaxAbsScaler` therefore also suffers from
 # the presence of large outliers.
 
@@ -320,7 +323,7 @@ make_plot(3)
 #
 # Unlike the previous scalers, the centering and scaling statistics of
 # :class:`~sklearn.preprocessing.RobustScaler`
-# is based on percentiles and are therefore not influenced by a few
+# are based on percentiles and are therefore not influenced by a small
 # number of very large marginal outliers. Consequently, the resulting range of
 # the transformed feature values is larger than for the previous scalers and,
 # more importantly, are approximately similar: for both features most of the

@@ -39,10 +39,11 @@ it then works on a random subset.
 # License: BSD 3 clause
 
 import time
-import numpy as np
+
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression, TheilSenRegressor
-from sklearn.linear_model import RANSACRegressor
+import numpy as np
+
+from sklearn.linear_model import LinearRegression, RANSACRegressor, TheilSenRegressor
 
 estimators = [
     ("OLS", LinearRegression()),
@@ -52,8 +53,9 @@ estimators = [
 colors = {"OLS": "turquoise", "Theil-Sen": "gold", "RANSAC": "lightgreen"}
 lw = 2
 
-# #############################################################################
+# %%
 # Outliers only in the y direction
+# --------------------------------
 
 np.random.seed(0)
 n_samples = 200
@@ -84,10 +86,11 @@ for name, estimator in estimators:
 
 plt.axis("tight")
 plt.legend(loc="upper left")
-plt.title("Corrupt y")
+_ = plt.title("Corrupt y")
 
-# #############################################################################
+# %%
 # Outliers in the X direction
+# ---------------------------
 
 np.random.seed(0)
 # Linear model y = 3*x + N(2, 0.1**2)

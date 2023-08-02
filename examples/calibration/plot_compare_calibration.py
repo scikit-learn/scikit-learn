@@ -92,7 +92,7 @@ from sklearn.naive_bayes import GaussianNB
 # Create classifiers
 lr = LogisticRegression()
 gnb = GaussianNB()
-svc = NaivelyCalibratedLinearSVC(C=1.0)
+svc = NaivelyCalibratedLinearSVC(C=1.0, dual="auto")
 rfc = RandomForestClassifier()
 
 clf_list = [
@@ -109,10 +109,11 @@ from matplotlib.gridspec import GridSpec
 
 fig = plt.figure(figsize=(10, 10))
 gs = GridSpec(4, 2)
-colors = plt.cm.get_cmap("Dark2")
+colors = plt.get_cmap("Dark2")
 
 ax_calibration_curve = fig.add_subplot(gs[:2, :2])
 calibration_displays = {}
+markers = ["^", "v", "s", "o"]
 for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
     display = CalibrationDisplay.from_estimator(
@@ -123,6 +124,7 @@ for i, (clf, name) in enumerate(clf_list):
         name=name,
         ax=ax_calibration_curve,
         color=colors(i),
+        marker=markers[i],
     )
     calibration_displays[name] = display
 
@@ -204,5 +206,5 @@ plt.show()
 #        1996.
 # .. [3] `Obtaining calibrated probability estimates from decision trees and
 #        naive Bayesian classifiers
-#        <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.29.3039&rep=rep1&type=pdf>`_
+#        <https://citeseerx.ist.psu.edu/doc_view/pid/4f67a122ec3723f08ad5cbefecad119b432b3304>`_
 #        Zadrozny, Bianca, and Charles Elkan. Icml. Vol. 1. 2001.

@@ -3,13 +3,12 @@
 
 # See quad_tree.pyx for details.
 
-import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 
-ctypedef np.npy_float32 DTYPE_t          # Type of X
-ctypedef np.npy_intp SIZE_t              # Type for indices and counters
-ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
-ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+ctypedef cnp.npy_float32 DTYPE_t          # Type of X
+ctypedef cnp.npy_intp SIZE_t              # Type for indices and counters
+ctypedef cnp.npy_int32 INT32_t            # Signed 32 bit integer
+ctypedef cnp.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
 # This is effectively an ifdef statement in Cython
 # It allows us to write printf debugging lines
@@ -32,12 +31,12 @@ cdef struct Cell:
     # Cell description
     SIZE_t cell_id             # Id of the cell in the cells array in the Tree
     SIZE_t point_index         # Index of the point at this cell (only defined
-                               # in non empty leaf)
+    #                          # in non empty leaf)
     bint is_leaf               # Does this cell have children?
     DTYPE_t squared_max_width  # Squared value of the maximum width w
     SIZE_t depth               # Depth of the cell in the tree
     SIZE_t cumulative_size     # Number of points included in the subtree with
-                               # this cell as a root.
+    #                          # this cell as a root.
 
     # Internal constants
     DTYPE_t[3] center          # Store the center for quick split of cells
@@ -69,29 +68,29 @@ cdef class _QuadTree:
 
     # Point insertion methods
     cdef int insert_point(self, DTYPE_t[3] point, SIZE_t point_index,
-                          SIZE_t cell_id=*) nogil except -1
+                          SIZE_t cell_id=*) except -1 nogil
     cdef SIZE_t _insert_point_in_new_child(self, DTYPE_t[3] point, Cell* cell,
                                            SIZE_t point_index, SIZE_t size=*
-                                           ) nogil
-    cdef SIZE_t _select_child(self, DTYPE_t[3] point, Cell* cell) nogil
-    cdef bint _is_duplicate(self, DTYPE_t[3] point1, DTYPE_t[3] point2) nogil
+                                           ) noexcept nogil
+    cdef SIZE_t _select_child(self, DTYPE_t[3] point, Cell* cell) noexcept nogil
+    cdef bint _is_duplicate(self, DTYPE_t[3] point1, DTYPE_t[3] point2) noexcept nogil
 
     # Create a summary of the Tree compare to a query point
     cdef long summarize(self, DTYPE_t[3] point, DTYPE_t* results,
                         float squared_theta=*, SIZE_t cell_id=*, long idx=*
-                        ) nogil
+                        ) noexcept nogil
 
     # Internal cell initialization methods
-    cdef void _init_cell(self, Cell* cell, SIZE_t parent, SIZE_t depth) nogil
+    cdef void _init_cell(self, Cell* cell, SIZE_t parent, SIZE_t depth) noexcept nogil
     cdef void _init_root(self, DTYPE_t[3] min_bounds, DTYPE_t[3] max_bounds
-                         ) nogil
+                         ) noexcept nogil
 
     # Private methods
     cdef int _check_point_in_cell(self, DTYPE_t[3] point, Cell* cell
-                                  ) nogil except -1
+                                  ) except -1 nogil
 
     # Private array manipulation to manage the ``cells`` array
-    cdef int _resize(self, SIZE_t capacity) nogil except -1
-    cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
-    cdef int _get_cell(self, DTYPE_t[3] point, SIZE_t cell_id=*) nogil except -1
-    cdef np.ndarray _get_cell_ndarray(self)
+    cdef int _resize(self, SIZE_t capacity) except -1 nogil
+    cdef int _resize_c(self, SIZE_t capacity=*) except -1 nogil
+    cdef int _get_cell(self, DTYPE_t[3] point, SIZE_t cell_id=*) except -1 nogil
+    cdef Cell[:] _get_cell_ndarray(self)

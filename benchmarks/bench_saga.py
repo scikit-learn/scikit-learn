@@ -4,25 +4,24 @@ Benchmarks of sklearn SAGA vs lightning SAGA vs Liblinear. Shows the gain
 in using multinomial logistic regression in term of learning time.
 """
 import json
-import time
 import os
+import time
 
-from joblib import Parallel
-from sklearn.utils.fixes import delayed
 import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn.datasets import (
-    fetch_rcv1,
-    load_iris,
-    load_digits,
     fetch_20newsgroups_vectorized,
+    fetch_rcv1,
+    load_digits,
+    load_iris,
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 from sklearn.utils.extmath import safe_sparse_dot, softmax
+from sklearn.utils.parallel import Parallel, delayed
 
 
 def fit_single(
@@ -112,14 +111,14 @@ def fit_single(
         train_time = time.clock() - t0
 
         scores = []
-        for (X, y) in [(X_train, y_train), (X_test, y_test)]:
+        for X, y in [(X_train, y_train), (X_test, y_test)]:
             try:
                 y_pred = lr.predict_proba(X)
             except NotImplementedError:
                 # Lightning predict_proba is not implemented for n_classes > 2
                 y_pred = _predict_proba(lr, X)
             score = log_loss(y, y_pred, normalize=False) / n_samples
-            score += 0.5 * alpha * np.sum(lr.coef_ ** 2) + beta * np.sum(
+            score += 0.5 * alpha * np.sum(lr.coef_**2) + beta * np.sum(
                 np.abs(lr.coef_)
             )
             scores.append(score)

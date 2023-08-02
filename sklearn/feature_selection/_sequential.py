@@ -1,15 +1,17 @@
 """
 Sequential feature selection
 """
-import numbers
+from numbers import Integral, Real
 
 import numpy as np
 
-from ._base import SelectorMixin
-from ..base import BaseEstimator, MetaEstimatorMixin, clone
+from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
+from ..metrics import get_scorer_names
+from ..model_selection import check_cv, cross_val_score
+from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
-from ..model_selection import cross_val_score
+from ._base import SelectorMixin
 
 
 class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -31,22 +33,43 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     estimator : estimator instance
         An unfitted estimator.
 
-    n_features_to_select : int or float, default=None
-        The number of features to select. If `None`, half of the features are
-        selected. If integer, the parameter is the absolute number of features
-        to select. If float between 0 and 1, it is the fraction of features to
-        select.
+    n_features_to_select : "auto", int or float, default="auto"
+        If `"auto"`, the behaviour depends on the `tol` parameter:
+
+        - if `tol` is not `None`, then features are selected while the score
+          change does not exceed `tol`.
+        - otherwise, half of the features are selected.
+
+        If integer, the parameter is the absolute number of features to select.
+        If float between 0 and 1, it is the fraction of features to select.
+
+        .. versionadded:: 1.1
+           The option `"auto"` was added in version 1.1.
+
+        .. versionchanged:: 1.3
+           The default changed from `"warn"` to `"auto"` in 1.3.
+
+    tol : float, default=None
+        If the score is not incremented by at least `tol` between two
+        consecutive feature additions or removals, stop adding or removing.
+
+        `tol` can be negative when removing features using `direction="backward"`.
+        It can be useful to reduce the number of features at the cost of a small
+        decrease in the score.
+
+        `tol` is enabled only when `n_features_to_select` is `"auto"`.
+
+        .. versionadded:: 1.1
 
     direction : {'forward', 'backward'}, default='forward'
         Whether to perform forward selection or backward selection.
 
-    scoring : str, callable, list/tuple or dict, default=None
+    scoring : str or callable, default=None
         A single str (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
-        NOTE that when using custom scorers, each scorer should return a single
-        value. Metric functions returning a list/array of values can be wrapped
-        into multiple scorers that return one value each.
+        NOTE that when using a custom scorer, it should return a single
+        value.
 
         If None, the estimator's score method is used.
 
@@ -60,9 +83,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used. These splitters are instantiated
-        with `shuffle=False` so the splits will be the same across calls.
+        either binary or multiclass,
+        :class:`~sklearn.model_selection.StratifiedKFold` is used. In all other
+        cases, :class:`~sklearn.model_selection.KFold` is used. These splitters
+        are instantiated with `shuffle=False` so the splits will be the same
+        across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -122,24 +147,43 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     (150, 3)
     """
 
+    _parameter_constraints: dict = {
+        "estimator": [HasMethods(["fit"])],
+        "n_features_to_select": [
+            StrOptions({"auto"}),
+            Interval(RealNotInt, 0, 1, closed="right"),
+            Interval(Integral, 0, None, closed="neither"),
+        ],
+        "tol": [None, Interval(Real, None, None, closed="neither")],
+        "direction": [StrOptions({"forward", "backward"})],
+        "scoring": [None, StrOptions(set(get_scorer_names())), callable],
+        "cv": ["cv_object"],
+        "n_jobs": [None, Integral],
+    }
+
     def __init__(
         self,
         estimator,
         *,
-        n_features_to_select=None,
+        n_features_to_select="auto",
+        tol=None,
         direction="forward",
         scoring=None,
         cv=5,
         n_jobs=None,
     ):
-
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
+        self.tol = tol
         self.direction = direction
         self.scoring = scoring
         self.cv = cv
         self.n_jobs = n_jobs
 
+    @_fit_context(
+        # SequentialFeatureSelector.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None):
         """Learn the features to select from X.
 
@@ -167,32 +211,24 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         )
         n_features = X.shape[1]
 
-        error_msg = (
-            "n_features_to_select must be either None, an "
-            "integer in [1, n_features - 1] "
-            "representing the absolute "
-            "number of features, or a float in (0, 1] "
-            "representing a percentage of features to "
-            f"select. Got {self.n_features_to_select}"
-        )
-        if self.n_features_to_select is None:
-            self.n_features_to_select_ = n_features // 2
-        elif isinstance(self.n_features_to_select, numbers.Integral):
-            if not 0 < self.n_features_to_select < n_features:
-                raise ValueError(error_msg)
+        if self.n_features_to_select == "auto":
+            if self.tol is not None:
+                # With auto feature selection, `n_features_to_select_` will be updated
+                # to `support_.sum()` after features are selected.
+                self.n_features_to_select_ = n_features - 1
+            else:
+                self.n_features_to_select_ = n_features // 2
+        elif isinstance(self.n_features_to_select, Integral):
+            if self.n_features_to_select >= n_features:
+                raise ValueError("n_features_to_select must be < n_features.")
             self.n_features_to_select_ = self.n_features_to_select
-        elif isinstance(self.n_features_to_select, numbers.Real):
-            if not 0 < self.n_features_to_select <= 1:
-                raise ValueError(error_msg)
+        elif isinstance(self.n_features_to_select, Real):
             self.n_features_to_select_ = int(n_features * self.n_features_to_select)
-        else:
-            raise ValueError(error_msg)
 
-        if self.direction not in ("forward", "backward"):
-            raise ValueError(
-                "direction must be either 'forward' or 'backward'. "
-                f"Got {self.direction}."
-            )
+        if self.tol is not None and self.tol < 0 and self.direction == "forward":
+            raise ValueError("tol must be positive when doing forward selection")
+
+        cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
 
         cloned_estimator = clone(self.estimator)
 
@@ -202,25 +238,36 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         current_mask = np.zeros(shape=n_features, dtype=bool)
         n_iterations = (
             self.n_features_to_select_
-            if self.direction == "forward"
+            if self.n_features_to_select == "auto" or self.direction == "forward"
             else n_features - self.n_features_to_select_
         )
+
+        old_score = -np.inf
+        is_auto_select = self.tol is not None and self.n_features_to_select == "auto"
         for _ in range(n_iterations):
-            new_feature_idx = self._get_best_new_feature(
-                cloned_estimator, X, y, current_mask
+            new_feature_idx, new_score = self._get_best_new_feature_score(
+                cloned_estimator, X, y, cv, current_mask
             )
+            if is_auto_select and ((new_score - old_score) < self.tol):
+                break
+
+            old_score = new_score
             current_mask[new_feature_idx] = True
 
         if self.direction == "backward":
             current_mask = ~current_mask
+
         self.support_ = current_mask
+        self.n_features_to_select_ = self.support_.sum()
 
         return self
 
-    def _get_best_new_feature(self, estimator, X, y, current_mask):
-        # Return the best new feature to add to the current_mask, i.e. return
-        # the best new feature to add (resp. remove) when doing forward
-        # selection (resp. backward selection)
+    def _get_best_new_feature_score(self, estimator, X, y, cv, current_mask):
+        # Return the best new feature and its score to add to the current_mask,
+        # i.e. return the best new feature and its score to add (resp. remove)
+        # when doing forward selection (resp. backward selection).
+        # Feature will be added if the current score and past score are greater
+        # than tol when n_feature is auto,
         candidate_feature_indices = np.flatnonzero(~current_mask)
         scores = {}
         for feature_idx in candidate_feature_indices:
@@ -233,11 +280,12 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
                 estimator,
                 X_new,
                 y,
-                cv=self.cv,
+                cv=cv,
                 scoring=self.scoring,
                 n_jobs=self.n_jobs,
             ).mean()
-        return max(scores, key=lambda feature_idx: scores[feature_idx])
+        new_feature_idx = max(scores, key=lambda feature_idx: scores[feature_idx])
+        return new_feature_idx, scores[new_feature_idx]
 
     def _get_support_mask(self):
         check_is_fitted(self)
@@ -246,5 +294,4 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     def _more_tags(self):
         return {
             "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
-            "requires_y": True,
         }
