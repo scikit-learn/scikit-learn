@@ -1243,7 +1243,6 @@ class KMeans(_BaseKMeans):
         For an example of how to use init with PCA, see
         :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
 
-
     n_init : 'auto' or int, default=10
         Number of times the k-means algorithm is run with different centroid
         seeds. The final results is the best output of `n_init` consecutive runs
