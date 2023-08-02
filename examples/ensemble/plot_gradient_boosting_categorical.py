@@ -21,6 +21,10 @@ particular, we will evaluate:
 We will work with the Ames Lowa Housing dataset which consists of numerical
 and categorical features, where the houses' sales prices is the target.
 
+See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for an
+example showcasing some other features of
+:class:`~ensemble.HistGradientBoostingRegressor`.
+
 """
 
 # %%

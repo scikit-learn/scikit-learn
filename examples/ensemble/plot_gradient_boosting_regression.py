@@ -11,7 +11,10 @@ tackle a diabetes regression task. We will obtain the results from
 and 500 regression trees of depth 4.
 
 Note: For larger datasets (n_samples >= 10000), please refer to
-:class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor`. See
+:ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for an example
+showcasing some other advantages of
+:class:`~ensemble.HistGradientBoostingRegressor`.
 
 """
 
