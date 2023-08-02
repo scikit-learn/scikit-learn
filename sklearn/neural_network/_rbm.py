@@ -37,9 +37,6 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
     The time complexity of this implementation is ``O(d ** 2)`` assuming
     d ~ n_features ~ n_components.
 
-    For an example usage, see
-    :ref:`sphx_glr_auto_examples_neural_networks_plot_rbm_logistic_classification.py`.
-
     Read more in the :ref:`User Guide <rbm>`.
 
     Parameters
@@ -130,6 +127,9 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
     >>> model = BernoulliRBM(n_components=2)
     >>> model.fit(X)
     BernoulliRBM(n_components=2)
+
+    For an example usage, see
+    :ref:`sphx_glr_auto_examples_neural_networks_plot_rbm_logistic_classification.py`.
     """
 
     _parameter_constraints: dict = {

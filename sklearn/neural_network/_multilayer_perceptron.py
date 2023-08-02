@@ -770,9 +770,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     For an example usage and visualization of varying regularization, see
     :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_alpha.py`
 
-    For an example usage and visualization of the MLP weights on MNIST, see
-    :ref:`sphx_glr_auto_examples_neural_networks_plot_mnist_filters.py`
-
     .. versionadded:: 0.18
 
     Parameters
