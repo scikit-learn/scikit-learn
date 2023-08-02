@@ -37,8 +37,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     .. note::
         `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-        cross fitting scheme is used in `fit_transform` for encoding. See the
-        :ref:`User Guide <target_encoder>` for details.
+        :term:`cross fitting` scheme is used in `fit_transform` for encoding.
+        See the :ref:`User Guide <target_encoder>` for details.
 
     .. versionadded:: 1.3
 
@@ -82,7 +82,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         If `"auto"`, then `smooth` is set to an empirical Bayes estimate.
 
     cv : int, default=5
-        Determines the number of folds in the cross fitting strategy used in
+        Determines the number of folds in the :term:`cross fitting` strategy used in
         :meth:`fit_transform`. For classification targets, `StratifiedKFold` is used
         and for continuous targets, `KFold` is used.
 
@@ -226,8 +226,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-            cross fitting scheme is used in `fit_transform` for encoding. See the
-            :ref:`User Guide <target_encoder>`. for details.
+            :term:`cross fitting` scheme is used in `fit_transform` for encoding.
+            See the :ref:`User Guide <target_encoder>`. for details.
 
         Parameters
         ----------
@@ -300,8 +300,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-            cross fitting scheme is used in `fit_transform` for encoding. See the
-            :ref:`User Guide <target_encoder>`. for details.
+            :term:`cross fitting` scheme is used in `fit_transform` for encoding.
+            See the :ref:`User Guide <target_encoder>`. for details.
 
         Parameters
         ----------
@@ -353,8 +353,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             inferred_type_of_target = type_of_target(y, input_name="y")
             if inferred_type_of_target not in accepted_target_types:
                 raise ValueError(
-                    f"Target type was inferred to be {inferred_type_of_target!r}. Only"
-                    f" {accepted_target_types} are supported."
+                    "Unknown label type: Target type was inferred to be "
+                    f"{inferred_type_of_target!r}. Only {accepted_target_types} are "
+                    "supported."
                 )
             self.target_type_ = inferred_type_of_target
         else:
@@ -518,4 +519,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             return feature_names
 
     def _more_tags(self):
-        return {"requires_y": True}
+        return {
+            "requires_y": True,
+            # TargetEncoder is a special case where a transformer uses `y` but
+            # only accept binary classification and regression targets. For the
+            # purpose of common tests we use `binary_only` tag to eliminate the
+            # multiclass tests. TODO: remove this special case when multiclass
+            # support is added to TargetEncoder. xref:
+            # https://github.com/scikit-learn/scikit-learn/pull/26674
+            "binary_only": True,
+        }
