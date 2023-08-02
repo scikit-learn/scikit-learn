@@ -11,10 +11,10 @@ than tens of thousands of samples (see
 HGBT models have additional advantages such as:
 
 - :ref:`categorical_support_gbdt` (see
-  :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`)
+  :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`).
 - :ref:`nan_support_hgbt`, which avoids the need for an imputer.
-- :ref:`Quantile loss support <quantile_support_hgbdt>`
-- :ref:`monotonic_cst_gbdt`
+- :ref:`Quantile loss support <quantile_support_hgbdt>`.
+- :ref:`monotonic_cst_gbdt`.
 
 This example aims at showcasing the last three points in a real setting.
 """
@@ -84,7 +84,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 
 max_iter_list = [10, 50]
 
-fig, ax = plt.subplots(figsize=(12, 4))
+fig, ax = plt.subplots(figsize=(10, 5))
 average_week_demand = df.groupby(["day", "period"])["transfer"].mean()
 average_week_demand.plot(color=colors[0], label="training data", linewidth=2, ax=ax)
 
@@ -243,7 +243,7 @@ fig, ax = plt.subplots(figsize=(12, 6))
 ax.plot(y.iloc[test_0].values[last_days], label="Actual transfer")
 
 for missing_fraction in missing_fraction_list:
-    X = df.drop(columns=["transfer", "class"])
+    X = df.drop(columns=["transfer", "class"])  # reset X
     mask = df["class"] == "DOWN"
     true_indices = mask[mask].index
     n_keep = int(len(true_indices) * missing_fraction)
@@ -296,7 +296,7 @@ from sklearn.metrics import make_scorer, mean_pinball_loss
 
 quantiles = [0.95, 0.05]
 predictions = []
-X = df.drop(columns=["transfer", "class"])
+X = df.drop(columns=["transfer", "class"])  # reset X
 
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.plot(y.iloc[test_0].values[last_days], label="Actual transfer")
@@ -344,17 +344,15 @@ _ = ax.legend()
 # Keep in mind that one can still improve the calibration of our model by:
 #
 # - collecting more data-points (in case the model is overfitting);
-# - better tuning of the model hyper-parameters (for instance you could try
-#   max_iter=300, max_leaf_nodes=64) and make sure the model is not over-fitting
-#   too much (e.g. by plotting the validation losses per boosting iteration and
-#   using early stopping);
+# - better tuning of the model hyper-parameters (see
+#   :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`)
+#   and make sure the model is not over-fitting;
 # - engineering more predictive features from the same data. This is especially
 #   useful for linear quantile regression (not covered in this tutorial);
-# - try other kinds of quantile regression models, for instance Quantile
-#   Forests.
+# - try other kinds of quantile regression models, such as Quantile Forests.
 #
 # Monotonic Constraints
-# ---------------------
+# =====================
 #
 # Given specific domain knowledge that requires the relationship between a
 # feature and the target to be monotonically increasing or decreasing, one can
@@ -381,9 +379,7 @@ conditions = [
     (X.columns == "vicdemand") | (X.columns == "vicprice"),
 ]
 choices = [1, -1]
-
 monotonic_cst = np.select(conditions, choices, default=0)
-
 
 gbdt_no_cst = HistGradientBoostingRegressor().fit(X, y)
 gbdt_cst = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst).fit(X, y)
@@ -396,7 +392,6 @@ disp = PartialDependenceDisplay.from_estimator(
     line_kw={"linewidth": 2, "label": "unconstrained", "color": "tab:blue"},
     ax=ax[0],
 )
-
 PartialDependenceDisplay.from_estimator(
     gbdt_cst,
     X,
@@ -411,7 +406,6 @@ disp = PartialDependenceDisplay.from_estimator(
     line_kw={"linewidth": 2, "label": "unconstrained", "color": "tab:blue"},
     ax=ax[1],
 )
-
 PartialDependenceDisplay.from_estimator(
     gbdt_cst,
     X,
@@ -419,9 +413,7 @@ PartialDependenceDisplay.from_estimator(
     line_kw={"linewidth": 2, "label": "constrained", "color": "tab:orange"},
     ax=disp.axes_,
 )
-
-plt.legend()
-plt.show()
+_ = plt.legend()
 
 # %%
 # Indeed, we can verify that the predictive quality of the model is not degraded
