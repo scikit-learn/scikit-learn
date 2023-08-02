@@ -869,8 +869,7 @@ def test_dataframe_protocol(constructor_name, minversion):
         no_op.transform(df_bad)
 
 
-@pytest.mark.usefixtures("enable_slep006")
-def test_transformer_fit_transform_with_metadata_in_transform():
+def test_transformer_fit_transform_with_metadata_in_transform(enable_slep006):
     """Test that having a transformer with metadata for transform raises a
     warning when calling fit_transform."""
 
@@ -895,8 +894,7 @@ def test_transformer_fit_transform_with_metadata_in_transform():
         assert len(record) == 0
 
 
-@pytest.mark.usefixtures("enable_slep006")
-def test_outlier_mixin_fit_predict_with_metadata_in_predict():
+def test_outlier_mixin_fit_predict_with_metadata_in_predict(enable_slep006):
     """Test that having an OutlierMixin with metadata for predict raises a
     warning when calling fit_predict."""
 

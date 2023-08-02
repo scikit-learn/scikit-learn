@@ -1206,9 +1206,8 @@ def test_scorer_set_score_request_raises(name):
         scorer.set_score_request()
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("name", get_scorer_names(), ids=get_scorer_names())
-def test_scorer_metadata_request(name):
+def test_scorer_metadata_request(enable_slep006, name):
     """Testing metadata requests for scorers.
 
     This test checks many small things in a large test, to reduce the
@@ -1255,8 +1254,7 @@ def test_scorer_metadata_request(name):
     assert list(routed_params.scorer.score.keys()) == ["sample_weight"]
 
 
-@pytest.mark.usefixtures("enable_slep006")
-def test_metadata_kwarg_conflict():
+def test_metadata_kwarg_conflict(enable_slep006):
     """This test makes sure the right warning is raised if the user passes
     some metadata both as a constructor to make_scorer, and during __call__.
     """
@@ -1278,8 +1276,7 @@ def test_metadata_kwarg_conflict():
         scorer(lr, X, y, labels=lr.classes_)
 
 
-@pytest.mark.usefixtures("enable_slep006")
-def test_PassthroughScorer_metadata_request():
+def test_PassthroughScorer_metadata_request(enable_slep006):
     """Test that _PassthroughScorer properly routes metadata.
 
     _PassthroughScorer should behave like a consumer, mirroring whatever is the
@@ -1297,8 +1294,7 @@ def test_PassthroughScorer_metadata_request():
     assert scorer.get_metadata_routing().score.requests["sample_weight"] == "alias"
 
 
-@pytest.mark.usefixtures("enable_slep006")
-def test_multimetric_scoring_metadata_routing():
+def test_multimetric_scoring_metadata_routing(enable_slep006):
     # Test that _MultimetricScorer properly routes metadata.
     def score1(y_true, y_pred):
         return 1

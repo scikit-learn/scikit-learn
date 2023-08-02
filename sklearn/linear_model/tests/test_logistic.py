@@ -2076,8 +2076,7 @@ def test_liblinear_not_stuck():
         clf.fit(X_prep, y)
 
 
-@pytest.mark.usefixtures("enable_slep006")
-def test_lr_cv_scores_differ_when_sample_weight_is_requested():
+def test_lr_cv_scores_differ_when_sample_weight_is_requested(enable_slep006):
     """Test that `sample_weight` is correctly passed to the scorer in
     `LogisticRegressionCV.fit` and `LogisticRegressionCV.score` by
     checking the difference in scores with the case when `sample_weight`

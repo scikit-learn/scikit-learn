@@ -1761,8 +1761,7 @@ class SimpleTransformer(BaseEstimator, TransformerMixin):
         return X
 
 
-@pytest.mark.usefixtures("enable_slep006")
-def test_metadata_routing_for_pipeline():
+def test_metadata_routing_for_pipeline(enable_slep006):
     """Test that metadata is routed correctly for pipelines."""
 
     def set_request(est, method, **kwarg):
@@ -1832,8 +1831,7 @@ def test_routing_passed_metadata_not_supported(method):
         getattr(pipe, method)([[1]], sample_weight=[1], prop="a")
 
 
-@pytest.mark.usefixtures("enable_slep006")
-def test_pipeline_with_estimator_with_len():
+def test_pipeline_with_estimator_with_len(enable_slep006):
     """Test that pipeline works with estimators that have a `__len__` method."""
     pipe = Pipeline(
         [("trs", RandomTreesEmbedding()), ("estimator", RandomForestClassifier())]
@@ -1842,9 +1840,8 @@ def test_pipeline_with_estimator_with_len():
     pipe.predict([[1]])
 
 
-@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("last_step", [None, "passthrough"])
-def test_pipeline_with_no_last_step(last_step):
+def test_pipeline_with_no_last_step(enable_slep006, last_step):
     """Test that the pipeline works when there is not last step.
 
     It should just ignore and pass through the data on transform.
