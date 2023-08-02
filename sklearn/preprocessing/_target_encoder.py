@@ -99,7 +99,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     Attributes
     ----------
-    encodings_ : list of shape (n_features,) of ndarray
+    encodings_ : list of shape (n_features,) or (n_features * n_classes) of \
+                    ndarray
         Encodings learnt on all of `X`.
         For feature `i`, `encodings_[i]` are the encodings matching the
         categories listed in `categories_[i]`. When `target_type_` is
@@ -109,8 +110,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         f0_c0, f0_c1, f0_c2, f1_c0, f1_c1, f1_c2,
 
     categories_ : list of shape (n_features,) of ndarray
-        The categories of each feature determined during fitting or specified
-        in `categories`
+        The categories of each input feature determined during fitting or
+        specified in `categories`
         (in order of the features in `X` and corresponding with the output
         of :meth:`transform`).
 
