@@ -2,7 +2,6 @@ import itertools
 import re
 import warnings
 from collections import defaultdict
-from functools import partial
 from math import floor, log10
 
 import numpy as np
@@ -307,11 +306,6 @@ ASSERT_RESULT = {
         RadiusNeighbors,
         np.float32,
     ): assert_radius_neighbors_results_quasi_equality,
-}
-
-ASSERT_RESULT_PAIRWISE = {
-    np.float32: partial(assert_allclose, rtol=1e-4),
-    np.float64: assert_array_equal,
 }
 
 
@@ -1025,7 +1019,7 @@ def test_n_threads_agnosticism_pairwise_distances(
     with threadpoolctl.threadpool_limits(limits=1, user_api="openmp"):
         dist = PairwiseDistances.compute(X, Y)
 
-    ASSERT_RESULT_PAIRWISE[dtype](ref_dist, dist)
+    assert_allclose(ref_dist, dist)
 
 
 @pytest.mark.parametrize(
@@ -1115,7 +1109,7 @@ def test_format_agnosticism_pairwise_distances(
         if _X is X and _Y is Y:
             continue
         dist = PairwiseDistances.compute(_X, _Y)
-        ASSERT_RESULT_PAIRWISE[dtype](dist, dist_dense)
+        assert_allclose(dist, dist_dense)
 
 
 @pytest.mark.parametrize(
@@ -1244,7 +1238,7 @@ def test_strategies_consistency_pairwise_distances(
         strategy="parallel_on_Y",
     )
 
-    ASSERT_RESULT_PAIRWISE[dtype](dist_par_X, dist_par_Y)
+    assert_allclose(dist_par_X, dist_par_Y)
 
 
 # "Concrete Dispatchers"-specific tests
@@ -1467,7 +1461,7 @@ def test_memmap_backed_data_pairwise_distances(
         metric=metric,
     )
 
-    ASSERT_RESULT_PAIRWISE[dtype](ref_dist, dist_mm)
+    assert_allclose(ref_dist, dist_mm)
 
 
 @pytest.mark.parametrize("n_samples", [100, 1000])
