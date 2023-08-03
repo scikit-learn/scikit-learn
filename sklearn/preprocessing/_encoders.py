@@ -14,6 +14,7 @@ from ..utils import _safe_indexing, check_array, is_scalar_nan
 from ..utils._encode import _check_unknown, _encode, _get_counts, _unique
 from ..utils._mask import _get_mask
 from ..utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
+from ..utils._set_output import _get_output_config
 from ..utils.validation import _check_feature_names_in, check_is_fitted
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
@@ -176,11 +177,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         warn_on_unknown=False,
         ignore_category_indices=None,
     ):
-        self._check_feature_names(X, reset=False)
-        self._check_n_features(X, reset=False)
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite
         )
+        self._check_feature_names(X, reset=False)
+        self._check_n_features(X, reset=False)
 
         X_int = np.zeros((n_samples, n_features), dtype=int)
         X_mask = np.ones((n_samples, n_features), dtype=bool)
@@ -437,7 +438,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             X_int[rows_to_update, i] = np.take(mapping, X_int[rows_to_update, i])
 
     def _more_tags(self):
-        return {"X_types": ["categorical"]}
+        return {"X_types": ["2darray", "categorical"], "allow_nan": True}
 
 
 class OneHotEncoder(_BaseEncoder):
@@ -1008,6 +1009,14 @@ class OneHotEncoder(_BaseEncoder):
             returned.
         """
         check_is_fitted(self)
+        transform_output = _get_output_config("transform", estimator=self)["dense"]
+        if transform_output == "pandas" and self.sparse_output:
+            raise ValueError(
+                "Pandas output does not support sparse data. Set sparse_output=False to"
+                " output pandas DataFrames or disable pandas output via"
+                ' `ohe.set_output(transform="default").'
+            )
+
         # validation of X happens in _check_X called by _transform
         warn_on_unknown = self.drop is not None and self.handle_unknown in {
             "ignore",

@@ -37,7 +37,7 @@ solves a problem of the form:
    :align: center
    :scale: 50%
 
-:class:`LinearRegression` will take in its ``fit`` method arrays X, y
+:class:`LinearRegression` will take in its ``fit`` method arrays ``X``, ``y``
 and will store the coefficients :math:`w` of the linear model in its
 ``coef_`` member::
 
@@ -114,7 +114,7 @@ of shrinkage and thus the coefficients become more robust to collinearity.
 
 
 As with other linear models, :class:`Ridge` will take in its ``fit`` method
-arrays X, y and will store the coefficients :math:`w` of the linear model in
+arrays ``X``, ``y`` and will store the coefficients :math:`w` of the linear model in
 its ``coef_`` member::
 
     >>> from sklearn import linear_model
@@ -889,12 +889,16 @@ the probability of the positive class :math:`P(y_i=1|X_i)` as
 
 .. math:: \hat{p}(X_i) = \operatorname{expit}(X_i w + w_0) = \frac{1}{1 + \exp(-X_i w - w_0)}.
 
+
 As an optimization problem, binary
 class logistic regression with regularization term :math:`r(w)` minimizes the
 following cost function:
 
-.. math:: \min_{w} C \sum_{i=1}^n \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right) + r(w).
-
+.. math::
+    :name: regularized-logistic-loss
+   
+    \min_{w} C \sum_{i=1}^n \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right) + r(w).
+   
 
 We currently provide four choices for the regularization term  :math:`r(w)`  via
 the `penalty` argument:
