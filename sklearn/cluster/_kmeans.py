@@ -1245,7 +1245,6 @@ class KMeans(_BaseKMeans):
 
         * a `random state`
 
-
         It will then return an initialization.
 
         For an example of how to use init with PCA, see
