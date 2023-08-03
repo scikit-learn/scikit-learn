@@ -2473,6 +2473,8 @@ def test_groups_with_routing_validation(cv_method):
     "cv_method", [cross_validate, cross_val_score, cross_val_predict]
 )
 def test_passed_unrequested_metadata(cv_method):
+    """Check that we raise an error if passing metada that are not
+    requested."""
     err_msg = re.escape("['metadata'] are passed to cross validation")
     with pytest.raises(ValueError, match=err_msg):
         cv_method(
