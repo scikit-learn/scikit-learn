@@ -2456,6 +2456,9 @@ def test_cross_validate_fit_param_deprecation():
     "cv_method", [cross_validate, cross_val_score, cross_val_predict]
 )
 def test_groups_with_routing_validation(cv_method):
+    """Check that we raise an error if `groups` are passed to the cv method instead
+    of `params` when metadata routing is enabled.
+    """
     with pytest.raises(ValueError, match="`groups` can only be passed if"):
         cv_method(
             estimator=ConsumingClassifier(),
