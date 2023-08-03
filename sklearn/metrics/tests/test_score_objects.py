@@ -809,11 +809,7 @@ def test_multimetric_scorer_calls_method_once(
         (["roc_auc", "neg_log_loss"]),
         (
             {
-                "roc_auc": make_scorer(
-                    roc_auc_score,
-                    needs_threshold=True,
-                    response_method=["predict_proba", "decision_function"],
-                ),
+                "roc_auc": make_scorer(roc_auc_score, needs_threshold=True),
                 "neg_log_loss": make_scorer(log_loss, needs_proba=True),
             }
         ),
