@@ -279,7 +279,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     y_train_mean,
                 )
             else:
-                encodings = self._learn_encodings(
+                encodings = self._learn_binary_or_continuous_encoding(
                     X_train,
                     y_train,
                     n_categories,
@@ -389,7 +389,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 self.target_mean_,
             )
         else:
-            encodings = self._learn_encodings(
+            encodings = self._learn_binary_or_continuous_encoding(
                 X_ordinal,
                 y,
                 n_categories,
@@ -399,7 +399,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         return X_ordinal, X_known_mask, y, n_categories
 
-    def _learn_encodings(self, X_ordinal, y, n_categories, target_mean):
+    def _learn_binary_or_continuous_encoding(self, X_ordinal, y, n_categories, target_mean):
         """Learn target encodings."""
         if self.smooth == "auto":
             y_variance = np.var(y)
@@ -436,7 +436,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         encodings = []
         for i in range(n_classes):
             y_class = y[:, i]
-            encoding = self._learn_encodings(
+            encoding = self._learn_binary_or_continuous_encoding(
                 X_ordinal,
                 y_class,
                 n_categories,
