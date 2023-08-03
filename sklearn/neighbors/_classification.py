@@ -56,7 +56,8 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
         Refer to the example entitled
         :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`
-        showing the impact of the `weights` parameter on the decision boundary.
+        showing the impact of the `weights` parameter on the decision
+        boundary.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
