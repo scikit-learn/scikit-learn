@@ -242,6 +242,7 @@ General Concepts
         instance.
 
         See the :ref:`Contributors' Guide <contributing_deprecation>`.
+        See also :term:`soft deprecation`.
 
     dimensionality
         May be used to refer to the number of :term:`features` (i.e.
@@ -729,6 +730,13 @@ General Concepts
         available for some samples provided as training data when
         :term:`fitting` the model.  We conventionally apply the label ``-1``
         to :term:`unlabeled` samples in semi-supervised classification.
+
+    soft deprecation
+        A soft deprecation can be used to indicate that a particular API should no longer be
+        used when writing new code, but that it is safe to continue using it in existing code.
+
+        See the :ref:`Contributors' Guide <contributing_deprecation>`.
+        See also :term:`deprecation`.
 
     sparse matrix
     sparse graph

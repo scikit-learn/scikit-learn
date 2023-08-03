@@ -1345,6 +1345,27 @@ not in other cases. The warning should be caught in all other tests
 (using e.g., ``@pytest.mark.filterwarnings``), and there should be no warning
 in the examples.
 
+Soft Deprecation
+----------------
+
+A soft deprecation can be used to indicate that a particular API should no longer be
+used when writing new code, but that it is safe to continue using it in existing code.
+The API remains documentated and tested, but will not be developerd further.
+
+The main difference between a "soft" and a (regular) "hard" deprecation is that the
+soft deprecation does not imply scheduling the removal of the deprecated API.
+
+Another difference is that a soft deprecation does not issue a warning: it's only mentioned
+in the documentation, whereas usually a "hard" deprecation issues a ``DeprecationWarning``
+warning at runtime. The documentation of a soft deprecation should explain why the API
+should be avoided, and if possible propose a replacement.
+
+If the decision is made to deprecate (in the regular sense) a feature that is currently
+soft deprecated, the deprecation must follow the :term:`backwards compatibility` rules
+(i.e., there is no exception because the feature is already soft deprecated).
+
+This policy and text is taken from `PEP387 <https://peps.python.org/pep-0387/#soft-deprecation>`_.
+
 .. currentmodule:: sklearn
 
 .. _code_review:
