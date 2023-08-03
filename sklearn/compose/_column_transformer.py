@@ -255,9 +255,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def _transformers(self):
         """
         Internal list of transformer only containing the name and
-        transformers, dropping the columns. This is for the implementation
-        of get_params via BaseComposition._get_params which expects lists
-        of tuples of len 2.
+        transformers, dropping the columns.
+
+        DO NOT USE: This is for the implementation of get_params via
+        BaseComposition._get_params which expects lists of tuples of len 2.
         """
         try:
             return [(name, trans) for name, trans, _ in self.transformers]
@@ -266,6 +267,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
     @_transformers.setter
     def _transformers(self, value):
+        """DO NOT USE: This is for the implementation of set_params via
+        BaseComposition._get_params which gives lists of tuples of len 2.
+        """
         try:
             self.transformers = [
                 (name, trans, col)
@@ -355,9 +359,18 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         Generate (name, trans, column, weight) tuples.
 
-        If fitted=True, use the fitted transformers, else use the
-        user specified transformers updated with converted column names
-        and potentially appended with transformer for remainder.
+        Parameters
+        ----------
+        fitted : bool, default=False
+            If fitted=True, use the fitted transformers (self.transformers_),
+            else use the unfitted transformers (self.transformers).
+
+        replace_strings : bool, default=False
+            If True, replace 'passthrough' with the fitted version in
+            _name_to_fitted_passthrough.
+
+            user specified transformers updated with converted column names
+            and potentially appended with transformer for remainder.
 
         """
         if fitted:
