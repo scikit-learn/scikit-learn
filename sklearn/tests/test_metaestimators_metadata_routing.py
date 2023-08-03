@@ -113,8 +113,6 @@ CV_SCORERS: list = [
     },
 ]
 
-CV_SCORER_IDS = [x["cv_estimator"].__name__ for x in CV_SCORERS]
-
 CV_SPLITTERS: list = [
     {
         "cv_estimator": LogisticRegressionCV,
@@ -123,6 +121,8 @@ CV_SPLITTERS: list = [
     }
 ]
 
+# IDs used by pytest to get meaningful verbose messages when running the tests
+CV_SCORER_IDS = [x["cv_estimator"].__name__ for x in CV_SCORERS]
 CV_SPLITTER_IDS = [x["cv_estimator"].__name__ for x in CV_SPLITTERS]
 
 
