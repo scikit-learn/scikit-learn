@@ -1106,7 +1106,7 @@ class Pipeline(_BaseComposition):
         router = MetadataRouter(owner=self.__class__.__name__)
 
         # first we add all steps except the last one
-        for _, name, trans in self._iter(with_final=False):
+        for _, name, trans in self._iter(with_final=False, filter_passthrough=True):
             method_mapping = MethodMapping()
             # fit, fit_predict, and fit_transform call fit_transform if it
             # exists, or else fit and transform
@@ -1140,7 +1140,7 @@ class Pipeline(_BaseComposition):
             router.add(method_mapping=method_mapping, **{name: trans})
 
         final_name, final_est = self.steps[-1]
-        if not final_est:
+        if final_est is None or final_est == "passthrough":
             return router
 
         # then we add the last step
