@@ -65,8 +65,8 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     # Because we don't expect to instantiate a lot of these objects, the
     # extra memory overhead of this setup should not be an issue.
     cdef float64_t p
-    cdef const {{INPUT_DTYPE_t}}[::1] vec
-    cdef const {{INPUT_DTYPE_t}}[:, ::1] mat
+    cdef const float64_t[::1] vec
+    cdef const float64_t[:, ::1] mat
     cdef intp_t size
     cdef object func
     cdef object kwargs
