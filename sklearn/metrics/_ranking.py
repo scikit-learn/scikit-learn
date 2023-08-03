@@ -313,7 +313,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     fpr : ndarray of shape (n_thresholds,)
         False positive rate (FPR) such that element i is the false positive
         rate of predictions with score >= thresholds[i]. This is occasionally
-        referred to as false acceptance propability or fall-out.
+        referred to as false acceptance probability or fall-out.
 
     fnr : ndarray of shape (n_thresholds,)
         False negative rate (FNR) such that element i is the false negative

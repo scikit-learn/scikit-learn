@@ -33,6 +33,7 @@ from ..utils.metadata_routing import (
     MetadataRequest,
     MetadataRouter,
     _MetadataRequester,
+    _raise_for_params,
     _routing_enabled,
     get_routing_for_object,
     process_routing,
@@ -273,11 +274,7 @@ class _BaseScorer(_MetadataRequester):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        if kwargs and not _routing_enabled():
-            raise ValueError(
-                "kwargs is only supported if enable_metadata_routing=True. See"
-                " the User Guide for more information."
-            )
+        _raise_for_params(kwargs, self, None)
 
         _kwargs = copy.deepcopy(kwargs)
         if sample_weight is not None:
@@ -476,7 +473,10 @@ class _ThresholdScorer(_BaseScorer):
             raise ValueError("{0} format is not supported".format(y_type))
 
         if is_regressor(clf):
-            response_method = self._response_method or "predict"
+            if self._response_method is None:
+                response_method = "predict"
+            else:
+                response_method = self._response_method
             y_pred = method_caller(clf, response_method, X)
         else:
             if self._response_method is None:
