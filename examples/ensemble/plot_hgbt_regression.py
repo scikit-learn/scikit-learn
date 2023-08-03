@@ -1,7 +1,7 @@
 """
-===========================================================
-Decision Tree Regression with HistGradientBoostingRegressor
-===========================================================
+=============================================================
+Usecase of advanced features in Histogram Boosting Regression
+=============================================================
 
 :ref:`histogram_based_gradient_boosting` (HGBT) models can be a competitive
 alternative to random forests, especially when the number of samples is larger
