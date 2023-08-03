@@ -2437,7 +2437,9 @@ def test_cross_validate_return_indices(global_random_seed):
 # ========================================
 
 
+# TODO(1.6): remove this test in 1.6
 def test_cross_validate_fit_param_deprecation():
+    """Check that we warn about deprecating `fit_params`."""
     with pytest.warns(FutureWarning, match="`fit_params` is deprecated"):
         cross_validate(estimator=ConsumingClassifier(), X=X, y=y, cv=2, fit_params={})
 
