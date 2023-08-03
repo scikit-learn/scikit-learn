@@ -80,7 +80,8 @@ are not yet supported, for instance some loss functions.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+  * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`
 
 Usage
 ^^^^^
@@ -168,6 +169,10 @@ whether the feature value is missing or not::
 If no missing values were encountered for a given feature during training,
 then samples with missing values are mapped to whichever child has the most
 samples.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
 
 .. _sw_hgbdt:
 
@@ -317,6 +322,7 @@ Also, monotonic constraints are not supported for multiclass classification.
 .. topic:: Examples:
 
   * :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
 
 .. _interaction_cst_hgbt:
 

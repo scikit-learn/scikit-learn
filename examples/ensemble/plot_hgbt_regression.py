@@ -367,6 +367,7 @@ _ = ax.legend()
 #
 # If the training data has feature names, it’s possible to specify the monotonic
 # constraints by passing a dictionary with the convention:
+#
 # - 1: monotonic increase
 # - 0: no constraint
 # - -1: monotonic decrease
