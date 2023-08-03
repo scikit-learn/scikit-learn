@@ -91,4 +91,4 @@ plt.show()
 # Whereas when `weights="distance"` the weight given to each neighbor is proportional
 # to the inverse of the distance from that neighbor to the query point.
 #
-# In some cases, taking the distance into account might improve the beneficial.
+# In some cases, taking the distance into account might improve the model.
