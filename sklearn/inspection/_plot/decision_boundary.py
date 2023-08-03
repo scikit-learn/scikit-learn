@@ -255,9 +255,14 @@ class DecisionBoundaryDisplay:
             `response_method="auto"`.
 
         class_label : int, float or str, default=None
-            When `response_method` return several columns (i.e. `"predict_proba"` and
-            `"decision_function"`), `class_label` specifies which column to use for
-            plotting.
+            When dealing with a multiclass problem, you can visualize one class against
+            the other classes by specifying `class_label`. This can be used in
+            combination with `"predict_proba"` and `"decision_function"` passed
+            ass `response_method`.
+
+            See the example entitle
+            :ref:`sphx_glr_auto_examples_classification_plot_classification_probability.py.py`
+            that shows how to use this parameter.
 
             .. versionadded:: 1.4
 
