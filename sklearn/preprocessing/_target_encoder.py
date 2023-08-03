@@ -399,7 +399,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         return X_ordinal, X_known_mask, y, n_categories
 
-    def _learn_binary_or_continuous_encoding(self, X_ordinal, y, n_categories, target_mean):
+    def _learn_binary_or_continuous_encoding(
+        self, X_ordinal, y, n_categories, target_mean
+    ):
         """Learn target encodings."""
         if self.smooth == "auto":
             y_variance = np.var(y)
