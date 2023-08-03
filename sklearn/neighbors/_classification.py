@@ -37,7 +37,6 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
     Read more in the :ref:`User Guide <classification>`.
 
-
     Parameters
     ----------
     n_neighbors : int, default=5
@@ -54,6 +53,10 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         - [callable] : a user-defined function which accepts an
           array of distances, and returns an array of the same shape
           containing the weights.
+
+        Refer to the example entitled
+        :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`
+        showing the impact of the `weights` parameter on the decision boundary.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
@@ -173,9 +176,6 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     [0]
     >>> print(neigh.predict_proba([[0.9]]))
     [[0.666... 0.333...]]
-
-    See :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`
-    for an example on how to use the API.
     """
 
     _parameter_constraints: dict = {**NeighborsBase._parameter_constraints}
