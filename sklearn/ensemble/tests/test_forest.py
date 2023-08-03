@@ -1819,7 +1819,7 @@ def test_round_samples_to_one_when_samples_too_low(class_weight):
     ],
 )
 def test_missing_values_is_resilient(make_data, Forest):
-    """Check that forest can deal with missing values and have decent performance."""
+    """Check that forest can deal with missing values and has decent performance."""
 
     rng = np.random.RandomState(0)
     n_samples, n_features = 1000, 10
@@ -1828,6 +1828,8 @@ def test_missing_values_is_resilient(make_data, Forest):
     # Create dataset with missing values
     X_missing = X.copy()
     X_missing[rng.choice([False, True], size=X.shape, p=[0.95, 0.05])] = np.nan
+    assert np.isnan(X_missing).any()
+
     X_missing_train, X_missing_test, y_train, y_test = train_test_split(
         X_missing, y, random_state=0
     )
@@ -1864,6 +1866,7 @@ def test_missing_value_is_predictive(Forest):
 
     predictive_feature = rng.standard_normal(size=n_samples)
     predictive_feature[y_mask] = np.nan
+    assert np.isnan(predictive_feature).any()
 
     X_predictive = X_non_predictive.copy()
     X_predictive[:, 5] = predictive_feature

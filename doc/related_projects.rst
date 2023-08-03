@@ -136,6 +136,14 @@ enhance the functionality of scikit-learn's estimators.
   Compiles tree-based ensemble models into C code for minimizing prediction
   latency.
 
+- `micromlgen <https://github.com/eloquentarduino/micromlgen>`_
+  MicroML brings Machine Learning algorithms to microcontrollers.
+  Supports several scikit-learn classifiers by transpiling them to C code.
+
+- `emlearn <https://emlearn.org>`_
+  Implements scikit-learn estimators in C99 for embedded devices and microcontrollers.
+  Supports several classifier, regression and outlier detection models.
+
 **Model throughput**
 
 - `Intel(R) Extension for scikit-learn <https://github.com/intel/scikit-learn-intelex>`_
