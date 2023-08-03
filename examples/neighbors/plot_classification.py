@@ -47,7 +47,7 @@ clf = Pipeline(
 # Decision boundary
 # -----------------
 #
-# Now, we will fit two different classifiers that changes due to the parameter
+# Now, we fit two classifiers with different values of the parameter
 # `weights`. We plot the decision boundary of each classifier as well as the original
 # dataset to observe the difference.
 import matplotlib.pyplot as plt
