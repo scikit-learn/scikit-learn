@@ -5,6 +5,7 @@ It allows to make uniform checks and validation.
 import numpy as np
 
 from ..base import is_classifier
+from .multiclass import type_of_target
 from .validation import _check_response_method, check_is_fitted
 
 
@@ -72,10 +73,8 @@ def _get_response_values(
     if is_classifier(estimator):
         prediction_method = _check_response_method(estimator, response_method)
         classes = estimator.classes_
-        if isinstance(classes, list):
-            target_type = "multilabel-indicator"
-        else:
-            target_type = "binary" if len(classes) <= 2 else "multiclass"
+        target_type = type_of_target(classes)
+        if target_type in ("binary", "multiclass"):
             if pos_label is not None and pos_label not in classes.tolist():
                 raise ValueError(
                     f"pos_label={pos_label} is not a valid label: It should be "

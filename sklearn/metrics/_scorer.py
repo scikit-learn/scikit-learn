@@ -129,20 +129,27 @@ class _MultimetricScorer:
                 **{name: Bunch(score=kwargs) for name in self._scorers}
             )
 
-        # to have the highest cache hit rate, we need to check if we have any
+        # To have the highest cache hit rate, we need to check if we have any
         # _ThresholdScorer and choose a single response method based on the current
         # estimator
-        scorers = copy.deepcopy(self._scorers)
-        for name, scorer in scorers.items():
-            if isinstance(scorer, _ThresholdScorer):
-                if scorer._response_method is None:
-                    response_method = ("decision_function", "predict_proba")
-                else:
-                    response_method = scorer._response_method
-                scorer._response_method = _check_response_method(
-                    estimator, response_method
-                ).__name__
+        def process_scorer(scorer):
+            if not isinstance(scorer, _ThresholdScorer):
+                return scorer
+            if scorer._response_method is None:
+                response_method = ("decision_function", "predict_proba")
+            else:
+                response_method = scorer._response_method
+            new_response_method = _check_response_method(
+                estimator, response_method
+            ).__name__
 
+            new_scorer = copy.copy(scorer)
+            new_scorer._response_method = new_response_method
+            return new_scorer
+
+        scorers = {
+            name: process_scorer(scorer) for name, scorer in self._scorers.items()
+        }
         for name, scorer in scorers.items():
             try:
                 if isinstance(scorer, _BaseScorer):
