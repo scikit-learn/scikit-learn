@@ -129,8 +129,15 @@ def test_multiclass_class_label(pyplot, response_method, class_label):
     results."""
     grid_resolution = 10
     eps = 1.0
-    X, y = make_classification(n_classes=3, n_informative=3, random_state=0)
-    X = X[:, [0, 1]]
+    X, y = make_classification(
+        n_features=2,
+        n_classes=3,
+        n_informative=2,
+        n_redundant=0,
+        n_repeated=0,
+        n_clusters_per_class=1,
+        random_state=0,
+    )
     lr = LogisticRegression(random_state=0).fit(X, y)
 
     disp = DecisionBoundaryDisplay.from_estimator(
