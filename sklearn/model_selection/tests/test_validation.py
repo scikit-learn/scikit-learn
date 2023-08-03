@@ -2504,7 +2504,7 @@ def test_cross_validate_routing(cv_method):
     estimator = ConsumingClassifier(registry=estimator_registry).set_fit_request(
         sample_weight="fit_sample_weight", metadata="fit_metadata"
     )
-    n_samples = len(X)
+    n_samples = _num_samples(X)
     rng = np.random.RandomState(0)
     score_weights = rng.rand(n_samples)
     score_metadata = rng.rand(n_samples)
