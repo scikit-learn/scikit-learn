@@ -402,10 +402,6 @@ class _ProbaScorer(_BaseScorer):
 
 
 class _ThresholdScorer(_BaseScorer):
-    def __init__(self, score_func, sign, kwargs, response_method=None):
-        super().__init__(score_func, sign, kwargs)
-        self._response_method = response_method
-
     def _score(self, method_caller, clf, X, y, **kwargs):
         """Evaluate decision function output for X relative to y_true.
 
@@ -455,10 +451,6 @@ class _ThresholdScorer(_BaseScorer):
         if is_regressor(clf):
             y_pred = method_caller(clf, "predict", X)
         else:
-            if self._response_method is None:
-                pass
-            else:
-                pass
             pos_label = self._get_pos_label()
             try:
                 y_pred = method_caller(clf, "decision_function", X, pos_label=pos_label)
