@@ -1237,8 +1237,16 @@ class KMeans(_BaseKMeans):
         If an array is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-        If a callable is passed, it should take arguments X, n_clusters and a
-        random state and return an initialization.
+        If a callable is passed, it should take:
+
+        * arguments `X`,
+
+        * `n_clusters`,
+
+        * a `random state`
+
+
+        It will then return an initialization.
 
         For an example of how to use init with PCA, see
         :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
