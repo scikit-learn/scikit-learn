@@ -2490,6 +2490,8 @@ def test_passed_unrequested_metadata(cv_method):
     "cv_method", [cross_validate, cross_val_score, cross_val_predict]
 )
 def test_cross_validate_routing(cv_method):
+    """Check that the cv method are properly dispatching the metadata
+    to consumer."""
     scorer_registry = _Registry()
     scorer = ConsumingScorer(registry=scorer_registry).set_score_request(
         sample_weight="score_weights", metadata="score_metadata"
