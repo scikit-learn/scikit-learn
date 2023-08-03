@@ -17,7 +17,7 @@ Changelog
 
 - |Fix| scorers used with :func:`metrics.get_scorer` handles properly
   multilabel-indicator matrix.
-  :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`27002` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.neighbors`
 ........................
