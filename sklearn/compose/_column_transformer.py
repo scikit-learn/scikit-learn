@@ -26,6 +26,7 @@ from ..utils.metadata_routing import (
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
+    process_routing,
 )
 from ..utils.metaestimators import _BaseComposition
 from ..utils.parallel import Parallel, delayed
@@ -723,25 +724,35 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             )
         )
         try:
-            return Parallel(n_jobs=self.n_jobs)(
-                delayed(func)(
-                    transformer=clone(trans) if not fitted else trans,
-                    X=_safe_indexing(X, column, axis=1),
-                    y=y,
-                    weight=weight,
-                    message_clsname="ColumnTransformer",
-                    message=self._log_message(name, idx, len(transformers)),
-                    params=routed_params[name],
+            jobs = []
+            for idx, (name, trans, column, weight) in enumerate(transformers, 1):
+                if func is _fit_transform_one:
+                    extra_args = dict(
+                        message_clsname="ColumnTransformer",
+                        message=self._log_message(name, idx, len(transformers)),
+                    )
+                else:
+                    extra_args = {}
+                jobs.append(
+                    delayed(func)(
+                        transformer=clone(trans) if not fitted else trans,
+                        X=_safe_indexing(X, column, axis=1),
+                        y=y,
+                        weight=weight,
+                        **extra_args,
+                        params=routed_params[name],
+                    )
                 )
-                for idx, (name, trans, column, weight) in enumerate(transformers, 1)
-            )
+
+            return Parallel(n_jobs=self.n_jobs)(jobs)
+
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN) from e
             else:
                 raise
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, **params):
         """Fit all transformers using X.
 
         Parameters
@@ -753,14 +764,24 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         y : array-like of shape (n_samples,...), default=None
             Targets for supervised learning.
 
+        **params : dict, default=None
+            Parameters to be passed to the underlying transformers' ``fit`` and
+            ``transform`` methods.
+
+            You can only pass this if metadata routing is enabled, which you
+            can enable using ``sklearn.set_config(enable_metadata_routing=True)``.
+
+            .. versionadded:: 1.4
+
         Returns
         -------
         self : ColumnTransformer
             This estimator.
         """
+        _raise_for_params(params, self, "fit")
         # we use fit_transform to make sure to set sparse_output_ (for which we
         # need the transformed data) to have consistent output type in predict
-        self.fit_transform(X, y=y)
+        self.fit_transform(X, y=y, **params)
         return self
 
     @_fit_context(
@@ -808,7 +829,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._validate_remainder(X)
 
         if _routing_enabled():
-            pass
+            routed_params = process_routing(self, "fit_transform", **params)
         else:
             routed_params = self._get_empty_routing()
 
@@ -908,7 +929,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             self._check_n_features(X, reset=False)
 
         if _routing_enabled():
-            pass
+            routed_params = process_routing(self, "transform", **params)
         else:
             routed_params = self._get_empty_routing()
 
@@ -1050,8 +1071,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         for name, step, _, _ in self._iter(
             fitted=False, column_as_strings=False, replace_strings=True
         ):
-            if step is not None:
-                method_mapping = MethodMapping()
+            if step is None:
+                continue
+            method_mapping = MethodMapping()
             if hasattr(step, "fit_transform"):
                 (
                     method_mapping.add(caller="fit", callee="fit_transform").add(
@@ -1065,6 +1087,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     .add(caller="fit_transform", callee="fit")
                     .add(caller="fit_transform", callee="transform")
                 )
+            method_mapping.add(caller="transform", callee="transform")
             router.add(method_mapping=method_mapping, **{name: step})
 
         return router

@@ -1239,8 +1239,29 @@ def make_pipeline(*steps, memory=None, verbose=False):
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
-def _transform_one(transformer, X, y, weight, **fit_params):
-    res = transformer.transform(X)
+def _transform_one(transformer, X, y, weight, params):
+    """Call transform and apply weight to output.
+
+    Parameters
+    ----------
+    transformer : estimator
+        Estimator to be used for transformation.
+
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Input data to be transformed.
+
+    y : ndarray of shape (n_samples,)
+        Ignored.
+
+    weight : float
+        Weight to be applied to the output of the transformation.
+
+    params : dict
+        Parameters to be passed to the transformer's ``transform`` method.
+
+        This should be of the form ``process_routing()["step_name"]``.
+    """
+    res = transformer.transform(X, **params.transform)
     # if we have a weight for this transformer, multiply output
     if weight is None:
         return res
@@ -1623,8 +1644,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             The `hstack` of results of transformers. `sum_n_components` is the
             sum of `n_components` (output dimension) over transformers.
         """
+        params = Bunch(transform={})
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, X, None, weight)
+            delayed(_transform_one)(trans, X, None, weight, params)
             for name, trans, weight in self._iter()
         )
         if not Xs:

@@ -23,6 +23,7 @@ from sklearn.preprocessing import (
     OneHotEncoder,
     StandardScaler,
 )
+from sklearn.tests.test_pipeline import SimpleTransformer
 from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_almost_equal,
@@ -2229,3 +2230,48 @@ def test_remainder_set_output():
     ct.set_output(transform="default")
     out = ct.fit_transform(df)
     assert isinstance(out, np.ndarray)
+
+
+# Metadata Routing Tests
+# ======================
+
+
+@pytest.mark.parametrize("method", ["transform", "fit_transform", "fit"])
+def test_routing_passed_metadata_not_supported(method):
+    """Test that the right error message is raised when metadata is passed while
+    not supported when `enable_metadata_routing=False`."""
+
+    X = np.array([[0, 1, 2], [2, 4, 6]]).T
+    y = [1, 2, 3]
+    trs = ColumnTransformer([("trans", Trans(), [0])]).fit(X, y)
+
+    with pytest.raises(
+        ValueError, match="is only supported if enable_metadata_routing=True"
+    ):
+        getattr(trs, method)([[1]], sample_weight=[1], prop="a")
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_metadata_routing_for_column_transformer():
+    """Test that metadata is routed correctly for pipelines."""
+    X = np.array([[0, 1, 2], [2, 4, 6]]).T
+    y = [1, 2, 3]
+    trs = ColumnTransformer(
+        [
+            (
+                "trans",
+                SimpleTransformer()
+                .set_fit_request(sample_weight=True, prop=True)
+                .set_transform_request(sample_weight=True, prop=True),
+                [0],
+            )
+        ]
+    )
+
+    trs.fit(X, y, sample_weight=[1], prop="a")
+    trs.fit_transform(X, y, sample_weight=[1], prop="a")
+    trs.transform(X, sample_weight=[1], prop="a")
+
+
+# End of Metadata Routing Tests
+# =============================
