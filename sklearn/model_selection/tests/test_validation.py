@@ -2437,7 +2437,9 @@ def test_cross_validate_return_indices(global_random_seed):
 # ========================================
 
 
+# TODO(1.6): remove this test in 1.6
 def test_cross_validate_fit_param_deprecation():
+    """Check that we warn about deprecating `fit_params`."""
     with pytest.warns(FutureWarning, match="`fit_params` is deprecated"):
         cross_validate(estimator=ConsumingClassifier(), X=X, y=y, cv=2, fit_params={})
 
@@ -2454,6 +2456,9 @@ def test_cross_validate_fit_param_deprecation():
     "cv_method", [cross_validate, cross_val_score, cross_val_predict]
 )
 def test_groups_with_routing_validation(cv_method):
+    """Check that we raise an error if `groups` are passed to the cv method instead
+    of `params` when metadata routing is enabled.
+    """
     with pytest.raises(ValueError, match="`groups` can only be passed if"):
         cv_method(
             estimator=ConsumingClassifier(),
@@ -2468,6 +2473,8 @@ def test_groups_with_routing_validation(cv_method):
     "cv_method", [cross_validate, cross_val_score, cross_val_predict]
 )
 def test_passed_unrequested_metadata(cv_method):
+    """Check that we raise an error if passing metada that are not
+    requested."""
     err_msg = re.escape("['metadata'] are passed to cross validation")
     with pytest.raises(ValueError, match=err_msg):
         cv_method(
@@ -2483,6 +2490,8 @@ def test_passed_unrequested_metadata(cv_method):
     "cv_method", [cross_validate, cross_val_score, cross_val_predict]
 )
 def test_cross_validate_routing(cv_method):
+    """Check that the cv method are properly dispatching the metadata
+    to consumer."""
     scorer_registry = _Registry()
     scorer = ConsumingScorer(registry=scorer_registry).set_score_request(
         sample_weight="score_weights", metadata="score_metadata"
@@ -2495,7 +2504,7 @@ def test_cross_validate_routing(cv_method):
     estimator = ConsumingClassifier(registry=estimator_registry).set_fit_request(
         sample_weight="fit_sample_weight", metadata="fit_metadata"
     )
-    n_samples = len(X)
+    n_samples = _num_samples(X)
     rng = np.random.RandomState(0)
     score_weights = rng.rand(n_samples)
     score_metadata = rng.rand(n_samples)
