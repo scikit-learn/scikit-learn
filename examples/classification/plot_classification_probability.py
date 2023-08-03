@@ -76,18 +76,25 @@ for index, (name, classifier) in enumerate(classifiers.items()):
             response_method="predict_proba",
             class_label=k,
             ax=axs[index, k],
+            alpha=0.5,
+            cmap="RdBu",
         )
         axs[index, k].set(
             xticks=(), yticks=(), ylabel=name if k == 0 else None, title=f"Class #{k}"
         )
-        idx = y_pred == k
-        if idx.any():
-            axs[index, k].scatter(
-                X[idx, 0], X[idx, 1], marker="o", c="w", edgecolor="k"
-            )
+        scatter = axs[index, k].scatter(
+            X[:, 0], X[:, 1], marker="o", c=y_pred, edgecolor="k", alpha=0.7
+        )
+
+axs[4, 1].legend(
+    scatter.legend_elements()[0],
+    iris.target_names,
+    bbox_to_anchor=(1.03, -0.1),
+    title="Predicted classes",
+)
 
 fig.colorbar(
-    cm.ScalarMappable(norm=None, cmap="viridis"),
+    cm.ScalarMappable(norm=None, cmap="RdBu"),
     ax=axs,
     orientation="horizontal",
     label="Probability",
