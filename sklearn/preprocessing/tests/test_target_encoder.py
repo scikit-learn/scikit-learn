@@ -78,6 +78,7 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     X_test = np.concatenate((X_test, [[unknown_value]]))
 
     rng = np.random.RandomState(global_random_seed)
+    rng_state = rng.get_state()
 
     n_splits = 3
     random_state = 0
@@ -85,10 +86,12 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
         y_int = rng.randint(low=0, high=2, size=n_samples)
         target_names = np.array(["cat", "dog"], dtype=object)
         y_train = target_names[y_int]
+        rng.set_state(rng_state)
         cv = StratifiedKFold(n_splits=n_splits, random_state=random_state, shuffle=True)
     else:  # target_type == continuous
         y_int = rng.uniform(low=-10, high=20, size=n_samples)
         y_train = y_int
+        rng.set_state(rng_state)
         cv = KFold(n_splits=n_splits, random_state=random_state, shuffle=True)
 
     shuffled_idx = rng.permutation(n_samples)
@@ -107,6 +110,7 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
             X_train_array[test_idx, 0]
         ]
 
+    rng.set_state(rng_state)
     target_encoder = TargetEncoder(
         smooth=smooth,
         categories=categories,
