@@ -27,6 +27,12 @@ Changelog
   when the input to the `param_distributions` parameter is a list of dicts.
   :pr:`26893` by :user:`Stefanie Senger <StefanieSenger>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.LabelEncoder` correctly accepts `y` as a keyword
+  argument. :pr:`26940` by `Thomas Fan`_.
+
 :mod:`sklearn.tree`
 ...................
 
