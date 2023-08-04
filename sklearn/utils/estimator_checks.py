@@ -4587,7 +4587,9 @@ def check_set_output_transform_pandas(name, transformer_orig):
         outputs_pandas = _output_from_fit_transform(transformer_pandas, name, X, df, y)
     except ValueError as e:
         # transformer does not support sparse data
-        assert "Pandas output does not support sparse data." in str(e), e
+        assert "The output of the transformer used is a scipy sparse matrix." in str(
+            e
+        ), e
         return
 
     for case in outputs_default:
