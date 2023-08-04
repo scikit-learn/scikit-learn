@@ -783,7 +783,10 @@ def test_select_best_index(SearchCV):
     assert best_index == 8
 
 
-def test_halving_random_search_cv_results():
+def test_halving_random_search_list_of_dicts():
+    """Check the behaviour of the `HalvingRandomSearchCV` with `param_distribution`
+    being a list of dictionary.
+    """
     X, y = make_classification(n_samples=150, n_features=4, random_state=42)
 
     params = [
