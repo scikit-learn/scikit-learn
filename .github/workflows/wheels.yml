@@ -42,7 +42,7 @@ jobs:
 
   # Build the wheels for Linux, Windows and macOS for Python 3.8 and newer
   build_wheels:
-    name: Build wheel for cp"${{ matrix.python }}"-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
+    name: Build wheel for cp ${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
     runs-on: ${{ matrix.os }}
     needs: check_build_trigger
     if: needs.check_build_trigger.outputs.build
