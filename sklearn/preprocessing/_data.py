@@ -629,7 +629,6 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     -----
     For a comparison of the different scalers, transformers, and normalizers,
     see: :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`.
-
     """
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
@@ -1348,7 +1347,6 @@ def maxabs_scale(X, *, axis=0, copy=True):
 
     For a comparison of the different scalers, transformers, and normalizers,
     see: :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`.
-
     """
     # Unlike the scaler object, this function allows 1d input.
 
@@ -1832,7 +1830,6 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     -----
     For a comparison of the different scalers, transformers, and normalizers,
     see: :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`.
-
     """
     if axis == 0:
         sparse_format = "csc"
