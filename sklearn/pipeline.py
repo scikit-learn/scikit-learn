@@ -53,8 +53,7 @@ def _final_estimator_has(attr):
 
 class Pipeline(_BaseComposition):
     """
-    A sequence of data transformers, which can be optionally complemented with
-    a final predictor.
+    A sequence of data transformers with an optional final predictor.
 
     `Pipeline` allows you to sequentially apply a list of transformers to
     preprocess the data and, if desired, conclude the sequence with a final
@@ -80,9 +79,9 @@ class Pipeline(_BaseComposition):
     Parameters
     ----------
     steps : list of tuples
-        List of (name, transform) tuples (implementing `fit` and `transform`)
-        that are chained in sequential order. The last step can only implement
-        `fit`.
+        List of (name of step, transformer implementing `transform`) tuples
+        that are chained in sequential order. The last step doesn't need to
+        implement `transform`.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. The last step
