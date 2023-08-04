@@ -80,17 +80,16 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     rng = np.random.RandomState(global_random_seed)
 
     n_splits = 3
+    random_state = 0
     if target_type == "binary":
         y_int = rng.randint(low=0, high=2, size=n_samples)
         target_names = np.array(["cat", "dog"], dtype=object)
         y_train = target_names[y_int]
-        rng_2 = np.random.RandomState(global_random_seed)
-        cv = StratifiedKFold(n_splits=n_splits, random_state=rng_2, shuffle=True)
+        cv = StratifiedKFold(n_splits=n_splits, random_state=random_state, shuffle=True)
     else:  # target_type == continuous
         y_int = rng.uniform(low=-10, high=20, size=n_samples)
         y_train = y_int
-        rng_2 = np.random.RandomState(global_random_seed)
-        cv = KFold(n_splits=n_splits, random_state=rng_2, shuffle=True)
+        cv = KFold(n_splits=n_splits, random_state=random_state, shuffle=True)
 
     shuffled_idx = rng.permutation(n_samples)
     X_train_array = X_train_array[shuffled_idx]
@@ -108,13 +107,11 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
             X_train_array[test_idx, 0]
         ]
 
-    rng = np.random.RandomState(global_random_seed)
-
     target_encoder = TargetEncoder(
         smooth=smooth,
         categories=categories,
         cv=n_splits,
-        random_state=rng,
+        random_state=random_state,
     )
 
     X_fit_transform = target_encoder.fit_transform(X_train, y_train)
