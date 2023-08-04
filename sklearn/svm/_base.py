@@ -1107,9 +1107,9 @@ def _fit_liblinear(
     intercept_scaling : float
         Liblinear internally penalizes the intercept, treating it like any
         other term in the feature vector. To reduce the impact of the
-        regularization on the intercept, the ``intercept_scaling`` parameter
-        can be set to a value greater than 1; the higher the value of
-        ``intercept_scaling``, the lower the impact of regularization on it.
+        regularization on the intercept, the `intercept_scaling` parameter can
+        be set to a value greater than 1; the higher the value of
+        `intercept_scaling`, the lower the impact of regularization on it.
         Then, the weights become `[w_x_1, ..., w_x_n,
         w_intercept*intercept_scaling]`, where `w_x_1, ..., w_x_n` represent
         the feature weights and the intercept weight is scaled by

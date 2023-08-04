@@ -66,10 +66,10 @@ section :ref:`svm_mathematical_formulation`). On the other hand,
 :class:`LinearSVC` is another (faster) implementation of Support Vector
 Classification for the case of a linear kernel. It also
 lacks some of the attributes of :class:`SVC` and :class:`NuSVC`, like
-``support_``. :class:`LinearSVC` uses ``squared_hinge`` loss and due to its
+`support_`. :class:`LinearSVC` uses `squared_hinge` loss and due to its
 implementation in `liblinear` it also regularizes the intercept, if considered.
 This effect can however be reduced by carefully fine tuning its
-``intercept_scaling`` parameter, which allows the intercept term to have a
+`intercept_scaling` parameter, which allows the intercept term to have a
 different regularization behavior compared to the other features. The
 classification results and score can therefore differ from the other two
 classifiers.
@@ -318,16 +318,16 @@ because the cost function ignores samples whose prediction is close to their
 target.
 
 There are three different implementations of Support Vector Regression:
-:class:`SVR`, :class:`NuSVR` and :class:`LinearSVR`. :class:`LinearSVR` provides
-a faster implementation than :class:`SVR` but only considers the linear kernel,
-while :class:`NuSVR` implements a slightly different formulation than
-:class:`SVR` and :class:`LinearSVR`. Due to its implementation in `liblinear`
-:class:`LinearSVR` also regularizes the intercept, if considered. This effect
-can however be reduced by carefully fine tuning its ``intercept_scaling``
-parameter, which allows the intercept term to have a different regularization
-behavior compared to the other features. The classification results and score
-can therefore differ from the other two classifiers. See
-:ref:`svm_implementation_details` for further details.
+:class:`SVR`, :class:`NuSVR` and :class:`LinearSVR`. :class:`LinearSVR`
+provides a faster implementation than :class:`SVR` but only considers the
+linear kernel, while :class:`NuSVR` implements a slightly different formulation
+than :class:`SVR` and :class:`LinearSVR`. Due to its implementation in
+`liblinear` :class:`LinearSVR` also regularizes the intercept, if considered.
+This effect can however be reduced by carefully fine tuning its
+`intercept_scaling` parameter, which allows the intercept term to have a
+different regularization behavior compared to the other features. The
+classification results and score can therefore differ from the other two
+classifiers. See :ref:`svm_implementation_details` for further details.
 
 As with classification classes, the fit method will take as
 argument vectors X, y, only that in this case y is expected to have

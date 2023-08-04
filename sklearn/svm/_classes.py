@@ -49,9 +49,9 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     penalties and loss functions and should scale better to large numbers of
     samples.
 
-    The main differences between LinearSVC and SVC lie in the loss function
-    used by default, and in the handling of intercept regularization between
-    those two implementations.
+    The main differences between :class:`~sklearn.svm.LinearSVC` and
+    :class:`~sklearn.svm.SVC` lie in the loss function used by default, and in
+    the handling of intercept regularization between those two implementations.
 
     This class supports both dense and sparse input and the multiclass support
     is handled according to a one-vs-the-rest scheme.
@@ -103,7 +103,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     fit_intercept : bool, default=True
         Whether or not to fit an intercept. If set to True, the feature vector
-        is extended to include an intercept term: ``[x_1, ..., x_n, 1]``, where
+        is extended to include an intercept term: `[x_1, ..., x_n, 1]`, where
         1 corresponds to the intercept. If set to False, no intercept will be
         used in calculations (i.e. data is expected to be already centered).
 
@@ -114,10 +114,10 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         vector. The intercept becomes intercept_scaling * synthetic feature
         weight. Note that liblinear internally penalizes the intercept,
         treating it like any other term in the feature vector. To reduce the
-        impact of the regularization on the intercept, the
-        ``intercept_scaling`` parameter can be set to a value greater than 1;
-        the higher the value of ``intercept_scaling``, the lower the impact of
-        regularization on it. Then, the weights become `[w_x_1, ..., w_x_n,
+        impact of the regularization on the intercept, the `intercept_scaling`
+        parameter can be set to a value greater than 1; the higher the value of
+        `intercept_scaling`, the lower the impact of regularization on it.
+        Then, the weights become `[w_x_1, ..., w_x_n,
         w_intercept*intercept_scaling]`, where `w_x_1, ..., w_x_n` represent
         the feature weights and the intercept weight is scaled by
         `intercept_scaling`. This scaling allows the intercept term to have a
@@ -371,9 +371,9 @@ class LinearSVR(RegressorMixin, LinearModel):
     penalties and loss functions and should scale better to large numbers of
     samples.
 
-    The main differences between LinearSVR and SVR lie in the loss function used
-    by default, and in the handling of intercept regularization between those
-    two implementations.
+    The main differences between :class:`~sklearn.svm.LinearSVR` and
+    :class:`~sklearn.svm.SVR` lie in the loss function used by default, and in
+    the handling of intercept regularization between those two implementations.
 
     This class supports both dense and sparse input.
 
@@ -403,21 +403,21 @@ class LinearSVR(RegressorMixin, LinearModel):
 
     fit_intercept : bool, default=True
         Whether or not to fit an intercept. If set to True, the feature vector
-        is extended to include an intercept term: ``[x_1, ..., x_n, 1]``, where
+        is extended to include an intercept term: `[x_1, ..., x_n, 1]`, where
         1 corresponds to the intercept. If set to False, no intercept will be
         used in calculations (i.e. data is expected to be already centered).
 
     intercept_scaling : float, default=1.0
-        When `fit_intercept` is True, the instance vector x becomes ``[x_1,
-        ..., x_n, intercept_scaling]``, i.e. a "synthetic" feature with a
-        constant value equal to `intercept_scaling` is appended to the instance
-        vector. The intercept becomes intercept_scaling * synthetic feature
-        weight. Note that liblinear internally penalizes the intercept,
-        treating it like any other term in the feature vector. To reduce the
-        impact of the regularization on the intercept, the
-        ``intercept_scaling`` parameter can be set to a value greater than 1;
-        the higher the value of ``intercept_scaling``, the lower the impact of
-        regularization on it. Then, the weights become `[w_x_1, ..., w_x_n,
+        When `fit_intercept` is True, the instance vector x becomes `[x_1, ...,
+        x_n, intercept_scaling]`, i.e. a "synthetic" feature with a constant
+        value equal to `intercept_scaling` is appended to the instance vector.
+        The intercept becomes intercept_scaling * synthetic feature weight.
+        Note that liblinear internally penalizes the intercept, treating it
+        like any other term in the feature vector. To reduce the impact of the
+        regularization on the intercept, the `intercept_scaling` parameter can
+        be set to a value greater than 1; the higher the value of
+        `intercept_scaling`, the lower the impact of regularization on it.
+        Then, the weights become `[w_x_1, ..., w_x_n,
         w_intercept*intercept_scaling]`, where `w_x_1, ..., w_x_n` represent
         the feature weights and the intercept weight is scaled by
         `intercept_scaling`. This scaling allows the intercept term to have a
@@ -480,8 +480,8 @@ class LinearSVR(RegressorMixin, LinearModel):
         same library as this class (liblinear).
 
     SVR : Implementation of Support Vector Machine regression using libsvm:
-        the kernel can be non-linear but its SMO algorithm does not
-        scale to large number of samples as LinearSVR does.
+        the kernel can be non-linear but its SMO algorithm does not scale to
+        large number of samples as :class:`~sklearn.svm.LinearSVR` does.
 
     sklearn.linear_model.SGDRegressor : SGDRegressor can optimize the same cost
         function as LinearSVR
