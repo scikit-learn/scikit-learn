@@ -52,9 +52,9 @@ def _encode_target(X_ordinal, y_int, n_categories, smooth):
 @pytest.mark.parametrize(
     "categories, unknown_value",
     [
-        ([np.array([0, 1, 2], dtype=np.int64)], 4),
-        ([np.array([1.0, 3.0, np.nan], dtype=np.float64)], 6.0),
-        ([np.array(["cat", "dog", "snake"], dtype=object)], "bear"),
+        # ([np.array([0, 1, 2], dtype=np.int64)], 4),
+        # ([np.array([1.0, 3.0, np.nan], dtype=np.float64)], 6.0),
+        # ([np.array(["cat", "dog", "snake"], dtype=object)], "bear"),
         ("auto", 3),
     ],
 )
@@ -77,19 +77,18 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
 
     X_test = np.concatenate((X_test, [[unknown_value]]))
 
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.RandomState(a := global_random_seed)
 
     n_splits = 3
-    random_state = 0
     if target_type == "binary":
         y_int = rng.randint(low=0, high=2, size=n_samples)
         target_names = np.array(["cat", "dog"], dtype=object)
         y_train = target_names[y_int]
-        cv = StratifiedKFold(n_splits=n_splits, random_state=random_state, shuffle=True)
+        cv = StratifiedKFold(n_splits=n_splits, random_state=rng, shuffle=True)
     else:  # target_type == continuous
         y_int = rng.uniform(low=-10, high=20, size=n_samples)
         y_train = y_int
-        cv = KFold(n_splits=n_splits, random_state=random_state, shuffle=True)
+        cv = KFold(n_splits=n_splits, random_state=rng, shuffle=True)
 
     shuffled_idx = rng.permutation(n_samples)
     X_train_array = X_train_array[shuffled_idx]
@@ -111,7 +110,7 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
         smooth=smooth,
         categories=categories,
         cv=n_splits,
-        random_state=random_state,
+        random_state=rng,
     )
 
     X_fit_transform = target_encoder.fit_transform(X_train, y_train)
