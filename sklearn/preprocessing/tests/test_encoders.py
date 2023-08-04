@@ -1977,7 +1977,7 @@ def test_one_hot_encoder_set_output():
 
     ohe.set_output(transform="pandas")
 
-    match = "The output of the transformer used is a scipy sparse matrix."
+    match = "Pandas output does not support sparse data. Set sparse_output=False"
     with pytest.raises(ValueError, match=match):
         ohe.fit_transform(X_df)
 
