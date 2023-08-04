@@ -91,6 +91,7 @@ Estimators with support for `Array API`-compatible inputs
 - :class:`decomposition.PCA` (with `svd_solver="full"`,
   `svd_solver="randomized"` and `power_iteration_normalizer="QR"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
+- :class:`preprocessing.MinMaxScaler`
 
 Coverage for more estimators is expected to grow over time. Please follow the
 dedicated `meta-issue on GitHub

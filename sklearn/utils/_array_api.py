@@ -495,9 +495,13 @@ def _nanmin(X, axis=None):
         return xp.asarray(numpy.nanmin(X, axis=axis))
 
     else:
-        X = xp.min(xp.where(~xp.isnan(X), X, xp.asarray(+xp.inf)), axis=axis)
+        mask = xp.isnan(X)
+        X = xp.min(xp.where(mask, xp.asarray(+xp.inf), X), axis=axis)
         # Replace Infs from all NaN slices with NaN again
-        return xp.where(~xp.isinf(X), X, xp.asarray(xp.nan))
+        mask = xp.all(mask, axis=axis)
+        if xp.any(mask):
+            X = xp.where(~mask, X, xp.asarray(xp.nan))
+        return X
 
 
 def _nanmax(X, axis=None):
@@ -508,9 +512,13 @@ def _nanmax(X, axis=None):
         return xp.asarray(numpy.nanmax(X, axis=axis))
 
     else:
-        X = xp.max(xp.where(~xp.isnan(X), X, xp.asarray(-xp.inf)), axis=axis)
+        mask = xp.isnan(X)
+        X = xp.max(xp.where(mask, xp.asarray(-xp.inf), X), axis=axis)
         # Replace Infs from all NaN slices with NaN again
-        return xp.where(~_isneginf(X), X, xp.asarray(xp.nan))
+        mask = xp.all(mask, axis=axis)
+        if xp.any(mask):
+            X = xp.where(~mask, X, xp.asarray(xp.nan))
+        return X
 
 
 def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
