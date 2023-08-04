@@ -372,6 +372,7 @@ def mutual_info_regression(
     mi : ndarray, shape (n_features,)
         Estimated mutual information between each feature and the target in
         nats (natural logarithm).
+        
     Notes
     -----
     1. The term "discrete features" is used instead of naming them
