@@ -71,6 +71,15 @@ Changelog
   and all metadata are passed as keyword arguments. :pr:`26909` by `Adrin
   Jalali`_.
 
+:mod:`sklearn.cluster`
+............................
+
+- |API| : `kdtree` and `balltree` values are now deprecated and are renamed as
+  `kd_tree` and `ball_tree` respectively for the `algorithm` parameter of
+  :class:`cluster.HDBSCAN` ensuring consistency in naming convention.
+  `kdtree` and `balltree` values will be removed in 1.6.
+  :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
@@ -110,6 +119,11 @@ Changelog
   Missing values in the train data and multi-output targets are not supported.
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
   initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
+
+- |Efficiency| Improves runtime and memory usage for
+  :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
+  :pr:`26957` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -168,10 +182,20 @@ Changelog
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`, initiated by
   :user:`Patrick O'Reilly <pat-oreilly>`.
 
+
+:mod:`sklearn.neighbors`
+........................
+
+- |API| :class:`neighbors.KNeighborsRegressor` now accepts
+  :class:`metric.DistanceMetric` objects directly via the `metric` keyword
+  argument allowing for the use of accelerated third-party
+  :class:`metric.DistanceMetric` objects.
+  :pr:`26267` by :user:`Meekail Zain <micky774>`
+
 :mod:`sklearn.metrics`
 ......................
 
-- |Performance| Computing pairwise distances via :class:`metrics.DistanceMetric`
+- |Efficiency| Computing pairwise distances via :class:`metrics.DistanceMetric`
   for CSR × CSR,  Dense × CSR, and CSR × Dense datasets is now 1.5x faster.
   :pr:`26765` by :user:`Meekail Zain <micky774>`
 
