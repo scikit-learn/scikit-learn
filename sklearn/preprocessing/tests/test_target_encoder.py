@@ -77,7 +77,7 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
 
     X_test = np.concatenate((X_test, [[unknown_value]]))
 
-    rng = np.random.RandomState(a := global_random_seed)
+    rng = np.random.RandomState(global_random_seed)
 
     n_splits = 3
     if target_type == "binary":
