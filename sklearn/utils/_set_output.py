@@ -44,9 +44,8 @@ def _wrap_in_pandas_container(
     if issparse(data_to_wrap):
         raise ValueError(
             "The output of the transformer used is a scipy sparse matrix. "
-            "Pandas however does not support this format. Set the "
-            "transformer output to a dense matrix or revert the output"
-            "format of the transformer with `set_output(transform='default')`."
+            "Try to set the transformer output to a dense array or disable "
+            "pandas output with set_output(transform='default')."
         )
 
     if callable(columns):
