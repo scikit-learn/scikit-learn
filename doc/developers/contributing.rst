@@ -1356,7 +1356,7 @@ The main difference between a "soft" and a (regular) "hard" deprecation is that 
 soft deprecation does not imply scheduling the removal of the deprecated API.
 
 Another difference is that a soft deprecation does not issue a warning: it's only mentioned
-in the documentation, whereas usually a "hard" deprecation issues a ``DeprecationWarning``
+in the documentation, whereas usually a "hard" deprecation issues a ``FutureWarning``
 warning at runtime. The documentation of a soft deprecation should explain why the API
 should be avoided, and if possible propose a replacement.
 
