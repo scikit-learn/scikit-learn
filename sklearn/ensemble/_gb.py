@@ -175,16 +175,12 @@ def _update_terminal_regions(
         masked_terminal_regions = terminal_regions.copy()
         masked_terminal_regions[~sample_mask] = -1
 
-        # update each leaf (= perform line search)
-        for leaf in np.nonzero(tree.children_left == TREE_LEAF)[0]:
-            indices = np.nonzero(terminal_regions == leaf)[0]  # of terminal regions
-            y_ = y.take(indices, axis=0)
-            sw = None if sample_weight is None else sample_weight[indices]
+        if isinstance(loss, HalfBinomialLoss):
 
-            if isinstance(loss, HalfBinomialLoss):
+            def compute_update(y_, indices, neg_gradient, raw_prediction, k):
                 # Make a single Newton-Raphson step, see "Additive Logistic Regression:
                 # A Statistical View of Boosting" FHT00 and note that we use a slightly
-                # different version of the loss with y in {0, 1} instead of {-1, +1}.
+                # different version (factor 2) of "F" with proba=expit(raw_prediction).
                 # Our node estimate is given by:
                 #    sum(w * (y - prob)) / sum(w * prob * (1 - prob))
                 # we take advantage that: y - prob = neg_gradient
@@ -194,8 +190,11 @@ def _update_terminal_regions(
                 numerator = np.average(neg_g, weights=sw)
                 # denominator = hessian = prob * (1 - prob)
                 denominator = np.average(prob * (1 - prob), weights=sw)
-                update = _safe_divide(numerator, denominator)
-            elif isinstance(loss, HalfMultinomialLoss):
+                return _safe_divide(numerator, denominator)
+
+        elif isinstance(loss, HalfMultinomialLoss):
+
+            def compute_update(y_, indices, neg_gradient, raw_prediction, k):
                 # we take advantage that: y - prob = neg_gradient
                 neg_g = neg_gradient.take(indices, axis=0)
                 prob = y_ - neg_g
@@ -210,20 +209,33 @@ def _update_terminal_regions(
                 numerator *= (K - 1) / K
                 # denominator = (diagonal) hessian = prob * (1 - prob)
                 denominator = np.average(prob * (1 - prob), weights=sw)
-                update = _safe_divide(numerator, denominator)
-            elif isinstance(loss, ExponentialLoss):
+                return _safe_divide(numerator, denominator)
+
+        elif isinstance(loss, ExponentialLoss):
+
+            def compute_update(y_, indices, neg_gradient, raw_prediction, k):
                 z = 2.0 * y_ - 1.0  # z is -1 or +1
                 raw_pred = raw_prediction[indices, k]
                 # numerator = negative gradient
                 numerator = np.average(z * np.exp(-z * raw_pred), weights=sw)
                 # denominator = hessian
                 denominator = np.average(np.exp(-z * raw_pred), weights=sw)
-                update = _safe_divide(numerator, denominator)
-            else:
-                update = loss.fit_intercept_only(
+                return _safe_divide(numerator, denominator)
+
+        else:
+
+            def compute_update(y_, indices, neg_gradient, raw_prediction, k):
+                return loss.fit_intercept_only(
                     y_true=y_ - raw_prediction[indices, k],
                     sample_weight=sw,
                 )
+
+        # update each leaf (= perform line search)
+        for leaf in np.nonzero(tree.children_left == TREE_LEAF)[0]:
+            indices = np.nonzero(terminal_regions == leaf)[0]  # of terminal regions
+            y_ = y.take(indices, axis=0)
+            sw = None if sample_weight is None else sample_weight[indices]
+            update = compute_update(y_, indices, neg_gradient, raw_prediction, k)
 
             # TODO: Multiply here by learning rate instead of everywhere else.
             tree.value[leaf, 0, 0] = update
@@ -646,15 +658,20 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
-            X_train, X_val, y_train, y_val, sample_weight_train, sample_weight_val = (
-                train_test_split(
-                    X,
-                    y,
-                    sample_weight,
-                    random_state=self.random_state,
-                    test_size=self.validation_fraction,
-                    stratify=stratify,
-                )
+            (
+                X_train,
+                X_val,
+                y_train,
+                y_val,
+                sample_weight_train,
+                sample_weight_val,
+            ) = train_test_split(
+                X,
+                y,
+                sample_weight,
+                random_state=self.random_state,
+                test_size=self.validation_fraction,
+                stratify=stratify,
             )
             if is_classifier(self):
                 if self.n_classes_ != np.unique(y_train).shape[0]:
