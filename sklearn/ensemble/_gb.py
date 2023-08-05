@@ -122,7 +122,7 @@ def _update_terminal_regions(
     tree,
     X,
     y,
-    residual,
+    neg_gradient,
     raw_prediction,
     sample_weight,
     sample_mask,
@@ -152,8 +152,8 @@ def _update_terminal_regions(
         The data array.
     y : ndarray of shape (n_samples,)
         The target labels.
-    residual : ndarray of shape (n_samples,)
-        The residuals (usually the negative gradient).
+    neg_gradient : ndarray of shape (n_samples,)
+        The negative gradient.
     raw_prediction : ndarray of shape (n_samples, n_trees_per_iteration)
         The raw predictions (i.e. values from the tree leaves) of the
         tree ensemble at iteration ``i - 1``.
@@ -187,20 +187,20 @@ def _update_terminal_regions(
                 # different version of the loss with y in {0, 1} instead of {-1, +1}.
                 # Our node estimate is given by:
                 #    sum(w * (y - prob)) / sum(w * prob * (1 - prob))
-                # we take advantage that: y - prob = residual
-                residual_ = residual.take(indices, axis=0)
-                prob = y_ - residual_
+                # we take advantage that: y - prob = neg_gradient
+                neg_g = neg_gradient.take(indices, axis=0)
+                prob = y_ - neg_g
                 # numerator = negative gradient = y - prob
-                numerator = np.average(residual_, weights=sw)
+                numerator = np.average(neg_g, weights=sw)
                 # denominator = hessian = prob * (1 - prob)
                 denominator = np.average(prob * (1 - prob), weights=sw)
                 # TODO: Multiply here (and other else clauses) by learning rate instead
                 # of everywhere else.
                 tree.value[leaf, 0, 0] = _safe_divide(numerator, denominator)
             elif isinstance(loss, HalfMultinomialLoss):
-                # we take advantage that: y - prob = residual
-                residual_ = residual.take(indices, axis=0)
-                prob = y_ - residual_
+                # we take advantage that: y - prob = neg_gradient
+                neg_g = neg_gradient.take(indices, axis=0)
+                prob = y_ - neg_g
                 K = loss.n_classes
                 # numerator = negative gradient * (k - 1) / k
                 # Note: The factor (k - 1)/k appears in the original papers "Greedy
@@ -208,7 +208,7 @@ def _update_terminal_regions(
                 # Regression" by Friedman, Hastie, Tibshirani. This factor is, however,
                 # wrong or at least arbitrary as it directly multiplies the
                 # learning_rate. We keep it for backward compatibility.
-                numerator = np.average(residual_, weights=sw)
+                numerator = np.average(neg_g, weights=sw)
                 numerator *= (K - 1) / K
                 # denominator = (diagonal) hessian = prob * (1 - prob)
                 denominator = np.average(prob * (1 - prob), weights=sw)
@@ -437,7 +437,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             if self._loss.is_multiclass:
                 y = np.array(original_y == k, dtype=np.float64)
 
-            # induce regression tree on residuals
+            # induce regression tree on the negative gradient
             tree = DecisionTreeRegressor(
                 criterion=self.criterion,
                 splitter="best",
