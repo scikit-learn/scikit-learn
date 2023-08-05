@@ -1,5 +1,4 @@
 import importlib
-import itertools
 import pickle
 import re
 import warnings
@@ -45,8 +44,14 @@ from ..model_selection._validation import _safe_split
 from ..pipeline import make_pipeline
 from ..preprocessing import StandardScaler, scale
 from ..random_projection import BaseRandomProjection
-from ..utils._array_api import _convert_to_numpy, get_namespace
-from ..utils._array_api import device as array_device
+from ..utils._array_api import (
+    _convert_to_numpy,
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
+)
+from ..utils._array_api import (
+    device as array_device,
+)
 from ..utils._param_validation import (
     InvalidParameterError,
     generate_invalid_param_val,
@@ -133,19 +138,8 @@ def _yield_checks(estimator):
     yield check_estimator_get_tags_default_keys
 
     if tags["array_api_support"]:
-        for array_namespace in ["numpy.array_api", "cupy.array_api", "cupy", "torch"]:
-            if array_namespace == "torch":
-                for device, dtype in itertools.product(
-                    ("cpu", "cuda"), ("float64", "float32")
-                ):
-                    yield partial(
-                        check_array_api_input,
-                        array_namespace=array_namespace,
-                        dtype=dtype,
-                        device=device,
-                    )
-            else:
-                yield partial(check_array_api_input, array_namespace=array_namespace)
+        for check in _yield_array_api_checks(estimator):
+            yield check
 
 
 def _yield_classifier_checks(classifier):
@@ -307,6 +301,16 @@ def _yield_outliers_checks(estimator):
         if _safe_tags(estimator, key="requires_fit"):
             yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
+
+
+def _yield_array_api_checks(estimator):
+    for array_namespace, device, dtype in yield_namespace_device_dtype_combinations():
+        yield partial(
+            check_array_api_input,
+            array_namespace=array_namespace,
+            dtype=dtype,
+            device=device,
+        )
 
 
 def _yield_all_checks(estimator):
@@ -576,8 +580,8 @@ def check_estimator(estimator=None, generate_only=False):
     independently and report the checks that are failing.
 
     scikit-learn provides a pytest specific decorator,
-    :func:`~sklearn.utils.parametrize_with_checks`, making it easier to test
-    multiple estimators.
+    :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`, making it
+    easier to test multiple estimators.
 
     Parameters
     ----------
@@ -845,10 +849,7 @@ def _generate_sparse_matrix(X_csr):
         yield sparse_format + "_64", X
 
 
-def check_array_api_input(
-    name, estimator_orig, *, array_namespace, device=None, dtype="float64"
-):
-    """Check that the array_api Array gives the same results as ndarrays."""
+def _array_api_for_tests(array_namespace, device, dtype):
     try:
         array_mod = importlib.import_module(array_namespace)
     except ModuleNotFoundError:
@@ -875,6 +876,26 @@ def check_array_api_input(
 
         if cupy.cuda.runtime.getDeviceCount() == 0:
             raise SkipTest("CuPy test requires cuda, which is not available")
+    return xp, device, dtype
+
+
+def check_array_api_input(
+    name,
+    estimator_orig,
+    array_namespace,
+    device=None,
+    dtype="float64",
+    check_values=False,
+):
+    """Check that the estimator can work consistently with the Array API
+
+    By default, this just checks that the types and shapes of the arrays are
+    consistent with calling the same estimator with numpy arrays.
+
+    When check_values is True, it also checks that calling the estimator on the
+    array_api Array gives the same results as ndarrays.
+    """
+    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
 
     X, y = make_classification(random_state=42)
     X = X.astype(dtype, copy=False)
@@ -896,33 +917,42 @@ def check_array_api_input(
     est_xp = clone(est)
     with config_context(array_api_dispatch=True):
         est_xp.fit(X_xp, y_xp)
+        input_ns = get_namespace(X_xp)[0].__name__
 
     # Fitted attributes which are arrays must have the same
     # namespace as the one of the training data.
     for key, attribute in array_attributes.items():
         est_xp_param = getattr(est_xp, key)
-        assert (
-            get_namespace(est_xp_param)[0] == get_namespace(X_xp)[0]
-        ), f"'{key}' attribute is in wrong namespace"
+        with config_context(array_api_dispatch=True):
+            attribute_ns = get_namespace(est_xp_param)[0].__name__
+        assert attribute_ns == input_ns, (
+            f"'{key}' attribute is in wrong namespace, expected {input_ns} "
+            f"got {attribute_ns}"
+        )
 
         assert array_device(est_xp_param) == array_device(X_xp)
 
         est_xp_param_np = _convert_to_numpy(est_xp_param, xp=xp)
-        assert_allclose(
-            attribute,
-            est_xp_param_np,
-            err_msg=f"{key} not the same",
-            atol=np.finfo(X.dtype).eps * 100,
-        )
+        if check_values:
+            assert_allclose(
+                attribute,
+                est_xp_param_np,
+                err_msg=f"{key} not the same",
+                atol=np.finfo(X.dtype).eps * 100,
+            )
+        else:
+            assert attribute.shape == est_xp_param_np.shape
+            assert attribute.dtype == est_xp_param_np.dtype
 
     # Check estimator methods, if supported, give the same results
     methods = (
+        "score",
+        "score_samples",
         "decision_function",
         "predict",
         "predict_log_proba",
         "predict_proba",
         "transform",
-        "inverse_transform",
     )
 
     for method_name in methods:
@@ -930,24 +960,83 @@ def check_array_api_input(
         if method is None:
             continue
 
-        result = method(X)
-        with config_context(array_api_dispatch=True):
-            result_xp = getattr(est_xp, method_name)(X_xp)
+        if method_name == "score":
+            result = method(X, y)
+            with config_context(array_api_dispatch=True):
+                result_xp = getattr(est_xp, method_name)(X_xp, y_xp)
+            # score typically returns a Python float
+            assert isinstance(result, float)
+            assert isinstance(result_xp, float)
+            if check_values:
+                assert abs(result - result_xp) < np.finfo(X.dtype).eps * 100
+            continue
+        else:
+            result = method(X)
+            with config_context(array_api_dispatch=True):
+                result_xp = getattr(est_xp, method_name)(X_xp)
 
-        assert (
-            get_namespace(result_xp)[0] == get_namespace(X_xp)[0]
-        ), f"'{method}' output is in wrong namespace"
+        with config_context(array_api_dispatch=True):
+            result_ns = get_namespace(result_xp)[0].__name__
+        assert result_ns == input_ns, (
+            f"'{method}' output is in wrong namespace, expected {input_ns}, "
+            f"got {result_ns}."
+        )
 
         assert array_device(result_xp) == array_device(X_xp)
-
         result_xp_np = _convert_to_numpy(result_xp, xp=xp)
 
-        assert_allclose(
-            result,
-            result_xp_np,
-            err_msg=f"{method} did not the return the same result",
-            atol=np.finfo(X.dtype).eps * 100,
-        )
+        if check_values:
+            assert_allclose(
+                result,
+                result_xp_np,
+                err_msg=f"{method} did not the return the same result",
+                atol=np.finfo(X.dtype).eps * 100,
+            )
+        else:
+            if hasattr(result, "shape"):
+                assert result.shape == result_xp_np.shape
+                assert result.dtype == result_xp_np.dtype
+
+        if method_name == "transform" and hasattr(est, "inverse_transform"):
+            inverse_result = est.inverse_transform(result)
+            with config_context(array_api_dispatch=True):
+                invese_result_xp = est_xp.inverse_transform(result_xp)
+                inverse_result_ns = get_namespace(invese_result_xp)[0].__name__
+            assert inverse_result_ns == input_ns, (
+                "'inverse_transform' output is in wrong namespace, expected"
+                f" {input_ns}, got {inverse_result_ns}."
+            )
+
+            assert array_device(invese_result_xp) == array_device(X_xp)
+
+            invese_result_xp_np = _convert_to_numpy(invese_result_xp, xp=xp)
+            if check_values:
+                assert_allclose(
+                    inverse_result,
+                    invese_result_xp_np,
+                    err_msg="inverse_transform did not the return the same result",
+                    atol=np.finfo(X.dtype).eps * 100,
+                )
+            else:
+                assert inverse_result.shape == invese_result_xp_np.shape
+                assert inverse_result.dtype == invese_result_xp_np.dtype
+
+
+def check_array_api_input_and_values(
+    name,
+    estimator_orig,
+    array_namespace,
+    device=None,
+    dtype="float64",
+):
+    return check_array_api_input(
+        name,
+        estimator_orig,
+        array_namespace=array_namespace,
+        device=device,
+        dtype=dtype,
+        check_values=True,
+    )
 
 
 def check_estimator_sparse_data(name, estimator_orig):
@@ -1261,7 +1350,10 @@ def check_dtype_object(name, estimator_orig):
 
     if "string" not in tags["X_types"]:
         X[0, 0] = {"foo": "bar"}
-        msg = "argument must be a string.* number"
+        # This error is raised by:
+        # - `np.asarray` in `check_array`
+        # - `_unique_python` for encoders
+        msg = "argument must be .* string.* number"
         with raises(TypeError, match=msg):
             estimator.fit(X, y)
     else:
@@ -3453,7 +3545,6 @@ def _enforce_estimator_tags_y(estimator, y):
         # Create strictly positive y. The minimal increment above 0 is 1, as
         # y could be of integer dtype.
         y += 1 + abs(y.min())
-    # Estimators with a `binary_only` tag only accept up to two unique y values
     if _safe_tags(estimator, key="binary_only") and y.size > 0:
         y = np.where(y == y.flat[0], y, y.flat[0] + 1)
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
@@ -3473,7 +3564,8 @@ def _enforce_estimator_tags_X(estimator, X, kernel=linear_kernel):
     if _safe_tags(estimator, key="requires_positive_X"):
         X = X - X.min()
     if "categorical" in _safe_tags(estimator, key="X_types"):
-        X = (X - X.min()).astype(np.int32)
+        dtype = np.float64 if _safe_tags(estimator, key="allow_nan") else np.int32
+        X = np.round((X - X.min())).astype(dtype)
 
     if estimator.__class__.__name__ == "SkewedChi2Sampler":
         # SkewedChi2Sampler requires X > -skewdness in transform
@@ -4495,7 +4587,7 @@ def check_set_output_transform_pandas(name, transformer_orig):
         outputs_pandas = _output_from_fit_transform(transformer_pandas, name, X, df, y)
     except ValueError as e:
         # transformer does not support sparse data
-        assert str(e) == "Pandas output does not support sparse data.", e
+        assert "Pandas output does not support sparse data." in str(e), e
         return
 
     for case in outputs_default:
@@ -4541,7 +4633,7 @@ def check_global_output_transform_pandas(name, transformer_orig):
             )
     except ValueError as e:
         # transformer does not support sparse data
-        assert str(e) == "Pandas output does not support sparse data.", e
+        assert "Pandas output does not support sparse data." in str(e), e
         return
 
     for case in outputs_default:
