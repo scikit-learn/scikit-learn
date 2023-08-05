@@ -70,10 +70,12 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     ----------
     check_y, check_X : callable, default=None
         The callable used to validate `X` and `y`. These callable should return
-        a bool where `False` will trigger an `AssertionError`.
+        a bool where `False` will trigger an `AssertionError`. If `None`, the
+        data is not validated. Default is `None`.
 
     check_y_params, check_X_params : dict, default=None
-        The optional parameters to pass to `check_X` and `check_y`.
+        The optional parameters to pass to `check_X` and `check_y`. If `None`,
+        an empty set is passed to the check_y/check_X callable.
 
     methods_to_check : "all" or list of str, default="all"
         The methods in which the checks should be applied. By default,
