@@ -133,19 +133,15 @@ def _update_terminal_regions(
 
     The current predictions of the model (of this stage) are updated.
 
-    Additionally, if loss.need_update_leaves_values is True, the terminal regions
-    (=leaves) of the given tree are updated as well. This corresponds to the line
-    search step in "Greedy Function Approximation" by Friedman.
+    Additionally, the terminal regions (=leaves) of the given tree are updated as well.
+    This corresponds to the line search step in "Greedy Function Approximation" by
+    Friedman, Algorithm 1 step 5.
 
     Update equals:
-        loss.fit_intercept_only(y_true - raw_prediction)
+        argmin_{x} loss(y_true, raw_prediction_old + x * tree.value)
 
-    Note: It only works, if the loss is a function of the residual, as is the
-    case for AbsoluteError and PinballLoss. Otherwise, one would need to get
-    the minimum of loss(y_true, raw_prediction + x) in x. A few examples:
-        - AbsoluteError: median(y_true - raw_prediction).
-        - PinballLoss: quantile(y_true - raw_prediction).
-    See also notes about need_update_leaves_values in BaseLoss.
+    For non-trivial cases like the Binomial loss, the update has no closed formula and
+    is an approximation, again, see the Friedman paper.
 
     Parameters
     ----------
@@ -186,7 +182,9 @@ def _update_terminal_regions(
             sw = None if sample_weight is None else sample_weight[indices]
 
             if isinstance(loss, HalfBinomialLoss):
-                # Make a single Newton-Raphson step.
+                # Make a single Newton-Raphson step, see "Additive Logistic Regression:
+                # A Statistical View of Boosting" FHT00 and note that we use a slightly
+                # different version of the loss with y in {0, 1} instead of {-1, +1}.
                 # Our node estimate is given by:
                 #    sum(w * (y - prob)) / sum(w * prob * (1 - prob))
                 # we take advantage that: y - prob = residual
