@@ -474,9 +474,6 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
         """
         return (
             ArgKmin.is_usable_for(X, Y, metric)
-            # TODO: Support CSR matrices.
-            and not issparse(X)
-            and not issparse(Y)
             # TODO: implement Euclidean specialization with GEMM.
             and metric not in ("euclidean", "sqeuclidean")
         )
