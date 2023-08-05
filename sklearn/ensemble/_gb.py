@@ -194,9 +194,7 @@ def _update_terminal_regions(
                 numerator = np.average(neg_g, weights=sw)
                 # denominator = hessian = prob * (1 - prob)
                 denominator = np.average(prob * (1 - prob), weights=sw)
-                # TODO: Multiply here (and other else clauses) by learning rate instead
-                # of everywhere else.
-                tree.value[leaf, 0, 0] = _safe_divide(numerator, denominator)
+                update = _safe_divide(numerator, denominator)
             elif isinstance(loss, HalfMultinomialLoss):
                 # we take advantage that: y - prob = neg_gradient
                 neg_g = neg_gradient.take(indices, axis=0)
@@ -212,7 +210,7 @@ def _update_terminal_regions(
                 numerator *= (K - 1) / K
                 # denominator = (diagonal) hessian = prob * (1 - prob)
                 denominator = np.average(prob * (1 - prob), weights=sw)
-                tree.value[leaf, 0, 0] = _safe_divide(numerator, denominator)
+                update = _safe_divide(numerator, denominator)
             elif isinstance(loss, ExponentialLoss):
                 z = 2.0 * y_ - 1.0  # z is -1 or +1
                 raw_pred = raw_prediction[indices, k]
@@ -220,13 +218,15 @@ def _update_terminal_regions(
                 numerator = np.average(z * np.exp(-z * raw_pred), weights=sw)
                 # denominator = hessian
                 denominator = np.average(np.exp(-z * raw_pred), weights=sw)
-                tree.value[leaf, 0, 0] = _safe_divide(numerator, denominator)
+                update = _safe_divide(numerator, denominator)
             else:
                 update = loss.fit_intercept_only(
                     y_true=y_ - raw_prediction[indices, k],
                     sample_weight=sw,
                 )
-                tree.value[leaf, 0, 0] = update
+
+            # TODO: Multiply here by learning rate instead of everywhere else.
+            tree.value[leaf, 0, 0] = update
 
     # update predictions (both in-bag and out-of-bag)
     raw_prediction[:, k] += learning_rate * tree.value[:, 0, 0].take(
