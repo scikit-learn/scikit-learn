@@ -392,7 +392,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     @abstractmethod
     def _encode_y(self, y=None, sample_weight=None):
-        """Called by fit to validate and encode y (for classification)."""
+        """Called by fit to validate and encode y."""
 
     @abstractmethod
     def _get_loss(self, sample_weight):
@@ -627,7 +627,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         )
         sample_weight_is_none = sample_weight is None
         sample_weight = _check_sample_weight(sample_weight, X)
-        y = self._encode_y(y=y, sample_weight=sample_weight)
+        if sample_weight_is_none:
+            y = self._encode_y(y=y, sample_weight=None)
+        else:
+            y = self._encode_y(y=y, sample_weight=sample_weight)
         y = column_or_1d(y, warn=True)  # TODO: Is this still required?
 
         self._set_max_features()
@@ -881,7 +884,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             if self.n_iter_no_change is not None:
                 # By calling next(y_val_pred_iter), we get the predictions
                 # for X_val after the addition of the current stage
-                validation_loss = self._loss(
+                validation_loss = factor * self._loss(
                     y_val, next(y_val_pred_iter), sample_weight_val
                 )
 
