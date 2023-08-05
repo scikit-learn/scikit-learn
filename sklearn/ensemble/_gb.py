@@ -196,6 +196,8 @@ def _update_terminal_regions(
                 numerator = np.average(residual_, weights=sw)
                 # denominator = hessian = prob * (1 - prob)
                 denominator = np.average(prob * (1 - prob), weights=sw)
+                # TODO: Multiply here (and other else clauses) by learning rate instead
+                # of everywhere else.
                 tree.value[leaf, 0, 0] = _safe_divide(numerator, denominator)
             elif isinstance(loss, HalfMultinomialLoss):
                 # we take advantage that: y - prob = residual
