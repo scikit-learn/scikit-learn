@@ -7,7 +7,8 @@ local structure in the data. The graph is simply the graph of 20 nearest
 neighbors.
 
 There are two advantages of imposing a connectivity. First, clustering
-without a connectivity matrix is much faster.
+with connectivity matrices is faster in general, when the connectivity
+matrix is sparse.
 
 Second, when using a connectivity matrix, single, average and complete
 linkage are unstable and tend to create a few clusters that grow very
