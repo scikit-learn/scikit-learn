@@ -426,14 +426,16 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             raw_prediction=raw_predictions,
             sample_weight=None,  # We pass sample_weights to the tree directly.
         )
+        # 2-d views of shape (n_samples, n_trees_per_iteration_) or (n_samples, 1)
+        # on neg_gradient to simplify the loop over n_trees_per_iteration_.
+        if neg_gradient.ndim == 1:
+            neg_g_view = neg_gradient.reshape((-1, 1))
+        else:
+            neg_g_view = neg_gradient
 
         for k in range(self.n_trees_per_iteration_):
             if self._loss.is_multiclass:
                 y = np.array(original_y == k, dtype=np.float64)
-            if neg_gradient.ndim == 2:
-                residual = neg_gradient[:, k]
-            else:
-                residual = neg_gradient
 
             # induce regression tree on residuals
             tree = DecisionTreeRegressor(
@@ -455,7 +457,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
             X = X_csc if X_csc is not None else X
-            tree.fit(X, residual, sample_weight=sample_weight, check_input=False)
+            tree.fit(
+                X, neg_g_view[:, k], sample_weight=sample_weight, check_input=False
+            )
 
             # update tree leaves
             X_for_tree_update = X_csr if X_csr is not None else X
@@ -464,7 +468,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 tree.tree_,
                 X_for_tree_update,
                 y,
-                residual,
+                neg_g_view[:, k],
                 raw_predictions,
                 sample_weight,
                 sample_mask,
