@@ -218,7 +218,8 @@ object::
     >>> rmtree(cachedir)
 
 | details-start |
-Warning:: **Side effect of caching transformers**
+**Warning: Side effect of caching transformers**
+
 | details-split |
 
 Using a :class:`Pipeline` without cache enabled, it is possible to
