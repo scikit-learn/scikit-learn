@@ -218,6 +218,7 @@ object::
     >>> rmtree(cachedir)
 
 | details-start |
+
 **Warning: Side effect of caching transformers**
 
 | details-split |
