@@ -217,11 +217,9 @@ object::
     >>> # Clear the cache directory when you don't need it anymore
     >>> rmtree(cachedir)
 
-| details-start |
-
+|details-start|
 **Warning: Side effect of caching transformers**
-
-| details-split |
+|details-split|
 
 Using a :class:`Pipeline` without cache enabled, it is possible to
 inspect the original instance such as::
@@ -261,7 +259,7 @@ the pipeline::
     >>> rmtree(cachedir)
 
 
-| details-end |
+|details-end|
 
 .. topic:: Examples:
 
