@@ -283,7 +283,6 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
             y_pred_cancer,
             pos_label="cancer",
         )
-    # we should obtain the statistics of the "cancer" class
     avg_prec_limit = 0.65
     assert display.average_precision < avg_prec_limit
     assert -np.trapz(display.precision, display.recall) < avg_prec_limit
