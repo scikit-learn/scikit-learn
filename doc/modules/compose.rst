@@ -217,7 +217,9 @@ object::
     >>> # Clear the cache directory when you don't need it anymore
     >>> rmtree(cachedir)
 
+| details-start |
 .. warning:: **Side effect of caching transformers**
+| details-split |
 
    Using a :class:`Pipeline` without cache enabled, it is possible to
    inspect the original instance such as::
@@ -255,6 +257,7 @@ object::
      >>> # Remove the cache directory
      >>> rmtree(cachedir)
 
+| details-end |
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
