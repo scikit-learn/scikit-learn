@@ -218,46 +218,49 @@ object::
     >>> rmtree(cachedir)
 
 | details-start |
-.. warning:: **Side effect of caching transformers**
+Warning:: **Side effect of caching transformers**
 | details-split |
 
-   Using a :class:`Pipeline` without cache enabled, it is possible to
-   inspect the original instance such as::
+Using a :class:`Pipeline` without cache enabled, it is possible to
+inspect the original instance such as::
 
-     >>> from sklearn.datasets import load_digits
-     >>> X_digits, y_digits = load_digits(return_X_y=True)
-     >>> pca1 = PCA()
-     >>> svm1 = SVC()
-     >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
-     >>> pipe.fit(X_digits, y_digits)
-     Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
-     >>> # The pca instance can be inspected directly
-     >>> print(pca1.components_)
-         [[-1.77484909e-19  ... 4.07058917e-18]]
+    >>> from sklearn.datasets import load_digits
+    >>> X_digits, y_digits = load_digits(return_X_y=True)
+    >>> pca1 = PCA()
+    >>> svm1 = SVC()
+    >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
+    >>> pipe.fit(X_digits, y_digits)
+    Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
+    >>> # The pca instance can be inspected directly
+    >>> print(pca1.components_)
+        [[-1.77484909e-19  ... 4.07058917e-18]]
 
-   Enabling caching triggers a clone of the transformers before fitting.
-   Therefore, the transformer instance given to the pipeline cannot be
-   inspected directly.
-   In following example, accessing the :class:`~sklearn.decomposition.PCA`
-   instance ``pca2`` will raise an ``AttributeError`` since ``pca2`` will be an
-   unfitted transformer.
-   Instead, use the attribute ``named_steps`` to inspect estimators within
-   the pipeline::
 
-     >>> cachedir = mkdtemp()
-     >>> pca2 = PCA()
-     >>> svm2 = SVC()
-     >>> cached_pipe = Pipeline([('reduce_dim', pca2), ('clf', svm2)],
-     ...                        memory=cachedir)
-     >>> cached_pipe.fit(X_digits, y_digits)
-     Pipeline(memory=...,
+Enabling caching triggers a clone of the transformers before fitting.
+Therefore, the transformer instance given to the pipeline cannot be
+inspected directly.
+In following example, accessing the :class:`~sklearn.decomposition.PCA`
+instance ``pca2`` will raise an ``AttributeError`` since ``pca2`` will be an
+unfitted transformer.
+Instead, use the attribute ``named_steps`` to inspect estimators within
+the pipeline::
+
+    >>> cachedir = mkdtemp()
+    >>> pca2 = PCA()
+    >>> svm2 = SVC()
+    >>> cached_pipe = Pipeline([('reduce_dim', pca2), ('clf', svm2)],
+    ...                        memory=cachedir)
+    >>> cached_pipe.fit(X_digits, y_digits)
+    Pipeline(memory=...,
              steps=[('reduce_dim', PCA()), ('clf', SVC())])
-     >>> print(cached_pipe.named_steps['reduce_dim'].components_)
-         [[-1.77484909e-19  ... 4.07058917e-18]]
-     >>> # Remove the cache directory
-     >>> rmtree(cachedir)
+    >>> print(cached_pipe.named_steps['reduce_dim'].components_)
+        [[-1.77484909e-19  ... 4.07058917e-18]]
+    >>> # Remove the cache directory
+    >>> rmtree(cachedir)
+
 
 | details-end |
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
