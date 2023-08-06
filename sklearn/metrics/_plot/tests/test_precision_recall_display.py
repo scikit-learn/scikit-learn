@@ -269,6 +269,7 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
     y_pred_cancer = -1 * y_pred if y_pred.ndim == 1 else y_pred[:, 0]
     y_pred_not_cancer = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
 
+    # we should obtain the statistics of the "cancer" class
     if constructor_name == "from_estimator":
         display = PrecisionRecallDisplay.from_estimator(
             classifier,
