@@ -181,7 +181,7 @@ You can also provide custom feature names for the input data using
 
 |details-end|
 
-.. notes::
+.. note::
 
 Calling ``fit`` on the pipeline is the same as calling ``fit`` on
 each estimator in turn, ``transform`` the input and pass it on to the next step.
