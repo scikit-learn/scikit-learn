@@ -168,7 +168,7 @@ Changelog
 ............................
 
 - |Efficiency| :class:`preprocessing.OrdinalEncoder` avoids calculating
-  `missing_indices` twice to improve efficiency.
+  missing indices twice to improve efficiency.
   :pr:`27017` by `Xuefeng Xu <xuefeng-xu>`.
 
 - |Fix| :class:`preprocessing.OneHotEncoder` shows a more informative error message
