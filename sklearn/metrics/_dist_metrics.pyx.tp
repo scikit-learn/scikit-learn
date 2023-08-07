@@ -1396,19 +1396,27 @@ cdef class MinkowskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
     Parameters
     ----------
-    p : int
+    p : float
         The order of the p-norm of the difference (see above).
+
+        .. versionchanged:: 1.4.0
+            Minkowski distance allows `p` to be `0<p<1`.
+
+
     w : (N,) array-like (optional)
         The weight vector.
 
-    Minkowski Distance requires p >= 1 and finite. For p = infinity,
-    use ChebyshevDistance.
+    Minkowski Distance requires p > 0 and finite.
+    When :math:`p \in (0,1)`, it isn't a true metric but is permissible when
+    the triangular inequality isn't necessary.
+    For p = infinity, use ChebyshevDistance.
     Note that for p=1, ManhattanDistance is more efficient, and for
     p=2, EuclideanDistance is more efficient.
+
     """
     def __init__(self, p, w=None):
-        if p < 1:
-            raise ValueError("p must be greater than 1")
+        if p <= 0:
+            raise ValueError("p must be greater than 0")
         elif np.isinf(p):
             raise ValueError("MinkowskiDistance requires finite p. "
                              "For p=inf, use ChebyshevDistance.")

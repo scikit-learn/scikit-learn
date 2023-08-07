@@ -378,10 +378,10 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
             if _routing_enabled():
                 routed_params = process_routing(
-                    obj=self,
-                    method="fit",
+                    self,
+                    "fit",
                     sample_weight=sample_weight,
-                    other_params=fit_params,
+                    **fit_params,
                 )
             else:
                 # sample_weight checks
