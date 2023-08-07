@@ -750,11 +750,13 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
 
-    param_distributions : dict
-        Dictionary with parameters names (string) as keys and distributions
+    param_distributions : dict or list of dicts
+        Dictionary with parameters names (`str`) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
+        If a list of dicts is given, first a dict is sampled uniformly, and
+        then a parameter is sampled using that dict as above.
 
     n_candidates : "exhaust" or int, default="exhaust"
         The number of candidate parameters to sample, at the first
@@ -1024,7 +1026,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     _parameter_constraints: dict = {
         **BaseSuccessiveHalving._parameter_constraints,
-        "param_distributions": [dict],
+        "param_distributions": [dict, list],
         "n_candidates": [
             Interval(Integral, 0, None, closed="neither"),
             StrOptions({"exhaust"}),
