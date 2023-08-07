@@ -26,10 +26,12 @@ def main(ctx):
     response = http.get(url).json()
     commit_msg = response["message"]
 
+    jobs_to_run = []
+
     if "[cd build]" in commit_msg or "[cd build cirrus]" in commit_msg:
-        return fs.read(arm_wheel_yaml)
+        jobs_to_run.append(fs.read(arm_wheel_yaml))
 
     if "[cirrus arm]" in commit_msg:
-        return fs.read(arm_tests_yaml)
+        jobs_to_run.append(fs.read(arm_tests_yaml))
 
-    return []
+    return jobs_to_run
