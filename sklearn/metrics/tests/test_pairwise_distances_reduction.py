@@ -650,8 +650,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
     metric = "manhattan"
 
     weights = "uniform"
-    labels = rng.randint(low=0, high=10, size=100)
-    unique_labels = np.unique(labels)
+    Y_labels = rng.randint(low=0, high=10, size=100)
+    unique_Y_labels = np.unique(Y_labels)
 
     msg = (
         "Only float64 or float32 datasets pairs are supported at this time, "
@@ -664,8 +664,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             k=k,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
         )
 
     msg = (
@@ -679,8 +679,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             k=k,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
         )
 
     with pytest.raises(ValueError, match="k == -1, must be >= 1."):
@@ -690,8 +690,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             k=-1,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
         )
 
     with pytest.raises(ValueError, match="k == 0, must be >= 1."):
@@ -701,8 +701,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             k=0,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
         )
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
@@ -712,8 +712,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             k=k,
             metric="wrong metric",
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
         )
 
     with pytest.raises(
@@ -725,8 +725,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             k=k,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
         )
 
     with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
@@ -736,8 +736,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             k=k,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
         )
 
     non_existent_weights_strategy = "non_existent_weights_strategy"
@@ -752,8 +752,8 @@ def test_argkmin_classmode_factory_method_wrong_usages():
             k=k,
             metric=metric,
             weights=non_existent_weights_strategy,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
         )
 
     # TODO: introduce assertions on UserWarnings once the Euclidean specialisation
@@ -1443,16 +1443,16 @@ def test_argkmin_classmode_strategy_consistent():
     metric = "manhattan"
 
     weights = "uniform"
-    labels = rng.randint(low=0, high=10, size=100)
-    unique_labels = np.unique(labels)
+    Y_labels = rng.randint(low=0, high=10, size=100)
+    unique_Y_labels = np.unique(Y_labels)
     results_X = ArgKminClassMode.compute(
         X=X,
         Y=Y,
         k=k,
         metric=metric,
         weights=weights,
-        labels=labels,
-        unique_labels=unique_labels,
+        Y_labels=Y_labels,
+        unique_Y_labels=unique_Y_labels,
         strategy="parallel_on_X",
     )
     results_Y = ArgKminClassMode.compute(
@@ -1461,8 +1461,8 @@ def test_argkmin_classmode_strategy_consistent():
         k=k,
         metric=metric,
         weights=weights,
-        labels=labels,
-        unique_labels=unique_labels,
+        Y_labels=Y_labels,
+        unique_Y_labels=unique_Y_labels,
         strategy="parallel_on_Y",
     )
     assert_array_equal(results_X, results_Y)
