@@ -14,6 +14,10 @@ cp $WHEEL_PATH $WHEEL_NAME
 # Dot the Python version for identyfing the base Docker image
 PYTHON_VERSION=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
 
+# TODO: remove this when Python 3.12 is released
+if [[ "$PYTHON_VERSION" == "3.12" ]]; then
+    PYTHON_VERSION=3.12-rc
+fi
 # Build a minimal Windows Docker image for testing the wheels
 docker build --build-arg PYTHON_VERSION=$PYTHON_VERSION \
              --build-arg WHEEL_NAME=$WHEEL_NAME \
