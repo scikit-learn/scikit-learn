@@ -14,11 +14,12 @@ from math import log
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.optimize import fmin, fmin_bfgs
+from scipy.optimize import minimize
 from scipy.special import expit, xlogy
 
 from sklearn.utils import Bunch
 
+from ._loss import HalfBinomialLoss
 from .base import (
     BaseEstimator,
     ClassifierMixin,
@@ -889,15 +890,29 @@ def _sigmoid_calibration(predictions, y, sample_weight=None):
         return np.array([dA, dB])
 
     AB0 = np.array([0.0, log((prior0 + 1.0) / (prior1 + 1.0))])
-    BFGS_OUT = fmin_bfgs(objective, AB0, fprime=grad, disp=False, full_output=True)
-    AB_ = BFGS_OUT[0]
+    # AB_ = fmin_bfgs(objective, AB0, fprime=grad, disp=False)
 
-    # Check if warnflag = "Gradient and/or function calls not changing"
-    # i.e. there is a problem of convergence.
-    if BFGS_OUT[-1] == 2:
-        # Fallback to Nelder-Mead
-        AB_ = fmin(objective, AB0, disp=False)
+    loss = HalfBinomialLoss()
 
+    def loss_grad(AB):
+        l, g = loss.loss_gradient(y_true=T, raw_prediction=-(AB[0] * F + AB[1]))
+        grad = np.array([F @ g, g.sum()])
+        return l.sum(), grad
+
+    opt_res = minimize(
+        loss_grad,
+        AB0,
+        method="L-BFGS-B",
+        jac=True,
+        options={
+            "iprint": 1,
+            "maxiter": 15000,
+            "maxls": 100,
+            "gtol": 1e-6,
+            "ftol": 64 * np.finfo(float).eps,
+        },
+    )
+    AB_ = opt_res.x
     return AB_[0], AB_[1]
 
 
