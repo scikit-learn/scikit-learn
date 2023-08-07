@@ -480,13 +480,6 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         return float(xp.sum(sample_score))
 
 
-def _isneginf(X):
-    xp, _ = get_namespace(X)
-    is_inf = xp.isinf(X)
-    signbit = xp.sign(X) < 0
-    return xp.logical_and(is_inf, signbit)
-
-
 def _nanmin(X, axis=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
