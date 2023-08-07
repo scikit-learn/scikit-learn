@@ -183,12 +183,12 @@ You can also provide custom feature names for the input data using
 
 .. note::
 
-Calling ``fit`` on the pipeline is the same as calling ``fit`` on
-each estimator in turn, ``transform`` the input and pass it on to the next step.
-The pipeline has all the methods that the last estimator in the pipeline has,
-i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
-as a classifier. If the last estimator is a transformer, again, so is the
-pipeline.
+    Calling ``fit`` on the pipeline is the same as calling ``fit`` on
+    each estimator in turn, ``transform`` the input and pass it on to the next step.
+    The pipeline has all the methods that the last estimator in the pipeline has,
+    i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
+    as a classifier. If the last estimator is a transformer, again, so is the
+    pipeline.
 
 .. _pipeline_cache:
 
