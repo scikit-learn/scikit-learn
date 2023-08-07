@@ -19,6 +19,7 @@ linux_aarch64_test_task:
 
   test_script: |
     bash build_tools/cirrus/build_test_arm.sh
+    # On success, this script is run updating the issue.
     bash build_tools/cirrus/update_tracking_issue.sh true
 
   on_failure:
