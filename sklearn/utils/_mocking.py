@@ -75,7 +75,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
 
     check_y_params, check_X_params : dict, default=None
         The optional parameters to pass to `check_X` and `check_y`. If `None`,
-        an empty set is passed to the check_y/check_X callable.
+        then no parameters are passed in.
 
     methods_to_check : "all" or list of str, default="all"
         The methods in which the checks should be applied. By default,
