@@ -45,8 +45,9 @@ The last estimator may be any type (transformer, classifier, etc.).
 Usage
 -----
 
-Construction
-............
+|details-start|
+**Construction**
+|details-split|
 
 The :class:`Pipeline` is built using a list of ``(key, value)`` pairs, where
 the ``key`` is a string containing the name you want to give this step and ``value``
@@ -69,8 +70,12 @@ filling in the names automatically::
     >>> make_pipeline(PCA(), SVC())
     Pipeline(steps=[('pca', PCA()), ('svc', SVC())])
 
-Accessing steps
-...............
+|details-end|
+
+|details-start|
+**Accessing steps**
+|details-split|
+
 
 The estimators of a pipeline are stored as a list in the ``steps`` attribute,
 but can be accessed by index or name by indexing (with ``[idx]``) the
@@ -102,8 +107,9 @@ permitted). This is convenient for performing only some of the transformations
 
 .. _pipeline_nested_parameters:
 
-Nested parameters
-.................
+|details-start|
+**Nested parameters**
+|details-split|
 
 Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
@@ -172,9 +178,9 @@ You can also provide custom feature names for the input data using
 
  * :ref:`composite_grid_search`
 
+|details-end|
 
-Notes
------
+.. notes::
 
 Calling ``fit`` on the pipeline is the same as calling ``fit`` on
 each estimator in turn, ``transform`` the input and pass it on to the next step.
