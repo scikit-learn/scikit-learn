@@ -1739,32 +1739,6 @@ class SimpleEstimator(BaseEstimator):
         assert prop is not None
 
 
-class SimpleTransformer(BaseEstimator, TransformerMixin):
-    def fit(self, X, y, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-        return self
-
-    def transform(self, X, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-        return X
-
-    def fit_transform(self, X, y, sample_weight=None, prop=None):
-        # implementing ``fit_transform`` is necessary since
-        # ``TransformerMixin.fit_transform`` doesn't route any metadata to
-        # ``transform``, while here we want ``transform`` to receive
-        # ``sample_weight`` and ``prop``.
-        assert sample_weight is not None
-        assert prop is not None
-        return self.fit(X, y, sample_weight, prop).transform(X, sample_weight, prop)
-
-    def inverse_transform(self, X, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-        return X
-
-
 @pytest.mark.usefixtures("enable_slep006")
 # split and partial_fit not relevant for pipelines
 @pytest.mark.parametrize("method", sorted(set(METHODS) - {"split", "partial_fit"}))
