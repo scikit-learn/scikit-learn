@@ -5,7 +5,11 @@ import numpy as np
 from scipy.sparse import issparse
 
 from ... import get_config
-from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING64
+from .._dist_metrics import (
+    BOOL_METRICS,
+    METRIC_MAPPING64,
+    DistanceMetric,
+)
 from ._argkmin import (
     ArgKmin32,
     ArgKmin64,
@@ -117,7 +121,7 @@ class BaseDistancesReductionDispatcher:
             and (is_numpy_c_ordered(Y) or is_valid_sparse_matrix(Y))
             and X.dtype == Y.dtype
             and X.dtype in (np.float32, np.float64)
-            and metric in cls.valid_metrics()
+            and (metric in cls.valid_metrics() or isinstance(metric, DistanceMetric))
         )
 
         return is_usable
