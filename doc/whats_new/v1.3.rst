@@ -23,6 +23,10 @@ Changelog
   :attr:`sklearn.neighbors.KDTree.valid_metrics` as public class attributes.
   :pr:`26754` by :user:`Julien Jerphanion <jjerphan>`.
 
+- |Fix| :class:`sklearn.model_selection.HalvingRandomSearchCV` no longer raises
+  when the input to the `param_distributions` parameter is a list of dicts.
+  :pr:`26893` by :user:`Stefanie Senger <StefanieSenger>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
