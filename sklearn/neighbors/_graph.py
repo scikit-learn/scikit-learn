@@ -73,7 +73,7 @@ def kneighbors_graph(
         :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
         values.
 
-    p : int, default=2
+    p : float, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
@@ -168,7 +168,7 @@ def radius_neighbors_graph(
         :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
         values.
 
-    p : int, default=2
+    p : float, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
@@ -281,7 +281,7 @@ class KNeighborsTransformer(
 
         Distance matrices are not supported.
 
-    p : int, default=2
+    p : float, default=2
         Parameter for the Minkowski metric from
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
@@ -508,7 +508,7 @@ class RadiusNeighborsTransformer(
 
         Distance matrices are not supported.
 
-    p : int, default=2
+    p : float, default=2
         Parameter for the Minkowski metric from
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
