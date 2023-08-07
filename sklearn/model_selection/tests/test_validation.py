@@ -2473,7 +2473,7 @@ def test_groups_with_routing_validation(cv_method):
     "cv_method", [cross_validate, cross_val_score, cross_val_predict]
 )
 def test_passed_unrequested_metadata(cv_method):
-    """Check that we raise an error if passing metada that are not
+    """Check that we raise an error when passing metadata that is not
     requested."""
     err_msg = re.escape("['metadata'] are passed to cross validation")
     with pytest.raises(ValueError, match=err_msg):
@@ -2490,8 +2490,8 @@ def test_passed_unrequested_metadata(cv_method):
     "cv_method", [cross_validate, cross_val_score, cross_val_predict]
 )
 def test_cross_validate_routing(cv_method):
-    """Check that the cv method are properly dispatching the metadata
-    to consumer."""
+    """Check that the respective cv method is properly dispatching the metadata
+    to the consumer."""
     scorer_registry = _Registry()
     scorer = ConsumingScorer(registry=scorer_registry).set_score_request(
         sample_weight="score_weights", metadata="score_metadata"

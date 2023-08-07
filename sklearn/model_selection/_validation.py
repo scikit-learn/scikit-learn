@@ -85,7 +85,7 @@ def _check_params_groups_deprecation(fit_params, params, groups):
         raise ValueError(
             "`groups` can only be passed if metadata routing is not enabled via"
             " `sklearn.set_config(enable_metadata_routing=True)`. When routing is"
-            " enabled, pass `groups` along other metadata via `params` argument"
+            " enabled, pass `groups` alongside other metadata via the `params` argument"
             " instead."
         )
 
@@ -161,7 +161,7 @@ def cross_validate(
         .. versionchanged:: 1.4
             ``groups`` can only be passed if metadata routing is not enabled
             via ``sklearn.set_config(enable_metadata_routing=True)``. When routing
-            is enabled, pass ``groups`` along other metadata via ``params``
+            is enabled, pass ``groups`` alongside other metadata via the ``params``
             argument instead. E.g.:
             ``cross_validate(..., params={'groups': groups})``.
 
@@ -599,7 +599,7 @@ def cross_val_score(
         .. versionchanged:: 1.4
             ``groups`` can only be passed if metadata routing is not enabled
             via ``sklearn.set_config(enable_metadata_routing=True)``. When routing
-            is enabled, pass ``groups`` along other metadata via ``params``
+            is enabled, pass ``groups`` alongside other metadata via the ``params``
             argument instead. E.g.:
             ``cross_val_score(..., params={'groups': groups})``.
 
@@ -1106,7 +1106,7 @@ def cross_val_predict(
         .. versionchanged:: 1.4
             ``groups`` can only be passed if metadata routing is not enabled
             via ``sklearn.set_config(enable_metadata_routing=True)``. When routing
-            is enabled, pass ``groups`` along other metadata via ``params``
+            is enabled, pass ``groups`` alongside other metadata via the ``params``
             argument instead. E.g.:
             ``cross_val_predict(..., params={'groups': groups})``.
 
@@ -2077,11 +2077,26 @@ def _incremental_fit_estimator(
         start_score = time.time()
 
         # TODO(SLEP6): support score params in the following two calls
-        test_scores.append(_score(estimator, X_test, y_test, scorer, None, error_score))
-        train_scores.append(
-            _score(estimator, X_train, y_train, scorer, None, error_score)
+        test_scores.append(
+            _score(
+                estimator,
+                X_test,
+                y_test,
+                scorer,
+                score_params=None,
+                error_score=error_score,
+            )
         )
-
+        train_scores.append(
+            _score(
+                estimator,
+                X_train,
+                y_train,
+                scorer,
+                score_params=None,
+                error_score=error_score,
+            )
+        )
         score_time = time.time() - start_score
         score_times.append(score_time)
 
