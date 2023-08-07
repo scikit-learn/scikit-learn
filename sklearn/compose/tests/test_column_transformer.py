@@ -23,7 +23,11 @@ from sklearn.preprocessing import (
     OneHotEncoder,
     StandardScaler,
 )
-from sklearn.tests.test_pipeline import SimpleTransformer
+from sklearn.tests.metadata_routing_common import (
+    ConsumingTransformer,
+    _Registry,
+    check_recorded_metadata,
+)
 from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_almost_equal,
@@ -2252,25 +2256,63 @@ def test_routing_passed_metadata_not_supported(method):
 
 
 @pytest.mark.usefixtures("enable_slep006")
-def test_metadata_routing_for_column_transformer():
+@pytest.mark.parametrize("method", ["transform", "fit_transform", "fit"])
+def test_metadata_routing_for_column_transformer(method):
     """Test that metadata is routed correctly for pipelines."""
     X = np.array([[0, 1, 2], [2, 4, 6]]).T
     y = [1, 2, 3]
+    registry = _Registry()
+    sample_weight, metadata = [1], "a"
     trs = ColumnTransformer(
         [
             (
                 "trans",
-                SimpleTransformer()
-                .set_fit_request(sample_weight=True, prop=True)
-                .set_transform_request(sample_weight=True, prop=True),
+                ConsumingTransformer(registry=registry)
+                .set_fit_request(sample_weight=True, metadata=True)
+                .set_transform_request(sample_weight=True, metadata=True),
                 [0],
             )
         ]
     )
 
-    trs.fit(X, y, sample_weight=[1], prop="a")
-    trs.fit_transform(X, y, sample_weight=[1], prop="a")
-    trs.transform(X, sample_weight=[1], prop="a")
+    if "fit" not in method:
+        trs.fit(X, y)
+
+    try:
+        getattr(trs, method)(X, y, sample_weight=sample_weight, metadata=metadata)
+    except TypeError:
+        # transform takes only X
+        getattr(trs, method)(X, sample_weight=sample_weight, metadata=metadata)
+
+    assert len(registry)
+    for _trs in registry:
+        check_recorded_metadata(
+            obj=_trs, method=method, sample_weight=sample_weight, metadata=metadata
+        )
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize("method", ["transform", "fit_transform", "fit"])
+def test_metadata_routing_error_for_column_transformer(method):
+    """Test that metadata is routed correctly for pipelines."""
+    X = np.array([[0, 1, 2], [2, 4, 6]]).T
+    y = [1, 2, 3]
+    sample_weight, metadata = [1], "a"
+    trs = ColumnTransformer([("trans", ConsumingTransformer(), [0])])
+
+    if "fit" not in method:
+        trs.fit(X, y)
+
+    error_message = (
+        "[sample_weight, metadata] are passed but are not explicitly set as requested"
+        f" or not for ConsumingTransformer.{method}"
+    )
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        try:
+            getattr(trs, method)(X, y, sample_weight=sample_weight, metadata=metadata)
+        except TypeError:
+            # transform takes only X
+            getattr(trs, method)(X, sample_weight=sample_weight, metadata=metadata)
 
 
 # End of Metadata Routing Tests
