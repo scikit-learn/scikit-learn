@@ -8,6 +8,7 @@ from ...utils._typedefs cimport intp_t, float64_t
 import numpy as np
 from scipy.sparse import issparse
 from sklearn.utils.fixes import threadpool_limits
+from ._classmode cimport WeightingStrategy
 
 {{for name_suffix in ["32", "64"]}}
 from ._argkmin cimport ArgKmin{{name_suffix}}
