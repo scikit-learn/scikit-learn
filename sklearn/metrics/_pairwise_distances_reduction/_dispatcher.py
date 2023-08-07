@@ -620,8 +620,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
 
 
 class RadiusNeighborsClassMode(BaseDistancesReductionDispatcher):
-    """Compute radius-based neighbors of row vectors of X on the ones of
-    Y with labels.
+    """Compute radius-based class modes of row vectors of X using the
+    those of Y.
 
     For each row-vector X[i] of the queries X, find all the indices j of
     row-vectors in Y such that:
@@ -639,6 +639,24 @@ class RadiusNeighborsClassMode(BaseDistancesReductionDispatcher):
     """
 
     @classmethod
+    def valid_metrics(cls) -> List[str]:
+        excluded = {
+            # PyFunc cannot be supported because it necessitates interacting with
+            # the CPython interpreter to call user defined functions.
+            "pyfunc",
+            "mahalanobis",  # is numerically unstable
+            # In order to support discrete distance metrics, we need to have a
+            # stable simultaneous sort which preserves the order of the indices
+            # because there generally is a lot of occurrences for a given values
+            # of distances in this case.
+            # TODO: implement a stable simultaneous_sort.
+            "hamming",
+            "euclidean",
+            *BOOL_METRICS,
+        }
+        return sorted(set(METRIC_MAPPING64.keys()) - excluded)
+
+    @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
         """Return True if the dispatcher can be used for the given parameters.
 
@@ -648,7 +666,7 @@ class RadiusNeighborsClassMode(BaseDistancesReductionDispatcher):
             The input array to be labelled.
 
         Y : ndarray of shape (n_samples_Y, n_features)
-            The input array whose labels are provided through the `labels`
+            The input array whose labels are provided through the `Y_labels`
             parameter.
 
         metric : str, default='euclidean'
@@ -662,11 +680,7 @@ class RadiusNeighborsClassMode(BaseDistancesReductionDispatcher):
         """
         return (
             RadiusNeighbors.is_usable_for(X, Y, metric)
-            # TODO: Support CSR matrices.
-            and not issparse(X)
-            and not issparse(Y)
-            # TODO: implement Euclidean specialization with GEMM.
-            and metric not in ("euclidean", "sqeuclidean")
+            and metric in cls.valid_metrics()
         )
 
     @classmethod
@@ -676,8 +690,8 @@ class RadiusNeighborsClassMode(BaseDistancesReductionDispatcher):
         Y,
         radius,
         weights,
-        labels,
-        unique_labels,
+        Y_labels,
+        unique_Y_labels,
         outlier_label,
         metric="euclidean",
         chunk_size=None,
@@ -690,21 +704,25 @@ class RadiusNeighborsClassMode(BaseDistancesReductionDispatcher):
         X : ndarray of shape (n_samples_X, n_features)
             The input array to be labelled.
         Y : ndarray of shape (n_samples_Y, n_features)
-            The input array whose labels are provided through the `labels`
-            parameter.
+            The input array whose class membership is provided through
+            the `Y_labels` parameter.
         radius : float
             The radius defining the neighborhood.
         weights : ndarray
-            The weights applied over the `labels` of `Y` when computing the
+            The weights applied to the `Y_labels` when computing the
             weighted mode of the labels.
-        labels : ndarray
+        Y_labels : ndarray
             An array containing the index of the class membership of the
             associated samples in `Y`. This is used in labeling `X`.
-        unique_classes : ndarray
+        unique_Y_labels : ndarray
             An array containing all unique class labels.
         outlier_label : int, default=None
             Label for outlier samples (samples with no neighbors in given
-            radius).
+            radius). In the default case when the value is None if any
+            outlier is detected, a ValueError will be raised. The outlier
+            label should be selected from among the unique 'Y' labels. If
+            it is specified with a different value a warning will be raised
+            and all class probabilities of outliers will be assigned to be 0.
         metric : str, default='euclidean'
             The distance metric to use. For a list of available metrics, see
             the documentation of :class:`~sklearn.metrics.DistanceMetric`.
@@ -755,8 +773,8 @@ class RadiusNeighborsClassMode(BaseDistancesReductionDispatcher):
                 Y=Y,
                 radius=radius,
                 weights=weights,
-                class_membership=np.array(labels, dtype=np.intp),
-                unique_labels=np.array(unique_labels, dtype=np.intp),
+                Y_labels=np.array(Y_labels, dtype=np.intp),
+                unique_Y_labels=np.array(unique_Y_labels, dtype=np.intp),
                 outlier_label=outlier_label,
                 metric=metric,
                 chunk_size=chunk_size,
@@ -770,8 +788,8 @@ class RadiusNeighborsClassMode(BaseDistancesReductionDispatcher):
                 Y=Y,
                 radius=radius,
                 weights=weights,
-                class_membership=np.array(labels, dtype=np.intp),
-                unique_labels=np.array(unique_labels, dtype=np.intp),
+                Y_labels=np.array(Y_labels, dtype=np.intp),
+                unique_Y_labels=np.array(unique_Y_labels, dtype=np.intp),
                 outlier_label=outlier_label,
                 metric=metric,
                 chunk_size=chunk_size,

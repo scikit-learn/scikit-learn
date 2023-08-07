@@ -859,8 +859,8 @@ def test_radius_neighbors_classmode_factory_method_wrong_usages():
     radius = 5
     metric = "manhattan"
     weights = "uniform"
-    labels = rng.randint(low=0, high=10, size=100)
-    unique_labels = np.unique(labels)
+    Y_labels = rng.randint(low=0, high=10, size=100)
+    unique_Y_labels = np.unique(Y_labels)
 
     msg = (
         "Only float64 or float32 datasets pairs are supported at this time, "
@@ -873,8 +873,8 @@ def test_radius_neighbors_classmode_factory_method_wrong_usages():
             radius=radius,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
             outlier_label=None,
         )
 
@@ -889,8 +889,8 @@ def test_radius_neighbors_classmode_factory_method_wrong_usages():
             radius=radius,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
             outlier_label=None,
         )
 
@@ -901,8 +901,8 @@ def test_radius_neighbors_classmode_factory_method_wrong_usages():
             radius=-1,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
             outlier_label=None,
         )
 
@@ -913,8 +913,8 @@ def test_radius_neighbors_classmode_factory_method_wrong_usages():
             radius=-1,
             metric="wrong_metric",
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
             outlier_label=None,
         )
 
@@ -927,8 +927,8 @@ def test_radius_neighbors_classmode_factory_method_wrong_usages():
             radius=radius,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
             outlier_label=None,
         )
 
@@ -939,8 +939,8 @@ def test_radius_neighbors_classmode_factory_method_wrong_usages():
             radius=radius,
             metric=metric,
             weights=weights,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
             outlier_label=None,
         )
 
@@ -956,8 +956,8 @@ def test_radius_neighbors_classmode_factory_method_wrong_usages():
             radius=radius,
             metric="wrong_metric",
             weights=non_existent_weights_strategy,
-            labels=labels,
-            unique_labels=unique_labels,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
             outlier_label=None,
         )
 
@@ -1476,16 +1476,16 @@ def test_radius_neighbors_classmode_strategy_consistent():
     metric = "manhattan"
 
     weights = "uniform"
-    labels = rng.randint(low=0, high=10, size=100)
-    unique_labels = np.unique(labels)
+    Y_labels = rng.randint(low=0, high=10, size=100)
+    unique_Y_labels = np.unique(Y_labels)
     results_X = RadiusNeighborsClassMode.compute(
         X=X,
         Y=Y,
         radius=radius,
         metric=metric,
         weights=weights,
-        labels=labels,
-        unique_labels=unique_labels,
+        Y_labels=Y_labels,
+        unique_Y_labels=unique_Y_labels,
         outlier_label=None,
         strategy="parallel_on_X",
     )
@@ -1495,8 +1495,8 @@ def test_radius_neighbors_classmode_strategy_consistent():
         radius=radius,
         metric=metric,
         weights=weights,
-        labels=labels,
-        unique_labels=unique_labels,
+        Y_labels=Y_labels,
+        unique_Y_labels=unique_Y_labels,
         outlier_label=None,
         strategy="parallel_on_Y",
     )

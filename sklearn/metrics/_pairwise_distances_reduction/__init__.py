@@ -99,7 +99,7 @@ __all__ = [
     "BaseDistancesReductionDispatcher",
     "ArgKmin",
     "RadiusNeighbors",
-    "RadiusNeighborsClassMode",
     "ArgKminClassMode",
+    "RadiusNeighborsClassMode",
     "sqeuclidean_row_norms",
 ]
