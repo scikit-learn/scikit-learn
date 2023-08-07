@@ -67,6 +67,9 @@ jobs:
           - os: windows-latest
             python: 311
             platform_id: win_amd64
+          - os: windows-latest
+            python: 312
+            platform_id: win_amd64
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
@@ -86,6 +89,10 @@ jobs:
 
           - os: ubuntu-latest
             python: 311
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+          - os: ubuntu-latest
+            python: 312
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
 
@@ -114,6 +121,9 @@ jobs:
           - os: macos-latest
             python: 310
             platform_id: macosx_arm64
+          - os: macos-latest
+            python: 311
+            platform_id: macosx_arm64
 
     steps:
       - name: Checkout scikit-learn
@@ -128,8 +138,15 @@ jobs:
         env:
           CONFTEST_PATH: ${{ github.workspace }}/conftest.py
           CONFTEST_NAME: conftest.py
+          # Temporary for Python 3.12 testing
+          CIBW_PRERELEASE_PYTHONS: True
+          # TODO: next lines with PIP_ fetch nightly numpy and scipy releases.
+          # They can be removed when there are numpy and scipy releases that
+          # supports Python 3.12
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
+                            PIP_EXTRA_INDEX_URL=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
+                            PIP_PRE=1
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
