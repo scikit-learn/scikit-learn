@@ -71,26 +71,27 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
 
     if categories == "auto":
         X_train = X_train_array
-        X_test = X_test_array
     else:
         X_train = categories[0][X_train_array]
+
+    if categories == "auto":
+        X_test = X_test_array
+    else:
         X_test = categories[0][X_test_array]
 
     X_test = np.concatenate((X_test, [[unknown_value]]))
 
     rng = np.random.RandomState(global_random_seed)
 
-    n_splits = 3
-    random_state = 0
     if target_type == "binary":
         y_int = rng.randint(low=0, high=2, size=n_samples)
         target_names = np.array(["cat", "dog"], dtype=object)
         y_train = target_names[y_int]
-        cv = StratifiedKFold(n_splits=n_splits, random_state=random_state, shuffle=True)
+        cv = StratifiedKFold(n_splits=3, random_state=0, shuffle=True)
     else:  # target_type == continuous
         y_int = rng.uniform(low=-10, high=20, size=n_samples)
         y_train = y_int
-        cv = KFold(n_splits=n_splits, random_state=random_state, shuffle=True)
+        cv = KFold(n_splits=3, random_state=0, shuffle=True)
 
     shuffled_idx = rng.permutation(n_samples)
     X_train_array = X_train_array[shuffled_idx]
@@ -109,10 +110,7 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
         ]
 
     target_encoder = TargetEncoder(
-        smooth=smooth,
-        categories=categories,
-        cv=n_splits,
-        random_state=random_state,
+        smooth=smooth, categories=categories, cv=3, random_state=0
     )
 
     X_fit_transform = target_encoder.fit_transform(X_train, y_train)
@@ -129,7 +127,7 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     assert_allclose(target_encoder.encodings_[0], expected_encodings)
     assert target_encoder.target_mean_ == pytest.approx(y_mean)
 
-    # Transform on test data, the last value is unknown so it is encoded as the target
+    # Transform on test data, the last value is unknown is it is encoded as the target
     # mean
     expected_X_test_transform = np.concatenate(
         (expected_encodings, np.array([y_mean]))
@@ -496,7 +494,7 @@ def test_smooth_zero():
 @pytest.mark.parametrize("smooth", [0.0, 1e3, "auto"])
 def test_invariance_of_encoding_under_label_permutation(smooth, global_random_seed):
     # Check that the encoding does not depend on the integer of the value of
-    # the integer labels. This is quite a trivial property but it is helpful
+    # the integer labels. This is quite of a trivial property but it is helpful
     # to understand the following test.
     rng = np.random.RandomState(global_random_seed)
 
@@ -534,7 +532,7 @@ def test_invariance_of_encoding_under_label_permutation(smooth, global_random_se
 @pytest.mark.parametrize("smooth", [0.0, "auto"])
 def test_target_encoding_for_linear_regression(smooth, global_random_seed):
     # Check some expected statistical properties when fitting a linear
-    # regression model on target encoded features depending on their relation
+    # regression model on target encoded features depending on there relation
     # with that target.
 
     # In this test, we use the Ridge class with the "lsqr" solver and a little
