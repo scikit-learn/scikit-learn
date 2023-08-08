@@ -70,7 +70,7 @@ jobs:
           - os: windows-latest
             python: 312
             platform_id: win_amd64
-            prerelease: True
+            prerelease: "True"
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
@@ -96,7 +96,7 @@ jobs:
             python: 312
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
-            prerelease: True
+            prerelease: "True"
 
           # MacOS x86_64
           - os: macos-latest
