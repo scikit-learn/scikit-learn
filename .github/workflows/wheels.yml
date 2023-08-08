@@ -70,6 +70,7 @@ jobs:
           - os: windows-latest
             python: 312
             platform_id: win_amd64
+            prerelease: True
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
@@ -95,6 +96,7 @@ jobs:
             python: 312
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
+            prerelease: True
 
           # MacOS x86_64
           - os: macos-latest
@@ -138,15 +140,11 @@ jobs:
         env:
           CONFTEST_PATH: ${{ github.workspace }}/conftest.py
           CONFTEST_NAME: conftest.py
-          # Temporary for Python 3.12 testing
-          CIBW_PRERELEASE_PYTHONS: True
-          # TODO: next lines with PIP_ fetch nightly numpy and scipy releases.
-          # They can be removed when there are numpy and scipy releases that
-          # supports Python 3.12
+          # TODO: remove when there are numpy and scipy releases that supports
+          # Python 3.12
+          CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease }}
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
-                            PIP_EXTRA_INDEX_URL=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
-                            PIP_PRE=1
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}

@@ -45,6 +45,13 @@ if [[ $(uname) == "Darwin" ]]; then
     fi
 fi
 
+# TODO: remove when there are numpy and scipy releases that supports Python
+# 3.12
+if [[ "$CIBW_PRERELEASE_PYTHONS" == "True" ]]; then
+    export PIP_EXTRA_INDEX_URL=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
+    export PIP_PRE=1
+fi
+
 # The version of the built dependencies are specified
 # in the pyproject.toml file, while the tests are run
 # against the most recent version of the dependencies
