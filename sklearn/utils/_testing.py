@@ -47,7 +47,7 @@ from sklearn.utils import (
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils._array_api import _check_array_api_dispatch
-from sklearn.utils.fixes import threadpool_info
+from sklearn.utils.fixes import VisibleDeprecationWarning, threadpool_info
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -96,7 +96,7 @@ def assert_no_warnings(func, *args, **kw):
         result = func(*args, **kw)
         if hasattr(np, "FutureWarning"):
             # Filter out numpy-specific warnings in numpy >= 1.9
-            w = [e for e in w if e.category is not np.VisibleDeprecationWarning]
+            w = [e for e in w if e.category is not VisibleDeprecationWarning]
 
         if len(w) > 0:
             raise AssertionError(
