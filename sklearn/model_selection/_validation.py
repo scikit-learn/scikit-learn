@@ -217,12 +217,12 @@ def cross_validate(
         Parameters to pass to the fit method of the estimator.
 
         .. deprecated:: 1.4
-            This parameter is deprecated will be removed in version 1.6. Use
+            This parameter is deprecated and will be removed in version 1.6. Use
             ``params`` instead.
 
     params : dict, default=None
-        Parameters to pass to the the underlying estimator's ``fit``, the
-        scorer, and the CV splitter.
+        Parameters to pass to the underlying estimator's ``fit``, the scorer,
+        and the CV splitter.
 
         .. versionadded:: 1.4
 
@@ -648,11 +648,11 @@ def cross_val_score(
         Parameters to pass to the fit method of the estimator.
 
         .. deprecated:: 1.4
-            This parameter is deprecated will be removed in version 1.6. Use
+            This parameter is deprecated and will be removed in version 1.6. Use
             ``params`` instead.
 
     params : dict, default=None
-        Parameters to pass the the underlying estimator's ``fit``, the scorer,
+        Parameters to pass to the underlying estimator's ``fit``, the scorer,
         and the CV splitter.
 
         .. versionadded:: 1.4
@@ -1144,12 +1144,12 @@ def cross_val_predict(
         Parameters to pass to the fit method of the estimator.
 
         .. deprecated:: 1.4
-            This parameter is deprecated will be removed in version 1.6. Use
+            This parameter is deprecated and will be removed in version 1.6. Use
             ``params`` instead.
 
     params : dict, default=None
-        Parameters to pass to the the underlying estimator's ``fit`` and the
-        CV splitter.
+        Parameters to pass to the underlying estimator's ``fit`` and the CV
+        splitter.
 
         .. versionadded:: 1.4
 

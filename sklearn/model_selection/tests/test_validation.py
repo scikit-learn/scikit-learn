@@ -2560,7 +2560,6 @@ def test_cross_validate_routing(cv_method):
         check_recorded_metadata(
             obj=_splitter,
             method="split",
-            split_params=("groups", "metadata"),
             groups=split_groups,
             metadata=split_metadata,
         )
