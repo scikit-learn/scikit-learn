@@ -296,6 +296,10 @@ def test_use_regression_target():
     [
         ([1, 2] * 10, ["A", "B"]),
         ([1, 2, 3] * 6 + [1, 2], ["A_1", "A_2", "A_3", "B_1", "B_2", "B_3"]),
+        (
+            ["y1", "y2", "y3"] * 6 + ["y1", "y2"],
+            ["A_y1", "A_y2", "A_y3", "B_y1", "B_y2", "B_y3"],
+        ),
     ],
 )
 def test_feature_names_out_set_output(y, feature_names):
