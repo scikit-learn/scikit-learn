@@ -9,10 +9,10 @@ ARG CIBW_TEST_REQUIRES
 # Copy and install the Windows wheel
 COPY $WHEEL_NAME $WHEEL_NAME
 COPY $CONFTEST_NAME $CONFTEST_NAME
-RUN if [[ "$CIBW_PRERELEASE_PYTHONS" == "True" ]]; then \
-  export PIP_EXTRA_INDEX_URL=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple; \
-  export PIP_PRE=1; \
-fi;
+RUN if ( $Env:CIBW_PRERELEASE_PYTHONS -eq 'True' ) { \
+  $Env:PIP_EXTRA_INDEX_URL = 'https://pypi.anaconda.org/scientific-python-nightly-wheels/simple'; \
+  $Env:PIP_PRE = '1'; \
+}
 RUN pip install $env:WHEEL_NAME
 
 # Install the testing dependencies
