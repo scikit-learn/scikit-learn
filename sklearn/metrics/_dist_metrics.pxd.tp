@@ -49,11 +49,11 @@ cdef inline float64_t euclidean_rdist{{name_suffix}}(
     return d
 
 
-cdef inline float64_t euclidean_dist_to_rdist{{name_suffix}}(const {{INPUT_DTYPE_t}} dist) except -1 nogil:
+cdef inline float64_t euclidean_dist_to_rdist{{name_suffix}}(const float64_t dist) except -1 nogil:
     return dist * dist
 
 
-cdef inline float64_t euclidean_rdist_to_dist{{name_suffix}}(const {{INPUT_DTYPE_t}} dist) except -1 nogil:
+cdef inline float64_t euclidean_rdist_to_dist{{name_suffix}}(const float64_t dist) except -1 nogil:
     return sqrt(dist)
 
 
@@ -71,21 +71,21 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     cdef object func
     cdef object kwargs
 
-    cdef {{INPUT_DTYPE_t}} dist(
+    cdef float64_t dist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
         intp_t size,
     ) except -1 nogil
 
-    cdef {{INPUT_DTYPE_t}} rdist(
+    cdef float64_t rdist(
         self,
         const {{INPUT_DTYPE_t}}* x1,
         const {{INPUT_DTYPE_t}}* x2,
         intp_t size,
     ) except -1 nogil
 
-    cdef {{INPUT_DTYPE_t}} dist_csr(
+    cdef float64_t dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -98,7 +98,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
         const intp_t size,
     ) except -1 nogil
 
-    cdef {{INPUT_DTYPE_t}} rdist_csr(
+    cdef float64_t rdist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,
         const int32_t* x1_indices,
@@ -145,8 +145,8 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
         {{INPUT_DTYPE_t}}[:, ::1] D,
     ) except -1 nogil
 
-    cdef {{INPUT_DTYPE_t}} _rdist_to_dist(self, {{INPUT_DTYPE_t}} rdist) except -1 nogil
+    cdef float64_t _rdist_to_dist(self, float64_t rdist) except -1 nogil
 
-    cdef {{INPUT_DTYPE_t}} _dist_to_rdist(self, {{INPUT_DTYPE_t}} dist) except -1 nogil
+    cdef float64_t _dist_to_rdist(self, float64_t dist) except -1 nogil
 
 {{endfor}}
