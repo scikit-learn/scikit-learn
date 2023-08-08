@@ -158,3 +158,11 @@ def _contents(data_module):
         )
     else:
         return resources.contents(data_module)
+
+
+# For +1.25 NumPy versions exceptions and warnings are being moved
+# to a dedicated submodule.
+if np_version >= parse_version("1.25.0"):
+    from numpy.exceptions import VisibleDeprecationWarning
+else:
+    from numpy import VisibleDeprecationWarning  # type: ignore  # noqa
