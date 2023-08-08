@@ -48,7 +48,7 @@ fi
 # TODO: remove when there are numpy and scipy releases that supports Python
 # 3.12
 if [[ "$CIBW_PRERELEASE_PYTHONS" == "True" ]]; then
-    ADDITIONAL_CIBW_ENVIRONMENT= "\
+    ADDITIONAL_CIBW_ENVIRONMENT="\
         PIP_EXTRA_INDEX_URL=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
         PIP_PRE=1"
     export CIBW_ENVIRONMENT="${CIBW_ENVIRONMENT}\n${ADDITIONAL_CIBW_ENVIRONMENT}"
