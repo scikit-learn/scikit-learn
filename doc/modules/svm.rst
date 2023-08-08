@@ -511,9 +511,8 @@ is advised to use :class:`~sklearn.model_selection.GridSearchCV` with
  * :ref:`sphx_glr_auto_examples_svm_plot_rbf_parameters.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
 
-|details-start|
-**Custom Kernels**
-|details-split|
+Custom Kernels
+--------------
 
 You can define your own kernels by either giving the kernel as a
 python function or by precomputing the Gram matrix.
@@ -530,7 +529,7 @@ classifiers, except that:
 
 
 Using Python functions as kernels
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------
 
 You can use your own defined kernels by passing a function to the
 ``kernel`` parameter.
@@ -548,13 +547,16 @@ instance that will use that kernel::
     ...     return np.dot(X, Y.T)
     ...
     >>> clf = svm.SVC(kernel=my_kernel)
+  
+
 
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_svm_plot_custom_kernel.py`.
 
-Using the Gram matrix
-~~~~~~~~~~~~~~~~~~~~~
+|details-start|
+**Using the Gram matrix**
+|details-split|  
 
 You can pass pre-computed kernels by using the ``kernel='precomputed'``
 option. You should then pass Gram matrix instead of X to the `fit` and
