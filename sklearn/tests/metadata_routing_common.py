@@ -323,7 +323,7 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         self.estimator = estimator
 
     def fit(self, X, y, **fit_params):
-        params = process_routing(self, "fit", fit_params)
+        params = process_routing(self, "fit", **fit_params)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
 
     def get_metadata_routing(self):
@@ -345,12 +345,12 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
             self.registry.append(self)
 
         record_metadata(self, "fit", sample_weight=sample_weight)
-        params = process_routing(self, "fit", fit_params, sample_weight=sample_weight)
+        params = process_routing(self, "fit", sample_weight=sample_weight, **fit_params)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
         return self
 
     def predict(self, X, **predict_params):
-        params = process_routing(self, "predict", predict_params)
+        params = process_routing(self, "predict", **predict_params)
         return self.estimator_.predict(X, **params.estimator.predict)
 
     def get_metadata_routing(self):
@@ -374,7 +374,7 @@ class WeightedMetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator)
             self.registry.append(self)
 
         record_metadata(self, "fit", sample_weight=sample_weight)
-        params = process_routing(self, "fit", kwargs, sample_weight=sample_weight)
+        params = process_routing(self, "fit", sample_weight=sample_weight, **kwargs)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
         return self
 
@@ -394,12 +394,12 @@ class MetaTransformer(MetaEstimatorMixin, TransformerMixin, BaseEstimator):
         self.transformer = transformer
 
     def fit(self, X, y=None, **fit_params):
-        params = process_routing(self, "fit", fit_params)
+        params = process_routing(self, "fit", **fit_params)
         self.transformer_ = clone(self.transformer).fit(X, y, **params.transformer.fit)
         return self
 
     def transform(self, X, y=None, **transform_params):
-        params = process_routing(self, "transform", transform_params)
+        params = process_routing(self, "transform", **transform_params)
         return self.transformer_.transform(X, **params.transformer.transform)
 
     def get_metadata_routing(self):

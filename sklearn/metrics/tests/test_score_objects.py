@@ -1197,6 +1197,15 @@ def test_scorer_no_op_multiclass_select_proba():
     scorer(lr, X_test, y_test)
 
 
+@pytest.mark.parametrize("name", get_scorer_names())
+def test_scorer_set_score_request_raises(name):
+    """Test that set_score_request is only available when feature flag is on."""
+    # Make sure they expose the routing methods.
+    scorer = get_scorer(name)
+    with pytest.raises(RuntimeError, match="This method is only available"):
+        scorer.set_score_request()
+
+
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("name", get_scorer_names(), ids=get_scorer_names())
 def test_scorer_metadata_request(name):
@@ -1288,6 +1297,7 @@ def test_PassthroughScorer_metadata_request():
     assert scorer.get_metadata_routing().score.requests["sample_weight"] == "alias"
 
 
+@pytest.mark.usefixtures("enable_slep006")
 def test_multimetric_scoring_metadata_routing():
     # Test that _MultimetricScorer properly routes metadata.
     def score1(y_true, y_pred):
@@ -1320,12 +1330,12 @@ def test_multimetric_scoring_metadata_routing():
     # this should fail, because metadata routing is not enabled and w/o it we
     # don't support different metadata for different scorers.
     # TODO: remove when enable_metadata_routing is deprecated
-    with pytest.raises(TypeError, match="got an unexpected keyword argument"):
-        multi_scorer(clf, X, y, sample_weight=1)
+    with config_context(enable_metadata_routing=False):
+        with pytest.raises(TypeError, match="got an unexpected keyword argument"):
+            multi_scorer(clf, X, y, sample_weight=1)
 
     # This passes since routing is done.
-    with config_context(enable_metadata_routing=True):
-        multi_scorer(clf, X, y, sample_weight=1)
+    multi_scorer(clf, X, y, sample_weight=1)
 
 
 def test_kwargs_without_metadata_routing_error():
