@@ -9,6 +9,7 @@ ARG CIBW_TEST_REQUIRES
 # Copy and install the Windows wheel
 COPY $WHEEL_NAME $WHEEL_NAME
 COPY $CONFTEST_NAME $CONFTEST_NAME
+RUN pip install --upgrade pip
 RUN pip install $env:WHEEL_NAME
 
 # Install the testing dependencies
