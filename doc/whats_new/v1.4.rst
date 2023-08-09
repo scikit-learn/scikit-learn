@@ -206,6 +206,12 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
+- |Enhancement| :func:`sklearn.utils.estimator_html_repr` dynamically adapts
+  diagram colors based on the browser's `prefers-color-scheme`, providing
+  improved adaptability to dark mode environments.
+  :pr:`26862` by :user:`Andrew Goh Yisheng <9y5>`, `Thomas Fan`_, `Adrin
+  Jalali`_.
+
 - |Enhancement| :class:`~utils.metadata_routing.MetadataRequest` and
   :class:`~utils.metadata_routing.MetadataRouter` now have a ``consumes`` method
   which can be used to check whether a given set of parameters would be consumed.
