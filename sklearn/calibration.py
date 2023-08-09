@@ -1186,7 +1186,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
         )
 
-        line_kwargs = {"marker": "s"}
+        line_kwargs = {"marker": "s", "linestyle": "-"}
         if name is not None:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
