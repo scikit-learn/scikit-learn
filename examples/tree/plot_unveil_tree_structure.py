@@ -67,18 +67,8 @@ clf.fit(X_train, y_train)
 #   - ``impurity[i]``: the impurity at node ``i``
 #   - ``weighted_n_node_samples[i]``: the weighted number of training samples
 #     reaching node ``i``
-#
-# Another important array is ``value``, which is a 3D array of shape
-# [``n_nodes``, ``n_classes``, ``n_outputs``] and holds the summary of the trainin
-# samples that reached each node. For each node, ``value[i]`` is the counts of
-# each class among the training samples reaching the node. For example, say the
-# training data has ``y = [[0, 1], [1, 2], [0, -1]]`` with two output dimensions
-# and two classes for the first dimension and three classes for the second dimension.
-# If ``value[i]`` held the array ``[[1, 0, 0], [0, 2, 1]]``, it indicates that:
-#
-# - there was 1 training sample that reached node ``i`` and with label ``y = (0, 0)``
-# - there were 2 training samples that reached node ``i`` and with label ``y = (1, 1)``
-# - there was 1 training sample that reached node ``i`` and with label ``y = (1, -1)``
+#   - ``value[i, j, k]``: the summary of the training samples that reached node i for
+#     class j and output k.
 #
 # Using the arrays, we can traverse the tree structure to compute various
 # properties. Below, we will compute the depth of each node and whether or not
@@ -89,6 +79,7 @@ children_left = clf.tree_.children_left
 children_right = clf.tree_.children_right
 feature = clf.tree_.feature
 threshold = clf.tree_.threshold
+values = clf.tree_.value
 
 node_depth = np.zeros(shape=n_nodes, dtype=np.int64)
 is_leaves = np.zeros(shape=n_nodes, dtype=bool)
@@ -116,13 +107,13 @@ print(
 for i in range(n_nodes):
     if is_leaves[i]:
         print(
-            "{space}node={node} is a leaf node.".format(
-                space=node_depth[i] * "\t", node=i
+            "{space}node={node} is a leaf node with value={value}.".format(
+                space=node_depth[i] * "\t", node=i, value=values[i]
             )
         )
     else:
         print(
-            "{space}node={node} is a split node: "
+            "{space}node={node} is a split node with value={value}: "
             "go to node {left} if X[:, {feature}] <= {threshold} "
             "else to node {right}.".format(
                 space=node_depth[i] * "\t",
@@ -131,8 +122,28 @@ for i in range(n_nodes):
                 feature=feature[i],
                 threshold=threshold[i],
                 right=children_right[i],
+                value=values[i],
             )
         )
+
+# %%
+# What is the values array used here?
+# -----------------------------------
+#
+# In the example shown above, we have a simple setting, where `n_outputs=1`, but
+# the tree classifier can also handle multi-output problems.
+#
+# In general, ``value`` is a 3D array of shape
+# [``n_nodes``, ``n_classes``, ``n_outputs``] and holds the summary of the trainin
+# samples that reached each node. For each node, ``value[i]`` is the counts of
+# each class among the training samples reaching the node. For example, say the
+# training data has ``y = [[0, 1], [1, 2], [0, -1]]`` with two output dimensions
+# and two classes for the first dimension and three classes for the second dimension.
+# If ``value[i]`` held the array ``[[1, 0, 0], [0, 2, 1]]``, it indicates that:
+#
+# - there was 1 training sample that reached node ``i`` and with label ``y = (0, 0)``
+# - there were 2 training samples that reached node ``i`` and with label ``y = (1, 1)``
+# - there was 1 training sample that reached node ``i`` and with label ``y = (1, -1)``
 
 ##############################################################################
 # We can compare the above output to the plot of the decision tree.

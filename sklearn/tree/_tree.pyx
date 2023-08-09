@@ -695,6 +695,9 @@ cdef class Tree:
     node_count : int
         The number of nodes (internal nodes + leaves) in the tree.
 
+    max_depth : int
+        The depth of the tree, i.e. the maximum depth of its leaves.
+
     capacity : int
         The current capacity (i.e., size) of the arrays, which is at least as
         great as `node_count`.
