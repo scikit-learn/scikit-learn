@@ -816,6 +816,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         fit_and_score_kwargs = dict(
             scorer=scorers,
             fit_params=fit_params,
+            # TODO(SLEP6): pass score params along
+            score_params=None,
             return_train_score=self.return_train_score,
             return_n_test_samples=True,
             return_times=True,
