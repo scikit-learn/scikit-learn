@@ -19,8 +19,13 @@ from . import check_random_state
 cdef UINT32_t DEFAULT_SEED = 1
 
 
-cpdef _sample_without_replacement_check_input(cnp.int_t n_population,
-                                              cnp.int_t n_samples):
+ctypedef fused default_int:
+    cnp.intp_t
+    long
+
+
+cpdef _sample_without_replacement_check_input(default_int n_population,
+                                              default_int n_samples):
     """ Check that input are consistent for sample_without_replacement"""
     if n_population < 0:
         raise ValueError('n_population should be greater than 0, got %s.'
@@ -33,8 +38,8 @@ cpdef _sample_without_replacement_check_input(cnp.int_t n_population,
 
 
 cpdef _sample_without_replacement_with_tracking_selection(
-        cnp.int_t n_population,
-        cnp.int_t n_samples,
+        default_int n_population,
+        default_int n_samples,
         random_state=None):
     r"""Sample integers without replacement.
 
@@ -76,9 +81,9 @@ cpdef _sample_without_replacement_with_tracking_selection(
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
-    cdef cnp.int_t i
-    cdef cnp.int_t j
-    cdef cnp.int_t[::1] out = np.empty((n_samples, ), dtype=int)
+    cdef default_int i
+    cdef default_int j
+    cdef default_int[::1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -97,8 +102,8 @@ cpdef _sample_without_replacement_with_tracking_selection(
     return np.asarray(out)
 
 
-cpdef _sample_without_replacement_with_pool(cnp.int_t n_population,
-                                            cnp.int_t n_samples,
+cpdef _sample_without_replacement_with_pool(default_int n_population,
+                                            default_int n_samples,
                                             random_state=None):
     """Sample integers without replacement.
 
@@ -131,10 +136,10 @@ cpdef _sample_without_replacement_with_pool(cnp.int_t n_population,
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
-    cdef cnp.int_t i
-    cdef cnp.int_t j
-    cdef cnp.int_t[::1] out = np.empty((n_samples,), dtype=int)
-    cdef cnp.int_t[::1] pool = np.empty((n_population,), dtype=int)
+    cdef default_int i
+    cdef default_int j
+    cdef default_int[::1] out = np.empty((n_samples,), dtype=int)
+    cdef default_int[::1] pool = np.empty((n_population,), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -154,8 +159,8 @@ cpdef _sample_without_replacement_with_pool(cnp.int_t n_population,
 
 
 cpdef _sample_without_replacement_with_reservoir_sampling(
-    cnp.int_t n_population,
-    cnp.int_t n_samples,
+    default_int n_population,
+    default_int n_samples,
     random_state=None
 ):
     """Sample integers without replacement.
@@ -191,9 +196,9 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
-    cdef cnp.int_t i
-    cdef cnp.int_t j
-    cdef cnp.int_t[::1] out = np.empty((n_samples, ), dtype=int)
+    cdef default_int i
+    cdef default_int j
+    cdef default_int[::1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -213,8 +218,8 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
     return np.asarray(out)
 
 
-cpdef sample_without_replacement(cnp.int_t n_population,
-                                 cnp.int_t n_samples,
+cdef _sample_without_replacement(default_int n_population,
+                                 default_int n_samples,
                                  method="auto",
                                  random_state=None):
     """Sample integers without replacement.
@@ -301,6 +306,29 @@ cpdef sample_without_replacement(cnp.int_t n_population,
     else:
         raise ValueError('Expected a method name in %s, got %s. '
                          % (all_methods, method))
+
+
+def sample_without_replacement(
+        object n_population, object n_samples, method="auto", random_state=None):
+    cdef:
+        cnp.intp_t n_pop_intp, n_samples_intp
+        long n_pop_long, n_samples_long
+
+    # Note: the legacy rng will use `long` internally in either case
+    # If NumPy 2.0 is guaranteed at compile time this could also be written
+    # as `cnp.NPY_DEFAULT_INT == cnp.NPY_INTP`.
+    if np.int_ is np.intp:
+        # converting to long will allow conversion to integer (from float)
+        # via `int()`, but conversion from other objects does not.
+        n_pop_intp = int(n_population)
+        n_samples_intp = int(n_samples)
+        return _sample_without_replacement(
+                n_pop_intp, n_samples_intp, method, random_state)
+    else:
+        n_pop_long = n_population
+        n_samples_long = n_samples
+        return _sample_without_replacement(
+                n_pop_long, n_samples_long, method, random_state)
 
 
 def _our_rand_r_py(seed):
