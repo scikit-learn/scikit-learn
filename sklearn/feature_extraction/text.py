@@ -1063,7 +1063,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         probabilistic models that model binary events rather than integer
         counts.
 
-    dtype : dtype, default=np.int64
+    dtype : dtype, default=np.bool if binary else np.int64
         Type of the matrix returned by fit_transform() or transform().
 
     Attributes
@@ -1193,7 +1193,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         self.ngram_range = ngram_range
         self.vocabulary = vocabulary
         self.binary = binary
-        self.dtype = dtype
+        self.dtype = np.bool if binary else dtype
 
     def _sort_features(self, X, vocabulary):
         """Sort features by name
