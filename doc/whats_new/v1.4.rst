@@ -157,6 +157,16 @@ Changelog
   object in the parameter grid if it's an estimator. :pr:`26786` by `Adrin
   Jalali`_.
 
+- |Feature| :func:`~model_selection.cross_validate`,
+  :func:`~model_selection.cross_val_score`, and
+  :func:`~model_selection.cross_val_predict` now support metadata routing. The
+  metadata are routed to the estimator's `fit`, the scorer, and the CV
+  splitter's `split`. The metadata is accepted via the new `params` parameter.
+  `fit_params` is deprecated and will be removed in version 1.6. `groups`
+  parameter is also not accepted as a separate argument when metadata routing
+  is enabled and should be passed via the `params` parameter. :pr:`26896` by
+  `Adrin Jalali`_.
+
 :mod:`sklearn.neighbors`
 ........................
 
