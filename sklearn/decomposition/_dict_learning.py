@@ -3,26 +3,29 @@
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
-import time
-import sys
 import itertools
-from numbers import Integral, Real
+import sys
+import time
 import warnings
-
 from math import ceil
+from numbers import Integral, Real
 
 import numpy as np
-from scipy import linalg
 from joblib import effective_n_jobs
+from scipy import linalg
 
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils._param_validation import validate_params
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from ..linear_model import Lars, Lasso, LassoLars, orthogonal_mp_gram
+from ..utils import check_array, check_random_state, gen_batches, gen_even_slices
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
+from ..utils.parallel import Parallel, delayed
 from ..utils.validation import check_is_fitted
-from ..utils.parallel import delayed, Parallel
-from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
 def _check_positive_coding(method, positive):
@@ -217,7 +220,8 @@ def _sparse_encode_precomputed(
         "check_input": ["boolean"],
         "verbose": ["verbose"],
         "positive": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 # XXX : could be moved to the linear_model module
 def sparse_encode(
@@ -732,7 +736,8 @@ def dict_learning_online(
     dict_init : ndarray of shape (n_components, n_features), default=None
         Initial values for the dictionary for warm restart scenarios.
         If `None`, the initial values for the dictionary are created
-        with an SVD decomposition of the data via :func:`~sklearn.utils.randomized_svd`.
+        with an SVD decomposition of the data via
+        :func:`~sklearn.utils.extmath.randomized_svd`.
 
     callback : callable, default=None
         A callable that gets invoked at the end of each iteration.
@@ -1076,7 +1081,8 @@ def dict_learning_online(
         "method": [StrOptions({"lars", "cd"})],
         "return_n_iter": ["boolean"],
         "method_max_iter": [Interval(Integral, 0, None, closed="left")],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def dict_learning(
     X,
@@ -1795,6 +1801,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.fit_transform(X)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Fit the model from data in X and return the transformed data.
 
@@ -1812,8 +1819,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         V : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
-        self._validate_params()
-
         _check_positive_coding(method=self.fit_algorithm, positive=self.positive_code)
 
         method = "lasso_" + self.fit_algorithm
@@ -2318,6 +2323,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         return False
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
@@ -2335,8 +2341,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X, dtype=[np.float64, np.float32], order="C", copy=False
         )
@@ -2412,7 +2416,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             self.n_steps_ = i + 1
             self.n_iter_ = np.ceil(self.n_steps_ / n_steps_per_iter)
         else:
-            # TODO remove this branch in 1.3
+            # TODO remove this branch in 1.4
             n_iter = 1000 if self.n_iter == "deprecated" else self.n_iter
 
             batches = gen_batches(n_samples, self._batch_size)
@@ -2435,6 +2439,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None):
         """Update the model using the data in X as a mini-batch.
 
@@ -2453,9 +2458,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             Return the instance itself.
         """
         has_components = hasattr(self, "components_")
-
-        if not has_components:
-            self._validate_params()
 
         X = self._validate_data(
             X, dtype=[np.float64, np.float32], order="C", reset=not has_components

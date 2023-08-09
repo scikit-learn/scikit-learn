@@ -1,37 +1,46 @@
-from os import environ
-from functools import wraps
+import builtins
 import platform
 import sys
 from contextlib import suppress
+from functools import wraps
+from os import environ
 from unittest import SkipTest
 
 import joblib
-import pytest
 import numpy as np
-from threadpoolctl import threadpool_limits
+import pytest
 from _pytest.doctest import DoctestItem
+from threadpoolctl import threadpool_limits
 
-from sklearn.utils import _IS_32BIT
+from sklearn import config_context
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
-from sklearn.utils.fixes import sp_version
-from sklearn.utils.fixes import parse_version
-from sklearn.datasets import fetch_20newsgroups
-from sklearn.datasets import fetch_20newsgroups_vectorized
-from sklearn.datasets import fetch_california_housing
-from sklearn.datasets import fetch_covtype
-from sklearn.datasets import fetch_kddcup99
-from sklearn.datasets import fetch_olivetti_faces
-from sklearn.datasets import fetch_rcv1
+from sklearn.datasets import (
+    fetch_20newsgroups,
+    fetch_20newsgroups_vectorized,
+    fetch_california_housing,
+    fetch_covtype,
+    fetch_kddcup99,
+    fetch_olivetti_faces,
+    fetch_rcv1,
+)
 from sklearn.tests import random_seed
-
+from sklearn.utils import _IS_32BIT
+from sklearn.utils.fixes import parse_version, sp_version
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
-        "Your version of pytest is too old, you should have "
-        "at least pytest >= {} installed.".format(PYTEST_MIN_VERSION)
+        f"Your version of pytest is too old. Got version {pytest.__version__}, you"
+        f" should have pytest >= {PYTEST_MIN_VERSION} installed."
     )
 
 scipy_datasets_require_network = sp_version >= parse_version("1.10")
+
+
+@pytest.fixture
+def enable_slep006():
+    """Enable SLEP006 for all tests."""
+    with config_context(enable_metadata_routing=True):
+        yield
 
 
 def raccoon_face_or_skip():
@@ -87,7 +96,7 @@ def _fetch_fixture(f):
         kwargs["download_if_missing"] = download_if_missing
         try:
             return f(*args, **kwargs)
-        except IOError as e:
+        except OSError as e:
             if str(e) != "Data not found and `download_if_missing` is False":
                 raise
             pytest.skip("test is enabled when SKLEARN_SKIP_NETWORK_TESTS=0")
@@ -252,3 +261,16 @@ def pytest_configure(config):
     # Register global_random_seed plugin if it is not already registered
     if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):
         config.pluginmanager.register(random_seed)
+
+
+@pytest.fixture
+def hide_available_pandas(monkeypatch):
+    """Pretend pandas was not installed."""
+    import_orig = builtins.__import__
+
+    def mocked_import(name, *args, **kwargs):
+        if name == "pandas":
+            raise ImportError()
+        return import_orig(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", mocked_import)
