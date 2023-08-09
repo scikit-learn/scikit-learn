@@ -1195,9 +1195,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         existing_ref_line = ref_line_label in self.ax_.get_legend_handles_labels()[1]
         if ref_line and not existing_ref_line:
             self.ax_.plot([0, 1], [0, 1], "k:", label=ref_line_label)
-        self.line_ = self.ax_.plot(self.prob_pred, self.prob_true, "-", **line_kwargs)[
-            0
-        ]
+        self.line_ = self.ax_.plot(self.prob_pred, self.prob_true, **line_kwargs)[0]
 
         # We always have to show the legend for at least the reference line
         self.ax_.legend(loc="lower right")
