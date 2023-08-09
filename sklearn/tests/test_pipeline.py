@@ -17,7 +17,11 @@ from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.dummy import DummyRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    RandomForestClassifier,
+    RandomTreesEmbedding,
+)
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_selection import SelectKBest, f_classif
@@ -27,7 +31,7 @@ from sklearn.metrics import accuracy_score, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline, make_union
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sklearn.svm import SVC
 from sklearn.utils._metadata_requests import COMPOSITE_METHODS, METHODS
 from sklearn.utils._testing import (
@@ -1826,6 +1830,27 @@ def test_routing_passed_metadata_not_supported(method):
         ValueError, match="is only supported if enable_metadata_routing=True"
     ):
         getattr(pipe, method)([[1]], sample_weight=[1], prop="a")
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_pipeline_with_estimator_with_len():
+    """Test that pipeline works with estimators that have a `__len__` method."""
+    pipe = Pipeline(
+        [("trs", RandomTreesEmbedding()), ("estimator", RandomForestClassifier())]
+    )
+    pipe.fit([[1]], [1])
+    pipe.predict([[1]])
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize("last_step", [None, "passthrough"])
+def test_pipeline_with_no_last_step(last_step):
+    """Test that the pipeline works when there is not last step.
+
+    It should just ignore and pass through the data on transform.
+    """
+    pipe = Pipeline([("trs", FunctionTransformer()), ("estimator", last_step)])
+    assert pipe.fit([[1]], [1]).transform([[1], [2], [3]]) == [[1], [2], [3]]
 
 
 # End of routing tests
