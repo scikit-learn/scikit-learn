@@ -30,6 +30,7 @@ from sklearn.metrics.pairwise import (
     PAIRWISE_DISTANCE_FUNCTIONS,
     PAIRWISE_KERNEL_FUNCTIONS,
     _euclidean_distances_upcast,
+    _paired_haversine_distances,
     additive_chi2_kernel,
     check_paired_arrays,
     check_pairwise_arrays,
@@ -117,6 +118,13 @@ def test_pairwise_distances(global_dtype):
     Y[:, 1] = (Y[:, 1] - 0.5) * 2 * np.pi
     S = pairwise_distances(X, Y, metric="haversine")
     S2 = haversine_distances(X, Y)
+    assert_allclose(S, S2)
+
+    # test that the two functions computing haversine give the same results
+    X_pairs = rng.randn(5, 2)
+    Y_pairs = np.tile(X_pairs[0, :], (5, 1))
+    S = haversine_distances(X_pairs, Y_pairs[0].reshape(1, -1)).ravel()
+    S2 = _paired_haversine_distances(X_pairs, Y_pairs).ravel()
     assert_allclose(S, S2)
 
     # "cityblock" uses scikit-learn metric, cityblock (function) is
@@ -440,11 +448,19 @@ def test_paired_distances(metric, func):
     # Euclidean distance, with Y != X.
     Y = rng.random_sample((5, 4))
 
+    if metric == "haversine":
+        with pytest.raises(ValueError):
+            func(X, Y)
+        X, Y = X[:, :2], Y[:, :2]
+
     S = paired_distances(X, Y, metric=metric)
     S2 = func(X, Y)
     assert_allclose(S, S2)
-    S3 = func(csr_matrix(X), csr_matrix(Y))
-    assert_allclose(S, S3)
+
+    if metric != "haversine":
+        S3 = func(csr_matrix(X), csr_matrix(Y))
+        assert_allclose(S, S3)
+
     if metric in PAIRWISE_DISTANCE_FUNCTIONS:
         # Check the pairwise_distances implementation
         # gives the same value
@@ -1181,6 +1197,22 @@ def test_paired_cosine_distances():
     Y = [[1], [2]]
     D = paired_cosine_distances(X, Y)
     assert_allclose(D, [0.5, 0.5])
+
+
+def test_paired_haversine_distances():
+    # Check the paired haversine distances computation
+    rng = np.random.RandomState(0)
+    X = rng.randn(5, 3)
+    Y = rng.randn(5, 3)
+    with pytest.raises(
+        ValueError,
+        match=(
+            r"For paired distances and the metric `haversine`, X and Y should both be"
+            r" of shape \(n_samples, 2\), but X.shape is \(5, 3\) and Y.shape is"
+            r" \(5, 3\)"
+        ),
+    ):
+        _paired_haversine_distances(X, Y)
 
 
 def test_chi_square_kernel():
