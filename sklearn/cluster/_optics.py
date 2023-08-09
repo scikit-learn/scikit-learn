@@ -51,12 +51,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
     cluster order. Note that we do not employ a heap to manage the expansion
     candidates, so the time complexity will be O(n^2).
 
-    Read more in the :ref:`User Guide <optics>`.
-
-    For an example of usage, see
-    :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`.
-
-
+    Read more in the :ref:`User Guide <optics>`. 
     Parameters
     ----------
     min_samples : int > 1 or float between 0 and 1, default=5
@@ -237,6 +232,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
     >>> clustering = OPTICS(min_samples=2).fit(X)
     >>> clustering.labels_
     array([0, 0, 0, 1, 1, 1])
+
+    For an example of usage, see :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`.
     """
 
     _parameter_constraints: dict = {
