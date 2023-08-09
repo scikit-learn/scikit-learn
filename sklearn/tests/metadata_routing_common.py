@@ -10,7 +10,7 @@ from sklearn.base import (
     TransformerMixin,
     clone,
 )
-from sklearn.metrics._scorer import _BaseScorer
+from sklearn.metrics._scorer import _PredictScorer, mean_squared_error
 from sklearn.model_selection import BaseCrossValidator
 from sklearn.model_selection._split import GroupsConsumerMixin
 from sklearn.utils._metadata_requests import (
@@ -214,16 +214,13 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         return self
 
     def predict(self, X, sample_weight="default", metadata="default"):
-        pass  # pragma: no cover
+        if self.registry is not None:
+            self.registry.append(self)
 
-        # when needed, uncomment the implementation
-        # if self.registry is not None:
-        #     self.registry.append(self)
-
-        # record_metadata_not_default(
-        #     self, "predict", sample_weight=sample_weight, metadata=metadata
-        # )
-        # return np.zeros(shape=(len(X),))
+        record_metadata_not_default(
+            self, "predict", sample_weight=sample_weight, metadata=metadata
+        )
+        return np.zeros(shape=(len(X),))
 
     def predict_proba(self, X, sample_weight="default", metadata="default"):
         if self.registry is not None:
@@ -276,44 +273,46 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
         return X
 
 
-class ConsumingScorer(_BaseScorer):
+class ConsumingScorer(_PredictScorer):
     def __init__(self, registry=None):
-        super().__init__(score_func="test", sign=1, kwargs={})
+        super().__init__(score_func=mean_squared_error, sign=1, kwargs={})
         self.registry = registry
 
-    def __call__(
-        self, estimator, X, y_true, sample_weight="default", metadata="default"
-    ):
+    def _score(self, method_caller, clf, X, y, **kwargs):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_default(
-            self, "score", sample_weight=sample_weight, metadata=metadata
-        )
+        record_metadata_not_default(self, "score", **kwargs)
 
-        return 0.0
+        sample_weight = kwargs.get("sample_weight", None)
+        return super()._score(method_caller, clf, X, y, sample_weight=sample_weight)
 
 
 class ConsumingSplitter(BaseCrossValidator, GroupsConsumerMixin):
     def __init__(self, registry=None):
         self.registry = registry
 
-    def split(self, X, y=None, groups="default"):
+    def split(self, X, y=None, groups="default", metadata="default"):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_default(self, "split", groups=groups)
+        record_metadata_not_default(self, "split", groups=groups, metadata=metadata)
 
-        split_index = len(X) - 10
-        train_indices = range(0, split_index)
-        test_indices = range(split_index, len(X))
+        split_index = len(X) // 2
+        train_indices = list(range(0, split_index))
+        test_indices = list(range(split_index, len(X)))
         yield test_indices, train_indices
+        yield train_indices, test_indices
 
     def get_n_splits(self, X=None, y=None, groups=None):
         pass  # pragma: no cover
 
     def _iter_test_indices(self, X=None, y=None, groups=None):
-        pass  # pragma: no cover
+        split_index = len(X) // 2
+        train_indices = list(range(0, split_index))
+        test_indices = list(range(split_index, len(X)))
+        yield test_indices
+        yield train_indices
 
 
 class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
