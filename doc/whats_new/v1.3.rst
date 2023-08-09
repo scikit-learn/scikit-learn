@@ -370,7 +370,7 @@ Changelog
 ......................
 
 - |Efficiency| :class:`GaussianMixture` is more efficient now and will bypass unnecessary
-  initialization like kmeans if the weights, means, and precision are given by users.
+  initialization if the weights, means, and precision are given by users.
   :pr:`26021` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
 
 :mod:`sklearn.model_selection`
