@@ -2270,9 +2270,9 @@ def _check_pos_label_consistency(pos_label, y_true):
             or np.array_equal(classes, [1])
         )
     ):
-        classes_repr = ", ".join(repr(c) for c in classes)
+        classes_repr = str(classes.tolist()).replace('[', '{').replace(']', '}')
         raise ValueError(
-            f"y_true takes value in {{{classes_repr}}} and pos_label is not "
+            f"y_true takes value in {classes_repr} and pos_label is not "
             "specified: either make y_true take value in {0, 1} or "
             "{-1, 1} or pass pos_label explicitly."
         )

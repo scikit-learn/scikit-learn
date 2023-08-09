@@ -774,7 +774,7 @@ class OneHotEncoder(_BaseEncoder):
         if infrequent_indices is not None and drop_idx in infrequent_indices:
             categories = self.categories_[feature_idx]
             raise ValueError(
-                f"Unable to drop category {categories[drop_idx]!r} from feature"
+                f"Unable to drop category {categories[drop_idx].tolist()!r} from feature"
                 f" {feature_idx} because it is infrequent"
             )
         return default_to_infrequent[drop_idx]
