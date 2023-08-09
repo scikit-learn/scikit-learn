@@ -50,9 +50,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
     computing only the distances to unprocessed points when constructing the
     cluster order. Note that we do not employ a heap to manage the expansion
     candidates, so the time complexity will be O(n^2).
-
-    Read more in the :ref:`User Guide <optics>`. 
-    Parameters
+    Read more in the :ref:`User Guide <optics>`.
+    
+    Parameters 
     ----------
     min_samples : int > 1 or float between 0 and 1, default=5
         The number of samples in a neighborhood for a point to be considered as
