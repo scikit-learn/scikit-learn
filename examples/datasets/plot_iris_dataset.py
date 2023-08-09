@@ -55,6 +55,14 @@ plt.ylim(y_min, y_max)
 plt.xticks(())
 plt.yticks(())
 
+# Each point in the scatter plot refers to one of the 150 iris flowers
+# in the dataset, with the color indicating their respective type
+# (Setosa, Versicolour, and Virginica).
+# Just based on the the 2 dimensions used in this plot - sepal width
+# and sepal length - you can already see a patttern, but there's still
+# overlap. Let's apply a PCA analysis to bettter differentiatte between
+# the three types!
+
 # %%
 # Plot a PCA representation
 # -------------------------
@@ -84,5 +92,10 @@ ax.set_zlabel("3rd eigenvector")
 ax.zaxis.set_ticklabels([])
 
 plt.show()
+
+# We've now applied a PCA analysis and plotted the irises
+# along the first three dimensions (= Eigenvectors).
+# Looks like the first dimension already does a prettty good job
+# in differentiating the types of irises!
 
 # %%
