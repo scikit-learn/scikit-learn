@@ -724,7 +724,7 @@ class GaussianMixture(BaseMixture):
         resp : array-like of shape (n_samples, n_components)
         """
         n_samples, _ = X.shape
-
+        weights, means, covariances = None, None, None
         if resp is not None:
             weights, means, covariances = _estimate_gaussian_parameters(
                 X, resp, self.reg_covar, self.covariance_type
