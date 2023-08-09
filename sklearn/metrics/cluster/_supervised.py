@@ -595,7 +595,7 @@ def homogeneity_score(labels_true, labels_pred, sample_weight=None):
     labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate.
 
-    sample_weight: array-like of shape (n_samples,), default=None
+    sample_weight : array-like of shape (n_samples,), default=None
         The weights for each observation in labels_true.
 
     Returns
@@ -677,7 +677,7 @@ def completeness_score(labels_true, labels_pred, sample_weight=None):
     labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate.
 
-    sample_weight: array-like of shape (n_samples,), default=None
+    sample_weight : array-like of shape (n_samples,), default=None
         The weights for each observation in labels_true.
 
     Returns
