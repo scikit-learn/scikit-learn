@@ -9,7 +9,6 @@ Generalized Linear Models with Exponential Dispersion Family
 from numbers import Integral, Real
 
 import numpy as np
-import scipy.optimize
 
 from ..._loss.loss import (
     HalfGammaLoss,
@@ -22,9 +21,9 @@ from ...base import BaseEstimator, RegressorMixin, _fit_context
 from ...utils import check_array
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._param_validation import Hidden, Interval, StrOptions
-from ...utils.optimize import _check_optimize_result
 from ...utils.validation import _check_sample_weight, check_is_fitted
 from .._linear_loss import LinearModelLoss
+from ._lbfgs_solver import LbfgsSolver
 from ._newton_solver import NewtonCholeskySolver, NewtonSolver
 
 
@@ -169,7 +168,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self.verbose = verbose
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **loss_kwargs):
         """Fit a Generalized Linear Model.
 
         Parameters
@@ -188,6 +187,16 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
+        data = (X, y, sample_weight)
+        *data, loss_dtype = self._validate_inputs(data)
+        linear_loss = self._get_linear_loss(**loss_kwargs)
+        initial_coef = self._init_coefficients(data, linear_loss, loss_dtype)
+        fitted_coef = self._fit_coefficients(data, linear_loss, initial_coef)
+        self._save_coefficients(fitted_coef)
+        return self
+
+    def _validate_inputs(self, data, **kwargs):
+        X, y, sample_weight = data
         X, y = self._validate_data(
             X,
             y,
@@ -197,49 +206,46 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             multi_output=False,
         )
 
-        # required by losses
-        if self.solver == "lbfgs":
-            # lbfgs will force coef and therefore raw_prediction to be float64. The
-            # base_loss needs y, X @ coef and sample_weight all of same dtype
-            # (and contiguous).
-            loss_dtype = np.float64
-        else:
-            loss_dtype = min(max(y.dtype, X.dtype), np.float64)
+        loss_dtype = self._get_loss_dtype(X, y)
         y = check_array(y, dtype=loss_dtype, order="C", ensure_2d=False)
-
-        # TODO: We could support samples_weight=None as the losses support it.
-        # Note that _check_sample_weight calls check_array(order="C") required by
-        # losses.
+        self._check_y_is_in_loss_range(y)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=loss_dtype)
 
-        n_samples, n_features = X.shape
-        self._base_loss = self._get_loss()
+        sample_weight = sample_weight / sample_weight.sum()
+        return X, y, sample_weight, loss_dtype
 
-        linear_loss = LinearModelLoss(
-            base_loss=self._base_loss,
-            fit_intercept=self.fit_intercept,
+    def _get_loss_dtype(self, X, y):
+        return (
+            np.float64
+            if self.solver == "lbfgs"
+            else min(max(y.dtype, X.dtype), np.float64)
         )
 
-        if not linear_loss.base_loss.in_y_true_range(y):
+    def _check_y_is_in_loss_range(self, y):
+        base_loss = self._get_loss()
+        if not base_loss.in_y_true_range(y):
             raise ValueError(
                 "Some value(s) of y are out of the valid range of the loss"
-                f" {self._base_loss.__class__.__name__!r}."
+                f" {base_loss.__class__.__name__!r}."
             )
 
-        # TODO: if alpha=0 check that X is not rank deficient
+    def _get_linear_loss(self, **loss_kwargs):
+        self._base_loss = self._get_loss()
+        return LinearModelLoss(
+            base_loss=self._base_loss, fit_intercept=self.fit_intercept
+        )
 
-        # IMPORTANT NOTE: Rescaling of sample_weight:
-        # We want to minimize
-        #     obj = 1/(2*sum(sample_weight)) * sum(sample_weight * deviance)
-        #         + 1/2 * alpha * L2,
-        # with
-        #     deviance = 2 * loss.
-        # The objective is invariant to multiplying sample_weight by a constant. We
-        # choose this constant such that sum(sample_weight) = 1. Thus, we end up with
-        #     obj = sum(sample_weight * loss) + 1/2 * alpha * L2.
-        # Note that LinearModelLoss.loss() computes sum(sample_weight * loss).
-        sample_weight = sample_weight / sample_weight.sum()
+    def _get_loss(self):
+        """This is only necessary because of the link and power arguments of the
+        TweedieRegressor.
 
+        Note that we do not need to pass sample_weight to the loss class as this is
+        only needed to set loss.constant_hessian on which GLMs do not rely.
+        """
+        return HalfSquaredError()
+
+    def _init_coefficients(self, data, linear_loss, loss_dtype):
+        X, y, sample_weight = data
         if self.warm_start and hasattr(self, "coef_"):
             if self.fit_intercept:
                 # LinearModelLoss needs intercept at the end of coefficient array.
@@ -250,74 +256,48 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         else:
             coef = linear_loss.init_zero_coef(X, dtype=loss_dtype)
             if self.fit_intercept:
-                coef[-1] = linear_loss.base_loss.link.link(
-                    np.average(y, weights=sample_weight)
-                )
+                coef[-1] = self.link_function.link(np.average(y, weights=sample_weight))
+        return coef
 
-        l2_reg_strength = self.alpha
-        n_threads = _openmp_effective_n_threads()
+    @property
+    def link_function(self):
+        return self._get_loss().link
 
-        # Algorithms for optimization:
-        # Note again that our losses implement 1/2 * deviance.
+    def _fit_coefficients(self, data, linear_loss, initial_coef):
+        solver = self._setup_solver(linear_loss, initial_coef)
+        X, y, sample_weight = data
+        coef = solver.solve(X, y, sample_weight)
+        self.n_iter_ = solver.iteration
+        return coef
+
+    def _setup_solver(self, linear_loss, initial_coef):
         if self.solver == "lbfgs":
-            func = linear_loss.loss_gradient
-
-            opt_res = scipy.optimize.minimize(
-                func,
-                coef,
-                method="L-BFGS-B",
-                jac=True,
-                options={
-                    "maxiter": self.max_iter,
-                    "maxls": 50,  # default is 20
-                    "iprint": self.verbose - 1,
-                    "gtol": self.tol,
-                    # The constant 64 was found empirically to pass the test suite.
-                    # The point is that ftol is very small, but a bit larger than
-                    # machine precision for float64, which is the dtype used by lbfgs.
-                    "ftol": 64 * np.finfo(float).eps,
-                },
-                args=(X, y, sample_weight, l2_reg_strength, n_threads),
-            )
-            self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
-            coef = opt_res.x
+            solver_cls = LbfgsSolver
         elif self.solver == "newton-cholesky":
-            sol = NewtonCholeskySolver(
-                coef=coef,
-                linear_loss=linear_loss,
-                l2_reg_strength=l2_reg_strength,
-                tol=self.tol,
-                max_iter=self.max_iter,
-                n_threads=n_threads,
-                verbose=self.verbose,
-            )
-            coef = sol.solve(X, y, sample_weight)
-            self.n_iter_ = sol.iteration
+            solver_cls = NewtonCholeskySolver
         elif issubclass(self.solver, NewtonSolver):
-            sol = self.solver(
-                coef=coef,
-                linear_loss=linear_loss,
-                l2_reg_strength=l2_reg_strength,
-                tol=self.tol,
-                max_iter=self.max_iter,
-                n_threads=n_threads,
-            )
-            coef = sol.solve(X, y, sample_weight)
-            self.n_iter_ = sol.iteration
+            solver_cls = self.solver
         else:
             raise ValueError(f"Invalid solver={self.solver}.")
 
-        if self.fit_intercept:
-            self.intercept_ = coef[-1]
-            self.coef_ = coef[:-1]
-        else:
-            # set intercept to zero as the other linear models do
-            self.intercept_ = 0.0
-            self.coef_ = coef
+        return solver_cls(
+            coef=initial_coef,
+            linear_loss=linear_loss,
+            max_iter=self.max_iter,
+            verbose=self.verbose - 1,
+            tol=self.tol,
+            l2_reg_strength=self.alpha,
+            n_threads=_openmp_effective_n_threads(),
+        )
 
-        return self
+    def _save_coefficients(self, fitted_coef):
+        self.intercept_, self.coef_ = (
+            [fitted_coef[-1], fitted_coef[:-1]]
+            if self.fit_intercept
+            else [0.0, fitted_coef]
+        )
 
-    def _linear_predictor(self, X):
+    def _linear_predictor(self, X, **kwargs):
         """Compute the linear_predictor = `X @ coef_ + intercept_`.
 
         Note that we often use the term raw_prediction instead of linear predictor.
@@ -343,7 +323,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         )
         return X @ self.coef_ + self.intercept_
 
-    def predict(self, X):
+    def predict(self, X, **predictor_kwargs):
         """Predict using GLM with feature matrix X.
 
         Parameters
@@ -357,8 +337,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             Returns predicted values.
         """
         # check_array is done in _linear_predictor
-        raw_prediction = self._linear_predictor(X)
-        y_pred = self._base_loss.link.inverse(raw_prediction)
+        raw_prediction = self._linear_predictor(X, **predictor_kwargs)
+        y_pred = self.link_function.inverse(raw_prediction)
         return y_pred
 
     def score(self, X, y, sample_weight=None):
@@ -407,7 +387,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             # losses.
             sample_weight = _check_sample_weight(sample_weight, X, dtype=y.dtype)
 
-        base_loss = self._base_loss
+        base_loss = self._get_loss()
 
         if not base_loss.in_y_true_range(y):
             raise ValueError(
@@ -447,15 +427,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             # This happens when the link or power parameter of TweedieRegressor is
             # invalid. We fallback on the default tags in that case.
             return {}
-
-    def _get_loss(self):
-        """This is only necessary because of the link and power arguments of the
-        TweedieRegressor.
-
-        Note that we do not need to pass sample_weight to the loss class as this is
-        only needed to set loss.constant_hessian on which GLMs do not rely.
-        """
-        return HalfSquaredError()
 
 
 class PoissonRegressor(_GeneralizedLinearRegressor):
