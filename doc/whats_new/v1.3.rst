@@ -46,6 +46,26 @@ Changelog
 - |Fix| :func:`tree.plot_tree` now accepts `class_names=True` as documented.
   :pr:`26903` by :user:`Thomas Roehr <2maz>`
 
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| :func:`metrics.cluster.homogeneity_completeness_v_measure` now accepts
+  a `sample_weight` parameter, bringing it conceptually in-line with other supervised
+  metrics such as :func:`metrics.f1_score` and :func:`metrics.roc_auc_score`. Defaults
+  to `None`, so is backward compatible
+  :pr:`26923` by :user:`Daniel Murnane <murnanedaniel>`
+- |Enhancement| :func:`metrics.cluster.homogeneity_score`,
+  :func:`metrics.cluster.completeness_score` and :func:`metrics.cluster.v_measure_score`
+  now accept a `sample_weight` parameter, to be passed to the updated
+  `metrics.cluster.homogeneity_completeness_v_measure` function
+  :pr:`26923` by :user:`Daniel Murnane <murnanedaniel>`
+- |Enhancement| :func:`metrics.cluster.contingency_matrix`,
+  :func:`metrics.cluster.mutual_info_score` and :func:`metrics.cluster.entropy`
+  now accepts a `sample_weight` to enable the functionality of
+  :func:`metrics.cluster.homogeneity_completeness_v_measure`
+  :pr:`26923` by :user:`Daniel Murnane <murnanedaniel>`
+
+
 .. _changes_1_3:
 
 Version 1.3.0
