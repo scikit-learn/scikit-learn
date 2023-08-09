@@ -12,6 +12,13 @@ Version 1.3.1
 Changelog
 ---------
 
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.KNNImputer` now correctly adds a missing indicator column in
+  ``transform`` when ``add_indicator`` is set to ``True`` and missing values are observed
+  during ``fit``. :pr:`26600` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
