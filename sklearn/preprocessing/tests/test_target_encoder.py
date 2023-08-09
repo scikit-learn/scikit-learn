@@ -1,21 +1,22 @@
 import numpy as np
-from numpy.testing import assert_allclose
-from numpy.testing import assert_array_equal
 import pytest
+from numpy.testing import assert_allclose, assert_array_equal
 
-from sklearn.preprocessing import (
-    TargetEncoder,
-    LabelEncoder,
-    KBinsDiscretizer,
-)
-from sklearn.model_selection import KFold
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import ShuffleSplit
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import Ridge
+from sklearn.model_selection import (
+    KFold,
+    ShuffleSplit,
+    StratifiedKFold,
+    cross_val_score,
+    train_test_split,
+)
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import (
+    KBinsDiscretizer,
+    LabelEncoder,
+    TargetEncoder,
+)
 
 
 def _encode_target(X_ordinal, y_int, n_categories, smooth):
@@ -483,7 +484,7 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
     # itself independent of the target variable: target encoding such a feature
     # without internal cross-validation should cause catastrophic overfitting
     # for the downstream regressor, even with shrinkage. This kind of features
-    # typically represents near unique idenfiers of samples. In general they
+    # typically represents near unique identifiers of samples. In general they
     # should be removed from a machine learning datasets but here we want to
     # study the ability of the default behavior of TargetEncoder to mitigate
     # them automatically.

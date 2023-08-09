@@ -10,18 +10,18 @@ at which the fix is no longer needed.
 #
 # License: BSD 3 clause
 
-from importlib import resources
 import sys
+from importlib import resources
 
-import sklearn
 import numpy as np
 import scipy
 import scipy.stats
 import threadpoolctl
 
-from .deprecation import deprecated
-from ..externals._packaging.version import parse as parse_version
+import sklearn
 
+from ..externals._packaging.version import parse as parse_version
+from .deprecation import deprecated
 
 np_version = parse_version(np.__version__)
 sp_version = parse_version(scipy.__version__)
@@ -29,7 +29,7 @@ sp_base_version = parse_version(sp_version.base_version)
 
 
 try:
-    from scipy.optimize._linesearch import line_search_wolfe2, line_search_wolfe1
+    from scipy.optimize._linesearch import line_search_wolfe1, line_search_wolfe2
 except ImportError:  # SciPy < 1.8
     from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1  # type: ignore  # noqa
 
@@ -158,3 +158,11 @@ def _contents(data_module):
         )
     else:
         return resources.contents(data_module)
+
+
+# For +1.25 NumPy versions exceptions and warnings are being moved
+# to a dedicated submodule.
+if np_version >= parse_version("1.25.0"):
+    from numpy.exceptions import VisibleDeprecationWarning
+else:
+    from numpy import VisibleDeprecationWarning  # type: ignore  # noqa

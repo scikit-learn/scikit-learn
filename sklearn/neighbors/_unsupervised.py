@@ -1,8 +1,6 @@
 """Unsupervised nearest neighbors learner"""
 from ..base import _fit_context
-from ._base import NeighborsBase
-from ._base import KNeighborsMixin
-from ._base import RadiusNeighborsMixin
+from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
 
 
 class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
@@ -118,14 +116,11 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
     >>> import numpy as np
     >>> from sklearn.neighbors import NearestNeighbors
     >>> samples = [[0, 0, 2], [1, 0, 0], [0, 0, 1]]
-
     >>> neigh = NearestNeighbors(n_neighbors=2, radius=0.4)
     >>> neigh.fit(samples)
     NearestNeighbors(...)
-
     >>> neigh.kneighbors([[0, 0, 1.3]], 2, return_distance=False)
     array([[2, 0]]...)
-
     >>> nbrs = neigh.radius_neighbors(
     ...    [[0, 0, 1.3]], 0.4, return_distance=False
     ... )

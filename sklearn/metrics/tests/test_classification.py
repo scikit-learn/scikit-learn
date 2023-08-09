@@ -1,55 +1,52 @@
-from functools import partial
-from itertools import product
-from itertools import chain
-from itertools import permutations
-import warnings
 import re
+import warnings
+from functools import partial
+from itertools import chain, permutations, product
 
 import numpy as np
-from scipy import linalg
-from scipy.stats import bernoulli
 import pytest
-
-from sklearn import datasets
-from sklearn import svm
-
-from sklearn.datasets import make_multilabel_classification
-from sklearn.preprocessing import label_binarize, LabelBinarizer
-from sklearn.utils.validation import check_random_state
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._mocking import MockDataFrame
-
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import average_precision_score
-from sklearn.metrics import balanced_accuracy_score
-from sklearn.metrics import class_likelihood_ratios
-from sklearn.metrics import classification_report
-from sklearn.metrics import cohen_kappa_score
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import f1_score
-from sklearn.metrics import fbeta_score
-from sklearn.metrics import hamming_loss
-from sklearn.metrics import hinge_loss
-from sklearn.metrics import jaccard_score
-from sklearn.metrics import log_loss
-from sklearn.metrics import matthews_corrcoef
-from sklearn.metrics import precision_recall_fscore_support
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
-from sklearn.metrics import zero_one_loss
-from sklearn.metrics import brier_score_loss
-from sklearn.metrics import multilabel_confusion_matrix
-
-from sklearn.metrics._classification import _check_targets
-from sklearn.exceptions import UndefinedMetricWarning
-from sklearn.utils.extmath import _nanaverage
-
+from scipy import linalg
 from scipy.spatial.distance import hamming as sp_hamming
+from scipy.stats import bernoulli
+
+from sklearn import datasets, svm
+from sklearn.datasets import make_multilabel_classification
+from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.metrics import (
+    accuracy_score,
+    average_precision_score,
+    balanced_accuracy_score,
+    brier_score_loss,
+    class_likelihood_ratios,
+    classification_report,
+    cohen_kappa_score,
+    confusion_matrix,
+    f1_score,
+    fbeta_score,
+    hamming_loss,
+    hinge_loss,
+    jaccard_score,
+    log_loss,
+    matthews_corrcoef,
+    multilabel_confusion_matrix,
+    precision_recall_fscore_support,
+    precision_score,
+    recall_score,
+    zero_one_loss,
+)
+from sklearn.metrics._classification import _check_targets
+from sklearn.preprocessing import LabelBinarizer, label_binarize
+from sklearn.utils._mocking import MockDataFrame
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_no_warnings,
+    ignore_warnings,
+)
+from sklearn.utils.extmath import _nanaverage
+from sklearn.utils.validation import check_random_state
 
 ###############################################################################
 # Utilities for testing
@@ -162,10 +159,10 @@ def test_classification_report_dictionary_output():
             for metric in expected_report[key]:
                 assert_almost_equal(expected_report[key][metric], report[key][metric])
 
-    assert type(expected_report["setosa"]["precision"]) == float
-    assert type(expected_report["macro avg"]["precision"]) == float
-    assert type(expected_report["setosa"]["support"]) == int
-    assert type(expected_report["macro avg"]["support"]) == int
+    assert isinstance(expected_report["setosa"]["precision"], float)
+    assert isinstance(expected_report["macro avg"]["precision"], float)
+    assert isinstance(expected_report["setosa"]["support"], int)
+    assert isinstance(expected_report["macro avg"]["support"], int)
 
 
 def test_classification_report_output_dict_empty_input():
@@ -2699,7 +2696,7 @@ def test_log_loss_pandas_input():
     y_pr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
     types = [(MockDataFrame, MockDataFrame)]
     try:
-        from pandas import Series, DataFrame
+        from pandas import DataFrame, Series
 
         types.append((Series, DataFrame))
     except ImportError:

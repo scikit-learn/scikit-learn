@@ -1,75 +1,73 @@
 """Test the search module"""
 
+import pickle
+import re
+import sys
 from collections.abc import Iterable, Sized
+from functools import partial
 from io import StringIO
 from itertools import chain, product
-from functools import partial
-import pickle
-import sys
 from types import GeneratorType
-import re
 
 import numpy as np
-import scipy.sparse as sp
 import pytest
+import scipy.sparse as sp
+from scipy.stats import bernoulli, expon, uniform
 
+from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
+from sklearn.cluster import KMeans
+from sklearn.datasets import (
+    make_blobs,
+    make_classification,
+    make_multilabel_classification,
+)
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LinearRegression, Ridge, SGDClassifier
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    make_scorer,
+    r2_score,
+    recall_score,
+    roc_auc_score,
+)
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.model_selection import (
+    GridSearchCV,
+    GroupKFold,
+    GroupShuffleSplit,
+    HalvingGridSearchCV,
+    KFold,
+    LeaveOneGroupOut,
+    LeavePGroupsOut,
+    ParameterGrid,
+    ParameterSampler,
+    RandomizedSearchCV,
+    StratifiedKFold,
+    StratifiedShuffleSplit,
+    train_test_split,
+)
+from sklearn.model_selection._search import BaseSearchCV
+from sklearn.model_selection._validation import FitFailedWarning
+from sklearn.model_selection.tests.common import OneTimeSplitter
+from sklearn.neighbors import KernelDensity, KNeighborsClassifier, LocalOutlierFactor
+from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC, LinearSVC
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils._testing import (
-    assert_array_equal,
-    assert_array_almost_equal,
-    assert_allclose,
-    assert_almost_equal,
-    ignore_warnings,
     MinimalClassifier,
     MinimalRegressor,
     MinimalTransformer,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
 )
-from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
-
-from scipy.stats import bernoulli, expon, uniform
-
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.base import is_classifier
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_blobs
-from sklearn.datasets import make_multilabel_classification
-
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import KFold
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection import LeaveOneGroupOut
-from sklearn.model_selection import LeavePGroupsOut
-from sklearn.model_selection import GroupKFold
-from sklearn.model_selection import GroupShuffleSplit
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.model_selection import ParameterGrid
-from sklearn.model_selection import ParameterSampler
-from sklearn.model_selection._search import BaseSearchCV
-
-from sklearn.model_selection._validation import FitFailedWarning
-
-from sklearn.svm import LinearSVC, SVC
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.cluster import KMeans
-from sklearn.neighbors import KernelDensity
-from sklearn.neighbors import LocalOutlierFactor
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import f1_score
-from sklearn.metrics import recall_score
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import make_scorer
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import r2_score
-from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
-from sklearn.linear_model import Ridge, SGDClassifier, LinearRegression
-from sklearn.ensemble import HistGradientBoostingClassifier
-
-from sklearn.model_selection.tests.common import OneTimeSplitter
 
 
 # Neither of the following two estimators inherit from BaseEstimator,
@@ -786,7 +784,7 @@ def test_pandas_input():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
     try:
-        from pandas import Series, DataFrame
+        from pandas import DataFrame, Series
 
         types.append((DataFrame, Series))
     except ImportError:
@@ -902,18 +900,16 @@ def check_cv_results_array_types(search, param_keys, score_keys):
         assert cv_results["rank_test_%s" % key].dtype == np.int32
 
 
-def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
+def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand, extra_keys=()):
     # Test the search.cv_results_ contains all the required results
-    assert_array_equal(
-        sorted(cv_results.keys()), sorted(param_keys + score_keys + ("params",))
-    )
+    all_keys = param_keys + score_keys + extra_keys
+    assert_array_equal(sorted(cv_results.keys()), sorted(all_keys + ("params",)))
     assert all(cv_results[key].shape == (n_cand,) for key in param_keys + score_keys)
 
 
 def test_grid_search_cv_results():
     X, y = make_classification(n_samples=50, n_features=4, random_state=42)
 
-    n_splits = 3
     n_grid_points = 6
     params = [
         dict(
@@ -951,9 +947,7 @@ def test_grid_search_cv_results():
     )
     n_candidates = n_grid_points
 
-    search = GridSearchCV(
-        SVC(), cv=n_splits, param_grid=params, return_train_score=True
-    )
+    search = GridSearchCV(SVC(), cv=3, param_grid=params, return_train_score=True)
     search.fit(X, y)
     cv_results = search.cv_results_
     # Check if score and timing are reasonable
@@ -969,17 +963,20 @@ def test_grid_search_cv_results():
     check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
     # Check masking
     cv_results = search.cv_results_
-    n_candidates = len(search.cv_results_["params"])
-    assert all(
+
+    poly_results = [
         (
             cv_results["param_C"].mask[i]
             and cv_results["param_gamma"].mask[i]
             and not cv_results["param_degree"].mask[i]
         )
         for i in range(n_candidates)
-        if cv_results["param_kernel"][i] == "linear"
-    )
-    assert all(
+        if cv_results["param_kernel"][i] == "poly"
+    ]
+    assert all(poly_results)
+    assert len(poly_results) == 2
+
+    rbf_results = [
         (
             not cv_results["param_C"].mask[i]
             and not cv_results["param_gamma"].mask[i]
@@ -987,13 +984,14 @@ def test_grid_search_cv_results():
         )
         for i in range(n_candidates)
         if cv_results["param_kernel"][i] == "rbf"
-    )
+    ]
+    assert all(rbf_results)
+    assert len(rbf_results) == 4
 
 
 def test_random_search_cv_results():
     X, y = make_classification(n_samples=50, n_features=4, random_state=42)
 
-    n_splits = 3
     n_search_iter = 30
 
     params = [
@@ -1018,12 +1016,12 @@ def test_random_search_cv_results():
         "mean_score_time",
         "std_score_time",
     )
-    n_cand = n_search_iter
+    n_candidates = n_search_iter
 
     search = RandomizedSearchCV(
         SVC(),
         n_iter=n_search_iter,
-        cv=n_splits,
+        cv=3,
         param_distributions=params,
         return_train_score=True,
     )
@@ -1031,8 +1029,7 @@ def test_random_search_cv_results():
     cv_results = search.cv_results_
     # Check results structure
     check_cv_results_array_types(search, param_keys, score_keys)
-    check_cv_results_keys(cv_results, param_keys, score_keys, n_cand)
-    n_candidates = len(search.cv_results_["params"])
+    check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
     assert all(
         (
             cv_results["param_C"].mask[i]
@@ -1040,7 +1037,7 @@ def test_random_search_cv_results():
             and not cv_results["param_degree"].mask[i]
         )
         for i in range(n_candidates)
-        if cv_results["param_kernel"][i] == "linear"
+        if cv_results["param_kernel"][i] == "poly"
     )
     assert all(
         (
@@ -2424,3 +2421,31 @@ def test_search_cv_verbose_3(capsys, return_train_score):
     else:
         match = re.findall(r"score=[\d\.]+", captured)
     assert len(match) == 3
+
+
+@pytest.mark.parametrize(
+    "SearchCV, param_search",
+    [
+        (GridSearchCV, "param_grid"),
+        (RandomizedSearchCV, "param_distributions"),
+        (HalvingGridSearchCV, "param_grid"),
+    ],
+)
+def test_search_estimator_param(SearchCV, param_search):
+    # test that SearchCV object doesn't change the object given in the parameter grid
+    X, y = make_classification(random_state=42)
+
+    params = {"clf": [LinearSVC(dual="auto")], "clf__C": [0.01]}
+    orig_C = params["clf"][0].C
+
+    pipe = Pipeline([("trs", MinimalTransformer()), ("clf", None)])
+
+    param_grid_search = {param_search: params}
+    gs = SearchCV(pipe, refit=True, cv=2, scoring="accuracy", **param_grid_search).fit(
+        X, y
+    )
+
+    # testing that the original object in params is not changed
+    assert params["clf"][0].C == orig_C
+    # testing that the GS is setting the parameter of the step correctly
+    assert gs.best_estimator_.named_steps["clf"].C == 0.01

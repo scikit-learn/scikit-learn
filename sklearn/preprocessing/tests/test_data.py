@@ -4,59 +4,54 @@
 #
 # License: BSD 3 clause
 
-import warnings
 import itertools
-
 import re
+import warnings
+
 import numpy as np
 import numpy.linalg as la
+import pytest
 from scipy import sparse, stats
 
-import pytest
-
-from sklearn.utils import gen_batches
-
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_less
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import skip_if_32bit
-from sklearn.utils._testing import _convert_container
-
-from sklearn.utils.sparsefuncs import mean_variance_axis
-from sklearn.preprocessing import Binarizer
-from sklearn.preprocessing import KernelCenterer
-from sklearn.preprocessing import Normalizer
-from sklearn.preprocessing import normalize
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import scale
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import minmax_scale
-from sklearn.preprocessing import QuantileTransformer
-from sklearn.preprocessing import quantile_transform
-from sklearn.preprocessing import MaxAbsScaler
-from sklearn.preprocessing import maxabs_scale
-from sklearn.preprocessing import RobustScaler
-from sklearn.preprocessing import robust_scale
-from sklearn.preprocessing import add_dummy_feature
-from sklearn.preprocessing import PowerTransformer
-from sklearn.preprocessing import power_transform
-from sklearn.preprocessing._data import _handle_zeros_in_scale
-from sklearn.preprocessing._data import BOUNDS_THRESHOLD
-from sklearn.metrics.pairwise import linear_kernel
-
-from sklearn.exceptions import NotFittedError
-
-from sklearn.base import clone
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import cross_val_predict
-from sklearn.svm import SVR
-from sklearn.utils import shuffle
-
 from sklearn import datasets
-
+from sklearn.base import clone
+from sklearn.exceptions import NotFittedError
+from sklearn.metrics.pairwise import linear_kernel
+from sklearn.model_selection import cross_val_predict
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import (
+    Binarizer,
+    KernelCenterer,
+    MaxAbsScaler,
+    MinMaxScaler,
+    Normalizer,
+    PowerTransformer,
+    QuantileTransformer,
+    RobustScaler,
+    StandardScaler,
+    add_dummy_feature,
+    maxabs_scale,
+    minmax_scale,
+    normalize,
+    power_transform,
+    quantile_transform,
+    robust_scale,
+    scale,
+)
+from sklearn.preprocessing._data import BOUNDS_THRESHOLD, _handle_zeros_in_scale
+from sklearn.svm import SVR
+from sklearn.utils import gen_batches, shuffle
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_less,
+    skip_if_32bit,
+)
+from sklearn.utils.sparsefuncs import mean_variance_axis
 
 iris = datasets.load_iris()
 
@@ -1851,7 +1846,7 @@ def test_normalizer_l1():
         X_norm = normalizer = Normalizer(norm="l2", copy=False).transform(X)
 
         assert X_norm is not X
-        assert sparse.isspmatrix_csr(X_norm)
+        assert sparse.issparse(X_norm) and X_norm.format == "csr"
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -1898,7 +1893,7 @@ def test_normalizer_l2():
         X_norm = normalizer = Normalizer(norm="l2", copy=False).transform(X)
 
         assert X_norm is not X
-        assert sparse.isspmatrix_csr(X_norm)
+        assert sparse.issparse(X_norm) and X_norm.format == "csr"
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -1946,7 +1941,7 @@ def test_normalizer_max():
         X_norm = normalizer = Normalizer(norm="l2", copy=False).transform(X)
 
         assert X_norm is not X
-        assert sparse.isspmatrix_csr(X_norm)
+        assert sparse.issparse(X_norm) and X_norm.format == "csr"
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -2210,21 +2205,21 @@ def test_add_dummy_feature():
 def test_add_dummy_feature_coo():
     X = sparse.coo_matrix([[1, 0], [0, 1], [0, 1]])
     X = add_dummy_feature(X)
-    assert sparse.isspmatrix_coo(X), X
+    assert sparse.issparse(X) and X.format == "coo", X
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
 def test_add_dummy_feature_csc():
     X = sparse.csc_matrix([[1, 0], [0, 1], [0, 1]])
     X = add_dummy_feature(X)
-    assert sparse.isspmatrix_csc(X), X
+    assert sparse.issparse(X) and X.format == "csc", X
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
 def test_add_dummy_feature_csr():
     X = sparse.csr_matrix([[1, 0], [0, 1], [0, 1]])
     X = add_dummy_feature(X)
-    assert sparse.isspmatrix_csr(X), X
+    assert sparse.issparse(X) and X.format == "csr", X
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 

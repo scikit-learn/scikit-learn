@@ -1,22 +1,21 @@
+import copy
 import itertools
 import pickle
-import copy
 
 import numpy as np
 import pytest
-
 import scipy.sparse as sp
 from scipy.spatial.distance import cdist
-from sklearn.metrics import DistanceMetric
 
+from sklearn.metrics import DistanceMetric
 from sklearn.metrics._dist_metrics import (
     BOOL_METRICS,
     DistanceMetric32,
     DistanceMetric64,
 )
-
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose, create_memmap_backed_data
+from sklearn.utils.fixes import parse_version, sp_version
 
 
 def dist_func(x1, x2, p):
@@ -44,18 +43,17 @@ Y_bool = (Y64 < 0.7).astype(np.float64)  # not too sparse
 V = rng.random_sample((d, d))
 VI = np.dot(V, V.T)
 
-
 METRICS_DEFAULT_PARAMS = [
     ("euclidean", {}),
     ("cityblock", {}),
-    ("minkowski", dict(p=(1, 1.5, 2, 3))),
+    ("minkowski", dict(p=(0.5, 1, 1.5, 2, 3))),
     ("chebyshev", {}),
     ("seuclidean", dict(V=(rng.random_sample(d),))),
     ("mahalanobis", dict(VI=(VI,))),
     ("hamming", {}),
     ("canberra", {}),
     ("braycurtis", {}),
-    ("minkowski", dict(p=(1, 1.5, 3), w=(rng.random_sample(d),))),
+    ("minkowski", dict(p=(0.5, 1, 1.5, 3), w=(rng.random_sample(d),))),
 ]
 
 
@@ -77,6 +75,13 @@ def test_cdist(metric_param_grid, X, Y):
             # TODO: Inspect slight numerical discrepancy
             # with scipy
             rtol_dict = {"rtol": 1e-6}
+
+        # TODO: Remove when scipy minimum version >= 1.7.0
+        # scipy supports 0<p<1 for minkowski metric >= 1.7.0
+        if metric == "minkowski":
+            p = kwargs["p"]
+            if sp_version < parse_version("1.7.0") and p < 1:
+                pytest.skip("scipy does not support 0<p<1 for minkowski metric < 1.7.0")
 
         D_scipy_cdist = cdist(X, Y, metric, **kwargs)
 
@@ -152,6 +157,12 @@ def test_pdist(metric_param_grid, X):
             # with scipy
             rtol_dict = {"rtol": 1e-6}
 
+        # TODO: Remove when scipy minimum version >= 1.7.0
+        # scipy supports 0<p<1 for minkowski metric >= 1.7.0
+        if metric == "minkowski":
+            p = kwargs["p"]
+            if sp_version < parse_version("1.7.0") and p < 1:
+                pytest.skip("scipy does not support 0<p<1 for minkowski metric < 1.7.0")
         D_scipy_pdist = cdist(X, X, metric, **kwargs)
 
         dm = DistanceMetric.get_metric(metric, X.dtype, **kwargs)
@@ -399,3 +410,9 @@ def test_get_metric_bad_dtype():
     msg = r"Unexpected dtype .* provided. Please select a dtype from"
     with pytest.raises(ValueError, match=msg):
         DistanceMetric.get_metric("manhattan", dtype)
+
+
+def test_minkowski_metric_validate_bad_p_parameter():
+    msg = "p must be greater than 0"
+    with pytest.raises(ValueError, match=msg):
+        DistanceMetric.get_metric("minkowski", p=0)

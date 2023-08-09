@@ -15,22 +15,21 @@ libsvm command line programs.
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from contextlib import closing
 import os.path
+from contextlib import closing
+from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
-from numbers import Integral
 
 from .. import __version__
-
-from ..utils import check_array, IS_PYPY
-from ..utils._param_validation import validate_params, HasMethods, Interval, StrOptions
+from ..utils import IS_PYPY, check_array
+from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
 
 if not IS_PYPY:
     from ._svmlight_format_fast import (
-        _load_svmlight_file,
         _dump_svmlight_file,
+        _load_svmlight_file,
     )
 else:
 
@@ -58,7 +57,8 @@ else:
         "query_id": ["boolean"],
         "offset": [Interval(Integral, 0, None, closed="left")],
         "length": [Integral],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def load_svmlight_file(
     f,
@@ -260,7 +260,8 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id, offset=0, length=
         "query_id": ["boolean"],
         "offset": [Interval(Integral, 0, None, closed="left")],
         "length": [Integral],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def load_svmlight_files(
     files,
@@ -449,7 +450,8 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
         "comment": [str, bytes, None],
         "query_id": ["array-like", None],
         "multilabel": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def dump_svmlight_file(
     X,

@@ -6,18 +6,16 @@ Multi-class / multi-label utility function
 ==========================================
 
 """
+import warnings
 from collections.abc import Sequence
 from itertools import chain
-import warnings
-
-from scipy.sparse import issparse
-from scipy.sparse import isspmatrix_dok
-from scipy.sparse import isspmatrix_lil
 
 import numpy as np
+from scipy.sparse import issparse
 
-from .validation import check_array, _assert_all_finite
 from ..utils._array_api import get_namespace
+from ..utils.fixes import VisibleDeprecationWarning
+from .validation import _assert_all_finite, check_array
 
 
 def _unique_multiclass(y):
@@ -164,10 +162,10 @@ def is_multilabel(y):
             ensure_min_features=0,
         )
         with warnings.catch_warnings():
-            warnings.simplefilter("error", np.VisibleDeprecationWarning)
+            warnings.simplefilter("error", VisibleDeprecationWarning)
             try:
                 y = check_array(y, dtype=None, **check_y_kwargs)
-            except (np.VisibleDeprecationWarning, ValueError) as e:
+            except (VisibleDeprecationWarning, ValueError) as e:
                 if str(e).startswith("Complex data not supported"):
                     raise
 
@@ -179,7 +177,7 @@ def is_multilabel(y):
         return False
 
     if issparse(y):
-        if isspmatrix_dok(y) or isspmatrix_lil(y):
+        if y.format in ("dok", "lil"):
             y = y.tocsr()
         labels = xp.unique_values(y.data)
         return (
@@ -327,11 +325,11 @@ def type_of_target(y, input_name=""):
     )
 
     with warnings.catch_warnings():
-        warnings.simplefilter("error", np.VisibleDeprecationWarning)
+        warnings.simplefilter("error", VisibleDeprecationWarning)
         if not issparse(y):
             try:
                 y = check_array(y, dtype=None, **check_y_kwargs)
-            except (np.VisibleDeprecationWarning, ValueError) as e:
+            except (VisibleDeprecationWarning, ValueError) as e:
                 if str(e).startswith("Complex data not supported"):
                     raise
 
