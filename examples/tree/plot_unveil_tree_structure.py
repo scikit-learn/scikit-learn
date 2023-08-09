@@ -44,9 +44,8 @@ clf.fit(X_train, y_train)
 #
 # The decision classifier has an attribute called ``tree_`` which allows access
 # to low level attributes such as ``node_count``, the total number of nodes,
-# and ``max_depth``, the maximal depth of the tree. To compute the depth of each
-# node in the tree, one can use ``compute_node_depths()``, which returns
-# the depth of each node in the tree. `tree_` also stores the
+# and ``max_depth``, the maximal depth of the tree. The tree_.compute_node_depths() method
+# computes the depth of each node in the tree. `tree_` also stores the
 # entire binary tree structure, represented as a number of parallel arrays. The
 # i-th element of each array holds information about the node ``i``. Node 0 is
 # the tree's root. Some of the arrays only apply to either leaves or split
