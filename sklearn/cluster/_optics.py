@@ -50,9 +50,10 @@ class OPTICS(ClusterMixin, BaseEstimator):
     computing only the distances to unprocessed points when constructing the
     cluster order. Note that we do not employ a heap to manage the expansion
     candidates, so the time complexity will be O(n^2).
+
     Read more in the :ref:`User Guide <optics>`.
-    
-    Parameters 
+
+    Parameters
     ----------
     min_samples : int > 1 or float between 0 and 1, default=5
         The number of samples in a neighborhood for a point to be considered as
@@ -233,7 +234,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
     >>> clustering.labels_
     array([0, 0, 0, 1, 1, 1])
 
-    For an example of usage, see :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`.
+    For an example of usage, see 
+    :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`.
     """
 
     _parameter_constraints: dict = {
