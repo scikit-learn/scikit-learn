@@ -4,19 +4,22 @@
 # License: BSD 3 clause
 
 import math
-import numpy as np
-from scipy.special import betaln, digamma, gammaln
 from numbers import Real
 
-from ._base import BaseMixture, _check_shape
-from ._gaussian_mixture import _check_precision_matrix
-from ._gaussian_mixture import _check_precision_positivity
-from ._gaussian_mixture import _compute_log_det_cholesky
-from ._gaussian_mixture import _compute_precision_cholesky
-from ._gaussian_mixture import _estimate_gaussian_parameters
-from ._gaussian_mixture import _estimate_log_gaussian_prob
+import numpy as np
+from scipy.special import betaln, digamma, gammaln
+
 from ..utils import check_array
 from ..utils._param_validation import Interval, StrOptions
+from ._base import BaseMixture, _check_shape
+from ._gaussian_mixture import (
+    _check_precision_matrix,
+    _check_precision_positivity,
+    _compute_log_det_cholesky,
+    _compute_precision_cholesky,
+    _estimate_gaussian_parameters,
+    _estimate_log_gaussian_prob,
+)
 
 
 def _log_dirichlet_norm(dirichlet_concentration):
@@ -323,7 +326,7 @@ class BayesianGaussianMixture(BaseMixture):
     .. [2] `Hagai Attias. (2000). "A Variational Bayesian Framework for
        Graphical Models". In Advances in Neural Information Processing
        Systems 12.
-       <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.36.2841&rep=rep1&type=pdf>`_
+       <https://citeseerx.ist.psu.edu/doc_view/pid/ee844fd96db7041a9681b5a18bff008912052c7e>`_
 
     .. [3] `Blei, David M. and Michael I. Jordan. (2006). "Variational
        inference for Dirichlet process mixtures". Bayesian analysis 1.1
@@ -541,7 +544,7 @@ class BayesianGaussianMixture(BaseMixture):
                 ),
             )
         else:
-            # case Variationnal Gaussian mixture with dirichlet distribution
+            # case Variational Gaussian mixture with dirichlet distribution
             self.weight_concentration_ = self.weight_concentration_prior_ + nk
 
     def _estimate_means(self, nk, xk):
@@ -749,7 +752,7 @@ class BayesianGaussianMixture(BaseMixture):
                 + np.hstack((0, np.cumsum(digamma_b - digamma_sum)[:-1]))
             )
         else:
-            # case Variationnal Gaussian mixture with dirichlet distribution
+            # case Variational Gaussian mixture with dirichlet distribution
             return digamma(self.weight_concentration_) - digamma(
                 np.sum(self.weight_concentration_)
             )

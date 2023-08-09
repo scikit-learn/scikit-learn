@@ -1,24 +1,21 @@
 """Testing for Spectral Clustering methods"""
+import pickle
 import re
 
 import numpy as np
+import pytest
 from scipy import sparse
 from scipy.linalg import LinAlgError
 
-import pytest
-
-import pickle
-
-from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_array_equal
-
 from sklearn.cluster import SpectralClustering, spectral_clustering
-from sklearn.cluster._spectral import discretize, cluster_qr
+from sklearn.cluster._spectral import cluster_qr, discretize
+from sklearn.datasets import make_blobs
 from sklearn.feature_extraction import img_to_graph
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
 from sklearn.neighbors import NearestNeighbors
-from sklearn.datasets import make_blobs
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import assert_array_equal
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa
@@ -227,6 +224,10 @@ def test_discretize(n_samples):
 @pytest.mark.filterwarnings(
     "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
 )
+# TODO: Remove when pyamg removes the use of np.find_common_type
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated:DeprecationWarning:pyamg.*"
+)
 def test_spectral_clustering_with_arpack_amg_solvers():
     # Test that spectral_clustering is the same for arpack and amg solver
     # Based on toy example from plot_segmentation_toy.py
@@ -309,7 +310,7 @@ def test_spectral_clustering_np_matrix_raises():
     a np.matrix. See #10993"""
     X = np.matrix([[0.0, 2.0], [2.0, 0.0]])
 
-    msg = r"spectral_clustering does not support passing in affinity as an np\.matrix"
+    msg = r"np\.matrix is not supported. Please convert to a numpy array"
     with pytest.raises(TypeError, match=msg):
         spectral_clustering(X)
 

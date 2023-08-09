@@ -6,16 +6,21 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..utils import check_random_state
-from ..utils.extmath import svd_flip
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.validation import check_array, check_is_fitted
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..linear_model import ridge_regression
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
-from ._dict_learning import dict_learning, MiniBatchDictionaryLearning
+from ..utils import check_random_state
+from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils.extmath import svd_flip
+from ..utils.validation import check_array, check_is_fitted
+from ._dict_learning import MiniBatchDictionaryLearning, dict_learning
 
 
-class _BaseSparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Base class for SparsePCA and MiniBatchSparsePCA"""
 
     _parameter_constraints: dict = {
@@ -53,6 +58,7 @@ class _BaseSparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
         self.verbose = verbose
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
@@ -70,7 +76,6 @@ class _BaseSparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
 

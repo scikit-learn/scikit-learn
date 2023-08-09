@@ -3,18 +3,18 @@
 # License: BSD 3 clause
 
 from numbers import Integral
+
 import numpy as np
 
-from ._base import _BaseImputer
-from ..utils.validation import FLOAT_DTYPES
+from ..base import _fit_context
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
 from ..neighbors._base import _get_weights
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_feature_names_in
 from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
+from ._base import _BaseImputer
 
 
 class KNNImputer(_BaseImputer):
@@ -71,6 +71,13 @@ class KNNImputer(_BaseImputer):
         missing values at fit/train time, the feature won't appear on the
         missing indicator even if there are missing values at transform/test
         time.
+
+    keep_empty_features : bool, default=False
+        If True, features that consist exclusively of missing values when
+        `fit` is called are returned in results when `transform` is called.
+        The imputed value is always `0`.
+
+        .. versionadded:: 1.2
 
     Attributes
     ----------
@@ -133,8 +140,13 @@ class KNNImputer(_BaseImputer):
         metric="nan_euclidean",
         copy=True,
         add_indicator=False,
+        keep_empty_features=False,
     ):
-        super().__init__(missing_values=missing_values, add_indicator=add_indicator)
+        super().__init__(
+            missing_values=missing_values,
+            add_indicator=add_indicator,
+            keep_empty_features=keep_empty_features,
+        )
         self.n_neighbors = n_neighbors
         self.weights = weights
         self.metric = metric
@@ -187,6 +199,7 @@ class KNNImputer(_BaseImputer):
 
         return np.ma.average(donors, axis=1, weights=weight_matrix).data
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the imputer on X.
 
@@ -204,7 +217,6 @@ class KNNImputer(_BaseImputer):
         self : object
             The fitted `KNNImputer` class instance.
         """
-        self._validate_params()
         # Check data integrity and calling arguments
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
@@ -265,8 +277,17 @@ class KNNImputer(_BaseImputer):
         # Removes columns where the training data is all nan
         if not np.any(mask):
             # No missing values in X
-            # Remove columns where the training data is all nan
-            return X[:, valid_mask]
+            if self.keep_empty_features:
+                Xc = X
+                Xc[:, ~valid_mask] = 0
+            else:
+                Xc = X[:, valid_mask]
+
+            # Even if there are no missing values in X, we still concatenate Xc
+            # with the missing value indicator matrix, X_indicator.
+            # This is to ensure that the output maintains consistency in terms
+            # of columns, regardless of whether missing values exist in X or not.
+            return super()._concatenate_indicator(Xc, X_indicator)
 
         row_missing_idx = np.flatnonzero(mask.any(axis=1))
 
@@ -342,7 +363,13 @@ class KNNImputer(_BaseImputer):
             # process_chunk modifies X in place. No return value.
             pass
 
-        return super()._concatenate_indicator(X[:, valid_mask], X_indicator)
+        if self.keep_empty_features:
+            Xc = X
+            Xc[:, ~valid_mask] = 0
+        else:
+            Xc = X[:, valid_mask]
+
+        return super()._concatenate_indicator(Xc, X_indicator)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -364,6 +391,7 @@ class KNNImputer(_BaseImputer):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         input_features = _check_feature_names_in(self, input_features)
         names = input_features[self._valid_mask]
         return self._concatenate_indicator_feature_names_out(names, input_features)

@@ -46,22 +46,24 @@ helper functions for loading the data and visualizing results.
 
 from functools import partial
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 from sklearn.datasets import fetch_openml
-from sklearn.metrics import mean_tweedie_deviance
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error,
+    mean_tweedie_deviance,
+)
 
 
-def load_mtpl2(n_samples=100000):
+def load_mtpl2(n_samples=None):
     """Fetch the French Motor Third-Party Liability Claims dataset.
 
     Parameters
     ----------
-    n_samples: int, default=100000
+    n_samples: int, default=None
       number of samples to select (for faster run time). Full dataset has
       678013 samples.
     """
@@ -209,13 +211,16 @@ def score_estimator(
 # containing the number of claims (``ClaimNb``), with the freMTPL2sev table,
 # containing the claim amount (``ClaimAmount``) for the same policy ids
 # (``IDpol``).
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
-from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
 from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import (
+    FunctionTransformer,
+    KBinsDiscretizer,
+    OneHotEncoder,
+    StandardScaler,
+)
 
-
-df = load_mtpl2(n_samples=60000)
+df = load_mtpl2()
 
 # Note: filter out claims with zero amount, as the severity model
 # requires strictly positive target values.
@@ -233,7 +238,11 @@ log_scale_transformer = make_pipeline(
 
 column_trans = ColumnTransformer(
     [
-        ("binned_numeric", KBinsDiscretizer(n_bins=10), ["VehAge", "DrivAge"]),
+        (
+            "binned_numeric",
+            KBinsDiscretizer(n_bins=10, subsample=int(2e5), random_state=0),
+            ["VehAge", "DrivAge"],
+        ),
         (
             "onehot_categorical",
             OneHotEncoder(),
@@ -270,16 +279,31 @@ with pd.option_context("display.max_columns", 15):
 # constant rate in a given time interval (``Exposure``, in units of years).
 # Here we model the frequency ``y = ClaimNb / Exposure``, which is still a
 # (scaled) Poisson distribution, and use ``Exposure`` as `sample_weight`.
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import PoissonRegressor
-
+from sklearn.model_selection import train_test_split
 
 df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
 
+# %%
+#
+# Let us keep in mind that despite the seemingly large number of data points in
+# this dataset, the number of evaluation points where the claim amount is
+# non-zero is quite small:
+len(df_test)
+
+# %%
+len(df_test[df_test["ClaimAmount"] > 0])
+
+# %%
+#
+# As a consequence, we expect a significant variability in our
+# evaluation upon random resampling of the train test split.
+#
 # The parameters of the model are estimated by minimizing the Poisson deviance
-# on the training set via a quasi-Newton solver: l-BFGS. Some of the features
-# are collinear, we use a weak penalization to avoid numerical issues.
-glm_freq = PoissonRegressor(alpha=1e-3, max_iter=400)
+# on the training set via a Newton solver. Some of the features are collinear
+# (e.g. because we did not drop any categorical level in the `OneHotEncoder`),
+# we use a weak L2 penalization to avoid numerical issues.
+glm_freq = PoissonRegressor(alpha=1e-4, solver="newton-cholesky")
 glm_freq.fit(X_train, df_train["Frequency"], sample_weight=df_train["Exposure"])
 
 scores = score_estimator(
@@ -295,6 +319,12 @@ print("Evaluation of PoissonRegressor on target Frequency")
 print(scores)
 
 # %%
+#
+# Note that the score measured on the test set is surprisingly better than on
+# the training set. This might be specific to this random train-test split.
+# Proper cross-validation could help us to assess the sampling variability of
+# these results.
+#
 # We can visually compare observed and predicted values, aggregated by the
 # drivers age (``DrivAge``), vehicle age (``VehAge``) and the insurance
 # bonus/malus (``BonusMalus``).
@@ -370,11 +400,10 @@ plot_obs_pred(
 #   more than one claim.
 from sklearn.linear_model import GammaRegressor
 
-
 mask_train = df_train["ClaimAmount"] > 0
 mask_test = df_test["ClaimAmount"] > 0
 
-glm_sev = GammaRegressor(alpha=10.0, max_iter=10000)
+glm_sev = GammaRegressor(alpha=10.0, solver="newton-cholesky")
 
 glm_sev.fit(
     X_train[mask_train.values],
@@ -395,13 +424,44 @@ print("Evaluation of GammaRegressor on target AvgClaimAmount")
 print(scores)
 
 # %%
-# Here, the scores for the test data call for caution as they are
-# significantly worse than for the training data indicating an overfit despite
-# the strong regularization.
 #
-# Note that the resulting model is the average claim amount per claim. As
-# such, it is conditional on having at least one claim, and cannot be used to
-# predict the average claim amount per policy in general.
+# Those values of the metrics are not necessarily easy to interpret. It can be
+# insightful to compare them with a model that does not use any input
+# features and always predicts a constant value, i.e. the average claim
+# amount, in the same setting:
+
+from sklearn.dummy import DummyRegressor
+
+dummy_sev = DummyRegressor(strategy="mean")
+dummy_sev.fit(
+    X_train[mask_train.values],
+    df_train.loc[mask_train, "AvgClaimAmount"],
+    sample_weight=df_train.loc[mask_train, "ClaimNb"],
+)
+
+scores = score_estimator(
+    dummy_sev,
+    X_train[mask_train.values],
+    X_test[mask_test.values],
+    df_train[mask_train],
+    df_test[mask_test],
+    target="AvgClaimAmount",
+    weights="ClaimNb",
+)
+print("Evaluation of a mean predictor on target AvgClaimAmount")
+print(scores)
+
+# %%
+#
+# We conclude that the claim amount is very challenging to predict. Still, the
+# :class:`~sklearn.linear_model.GammaRegressor` is able to leverage some
+# information from the input features to slightly improve upon the mean
+# baseline in terms of D².
+#
+# Note that the resulting model is the average claim amount per claim. As such,
+# it is conditional on having at least one claim, and cannot be used to predict
+# the average claim amount per policy. For this, it needs to be combined with
+# a claims frequency model.
 
 print(
     "Mean AvgClaim Amount per policy:              %.2f "
@@ -415,7 +475,10 @@ print(
     "Predicted Mean AvgClaim Amount | NbClaim > 0: %.2f"
     % glm_sev.predict(X_train).mean()
 )
-
+print(
+    "Predicted Mean AvgClaim Amount (dummy) | NbClaim > 0: %.2f"
+    % dummy_sev.predict(X_train).mean()
+)
 
 # %%
 # We can visually compare observed and predicted values, aggregated for
@@ -480,8 +543,7 @@ plt.tight_layout()
 # regardless of `power`.
 from sklearn.linear_model import TweedieRegressor
 
-
-glm_pure_premium = TweedieRegressor(power=1.9, alpha=0.1, max_iter=10000)
+glm_pure_premium = TweedieRegressor(power=1.9, alpha=0.1, solver="newton-cholesky")
 glm_pure_premium.fit(
     X_train, df_train["PurePremium"], sample_weight=df_train["Exposure"]
 )

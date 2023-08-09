@@ -3,35 +3,36 @@ Todo: cross-check the F-value with stats model
 """
 import itertools
 import warnings
+
 import numpy as np
-from numpy.testing import assert_allclose
-from scipy import stats, sparse
-
 import pytest
+from numpy.testing import assert_allclose
+from scipy import sparse, stats
 
-from sklearn.utils._testing import assert_almost_equal, _convert_container
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils import safe_mask
-
-from sklearn.datasets import make_classification, make_regression
+from sklearn.datasets import load_iris, make_classification, make_regression
 from sklearn.feature_selection import (
+    GenericUnivariateSelect,
+    SelectFdr,
+    SelectFpr,
+    SelectFwe,
+    SelectKBest,
+    SelectPercentile,
     chi2,
     f_classif,
     f_oneway,
     f_regression,
-    GenericUnivariateSelect,
     mutual_info_classif,
     mutual_info_regression,
     r_regression,
-    SelectPercentile,
-    SelectKBest,
-    SelectFpr,
-    SelectFdr,
-    SelectFwe,
 )
-
+from sklearn.utils import safe_mask
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 
 ##############################################################################
 # Test the score functions
@@ -440,6 +441,14 @@ def test_select_kbest_all():
     univariate_filter = SelectKBest(f_classif, k="all")
     X_r = univariate_filter.fit(X, y).transform(X)
     assert_array_equal(X, X_r)
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/24949
+    X_r2 = (
+        GenericUnivariateSelect(f_classif, mode="k_best", param="all")
+        .fit(X, y)
+        .transform(X)
+    )
+    assert_array_equal(X_r, X_r2)
 
 
 @pytest.mark.parametrize("dtype_in", [np.float32, np.float64])
@@ -936,3 +945,41 @@ def test_mutual_info_regression():
     gtruth = np.zeros(10)
     gtruth[:2] = 1
     assert_array_equal(support, gtruth)
+
+
+def test_dataframe_output_dtypes():
+    """Check that the output datafarme dtypes are the same as the input.
+
+    Non-regression test for gh-24860.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X, y = load_iris(return_X_y=True, as_frame=True)
+    X = X.astype(
+        {
+            "petal length (cm)": np.float32,
+            "petal width (cm)": np.float64,
+        }
+    )
+    X["petal_width_binned"] = pd.cut(X["petal width (cm)"], bins=10)
+
+    column_order = X.columns
+
+    def selector(X, y):
+        ranking = {
+            "sepal length (cm)": 1,
+            "sepal width (cm)": 2,
+            "petal length (cm)": 3,
+            "petal width (cm)": 4,
+            "petal_width_binned": 5,
+        }
+        return np.asarray([ranking[name] for name in column_order])
+
+    univariate_filter = SelectKBest(selector, k=3).set_output(transform="pandas")
+    output = univariate_filter.fit_transform(X, y)
+
+    assert_array_equal(
+        output.columns, ["petal length (cm)", "petal width (cm)", "petal_width_binned"]
+    )
+    for name, dtype in output.dtypes.items():
+        assert dtype == X.dtypes[name]

@@ -8,52 +8,53 @@ Testing for the forest module (sklearn.ensemble.forest).
 #          Arnaud Joly
 # License: BSD 3 clause
 
-import pickle
-import math
-from collections import defaultdict
 import itertools
-from itertools import combinations
-from itertools import product
-from typing import Dict, Any
-
-import numpy as np
-from scipy.sparse import csr_matrix
-from scipy.sparse import csc_matrix
-from scipy.sparse import coo_matrix
-from scipy.special import comb
-
-import pytest
+import math
+import pickle
+from collections import defaultdict
+from functools import partial
+from itertools import combinations, product
+from typing import Any, Dict
+from unittest.mock import patch
 
 import joblib
+import numpy as np
+import pytest
+from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
+from scipy.special import comb
 
-from sklearn.dummy import DummyRegressor
-from sklearn.metrics import mean_poisson_deviance
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import _convert_container
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import skip_if_no_parallel
-
-from sklearn.exceptions import NotFittedError
-
+import sklearn
 from sklearn import datasets
-from sklearn.decomposition import TruncatedSVD
 from sklearn.datasets import make_classification
-from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.ensemble import ExtraTreesRegressor
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import RandomTreesEmbedding
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
+from sklearn.decomposition import TruncatedSVD
+from sklearn.dummy import DummyRegressor
+from sklearn.ensemble import (
+    ExtraTreesClassifier,
+    ExtraTreesRegressor,
+    RandomForestClassifier,
+    RandomForestRegressor,
+    RandomTreesEmbedding,
+)
+from sklearn.exceptions import NotFittedError
+from sklearn.metrics import (
+    explained_variance_score,
+    f1_score,
+    mean_poisson_deviance,
+    mean_squared_error,
+)
+from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.svm import LinearSVC
-from sklearn.utils.validation import check_random_state
-
-from sklearn.metrics import mean_squared_error
-
 from sklearn.tree._classes import SPARSE_SPLITTERS
-
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+    skip_if_no_parallel,
+)
+from sklearn.utils.parallel import Parallel
+from sklearn.utils.validation import check_random_state
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -502,7 +503,10 @@ def test_unfitted_feature_importances(name):
         ),
     ],
 )
-def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accuracy):
+@pytest.mark.parametrize("oob_score", [True, partial(f1_score, average="micro")])
+def test_forest_classifier_oob(
+    ForestClassifier, X, y, X_type, lower_bound_accuracy, oob_score
+):
     """Check that OOB score is close to score on a test set."""
     X = _convert_container(X, constructor_name=X_type)
     X_train, X_test, y_train, y_test = train_test_split(
@@ -514,7 +518,7 @@ def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accur
     classifier = ForestClassifier(
         n_estimators=40,
         bootstrap=True,
-        oob_score=True,
+        oob_score=oob_score,
         random_state=0,
     )
 
@@ -522,10 +526,13 @@ def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accur
     assert not hasattr(classifier, "oob_decision_function_")
 
     classifier.fit(X_train, y_train)
-    test_score = classifier.score(X_test, y_test)
+    if callable(oob_score):
+        test_score = oob_score(y_test, classifier.predict(X_test))
+    else:
+        test_score = classifier.score(X_test, y_test)
+        assert classifier.oob_score_ >= lower_bound_accuracy
 
     assert abs(test_score - classifier.oob_score_) <= 0.1
-    assert classifier.oob_score_ >= lower_bound_accuracy
 
     assert hasattr(classifier, "oob_score_")
     assert not hasattr(classifier, "oob_prediction_")
@@ -557,7 +564,8 @@ def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accur
         ),
     ],
 )
-def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2):
+@pytest.mark.parametrize("oob_score", [True, explained_variance_score])
+def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2, oob_score):
     """Check that forest-based regressor provide an OOB score close to the
     score on a test set."""
     X = _convert_container(X, constructor_name=X_type)
@@ -570,7 +578,7 @@ def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2):
     regressor = ForestRegressor(
         n_estimators=50,
         bootstrap=True,
-        oob_score=True,
+        oob_score=oob_score,
         random_state=0,
     )
 
@@ -578,10 +586,13 @@ def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2):
     assert not hasattr(regressor, "oob_prediction_")
 
     regressor.fit(X_train, y_train)
-    test_score = regressor.score(X_test, y_test)
+    if callable(oob_score):
+        test_score = oob_score(y_test, regressor.predict(X_test))
+    else:
+        test_score = regressor.score(X_test, y_test)
+        assert regressor.oob_score_ >= lower_bound_r2
 
     assert abs(test_score - regressor.oob_score_) <= 0.1
-    assert regressor.oob_score_ >= lower_bound_r2
 
     assert hasattr(regressor, "oob_score_")
     assert hasattr(regressor, "oob_prediction_")
@@ -1148,7 +1159,7 @@ def check_memory_layout(name, dtype):
     y = iris.target
     assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
-    if est.base_estimator.splitter in SPARSE_SPLITTERS:
+    if est.estimator.splitter in SPARSE_SPLITTERS:
         # csr matrix
         X = csr_matrix(iris.data, dtype=dtype)
         y = iris.target
@@ -1456,6 +1467,27 @@ def test_warm_start_oob(name):
     check_warm_start_oob(name)
 
 
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_oob_not_computed_twice(name):
+    # Check that oob_score is not computed twice when warm_start=True.
+    X, y = hastie_X, hastie_y
+    ForestEstimator = FOREST_ESTIMATORS[name]
+
+    est = ForestEstimator(
+        n_estimators=10, warm_start=True, bootstrap=True, oob_score=True
+    )
+
+    with patch.object(
+        est, "_set_oob_score_and_attributes", wraps=est._set_oob_score_and_attributes
+    ) as mock_set_oob_score_and_attributes:
+        est.fit(X, y)
+
+        with pytest.warns(UserWarning, match="Warm-start fitting without increasing"):
+            est.fit(X, y)
+
+        mock_set_oob_score_and_attributes.assert_called_once()
+
+
 def test_dtype_convert(n_classes=15):
     classifier = RandomForestClassifier(random_state=0, bootstrap=False)
 
@@ -1686,57 +1718,6 @@ def test_little_tree_with_small_max_samples(ForestClass):
     assert tree1.node_count > tree2.node_count, msg
 
 
-# FIXME: remove in 1.2
-@pytest.mark.parametrize(
-    "Estimator",
-    [
-        ExtraTreesClassifier,
-        ExtraTreesRegressor,
-        RandomForestClassifier,
-        RandomForestRegressor,
-        RandomTreesEmbedding,
-    ],
-)
-def test_n_features_deprecation(Estimator):
-    # Check that we raise the proper deprecation warning if accessing
-    # `n_features_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator().fit(X, y)
-
-    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
-        est.n_features_
-
-
-# TODO: Remove in v1.3
-@pytest.mark.parametrize(
-    "Estimator",
-    [
-        ExtraTreesClassifier,
-        ExtraTreesRegressor,
-        RandomForestClassifier,
-        RandomForestRegressor,
-    ],
-)
-def test_max_features_deprecation(Estimator):
-    """Check warning raised for max_features="auto" deprecation."""
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator(max_features="auto")
-
-    err_msg = (
-        r"`max_features='auto'` has been deprecated in 1.1 "
-        r"and will be removed in 1.3. To keep the past behaviour, "
-        r"explicitly set `max_features=(1.0|'sqrt')` or remove this "
-        r"parameter as it is also the default value for RandomForest"
-        r"(Regressors|Classifiers) and ExtraTrees(Regressors|"
-        r"Classifiers)\."
-    )
-
-    with pytest.warns(FutureWarning, match=err_msg):
-        est.fit(X, y)
-
-
 @pytest.mark.parametrize("Forest", FOREST_REGRESSORS)
 def test_mse_criterion_object_segfault_smoke_test(Forest):
     # This is a smoke test to ensure that passing a mutable criterion
@@ -1777,3 +1758,145 @@ def test_random_trees_embedding_feature_names_out():
         ]
     ]
     assert_array_equal(expected_names, names)
+
+
+# TODO(1.4): remove in 1.4
+@pytest.mark.parametrize(
+    "name",
+    FOREST_ESTIMATORS,
+)
+def test_base_estimator_property_deprecated(name):
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    model = FOREST_ESTIMATORS[name]()
+    model.fit(X, y)
+
+    warn_msg = (
+        "Attribute `base_estimator_` was deprecated in version 1.2 and "
+        "will be removed in 1.4. Use `estimator_` instead."
+    )
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model.base_estimator_
+
+
+def test_read_only_buffer(monkeypatch):
+    """RandomForestClassifier must work on readonly sparse data.
+
+    Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/25333
+    """
+    monkeypatch.setattr(
+        sklearn.ensemble._forest,
+        "Parallel",
+        partial(Parallel, max_nbytes=100),
+    )
+    rng = np.random.RandomState(seed=0)
+
+    X, y = make_classification(n_samples=100, n_features=200, random_state=rng)
+    X = csr_matrix(X, copy=True)
+
+    clf = RandomForestClassifier(n_jobs=2, random_state=rng)
+    cross_val_score(clf, X, y, cv=2)
+
+
+@pytest.mark.parametrize("class_weight", ["balanced_subsample", None])
+def test_round_samples_to_one_when_samples_too_low(class_weight):
+    """Check low max_samples works and is rounded to one.
+
+    Non-regression test for gh-24037.
+    """
+    X, y = datasets.load_wine(return_X_y=True)
+    forest = RandomForestClassifier(
+        n_estimators=10, max_samples=1e-4, class_weight=class_weight, random_state=0
+    )
+    forest.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "make_data, Forest",
+    [
+        (datasets.make_regression, RandomForestRegressor),
+        (datasets.make_classification, RandomForestClassifier),
+    ],
+)
+def test_missing_values_is_resilient(make_data, Forest):
+    """Check that forest can deal with missing values and has decent performance."""
+
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 1000, 10
+    X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
+
+    # Create dataset with missing values
+    X_missing = X.copy()
+    X_missing[rng.choice([False, True], size=X.shape, p=[0.95, 0.05])] = np.nan
+    assert np.isnan(X_missing).any()
+
+    X_missing_train, X_missing_test, y_train, y_test = train_test_split(
+        X_missing, y, random_state=0
+    )
+
+    # Train forest with missing values
+    forest_with_missing = Forest(random_state=rng, n_estimators=50)
+    forest_with_missing.fit(X_missing_train, y_train)
+    score_with_missing = forest_with_missing.score(X_missing_test, y_test)
+
+    # Train forest without missing values
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    forest = Forest(random_state=rng, n_estimators=50)
+    forest.fit(X_train, y_train)
+    score_without_missing = forest.score(X_test, y_test)
+
+    # Score is still 80 percent of the forest's score that had no missing values
+    assert score_with_missing >= 0.80 * score_without_missing
+
+
+@pytest.mark.parametrize("Forest", [RandomForestClassifier, RandomForestRegressor])
+def test_missing_value_is_predictive(Forest):
+    """Check that the forest learns when missing values are only present for
+    a predictive feature."""
+    rng = np.random.RandomState(0)
+    n_samples = 300
+
+    X_non_predictive = rng.standard_normal(size=(n_samples, 10))
+    y = rng.randint(0, high=2, size=n_samples)
+
+    # Create a predictive feature using `y` and with some noise
+    X_random_mask = rng.choice([False, True], size=n_samples, p=[0.95, 0.05])
+    y_mask = y.astype(bool)
+    y_mask[X_random_mask] = ~y_mask[X_random_mask]
+
+    predictive_feature = rng.standard_normal(size=n_samples)
+    predictive_feature[y_mask] = np.nan
+    assert np.isnan(predictive_feature).any()
+
+    X_predictive = X_non_predictive.copy()
+    X_predictive[:, 5] = predictive_feature
+
+    (
+        X_predictive_train,
+        X_predictive_test,
+        X_non_predictive_train,
+        X_non_predictive_test,
+        y_train,
+        y_test,
+    ) = train_test_split(X_predictive, X_non_predictive, y, random_state=0)
+    forest_predictive = Forest(random_state=0).fit(X_predictive_train, y_train)
+    forest_non_predictive = Forest(random_state=0).fit(X_non_predictive_train, y_train)
+
+    predictive_test_score = forest_predictive.score(X_predictive_test, y_test)
+
+    assert predictive_test_score >= 0.75
+    assert predictive_test_score >= forest_non_predictive.score(
+        X_non_predictive_test, y_test
+    )
+
+
+def test_non_supported_criterion_raises_error_with_missing_values():
+    """Raise error for unsupported criterion when there are missing values."""
+    X = np.array([[0, 1, 2], [np.nan, 0, 2.0]])
+    y = [0.5, 1.0]
+
+    forest = RandomForestRegressor(criterion="absolute_error")
+
+    msg = "RandomForestRegressor does not accept missing values"
+    with pytest.raises(ValueError, match=msg):
+        forest.fit(X, y)

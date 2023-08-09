@@ -21,7 +21,7 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
-# flake8: noqa
+# ruff: noqa
 
 __doc__ = \
 """
@@ -3842,7 +3842,7 @@ class _MultipleMatch(ParseElementEnhance):
             try_not_ender(instring, loc)
         loc, tokens = self_expr_parse( instring, loc, doActions, callPreParse=False )
         try:
-            hasIgnoreExprs = (not not self.ignoreExprs)
+            hasIgnoreExprs = bool(self.ignoreExprs)
             while 1:
                 if check_ender:
                     try_not_ender(instring, loc)

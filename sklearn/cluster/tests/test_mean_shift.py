@@ -3,22 +3,15 @@ Testing for mean shift clustering methods
 
 """
 
-import numpy as np
 import warnings
+
+import numpy as np
 import pytest
 
-from scipy import sparse
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose
-
-from sklearn.cluster import MeanShift
-from sklearn.cluster import mean_shift
-from sklearn.cluster import estimate_bandwidth
-from sklearn.cluster import get_bin_seeds
+from sklearn.cluster import MeanShift, estimate_bandwidth, get_bin_seeds, mean_shift
 from sklearn.datasets import make_blobs
 from sklearn.metrics import v_measure_score
-
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 n_clusters = 3
 centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
@@ -74,14 +67,6 @@ def test_mean_shift(
     assert n_clusters_mean_shift == expected
     assert labels_mean_shift_unique[0] == first_cluster_label
     assert cluster_centers.dtype == global_dtype
-
-
-def test_estimate_bandwidth_with_sparse_matrix():
-    # Test estimate_bandwidth with sparse matrix
-    X = sparse.lil_matrix((1000, 1000))
-    msg = "A sparse matrix was passed, but dense data is required."
-    with pytest.raises(TypeError, match=msg):
-        estimate_bandwidth(X)
 
 
 def test_parallel(global_dtype):

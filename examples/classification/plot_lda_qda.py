@@ -15,8 +15,8 @@ class has its own standard deviation with QDA.
 # Colormap
 # --------
 
-import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 from matplotlib import colors
 
 cmap = colors.LinearSegmentedColormap(
@@ -139,7 +139,7 @@ def plot_ellipse(splot, mean, cov, color):
         mean,
         2 * v[0] ** 0.5,
         2 * v[1] ** 0.5,
-        180 + angle,
+        angle=180 + angle,
         facecolor=color,
         edgecolor="black",
         linewidth=2,
@@ -172,8 +172,10 @@ plt.suptitle(
     fontsize=15,
 )
 
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.discriminant_analysis import (
+    LinearDiscriminantAnalysis,
+    QuadraticDiscriminantAnalysis,
+)
 
 for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
     # Linear Discriminant Analysis

@@ -34,6 +34,10 @@ Base classes
    base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
+   base.MetaEstimatorMixin
+   base.OneToOneFeatureMixin
+   base.OutlierMixin
+   base.ClassNamePrefixFeaturesOutMixin
    feature_selection.SelectorMixin
 
 Functions
@@ -192,6 +196,7 @@ details.
    covariance.empirical_covariance
    covariance.graphical_lasso
    covariance.ledoit_wolf
+   covariance.ledoit_wolf_shrinkage
    covariance.oas
    covariance.shrunk_covariance
 
@@ -251,7 +256,6 @@ Loaders
    datasets.fetch_rcv1
    datasets.fetch_species_distributions
    datasets.get_data_home
-   datasets.load_boston
    datasets.load_breast_cancer
    datasets.load_diabetes
    datasets.load_digits
@@ -443,6 +447,7 @@ Samples generator
    exceptions.DataDimensionalityWarning
    exceptions.EfficiencyWarning
    exceptions.FitFailedWarning
+   exceptions.InconsistentVersionWarning
    exceptions.NotFittedError
    exceptions.UndefinedMetricWarning
 
@@ -459,7 +464,6 @@ Samples generator
 .. autosummary::
    :toctree: generated/
 
-   experimental.enable_hist_gradient_boosting
    experimental.enable_iterative_imputer
    experimental.enable_halving_search_cv
 
@@ -658,16 +662,10 @@ Plotting
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
+   :template: display_only_from_estimator.rst
 
    inspection.DecisionBoundaryDisplay
    inspection.PartialDependenceDisplay
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   inspection.plot_partial_dependence
 
 .. _isotonic_ref:
 
@@ -1127,20 +1125,12 @@ See the :ref:`visualizations` section of the user guide for further details.
 
 .. autosummary::
    :toctree: generated/
-   :template: function.rst
-
-   metrics.plot_confusion_matrix
-   metrics.plot_det_curve
-   metrics.plot_precision_recall_curve
-   metrics.plot_roc_curve
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
+   :template: display_all_class_methods.rst
 
    metrics.ConfusionMatrixDisplay
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
+   metrics.PredictionErrorDisplay
    metrics.RocCurveDisplay
    calibration.CalibrationDisplay
 
@@ -1247,6 +1237,18 @@ Model validation
    model_selection.learning_curve
    model_selection.permutation_test_score
    model_selection.validation_curve
+
+Visualization
+-------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: display_only_from_estimator.rst
+
+   model_selection.LearningCurveDisplay
+   model_selection.ValidationCurveDisplay
 
 .. _multiclass_ref:
 
@@ -1440,6 +1442,7 @@ details.
    preprocessing.RobustScaler
    preprocessing.SplineTransformer
    preprocessing.StandardScaler
+   preprocessing.TargetEncoder
 
 .. autosummary::
    :toctree: generated/
@@ -1652,7 +1655,21 @@ Plotting
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
-   utils.all_estimators
+   utils.metadata_routing.get_routing_for_object
+   utils.metadata_routing.MetadataRouter
+   utils.metadata_routing.MetadataRequest
+   utils.metadata_routing.MethodMapping
+   utils.metadata_routing.process_routing
+
+Specific utilities to list scikit-learn components:
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.discovery.all_estimators
+   utils.discovery.all_displays
+   utils.discovery.all_functions
 
 Utilities from joblib:
 
@@ -1660,18 +1677,16 @@ Utilities from joblib:
    :toctree: generated/
    :template: function.rst
 
+   utils.parallel.delayed
    utils.parallel_backend
    utils.register_parallel_backend
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   utils.parallel.Parallel
 
 
 Recently deprecated
 ===================
-
-To be removed in 1.3
---------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   utils.metaestimators.if_delegate_has_method

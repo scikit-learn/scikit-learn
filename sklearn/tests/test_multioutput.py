@@ -1,41 +1,54 @@
-import pytest
-import numpy as np
-import scipy.sparse as sp
-from joblib import cpu_count
 import re
 
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
+import numpy as np
+import pytest
+import scipy.sparse as sp
+from joblib import cpu_count
+
 from sklearn import datasets
-from sklearn.base import clone
-from sklearn.datasets import make_classification
-from sklearn.datasets import load_linnerud
-from sklearn.datasets import make_multilabel_classification
-from sklearn.datasets import make_regression
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
+from sklearn.base import ClassifierMixin, clone
+from sklearn.datasets import (
+    load_linnerud,
+    make_classification,
+    make_multilabel_classification,
+    make_regression,
+)
+from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.ensemble import (
+    GradientBoostingRegressor,
+    RandomForestClassifier,
+    StackingRegressor,
+)
 from sklearn.exceptions import NotFittedError
-from sklearn.linear_model import Lasso
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import OrthogonalMatchingPursuit
-from sklearn.linear_model import Ridge
-from sklearn.linear_model import SGDClassifier
-from sklearn.linear_model import SGDRegressor
-from sklearn.linear_model import LinearRegression
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import (
+    Lasso,
+    LinearRegression,
+    LogisticRegression,
+    OrthogonalMatchingPursuit,
+    PassiveAggressiveClassifier,
+    Ridge,
+    SGDClassifier,
+    SGDRegressor,
+)
 from sklearn.metrics import jaccard_score, mean_squared_error
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.multioutput import ClassifierChain, RegressorChain
-from sklearn.multioutput import MultiOutputClassifier
-from sklearn.multioutput import MultiOutputRegressor
+from sklearn.multioutput import (
+    ClassifierChain,
+    MultiOutputClassifier,
+    MultiOutputRegressor,
+    RegressorChain,
+)
+from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
-from sklearn.model_selection import GridSearchCV, train_test_split
-from sklearn.dummy import DummyRegressor, DummyClassifier
-from sklearn.pipeline import make_pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.ensemble import StackingRegressor
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 
 def test_multi_target_regression():
@@ -202,8 +215,8 @@ def test_hasattr_multi_output_predict_proba():
 
 # check predict_proba passes
 def test_multi_output_predict_proba():
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5, loss="log_loss")
-    param = {"loss": ("hinge", "log", "modified_huber")}
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
+    param = {"loss": ("hinge", "log_loss", "modified_huber")}
 
     # inner function for custom scoring
     def custom_scorer(estimator, X, y):
@@ -213,7 +226,11 @@ def test_multi_output_predict_proba():
             return 0.0
 
     grid_clf = GridSearchCV(
-        sgd_linear_clf, param_grid=param, scoring=custom_scorer, cv=3
+        sgd_linear_clf,
+        param_grid=param,
+        scoring=custom_scorer,
+        cv=3,
+        error_score="raise",
     )
     multi_target_linear = MultiOutputClassifier(grid_clf)
     multi_target_linear.fit(X, y)
@@ -300,7 +317,7 @@ def test_multi_output_classification():
 
 def test_multiclass_multioutput_estimator():
     # test to check meta of meta estimators
-    svc = LinearSVC(random_state=0)
+    svc = LinearSVC(dual="auto", random_state=0)
     multi_class_svc = OneVsRestClassifier(svc)
     multi_target_svc = MultiOutputClassifier(multi_class_svc)
 
@@ -405,7 +422,7 @@ def test_multi_output_classification_partial_fit_sample_weights():
 def test_multi_output_exceptions():
     # NotFittedError when fit is not done but score, predict and
     # and predict_proba are called
-    moc = MultiOutputClassifier(LinearSVC(random_state=0))
+    moc = MultiOutputClassifier(LinearSVC(dual="auto", random_state=0))
     with pytest.raises(NotFittedError):
         moc.score(X, y)
 
@@ -441,7 +458,7 @@ def test_multi_output_delegate_predict_proba():
     assert hasattr(moc, "predict_proba")
 
     # A base estimator without `predict_proba` should raise an AttributeError
-    moc = MultiOutputClassifier(LinearSVC())
+    moc = MultiOutputClassifier(LinearSVC(dual="auto"))
     assert not hasattr(moc, "predict_proba")
     msg = "'LinearSVC' object has no attribute 'predict_proba'"
     with pytest.raises(AttributeError, match=msg):
@@ -467,7 +484,7 @@ def generate_multilabel_dataset_with_correlations():
 def test_classifier_chain_fit_and_predict_with_linear_svc():
     # Fit classifier chain and verify predict performance using LinearSVC
     X, Y = generate_multilabel_dataset_with_correlations()
-    classifier_chain = ClassifierChain(LinearSVC())
+    classifier_chain = ClassifierChain(LinearSVC(dual="auto"))
     classifier_chain.fit(X, Y)
 
     Y_pred = classifier_chain.predict(X)
@@ -762,3 +779,26 @@ def test_multioutputregressor_ducktypes_fitted_estimator():
 
     # Does not raise
     reg.predict(X)
+
+
+@pytest.mark.parametrize(
+    "Cls, method", [(ClassifierChain, "fit"), (MultiOutputClassifier, "partial_fit")]
+)
+def test_fit_params_no_routing(Cls, method):
+    """Check that we raise an error when passing metadata not requested by the
+    underlying classifier.
+    """
+    X, y = make_classification(n_samples=50)
+    clf = Cls(PassiveAggressiveClassifier())
+
+    with pytest.raises(ValueError, match="is only supported if"):
+        getattr(clf, method)(X, y, test=1)
+
+
+def test_multioutput_regressor_has_partial_fit():
+    # Test that an unfitted MultiOutputRegressor handles available_if for
+    # partial_fit correctly
+    est = MultiOutputRegressor(LinearRegression())
+    msg = "This 'MultiOutputRegressor' has no attribute 'partial_fit'"
+    with pytest.raises(AttributeError, match=msg):
+        getattr(est, "partial_fit")

@@ -1,246 +1,270 @@
 # Minimum spanning tree single linkage implementation for hdbscan
 # Authors: Leland McInnes <leland.mcinnes@gmail.com>
 #          Steve Astels <sastels@gmail.com>
-# License: 3-clause BSD
+#          Meekail Zain <zainmeekail@gmail.com>
+# Copyright (c) 2015, Leland McInnes
+# All rights reserved.
 
-import numpy as np
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+
+# 3. Neither the name of the copyright holder nor the names of its contributors
+# may be used to endorse or promote products derived from this software without
+# specific prior written permission.
+
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
 cimport numpy as cnp
-import cython
-
 from libc.float cimport DBL_MAX
 
-from ...metrics._dist_metrics cimport DistanceMetric
+import numpy as np
+from ...metrics._dist_metrics cimport DistanceMetric64
+from ...cluster._hierarchical_fast cimport UnionFind
+from ...cluster._hdbscan._tree cimport HIERARCHY_t
+from ...cluster._hdbscan._tree import HIERARCHY_dtype
+from ...utils._typedefs cimport intp_t, float64_t, int64_t, uint8_t
 
+cdef extern from "numpy/arrayobject.h":
+    intp_t * PyArray_SHAPE(cnp.PyArrayObject *)
 
-cpdef cnp.ndarray[cnp.double_t, ndim=2] mst_from_distance_matrix(
-    cnp.ndarray[cnp.double_t, ndim=2] distance_matrix
+# Numpy structured dtype representing a single ordered edge in Prim's algorithm
+MST_edge_dtype = np.dtype([
+    ("current_node", np.int64),
+    ("next_node", np.int64),
+    ("distance", np.float64),
+])
+
+# Packed shouldn't make a difference since they're all 8-byte quantities,
+# but it's included just to be safe.
+ctypedef packed struct MST_edge_t:
+    int64_t current_node
+    int64_t next_node
+    float64_t distance
+
+cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
+    cnp.ndarray[float64_t, ndim=2] mutual_reachability
 ):
+    """Compute the Minimum Spanning Tree (MST) representation of the mutual-
+    reachability graph using Prim's algorithm.
 
+    Parameters
+    ----------
+    mutual_reachability : ndarray of shape (n_samples, n_samples)
+        Array of mutual-reachabilities between samples.
+
+    Returns
+    -------
+    mst : ndarray of shape (n_samples - 1,), dtype=MST_edge_dtype
+        The MST representation of the mutual-reahability graph. The MST is
+        represented as a collecteion of edges.
+    """
     cdef:
-        cnp.ndarray[cnp.intp_t, ndim=1] node_labels
-        cnp.ndarray[cnp.intp_t, ndim=1] current_labels
-        cnp.ndarray[cnp.double_t, ndim=1] current_distances
-        cnp.ndarray[cnp.double_t, ndim=1] left
-        cnp.ndarray[cnp.double_t, ndim=1] right
-        cnp.ndarray[cnp.double_t, ndim=2] result
+        # Note: we utilize ndarray's over memory-views to make use of numpy
+        # binary indexing and sub-selection below.
+        cnp.ndarray[int64_t, ndim=1, mode='c'] current_labels
+        cnp.ndarray[float64_t, ndim=1, mode='c'] min_reachability, left, right
+        cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst
 
-        cnp.ndarray label_filter
+        cnp.ndarray[uint8_t, mode='c'] label_filter
 
-        cnp.intp_t current_node
-        cnp.intp_t new_node_index
-        cnp.intp_t new_node
-        cnp.intp_t i
+        int64_t n_samples = PyArray_SHAPE(<cnp.PyArrayObject*> mutual_reachability)[0]
+        int64_t current_node, new_node_index, new_node, i
 
-    result = np.zeros((distance_matrix.shape[0] - 1, 3))
-    node_labels = np.arange(distance_matrix.shape[0], dtype=np.intp)
+    mst = np.empty(n_samples - 1, dtype=MST_edge_dtype)
+    current_labels = np.arange(n_samples, dtype=np.int64)
     current_node = 0
-    current_distances = np.infty * np.ones(distance_matrix.shape[0])
-    current_labels = node_labels
-    for i in range(1, node_labels.shape[0]):
+    min_reachability = np.full(n_samples, fill_value=np.infty, dtype=np.float64)
+    for i in range(0, n_samples - 1):
         label_filter = current_labels != current_node
         current_labels = current_labels[label_filter]
-        left = current_distances[label_filter]
-        right = distance_matrix[current_node][current_labels]
-        current_distances = np.where(left < right, left, right)
+        left = min_reachability[label_filter]
+        right = mutual_reachability[current_node][current_labels]
+        min_reachability = np.minimum(left, right)
 
-        new_node_index = np.argmin(current_distances)
+        new_node_index = np.argmin(min_reachability)
         new_node = current_labels[new_node_index]
-        result[i - 1, 0] = <double> current_node
-        result[i - 1, 1] = <double> new_node
-        result[i - 1, 2] = current_distances[new_node_index]
+        mst[i].current_node = current_node
+        mst[i].next_node = new_node
+        mst[i].distance = min_reachability[new_node_index]
         current_node = new_node
 
-    return result
+    return mst
 
 
-cpdef cnp.ndarray[cnp.double_t, ndim=2] mst_from_data_matrix(
-    cnp.ndarray[cnp.double_t, ndim=2, mode='c'] raw_data,
-    cnp.ndarray[cnp.double_t, ndim=1, mode='c'] core_distances,
-    DistanceMetric dist_metric,
-    cnp.double_t alpha=1.0
+cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
+    const float64_t[:, ::1] raw_data,
+    const float64_t[::1] core_distances,
+    DistanceMetric64 dist_metric,
+    float64_t alpha=1.0
 ):
+    """Compute the Minimum Spanning Tree (MST) representation of the mutual-
+    reachability graph generated from the provided `raw_data` and
+    `core_distances` using Prim's algorithm.
+
+    Parameters
+    ----------
+    raw_data : ndarray of shape (n_samples, n_features)
+        Input array of data samples.
+
+    core_distances : ndarray of shape (n_samples,)
+        An array containing the core-distance calculated for each corresponding
+        sample.
+
+    dist_metric : DistanceMetric
+        The distance metric to use when calculating pairwise distances for
+        determining mutual-reachability.
+
+    Returns
+    -------
+    mst : ndarray of shape (n_samples - 1,), dtype=MST_edge_dtype
+        The MST representation of the mutual-reahability graph. The MST is
+        represented as a collecteion of edges.
+    """
 
     cdef:
-        cnp.ndarray[cnp.double_t, ndim=1] current_distances_arr
-        cnp.ndarray[cnp.double_t, ndim=1] current_sources_arr
-        cnp.ndarray[cnp.int8_t, ndim=1] in_tree_arr
-        cnp.ndarray[cnp.double_t, ndim=2] result_arr
+        uint8_t[::1] in_tree
+        float64_t[::1] min_reachability
+        int64_t[::1] current_sources
+        cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst
 
-        cnp.double_t * current_distances
-        cnp.double_t * current_sources
-        cnp.double_t * current_core_distances
-        cnp.double_t * raw_data_ptr
-        cnp.int8_t * in_tree
-        cnp.double_t[:, ::1] raw_data_view
-        cnp.double_t[:, ::1] result
+        int64_t current_node, source_node, new_node, next_node_source
+        int64_t i, j, n_samples, num_features
 
-        cnp.ndarray label_filter
+        float64_t current_node_core_dist, new_reachability, mutual_reachability_distance
+        float64_t next_node_min_reach, pair_distance, next_node_core_dist
 
-        cnp.intp_t current_node
-        cnp.intp_t source_node
-        cnp.intp_t right_node
-        cnp.intp_t left_node
-        cnp.intp_t new_node
-        cnp.intp_t i
-        cnp.intp_t j
-        cnp.intp_t dim
-        cnp.intp_t num_features
-
-        double current_node_core_distance
-        double right_value
-        double left_value
-        double core_value
-        double new_distance
-
-    dim = raw_data.shape[0]
+    n_samples = raw_data.shape[0]
     num_features = raw_data.shape[1]
 
-    raw_data_view = (<cnp.double_t[:raw_data.shape[0], :raw_data.shape[1]:1]> (
-        <cnp.double_t *> raw_data.data))
-    raw_data_ptr = (<cnp.double_t *> &raw_data_view[0, 0])
+    mst = np.empty(n_samples - 1, dtype=MST_edge_dtype)
 
-    result_arr = np.zeros((dim - 1, 3))
-    in_tree_arr = np.zeros(dim, dtype=np.int8)
+    in_tree = np.zeros(n_samples, dtype=np.uint8)
+    min_reachability = np.full(n_samples, fill_value=np.infty, dtype=np.float64)
+    current_sources = np.ones(n_samples, dtype=np.int64)
+
     current_node = 0
-    current_distances_arr = np.infty * np.ones(dim)
-    current_sources_arr = np.ones(dim)
 
-    result = (<cnp.double_t[:dim - 1, :3:1]> (<cnp.double_t *> result_arr.data))
-    in_tree = (<cnp.int8_t *> in_tree_arr.data)
-    current_distances = (<cnp.double_t *> current_distances_arr.data)
-    current_sources = (<cnp.double_t *> current_sources_arr.data)
-    current_core_distances = (<cnp.double_t *> core_distances.data)
-
-    for i in range(1, dim):
+    for i in range(0, n_samples - 1):
 
         in_tree[current_node] = 1
 
-        current_node_core_distance = current_core_distances[current_node]
+        current_node_core_dist = core_distances[current_node]
 
-        new_distance = DBL_MAX
+        new_reachability = DBL_MAX
         source_node = 0
         new_node = 0
 
-        for j in range(dim):
+        for j in range(n_samples):
             if in_tree[j]:
                 continue
 
-            right_value = current_distances[j]
-            right_source = current_sources[j]
+            next_node_min_reach = min_reachability[j]
+            next_node_source = current_sources[j]
 
-            left_value = dist_metric.dist(&raw_data_ptr[num_features *
-                                                        current_node],
-                                          &raw_data_ptr[num_features * j],
-                                          num_features)
-            left_source = current_node
+            pair_distance = dist_metric.dist(
+                &raw_data[current_node, 0],
+                &raw_data[j, 0],
+                num_features
+            )
 
-            if alpha != 1.0:
-                left_value /= alpha
+            pair_distance /= alpha
 
-            core_value = core_distances[j]
-            if (current_node_core_distance > right_value or
-                    core_value > right_value or
-                    left_value > right_value):
-                if right_value < new_distance:
-                    new_distance = right_value
-                    source_node = right_source
+            next_node_core_dist = core_distances[j]
+            mutual_reachability_distance = max(
+                current_node_core_dist,
+                next_node_core_dist,
+                pair_distance
+            )
+            if mutual_reachability_distance > next_node_min_reach:
+                if next_node_min_reach < new_reachability:
+                    new_reachability = next_node_min_reach
+                    source_node = next_node_source
                     new_node = j
                 continue
 
-            if core_value > current_node_core_distance:
-                if core_value > left_value:
-                    left_value = core_value
-            else:
-                if current_node_core_distance > left_value:
-                    left_value = current_node_core_distance
-
-            if left_value < right_value:
-                current_distances[j] = left_value
-                current_sources[j] = left_source
-                if left_value < new_distance:
-                    new_distance = left_value
-                    source_node = left_source
+            if mutual_reachability_distance < next_node_min_reach:
+                min_reachability[j] = mutual_reachability_distance
+                current_sources[j] = current_node
+                if mutual_reachability_distance < new_reachability:
+                    new_reachability = mutual_reachability_distance
+                    source_node = current_node
                     new_node = j
             else:
-                if right_value < new_distance:
-                    new_distance = right_value
-                    source_node = right_source
+                if next_node_min_reach < new_reachability:
+                    new_reachability = next_node_min_reach
+                    source_node = next_node_source
                     new_node = j
 
-        result[i - 1, 0] = <double> source_node
-        result[i - 1, 1] = <double> new_node
-        result[i - 1, 2] = new_distance
+        mst[i].current_node = source_node
+        mst[i].next_node = new_node
+        mst[i].distance = new_reachability
         current_node = new_node
 
-    return result_arr
+    return mst
 
+cpdef cnp.ndarray[HIERARCHY_t, ndim=1, mode="c"] make_single_linkage(const MST_edge_t[::1] mst):
+    """Construct a single-linkage tree from an MST.
 
-cdef class UnionFind (object):
+    Parameters
+    ----------
+    mst : ndarray of shape (n_samples - 1,), dtype=MST_edge_dtype
+        The MST representation of the mutual-reahability graph. The MST is
+        represented as a collecteion of edges.
 
+    Returns
+    -------
+    single_linkage : ndarray of shape (n_samples - 1,), dtype=HIERARCHY_dtype
+        The single-linkage tree tree (dendrogram) built from the MST. Each
+        of the array represents the following:
+
+        - left node/cluster
+        - right node/cluster
+        - distance
+        - new cluster size
+    """
     cdef:
-        cnp.ndarray parent_arr
-        cnp.ndarray size_arr
-        cnp.intp_t next_label
-        cnp.intp_t *parent
-        cnp.intp_t *size
+        cnp.ndarray[HIERARCHY_t, ndim=1, mode="c"] single_linkage
 
-    def __init__(self, N):
-        self.parent_arr = -1 * np.ones(2 * N - 1, dtype=np.intp, order='C')
-        self.next_label = N
-        self.size_arr = np.hstack((np.ones(N, dtype=np.intp),
-                                   np.zeros(N-1, dtype=np.intp)))
-        self.parent = (<cnp.intp_t *> self.parent_arr.data)
-        self.size = (<cnp.intp_t *> self.size_arr.data)
+        # Note mst.shape[0] is one fewer than the number of samples
+        int64_t n_samples = mst.shape[0] + 1
+        intp_t current_node_cluster, next_node_cluster
+        int64_t current_node, next_node, i
+        float64_t distance
+        UnionFind U = UnionFind(n_samples)
 
-    cdef void union(self, cnp.intp_t m, cnp.intp_t n):
-        self.size[self.next_label] = self.size[m] + self.size[n]
-        self.parent[m] = self.next_label
-        self.parent[n] = self.next_label
-        self.size[self.next_label] = self.size[m] + self.size[n]
-        self.next_label += 1
+    single_linkage = np.zeros(n_samples - 1, dtype=HIERARCHY_dtype)
 
-        return
+    for i in range(n_samples - 1):
 
-    @cython.wraparound(True)
-    cdef cnp.intp_t fast_find(self, cnp.intp_t n):
-        cdef cnp.intp_t p
-        p = n
-        while self.parent_arr[n] != -1:
-            n = self.parent_arr[n]
-        # label up to the root
-        while self.parent_arr[p] != n:
-            p, self.parent_arr[p] = self.parent_arr[p], n
-        return n
+        current_node = mst[i].current_node
+        next_node = mst[i].next_node
+        distance = mst[i].distance
 
-@cython.wraparound(True)
-cpdef cnp.ndarray[cnp.double_t, ndim=2] label(cnp.double_t[:,:] L):
+        current_node_cluster = U.fast_find(current_node)
+        next_node_cluster = U.fast_find(next_node)
 
-    cdef:
-        cnp.ndarray[cnp.double_t, ndim=2] result_arr
-        cnp.double_t[:, ::1] result
+        single_linkage[i].left_node = current_node_cluster
+        single_linkage[i].right_node = next_node_cluster
+        single_linkage[i].value = distance
+        single_linkage[i].cluster_size = U.size[current_node_cluster] + U.size[next_node_cluster]
 
-        cnp.intp_t N, a, aa, b, bb, index
-        cnp.double_t delta
+        U.union(current_node_cluster, next_node_cluster)
 
-    result_arr = np.zeros((L.shape[0], L.shape[1] + 1))
-    result = (<cnp.double_t[:L.shape[0], :4:1]> (
-        <cnp.double_t *> result_arr.data))
-    N = L.shape[0] + 1
-    U = UnionFind(N)
-
-    for index in range(L.shape[0]):
-
-        a = <cnp.intp_t> L[index, 0]
-        b = <cnp.intp_t> L[index, 1]
-        delta = L[index, 2]
-
-        aa, bb = U.fast_find(a), U.fast_find(b)
-
-        result[index][0] = aa
-        result[index][1] = bb
-        result[index][2] = delta
-        result[index][3] = U.size[aa] + U.size[bb]
-
-        U.union(aa, bb)
-
-    return result_arr
+    return single_linkage

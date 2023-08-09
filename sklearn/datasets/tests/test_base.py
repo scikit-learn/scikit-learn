@@ -2,33 +2,33 @@ import os
 import shutil
 import tempfile
 import warnings
-from pickle import loads
-from pickle import dumps
 from functools import partial
-from importlib import resources
+from pickle import dumps, loads
 
-import pytest
 import numpy as np
-from sklearn.datasets import get_data_home
-from sklearn.datasets import clear_data_home
-from sklearn.datasets import load_files
-from sklearn.datasets import load_sample_images
-from sklearn.datasets import load_sample_image
-from sklearn.datasets import load_digits
-from sklearn.datasets import load_diabetes
-from sklearn.datasets import load_linnerud
-from sklearn.datasets import load_iris
-from sklearn.datasets import load_breast_cancer
-from sklearn.datasets import load_boston
-from sklearn.datasets import load_wine
+import pytest
+
+from sklearn.datasets import (
+    clear_data_home,
+    get_data_home,
+    load_breast_cancer,
+    load_diabetes,
+    load_digits,
+    load_files,
+    load_iris,
+    load_linnerud,
+    load_sample_image,
+    load_sample_images,
+    load_wine,
+)
 from sklearn.datasets._base import (
     load_csv_data,
     load_gzip_compressed_csv_data,
 )
+from sklearn.datasets.tests.test_common import check_as_frame
 from sklearn.preprocessing import scale
 from sklearn.utils import Bunch
-from sklearn.utils._testing import SkipTest
-from sklearn.datasets.tests.test_common import check_as_frame
+from sklearn.utils.fixes import _is_resource
 
 
 def _remove_dir(path):
@@ -100,10 +100,11 @@ def test_default_load_files(test_category_dir_1, test_category_dir_2, load_files
 def test_load_files_w_categories_desc_and_encoding(
     test_category_dir_1, test_category_dir_2, load_files_root
 ):
-    category = os.path.abspath(test_category_dir_1).split("/").pop()
+    category = os.path.abspath(test_category_dir_1).split(os.sep).pop()
     res = load_files(
-        load_files_root, description="test", categories=category, encoding="utf-8"
+        load_files_root, description="test", categories=[category], encoding="utf-8"
     )
+
     assert len(res.filenames) == 1
     assert len(res.target_names) == 1
     assert res.DESCR == "test"
@@ -223,12 +224,6 @@ def test_load_sample_image():
         warnings.warn("Could not load sample images, PIL is not available.")
 
 
-def test_load_missing_sample_image_error():
-    pytest.importorskip("PIL")
-    with pytest.raises(AttributeError):
-        load_sample_image("blop.jpg")
-
-
 def test_load_diabetes_raw():
     """Test to check that we load a scaled version by default but that we can
     get an unscaled version when setting `scaled=False`."""
@@ -245,7 +240,6 @@ def test_load_diabetes_raw():
     )
 
 
-@pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
 @pytest.mark.parametrize(
     "loader_func, data_shape, target_shape, n_target, has_descr, filenames",
     [
@@ -263,7 +257,6 @@ def test_load_diabetes_raw():
         (load_diabetes, (442, 10), (442,), None, True, []),
         (load_digits, (1797, 64), (1797,), 10, True, []),
         (partial(load_digits, n_class=9), (1617, 64), (1617,), 10, True, []),
-        (load_boston, (506, 13), (506,), None, True, ["filename"]),
     ],
 )
 def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, filenames):
@@ -282,7 +275,7 @@ def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, file
         assert "data_module" in bunch
         assert all(
             [
-                f in bunch and resources.is_resource(bunch["data_module"], bunch[f])
+                f in bunch and _is_resource(bunch["data_module"], bunch[f])
                 for f in filenames
             ]
         )
@@ -343,31 +336,13 @@ def test_bunch_dir():
     assert "data" in dir(data)
 
 
-# FIXME: to be removed in 1.2
-def test_load_boston_warning():
-    """Check that we raise the ethical warning when loading `load_boston`."""
-    warn_msg = "The Boston housing prices dataset has an ethical problem"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        load_boston()
+def test_load_boston_error():
+    """Check that we raise the ethical warning when trying to import `load_boston`."""
+    msg = "The Boston housing prices dataset has an ethical problem"
+    with pytest.raises(ImportError, match=msg):
+        from sklearn.datasets import load_boston  # noqa
 
-
-@pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
-def test_load_boston_alternative():
-    pd = pytest.importorskip("pandas")
-    if os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "1":
-        raise SkipTest(
-            "This test requires an internet connection to fetch the dataset."
-        )
-
-    boston_sklearn = load_boston()
-
-    data_url = "http://lib.stat.cmu.edu/datasets/boston"
-    try:
-        raw_df = pd.read_csv(data_url, sep=r"\s+", skiprows=22, header=None)
-    except ConnectionError as e:
-        pytest.xfail(f"The dataset can't be downloaded. Got exception: {e}")
-    data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
-    target = raw_df.values[1::2, 2]
-
-    np.testing.assert_allclose(data, boston_sklearn.data)
-    np.testing.assert_allclose(target, boston_sklearn.target)
+    # other non-existing function should raise the usual import error
+    msg = "cannot import name 'non_existing_function' from 'sklearn.datasets'"
+    with pytest.raises(ImportError, match=msg):
+        from sklearn.datasets import non_existing_function  # noqa

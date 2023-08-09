@@ -2,11 +2,14 @@ from functools import reduce
 
 import numpy as np
 
-from ...preprocessing import LabelEncoder
-from ...utils import check_matplotlib_support
-from ...utils import _safe_indexing
 from ...base import is_regressor
-from ...utils.validation import check_is_fitted, _is_arraylike_not_scalar
+from ...preprocessing import LabelEncoder
+from ...utils import _safe_indexing, check_matplotlib_support
+from ...utils.validation import (
+    _is_arraylike_not_scalar,
+    _num_features,
+    check_is_fitted,
+)
 
 
 def _check_boundary_response_method(estimator, response_method):
@@ -91,7 +94,7 @@ class DecisionBoundaryDisplay:
     surface_ : matplotlib `QuadContourSet` or `QuadMesh`
         If `plot_method` is 'contour' or 'contourf', `surface_` is a
         :class:`QuadContourSet <matplotlib.contour.QuadContourSet>`. If
-        `plot_method is `pcolormesh`, `surface_` is a
+        `plot_method` is 'pcolormesh', `surface_` is a
         :class:`QuadMesh <matplotlib.collections.QuadMesh>`.
 
     ax_ : matplotlib Axes
@@ -99,6 +102,36 @@ class DecisionBoundaryDisplay:
 
     figure_ : matplotlib Figure
         Figure containing the confusion matrix.
+
+    See Also
+    --------
+    DecisionBoundaryDisplay.from_estimator : Plot decision boundary given an estimator.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.inspection import DecisionBoundaryDisplay
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> iris = load_iris()
+    >>> feature_1, feature_2 = np.meshgrid(
+    ...     np.linspace(iris.data[:, 0].min(), iris.data[:, 0].max()),
+    ...     np.linspace(iris.data[:, 1].min(), iris.data[:, 1].max())
+    ... )
+    >>> grid = np.vstack([feature_1.ravel(), feature_2.ravel()]).T
+    >>> tree = DecisionTreeClassifier().fit(iris.data[:, :2], iris.target)
+    >>> y_pred = np.reshape(tree.predict(grid), feature_1.shape)
+    >>> display = DecisionBoundaryDisplay(
+    ...     xx0=feature_1, xx1=feature_2, response=y_pred
+    ... )
+    >>> display.plot()
+    <...>
+    >>> display.ax_.scatter(
+    ...     iris.data[:, 0], iris.data[:, 1], c=iris.target, edgecolor="black"
+    ... )
+    <...>
+    >>> plt.show()
     """
 
     def __init__(self, *, xx0, xx1, response, xlabel=None, ylabel=None):
@@ -118,7 +151,7 @@ class DecisionBoundaryDisplay:
             to the following matplotlib documentation for details:
             :func:`contourf <matplotlib.pyplot.contourf>`,
             :func:`contour <matplotlib.pyplot.contour>`,
-            :func:`pcolomesh <matplotlib.pyplot.pcolomesh>`.
+            :func:`pcolormesh <matplotlib.pyplot.pcolormesh>`.
 
         ax : Matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -136,6 +169,7 @@ class DecisionBoundaryDisplay:
         Returns
         -------
         display: :class:`~sklearn.inspection.DecisionBoundaryDisplay`
+            Object that stores computed values.
         """
         check_matplotlib_support("DecisionBoundaryDisplay.plot")
         import matplotlib.pyplot as plt  # noqa
@@ -203,7 +237,7 @@ class DecisionBoundaryDisplay:
             to the following matplotlib documentation for details:
             :func:`contourf <matplotlib.pyplot.contourf>`,
             :func:`contour <matplotlib.pyplot.contour>`,
-            :func:`pcolomesh <matplotlib.pyplot.pcolomesh>`.
+            :func:`pcolormesh <matplotlib.pyplot.pcolormesh>`.
 
         response_method : {'auto', 'predict_proba', 'decision_function', \
                 'predict'}, default='auto'
@@ -240,10 +274,10 @@ class DecisionBoundaryDisplay:
         See Also
         --------
         DecisionBoundaryDisplay : Decision boundary visualization.
-        ConfusionMatrixDisplay.from_estimator : Plot the confusion matrix
-            given an estimator, the data, and the label.
-        ConfusionMatrixDisplay.from_predictions : Plot the confusion matrix
-            given the true and predicted labels.
+        sklearn.metrics.ConfusionMatrixDisplay.from_estimator : Plot the
+            confusion matrix given an estimator, the data, and the label.
+        sklearn.metrics.ConfusionMatrixDisplay.from_predictions : Plot the
+            confusion matrix given the true and predicted labels.
 
         Examples
         --------
@@ -283,6 +317,12 @@ class DecisionBoundaryDisplay:
             raise ValueError(
                 f"plot_method must be one of {available_methods}. "
                 f"Got {plot_method} instead."
+            )
+
+        num_features = _num_features(X)
+        if num_features != 2:
+            raise ValueError(
+                f"n_features must be equal to 2. Got {num_features} instead."
             )
 
         x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)

@@ -45,6 +45,7 @@ _ = fig.suptitle("A selection from the 64-dimensional digits dataset", fontsize=
 # scattered across it.
 import numpy as np
 from matplotlib import offsetbox
+
 from sklearn.preprocessing import MinMaxScaler
 
 
@@ -103,11 +104,11 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.manifold import (
+    MDS,
+    TSNE,
     Isomap,
     LocallyLinearEmbedding,
-    MDS,
     SpectralEmbedding,
-    TSNE,
 )
 from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from sklearn.pipeline import make_pipeline
@@ -134,7 +135,9 @@ embeddings = {
     "LTSA LLE embedding": LocallyLinearEmbedding(
         n_neighbors=n_neighbors, n_components=2, method="ltsa"
     ),
-    "MDS embedding": MDS(n_components=2, n_init=1, max_iter=120, n_jobs=2),
+    "MDS embedding": MDS(
+        n_components=2, n_init=1, max_iter=120, n_jobs=2, normalized_stress="auto"
+    ),
     "Random Trees embedding": make_pipeline(
         RandomTreesEmbedding(n_estimators=200, max_depth=5, random_state=0),
         TruncatedSVD(n_components=2),
@@ -144,8 +147,6 @@ embeddings = {
     ),
     "t-SNE embeedding": TSNE(
         n_components=2,
-        init="pca",
-        learning_rate="auto",
         n_iter=500,
         n_iter_without_progress=150,
         n_jobs=2,

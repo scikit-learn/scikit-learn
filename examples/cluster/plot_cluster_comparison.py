@@ -26,14 +26,14 @@ dimensional data.
 
 import time
 import warnings
+from itertools import cycle, islice
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn import cluster, datasets, mixture
 from sklearn.neighbors import kneighbors_graph
 from sklearn.preprocessing import StandardScaler
-from itertools import cycle, islice
 
 np.random.seed(0)
 
@@ -154,7 +154,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
     # Create cluster objects
     # ============
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
-    two_means = cluster.MiniBatchKMeans(n_clusters=params["n_clusters"])
+    two_means = cluster.MiniBatchKMeans(n_clusters=params["n_clusters"], n_init="auto")
     ward = cluster.AgglomerativeClustering(
         n_clusters=params["n_clusters"], linkage="ward", connectivity=connectivity
     )
