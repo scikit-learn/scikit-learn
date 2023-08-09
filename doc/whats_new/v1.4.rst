@@ -185,6 +185,9 @@ Changelog
   when `sparse_output=True` and the output is configured to be pandas.
   :pr:`26931` by `Thomas Fan`_.
 
+- |Enhancement| :func:`sklearn.model_selection.train_test_split` now supports
+  Array API compatible inputs. :pr:`26855` by `Tim Head`_.
+
 :mod:`sklearn.tree`
 ...................
 
