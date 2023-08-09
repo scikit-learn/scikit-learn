@@ -541,6 +541,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     store_centers : str, default=None
         Which, if any, cluster centers to compute and store. The options are:
+
         - `None` which does not compute nor store any centers.
         - `"centroid"` which calculates the center by taking the weighted
           average of their positions. Note that the algorithm uses the
