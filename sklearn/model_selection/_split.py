@@ -2673,7 +2673,7 @@ def _pprint(params, offset=0, printer=repr):
     this_line_length = offset
     line_sep = ",\n" + (1 + offset // 2) * " "
     for i, (k, v) in enumerate(sorted(params.items())):
-        if type(v) is float:
+        if isinstance(v, float):
             # use str for representing floating point numbers
             # this way we get consistent representation across
             # architectures and versions.

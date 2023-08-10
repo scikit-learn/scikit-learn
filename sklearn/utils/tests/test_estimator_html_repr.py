@@ -197,6 +197,9 @@ def test_estimator_html_repr_pipeline():
             assert f"<label>{html.escape(name)}</label>" in html_output
             assert f"<pre>{html.escape(str(est))}</pre>" in html_output
 
+    # verify that prefers-color-scheme is implemented
+    assert "prefers-color-scheme" in html_output
+
 
 @pytest.mark.parametrize("final_estimator", [None, LinearSVC()])
 def test_stacking_classifier(final_estimator):
