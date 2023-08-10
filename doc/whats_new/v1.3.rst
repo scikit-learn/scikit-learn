@@ -625,6 +625,13 @@ Changelog
   `n_targets`, which is used to decide the number of outputs when sampling
   from the prior distributions. :pr:`23099` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+:mod:`sklearn.mixture`
+......................
+
+- |Efficiency| :class:`GaussianMixture` is more efficient now and will bypass unnecessary
+  initialization if the weights, means, and precisions are given by users.
+  :pr:`26021` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
