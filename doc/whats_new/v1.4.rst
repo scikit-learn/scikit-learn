@@ -216,6 +216,18 @@ Changelog
   for CSR × CSR,  Dense × CSR, and CSR × Dense datasets is now 1.5x faster.
   :pr:`26765` by :user:`Meekail Zain <micky774>`
 
+- |Efficiency| :func:`pairwise.pairwise_distances`' performance has been improved
+  when providing dense datasets.
+  :pr:`26983` by :user:`Meekail Zain <micky774>` and
+  :user:`Vincent Maladiere <Vincent-Maladiere>` and
+  :user:`Julien Jerphanion <jjerphan>`.
+
+- |Feature| :func:`pairwise.pairwise_distances` now supports combination of
+  dense arrays and sparse CSR matrices datasets.
+  :pr:`26983` by :user:`Meekail Zain <micky774>` and
+  :user:`Vincent Maladiere <Vincent-Maladiere>` and
+  :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.utils`
 ....................
 

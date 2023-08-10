@@ -1,0 +1,40 @@
+{{py:
+
+implementation_specific_values = [
+    # Values are the following ones:
+    #
+    #       name_suffix, INPUT_DTYPE_t
+    #
+    #
+    ('64', 'cnp.float64_t'),
+    ('32', 'cnp.float32_t')
+]
+
+}}
+cimport numpy as cnp
+
+from ...utils._typedefs cimport intp_t
+{{for name_suffix, INPUT_DTYPE_t in implementation_specific_values}}
+
+from ._datasets_pair cimport DatasetsPair{{name_suffix}}
+
+
+cdef class PairwiseDistances{{name_suffix}}:
+    """float{{name_suffix}} implementation of PairwiseDistances."""
+
+    cdef:
+        readonly DatasetsPair{{name_suffix}} datasets_pair
+
+        intp_t n_samples_X, n_samples_Y
+        intp_t effective_n_threads
+        bint X_is_Y
+        bint execute_in_parallel_on_Y
+
+        {{INPUT_DTYPE_t}}[:, ::1] pairwise_distances_matrix
+
+    cdef void _parallel_on_X(self) nogil
+
+    cdef void _parallel_on_Y(self) nogil
+
+
+{{endfor}}

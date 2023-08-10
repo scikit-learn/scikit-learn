@@ -1,0 +1,188 @@
+cimport numpy as cnp
+from cython cimport final
+from cython.parallel cimport prange
+from ...utils._typedefs cimport intp_t
+
+import numpy as np
+
+from scipy.sparse import issparse
+from sklearn import get_config
+from ...utils import check_array, _in_unstable_openblas_configuration
+from ...utils._openmp_helpers import _openmp_effective_n_threads
+from ...utils.fixes import threadpool_limits, sp_version, parse_version
+
+cnp.import_array()
+
+
+def _precompute_metric_params(X, Y, metric=None, **kwds):
+    """Precompute data-derived metric parameters if not provided."""
+    if metric == "seuclidean" and "V" not in kwds:
+        # There is a bug in scipy < 1.5 that will cause a crash if
+        # X.dtype != np.double (float64). See PR #15730
+        dtype = np.float64 if sp_version < parse_version("1.5") else None
+        if X is Y:
+            V = np.var(X, axis=0, ddof=1, dtype=dtype)
+        else:
+            raise ValueError(
+                "The 'V' parameter is required for the seuclidean metric "
+                "when Y is passed."
+            )
+        return {"V": V}
+    if metric == "mahalanobis" and "VI" not in kwds:
+        if X is Y:
+            VI = np.linalg.inv(np.cov(X.T)).T
+        else:
+            raise ValueError(
+                "The 'VI' parameter is required for the mahalanobis metric "
+                "when Y is passed."
+            )
+        return {"VI": VI}
+    return {}
+
+{{for name_suffix, INPUT_DTYPE in (('64', 'np.float64'),('32', 'np.float32'))}}
+
+from ._datasets_pair cimport DatasetsPair{{name_suffix}}
+
+
+cdef class PairwiseDistances{{name_suffix}}:
+    """float{{name_suffix}} implementation of PairwiseDistances."""
+
+    @classmethod
+    def compute(
+        cls,
+        X,
+        Y,
+        str metric="euclidean",
+        dict metric_kwargs=None,
+        str strategy=None,
+        intp_t n_jobs=-1,
+    ):
+        """Compute the pairwise-distances matrix.
+
+        This classmethod is responsible for introspecting the arguments
+        values to dispatch to the most appropriate implementation of
+        :class:`PairwiseDistances{{name_suffix}}`.
+
+        This allows decoupling the API entirely from the implementation details
+        whilst maintaining RAII: all temporarily allocated datastructures necessary
+        for the concrete implementation are therefore freed when this classmethod
+        returns.
+
+        No instance should directly be created outside of this class method.
+        """
+        # Precompute data-derived distance metric parameters
+        metric_kwargs = {} if metric_kwargs is None else metric_kwargs
+
+        params = _precompute_metric_params(
+            X,
+            Y,
+            metric=metric,
+            **metric_kwargs,
+        )
+        metric_kwargs.update(**params)
+
+        # Fall back on a generic implementation that handles most scipy
+        # metrics by computing the distances between 2 vectors at a time.
+        pdr = PairwiseDistances{{name_suffix}}(
+            datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
+            strategy=strategy,
+            X_is_Y=X is Y,
+            n_jobs=n_jobs,
+        )
+
+        # Limit the number of threads in second level of nested parallelism for BLAS
+        # to avoid threads over-subscription (in GEMM for instance).
+        with threadpool_limits(limits=1, user_api="blas"):
+            if pdr.execute_in_parallel_on_Y:
+                pdr._parallel_on_Y()
+            else:
+                pdr._parallel_on_X()
+
+        return pdr._finalize_results()
+
+
+    def __init__(
+        self,
+        DatasetsPair{{name_suffix}} datasets_pair,
+        strategy=None,
+        bint X_is_Y=False,
+        sort_results=False,
+        intp_t n_jobs=-1,
+    ):
+        self.datasets_pair = datasets_pair
+        self.n_samples_X = datasets_pair.n_samples_X()
+        self.n_samples_Y = datasets_pair.n_samples_Y()
+        self.X_is_Y = X_is_Y
+
+        self.effective_n_threads = _openmp_effective_n_threads()
+        if n_jobs != -1:
+            self.effective_n_threads = min(self.effective_n_threads, n_jobs)
+        if strategy is None:
+            strategy = get_config().get("pairwise_dist_parallel_strategy", 'auto')
+
+        if strategy not in ('parallel_on_X', 'parallel_on_Y', 'auto'):
+            raise RuntimeError(f"strategy must be 'parallel_on_X, 'parallel_on_Y', "
+                               f"or 'auto', but currently strategy='{self.strategy}'.")
+
+        if strategy == 'auto':
+            # TODO: inspect if the current heuristic is relevant
+            # for PairwiseDistances
+            # This is a simple heuristic whose constant for the
+            # comparison has been chosen based on experiments.
+            # parallel_on_X has less synchronization overhead than
+            # parallel_on_Y and should therefore be used whenever
+            # n_samples_X is large enough to not starve any of the
+            # available hardware threads.
+            if self.n_samples_Y < self.n_samples_X:
+                # No point to even consider parallelizing on Y in this case. This
+                # is in particular important to do this on machines with a large
+                # number of hardware threads.
+                strategy = 'parallel_on_X'
+            elif 4 * self.effective_n_threads < self.n_samples_X:
+                # If Y is larger than X, but X is still large enough to allow for
+                # parallelism, we might still want to favor parallelizing on X.
+                strategy = 'parallel_on_X'
+            else:
+                strategy = 'parallel_on_Y'
+
+        self.execute_in_parallel_on_Y = strategy == "parallel_on_Y"
+
+        # Distance matrix which will be complete and returned to the caller.
+        self.pairwise_distances_matrix = np.empty(
+            (self.n_samples_X, self.n_samples_Y), dtype={{INPUT_DTYPE}},
+        )
+
+    cdef void _parallel_on_X(self) nogil:
+
+        cdef:
+            intp_t n_X = self.n_samples_X
+            intp_t n_Y = self.n_samples_Y
+            intp_t i, j
+
+        for i in prange(n_X, nogil=True, num_threads=self.effective_n_threads):
+            for j in range(n_Y):
+                self.pairwise_distances_matrix[i, j] = self.datasets_pair.dist(i, j)
+
+    cdef void _parallel_on_Y(self) nogil:
+
+        cdef:
+            intp_t n_X = self.n_samples_X
+            intp_t n_Y = self.n_samples_Y
+            intp_t i, j
+
+        for i in range(n_X):
+            for j in prange(n_Y, nogil=True, num_threads=self.effective_n_threads):
+                self.pairwise_distances_matrix[i, j] = self.datasets_pair.dist(i, j)
+
+    def _finalize_results(self):
+        # If X is Y, then catastrophic cancellation might have occurred for
+        # computations of terms on the diagonal which must equal zero.
+        # We enforce it by zeroing the diagonal.
+        distance_matrix = np.asarray(self.pairwise_distances_matrix)
+        if self.X_is_Y:
+            np.fill_diagonal(distance_matrix, 0.)
+
+        return distance_matrix
+
+
+{{endfor}}

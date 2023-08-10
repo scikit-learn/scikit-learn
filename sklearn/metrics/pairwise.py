@@ -28,6 +28,7 @@ from ..utils import (
     is_scalar_nan,
 )
 from ..utils._mask import _get_mask
+from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._param_validation import (
     Hidden,
     Interval,
@@ -40,7 +41,11 @@ from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.fixes import parse_version, sp_base_version
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import _num_samples, check_non_negative
-from ._pairwise_distances_reduction import ArgKmin
+from ._pairwise_distances_reduction import (
+    ArgKmin,
+    PairwiseDistances,
+)
+from ._pairwise_distances_reduction._pairwise_distances import _precompute_metric_params
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
 
@@ -1869,29 +1874,6 @@ def _check_chunk_size(reduced, chunk_size):
         )
 
 
-def _precompute_metric_params(X, Y, metric=None, **kwds):
-    """Precompute data-derived metric parameters if not provided."""
-    if metric == "seuclidean" and "V" not in kwds:
-        if X is Y:
-            V = np.var(X, axis=0, ddof=1)
-        else:
-            raise ValueError(
-                "The 'V' parameter is required for the seuclidean metric "
-                "when Y is passed."
-            )
-        return {"V": V}
-    if metric == "mahalanobis" and "VI" not in kwds:
-        if X is Y:
-            VI = np.linalg.inv(np.cov(X.T)).T
-        else:
-            raise ValueError(
-                "The 'VI' parameter is required for the mahalanobis metric "
-                "when Y is passed."
-            )
-        return {"VI": VI}
-    return {}
-
-
 @validate_params(
     {
         "X": ["array-like", "sparse matrix"],
@@ -2201,6 +2183,26 @@ def pairwise_distances(
     sklearn.metrics.pairwise.paired_distances : Computes the distances between
         corresponding elements of two arrays.
     """
+    if (
+        metric not in _VALID_METRICS
+        and not callable(metric)
+        and metric != "precomputed"
+    ):
+        raise ValueError(
+            "Unknown metric %s. Valid metrics are %s, or 'precomputed', or a callable"
+            % (metric, _VALID_METRICS)
+        )
+    n_jobs = effective_n_jobs(n_jobs)
+    pwd_backend_is_usable = (
+        PairwiseDistances.is_usable_for(X, Y, metric=metric)
+        # Ensure that we do not accept sqeuclidean request as well
+        and not (kwds.get("squared", False) and metric == "euclidean")
+    )
+    # Heuristic based on overhead of generic method vs specialization
+    min_threading = 6 if metric == "manhattan" else 2
+    multi_threaded_preferred = (
+        _openmp_effective_n_threads() >= 2 and n_jobs >= min_threading
+    )
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
             X, Y, precomputed=True, force_all_finite=force_all_finite
@@ -2212,8 +2214,29 @@ def pairwise_distances(
         )
         check_non_negative(X, whom=whom)
         return X
-    elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
+    # Prefer specialized path, except for when multi-threaded computation via
+    # PairwiseDistances is available.
+    # TODO(1.4) Remove check for `sum_over_features` upon deprecation completion
+    elif metric in PAIRWISE_DISTANCE_FUNCTIONS and not (
+        pwd_backend_is_usable
+        and multi_threaded_preferred
+        and kwds.get("sum_over_features", True)
+    ):
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
+    elif pwd_backend_is_usable:
+        if issparse(X):
+            X = csr_matrix(X, copy=False)
+            # This also sorts indices in-place.
+            X.sum_duplicates()
+
+        if issparse(Y):
+            Y = csr_matrix(Y, copy=False)
+            # This also sorts indices in-place.
+            Y.sum_duplicates()
+
+        return PairwiseDistances.compute(
+            X, Y, metric=metric, metric_kwargs=kwds, n_jobs=n_jobs
+        )
     elif callable(metric):
         func = partial(
             _pairwise_callable, metric=metric, force_all_finite=force_all_finite, **kwds

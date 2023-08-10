@@ -15,6 +15,7 @@ from sklearn.metrics._pairwise_distances_reduction import (
     ArgKmin,
     ArgKminClassMode,
     BaseDistancesReductionDispatcher,
+    PairwiseDistances,
     RadiusNeighbors,
     sqeuclidean_row_norms,
 )
@@ -851,6 +852,44 @@ def test_radius_neighbors_factory_method_wrong_usages():
         )
 
 
+def test_pairwise_distances_factory_method_wrong_usages():
+    rng = np.random.RandomState(1)
+    X = rng.rand(100, 10)
+    Y = rng.rand(100, 10)
+    metric = "euclidean"
+
+    msg = (
+        "Only float64 or float32 datasets pairs are supported, but "
+        "got: X.dtype=float32 and Y.dtype=float64"
+    )
+    with pytest.raises(
+        ValueError,
+        match=msg,
+    ):
+        PairwiseDistances.compute(X=X.astype(np.float32), Y=Y, metric=metric)
+
+    msg = (
+        "Only float64 or float32 datasets pairs are supported, but "
+        "got: X.dtype=float64 and Y.dtype=int32"
+    )
+    with pytest.raises(
+        ValueError,
+        match=msg,
+    ):
+        PairwiseDistances.compute(X=X, Y=Y.astype(np.int32), metric=metric)
+
+    with pytest.raises(ValueError, match="Unrecognized metric"):
+        PairwiseDistances.compute(X=X, Y=Y, metric="wrong metric")
+
+    with pytest.raises(
+        ValueError, match=r"Buffer has wrong number of dimensions \(expected 2, got 1\)"
+    ):
+        PairwiseDistances.compute(X=np.array([1.0, 2.0]), Y=Y, metric=metric)
+
+    with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
+        PairwiseDistances.compute(X=np.asfortranarray(X), Y=Y, metric=metric)
+
+
 @pytest.mark.parametrize(
     "n_samples_X, n_samples_Y", [(100, 100), (500, 100), (100, 500)]
 )
@@ -960,6 +999,29 @@ def test_n_threads_agnosticism(
     )
 
 
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+def test_n_threads_agnosticism_pairwise_distances(
+    global_random_seed,
+    dtype,
+    n_features=100,
+):
+    """Check that results do not depend on the number of threads."""
+    # TODO: Parametrize `n_samples_X` and `n_samples_Y` when the
+    # strategy heuristic has been inspected.
+    n_samples_X, n_samples_Y = 100, 100
+    rng = np.random.RandomState(global_random_seed)
+    spread = 100
+    X = rng.rand(n_samples_X, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples_Y, n_features).astype(dtype) * spread
+
+    ref_dist = PairwiseDistances.compute(X, Y)
+
+    with threadpoolctl.threadpool_limits(limits=1, user_api="openmp"):
+        dist = PairwiseDistances.compute(X, Y)
+
+    assert_allclose(ref_dist, dist)
+
+
 @pytest.mark.parametrize(
     "Dispatcher, dtype",
     [
@@ -1023,6 +1085,31 @@ def test_format_agnosticism(
             indices,
             **check_parameters,
         )
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_format_agnosticism_pairwise_distances(
+    global_random_seed,
+    dtype,
+):
+    """Check that results do not depend on the format (dense, sparse) of the input."""
+    rng = np.random.RandomState(global_random_seed)
+    spread = 100
+    n_samples, n_features = 100, 100
+
+    X = rng.rand(n_samples, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+
+    X_csr = csr_matrix(X)
+    Y_csr = csr_matrix(Y)
+
+    dist_dense = PairwiseDistances.compute(X, Y)
+
+    for _X, _Y in itertools.product((X, X_csr), (Y, Y_csr)):
+        if _X is X and _Y is Y:
+            continue
+        dist = PairwiseDistances.compute(_X, _Y)
+        assert_allclose(dist, dist_dense)
 
 
 @pytest.mark.parametrize(
@@ -1100,6 +1187,58 @@ def test_strategies_consistency(
     ASSERT_RESULT[(Dispatcher, dtype)](
         dist_par_X, dist_par_Y, indices_par_X, indices_par_Y, **check_parameters
     )
+
+
+@pytest.mark.parametrize(
+    "metric",
+    ["euclidean", "minkowski", "manhattan", "infinity", "seuclidean", "haversine"],
+)
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+def test_strategies_consistency_pairwise_distances(
+    global_random_seed,
+    metric,
+    dtype,
+    n_features=10,
+):
+    """Check that the results do not depend on the strategy used."""
+    # TODO: Parametrize `n_samples_X` and `n_samples_Y` when the
+    # strategy heuristic has been inspected.
+    n_samples_X, n_samples_Y = 100, 100
+    rng = np.random.RandomState(global_random_seed)
+    spread = 100
+    X = rng.rand(n_samples_X, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples_Y, n_features).astype(dtype) * spread
+
+    # Haversine distance only accepts 2D data
+    if metric == "haversine":
+        X = np.ascontiguousarray(X[:, :2])
+        Y = np.ascontiguousarray(Y[:, :2])
+
+    dist_par_X = PairwiseDistances.compute(
+        X,
+        Y,
+        metric=metric,
+        # Taking the first
+        metric_kwargs=_get_metric_params_list(
+            metric, n_features, seed=global_random_seed
+        )[0],
+        # To be sure to use parallelization
+        strategy="parallel_on_X",
+    )
+
+    dist_par_Y = PairwiseDistances.compute(
+        X,
+        Y,
+        metric=metric,
+        # Taking the first
+        metric_kwargs=_get_metric_params_list(
+            metric, n_features, seed=global_random_seed
+        )[0],
+        # To be sure to use parallelization
+        strategy="parallel_on_Y",
+    )
+
+    assert_allclose(dist_par_X, dist_par_Y)
 
 
 # "Concrete Dispatchers"-specific tests
@@ -1292,6 +1431,37 @@ def test_memmap_backed_data(
     ASSERT_RESULT[(Dispatcher, dtype)](
         ref_dist, dist_mm, ref_indices, indices_mm, **check_parameters
     )
+
+
+@pytest.mark.parametrize("metric", ["manhattan", "euclidean"])
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+def test_memmap_backed_data_pairwise_distances(
+    metric,
+    dtype,
+):
+    """Check that the results do not depend on the datasets writability."""
+    rng = np.random.RandomState(0)
+    spread = 100
+    n_samples, n_features = 128, 10
+    X = rng.rand(n_samples, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+
+    # Create read only datasets
+    X_mm, Y_mm = create_memmap_backed_data([X, Y])
+
+    ref_dist = PairwiseDistances.compute(
+        X,
+        Y,
+        metric=metric,
+    )
+
+    dist_mm = PairwiseDistances.compute(
+        X_mm,
+        Y_mm,
+        metric=metric,
+    )
+
+    assert_allclose(ref_dist, dist_mm)
 
 
 @pytest.mark.parametrize("n_samples", [100, 1000])

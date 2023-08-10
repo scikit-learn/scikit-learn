@@ -19,6 +19,10 @@ from ._argkmin_classmode import (
     ArgKminClassMode64,
 )
 from ._base import _sqeuclidean_row_norms32, _sqeuclidean_row_norms64
+from ._pairwise_distances import (
+    PairwiseDistances32,
+    PairwiseDistances64,
+)
 from ._radius_neighbors import (
     RadiusNeighbors32,
     RadiusNeighbors64,
@@ -151,6 +155,150 @@ class BaseDistancesReductionDispatcher:
         This method is an abstract class method: it has to be implemented
         for all subclasses.
         """
+
+
+class PairwiseDistances(BaseDistancesReductionDispatcher):
+    """Compute the pairwise distances matrix for two sets of vectors.
+
+    The distance function `dist` depends on the values of the `metric`
+    and `metric_kwargs` parameters.
+
+    This class only computes the pairwise distances matrix without
+    applying any reduction on it. It shares most of the underlying
+    code infrastructure with reducing variants to leverage multi-thread
+    parallelism. However contrary to the reducing variants, no chunking
+    is applied to allow for contiguous write access to the final distance
+    array that is not expected to fit in the CPU cache in general.
+
+    This class is not meant to be instantiated, one should only use
+    its :meth:`compute` classmethod which handles allocation and
+    deallocation consistently.
+    """
+
+    @classmethod
+    def valid_metrics(cls) -> List[str]:
+        excluded = {
+            # PyFunc cannot be supported because it necessitates interacting with
+            # the CPython interpreter to call user defined functions.
+            "pyfunc",
+            "mahalanobis",  # is numerically unstable
+            # In order to support discrete distance metrics, we need to have a
+            # stable simultaneous sort which preserves the order of the indices
+            # because there generally is a lot of occurrences for a given values
+            # of distances in this case.
+            # TODO: implement a stable simultaneous_sort.
+            "hamming",
+            *BOOL_METRICS,
+        }
+        return sorted(set(METRIC_MAPPING64.keys()) - excluded)
+
+    @classmethod
+    def compute(
+        cls,
+        X,
+        Y,
+        metric="euclidean",
+        metric_kwargs=None,
+        strategy=None,
+        n_jobs=-1,
+    ):
+        """Return pairwise distances matrix for the given arguments.
+
+        Parameters
+        ----------
+        X : ndarray or CSR matrix of shape (n_samples_X, n_features)
+            Input data.
+
+        Y : ndarray or CSR matrix of shape (n_samples_Y, n_features)
+            Input data.
+
+        metric : str, default='euclidean'
+            The distance metric to use.
+            For a list of available metrics, see the documentation of
+            :class:`~sklearn.metrics.DistanceMetric`.
+
+        metric_kwargs : dict, default=None
+            Keyword arguments to pass to specified metric function.
+
+        strategy : str, {'auto', 'parallel_on_X', 'parallel_on_Y'}, default=None
+            The strategy defining which dataset parallelization are made on.
+
+            For both strategies the computations happens with two nested loops,
+            respectively on rows of X and rows of Y.
+            Strategies differs on which loop (outer or inner) is made to run
+            in parallel with the Cython `prange` construct:
+
+              - 'parallel_on_X' dispatches rows of X uniformly on threads.
+                Each thread then iterates on all the rows of Y. This strategy is
+                embarrassingly parallel and comes with no datastructures
+                synchronisation.
+
+              - 'parallel_on_Y' dispatches rows of Y uniformly on threads.
+                Each thread processes all the rows of X in turn. This strategy is
+                a sequence of embarrassingly parallel subtasks (the inner loop on Y
+                chunks) with no intermediate datastructures synchronisation.
+
+              - 'auto' relies on a simple heuristic to choose between
+                'parallel_on_X' and 'parallel_on_Y': when `X.shape[0]` is large enough,
+                'parallel_on_X' is usually the most efficient strategy.
+                When `X.shape[0]` is small but `Y.shape[0]` is large, 'parallel_on_Y'
+                brings more opportunity for parallelism and is therefore more efficient.
+
+              - None (default) looks-up in scikit-learn configuration for
+                `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
+
+        n_jobs : int, default=None
+            The number of jobs to use for the computation. This works by breaking
+            down the pairwise matrix into n_jobs even slices and computing them in
+            parallel.
+
+            ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+            ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+            for more details.
+
+        Returns
+        -------
+        pairwise_distances_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+            The pairwise distances matrix.
+
+        Notes
+        -----
+        This public classmethod is responsible for introspecting the arguments
+        values to dispatch to the private dtype-specialized implementation of
+        :class:`PairwiseDistances`.
+
+        All temporarily allocated datastructures necessary for the concrete
+        implementations are therefore freed when this classmethod returns.
+
+        This allows entirely decoupling the API entirely from the
+        implementation details whilst maintaining RAII.
+        """
+        n_jobs = 1 if n_jobs is None else n_jobs
+        Y = X if Y is None else Y
+        if X.dtype == Y.dtype == np.float64:
+            return PairwiseDistances64.compute(
+                X=X,
+                Y=Y,
+                metric=metric,
+                metric_kwargs=metric_kwargs,
+                strategy=strategy,
+                n_jobs=n_jobs,
+            )
+
+        if X.dtype == Y.dtype == np.float32:
+            return PairwiseDistances32.compute(
+                X=X,
+                Y=Y,
+                metric=metric,
+                metric_kwargs=metric_kwargs,
+                strategy=strategy,
+                n_jobs=n_jobs,
+            )
+
+        raise ValueError(
+            "Only float64 or float32 datasets pairs are supported, but "
+            f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
+        )
 
 
 class ArgKmin(BaseDistancesReductionDispatcher):

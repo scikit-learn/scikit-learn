@@ -278,6 +278,12 @@ extension_config = {
             "extra_compile_args": ["-std=c++11"],
         },
         {
+            "sources": ["_pairwise_distances.pyx.tp", "_pairwise_distances.pxd.tp"],
+            "language": "c++",
+            "include_np": True,
+            "extra_compile_args": ["-std=c++11"],
+        },
+        {
             "sources": ["_argkmin.pyx.tp", "_argkmin.pxd.tp"],
             "language": "c++",
             "include_np": True,
