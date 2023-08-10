@@ -1405,7 +1405,7 @@ def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
         sklearn.mixture._gaussian_mixture, "_estimate_gaussian_parameters", mock
     )
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     rand_data = RandomData(rng)
 
     gm = GaussianMixture(
