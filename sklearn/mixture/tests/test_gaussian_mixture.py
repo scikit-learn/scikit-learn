@@ -1391,7 +1391,10 @@ def test_gaussian_mixture_single_component_stable():
     gm.fit(X).sample()
 
 
-def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(monkeypatch):
+def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
+    monkeypatch,
+    global_random_seed,
+):
     """When all init are provided, the Gaussian parameters are not estimated.
 
     Non-regression test for gh-26015.
