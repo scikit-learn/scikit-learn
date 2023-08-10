@@ -1395,7 +1395,7 @@ def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
     monkeypatch,
     global_random_seed,
 ):
-    """When all init are provided, the Gaussian parameters are not estimated.
+    """When all init parameters are provided, the Gaussian parameters are not estimated.
 
     Non-regression test for gh-26015.
     """
