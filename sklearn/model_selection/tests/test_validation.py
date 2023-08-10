@@ -73,6 +73,13 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder, scale
 from sklearn.svm import SVC, LinearSVC
+from sklearn.tests.metadata_routing_common import (
+    ConsumingClassifier,
+    ConsumingScorer,
+    ConsumingSplitter,
+    _Registry,
+    check_recorded_metadata,
+)
 from sklearn.utils import shuffle
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils._testing import (
@@ -706,7 +713,7 @@ def test_cross_val_score_fit_params():
         "dummy_obj": DUMMY_OBJ,
         "callback": assert_fit_params,
     }
-    cross_val_score(clf, X, y, fit_params=fit_params)
+    cross_val_score(clf, X, y, params=fit_params)
 
 
 def test_cross_val_score_score_func():
@@ -1160,7 +1167,7 @@ def test_cross_val_score_sparse_fit_params():
     X, y = iris.data, iris.target
     clf = MockClassifier()
     fit_params = {"sparse_sample_weight": coo_matrix(np.eye(X.shape[0]))}
-    a = cross_val_score(clf, X, y, fit_params=fit_params, cv=3)
+    a = cross_val_score(clf, X, y, params=fit_params, cv=3)
     assert_array_equal(a, np.ones(3))
 
 
@@ -2082,12 +2089,23 @@ def test_fit_and_score_failing():
     failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
     # dummy X data
     X = np.arange(1, 10)
-    fit_and_score_args = [failing_clf, X, None, dict(), None, None, 0, None, None]
+    fit_and_score_args = dict(
+        estimator=failing_clf,
+        X=X,
+        y=None,
+        scorer=dict(),
+        train=None,
+        test=None,
+        verbose=0,
+        parameters=None,
+        fit_params=None,
+        score_params=None,
+    )
     # passing error score to trigger the warning message
-    fit_and_score_kwargs = {"error_score": "raise"}
+    fit_and_score_args["error_score"] = "raise"
     # check if exception was raised, with default error_score='raise'
     with pytest.raises(ValueError, match="Failing classifier failed as required"):
-        _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
+        _fit_and_score(**fit_and_score_args)
 
     assert failing_clf.score() == 0.0  # FailingClassifier coverage
 
@@ -2097,14 +2115,21 @@ def test_fit_and_score_working():
     clf = SVC(kernel="linear", random_state=0)
     train, test = next(ShuffleSplit().split(X))
     # Test return_parameters option
-    fit_and_score_args = [clf, X, y, dict(), train, test, 0]
-    fit_and_score_kwargs = {
-        "parameters": {"max_iter": 100, "tol": 0.1},
-        "fit_params": None,
-        "return_parameters": True,
-    }
-    result = _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
-    assert result["parameters"] == fit_and_score_kwargs["parameters"]
+    fit_and_score_args = dict(
+        estimator=clf,
+        X=X,
+        y=y,
+        scorer=dict(),
+        train=train,
+        test=test,
+        verbose=0,
+        parameters={"max_iter": 100, "tol": 0.1},
+        fit_params=None,
+        score_params=None,
+        return_parameters=True,
+    )
+    result = _fit_and_score(**fit_and_score_args)
+    assert result["parameters"] == fit_and_score_args["parameters"]
 
 
 class DataDependentFailingClassifier(BaseEstimator):
@@ -2315,13 +2340,22 @@ def test_fit_and_score_verbosity(
     train, test = next(ShuffleSplit().split(X))
 
     # test print without train score
-    fit_and_score_args = [clf, X, y, scorer, train, test, verbose, None, None]
-    fit_and_score_kwargs = {
-        "return_train_score": train_score,
-        "split_progress": split_prg,
-        "candidate_progress": cdt_prg,
-    }
-    _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
+    fit_and_score_args = dict(
+        estimator=clf,
+        X=X,
+        y=y,
+        scorer=scorer,
+        train=train,
+        test=test,
+        verbose=verbose,
+        parameters=None,
+        fit_params=None,
+        score_params=None,
+        return_train_score=train_score,
+        split_progress=split_prg,
+        candidate_progress=cdt_prg,
+    )
+    _fit_and_score(**fit_and_score_args)
     out, _ = capsys.readouterr()
     outlines = out.split("\n")
     if len(outlines) > 2:
@@ -2336,9 +2370,15 @@ def test_score():
     def two_params_scorer(estimator, X_test):
         return None
 
-    fit_and_score_args = [None, None, None, two_params_scorer]
     with pytest.raises(ValueError, match=error_message):
-        _score(*fit_and_score_args, error_score=np.nan)
+        _score(
+            estimator=None,
+            X_test=None,
+            y_test=None,
+            scorer=two_params_scorer,
+            score_params=None,
+            error_score=np.nan,
+        )
 
 
 def test_callable_multimetric_confusion_matrix_cross_validate():
@@ -2391,3 +2431,149 @@ def test_cross_validate_return_indices(global_random_seed):
     for split_idx, (expected_train_idx, expected_test_idx) in enumerate(cv.split(X, y)):
         assert_array_equal(train_indices[split_idx], expected_train_idx)
         assert_array_equal(test_indices[split_idx], expected_test_idx)
+
+
+# Tests for metadata routing in cross_val*
+# ========================================
+
+
+# TODO(1.6): remove this test in 1.6
+def test_cross_validate_fit_param_deprecation():
+    """Check that we warn about deprecating `fit_params`."""
+    with pytest.warns(FutureWarning, match="`fit_params` is deprecated"):
+        cross_validate(estimator=ConsumingClassifier(), X=X, y=y, cv=2, fit_params={})
+
+    with pytest.raises(
+        ValueError, match="`params` and `fit_params` cannot both be provided"
+    ):
+        cross_validate(
+            estimator=ConsumingClassifier(), X=X, y=y, fit_params={}, params={}
+        )
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize(
+    "cv_method", [cross_validate, cross_val_score, cross_val_predict]
+)
+def test_groups_with_routing_validation(cv_method):
+    """Check that we raise an error if `groups` are passed to the cv method instead
+    of `params` when metadata routing is enabled.
+    """
+    with pytest.raises(ValueError, match="`groups` can only be passed if"):
+        cv_method(
+            estimator=ConsumingClassifier(),
+            X=X,
+            y=y,
+            groups=[],
+        )
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize(
+    "cv_method", [cross_validate, cross_val_score, cross_val_predict]
+)
+def test_passed_unrequested_metadata(cv_method):
+    """Check that we raise an error when passing metadata that is not
+    requested."""
+    err_msg = re.escape("['metadata'] are passed to cross validation")
+    with pytest.raises(ValueError, match=err_msg):
+        cv_method(
+            estimator=ConsumingClassifier(),
+            X=X,
+            y=y,
+            params=dict(metadata=[]),
+        )
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize(
+    "cv_method", [cross_validate, cross_val_score, cross_val_predict]
+)
+def test_cross_validate_routing(cv_method):
+    """Check that the respective cv method is properly dispatching the metadata
+    to the consumer."""
+    scorer_registry = _Registry()
+    scorer = ConsumingScorer(registry=scorer_registry).set_score_request(
+        sample_weight="score_weights", metadata="score_metadata"
+    )
+    splitter_registry = _Registry()
+    splitter = ConsumingSplitter(registry=splitter_registry).set_split_request(
+        groups="split_groups", metadata="split_metadata"
+    )
+    estimator_registry = _Registry()
+    estimator = ConsumingClassifier(registry=estimator_registry).set_fit_request(
+        sample_weight="fit_sample_weight", metadata="fit_metadata"
+    )
+    n_samples = _num_samples(X)
+    rng = np.random.RandomState(0)
+    score_weights = rng.rand(n_samples)
+    score_metadata = rng.rand(n_samples)
+    split_groups = rng.randint(0, 3, n_samples)
+    split_metadata = rng.rand(n_samples)
+    fit_sample_weight = rng.rand(n_samples)
+    fit_metadata = rng.rand(n_samples)
+
+    extra_params = {
+        cross_validate: dict(scoring=dict(my_scorer=scorer, accuracy="accuracy")),
+        # cross_val_score doesn't support multiple scorers
+        cross_val_score: dict(scoring=scorer),
+        # cross_val_predict doesn't need a scorer
+        cross_val_predict: dict(),
+    }
+
+    params = dict(
+        split_groups=split_groups,
+        split_metadata=split_metadata,
+        fit_sample_weight=fit_sample_weight,
+        fit_metadata=fit_metadata,
+    )
+
+    if cv_method is not cross_val_predict:
+        params.update(
+            score_weights=score_weights,
+            score_metadata=score_metadata,
+        )
+
+    cv_method(
+        estimator,
+        X=X,
+        y=y,
+        cv=splitter,
+        **extra_params[cv_method],
+        params=params,
+    )
+
+    if cv_method is not cross_val_predict:
+        # cross_val_predict doesn't need a scorer
+        assert len(scorer_registry)
+    for _scorer in scorer_registry:
+        check_recorded_metadata(
+            obj=_scorer,
+            method="score",
+            split_params=("sample_weight", "metadata"),
+            sample_weight=score_weights,
+            metadata=score_metadata,
+        )
+
+    assert len(splitter_registry)
+    for _splitter in splitter_registry:
+        check_recorded_metadata(
+            obj=_splitter,
+            method="split",
+            groups=split_groups,
+            metadata=split_metadata,
+        )
+
+    assert len(estimator_registry)
+    for _estimator in estimator_registry:
+        check_recorded_metadata(
+            obj=_estimator,
+            method="fit",
+            split_params=("sample_weight", "metadata"),
+            sample_weight=fit_sample_weight,
+            metadata=fit_metadata,
+        )
+
+
+# End of metadata routing tests
+# =============================
