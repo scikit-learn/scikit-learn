@@ -188,13 +188,9 @@ distance can be supplied to compute the weights.
 
 .. |classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_classification_001.png
    :target: ../auto_examples/neighbors/plot_classification.html
-   :scale: 50
+   :scale: 75
 
-.. |classification_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_classification_002.png
-   :target: ../auto_examples/neighbors/plot_classification.html
-   :scale: 50
-
-.. centered:: |classification_1| |classification_2|
+.. centered:: |classification_1|
 
 .. topic:: Examples:
 
