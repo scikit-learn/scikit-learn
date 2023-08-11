@@ -512,7 +512,10 @@ def test_check_array_api_input():
 
     with raises(AssertionError, match="Not equal to tolerance"):
         check_array_api_input(
-            "BrokenArrayAPI", BrokenArrayAPI(), array_namespace="numpy.array_api"
+            "BrokenArrayAPI",
+            BrokenArrayAPI(),
+            array_namespace="numpy.array_api",
+            check_values=True,
         )
 
 

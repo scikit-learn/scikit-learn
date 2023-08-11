@@ -10,7 +10,7 @@ from scipy.sparse import (
     coo_matrix,
     csc_matrix,
     csr_matrix,
-    isspmatrix_csr,
+    issparse,
 )
 from scipy.special import comb
 
@@ -43,7 +43,7 @@ from sklearn.model_selection._split import (
     _yields_constant_splits,
 )
 from sklearn.svm import SVC
-from sklearn.tests.test_metadata_routing import assert_request_is_empty
+from sklearn.tests.metadata_routing_common import assert_request_is_empty
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
     assert_allclose,
@@ -1355,8 +1355,8 @@ def test_train_test_split_sparse():
     for InputFeatureType in sparse_types:
         X_s = InputFeatureType(X)
         X_train, X_test = train_test_split(X_s)
-        assert isspmatrix_csr(X_train)
-        assert isspmatrix_csr(X_test)
+        assert issparse(X_train) and X_train.format == "csr"
+        assert issparse(X_test) and X_test.format == "csr"
 
 
 def test_train_test_split_mock_pandas():
@@ -1808,7 +1808,7 @@ def test_nested_cv():
             error_score="raise",
         )
         cross_val_score(
-            gs, X=X, y=y, groups=groups, cv=outer_cv, fit_params={"groups": groups}
+            gs, X=X, y=y, groups=groups, cv=outer_cv, params={"groups": groups}
         )
 
 

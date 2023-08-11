@@ -61,7 +61,7 @@ Installing the latest release
          ><span class="sk-expandable" data-packager="pip" data-os="linux">Install python3 and python3-pip using the package manager of the Linux Distribution.</span
          ><span class="sk-expandable" data-packager="conda"
             >Install conda using the <a href="https://docs.conda.io/projects/conda/en/latest/user-guide/install/">Anaconda or miniconda</a>
-             installers or the <a href="https://https://github.com/conda-forge/miniforge#miniforge">miniforge</a> installers
+             installers or the <a href="https://github.com/conda-forge/miniforge#miniforge">miniforge</a> installers
              (no administrator permission required for any of those).</span>
        </div>
 
@@ -279,14 +279,14 @@ and in the `main`, `conda-forge` and `intel` conda channels:
 
   conda install scikit-learn-intelex
 
-This package has an Intel optimized version of many estimators. Whenever 
-an alternative implementation doesn't exist, scikit-learn implementation 
-is used as a fallback. Those optimized solvers come from the oneDAL 
-C++ library and are optimized for the x86_64 architecture, and are 
+This package has an Intel optimized version of many estimators. Whenever
+an alternative implementation doesn't exist, scikit-learn implementation
+is used as a fallback. Those optimized solvers come from the oneDAL
+C++ library and are optimized for the x86_64 architecture, and are
 optimized for multi-core Intel CPUs.
 
 Note that those solvers are not enabled by default, please refer to the
-`scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/what-is-patching.html>`_ 
+`scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/what-is-patching.html>`_
 documentation for more details on usage scenarios. Direct export example:
 
 .. prompt:: bash $

@@ -70,6 +70,7 @@ from ..tree import (
 from ..tree._tree import DOUBLE, DTYPE
 from ..utils import check_random_state, compute_sample_weight
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
+from ..utils._tags import _safe_tags
 from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
@@ -159,6 +160,7 @@ def _parallel_build_trees(
     verbose=0,
     class_weight=None,
     n_samples_bootstrap=None,
+    missing_values_in_feature_mask=None,
 ):
     """
     Private function used to fit a single tree in parallel."""
@@ -185,9 +187,21 @@ def _parallel_build_trees(
         elif class_weight == "balanced_subsample":
             curr_sample_weight *= compute_sample_weight("balanced", y, indices=indices)
 
-        tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
+        tree._fit(
+            X,
+            y,
+            sample_weight=curr_sample_weight,
+            check_input=False,
+            missing_values_in_feature_mask=missing_values_in_feature_mask,
+        )
     else:
-        tree.fit(X, y, sample_weight=sample_weight, check_input=False)
+        tree._fit(
+            X,
+            y,
+            sample_weight=sample_weight,
+            check_input=False,
+            missing_values_in_feature_mask=missing_values_in_feature_mask,
+        )
 
     return tree
 
@@ -345,9 +359,26 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         # Validate or convert input data
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
+
         X, y = self._validate_data(
-            X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE
+            X,
+            y,
+            multi_output=True,
+            accept_sparse="csc",
+            dtype=DTYPE,
+            force_all_finite=False,
         )
+        # _compute_missing_values_in_feature_mask checks if X has missing values and
+        # will raise an error if the underlying tree base estimator can't handle missing
+        # values. Only the criterion is required to determine if the tree supports
+        # missing values.
+        estimator = type(self.estimator)(criterion=self.criterion)
+        missing_values_in_feature_mask = (
+            estimator._compute_missing_values_in_feature_mask(
+                X, estimator_name=self.__class__.__name__
+            )
+        )
+
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -472,6 +503,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     verbose=self.verbose,
                     class_weight=self.class_weight,
                     n_samples_bootstrap=n_samples_bootstrap,
+                    missing_values_in_feature_mask=missing_values_in_feature_mask,
                 )
                 for i, t in enumerate(trees)
             )
@@ -599,7 +631,18 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         Validate X whenever one tries to predict, apply, predict_proba."""
         check_is_fitted(self)
-        X = self._validate_data(X, dtype=DTYPE, accept_sparse="csr", reset=False)
+        if self.estimators_[0]._support_missing_values(X):
+            force_all_finite = "allow-nan"
+        else:
+            force_all_finite = True
+
+        X = self._validate_data(
+            X,
+            dtype=DTYPE,
+            accept_sparse="csr",
+            reset=False,
+            force_all_finite=force_all_finite,
+        )
         if issparse(X) and (X.indices.dtype != np.intc or X.indptr.dtype != np.intc):
             raise ValueError("No support for np.int64 index based sparse matrices")
         return X
@@ -665,6 +708,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         data. Thus fetching the property may be slower than expected.
         """
         return [sample_indices for sample_indices in self._get_estimators_indices()]
+
+    def _more_tags(self):
+        # Only the criterion is required to determine if the tree supports
+        # missing values
+        estimator = type(self.estimator)(criterion=self.criterion)
+        return {"allow_nan": _safe_tags(estimator, key="allow_nan")}
 
 
 def _accumulate_prediction(predict, X, out, lock):
@@ -1303,6 +1352,25 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 0.22
 
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonic increase
+          - 0: no constraint
+          - -1: monotonic decrease
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multiclass classifications (i.e. when `n_classes > 2`),
+          - multioutput classifications (i.e. when `n_outputs_ > 1`),
+          - classifications trained on data with missing values.
+
+        The constraints hold over the probability of the positive class.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.DecisionTreeClassifier`
@@ -1447,6 +1515,7 @@ class RandomForestClassifier(ForestClassifier):
         class_weight=None,
         ccp_alpha=0.0,
         max_samples=None,
+        monotonic_cst=None,
     ):
         super().__init__(
             estimator=DecisionTreeClassifier(),
@@ -1462,6 +1531,7 @@ class RandomForestClassifier(ForestClassifier):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "monotonic_cst",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1481,6 +1551,7 @@ class RandomForestClassifier(ForestClassifier):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
+        self.monotonic_cst = monotonic_cst
         self.ccp_alpha = ccp_alpha
 
 
@@ -1661,6 +1732,22 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 0.22
 
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonically increasing
+          - 0: no constraint
+          - -1: monotonically decreasing
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multioutput regressions (i.e. when `n_outputs_ > 1`),
+          - regressions trained on data with missing values.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
@@ -1792,6 +1879,7 @@ class RandomForestRegressor(ForestRegressor):
         warm_start=False,
         ccp_alpha=0.0,
         max_samples=None,
+        monotonic_cst=None,
     ):
         super().__init__(
             estimator=DecisionTreeRegressor(),
@@ -1807,6 +1895,7 @@ class RandomForestRegressor(ForestRegressor):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "monotonic_cst",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1826,6 +1915,7 @@ class RandomForestRegressor(ForestRegressor):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
+        self.monotonic_cst = monotonic_cst
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -2013,9 +2103,28 @@ class ExtraTreesClassifier(ForestClassifier):
 
         .. versionadded:: 0.22
 
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonically increasing
+          - 0: no constraint
+          - -1: monotonically decreasing
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multiclass classifications (i.e. when `n_classes > 2`),
+          - multioutput classifications (i.e. when `n_outputs_ > 1`),
+          - classifications trained on data with missing values.
+
+        The constraints hold over the probability of the positive class.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
-    estimator_ : :class:`~sklearn.tree.ExtraTreesClassifier`
+    estimator_ : :class:`~sklearn.tree.ExtraTreeClassifier`
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
@@ -2146,6 +2255,7 @@ class ExtraTreesClassifier(ForestClassifier):
         class_weight=None,
         ccp_alpha=0.0,
         max_samples=None,
+        monotonic_cst=None,
     ):
         super().__init__(
             estimator=ExtraTreeClassifier(),
@@ -2161,6 +2271,7 @@ class ExtraTreesClassifier(ForestClassifier):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "monotonic_cst",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -2181,6 +2292,7 @@ class ExtraTreesClassifier(ForestClassifier):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
+        self.monotonic_cst = monotonic_cst
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -2356,6 +2468,22 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionadded:: 0.22
 
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonically increasing
+          - 0: no constraint
+          - -1: monotonically decreasing
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multioutput regressions (i.e. when `n_outputs_ > 1`),
+          - regressions trained on data with missing values.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor`
@@ -2472,6 +2600,7 @@ class ExtraTreesRegressor(ForestRegressor):
         warm_start=False,
         ccp_alpha=0.0,
         max_samples=None,
+        monotonic_cst=None,
     ):
         super().__init__(
             estimator=ExtraTreeRegressor(),
@@ -2487,6 +2616,7 @@ class ExtraTreesRegressor(ForestRegressor):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "monotonic_cst",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -2506,6 +2636,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
+        self.monotonic_cst = monotonic_cst
 
 
 class RandomTreesEmbedding(TransformerMixin, BaseForest):
@@ -2703,7 +2834,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         **BaseDecisionTree._parameter_constraints,
         "sparse_output": ["boolean"],
     }
-    for param in ("max_features", "ccp_alpha", "splitter"):
+    for param in ("max_features", "ccp_alpha", "splitter", "monotonic_cst"):
         _parameter_constraints.pop(param)
 
     criterion = "squared_error"
