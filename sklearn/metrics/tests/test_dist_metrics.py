@@ -200,11 +200,8 @@ def test_distance_metrics_dtype_consistency(metric_param_grid):
         D64 = dm64.pairwise(X64)
         D32 = dm32.pairwise(X32)
 
-        # Both results are np.float64 dtype because the accumulation across
-        # features is done in float64. However the input data and the element
-        # wise arithmetic operations are done in float32 so we can expect a
-        # small discrepancy.
-        assert D64.dtype == D32.dtype == np.float64
+        assert D64.dtype == np.float64
+        assert D32.dtype == np.float32
 
         # assert_allclose introspects the dtype of the input arrays to decide
         # which rtol value to use by default but in this case we know that D32
