@@ -96,9 +96,9 @@ def _get_response_values(
                     )
                     raise ValueError(err_msg)
             elif target_type == "multilabel-indicator" and isinstance(y_pred, list):
-            # Use a compress format of shape `(n_samples, n_output)`.
-            # Only `MLPClassifier` and `RidgeClassifier` already return
-            # such output in a form of a NumPy array.
+                # Use a compress format of shape `(n_samples, n_output)`.
+                # Only `MLPClassifier` and `RidgeClassifier` already return
+                # such output in a form of a NumPy array.
                 y_pred = np.vstack([p[:, -1] for p in y_pred]).T
         elif prediction_method.__name__ == "decision_function":
             if target_type == "binary":
