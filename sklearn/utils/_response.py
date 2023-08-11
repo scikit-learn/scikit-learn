@@ -81,7 +81,7 @@ def _get_response_values(
                     f"one of {classes}"
                 )
             elif pos_label is None and target_type == "binary":
-                pos_label = pos_label if pos_label is not None else classes[-1]
+                pos_label = classes[-1]
 
         y_pred = prediction_method(X)
         if prediction_method.__name__ == "predict_proba":
