@@ -708,6 +708,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             by lexicographic order.
         """
 
+        check_is_fitted(self, "_fit_method")
         n_queries = _num_samples(X)
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
