@@ -743,7 +743,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
                 # on many combination of datasets.
                 # Hence, we choose to enforce it here.
                 # For more information, see:
-                # https://github.com/scikit-learn/scikit-learn/pull/24076#issuecomment-1445258342  # noqa
+                # https://github.com/scikit-learn/scikit-learn/pull/26828/files#r1282398471  # noqa
             )
             return probabilities
 

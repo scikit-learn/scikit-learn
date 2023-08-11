@@ -3,13 +3,12 @@ import warnings
 from cython cimport floating, final, integral
 from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
-
+from ._classmode cimport WeightingStrategy
 from ...utils._typedefs cimport intp_t, float64_t
 
 import numpy as np
 from scipy.sparse import issparse
-from sklearn.utils.fixes import threadpool_limits
-from ._classmode cimport WeightingStrategy
+from ...utils.fixes import threadpool_limits
 
 
 {{for name_suffix in ["32", "64"]}}
@@ -118,7 +117,7 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
     cdef inline void weighted_histogram_mode(
         self,
         intp_t sample_index,
-        intp_t k,
+        intp_t sample_n_neighbors,
         intp_t* indices,
         float64_t* distances,
     ) noexcept nogil:
@@ -129,7 +128,7 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
                 self.weight_type == WeightingStrategy.distance
             )
 
-        if k == 0:
+        if sample_n_neighbors == 0:
             self.outliers_exist = True
             self.outliers[sample_index] = True
             if self.outlier_label_index >= 0:
@@ -139,7 +138,7 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
 
         # Iterate over the neighbors. This can be different for
         # each of the samples as they are based on the radius.
-        for neighbor_rank in range(k):
+        for neighbor_rank in range(sample_n_neighbors):
             if use_distance_weighting:
                 score_incr = 1 / distances[neighbor_rank]
 
@@ -162,7 +161,7 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
         for idx in range(X_start, X_end):
             self.weighted_histogram_mode(
                 sample_index=idx,
-                k=deref(self.neigh_indices)[idx].size(),
+                sample_n_neighbors=deref(self.neigh_indices)[idx].size(),
                 indices=deref(self.neigh_indices)[idx].data(),
                 distances=deref(self.neigh_distances)[idx].data(),
             )
@@ -185,7 +184,7 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
             for idx in prange(self.n_samples_X, schedule='static'):
                 self.weighted_histogram_mode(
                     sample_index=idx,
-                    k=deref(self.neigh_indices)[idx].size(),
+                    sample_n_neighbors=deref(self.neigh_indices)[idx].size(),
                     indices=deref(self.neigh_indices)[idx].data(),
                     distances=deref(self.neigh_distances)[idx].data(),
                 )

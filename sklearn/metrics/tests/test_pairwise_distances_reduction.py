@@ -1468,7 +1468,8 @@ def test_argkmin_classmode_strategy_consistent():
     assert_array_equal(results_X, results_Y)
 
 
-def test_radius_neighbors_classmode_strategy_consistent():
+@pytest.mark.parametrize("outlier_label", [None, 0, 3, 6, 9])
+def test_radius_neighbors_classmode_strategy_consistent(outlier_label):
     rng = np.random.RandomState(1)
     X = rng.rand(100, 10)
     Y = rng.rand(100, 10)
@@ -1486,7 +1487,7 @@ def test_radius_neighbors_classmode_strategy_consistent():
         weights=weights,
         Y_labels=Y_labels,
         unique_Y_labels=unique_Y_labels,
-        outlier_label=None,
+        outlier_label=outlier_label,
         strategy="parallel_on_X",
     )
     results_Y = RadiusNeighborsClassMode.compute(
@@ -1497,7 +1498,7 @@ def test_radius_neighbors_classmode_strategy_consistent():
         weights=weights,
         Y_labels=Y_labels,
         unique_Y_labels=unique_Y_labels,
-        outlier_label=None,
+        outlier_label=outlier_label,
         strategy="parallel_on_Y",
     )
     assert_allclose(results_X, results_Y)

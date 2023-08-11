@@ -645,47 +645,13 @@ class RadiusNeighborsClassMode(BaseDistancesReductionDispatcher):
     @classmethod
     def valid_metrics(cls) -> List[str]:
         excluded = {
-            # PyFunc cannot be supported because it necessitates interacting with
-            # the CPython interpreter to call user defined functions.
-            "pyfunc",
-            "mahalanobis",  # is numerically unstable
-            # In order to support discrete distance metrics, we need to have a
-            # stable simultaneous sort which preserves the order of the indices
-            # because there generally is a lot of occurrences for a given values
-            # of distances in this case.
-            # TODO: implement a stable simultaneous_sort.
-            "hamming",
+            # Euclidean is technically usable for RadiusNeighborsClassMode
+            # but it would not be competitive.
+            # TODO: implement Euclidean specialization using GEMM.
             "euclidean",
-            *BOOL_METRICS,
+            "sqeuclidean",
         }
-        return sorted(set(METRIC_MAPPING64.keys()) - excluded)
-
-    @classmethod
-    def is_usable_for(cls, X, Y, metric) -> bool:
-        """Return True if the dispatcher can be used for the given parameters.
-
-        Parameters
-        ----------
-        X : ndarray of shape (n_samples_X, n_features)
-            The input array to be labelled.
-
-        Y : ndarray of shape (n_samples_Y, n_features)
-            The input array whose labels are provided through the `Y_labels`
-            parameter.
-
-        metric : str, default='euclidean'
-            The distance metric to use. For a list of available metrics, see
-            the documentation of :class:`~sklearn.metrics.DistanceMetric`.
-            Currently does not support `'precomputed'`.
-
-        Returns
-        -------
-        True if the PairwiseDistancesReduction can be used, else False.
-        """
-        return (
-            RadiusNeighbors.is_usable_for(X, Y, metric)
-            and metric in cls.valid_metrics()
-        )
+        return sorted(set(BaseDistancesReductionDispatcher.valid_metrics()) - excluded)
 
     @classmethod
     def compute(
