@@ -1811,8 +1811,9 @@ def test_round_samples_to_one_when_samples_too_low(class_weight):
     forest.fit(X, y)
 
 
+@pytest.mark.parametrize("boostrap", [True, False])
 @pytest.mark.parametrize("ForestClass", FOREST_CLASSIFIERS_REGRESSORS.values())
-def test_estimators_samples(ForestClass):
+def test_estimators_samples(ForestClass, bootstrap):
     # Check that format of estimators_samples_ is correct and that results
     # generated at fit time can be identically reproduced at a later time
     # using data saved in object attributes.
@@ -1822,7 +1823,7 @@ def test_estimators_samples(ForestClass):
         max_samples=0.5,
         max_features=0.5,
         random_state=1,
-        bootstrap=True,
+        bootstrap=bootstrap,
     )
     est.fit(X, y)
 
