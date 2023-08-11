@@ -1008,11 +1008,11 @@ def test_calibrated_classifier_cv_works_with_large_confidence_scores(
 
     Non-regression test for issue #26766.
     """
-    r = 0.67
+    prob = 0.67
     n = 1000
     random_noise = np.random.default_rng(global_random_seed).normal(size=n)
 
-    y_train = np.array([1] * int(n * r) + [0] * (n - int(n * r)))
+    y_train = np.array([1] * int(n * prob) + [0] * (n - int(n * prob)))
     X_train = 1e5 * y_train.reshape((-1, 1)) + random_noise
 
     clf_sigmoid = CalibratedClassifierCV(
@@ -1021,10 +1021,14 @@ def test_calibrated_classifier_cv_works_with_large_confidence_scores(
     )
     score_sigmoid = cross_val_score(clf_sigmoid, X_train, y_train, scoring="roc_auc")
 
+    # The isotonic method is used for comparison because it is numerically
+    # stable.
     clf_isotonic = CalibratedClassifierCV(
         SGDClassifier(loss="squared_hinge", random_state=global_random_seed),
         method="isotonic",
     )
     score_isotonic = cross_val_score(clf_isotonic, X_train, y_train, scoring="roc_auc")
 
+    # The AUC score should be the same because it is invariant under
+    # strictly monotonic conditions
     assert_allclose(score_sigmoid, score_isotonic)
