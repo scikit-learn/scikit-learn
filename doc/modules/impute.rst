@@ -87,6 +87,8 @@ string values or pandas categoricals when using the ``'most_frequent'`` or
      ['a' 'y']
      ['b' 'y']]
 
+For another example on usage, see :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
+
 .. _iterative_imputer:
 
 
@@ -219,6 +221,8 @@ neighbors of samples with missing values::
            [3. , 4. , 3. ],
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
+
+For another example on usage, see :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
 
 .. topic:: References
 
