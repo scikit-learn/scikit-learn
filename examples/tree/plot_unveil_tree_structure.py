@@ -44,8 +44,8 @@ clf.fit(X_train, y_train)
 #
 # The decision classifier has an attribute called ``tree_`` which allows access
 # to low level attributes such as ``node_count``, the total number of nodes,
-# and ``max_depth``, the maximal depth of the tree. The tree_.compute_node_depths() method
-# computes the depth of each node in the tree. `tree_` also stores the
+# and ``max_depth``, the maximal depth of the tree. The tree_.compute_node_depths()
+# method computes the depth of each node in the tree. `tree_` also stores the
 # entire binary tree structure, represented as a number of parallel arrays. The
 # i-th element of each array holds information about the node ``i``. Node 0 is
 # the tree's root. Some of the arrays only apply to either leaves or split
@@ -128,21 +128,22 @@ for i in range(n_nodes):
 # %%
 # What is the values array used here?
 # -----------------------------------
+# The `tree_.value` array is a 3D array of shape
+# [``n_nodes``, ``n_classes``, ``n_outputs``] which provides the count of samples
+# reaching a node for each class and for each output. Each node has a ``value``
+# array which is the number of weighted samples reaching this
+# node for each output and class.
 #
-# In the example shown above, we have a simple setting, where `n_outputs=1`, but
-# the tree classifier can also handle multi-output problems.
+# For example, in the above tree built on the iris dataset, the root node has
+# ``value = [37, 34, 41]``, indicating there are 37 samples
+# of class 0, 34 samples of class 1, and 41 samples of class 2 at the root node.
+# Traversing the tree, the samples are split and as a result, the ``value`` array
+# reaching each node changes. The left child of the root node has ``value = [37, 0, 0]``
+# because all 37 samples in the left child node are from class 0.
 #
-# In general, ``value`` is a 3D array of shape
-# [``n_nodes``, ``n_classes``, ``n_outputs``] and holds the summary of the trainin
-# samples that reached each node. For each node, ``value[i]`` is the counts of
-# each class among the training samples reaching the node. For example, say the
-# training data has ``y = [[0, 1], [1, 2], [0, -1]]`` with two output dimensions
-# and two classes for the first dimension and three classes for the second dimension.
-# If ``value[i]`` held the array ``[[1, 0, 0], [0, 2, 1]]``, it indicates that:
-#
-# - there was 1 training sample that reached node ``i`` and with label ``y = (0, 0)``
-# - there were 2 training samples that reached node ``i`` and with label ``y = (1, 1)``
-# - there was 1 training sample that reached node ``i`` and with label ``y = (1, -1)``
+# Note: In this example, `n_outputs=1`, but the tree classifier can also handle
+# multi-output problems. The `value` array at each node would just be a 2D
+# array instead.
 
 ##############################################################################
 # We can compare the above output to the plot of the decision tree.
