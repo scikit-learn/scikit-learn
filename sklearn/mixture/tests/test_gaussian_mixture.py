@@ -8,11 +8,13 @@ import re
 import sys
 import warnings
 from io import StringIO
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
 from scipy import linalg, stats
 
+import sklearn
 from sklearn.cluster import KMeans
 from sklearn.covariance import EmpiricalCovariance
 from sklearn.datasets import make_spd_matrix
@@ -1387,3 +1389,34 @@ def test_gaussian_mixture_single_component_stable():
     X = rng.multivariate_normal(np.zeros(2), np.identity(2), size=3)
     gm = GaussianMixture(n_components=1)
     gm.fit(X).sample()
+
+
+def test_gaussian_mixture_all_init_does_not_estimate_gaussian_parameters(
+    monkeypatch,
+    global_random_seed,
+):
+    """When all init parameters are provided, the Gaussian parameters
+    are not estimated.
+
+    Non-regression test for gh-26015.
+    """
+
+    mock = Mock(side_effect=_estimate_gaussian_parameters)
+    monkeypatch.setattr(
+        sklearn.mixture._gaussian_mixture, "_estimate_gaussian_parameters", mock
+    )
+
+    rng = np.random.RandomState(global_random_seed)
+    rand_data = RandomData(rng)
+
+    gm = GaussianMixture(
+        n_components=rand_data.n_components,
+        weights_init=rand_data.weights,
+        means_init=rand_data.means,
+        precisions_init=rand_data.precisions["full"],
+        random_state=rng,
+    )
+    gm.fit(rand_data.X["full"])
+    # The initial gaussian parameters are not estimated. They are estimated for every
+    # m_step.
+    assert mock.call_count == gm.n_iter_
