@@ -82,6 +82,17 @@ def test_get_loss(loss, est, err_msg):
         est.fit(X, y)
 
 
+def test_raise_if_init_has_no_predict_proba():
+    """Test raise if init_ has not predict_proba method."""
+    clf = GradientBoostingClassifier(init=GradientBoostingRegressor)
+    msg = (
+        "The 'init' parameter of GradientBoostingClassifier must be a str among "
+        "{'zero'}, None or an object implementing 'fit' and 'predict_proba'."
+    )
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
+
+
 @pytest.mark.parametrize("loss", ("log_loss", "exponential"))
 def test_classification_toy(loss, global_random_seed):
     # Check classification on a toy dataset.

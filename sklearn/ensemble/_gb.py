@@ -99,11 +99,9 @@ def _init_raw_predictions(X, estimator, loss, use_predict_proba):
     # DummyRegressor which is the default given by the `init` parameter,
     # see also _init_state.
     if use_predict_proba:
-        try:
-            predictions = estimator.predict_proba(X)
-        except AttributeError as e:
-            msg = "The given init estimator does not provide a predict_proba method."
-            raise AttributeError(msg) from e
+        # Our parameter validation, set via _fit_context and _parameter_constraints
+        # already guarantees that estimator has a predict_proba method.
+        predictions = estimator.predict_proba(X)
         if not loss.is_multiclass:
             predictions = predictions[:, 1]  # probability of positive class
         eps = np.finfo(np.float32).eps  # FIXME: This is quite large!
