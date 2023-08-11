@@ -125,9 +125,9 @@ Changelog
   :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
   :pr:`26957` by `Thomas Fan`_.
 
-- |Enhancement| A fitted property, ``estimators_samples_``, was added to all Forest methods,
+- |Enhancement| A fitted property, ``estimators_samples_``, was added to all Forest methods, including
   :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
-  :class:`ensemble.ExtraTreesClassifier`, and :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`,
   which allows to retrieve the training sample indices used for each tree estimator.
   :pr:`26736` by :user:`Adam Li <adam2392>`.
 
