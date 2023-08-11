@@ -1811,7 +1811,7 @@ def test_round_samples_to_one_when_samples_too_low(class_weight):
     forest.fit(X, y)
 
 
-@pytest.mark.parametrize("boostrap", [True, False])
+@pytest.mark.parametrize("bootstrap", [True, False])
 @pytest.mark.parametrize("ForestClass", FOREST_CLASSIFIERS_REGRESSORS.values())
 def test_estimators_samples(ForestClass, bootstrap):
     # Check that format of estimators_samples_ is correct and that results
@@ -1839,8 +1839,17 @@ def test_estimators_samples(ForestClass, bootstrap):
 
     # Test for correct formatting
     assert len(estimators_samples) == len(estimators)
-    assert len(estimators_samples[0]) == len(X) // 2
     assert estimators_samples[0].dtype.kind == "i"
+
+    # each tree was fit on the entire dataset if not bootstrap
+    for i in range(len(estimators)):
+        if bootstrap:
+            assert len(estimators_samples[i]) == len(X) // 2
+
+            # the bootstrap should sample multiple indices
+            assert len(np.unique(estimators_samples[i])) < len(estimators_samples[i])
+        else:
+            assert len(set(estimators_samples[i])) == len(X)
 
     # Re-fit single estimator to test for consistent sampling
     estimator_index = 0
@@ -1854,11 +1863,7 @@ def test_estimators_samples(ForestClass, bootstrap):
     orig_tree_values = estimator.tree_.value
     estimator.fit(X_train, y_train)
     new_tree_values = estimator.tree_.value
-
     assert_array_almost_equal(orig_tree_values, new_tree_values)
-
-    # the bootstrap can sample multiple indices
-    assert len(np.unique(estimator_samples)) != len(estimator_samples)
 
 
 @pytest.mark.parametrize(

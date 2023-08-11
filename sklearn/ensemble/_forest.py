@@ -686,14 +686,17 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     def _get_estimators_indices(self):
         # Get drawn indices along both sample and feature axes
         for tree in self.estimators_:
-            seed = tree.random_state
-            # Operations accessing random_state must be performed identically
-            # to those in `_parallel_build_trees()`
-            sample_indices = _generate_sample_indices(
-                seed, self._n_samples, self._n_samples_bootstrap
-            )
+            if not self.bootstrap:
+                yield np.arange(self._n_samples, dtype=np.int32)
+            else:
+                seed = tree.random_state
+                # Operations accessing random_state must be performed identically
+                # to those in `_parallel_build_trees()`
+                sample_indices = _generate_sample_indices(
+                    seed, self._n_samples, self._n_samples_bootstrap
+                )
 
-            yield sample_indices
+                yield sample_indices
 
     @property
     def estimators_samples_(self):
