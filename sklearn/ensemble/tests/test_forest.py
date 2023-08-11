@@ -1818,9 +1818,15 @@ def test_estimators_samples(ForestClass, bootstrap):
     # generated at fit time can be identically reproduced at a later time
     # using data saved in object attributes.
     X, y = make_hastie_10_2(n_samples=200, random_state=1)
+
+    # test both with bootstrap and w/o. No bootstrap requires max samples is not set.
+    if bootstrap:
+        max_samples = 0.5
+    else:
+        max_samples = None
     est = ForestClass(
         n_estimators=10,
-        max_samples=0.5,
+        max_samples=max_samples,
         max_features=0.5,
         random_state=1,
         bootstrap=bootstrap,
@@ -1854,7 +1860,6 @@ def test_estimators_samples(ForestClass, bootstrap):
     # the bootstrap can sample multiple indices
     assert len(np.unique(estimator_samples)) != len(estimator_samples)
 
-    
 
 @pytest.mark.parametrize(
     "make_data, Forest",
