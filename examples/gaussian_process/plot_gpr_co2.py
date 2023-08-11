@@ -1,7 +1,7 @@
 """
-=======================================================
-Gaussian process regression (GPR) on Mauna Loa CO2 data
-=======================================================
+====================================================================================
+Forecasting of CO2 level on Mona Loa dataset using Gaussian process regression (GPR)
+====================================================================================
 
 This example is based on Section 5.4.3 of "Gaussian Processes for Machine
 Learning" [RW2006]_. It illustrates an example of complex kernel engineering
