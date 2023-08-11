@@ -1258,7 +1258,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         The used categories can be found in the ``categories_`` attribute.
 
-    dtype : number type, default=np.float64
+    dtype : number type, default=float
         Desired dtype of output.
 
     handle_unknown : {'error', 'use_encoded_value'}, default='error'
