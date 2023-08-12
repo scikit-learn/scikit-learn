@@ -56,7 +56,7 @@ from sklearn.multioutput import ClassifierChain
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
-from sklearn.tests.test_metadata_routing import assert_request_is_empty
+from sklearn.tests.metadata_routing_common import assert_request_is_empty
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
     assert_almost_equal,
