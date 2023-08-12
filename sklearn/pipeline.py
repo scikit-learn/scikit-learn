@@ -1644,6 +1644,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             The `hstack` of results of transformers. `sum_n_components` is the
             sum of `n_components` (output dimension) over transformers.
         """
+        # TODO(SLEP6): accept **params here in `transform` and route it to the
+        # underlying estimators.
         params = Bunch(transform={})
         Xs = Parallel(n_jobs=self.n_jobs)(
             delayed(_transform_one)(trans, X, None, weight, params)

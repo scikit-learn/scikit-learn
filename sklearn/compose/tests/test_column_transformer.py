@@ -2275,14 +2275,11 @@ def test_metadata_routing_for_column_transformer(method):
         ]
     )
 
-    if "fit" not in method:
+    if method == "transform":
         trs.fit(X, y)
-
-    try:
+        trs.transform(X, sample_weight=sample_weight, metadata=metadata)
+    else:
         getattr(trs, method)(X, y, sample_weight=sample_weight, metadata=metadata)
-    except TypeError:
-        # transform takes only X
-        getattr(trs, method)(X, sample_weight=sample_weight, metadata=metadata)
 
     assert len(registry)
     for _trs in registry:
@@ -2292,27 +2289,60 @@ def test_metadata_routing_for_column_transformer(method):
 
 
 @pytest.mark.usefixtures("enable_slep006")
+def test_metadata_routing_no_fit_transform():
+    """Test metadata routing when the sub-estimator doesn't implement
+    ``fit_transform``."""
+
+    class NoFitTransform(BaseEstimator):
+        def fit(self, X, y=None, sample_weight=None, metadata=None):
+            assert sample_weight
+            assert metadata
+            return self
+
+        def transform(self, X, sample_weight=None, metadata=None):
+            assert sample_weight
+            assert metadata
+            return X
+
+    X = np.array([[0, 1, 2], [2, 4, 6]]).T
+    y = [1, 2, 3]
+    registry = _Registry()
+    sample_weight, metadata = [1], "a"
+    trs = ColumnTransformer(
+        [
+            (
+                "trans",
+                ConsumingTransformer(registry=registry)
+                .set_fit_request(sample_weight=True, metadata=True)
+                .set_transform_request(sample_weight=True, metadata=True),
+                [0],
+            )
+        ]
+    )
+
+    trs.fit(X, y, sample_weight=sample_weight, metadata=metadata)
+    trs.fit_transform(X, y, sample_weight=sample_weight, metadata=metadata)
+
+
+@pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("method", ["transform", "fit_transform", "fit"])
 def test_metadata_routing_error_for_column_transformer(method):
-    """Test that metadata is routed correctly for pipelines."""
+    """Test that the right error is raised when metadata is not requested."""
     X = np.array([[0, 1, 2], [2, 4, 6]]).T
     y = [1, 2, 3]
     sample_weight, metadata = [1], "a"
     trs = ColumnTransformer([("trans", ConsumingTransformer(), [0])])
-
-    if "fit" not in method:
-        trs.fit(X, y)
 
     error_message = (
         "[sample_weight, metadata] are passed but are not explicitly set as requested"
         f" or not for ConsumingTransformer.{method}"
     )
     with pytest.raises(ValueError, match=re.escape(error_message)):
-        try:
+        if method == "transform":
+            trs.fit(X, y)
+            trs.transform(X, sample_weight=sample_weight, metadata=metadata)
+        else:
             getattr(trs, method)(X, y, sample_weight=sample_weight, metadata=metadata)
-        except TypeError:
-            # transform takes only X
-            getattr(trs, method)(X, sample_weight=sample_weight, metadata=metadata)
 
 
 # End of Metadata Routing Tests

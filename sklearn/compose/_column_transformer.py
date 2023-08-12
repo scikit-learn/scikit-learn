@@ -365,15 +365,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Parameters
         ----------
-        fitted : bool, default
+        fitted : bool
             If True, use the fitted transformers (``self.transformers_``) to
             iterate through transformers, else use the transformers passed by
             the user (``self.transformers``).
 
         replace_strings : bool
             If True, replace 'passthrough' with the fitted version in
-            ``self._name_to_fitted_passthrough``. If True, it also skips
-            ``drop`` transformers.
+            ``self._name_to_fitted_passthrough``. If True, also skip ``drop``
+            transformers.
 
         column_as_strings : bool
             If True, columns are returned as strings. If False, columns are
@@ -725,7 +725,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         )
         try:
             jobs = []
-            for idx, (name, trans, column, weight) in enumerate(transformers, 1):
+            for idx, (name, trans, column, weight) in enumerate(transformers, start=1):
                 if func is _fit_transform_one:
                     extra_args = dict(
                         message_clsname="ColumnTransformer",
@@ -897,9 +897,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         X = _check_X(X)
 
         # If ColumnTransformer is fit using a dataframe, and now a dataframe is
-        # passed to be transformed, we select columns by name instead, which
+        # passed to be transformed, we select columns by name instead. This
         # enables the user to pass X at transform time with extra columns which
-        # were not present in fit time, and the order of the columns won't
+        # were not present in fit time, and the order of the columns doesn't
         # matter.
         fit_dataframe_and_transform_dataframe = hasattr(
             self, "feature_names_in_"
@@ -1040,8 +1040,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def _get_empty_routing(self):
         """Return empty routing.
 
-        Used while routing can be disabled. Remove when
-        ``set_config(enable_metadata_routing=False)`` is no more an option.
+        Used while routing can be disabled.
+
+        TODO: Remove when ``set_config(enable_metadata_routing=False)`` is no
+        more an option.
         """
         return Bunch(
             **{
