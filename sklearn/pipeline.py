@@ -27,6 +27,7 @@ from .utils._tags import _safe_tags
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _raise_for_params,
     _routing_enabled,
     process_routing,
 )
@@ -333,9 +334,7 @@ class Pipeline(_BaseComposition):
 
     def _check_method_params(self, method, props, **kwargs):
         if _routing_enabled():
-            routed_params = process_routing(
-                self, method=method, other_params=props, **kwargs
-            )
+            routed_params = process_routing(self, method, **props, **kwargs)
             return routed_params
         else:
             fit_params_steps = Bunch(
@@ -585,7 +584,7 @@ class Pipeline(_BaseComposition):
             return self.steps[-1][1].predict(Xt, **params)
 
         # metadata routing enabled
-        routed_params = process_routing(self, "predict", other_params=params)
+        routed_params = process_routing(self, "predict", **params)
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt, **routed_params[name].transform)
         return self.steps[-1][1].predict(Xt, **routed_params[self.steps[-1][0]].predict)
@@ -705,7 +704,7 @@ class Pipeline(_BaseComposition):
             return self.steps[-1][1].predict_proba(Xt, **params)
 
         # metadata routing enabled
-        routed_params = process_routing(self, "predict_proba", other_params=params)
+        routed_params = process_routing(self, "predict_proba", **params)
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt, **routed_params[name].transform)
         return self.steps[-1][1].predict_proba(
@@ -742,15 +741,11 @@ class Pipeline(_BaseComposition):
         y_score : ndarray of shape (n_samples, n_classes)
             Result of calling `decision_function` on the final estimator.
         """
-        if params and not _routing_enabled():
-            raise ValueError(
-                "params is only supported if enable_metadata_routing=True."
-                " See the User Guide for more information."
-            )
+        _raise_for_params(params, self, "decision_function")
 
         # not branching here since params is only available if
         # enable_metadata_routing=True
-        routed_params = process_routing(self, "decision_function", other_params=params)
+        routed_params = process_routing(self, "decision_function", **params)
 
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -836,7 +831,7 @@ class Pipeline(_BaseComposition):
             return self.steps[-1][1].predict_log_proba(Xt, **params)
 
         # metadata routing enabled
-        routed_params = process_routing(self, "predict_log_proba", other_params=params)
+        routed_params = process_routing(self, "predict_log_proba", **params)
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt, **routed_params[name].transform)
         return self.steps[-1][1].predict_log_proba(
@@ -881,15 +876,11 @@ class Pipeline(_BaseComposition):
         Xt : ndarray of shape (n_samples, n_transformed_features)
             Transformed data.
         """
-        if not _routing_enabled() and params:
-            raise ValueError(
-                "params is only supported if enable_metadata_routing=True."
-                " See the User Guide for more information."
-            )
+        _raise_for_params(params, self, "transform")
 
         # not branching here since params is only available if
         # enable_metadata_routing=True
-        routed_params = process_routing(self, "transform", other_params=params)
+        routed_params = process_routing(self, "transform", **params)
         Xt = X
         for _, name, transform in self._iter():
             Xt = transform.transform(Xt, **routed_params[name].transform)
@@ -928,15 +919,11 @@ class Pipeline(_BaseComposition):
             Inverse transformed data, that is, data in the original feature
             space.
         """
-        if not _routing_enabled() and params:
-            raise ValueError(
-                "params is only supported if enable_metadata_routing=True. See"
-                " the User Guide for more information."
-            )
+        _raise_for_params(params, self, "inverse_transform")
 
         # we don't have to branch here, since params is only non-empty if
         # enable_metadata_routing=True.
-        routed_params = process_routing(self, "inverse_transform", other_params=params)
+        routed_params = process_routing(self, "inverse_transform", **params)
         reverse_iter = reversed(list(self._iter()))
         for _, name, transform in reverse_iter:
             Xt = transform.inverse_transform(
@@ -992,7 +979,7 @@ class Pipeline(_BaseComposition):
 
         # metadata routing is enabled.
         routed_params = process_routing(
-            self, "score", sample_weight=sample_weight, other_params=params
+            self, "score", sample_weight=sample_weight, **params
         )
 
         Xt = X
@@ -1119,7 +1106,7 @@ class Pipeline(_BaseComposition):
         router = MetadataRouter(owner=self.__class__.__name__)
 
         # first we add all steps except the last one
-        for _, name, trans in self._iter(with_final=False):
+        for _, name, trans in self._iter(with_final=False, filter_passthrough=True):
             method_mapping = MethodMapping()
             # fit, fit_predict, and fit_transform call fit_transform if it
             # exists, or else fit and transform
@@ -1153,7 +1140,7 @@ class Pipeline(_BaseComposition):
             router.add(method_mapping=method_mapping, **{name: trans})
 
         final_name, final_est = self.steps[-1]
-        if not final_est:
+        if final_est is None or final_est == "passthrough":
             return router
 
         # then we add the last step

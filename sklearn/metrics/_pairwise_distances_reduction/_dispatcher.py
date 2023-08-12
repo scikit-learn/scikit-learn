@@ -5,7 +5,11 @@ import numpy as np
 from scipy.sparse import issparse
 
 from ... import get_config
-from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING64
+from .._dist_metrics import (
+    BOOL_METRICS,
+    METRIC_MAPPING64,
+    DistanceMetric,
+)
 from ._argkmin import (
     ArgKmin32,
     ArgKmin64,
@@ -117,7 +121,7 @@ class BaseDistancesReductionDispatcher:
             and (is_numpy_c_ordered(Y) or is_valid_sparse_matrix(Y))
             and X.dtype == Y.dtype
             and X.dtype in (np.float32, np.float64)
-            and metric in cls.valid_metrics()
+            and (metric in cls.valid_metrics() or isinstance(metric, DistanceMetric))
         )
 
         return is_usable
@@ -456,7 +460,7 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
             The input array to be labelled.
 
         Y : ndarray of shape (n_samples_Y, n_features)
-            The input array whose labels are provided through the `labels`
+            The input array whose labels are provided through the `Y_labels`
             parameter.
 
         metric : str, default='euclidean'
@@ -484,8 +488,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
         Y,
         k,
         weights,
-        labels,
-        unique_labels,
+        Y_labels,
+        unique_Y_labels,
         metric="euclidean",
         chunk_size=None,
         metric_kwargs=None,
@@ -499,23 +503,23 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
             The input array to be labelled.
 
         Y : ndarray of shape (n_samples_Y, n_features)
-            The input array whose labels are provided through the `labels`
-            parameter.
+            The input array whose class membership are provided through the
+            `Y_labels` parameter.
 
         k : int
             The number of nearest neighbors to consider.
 
         weights : ndarray
-            The weights applied over the `labels` of `Y` when computing the
+            The weights applied over the `Y_labels` of `Y` when computing the
             weighted mode of the labels.
 
-        class_membership : ndarray
+        Y_labels : ndarray
             An array containing the index of the class membership of the
             associated samples in `Y`. This is used in labeling `X`.
 
-        unique_classes : ndarray
+        unique_Y_labels : ndarray
             An array containing all unique indices contained in the
-            corresponding `class_membership` array.
+            corresponding `Y_labels` array.
 
         metric : str, default='euclidean'
             The distance metric to use. For a list of available metrics, see
@@ -587,8 +591,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
                 Y=Y,
                 k=k,
                 weights=weights,
-                class_membership=np.array(labels, dtype=np.intp),
-                unique_labels=np.array(unique_labels, dtype=np.intp),
+                Y_labels=np.array(Y_labels, dtype=np.intp),
+                unique_Y_labels=np.array(unique_Y_labels, dtype=np.intp),
                 metric=metric,
                 chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,
@@ -601,8 +605,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
                 Y=Y,
                 k=k,
                 weights=weights,
-                class_membership=np.array(labels, dtype=np.intp),
-                unique_labels=np.array(unique_labels, dtype=np.intp),
+                Y_labels=np.array(Y_labels, dtype=np.intp),
+                unique_Y_labels=np.array(unique_Y_labels, dtype=np.intp),
                 metric=metric,
                 chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,

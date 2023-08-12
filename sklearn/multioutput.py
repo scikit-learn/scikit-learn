@@ -36,6 +36,7 @@ from .utils._param_validation import HasMethods, StrOptions
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _raise_for_params,
     _routing_enabled,
     process_routing,
 )
@@ -148,11 +149,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         self : object
             Returns a fitted instance.
         """
-        if partial_fit_params and not _routing_enabled():
-            raise ValueError(
-                "partial_fit_params is only supported if enable_metadata_routing=True."
-                " See the User Guide for more information."
-            )
+        _raise_for_params(partial_fit_params, self, "partial_fit")
 
         first_time = not hasattr(self, "estimators_")
 
@@ -166,10 +163,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         if _routing_enabled():
             routed_params = process_routing(
-                obj=self,
-                method="partial_fit",
-                other_params=partial_fit_params,
+                self,
+                "partial_fit",
                 sample_weight=sample_weight,
+                **partial_fit_params,
             )
         else:
             if sample_weight is not None and not has_fit_parameter(
@@ -252,10 +249,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         if _routing_enabled():
             routed_params = process_routing(
-                obj=self,
-                method="fit",
-                other_params=fit_params,
+                self,
+                "fit",
                 sample_weight=sample_weight,
+                **fit_params,
             )
         else:
             if sample_weight is not None and not has_fit_parameter(
@@ -709,9 +706,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         del Y_pred_chain
 
         if _routing_enabled():
-            routed_params = process_routing(
-                obj=self, method="fit", other_params=fit_params
-            )
+            routed_params = process_routing(self, "fit", **fit_params)
         else:
             routed_params = Bunch(estimator=Bunch(fit=fit_params))
 
@@ -781,6 +776,11 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     Each model makes a prediction in the order specified by the chain using
     all of the available features provided to the model plus the predictions
     of models that are earlier in the chain.
+
+    For an example of how to use ``ClassifierChain`` and benefit from its
+    ensemble, see
+    :ref:`ClassifierChain on a yeast dataset
+    <sphx_glr_auto_examples_multioutput_plot_classifier_chain_yeast.py>` example.
 
     Read more in the :ref:`User Guide <classifierchain>`.
 
@@ -919,11 +919,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         self : object
             Class instance.
         """
-        if fit_params and not _routing_enabled():
-            raise ValueError(
-                "fit_params is only supported if enable_metadata_routing=True. "
-                "See the User Guide for more information."
-            )
+        _raise_for_params(fit_params, self, "fit")
 
         super().fit(X, Y, **fit_params)
         self.classes_ = [

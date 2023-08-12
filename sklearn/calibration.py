@@ -378,10 +378,10 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
             if _routing_enabled():
                 routed_params = process_routing(
-                    obj=self,
-                    method="fit",
+                    self,
+                    "fit",
                     sample_weight=sample_weight,
-                    other_params=fit_params,
+                    **fit_params,
                 )
             else:
                 # sample_weight checks
@@ -450,7 +450,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     cv=cv,
                     method=method_name,
                     n_jobs=self.n_jobs,
-                    fit_params=routed_params.estimator.fit,
+                    params=routed_params.estimator.fit,
                 )
                 predictions = _compute_predictions(
                     pred_method, method_name, X, n_classes
@@ -1186,7 +1186,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
         )
 
-        line_kwargs = {}
+        line_kwargs = {"marker": "s", "linestyle": "-"}
         if name is not None:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
@@ -1195,9 +1195,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         existing_ref_line = ref_line_label in self.ax_.get_legend_handles_labels()[1]
         if ref_line and not existing_ref_line:
             self.ax_.plot([0, 1], [0, 1], "k:", label=ref_line_label)
-        self.line_ = self.ax_.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[
-            0
-        ]
+        self.line_ = self.ax_.plot(self.prob_pred, self.prob_true, **line_kwargs)[0]
 
         # We always have to show the legend for at least the reference line
         self.ax_.legend(loc="lower right")

@@ -1,28 +1,27 @@
 import copy
 import re
-from functools import partial
 
 import numpy as np
 import pytest
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.linear_model import LogisticRegressionCV
-from sklearn.metrics._scorer import _BaseScorer
-from sklearn.model_selection import BaseCrossValidator
-from sklearn.model_selection._split import GroupsConsumerMixin
 from sklearn.multioutput import (
     ClassifierChain,
     MultiOutputClassifier,
     MultiOutputRegressor,
     RegressorChain,
 )
-from sklearn.tests.test_metadata_routing import (
+from sklearn.tests.metadata_routing_common import (
+    ConsumingClassifier,
+    ConsumingRegressor,
+    ConsumingScorer,
+    ConsumingSplitter,
+    _Registry,
     assert_request_is_empty,
     check_recorded_metadata,
-    record_metadata,
 )
 from sklearn.utils.metadata_routing import MetadataRouter
 
@@ -41,179 +40,6 @@ def enable_slep006():
     """Enable SLEP006 for all tests."""
     with config_context(enable_metadata_routing=True):
         yield
-
-
-record_metadata_not_default = partial(record_metadata, record_default=False)
-
-
-class _Registry(list):
-    # This list is used to get a reference to the sub-estimators, which are not
-    # necessarily stored on the metaestimator. We need to override __deepcopy__
-    # because the sub-estimators are probably cloned, which would result in a
-    # new copy of the list, but we need copy and deep copy both to return the
-    # same instance.
-    def __deepcopy__(self, memo):
-        return self
-
-    def __copy__(self):
-        return self
-
-
-class ConsumingRegressor(RegressorMixin, BaseEstimator):
-    """A regressor consuming metadata.
-
-    Parameters
-    ----------
-    registry : list, default=None
-        If a list, the estimator will append itself to the list in order to have
-        a reference to the estimator later on. Since that reference is not
-        required in all tests, registration can be skipped by leaving this value
-        as None.
-
-    """
-
-    def __init__(self, registry=None):
-        self.registry = registry
-
-    def partial_fit(self, X, y, sample_weight="default", metadata="default"):
-        if self.registry is not None:
-            self.registry.append(self)
-
-        record_metadata_not_default(
-            self, "partial_fit", sample_weight=sample_weight, metadata=metadata
-        )
-        return self
-
-    def fit(self, X, y, sample_weight="default", metadata="default"):
-        if self.registry is not None:
-            self.registry.append(self)
-
-        record_metadata_not_default(
-            self, "fit", sample_weight=sample_weight, metadata=metadata
-        )
-        return self
-
-    def predict(self, X, sample_weight="default", metadata="default"):
-        pass  # pragma: no cover
-
-        # when needed, uncomment the implementation
-        # if self.registry is not None:
-        #     self.registry.append(self)
-
-        # record_metadata_not_default(
-        #     self, "predict", sample_weight=sample_weight, metadata=metadata
-        # )
-        # return np.zeros(shape=(len(X),))
-
-
-class ConsumingClassifier(ClassifierMixin, BaseEstimator):
-    """A classifier consuming metadata.
-
-    Parameters
-    ----------
-    registry : list, default=None
-        If a list, the estimator will append itself to the list in order to have
-        a reference to the estimator later on. Since that reference is not
-        required in all tests, registration can be skipped by leaving this value
-        as None.
-
-    """
-
-    def __init__(self, registry=None):
-        self.registry = registry
-
-    def partial_fit(self, X, y, sample_weight="default", metadata="default"):
-        if self.registry is not None:
-            self.registry.append(self)
-
-        record_metadata_not_default(
-            self, "partial_fit", sample_weight=sample_weight, metadata=metadata
-        )
-        self.classes_ = [0, 1]
-        return self
-
-    def fit(self, X, y, sample_weight="default", metadata="default"):
-        if self.registry is not None:
-            self.registry.append(self)
-
-        record_metadata_not_default(
-            self, "fit", sample_weight=sample_weight, metadata=metadata
-        )
-        self.classes_ = [0, 1]
-        return self
-
-    def predict(self, X, sample_weight="default", metadata="default"):
-        pass  # pragma: no cover
-
-        # when needed, uncomment the implementation
-        # if self.registry is not None:
-        #     self.registry.append(self)
-
-        # record_metadata_not_default(
-        #     self, "predict", sample_weight=sample_weight, metadata=metadata
-        # )
-        # return np.zeros(shape=(len(X),))
-
-    def predict_proba(self, X, sample_weight="default", metadata="default"):
-        if self.registry is not None:
-            self.registry.append(self)
-
-        record_metadata_not_default(
-            self, "predict_proba", sample_weight=sample_weight, metadata=metadata
-        )
-        return np.asarray([[0.0, 1.0]] * len(X))
-
-    def predict_log_proba(self, X, sample_weight="default", metadata="default"):
-        pass  # pragma: no cover
-
-        # when needed, uncomment the implementation
-        # if self.registry is not None:
-        #     self.registry.append(self)
-
-        # record_metadata_not_default(
-        #     self, "predict_log_proba", sample_weight=sample_weight, metadata=metadata
-        # )
-        # return np.zeros(shape=(len(X), 2))
-
-
-class ConsumingScorer(_BaseScorer):
-    def __init__(self, registry=None):
-        super().__init__(score_func="test", sign=1, kwargs={})
-        self.registry = registry
-
-    def __call__(
-        self, estimator, X, y_true, sample_weight="default", metadata="default"
-    ):
-        if self.registry is not None:
-            self.registry.append(self)
-
-        record_metadata_not_default(
-            self, "score", sample_weight=sample_weight, metadata=metadata
-        )
-
-        return 0.0
-
-
-class ConsumingSplitter(BaseCrossValidator, GroupsConsumerMixin):
-    def __init__(self, registry=None):
-        self.registry = registry
-
-    def split(self, X, y=None, groups="default"):
-        if self.registry is not None:
-            self.registry.append(self)
-
-        record_metadata_not_default(self, "split", groups=groups)
-
-        split_index = len(X) - 10
-        train_indices = range(0, split_index)
-        test_indices = range(split_index, len(X))
-        yield test_indices, train_indices
-
-    def get_n_splits(self, X=None, y=None, groups=None):
-        pass  # pragma: no cover
-
-    def _iter_test_indices(self, X=None, y=None, groups=None):
-        pass  # pragma: no cover
 
 
 METAESTIMATORS: list = [
@@ -271,7 +97,7 @@ The keys are as follows:
 - routing_methods: list of all methods to check for routing
 - preserves_metadata: Whether the metaestimator passes the metadata to the
   sub-estimator without modification or not. If it does, we check that the
-  values are identical. If it doesn', no check is performed. TODO Maybe
+  values are identical. If it doesn't, no check is performed. TODO Maybe
   something smarter could be done if the data is modified.
 
 """
@@ -279,7 +105,7 @@ The keys are as follows:
 # ids used for pytest fixture
 METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATORS]
 
-CV_SCORERS = [
+CV_SCORERS: list = [
     {
         "cv_estimator": LogisticRegressionCV,
         "scorer_name": "scoring",
@@ -287,13 +113,17 @@ CV_SCORERS = [
     },
 ]
 
-CV_SPLITTERS = [
+CV_SPLITTERS: list = [
     {
         "cv_estimator": LogisticRegressionCV,
         "splitter_name": "cv",
         "routing_methods": ["fit"],
     }
 ]
+
+# IDs used by pytest to get meaningful verbose messages when running the tests
+CV_SCORER_IDS = [x["cv_estimator"].__name__ for x in CV_SCORERS]
+CV_SPLITTER_IDS = [x["cv_estimator"].__name__ for x in CV_SPLITTERS]
 
 
 def test_registry_copy():
@@ -390,7 +220,7 @@ def test_setting_request_removes_error(metaestimator):
                     check_recorded_metadata(estimator, method_name, **kwargs)
 
 
-@pytest.mark.parametrize("cv_scorer", CV_SCORERS)
+@pytest.mark.parametrize("cv_scorer", CV_SCORERS, ids=CV_SCORER_IDS)
 def test_metadata_is_routed_correctly_to_scorer(cv_scorer):
     """Test that any requested metadata is correctly routed to the underlying
     scorers in CV estimators.
@@ -406,6 +236,8 @@ def test_metadata_is_routed_correctly_to_scorer(cv_scorer):
         instance = cls(**{scorer_name: scorer})
         method = getattr(instance, method_name)
         kwargs = {"sample_weight": sample_weight}
+        if "fit" not in method_name:  # instance needs to be fitted first
+            instance.fit(X, y)
         method(X, y, **kwargs)
         for _scorer in registry:
             check_recorded_metadata(
@@ -416,7 +248,7 @@ def test_metadata_is_routed_correctly_to_scorer(cv_scorer):
             )
 
 
-@pytest.mark.parametrize("cv_splitter", CV_SPLITTERS)
+@pytest.mark.parametrize("cv_splitter", CV_SPLITTERS, ids=CV_SPLITTER_IDS)
 def test_metadata_is_routed_correctly_to_splitter(cv_splitter):
     """Test that any requested metadata is correctly routed to the underlying
     splitters in CV estimators.

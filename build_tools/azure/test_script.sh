@@ -49,7 +49,7 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
-    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Werror::numpy.VisibleDeprecationWarning"
+    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Werror::sklearn.utils.fixes.VisibleDeprecationWarning"
 
     # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib
     # removes its usage
@@ -73,10 +73,6 @@ fi
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     XDIST_WORKERS=$(python -c "import joblib; print(joblib.cpu_count(only_physical_cores=True))")
     TEST_CMD="$TEST_CMD -n$XDIST_WORKERS"
-fi
-
-if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
-    TEST_CMD="$TEST_CMD -ra"
 fi
 
 if [[ -n "$SELECTED_TESTS" ]]; then
