@@ -943,6 +943,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _raw_predict(self, X):
         """Return the sum of the trees raw predictions (+ init estimator)."""
+        check_is_fitted(self)
         raw_predictions = self._raw_predict_init(X)
         predict_stages(self.estimators_, X, self.learning_rate, raw_predictions)
         return raw_predictions
@@ -1653,14 +1654,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             If the ``loss`` does not support probabilities.
         """
         raw_predictions = self.decision_function(X)
-        try:
-            return self._loss.predict_proba(raw_predictions)
-        except NotFittedError:
-            raise
-        except AttributeError as e:
-            raise AttributeError(
-                "loss=%r does not support predict_proba" % self.loss
-            ) from e
+        return self._loss.predict_proba(raw_predictions)
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities for X.
