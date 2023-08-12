@@ -188,7 +188,7 @@ def _array_indexing(array, key, key_dtype, axis):
         key = np.asarray(key)
     if isinstance(key, tuple):
         key = list(key)
-    return array[key] if axis == 0 else array[:, key]
+    return array[key, ...] if axis == 0 else array[:, key]
 
 
 def _pandas_indexing(X, key, key_dtype, axis):
