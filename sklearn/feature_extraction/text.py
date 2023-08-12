@@ -1540,9 +1540,6 @@ class TfidfTransformer(
     Normalization is "c" (cosine) when ``norm='l2'``, "n" (none)
     when ``norm=None``.
 
-    For an efficiency comparision of the different feature extractors, see
-    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
-
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
     Parameters
