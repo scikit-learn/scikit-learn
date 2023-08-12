@@ -48,7 +48,6 @@ from ..tree import DecisionTreeRegressor
 from ..tree._tree import DOUBLE, DTYPE, TREE_LEAF
 from ..utils import check_array, check_random_state, column_or_1d
 from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils.fixes import percentile
 from ..utils.multiclass import check_classification_targets
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import _check_sample_weight, check_is_fitted
@@ -247,11 +246,10 @@ def _update_terminal_regions(
 def set_huber_delta(loss, y_true, raw_prediction, sample_weight=None):
     """Calculate and set self.closs.delta based on self.quantile."""
     abserr = np.abs(y_true - raw_prediction.squeeze())
-    if sample_weight is None:
-        # Same as np.quantile(abserr, loss.quantile, axis=0, method="inverted_cdf")
-        delta = percentile(abserr, 100 * loss.quantile, axis=0, method="lower")
-    else:
-        delta = _weighted_percentile(abserr, sample_weight, 100 * loss.quantile)
+    # sample_weight is always a ndarray, never None.
+    # if sample_weight is None:
+    #     delta = np.quantile(abserr, loss.quantile, axis=0)
+    delta = _weighted_percentile(abserr, sample_weight, 100 * loss.quantile)
     loss.closs.delta = float(delta)
 
 
@@ -421,12 +419,17 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X_csr=None,
     ):
         """Fit another stage of ``n_trees_per_iteration_`` trees."""
-        # FIXME: Replace assert by raise ValueError.
-        assert sample_mask.dtype == bool
+        if sample_mask.dtype != bool:
+            raise ValueError("Only dtype bool is allowed for sample_mask.")
         original_y = y
 
         if isinstance(self._loss, HuberLoss):
-            set_huber_delta(loss=self._loss, y_true=y, raw_prediction=raw_predictions)
+            set_huber_delta(
+                loss=self._loss,
+                y_true=y,
+                raw_prediction=raw_predictions,
+                sample_weight=sample_weight,
+            )
         # TODO: Without oob, i.e. with self.subsample = 1.0, we could call
         # self._loss.loss_gradient and use it to set train_score_.
         # But note that train_score_[i] is the score AFTER fitting the i-th tree.
@@ -849,11 +852,13 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # subsampling
             if do_oob:
                 sample_mask = _random_sample_mask(n_samples, n_inbag, random_state)
+                y_oob_masked = y[~sample_mask]
+                sample_weight_oob_masked = sample_weight[~sample_mask]
                 if i == 0:  # store the initial loss to compute the OOB score
                     initial_loss = factor * self._loss(
-                        y[~sample_mask],
-                        raw_predictions[~sample_mask],
-                        sample_weight[~sample_mask],
+                        y_true=y_oob_masked,
+                        raw_prediction=raw_predictions[~sample_mask],
+                        sample_weight=sample_weight_oob_masked,
                     )
 
             # fit next stage of trees
@@ -872,14 +877,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # track loss
             if do_oob:
                 self.train_score_[i] = factor * self._loss(
-                    y[sample_mask],
-                    raw_predictions[sample_mask],
-                    sample_weight[sample_mask],
+                    y_true=y[sample_mask],
+                    raw_prediction=raw_predictions[sample_mask],
+                    sample_weight=sample_weight[sample_mask],
                 )
                 self.oob_scores_[i] = factor * self._loss(
-                    y[~sample_mask],
-                    raw_predictions[~sample_mask],
-                    sample_weight[~sample_mask],
+                    y_true=y_oob_masked,
+                    raw_prediction=raw_predictions[~sample_mask],
+                    sample_weight=sample_weight_oob_masked,
                 )
                 previous_loss = initial_loss if i == 0 else self.oob_scores_[i - 1]
                 self.oob_improvement_[i] = previous_loss - self.oob_scores_[i]
@@ -887,7 +892,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             else:
                 # no need to fancy index w/ no subsampling
                 self.train_score_[i] = factor * self._loss(
-                    y, raw_predictions, sample_weight
+                    y_true=y,
+                    raw_prediction=raw_predictions,
+                    sample_weight=sample_weight,
                 )
 
             if self.verbose > 0:
