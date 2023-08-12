@@ -20,17 +20,11 @@ information on this dataset.
 # License: BSD 3 clause
 
 # %%
-# Setup: Import the data and prepare the plot
-# -------------------------------------------
+# Setup: Import the iris dataset
+# ------------------------------
 from sklearn import datasets
 
-# import some data to play with
 iris = datasets.load_iris()
-X = iris.data[:, :2]  # we only take the first two features.
-y = iris.target
-
-x_min, x_max = X[:, 0].min() - 0.5, X[:, 0].max() + 0.5
-y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5
 
 
 # %%
@@ -41,19 +35,18 @@ import matplotlib.pyplot as plt  # noqa: E402
 # unused but required import for doing 3d projections with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401, E402
 
+# Prepare the plot size
 plt.figure(2, figsize=(8, 6))
 plt.clf()
 
-# Plot the training points
-plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Set1, edgecolor="k")
-plt.xlabel("Sepal length")
-plt.ylabel("Sepal width")
+# Plot the training points across the 1st and 2nd feature
+# (sepal length and sepal width)
+plt.scatter(iris.data[:, 0], iris.data[:, 1], c=iris.target)
+plt.xlabel("Sepal Length")
+plt.ylabel("Sepal Width")
 
-plt.xlim(x_min, x_max)
-plt.ylim(y_min, y_max)
 plt.xticks(())
 plt.yticks(())
-
 # Each point in the scatter plot refers to one of the 150 iris flowers
 # in the dataset, with the color indicating their respective type
 # (Setosa, Versicolour, and Virginica).
@@ -65,8 +58,8 @@ plt.yticks(())
 # %%
 # Plot a PCA representation
 # -------------------------
-# Let's apply a PCA to the iris dataset and then plot the first three
-# dimensions.
+# Let's apply a PCA to the iris dataset and then plot the irises
+# across the first three PCA dimensions.
 # This will give us a better understanding of our analysis results.
 from sklearn.decomposition import PCA  # noqa: E402
 
@@ -78,25 +71,23 @@ ax.scatter(
     X_reduced[:, 0],
     X_reduced[:, 1],
     X_reduced[:, 2],
-    c=y,
-    cmap=plt.cm.Set1,
-    edgecolor="k",
+    c=iris.target,
     s=40,
 )
 
 ax.set_title("First three PCA dimensions")
-ax.set_xlabel("1st eigenvector")
+ax.set_xlabel("1st Eigenvector")
 ax.xaxis.set_ticklabels([])
-ax.set_ylabel("2nd eigenvector")
+ax.set_ylabel("2nd Eigenvector")
 ax.yaxis.set_ticklabels([])
-ax.set_zlabel("3rd eigenvector")
+ax.set_zlabel("3rd Eigenvector")
 ax.zaxis.set_ticklabels([])
 
 plt.show()
 
 # We've now applied a PCA analysis and plotted the irises
 # along the first three dimensions (= Eigenvectors).
-# Looks like the first dimension already does a prettty good job
+# Looks like the first dimension already does a pretty good job
 # in differentiating the types of irises!
 
 # %%
