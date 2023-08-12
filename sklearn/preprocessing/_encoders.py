@@ -603,7 +603,7 @@ class OneHotEncoder(_BaseEncoder):
         .. versionadded:: 1.2
            `sparse` was renamed to `sparse_output`
 
-    dtype : number type, default=float
+    dtype : number type, default=np.float64
         Desired dtype of output.
 
     handle_unknown : {'error', 'ignore', 'infrequent_if_exist'}, \
