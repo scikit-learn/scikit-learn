@@ -23,7 +23,6 @@ information on this dataset.
 # Setup: Import the data and prepare the plot
 # -------------------------------------------
 from sklearn import datasets
-from sklearn.decomposition import PCA
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -69,6 +68,8 @@ plt.yticks(())
 # Let's apply a PCA to the iris dataset and then plot the first three
 # dimensions.
 # This will give us a better understanding of our analysis results.
+from sklearn.decomposition import PCA  # noqa: E402
+
 fig = plt.figure(1, figsize=(8, 6))
 ax = fig.add_subplot(111, projection="3d", elev=-150, azim=110)
 
