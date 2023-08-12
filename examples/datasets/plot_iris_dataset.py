@@ -1,7 +1,7 @@
 """
-=========================================================
+================
 The Iris Dataset
-=========================================================
+================
 This data sets consists of 3 different types of irises'
 (Setosa, Versicolour, and Virginica) petal and sepal
 length, stored in a 150x4 numpy.ndarray
@@ -21,7 +21,7 @@ information on this dataset.
 
 # %%
 # Setup: Import the data and prepare the plot
-# -------------------------------------------------
+# -------------------------------------------
 import matplotlib.pyplot as plt
 
 # unused but required import for doing 3d projections with matplotlib < 3.2
