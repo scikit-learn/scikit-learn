@@ -31,6 +31,13 @@ from ..metrics._scorer import _check_multimetric_scoring, get_scorer_names
 from ..utils import check_random_state
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._tags import _safe_tags
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
 from ..utils.metaestimators import available_if
 from ..utils.parallel import Parallel, delayed
 from ..utils.random import sample_without_replacement
@@ -370,6 +377,37 @@ def _estimator_has(attr):
     return check
 
 
+def _get_params_for_method(obj, method, params):
+    """Get routed parameters for a given method.
+
+    If metadata routing is not enabled, params has to be empty, and this method
+    returns an empty dict. If not, routing is done and the right metadata are
+    returned to be passed as kwargs to the underlying estimator's method.
+
+    Parameters
+    ----------
+    obj : object
+        The router object, i.e. the *SearchCV instance.
+
+    method : str
+        The method for which the routing is done.
+
+    params : dict
+        The parameters to be routed.
+
+    Returns
+    -------
+    routed_params : dict
+        Routed params of the form ``process_routing().estimator.method``.
+    """
+    _raise_for_params(params, obj, method)
+
+    if _routing_enabled():
+        return process_routing(obj, method, **params).estimator[method]
+    else:
+        return dict()
+
+
 class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for hyper parameter search with cross-validation."""
 
@@ -429,7 +467,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             },
         }
 
-    def score(self, X, y=None):
+    def score(self, X, y=None, **params):
         """Return the score on the given data, if the estimator has been refit.
 
         This uses the score defined by ``scoring`` where provided, and the
@@ -446,6 +484,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
+        **params : dict
+            Parameters to be passed the underlying scorer(s).
+
+            Only available if `enable_metadata_routing=True`. See the
+            :ref:`User Guide <metadata_routing>`.
+
+            ..versionadded:: 1.4
+
         Returns
         -------
         score : float
@@ -454,6 +500,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         _check_refit(self, "score")
         check_is_fitted(self)
+
+        score_params = _get_params_for_method(self, "score", params)
+
         if self.scorer_ is None:
             raise ValueError(
                 "No score function explicitly defined, "
@@ -465,10 +514,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 scorer = self.scorer_[self.refit]
             else:
                 scorer = self.scorer_
-            return scorer(self.best_estimator_, X, y)
+            return scorer(self.best_estimator_, X, y, **score_params)
 
         # callable
-        score = self.scorer_(self.best_estimator_, X, y)
+        score = self.scorer_(self.best_estimator_, X, y, **score_params)
         if self.multimetric_:
             score = score[self.refit]
         return score
@@ -497,7 +546,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         return self.best_estimator_.score_samples(X)
 
     @available_if(_estimator_has("predict"))
-    def predict(self, X):
+    def predict(self, X, **params):
         """Call predict on the estimator with the best found parameters.
 
         Only available if ``refit=True`` and the underlying estimator supports
@@ -509,6 +558,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Must fulfill the input assumptions of the
             underlying estimator.
 
+        **params : dict
+            Parameters to be passed the underlying estimator's ``predict``.
+
+            Only available if `enable_metadata_routing=True`. See the
+            :ref:`User Guide <metadata_routing>`.
+
+            ..versionadded:: 1.4
+
         Returns
         -------
         y_pred : ndarray of shape (n_samples,)
@@ -516,10 +573,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             the best found parameters.
         """
         check_is_fitted(self)
-        return self.best_estimator_.predict(X)
+        return self.best_estimator_.predict(
+            X, **_get_params_for_method(self, "predict", params)
+        )
 
     @available_if(_estimator_has("predict_proba"))
-    def predict_proba(self, X):
+    def predict_proba(self, X, **params):
         """Call predict_proba on the estimator with the best found parameters.
 
         Only available if ``refit=True`` and the underlying estimator supports
@@ -531,6 +590,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Must fulfill the input assumptions of the
             underlying estimator.
 
+        **params : dict
+            Parameters to be passed the underlying estimator's ``predict_proba``.
+
+            Only available if `enable_metadata_routing=True`. See the
+            :ref:`User Guide <metadata_routing>`.
+
+            ..versionadded:: 1.4
+
         Returns
         -------
         y_pred : ndarray of shape (n_samples,) or (n_samples, n_classes)
@@ -539,10 +606,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             to that in the fitted attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        return self.best_estimator_.predict_proba(X)
+        return self.best_estimator_.predict_proba(
+            X, **_get_params_for_method(self, "predict_proba", params)
+        )
 
     @available_if(_estimator_has("predict_log_proba"))
-    def predict_log_proba(self, X):
+    def predict_log_proba(self, X, **params):
         """Call predict_log_proba on the estimator with the best found parameters.
 
         Only available if ``refit=True`` and the underlying estimator supports
@@ -554,6 +623,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Must fulfill the input assumptions of the
             underlying estimator.
 
+        **params : dict
+            Parameters to be passed the underlying estimator's ``predict_log_proba``.
+
+            Only available if `enable_metadata_routing=True`. See the
+            :ref:`User Guide <metadata_routing>`.
+
+            ..versionadded:: 1.4
+
         Returns
         -------
         y_pred : ndarray of shape (n_samples,) or (n_samples, n_classes)
@@ -562,10 +639,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             corresponds to that in the fitted attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        return self.best_estimator_.predict_log_proba(X)
+        return self.best_estimator_.predict_log_proba(
+            X, **_get_params_for_method(self, "predict_log_proba", params)
+        )
 
     @available_if(_estimator_has("decision_function"))
-    def decision_function(self, X):
+    def decision_function(self, X, **params):
         """Call decision_function on the estimator with the best found parameters.
 
         Only available if ``refit=True`` and the underlying estimator supports
@@ -577,6 +656,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Must fulfill the input assumptions of the
             underlying estimator.
 
+        **params : dict
+            Parameters to be passed the underlying estimator's ``decision_function``.
+
+            Only available if `enable_metadata_routing=True`. See the
+            :ref:`User Guide <metadata_routing>`.
+
+            ..versionadded:: 1.4
+
         Returns
         -------
         y_score : ndarray of shape (n_samples,) or (n_samples, n_classes) \
@@ -585,10 +672,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             the best found parameters.
         """
         check_is_fitted(self)
-        return self.best_estimator_.decision_function(X)
+        return self.best_estimator_.decision_function(
+            X, **_get_params_for_method(self, "decision_function", params)
+        )
 
     @available_if(_estimator_has("transform"))
-    def transform(self, X):
+    def transform(self, X, **params):
         """Call transform on the estimator with the best found parameters.
 
         Only available if the underlying estimator supports ``transform`` and
@@ -600,6 +689,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Must fulfill the input assumptions of the
             underlying estimator.
 
+        **params : dict
+            Parameters to be passed the underlying estimator's ``transform``.
+
+            Only available if `enable_metadata_routing=True`. See the
+            :ref:`User Guide <metadata_routing>`.
+
+            ..versionadded:: 1.4
+
         Returns
         -------
         Xt : {ndarray, sparse matrix} of shape (n_samples, n_features)
@@ -607,10 +704,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             the best found parameters.
         """
         check_is_fitted(self)
-        return self.best_estimator_.transform(X)
+        return self.best_estimator_.transform(
+            X, **_get_params_for_method(self, "transform", params)
+        )
 
     @available_if(_estimator_has("inverse_transform"))
-    def inverse_transform(self, Xt):
+    def inverse_transform(self, Xt, **params):
         """Call inverse_transform on the estimator with the best found params.
 
         Only available if the underlying estimator implements
@@ -622,6 +721,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Must fulfill the input assumptions of the
             underlying estimator.
 
+        **params : dict
+            Parameters to be passed the underlying estimator's ``inverse_transform``.
+
+            Only available if `enable_metadata_routing=True`. See the
+            :ref:`User Guide <metadata_routing>`.
+
+            ..versionadded:: 1.4
+
         Returns
         -------
         X : {ndarray, sparse matrix} of shape (n_samples, n_features)
@@ -629,7 +736,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             estimator with the best found parameters.
         """
         check_is_fitted(self)
-        return self.best_estimator_.inverse_transform(Xt)
+        return self.best_estimator_.inverse_transform(
+            Xt, **_get_params_for_method(self, "inverse_transform", params)
+        )
 
     @property
     def n_features_in_(self):
@@ -1056,6 +1165,31 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 )
 
         return results
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.4
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add(
+                estimator=self.estimator,
+                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            )
+            .add(self.scorer, MethodMapping("score"))
+            .add(self.cv, MethodMapping("split"))
+        )
+        return router
 
 
 class GridSearchCV(BaseSearchCV):
