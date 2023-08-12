@@ -51,8 +51,8 @@ plt.yticks(())
 # in the dataset, with the color indicating their respective type
 # (Setosa, Versicolour, and Virginica).
 # Just based on the the 2 dimensions used in this plot - sepal width
-# and sepal length - you can already see a patttern, but there's still
-# overlap. Let's apply a PCA analysis to bettter differentiatte between
+# and sepal length - you can already see a pattern, but there's still
+# overlap. Let's apply a PCA analysis to better differentiate between
 # the three types!
 
 # %%
