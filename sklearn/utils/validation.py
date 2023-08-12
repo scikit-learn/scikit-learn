@@ -1076,7 +1076,8 @@ def check_X_y(
         performed if the dtype of the input is not in the list.
 
     order : {'F', 'C'}, default=None
-        Whether an array will be forced to be fortran or c-style.
+        Whether an array will be forced to be fortran or c-style. If
+        `None`, then the input data's order is preserved when possible.
 
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might

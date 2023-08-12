@@ -186,6 +186,9 @@ class _ArrayAPIWrapper:
     def __getattr__(self, name):
         return getattr(self._namespace, name)
 
+    def __eq__(self, other):
+        return self._namespace == other._namespace
+
     def take(self, X, indices, *, axis=0):
         # When array_api supports `take` we can use this directly
         # https://github.com/data-apis/array-api/issues/177
