@@ -84,6 +84,7 @@ ax.set_zlabel("3rd Eigenvector")
 ax.zaxis.set_ticklabels([])
 
 plt.show()
+
 # %%
 # PCA will create 3 new features that are a linear combination of the
 # 4 original features. In addition, this transform maximizes the variance.
