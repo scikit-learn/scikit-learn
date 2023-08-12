@@ -52,15 +52,14 @@ plt.yticks(())
 # (Setosa, Versicolour, and Virginica).
 # Just based on the the 2 dimensions used in this plot - sepal width
 # and sepal length - you can already see a pattern, but there's still
-# overlap. Let's apply a PCA analysis to better differentiate between
-# the three types!
+# overlap.
 
 # %%
 # Plot a PCA representation
 # -------------------------
-# Let's apply a PCA to the iris dataset and then plot the irises
-# across the first three PCA dimensions.
-# This will give us a better understanding of our analysis results.
+# Let's apply a Principal Component Analysis (PCA) to the iris dataset
+# and then plot the irises across the first three PCA dimensions.
+# This will allow us to better differentiate between the three types!
 from sklearn.decomposition import PCA  # noqa: E402
 
 fig = plt.figure(1, figsize=(8, 6))
@@ -84,10 +83,8 @@ ax.set_zlabel("3rd Eigenvector")
 ax.zaxis.set_ticklabels([])
 
 plt.show()
-
-# We've now applied a PCA analysis and plotted the irises
-# along the first three dimensions (= Eigenvectors).
-# Looks like the first dimension already does a pretty good job
-# in differentiating the types of irises!
-
 # %%
+# PCA will create 3 new features that are a linear combination of the
+# 4 original features. In addition, this transform maximizes the variance.
+# With this transformation, we see that we can identify each species using
+# only the first feature (i.e. first eigenvalues).
