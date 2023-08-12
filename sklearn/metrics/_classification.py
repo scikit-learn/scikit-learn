@@ -367,6 +367,12 @@ def confusion_matrix(
     else:
         dtype = np.float64
 
+    if n_labels==1:
+        return coo_matrix((sample_weight, (y_true, y_pred)),
+                shape=(2, 2),
+                dtype=dtype,
+            ).toarray()
+
     cm = coo_matrix(
         (sample_weight, (y_true, y_pred)),
         shape=(n_labels, n_labels),
@@ -1914,15 +1920,25 @@ def class_likelihood_ratios(
         labels=labels,
     )
 
-    # Case when `y_test` contains a single class and `y_test == y_pred`.
+    if labels is None:
+        labels = unique_labels(y_true, y_pred)
+    else:
+        labels = np.asarray(labels)
+        n_labels = labels.size
+        if n_labels == 0:
+            raise ValueError("'labels' should contains at least one label.")
+        elif y_true.size == 0:
+            return np.zeros((n_labels, n_labels), dtype=int)
+        elif len(np.intersect1d(y_true, labels)) == 0:
+            raise ValueError("At least one label specified must be in y_true")
+    n_labels = labels.size
+
+    # Case when `y_test` contains a single class and `y_test == y_pred`. (is solved Now)
     # This may happen when cross-validating imbalanced data and should
     # not be interpreted as a perfect score.
-    if cm.shape == (1, 1):
-        msg = "samples of only one class were seen during testing "
-        if raise_warning:
-            warnings.warn(msg, UserWarning, stacklevel=2)
-        positive_likelihood_ratio = np.nan
-        negative_likelihood_ratio = np.nan
+    if (n_labels,n_labels)==(1,1):
+        positive_likelihood_ratio=float("inf")
+        negative_likelihood_ratio=0
     else:
         tn, fp, fn, tp = cm.ravel()
         support_pos = tp + fn
