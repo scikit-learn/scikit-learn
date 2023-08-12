@@ -50,9 +50,10 @@ _ = ax.legend(
 # Each point in the scatter plot refers to one of the 150 iris flowers
 # in the dataset, with the color indicating their respective type
 # (Setosa, Versicolour, and Virginica).
-# Just based on the the 2 dimensions used in this plot - sepal width
-# and sepal length - you can already see a pattern, but there's still
-# overlap.
+# You can already see a pattern regarding the Setosa type, which is
+# easily identifiable based on its short and wide sepal. Only
+# considering these 2 dimensions, sepal width and length, there's still
+# overlap between the Versicolor and Virginica types.
 
 # %%
 # Plot a PCA representation
