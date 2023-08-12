@@ -20,8 +20,8 @@ information on this dataset.
 # License: BSD 3 clause
 
 # %%
-# Setup: Import the iris dataset
-# ------------------------------
+# Loading the iris dataset
+# ------------------------
 from sklearn import datasets
 
 iris = datasets.load_iris()
