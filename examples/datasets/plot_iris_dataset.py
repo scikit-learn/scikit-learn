@@ -41,12 +41,12 @@ plt.clf()
 
 # Plot the training points across the 1st and 2nd feature
 # (sepal length and sepal width)
-plt.scatter(iris.data[:, 0], iris.data[:, 1], c=iris.target)
-plt.xlabel("Sepal Length")
-plt.ylabel("Sepal Width")
-
-plt.xticks(())
-plt.yticks(())
+_, ax = plt.subplots()
+scatter = ax.scatter(iris.data[:, 0], iris.data[:, 1], c=iris.target)
+ax.set(xlabel=iris.feature_names[0], ylabel=iris.feature_names[1])
+_ = ax.legend(
+    scatter.legend_elements()[0], iris.target_names, loc="lower right", title="Classes"
+)
 # Each point in the scatter plot refers to one of the 150 iris flowers
 # in the dataset, with the color indicating their respective type
 # (Setosa, Versicolour, and Virginica).
