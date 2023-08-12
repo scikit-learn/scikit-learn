@@ -1224,21 +1224,24 @@ class KMeans(_BaseKMeans):
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
-        'k-means++' : selects initial cluster centroids using sampling based on
-        an empirical probability distribution of the points' contribution to the
-        overall inertia. This technique speeds up convergence. The algorithm
-        implemented is "greedy k-means++". It differs from the vanilla k-means++
-        by making several trials at each sampling step and choosing the best centroid
-        among them.
+        * 'k-means++' : selects initial cluster centroids using sampling \
+            based on an empirical probability distribution of the points' \
+            contribution to the overall inertia. This technique speeds up \
+            convergence. The algorithm implemented is "greedy k-means++". It \
+            differs from the vanilla k-means++ by making several trials at \
+            each sampling step and choosing the best centroid among them.
 
-        'random': choose `n_clusters` observations (rows) at random from data
-        for the initial centroids.
+        * 'random': choose `n_clusters` observations (rows) at random from \
+        data for the initial centroids.
 
-        If an array is passed, it should be of shape (n_clusters, n_features)
+        * If an array is passed, it should be of shape (n_clusters, n_features)\
         and gives the initial centers.
 
-        If a callable is passed, it should take arguments X, n_clusters and a
+        * If a callable is passed, it should take arguments X, n_clusters and a\
         random state and return an initialization.
+
+        For an example of how to use the different `init` strategy, see the example
+        entitled :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
 
     n_init : 'auto' or int, default=10
         Number of times the k-means algorithm is run with different centroid
