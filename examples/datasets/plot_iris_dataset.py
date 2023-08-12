@@ -22,11 +22,6 @@ information on this dataset.
 # %%
 # Setup: Import the data and prepare the plot
 # -------------------------------------------
-import matplotlib.pyplot as plt
-
-# unused but required import for doing 3d projections with matplotlib < 3.2
-import mpl_toolkits.mplot3d  # noqa: F401
-
 from sklearn import datasets
 from sklearn.decomposition import PCA
 
@@ -42,6 +37,11 @@ y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5
 # %%
 # Scatter Plot of the Iris dataset
 # --------------------------------
+import matplotlib.pyplot as plt  # noqa: E402
+
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401, E402
+
 plt.figure(2, figsize=(8, 6))
 plt.clf()
 
