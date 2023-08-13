@@ -27,7 +27,11 @@ from scipy.stats import rankdata
 from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone, is_classifier
 from ..exceptions import NotFittedError
 from ..metrics import check_scoring
-from ..metrics._scorer import _check_multimetric_scoring, get_scorer_names
+from ..metrics._scorer import (
+    _check_multimetric_scoring,
+    _MultimetricScorer,
+    get_scorer_names,
+)
 from ..utils import Bunch, check_random_state
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._tags import _safe_tags
@@ -863,6 +867,55 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             best_index = results[f"rank_test_{refit_metric}"].argmin()
         return best_index
 
+    def _get_scorers(self, convert_multimetric):
+        """Get the scorer(s) to be used.
+
+        This is used in ``fit`` and ``get_metadata_routing``.
+
+        Parameters
+        ----------
+        convert_multimetric : bool
+            Whether to convert a dict of scorers to a _MultimetricScorer. This
+            is used in ``get_metadata_routing`` to include the routing info for
+            multiple scorers.
+
+        Returns
+        -------
+        scorers, refit_metric
+        """
+        refit_metric = "score"
+
+        if callable(self.scoring):
+            scorers = self.scoring
+        elif self.scoring is None or isinstance(self.scoring, str):
+            scorers = check_scoring(self.estimator, self.scoring)
+        else:
+            scorers = _check_multimetric_scoring(self.estimator, self.scoring)
+            self._check_refit_for_multimetric(scorers)
+            refit_metric = self.refit
+            if convert_multimetric and isinstance(scorers, dict):
+                scorers = _MultimetricScorer(
+                    scorers=scorers, raise_exc=(self.error_score == "raise")
+                )
+
+        return scorers, refit_metric
+
+    def _get_routed_params_for_fit(self, params):
+        """Get the parameters to be used for routing.
+
+        This is a method instead of a snippet in ``fit`` since it's used twice,
+        here in ``fit``, and in ``HalvingRandomSearchCV.fit``.
+        """
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **params)
+        else:
+            routed_params = Bunch(
+                estimator=Bunch(fit=params),
+                cv=Bunch(split={}),
+                scorer=Bunch(score={}),
+            )
+        return routed_params
+
     @_fit_context(
         # *SearchCV.estimator is not validated yet
         prefer_skip_nested_validation=False
@@ -897,28 +950,15 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Instance of fitted estimator.
         """
         estimator = self.estimator
-        refit_metric = "score"
-
-        if callable(self.scoring):
-            scorers = self.scoring
-        elif self.scoring is None or isinstance(self.scoring, str):
-            scorers = check_scoring(self.estimator, self.scoring)
-        else:
-            scorers = _check_multimetric_scoring(self.estimator, self.scoring)
-            self._check_refit_for_multimetric(scorers)
-            refit_metric = self.refit
+        # Here we keep a dict of scorers as is, and only convert to a
+        # _MultimetricScorer at a later stage. Issue:
+        # https://github.com/scikit-learn/scikit-learn/issues/27001
+        scorers, refit_metric = self._get_scorers(convert_multimetric=False)
 
         X, y = indexable(X, y)
         params = _check_method_params(X, params=params)
 
-        if _routing_enabled():
-            routed_params = process_routing(self, "fit", **params)
-        else:
-            routed_params = Bunch(
-                estimator=Bunch(fit=params),
-                cv=Bunch(split={}),
-                scorer=Bunch(score={}),
-            )
+        routed_params = self._get_routed_params_for_fit(params)
 
         cv_orig = check_cv(self.cv, y, classifier=is_classifier(estimator))
         n_splits = cv_orig.get_n_splits(X, y, **routed_params.splitter.split)
@@ -1185,29 +1225,28 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = (
-            MetadataRouter(owner=self.__class__.__name__)
-            .add(
-                estimator=self.estimator,
-                method_mapping=MethodMapping()
-                .add(caller="fit", callee="fit")
-                .add(caller="fit", callee="score")
-                .add(caller="predict", callee="predict")
-                .add(caller="predict_proba", callee="predict_proba")
-                .add(caller="predict_log_proba", callee="predict_log_proba")
-                .add(caller="decision_function", callee="decision_function")
-                .add(caller="transform", callee="transform")
-                .add(caller="inverse_transform", callee="inverse_transform"),
-            )
-            .add(
-                # TODO: get actual scorer
-                self.scorer,
-                MethodMapping()
-                .add(caller="score", callee="score")
-                .add(caller="fit", callee="score"),
-            )
-            .add(self.cv, MethodMapping().add(caller="fit", callee="split"))
+        router = MetadataRouter(owner=self.__class__.__name__)
+        router.add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="fit")
+            .add(caller="fit", callee="score")
+            .add(caller="predict", callee="predict")
+            .add(caller="predict_proba", callee="predict_proba")
+            .add(caller="predict_log_proba", callee="predict_log_proba")
+            .add(caller="decision_function", callee="decision_function")
+            .add(caller="transform", callee="transform")
+            .add(caller="inverse_transform", callee="inverse_transform"),
         )
+
+        scorer = self._get_scorers(convert_multimetric=True)
+        router.add(
+            scorer,
+            MethodMapping()
+            .add(caller="score", callee="score")
+            .add(caller="fit", callee="score"),
+        )
+        router.add(self.cv, MethodMapping().add(caller="fit", callee="split"))
         return router
 
 
