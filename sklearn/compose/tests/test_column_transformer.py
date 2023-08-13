@@ -2306,13 +2306,13 @@ def test_metadata_routing_no_fit_transform():
 
     X = np.array([[0, 1, 2], [2, 4, 6]]).T
     y = [1, 2, 3]
-    registry = _Registry()
+    _Registry()
     sample_weight, metadata = [1], "a"
     trs = ColumnTransformer(
         [
             (
                 "trans",
-                ConsumingTransformer(registry=registry)
+                NoFitTransform()
                 .set_fit_request(sample_weight=True, metadata=True)
                 .set_transform_request(sample_weight=True, metadata=True),
                 [0],
