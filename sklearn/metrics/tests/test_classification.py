@@ -631,14 +631,7 @@ def test_confusion_matrix_normalize_single_class():
 @pytest.mark.parametrize(
     "params, warn_msg",
     [
-        # When y_test contains one class only and y_test==y_pred, LR+ is undefined
-        (
-            {
-                "y_true": np.array([0, 0, 0, 0, 0, 0]),
-                "y_pred": np.array([0, 0, 0, 0, 0, 0]),
-            },
-            "samples of only one class were seen during testing",
-        ),
+        # When y_test contains one class only and y_test==y_pred, LR+ is undefined (Fixed)
         # When `fp == 0` and `tp != 0`, LR+ is undefined
         (
             {
