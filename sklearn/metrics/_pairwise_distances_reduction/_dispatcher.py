@@ -455,7 +455,7 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
         excluded = {
             # Euclidean is technically usable for ArgKminClassMode but it would not be competitive.
             # TODO: implement Euclidean specialization using GEMM.
-            "euclidean"
+            "euclidean",
             "sqeuclidean",
         }
         return list(set(BaseDistancesReductionDispatcher.valid_metrics()) - excluded)
