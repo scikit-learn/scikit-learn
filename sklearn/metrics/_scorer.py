@@ -950,11 +950,7 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
         return get_scorer(scoring)
     if scoring is None:
         if hasattr(estimator, "score"):
-            # We need to set the metadata requests of the _PassthroughScorer to
-            # be the same as what the user has set for the original estimator.
-            return _PassthroughScorer(estimator).set_score_request(
-                **get_routing_for_object(estimator).score.requests
-            )
+            return _PassthroughScorer(estimator)
         elif allow_none:
             return None
         else:

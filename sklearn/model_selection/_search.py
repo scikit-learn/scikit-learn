@@ -909,9 +909,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **params)
         else:
+            params = params.copy()
+            groups = params.pop("groups", None)
             routed_params = Bunch(
                 estimator=Bunch(fit=params),
-                cv=Bunch(split={}),
+                splitter=Bunch(split={"groups": groups}),
                 scorer=Bunch(score={}),
             )
         return routed_params
@@ -1011,7 +1013,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     )
                     for (cand_idx, parameters), (split_idx, (train, test)) in product(
                         enumerate(candidate_params),
-                        enumerate(cv.split(X, y, routed_params.splitter.split)),
+                        enumerate(cv.split(X, y, **routed_params.splitter.split)),
                     )
                 )
 
@@ -1241,12 +1243,15 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         scorer = self._get_scorers(convert_multimetric=True)
         router.add(
-            scorer,
-            MethodMapping()
+            scorer=scorer,
+            method_mapping=MethodMapping()
             .add(caller="score", callee="score")
             .add(caller="fit", callee="score"),
         )
-        router.add(self.cv, MethodMapping().add(caller="fit", callee="split"))
+        router.add(
+            splitter=self.cv,
+            method_mapping=MethodMapping().add(caller="fit", callee="split"),
+        )
         return router
 
 
