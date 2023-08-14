@@ -453,7 +453,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
     @classmethod
     def valid_metrics(cls) -> List[str]:
         excluded = {
-            # Euclidean is technically usable for ArgKminClassMode but it would not be competitive.
+            # Euclidean is technically usable for ArgKminClassMode
+            # but its current implementation would not be competitive.
             # TODO: implement Euclidean specialization using GEMM.
             "euclidean",
             "sqeuclidean",
