@@ -146,28 +146,6 @@ purpose.
     Scikit-learn 1.1 and later requires Python 3.8 or newer.
 
 
-.. _install_on_apple_silicon_m1:
-
-Installing on Apple Silicon M1 hardware
-=======================================
-
-The recently introduced `macos/arm64` platform (sometimes also known as
-`macos/aarch64`) requires the open source community to upgrade the build
-configuration and automation to properly support it.
-
-At the time of writing (January 2021), the only way to get a working
-installation of scikit-learn on this hardware is to install scikit-learn and its
-dependencies from the conda-forge distribution, for instance using the miniforge
-installers:
-
-https://github.com/conda-forge/miniforge
-
-The following issue tracks progress on making it possible to install
-scikit-learn from PyPI with pip:
-
-https://github.com/scikit-learn/scikit-learn/issues/19137
-
-
 .. _install_by_distribution:
 
 Third party distributions of scikit-learn
