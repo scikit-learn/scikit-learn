@@ -27,8 +27,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     .. note::
         `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-        cross fitting scheme is used in `fit_transform` for encoding. See the
-        :ref:`User Guide <target_encoder>` for details.
+        :term:`cross fitting` scheme is used in `fit_transform` for encoding.
+        See the :ref:`User Guide <target_encoder>` for details.
 
     .. versionadded:: 1.3
 
@@ -68,7 +68,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         If `"auto"`, then `smooth` is set to an empirical Bayes estimate.
 
     cv : int, default=5
-        Determines the number of folds in the cross fitting strategy used in
+        Determines the number of folds in the :term:`cross fitting` strategy used in
         :meth:`fit_transform`. For classification targets, `StratifiedKFold` is used
         and for continuous targets, `KFold` is used.
 
@@ -204,8 +204,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-            cross fitting scheme is used in `fit_transform` for encoding. See the
-            :ref:`User Guide <target_encoder>`. for details.
+            :term:`cross fitting` scheme is used in `fit_transform` for encoding.
+            See the :ref:`User Guide <target_encoder>`. for details.
 
         Parameters
         ----------
@@ -260,8 +260,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-            cross fitting scheme is used in `fit_transform` for encoding. See the
-            :ref:`User Guide <target_encoder>`. for details.
+            :term:`cross fitting` scheme is used in `fit_transform` for encoding.
+            See the :ref:`User Guide <target_encoder>`. for details.
 
         Parameters
         ----------
@@ -273,14 +273,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         X_trans : ndarray of shape (n_samples, n_features)
             Transformed input.
         """
-        X_ordinal, X_valid = self._transform(
+        X_ordinal, X_known_mask = self._transform(
             X, handle_unknown="ignore", force_all_finite="allow-nan"
         )
         X_out = np.empty_like(X_ordinal, dtype=np.float64)
         self._transform_X_ordinal(
             X_out,
             X_ordinal,
-            ~X_valid,
+            ~X_known_mask,
             slice(None),
             self.encodings_,
             self.target_mean_,
