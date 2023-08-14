@@ -216,8 +216,8 @@ the best set of parameters. Read more in the :ref:`User Guide
 Next steps
 ----------
 
-We have briefly covered estimator fitting and predicting, pre-processing
-steps, pipelines, cross-validation tools and automatic hyper-parameter
+We have briefly covered estimator fitting and prediction, pre-processing
+steps, pipelines, cross-validation tools, and automatic hyper-parameter
 searches. This guide should give you an overview of some of the main
 features of the library, but there is much more to ``scikit-learn``!
 
