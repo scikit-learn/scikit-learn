@@ -7,7 +7,7 @@ Installing scikit-learn
 There are different ways to install scikit-learn:
 
   * :ref:`Install the latest official release <install_official_release>`. This
-    is the best approach for most users. It will provide a stable version
+    is the best approach for most users. It will provide a stable version,
     and pre-built packages are available for most platforms.
 
   * Install the version of scikit-learn provided by your
@@ -17,9 +17,9 @@ There are different ways to install scikit-learn:
     It might not provide the latest release version.
 
   * :ref:`Building the package from source
-    <install_bleeding_edge>`. This is best for users who want the
+    <install_bleeding_edge>`. This is the best for users who want the
     latest-and-greatest features and aren't afraid of running
-    brand-new code. This is also needed for users who wish to contribute to the
+    brand-new code. It is also needed for users who wish to contribute to the
     project.
 
 
@@ -107,7 +107,7 @@ In order to check your installation you can use
       ></code></pre></div>
   </div>
 
-Note that in order to avoid potential conflicts with other packages it is
+Note that, in order to avoid potential conflicts with other packages, it is
 strongly recommended to use a `virtual environment (venv)
 <https://docs.python.org/3/tutorial/venv.html>`_ or a `conda environment
 <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_.
@@ -281,11 +281,11 @@ and in the `main`, `conda-forge` and `intel` conda channels:
 
 This package has an Intel optimized version of many estimators. Whenever
 an alternative implementation doesn't exist, scikit-learn implementation
-is used as a fallback. Those optimized solvers come from the oneDAL
+is used as a fallback. These optimized solvers come from the oneDAL
 C++ library and are optimized for the x86_64 architecture, and are
 optimized for multi-core Intel CPUs.
 
-Note that those solvers are not enabled by default, please refer to the
+Note that these solvers are not enabled by default, please refer to the
 `scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/what-is-patching.html>`_
 documentation for more details on usage scenarios. Direct export example:
 
