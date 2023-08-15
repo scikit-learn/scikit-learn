@@ -442,9 +442,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         else:
             n_samples_bootstrap = None
 
-        self._n_samples_bootstrap = (
-            n_samples_bootstrap if n_samples_bootstrap is not None else self._n_samples
-        )
+        self._n_samples_bootstrap = n_samples_bootstrap
 
         self._validate_estimator()
 
