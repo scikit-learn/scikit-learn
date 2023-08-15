@@ -170,6 +170,11 @@ Changelog
 :mod:`sklearn.neighbors`
 ........................
 
+- |Efficiency| :meth:`sklearn.neighbors.KNeighborsRegressor.predict` and
+  :meth:`sklearn.neighbors.KNeighborsRegressor.predict_proba` now efficiently support
+  pairs of dense and sparse datasets.
+  :pr:`27018` by :user:`Julien Jerphanion <jjerphan>`.
+
 - |Fix| Neighbors based estimators now correctly work when `metric="minkowski"` and the
   metric parameter `p` is in the range `0 < p < 1`, regardless of the `dtype` of `X`.
   :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
