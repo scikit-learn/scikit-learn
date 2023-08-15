@@ -71,6 +71,15 @@ Changelog
   and all metadata are passed as keyword arguments. :pr:`26909` by `Adrin
   Jalali`_.
 
+:mod:`sklearn.cluster`
+............................
+
+- |API| : `kdtree` and `balltree` values are now deprecated and are renamed as
+  `kd_tree` and `ball_tree` respectively for the `algorithm` parameter of
+  :class:`cluster.HDBSCAN` ensuring consistency in naming convention.
+  `kdtree` and `balltree` values will be removed in 1.6.
+  :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
@@ -111,6 +120,11 @@ Changelog
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
   initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
 
+- |Efficiency| Improves runtime and memory usage for
+  :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
+  :pr:`26957` by `Thomas Fan`_.
+
 :mod:`sklearn.feature_selection`
 ................................
 
@@ -143,8 +157,23 @@ Changelog
   object in the parameter grid if it's an estimator. :pr:`26786` by `Adrin
   Jalali`_.
 
+- |Feature| :func:`~model_selection.cross_validate`,
+  :func:`~model_selection.cross_val_score`, and
+  :func:`~model_selection.cross_val_predict` now support metadata routing. The
+  metadata are routed to the estimator's `fit`, the scorer, and the CV
+  splitter's `split`. The metadata is accepted via the new `params` parameter.
+  `fit_params` is deprecated and will be removed in version 1.6. `groups`
+  parameter is also not accepted as a separate argument when metadata routing
+  is enabled and should be passed via the `params` parameter. :pr:`26896` by
+  `Adrin Jalali`_.
+
 :mod:`sklearn.neighbors`
 ........................
+
+- |Efficiency| :meth:`sklearn.neighbors.KNeighborsRegressor.predict` and
+  :meth:`sklearn.neighbors.KNeighborsRegressor.predict_proba` now efficiently support
+  pairs of dense and sparse datasets.
+  :pr:`27018` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |Fix| Neighbors based estimators now correctly work when `metric="minkowski"` and the
   metric parameter `p` is in the range `0 < p < 1`, regardless of the `dtype` of `X`.
@@ -153,9 +182,16 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Efficiency| :class:`preprocessing.OrdinalEncoder` avoids calculating
+  missing indices twice to improve efficiency.
+  :pr:`27017` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
 - |Fix| :class:`preprocessing.OneHotEncoder` shows a more informative error message
   when `sparse_output=True` and the output is configured to be pandas.
   :pr:`26931` by `Thomas Fan`_.
+
+- |Enhancement| :func:`sklearn.model_selection.train_test_split` now supports
+  Array API compatible inputs. :pr:`26855` by `Tim Head`_.
 
 :mod:`sklearn.tree`
 ...................
@@ -168,15 +204,36 @@ Changelog
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`, initiated by
   :user:`Patrick O'Reilly <pat-oreilly>`.
 
+
+:mod:`sklearn.neighbors`
+........................
+
+- |API| :class:`neighbors.KNeighborsRegressor` now accepts
+  :class:`metric.DistanceMetric` objects directly via the `metric` keyword
+  argument allowing for the use of accelerated third-party
+  :class:`metric.DistanceMetric` objects.
+  :pr:`26267` by :user:`Meekail Zain <micky774>`
+
 :mod:`sklearn.metrics`
 ......................
 
-- |Performance| Computing pairwise distances via :class:`metrics.DistanceMetric`
+- |Efficiency| Computing pairwise distances via :class:`metrics.DistanceMetric`
   for CSR × CSR,  Dense × CSR, and CSR × Dense datasets is now 1.5x faster.
   :pr:`26765` by :user:`Meekail Zain <micky774>`
 
+- |Efficiency| Computing distances via :class:`metrics.DistanceMetric`
+  for CSR × CSR, Dense × CSR, and CSR × Dense now uses ~50% less memory,
+  and outputs distances in the same dtype as the provided data.
+  :pr:`27006` by :user:`Meekail Zain <micky774>`
+
 :mod:`sklearn.utils`
 ....................
+
+- |Enhancement| :func:`sklearn.utils.estimator_html_repr` dynamically adapts
+  diagram colors based on the browser's `prefers-color-scheme`, providing
+  improved adaptability to dark mode environments.
+  :pr:`26862` by :user:`Andrew Goh Yisheng <9y5>`, `Thomas Fan`_, `Adrin
+  Jalali`_.
 
 - |Enhancement| :class:`~utils.metadata_routing.MetadataRequest` and
   :class:`~utils.metadata_routing.MetadataRouter` now have a ``consumes`` method
