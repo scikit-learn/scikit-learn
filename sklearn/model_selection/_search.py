@@ -491,10 +491,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         **params : dict
             Parameters to be passed the underlying scorer(s).
 
-            Only available if `enable_metadata_routing=True`. See the
-            :ref:`User Guide <metadata_routing>`.
-
             ..versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
@@ -1175,14 +1175,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         router = MetadataRouter(owner=self.__class__.__name__)
         router.add(
             estimator=self.estimator,
-            method_mapping=MethodMapping()
-            .add(caller="fit", callee="fit")
-            .add(caller="predict", callee="predict")
-            .add(caller="predict_proba", callee="predict_proba")
-            .add(caller="predict_log_proba", callee="predict_log_proba")
-            .add(caller="decision_function", callee="decision_function")
-            .add(caller="transform", callee="transform")
-            .add(caller="inverse_transform", callee="inverse_transform"),
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
 
         scorer, _ = self._get_scorers(convert_multimetric=True)
