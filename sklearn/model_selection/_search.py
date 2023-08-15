@@ -505,7 +505,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         _check_refit(self, "score")
         check_is_fitted(self)
 
-        score_params = _get_params_for_method(self, "score", params)
+        _raise_for_params(params, self, "score")
+
+        if _routing_enabled():
+            score_params = process_routing(self, "score", **params).scorer["score"]
+        else:
+            score_params = dict()
 
         if self.scorer_ is None:
             raise ValueError(
@@ -1232,7 +1237,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             estimator=self.estimator,
             method_mapping=MethodMapping()
             .add(caller="fit", callee="fit")
-            .add(caller="fit", callee="score")
             .add(caller="predict", callee="predict")
             .add(caller="predict_proba", callee="predict_proba")
             .add(caller="predict_log_proba", callee="predict_log_proba")
@@ -1241,7 +1245,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             .add(caller="inverse_transform", callee="inverse_transform"),
         )
 
-        scorer = self._get_scorers(convert_multimetric=True)
+        scorer, _ = self._get_scorers(convert_multimetric=True)
         router.add(
             scorer=scorer,
             method_mapping=MethodMapping()
