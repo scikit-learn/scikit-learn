@@ -234,7 +234,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
     >>> clustering.labels_
     array([0, 0, 0, 1, 1, 1])
 
-    For an example of usage, see
+    For a more detailed example see
     :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`.
     """
 
