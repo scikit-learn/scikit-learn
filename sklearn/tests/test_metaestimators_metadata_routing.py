@@ -107,14 +107,8 @@ METAESTIMATORS: list = [
         "init_args": {"param_grid": {"alpha": [0.1, 0.2]}},
         "X": X,
         "y": y,
-        "estimator_routing_methods": [
-            "fit",
-            "predict",
-            "predict_proba",
-            "predict_log_proba",
-            "decision_function",
-        ],
-        "preserves_metadata": False,
+        "estimator_routing_methods": ["fit"],
+        "preserves_metadata": "subset",
         "scorer_name": "scoring",
         "scorer_routing_methods": ["fit", "score"],
         "cv_name": "cv",
@@ -127,14 +121,8 @@ METAESTIMATORS: list = [
         "init_args": {"param_distributions": {"alpha": [0.1, 0.2]}},
         "X": X,
         "y": y,
-        "estimator_routing_methods": [
-            "fit",
-            "predict",
-            "predict_proba",
-            "predict_log_proba",
-            "decision_function",
-        ],
-        "preserves_metadata": False,
+        "estimator_routing_methods": ["fit"],
+        "preserves_metadata": "subset",
         "scorer_name": "scoring",
         "scorer_routing_methods": ["fit", "score"],
         "cv_name": "cv",
@@ -147,14 +135,8 @@ METAESTIMATORS: list = [
         "init_args": {"param_grid": {"alpha": [0.1, 0.2]}},
         "X": X,
         "y": y,
-        "estimator_routing_methods": [
-            "fit",
-            "predict",
-            "predict_proba",
-            "predict_log_proba",
-            "decision_function",
-        ],
-        "preserves_metadata": False,
+        "estimator_routing_methods": ["fit"],
+        "preserves_metadata": "subset",
         "scorer_name": "scoring",
         "scorer_routing_methods": ["fit", "score"],
         "cv_name": "cv",
@@ -167,14 +149,8 @@ METAESTIMATORS: list = [
         "init_args": {"param_distributions": {"alpha": [0.1, 0.2]}},
         "X": X,
         "y": y,
-        "estimator_routing_methods": [
-            "fit",
-            "predict",
-            "predict_proba",
-            "predict_log_proba",
-            "decision_function",
-        ],
-        "preserves_metadata": False,
+        "estimator_routing_methods": ["fit"],
+        "preserves_metadata": "subset",
         "scorer_name": "scoring",
         "scorer_routing_methods": ["fit", "score"],
         "cv_name": "cv",
@@ -193,10 +169,15 @@ The keys are as follows:
 - y: y-data to fit
 - estimator_routing_methods: list of all methods to check for routing metadata
   to the sub-estimator
-- preserves_metadata: Whether the metaestimator passes the metadata to the
-  sub-estimator without modification or not. If it does, we check that the
-  values are identical. If it doesn't, no check is performed. TODO Maybe
-  something smarter could be done if the data is modified.
+- preserves_metadata:
+    - True (default): the metaestimator passes the metadata to the
+      sub-estimator without modification. We check that the values recorded by
+      the sub-estimator are identical to what we've passed to the
+      metaestimator.
+    - False: no check is performed regarding values, we only check that a
+      metadata with the expected names/keys are passed.
+    - "subset": we check that the recorded metadata by the sub-estimator is a
+      subset of what is passed to the metaestimator.
 - scorer_name: The name of the argument for the scorer
 - scorer_routing_methods: list of all methods to check for routing metadata
   to the scorer
@@ -341,6 +322,8 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
 
     for method_name in routing_methods:
         for key in ["sample_weight", "metadata"]:
+            if method_name == "predict":
+                pass
             val = {"sample_weight": sample_weight, "metadata": metadata}[key]
             method_kwargs = {key: val}
 
@@ -360,12 +343,20 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
                 instance.fit(X, y)
                 method(X, **method_kwargs)
 
-            if preserves_metadata:
-                # sanity check that registry is not empty, or else the test
-                # passes trivially
-                assert registry
+            # sanity check that registry is not empty, or else the test passes
+            # trivially
+            assert registry
+            if preserves_metadata is True:
                 for estimator in registry:
                     check_recorded_metadata(estimator, method_name, **method_kwargs)
+            elif preserves_metadata == "subset":
+                for estimator in registry:
+                    check_recorded_metadata(
+                        estimator,
+                        method_name,
+                        split_params=method_kwargs.keys(),
+                        **method_kwargs,
+                    )
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
