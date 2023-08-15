@@ -54,6 +54,11 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
           array of distances, and returns an array of the same shape
           containing the weights.
 
+        Refer to the example entitled
+        :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`
+        showing the impact of the `weights` parameter on the decision
+        boundary.
+
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
@@ -72,7 +77,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p : int, default=2
+    p : float, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
@@ -329,8 +334,8 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                     self._fit_X,
                     k=self.n_neighbors,
                     weights=self.weights,
-                    labels=self._y,
-                    unique_labels=self.classes_,
+                    Y_labels=self._y,
+                    unique_Y_labels=self.classes_,
                     metric=metric,
                     metric_kwargs=metric_kwargs,
                     # `strategy="parallel_on_X"` has in practice be shown
@@ -433,7 +438,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p : int, default=2
+    p : float, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.

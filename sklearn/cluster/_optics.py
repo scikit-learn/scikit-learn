@@ -138,8 +138,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree`.
-        - 'kd_tree' will use :class:`KDTree`.
+        - 'ball_tree' will use :class:`~sklearn.neighbors.BallTree`.
+        - 'kd_tree' will use :class:`~sklearn.neighbors.KDTree`.
         - 'brute' will use a brute-force search.
         - 'auto' (default) will attempt to decide the most appropriate
           algorithm based on the values passed to :meth:`fit` method.
@@ -148,10 +148,10 @@ class OPTICS(ClusterMixin, BaseEstimator):
         this parameter, using brute force.
 
     leaf_size : int, default=30
-        Leaf size passed to :class:`BallTree` or :class:`KDTree`. This can
-        affect the speed of the construction and query, as well as the memory
-        required to store the tree. The optimal value depends on the
-        nature of the problem.
+        Leaf size passed to :class:`~sklearn.neighbors.BallTree` or
+        :class:`~sklearn.neighbors.KDTree`. This can affect the speed of the
+        construction and query, as well as the memory required to store the
+        tree. The optimal value depends on the nature of the problem.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
@@ -233,6 +233,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
     >>> clustering = OPTICS(min_samples=2).fit(X)
     >>> clustering.labels_
     array([0, 0, 0, 1, 1, 1])
+
+    For a more detailed example see
+    :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`.
     """
 
     _parameter_constraints: dict = {
@@ -503,7 +506,7 @@ def compute_optics_graph(
         .. note::
            `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
-    p : int, default=2
+    p : float, default=2
         Parameter for the Minkowski metric from
         :class:`~sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
@@ -515,20 +518,20 @@ def compute_optics_graph(
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
-        - 'ball_tree' will use :class:`BallTree`.
-        - 'kd_tree' will use :class:`KDTree`.
+        - 'ball_tree' will use :class:`~sklearn.neighbors.BallTree`.
+        - 'kd_tree' will use :class:`~sklearn.neighbors.KDTree`.
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
-          based on the values passed to :meth:`fit` method. (default)
+          based on the values passed to `fit` method. (default)
 
         Note: fitting on sparse input will override the setting of
         this parameter, using brute force.
 
     leaf_size : int, default=30
-        Leaf size passed to :class:`BallTree` or :class:`KDTree`. This can
-        affect the speed of the construction and query, as well as the memory
-        required to store the tree. The optimal value depends on the
-        nature of the problem.
+        Leaf size passed to :class:`~sklearn.neighbors.BallTree` or
+        :class:`~sklearn.neighbors.KDTree`. This can affect the speed of the
+        construction and query, as well as the memory required to store the
+        tree. The optimal value depends on the nature of the problem.
 
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.

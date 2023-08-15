@@ -53,7 +53,7 @@ dependent_packages = {
     "plotly": ("5.14.0", "docs, examples"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
-    "conda-lock": ("2.0.0", "maintenance"),
+    "conda-lock": ("2.1.1", "maintenance"),
 }
 
 
