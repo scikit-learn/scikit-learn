@@ -2303,21 +2303,3 @@ def test_nearest_neighbours_works_with_p_less_than_1():
 
     y = neigh.kneighbors(X[0].reshape(1, -1), return_distance=False)
     assert_allclose(y[0], [0, 1, 2])
-
-
-def test_radius_neighbors_is_fitted_before_calling_predict_proba():
-    """Check that :class:`RadiusNeighborsClassifier` is fitted before
-    calling the :meth:`predict` and :meth:`predict_proba`.
-    """
-    rng = np.random.RandomState(42)
-    X = rng.rand(10, 2)
-    y = rng.rand(10, 1).round()
-
-    clf = neighbors.RadiusNeighborsClassifier()
-
-    msg = "is not fitted yet."
-    with pytest.raises(NotFittedError, match=msg):
-        clf.predict_proba(X)
-
-    clf.fit(X, y)
-    clf.predict_proba(X)

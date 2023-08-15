@@ -74,6 +74,7 @@ from sklearn.utils.estimator_checks import (
     check_class_weight_balanced_linear_classifier,
     check_dataframe_column_names_consistency,
     check_estimator,
+    check_estimators_unfitted,
     check_get_feature_names_out_error,
     check_global_output_transform_pandas,
     check_n_features_in_after_fitting,
@@ -602,3 +603,14 @@ def test_global_output_transform_pandas(estimator):
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
         check_global_output_transform_pandas(estimator.__class__.__name__, estimator)
+
+
+@pytest.mark.parametrize(
+    "classifier",
+    _tested_estimators(type_filter="classifier"),
+    ids=_get_check_estimator_ids,
+)
+def test_classifiers_unfitted(classifier):
+    classifier_name = classifier.__class__.__name__
+    _set_checking_parameters(classifier)
+    check_estimators_unfitted(classifier_name, classifier)

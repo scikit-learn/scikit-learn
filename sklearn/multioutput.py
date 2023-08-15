@@ -936,6 +936,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Y_prob : array-like of shape (n_samples, n_classes)
             The predicted probabilities.
         """
+        check_is_fitted(self, "estimators_")
         X = self._validate_data(X, accept_sparse=True, reset=False)
         Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
@@ -968,6 +969,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
             Returns the decision function of the sample for each model
             in the chain.
         """
+        check_is_fitted(self, "estimators_")
         X = self._validate_data(X, accept_sparse=True, reset=False)
         Y_decision_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
