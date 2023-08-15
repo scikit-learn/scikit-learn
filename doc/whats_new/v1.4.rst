@@ -216,6 +216,11 @@ Changelog
   for CSR × CSR,  Dense × CSR, and CSR × Dense datasets is now 1.5x faster.
   :pr:`26765` by :user:`Meekail Zain <micky774>`
 
+- |Efficiency| Computing distances via :class:`metrics.DistanceMetric`
+  for CSR × CSR, Dense × CSR, and CSR × Dense now uses ~50% less memory,
+  and outputs distances in the same dtype as the provided data.
+  :pr:`27006` by :user:`Meekail Zain <micky774>`
+
 :mod:`sklearn.utils`
 ....................
 
