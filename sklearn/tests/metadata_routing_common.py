@@ -224,16 +224,22 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         return np.zeros(shape=(len(X),))
 
     def predict_proba(self, X, sample_weight="default", metadata="default"):
-        record_metadata_not_default(
-            self, "predict_proba", sample_weight=sample_weight, metadata=metadata
-        )
-        return np.asarray([[0.0, 1.0]] * len(X))
+        pass  # pragma: no cover
+
+        # uncomment when needed
+        # record_metadata_not_default(
+        #     self, "predict_proba", sample_weight=sample_weight, metadata=metadata
+        # )
+        # return np.asarray([[0.0, 1.0]] * len(X))
 
     def predict_log_proba(self, X, sample_weight="default", metadata="default"):
-        record_metadata_not_default(
-            self, "predict_log_proba", sample_weight=sample_weight, metadata=metadata
-        )
-        return np.zeros(shape=(len(X), 2))
+        pass  # pragma: no cover
+
+        # uncomment when needed
+        # record_metadata_not_default(
+        #     self, "predict_log_proba", sample_weight=sample_weight, metadata=metadata
+        # )
+        # return np.zeros(shape=(len(X), 2))
 
     def decision_function(self, X, sample_weight="default", metadata="default"):
         record_metadata_not_default(
