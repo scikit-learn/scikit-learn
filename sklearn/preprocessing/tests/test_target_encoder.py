@@ -78,7 +78,9 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     X_test = np.concatenate((X_test, [[unknown_value]]))
 
     rng = np.random.RandomState(global_random_seed)
-    # Required so shuffle is the same in cv iterators (direct and inside target encoder)
+    # We use this to set the same state before passing `rng` to cv iterator/target
+    # encoder. Required for cv shuffle to be consistent when calculating manually and
+    # inside target encoder
     rng_state = rng.get_state()
 
     n_splits = 3
