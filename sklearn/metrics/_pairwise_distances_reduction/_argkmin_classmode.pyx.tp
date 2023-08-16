@@ -8,13 +8,7 @@ from ...utils._typedefs cimport intp_t, float64_t
 import numpy as np
 from scipy.sparse import issparse
 from sklearn.utils.fixes import threadpool_limits
-
-cpdef enum WeightingStrategy:
-    uniform = 0
-    # TODO: Implement the following options, most likely in
-    # `weighted_histogram_mode`
-    distance = 1
-    callable = 2
+from ._classmode cimport WeightingStrategy
 
 {{for name_suffix in ["32", "64"]}}
 from ._argkmin cimport ArgKmin{{name_suffix}}
