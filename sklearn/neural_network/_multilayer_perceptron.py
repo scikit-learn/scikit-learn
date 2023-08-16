@@ -1161,7 +1161,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         y : ndarray, shape (n_samples,) or (n_samples, n_classes)
             The predicted classes.
         """
-        check_is_fitted(selfo
+        check_is_fitted(self)
         return self._predict(X)
 
     def _predict(self, X, check_input=True):
