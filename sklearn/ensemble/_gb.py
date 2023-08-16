@@ -1426,7 +1426,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     _parameter_constraints: dict = {
         **BaseGradientBoosting._parameter_constraints,
-        "loss": [StrOptions({"log_loss", "exponential"}), BaseLoss],
+        "loss": [StrOptions({"log_loss", "exponential"})],
         "init": [StrOptions({"zero"}), None, HasMethods(["fit", "predict_proba"])],
     }
 
@@ -2024,10 +2024,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     _parameter_constraints: dict = {
         **BaseGradientBoosting._parameter_constraints,
-        "loss": [
-            StrOptions({"squared_error", "absolute_error", "huber", "quantile"}),
-            BaseLoss,
-        ],
+        "loss": [StrOptions({"squared_error", "absolute_error", "huber", "quantile"})],
         "init": [StrOptions({"zero"}), None, HasMethods(["fit", "predict"])],
         "alpha": [Interval(Real, 0.0, 1.0, closed="neither")],
     }
