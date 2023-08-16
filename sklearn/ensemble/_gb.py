@@ -1483,13 +1483,13 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         check_classification_targets(y)
 
         label_encoder = LabelEncoder()
-        encoded_y = label_encoder.fit_transform(y)
+        encoded_y_int = label_encoder.fit_transform(y)
         self.classes_ = label_encoder.classes_
         n_classes = self.classes_.shape[0]
         # only 1 tree for binary classification. For multiclass classification,
         # we build 1 tree per class.
         self.n_trees_per_iteration_ = 1 if n_classes <= 2 else n_classes
-        encoded_y = encoded_y.astype(float, copy=False)
+        encoded_y = encoded_y_int.astype(float, copy=False)
 
         # From here on, it is additional to the HGBT case.
         # expose n_classes_ attribute
@@ -1497,9 +1497,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         if sample_weight is None:
             n_trim_classes = n_classes
         else:
-            n_trim_classes = np.count_nonzero(
-                np.bincount(encoded_y.astype(int), sample_weight)
-            )
+            n_trim_classes = np.count_nonzero(np.bincount(encoded_y_int, sample_weight))
 
         if n_trim_classes < 2:
             raise ValueError(
