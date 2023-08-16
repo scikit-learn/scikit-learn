@@ -213,6 +213,17 @@ Changelog
   for CSR × CSR,  Dense × CSR, and CSR × Dense datasets is now 1.5x faster.
   :pr:`26765` by :user:`Meekail Zain <micky774>`
 
+- |Enhancement| :func:`metrics.cluster.homogeneity_completeness_v_measure`,
+  :func:`metrics.cluster.homogeneity_score`, :func:`metrics.cluster.completeness_score`,
+  :func:`metrics.cluster.v_measure_score`, :func:`metrics.cluster.contingency_matrix`,
+  :func:`metrics.cluster.mutual_info_score` and :func:`metrics.cluster.entropy`
+  now accept a `sample_weight` parameter, to be passed to the updated
+  :func:`metrics.cluster.homogeneity_completeness_v_measure` function, bringing it
+  conceptually in-line with other supervised metrics such as :func:`metrics.f1_score`
+  and :func:`metrics.roc_auc_score`. Defaults to `None`, so is backward compatible
+  :pr:`26923` by :user:`Daniel Murnane <murnanedaniel>`_.
+
+
 :mod:`sklearn.utils`
 ....................
 
