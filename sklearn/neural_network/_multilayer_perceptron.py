@@ -767,9 +767,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     This model optimizes the log-loss function using LBFGS or stochastic
     gradient descent.
 
-    For an example usage and visualization of varying regularization, see
-    :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_alpha.py`
-
     .. versionadded:: 0.18
 
     Parameters
@@ -803,6 +800,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         - 'adam' refers to a stochastic gradient-based optimizer proposed
           by Kingma, Diederik, and Jimmy Ba
 
+        For example usage and comparison with Adam optimizer, see
+        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`
+
         Note: The default solver 'adam' works pretty well on relatively
         large datasets (with thousands of training samples or more) in terms of
         both training time and validation score.
@@ -812,6 +812,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     alpha : float, default=0.0001
         Strength of the L2 regularization term. The L2 regularization term
         is divided by the sample size when added to the loss.
+
+        For an example usage and visualization of varying regularization, see
+        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_alpha.py`
 
     batch_size : int, default='auto'
         Size of minibatches for stochastic optimizers.
@@ -1158,7 +1161,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         y : ndarray, shape (n_samples,) or (n_samples, n_classes)
             The predicted classes.
         """
-        check_is_fitted(self)
+        check_is_fitted(selfo
         return self._predict(X)
 
     def _predict(self, X, check_input=True):
@@ -1295,6 +1298,9 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
         - 'adam' refers to a stochastic gradient-based optimizer proposed by
           Kingma, Diederik, and Jimmy Ba
+
+        For example usage and comparison with Adam optimizer, see
+        :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`
 
         Note: The default solver 'adam' works pretty well on relatively
         large datasets (with thousands of training samples or more) in terms of

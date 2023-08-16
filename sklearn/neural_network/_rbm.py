@@ -128,7 +128,7 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
     >>> model.fit(X)
     BernoulliRBM(n_components=2)
 
-    For an example usage, see
+    For a more detailed example usage, see
     :ref:`sphx_glr_auto_examples_neural_networks_plot_rbm_logistic_classification.py`.
     """
 
