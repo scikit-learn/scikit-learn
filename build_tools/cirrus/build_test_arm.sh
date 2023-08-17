@@ -25,7 +25,7 @@ setup_ccache() {
 MAMBAFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-aarch64.sh"
 
 # Install Mambaforge
-wget $MAMBAFORGE_URL -O mambaforge.sh
+curl -L --retry 10 $MAMBAFORGE_URL -o mambaforge.sh
 MAMBAFORGE_PATH=$HOME/mambaforge
 bash ./mambaforge.sh -b -p $MAMBAFORGE_PATH
 export PATH=$MAMBAFORGE_PATH/bin:$PATH

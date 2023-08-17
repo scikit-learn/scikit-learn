@@ -2,10 +2,14 @@ from abc import abstractmethod
 from typing import List
 
 import numpy as np
-from scipy.sparse import issparse, isspmatrix_csr
+from scipy.sparse import issparse
 
 from ... import get_config
-from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING64
+from .._dist_metrics import (
+    BOOL_METRICS,
+    METRIC_MAPPING64,
+    DistanceMetric,
+)
 from ._argkmin import (
     ArgKmin32,
     ArgKmin64,
@@ -96,11 +100,12 @@ class BaseDistancesReductionDispatcher:
         """
 
         def is_numpy_c_ordered(X):
-            return hasattr(X, "flags") and X.flags.c_contiguous
+            return hasattr(X, "flags") and getattr(X.flags, "c_contiguous", False)
 
         def is_valid_sparse_matrix(X):
             return (
-                isspmatrix_csr(X)
+                issparse(X)
+                and X.format == "csr"
                 and
                 # TODO: support CSR matrices without non-zeros elements
                 X.nnz > 0
@@ -116,7 +121,7 @@ class BaseDistancesReductionDispatcher:
             and (is_numpy_c_ordered(Y) or is_valid_sparse_matrix(Y))
             and X.dtype == Y.dtype
             and X.dtype in (np.float32, np.float64)
-            and metric in cls.valid_metrics()
+            and (metric in cls.valid_metrics() or isinstance(metric, DistanceMetric))
         )
 
         return is_usable
@@ -446,35 +451,15 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
     """
 
     @classmethod
-    def is_usable_for(cls, X, Y, metric) -> bool:
-        """Return True if the dispatcher can be used for the given parameters.
-
-        Parameters
-        ----------
-        X : ndarray of shape (n_samples_X, n_features)
-            The input array to be labelled.
-
-        Y : ndarray of shape (n_samples_Y, n_features)
-            The input array whose labels are provided through the `labels`
-            parameter.
-
-        metric : str, default='euclidean'
-            The distance metric to use. For a list of available metrics, see
-            the documentation of :class:`~sklearn.metrics.DistanceMetric`.
-            Currently does not support `'precomputed'`.
-
-        Returns
-        -------
-        True if the PairwiseDistancesReduction can be used, else False.
-        """
-        return (
-            ArgKmin.is_usable_for(X, Y, metric)
-            # TODO: Support CSR matrices.
-            and not issparse(X)
-            and not issparse(Y)
-            # TODO: implement Euclidean specialization with GEMM.
-            and metric not in ("euclidean", "sqeuclidean")
-        )
+    def valid_metrics(cls) -> List[str]:
+        excluded = {
+            # Euclidean is technically usable for ArgKminClassMode
+            # but its current implementation would not be competitive.
+            # TODO: implement Euclidean specialization using GEMM.
+            "euclidean",
+            "sqeuclidean",
+        }
+        return list(set(BaseDistancesReductionDispatcher.valid_metrics()) - excluded)
 
     @classmethod
     def compute(
@@ -483,8 +468,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
         Y,
         k,
         weights,
-        labels,
-        unique_labels,
+        Y_labels,
+        unique_Y_labels,
         metric="euclidean",
         chunk_size=None,
         metric_kwargs=None,
@@ -498,23 +483,23 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
             The input array to be labelled.
 
         Y : ndarray of shape (n_samples_Y, n_features)
-            The input array whose labels are provided through the `labels`
-            parameter.
+            The input array whose class membership are provided through the
+            `Y_labels` parameter.
 
         k : int
             The number of nearest neighbors to consider.
 
         weights : ndarray
-            The weights applied over the `labels` of `Y` when computing the
+            The weights applied over the `Y_labels` of `Y` when computing the
             weighted mode of the labels.
 
-        class_membership : ndarray
+        Y_labels : ndarray
             An array containing the index of the class membership of the
             associated samples in `Y`. This is used in labeling `X`.
 
-        unique_classes : ndarray
+        unique_Y_labels : ndarray
             An array containing all unique indices contained in the
-            corresponding `class_membership` array.
+            corresponding `Y_labels` array.
 
         metric : str, default='euclidean'
             The distance metric to use. For a list of available metrics, see
@@ -586,8 +571,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
                 Y=Y,
                 k=k,
                 weights=weights,
-                class_membership=np.array(labels, dtype=np.intp),
-                unique_labels=np.array(unique_labels, dtype=np.intp),
+                Y_labels=np.array(Y_labels, dtype=np.intp),
+                unique_Y_labels=np.array(unique_Y_labels, dtype=np.intp),
                 metric=metric,
                 chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,
@@ -600,8 +585,8 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
                 Y=Y,
                 k=k,
                 weights=weights,
-                class_membership=np.array(labels, dtype=np.intp),
-                unique_labels=np.array(unique_labels, dtype=np.intp),
+                Y_labels=np.array(Y_labels, dtype=np.intp),
+                unique_Y_labels=np.array(unique_Y_labels, dtype=np.intp),
                 metric=metric,
                 chunk_size=chunk_size,
                 metric_kwargs=metric_kwargs,

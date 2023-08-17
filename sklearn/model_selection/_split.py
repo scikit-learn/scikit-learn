@@ -2512,7 +2512,8 @@ def check_cv(cv=5, y=None, *, classifier=False):
         "random_state": ["random_state"],
         "shuffle": ["boolean"],
         "stratify": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def train_test_split(
     *arrays,
@@ -2672,7 +2673,7 @@ def _pprint(params, offset=0, printer=repr):
     this_line_length = offset
     line_sep = ",\n" + (1 + offset // 2) * " "
     for i, (k, v) in enumerate(sorted(params.items())):
-        if type(v) is float:
+        if isinstance(v, float):
             # use str for representing floating point numbers
             # this way we get consistent representation across
             # architectures and versions.

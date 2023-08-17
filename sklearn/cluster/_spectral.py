@@ -189,7 +189,10 @@ def discretize(
     return labels
 
 
-@validate_params({"affinity": ["array-like", "sparse matrix"]})
+@validate_params(
+    {"affinity": ["array-like", "sparse matrix"]},
+    prefer_skip_nested_validation=False,
+)
 def spectral_clustering(
     affinity,
     *,
@@ -436,7 +439,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
            of precomputed distances, and construct a binary affinity matrix
            from the ``n_neighbors`` nearest neighbors of each instance.
          - one of the kernels supported by
-           :func:`~sklearn.metrics.pairwise_kernels`.
+           :func:`~sklearn.metrics.pairwise.pairwise_kernels`.
 
         Only kernels that produce similarity scores (non-negative values that
         increase with similarity) should be used. This property is not checked
@@ -447,7 +450,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         the nearest neighbors method. Ignored for ``affinity='rbf'``.
 
     eigen_tol : float, default="auto"
-        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        Stopping criterion for eigen decomposition of the Laplacian matrix.
         If `eigen_tol="auto"` then the passed tolerance will depend on the
         `eigen_solver`:
 

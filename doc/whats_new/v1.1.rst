@@ -62,7 +62,7 @@ Changelog
 :mod:`sklearn.base`
 ...................
 
-- |Fix| The `get_params` method of the :class:`BaseEstimator` class now supports
+- |Fix| The `get_params` method of the :class:`base.BaseEstimator` class now supports
   estimators with `type`-type params that have the `get_params` method.
   :pr:`24017` by :user:`Henry Sorsky <hsorsky>`.
 
@@ -544,7 +544,7 @@ Changelog
   :pr:`22002` by :user:`Takeshi Oura <takoika>`.
 
 - |Enhancement| :class:`decomposition.PCA` exposes a parameter `n_oversamples` to tune
-  :func:`utils.randomized_svd` and get accurate results when the number of
+  :func:`utils.extmath.randomized_svd` and get accurate results when the number of
   features is large.
   :pr:`21109` by :user:`Smile <x-shadow-man>`.
 
@@ -591,13 +591,14 @@ Changelog
   `Thomas Fan`_.
 
 - |Enhancement| :class:`decomposition.TruncatedSVD` exposes the parameter
-  `n_oversamples` and `power_iteration_normalizer` to tune :func:`utils.randomized_svd`
-  and get accurate results when the number of features is large, the rank of the matrix
-  is high, or other features of the matrix make low rank approximation difficult.
+  `n_oversamples` and `power_iteration_normalizer` to tune
+  :func:`utils.extmath.randomized_svd` and get accurate results when the number
+  of features is large, the rank of the matrix is high, or other features of
+  the matrix make low rank approximation difficult.
   :pr:`21705` by :user:`Jay S. Stanley III <stanleyjs>`.
 
 - |Enhancement| :class:`decomposition.PCA` exposes the parameter
-  `power_iteration_normalizer` to tune :func:`utils.randomized_svd` and
+  `power_iteration_normalizer` to tune :func:`utils.extmath.randomized_svd` and
   get more accurate results when low rank approximation is difficult.
   :pr:`21705` by :user:`Jay S. Stanley III <stanleyjs>`.
 
@@ -661,7 +662,7 @@ Changelog
   The quantile level can be specified with the new parameter `quantile`.
   :pr:`21800` and :pr:`20567` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |Efficiency| :meth:`fit` of :class:`ensemble.GradientBoostingClassifier`
+- |Efficiency| `fit` of :class:`ensemble.GradientBoostingClassifier`
   and :class:`ensemble.GradientBoostingRegressor` now calls :func:`utils.check_array`
   with parameter `force_all_finite=False` for non initial warm-start runs as it has
   already been checked before.
@@ -838,7 +839,7 @@ Changelog
 
 - |Enhancement| :meth:`inspection.PartialDependenceDisplay.from_estimator`,
   :meth:`inspection.PartialDependenceDisplay.plot`, and
-  :func:`inspection.plot_partial_dependence` now support plotting centered
+  `inspection.plot_partial_dependence` now support plotting centered
   Individual Conditional Expectation (cICE) and centered PDP curves controlled
   by setting the parameter `centered`.
   :pr:`18310` by :user:`Johannes Elfner <JoElfner>` and

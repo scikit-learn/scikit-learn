@@ -121,7 +121,8 @@ def f_oneway(*args):
     {
         "X": ["array-like", "sparse matrix"],
         "y": ["array-like"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def f_classif(X, y):
     """Compute the ANOVA F-value for the provided sample.
@@ -177,7 +178,8 @@ def _chisquare(f_obs, f_exp):
     {
         "X": ["array-like", "sparse matrix"],
         "y": ["array-like"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def chi2(X, y):
     """Compute chi-squared stats between each non-negative feature and class.
@@ -257,7 +259,8 @@ def chi2(X, y):
         "y": ["array-like"],
         "center": ["boolean"],
         "force_finite": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def r_regression(X, y, *, center=True, force_finite=True):
     """Compute Pearson's r for each features and the target.
@@ -348,7 +351,8 @@ def r_regression(X, y, *, center=True, force_finite=True):
         "y": ["array-like"],
         "center": ["boolean"],
         "force_finite": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def f_regression(X, y, *, center=True, force_finite=True):
     """Univariate linear regression tests returning F-statistic and p-values.

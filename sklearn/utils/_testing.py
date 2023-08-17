@@ -38,6 +38,7 @@ from numpy.testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
+    assert_no_warnings,
 )
 
 import sklearn
@@ -65,6 +66,7 @@ __all__ = [
     "assert_approx_equal",
     "assert_allclose",
     "assert_run_python_script",
+    "assert_no_warnings",
     "SkipTest",
 ]
 
@@ -78,32 +80,6 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
-
-
-# To remove when we support numpy 1.7
-def assert_no_warnings(func, *args, **kw):
-    """
-    Parameters
-    ----------
-    func
-    *args
-    **kw
-    """
-    # very important to avoid uncontrolled state propagation
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-
-        result = func(*args, **kw)
-        if hasattr(np, "FutureWarning"):
-            # Filter out numpy-specific warnings in numpy >= 1.9
-            w = [e for e in w if e.category is not np.VisibleDeprecationWarning]
-
-        if len(w) > 0:
-            raise AssertionError(
-                "Got warnings when calling %s: [%s]"
-                % (func.__name__, ", ".join(str(warning) for warning in w))
-            )
-    return result
 
 
 def ignore_warnings(obj=None, category=Warning):
@@ -797,7 +773,9 @@ def assert_run_python_script(source_code, timeout=60):
         os.unlink(source_file)
 
 
-def _convert_container(container, constructor_name, columns_name=None, dtype=None):
+def _convert_container(
+    container, constructor_name, columns_name=None, dtype=None, minversion=None
+):
     """Convert a given container to a specific array-like with a dtype.
 
     Parameters
@@ -813,6 +791,8 @@ def _convert_container(container, constructor_name, columns_name=None, dtype=Non
     dtype : dtype, default=None
         Force the dtype of the container. Does not apply to `"slice"`
         container.
+    minversion : str, default=None
+        Minimum version for package to install.
 
     Returns
     -------
@@ -833,13 +813,23 @@ def _convert_container(container, constructor_name, columns_name=None, dtype=Non
     elif constructor_name == "sparse":
         return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == "dataframe":
-        pd = pytest.importorskip("pandas")
+        pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
+    elif constructor_name == "pyarrow":
+        pa = pytest.importorskip("pyarrow", minversion=minversion)
+        array = np.asarray(container)
+        if columns_name is None:
+            columns_name = [f"col{i}" for i in range(array.shape[1])]
+        data = {name: array[:, i] for i, name in enumerate(columns_name)}
+        return pa.Table.from_pydict(data)
+    elif constructor_name == "polars":
+        pl = pytest.importorskip("polars", minversion=minversion)
+        return pl.DataFrame(container, schema=columns_name)
     elif constructor_name == "series":
-        pd = pytest.importorskip("pandas")
+        pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Series(container, dtype=dtype)
     elif constructor_name == "index":
-        pd = pytest.importorskip("pandas")
+        pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Index(container, dtype=dtype)
     elif constructor_name == "slice":
         return slice(container[0], container[1])

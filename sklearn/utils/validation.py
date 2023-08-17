@@ -11,6 +11,7 @@
 
 import numbers
 import operator
+import sys
 import warnings
 from contextlib import suppress
 from functools import reduce, wraps
@@ -1075,7 +1076,8 @@ def check_X_y(
         performed if the dtype of the input is not in the list.
 
     order : {'F', 'C'}, default=None
-        Whether an array will be forced to be fortran or c-style.
+        Whether an array will be forced to be fortran or c-style. If
+        `None`, then the input data's order is preserved when possible.
 
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
@@ -1945,44 +1947,57 @@ def _check_response_method(estimator, response_method):
     return prediction_method
 
 
-def _check_fit_params(X, fit_params, indices=None):
-    """Check and validate the parameters passed during `fit`.
+def _check_method_params(X, params, indices=None):
+    """Check and validate the parameters passed to a specific
+    method like `fit`.
 
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
         Data array.
 
-    fit_params : dict
-        Dictionary containing the parameters passed at fit.
+    params : dict
+        Dictionary containing the parameters passed to the method.
 
     indices : array-like of shape (n_samples,), default=None
         Indices to be selected if the parameter has the same size as `X`.
 
     Returns
     -------
-    fit_params_validated : dict
+    method_params_validated : dict
         Validated parameters. We ensure that the values support indexing.
     """
     from . import _safe_indexing
 
-    fit_params_validated = {}
-    for param_key, param_value in fit_params.items():
+    method_params_validated = {}
+    for param_key, param_value in params.items():
         if not _is_arraylike(param_value) or _num_samples(param_value) != _num_samples(
             X
         ):
             # Non-indexable pass-through (for now for backward-compatibility).
             # https://github.com/scikit-learn/scikit-learn/issues/15805
-            fit_params_validated[param_key] = param_value
+            method_params_validated[param_key] = param_value
         else:
-            # Any other fit_params should support indexing
+            # Any other method_params should support indexing
             # (e.g. for cross-validation).
-            fit_params_validated[param_key] = _make_indexable(param_value)
-            fit_params_validated[param_key] = _safe_indexing(
-                fit_params_validated[param_key], indices
+            method_params_validated[param_key] = _make_indexable(param_value)
+            method_params_validated[param_key] = _safe_indexing(
+                method_params_validated[param_key], indices
             )
 
-    return fit_params_validated
+    return method_params_validated
+
+
+def _is_pandas_df(X):
+    """Return True if the X is a pandas dataframe."""
+    if hasattr(X, "columns") and hasattr(X, "iloc"):
+        # Likely a pandas DataFrame, we explicitly check the type to confirm.
+        try:
+            pd = sys.modules["pandas"]
+        except KeyError:
+            return False
+        return isinstance(X, pd.DataFrame)
+    return False
 
 
 def _get_feature_names(X):
@@ -2008,8 +2023,22 @@ def _get_feature_names(X):
     feature_names = None
 
     # extract feature names for support array containers
-    if hasattr(X, "columns"):
+    if _is_pandas_df(X):
+        # Make sure we can inspect columns names from pandas, even with
+        # versions too old to expose a working implementation of
+        # __dataframe__.column_names() and avoid introducing any
+        # additional copy.
+        # TODO: remove the pandas-specific branch once the minimum supported
+        # version of pandas has a working implementation of
+        # __dataframe__.column_names() that is guaranteed to not introduce any
+        # additional copy of the data without having to impose allow_copy=False
+        # that could fail with other libraries. Note: in the longer term, we
+        # could decide to instead rely on the __dataframe_namespace__ API once
+        # adopted by our minimally supported pandas version.
         feature_names = np.asarray(X.columns, dtype=object)
+    elif hasattr(X, "__dataframe__"):
+        df_protocol = X.__dataframe__()
+        feature_names = np.asarray(list(df_protocol.column_names()), dtype=object)
 
     if feature_names is None or len(feature_names) == 0:
         return

@@ -53,7 +53,7 @@ from .utils.metadata_routing import (
 from .utils.multiclass import check_classification_targets
 from .utils.parallel import Parallel, delayed
 from .utils.validation import (
-    _check_fit_params,
+    _check_method_params,
     _check_pos_label_consistency,
     _check_sample_weight,
     _num_samples,
@@ -378,10 +378,10 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
             if _routing_enabled():
                 routed_params = process_routing(
-                    obj=self,
-                    method="fit",
+                    self,
+                    "fit",
                     sample_weight=sample_weight,
-                    other_params=fit_params,
+                    **fit_params,
                 )
             else:
                 # sample_weight checks
@@ -450,7 +450,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     cv=cv,
                     method=method_name,
                     n_jobs=self.n_jobs,
-                    fit_params=routed_params.estimator.fit,
+                    params=routed_params.estimator.fit,
                 )
                 predictions = _compute_predictions(
                     pred_method, method_name, X, n_classes
@@ -532,7 +532,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Returns
         -------
         routing : MetadataRouter
-            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
         router = (
@@ -612,7 +612,7 @@ def _fit_classifier_calibrator_pair(
     -------
     calibrated_classifier : _CalibratedClassifier instance
     """
-    fit_params_train = _check_fit_params(X, fit_params, train)
+    fit_params_train = _check_method_params(X, params=fit_params, indices=train)
     X_train, y_train = _safe_indexing(X, train), _safe_indexing(y, train)
     X_test, y_test = _safe_indexing(X, test), _safe_indexing(y, test)
 
@@ -955,7 +955,8 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         "pos_label": [Real, str, "boolean", None],
         "n_bins": [Interval(Integral, 1, None, closed="left")],
         "strategy": [StrOptions({"uniform", "quantile"})],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def calibration_curve(
     y_true,
@@ -1185,7 +1186,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
         )
 
-        line_kwargs = {}
+        line_kwargs = {"marker": "s", "linestyle": "-"}
         if name is not None:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
@@ -1194,9 +1195,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         existing_ref_line = ref_line_label in self.ax_.get_legend_handles_labels()[1]
         if ref_line and not existing_ref_line:
             self.ax_.plot([0, 1], [0, 1], "k:", label=ref_line_label)
-        self.line_ = self.ax_.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[
-            0
-        ]
+        self.line_ = self.ax_.plot(self.prob_pred, self.prob_true, **line_kwargs)[0]
 
         # We always have to show the legend for at least the reference line
         self.ax_.legend(loc="lower right")

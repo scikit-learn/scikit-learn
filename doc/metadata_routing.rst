@@ -34,9 +34,9 @@ you can check our related developer guide:
 
 .. note::
   Note that the methods and requirements introduced in this document are only
-  relevant if you want to pass metadata (e.g. ``sample_weight``) to a method.
+  relevant if you want to pass :term:`metadata` (e.g. ``sample_weight``) to a method.
   If you're only passing ``X`` and ``y`` and no other parameter / metadata to
-  methods such as ``fit``, ``transform``, etc, then you don't need to set
+  methods such as :term:`fit`, :term:`transform`, etc, then you don't need to set
   anything.
 
 Usage Examples
@@ -91,13 +91,13 @@ since ``sample_weigh`` was not requested by any of its underlying objects.
 Weighted scoring and unweighted fitting
 ---------------------------------------
 
-When passing metadata such as ``sample_weight`` around, all scikit-learn
-estimators require weights to be either explicitly requested or not requested
-(i.e. ``True`` or ``False``) when used in another router such as a
-:class:`~pipeline.Pipeline` or a ``*GridSearchCV``. To perform an unweighted
-fit, we need to configure :class:`~linear_model.LogisticRegressionCV` to not
-request sample weights, so that :func:`~model_selection.cross_validate` does
-not pass the weights along::
+When passing metadata such as ``sample_weight`` around, all ``sample_weight``
+:term:`consumers <consumer>` require weights to be either explicitly requested
+or not requested (i.e. ``True`` or ``False``) when used in another
+:term:`router` such as a :class:`~pipeline.Pipeline` or a ``*GridSearchCV``. To
+perform an unweighted fit, we need to configure
+:class:`~linear_model.LogisticRegressionCV` to not request sample weights, so
+that :func:`~model_selection.cross_validate` does not pass the weights along::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...     sample_weight=True
@@ -177,16 +177,17 @@ consumers. In this example, we pass ``scoring_weight`` to the scorer, and
 API Interface
 *************
 
-A *consumer* is an object (estimator, meta-estimator, scorer, splitter) which
-accepts and uses some metadata in at least one of its methods (``fit``,
-``predict``, ``inverse_transform``, ``transform``, ``score``, ``split``).
-Meta-estimators which only forward the metadata to other objects (the child
-estimator, scorers, or splitters) and don't use the metadata themselves are not
-consumers. (Meta-)Estimators which route metadata to other objects are
-*routers*. A(n) (meta-)estimator can be a consumer and a router at the same time.
-(Meta-)Estimators and splitters expose a ``set_*_request`` method for each
-method which accepts at least one metadata. For instance, if an estimator
-supports ``sample_weight`` in ``fit`` and ``score``, it exposes
+A :term:`consumer` is an object (estimator, meta-estimator, scorer, splitter)
+which accepts and uses some :term:`metadata` in at least one of its methods
+(``fit``, ``predict``, ``inverse_transform``, ``transform``, ``score``,
+``split``). Meta-estimators which only forward the metadata to other objects
+(the child estimator, scorers, or splitters) and don't use the metadata
+themselves are not consumers. (Meta-)Estimators which route metadata to other
+objects are :term:`routers <router>`. A(n) (meta-)estimator can be a
+:term:`consumer` and a :term:`router` at the same time. (Meta-)Estimators and
+splitters expose a ``set_*_request`` method for each method which accepts at
+least one metadata. For instance, if an estimator supports ``sample_weight`` in
+``fit`` and ``score``, it exposes
 ``estimator.set_fit_request(sample_weight=value)`` and
 ``estimator.set_score_request(sample_weight=value)``. Here ``value`` can be:
 

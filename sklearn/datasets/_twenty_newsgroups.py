@@ -161,7 +161,8 @@ def strip_newsgroup_footer(text):
         "remove": [tuple],
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_20newsgroups(
     *,
@@ -208,7 +209,7 @@ def fetch_20newsgroups(
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, default=42
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -355,7 +356,8 @@ def fetch_20newsgroups(
         "return_X_y": ["boolean"],
         "normalize": ["boolean"],
         "as_frame": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_20newsgroups_vectorized(
     *,

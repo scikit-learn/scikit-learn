@@ -86,6 +86,17 @@ For this, they can operate the scikit-learn accounts on various social networks
 and produce materials. They also have the required rights to our blog
 repository and other relevant accounts and platforms.
 
+Documentation team
+~~~~~~~~~~~~~~~~~~
+
+Members of the documentation team engage with the documentation of the project
+among other things. They might also be involved in other aspects of the
+project, but their reviews on documentation contributions are considered
+authoritative, and can merge such contributions.
+
+To this end, they have permissions to merge pull requests in scikit-learn's
+repository.
+
 Maintainers
 ~~~~~~~~~~~
 
@@ -158,8 +169,8 @@ are made according to the following rules:
   versions** happen via a :ref:`slep` and follows the decision-making process
   outlined above.
 
-* **Changes to the governance model** follow the process outlined in [
-  SLEP020](https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep020/proposal.html).
+* **Changes to the governance model** follow the process outlined in `SLEP020
+  <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep020/proposal.html>`__.
 
 If a veto -1 vote is cast on a lazy consensus, the proposer can appeal to the
 community and maintainers and the change can be approved or rejected using

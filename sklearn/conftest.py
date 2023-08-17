@@ -1,3 +1,4 @@
+import builtins
 import platform
 import sys
 from contextlib import suppress
@@ -11,6 +12,7 @@ import pytest
 from _pytest.doctest import DoctestItem
 from threadpoolctl import threadpool_limits
 
+from sklearn import config_context
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.datasets import (
     fetch_20newsgroups,
@@ -32,6 +34,13 @@ if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     )
 
 scipy_datasets_require_network = sp_version >= parse_version("1.10")
+
+
+@pytest.fixture
+def enable_slep006():
+    """Enable SLEP006 for all tests."""
+    with config_context(enable_metadata_routing=True):
+        yield
 
 
 def raccoon_face_or_skip():
@@ -252,3 +261,16 @@ def pytest_configure(config):
     # Register global_random_seed plugin if it is not already registered
     if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):
         config.pluginmanager.register(random_seed)
+
+
+@pytest.fixture
+def hide_available_pandas(monkeypatch):
+    """Pretend pandas was not installed."""
+    import_orig = builtins.__import__
+
+    def mocked_import(name, *args, **kwargs):
+        if name == "pandas":
+            raise ImportError()
+        return import_orig(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", mocked_import)

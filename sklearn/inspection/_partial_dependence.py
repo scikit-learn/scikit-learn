@@ -408,7 +408,8 @@ def _partial_dependence_brute(
         "method": [StrOptions({"auto", "recursion", "brute"})],
         "kind": [StrOptions({"average", "individual", "both"})],
         "custom_values": [dict, None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def partial_dependence(
     estimator,

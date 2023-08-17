@@ -124,7 +124,8 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
         "with_mean": ["boolean"],
         "with_std": ["boolean"],
         "copy": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     """Standardize a dataset along any axis.
@@ -555,7 +556,8 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     {
         "X": ["array-like"],
         "axis": [Options(Integral, {0, 1})],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     """Transform features by scaling each feature to a given range.
@@ -719,11 +721,12 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     mean_ : ndarray of shape (n_features,) or None
         The mean value for each feature in the training set.
-        Equal to ``None`` when ``with_mean=False``.
+        Equal to ``None`` when ``with_mean=False`` and ``with_std=False``.
 
     var_ : ndarray of shape (n_features,) or None
         The variance for each feature in the training set. Used to compute
-        `scale_`. Equal to ``None`` when ``with_std=False``.
+        `scale_`. Equal to ``None`` when ``with_mean=False`` and
+        ``with_std=False``.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1290,8 +1293,8 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     {
         "X": ["array-like", "sparse matrix"],
         "axis": [Options(Integral, {0, 1})],
-        "copy": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def maxabs_scale(X, *, axis=0, copy=True):
     """Scale each feature to the [-1, 1] range without breaking the sparsity.
@@ -1645,7 +1648,8 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
 
 @validate_params(
-    {"X": ["array-like", "sparse matrix"], "axis": [Options(Integral, {0, 1})]}
+    {"X": ["array-like", "sparse matrix"], "axis": [Options(Integral, {0, 1})]},
+    prefer_skip_nested_validation=False,
 )
 def robust_scale(
     X,
@@ -1780,7 +1784,8 @@ def robust_scale(
         "axis": [Options(Integral, {0, 1})],
         "copy": ["boolean"],
         "return_norm": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     """Scale input vectors individually to unit norm (vector length).
@@ -2018,7 +2023,8 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         "X": ["array-like", "sparse matrix"],
         "threshold": [Interval(Real, None, None, closed="neither")],
         "copy": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def binarize(X, *, threshold=0.0, copy=True):
     """Boolean thresholding of array-like or scipy.sparse matrix.
@@ -2355,7 +2361,8 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
     {
         "X": ["array-like", "sparse matrix"],
         "value": [Interval(Real, None, None, closed="neither")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def add_dummy_feature(X, value=1.0):
     """Augment dataset with an additional dummy feature.
@@ -2387,7 +2394,7 @@ def add_dummy_feature(X, value=1.0):
     n_samples, n_features = X.shape
     shape = (n_samples, n_features + 1)
     if sparse.issparse(X):
-        if sparse.isspmatrix_coo(X):
+        if X.format == "coo":
             # Shift columns to the right.
             col = X.col + 1
             # Column indices of dummy feature are 0 everywhere.
@@ -2397,7 +2404,7 @@ def add_dummy_feature(X, value=1.0):
             # Prepend the dummy feature n_samples times.
             data = np.concatenate((np.full(n_samples, value), X.data))
             return sparse.coo_matrix((data, (row, col)), shape)
-        elif sparse.isspmatrix_csc(X):
+        elif X.format == "csc":
             # Shift index pointers since we need to add n_samples elements.
             indptr = X.indptr + n_samples
             # indptr[0] must be 0.
@@ -2845,7 +2852,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
 
 @validate_params(
-    {"X": ["array-like", "sparse matrix"], "axis": [Options(Integral, {0, 1})]}
+    {"X": ["array-like", "sparse matrix"], "axis": [Options(Integral, {0, 1})]},
+    prefer_skip_nested_validation=False,
 )
 def quantile_transform(
     X,
@@ -3406,7 +3414,10 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"allow_nan": True}
 
 
-@validate_params({"X": ["array-like"]})
+@validate_params(
+    {"X": ["array-like"]},
+    prefer_skip_nested_validation=False,
+)
 def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
     """Parametric, monotonic transformation to make data more Gaussian-like.
 
