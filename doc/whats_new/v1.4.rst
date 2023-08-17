@@ -221,7 +221,7 @@ Changelog
   :func:`metrics.cluster.homogeneity_completeness_v_measure` function, bringing it
   conceptually in-line with other supervised metrics such as :func:`metrics.f1_score`
   and :func:`metrics.roc_auc_score`. Defaults to `None`, so is backward compatible
-  :pr:`26923` by :user:`Daniel Murnane <murnanedaniel>`_.
+  :pr:`26923` by :user:`Daniel Murnane <murnanedaniel>`
 
 
 :mod:`sklearn.utils`
