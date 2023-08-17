@@ -17,6 +17,10 @@ linux_aarch64_test_task:
     folder: /root/.conda/pkgs
     fingerprint_script: cat build_tools/cirrus/py39_conda_forge_linux-aarch64_conda.lock
 
+  install_python_script: |
+    # Install python so that update_tracking_issue has access to a Python
+    apt install -y python3 python-is-python3
+
   test_script: |
     bash build_tools/cirrus/build_test_arm.sh
     # On success, this script is run updating the issue.
