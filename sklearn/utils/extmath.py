@@ -58,7 +58,8 @@ def squared_norm(x):
     {
         "X": ["array-like", "sparse matrix"],
         "squared": [bool, None],
-    }
+    },
+prefer_skip_nested_validation=False
 )
 def row_norms(X, squared=False):
     """Row-wise (squared) Euclidean norm of X.
