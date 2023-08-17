@@ -86,6 +86,17 @@ For this, they can operate the scikit-learn accounts on various social networks
 and produce materials. They also have the required rights to our blog
 repository and other relevant accounts and platforms.
 
+Documentation team
+~~~~~~~~~~~~~~~~~~
+
+Members of the documentation team engage with the documentation of the project
+among other things. They might also be involved in other aspects of the
+project, but their reviews on documentation contributions are considered
+authoritative, and can merge such contributions.
+
+To this end, they have permissions to merge pull requests in scikit-learn's
+repository.
+
 Maintainers
 ~~~~~~~~~~~
 
