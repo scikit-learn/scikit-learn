@@ -130,6 +130,7 @@ def _check_function_param_validation(
 
 
 PARAM_VALIDATION_FUNCTION_LIST = [
+    "sklearn.utils.row_norms",
     "sklearn.calibration.calibration_curve",
     "sklearn.cluster.cluster_optics_dbscan",
     "sklearn.cluster.compute_optics_graph",

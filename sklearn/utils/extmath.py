@@ -53,7 +53,12 @@ def squared_norm(x):
         )
     return np.dot(x, x)
 
-
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "squared": [bool, None],
+    }
+)
 def row_norms(X, squared=False):
     """Row-wise (squared) Euclidean norm of X.
 
@@ -75,7 +80,8 @@ def row_norms(X, squared=False):
         The row-wise (squared) Euclidean norm of X.
     """
     if sparse.issparse(X):
-        X = X.tocsr()
+        if not sparse.isspmatrix_csr(X):
+            X = sparse.csr_matrix(X)
         norms = csr_row_norms(X)
     else:
         norms = np.einsum("ij,ij->i", X, X)
