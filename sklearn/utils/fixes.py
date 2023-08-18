@@ -34,8 +34,6 @@ LIL_CONTAINERS = [scipy.sparse.lil_matrix]
 DOK_CONTAINERS = [scipy.sparse.dok_matrix]
 BSR_CONTAINERS = [scipy.sparse.bsr_matrix]
 
-_CONTAINERS = [scipy.sparse.csr_matrix]
-
 if parse_version(scipy.__version__) >= parse_version("1.8"):
     # Sparse Arrays have been added in SciPy 1.8
     # TODO: Remove this when SciPy 1.8 is the minimum supported version
