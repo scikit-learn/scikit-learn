@@ -12,6 +12,7 @@ intervals.
 # Generate some data for a synthetic regression problem by applying the
 # function f to uniformly sampled random inputs.
 import numpy as np
+
 from sklearn.model_selection import train_test_split
 
 
@@ -58,7 +59,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_pinball_loss, mean_squared_error
 
-
 all_models = {}
 common_params = dict(
     learning_rate=0.05,
@@ -92,7 +92,6 @@ xx = np.atleast_2d(np.linspace(0, 10, 1000)).T
 # mean (loss equals squared error), the conditional median and the conditional
 # 90% interval (from 5th to 95th conditional percentiles).
 import matplotlib.pyplot as plt
-
 
 y_pred = all_models["mse"].predict(xx)
 y_lower = all_models["q 0.05"].predict(xx)
@@ -129,8 +128,8 @@ plt.show()
 # Analysis of the error metrics
 # -----------------------------
 #
-# Measure the models with :func:`mean_squared_error` and
-# :func:`mean_pinball_loss` metrics on the training dataset.
+# Measure the models with :func:`~sklearn.metrics.mean_squared_error` and
+# :func:`~sklearn.metrics.mean_pinball_loss` metrics on the training dataset.
 import pandas as pd
 
 
@@ -157,7 +156,7 @@ pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 # training converged.
 #
 # Note that because the target distribution is asymmetric, the expected
-# conditional mean and conditional median are signficiantly different and
+# conditional mean and conditional median are significantly different and
 # therefore one could not use the squared error model get a good estimation of
 # the conditional median nor the converse.
 #
@@ -195,7 +194,7 @@ pd.DataFrame(results).set_index("model").style.apply(highlight_min)
 # --------------------------------------
 #
 # We can also evaluate the ability of the two extreme quantile estimators at
-# producing a well-calibrated conditational 90%-confidence interval.
+# producing a well-calibrated conditional 90%-confidence interval.
 #
 # To do this we can compute the fraction of observations that fall between the
 # predictions:

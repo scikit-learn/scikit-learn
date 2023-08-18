@@ -1,34 +1,36 @@
-import numpy as np
-from scipy import optimize
-from numpy.testing import assert_allclose
-from scipy.special import factorial, xlogy
 from itertools import product
+
+import numpy as np
 import pytest
+from numpy.testing import assert_allclose
+from scipy import optimize
+from scipy.special import factorial, xlogy
 
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.dummy import DummyRegressor
-from sklearn.model_selection import GridSearchCV
-
-from sklearn.metrics import explained_variance_score
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import mean_squared_log_error
-from sklearn.metrics import median_absolute_error
-from sklearn.metrics import mean_absolute_percentage_error
-from sklearn.metrics import max_error
-from sklearn.metrics import mean_pinball_loss
-from sklearn.metrics import r2_score
-from sklearn.metrics import mean_tweedie_deviance
-from sklearn.metrics import d2_tweedie_score
-from sklearn.metrics import d2_pinball_score
-from sklearn.metrics import d2_absolute_error_score
-from sklearn.metrics import make_scorer
-
-from sklearn.metrics._regression import _check_reg_targets
-
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.metrics import (
+    d2_absolute_error_score,
+    d2_pinball_score,
+    d2_tweedie_score,
+    explained_variance_score,
+    make_scorer,
+    max_error,
+    mean_absolute_error,
+    mean_absolute_percentage_error,
+    mean_pinball_loss,
+    mean_squared_error,
+    mean_squared_log_error,
+    mean_tweedie_deviance,
+    median_absolute_error,
+    r2_score,
+)
+from sklearn.metrics._regression import _check_reg_targets
+from sklearn.model_selection import GridSearchCV
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 
 def test_regression_metrics(n_samples=50):

@@ -1,6 +1,6 @@
 import pickle
-import numpy as np
 
+import numpy as np
 import pytest
 
 from sklearn.neighbors._quad_tree import _QuadTree

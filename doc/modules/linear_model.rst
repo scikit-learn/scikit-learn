@@ -37,7 +37,7 @@ solves a problem of the form:
    :align: center
    :scale: 50%
 
-:class:`LinearRegression` will take in its ``fit`` method arrays X, y
+:class:`LinearRegression` will take in its ``fit`` method arrays ``X``, ``y``
 and will store the coefficients :math:`w` of the linear model in its
 ``coef_`` member::
 
@@ -114,7 +114,7 @@ of shrinkage and thus the coefficients become more robust to collinearity.
 
 
 As with other linear models, :class:`Ridge` will take in its ``fit`` method
-arrays X, y and will store the coefficients :math:`w` of the linear model in
+arrays ``X``, ``y`` and will store the coefficients :math:`w` of the linear model in
 its ``coef_`` member::
 
     >>> from sklearn import linear_model
@@ -889,12 +889,16 @@ the probability of the positive class :math:`P(y_i=1|X_i)` as
 
 .. math:: \hat{p}(X_i) = \operatorname{expit}(X_i w + w_0) = \frac{1}{1 + \exp(-X_i w - w_0)}.
 
+
 As an optimization problem, binary
 class logistic regression with regularization term :math:`r(w)` minimizes the
 following cost function:
 
-.. math:: \min_{w} C \sum_{i=1}^n \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right) + r(w).
-
+.. math::
+    :name: regularized-logistic-loss
+   
+    \min_{w} C \sum_{i=1}^n \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right) + r(w).
+   
 
 We currently provide four choices for the regularization term  :math:`r(w)`  via
 the `penalty` argument:
@@ -1062,15 +1066,16 @@ with `loss="log_loss"`, which might be even faster but requires more tuning.
 .. topic:: Differences from liblinear:
 
    There might be a difference in the scores obtained between
-   :class:`LogisticRegression` with ``solver=liblinear``
-   or :class:`LinearSVC` and the external liblinear library directly,
-   when ``fit_intercept=False`` and the fit ``coef_`` (or) the data to
-   be predicted are zeroes. This is because for the sample(s) with
-   ``decision_function`` zero, :class:`LogisticRegression` and :class:`LinearSVC`
-   predict the negative class, while liblinear predicts the positive class.
-   Note that a model with ``fit_intercept=False`` and having many samples with
-   ``decision_function`` zero, is likely to be a underfit, bad model and you are
-   advised to set ``fit_intercept=True`` and increase the intercept_scaling.
+   :class:`LogisticRegression` with ``solver=liblinear`` or
+   :class:`~sklearn.svm.LinearSVC` and the external liblinear library directly,
+   when ``fit_intercept=False`` and the fit ``coef_`` (or) the data to be
+   predicted are zeroes. This is because for the sample(s) with
+   ``decision_function`` zero, :class:`LogisticRegression` and
+   :class:`~sklearn.svm.LinearSVC` predict the negative class, while liblinear
+   predicts the positive class. Note that a model with ``fit_intercept=False``
+   and having many samples with ``decision_function`` zero, is likely to be a
+   underfit, bad model and you are advised to set ``fit_intercept=True`` and
+   increase the intercept_scaling.
 
 .. note:: **Feature selection with sparse logistic regression**
 
@@ -1194,7 +1199,7 @@ Examples of use cases include:
 * Risk modeling / insurance policy pricing:  number of claim events /
   policyholder per year (Poisson), cost per event (Gamma), total cost per
   policyholder per year (Tweedie / Compound Poisson Gamma).
-* Credit Default: probability that a loan can't be payed back (Bernouli).
+* Credit Default: probability that a loan can't be paid back (Bernouli).
 * Fraud Detection: probability that a financial transaction like a cash transfer
   is a fraudulent transaction (Bernoulli).
 * Predictive maintenance: number of production interruption events per year

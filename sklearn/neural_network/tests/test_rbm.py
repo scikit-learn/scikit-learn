@@ -1,18 +1,18 @@
-import sys
 import re
-import pytest
+import sys
+from io import StringIO
 
 import numpy as np
+import pytest
 from scipy.sparse import csc_matrix, csr_matrix, lil_matrix
-from sklearn.utils._testing import (
-    assert_almost_equal,
-    assert_array_equal,
-    assert_allclose,
-)
 
 from sklearn.datasets import load_digits
-from io import StringIO
 from sklearn.neural_network import BernoulliRBM
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_equal,
+)
 from sklearn.utils.validation import assert_all_finite
 
 Xdigits, _ = load_digits(return_X_y=True)

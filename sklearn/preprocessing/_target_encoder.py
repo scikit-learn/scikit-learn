@@ -1,20 +1,19 @@
+from numbers import Integral, Real
+
 import numpy as np
 
-from numbers import Real, Integral
-
-from ._encoders import _BaseEncoder
-from ..base import OneToOneFeatureMixin
-from ._target_encoder_fast import _fit_encoding_fast
-from ._target_encoder_fast import _fit_encoding_fast_auto_smooth
-from ..utils.validation import _check_y, check_consistent_length
-from ..utils.multiclass import type_of_target
+from ..base import OneToOneFeatureMixin, _fit_context
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.multiclass import type_of_target
+from ..utils.validation import _check_y, check_consistent_length
+from ._encoders import _BaseEncoder
+from ._target_encoder_fast import _fit_encoding_fast, _fit_encoding_fast_auto_smooth
 
 
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """Target Encoder for regression and classification targets.
 
-    Each category is encoded based on a shrinked estimate of the average target
+    Each category is encoded based on a shrunk estimate of the average target
     values for observations belonging to the category. The encoding scheme mixes
     the global target mean with the target mean conditioned on the value of the
     category. [MIC]_
@@ -28,14 +27,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     .. note::
         `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-        cross-validation scheme is used in `fit_transform` for encoding. See the
-        :ref:`User Guide <target_encoder>`. for details.
+        :term:`cross fitting` scheme is used in `fit_transform` for encoding.
+        See the :ref:`User Guide <target_encoder>` for details.
 
     .. versionadded:: 1.3
 
     Parameters
     ----------
-    categories : "auto" or a list of array-like, default="auto"
+    categories : "auto" or list of shape (n_features,) of array-like, default="auto"
         Categories (unique values) per feature:
 
         - `"auto"` : Determine categories automatically from the training data.
@@ -43,7 +42,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
           passed categories should not mix strings and numeric values within a single
           feature, and should be sorted in case of numeric values.
 
-        The used categories is stored in the `categories_` fitted attribute.
+        The used categories are stored in the `categories_` fitted attribute.
 
     target_type : {"auto", "continuous", "binary"}, default="auto"
         Type of target.
@@ -55,26 +54,27 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         .. note::
             The type of target inferred with `"auto"` may not be the desired target
-            type used for modeling. For example, if the target consistent of integers
+            type used for modeling. For example, if the target consisted of integers
             between 0 and 100, then :func:`~sklearn.utils.multiclass.type_of_target`
             will infer the target as `"multiclass"`. In this case, setting
-            `target_type="continuous"` will understand the target as a regression
+            `target_type="continuous"` will specify the target as a regression
             problem. The `target_type_` attribute gives the target type used by the
             encoder.
 
     smooth : "auto" or float, default="auto"
-        The amount of mixing of the categorical encoding with the global target mean. A
-        larger `smooth` value will put more weight on the global target mean.
+        The amount of mixing of the target mean conditioned on the value of the
+        category with the global target mean. A larger `smooth` value will put
+        more weight on the global target mean.
         If `"auto"`, then `smooth` is set to an empirical Bayes estimate.
 
     cv : int, default=5
-        Determines the number of folds in the cross-validation strategy used in
+        Determines the number of folds in the :term:`cross fitting` strategy used in
         :meth:`fit_transform`. For classification targets, `StratifiedKFold` is used
         and for continuous targets, `KFold` is used.
 
     shuffle : bool, default=True
         Whether to shuffle the data in :meth:`fit_transform` before splitting into
-        batches. Note that the samples within each split will not be shuffled.
+        folds. Note that the samples within each split will not be shuffled.
 
     random_state : int, RandomState instance or None, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
@@ -86,11 +86,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     Attributes
     ----------
     encodings_ : list of shape (n_features,) of ndarray
-        For feature `i`, `encodings_[i]` is the encoding matching the
+        Encodings learnt on all of `X`.
+        For feature `i`, `encodings_[i]` are the encodings matching the
         categories listed in `categories_[i]`.
 
     categories_ : list of shape (n_features,) of ndarray
-        The categories of each feature determined during fitting
+        The categories of each feature determined during fitting or specified
+        in `categories`
         (in order of the features in `X` and corresponding with the output
         of :meth:`transform`).
 
@@ -176,6 +178,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.shuffle = shuffle
         self.random_state = random_state
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the :class:`TargetEncoder` to X and y.
 
@@ -192,17 +195,17 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self : object
             Fitted encoder.
         """
-        self._validate_params()
         self._fit_encodings_all(X, y)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y):
         """Fit :class:`TargetEncoder` and transform X with the target encoding.
 
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-            cross-validation scheme is used in `fit_transform` for encoding. See the
-            :ref:`User Guide <target_encoder>`. for details.
+            :term:`cross fitting` scheme is used in `fit_transform` for encoding.
+            See the :ref:`User Guide <target_encoder>`. for details.
 
         Parameters
         ----------
@@ -219,7 +222,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         """
         from ..model_selection import KFold, StratifiedKFold  # avoid circular import
 
-        self._validate_params()
         X_ordinal, X_known_mask, y, n_categories = self._fit_encodings_all(X, y)
 
         # The cv splitter is voluntarily restricted to *KFold to enforce non
@@ -258,8 +260,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         .. note::
             `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-            cross-validation scheme is used in `fit_transform` for encoding. See the
-            :ref:`User Guide <target_encoder>`. for details.
+            :term:`cross fitting` scheme is used in `fit_transform` for encoding.
+            See the :ref:`User Guide <target_encoder>`. for details.
 
         Parameters
         ----------
@@ -271,14 +273,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         X_trans : ndarray of shape (n_samples, n_features)
             Transformed input.
         """
-        X_ordinal, X_valid = self._transform(
+        X_ordinal, X_known_mask = self._transform(
             X, handle_unknown="ignore", force_all_finite="allow-nan"
         )
         X_out = np.empty_like(X_ordinal, dtype=np.float64)
         self._transform_X_ordinal(
             X_out,
             X_ordinal,
-            ~X_valid,
+            ~X_known_mask,
             slice(None),
             self.encodings_,
             self.target_mean_,
@@ -297,8 +299,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             inferred_type_of_target = type_of_target(y, input_name="y")
             if inferred_type_of_target not in accepted_target_types:
                 raise ValueError(
-                    f"Target type was inferred to be {inferred_type_of_target!r}. Only"
-                    f" {accepted_target_types} are supported."
+                    "Unknown label type: Target type was inferred to be "
+                    f"{inferred_type_of_target!r}. Only {accepted_target_types} are "
+                    "supported."
                 )
             self.target_type_ = inferred_type_of_target
         else:
@@ -341,4 +344,13 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             X_out[X_unknown_mask[:, f_idx], f_idx] = y_mean
 
     def _more_tags(self):
-        return {"requires_y": True}
+        return {
+            "requires_y": True,
+            # TargetEncoder is a special case where a transformer uses `y` but
+            # only accept binary classification and regression targets. For the
+            # purpose of common tests we use `binary_only` tag to eliminate the
+            # multiclass tests. TODO: remove this special case when multiclass
+            # support is added to TargetEncoder. xref:
+            # https://github.com/scikit-learn/scikit-learn/pull/26674
+            "binary_only": True,
+        }

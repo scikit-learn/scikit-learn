@@ -1,15 +1,15 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
 
-from numbers import Integral
 from itertools import chain
+from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
-from ._hashing_fast import transform as _hashing_transform
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils._param_validation import Interval, StrOptions
+from ._hashing_fast import transform as _hashing_transform
 
 
 def _iteritems(d):
@@ -121,6 +121,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         self.n_features = n_features
         self.alternate_sign = alternate_sign
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X=None, y=None):
         """Only validates estimator's parameters.
 
@@ -140,8 +141,6 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         self : object
             FeatureHasher class instance.
         """
-        # repeat input validation for grid search (which calls set_params)
-        self._validate_params()
         return self
 
     def transform(self, raw_X):

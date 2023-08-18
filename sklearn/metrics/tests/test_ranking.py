@@ -1,43 +1,46 @@
 import re
-import pytest
-import numpy as np
 import warnings
-from scipy.sparse import csr_matrix
+
+import numpy as np
+import pytest
 from scipy import stats
+from scipy.sparse import csr_matrix
 
-from sklearn import datasets
-from sklearn import svm
-
-from sklearn.utils.extmath import softmax
+from sklearn import datasets, svm
 from sklearn.datasets import make_multilabel_classification
-from sklearn.random_projection import _sparse_random_matrix
-from sklearn.utils.validation import check_array, check_consistent_length
-from sklearn.utils.validation import check_random_state
-
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import auc
-from sklearn.metrics import average_precision_score
-from sklearn.metrics import coverage_error
-from sklearn.metrics import det_curve
-from sklearn.metrics import label_ranking_average_precision_score
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import label_ranking_loss
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import roc_curve
-from sklearn.metrics._ranking import _ndcg_sample_scores, _dcg_sample_scores
-from sklearn.metrics import ndcg_score, dcg_score
-from sklearn.metrics import top_k_accuracy_score
-
 from sklearn.exceptions import UndefinedMetricWarning
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    auc,
+    average_precision_score,
+    coverage_error,
+    dcg_score,
+    det_curve,
+    label_ranking_average_precision_score,
+    label_ranking_loss,
+    ndcg_score,
+    precision_recall_curve,
+    roc_auc_score,
+    roc_curve,
+    top_k_accuracy_score,
+)
+from sklearn.metrics._ranking import _dcg_sample_scores, _ndcg_sample_scores
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
-
+from sklearn.random_projection import _sparse_random_matrix
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.extmath import softmax
+from sklearn.utils.validation import (
+    check_array,
+    check_consistent_length,
+    check_random_state,
+)
 
 ###############################################################################
 # Utilities for testing

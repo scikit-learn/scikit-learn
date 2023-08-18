@@ -1,35 +1,32 @@
-import warnings
-import unittest
-import os
 import atexit
+import os
+import unittest
+import warnings
 
 import numpy as np
-
+import pytest
 from scipy import sparse
 
-import pytest
-
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils._testing import (
+    TempMemmap,
+    _convert_container,
+    _delete_folder,
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    assert_no_warnings,
+    assert_raise_message,
+    assert_raises,
+    assert_raises_regex,
+    check_docstring_parameters,
+    create_memmap_backed_data,
+    ignore_warnings,
+    raises,
+    set_random_state,
+)
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.metaestimators import available_if
-from sklearn.utils._testing import (
-    assert_raises,
-    assert_no_warnings,
-    set_random_state,
-    assert_raise_message,
-    ignore_warnings,
-    check_docstring_parameters,
-    assert_allclose_dense_sparse,
-    assert_raises_regex,
-    TempMemmap,
-    create_memmap_backed_data,
-    _delete_folder,
-    _convert_container,
-    raises,
-    assert_allclose,
-)
-
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
 def test_set_random_state():

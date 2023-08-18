@@ -2,15 +2,15 @@
 # Author: Joel Nothman
 #         Andreas Mueller
 # License: BSD
-from typing import List, Any
-
 from abc import ABCMeta, abstractmethod
-import numpy as np
 from contextlib import suppress
+from typing import Any, List
 
+import numpy as np
+
+from ..base import BaseEstimator
 from ..utils import _safe_indexing
 from ..utils._tags import _safe_tags
-from ..base import BaseEstimator
 from ._available_if import available_if
 
 __all__ = ["available_if"]

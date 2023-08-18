@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 import scipy.sparse as sp
 
-from sklearn.utils._testing import assert_array_equal, assert_allclose
 from sklearn.cluster import BisectingKMeans
 from sklearn.metrics import v_measure_score
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 
 @pytest.mark.parametrize("bisecting_strategy", ["biggest_inertia", "largest_cluster"])

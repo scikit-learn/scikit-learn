@@ -6,18 +6,18 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ._kmeans import _BaseKMeans
-from ._kmeans import _kmeans_single_elkan
-from ._kmeans import _kmeans_single_lloyd
-from ._kmeans import _labels_inertia_threadpool_limit
-from ._k_means_common import _inertia_dense
-from ._k_means_common import _inertia_sparse
-from ..utils.extmath import row_norms
+from ..base import _fit_context
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_sample_weight
-from ..utils.validation import check_random_state
 from ..utils._param_validation import StrOptions
+from ..utils.extmath import row_norms
+from ..utils.validation import _check_sample_weight, check_is_fitted, check_random_state
+from ._k_means_common import _inertia_dense, _inertia_sparse
+from ._kmeans import (
+    _BaseKMeans,
+    _kmeans_single_elkan,
+    _kmeans_single_lloyd,
+    _labels_inertia_threadpool_limit,
+)
 
 
 class _BisectingTree:
@@ -347,6 +347,7 @@ class BisectingKMeans(_BaseKMeans):
 
         cluster_to_bisect.split(best_labels, best_centers, scores)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
         """Compute bisecting k-means clustering.
 
@@ -373,8 +374,6 @@ class BisectingKMeans(_BaseKMeans):
         self
             Fitted estimator.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X,
             accept_sparse="csr",
