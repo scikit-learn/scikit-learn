@@ -45,6 +45,7 @@ def yield_namespace_device_dtype_combinations():
                 ("cpu", "cuda"), ("float64", "float32")
             ):
                 yield array_namespace, device, dtype
+            yield array_namespace, "mps", "float32"
         else:
             yield array_namespace, None, None
 
@@ -442,7 +443,9 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         return float(numpy.average(sample_score_np, weights=sample_weight_np))
 
     if not xp.isdtype(sample_score.dtype, "real floating"):
-        sample_score = xp.astype(sample_score, xp.float64)
+        # We move to cpu device ahead of time since certain devices may not support
+        # float64, but we want the same precision for all devices and namespaces.
+        sample_score = xp.astype(xp.asarray(sample_score, device="cpu"), xp.float64)
 
     if sample_weight is not None:
         sample_weight = xp.asarray(sample_weight)
