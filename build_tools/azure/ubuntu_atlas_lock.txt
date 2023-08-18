@@ -4,7 +4,7 @@
 #
 #    pip-compile --config=pyproject.toml --output-file=build_tools/azure/ubuntu_atlas_lock.txt build_tools/azure/ubuntu_atlas_requirements.txt
 #
-cython==0.29.36
+cython==3.0.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 exceptiongroup==1.1.2
     # via pytest
