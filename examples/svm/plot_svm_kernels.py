@@ -160,7 +160,7 @@ def plot_training_data_with_decision_boundary(kernel):
 # %%
 # Linear kernel
 # *************
-# Linear kernel is the dot products of the input samples:
+# Linear kernel is the dot product of the input samples:
 #
 # .. math:: K(\mathbf{x}_1, \mathbf{x}_2) = \mathbf{x}_1^\top \mathbf{x}_2
 #
