@@ -38,7 +38,8 @@ BSR_CONTAINERS = [scipy.sparse.bsr_matrix]
 
 if parse_version(scipy.__version__) >= parse_version("1.8"):
     # Sparse Arrays have been added in SciPy 1.8
-    # TODO: Remove this when SciPy 1.8 is the minimum supported version
+    # TODO: When SciPy 1.8 is the minimum supported version,
+    # those list can be created directly without this condition.
     # See: https://github.com/scikit-learn/scikit-learn/issues/27090
     CSR_CONTAINERS.append(scipy.sparse.csr_array)
     CSC_CONTAINERS.append(scipy.sparse.csc_array)
