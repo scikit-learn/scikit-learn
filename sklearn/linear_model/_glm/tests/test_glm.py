@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 import scipy
 from numpy.testing import assert_allclose
-from scipy import linalg
+from scipy import linalg, sparse
 from scipy.optimize import minimize, root
 
 from sklearn._loss import HalfBinomialLoss, HalfPoissonLoss, HalfTweedieLoss
@@ -29,6 +29,7 @@ from sklearn.linear_model._glm._newton_solver import NewtonCholeskySolver
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.metrics import d2_tweedie_score, mean_poisson_deviance
 from sklearn.model_selection import train_test_split
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 SOLVERS = ["lbfgs", "newton-cholesky"]
 
@@ -73,8 +74,9 @@ def regression_data():
             # TweedieRegressor(power=0, link="log"),  # too difficult
             TweedieRegressor(power=1.5),
         ],
+        CSR_CONTAINERS + [np.array],
     ),
-    ids=lambda param: f"{param[0]}-{param[1]}",
+    ids=lambda param: f"{param[0]}-{param[1]}-{param[2]}",
 )
 def glm_dataset(global_random_seed, request):
     """Dataset with GLM solutions, well conditioned X.
@@ -117,7 +119,7 @@ def glm_dataset(global_random_seed, request):
     l2_reg_strength : float
         Always equal 1.
     """
-    data_type, model = request.param
+    data_type, model, matrix_class = request.param
     # Make larger dim more than double as big as the smaller one.
     # This helps when constructing singular matrices like (X, X).
     if data_type == "long":
@@ -137,6 +139,7 @@ def glm_dataset(global_random_seed, request):
     U, s, Vt = linalg.svd(X, full_matrices=False)
     assert np.all(s > 1e-3)  # to be sure
     assert np.max(s) / np.min(s) < 100  # condition number of X
+    X = matrix_class(X)
 
     if data_type == "long":
         coef_unpenalized = rng.uniform(low=1, high=3, size=n_features)
@@ -270,7 +273,10 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
 
     model = clone(model).set_params(**params)
     X = X[:, :-1]  # remove intercept
-    X = 0.5 * np.concatenate((X, X), axis=1)
+    if sparse.issparse(X):
+        X = np.multiply(sparse.hstack((X, X)), 0.5)
+    else:
+        X = 0.5 * np.concatenate((X, X), axis=1)
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features - 1)
     if fit_intercept:
         coef = coef_with_intercept
@@ -313,10 +319,14 @@ def test_glm_regression_vstacked_X(solver, fit_intercept, glm_dataset):
         tol=1e-12,
         max_iter=1000,
     )
+    if sparse.issparse(X):
+        vstack = sparse.vstack
+    else:
+        vstack = np.vstack
 
     model = clone(model).set_params(**params)
     X = X[:, :-1]  # remove intercept
-    X = np.concatenate((X, X), axis=0)
+    X = vstack((X, X))
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
     y = np.r_[y, y]
     if fit_intercept:
@@ -436,6 +446,10 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         tol=1e-12,
         max_iter=1000,
     )
+    if sparse.issparse(X):
+        hstack = sparse.hstack
+    else:
+        hstack = np.hstack
 
     model = clone(model).set_params(**params)
     if fit_intercept:
@@ -443,14 +457,14 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         coef = coef[:-1]
         if n_samples > n_features:
             X = X[:, :-1]  # remove intercept
-            X = 0.5 * np.concatenate((X, X), axis=1)
+            X = 0.5 * hstack((X, X))
         else:
             # To know the minimum norm solution, we keep one intercept column and do
             # not divide by 2. Later on, we must take special care.
-            X = np.c_[X[:, :-1], X[:, :-1], X[:, -1]]
+            X = hstack((X[:, :-1], X[:, :-1], X[:, [-1]]))
     else:
         intercept = 0
-        X = 0.5 * np.concatenate((X, X), axis=1)
+        X = 0.5 * hstack((X, X))
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
 
     with warnings.catch_warnings():
@@ -522,6 +536,10 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
         tol=1e-12,
         max_iter=1000,
     )
+    if sparse.issparse(X):
+        vstack = sparse.vstack
+    else:
+        vstack = np.vstack
 
     model = clone(model).set_params(**params)
     if fit_intercept:
@@ -530,7 +548,7 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
         coef = coef[:-1]
     else:
         intercept = 0
-    X = np.concatenate((X, X), axis=0)
+    X = vstack((X, X))
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
     y = np.r_[y, y]
 
