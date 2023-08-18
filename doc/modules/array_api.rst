@@ -118,4 +118,28 @@ To run these checks you need to install
 test environment. To run the full set of checks you need to install both
 `PyTorch <https://pytorch.org/>`_ and `CuPy <https://cupy.dev/>`_ and have
 a GPU. Checks that can not be executed or have missing dependencies will be
-automatically skipped.
+automatically skipped. Therefore it's important to run the tests with the
+`-v` flag to see which checks are skipped:
+
+.. prompt:: bash $
+
+    $ pip install array-api-compat  # and other libraries as needed
+    $ pytest -k "array_api" -v
+
+Note on MPS device support
+--------------------------
+
+The Metal Performance Shaders (MPS) device support for PyTorch is incomplete at
+the time of writing. See the following github issue for more details:
+
+- https://github.com/pytorch/pytorch/issues/77764
+
+To run the tests with MPS enabled, you need to set the environment variable
+`PYTORCH_ENABLE_MPS_FALLBACK=1` before running the tests:
+
+.. prompt:: bash $
+
+    $ PYTORCH_ENABLE_MPS_FALLBACK=1 pytest -k "array_api" -v
+
+At the time of writing all scikit-learn tests should pass, however, the
+computational speed is not necessarily better than with the CPU device.
