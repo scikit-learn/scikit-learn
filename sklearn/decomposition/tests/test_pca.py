@@ -87,18 +87,19 @@ def test_linear_operator_reversed_matmul():
 @pytest.mark.parametrize("n_components", [1, 2, 3, 10, SPARSE_MAX_COMPONENTS])
 @pytest.mark.parametrize("format", ["csr", "csc"])
 @pytest.mark.parametrize("svd_solver", ["arpack"])
-@pytest.mark.parametrize(
-    "rtol", [1e-07]
-)  # , 1e-06, 1e-05, 1e-04, 1e-03, 1e-02, 1e-01, 1e-00])
+@pytest.mark.parametrize("scale", [1, 10, 100])
 def test_pca_sparse(
-    global_random_seed, rtol, svd_solver, format, n_components, density
+    global_random_seed, svd_solver, format, n_components, density, scale
 ):
+    RTOL = 1e-08
+
     if svd_solver in ["lobpcg", "arpack"] and n_components == SPARSE_MAX_COMPONENTS:
         pytest.skip("lobpcg and arpack don't support full solves")
     random_state = np.random.RandomState(global_random_seed)
     X = sp.sparse.random(
         SPARSE_M, SPARSE_N, format=format, random_state=random_state, density=density
     )
+    np.multiply(X.data, scale, out=X.data)
     pca = PCA(n_components=n_components, svd_solver=svd_solver)
     pca.fit(X)
 
@@ -106,8 +107,8 @@ def test_pca_sparse(
     pcad = PCA(n_components=n_components, svd_solver=svd_solver)
     pcad.fit(Xd)
 
-    assert_allclose(pca.components_, pcad.components_, rtol=rtol)
-    assert_allclose(pca.singular_values_, pcad.singular_values_, rtol=rtol)
+    assert_allclose(pca.components_, pcad.components_, rtol=RTOL)
+    assert_allclose(pca.singular_values_, pcad.singular_values_, rtol=RTOL)
 
 
 def test_no_empty_slice_warning():
