@@ -101,9 +101,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
     }
 
     @abstractmethod
-    def __init__(self, estimator, *, n_jobs=None):
+    def __init__(self, estimator, *, n_jobs=None, features_in=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
+        self.features_in = features_in
 
     @_available_if_estimator_has("partial_fit")
     @_fit_context(
@@ -269,7 +270,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_estimator)(
-                self.estimator, X, y[:, i], **routed_params.estimator.fit
+                self.estimator,
+                X[:, self.features_in[i]],
+                y[:, i],
+                **routed_params.estimator.fit,
             )
             for i in range(y.shape[1])
         )
@@ -300,7 +304,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             raise ValueError("The base estimator should implement a predict method")
 
         y = Parallel(n_jobs=self.n_jobs)(
-            delayed(e.predict)(X) for e in self.estimators_
+            delayed(e.predict)(X[:, self.features_in[i]])
+            for i, e in enumerate(self.estimators_)
         )
 
         return np.asarray(y).T
@@ -397,8 +402,9 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     array([[176..., 35..., 57...]])
     """
 
-    def __init__(self, estimator, *, n_jobs=None):
-        super().__init__(estimator, n_jobs=n_jobs)
+    def __init__(self, estimator, *, n_jobs=None, features_in=None):
+        super().__init__(estimator, n_jobs=n_jobs, features_in=features_in)
+        # self.features_in = features_in
 
     @_available_if_estimator_has("partial_fit")
     def partial_fit(self, X, y, sample_weight=None, **partial_fit_params):
