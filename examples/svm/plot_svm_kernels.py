@@ -286,4 +286,3 @@ plot_training_data_with_decision_boundary("sigmoid")
 # such as :class:`~sklearn.model_selection.GridSearchCV` is recommended to
 # capture the underlying structures within the data.
 
-# %%
