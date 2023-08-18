@@ -41,7 +41,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         transformer.inverse_transform(regressor.predict(X))
 
-    For an example use case of the TransformedTargetRegressor, refer to
+    For an example use case refer to
     :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`.
 
     Read more in the :ref:`User Guide <transformed_target_regressor>`.
