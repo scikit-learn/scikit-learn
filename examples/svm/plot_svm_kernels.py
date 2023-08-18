@@ -132,7 +132,7 @@ def plot_training_data_with_decision_boundary(kernel):
         **common_params,
         response_method="predict",
         plot_method="pcolormesh",
-        cmap=ListedColormap(["lightblue", "lightpink"]),
+        alpha=0.3,
     )
     DecisionBoundaryDisplay.from_estimator(
         **common_params,
