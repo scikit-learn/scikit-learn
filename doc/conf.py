@@ -299,6 +299,7 @@ redirects = {
     "auto_examples/decomposition/plot_beta_divergence": (
         "auto_examples/applications/plot_topics_extraction_with_nmf_lda"
     ),
+    "auto_examples/svm/plot_svm_nonlinear": "auto_examples/svm/plot_svm_kernels",
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
