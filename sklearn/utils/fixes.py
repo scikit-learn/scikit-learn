@@ -27,6 +27,8 @@ np_version = parse_version(np.__version__)
 sp_version = parse_version(scipy.__version__)
 sp_base_version = parse_version(sp_version.base_version)
 
+# TODO: We can consider removing the containers and importing
+# directly from SciPy when sparse matrices will be deprecated.
 CSR_CONTAINERS = [scipy.sparse.csr_matrix]
 CSC_CONTAINERS = [scipy.sparse.csc_matrix]
 COO_CONTAINERS = [scipy.sparse.coo_matrix]
