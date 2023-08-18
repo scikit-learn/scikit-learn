@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import scipy.sparse as sp
 
 from sklearn.cluster import BisectingKMeans
 from sklearn.metrics import v_measure_score
@@ -111,7 +110,7 @@ def test_dtype_preserved(csr_container, global_dtype):
 
     if csr_container is not None:
         X[X < 0.8] = 0
-        X = sp.csr_matrix(X)
+        X = csr_container(X)
 
     km = BisectingKMeans(n_clusters=3, random_state=0)
     km.fit(X)
@@ -127,7 +126,7 @@ def test_float32_float64_equivalence(csr_container):
 
     if csr_container is not None:
         X[X < 0.8] = 0
-        X = sp.csr_matrix(X)
+        X = csr_container(X)
 
     km64 = BisectingKMeans(n_clusters=3, random_state=0).fit(X)
     km32 = BisectingKMeans(n_clusters=3, random_state=0).fit(X.astype(np.float32))
