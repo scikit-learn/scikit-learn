@@ -76,9 +76,7 @@ x_min, x_max, y_min, y_max = -3, 3, -3, 3
 ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
 
 # Plot samples by color and add legend
-scatter = ax.scatter(
-    X[:, 0], X[:, 1], s=150, c=y, label=y, edgecolors="k"
-)
+scatter = ax.scatter(X[:, 0], X[:, 1], s=150, c=y, label=y, edgecolors="k")
 ax.legend(*scatter.legend_elements(), loc="upper right", title="Classes")
 ax.set_title("Samples in two-dimensional feature space")
 _ = plt.show()
@@ -153,12 +151,6 @@ def plot_training_data_with_decision_boundary(kernel):
     )
     # Plot samples by color and add legend
     ax.scatter(X[:, 0], X[:, 1], c=y, s=150, edgecolors="k")
-    class0_label = plt.Line2D(
-        [], [], marker="o", color="black", markerfacecolor="b", markersize=10
-    )
-    class1_label = plt.Line2D(
-        [], [], marker="o", color="black", markerfacecolor="r", markersize=10
-    )
     ax.legend(*scatter.legend_elements(), loc="upper right", title="Classes")
     ax.set_title(f" Decision boundaries of {kernel} kernel in SVC")
 
@@ -285,4 +277,3 @@ plot_training_data_with_decision_boundary("sigmoid")
 # For a comprehensive evaluation, fine-tuning of SVC parameters using techniques
 # such as :class:`~sklearn.model_selection.GridSearchCV` is recommended to
 # capture the underlying structures within the data.
-
