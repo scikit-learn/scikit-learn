@@ -24,6 +24,12 @@ random sampling procedures.
   and has been fixed.
   :pr:`26416` by :user:`Yang Tao <mchikyt3>`.
 
+- |Fix| Ridge models with `solver='sparse_cg'` may have slightly different
+  results because of an underlying change in the scipy solver related to
+  tolerance handling.
+  :pr:`26814` by :user:`Loïc Estève <lesteve>`
+
+
 Changes impacting all modules
 -----------------------------
 
