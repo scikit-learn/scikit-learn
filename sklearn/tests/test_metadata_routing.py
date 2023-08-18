@@ -237,7 +237,7 @@ def test_process_routing_invalid_object():
     class InvalidObject:
         pass
 
-    with pytest.raises(AttributeError, match="has not implemented the routing"):
+    with pytest.raises(AttributeError, match="either implement the routing method"):
         process_routing(InvalidObject(), "fit", **{})
 
 

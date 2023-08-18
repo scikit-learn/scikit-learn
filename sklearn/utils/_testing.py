@@ -38,6 +38,7 @@ from numpy.testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
+    assert_no_warnings,
 )
 
 import sklearn
@@ -47,7 +48,7 @@ from sklearn.utils import (
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils._array_api import _check_array_api_dispatch
-from sklearn.utils.fixes import VisibleDeprecationWarning, threadpool_info
+from sklearn.utils.fixes import threadpool_info
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -65,6 +66,7 @@ __all__ = [
     "assert_approx_equal",
     "assert_allclose",
     "assert_run_python_script",
+    "assert_no_warnings",
     "SkipTest",
 ]
 
@@ -78,32 +80,6 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
-
-
-# To remove when we support numpy 1.7
-def assert_no_warnings(func, *args, **kw):
-    """
-    Parameters
-    ----------
-    func
-    *args
-    **kw
-    """
-    # very important to avoid uncontrolled state propagation
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-
-        result = func(*args, **kw)
-        if hasattr(np, "FutureWarning"):
-            # Filter out numpy-specific warnings in numpy >= 1.9
-            w = [e for e in w if e.category is not VisibleDeprecationWarning]
-
-        if len(w) > 0:
-            raise AssertionError(
-                "Got warnings when calling %s: [%s]"
-                % (func.__name__, ", ".join(str(warning) for warning in w))
-            )
-    return result
 
 
 def ignore_warnings(obj=None, category=Warning):
