@@ -129,12 +129,14 @@ automatically skipped. Therefore it's important to run the tests with the
 Note on MPS device support
 --------------------------
 
-The Metal Performance Shaders (MPS) device support for PyTorch is incomplete at
-the time of writing. See the following github issue for more details:
+On macOS, PyTorch can use the Metal Performance Shaders (MPS) to access
+hardware accelerators (e.g. the internal GPU component of the M1 or M2 chips).
+However, the MPS device support for PyTorch is incomplete at the time of
+writing. See the following github issue for more details:
 
 - https://github.com/pytorch/pytorch/issues/77764
 
-To run the tests with MPS enabled, you need to set the environment variable
+To enable the MPS support in PyTorch, set the environment variable
 `PYTORCH_ENABLE_MPS_FALLBACK=1` before running the tests:
 
 .. prompt:: bash $
