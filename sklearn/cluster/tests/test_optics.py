@@ -809,7 +809,6 @@ def test_precomputed_dists(is_sparse, global_dtype, csr_container):
     redX = X[::2].astype(global_dtype, copy=False)
     print("redX", redX)
     dists = pairwise_distances(redX, metric="euclidean")
-    print("dists", dists)
     dists = csr_container(dists) if is_sparse else dists
     try:
         with warnings.catch_warnings():
