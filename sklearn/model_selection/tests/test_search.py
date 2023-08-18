@@ -14,6 +14,7 @@ import pytest
 import scipy.sparse as sp
 from scipy.stats import bernoulli, expon, uniform
 
+from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
@@ -21,6 +22,7 @@ from sklearn.datasets import (
     make_classification,
     make_multilabel_classification,
 )
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.impute import SimpleImputer
@@ -57,6 +59,9 @@ from sklearn.neighbors import KernelDensity, KNeighborsClassifier, LocalOutlierF
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils._array_api import (
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils._testing import (
     MinimalClassifier,
@@ -67,6 +72,9 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     ignore_warnings,
+)
+from sklearn.utils.estimator_checks import (
+    _array_api_for_tests,
 )
 
 
@@ -223,6 +231,32 @@ def test_grid_search_pipeline_steps():
     # check that we didn't modify the parameter grid that was passed
     assert not hasattr(param_grid["regressor"][0], "coef_")
     assert not hasattr(param_grid["regressor"][1], "coef_")
+
+
+@pytest.mark.parametrize(
+    "array_namepsace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+def test_array_api_SearchCV(SearchCV, array_namepsace, device, dtype):
+    xp, device, dtype = _array_api_for_tests(array_namepsace, device, dtype)
+
+    X = np.arange(100).reshape((10, 10))
+    X_np = X.astype(dtype)
+    X_xp = xp.asarray(X_np, device=device)
+
+    # y should always be an integer, no matter what `dtype` is
+    y_np = np.array([0] * 5 + [1] * 5)
+    y_xp = xp.asarray(y_np, device=device)
+
+    with config_context(array_api_dispatch=True):
+        searcher = SearchCV(
+            LinearDiscriminantAnalysis(),
+            {"tol": [1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7]},
+            cv=2,
+        )
+        searcher.fit(X_xp, y_xp)
+
+        searcher.score(X_xp, y_xp)
 
 
 @pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])

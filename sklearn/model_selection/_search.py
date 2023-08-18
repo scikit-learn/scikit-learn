@@ -427,6 +427,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             "_xfail_checks": {
                 "check_supervised_y_2d": "DataConversionWarning not caught"
             },
+            "array_api_support": True,
         }
 
     def score(self, X, y=None):
