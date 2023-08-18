@@ -691,6 +691,26 @@ def test_standard_check_array_of_inverse_transform():
     scaler.inverse_transform(x)
 
 
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "check",
+    [check_array_api_input_and_values],
+    ids=_get_check_estimator_ids,
+)
+@pytest.mark.parametrize(
+    "estimator",
+    [MinMaxScaler()],
+    ids=_get_check_estimator_ids,
+)
+def test_minmaxscaler_array_api_compliance(
+    estimator, check, array_namespace, device, dtype
+):
+    name = estimator.__class__.__name__
+    check(name, estimator, array_namespace, device=device, dtype=dtype)
+
+
 def test_min_max_scaler_iris():
     X = iris.data
     scaler = MinMaxScaler()
