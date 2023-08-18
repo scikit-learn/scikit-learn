@@ -86,31 +86,27 @@ _ = plt.show()
 #
 # Training SVC model and plotting decision boundaries
 # ---------------------------------------------------
-# We create a function to plot the decision boundaries learned by the trained
-# :class:`~sklearn.svm.SVC` model, allowing the `kernel` parameter as input.
+# We define a function that fits a :class:`~sklearn.svm.SVC` classifier,
+# allowing the `kernel` parameter as input, and then plots the decision
+# boundaries learned by the model using
+# :class:`~sklearn.inspection.DecisionBoundaryDisplay`.
+# 
+# Notice that for the sake of simplicity, the `C` parameter is set to its
+# default value (`C=1`) in this example, whereas the `gamma` parameter is set to
+# `gamma=2` across all kernels, although it is automatically ignored for the
+# linear kernel. In a real classification task, where performance matters,
+# parameter tuning (by using :class:`~sklearn.model_selection.GridSearchCV` for
+# instance) is highly recommended to capture different structures within the
+# data.
 #
-# First, we train the model.
-#
-# Next, we obtain the decision boundary by using the fitted classifier's
-# :func:`~sklearn.svm.SVC.decision_function`. In a prediction task, this
-# function computes the signed distance of each new sample to the hyperplane
-# (decision boundary) to determine its class. Here, we use it to get the
-# position of the hyperplane.
-#
-# We then color the areas separated by the hyperplane based on their predicted
-# class. We also plot the margins to both sides of the decision boundary and the
-# support vectors used during training.
-#
-# Please note that in this example, for the sake of simplicity, we do not fine
-# tune any of the :class:`~sklearn.svm.SVC` parameters. The `C` parameter is set
-# to its default value (`C=1`), resulting in margins at 1 unit distance from
-# both sides of the hyperplane. The `gamma` parameter is set to a constant value
-# (`gamma=2`) for simplicity across all kernels, although it is automatically
-# ignored for the linear kernel.
-#
-# In a real classification task, where performance matters, parameter tuning
-# with techniques like :class:`~sklearn.model_selection.GridSearchCV` is
-# highly recommended to capture different structures within the data.
+# Setting `response_method="predict"` in
+# :class:`~sklearn.inspection.DecisionBoundaryDisplay` colors the areas based on
+# their predicted class, which in the case of :class:`~sklearn.svm.SVC`
+# corresponds to the signed distance of each new sample to the hyperplane. Using
+# `response_method="decision_function"` allows us to also plot the margins at
+# both sides of the decision boundary. Finally the support vectors used during
+# training (which always lay on the margins) can be identified by means ot the
+# `support_vectors_` attribute.
 from sklearn import svm
 from sklearn.inspection import DecisionBoundaryDisplay
 
