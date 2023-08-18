@@ -15,6 +15,7 @@ import pytest
 from scipy import sparse
 from scipy.cluster import hierarchy
 from scipy.sparse.csgraph import connected_components
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration, ward_tree
 from sklearn.cluster._agglomerative import (
@@ -175,8 +176,8 @@ def test_agglomerative_clustering_distances(
     else:
         assert not hasattr(clustering, "distances_")
 
-
-def test_agglomerative_clustering(global_random_seed):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_agglomerative_clustering(global_random_seed, csr_container):
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering.
     rng = np.random.RandomState(global_random_seed)
@@ -218,7 +219,7 @@ def test_agglomerative_clustering(global_random_seed):
         # Check that we raise a TypeError on dense matrices
         clustering = AgglomerativeClustering(
             n_clusters=10,
-            connectivity=sparse.lil_matrix(connectivity.toarray()[:10, :10]),
+            connectivity=csr_container(connectivity.toarray()[:10, :10]),
             linkage=linkage,
         )
         with pytest.raises(ValueError):
@@ -908,3 +909,5 @@ def test_deprecate_affinity():
         af.fit(X)
     with pytest.raises(ValueError, match=msg):
         af.fit_predict(X)
+
+

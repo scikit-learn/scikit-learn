@@ -16,6 +16,7 @@ from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 rng = np.random.RandomState(0)
 n_points_per_cluster = 10
@@ -160,6 +161,7 @@ def test_cluster_hierarchy_(global_dtype):
     "metric, is_sparse",
     [["minkowski", False], ["euclidean", True]],
 )
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_correct_number_of_clusters(metric, is_sparse):
     # in 'auto' mode
 
@@ -292,6 +294,7 @@ def test_close_extract():
     "metric, is_sparse",
     [["minkowski", False], ["euclidean", False], ["euclidean", True]],
 )
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_dbscan_optics_parity(eps, min_samples, metric, is_sparse, global_dtype):
     # Test that OPTICS clustering labels are <= 5% difference of DBSCAN
 
@@ -359,7 +362,7 @@ def test_min_cluster_size(min_cluster_size, global_dtype):
     clust_frac.fit(redX)
     assert_array_equal(clust.labels_, clust_frac.labels_)
 
-
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_min_cluster_size_invalid2():
     clust = OPTICS(min_cluster_size=len(X) + 1)
     with pytest.raises(ValueError, match="must be no greater than the "):
@@ -799,6 +802,7 @@ def test_extract_dbscan(global_dtype):
 
 
 @pytest.mark.parametrize("is_sparse", [False, True])
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_precomputed_dists(is_sparse, global_dtype):
     redX = X[::2].astype(global_dtype, copy=False)
     dists = pairwise_distances(redX, metric="euclidean")
