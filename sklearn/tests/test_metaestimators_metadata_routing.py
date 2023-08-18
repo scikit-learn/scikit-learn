@@ -20,8 +20,6 @@ from sklearn.tests.metadata_routing_common import (
     ConsumingScorer,
     ConsumingSplitter,
     _Registry,
-)
-from sklearn.tests.test_metadata_routing import (
     assert_request_is_empty,
     check_recorded_metadata,
 )
@@ -107,7 +105,7 @@ The keys are as follows:
 # ids used for pytest fixture
 METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATORS]
 
-CV_SCORERS = [
+CV_SCORERS: list = [
     {
         "cv_estimator": LogisticRegressionCV,
         "scorer_name": "scoring",
@@ -115,13 +113,17 @@ CV_SCORERS = [
     },
 ]
 
-CV_SPLITTERS = [
+CV_SPLITTERS: list = [
     {
         "cv_estimator": LogisticRegressionCV,
         "splitter_name": "cv",
         "routing_methods": ["fit"],
     }
 ]
+
+# IDs used by pytest to get meaningful verbose messages when running the tests
+CV_SCORER_IDS = [x["cv_estimator"].__name__ for x in CV_SCORERS]
+CV_SPLITTER_IDS = [x["cv_estimator"].__name__ for x in CV_SPLITTERS]
 
 
 def test_registry_copy():
@@ -218,7 +220,7 @@ def test_setting_request_removes_error(metaestimator):
                     check_recorded_metadata(estimator, method_name, **kwargs)
 
 
-@pytest.mark.parametrize("cv_scorer", CV_SCORERS)
+@pytest.mark.parametrize("cv_scorer", CV_SCORERS, ids=CV_SCORER_IDS)
 def test_metadata_is_routed_correctly_to_scorer(cv_scorer):
     """Test that any requested metadata is correctly routed to the underlying
     scorers in CV estimators.
@@ -234,6 +236,8 @@ def test_metadata_is_routed_correctly_to_scorer(cv_scorer):
         instance = cls(**{scorer_name: scorer})
         method = getattr(instance, method_name)
         kwargs = {"sample_weight": sample_weight}
+        if "fit" not in method_name:  # instance needs to be fitted first
+            instance.fit(X, y)
         method(X, y, **kwargs)
         for _scorer in registry:
             check_recorded_metadata(
@@ -244,7 +248,7 @@ def test_metadata_is_routed_correctly_to_scorer(cv_scorer):
             )
 
 
-@pytest.mark.parametrize("cv_splitter", CV_SPLITTERS)
+@pytest.mark.parametrize("cv_splitter", CV_SPLITTERS, ids=CV_SPLITTER_IDS)
 def test_metadata_is_routed_correctly_to_splitter(cv_splitter):
     """Test that any requested metadata is correctly routed to the underlying
     splitters in CV estimators.
