@@ -159,7 +159,7 @@ def plot_training_data_with_decision_boundary(kernel):
     class1_label = plt.Line2D(
         [], [], marker="o", color="black", markerfacecolor="r", markersize=10
     )
-    ax.legend([class0_label, class1_label], ["Class 0", "Class 1"], loc="lower right")
+    ax.legend(*scatter.legend_elements(), loc="upper right", title="Classes")
     ax.set_title(f" Decision boundaries of {kernel} kernel in SVC")
 
     _ = plt.show()
