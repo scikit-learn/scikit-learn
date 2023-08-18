@@ -141,7 +141,7 @@ def plot_training_data_with_decision_boundary(kernel):
         linestyles=["--", "-", "--"],
     )
 
-    # Plot huger circles around samples that serve as support vectors
+    # Plot bigger circles around samples that serve as support vectors
     ax.scatter(
         clf.support_vectors_[:, 0],
         clf.support_vectors_[:, 1],
