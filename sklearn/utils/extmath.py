@@ -1090,7 +1090,7 @@ def _incremental_mean_and_var(
         # equivalent to np.nansum(X * sample_weight, axis=0)
         # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
         new_sum = _safe_accumulator_op(
-            xp.matmul, sample_weight, np.where(X_nan_mask, 0, X)
+            xp.matmul, sample_weight, xp.where(X_nan_mask, 0, X)
         )
         new_sample_count = _safe_accumulator_op(
             xp.sum, sample_weight[:, None] * (~X_nan_mask), axis=0
