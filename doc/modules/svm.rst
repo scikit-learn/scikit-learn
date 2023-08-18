@@ -538,8 +538,9 @@ classifiers, except that:
       use of ``fit()`` and ``predict()`` you will have unexpected results.
 
 
-Using Python functions as kernels
----------------------------------
+|details-start|
+**Using Python functions as kernels**
+|details-split|  
 
 You can use your own defined kernels by passing a function to the
 ``kernel`` parameter.
@@ -558,11 +559,8 @@ instance that will use that kernel::
     ...
     >>> clf = svm.SVC(kernel=my_kernel)
   
+|details-end|
 
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_svm_plot_custom_kernel.py`.
 
 |details-start|
 **Using the Gram matrix**
@@ -590,6 +588,10 @@ test vectors must be provided:
     array([0, 1, 0])
 
 |details-end|
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_svm_plot_custom_kernel.py`.
 
 .. _svm_mathematical_formulation:
 
