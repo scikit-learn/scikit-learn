@@ -168,11 +168,10 @@ plot_training_data_with_decision_boundary("linear")
 
 # %%
 # Training a :class:`~sklearn.svm.SVC` on a linear kernel results in an
-# untransformed feature space and we can see the hyperplane and the margins as
-# straight lines. The support vectors are on the margins. The trained classes do
-# not perfectly capture the data, but thanks to the model's soft margins, we can
-# expect that it has converged, and the position of the classification
-# boundaries has stabilized.
+# untransformed feature space where the hyperplane and the margins are straight
+# lines. In this case, the choice `C=1` results in margins at 1 unit distance
+# from both sides of the hyperplane. Due to the lack of expressivity of the
+# linear kernel, the trained classes do not perfectly predict the data.
 #
 # Polynomial kernel
 # *****************
