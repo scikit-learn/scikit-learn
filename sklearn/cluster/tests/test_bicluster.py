@@ -33,6 +33,7 @@ class MockBiclustering(BiclusterMixin, BaseEstimator):
             np.where([False, False, True, True])[0],
         )
 
+
 @pytest.mark.parametrize("input_type", [csr_matrix, csr_array])
 def test_get_submatrix(input_type):
     data = np.arange(20).reshape(5, 4)
