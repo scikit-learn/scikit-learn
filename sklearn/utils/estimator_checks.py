@@ -871,9 +871,16 @@ def _array_api_for_tests(array_namespace, device, dtype):
     if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
         raise SkipTest("PyTorch test requires cuda, which is not available")
     elif array_namespace == "torch" and device == "mps" and not xp.has_mps:
-        raise SkipTest(
-            "PyTorch test requires mps device support, which is not available"
-        )
+        if not xp.backends.mps.is_built():
+            raise SkipTest(
+                "MPS is not available because the current PyTorch install was not "
+                "built with MPS enabled."
+            )
+        else:
+            raise SkipTest(
+                "MPS is not available because the current MacOS version is not 12.3+ "
+                "and/or you do not have an MPS-enabled device on this machine."
+            )
     elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
         import cupy
 
