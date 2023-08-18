@@ -3,7 +3,6 @@
 import numpy as np
 import pytest
 from scipy.sparse import issparse
-from sklearn.utils.fixes import CSR_CONTAINERS
 
 from sklearn.base import BaseEstimator, BiclusterMixin
 from sklearn.cluster import SpectralBiclustering, SpectralCoclustering
@@ -20,7 +19,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 class MockBiclustering(BiclusterMixin, BaseEstimator):
