@@ -6,6 +6,7 @@ from numpy.testing import assert_allclose
 from scipy import optimize
 from scipy.special import factorial, xlogy
 
+from sklearn import config_context, datasets
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import (
@@ -26,11 +27,19 @@ from sklearn.metrics import (
 )
 from sklearn.metrics._regression import _check_reg_targets
 from sklearn.model_selection import GridSearchCV
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    device,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.estimator_checks import _array_api_for_tests
+
+iris = datasets.load_iris()
 
 
 def test_regression_metrics(n_samples=50):
@@ -492,7 +501,7 @@ def test_tweedie_deviance_continuity():
 
     # Ws we get closer to the limit, with 1e-12 difference the absolute
     # tolerance to pass the below check increases. There are likely
-    # numerical precision issues on the edges of different definition
+    # numerical metric issues on the edges of different definition
     # regions.
     assert_allclose(
         mean_tweedie_deviance(y_true, y_pred, power=1 + 1e-10),
@@ -550,7 +559,7 @@ def test_mean_pinball_loss_on_constant_predictions(distribution, target_quantile
 
         # Check that the loss of this constant predictor is greater or equal
         # than the loss of using the optimal quantile (up to machine
-        # precision):
+        # metric):
         assert pbl >= best_pbl - np.finfo(best_pbl.dtype).eps
 
         # Check that the value of the pinball loss matches the analytical
@@ -577,7 +586,7 @@ def test_mean_pinball_loss_on_constant_predictions(distribution, target_quantile
 def test_dummy_quantile_parameter_tuning():
     # Integration test to check that it is possible to use the pinball loss to
     # tune the hyperparameter of a quantile regressor. This is conceptually
-    # similar to the previous test but using the scikit-learn estimator and
+    # similar to the previous test but using the scikit-learn metric and
     # scoring API instead.
     n_samples = 1000
     rng = np.random.RandomState(0)
@@ -611,3 +620,37 @@ def test_pinball_loss_relation_with_mae():
         mean_absolute_error(y_true, y_pred)
         == mean_pinball_loss(y_true, y_pred, alpha=0.5) * 2
     )
+
+
+def check_array_api_compute_metric(name, metric, array_namepsace, _device, dtype):
+    xp, _device, dtype = _array_api_for_tests(array_namepsace, _device, dtype)
+    y_true_np = np.array([[1, 3], [1, 2]], dtype=float)
+    y_pred_np = np.array([[1, 4], [1, 1]], dtype=float)
+    y_true_xp = xp.asarray(y_true_np, device=_device)
+    y_pred_xp = xp.asarray(y_pred_np, device=_device)
+
+    metric_np = metric(y_true_np, y_pred_np)
+
+    with config_context(array_api_dispatch=True):
+        metric_xp = metric(y_true_xp, y_pred_xp)
+        assert metric_xp.shape == ()
+        assert metric_xp.dtype == y_true_xp.dtype
+        assert device(metric_xp) == device(y_true_xp)
+
+        assert_allclose(
+            _convert_to_numpy(metric_xp, xp=xp),
+            metric_np,
+            atol=np.finfo(dtype).eps * 100,
+        )
+
+
+@pytest.mark.parametrize(
+    "array_namespace, _device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "check",
+    [check_array_api_compute_metric],
+)
+def test_r2_score_array_api_compliance(check, array_namespace, _device, dtype):
+    name = r2_score.__class__.__name__
+    check(name, r2_score, array_namespace, _device=_device, dtype=dtype)

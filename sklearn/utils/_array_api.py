@@ -463,6 +463,34 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         return float(xp.sum(sample_score))
 
 
+def _average(array, axis=None, weights=None, xp=None):
+    if xp is None:
+        xp, _ = get_namespace(array)
+    if _is_numpy_namespace(xp):
+        return numpy.average(array, axis=axis, weights=weights)
+
+    a = xp.asarray(array, dtype=xp.float64)
+
+    if weights is None:
+        return xp.mean(a, axis=axis)
+
+    # Sanity checks
+    if a.shape != weights.shape:
+        if axis is None:
+            raise TypeError(
+                "Axis must be specified when shapes of a and weights differ."
+            )
+        if weights.ndim != 1:
+            raise TypeError("1D weights expected when shapes of a and weights differ.")
+        if weights.shape[0] != a.shape[axis]:
+            raise ValueError("Length of weights not compatible with specified axis.")
+
+    scale = xp.sum(weights, axis=axis)
+    if xp.any(scale == 0.0):
+        raise ZeroDivisionError("Weights sum to zero, can't be normalized")
+    return xp.multiply(a, weights) / scale
+
+
 def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
     """Helper to support the order kwarg only for NumPy-backed arrays
 
