@@ -39,6 +39,7 @@ from ..utils.validation import (
     check_random_state,
     validate_data,
 )
+from ..utils._array_api import get_namespace, XP_FLOAT_DTYPES
 from ._encoders import OneHotEncoder
 
 BOUNDS_THRESHOLD = 1e-7
@@ -926,12 +927,13 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        xp, _ = get_namespace(X)
         first_call = not hasattr(self, "n_samples_seen_")
         X = validate_data(
             self,
             X,
             accept_sparse=("csr", "csc"),
-            dtype=FLOAT_DTYPES,
+            dtype=XP_FLOAT_DTYPES(xp),
             ensure_all_finite="allow-nan",
             reset=first_call,
         )
@@ -947,11 +949,11 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # if n_samples_seen_ is an integer (i.e. no missing values), we need to
         # transform it to a NumPy array of shape (n_features,) required by
         # incr_mean_variance_axis and _incremental_variance_axis
-        dtype = np.int64 if sample_weight is None else X.dtype
+        dtype = xp.int64 if sample_weight is None else X.dtype
         if not hasattr(self, "n_samples_seen_"):
-            self.n_samples_seen_ = np.zeros(n_features, dtype=dtype)
+            self.n_samples_seen_ = xp.zeros(n_features, dtype=dtype)
         elif np.size(self.n_samples_seen_) == 1:
-            self.n_samples_seen_ = np.repeat(self.n_samples_seen_, X.shape[1])
+            self.n_samples_seen_ = xp.repeat(self.n_samples_seen_, X.shape[1])
             self.n_samples_seen_ = self.n_samples_seen_.astype(dtype, copy=False)
 
         if sparse.issparse(X):
@@ -986,8 +988,8 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                     )
                 # We force the mean and variance to float64 for large arrays
                 # See https://github.com/scikit-learn/scikit-learn/pull/12338
-                self.mean_ = self.mean_.astype(np.float64, copy=False)
-                self.var_ = self.var_.astype(np.float64, copy=False)
+                self.mean_ = self.mean_.astype(xp.float64, copy=False)
+                self.var_ = self.var_.astype(xp.float64, copy=False)
             else:
                 self.mean_ = None  # as with_mean must be False for sparse
                 self.var_ = None
@@ -1010,7 +1012,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             if not self.with_mean and not self.with_std:
                 self.mean_ = None
                 self.var_ = None
-                self.n_samples_seen_ += X.shape[0] - np.isnan(X).sum(axis=0)
+                self.n_samples_seen_ += X.shape[0] - xp.isnan(X).sum(axis=0)
 
             else:
                 self.mean_, self.var_, self.n_samples_seen_ = _incremental_mean_and_var(
@@ -1024,7 +1026,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # for backward-compatibility, reduce n_samples_seen_ to an integer
         # if the number of samples is the same for each feature (i.e. no
         # missing values)
-        if np.ptp(self.n_samples_seen_) == 0:
+        if np.ptp(self.n_samples_seen_) == 0:  # TODO add ptp to array api utils
             self.n_samples_seen_ = self.n_samples_seen_[0]
 
         if self.with_std:
@@ -1034,7 +1036,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 self.var_, self.mean_, self.n_samples_seen_
             )
             self.scale_ = _handle_zeros_in_scale(
-                np.sqrt(self.var_), copy=False, constant_mask=constant_mask
+                xp.sqrt(self.var_), copy=False, constant_mask=constant_mask
             )
         else:
             self.scale_ = None
@@ -1056,6 +1058,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
+        xp, _ = get_namespace(X)
         check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
@@ -1065,7 +1068,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             reset=False,
             accept_sparse="csr",
             copy=copy,
-            dtype=FLOAT_DTYPES,
+            dtype=XP_FLOAT_DTYPES(xp),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -1100,6 +1103,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
+        xp, _ = get_namespace(X)
         check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
@@ -1107,7 +1111,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             accept_sparse="csr",
             copy=copy,
-            dtype=FLOAT_DTYPES,
+            dtype=XP_FLOAT_DTYPES(xp),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
