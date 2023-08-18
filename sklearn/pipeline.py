@@ -73,7 +73,7 @@ class Pipeline(_BaseComposition):
     :class:`~sklearn.model_selection.GridSearchCV`, refer to
     :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`. The
     example :ref:`sphx_glr_auto_examples_compose_plot_digits_pipe.py` shows how
-    to search a pipeline using `'__'` as a separator in the parameter names.
+    to grid search on a pipeline using `'__'` as a separator in the parameter names.
 
     Read more in the :ref:`User Guide <pipeline>`.
 
