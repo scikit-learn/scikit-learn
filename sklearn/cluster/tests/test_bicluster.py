@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from scipy.sparse import csr_matrix, csr_array, issparse
+from scipy.sparse import csr_array, csr_matrix, issparse
 
 from sklearn.base import BaseEstimator, BiclusterMixin
 from sklearn.cluster import SpectralBiclustering, SpectralCoclustering
@@ -19,6 +19,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.fixes import parse_version, sp_version
 
 
 class MockBiclustering(BiclusterMixin, BaseEstimator):
@@ -34,7 +35,19 @@ class MockBiclustering(BiclusterMixin, BaseEstimator):
         )
 
 
-@pytest.mark.parametrize("input_type", [csr_matrix, csr_array])
+@pytest.mark.parametrize(
+    "input_type",
+    [
+        pytest.param(
+            csr_array,
+            marks=pytest.mark.skipif(
+                sp_version <= parse_version("1.8.0"),
+                reason="sparse array not supported in scipy < 1.8.0",
+            ),
+        ),
+        csr_matrix,
+    ],
+)
 def test_get_submatrix(input_type):
     data = np.arange(20).reshape(5, 4)
     model = MockBiclustering()
@@ -59,7 +72,19 @@ def _test_shape_indices(model):
         assert len(j_ind) == n
 
 
-@pytest.mark.parametrize("input_type", [csr_matrix, csr_array])
+@pytest.mark.parametrize(
+    "input_type",
+    [
+        pytest.param(
+            csr_array,
+            marks=pytest.mark.skipif(
+                sp_version <= parse_version("1.8.0"),
+                reason="sparse array not supported in scipy < 1.8.0",
+            ),
+        ),
+        csr_matrix,
+    ],
+)
 def test_spectral_coclustering(global_random_seed, input_type):
     # Test Dhillon's Spectral CoClustering on a simple problem.
     param_grid = {
@@ -89,7 +114,19 @@ def test_spectral_coclustering(global_random_seed, input_type):
             _test_shape_indices(model)
 
 
-@pytest.mark.parametrize("input_type", [csr_matrix, csr_array])
+@pytest.mark.parametrize(
+    "input_type",
+    [
+        pytest.param(
+            csr_array,
+            marks=pytest.mark.skipif(
+                sp_version <= parse_version("1.8.0"),
+                reason="sparse array not supported in scipy < 1.8.0",
+            ),
+        ),
+        csr_matrix,
+    ],
+)
 def test_spectral_biclustering(global_random_seed, input_type):
     # Test Kluger methods on a checkerboard dataset.
     S, rows, cols = make_checkerboard(
@@ -148,7 +185,19 @@ def _do_bistochastic_test(scaled):
     assert_almost_equal(scaled.sum(axis=0).mean(), scaled.sum(axis=1).mean(), decimal=1)
 
 
-@pytest.mark.parametrize("input_type", [csr_matrix, csr_array])
+@pytest.mark.parametrize(
+    "input_type",
+    [
+        pytest.param(
+            csr_array,
+            marks=pytest.mark.skipif(
+                sp_version <= parse_version("1.8.0"),
+                reason="sparse array not supported in scipy < 1.8.0",
+            ),
+        ),
+        csr_matrix,
+    ],
+)
 def test_scale_normalize(global_random_seed, input_type):
     generator = np.random.RandomState(global_random_seed)
     X = generator.rand(100, 100)
@@ -159,7 +208,19 @@ def test_scale_normalize(global_random_seed, input_type):
             assert issparse(scaled)
 
 
-@pytest.mark.parametrize("input_type", [csr_matrix, csr_array])
+@pytest.mark.parametrize(
+    "input_type",
+    [
+        pytest.param(
+            csr_array,
+            marks=pytest.mark.skipif(
+                sp_version <= parse_version("1.8.0"),
+                reason="sparse array not supported in scipy < 1.8.0",
+            ),
+        ),
+        csr_matrix,
+    ],
+)
 def test_bistochastic_normalize(global_random_seed, input_type):
     generator = np.random.RandomState(global_random_seed)
     X = generator.rand(100, 100)
@@ -186,7 +247,19 @@ def test_fit_best_piecewise(global_random_seed):
     assert_array_equal(best, vectors[:2])
 
 
-@pytest.mark.parametrize("input_type", [csr_matrix, csr_array])
+@pytest.mark.parametrize(
+    "input_type",
+    [
+        pytest.param(
+            csr_array,
+            marks=pytest.mark.skipif(
+                sp_version <= parse_version("1.8.0"),
+                reason="sparse array not supported in scipy < 1.8.0",
+            ),
+        ),
+        csr_matrix,
+    ],
+)
 def test_project_and_cluster(global_random_seed, input_type):
     model = SpectralBiclustering(random_state=global_random_seed)
     data = np.array([[1, 1, 1], [1, 1, 1], [3, 6, 3], [3, 6, 3]])
