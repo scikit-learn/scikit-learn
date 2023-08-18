@@ -79,12 +79,6 @@ ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
 scatter = ax.scatter(
     X[:, 0], X[:, 1], s=150, c=y, label=y, edgecolors="k"
 )
-cl0_label = plt.Line2D(
-    [], [], marker="o", color="black", markerfacecolor="b", markersize=10
-)
-cl1_label = plt.Line2D(
-    [], [], marker="o", color="black", markerfacecolor="r", markersize=10
-)
 ax.legend([cl0_label, cl1_label], ["Class 0", "Class 1"], loc="lower right")
 ax.set_title("Samples in two-dimensional feature space")
 _ = plt.show()
