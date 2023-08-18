@@ -152,7 +152,7 @@ def plot_training_data_with_decision_boundary(kernel):
         edgecolors="k",
     )
     # Plot samples by color and add legend
-    ax.scatter(X[:, 0], X[:, 1], c=samples_colormap[y], s=150, edgecolors="k")
+    ax.scatter(X[:, 0], X[:, 1], c=y, s=150, edgecolors="k")
     class0_label = plt.Line2D(
         [], [], marker="o", color="black", markerfacecolor="b", markersize=10
     )
