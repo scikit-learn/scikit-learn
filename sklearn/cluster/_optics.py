@@ -233,6 +233,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
     >>> clustering = OPTICS(min_samples=2).fit(X)
     >>> clustering.labels_
     array([0, 0, 0, 1, 1, 1])
+
+    For a more detailed example see
+    :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`.
     """
 
     _parameter_constraints: dict = {

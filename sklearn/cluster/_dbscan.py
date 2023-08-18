@@ -22,6 +22,8 @@ from ..utils.validation import _check_sample_weight
 from ._dbscan_inner import dbscan_inner
 
 
+# This function is not validated using validate_params because
+# it's just a factory for DBSCAN.
 def dbscan(
     X,
     eps=0.5,

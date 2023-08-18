@@ -54,6 +54,11 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
           array of distances, and returns an array of the same shape
           containing the weights.
 
+        Refer to the example entitled
+        :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`
+        showing the impact of the `weights` parameter on the decision
+        boundary.
+
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
@@ -329,8 +334,8 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                     self._fit_X,
                     k=self.n_neighbors,
                     weights=self.weights,
-                    labels=self._y,
-                    unique_labels=self.classes_,
+                    Y_labels=self._y,
+                    unique_Y_labels=self.classes_,
                     metric=metric,
                     metric_kwargs=metric_kwargs,
                     # `strategy="parallel_on_X"` has in practice be shown
