@@ -122,7 +122,7 @@ def plot_training_data_with_decision_boundary(kernel):
     clf = svm.SVC(kernel=kernel, gamma=2).fit(X, y)
 
     # Settings for plotting
-    fig, ax = plt.subplots(figsize=(4, 3))
+    _, ax = plt.subplots(figsize=(4, 3))
     x_min, x_max, y_min, y_max = -3, 3, -3, 3
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)
