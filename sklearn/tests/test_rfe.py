@@ -22,4 +22,4 @@ def test_rfe():
         False,
         False,
     ]
-    assert selector_fit.ranking_.tolist() == [1, 1, 1, 1, 1, 6, 4, 3, 2, 5]
+    assert selector_fit.ranking_.tolist() == expected
