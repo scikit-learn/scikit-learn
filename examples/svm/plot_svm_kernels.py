@@ -77,7 +77,7 @@ ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
 
 # Plot samples by color and add legend
 scatter = ax.scatter(
-    X[:, 0], X[:, 1], s=150, c=samples_colormap[y], label=y, edgecolors="k"
+    X[:, 0], X[:, 1], s=150, c=y, label=y, edgecolors="k"
 )
 cl0_label = plt.Line2D(
     [], [], marker="o", color="black", markerfacecolor="b", markersize=10
