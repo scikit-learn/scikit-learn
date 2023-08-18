@@ -113,8 +113,6 @@ _ = plt.show()
 # In a real classification task, where performance matters, parameter tuning
 # with techniques like :class:`~sklearn.model_selection.GridSearchCV` is
 # highly recommended to capture different structures within the data.
-from matplotlib.colors import ListedColormap
-
 from sklearn import svm
 from sklearn.inspection import DecisionBoundaryDisplay
 
