@@ -45,6 +45,7 @@ def yield_namespace_device_dtype_combinations():
                 ("cpu", "cuda"), ("float64", "float32")
             ):
                 yield array_namespace, device, dtype
+            yield array_namespace, "mps", "float32"
         else:
             yield array_namespace, None, None
 
