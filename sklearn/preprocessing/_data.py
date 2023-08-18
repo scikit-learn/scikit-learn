@@ -22,7 +22,8 @@ from ..base import (
     TransformerMixin,
     _fit_context,
 )
-from ..utils import check_array
+from ..utils import _array_api, check_array
+from ..utils._array_api import get_namespace
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs import (
@@ -103,16 +104,17 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
         if scale == 0.0:
             scale = 1.0
         return scale
-    elif isinstance(scale, np.ndarray):
+    else:
+        xp, _ = get_namespace(scale)
         if constant_mask is None:
             # Detect near constant values to avoid dividing by a very small
             # value that could lead to surprising results and numerical
             # stability issues.
-            constant_mask = scale < 10 * np.finfo(scale.dtype).eps
+            constant_mask = scale < 10 * xp.finfo(scale.dtype).eps
 
         if copy:
             # New array to avoid side-effects
-            scale = scale.copy()
+            scale = xp.asarray(scale, copy=True)
         scale[constant_mask] = 1.0
         return scale
 
@@ -1203,12 +1205,14 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted scaler.
         """
+        xp, _ = get_namespace(X)
+
         first_pass = not hasattr(self, "n_samples_seen_")
         X = self._validate_data(
             X,
             reset=first_pass,
             accept_sparse=("csr", "csc"),
-            dtype=FLOAT_DTYPES,
+            dtype=_array_api.supported_float_dtypes(xp),
             force_all_finite="allow-nan",
         )
 
@@ -1216,12 +1220,12 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             mins, maxs = min_max_axis(X, axis=0, ignore_nan=True)
             max_abs = np.maximum(np.abs(mins), np.abs(maxs))
         else:
-            max_abs = np.nanmax(np.abs(X), axis=0)
+            max_abs = _array_api._nanmax(xp.abs(X), axis=0)
 
         if first_pass:
             self.n_samples_seen_ = X.shape[0]
         else:
-            max_abs = np.maximum(self.max_abs_, max_abs)
+            max_abs = xp.maximum(self.max_abs_, max_abs)
             self.n_samples_seen_ += X.shape[0]
 
         self.max_abs_ = max_abs
