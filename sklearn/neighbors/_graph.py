@@ -230,6 +230,10 @@ class KNeighborsTransformer(
 
     The transformed data is a sparse graph as returned by kneighbors_graph.
 
+    See
+    :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`
+    for an example on how to use the API.
+
     Read more in the :ref:`User Guide <neighbors_transformer>`.
 
     .. versionadded:: 0.22
