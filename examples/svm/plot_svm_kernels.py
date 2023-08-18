@@ -124,9 +124,7 @@ def plot_training_data_with_decision_boundary(kernel):
     # Settings for plotting
     _, ax = plt.subplots(figsize=(4, 3))
     x_min, x_max, y_min, y_max = -3, 3, -3, 3
-    ax.set_xlim(x_min, x_max)
-    ax.set_ylim(y_min, y_max)
-    samples_colormap = np.array(["b", "r"])
+    ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
 
     # Plot decision boundary and margins
     common_params = {"estimator": clf, "X": X, "ax": ax}
