@@ -41,9 +41,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         transformer.inverse_transform(regressor.predict(X))
 
-    For an example use case of the TransformedTargetRegressor, refer to
-    :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`.
-
     Read more in the :ref:`User Guide <transformed_target_regressor>`.
 
     .. versionadded:: 0.20
@@ -111,9 +108,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     to be used by scikit-learn transformers. At the time of prediction, the
     output will be reshaped to a have the same number of dimensions as `y`.
 
-    See :ref:`examples/compose/plot_transformed_target.py
-    <sphx_glr_auto_examples_compose_plot_transformed_target.py>`.
-
     Examples
     --------
     >>> import numpy as np
@@ -129,6 +123,9 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     1.0
     >>> tt.regressor_.coef_
     array([2.])
+
+    For a more detailed example use case refer to
+    :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`.
     """
 
     _parameter_constraints: dict = {

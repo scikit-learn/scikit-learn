@@ -1298,9 +1298,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     setting to 'drop' or disabled by setting to 'passthrough' (features are
     passed without transformation).
 
-    For an example of usage, see
-    :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`.
-
     Read more in the :ref:`User Guide <feature_union>`.
 
     .. versionadded:: 0.13
@@ -1379,6 +1376,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     >>> union.set_params(pca__n_components=1).fit_transform(X)
     array([[ 1.5       ,  3.0...],
            [-1.5       ,  5.7...]])
+
+    For a more detailed example of usage, see
+    :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`.
     """
 
     _required_parameters = ["transformer_list"]

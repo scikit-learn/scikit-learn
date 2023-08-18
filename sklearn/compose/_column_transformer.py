@@ -48,9 +48,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     This is useful for heterogeneous or columnar data, to combine several
     feature extraction mechanisms or transformations into a single transformer.
 
-    For an example of usage, see
-    :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
-
     Read more in the :ref:`User Guide <column_transformer>`.
 
     .. versionadded:: 0.20
@@ -217,6 +214,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     ...     [("text_preprocess", FeatureHasher(input_type="string"), "documents"),
     ...      ("num_preprocess", MinMaxScaler(), ["width"])])
     >>> X_trans = ct.fit_transform(X)  # doctest: +SKIP
+
+    For a more detailed example of usage, see
+    :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
     """
 
     _required_parameters = ["transformers"]
@@ -1083,7 +1083,7 @@ class make_column_selector:
 
     For an example of how to use :func:`make_column_selector` within a
     :class:`ColumnTransformer` to select columns based on data type (i.e.
-    dtype), refer to
+    `dtype`), refer to
     :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
 
     Parameters
