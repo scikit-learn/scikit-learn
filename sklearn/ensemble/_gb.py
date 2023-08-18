@@ -31,7 +31,6 @@ from scipy.sparse import csc_matrix, csr_matrix, issparse
 from .._loss.loss import (
     _LOSSES,
     AbsoluteError,
-    BaseLoss,
     ExponentialLoss,
     HalfBinomialLoss,
     HalfMultinomialLoss,
@@ -419,8 +418,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X_csr=None,
     ):
         """Fit another stage of ``n_trees_per_iteration_`` trees."""
-        if sample_mask.dtype != bool:
-            raise ValueError("Only dtype bool is allowed for sample_mask.")
         original_y = y
 
         if isinstance(self._loss, HuberLoss):
@@ -652,10 +649,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         self._set_max_features()
 
-        if isinstance(self.loss, str):
-            self._loss = self._get_loss(sample_weight=sample_weight)
-        elif isinstance(self.loss, BaseLoss):
-            self._loss = self.loss
+        # self.loss is guaranteed to be a string
+        self._loss = self._get_loss(sample_weight=sample_weight)
 
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
@@ -1524,11 +1519,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
                 )
             else:
                 return ExponentialLoss(sample_weight=sample_weight)
-        else:
-            raise ValueError(
-                f"Loss {self.loss} is not supported for {self.__class__.__name__}. "
-                f"Accepted losses: {self._VALID_LOSSES}."
-            )
 
     def decision_function(self, X):
         """Compute the decision function of ``X``.
