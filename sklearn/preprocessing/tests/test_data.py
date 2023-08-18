@@ -223,8 +223,9 @@ def test_standard_scaler_dtype(add_sample_weight, sparse_container):
         scaler = StandardScaler(with_mean=with_mean)
         X_scaled = scaler.fit(X, sample_weight=sample_weight).transform(X)
         assert X.dtype == X_scaled.dtype
-        assert scaler.mean_.dtype == np.float64
-        assert scaler.scale_.dtype == np.float64
+        # TODO is it a good idea to change this behavior?
+        assert scaler.mean_.dtype == dtype
+        assert scaler.scale_.dtype == dtype
 
 
 @pytest.mark.parametrize(
@@ -2631,7 +2632,7 @@ def test_standard_scaler_array_api_compliance(array_namespace, device, dtype):
     xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
 
     from sklearn.datasets import make_classification
-    X, y = make_classification(random_state=42)
+    X, _ = make_classification(random_state=0)
     X = X.astype(dtype, copy=False)
 
     X_xp = xp.asarray(X, device=device)

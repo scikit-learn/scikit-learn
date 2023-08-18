@@ -39,7 +39,7 @@ from ..utils.validation import (
     check_random_state,
     validate_data,
 )
-from ..utils._array_api import get_namespace, XP_FLOAT_DTYPES
+from ..utils._array_api import get_namespace, XP_FLOAT_DTYPES, size, counter_dtype
 from ._encoders import OneHotEncoder
 
 BOUNDS_THRESHOLD = 1e-7
@@ -948,12 +948,12 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # See incr_mean_variance_axis and _incremental_mean_variance_axis
 
         # if n_samples_seen_ is an integer (i.e. no missing values), we need to
-        # transform it to a NumPy array of shape (n_features,) required by
+        # transform it to an array of shape (n_features,) required by
         # incr_mean_variance_axis and _incremental_variance_axis
-        dtype = xp.int64 if sample_weight is None else X.dtype
+        dtype = counter_dtype(xp, X.dtype) if sample_weight is None else X.dtype
         if not hasattr(self, "n_samples_seen_"):
             self.n_samples_seen_ = xp.zeros(n_features, dtype=dtype)
-        elif np.size(self.n_samples_seen_) == 1:
+        elif size(self.n_samples_seen_) == 1:
             self.n_samples_seen_ = xp.repeat(self.n_samples_seen_, X.shape[1])
             self.n_samples_seen_ = self.n_samples_seen_.astype(dtype, copy=False)
 
@@ -1004,9 +1004,9 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         else:
             # First pass
             if not hasattr(self, "scale_"):
-                self.mean_ = 0.0
+                self.mean_ = xp.zeros(1)[0]  # TODO is there a better way?
                 if self.with_std:
-                    self.var_ = 0.0
+                    self.var_ = xp.zeros(1)[0]  # TODO is there a better way?
                 else:
                     self.var_ = None
 
@@ -1036,8 +1036,13 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             constant_mask = _is_constant_feature(
                 self.var_, self.mean_, self.n_samples_seen_
             )
+            # TODO ugly hack, torch.sqrt does not support torch.float16!
+            var = xp.empty(self.var_.shape, dtype=xp.float64)
+            var[:] = self.var_
+            std = xp.empty(var.shape, dtype=X.dtype)
+            std[:] = xp.sqrt(var)
             self.scale_ = _handle_zeros_in_scale(
-                xp.sqrt(self.var_), copy=False, constant_mask=constant_mask
+                std, copy=False, constant_mask=constant_mask
             )
         else:
             self.scale_ = None
