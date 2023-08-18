@@ -41,6 +41,9 @@ from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
+from sklearn.utils.estimator_checks import (
+    _array_api_for_tests,
+)
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose,
@@ -2619,3 +2622,19 @@ def test_power_transformer_constant_feature(standardize):
             assert_allclose(Xt_, np.zeros_like(X))
         else:
             assert_allclose(Xt_, X)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+def test_standard_scaler_array_api_compliance(array_namespace, device, dtype):
+    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
+
+    from sklearn.datasets import make_classification
+    X, y = make_classification(random_state=42)
+    X = X.astype(dtype, copy=False)
+
+    X_xp = xp.asarray(X, device=device)
+
+    scale = StandardScaler()
+    X_trans = scale.fit_transform(X_xp)
