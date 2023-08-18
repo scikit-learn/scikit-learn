@@ -79,7 +79,7 @@ ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
 scatter = ax.scatter(
     X[:, 0], X[:, 1], s=150, c=y, label=y, edgecolors="k"
 )
-ax.legend([cl0_label, cl1_label], ["Class 0", "Class 1"], loc="lower right")
+ax.legend(*scatter.legend_elements(), loc="upper right", title="Classes")
 ax.set_title("Samples in two-dimensional feature space")
 _ = plt.show()
 
