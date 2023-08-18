@@ -15,6 +15,7 @@ from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.metrics import euclidean_distances
 from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 n_clusters = 3
 centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
@@ -104,10 +105,11 @@ def test_affinity_propagation_affinity_shape():
         affinity_propagation(S[:, :-1])
 
 
-def test_affinity_propagation_precomputed_with_sparse_input():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_affinity_propagation_precomputed_with_sparse_input(csr_container):
     err_msg = "A sparse matrix was passed, but dense data is required"
     with pytest.raises(TypeError, match=err_msg):
-        AffinityPropagation(affinity="precomputed").fit(csr_matrix((3, 3)))
+        AffinityPropagation(affinity="precomputed").fit(csr_container((3, 3)))
 
 
 def test_affinity_propagation_predict(global_random_seed, global_dtype):
@@ -287,20 +289,22 @@ def test_correct_clusters(global_dtype):
     assert_array_equal(afp.labels_, expected)
 
 
-def test_sparse_input_for_predict():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_input_for_predict(csr_container):
     # Test to make sure sparse inputs are accepted for predict
     # (non-regression test for issue #20049)
     af = AffinityPropagation(affinity="euclidean", random_state=42)
     af.fit(X)
-    labels = af.predict(csr_matrix((2, 2)))
+    labels = af.predict(csr_container((2, 2)))
     assert_array_equal(labels, (2, 2))
 
 
-def test_sparse_input_for_fit_predict():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_input_for_fit_predict(csr_container):
     # Test to make sure sparse inputs are accepted for fit_predict
     # (non-regression test for issue #20049)
     af = AffinityPropagation(affinity="euclidean", random_state=42)
     rng = np.random.RandomState(42)
-    X = csr_matrix(rng.randint(0, 2, size=(5, 5)))
+    X = csr_container(rng.randint(0, 2, size=(5, 5)))
     labels = af.fit_predict(X)
     assert_array_equal(labels, (0, 1, 1, 2, 3))
