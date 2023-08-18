@@ -1327,7 +1327,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
 
         Returns
         -------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             Returns a data matrix of the original shape.
         """
         if Xt is None and W is None:
