@@ -1,4 +1,3 @@
-import pytest
 from sklearn.datasets import make_friedman1
 from sklearn.feature_selection import RFE
 from sklearn.svm import SVR
