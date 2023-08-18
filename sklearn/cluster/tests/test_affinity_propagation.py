@@ -7,7 +7,6 @@ import warnings
 
 import numpy as np
 import pytest
-from scipy.sparse import csr_matrix
 
 from sklearn.cluster import AffinityPropagation, affinity_propagation
 from sklearn.cluster._affinity_propagation import _equal_similarities_and_preferences
@@ -257,13 +256,14 @@ def test_affinity_propagation_random_state():
     assert np.mean((centers0 - centers76) ** 2) > 1
 
 
-@pytest.mark.parametrize("centers", [csr_matrix(np.zeros((1, 10))), np.zeros((1, 10))])
-def test_affinity_propagation_convergence_warning_dense_sparse(centers, global_dtype):
+@pytest.mark.parametrize("container", CSR_CONTAINERS + [np.array])
+def test_affinity_propagation_convergence_warning_dense_sparse(container, global_dtype):
     """
     Check that having sparse or dense `centers` format should not
     influence the convergence.
     Non-regression test for gh-13334.
     """
+    centers = container(np.zeros((1, 10)))
     rng = np.random.RandomState(42)
     X = rng.rand(40, 10).astype(global_dtype, copy=False)
     y = (4 * rng.rand(40)).astype(int)
