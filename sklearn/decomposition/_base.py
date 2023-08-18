@@ -11,7 +11,7 @@
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-from scipy import linalg
+from scipy import linalg, sparse
 from scipy.sparse import issparse
 from scipy.sparse.linalg import LinearOperator
 
@@ -20,7 +20,14 @@ from ..utils._array_api import _add_to_diagonal, get_namespace
 from ..utils.validation import check_is_fitted
 
 
-def _implicitly_center(X, mu):
+def _implicitly_center(
+    X: "sparse.spmatrix | sparse.sparray", mu: np.ndarray
+) -> LinearOperator:
+    """Create an implicitly centered linear operator.
+
+    Allows us to perform a PCA on  sparse data without ever densifying the whole data
+    matrix.
+    """
     mu = mu[None, :]
     XT = X.T.conj(copy=False)
     return LinearOperator(
