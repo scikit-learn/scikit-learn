@@ -110,6 +110,11 @@ Changelog
   :pr:`26315` and :pr:`27098` by :user:`Mateusz Sokół <mtsokol>`,
   :user:`Olivier Grisel <ogrisel>` and :user:` Edoardo Abati <EdAbati>`.
 
+- |Enhancement| :func:`decomposition.non_negative_factorization`, :class:`decomposition.NMF`,
+  and :class:`decomposition.MiniBatchNMF` now support :class:`scipy.sparse.sparray`
+  subclasses.
+  :pr:`27100` by :user:`Isaac Virshup <ivirshup>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
