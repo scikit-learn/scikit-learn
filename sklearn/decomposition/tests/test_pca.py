@@ -26,6 +26,9 @@ from sklearn.utils.estimator_checks import (
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
 
+# `SPARSE_M` and `SPARSE_N` could be larger, but be aware:
+# * SciPy's generation of random sparse matrix can be costly
+# * A (SPARSE_M, SPARSE_N) dense array is allocated to compare against
 SPARSE_M, SPARSE_N = 1000, 300  # arbitrary
 SPARSE_MAX_COMPONENTS = min(SPARSE_M, SPARSE_N)
 
