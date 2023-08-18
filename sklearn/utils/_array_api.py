@@ -493,7 +493,7 @@ def _nanmin(X, axis=None):
         # Replace Infs from all NaN slices with NaN again
         mask = xp.all(mask, axis=axis)
         if xp.any(mask):
-            X = xp.where(~mask, X, xp.asarray(xp.nan))
+            X = xp.where(mask, xp.asarray(xp.nan), X)
         return X
 
 
@@ -510,7 +510,7 @@ def _nanmax(X, axis=None):
         # Replace Infs from all NaN slices with NaN again
         mask = xp.all(mask, axis=axis)
         if xp.any(mask):
-            X = xp.where(~mask, X, xp.asarray(xp.nan))
+            X = xp.where(mask, xp.asarray(xp.nan), X)
         return X
 
 
