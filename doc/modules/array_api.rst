@@ -83,17 +83,26 @@ the tensors directly::
     >>> X_trans.device.type
     'cuda'
 
-.. _array_api_estimators:
+.. _array_api_supported:
 
-Estimators with support for `Array API`-compatible inputs
-=========================================================
+Support for `Array API`-compatible inputs
+=========================================
+
+Estimators and other tools in scikit-learn that support Array API compatible inputs.
+
+Estimators
+----------
 
 - :class:`decomposition.PCA` (with `svd_solver="full"`,
   `svd_solver="randomized"` and `power_iteration_normalizer="QR"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 
-Coverage for more estimators is expected to grow over time. Please follow the
-dedicated `meta-issue on GitHub
+Tools
+-----
+
+- :func:`model_selection.train_test_split`
+
+Coverage is expected to grow over time. Please follow the dedicated `meta-issue on GitHub
 <https://github.com/scikit-learn/scikit-learn/issues/22352>`_ to track progress.
 
 Common estimator checks

@@ -1755,6 +1755,9 @@ class TfidfVectorizer(CountVectorizer):
     Equivalent to :class:`CountVectorizer` followed by
     :class:`TfidfTransformer`.
 
+    For an example of usage, see
+    :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`.
+
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
     Parameters
