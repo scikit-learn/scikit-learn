@@ -870,13 +870,10 @@ def _array_api_for_tests(array_namespace, device, dtype):
     xp = array_api_compat.get_namespace(array_mod.asarray(1))
     if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
         raise SkipTest("PyTorch test requires cuda, which is not available")
-    elif array_namespace == "torch" and device == "mps":
-        try:
-            xp.asarray([0.0], device="mps")
-        except RuntimeError:
-            raise SkipTest(
-                "PyTorch test requires mps device support, which is not available"
-            )
+    elif array_namespace == "torch" and device == "mps" and not xp.has_mps:
+        raise SkipTest(
+            "PyTorch test requires mps device support, which is not available"
+        )
     elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
         import cupy
 
