@@ -1677,7 +1677,7 @@ def test_robust_scaler_unit_variance():
 )
 @pytest.mark.parametrize(
     "estimator",
-    [MinMaxScaler()],
+    [MaxAbsScaler()],
     ids=_get_check_estimator_ids,
 )
 def test_maxabscaler_array_api_compliance(
