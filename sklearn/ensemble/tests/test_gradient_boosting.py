@@ -15,6 +15,7 @@ from sklearn.base import clone
 from sklearn.datasets import make_classification, make_regression
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
+from sklearn.ensemble._gb import _safe_divide
 from sklearn.ensemble._gradient_boosting import predict_stages
 from sklearn.exceptions import DataConversionWarning, NotFittedError
 from sklearn.linear_model import LinearRegression
@@ -1464,6 +1465,15 @@ def test_huber_vs_mean_and_median():
 
     assert np.all(gbt_absolute_error.predict(X) <= gbt_huber.predict(X))
     assert np.all(gbt_huber.predict(X) <= gbt_squared_error.predict(X))
+
+
+def test_safe_divide():
+    """Test that _safe_divide handles division by zero."""
+    assert _safe_divide(np.array([1e300]), 0) == 0
+
+    with pytest.warns(RuntimeWarning, match="overflow"):
+        # np.finfo(float).max = 1.7976931348623157e+308
+        _safe_divide(np.array([1e300]), 1e-10)
 
 
 def test_squared_error_exact_backward_compat():
