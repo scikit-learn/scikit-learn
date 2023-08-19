@@ -126,17 +126,17 @@ def _extract_missing(values):
         Object with missing value information.
     """
     missing_values_set = set()
-    missing_values_dict = {'nan': False, 'none': False, 'pdna': False}
+    missing_values_dict = {"nan": False, "none": False, "pdna": False}
 
     for value in values:
         if value is None:
-            missing_values_dict['none'] = True
+            missing_values_dict["none"] = True
             missing_values_set.add(None)
         elif is_scalar_nan(value):
-            missing_values_dict['nan'] = True
+            missing_values_dict["nan"] = True
             missing_values_set.add(value)
         elif _is_pandas_na(value):
-            missing_values_dict['pdna'] = True
+            missing_values_dict["pdna"] = True
             missing_values_set.add(value)
 
     if not missing_values_set:
