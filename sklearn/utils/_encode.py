@@ -3,8 +3,9 @@ from contextlib import suppress
 from typing import NamedTuple
 
 import numpy as np
+import pandas as pd
 
-from . import is_scalar_nan
+from . import is_scalar_nan, _is_pandas_na
 
 
 def _unique(values, *, return_inverse=False, return_counts=False):
@@ -94,7 +95,7 @@ class MissingValues(NamedTuple):
 
     nan: bool
     none: bool
-
+    pdna: bool
     def to_list(self):
         """Convert tuple to a list where None is always first."""
         output = []
@@ -102,6 +103,9 @@ class MissingValues(NamedTuple):
             output.append(None)
         if self.nan:
             output.append(np.nan)
+        if self.pdna:
+            output.append(pd.NA)
+
         return output
 
 
@@ -121,22 +125,24 @@ def _extract_missing(values):
     missing_values: MissingValues
         Object with missing value information.
     """
-    missing_values_set = {
-        value for value in values if value is None or is_scalar_nan(value)
-    }
+    missing_values_set = set()
+    missing_values_dict = {'nan': False, 'none': False, 'pdna': False}
+
+    for value in values:
+        if value is None:
+            missing_values_dict['none'] = True
+            missing_values_set.add(None)
+        elif is_scalar_nan(value):
+            missing_values_dict['nan'] = True
+            missing_values_set.add(value)
+        elif _is_pandas_na(value):
+            missing_values_dict['pdna'] = True
+            missing_values_set.add(value)
 
     if not missing_values_set:
-        return values, MissingValues(nan=False, none=False)
+        return values, MissingValues(nan=False, none=False, pdna=False)
 
-    if None in missing_values_set:
-        if len(missing_values_set) == 1:
-            output_missing_values = MissingValues(nan=False, none=True)
-        else:
-            # If there is more than one missing value, then it has to be
-            # float('nan') or np.nan
-            output_missing_values = MissingValues(nan=True, none=True)
-    else:
-        output_missing_values = MissingValues(nan=True, none=False)
+    output_missing_values = MissingValues(**missing_values_dict)
 
     # create set without the missing values
     output = values - missing_values_set
@@ -170,7 +176,6 @@ def _unique_python(values, *, return_inverse, return_counts):
     try:
         uniques_set = set(values)
         uniques_set, missing_values = _extract_missing(uniques_set)
-
         uniques = sorted(uniques_set)
         uniques.extend(missing_values.to_list())
         uniques = np.array(uniques, dtype=values.dtype)
