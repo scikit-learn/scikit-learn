@@ -24,6 +24,13 @@ random sampling procedures.
   and has been fixed.
   :pr:`26416` by :user:`Yang Tao <mchikyt3>`.
 
+- |Fix| Ridge models with `solver='sparse_cg'` may have slightly different
+  results with scipy>=1.12, because of an underlying change in the scipy solver
+  (see `scipy#18488 <https://github.com/scipy/scipy/pull/18488>`_ for more
+  details)
+  :pr:`26814` by :user:`Loïc Estève <lesteve>`
+
+
 Changes impacting all modules
 -----------------------------
 
@@ -100,8 +107,13 @@ Changelog
 - |Enhancement| :class:`decomposition.PCA` now supports the Array API for the
   `full` and `randomized` solvers (with QR power iterations). See
   :ref:`array_api` for more details.
-  :pr:`26315` by :user:`Mateusz Sokół <mtsokol>` and
-  :user:`Olivier Grisel <ogrisel>`.
+  :pr:`26315` and :pr:`27098` by :user:`Mateusz Sokół <mtsokol>`,
+  :user:`Olivier Grisel <ogrisel>` and :user:` Edoardo Abati <EdAbati>`.
+
+- |Enhancement| :func:`decomposition.non_negative_factorization`, :class:`decomposition.NMF`,
+  and :class:`decomposition.MiniBatchNMF` now support :class:`scipy.sparse.sparray`
+  subclasses.
+  :pr:`27100` by :user:`Isaac Virshup <ivirshup>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -167,6 +179,9 @@ Changelog
   is enabled and should be passed via the `params` parameter. :pr:`26896` by
   `Adrin Jalali`_.
 
+- |Enhancement| :func:`sklearn.model_selection.train_test_split` now supports
+  Array API compatible inputs. :pr:`26855` by `Tim Head`_.
+
 :mod:`sklearn.neighbors`
 ........................
 
@@ -190,8 +205,11 @@ Changelog
   when `sparse_output=True` and the output is configured to be pandas.
   :pr:`26931` by `Thomas Fan`_.
 
-- |Enhancement| :func:`sklearn.model_selection.train_test_split` now supports
-  Array API compatible inputs. :pr:`26855` by `Tim Head`_.
+- |MajorFeature| :class:`preprocessing.MinMaxScaler` now
+  supports the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
+  support is considered experimental and might evolve without being subject to
+  our usual rolling deprecation cycle policy. See
+  :ref:`array_api` for more details. :pr:`26243` by `Tim Head`_.
 
 :mod:`sklearn.tree`
 ...................
