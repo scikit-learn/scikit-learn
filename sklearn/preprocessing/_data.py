@@ -1256,12 +1256,15 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
+
+        xp, _ = get_namespace(X)
+
         X = self._validate_data(
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
             reset=False,
-            dtype=FLOAT_DTYPES,
+            dtype=_array_api.supported_float_dtypes(xp),
             force_all_finite="allow-nan",
         )
 
@@ -1285,11 +1288,14 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
+
+        xp, _ = get_namespace(X)
+
         X = check_array(
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
-            dtype=FLOAT_DTYPES,
+            dtype=_array_api.supported_float_dtypes(xp),
             force_all_finite="allow-nan",
         )
 
