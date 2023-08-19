@@ -54,6 +54,13 @@ def squared_norm(x):
     return np.dot(x, x)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "squared": [bool, None],
+    },
+prefer_skip_nested_validation=False
+)
 def row_norms(X, squared=False):
     """Row-wise (squared) Euclidean norm of X.
 
@@ -75,7 +82,8 @@ def row_norms(X, squared=False):
         The row-wise (squared) Euclidean norm of X.
     """
     if sparse.issparse(X):
-        X = X.tocsr()
+        if not sparse.isspmatrix_csr(X):
+            X = sparse.csr_matrix(X)
         norms = csr_row_norms(X)
     else:
         norms = np.einsum("ij,ij->i", X, X)
@@ -196,17 +204,17 @@ def safe_sparse_dot(a, b, *, dense_output=False):
         ret = a @ b
 
     if (
-        sparse.issparse(a)
-        and sparse.issparse(b)
-        and dense_output
-        and hasattr(ret, "toarray")
+            sparse.issparse(a)
+            and sparse.issparse(b)
+            and dense_output
+            and hasattr(ret, "toarray")
     ):
         return ret.toarray()
     return ret
 
 
 def randomized_range_finder(
-    A, *, size, n_iter, power_iteration_normalizer="auto", random_state=None
+        A, *, size, n_iter, power_iteration_normalizer="auto", random_state=None
 ):
     """Compute an orthonormal matrix whose range approximates the range of A.
 
@@ -340,16 +348,16 @@ def randomized_range_finder(
     prefer_skip_nested_validation=True,
 )
 def randomized_svd(
-    M,
-    n_components,
-    *,
-    n_oversamples=10,
-    n_iter="auto",
-    power_iteration_normalizer="auto",
-    transpose="auto",
-    flip_sign=True,
-    random_state=None,
-    svd_lapack_driver="gesdd",
+        M,
+        n_components,
+        *,
+        n_oversamples=10,
+        n_iter="auto",
+        power_iteration_normalizer="auto",
+        transpose="auto",
+        flip_sign=True,
+        random_state=None,
+        svd_lapack_driver="gesdd",
 ):
     """Compute a truncated randomized SVD.
 
@@ -539,14 +547,14 @@ def randomized_svd(
 
 
 def _randomized_eigsh(
-    M,
-    n_components,
-    *,
-    n_oversamples=10,
-    n_iter="auto",
-    power_iteration_normalizer="auto",
-    selection="module",
-    random_state=None,
+        M,
+        n_components,
+        *,
+        n_oversamples=10,
+        n_iter="auto",
+        power_iteration_normalizer="auto",
+        selection="module",
+        random_state=None,
 ):
     """Computes a truncated eigendecomposition using randomized methods
 
@@ -1038,7 +1046,7 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
 
 
 def _incremental_mean_and_var(
-    X, last_mean, last_variance, last_sample_count, sample_weight=None
+        X, last_mean, last_variance, last_sample_count, sample_weight=None
 ):
     """Calculate mean update and a Youngs and Cramer variance update.
 
@@ -1142,18 +1150,18 @@ def _incremental_mean_and_var(
         # correction term of the corrected 2 pass algorithm.
         # See "Algorithms for computing the sample variance: analysis
         # and recommendations", by Chan, Golub, and LeVeque.
-        new_unnormalized_variance -= correction**2 / new_sample_count
+        new_unnormalized_variance -= correction ** 2 / new_sample_count
 
         last_unnormalized_variance = last_variance * last_sample_count
 
         with np.errstate(divide="ignore", invalid="ignore"):
             last_over_new_count = last_sample_count / new_sample_count
             updated_unnormalized_variance = (
-                last_unnormalized_variance
-                + new_unnormalized_variance
-                + last_over_new_count
-                / updated_sample_count
-                * (last_sum / last_over_new_count - new_sum) ** 2
+                    last_unnormalized_variance
+                    + new_unnormalized_variance
+                    + last_over_new_count
+                    / updated_sample_count
+                    * (last_sum / last_over_new_count - new_sum) ** 2
             )
 
         zeros = last_sample_count == 0
@@ -1213,9 +1221,9 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     out = xp.cumsum(arr, axis=axis, dtype=np.float64)
     expected = xp.sum(arr, axis=axis, dtype=np.float64)
     if not xp.all(
-        xp.isclose(
-            out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
-        )
+            xp.isclose(
+                out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
+            )
     ):
         warnings.warn(
             (
