@@ -5,7 +5,7 @@ from typing import NamedTuple
 import numpy as np
 import pandas as pd
 
-from . import is_scalar_nan, _is_pandas_na
+from . import _is_pandas_na, is_scalar_nan
 
 
 def _unique(values, *, return_inverse=False, return_counts=False):
@@ -96,6 +96,7 @@ class MissingValues(NamedTuple):
     nan: bool
     none: bool
     pdna: bool
+
     def to_list(self):
         """Convert tuple to a list where None is always first."""
         output = []
