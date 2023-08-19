@@ -268,15 +268,26 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             if sample_weight is not None:
                 routed_params.estimator.fit["sample_weight"] = sample_weight
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_estimator)(
-                self.estimator,
-                X[:, self.features_in[i]],
-                y[:, i],
-                **routed_params.estimator.fit,
+        if self.features_in is not None:
+            self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+                delayed(_fit_estimator)(
+                    self.estimator,
+                    X[:, self.features_in[i]],
+                    y[:, i],
+                    **routed_params.estimator.fit,
+                )
+                for i in range(y.shape[1])
             )
-            for i in range(y.shape[1])
-        )
+        else:
+            self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+                delayed(_fit_estimator)(
+                    self.estimator,
+                    X,
+                    y[:, i],
+                    **routed_params.estimator.fit,
+                )
+                for i in range(y.shape[1])
+            )
 
         if hasattr(self.estimators_[0], "n_features_in_"):
             self.n_features_in_ = self.estimators_[0].n_features_in_
@@ -303,10 +314,15 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         if not hasattr(self.estimators_[0], "predict"):
             raise ValueError("The base estimator should implement a predict method")
 
-        y = Parallel(n_jobs=self.n_jobs)(
-            delayed(e.predict)(X[:, self.features_in[i]])
-            for i, e in enumerate(self.estimators_)
-        )
+        if self.features_in is not None:
+            y = Parallel(n_jobs=self.n_jobs)(
+                delayed(e.predict)(X[:, self.features_in[i]])
+                for i, e in enumerate(self.estimators_)
+            )
+        else:
+            y = Parallel(n_jobs=self.n_jobs)(
+                delayed(e.predict)(X) for e in self.estimators_
+            )
 
         return np.asarray(y).T
 
@@ -404,7 +420,6 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
 
     def __init__(self, estimator, *, n_jobs=None, features_in=None):
         super().__init__(estimator, n_jobs=n_jobs, features_in=features_in)
-        # self.features_in = features_in
 
     @_available_if_estimator_has("partial_fit")
     def partial_fit(self, X, y, sample_weight=None, **partial_fit_params):
