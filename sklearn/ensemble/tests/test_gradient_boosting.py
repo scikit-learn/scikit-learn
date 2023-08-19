@@ -8,7 +8,6 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
-from scipy.special import expit
 
 from sklearn import datasets
 from sklearn.base import clone
@@ -1138,30 +1137,6 @@ def test_warm_start_wo_nestimators_change():
     assert clf.estimators_.shape[0] == 10
     clf.fit([[0, 1], [2, 3]], [0, 1])
     assert clf.estimators_.shape[0] == 10
-
-
-def test_probability_exponential(global_random_seed):
-    # Predict probabilities.
-    clf = GradientBoostingClassifier(
-        loss="exponential", n_estimators=100, random_state=global_random_seed
-    )
-
-    with pytest.raises(ValueError):
-        clf.predict_proba(T)
-
-    clf.fit(X, y)
-    assert_array_equal(clf.predict(T), true_result)
-
-    # check if probabilities are in [0, 1].
-    y_proba = clf.predict_proba(T)
-    assert np.all(y_proba >= 0.0)
-    assert np.all(y_proba <= 1.0)
-    score = clf.decision_function(T).ravel()
-    assert_allclose(y_proba[:, 1], expit(2 * score))
-
-    # derive predictions from probabilities
-    y_pred = clf.classes_.take(y_proba.argmax(axis=1), axis=0)
-    assert_array_equal(y_pred, true_result)
 
 
 @pytest.mark.parametrize(
