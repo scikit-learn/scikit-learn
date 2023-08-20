@@ -5,13 +5,11 @@ from typing import Optional
 import pytest
 
 # make it possible to discover experimental estimators when calling `all_estimators`
-from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.experimental import enable_halving_search_cv  # noqa
-
-from sklearn.utils.discovery import all_estimators
-from sklearn.utils.discovery import all_displays
-from sklearn.utils.discovery import all_functions
-
+from sklearn.experimental import (
+    enable_halving_search_cv,  # noqa
+    enable_iterative_imputer,  # noqa
+)
+from sklearn.utils.discovery import all_displays, all_estimators, all_functions
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
@@ -177,8 +175,8 @@ def test_docstring(Klass, method, request):
 
 
 if __name__ == "__main__":
-    import sys
     import argparse
+    import sys
 
     parser = argparse.ArgumentParser(description="Validate docstring with numpydoc.")
     parser.add_argument("import_path", help="Import path to validate")

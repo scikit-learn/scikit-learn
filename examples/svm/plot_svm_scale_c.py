@@ -76,7 +76,8 @@ model_l1 = LinearSVC(penalty="l1", loss="squared_hinge", dual=False, tol=1e-3)
 # We will compute the mean test score for different values of `C`.
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import validation_curve, ShuffleSplit
+
+from sklearn.model_selection import ShuffleSplit, validation_curve
 
 Cs = np.logspace(-2.3, -1.3, 10)
 train_sizes = np.linspace(0.3, 0.7, 3)

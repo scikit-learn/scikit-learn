@@ -45,20 +45,24 @@ The same task has been used in a number of papers including:
 #         Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: BSD 3 clause
 
+import argparse
 import os
 from time import time
-import argparse
+
 import numpy as np
 from joblib import Memory
 
 from sklearn.datasets import fetch_covtype, get_data_home
-from sklearn.svm import LinearSVC
-from sklearn.linear_model import SGDClassifier, LogisticRegression
-from sklearn.naive_bayes import GaussianNB
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import (
+    ExtraTreesClassifier,
+    GradientBoostingClassifier,
+    RandomForestClassifier,
+)
+from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.metrics import zero_one_loss
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import LinearSVC
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_array
 
 # Memoize the data extraction and memory map the resulting

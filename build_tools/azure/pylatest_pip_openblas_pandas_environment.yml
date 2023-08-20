@@ -6,7 +6,6 @@ channels:
 dependencies:
   - python=3.9
   - ccache
-  - sphinx
   - pip
   - pip:
     - numpy
@@ -20,8 +19,10 @@ dependencies:
     - pytest
     - pytest-xdist==2.5.0
     - pillow
+    - setuptools
     - pytest-cov
     - coverage
+    - sphinx
     - numpydoc
     - lightgbm
     - scikit-image

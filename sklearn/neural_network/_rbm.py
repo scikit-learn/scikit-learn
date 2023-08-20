@@ -14,15 +14,16 @@ import numpy as np
 import scipy.sparse as sp
 from scipy.special import expit  # logistic function
 
-from ..base import BaseEstimator
-from ..base import TransformerMixin
-from ..base import ClassNamePrefixFeaturesOutMixin
-from ..utils import check_random_state
-from ..utils import gen_even_slices
-from ..utils.extmath import safe_sparse_dot
-from ..utils.extmath import log_logistic
-from ..utils.validation import check_is_fitted
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from ..utils import check_random_state, gen_even_slices
 from ..utils._param_validation import Interval
+from ..utils.extmath import log_logistic, safe_sparse_dot
+from ..utils.validation import check_is_fitted
 
 
 class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -269,6 +270,7 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
 
         return v_
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None):
         """Fit the model to the partial segment of the data X.
 
@@ -285,9 +287,6 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         self : BernoulliRBM
             The fitted model.
         """
-
-        self._validate_params()
-
         first_pass = not hasattr(self, "components_")
         X = self._validate_data(
             X, accept_sparse="csr", dtype=np.float64, reset=first_pass
@@ -380,6 +379,7 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         fe_ = self._free_energy(v_)
         return v.shape[1] * log_logistic(fe_ - fe)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model to the data X.
 
@@ -396,9 +396,6 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         self : BernoulliRBM
             The fitted model.
         """
-
-        self._validate_params()
-
         X = self._validate_data(X, accept_sparse="csr", dtype=(np.float64, np.float32))
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)

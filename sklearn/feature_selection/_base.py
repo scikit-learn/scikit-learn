@@ -8,17 +8,16 @@ from abc import ABCMeta, abstractmethod
 from operator import attrgetter
 
 import numpy as np
-from scipy.sparse import issparse, csc_matrix
+from scipy.sparse import csc_matrix, issparse
 
 from ..base import TransformerMixin
-from ..cross_decomposition._pls import _PLS
 from ..utils import (
+    _safe_indexing,
     check_array,
     safe_sqr,
 )
-from ..utils._tags import _safe_tags
-from ..utils import _safe_indexing
 from ..utils._set_output import _get_output_config
+from ..utils._tags import _safe_tags
 from ..utils.validation import _check_feature_names_in, check_is_fitted
 
 
@@ -207,10 +206,7 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
     """
     if isinstance(getter, str):
         if getter == "auto":
-            if isinstance(estimator, _PLS):
-                # TODO(1.3): remove this branch
-                getter = attrgetter("_coef_")
-            elif hasattr(estimator, "coef_"):
+            if hasattr(estimator, "coef_"):
                 getter = attrgetter("coef_")
             elif hasattr(estimator, "feature_importances_"):
                 getter = attrgetter("feature_importances_")

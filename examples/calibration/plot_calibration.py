@@ -91,8 +91,8 @@ print("With sigmoid calibration: %1.3f" % clf_sigmoid_score)
 # %%
 # Plot data and the predicted probabilities
 # -----------------------------------------
-from matplotlib import cm
 import matplotlib.pyplot as plt
+from matplotlib import cm
 
 plt.figure()
 y_unique = np.unique(y)

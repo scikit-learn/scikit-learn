@@ -1,5 +1,4 @@
 import numbers
-import warnings
 from itertools import chain
 from math import ceil
 
@@ -7,16 +6,18 @@ import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
+from ...base import is_regressor
+from ...utils import (
+    Bunch,
+    _safe_indexing,
+    check_array,
+    check_matplotlib_support,  # noqa
+    check_random_state,
+)
+from ...utils._encode import _unique
+from ...utils.parallel import Parallel, delayed
 from .. import partial_dependence
 from .._pd_utils import _check_feature_names, _get_feature_index
-from ...base import is_regressor
-from ...utils import Bunch
-from ...utils import check_array
-from ...utils import check_matplotlib_support  # noqa
-from ...utils import check_random_state
-from ...utils import _safe_indexing
-from ...utils.parallel import delayed, Parallel
-from ...utils._encode import _unique
 
 
 class PartialDependenceDisplay:
@@ -63,18 +64,6 @@ class PartialDependenceDisplay:
     deciles : dict
         Deciles for feature indices in ``features``.
 
-    pdp_lim : dict or None
-        Global min and max average predictions, such that all plots will have
-        the same scale and y limits. `pdp_lim[1]` is the global min and max for
-        single partial dependence curves. `pdp_lim[2]` is the global min and
-        max for two-way partial dependence curves. If `None`, the limit will be
-        inferred from the global minimum and maximum of all predictions.
-
-        .. deprecated:: 1.1
-           Pass the parameter `pdp_lim` to
-           :meth:`~sklearn.inspection.PartialDependenceDisplay.plot` instead.
-           It will be removed in 1.3.
-
     kind : {'average', 'individual', 'both'} or list of such str, \
             default='average'
         Whether to plot the partial dependence averaged across all the samples
@@ -97,8 +86,9 @@ class PartialDependenceDisplay:
 
         .. note::
            The fast ``method='recursion'`` option is only available for
-           ``kind='average'``. Plotting individual dependencies requires using
-           the slower ``method='brute'`` option.
+           `kind='average'` and `sample_weights=None`. Computing individual
+           dependencies and doing weighted averages requires using the slower
+           `method='brute'`.
 
         .. versionadded:: 0.24
            Add `kind` parameter with `'average'`, `'individual'`, and `'both'`
@@ -236,7 +226,6 @@ class PartialDependenceDisplay:
         feature_names,
         target_idx,
         deciles,
-        pdp_lim="deprecated",
         kind="average",
         subsample=1000,
         random_state=None,
@@ -246,7 +235,6 @@ class PartialDependenceDisplay:
         self.features = features
         self.feature_names = feature_names
         self.target_idx = target_idx
-        self.pdp_lim = pdp_lim
         self.deciles = deciles
         self.kind = kind
         self.subsample = subsample
@@ -260,6 +248,7 @@ class PartialDependenceDisplay:
         X,
         features,
         *,
+        sample_weight=None,
         categorical_features=None,
         feature_names=None,
         target=None,
@@ -350,6 +339,14 @@ class PartialDependenceDisplay:
             with `kind='average'`). Each tuple must be of size 2.
             If any entry is a string, then it must be in ``feature_names``.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights are used to calculate weighted means when averaging the
+            model output. If `None`, then samples are equally weighted. If
+            `sample_weight` is not `None`, then `method` will be set to `'brute'`.
+            Note that `sample_weight` is ignored for `kind='individual'`.
+
+            .. versionadded:: 1.3
+
         categorical_features : array-like of shape (n_features,) or shape \
                 (n_categorical_features,), dtype={bool, int, str}, default=None
             Indicates the categorical features.
@@ -422,7 +419,8 @@ class PartialDependenceDisplay:
               computationally intensive.
 
             - `'auto'`: the `'recursion'` is used for estimators that support it,
-              and `'brute'` is used otherwise.
+              and `'brute'` is used otherwise. If `sample_weight` is not `None`,
+              then `'brute'` is used regardless of the estimator.
 
             Please see :ref:`this note <pdp_method_differences>` for
             differences between the `'brute'` and `'recursion'` method.
@@ -477,9 +475,10 @@ class PartialDependenceDisplay:
             - ``kind='average'`` results in the traditional PD plot;
             - ``kind='individual'`` results in the ICE plot.
 
-           Note that the fast ``method='recursion'`` option is only available for
-           ``kind='average'``. Plotting individual dependencies requires using the
-           slower ``method='brute'`` option.
+           Note that the fast `method='recursion'` option is only available for
+           `kind='average'` and `sample_weights=None`. Computing individual
+           dependencies and doing weighted averages requires using the slower
+           `method='brute'`.
 
         centered : bool, default=False
             If `True`, the ICE and PD lines will start at the origin of the
@@ -706,6 +705,7 @@ class PartialDependenceDisplay:
                 estimator,
                 X,
                 fxs,
+                sample_weight=sample_weight,
                 feature_names=feature_names,
                 categorical_features=categorical_features,
                 response_method=response_method,
@@ -1232,27 +1232,6 @@ class PartialDependenceDisplay:
                 f"Values provided to `kind` must be one of: {valid_kinds!r} or a list"
                 f" of such values. Currently, kind={self.kind!r}"
             )
-
-        # FIXME: remove in 1.3
-        if self.pdp_lim != "deprecated":
-            warnings.warn(
-                (
-                    "The `pdp_lim` parameter is deprecated in version 1.1 and will be "
-                    "removed in version 1.3. Provide `pdp_lim` to the `plot` method."
-                    "instead."
-                ),
-                FutureWarning,
-            )
-            if pdp_lim is not None and self.pdp_lim != pdp_lim:
-                warnings.warn(
-                    (
-                        "`pdp_lim` has been passed in both the constructor and the"
-                        " `plot` method. For backward compatibility, the parameter from"
-                        " the constructor will be used."
-                    ),
-                    UserWarning,
-                )
-            pdp_lim = self.pdp_lim
 
         # Center results before plotting
         if not centered:

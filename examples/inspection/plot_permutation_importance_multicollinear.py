@@ -22,9 +22,9 @@ from collections import defaultdict
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.stats import spearmanr
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import squareform
+from scipy.stats import spearmanr
 
 from sklearn.datasets import load_breast_cancer
 from sklearn.ensemble import RandomForestClassifier

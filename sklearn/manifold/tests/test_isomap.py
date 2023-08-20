@@ -1,13 +1,11 @@
-from itertools import product
-import numpy as np
 import math
-import pytest
+from itertools import product
 
-from sklearn import datasets, clone
-from sklearn import manifold
-from sklearn import neighbors
-from sklearn import pipeline
-from sklearn import preprocessing
+import numpy as np
+import pytest
+from scipy.sparse import rand as sparse_rand
+
+from sklearn import clone, datasets, manifold, neighbors, pipeline, preprocessing
 from sklearn.datasets import make_blobs
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.utils._testing import (
@@ -15,7 +13,6 @@ from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_array_equal,
 )
-from scipy.sparse import rand as sparse_rand
 
 eigen_solvers = ["auto", "dense", "arpack"]
 path_methods = ["auto", "FW", "D"]

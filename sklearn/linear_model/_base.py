@@ -14,32 +14,37 @@ Generalized Linear Models.
 #         Maria Telenczuk <https://github.com/maikia>
 # License: BSD 3 clause
 
-from abc import ABCMeta, abstractmethod
 import numbers
 import warnings
+from abc import ABCMeta, abstractmethod
+from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
-from scipy import linalg
-from scipy import optimize
-from scipy import sparse
+from scipy import linalg, optimize, sparse
 from scipy.sparse.linalg import lsqr
 from scipy.special import expit
-from numbers import Integral
 
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin, MultiOutputMixin
+from ..base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+)
 from ..preprocessing._data import _is_constant_feature
-from ..utils import check_array
-from ..utils.validation import FLOAT_DTYPES
-from ..utils import check_random_state
-from ..utils.extmath import safe_sparse_dot
-from ..utils.extmath import _incremental_mean_and_var
-from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
+from ..utils import check_array, check_random_state
 from ..utils._array_api import get_namespace
-from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
-from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.parallel import delayed, Parallel
+from ..utils._seq_dataset import (
+    ArrayDataset32,
+    ArrayDataset64,
+    CSRDataset32,
+    CSRDataset64,
+)
+from ..utils.extmath import _incremental_mean_and_var, safe_sparse_dot
+from ..utils.parallel import Parallel, delayed
+from ..utils.sparsefuncs import inplace_column_scale, mean_variance_axis
+from ..utils.validation import FLOAT_DTYPES, _check_sample_weight, check_is_fitted
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.
@@ -449,7 +454,7 @@ class LinearClassifierMixin(ClassifierMixin):
         else:
             indices = xp.argmax(scores, axis=1)
 
-        return xp.take(self.classes_, indices)
+        return xp.take(self.classes_, indices, axis=0)
 
     def _predict_proba_lr(self, X):
         """Probability estimation for OvR logistic regression.
@@ -642,6 +647,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         self.n_jobs = n_jobs
         self.positive = positive
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """
         Fit linear model.
@@ -665,9 +671,6 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Fitted Estimator.
         """
-
-        self._validate_params()
-
         n_jobs_ = self.n_jobs
 
         accept_sparse = False if self.positive else ["csr", "csc", "coo"]
@@ -836,7 +839,7 @@ def _pre_fit(
     """
     n_samples, n_features = X.shape
 
-    if sparse.isspmatrix(X):
+    if sparse.issparse(X):
         # copy is not needed here as X is not modified inplace when X is sparse
         precompute = False
         X, y, X_offset, y_offset, X_scale = _preprocess_data(

@@ -19,9 +19,6 @@ def _get_response_values(
     The response values are predictions, one scalar value for each sample in X
     that depends on the specific choice of `response_method`.
 
-    This helper only accepts multiclass classifiers with the `predict` response
-    method.
-
     If `estimator` is a binary classifier, also return the label for the
     effective positive class.
 
@@ -75,14 +72,7 @@ def _get_response_values(
     if is_classifier(estimator):
         prediction_method = _check_response_method(estimator, response_method)
         classes = estimator.classes_
-
         target_type = "binary" if len(classes) <= 2 else "multiclass"
-
-        if target_type == "multiclass" and prediction_method.__name__ != "predict":
-            raise ValueError(
-                "With a multiclass estimator, the response method should be "
-                f"predict, got {prediction_method.__name__} instead."
-            )
 
         if pos_label is not None and pos_label not in classes.tolist():
             raise ValueError(

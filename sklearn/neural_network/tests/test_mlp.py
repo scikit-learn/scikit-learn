@@ -5,32 +5,32 @@ Testing for Multi-layer Perceptron module (sklearn.neural_network)
 # Author: Issam H. Laradji
 # License: BSD 3 clause
 
-import pytest
+import re
 import sys
 import warnings
-import re
+from io import StringIO
 
-import numpy as np
 import joblib
-
+import numpy as np
+import pytest
 from numpy.testing import (
+    assert_allclose,
     assert_almost_equal,
     assert_array_equal,
-    assert_allclose,
 )
-
-from sklearn.datasets import load_digits, load_iris
-from sklearn.datasets import make_regression, make_multilabel_classification
-from sklearn.exceptions import ConvergenceWarning
-from io import StringIO
-from sklearn.metrics import roc_auc_score
-from sklearn.neural_network import MLPClassifier
-from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import LabelBinarizer
-from sklearn.preprocessing import MinMaxScaler, scale
 from scipy.sparse import csr_matrix
-from sklearn.utils._testing import ignore_warnings
 
+from sklearn.datasets import (
+    load_digits,
+    load_iris,
+    make_multilabel_classification,
+    make_regression,
+)
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import roc_auc_score
+from sklearn.neural_network import MLPClassifier, MLPRegressor
+from sklearn.preprocessing import LabelBinarizer, MinMaxScaler, scale
+from sklearn.utils._testing import ignore_warnings
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 

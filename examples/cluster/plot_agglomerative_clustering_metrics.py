@@ -37,8 +37,8 @@ thus the clustering puts them in the same cluster.
 # Author: Gael Varoquaux
 # License: BSD 3-Clause or CC-0
 
-import matplotlib.pyplot as plt
 import matplotlib.patheffects as PathEffects
+import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn.cluster import AgglomerativeClustering
