@@ -1387,3 +1387,23 @@ def test_unknown_category_that_are_negative():
     X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
 
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
+
+
+@pytest.mark.parametrize("sample_weight", [False, True])
+def test_post_fit_calibration(sample_weight):
+    """Test that post_fit_calibration guarantees balance property."""
+    rng = np.random.RandomState(42)
+    X, y = make_regression(n_samples=100, random_state=rng)
+    if sample_weight:
+        sample_weight = np.abs(rng.normal(size=y.shape[0]))
+    else:
+        sample_weight = None
+    m = HistGradientBoostingRegressor(
+        loss="gamma", max_iter=2, post_fit_calibration=True, early_stopping=False
+    )
+    y += np.abs(np.min(y)) + 0.1  # make it positive
+    m.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(
+        np.average(m.predict(X), weights=sample_weight),
+        np.average(y, weights=sample_weight),
+    )

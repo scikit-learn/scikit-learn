@@ -783,7 +783,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             #    sum(predictions) = sum(inverse_link(raw_predictions)) = sum(y)
             # Therefore, we modify _baseline_prediction accordingly.
             mean_pred = np.average(
-                self._loss.link.inverse(raw_predictions), weights=sample_weight_train
+                self._loss.link.inverse(raw_predictions).ravel(),
+                weights=sample_weight_train,
             )
             mean_y = np.average(y_train, weights=sample_weight_train)
             if isinstance(self._loss.link, LogLink):
