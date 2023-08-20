@@ -15,6 +15,7 @@ from importlib import resources
 
 import numpy as np
 import scipy
+import scipy.sparse.linalg
 import scipy.stats
 import threadpoolctl
 
@@ -27,6 +28,26 @@ np_version = parse_version(np.__version__)
 sp_version = parse_version(scipy.__version__)
 sp_base_version = parse_version(sp_version.base_version)
 
+# TODO: We can consider removing the containers and importing
+# directly from SciPy when sparse matrices will be deprecated.
+CSR_CONTAINERS = [scipy.sparse.csr_matrix]
+CSC_CONTAINERS = [scipy.sparse.csc_matrix]
+COO_CONTAINERS = [scipy.sparse.coo_matrix]
+LIL_CONTAINERS = [scipy.sparse.lil_matrix]
+DOK_CONTAINERS = [scipy.sparse.dok_matrix]
+BSR_CONTAINERS = [scipy.sparse.bsr_matrix]
+
+if parse_version(scipy.__version__) >= parse_version("1.8"):
+    # Sparse Arrays have been added in SciPy 1.8
+    # TODO: When SciPy 1.8 is the minimum supported version,
+    # those list can be created directly without this condition.
+    # See: https://github.com/scikit-learn/scikit-learn/issues/27090
+    CSR_CONTAINERS.append(scipy.sparse.csr_array)
+    CSC_CONTAINERS.append(scipy.sparse.csc_array)
+    COO_CONTAINERS.append(scipy.sparse.coo_array)
+    LIL_CONTAINERS.append(scipy.sparse.lil_array)
+    DOK_CONTAINERS.append(scipy.sparse.dok_array)
+    BSR_CONTAINERS.append(scipy.sparse.bsr_array)
 
 try:
     from scipy.optimize._linesearch import line_search_wolfe1, line_search_wolfe2
@@ -107,6 +128,19 @@ def _mode(a, axis=0):
                 mode = np.ravel(mode)
         return mode
     return scipy.stats.mode(a, axis=axis)
+
+
+# TODO: Remove when Scipy 1.12 is the minimum supported version
+if sp_base_version >= parse_version("1.12.0"):
+    _sparse_linalg_cg = scipy.sparse.linalg.cg
+else:
+
+    def _sparse_linalg_cg(A, b, **kwargs):
+        if "rtol" in kwargs:
+            kwargs["tol"] = kwargs.pop("rtol")
+        if "atol" not in kwargs:
+            kwargs["atol"] = "legacy"
+        return scipy.sparse.linalg.cg(A, b, **kwargs)
 
 
 ###############################################################################
