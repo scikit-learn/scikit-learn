@@ -382,6 +382,15 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         .. versionchanged:: 0.20
             `n_jobs` default changed from `1` to `None`.
 
+    features_in: dict or None, optional(default=None)
+        A dicitonary with keys(ints) corresponding to number of outputs/models
+        to be fitted. Values (lists) denote indexes of columns to be used for fitting.
+        Used for filtering of columns to be used for fit/predict if some of the
+        columns should be omited for some of the outputs.
+
+        E.g. {0: [0, 1], 1: [1, 2]} would indicate to use columns 0 and 1 for first
+        output and columns 1 and 2 for second output of the MultiOutput model.
+
     Attributes
     ----------
     estimators_ : list of ``n_output`` estimators
