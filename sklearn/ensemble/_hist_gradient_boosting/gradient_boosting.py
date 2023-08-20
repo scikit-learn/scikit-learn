@@ -2,14 +2,16 @@
 # Author: Nicolas Hug
 
 import itertools
+import warnings
 from abc import ABC, abstractmethod
 from functools import partial
 from numbers import Integral, Real
 from timeit import default_timer as time
 
 import numpy as np
+from scipy.optimize import root, root_scalar
 
-from ..._loss.link import LogLink
+from ..._loss.link import IdentityLink, LogitLink, LogLink
 from ..._loss.loss import (
     _LOSSES,
     BaseLoss,
@@ -26,6 +28,7 @@ from ...base import (
     _fit_context,
     is_classifier,
 )
+from ...exceptions import ConvergenceWarning
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
@@ -773,24 +776,72 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if should_early_stop:
                 break
 
-        if self.post_fit_calibration and self._loss.canonical_link is False:
-            # We compare "x is False" instead of "not x" to exclude
-            # canonical_link = None.
-            # TODO: Decide whether to use the whole X or just X_train.
-            # For the time being, we go with X_train as it is a bit shorter to
-            # implement.
+        # We compare "x is False" instead of "not x" to exclude  canonical_link = None.
+        if self.loss not in ("absolute_error", "quantile") and (
+            self.post_fit_calibration
+            or (
+                self.post_fit_calibration == "auto"
+                and self._loss.canonical_link is False
+            )
+        ):
+            # The post fit calibration is done on X_train and NOT on the whole X.
+            # Doing it only on X_train is a bit shorter to implement and a bit faster
+            # to run. For iid splits, it should not make a noticable difference.
             # We want to achieve the balance property
             #    sum(predictions) = sum(inverse_link(raw_predictions)) = sum(y)
             # Therefore, we modify _baseline_prediction accordingly.
+            y_pred = self._loss.link.inverse(raw_predictions)
             mean_pred = np.average(
-                self._loss.link.inverse(raw_predictions).ravel(),
+                y_pred,
                 weights=sample_weight_train,
+                axis=0,
             )
-            mean_y = np.average(y_train, weights=sample_weight_train)
-            if isinstance(self._loss.link, LogLink):
+            mean_y = np.average(y_train, weights=sample_weight_train, axis=0)
+
+            if isinstance(self._loss.link, (IdentityLink, LogLink)):
                 correction = self._loss.link.link(mean_y / mean_pred)
             else:
-                raise NotImplementedError()
+                if isinstance(self._loss.link, LogitLink):
+                    # First order approx: expit(x+c) = expit(x) (1 + c/(1+exp(x)))
+                    # mean(y) = term_0 + c * term_1
+                    term_0 = mean_pred
+                    term_1 = np.average(
+                        y_pred / (1 + np.exp(raw_predictions)),
+                        weights=sample_weight_train,
+                        axis=0,
+                    )
+                    x0 = (mean_y - term_0) / term_1
+                    find_root = partial(root_scalar, x1=0, xtol=1e-10, rtol=1e-10)
+                else:
+                    if is_classifier(self):
+                        mean_y = np.zeros_like(
+                            y_train, shape=self.n_trees_per_iteration_
+                        )
+                        for k in range(self.n_trees_per_iteration_):
+                            mean_y[k] = np.average(
+                                y_train == k, weights=sample_weight_train
+                            )
+                    x0 = np.zeros_like(self._baseline_prediction)
+                    find_root = partial(root, tol=1e-10, method="lm")
+
+                def fun(x):
+                    return mean_y - np.average(
+                        self._loss.link.inverse(raw_predictions + x),
+                        weights=sample_weight_train,
+                        axis=0,
+                    )
+
+                sol = find_root(fun, x0=x0)
+                if not (
+                    getattr(sol, "converged", True) and getattr(sol, "success", True)
+                ):
+                    msg = (
+                        "Post fit calibration used a root finding algorithm that "
+                        "failed to converge."
+                    )
+                    warnings.warn(msg, ConvergenceWarning, stacklevel=2)
+                correction = sol.root if hasattr(sol, "root") else sol.x
+
             self._baseline_prediction += correction
             raw_predictions = correction
 
@@ -1418,12 +1469,15 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         stopping. The higher the tolerance, the more likely we are to early
         stop: higher tolerance means that it will be harder for subsequent
         iterations to be considered an improvement upon the reference score.
-    post_fit_calibration: bool, default=True
-        If `loss` is `"gamma"`, then, after the fit is more or less finished, a
-        constant is added to the raw_predictions in link space such that on the
-        training data (minus the `validation_fraction`), the balance property
-        is fulfilled: the weighted average of predictions (`predict`) equals the
+    post_fit_calibration: bool, default=False
+        If True, then, after the fit is more or less finished, a constant is added to
+        the raw_predictions in link space such that on the effective training data,
+        i.e. without the `validation_fraction`, the balance property of is fulfilled:
+        the weighted average of predictions (`predict`) equals the
         weighted average of observations, i.e. `np.average(y, weights=sample_weight)`.
+        For the losses "quantile" and "absolute_error", this step is skipped. Using
+        post fit calibration has the largest effect on non-canonical loss-link
+        combinations: only "gamma" which has a log-link.
     verbose : int, default=0
         The verbosity level. If not zero, print some information about the
         fitting process.
@@ -1531,7 +1585,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         validation_fraction=0.1,
         n_iter_no_change=10,
         tol=1e-7,
-        post_fit_calibration=True,
+        post_fit_calibration=False,
         verbose=0,
         random_state=None,
     ):
@@ -1786,6 +1840,12 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         tolerance, the more likely we are to early stop: higher tolerance
         means that it will be harder for subsequent iterations to be
         considered an improvement upon the reference score.
+    post_fit_calibration: bool, default=False
+        If True, then, after the fit is more or less finished, a constant is added to
+        the raw_predictions in link space such that on the effective training data,
+        i.e. without the `validation_fraction`, the balance property of is fulfilled:
+        the weighted average of predictions (`predict_proba`) equals the
+        weighted average of observations, i.e. `np.average(y, weights=sample_weight)`.
     verbose : int, default=0
         The verbosity level. If not zero, print some information about the
         fitting process.
@@ -1893,6 +1953,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         validation_fraction=0.1,
         n_iter_no_change=10,
         tol=1e-7,
+        post_fit_calibration=False,
         verbose=0,
         random_state=None,
         class_weight=None,
@@ -1915,7 +1976,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change,
             tol=tol,
-            post_fit_calibration=False,  # no non-canonical links
+            post_fit_calibration=post_fit_calibration,
             verbose=verbose,
             random_state=random_state,
         )
