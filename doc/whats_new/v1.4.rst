@@ -132,6 +132,12 @@ Changelog
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
   initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
 
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` have a new parameter
+  `post_fit_calibration`. This option ensures that, after a fit is almost complete,
+  a constant is added in the predictions in link space such that the balance property
+  holds: average predicted equals average observed.
+
 - |Efficiency| Improves runtime and memory usage for
   :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
