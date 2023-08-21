@@ -1075,7 +1075,6 @@ def _incremental_mean_and_var(
     `utils.sparsefuncs.incr_mean_variance_axis` and
     `utils.sparsefuncs_fast.incr_mean_variance_axis0`
     """
-    from ..utils._array_api import get_namespace
     xp, _ = get_namespace(X)
     # old = stats until now
     # new = the current increment
