@@ -106,7 +106,7 @@ def test_roc_curve_display_plotting(
     assert isinstance(display.ax_, mpl.axes.Axes)
     assert isinstance(display.figure_, mpl.figure.Figure)
     assert display.ax_.get_adjustable() == "box"
-    assert display.ax_.get_aspect() == 1.0
+    assert display.ax_.get_aspect() in ("equal", 1.0)
     assert display.ax_.get_xlim() == display.ax_.get_ylim() == (-0.01, 1.01)
 
     expected_label = f"{default_name} (AUC = {display.roc_auc:.2f})"
