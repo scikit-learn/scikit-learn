@@ -29,8 +29,8 @@ amount of regularization with `C`, there would be a different amount of samples
 between the main problem and the smaller problems within the folds of the cross
 validation.
 
-Since our loss function is dependent on the amount of samples, the latter will
-influence the selected value of `C`. The question that arises is "How do we
+Since the loss function dependens on the amount of samples, the latter
+influences the selected value of `C`. The question that arises is "How do we
 optimally adjust C to account for the different amount of training samples?"
 """
 
@@ -45,7 +45,7 @@ optimally adjust C to account for the different amount of training samples?"
 # In this example we investigate the effect of reparametrizing the regularization
 # parameter `C` to account for the number of samples when using either L1 or L2
 # penalty. For such purpose we create a synthetic dataset with a large number of
-# features, out of which only a few will be informative. We therefore expect the
+# features, out of which only a few are informative. We therefore expect the
 # regularization to shrink the coefficients towards zero (L2 penalty) or exactly
 # zero (L1 penalty).
 
