@@ -34,7 +34,7 @@ def _implicitly_center(
         matvec=lambda x: X @ x - mu @ x,
         matmat=lambda x: X @ x - mu @ x,
         rmatvec=lambda x: XT @ x - (mu * x.sum()),
-        rmatmat=lambda x: XT @ x - (mu * x.sum()),
+        rmatmat=lambda x: XT @ x - mu.T @ x.sum(axis=0)[None, :],
         dtype=X.dtype,
         shape=X.shape,
     )
