@@ -92,6 +92,7 @@ def test_n_clusters(global_random_seed, global_dtype):
     with pytest.warns(ConvergenceWarning):
         brc4.fit(X)
 
+
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sparse_X(global_random_seed, global_dtype, csr_container):
     # Test that sparse and dense data give same results

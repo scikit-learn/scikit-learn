@@ -65,7 +65,8 @@ def test_dbscan_feature():
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert n_clusters_2 == n_clusters
 
-pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
+
+@pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
 def test_dbscan_sparse(lil_container):
     core_sparse, labels_sparse = dbscan(lil_container(X), eps=0.8, min_samples=10)
     core_dense, labels_dense = dbscan(X, eps=0.8, min_samples=10)
@@ -106,20 +107,20 @@ def test_dbscan_sparse_precomputed_different_eps():
     assert_array_equal(dbscan_lower[1], dbscan_higher[1])
 
 
-@pytest.mark.parametrize("use_sparse", [True, False])
 @pytest.mark.parametrize("metric", ["precomputed", "minkowski"])
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_dbscan_input_not_modified(use_sparse, metric, csr_container):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS + [None])
+def test_dbscan_input_not_modified(metric, csr_container):
     # test that the input is not modified by dbscan
     X = np.random.RandomState(0).rand(10, 10)
-    X = csr_container(X) if use_sparse else X
+    X = csr_container(X) if csr_container is not None else X
     X_copy = X.copy()
     dbscan(X, metric=metric)
 
-    if use_sparse:
+    if csr_container is not None:
         assert_array_equal(X.toarray(), X_copy.toarray())
     else:
         assert_array_equal(X, X_copy)
+
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_dbscan_no_core_samples(csr_container):
@@ -390,6 +391,7 @@ def test_dbscan_precomputed_metric_with_degenerate_input_arrays():
     X = np.zeros((10, 10))
     labels = DBSCAN(eps=0.5, metric="precomputed").fit(X).labels_
     assert len(set(labels)) == 1
+
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_dbscan_precomputed_metric_with_initial_rows_zero(csr_container):
