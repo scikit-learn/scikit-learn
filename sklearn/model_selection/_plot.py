@@ -2,9 +2,9 @@ import warnings
 
 import numpy as np
 
-from . import learning_curve, validation_curve
 from ..utils import check_matplotlib_support
-from ..utils._plotting import _validate_score_name, _interval_max_min_ratio
+from ..utils._plotting import _interval_max_min_ratio, _validate_score_name
+from ._validation import learning_curve, validation_curve
 
 
 class _BaseCurveDisplay:
@@ -380,7 +380,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             For int/None inputs, if the estimator is a classifier and `y` is
             either binary or multiclass,
             :class:`~sklearn.model_selection.StratifiedKFold` is used. In all
-            other cases, :class:`~sklearn.model_selectionKFold` is used. These
+            other cases, :class:`~sklearn.model_selection.KFold` is used. These
             splitters are instantiated with `shuffle=False` so the splits will
             be the same across calls.
 
@@ -772,7 +772,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             For int/None inputs, if the estimator is a classifier and `y` is
             either binary or multiclass,
             :class:`~sklearn.model_selection.StratifiedKFold` is used. In all
-            other cases, :class:`~sklearn.model_selectionKFold` is used. These
+            other cases, :class:`~sklearn.model_selection.KFold` is used. These
             splitters are instantiated with `shuffle=False` so the splits will
             be the same across calls.
 

@@ -1,23 +1,22 @@
-import numpy as np
-import scipy.sparse as sp
-import pytest
 import warnings
 
-from sklearn.utils._testing import (
-    assert_array_almost_equal,
-    assert_array_equal,
-    assert_allclose,
-)
+import numpy as np
+import pytest
+import scipy.sparse as sp
 
+from sklearn.datasets import make_blobs, make_circles
 from sklearn.decomposition import PCA, KernelPCA
-from sklearn.datasets import make_circles
-from sklearn.datasets import make_blobs
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import Perceptron
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 from sklearn.utils.validation import _check_psd_eigenvalues
 
 

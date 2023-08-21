@@ -3,12 +3,11 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import MetaEstimatorMixin, clone, BaseEstimator
-from ..base import _fit_context
-from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils.validation import check_is_fitted
-from ..utils.metaestimators import available_if
+from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
 from ..utils import safe_mask
+from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils.metaestimators import available_if
+from ..utils.validation import check_is_fitted
 
 __all__ = ["SelfTrainingClassifier"]
 

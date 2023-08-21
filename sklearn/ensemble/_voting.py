@@ -18,24 +18,23 @@ from numbers import Integral
 
 import numpy as np
 
-from ..base import ClassifierMixin
-from ..base import RegressorMixin
-from ..base import TransformerMixin
-from ..base import clone
-from ..base import _fit_context
-from ._base import _fit_single_estimator
-from ._base import _BaseHeterogeneousEnsemble
+from ..base import (
+    ClassifierMixin,
+    RegressorMixin,
+    TransformerMixin,
+    _fit_context,
+    clone,
+)
+from ..exceptions import NotFittedError
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
-from ..utils.metaestimators import available_if
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_feature_names_in
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import column_or_1d
-from ..utils._param_validation import StrOptions
-from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
-from ..utils.parallel import delayed, Parallel
+from ..utils._param_validation import StrOptions
+from ..utils.metaestimators import available_if
+from ..utils.multiclass import check_classification_targets
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import _check_feature_names_in, check_is_fitted, column_or_1d
+from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):

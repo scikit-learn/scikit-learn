@@ -1,26 +1,24 @@
 from unittest.mock import Mock
-import pytest
 
 import numpy as np
-
+import pytest
 from scipy import sparse
-from scipy.sparse import csgraph
 from scipy.linalg import eigh
-from scipy.sparse.linalg import eigsh
-from scipy.sparse.linalg import lobpcg
+from scipy.sparse import csgraph
+from scipy.sparse.linalg import eigsh, lobpcg
 
-from sklearn.manifold import SpectralEmbedding, _spectral_embedding
-from sklearn.manifold._spectral_embedding import _graph_is_connected
-from sklearn.manifold._spectral_embedding import _graph_connected_component
-from sklearn.manifold import spectral_embedding
-from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.metrics import normalized_mutual_info_score, pairwise_distances
-from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
+from sklearn.manifold import SpectralEmbedding, _spectral_embedding, spectral_embedding
+from sklearn.manifold._spectral_embedding import (
+    _graph_connected_component,
+    _graph_is_connected,
+)
+from sklearn.metrics import normalized_mutual_info_score, pairwise_distances
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa
@@ -245,6 +243,9 @@ def test_spectral_embedding_callable_affinity(X, seed=36):
 @pytest.mark.filterwarnings(
     "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
 )
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated:DeprecationWarning:pyamg.*"
+)
 @pytest.mark.skipif(
     not pyamg_available, reason="PyAMG is required for the tests in this function."
 )
@@ -301,6 +302,10 @@ def test_spectral_embedding_amg_solver(dtype, seed=36):
 )
 @pytest.mark.skipif(
     not pyamg_available, reason="PyAMG is required for the tests in this function."
+)
+# TODO: Remove when pyamg removes the use of np.find_common_type
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated:DeprecationWarning:pyamg.*"
 )
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
@@ -466,6 +471,10 @@ def test_error_pyamg_not_available():
         se_precomp.fit_transform(S)
 
 
+# TODO: Remove when pyamg removes the use of np.find_common_type
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated:DeprecationWarning:pyamg.*"
+)
 @pytest.mark.parametrize("solver", ["arpack", "amg", "lobpcg"])
 def test_spectral_eigen_tol_auto(monkeypatch, solver):
     """Test that `eigen_tol="auto"` is resolved correctly"""

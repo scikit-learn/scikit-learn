@@ -2,19 +2,19 @@ import warnings
 
 import numpy as np
 import pytest
-
 from numpy.testing import assert_allclose
-from scipy.sparse import csr_matrix, csc_matrix, dok_matrix, lil_matrix
-from scipy.sparse import issparse
+from scipy.sparse import csc_matrix, csr_matrix, dok_matrix, issparse, lil_matrix
 
 from sklearn import datasets
-from sklearn.utils._testing import assert_array_equal
-from sklearn.metrics.cluster import silhouette_score
-from sklearn.metrics.cluster import silhouette_samples
-from sklearn.metrics.cluster._unsupervised import _silhouette_reduce
 from sklearn.metrics import pairwise_distances
-from sklearn.metrics.cluster import calinski_harabasz_score
-from sklearn.metrics.cluster import davies_bouldin_score
+from sklearn.metrics.cluster import (
+    calinski_harabasz_score,
+    davies_bouldin_score,
+    silhouette_samples,
+    silhouette_score,
+)
+from sklearn.metrics.cluster._unsupervised import _silhouette_reduce
+from sklearn.utils._testing import assert_array_equal
 
 
 def test_silhouette():

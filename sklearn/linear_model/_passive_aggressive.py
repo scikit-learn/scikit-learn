@@ -2,11 +2,9 @@
 # License: BSD 3 clause
 from numbers import Real
 
-from ._stochastic_gradient import BaseSGDClassifier
-from ._stochastic_gradient import BaseSGDRegressor
-from ._stochastic_gradient import DEFAULT_EPSILON
 from ..base import _fit_context
 from ..utils._param_validation import Interval, StrOptions
+from ._stochastic_gradient import DEFAULT_EPSILON, BaseSGDClassifier, BaseSGDRegressor
 
 
 class PassiveAggressiveClassifier(BaseSGDClassifier):
@@ -26,7 +24,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     max_iter : int, default=1000
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        :meth:`partial_fit` method.
+        :meth:`PassiveAggressive.partial_fit` method.
 
         .. versionadded:: 0.19
 

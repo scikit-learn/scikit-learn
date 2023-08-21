@@ -1,31 +1,25 @@
-from time import time
+import warnings
 from collections import namedtuple
 from numbers import Integral, Real
-import warnings
+from time import time
 
-from scipy import stats
 import numpy as np
+from scipy import stats
 
-from ..base import clone
-from ..base import _fit_context
+from ..base import _fit_context, clone
 from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
 from ..utils import (
+    _safe_assign,
+    _safe_indexing,
     check_array,
     check_random_state,
     is_scalar_nan,
-    _safe_assign,
-    _safe_indexing,
 )
-from ..utils.validation import FLOAT_DTYPES, check_is_fitted
-from ..utils.validation import _check_feature_names_in
 from ..utils._mask import _get_mask
 from ..utils._param_validation import HasMethods, Interval, StrOptions
-
-from ._base import _BaseImputer
-from ._base import SimpleImputer
-from ._base import _check_inputs_dtype
-
+from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
+from ._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
 
 _ImputerTriplet = namedtuple(
     "_ImputerTriplet", ["feat_idx", "neighbor_feat_idx", "estimator"]

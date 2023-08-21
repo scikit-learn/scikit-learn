@@ -6,14 +6,13 @@ import warnings
 
 import numpy as np
 
-from ..base import BaseEstimator, RegressorMixin, clone
-from ..base import _fit_context
-from ..utils.validation import check_is_fitted
-from ..utils._tags import _safe_tags
-from ..utils import check_array, _safe_indexing
-from ..utils._param_validation import HasMethods
-from ..preprocessing import FunctionTransformer
+from ..base import BaseEstimator, RegressorMixin, _fit_context, clone
 from ..exceptions import NotFittedError
+from ..preprocessing import FunctionTransformer
+from ..utils import _safe_indexing, check_array
+from ..utils._param_validation import HasMethods
+from ..utils._tags import _safe_tags
+from ..utils.validation import check_is_fitted
 
 __all__ = ["TransformedTargetRegressor"]
 
@@ -109,9 +108,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     to be used by scikit-learn transformers. At the time of prediction, the
     output will be reshaped to a have the same number of dimensions as `y`.
 
-    See :ref:`examples/compose/plot_transformed_target.py
-    <sphx_glr_auto_examples_compose_plot_transformed_target.py>`.
-
     Examples
     --------
     >>> import numpy as np
@@ -127,6 +123,9 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     1.0
     >>> tt.regressor_.coef_
     array([2.])
+
+    For a more detailed example use case refer to
+    :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`.
     """
 
     _parameter_constraints: dict = {

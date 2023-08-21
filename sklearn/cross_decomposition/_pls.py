@@ -5,25 +5,27 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD 3 clause
 
-from numbers import Integral, Real
-
 import warnings
 from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.linalg import svd
 
-from ..base import BaseEstimator, RegressorMixin, TransformerMixin
-from ..base import MultiOutputMixin
-from ..base import ClassNamePrefixFeaturesOutMixin
-from ..base import _fit_context
-from ..utils import check_array, check_consistent_length
-from ..utils.fixes import sp_version
-from ..utils.fixes import parse_version
-from ..utils.extmath import svd_flip
-from ..utils.validation import check_is_fitted, FLOAT_DTYPES
-from ..utils._param_validation import Interval, StrOptions
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    TransformerMixin,
+    _fit_context,
+)
 from ..exceptions import ConvergenceWarning
+from ..utils import check_array, check_consistent_length
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import svd_flip
+from ..utils.fixes import parse_version, sp_version
+from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 
 __all__ = ["PLSCanonical", "PLSRegression", "PLSSVD"]
 
@@ -236,7 +238,10 @@ class _PLS(
             Y, input_name="Y", dtype=np.float64, copy=self.copy, ensure_2d=False
         )
         if Y.ndim == 1:
+            self._predict_1d = True
             Y = Y.reshape(-1, 1)
+        else:
+            self._predict_1d = False
 
         n = X.shape[0]
         p = X.shape[1]
@@ -467,8 +472,8 @@ class _PLS(
         # Normalize
         X -= self._x_mean
         X /= self._x_std
-        Ypred = X @ self.coef_.T
-        return Ypred + self.intercept_
+        Ypred = X @ self.coef_.T + self.intercept_
+        return Ypred.ravel() if self._predict_1d else Ypred
 
     def fit_transform(self, X, y=None):
         """Learn and apply the dimension reduction on the train data.

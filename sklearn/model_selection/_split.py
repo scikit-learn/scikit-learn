@@ -11,27 +11,29 @@ functions to split the data based on a preset strategy.
 #         Rodion Martynov <marrodion@gmail.com>
 # License: BSD 3 clause
 
-from collections.abc import Iterable
-from collections import defaultdict
+import numbers
 import warnings
+from abc import ABCMeta, abstractmethod
+from collections import defaultdict
+from collections.abc import Iterable
+from inspect import signature
 from itertools import chain, combinations
 from math import ceil, floor
-import numbers
-from abc import ABCMeta, abstractmethod
-from inspect import signature
 
 import numpy as np
 from scipy.special import comb
 
-from ..utils import indexable, check_random_state, _safe_indexing
-from ..utils import _approximate_mode
-from ..utils.validation import _num_samples, column_or_1d
-from ..utils.validation import check_array
-from ..utils.multiclass import type_of_target
-from ..utils import metadata_routing
+from ..utils import (
+    _approximate_mode,
+    _safe_indexing,
+    check_random_state,
+    indexable,
+    metadata_routing,
+)
+from ..utils._param_validation import Interval, RealNotInt, validate_params
 from ..utils.metadata_routing import _MetadataRequester
-from ..utils._param_validation import validate_params, Interval
-from ..utils._param_validation import RealNotInt
+from ..utils.multiclass import type_of_target
+from ..utils.validation import _num_samples, check_array, column_or_1d
 
 __all__ = [
     "BaseCrossValidator",
@@ -2510,7 +2512,8 @@ def check_cv(cv=5, y=None, *, classifier=False):
         "random_state": ["random_state"],
         "shuffle": ["boolean"],
         "stratify": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def train_test_split(
     *arrays,
@@ -2670,7 +2673,7 @@ def _pprint(params, offset=0, printer=repr):
     this_line_length = offset
     line_sep = ",\n" + (1 + offset // 2) * " "
     for i, (k, v) in enumerate(sorted(params.items())):
-        if type(v) is float:
+        if isinstance(v, float):
             # use str for representing floating point numbers
             # this way we get consistent representation across
             # architectures and versions.

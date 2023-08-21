@@ -1,41 +1,45 @@
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import csr_matrix
 import pytest
+from scipy.sparse import csr_matrix
 
 from sklearn._config import config_context, get_config
-from sklearn.base import BaseEstimator
-from sklearn.base import _fit_context
+from sklearn.base import BaseEstimator, _fit_context
 from sklearn.model_selection import LeaveOneOut
 from sklearn.utils import deprecated
-from sklearn.utils._param_validation import Hidden
-from sklearn.utils._param_validation import Interval
-from sklearn.utils._param_validation import Options
-from sklearn.utils._param_validation import StrOptions
-from sklearn.utils._param_validation import _ArrayLikes
-from sklearn.utils._param_validation import _Booleans
-from sklearn.utils._param_validation import _Callables
-from sklearn.utils._param_validation import _CVObjects
-from sklearn.utils._param_validation import _InstancesOf
-from sklearn.utils._param_validation import MissingValues
-from sklearn.utils._param_validation import _PandasNAConstraint
-from sklearn.utils._param_validation import _IterablesNotString
-from sklearn.utils._param_validation import _NoneConstraint
-from sklearn.utils._param_validation import _RandomStates
-from sklearn.utils._param_validation import _SparseMatrices
-from sklearn.utils._param_validation import _VerboseHelper
-from sklearn.utils._param_validation import HasMethods
-from sklearn.utils._param_validation import make_constraint
-from sklearn.utils._param_validation import generate_invalid_param_val
-from sklearn.utils._param_validation import generate_valid_param
-from sklearn.utils._param_validation import validate_params
-from sklearn.utils._param_validation import InvalidParameterError
-from sklearn.utils._param_validation import RealNotInt
+from sklearn.utils._param_validation import (
+    HasMethods,
+    Hidden,
+    Interval,
+    InvalidParameterError,
+    MissingValues,
+    Options,
+    RealNotInt,
+    StrOptions,
+    _ArrayLikes,
+    _Booleans,
+    _Callables,
+    _CVObjects,
+    _InstancesOf,
+    _IterablesNotString,
+    _NoneConstraint,
+    _PandasNAConstraint,
+    _RandomStates,
+    _SparseMatrices,
+    _VerboseHelper,
+    generate_invalid_param_val,
+    generate_valid_param,
+    make_constraint,
+    validate_params,
+)
 
 
 # Some helpers for the tests
-@validate_params({"a": [Real], "b": [Real], "c": [Real], "d": [Real]})
+@validate_params(
+    {"a": [Real], "b": [Real], "c": [Real], "d": [Real]},
+    prefer_skip_nested_validation=True,
+)
 def _func(a, b=0, *args, c, d=0, **kwargs):
     """A function to test the validation of functions."""
 
@@ -43,12 +47,12 @@ def _func(a, b=0, *args, c, d=0, **kwargs):
 class _Class:
     """A class to test the _InstancesOf constraint and the validation of methods."""
 
-    @validate_params({"a": [Real]})
+    @validate_params({"a": [Real]}, prefer_skip_nested_validation=True)
     def _method(self, a):
         """A validated method"""
 
     @deprecated()
-    @validate_params({"a": [Real]})
+    @validate_params({"a": [Real]}, prefer_skip_nested_validation=True)
     def _deprecated_method(self, a):
         """A deprecated validated method"""
 
@@ -469,7 +473,7 @@ def test_validate_params_missing_params():
     constraints
     """
 
-    @validate_params({"a": [int]})
+    @validate_params({"a": [int]}, prefer_skip_nested_validation=True)
     def func(a, b):
         pass
 
@@ -527,7 +531,9 @@ def test_stroptions_deprecated_subset():
 def test_hidden_constraint():
     """Check that internal constraints are not exposed in the error message."""
 
-    @validate_params({"param": [Hidden(list), dict]})
+    @validate_params(
+        {"param": [Hidden(list), dict]}, prefer_skip_nested_validation=True
+    )
     def f(param):
         pass
 
@@ -549,7 +555,10 @@ def test_hidden_constraint():
 def test_hidden_stroptions():
     """Check that we can have 2 StrOptions constraints, one being hidden."""
 
-    @validate_params({"param": [StrOptions({"auto"}), Hidden(StrOptions({"warn"}))]})
+    @validate_params(
+        {"param": [StrOptions({"auto"}), Hidden(StrOptions({"warn"}))]},
+        prefer_skip_nested_validation=True,
+    )
     def f(param):
         pass
 
@@ -581,7 +590,7 @@ def test_boolean_constraint_deprecated_int():
     validation when using an int for a parameter accepting a boolean.
     """
 
-    @validate_params({"param": ["boolean"]})
+    @validate_params({"param": ["boolean"]}, prefer_skip_nested_validation=True)
     def f(param):
         pass
 
@@ -599,7 +608,10 @@ def test_boolean_constraint_deprecated_int():
 def test_no_validation():
     """Check that validation can be skipped for a parameter."""
 
-    @validate_params({"param1": [int, None], "param2": "no_validation"})
+    @validate_params(
+        {"param1": [int, None], "param2": "no_validation"},
+        prefer_skip_nested_validation=True,
+    )
     def f(param1=None, param2=None):
         pass
 
@@ -680,7 +692,7 @@ def test_real_not_int():
 def test_skip_param_validation():
     """Check that param validation can be skipped using config_context."""
 
-    @validate_params({"a": [int]})
+    @validate_params({"a": [int]}, prefer_skip_nested_validation=True)
     def f(a):
         pass
 
@@ -696,7 +708,7 @@ def test_skip_param_validation():
 def test_skip_nested_validation(prefer_skip_nested_validation):
     """Check that nested validation can be skipped."""
 
-    @validate_params({"a": [int]})
+    @validate_params({"a": [int]}, prefer_skip_nested_validation=True)
     def f(a):
         pass
 

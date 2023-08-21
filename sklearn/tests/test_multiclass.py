@@ -1,45 +1,42 @@
-import numpy as np
-import scipy.sparse as sp
-import pytest
-from numpy.testing import assert_allclose
-
 from re import escape
 
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._mocking import CheckingClassifier
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.multiclass import OneVsOneClassifier
-from sklearn.multiclass import OutputCodeClassifier
-from sklearn.utils.multiclass import check_classification_targets, type_of_target
+import numpy as np
+import pytest
+import scipy.sparse as sp
+from numpy.testing import assert_allclose
+
+from sklearn import datasets, svm
+from sklearn.datasets import load_breast_cancer
+from sklearn.exceptions import NotFittedError
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import (
+    ElasticNet,
+    Lasso,
+    LinearRegression,
+    LogisticRegression,
+    Perceptron,
+    Ridge,
+    SGDClassifier,
+)
+from sklearn.metrics import precision_score, recall_score
+from sklearn.model_selection import GridSearchCV, cross_val_score
+from sklearn.multiclass import (
+    OneVsOneClassifier,
+    OneVsRestClassifier,
+    OutputCodeClassifier,
+)
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.svm import SVC, LinearSVC
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import (
     check_array,
     shuffle,
 )
-
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
-
-from sklearn.svm import LinearSVC, SVC
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.linear_model import (
-    LinearRegression,
-    Lasso,
-    ElasticNet,
-    Ridge,
-    Perceptron,
-    LogisticRegression,
-    SGDClassifier,
-)
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import GridSearchCV, cross_val_score
-from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.impute import SimpleImputer
-from sklearn import svm
-from sklearn.exceptions import NotFittedError
-from sklearn import datasets
-from sklearn.datasets import load_breast_cancer
+from sklearn.utils._mocking import CheckingClassifier
+from sklearn.utils._testing import assert_almost_equal, assert_array_equal
+from sklearn.utils.multiclass import check_classification_targets, type_of_target
 
 msg = "The default value for `force_alpha` will change"
 pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")

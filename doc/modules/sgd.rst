@@ -249,6 +249,10 @@ quadratic in the number of samples.
 with a large number of training samples (> 10,000) for which the SGD
 variant can be several orders of magnitude faster.
 
+|details-start|
+**Mathematical details**
+|details-split|
+
 Its implementation is based on the implementation of the stochastic
 gradient descent. Indeed, the original optimization problem of the One-Class
 SVM is given by
@@ -281,6 +285,8 @@ This is similar to the optimization problems studied in section
 :math:`\alpha = \nu/2`, :math:`L` being the hinge loss function and :math:`R`
 being the L2 norm. We just need to add the term :math:`b\nu` in the
 optimization loop.
+
+|details-end|
 
 As :class:`SGDClassifier` and :class:`SGDRegressor`, :class:`SGDOneClassSVM`
 supports averaged SGD. Averaging can be enabled by setting ``average=True``.
@@ -342,9 +348,9 @@ Tips on Practical Use
   * Stochastic Gradient Descent is sensitive to feature scaling, so it
     is highly recommended to scale your data. For example, scale each
     attribute on the input vector X to [0,1] or [-1,+1], or standardize
-    it to have mean 0 and variance 1. Note that the *same* scaling
-    must be applied to the test vector to obtain meaningful
-    results. This can be easily done using :class:`StandardScaler`::
+    it to have mean 0 and variance 1. Note that the *same* scaling must be
+    applied to the test vector to obtain meaningful results. This can be easily
+    done using :class:`~sklearn.preprocessing.StandardScaler`::
 
       from sklearn.preprocessing import StandardScaler
       scaler = StandardScaler()
@@ -410,6 +416,10 @@ where :math:`L` is a loss function that measures model (mis)fit and
 complexity; :math:`\alpha > 0` is a non-negative hyperparameter that controls
 the regularization strength.
 
+|details-start|
+**Loss functions details**
+|details-split|
+
 Different choices for :math:`L` entail different classifiers or regressors:
 
 - Hinge (soft-margin): equivalent to Support Vector Classification.
@@ -430,6 +440,8 @@ Different choices for :math:`L` entail different classifiers or regressors:
   \varepsilon^2` otherwise.
 - Epsilon-Insensitive: (soft-margin) equivalent to Support Vector Regression.
   :math:`L(y_i, f(x_i)) = \max(0, |y_i - f(x_i)| - \varepsilon)`.
+
+|details-end|
 
 All of the above loss functions can be regarded as an upper bound on the
 misclassification error (Zero-one loss) as shown in the Figure below.
@@ -491,7 +503,7 @@ where :math:`t` is the time step (there are a total of `n_samples * n_iter`
 time steps), :math:`t_0` is determined based on a heuristic proposed by Léon Bottou
 such that the expected initial updates are comparable with the expected
 size of the weights (this assuming that the norm of the training samples is
-approx. 1). The exact definition can be found in ``_init_t`` in :class:`BaseSGD`.
+approx. 1). The exact definition can be found in ``_init_t`` in `BaseSGD`.
 
 
 For regression the default learning rate schedule is inverse scaling

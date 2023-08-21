@@ -7,18 +7,28 @@ import time
 from contextlib import closing
 from functools import wraps
 from os.path import join
-from typing import Callable, Optional, Dict, Tuple, List, Any, Union
 from tempfile import TemporaryDirectory
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from urllib.error import HTTPError, URLError
-from urllib.request import urlopen, Request
+from urllib.request import Request, urlopen
 from warnings import warn
 
 import numpy as np
 
+from ..utils import (
+    Bunch,
+    check_pandas_support,  # noqa  # noqa
+)
+from ..utils._param_validation import (
+    Hidden,
+    Integral,
+    Interval,
+    Real,
+    StrOptions,
+    validate_params,
+)
 from . import get_data_home
 from ._arff_parser import load_arff_from_gzip_file
-from ..utils import Bunch
-from ..utils import check_pandas_support  # noqa
 
 __all__ = ["fetch_openml"]
 
@@ -734,6 +744,26 @@ def _valid_data_column_names(features_list, target_columns):
     return valid_data_column_names
 
 
+@validate_params(
+    {
+        "name": [str, None],
+        "version": [Interval(Integral, 1, None, closed="left"), StrOptions({"active"})],
+        "data_id": [Interval(Integral, 1, None, closed="left"), None],
+        "data_home": [str, None],
+        "target_column": [str, list, None],
+        "cache": [bool],
+        "return_X_y": [bool],
+        "as_frame": [bool, StrOptions({"auto"})],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0, None, closed="right")],
+        "parser": [
+            StrOptions({"auto", "pandas", "liac-arff"}),
+            Hidden(StrOptions({"warn"})),
+        ],
+        "read_csv_kwargs": [dict, None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def fetch_openml(
     name: Optional[str] = None,
     *,
@@ -746,7 +776,7 @@ def fetch_openml(
     as_frame: Union[str, bool] = "auto",
     n_retries: int = 3,
     delay: float = 1.0,
-    parser: Optional[str] = "warn",
+    parser: str = "warn",
     read_csv_kwargs: Optional[Dict] = None,
 ):
     """Fetch dataset from openml by name or dataset id.
@@ -839,7 +869,7 @@ def fetch_openml(
         - `"pandas"`: this is the most efficient parser. However, it requires
           pandas to be installed and can only open dense datasets.
         - `"liac-arff"`: this is a pure Python ARFF parser that is much less
-          memory- and CPU-efficient. It deals with sparse ARFF dataset.
+          memory- and CPU-efficient. It deals with sparse ARFF datasets.
 
         If `"auto"` (future default), the parser is chosen automatically such that
         `"liac-arff"` is selected for sparse ARFF datasets, otherwise
@@ -854,7 +884,7 @@ def fetch_openml(
 
     read_csv_kwargs : dict, default=None
         Keyword arguments passed to :func:`pandas.read_csv` when loading the data
-        from a ARFF file and using the pandas parser. It can allows to
+        from a ARFF file and using the pandas parser. It can allow to
         overwrite some default parameters.
 
         .. versionadded:: 1.3
@@ -986,14 +1016,6 @@ def fetch_openml(
             "unusable. Warning: {}".format(data_description["warning"])
         )
 
-    # TODO(1.4): remove "warn" from the valid parser
-    valid_parsers = ("auto", "pandas", "liac-arff", "warn")
-    if parser not in valid_parsers:
-        raise ValueError(
-            f"`parser` must be one of {', '.join(repr(p) for p in valid_parsers)}. Got"
-            f" {parser!r} instead."
-        )
-
     if parser == "warn":
         # TODO(1.4): remove this warning
         parser = "liac-arff"
@@ -1007,11 +1029,6 @@ def fetch_openml(
                 " API doc for details."
             ),
             FutureWarning,
-        )
-
-    if as_frame not in ("auto", True, False):
-        raise ValueError(
-            f"`as_frame` must be one of 'auto', True, or False. Got {as_frame} instead."
         )
 
     return_sparse = data_description["format"].lower() == "sparse_arff"
@@ -1091,14 +1108,9 @@ def fetch_openml(
         target_columns = [target_column]
     elif target_column is None:
         target_columns = []
-    elif isinstance(target_column, list):
-        target_columns = target_column
     else:
-        raise TypeError(
-            "Did not recognize type of target_column"
-            "Should be str, list or None. Got: "
-            "{}".format(type(target_column))
-        )
+        # target_column already is of type list
+        target_columns = target_column
     data_columns = _valid_data_column_names(features_list, target_columns)
 
     shape: Optional[Tuple[int, int]]

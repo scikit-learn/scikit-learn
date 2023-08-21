@@ -39,12 +39,11 @@ contributed to fewer projections than the central disk.
 # Author: Emmanuelle Gouillart <emmanuelle.gouillart@nsup.org>
 # License: BSD 3 clause
 
-import numpy as np
-from scipy import sparse
-from scipy import ndimage
-from sklearn.linear_model import Lasso
-from sklearn.linear_model import Ridge
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy import ndimage, sparse
+
+from sklearn.linear_model import Lasso, Ridge
 
 
 def _weights(x, dx=1, orig=0):

@@ -1,16 +1,15 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
 
-from numbers import Integral
 from itertools import chain
+from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
-from ..base import _fit_context
-from ._hashing_fast import transform as _hashing_transform
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils._param_validation import Interval, StrOptions
+from ._hashing_fast import transform as _hashing_transform
 
 
 def _iteritems(d):

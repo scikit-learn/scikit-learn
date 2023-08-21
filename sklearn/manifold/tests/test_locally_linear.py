@@ -1,17 +1,17 @@
 from itertools import product
 
 import numpy as np
+import pytest
+from scipy import linalg
+
+from sklearn import manifold, neighbors
+from sklearn.datasets import make_blobs
+from sklearn.manifold._locally_linear import barycenter_kneighbors_graph
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
+    ignore_warnings,
 )
-from scipy import linalg
-import pytest
-
-from sklearn import neighbors, manifold
-from sklearn.datasets import make_blobs
-from sklearn.manifold._locally_linear import barycenter_kneighbors_graph
-from sklearn.utils._testing import ignore_warnings
 
 eigen_solvers = ["dense", "arpack"]
 
@@ -119,7 +119,7 @@ def test_pipeline():
     # check that LocallyLinearEmbedding works fine as a Pipeline
     # only checks that no error is raised.
     # TODO check that it actually does something useful
-    from sklearn import pipeline, datasets
+    from sklearn import datasets, pipeline
 
     X, y = datasets.make_blobs(random_state=0)
     clf = pipeline.Pipeline(

@@ -8,7 +8,6 @@ from typing import List
 import numpy as np
 import scipy as sp
 
-
 from ..externals import _arff
 from ..externals._arff import ArffSparseDataType
 from ..utils import (

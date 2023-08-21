@@ -8,20 +8,19 @@ from numbers import Integral
 from operator import itemgetter
 
 import numpy as np
-from scipy.linalg import cholesky, cho_solve, solve
 import scipy.optimize
+from scipy.linalg import cho_solve, cholesky, solve
 from scipy.special import erf, expit
 
-from ..base import BaseEstimator, ClassifierMixin, clone
-from ..base import _fit_context
-from .kernels import Kernel, RBF, CompoundKernel, ConstantKernel as C
-from ..utils.validation import check_is_fitted
-from ..utils import check_random_state
-from ..utils.optimize import _check_optimize_result
-from ..utils._param_validation import Interval, StrOptions
+from ..base import BaseEstimator, ClassifierMixin, _fit_context, clone
+from ..multiclass import OneVsOneClassifier, OneVsRestClassifier
 from ..preprocessing import LabelEncoder
-from ..multiclass import OneVsRestClassifier, OneVsOneClassifier
-
+from ..utils import check_random_state
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.optimize import _check_optimize_result
+from ..utils.validation import check_is_fitted
+from .kernels import RBF, CompoundKernel, Kernel
+from .kernels import ConstantKernel as C
 
 # Values required for approximating the logistic sigmoid by
 # error functions. coefs are obtained via:

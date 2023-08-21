@@ -2,8 +2,8 @@
 # License: BSD 3 clause
 from numbers import Real
 
+from ..utils._param_validation import Interval, StrOptions
 from ._stochastic_gradient import BaseSGDClassifier
-from ..utils._param_validation import StrOptions, Interval
 
 
 class Perceptron(BaseSGDClassifier):

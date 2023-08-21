@@ -1,42 +1,54 @@
-import pytest
-import numpy as np
-import scipy.sparse as sp
-from joblib import cpu_count
 import re
 
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
+import numpy as np
+import pytest
+import scipy.sparse as sp
+from joblib import cpu_count
+
 from sklearn import datasets
-from sklearn.base import clone
-from sklearn.datasets import make_classification
-from sklearn.datasets import load_linnerud
-from sklearn.datasets import make_multilabel_classification
-from sklearn.datasets import make_regression
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
+from sklearn.base import ClassifierMixin, clone
+from sklearn.datasets import (
+    load_linnerud,
+    make_classification,
+    make_multilabel_classification,
+    make_regression,
+)
+from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.ensemble import (
+    GradientBoostingRegressor,
+    RandomForestClassifier,
+    StackingRegressor,
+)
 from sklearn.exceptions import NotFittedError
-from sklearn.linear_model import Lasso
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import OrthogonalMatchingPursuit
-from sklearn.linear_model import Ridge
-from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.linear_model import SGDClassifier
-from sklearn.linear_model import SGDRegressor
-from sklearn.linear_model import LinearRegression
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import (
+    Lasso,
+    LinearRegression,
+    LogisticRegression,
+    OrthogonalMatchingPursuit,
+    PassiveAggressiveClassifier,
+    Ridge,
+    SGDClassifier,
+    SGDRegressor,
+)
 from sklearn.metrics import jaccard_score, mean_squared_error
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.multioutput import ClassifierChain, RegressorChain
-from sklearn.multioutput import MultiOutputClassifier
-from sklearn.multioutput import MultiOutputRegressor
+from sklearn.multioutput import (
+    ClassifierChain,
+    MultiOutputClassifier,
+    MultiOutputRegressor,
+    RegressorChain,
+)
+from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
-from sklearn.model_selection import GridSearchCV, train_test_split
-from sklearn.dummy import DummyRegressor, DummyClassifier
-from sklearn.pipeline import make_pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.ensemble import StackingRegressor
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 
 def test_multi_target_regression():

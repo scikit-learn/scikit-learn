@@ -3,15 +3,14 @@
 # License: BSD 3 clause
 
 from array import array
-from collections.abc import Mapping, Iterable
-from operator import itemgetter
+from collections.abc import Iterable, Mapping
 from numbers import Number
+from operator import itemgetter
 
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
-from ..base import _fit_context
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 

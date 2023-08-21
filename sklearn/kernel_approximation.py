@@ -8,8 +8,8 @@ approximate kernel feature maps based on Fourier transforms and Count Sketches.
 
 # License: BSD 3 clause
 
-from numbers import Integral, Real
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
@@ -20,20 +20,21 @@ try:
 except ImportError:  # scipy < 1.4
     from scipy.fftpack import fft, ifft
 
-from .base import BaseEstimator
-from .base import TransformerMixin
-from .base import ClassNamePrefixFeaturesOutMixin
-from .base import _fit_context
-from .utils import check_random_state
-from .utils import deprecated
+from .base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from .metrics.pairwise import KERNEL_PARAMS, PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
+from .utils import check_random_state, deprecated
+from .utils._param_validation import Interval, StrOptions
 from .utils.extmath import safe_sparse_dot
-from .utils.validation import check_is_fitted
-from .utils.validation import _check_feature_names_in
-from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
-from .utils.validation import check_non_negative
-from .utils._param_validation import Interval
-from .utils._param_validation import StrOptions
-from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
+from .utils.validation import (
+    _check_feature_names_in,
+    check_is_fitted,
+    check_non_negative,
+)
 
 
 class PolynomialCountSketch(
@@ -362,7 +363,7 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         X = self._validate_data(X, accept_sparse="csr")
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
-        sparse = sp.isspmatrix(X)
+        sparse = sp.issparse(X)
         if self.gamma == "scale":
             # var = E[X^2] - E[X]^2 if sparse
             X_var = (X.multiply(X)).mean() - (X.mean()) ** 2 if sparse else X.var()

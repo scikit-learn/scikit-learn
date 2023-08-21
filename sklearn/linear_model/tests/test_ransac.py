@@ -1,18 +1,19 @@
 import numpy as np
 import pytest
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_equal
-
+from sklearn.datasets import make_regression
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import (
+    LinearRegression,
+    OrthogonalMatchingPursuit,
+    RANSACRegressor,
+    Ridge,
+)
+from sklearn.linear_model._ransac import _dynamic_max_trials
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose
-from sklearn.datasets import make_regression
-from sklearn.linear_model import LinearRegression, RANSACRegressor, Ridge
-from sklearn.linear_model import OrthogonalMatchingPursuit
-from sklearn.linear_model._ransac import _dynamic_max_trials
-from sklearn.exceptions import ConvergenceWarning
-
 
 # Generate coordinates of line
 X = np.arange(-200, 200)

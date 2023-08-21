@@ -77,10 +77,9 @@ print(f"Number of numerical features: {n_numerical_features}")
 # As a baseline, we create an estimator where the categorical features are
 # dropped:
 
+from sklearn.compose import make_column_selector, make_column_transformer
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.pipeline import make_pipeline
-from sklearn.compose import make_column_transformer
-from sklearn.compose import make_column_selector
 
 dropper = make_column_transformer(
     ("drop", make_column_selector(dtype_include="category")), remainder="passthrough"
@@ -114,8 +113,9 @@ hist_one_hot = make_pipeline(
 # were ordered quantities, i.e. the categories will be encoded as 0, 1, 2,
 # etc., and treated as continuous features.
 
-from sklearn.preprocessing import OrdinalEncoder
 import numpy as np
+
+from sklearn.preprocessing import OrdinalEncoder
 
 ordinal_encoder = make_column_transformer(
     (
@@ -166,8 +166,9 @@ hist_native = make_pipeline(
 # models performance in terms of
 # :func:`~metrics.mean_absolute_percentage_error` and fit times.
 
-from sklearn.model_selection import cross_validate
 import matplotlib.pyplot as plt
+
+from sklearn.model_selection import cross_validate
 
 scoring = "neg_mean_absolute_percentage_error"
 n_cv_folds = 3

@@ -7,21 +7,20 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
+import warnings
 from numbers import Integral
 
 import numpy as np
-from ..utils.fixes import _mode
-from ..utils.extmath import weighted_mode
-from ..utils.validation import _is_arraylike, _num_samples, check_is_fitted
 
-import warnings
-from ._base import _get_weights
-from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
-from ..base import ClassifierMixin
-from ..base import _fit_context
+from sklearn.neighbors._base import _check_precomputed
+
+from ..base import ClassifierMixin, _fit_context
 from ..metrics._pairwise_distances_reduction import ArgKminClassMode
 from ..utils._param_validation import StrOptions
-from sklearn.neighbors._base import _check_precomputed
+from ..utils.extmath import weighted_mode
+from ..utils.fixes import _mode
+from ..utils.validation import _is_arraylike, _num_samples, check_is_fitted
+from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, _get_weights
 
 
 def _adjusted_metric(metric, metric_kwargs, p=None):
@@ -55,6 +54,11 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
           array of distances, and returns an array of the same shape
           containing the weights.
 
+        Refer to the example entitled
+        :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`
+        showing the impact of the `weights` parameter on the decision
+        boundary.
+
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
@@ -73,7 +77,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p : int, default=2
+    p : float, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
@@ -330,8 +334,8 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                     self._fit_X,
                     k=self.n_neighbors,
                     weights=self.weights,
-                    labels=self._y,
-                    unique_labels=self.classes_,
+                    Y_labels=self._y,
+                    unique_Y_labels=self.classes_,
                     metric=metric,
                     metric_kwargs=metric_kwargs,
                     # `strategy="parallel_on_X"` has in practice be shown
@@ -434,7 +438,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p : int, default=2
+    p : float, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.

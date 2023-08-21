@@ -1,17 +1,26 @@
+import re
+import warnings
+
 import numpy as np
+import pytest
 import scipy as sp
 from numpy.testing import assert_array_equal
 
-import pytest
-import warnings
-
-from sklearn.utils._testing import assert_allclose
-
-from sklearn import datasets
-from sklearn.decomposition import PCA
+from sklearn import config_context, datasets
+from sklearn.base import clone
 from sklearn.datasets import load_iris
-from sklearn.decomposition._pca import _assess_dimension
-from sklearn.decomposition._pca import _infer_dimension
+from sklearn.decomposition import PCA
+from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils.estimator_checks import (
+    _array_api_for_tests,
+    _get_check_estimator_ids,
+    check_array_api_input_and_values,
+)
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
@@ -686,3 +695,93 @@ def test_variance_correctness(copy):
     pca_var = pca.explained_variance_ / pca.explained_variance_ratio_
     true_var = np.var(X, ddof=1, axis=0).sum()
     np.testing.assert_allclose(pca_var, true_var)
+
+
+def check_array_api_get_precision(name, estimator, array_namepsace, device, dtype):
+    xp, device, dtype = _array_api_for_tests(array_namepsace, device, dtype)
+    iris_np = iris.data.astype(dtype)
+    iris_xp = xp.asarray(iris_np, device=device)
+
+    estimator.fit(iris_np)
+    precision_np = estimator.get_precision()
+    covariance_np = estimator.get_covariance()
+
+    with config_context(array_api_dispatch=True):
+        estimator_xp = clone(estimator).fit(iris_xp)
+        precision_xp = estimator_xp.get_precision()
+        assert precision_xp.shape == (4, 4)
+        assert precision_xp.dtype == iris_xp.dtype
+
+        assert_allclose(
+            _convert_to_numpy(precision_xp, xp=xp),
+            precision_np,
+            atol=np.finfo(dtype).eps * 100,
+        )
+        covariance_xp = estimator_xp.get_covariance()
+        assert covariance_xp.shape == (4, 4)
+        assert covariance_xp.dtype == iris_xp.dtype
+
+        assert_allclose(
+            _convert_to_numpy(covariance_xp, xp=xp),
+            covariance_np,
+            atol=np.finfo(dtype).eps * 100,
+        )
+
+
+@pytest.mark.parametrize(
+    "array_namepsace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "check",
+    [check_array_api_input_and_values, check_array_api_get_precision],
+    ids=_get_check_estimator_ids,
+)
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        PCA(n_components=2, svd_solver="full"),
+        PCA(n_components=2, svd_solver="full", whiten=True),
+        PCA(
+            n_components=2,
+            svd_solver="randomized",
+            power_iteration_normalizer="QR",
+            random_state=0,  # how to use global_random_seed here?
+        ),
+    ],
+    ids=_get_check_estimator_ids,
+)
+def test_pca_array_api_compliance(estimator, check, array_namepsace, device, dtype):
+    name = estimator.__class__.__name__
+    check(name, estimator, array_namepsace, device=device, dtype=dtype)
+
+
+def test_array_api_error_and_warnings_on_unsupported_params():
+    pytest.importorskip("array_api_compat")
+    xp = pytest.importorskip("numpy.array_api")
+    iris_xp = xp.asarray(iris.data)
+
+    pca = PCA(n_components=2, svd_solver="arpack", random_state=0)
+    expected_msg = re.escape(
+        "PCA with svd_solver='arpack' is not supported for Array API inputs."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        with config_context(array_api_dispatch=True):
+            pca.fit(iris_xp)
+
+    pca.set_params(svd_solver="randomized", power_iteration_normalizer="LU")
+    expected_msg = re.escape(
+        "Array API does not support LU factorization. Set"
+        " `power_iteration_normalizer='QR'` instead."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        with config_context(array_api_dispatch=True):
+            pca.fit(iris_xp)
+
+    pca.set_params(svd_solver="randomized", power_iteration_normalizer="auto")
+    expected_msg = re.escape(
+        "Array API does not support LU factorization, falling back to QR instead. Set"
+        " `power_iteration_normalizer='QR'` explicitly to silence this warning."
+    )
+    with pytest.warns(UserWarning, match=expected_msg):
+        with config_context(array_api_dispatch=True):
+            pca.fit(iris_xp)

@@ -9,17 +9,16 @@ from numbers import Integral, Real
 from operator import itemgetter
 
 import numpy as np
-from scipy.linalg import cholesky, cho_solve, solve_triangular
 import scipy.optimize
+from scipy.linalg import cho_solve, cholesky, solve_triangular
 
-from ..base import BaseEstimator, RegressorMixin, clone
-from ..base import MultiOutputMixin
-from ..base import _fit_context
-from .kernels import Kernel, RBF, ConstantKernel as C
+from ..base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context, clone
 from ..preprocessing._data import _handle_zeros_in_scale
 from ..utils import check_random_state
-from ..utils.optimize import _check_optimize_result
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.optimize import _check_optimize_result
+from .kernels import RBF, Kernel
+from .kernels import ConstantKernel as C
 
 GPR_CHOLESKY_LOWER = True
 
@@ -38,6 +37,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
        * exposes a method `log_marginal_likelihood(theta)`, which can be used
          externally for other ways of selecting hyperparameters, e.g., via
          Markov chain Monte Carlo.
+
+    To learn the difference between a point-estimate approach vs. a more
+    Bayesian modelling approach, refer to the example entitled
+    :ref:`sphx_glr_auto_examples_gaussian_process_plot_compare_gpr_krr.py`.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 

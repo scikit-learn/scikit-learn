@@ -23,13 +23,12 @@ iris = load_iris()
 
 # %%
 # Display the decision functions of trees trained on all pairs of features.
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.datasets import load_iris
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.inspection import DecisionBoundaryDisplay
-
+from sklearn.tree import DecisionTreeClassifier
 
 # Parameters
 n_classes = 3

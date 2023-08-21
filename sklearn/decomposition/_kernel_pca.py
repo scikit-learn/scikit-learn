@@ -4,24 +4,29 @@
 #         Sylvain Marie <sylvain.marie@schneider-electric.com>
 # License: BSD 3 clause
 
-import numpy as np
 from numbers import Integral, Real
-from scipy import linalg
-from scipy.sparse.linalg import eigsh
-from scipy.linalg import eigh
 
-from ..utils._arpack import _init_arpack_v0
-from ..utils.extmath import svd_flip, _randomized_eigsh
-from ..utils.validation import (
-    check_is_fitted,
-    _check_psd_eigenvalues,
+import numpy as np
+from scipy import linalg
+from scipy.linalg import eigh
+from scipy.sparse.linalg import eigsh
+
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
 )
-from ..utils._param_validation import Interval, StrOptions
 from ..exceptions import NotFittedError
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from ..base import _fit_context
-from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
+from ..preprocessing import KernelCenterer
+from ..utils._arpack import _init_arpack_v0
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import _randomized_eigsh, svd_flip
+from ..utils.validation import (
+    _check_psd_eigenvalues,
+    check_is_fitted,
+)
 
 
 class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
