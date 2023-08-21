@@ -79,13 +79,13 @@ fig.suptitle(
 _ = fig.tight_layout()
 
 # %%
-# The plot on the left shows the gini importance of the model. As the
+# The plot on the left shows the Gini importance of the model. As the
 # scikit-learn implementation of
 # :class:`~sklearn.ensemble.RandomForestClassifier` uses a random subsets of
 # :math:`\sqrt{n_\text{features}}` features at each split, it is able to dilute
 # the dominance of any single correlated feature. As a result, the individual
 # feature importance may be distributed more evenly among the correlated
-# features. Since the features have large cardenality and the classifier is
+# features. Since the features have large cardinality and the classifier is
 # non-overfitted, we can relatively trust those values.
 #
 # The permutation importance on the right plot shows that permuting a feature
@@ -108,7 +108,7 @@ _ = ax.figure.tight_layout()
 #
 # Handling Multicollinear Features
 # --------------------------------
-# When features are collinear, permutating one feature will have little effect
+# When features are collinear, permuting one feature will have little effect
 # on the models performance because it can get the same information from a
 # correlated feature. One way to handle multicollinear features is by performing
 # hierarchical clustering on the Spearman rank-order correlations, picking a
