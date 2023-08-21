@@ -18,8 +18,16 @@ from ..pipeline import _fit_transform_one, _name_estimators, _transform_one
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch, _get_column_indices, _safe_indexing, check_pandas_support
 from ..utils._estimator_html_repr import _VisualBlock
+from ..utils._metadata_requests import METHODS
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from ..utils._set_output import _get_output_config, _safe_set_output
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
 from ..utils.metaestimators import _BaseComposition
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
@@ -214,6 +222,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     ...     [("text_preprocess", FeatureHasher(input_type="string"), "documents"),
     ...      ("num_preprocess", MinMaxScaler(), ["width"])])
     >>> X_trans = ct.fit_transform(X)  # doctest: +SKIP
+
+    For a more detailed example of usage, see
+    :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
     """
 
     _required_parameters = ["transformers"]
@@ -351,14 +362,26 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._set_params("_transformers", **kwargs)
         return self
 
-    def _iter(self, fitted=False, replace_strings=False, column_as_strings=False):
+    def _iter(self, fitted, replace_strings, column_as_strings):
         """
         Generate (name, trans, column, weight) tuples.
 
-        If fitted=True, use the fitted transformers, else use the
-        user specified transformers updated with converted column names
-        and potentially appended with transformer for remainder.
+        Parameters
+        ----------
+        fitted : bool
+            If True, use the fitted transformers (``self.transformers_``) to
+            iterate through transformers, else use the transformers passed by
+            the user (``self.transformers``).
 
+        replace_strings : bool
+            If True, replace 'passthrough' with the fitted version in
+            ``self._name_to_fitted_passthrough``. If True, also skip ``drop``
+            transformers.
+
+        column_as_strings : bool
+            If True, columns are returned as strings. If False, columns are
+            returned as they were given by the user. This can only be True if
+            the ``ColumnTransformer`` is already fitted.
         """
         if fitted:
             if replace_strings:
@@ -521,7 +544,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         # List of tuples (name, feature_names_out)
         transformer_with_feature_names_out = []
-        for name, trans, column, _ in self._iter(fitted=True):
+        for name, trans, column, _ in self._iter(
+            fitted=True, replace_strings=False, column_as_strings=False
+        ):
             feature_names_out = self._get_feature_name_out_for_transformer(
                 name, trans, column, input_features
             )
@@ -591,7 +616,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         transformers_ = []
         self._name_to_fitted_passthrough = {}
 
-        for name, old, column, _ in self._iter():
+        for name, old, column, _ in self._iter(
+            fitted=False, replace_strings=False, column_as_strings=False
+        ):
             if old == "drop":
                 trans = "drop"
             elif old == "passthrough":
@@ -619,7 +646,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         hstack can raise an error or produce incorrect results.
         """
         names = [
-            name for name, _, _, _ in self._iter(fitted=True, replace_strings=True)
+            name
+            for name, _, _, _ in self._iter(
+                fitted=True, replace_strings=True, column_as_strings=False
+            )
         ]
         for Xs, name in zip(result, names):
             if not getattr(Xs, "ndim", 0) == 2:
@@ -636,7 +666,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self.output_indices_ = {}
 
         for transformer_idx, (name, _, _, _) in enumerate(
-            self._iter(fitted=True, replace_strings=True)
+            self._iter(fitted=True, replace_strings=True, column_as_strings=False)
         ):
             n_columns = Xs[transformer_idx].shape[1]
             self.output_indices_[name] = slice(idx, idx + n_columns)
@@ -655,13 +685,41 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return None
         return "(%d of %d) Processing %s" % (idx, total, name)
 
-    def _fit_transform(self, X, y, func, fitted=False, column_as_strings=False):
+    def _call_func_on_transformers(
+        self, X, y, func, fitted, column_as_strings, routed_params
+    ):
         """
         Private function to fit and/or transform on demand.
 
+        Parameters
+        ----------
+        X : {array-like, dataframe} of shape (n_samples, n_features)
+            The data to be used in fit and/or transform.
+
+        y : array-like of shape (n_samples,)
+            Targets.
+
+        func : callable
+            Function to call, which can be _fit_transform_one or
+            _transform_one.
+
+        fitted : bool
+            Used to get an iterable of transformers. If True, use the fitted
+            transformers, else use the unfitted transformers.
+
+        column_as_strings : bool
+            Used to iterate through transformers. If True, columns are returned
+            as strings. If False, columns are returned as they were given by
+            the user. Can be True only if the ``ColumnTransformer`` is already
+            fitted.
+
+        routed_params : dict
+            The routed parameters as the output from ``process_routing``.
+
+        Returns
+        -------
         Return value (transformers and/or transformed X data) depends
         on the passed function.
-        ``fitted=True`` ensures the fitted transformers are used.
         """
         transformers = list(
             self._iter(
@@ -669,24 +727,35 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             )
         )
         try:
-            return Parallel(n_jobs=self.n_jobs)(
-                delayed(func)(
-                    transformer=clone(trans) if not fitted else trans,
-                    X=_safe_indexing(X, column, axis=1),
-                    y=y,
-                    weight=weight,
-                    message_clsname="ColumnTransformer",
-                    message=self._log_message(name, idx, len(transformers)),
+            jobs = []
+            for idx, (name, trans, column, weight) in enumerate(transformers, start=1):
+                if func is _fit_transform_one:
+                    extra_args = dict(
+                        message_clsname="ColumnTransformer",
+                        message=self._log_message(name, idx, len(transformers)),
+                    )
+                else:
+                    extra_args = {}
+                jobs.append(
+                    delayed(func)(
+                        transformer=clone(trans) if not fitted else trans,
+                        X=_safe_indexing(X, column, axis=1),
+                        y=y,
+                        weight=weight,
+                        **extra_args,
+                        params=routed_params[name],
+                    )
                 )
-                for idx, (name, trans, column, weight) in enumerate(transformers, 1)
-            )
+
+            return Parallel(n_jobs=self.n_jobs)(jobs)
+
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN) from e
             else:
                 raise
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, **params):
         """Fit all transformers using X.
 
         Parameters
@@ -698,21 +767,31 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         y : array-like of shape (n_samples,...), default=None
             Targets for supervised learning.
 
+        **params : dict, default=None
+            Parameters to be passed to the underlying transformers' ``fit`` and
+            ``transform`` methods.
+
+            You can only pass this if metadata routing is enabled, which you
+            can enable using ``sklearn.set_config(enable_metadata_routing=True)``.
+
+            .. versionadded:: 1.4
+
         Returns
         -------
         self : ColumnTransformer
             This estimator.
         """
+        _raise_for_params(params, self, "fit")
         # we use fit_transform to make sure to set sparse_output_ (for which we
         # need the transformed data) to have consistent output type in predict
-        self.fit_transform(X, y=y)
+        self.fit_transform(X, y=y, **params)
         return self
 
     @_fit_context(
         # estimators in ColumnTransformer.transformers are not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, **params):
         """Fit all transformers, transform the data and concatenate results.
 
         Parameters
@@ -724,6 +803,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         y : array-like of shape (n_samples,), default=None
             Targets for supervised learning.
 
+        **params : dict, default=None
+            Parameters to be passed to the underlying transformers' ``fit`` and
+            ``transform`` methods.
+
+            You can only pass this if metadata routing is enabled, which you
+            can enable using ``sklearn.set_config(enable_metadata_routing=True)``.
+
+            .. versionadded:: 1.4
+
         Returns
         -------
         X_t : {array-like, sparse matrix} of \
@@ -733,6 +821,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             any result is a sparse matrix, everything will be converted to
             sparse matrices.
         """
+        _raise_for_params(params, self, "fit_transform")
         self._check_feature_names(X, reset=True)
 
         X = _check_X(X)
@@ -742,7 +831,19 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._validate_column_callables(X)
         self._validate_remainder(X)
 
-        result = self._fit_transform(X, y, _fit_transform_one)
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit_transform", **params)
+        else:
+            routed_params = self._get_empty_routing()
+
+        result = self._call_func_on_transformers(
+            X,
+            y,
+            _fit_transform_one,
+            fitted=False,
+            column_as_strings=False,
+            routed_params=routed_params,
+        )
 
         if not result:
             self._update_fitted_transformers([])
@@ -768,13 +869,22 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         return self._hstack(list(Xs))
 
-    def transform(self, X):
+    def transform(self, X, **params):
         """Transform X separately by each transformer, concatenate results.
 
         Parameters
         ----------
         X : {array-like, dataframe} of shape (n_samples, n_features)
             The data to be transformed by subset.
+
+        **params : dict, default=None
+            Parameters to be passed to the underlying transformers' ``transform``
+            method.
+
+            You can only pass this if metadata routing is enabled, which you
+            can enable using ``sklearn.set_config(enable_metadata_routing=True)``.
+
+            .. versionadded:: 1.4
 
         Returns
         -------
@@ -785,9 +895,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             any result is a sparse matrix, everything will be converted to
             sparse matrices.
         """
+        _raise_for_params(params, self, "transform")
         check_is_fitted(self)
         X = _check_X(X)
 
+        # If ColumnTransformer is fit using a dataframe, and now a dataframe is
+        # passed to be transformed, we select columns by name instead. This
+        # enables the user to pass X at transform time with extra columns which
+        # were not present in fit time, and the order of the columns doesn't
+        # matter.
         fit_dataframe_and_transform_dataframe = hasattr(
             self, "feature_names_in_"
         ) and hasattr(X, "columns")
@@ -815,12 +931,18 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # check that n_features_in_ is consistent
             self._check_n_features(X, reset=False)
 
-        Xs = self._fit_transform(
+        if _routing_enabled():
+            routed_params = process_routing(self, "transform", **params)
+        else:
+            routed_params = self._get_empty_routing()
+
+        Xs = self._call_func_on_transformers(
             X,
             None,
             _transform_one,
             fitted=True,
             column_as_strings=fit_dataframe_and_transform_dataframe,
+            routed_params=routed_params,
         )
         self._validate_output(Xs)
 
@@ -880,7 +1002,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     return output
 
                 transformer_names = [
-                    t[0] for t in self._iter(fitted=True, replace_strings=True)
+                    t[0]
+                    for t in self._iter(
+                        fitted=True, replace_strings=True, column_as_strings=False
+                    )
                 ]
                 # Selection of columns might be empty.
                 # Hence feature names are filtered for non-emptiness.
@@ -914,6 +1039,60 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         return _VisualBlock(
             "parallel", transformers, names=names, name_details=name_details
         )
+
+    def _get_empty_routing(self):
+        """Return empty routing.
+
+        Used while routing can be disabled.
+
+        TODO: Remove when ``set_config(enable_metadata_routing=False)`` is no
+        more an option.
+        """
+        return Bunch(
+            **{
+                name: Bunch(**{method: {} for method in METHODS})
+                for name, step, _, _ in self._iter(
+                    fitted=False, column_as_strings=False, replace_strings=True
+                )
+            }
+        )
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.4
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__)
+        for name, step, _, _ in self._iter(
+            fitted=False, column_as_strings=False, replace_strings=True
+        ):
+            method_mapping = MethodMapping()
+            if hasattr(step, "fit_transform"):
+                (
+                    method_mapping.add(caller="fit", callee="fit_transform").add(
+                        caller="fit_transform", callee="fit_transform"
+                    )
+                )
+            else:
+                (
+                    method_mapping.add(caller="fit", callee="fit")
+                    .add(caller="fit", callee="transform")
+                    .add(caller="fit_transform", callee="fit")
+                    .add(caller="fit_transform", callee="transform")
+                )
+            method_mapping.add(caller="transform", callee="transform")
+            router.add(method_mapping=method_mapping, **{name: step})
+
+        return router
 
 
 def _check_X(X):
@@ -1077,6 +1256,11 @@ class make_column_selector:
     :func:`make_column_selector` can select columns based on datatype or the
     columns name with a regex. When using multiple selection criteria, **all**
     criteria must match for a column to be selected.
+
+    For an example of how to use :func:`make_column_selector` within a
+    :class:`ColumnTransformer` to select columns based on data type (i.e.
+    `dtype`), refer to
+    :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
 
     Parameters
     ----------
