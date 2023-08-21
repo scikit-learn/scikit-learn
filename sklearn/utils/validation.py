@@ -1002,9 +1002,9 @@ def _check_large_sparse(X, accept_large_sparse=False):
     """Raise a ValueError if X has 64bit indices and accept_large_sparse=False"""
     if not accept_large_sparse:
         supported_indices = ["int32"]
-        if X.getformat() == "coo":
+        if X.format == "coo":
             index_keys = ["col", "row"]
-        elif X.getformat() in ["csr", "csc", "bsr"]:
+        elif X.format in ["csr", "csc", "bsr"]:
             index_keys = ["indices", "indptr"]
         else:
             return
