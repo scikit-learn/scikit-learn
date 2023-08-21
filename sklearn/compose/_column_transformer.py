@@ -1051,7 +1051,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 for name, step, _, _ in self._iter(
                     fitted=False, column_as_strings=False, replace_strings=True
                 )
-                if step is not None
             }
         )
 
@@ -1073,8 +1072,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         for name, step, _, _ in self._iter(
             fitted=False, column_as_strings=False, replace_strings=True
         ):
-            if step is None:
-                continue
             method_mapping = MethodMapping()
             if hasattr(step, "fit_transform"):
                 (
