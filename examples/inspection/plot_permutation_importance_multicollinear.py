@@ -108,12 +108,15 @@ _ = ax.figure.tight_layout()
 #
 # Handling Multicollinear Features
 # --------------------------------
-# When features are collinear, permuting one feature will have little effect
-# on the models performance because it can get the same information from a
-# correlated feature. One way to handle multicollinear features is by performing
-# hierarchical clustering on the Spearman rank-order correlations, picking a
-# threshold, and keeping a single feature from each cluster. First, we plot a
-# heatmap of the correlated features:
+# When features are collinear, permuting one feature will have little effect on
+# the models performance because it can get the same information from a
+# correlated feature. Note that this is not the case for all predictive models
+# and depends on their underlying implementation.
+#
+# One way to handle multicollinear features is by performing hierarchical
+# clustering on the Spearman rank-order correlations, picking a threshold, and
+# keeping a single feature from each cluster. First, we plot a heatmap of the
+# correlated features:
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import squareform
 from scipy.stats import spearmanr
