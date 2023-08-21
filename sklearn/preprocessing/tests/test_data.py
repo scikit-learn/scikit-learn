@@ -701,12 +701,10 @@ def test_standard_check_array_of_inverse_transform():
 )
 @pytest.mark.parametrize(
     "estimator",
-    [MinMaxScaler()],
+    [MinMaxScaler(), MaxAbsScaler()],
     ids=_get_check_estimator_ids,
 )
-def test_minmaxscaler_array_api_compliance(
-    estimator, check, array_namespace, device, dtype
-):
+def test_scaler_array_api_compliance(estimator, check, array_namespace, device, dtype):
     name = estimator.__class__.__name__
     check(name, estimator, array_namespace, device=device, dtype=dtype)
 
@@ -1665,26 +1663,6 @@ def test_robust_scaler_unit_variance():
     assert robust_scaler.center_ == pytest.approx(0, abs=1e-3)
     assert robust_scaler.scale_ == pytest.approx(1, abs=1e-2)
     assert X_trans.std() == pytest.approx(1, abs=1e-2)
-
-
-@pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
-)
-@pytest.mark.parametrize(
-    "check",
-    [check_array_api_input_and_values],
-    ids=_get_check_estimator_ids,
-)
-@pytest.mark.parametrize(
-    "estimator",
-    [MaxAbsScaler()],
-    ids=_get_check_estimator_ids,
-)
-def test_maxabscaler_array_api_compliance(
-    estimator, check, array_namespace, device, dtype
-):
-    name = estimator.__class__.__name__
-    check(name, estimator, array_namespace, device=device, dtype=dtype)
 
 
 def test_maxabs_scaler_zero_variance_features():
