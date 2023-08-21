@@ -55,13 +55,13 @@ def get_data_home(data_home=None) -> str:
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
         is `~/sklearn_learn_data`.
 
     Returns
     -------
-    data_home: str or path-like, default=None
+    data_home: str
         The path to scikit-learn data directory.
     """
     if data_home is None:
