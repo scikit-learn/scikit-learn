@@ -411,7 +411,7 @@ ax.plot(
     linewidth=4,
 )
 ax.plot([0, 1], [0, 1], "k--", label="Chance level (AUC = 0.5)")
-ax.set(
+_ = ax.set(
     xlabel="False Positive Rate",
     ylabel="True Positive Rate",
     title="Extension of Receiver Operating Characteristic\nto One-vs-One multiclass",
