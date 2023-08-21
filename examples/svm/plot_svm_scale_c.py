@@ -59,12 +59,12 @@ X, y = make_classification(
 # %%
 # L1-penalty case
 # ---------------
-# In the L1 case, theory says that prediction consistency (i.e. that under given
-# hypothesis, the estimator learned predicts as well as a model knowing the true
-# distribution) is not possible because of the bias introduced by the L1
-# penalty. It does say, however, that model consistency, i.e. finding the right
-# set of non-zero parameters as well as their signs, can be achieved by tuning
-# `C`.
+# In the L1 case, theory says that provided a strong regularization, the
+# estimator cannot predict as well as a model knowing the true distribution
+# (even in the limit where the sample size grows to infinity) as it may set some
+# weights of otherwise predictive features to zero, which induces a bias. It does
+# say, however, that it is possible to find the right set of non-zero parameters
+# as well as their signs by tuning `C`.
 #
 # We define a linear SVC with the L1 penalty.
 
