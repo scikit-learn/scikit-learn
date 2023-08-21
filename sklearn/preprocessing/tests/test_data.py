@@ -223,7 +223,6 @@ def test_standard_scaler_dtype(add_sample_weight, sparse_container):
         scaler = StandardScaler(with_mean=with_mean)
         X_scaled = scaler.fit(X, sample_weight=sample_weight).transform(X)
         assert X.dtype == X_scaled.dtype
-        # TODO is it a good idea to change this behavior?
         assert scaler.mean_.dtype == np.float64
         assert scaler.scale_.dtype == np.float64
 
