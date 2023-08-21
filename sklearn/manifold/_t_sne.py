@@ -27,8 +27,8 @@ from ..metrics.pairwise import _VALID_METRICS, pairwise_distances
 from ..neighbors import NearestNeighbors
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.validation import check_non_negative
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.validation import _num_samples, check_non_negative
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_utils'
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
@@ -446,6 +446,15 @@ def _gradient_descent(
     return p, error, i
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "X_embedded": ["array-like", "sparse matrix"],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+    },
+    prefer_skip_nested_validation=True,
+)
 def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     r"""Indicate to what extent the local structure is retained.
 
@@ -504,7 +513,7 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
            Local Structure. Proceedings of the Twelfth International Conference on
            Artificial Intelligence and Statistics, PMLR 5:384-391, 2009.
     """
-    n_samples = X.shape[0]
+    n_samples = _num_samples(X)
     if n_neighbors >= n_samples / 2:
         raise ValueError(
             f"n_neighbors ({n_neighbors}) should be less than n_samples / 2"

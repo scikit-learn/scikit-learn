@@ -90,7 +90,7 @@ feature, code or documentation improvement).
 
    .. prompt:: bash $
 
-     pip install --verbose --no-use-pep517 --no-build-isolation --editable .
+     pip install -v --no-use-pep517 --no-build-isolation -e .
 
 #. Check that the installed scikit-learn has a version number ending with
    `.dev0`:
@@ -109,7 +109,9 @@ feature, code or documentation improvement).
     (ending in `.pyx` or `.pxd`). This can happen when you edit them or when you
     use certain git commands such as `git pull`. Use the ``--no-build-isolation`` flag
     to avoid compiling the whole project each time, only the files you have
-    modified.
+    modified. Include the ``--no-use-pep517`` flag because the ``--no-build-isolation``
+    option might not work otherwise (this is due to a bug which will be fixed in the
+    future).
 
 Dependencies
 ------------
@@ -242,7 +244,7 @@ Finally, build scikit-learn from this command prompt:
 
 .. prompt:: bash $
 
-    pip install --verbose --no-use-pep517 --no-build-isolation --editable .
+    pip install -v --no-use-pep517 --no-build-isolation -e .
 
 .. _compiler_macos:
 
@@ -284,7 +286,7 @@ scikit-learn from source:
         joblib threadpoolctl pytest compilers llvm-openmp
     conda activate sklearn-dev
     make clean
-    pip install --verbose --no-use-pep517 --no-build-isolation --editable .
+    pip install -v --no-use-pep517 --no-build-isolation -e .
 
 .. note::
 
@@ -364,7 +366,7 @@ Finally, build scikit-learn in verbose mode (to check for the presence of the
 .. prompt:: bash $
 
     make clean
-    pip install --verbose --no-use-pep517 --no-build-isolation --editable .
+    pip install -v --no-use-pep517 --no-build-isolation -e .
 
 .. _compiler_linux:
 
@@ -424,7 +426,7 @@ in the user folder using conda:
     conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
         joblib threadpoolctl pytest compilers
     conda activate sklearn-dev
-    pip install --verbose --no-use-pep517 --no-build-isolation --editable .
+    pip install -v --no-use-pep517 --no-build-isolation -e .
 
 .. _compiler_freebsd:
 
@@ -453,7 +455,7 @@ Finally, build the package using the standard command:
 
 .. prompt:: bash $
 
-    pip install --verbose --no-use-pep517 --no-build-isolation --editable .
+    pip install -v --no-use-pep517 --no-build-isolation -e .
 
 For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
@@ -514,7 +516,7 @@ and environment variable as follows before calling the ``pip install`` or
 ``python setup.py build_ext`` commands::
 
     export SKLEARN_BUILD_PARALLEL=3
-    pip install --verbose --no-use-pep517 --no-build-isolation --editable .
+    pip install -v --no-use-pep517 --no-build-isolation -e .
 
 On a machine with 2 CPU cores, it can be beneficial to use a parallelism level
 of 3 to overlap IO bound tasks (reading and writing files on disk) with CPU

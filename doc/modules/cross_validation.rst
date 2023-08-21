@@ -102,6 +102,7 @@ where the number of samples is very small.
 .. image:: ../images/grid_search_cross_validation.png
    :width: 500px
    :height: 300px
+   :alt: A depiction of a 5 fold cross validation on a training set, while holding out a test set.
    :align: center
 
 Computing cross-validated metrics

@@ -525,16 +525,16 @@ def test_shuffle_dont_convert_to_array():
     a_s, b_s, c_s, d_s, e_s = shuffle(a, b, c, d, e, random_state=0)
 
     assert a_s == ["c", "b", "a"]
-    assert type(a_s) == list
+    assert type(a_s) == list  # noqa: E721
 
     assert_array_equal(b_s, ["c", "b", "a"])
     assert b_s.dtype == object
 
     assert c_s == [3, 2, 1]
-    assert type(c_s) == list
+    assert type(c_s) == list  # noqa: E721
 
     assert_array_equal(d_s, np.array([["c", 2], ["b", 1], ["a", 0]], dtype=object))
-    assert type(d_s) == MockDataFrame
+    assert type(d_s) == MockDataFrame  # noqa: E721
 
     assert_array_equal(e_s.toarray(), np.array([[4, 5], [2, 3], [0, 1]]))
 
@@ -544,11 +544,6 @@ def test_gen_even_slices():
     some_range = range(10)
     joined_range = list(chain(*[some_range[slice] for slice in gen_even_slices(10, 3)]))
     assert_array_equal(some_range, joined_range)
-
-    # check that passing negative n_chunks raises an error
-    slices = gen_even_slices(10, -1)
-    with pytest.raises(ValueError, match="gen_even_slices got n_packs=-1, must be >=1"):
-        next(slices)
 
 
 @pytest.mark.parametrize(
