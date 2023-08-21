@@ -214,6 +214,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     ...     [("text_preprocess", FeatureHasher(input_type="string"), "documents"),
     ...      ("num_preprocess", MinMaxScaler(), ["width"])])
     >>> X_trans = ct.fit_transform(X)  # doctest: +SKIP
+
+    For a more detailed example of usage, see
+    :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
     """
 
     _required_parameters = ["transformers"]
@@ -1077,6 +1080,11 @@ class make_column_selector:
     :func:`make_column_selector` can select columns based on datatype or the
     columns name with a regex. When using multiple selection criteria, **all**
     criteria must match for a column to be selected.
+
+    For an example of how to use :func:`make_column_selector` within a
+    :class:`ColumnTransformer` to select columns based on data type (i.e.
+    `dtype`), refer to
+    :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
 
     Parameters
     ----------
