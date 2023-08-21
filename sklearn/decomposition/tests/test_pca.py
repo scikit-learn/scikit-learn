@@ -111,6 +111,19 @@ def test_pca_sparse(
     assert_allclose(pca.singular_values_, pcad.singular_values_, rtol=RTOL)
 
 
+@pytest.mark.parametrize("svd_solver", ["randomized", "logpcg", "full", "auto"])
+def test_sparse_pca_solver_error(global_random_seed, svd_solver):
+    random_state = np.random.RandomState(global_random_seed)
+    X = sp.sparse.random(
+        SPARSE_M,
+        SPARSE_N,
+        random_state=random_state,
+    )
+    pca = PCA(n_components=30, svd_solver=svd_solver)
+    with pytest.raises(TypeError):
+        pca.fit(X)
+
+
 def test_no_empty_slice_warning():
     # test if we avoid numpy warnings for computing over empty arrays
     n_components = 10
