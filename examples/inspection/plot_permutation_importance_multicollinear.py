@@ -108,10 +108,10 @@ _ = ax.figure.tight_layout()
 #
 # Handling Multicollinear Features
 # --------------------------------
-# When features are collinear, permuting one feature will have little effect on
-# the models performance because it can get the same information from a
-# correlated feature. Note that this is not the case for all predictive models
-# and depends on their underlying implementation.
+# When features are collinear, permuting one feature has little effect on the
+# models performance because it can get the same information from a correlated
+# feature. Note that this is not the case for all predictive models and depends
+# on their underlying implementation.
 #
 # One way to handle multicollinear features is by performing hierarchical
 # clustering on the Spearman rank-order correlations, picking a threshold, and
