@@ -40,12 +40,13 @@ from sklearn.preprocessing import StandardScaler
 # of the algorithms, but not too big to avoid too long running times
 # ============
 n_samples = 500
+seed = 30
 noisy_circles = datasets.make_circles(
-    n_samples=n_samples, factor=0.5, noise=0.05, random_state=8
+    n_samples=n_samples, factor=0.5, noise=0.05, random_state=seed
 )
-noisy_moons = datasets.make_moons(n_samples=n_samples, noise=0.05, random_state=8)
-blobs = datasets.make_blobs(n_samples=n_samples, random_state=8)
-rng = np.random.RandomState(42)
+noisy_moons = datasets.make_moons(n_samples=n_samples, noise=0.05, random_state=seed)
+blobs = datasets.make_blobs(n_samples=n_samples, random_state=seed)
+rng = np.random.RandomState(seed)
 no_structure = rng.rand(n_samples, 2), None
 
 # Anisotropicly distributed data
