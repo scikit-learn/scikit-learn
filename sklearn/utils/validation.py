@@ -1002,9 +1002,9 @@ def _check_large_sparse(X, accept_large_sparse=False):
     """Raise a ValueError if X has 64bit indices and accept_large_sparse=False"""
     if not accept_large_sparse:
         supported_indices = ["int32"]
-        if X.getformat() == "coo":
+        if X.format == "coo":
             index_keys = ["col", "row"]
-        elif X.getformat() in ["csr", "csc", "bsr"]:
+        elif X.format in ["csr", "csc", "bsr"]:
             index_keys = ["indices", "indptr"]
         else:
             return
@@ -1076,7 +1076,8 @@ def check_X_y(
         performed if the dtype of the input is not in the list.
 
     order : {'F', 'C'}, default=None
-        Whether an array will be forced to be fortran or c-style.
+        Whether an array will be forced to be fortran or c-style. If
+        `None`, then the input data's order is preserved when possible.
 
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
