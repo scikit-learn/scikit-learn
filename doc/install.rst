@@ -119,17 +119,7 @@ In order to check your installation you can use
   <span class="prompt1">python -m pip freeze  # to see all packages installed in the active virtualenv</span>
   <span class="prompt1">python -c "import sklearn; sklearn.show_versions()"</span></pre>
 
-    <pre class="sk-expandable" data-packager="pip" data-os="linux" data-venv=""
-    ><span class="prompt1">python3 -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
-  <span class="prompt1">python3 -m pip freeze  # to see all packages installed in the active virtualenv</span>
-  <span class="prompt1">python3 -c "import sklearn; sklearn.show_versions()"</span></pre>
-
-    <pre class="sk-expandable" data-packager="pip" data-os="windows" data-venv=""
-    ><span class="prompt1">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
-  <span class="prompt1">python -m pip freeze  # to see all packages installed in the active virtualenv</span>
-  <span class="prompt1">python -c "import sklearn; sklearn.show_versions()"</span></pre>
-
-    <pre class="sk-expandable" data-packager="pip" data-os="mac" data-venv=""
+    <pre class="sk-expandable" data-packager="pip" data-venv=""
     ><span class="prompt1">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
   <span class="prompt1">python -m pip freeze  # to see all packages installed in the active virtualenv</span>
   <span class="prompt1">python -c "import sklearn; sklearn.show_versions()"</span></pre>
