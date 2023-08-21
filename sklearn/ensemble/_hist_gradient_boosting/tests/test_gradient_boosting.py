@@ -27,7 +27,7 @@ from sklearn.metrics import mean_gamma_deviance, mean_poisson_deviance
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
-from sklearn.utils import shuffle
+from sklearn.utils import check_random_state, shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 n_threads = _openmp_effective_n_threads()
@@ -1387,3 +1387,56 @@ def test_unknown_category_that_are_negative():
     X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
 
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
+
+
+@pytest.mark.parametrize("sample_weight", [False, True])
+def test_X_val_in_fit(sample_weight):
+    """Test that passing X_val, y_val in fit is same as validation fraction."""
+    rng = np.random.RandomState(42)
+    X, y = make_regression(n_samples=100, random_state=rng)
+    if sample_weight:
+        sample_weight = np.abs(rng.normal(size=100))
+        data = (X, y, sample_weight)
+    else:
+        sample_weight = None
+        data = (X, y)
+    rng_seed = 12
+
+    # Fit with validation fraction and early stopping.
+    m1 = HistGradientBoostingRegressor(
+        early_stopping=True,
+        validation_fraction=0.5,
+        random_state=rng_seed,
+    )
+    m1.fit(X, y, sample_weight)
+
+    # Do train-test split ourselves.
+    rng = check_random_state(rng_seed)
+    # We do the same as in the fit method.
+    random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
+    X_train, X_val, y_train, y_val, *sw = train_test_split(
+        *data,
+        test_size=0.5,
+        random_state=random_seed,
+    )
+    if sample_weight is not None:
+        sample_weight_train = sw[0]
+        sample_weight_val = sw[1]
+    else:
+        sample_weight_train = None
+        sample_weight_val = None
+    m2 = HistGradientBoostingRegressor(
+        early_stopping=True,
+        random_state=rng_seed,
+    )
+    m2.fit(
+        X_train,
+        y_train,
+        sample_weight=sample_weight_train,
+        X_val=X_val,
+        y_val=y_val,
+        sample_weight_val=sample_weight_val,
+    )
+
+    assert_allclose(m2.n_iter_, m1.n_iter_)
+    assert_allclose(m2.predict(X), m1.predict(X))

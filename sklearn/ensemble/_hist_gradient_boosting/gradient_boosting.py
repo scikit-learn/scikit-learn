@@ -351,7 +351,16 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return constraints
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y, sample_weight=None):
+    def fit(
+        self,
+        X,
+        y,
+        sample_weight=None,
+        *,
+        X_val=None,
+        y_val=None,
+        sample_weight_val=None,
+    ):
         """Fit the gradient boosting model.
 
         Parameters
@@ -366,6 +375,21 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             Weights of training data.
 
             .. versionadded:: 0.23
+
+        X_val : array-like of shape (n_val, n_features)
+            Additional sample of features for validation used in early stopping.
+
+            .. versionadded:: 1.4
+
+        y_val : array-like of shape (n_samples,)
+            Additional sample of target values for validation used in early stopping.
+
+            .. versionadded:: 1.4
+
+        sample_weight_val : array-like of shape (n_samples,) default=None
+            Additional weights for validation used in early stopping.
+
+            .. versionadded:: 1.4
 
         Returns
         -------
@@ -389,6 +413,19 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._fitted_with_sw = True
 
         sample_weight = self._finalize_sample_weight(sample_weight, y)
+
+        validation_data_provided = X_val is not None
+        if validation_data_provided:
+            X_val, y_val = self._validate_data(
+                X_val, y_val, dtype=X_DTYPE, force_all_finite=False, reset=False
+            )
+            y_val = self._encode_y_val(y_val)
+            if sample_weight_val is not None:
+                sample_weight_val = _check_sample_weight(
+                    sample_weight_val, X_val, dtype=np.float64
+                )
+
+        self._del_encoder_y()
 
         rng = check_random_state(self.random_state)
 
@@ -429,13 +466,19 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._loss = self.loss
 
         if self.early_stopping == "auto":
-            self.do_early_stopping_ = n_samples > 10000
+            self.do_early_stopping_ = n_samples > 10_000
         else:
             self.do_early_stopping_ = self.early_stopping
 
         # create validation data if needed
-        self._use_validation_data = self.validation_fraction is not None
-        if self.do_early_stopping_ and self._use_validation_data:
+        self._use_validation_data = (
+            self.validation_fraction is not None or validation_data_provided
+        )
+        if (
+            self.do_early_stopping_
+            and self._use_validation_data
+            and not validation_data_provided
+        ):
             # stratify for classification
             # instead of checking predict_proba, loss.n_classes >= 2 would also work
             stratify = y if hasattr(self._loss, "predict_proba") else None
@@ -473,7 +516,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 )
         else:
             X_train, y_train, sample_weight_train = X, y, sample_weight
-            X_val = y_val = sample_weight_val = None
+            if not validation_data_provided:
+                X_val = y_val = sample_weight_val = None
 
         # Bin the data
         # For ease of use of the API, the user-facing GBDT classes accept the
@@ -1189,6 +1233,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     def _encode_y(self, y=None):
         pass
 
+    @abstractmethod
+    def _encode_y_val(self, y=None):
+        pass
+
+    def _del_encoder_y(self):
+        pass
+
     @property
     def n_iter_(self):
         """Number of iterations of the boosting process."""
@@ -1358,6 +1409,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
         the training data. Only used if early stopping is performed.
+        It is ignored if `X_val` and `y_val` are passed to fit.
     n_iter_no_change : int, default=10
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
@@ -1556,6 +1608,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                 )
         return y
 
+    def _encode_y_val(self, y=None):
+        return self._encode_y(y)
+
     def _get_loss(self, sample_weight):
         if self.loss == "quantile":
             return _LOSSES[self.loss](
@@ -1718,6 +1773,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
         the training data. Only used if early stopping is performed.
+        It is ignored if `X_val` and `y_val` are passed to fit.
     n_iter_no_change : int, default=10
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
@@ -1999,15 +2055,23 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         # and n_trees_per_iteration_
         check_classification_targets(y)
 
-        label_encoder = LabelEncoder()
-        encoded_y = label_encoder.fit_transform(y)
-        self.classes_ = label_encoder.classes_
+        self._label_encoder = LabelEncoder()
+        encoded_y = self._label_encoder.fit_transform(y)
+        self.classes_ = self._label_encoder.classes_
         n_classes = self.classes_.shape[0]
         # only 1 tree for binary classification. For multiclass classification,
         # we build 1 tree per class.
         self.n_trees_per_iteration_ = 1 if n_classes <= 2 else n_classes
         encoded_y = encoded_y.astype(Y_DTYPE, copy=False)
         return encoded_y
+
+    def _encode_y_val(self, y):
+        encoded_y = self._label_encoder.transform(y)
+        return encoded_y.astype(Y_DTYPE, copy=False)
+
+    def _del_encoder_y(self):
+        if hasattr(self, "_label_encoder"):
+            del self._label_encoder
 
     def _get_loss(self, sample_weight):
         # At this point self.loss == "log_loss"
