@@ -243,6 +243,9 @@ def test_spectral_embedding_callable_affinity(X, seed=36):
 @pytest.mark.filterwarnings(
     "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
 )
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated:DeprecationWarning:pyamg.*"
+)
 @pytest.mark.skipif(
     not pyamg_available, reason="PyAMG is required for the tests in this function."
 )
@@ -299,6 +302,10 @@ def test_spectral_embedding_amg_solver(dtype, seed=36):
 )
 @pytest.mark.skipif(
     not pyamg_available, reason="PyAMG is required for the tests in this function."
+)
+# TODO: Remove when pyamg removes the use of np.find_common_type
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated:DeprecationWarning:pyamg.*"
 )
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
@@ -464,6 +471,10 @@ def test_error_pyamg_not_available():
         se_precomp.fit_transform(S)
 
 
+# TODO: Remove when pyamg removes the use of np.find_common_type
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated:DeprecationWarning:pyamg.*"
+)
 @pytest.mark.parametrize("solver", ["arpack", "amg", "lobpcg"])
 def test_spectral_eigen_tol_auto(monkeypatch, solver):
     """Test that `eigen_tol="auto"` is resolved correctly"""

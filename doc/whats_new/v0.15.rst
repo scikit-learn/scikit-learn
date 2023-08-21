@@ -58,9 +58,9 @@ Version 0.15.1
 Bug fixes
 ---------
 
-- Made :func:`cross_validation.cross_val_score` use
-  :class:`cross_validation.KFold` instead of
-  :class:`cross_validation.StratifiedKFold` on multi-output classification
+- Made `cross_validation.cross_val_score` use
+  `cross_validation.KFold` instead of
+  `cross_validation.StratifiedKFold` on multi-output classification
   problems. By :user:`Nikolay Mayorov <nmayorov>`.
 
 - Support unseen labels :class:`preprocessing.LabelBinarizer` to restore
@@ -75,7 +75,7 @@ Bug fixes
   per-class sum of prediction scores. By `Andreas Müller`_.
 
 - Made :func:`cross_validation.cross_val_score` and
-  :class:`grid_search.GridSearchCV` accept Python lists as input data.
+  `grid_search.GridSearchCV` accept Python lists as input data.
   This is especially useful for cross-validation and model selection of
   text processing pipelines. By `Andreas Müller`_.
 
@@ -141,7 +141,7 @@ New features
 - Shorthand constructors :func:`pipeline.make_pipeline` and
   :func:`pipeline.make_union` were added by `Lars Buitinck`_.
 
-- Shuffle option for :class:`cross_validation.StratifiedKFold`.
+- Shuffle option for `cross_validation.StratifiedKFold`.
   By :user:`Jeffrey Blackburne <jblackburne>`.
 
 - Incremental learning (``partial_fit``) for Gaussian Naive Bayes by
@@ -151,7 +151,7 @@ New features
   <neural_network.BernoulliRBM>`
   By :user:`Danny Sullivan <dsullivan7>`.
 
-- Added :func:`learning_curve <learning_curve.learning_curve>` utility to
+- Added `learning_curve` utility to
   chart performance with respect to training size. See
   :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py`. By Alexander Fabisch.
 
@@ -203,16 +203,16 @@ Enhancements
   threading backend of joblib 0.8 and releasing the GIL in the tree fitting
   Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_.
 
-- Speed improvement of the :mod:`sklearn.ensemble.gradient_boosting` module.
+- Speed improvement of the `sklearn.ensemble.gradient_boosting` module.
   By `Gilles Louppe`_ and `Peter Prettenhofer`_.
 
-- Various enhancements to the  :mod:`sklearn.ensemble.gradient_boosting`
+- Various enhancements to the `sklearn.ensemble.gradient_boosting`
   module: a ``warm_start`` argument to fit additional trees,
   a ``max_leaf_nodes`` argument to fit GBM style trees,
   a ``monitor`` fit argument to inspect the estimator during training, and
   refactoring of the verbose code. By `Peter Prettenhofer`_.
 
-- Faster :class:`sklearn.ensemble.ExtraTrees` by caching feature values.
+- Faster `sklearn.ensemble.ExtraTrees` by caching feature values.
   By `Arnaud Joly`_.
 
 - Faster depth-based tree building algorithm such as decision tree,
@@ -246,7 +246,7 @@ Enhancements
   significantly speedup computation by `Denis Engemann`_, and
   `Alexandre Gramfort`_.
 
-- Changed :class:`cross_validation.StratifiedKFold` to try and
+- Changed `cross_validation.StratifiedKFold` to try and
   preserve as much of the original ordering of samples as possible so as
   not to hide overfitting on datasets with a non-negligible level of
   samples dependency.
@@ -282,9 +282,8 @@ Enhancements
   By `Lars Buitinck`_.
 
 - Grid search and cross validation allow NaNs in the input arrays so that
-  preprocessors such as :class:`preprocessing.Imputer
-  <preprocessing.Imputer>` can be trained within the cross validation loop,
-  avoiding potentially skewed results.
+  preprocessors such as `preprocessing.Imputer` can be trained within the cross
+  validation loop, avoiding potentially skewed results.
 
 - Ridge regression can now deal with sample weights in feature space
   (only sample space until then). By :user:`Michael Eickenberg <eickenberg>`.
@@ -333,7 +332,7 @@ Bug fixes
 - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
   ``partial_fit`` was not working properly.
 
-- Fixed bug in :class:`linear_model.stochastic_gradient` :
+- Fixed bug in `linear_model.stochastic_gradient` :
   ``l1_ratio`` was used as ``(1.0 - l1_ratio)`` .
 
 - Fixed bug in :class:`multiclass.OneVsOneClassifier` with string
@@ -353,10 +352,10 @@ Bug fixes
   By `Olivier Grisel`_.
 
 - Raise error in :class:`cluster.FeatureAgglomeration` and
-  :class:`cluster.WardAgglomeration` when no samples are given,
+  `cluster.WardAgglomeration` when no samples are given,
   rather than returning meaningless clustering.
 
-- Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
+- Fixed bug in `gradient_boosting.GradientBoostingRegressor` with
   ``loss='huber'``: ``gamma`` might have not been initialized.
 
 - Fixed feature importances as computed with a forest of randomized trees
@@ -366,36 +365,36 @@ Bug fixes
 API changes summary
 -------------------
 
-- :mod:`sklearn.hmm` is deprecated. Its removal is planned
+- `sklearn.hmm` is deprecated. Its removal is planned
   for the 0.17 release.
 
-- Use of :class:`covariance.EllipticEnvelop` has now been removed after
+- Use of `covariance.EllipticEnvelop` has now been removed after
   deprecation.
   Please use :class:`covariance.EllipticEnvelope` instead.
 
-- :class:`cluster.Ward` is deprecated. Use
+- `cluster.Ward` is deprecated. Use
   :class:`cluster.AgglomerativeClustering` instead.
 
-- :class:`cluster.WardClustering` is deprecated. Use
+- `cluster.WardClustering` is deprecated. Use
 - :class:`cluster.AgglomerativeClustering` instead.
 
-- :class:`cross_validation.Bootstrap` is deprecated.
-  :class:`cross_validation.KFold` or
-  :class:`cross_validation.ShuffleSplit` are recommended instead.
+- `cross_validation.Bootstrap` is deprecated.
+  `cross_validation.KFold` or
+  `cross_validation.ShuffleSplit` are recommended instead.
 
 - Direct support for the sequence of sequences (or list of lists) multilabel
   format is deprecated. To convert to and from the supported binary
   indicator matrix format, use
-  :class:`MultiLabelBinarizer <preprocessing.MultiLabelBinarizer>`.
+  :class:`preprocessing.MultiLabelBinarizer`.
   By `Joel Nothman`_.
 
-- Add score method to :class:`PCA <decomposition.PCA>` following the model of
+- Add score method to :class:`decomposition.PCA` following the model of
   probabilistic PCA and deprecate
-  :class:`ProbabilisticPCA <decomposition.ProbabilisticPCA>` model whose
+  `ProbabilisticPCA` model whose
   score implementation is not correct. The computation now also exploits the
   matrix inversion lemma for faster computation. By `Alexandre Gramfort`_.
 
-- The score method of :class:`FactorAnalysis <decomposition.FactorAnalysis>`
+- The score method of :class:`decomposition.FactorAnalysis`
   now returns the average log-likelihood of the samples. Use score_samples
   to get log-likelihood of each sample. By `Alexandre Gramfort`_.
 
@@ -410,7 +409,7 @@ API changes summary
   from version 0.13 in some classifiers. By `Joel Nothman`_.
 
 - Fix wrong ``explained_variance_ratio_`` attribute in
-  :class:`RandomizedPCA <decomposition.RandomizedPCA>`.
+  `RandomizedPCA`.
   By `Alexandre Gramfort`_.
 
 - Fit alphas for each ``l1_ratio`` instead of ``mean_l1_ratio`` in
@@ -445,11 +444,11 @@ API changes summary
   performance, you should modify the value of ``max_features``.
   By `Arnaud Joly`_.
 
-- Fix :func:`utils.compute_class_weight` when ``class_weight=="auto"``.
+- Fix :func:`utils.class_weight.compute_class_weight` when ``class_weight=="auto"``.
   Previously it was broken for input of non-integer ``dtype`` and the
   weighted array that was returned was wrong. By `Manoj Kumar`_.
 
-- Fix :class:`cross_validation.Bootstrap` to return ``ValueError``
+- Fix `cross_validation.Bootstrap` to return ``ValueError``
   when ``n_train + n_test > n``. By :user:`Ronald Phlypo <rphlypo>`.
 
 
@@ -620,4 +619,3 @@ List of contributors for release 0.15 by number of commits.
 *   1	Andrew Ash
 *   1	Pietro Zambelli
 *   1	staubda
-

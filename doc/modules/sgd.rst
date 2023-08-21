@@ -348,9 +348,9 @@ Tips on Practical Use
   * Stochastic Gradient Descent is sensitive to feature scaling, so it
     is highly recommended to scale your data. For example, scale each
     attribute on the input vector X to [0,1] or [-1,+1], or standardize
-    it to have mean 0 and variance 1. Note that the *same* scaling
-    must be applied to the test vector to obtain meaningful
-    results. This can be easily done using :class:`StandardScaler`::
+    it to have mean 0 and variance 1. Note that the *same* scaling must be
+    applied to the test vector to obtain meaningful results. This can be easily
+    done using :class:`~sklearn.preprocessing.StandardScaler`::
 
       from sklearn.preprocessing import StandardScaler
       scaler = StandardScaler()
@@ -503,7 +503,7 @@ where :math:`t` is the time step (there are a total of `n_samples * n_iter`
 time steps), :math:`t_0` is determined based on a heuristic proposed by Léon Bottou
 such that the expected initial updates are comparable with the expected
 size of the weights (this assuming that the norm of the training samples is
-approx. 1). The exact definition can be found in ``_init_t`` in :class:`BaseSGD`.
+approx. 1). The exact definition can be found in ``_init_t`` in `BaseSGD`.
 
 
 For regression the default learning rate schedule is inverse scaling

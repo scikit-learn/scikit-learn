@@ -45,7 +45,7 @@ iris.data = sparse.csr_matrix(iris.data)
 
 def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
     dense_svm.fit(X_train.toarray(), y_train)
-    if sparse.isspmatrix(X_test):
+    if sparse.issparse(X_test):
         X_test_dense = X_test.toarray()
     else:
         X_test_dense = X_test
@@ -77,7 +77,7 @@ def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
             dense_svm.predict_proba(X_test_dense), sparse_svm.predict_proba(X_test), 4
         )
         msg = "cannot use sparse input in 'SVC' trained on dense data"
-    if sparse.isspmatrix(X_test):
+    if sparse.issparse(X_test):
         with pytest.raises(ValueError, match=msg):
             dense_svm.predict(X_test)
 
