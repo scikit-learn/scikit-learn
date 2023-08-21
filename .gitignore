@@ -105,3 +105,6 @@ sklearn/neighbors/_kd_tree.pyx
 
 # Default JupyterLite content
 jupyterlite_contents
+
+#SIMD
+sklearn/metrics/simd/simd_dist_metrics.cpp

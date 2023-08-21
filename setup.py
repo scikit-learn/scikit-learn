@@ -202,14 +202,26 @@ extension_config = {
     ],
     "cluster": [
         {"sources": ["_dbscan_inner.pyx"], "language": "c++", "include_np": True},
-        {"sources": ["_hierarchical_fast.pyx"], "language": "c++", "include_np": True},
+        {
+            "sources": ["_hierarchical_fast.pyx"],
+            "language": "c++",
+            "include_np": True,
+            "extra_compile_args": ["-std=c++11"],
+            "include_dirs": ["../../xsimd/include/xsimd/"],
+        },
         {"sources": ["_k_means_common.pyx"], "include_np": True},
         {"sources": ["_k_means_lloyd.pyx"], "include_np": True},
         {"sources": ["_k_means_elkan.pyx"], "include_np": True},
         {"sources": ["_k_means_minibatch.pyx"], "include_np": True},
     ],
     "cluster._hdbscan": [
-        {"sources": ["_linkage.pyx"], "include_np": True},
+        {
+            "sources": ["_linkage.pyx"],
+            "include_np": True,
+            "language": "c++",
+            "extra_compile_args": ["-std=c++11"],
+            "include_dirs": ["../../../xsimd/include/xsimd/"],
+        },
         {"sources": ["_reachability.pyx"], "include_np": True},
         {"sources": ["_tree.pyx"], "include_np": True},
     ],
@@ -254,6 +266,10 @@ extension_config = {
         {
             "sources": ["_dist_metrics.pyx.tp", "_dist_metrics.pxd.tp"],
             "include_np": True,
+            "language": "c++",
+            "extra_compile_args": ["-std=c++11", "-mavx"],
+            "libraries": ["avx_dist_metrics"],
+            "include_dirs": ["../../xsimd/include/xsimd/"],
         },
     ],
     "metrics.cluster": [
@@ -265,35 +281,41 @@ extension_config = {
             "language": "c++",
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
+            "include_dirs": ["../../../xsimd/include/xsimd/"],
         },
         {
             "sources": ["_middle_term_computer.pyx.tp", "_middle_term_computer.pxd.tp"],
             "language": "c++",
             "extra_compile_args": ["-std=c++11"],
+            "include_dirs": ["../../../xsimd/include/xsimd/"],
         },
         {
             "sources": ["_base.pyx.tp", "_base.pxd.tp"],
             "language": "c++",
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
+            "include_dirs": ["../../../xsimd/include/xsimd/"],
         },
         {
             "sources": ["_argkmin.pyx.tp", "_argkmin.pxd.tp"],
             "language": "c++",
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
+            "include_dirs": ["../../../xsimd/include/xsimd/"],
         },
         {
             "sources": ["_argkmin_classmode.pyx.tp"],
             "language": "c++",
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
+            "include_dirs": ["../../../xsimd/include/xsimd/"],
         },
         {
             "sources": ["_radius_neighbors.pyx.tp", "_radius_neighbors.pxd.tp"],
             "language": "c++",
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
+            "include_dirs": ["../../../xsimd/include/xsimd/"],
         },
     ],
     "preprocessing": [
@@ -307,8 +329,20 @@ extension_config = {
     ],
     "neighbors": [
         {"sources": ["_binary_tree.pxi.tp"], "include_np": True},
-        {"sources": ["_ball_tree.pyx.tp"], "include_np": True},
-        {"sources": ["_kd_tree.pyx.tp"], "include_np": True},
+        {
+            "sources": ["_ball_tree.pyx.tp"],
+            "include_np": True,
+            "language": "c++",
+            "extra_compile_args": ["-std=c++11"],
+            "include_dirs": ["../../xsimd/include/xsimd/"],
+        },
+        {
+            "sources": ["_kd_tree.pyx.tp"],
+            "include_np": True,
+            "language": "c++",
+            "extra_compile_args": ["-std=c++11"],
+            "include_dirs": ["../../xsimd/include/xsimd/"],
+        },
         {"sources": ["_partition_nodes.pyx"], "language": "c++", "include_np": True},
         {"sources": ["_quad_tree.pyx"], "include_np": True},
     ],
@@ -442,6 +476,16 @@ libraries = [
             # Use C++11 to use the random number generator fix
             "extra_compiler_args": ["-std=c++11"],
             "extra_link_args": ["-lstdc++"],
+        },
+    ),
+    (
+        "avx_dist_metrics",
+        {
+            "language": "c++",
+            "sources": [join("sklearn", "metrics", "_simd", "simd_dist_metrics.cpp")],
+            "cflags": ["-std=c++14", "-mavx"],
+            "extra_link_args": ["-std=c++14"],
+            "include_dirs": [join("xsimd", "include", "xsimd")],
         },
     ),
 ]
