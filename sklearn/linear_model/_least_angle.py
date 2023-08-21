@@ -673,12 +673,6 @@ def _lars_path_solver(
                 # The system is becoming too ill-conditioned.
                 # We have degenerate vectors in our active set.
                 # We'll 'drop for good' the last regressor added.
-
-                # Note: this case is very rare. It is no longer triggered by
-                # the test suite. The `equality_tolerance` margin added in 0.16
-                # to get early stopping to work consistently on all versions of
-                # Python including 32 bit Python under Windows seems to make it
-                # very difficult to trigger the 'drop for good' strategy.
                 warnings.warn(
                     "Regressors in active set degenerate. "
                     "Dropping a regressor, after %i iterations, "
