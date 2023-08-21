@@ -2258,7 +2258,7 @@ def test_routing_passed_metadata_not_supported(method):
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize("method", ["transform", "fit_transform", "fit"])
 def test_metadata_routing_for_column_transformer(method):
-    """Test that metadata is routed correctly for pipelines."""
+    """Test that metadata is routed correctly for column transformer."""
     X = np.array([[0, 1, 2], [2, 4, 6]]).T
     y = [1, 2, 3]
     registry = _Registry()
