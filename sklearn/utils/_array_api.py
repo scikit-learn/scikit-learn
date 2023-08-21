@@ -50,10 +50,6 @@ def yield_namespaces(include_numpy_namespaces=True):
         yield array_namespace
 
 
-def XP_FLOAT_DTYPES(xp):
-    return xp.float64, xp.float32, xp.float16
-
-
 def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     """Yield supported namespace, device, dtype tuples for testing.
 
