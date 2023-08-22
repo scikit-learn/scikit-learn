@@ -860,9 +860,10 @@ def _sigmoid_calibration(predictions, y, sample_weight=None):
     max_prediction = np.max(np.abs(F))
 
     # If the predictions have large values we scale them in order to bring
-    # them within a suitable range. This has no effect on the optimization
-    # because linear solvers like Logisitic Regression without a penalty
-    # are invariant to multiplying the features by a constant.
+    # them within a suitable range. This has no effect on the final
+    # (prediction) result because linear models like Logisitic Regression
+    # without a penalty are invariant to multiplying the features by a
+    # constant.
     if max_prediction >= threshold:
         scale_constant = max_prediction
         F /= scale_constant
@@ -903,7 +904,7 @@ def _sigmoid_calibration(predictions, y, sample_weight=None):
 
     AB0 = np.array([0.0, log((prior0 + 1.0) / (prior1 + 1.0))])
     AB_ = fmin_bfgs(objective, AB0, fprime=grad, disp=False)
-    # The tuned parameters are converted back to the original scale and offset
+    # The tuned parameters are converted back to the original scale and offset.
     AB_ /= scale_constant
     return AB_[0], AB_[1]
 
