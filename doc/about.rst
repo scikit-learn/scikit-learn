@@ -28,7 +28,7 @@ Authors
 The following people are currently core contributors to scikit-learn's development
 and maintenance:
 
-.. include:: authors.rst
+.. include:: authors.rst aaa
 
 Please do not email the authors directly to ask for assistance or report issues.
 Instead, please see `What's the best way to ask questions about scikit-learn
