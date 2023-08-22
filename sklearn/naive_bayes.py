@@ -262,7 +262,7 @@ class GaussianNB(_BaseNB):
         probability of each class.
 
     class_log_prior_ : ndarray of shape (n_classes,)
-        smoothed empirical log probability for each class.
+        empirical log probability for each class.
 
         .. versionadded:: 1.4
 
