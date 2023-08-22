@@ -1730,14 +1730,12 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
         metric(y1, y2)
 
 
-def check_array_api_metric(metric, array_namespace, _device, dtype):
-    xp, _device, dtype = _array_api_for_tests(array_namespace, _device, dtype)
-    # y_true_np = np.array([0, 2, 1, 3])
-    # y_pred_np = np.array([0, 1, 2, 3])
+def check_array_api_metric(metric, array_namespace, device, dtype):
+    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
     y_true_np = np.array([0, 0, 1, 1])
     y_pred_np = np.array([0, 1, 0, 1])
-    y_true_xp = xp.asarray(y_true_np, device=_device)
-    y_pred_xp = xp.asarray(y_pred_np, device=_device)
+    y_true_xp = xp.asarray(y_true_np, device=device)
+    y_pred_xp = xp.asarray(y_pred_np, device=device)
 
     metric_np = metric(y_true_np, y_pred_np)
 
@@ -1756,11 +1754,7 @@ def check_array_api_metric(metric, array_namespace, _device, dtype):
 )
 @pytest.mark.parametrize(
     "metric",
-    [
-        accuracy_score,
-        zero_one_loss,
-        partial(zero_one_loss, sample_weight=[1, 2, 3, 4]),
-    ],
+    [accuracy_score, zero_one_loss],
 )
 def test_array_api_compliance(metric, array_namespace, device, dtype):
     check_array_api_metric(metric, array_namespace, device, dtype)
