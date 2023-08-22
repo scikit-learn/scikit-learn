@@ -4,17 +4,15 @@ Testing for the nearest centroid module.
 import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
-from scipy import sparse as sp
 
 from sklearn import datasets
 from sklearn.neighbors import NearestCentroid
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
-X_csr = sp.csr_matrix(X)  # Sparse matrix
 y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
-T_csr = sp.csr_matrix(T)
 true_result = [-1, 1, 1]
 
 # also load the iris dataset
@@ -26,7 +24,10 @@ iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
 
-def test_classification_toy():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_classification_toy(csr_container):
+    X_csr = csr_container(X)
+    T_csr = csr_container(T)
     # Check classification on a toy dataset, including sparse versions.
     clf = NearestCentroid()
     clf.fit(X, y)
@@ -135,7 +136,9 @@ def test_predict_translated_data():
     assert_array_equal(y_init, y_translate)
 
 
-def test_manhattan_metric():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_manhattan_metric(csr_container):
+    X_csr = csr_container(X)
     # Test the manhattan metric.
 
     clf = NearestCentroid(metric="manhattan")
