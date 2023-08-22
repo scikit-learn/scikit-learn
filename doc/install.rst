@@ -290,9 +290,7 @@ Note that those solvers are not enabled by default, please refer to the
 `scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/what-is-patching.html>`_
 documentation for more details on usage scenarios. Direct export example:
 
-.. prompt:: bash $
-
-  from sklearnex.neighbors import NearestNeighbors
+    >>> from sklearnex.neighbors import NearestNeighbors
 
 Compatibility with the standard scikit-learn solvers is checked by running the
 full scikit-learn test suite via automated continuous integration as reported
@@ -340,6 +338,6 @@ using the ``regedit`` tool:
 
 #. Reinstall scikit-learn (ignoring the previous broken installation):
 
-.. prompt:: python $
+.. prompt:: bash $
 
     pip install --exists-action=i scikit-learn
