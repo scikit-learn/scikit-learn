@@ -139,6 +139,12 @@ Changelog
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
   initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
 
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` allow more control of the validation
+  set used for early stopping. You can now pass them data used for validation directly
+  to `fit` via the arguments `X_val`, `y_val` and `sample_weight_val`.
+  :pr:`27124` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| Improves runtime and memory usage for
   :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
