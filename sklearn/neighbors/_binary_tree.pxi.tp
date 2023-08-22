@@ -1143,7 +1143,7 @@ cdef class BinaryTree{{name_suffix}}:
 
         # flatten X, and save original shape information
         np_Xarr = X.reshape((-1, self.data.shape[1]))
-        cdef {{INPUT_DTYPE_t}}[:, ::1] Xarr = np_Xarr
+        cdef const {{INPUT_DTYPE_t}}[:, ::1] Xarr = np_Xarr
         cdef float64_t reduced_dist_LB
         cdef intp_t i
         cdef const {{INPUT_DTYPE_t}}* pt
