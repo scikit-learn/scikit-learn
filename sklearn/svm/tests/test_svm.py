@@ -14,7 +14,10 @@ from numpy.testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
-from scipy import sparse
+
+# from scipy import sparse
+
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 from sklearn import base, datasets, linear_model, metrics, svm
 from sklearn.datasets import make_blobs, make_classification
@@ -681,8 +684,8 @@ def test_auto_weight():
             y, y_pred_balanced, average="macro"
         )
 
-
-def test_bad_input():
+@pytest.mark.parametrize('csr_container', CSR_CONTAINERS)
+def test_bad_input(csr_container):
     # Test dimensions for labels
     Y2 = Y[:-1]  # wrong dimensions for labels
     with pytest.raises(ValueError):
@@ -707,7 +710,7 @@ def test_bad_input():
     # predict with sparse input when trained with dense
     clf = svm.SVC().fit(X, Y)
     with pytest.raises(ValueError):
-        clf.predict(sparse.lil_matrix(X))
+        clf.predict(csr_container(X))
 
     Xt = np.array(X).T
     clf.fit(np.dot(X, Xt), Y)
@@ -743,17 +746,17 @@ def test_unicode_kernel():
         iris.data, iris.target.astype(np.float64), 5, kernel="linear", random_seed=0
     )
 
-
-def test_sparse_precomputed():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_precomputed(csr_container):
     clf = svm.SVC(kernel="precomputed")
-    sparse_gram = sparse.csr_matrix([[1, 0], [0, 1]])
+    sparse_gram = csr_container([[1, 0], [0, 1]])
     with pytest.raises(TypeError, match="Sparse precomputed"):
         clf.fit(sparse_gram, [0, 1])
 
-
-def test_sparse_fit_support_vectors_empty():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_fit_support_vectors_empty(csr_container):
     # Regression test for #14893
-    X_train = sparse.csr_matrix(
+    X_train = csr_container(
         [[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]]
     )
     y_train = np.array([0.04, 0.04, 0.10, 0.16])
