@@ -339,11 +339,9 @@ def test_discretenb_predict_proba():
 
 @pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_uniform_prior(DiscreteNaiveBayes):
-    # Test whether discrete NB classes fit a uniform prior
-    # when fit_prior=False and class_prior=None
-
+    """Check that we can set a uniform prior on the classes"""
     clf = DiscreteNaiveBayes()
-    clf.set_params(fit_prior=False)
+    clf.set_params(priors="uniform")
     clf.fit([[0], [0], [1]], [0, 0, 1])
     prior = np.exp(clf.class_log_prior_)
     assert_array_almost_equal(prior, np.array([0.5, 0.5]))
@@ -351,9 +349,8 @@ def test_discretenb_uniform_prior(DiscreteNaiveBayes):
 
 @pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_provide_prior(DiscreteNaiveBayes):
-    # Test whether discrete NB classes use provided prior
-
-    clf = DiscreteNaiveBayes(class_prior=[0.5, 0.5])
+    """Check that naive Bayes classes use provided prior when calling `fit`."""
+    clf = DiscreteNaiveBayes(priors=[0.5, 0.5])
     clf.fit([[0], [0], [1]], [0, 0, 1])
     prior = np.exp(clf.class_log_prior_)
     assert_array_almost_equal(prior, np.array([0.5, 0.5]))
@@ -370,18 +367,16 @@ def test_discretenb_provide_prior(DiscreteNaiveBayes):
 
 @pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_provide_prior_with_partial_fit(DiscreteNaiveBayes):
-    # Test whether discrete NB classes use provided prior
-    # when using partial_fit
-
+    """Check that naive Bayes classes use provided prior when calling `partial_fit`."""
     iris = load_iris()
     iris_data1, iris_data2, iris_target1, iris_target2 = train_test_split(
         iris.data, iris.target, test_size=0.4, random_state=415
     )
 
-    for prior in [None, [0.3, 0.3, 0.4]]:
-        clf_full = DiscreteNaiveBayes(class_prior=prior)
+    for priors in [None, [0.3, 0.3, 0.4]]:
+        clf_full = DiscreteNaiveBayes(priors=priors)
         clf_full.fit(iris.data, iris.target)
-        clf_partial = DiscreteNaiveBayes(class_prior=prior)
+        clf_partial = DiscreteNaiveBayes(priors=priors)
         clf_partial.partial_fit(iris_data1, iris_target1, classes=[0, 1, 2])
         clf_partial.partial_fit(iris_data2, iris_target2)
         assert_array_almost_equal(
@@ -701,7 +696,7 @@ def test_categoricalnb(global_random_seed):
 
     X3 = np.array([[1, 4], [2, 5]])
     y3 = np.array([1, 2])
-    clf = CategoricalNB(alpha=1, fit_prior=False)
+    clf = CategoricalNB(alpha=1, priors="uniform")
 
     clf.fit(X3, y3)
     assert_array_equal(clf.n_categories_, np.array([3, 6]))
@@ -731,7 +726,7 @@ def test_categoricalnb(global_random_seed):
     # Check sample_weight
     X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
     y = np.array([1, 1, 2, 2])
-    clf = CategoricalNB(alpha=1, fit_prior=False)
+    clf = CategoricalNB(alpha=1, priors="uniform")
     clf.fit(X, y)
     assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([1]))
     assert_array_equal(clf.n_categories_, np.array([2, 2]))
@@ -740,7 +735,7 @@ def test_categoricalnb(global_random_seed):
         X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
         y = np.array([1, 1, 2, 2])
         sample_weight = np.array([1, 1, 10, 0.1]) * factor
-        clf = CategoricalNB(alpha=1, fit_prior=False)
+        clf = CategoricalNB(alpha=1, priors="uniform")
         clf.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([2]))
         assert_array_equal(clf.n_categories_, np.array([2, 2]))
@@ -784,7 +779,7 @@ def test_categoricalnb_with_min_categories(
     y_n_categories = np.array([1, 1, 2, 2])
     expected_prediction = np.array([1])
 
-    clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=min_categories)
+    clf = CategoricalNB(alpha=1, priors="uniform", min_categories=min_categories)
     clf.fit(X_n_categories, y_n_categories)
     X1_count, X2_count = clf.category_count_
     assert_array_equal(X1_count, exp_X1_count)
@@ -804,7 +799,7 @@ def test_categoricalnb_min_categories_errors(min_categories, error_msg):
     X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
     y = np.array([1, 1, 2, 2])
 
-    clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=min_categories)
+    clf = CategoricalNB(alpha=1, priors="uniform", min_categories=min_categories)
     with pytest.raises(ValueError, match=error_msg):
         clf.fit(X, y)
 
@@ -989,3 +984,25 @@ def test_predict_joint_proba(Estimator, global_random_seed):
     log_prob_x = logsumexp(jll, axis=1)
     log_prob_x_y = jll - np.atleast_2d(log_prob_x).T
     assert_allclose(est.predict_log_proba(X2), log_prob_x_y)
+
+
+# TODO(1.6): remove the following test
+@pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"class_prior": [0.5, 0.5], "fit_prior": "deprecated"},
+        {"class_prior": None, "fit_prior": "deprecated"},
+        {"class_prior": "deprecated", "fit_prior": True},
+        {"class_prior": "deprecated", "fit_prior": False},
+    ],
+)
+def test_discrete_naive_bayes_deprecation_prior(DiscreteNaiveBayes, params):
+    """Check that we raise warnings when `class_prior` or `fit_prior` are passed."""
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 2, size=(10, 5))
+    y = rng.randint(0, 2, size=10)
+
+    msg = "class_prior/fit_prior are deprecated in 1.4 and will be removed in 1.6"
+    with pytest.warns(FutureWarning, match=msg):
+        DiscreteNaiveBayes(**params).fit(X, y)
