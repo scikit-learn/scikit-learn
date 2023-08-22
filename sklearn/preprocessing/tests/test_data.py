@@ -701,7 +701,7 @@ def test_standard_check_array_of_inverse_transform():
 )
 @pytest.mark.parametrize(
     "estimator",
-    [MinMaxScaler(), MaxAbsScaler()],
+    [MaxAbsScaler(), MinMaxScaler()],
     ids=_get_check_estimator_ids,
 )
 def test_scaler_array_api_compliance(estimator, check, array_namespace, device, dtype):
