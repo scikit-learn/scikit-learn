@@ -435,10 +435,10 @@ def test_column_transformer_sparse_array(csr_container):
     X_sparse = csr_container(sparse.eye(3, 2))
 
     # no distinction between 1D and 2D
-    X_res_first = X_sparse[:, 0]
+    X_res_first = X_sparse[:, [0]]
     X_res_both = X_sparse
 
-    for col in [0, [0], slice(0, 1)]:
+    for col in [(0,), [0], slice(0, 1)]:
         for remainder, res in [("drop", X_res_first), ("passthrough", X_res_both)]:
             ct = ColumnTransformer(
                 [("trans", Trans(), col)], remainder=remainder, sparse_threshold=0.8
