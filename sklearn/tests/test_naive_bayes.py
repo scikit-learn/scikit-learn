@@ -80,6 +80,7 @@ def test_gnb_prior(global_random_seed):
     clf = GaussianNB().fit(X1, y1)
     # Check that the class priors sum to 1
     assert_array_almost_equal(clf.class_prior_.sum(), 1)
+    assert_allclose(clf.class_prior_, np.exp(clf.class_log_prior_))
 
 
 def test_gnb_sample_weight(global_random_seed):
@@ -223,6 +224,27 @@ def test_gnb_naive_bayes_scale_invariance():
     labels = [GaussianNB().fit(f * X, y).predict(f * X) for f in [1e-10, 1, 1e10]]
     assert_array_equal(labels[0], labels[1])
     assert_array_equal(labels[1], labels[2])
+
+
+@pytest.mark.parametrize(
+    "priors, expected_priors",
+    [
+        (None, [0.25, 0.75]),
+        ("empirical", [0.25, 0.75]),
+        ([0.5, 0.5], [0.5, 0.5]),
+        ("uniform", [0.5, 0.5]),
+    ],
+)
+@pytest.mark.parametrize("NaiveBayes", ALL_NAIVE_BAYES_CLASSES)
+def test_naive_bayes_priors_strategies(NaiveBayes, priors, expected_priors):
+    """Check that we properly infer the class priors with the different strategies."""
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 4, size=(8, 3))
+    y = np.array([0, 0, 1, 1, 1, 1, 1, 1])
+    classifier = NaiveBayes(priors=priors).fit(X, y)
+    assert_allclose(classifier.class_log_prior_, np.log(expected_priors))
+    if hasattr(classifier, "class_prior_"):
+        assert_allclose(classifier.class_prior_, expected_priors)
 
 
 @pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
