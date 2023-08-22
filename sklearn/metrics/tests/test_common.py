@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 import scipy.sparse as sp
 
+from sklearn._config import config_context
 from sklearn.datasets import make_multilabel_classification
 from sklearn.metrics import (
     accuracy_score,
@@ -53,6 +54,9 @@ from sklearn.metrics import (
 from sklearn.metrics._base import _average_binary_score
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
+from sklearn.utils._array_api import (
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
@@ -60,6 +64,7 @@ from sklearn.utils._testing import (
     assert_array_less,
     ignore_warnings,
 )
+from sklearn.utils.estimator_checks import _array_api_for_tests
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import _num_samples, check_random_state
 
@@ -1723,3 +1728,39 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
     err_msg = err_msg_pos_label_1 if pos_label_default == 1 else err_msg_pos_label_None
     with pytest.raises(ValueError, match=err_msg):
         metric(y1, y2)
+
+
+def check_array_api_metric(metric, array_namespace, _device, dtype):
+    xp, _device, dtype = _array_api_for_tests(array_namespace, _device, dtype)
+    # y_true_np = np.array([0, 2, 1, 3])
+    # y_pred_np = np.array([0, 1, 2, 3])
+    y_true_np = np.array([0, 0, 1, 1])
+    y_pred_np = np.array([0, 1, 0, 1])
+    y_true_xp = xp.asarray(y_true_np, device=_device)
+    y_pred_xp = xp.asarray(y_pred_np, device=_device)
+
+    metric_np = metric(y_true_np, y_pred_np)
+
+    with config_context(array_api_dispatch=True):
+        metric_xp = metric(y_true_xp, y_pred_xp)
+
+        assert_allclose(
+            metric_xp,
+            metric_np,
+            atol=np.finfo(dtype).eps * 100,
+        )
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "metric",
+    [
+        accuracy_score,
+        zero_one_loss,
+        partial(zero_one_loss, sample_weight=[1, 2, 3, 4]),
+    ],
+)
+def test_array_api_compliance(metric, array_namespace, device, dtype):
+    check_array_api_metric(metric, array_namespace, device, dtype)
