@@ -255,7 +255,7 @@ Changelog
   :func:`~metrics.pairwise.paired_manhattan_distances` and
   :func:`~metrics.pairwise.paired_cosine_distances` are now deprecated and
   will be removed in 1.6.
-  :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+  :pr:`27129` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
 :mod:`sklearn.utils`
 ....................
