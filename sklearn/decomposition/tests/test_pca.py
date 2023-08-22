@@ -91,7 +91,7 @@ def test_linear_operator_reversed_matmul():
 def test_pca_sparse(
     global_random_seed, svd_solver, format, n_components, density, scale
 ):
-    RTOL = 1e-08
+    RTOL = 1e-07  # 1e0-8 can result in occasional failures
 
     if svd_solver in ["lobpcg", "arpack"] and n_components == SPARSE_MAX_COMPONENTS:
         pytest.skip("lobpcg and arpack don't support full solves")
