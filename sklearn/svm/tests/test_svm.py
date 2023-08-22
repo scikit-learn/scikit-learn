@@ -15,8 +15,6 @@ from numpy.testing import (
     assert_array_equal,
 )
 
-# from scipy import sparse
-
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 from sklearn import base, datasets, linear_model, metrics, svm
