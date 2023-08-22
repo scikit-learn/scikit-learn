@@ -15,8 +15,6 @@ from numpy.testing import (
     assert_array_equal,
 )
 
-from sklearn.utils.fixes import CSR_CONTAINERS
-
 from sklearn import base, datasets, linear_model, metrics, svm
 from sklearn.datasets import make_blobs, make_classification
 from sklearn.exceptions import (
@@ -41,6 +39,7 @@ from sklearn.svm import (  # type: ignore
 from sklearn.svm._classes import _validate_dual_parameter
 from sklearn.utils import check_random_state, shuffle
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.fixes import CSR_CONTAINERS, LIL_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
 # toy sample
@@ -682,8 +681,9 @@ def test_auto_weight():
             y, y_pred_balanced, average="macro"
         )
 
-@pytest.mark.parametrize('csr_container', CSR_CONTAINERS)
-def test_bad_input(csr_container):
+
+@pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
+def test_bad_input(lil_container):
     # Test dimensions for labels
     Y2 = Y[:-1]  # wrong dimensions for labels
     with pytest.raises(ValueError):
@@ -708,7 +708,7 @@ def test_bad_input(csr_container):
     # predict with sparse input when trained with dense
     clf = svm.SVC().fit(X, Y)
     with pytest.raises(ValueError):
-        clf.predict(csr_container(X))
+        clf.predict(lil_container(X))
 
     Xt = np.array(X).T
     clf.fit(np.dot(X, Xt), Y)
@@ -744,6 +744,7 @@ def test_unicode_kernel():
         iris.data, iris.target.astype(np.float64), 5, kernel="linear", random_seed=0
     )
 
+
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sparse_precomputed(csr_container):
     clf = svm.SVC(kernel="precomputed")
@@ -751,12 +752,11 @@ def test_sparse_precomputed(csr_container):
     with pytest.raises(TypeError, match="Sparse precomputed"):
         clf.fit(sparse_gram, [0, 1])
 
+
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sparse_fit_support_vectors_empty(csr_container):
     # Regression test for #14893
-    X_train = csr_container(
-        [[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]]
-    )
+    X_train = csr_container([[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]])
     y_train = np.array([0.04, 0.04, 0.10, 0.16])
     model = svm.SVR(kernel="linear")
     model.fit(X_train, y_train)
