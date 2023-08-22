@@ -1106,9 +1106,6 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
    metrics.pairwise.sigmoid_kernel
-   metrics.pairwise.paired_euclidean_distances
-   metrics.pairwise.paired_manhattan_distances
-   metrics.pairwise.paired_cosine_distances
    metrics.pairwise.paired_distances
    metrics.pairwise_distances
    metrics.pairwise_distances_argmin

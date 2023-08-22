@@ -36,6 +36,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from ..utils.deprecation import deprecated
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.fixes import parse_version, sp_base_version
 from ..utils.parallel import Parallel, delayed
@@ -1135,6 +1136,11 @@ def cosine_distances(X, Y=None):
     return S
 
 
+# TODO: Remove in 1.6
+@deprecated(
+    "The public function `sklearn.pairwise.paired_euclidean_distances` has been "
+    "deprecated and will be removed in 1.6."
+)
 # Paired distances
 @validate_params(
     {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
@@ -1163,6 +1169,11 @@ def paired_euclidean_distances(X, Y):
     return row_norms(X - Y)
 
 
+# TODO: Remove in 1.6
+@deprecated(
+    "The public function `sklearn.pairwise.paired_manhattan_distances` has been "
+    "deprecated and will be removed in 1.6."
+)
 @validate_params(
     {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
     prefer_skip_nested_validation=True,
@@ -1207,6 +1218,11 @@ def paired_manhattan_distances(X, Y):
         return np.abs(diff).sum(axis=-1)
 
 
+# TODO: Remove in 1.6
+@deprecated(
+    "The public function `sklearn.pairwise.paired_cosine_distances` has been "
+    "deprecated and will be removed in 1.6."
+)
 @validate_params(
     {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
     prefer_skip_nested_validation=True,
@@ -1241,6 +1257,8 @@ def paired_cosine_distances(X, Y):
     return 0.5 * row_norms(normalize(X) - normalize(Y), squared=True)
 
 
+# TODO: Remove PAIRED_DISTANCES dictionary since pairwise_*_distances functions
+# are deprecated in 1.6
 PAIRED_DISTANCES = {
     "cosine": paired_cosine_distances,
     "euclidean": paired_euclidean_distances,
