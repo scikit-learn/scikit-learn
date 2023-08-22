@@ -72,23 +72,23 @@ Then run:
   <div class="highlight">
     <pre class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no"
     ><span>pip3 install -U scikit-learn</span></pre>
-    
+
     <pre class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no"
     ><span>pip install -U scikit-learn</span></pre>
-    
+
     <pre class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no"
     ><span>pip install -U scikit-learn</span></pre>
-    
+
     <pre class="sk-expandable" data-packager="pip" data-os="linux" data-venv=""
     ><span>python3 -m venv sklearn-venv</span>
   <span>source sklearn-venv/bin/activate</span>
   <span>pip3 install -U scikit-learn</span></pre>
-    
+
     <pre class="sk-expandable" data-packager="pip" data-os="windows" data-venv=""
     ><span>python -m venv sklearn-venv</span>
   <span>sklearn-venv\Scripts\activate</span>
   <span>pip install -U scikit-learn</span></pre>
-    
+
     <pre class="sk-expandable" data-packager="pip" data-os="mac" data-venv=""
     ><span>python -m venv sklearn-venv</span>
   <span>source sklearn-venv/bin/activate</span>
@@ -290,7 +290,9 @@ Note that those solvers are not enabled by default, please refer to the
 `scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/what-is-patching.html>`_
 documentation for more details on usage scenarios. Direct export example:
 
-    >>> from sklearnex.neighbors import NearestNeighbors
+.. prompt:: bash >>>
+
+  from sklearnex.neighbors import NearestNeighbors
 
 Compatibility with the standard scikit-learn solvers is checked by running the
 full scikit-learn test suite via automated continuous integration as reported
