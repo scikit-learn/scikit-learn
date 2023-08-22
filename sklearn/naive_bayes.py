@@ -39,6 +39,34 @@ __all__ = [
 class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for naive Bayes estimators"""
 
+    def _update_class_log_prior(self, class_prior=None):
+        """Update class log priors.
+
+        The class log priors are based on `class_prior`, class count or the
+        number of classes. This method is called each time `fit` or
+        `partial_fit` update the model.
+        """
+        n_classes = len(self.classes_)
+        if class_prior is not None:
+            if len(class_prior) != n_classes:
+                raise ValueError("Number of priors must match number of classes.")
+            elif not np.isclose(np.sum(class_prior), 1.0):
+                raise ValueError("The sum of the priors should be 1.")
+            elif np.min(class_prior) < 0:
+                raise ValueError("Priors must be non-negative")
+            self.class_log_prior_ = np.log(class_prior)
+        elif getattr(self, "fit_prior", True):
+            with warnings.catch_warnings():
+                # silence the warning when count is 0 because class was not yet
+                # observed
+                warnings.simplefilter("ignore", RuntimeWarning)
+                log_class_count = np.log(self.class_count_)
+
+            # empirical prior, with sample_weight taken into account
+            self.class_log_prior_ = log_class_count - np.log(self.class_count_.sum())
+        else:
+            self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
+
     @abstractmethod
     def _joint_log_likelihood(self, X):
         """Compute the unnormalized posterior log probability of X
@@ -439,24 +467,6 @@ class GaussianNB(_BaseNB):
             self.var_ = np.zeros((n_classes, n_features))
 
             self.class_count_ = np.zeros(n_classes, dtype=np.float64)
-
-            # Initialise the class prior
-            # Take into account the priors
-            if self.priors is not None:
-                priors = np.asarray(self.priors)
-                # Check that the provided prior matches the number of classes
-                if len(priors) != n_classes:
-                    raise ValueError("Number of priors must match number of classes.")
-                # Check that the sum is 1
-                if not np.isclose(priors.sum(), 1.0):
-                    raise ValueError("The sum of the priors should be 1.")
-                # Check that the priors are non-negative
-                if (priors < 0).any():
-                    raise ValueError("Priors must be non-negative.")
-                self.class_prior_ = priors
-            else:
-                # Initialize the priors to zeros for each class
-                self.class_prior_ = np.zeros(len(self.classes_), dtype=np.float64)
         else:
             if X.shape[1] != self.theta_.shape[1]:
                 msg = "Number of features %d does not match previous data %d."
@@ -496,10 +506,8 @@ class GaussianNB(_BaseNB):
 
         self.var_[:, :] += self.epsilon_
 
-        # Update if only no priors is provided
-        if self.priors is None:
-            # Empirical prior, with sample_weight taken into account
-            self.class_prior_ = self.class_count_ / self.class_count_.sum()
+        self._update_class_log_prior(class_prior=self.priors)
+        self.class_prior_ = np.exp(self.class_log_prior_)
 
         return self
 
@@ -528,12 +536,18 @@ class _BaseDiscreteNB(_BaseNB):
 
     _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
-        "fit_prior": ["boolean"],
-        "class_prior": ["array-like", None],
+        "fit_prior": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "class_prior": ["array-like", None, Hidden(StrOptions({"deprecated"}))],
         "force_alpha": ["boolean", Hidden(StrOptions({"warn"}))],
     }
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None, force_alpha="warn"):
+    def __init__(
+        self,
+        alpha=1.0,
+        fit_prior=True,
+        class_prior=None,
+        force_alpha="warn",
+    ):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
@@ -576,30 +590,6 @@ class _BaseDiscreteNB(_BaseNB):
     def _check_X_y(self, X, y, reset=True):
         """Validate X and y in fit methods."""
         return self._validate_data(X, y, accept_sparse="csr", reset=reset)
-
-    def _update_class_log_prior(self, class_prior=None):
-        """Update class log priors.
-
-        The class log priors are based on `class_prior`, class count or the
-        number of classes. This method is called each time `fit` or
-        `partial_fit` update the model.
-        """
-        n_classes = len(self.classes_)
-        if class_prior is not None:
-            if len(class_prior) != n_classes:
-                raise ValueError("Number of priors must match number of classes.")
-            self.class_log_prior_ = np.log(class_prior)
-        elif self.fit_prior:
-            with warnings.catch_warnings():
-                # silence the warning when count is 0 because class was not yet
-                # observed
-                warnings.simplefilter("ignore", RuntimeWarning)
-                log_class_count = np.log(self.class_count_)
-
-            # empirical prior, with sample_weight taken into account
-            self.class_log_prior_ = log_class_count - np.log(self.class_count_.sum())
-        else:
-            self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
 
     def _check_alpha(self):
         alpha = (
