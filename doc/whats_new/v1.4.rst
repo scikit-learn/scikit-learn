@@ -169,7 +169,7 @@ Changelog
   removed in scikit-learn 1.6.
   :pr:`27135` by `Guillaume Lemaitre <glemaitre>`.
 
-- |API| add the options `"empirical"` and `"uniform"` to priors for
+- |API| add the options `"empirical"` and `"uniform"` to `priors` parameter for
   :class:`naive_bayes.GaussianNB`.
   :pr:`27135` by `Guillaume Lemaitre <glemaitre>`.
 
