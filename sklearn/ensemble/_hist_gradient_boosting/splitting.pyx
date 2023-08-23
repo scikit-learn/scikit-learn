@@ -506,9 +506,11 @@ cdef class Splitter:
                 1,
                 int(ceil(colsample_bynode * n_allowed_features)),
             )
-            subsample_mask = np.full(n_allowed_features, False)
-            subsample_mask[:n_subsampled_features] = True
-            self.rng.shuffle(subsample_mask)
+            subsample_mask_arr = np.full(n_allowed_features, False)
+            subsample_mask_arr[:n_subsampled_features] = True
+            self.rng.shuffle(subsample_mask_arr)
+            # https://github.com/numpy/numpy/issues/18273
+            subsample_mask = subsample_mask_arr
 
         with nogil:
 
