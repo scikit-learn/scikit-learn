@@ -269,8 +269,6 @@ handles, labels = display.ax_.get_legend_handles_labels()
 handles.extend([l])
 labels.extend(["iso-f1 curves"])
 # set the legend and the axes
-ax.set_xlim([0.0, 1.0])
-ax.set_ylim([0.0, 1.05])
 ax.legend(handles=handles, labels=labels, loc="best")
 ax.set_title("Extension of Precision-Recall curve to multi-class")
 
