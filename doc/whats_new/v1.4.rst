@@ -138,6 +138,13 @@ Changelog
   a constant is added in the predictions in link space such that the balance property
   holds: average predicted equals average observed.
 
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` got the new parameter
+  `post_fit_calibration` to recalibrate the model: In link space, a constant is added
+  such that on the training set (without the validation set), the balance property of
+  equal observed average and predicted average holds.
+  :pr:`26311` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| Improves runtime and memory usage for
   :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
