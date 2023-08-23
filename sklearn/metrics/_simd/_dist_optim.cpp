@@ -10,6 +10,7 @@ this file due to cimporting _dist_metrics
 #include "simd.hpp"
 #else
 #include <cstddef>
+
 /* Else, we provide trivial functions for compilation */
 template <typename Type>
 Type xsimd_manhattan_dist(const Type* a, const Type* b, const std::size_t size){return -1;}

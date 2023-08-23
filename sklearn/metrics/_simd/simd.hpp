@@ -2,6 +2,7 @@
 
 namespace xs = xsimd;
 
+/*Manhattan Distance*/
 template <typename Type>
 Type xsimd_manhattan_dist(const Type* a, const Type* b, const std::size_t size){
     using batch_type = xs::batch<Type, xs::avx>;
@@ -51,5 +52,6 @@ Type xsimd_manhattan_dist(const Type* a, const Type* b, const std::size_t size){
     return (Type) scalar_sum;
 }
 
+/*Extern declarations to later be mapped to simd.cpp declarations at link time*/
 extern template float xsimd_manhattan_dist(const float* a, const float* b, const std::size_t size);
 extern template double xsimd_manhattan_dist(const double* a, const double* b, const std::size_t size);
