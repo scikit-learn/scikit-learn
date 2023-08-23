@@ -538,6 +538,17 @@ def randomized_svd(
         return U[:, :n_components], s[:n_components], Vt[:n_components, :]
 
 
+validate_params({
+        "M": [np.ndarray, "sparse-matrix"],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "n_oversamples": [Integral],
+        "n_iter": [Interval(Integral, 0, None, closed="left"), StrOptions({"auto"})],
+        "power_iteration_normalizer": [StrOptions({"auto", "QR", "LU", "none"})],
+        "selection": [StrOptions({"value", "module"})],
+        "random_state": ["random_state", Integral]
+    }
+    ,prefer_skip_nested_validation=True,
+)
 def _randomized_eigsh(
     M,
     n_components,
