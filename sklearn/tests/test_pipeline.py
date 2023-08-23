@@ -17,7 +17,11 @@ from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.dummy import DummyRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    RandomForestClassifier,
+    RandomTreesEmbedding,
+)
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_selection import SelectKBest, f_classif
@@ -27,8 +31,12 @@ from sklearn.metrics import accuracy_score, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.pipeline import FeatureUnion, Pipeline, make_pipeline, make_union
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import FunctionTransformer, StandardScaler
 from sklearn.svm import SVC
+from sklearn.tests.metadata_routing_common import (
+    ConsumingTransformer,
+    check_recorded_metadata,
+)
 from sklearn.utils._metadata_requests import COMPOSITE_METHODS, METHODS
 from sklearn.utils._testing import (
     MinimalClassifier,
@@ -1731,34 +1739,10 @@ class SimpleEstimator(BaseEstimator):
         assert prop is not None
 
 
-class SimpleTransformer(BaseEstimator, TransformerMixin):
-    def fit(self, X, y, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-        return self
-
-    def transform(self, X, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-        return X
-
-    def fit_transform(self, X, y, sample_weight=None, prop=None):
-        # implementing ``fit_transform`` is necessary since
-        # ``TransformerMixin.fit_transform`` doesn't route any metadata to
-        # ``transform``, while here we want ``transform`` to receive
-        # ``sample_weight`` and ``prop``.
-        assert sample_weight is not None
-        assert prop is not None
-        return self.fit(X, y, sample_weight, prop).transform(X, sample_weight, prop)
-
-    def inverse_transform(self, X, sample_weight=None, prop=None):
-        assert sample_weight is not None
-        assert prop is not None
-        return X
-
-
 @pytest.mark.usefixtures("enable_slep006")
-def test_metadata_routing_for_pipeline():
+# split and partial_fit not relevant for pipelines
+@pytest.mark.parametrize("method", sorted(set(METHODS) - {"split", "partial_fit"}))
+def test_metadata_routing_for_pipeline(method):
     """Test that metadata is routed correctly for pipelines."""
 
     def set_request(est, method, **kwarg):
@@ -1776,41 +1760,70 @@ def test_metadata_routing_for_pipeline():
             getattr(est, f"set_{method}_request")(**kwarg)
         return est
 
-    # split and partial_fit not relevant for pipelines
-    methods = set(METHODS) - {"split", "partial_fit"}
+    X, y = [[1]], [1]
+    sample_weight, prop, metadata = [1], "a", "b"
 
-    for method in methods:
-        # test that metadata is routed correctly for pipelines when requested
-        est = SimpleEstimator()
-        est = set_request(est, method, sample_weight=True, prop=True)
-        trs = (
-            SimpleTransformer()
-            .set_fit_request(sample_weight=True, prop=True)
-            .set_transform_request(sample_weight=True, prop=True)
-            .set_inverse_transform_request(sample_weight=True, prop=True)
+    # test that metadata is routed correctly for pipelines when requested
+    est = SimpleEstimator()
+    est = set_request(est, method, sample_weight=True, prop=True)
+    est = set_request(est, "fit", sample_weight=True, prop=True)
+    trs = (
+        ConsumingTransformer()
+        .set_fit_request(sample_weight=True, metadata=True)
+        .set_transform_request(sample_weight=True, metadata=True)
+        .set_inverse_transform_request(sample_weight=True, metadata=True)
+    )
+    pipeline = Pipeline([("trs", trs), ("estimator", est)])
+
+    if "fit" not in method:
+        pipeline = pipeline.fit(
+            [[1]], [1], sample_weight=sample_weight, prop=prop, metadata=metadata
         )
-        pipeline = Pipeline([("trs", trs), ("estimator", est)])
+
+    try:
+        getattr(pipeline, method)(
+            X, y, sample_weight=sample_weight, prop=prop, metadata=metadata
+        )
+    except TypeError:
+        # Some methods don't accept y
+        getattr(pipeline, method)(
+            X, sample_weight=sample_weight, prop=prop, metadata=metadata
+        )
+
+    # Make sure the transformer has received the metadata
+    # For the transformer, always only `fit` and `transform` are called.
+    check_recorded_metadata(
+        obj=trs, method="fit", sample_weight=sample_weight, metadata=metadata
+    )
+    check_recorded_metadata(
+        obj=trs, method="transform", sample_weight=sample_weight, metadata=metadata
+    )
+
+
+@pytest.mark.usefixtures("enable_slep006")
+# split and partial_fit not relevant for pipelines
+# sorted is here needed to make `pytest -nX` work. W/o it, tests are collected
+# in different orders between workers and that makes it fail.
+@pytest.mark.parametrize("method", sorted(set(METHODS) - {"split", "partial_fit"}))
+def test_metadata_routing_error_for_pipeline(method):
+    """Test that metadata is not routed for pipelines when not requested."""
+    X, y = [[1]], [1]
+    sample_weight, prop = [1], "a"
+    est = SimpleEstimator()
+    # here not setting sample_weight request and leaving it as None
+    pipeline = Pipeline([("estimator", est)])
+    error_message = (
+        "[sample_weight, prop] are passed but are not explicitly set as requested"
+        f" or not for SimpleEstimator.{method}"
+    )
+    with pytest.raises(ValueError, match=re.escape(error_message)):
         try:
-            getattr(pipeline, method)([[1]], [1], sample_weight=[1], prop="a")
+            # passing X, y positional as the first two arguments
+            getattr(pipeline, method)(X, y, sample_weight=sample_weight, prop=prop)
         except TypeError:
-            getattr(pipeline, method)([[1]], sample_weight=[1], prop="a")
-
-        # test that metadata is not routed for pipelines when not requested
-        est = SimpleEstimator()
-        # here not setting sample_weight request and leaving it as None
-        pipeline = Pipeline([("estimator", est)])
-        error_message = (
-            "[sample_weight, prop] are passed but are not explicitly set as requested"
-            f" or not for SimpleEstimator.{method}"
-        )
-        with pytest.raises(ValueError, match=re.escape(error_message)):
-            try:
-                # passing X, y positional as the first two arguments
-                getattr(pipeline, method)([[1]], [1], sample_weight=[1], prop="a")
-            except TypeError:
-                # not all methods accept y (like `predict`), so here we only
-                # pass X as a positional arg.
-                getattr(pipeline, method)([[1]], sample_weight=[1], prop="a")
+            # not all methods accept y (like `predict`), so here we only
+            # pass X as a positional arg.
+            getattr(pipeline, method)(X, sample_weight=sample_weight, prop=prop)
 
 
 @pytest.mark.parametrize(
@@ -1826,6 +1839,27 @@ def test_routing_passed_metadata_not_supported(method):
         ValueError, match="is only supported if enable_metadata_routing=True"
     ):
         getattr(pipe, method)([[1]], sample_weight=[1], prop="a")
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_pipeline_with_estimator_with_len():
+    """Test that pipeline works with estimators that have a `__len__` method."""
+    pipe = Pipeline(
+        [("trs", RandomTreesEmbedding()), ("estimator", RandomForestClassifier())]
+    )
+    pipe.fit([[1]], [1])
+    pipe.predict([[1]])
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize("last_step", [None, "passthrough"])
+def test_pipeline_with_no_last_step(last_step):
+    """Test that the pipeline works when there is not last step.
+
+    It should just ignore and pass through the data on transform.
+    """
+    pipe = Pipeline([("trs", FunctionTransformer()), ("estimator", last_step)])
+    assert pipe.fit([[1]], [1]).transform([[1], [2], [3]]) == [[1], [2], [3]]
 
 
 # End of routing tests

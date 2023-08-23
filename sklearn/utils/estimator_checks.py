@@ -868,9 +868,19 @@ def _array_api_for_tests(array_namespace, device, dtype):
     # This is because `cupy` is not the same as the compatibility wrapped
     # namespace of a CuPy array.
     xp = array_api_compat.get_namespace(array_mod.asarray(1))
-
     if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
         raise SkipTest("PyTorch test requires cuda, which is not available")
+    elif array_namespace == "torch" and device == "mps" and not xp.has_mps:
+        if not xp.backends.mps.is_built():
+            raise SkipTest(
+                "MPS is not available because the current PyTorch install was not "
+                "built with MPS enabled."
+            )
+        else:
+            raise SkipTest(
+                "MPS is not available because the current MacOS version is not 12.3+ "
+                "and/or you do not have an MPS-enabled device on this machine."
+            )
     elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
         import cupy
 
@@ -4587,7 +4597,7 @@ def check_set_output_transform_pandas(name, transformer_orig):
         outputs_pandas = _output_from_fit_transform(transformer_pandas, name, X, df, y)
     except ValueError as e:
         # transformer does not support sparse data
-        assert str(e) == "Pandas output does not support sparse data.", e
+        assert "Pandas output does not support sparse data." in str(e), e
         return
 
     for case in outputs_default:
@@ -4633,7 +4643,7 @@ def check_global_output_transform_pandas(name, transformer_orig):
             )
     except ValueError as e:
         # transformer does not support sparse data
-        assert str(e) == "Pandas output does not support sparse data.", e
+        assert "Pandas output does not support sparse data." in str(e), e
         return
 
     for case in outputs_default:

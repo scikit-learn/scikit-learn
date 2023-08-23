@@ -293,6 +293,13 @@ class _BaseScorer(_MetadataRequester):
             Arguments should be of the form ``param_name=alias``, and `alias`
             can be one of ``{True, False, None, str}``.
         """
+        if not _routing_enabled():
+            raise RuntimeError(
+                "This method is only available when metadata routing is enabled."
+                " You can enable it using"
+                " sklearn.set_config(enable_metadata_routing=True)."
+            )
+
         self._warn_overlap(
             message=(
                 "You are setting metadata request for parameters which are "
