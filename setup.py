@@ -43,6 +43,7 @@ PROJECT_URLS = {
     "Documentation": "https://scikit-learn.org/stable/documentation.html",
     "Source Code": "https://github.com/scikit-learn/scikit-learn",
 }
+SIMD_DIRECTORY = join("sklearn", "metrics", "_simd")
 
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
@@ -206,8 +207,6 @@ extension_config = {
             "sources": ["_hierarchical_fast.pyx"],
             "language": "c++",
             "include_np": True,
-            "extra_compile_args": ["-std=c++11"],
-            "include_dirs": ["../../xsimd/include/xsimd/"],
         },
         {"sources": ["_k_means_common.pyx"], "include_np": True},
         {"sources": ["_k_means_lloyd.pyx"], "include_np": True},
@@ -218,9 +217,6 @@ extension_config = {
         {
             "sources": ["_linkage.pyx"],
             "include_np": True,
-            "language": "c++",
-            "extra_compile_args": ["-std=c++11"],
-            "include_dirs": ["../../../xsimd/include/xsimd/"],
         },
         {"sources": ["_reachability.pyx"], "include_np": True},
         {"sources": ["_tree.pyx"], "include_np": True},
@@ -264,12 +260,16 @@ extension_config = {
     "metrics": [
         {"sources": ["_pairwise_fast.pyx"], "include_np": True},
         {
-            "sources": ["_dist_metrics.pyx.tp", "_dist_metrics.pxd.tp"],
+            "sources": [
+                "_dist_metrics.pyx.tp",
+                "_dist_metrics.pxd.tp",
+                join("_simd", "_dist_optim.cpp"),
+            ],
             "include_np": True,
             "language": "c++",
-            "extra_compile_args": ["-std=c++11", "-mavx"],
-            "libraries": ["avx_dist_metrics"],
-            "include_dirs": ["../../xsimd/include/xsimd/"],
+            "extra_compile_args": ["-std=c++11"],
+            "define_macros": [("USE_SIMD", None)],
+            "include_dirs": [join("..", "..", "xsimd", "include", "xsimd")],
         },
     ],
     "metrics.cluster": [
@@ -281,41 +281,35 @@ extension_config = {
             "language": "c++",
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
-            "include_dirs": ["../../../xsimd/include/xsimd/"],
         },
         {
             "sources": ["_middle_term_computer.pyx.tp", "_middle_term_computer.pxd.tp"],
             "language": "c++",
             "extra_compile_args": ["-std=c++11"],
-            "include_dirs": ["../../../xsimd/include/xsimd/"],
         },
         {
             "sources": ["_base.pyx.tp", "_base.pxd.tp"],
             "language": "c++",
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
-            "include_dirs": ["../../../xsimd/include/xsimd/"],
         },
         {
             "sources": ["_argkmin.pyx.tp", "_argkmin.pxd.tp"],
             "language": "c++",
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
-            "include_dirs": ["../../../xsimd/include/xsimd/"],
         },
         {
             "sources": ["_argkmin_classmode.pyx.tp"],
             "language": "c++",
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
-            "include_dirs": ["../../../xsimd/include/xsimd/"],
         },
         {
             "sources": ["_radius_neighbors.pyx.tp", "_radius_neighbors.pxd.tp"],
             "language": "c++",
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
-            "include_dirs": ["../../../xsimd/include/xsimd/"],
         },
     ],
     "preprocessing": [
@@ -332,16 +326,10 @@ extension_config = {
         {
             "sources": ["_ball_tree.pyx.tp"],
             "include_np": True,
-            "language": "c++",
-            "extra_compile_args": ["-std=c++11"],
-            "include_dirs": ["../../xsimd/include/xsimd/"],
         },
         {
             "sources": ["_kd_tree.pyx.tp"],
             "include_np": True,
-            "language": "c++",
-            "extra_compile_args": ["-std=c++11"],
-            "include_dirs": ["../../xsimd/include/xsimd/"],
         },
         {"sources": ["_partition_nodes.pyx"], "language": "c++", "include_np": True},
         {"sources": ["_quad_tree.pyx"], "include_np": True},
@@ -482,10 +470,10 @@ libraries = [
         "avx_dist_metrics",
         {
             "language": "c++",
-            "sources": [join("sklearn", "metrics", "_simd", "simd_dist_metrics.cpp")],
+            "sources": [join(SIMD_DIRECTORY, "simd.cpp")],
             "cflags": ["-std=c++14", "-mavx"],
             "extra_link_args": ["-std=c++14"],
-            "include_dirs": [join("xsimd", "include", "xsimd")],
+            "include_dirs": [join("xsimd", "include")],
         },
     ),
 ]
@@ -582,13 +570,14 @@ def configure_extension_modules():
             optimization_level = extension.get(
                 "optimization_level", default_optimization_level
             )
+            define_macros = extension.get("define_macros", [])
             if os.name == "posix":
                 extra_compile_args.append(f"-{optimization_level}")
             else:
                 extra_compile_args.append(f"/{optimization_level}")
 
             libraries_ext = extension.get("libraries", []) + default_libraries
-
+            # print(f"DEBUG ***\n Extension {name} has macros {define_macros}")
             new_ext = Extension(
                 name=name,
                 sources=sources,
@@ -598,6 +587,7 @@ def configure_extension_modules():
                 depends=depends,
                 extra_link_args=extension.get("extra_link_args", None),
                 extra_compile_args=extra_compile_args,
+                define_macros=define_macros,
             )
             cython_exts.append(new_ext)
 
