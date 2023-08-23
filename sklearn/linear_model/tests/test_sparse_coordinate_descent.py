@@ -19,7 +19,7 @@ def test_sparse_coef():
     clf = ElasticNet()
     clf.coef_ = [1, 2, 3]
 
-    assert sp.isspmatrix(clf.sparse_coef_)
+    assert sp.issparse(clf.sparse_coef_)
     assert clf.sparse_coef_.toarray().tolist()[0] == clf.coef_
 
 

@@ -59,7 +59,7 @@ def set_config(
     enable_metadata_routing=None,
     skip_parameter_validation=None,
 ):
-    """Set global scikit-learn configuration
+    """Set global scikit-learn configuration.
 
     .. versionadded:: 0.19
 
