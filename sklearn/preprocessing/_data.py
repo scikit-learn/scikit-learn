@@ -1389,7 +1389,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     set. Median and interquartile range are then stored to be used on
     later data using the :meth:`transform` method.
 
-    Standardization of a dataset is a common requirement for many machine
+    Standardization of a dataset is a common preprocessing for many machine
     learning estimators. Typically this is done by removing the mean and
     scaling to unit variance. However, outliers can often influence the sample
     mean / variance in a negative way. In such cases, the median and the
