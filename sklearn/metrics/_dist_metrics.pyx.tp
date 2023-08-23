@@ -1085,18 +1085,17 @@ cdef class EuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     ) except -1 nogil:
         return sqrt(
             EuclideanDistance{{name_suffix}}.rdist_csr(
-                self,
-                x1_data,
-                x1_indices,
-                x2_data,
-                x2_indices,
-                x1_start,
-                x1_end,
-                x2_start,
-                x2_end,
-                size,
-                )
-            )
+            self,
+            x1_data,
+            x1_indices,
+            x2_data,
+            x2_indices,
+            x1_start,
+            x1_end,
+            x2_start,
+            x2_end,
+            size,
+        ))
 
 #------------------------------------------------------------
 # SEuclidean Distance
@@ -1216,18 +1215,17 @@ cdef class SEuclideanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     ) except -1 nogil:
         return sqrt(
             SEuclideanDistance{{name_suffix}}.rdist_csr(
-                self,
-                x1_data,
-                x1_indices,
-                x2_data,
-                x2_indices,
-                x1_start,
-                x1_end,
-                x2_start,
-                x2_end,
-                size,
-            )
-        )
+            self,
+            x1_data,
+            x1_indices,
+            x2_data,
+            x2_indices,
+            x1_start,
+            x1_end,
+            x2_start,
+            x2_end,
+            size,
+        ))
 
 #------------------------------------------------------------
 # Manhattan Distance
@@ -1743,18 +1741,17 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     ) except -1 nogil:
         return sqrt(
             MahalanobisDistance{{name_suffix}}.rdist_csr(
-                self,
-                x1_data,
-                x1_indices,
-                x2_data,
-                x2_indices,
-                x1_start,
-                x1_end,
-                x2_start,
-                x2_end,
-                size,
-            )
-        )
+            self,
+            x1_data,
+            x1_indices,
+            x2_data,
+            x2_indices,
+            x1_start,
+            x1_end,
+            x2_start,
+            x2_end,
+            size,
+        ))
 
 #------------------------------------------------------------
 # Hamming Distance
