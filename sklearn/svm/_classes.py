@@ -918,9 +918,9 @@ class NuSVC(BaseSVC):
 
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
-         Specifies the kernel type to be used in the algorithm.
-         If none is given, 'rbf' will be used. If a callable is given it is
-         used to precompute the kernel matrix. For an intuitive
+        Specifies the kernel type to be used in the algorithm.
+        If none is given, 'rbf' will be used. If a callable is given it is
+        used to precompute the kernel matrix. For an intuitive
         visualization of different kernel types see
         :ref:`sphx_glr_auto_examples_svm_plot_svm_kernels.py`.
 

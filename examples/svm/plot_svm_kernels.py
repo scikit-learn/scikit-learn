@@ -234,9 +234,11 @@ plot_training_data_with_decision_boundary("rbf")
 # (`coef0`) that shifts the data up or down.
 #
 # In the sigmoid kernel, the similarity between two data points is computed
-# using the hyperbolic tangent function (tanh). The kernel function takes into
-# account the dot product of the two points (x1 and x2), scaled by the kernel
-# coefficient γ, and shifted by a bias term r.
+# using the hyperbolic tangent function (:math:`tanh`). The kernel function
+# takes into account the dot product of the two points (:math:`\mathbf{x}_1`
+# and :math:`\mathbf{x}_2`), scaled by the kernel coefficient :math:`{\gamma}`
+# (`gamma`), and shifted by a bias term :math:`{r}` (`coef0`).
+
 plot_training_data_with_decision_boundary("sigmoid")
 
 # %%
