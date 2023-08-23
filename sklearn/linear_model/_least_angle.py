@@ -673,12 +673,6 @@ def _lars_path_solver(
                 # The system is becoming too ill-conditioned.
                 # We have degenerate vectors in our active set.
                 # We'll 'drop for good' the last regressor added.
-
-                # Note: this case is very rare. It is no longer triggered by
-                # the test suite. The `equality_tolerance` margin added in 0.16
-                # to get early stopping to work consistently on all versions of
-                # Python including 32 bit Python under Windows seems to make it
-                # very difficult to trigger the 'drop for good' strategy.
                 warnings.warn(
                     "Regressors in active set degenerate. "
                     "Dropping a regressor, after %i iterations, "
@@ -686,7 +680,7 @@ def _lars_path_solver(
                     "with an active set of %i regressors, and "
                     "the smallest cholesky pivot element being %.3e."
                     " Reduce max_iter or increase eps parameters."
-                    % (n_iter, alpha, n_active, diag),
+                    % (n_iter, alpha.item(), n_active, diag),
                     ConvergenceWarning,
                 )
 
@@ -714,7 +708,7 @@ def _lars_path_solver(
                 "are small and the current value of alpha is no "
                 "longer well controlled. %i iterations, alpha=%.3e, "
                 "previous alpha=%.3e, with an active set of %i "
-                "regressors." % (n_iter, alpha, prev_alpha, n_active),
+                "regressors." % (n_iter, alpha.item(), prev_alpha.item(), n_active),
                 ConvergenceWarning,
             )
             break
@@ -1577,7 +1571,7 @@ class LarsCV(Lars):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, :class:`KFold` is used.
+        For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1881,7 +1875,7 @@ class LassoLarsCV(LarsCV):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, :class:`KFold` is used.
+        For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
