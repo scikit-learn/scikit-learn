@@ -115,7 +115,7 @@ Changelog
   `full` and `randomized` solvers (with QR power iterations). See
   :ref:`array_api` for more details.
   :pr:`26315` and :pr:`27098` by :user:`Mateusz Sokół <mtsokol>`,
-  :user:`Olivier Grisel <ogrisel>` and :user:` Edoardo Abati <EdAbati>`.
+  :user:`Olivier Grisel <ogrisel>` and :user:`Edoardo Abati <EdAbati>`.
 
 - |Enhancement| :func:`decomposition.non_negative_factorization`, :class:`decomposition.NMF`,
   and :class:`decomposition.MiniBatchNMF` now support :class:`scipy.sparse.sparray`
@@ -212,11 +212,11 @@ Changelog
   when `sparse_output=True` and the output is configured to be pandas.
   :pr:`26931` by `Thomas Fan`_.
 
-- |MajorFeature| :class:`preprocessing.MinMaxScaler` now
+- |MajorFeature| :class:`preprocessing.MinMaxScaler` and :class:`preprocessing.MaxAbsScaler` now
   supports the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
   support is considered experimental and might evolve without being subject to
   our usual rolling deprecation cycle policy. See
-  :ref:`array_api` for more details. :pr:`26243` by `Tim Head`_.
+  :ref:`array_api` for more details. :pr:`26243` by `Tim Head`_ and :pr:`27110` by :user:`Edoardo Abati <EdAbati>`.
 
 :mod:`sklearn.tree`
 ...................
@@ -250,6 +250,12 @@ Changelog
   for CSR × CSR, Dense × CSR, and CSR × Dense now uses ~50% less memory,
   and outputs distances in the same dtype as the provided data.
   :pr:`27006` by :user:`Meekail Zain <micky774>`
+
+- |Enhancement| Improve the rendering of the plot obtained with the
+  :class:`metrics.PrecisionRecallDisplay` and :class:`metrics.RocCurveDisplay`
+  classes. the x- and y-axis limits are set to [0, 1] and the aspect ratio between
+  both axis is set to be 1 to get a square plot.
+  :pr:`26366` by :user:`Mojdeh Rastgoo <mrastgoo>`.
 
 :mod:`sklearn.utils`
 ....................
