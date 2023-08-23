@@ -26,9 +26,10 @@ iris.target = iris.target[perm]
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_classification_toy(csr_container):
+    # Check classification on a toy dataset, including sparse versions.
     X_csr = csr_container(X)
     T_csr = csr_container(T)
-    # Check classification on a toy dataset, including sparse versions.
+
     clf = NearestCentroid()
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
