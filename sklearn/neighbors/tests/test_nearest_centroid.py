@@ -139,8 +139,9 @@ def test_predict_translated_data():
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_manhattan_metric(csr_container):
-    X_csr = csr_container(X)
     # Test the manhattan metric.
+    X_csr = csr_container(X)
+    
 
     clf = NearestCentroid(metric="manhattan")
     clf.fit(X, y)
