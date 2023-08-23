@@ -87,12 +87,12 @@ _ = plt.show()
 # Training SVC model and plotting decision boundaries
 # ---------------------------------------------------
 # We define a function that fits a :class:`~sklearn.svm.SVC` classifier,
-# allowing the `kernel` parameter as input, and then plots the decision
+# allowing the `kernel` parameter as an input, and then plots the decision
 # boundaries learned by the model using
 # :class:`~sklearn.inspection.DecisionBoundaryDisplay`.
-# 
+#
 # Notice that for the sake of simplicity, the `C` parameter is set to its
-# default value (`C=1`) in this example, whereas the `gamma` parameter is set to
+# default value (`C=1`) in this example and the `gamma` parameter is set to
 # `gamma=2` across all kernels, although it is automatically ignored for the
 # linear kernel. In a real classification task, where performance matters,
 # parameter tuning (by using :class:`~sklearn.model_selection.GridSearchCV` for
@@ -100,13 +100,12 @@ _ = plt.show()
 # data.
 #
 # Setting `response_method="predict"` in
-# :class:`~sklearn.inspection.DecisionBoundaryDisplay` colors the areas based on
-# their predicted class, which in the case of :class:`~sklearn.svm.SVC`
-# corresponds to the signed distance of each new sample to the hyperplane. Using
-# `response_method="decision_function"` allows us to also plot the margins at
-# both sides of the decision boundary. Finally the support vectors used during
-# training (which always lay on the margins) can be identified by means ot the
-# `support_vectors_` attribute.
+# :class:`~sklearn.inspection.DecisionBoundaryDisplay` colors the areas based
+# on their predicted class. Using `response_method="decision_function"` allows
+# us to also plot the decision boundary and the margins to both sides of it.
+# Finally the support vectors used during training (which always lay on the
+# margins) are identified by means of the `support_vectors_` attribute of
+# the trained SVCs, and plotted as well.
 from sklearn import svm
 from sklearn.inspection import DecisionBoundaryDisplay
 
@@ -168,10 +167,9 @@ plot_training_data_with_decision_boundary("linear")
 
 # %%
 # Training a :class:`~sklearn.svm.SVC` on a linear kernel results in an
-# untransformed feature space where the hyperplane and the margins are straight
-# lines. In this case, the choice `C=1` results in margins at 1 unit distance
-# from both sides of the hyperplane. Due to the lack of expressivity of the
-# linear kernel, the trained classes do not perfectly predict the data.
+# untransformed feature space, where the hyperplane and the margins are
+# straight lines. Due to the lack of expressivity of the linear kernel, the
+# trained classes do not perfectly capture the training data.
 #
 # Polynomial kernel
 # *****************
