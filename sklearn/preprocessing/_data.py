@@ -290,8 +290,10 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     This transformation is often used as an alternative to zero mean,
     unit variance scaling.
 
-    MinMaxScaler doesn't reduce the effect of outliers; it only linearily
-    scales them down. For an example visualization, refer to :ref:`Compare
+    `MinMaxScaler` doesn't reduce the effect of outliers, but it linearily
+    scales them down into a fixed range, where the largest occuring data point
+    corresponds to the maximum value and the smallest one corresponds to the
+    minimum value. For an example visualization, refer to :ref:`Compare
     MinMaxScaler with other scalers <plot_all_scaling_minmax_scaler_section>`.
 
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
@@ -681,7 +683,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     than others, it might dominate the objective function and make the
     estimator unable to learn from other features correctly as expected.
 
-    StandardScaler is sensitive to outliers, and the features may scale
+    `StandardScaler` is sensitive to outliers, and the features may scale
     differently from each other in the presence of outliers. For an example
     visualization, refer to :ref:`Compare StandardScaler with other scalers
     <plot_all_scaling_standard_scaler_section>`.
@@ -1080,7 +1082,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     This scaler can also be applied to sparse CSR or CSC matrices.
 
-    MaxAbsScaler doesn't reduce the effect of outliers; it only linearily
+    `MaxAbsScaler` doesn't reduce the effect of outliers; it only linearily
     scales them down. For an example visualization, refer to :ref:`Compare
     MaxAbsScaler with other scalers <plot_all_scaling_max_abs_scaler_section>`.
 
