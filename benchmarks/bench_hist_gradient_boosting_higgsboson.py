@@ -25,6 +25,7 @@ parser.add_argument("--max-bins", type=int, default=255)
 parser.add_argument("--no-predict", action="store_true", default=False)
 parser.add_argument("--cache-loc", type=str, default="/tmp")
 parser.add_argument("--no-interactions", type=bool, default=False)
+parser.add_argument("--colsample-bynode", type=float, default=1)
 args = parser.parse_args()
 
 HERE = os.path.dirname(__file__)
@@ -36,6 +37,7 @@ n_trees = args.n_trees
 subsample = args.subsample
 lr = args.learning_rate
 max_bins = args.max_bins
+colsample_bynode = args.colsample_bynode
 
 
 @m.cache
@@ -104,6 +106,7 @@ est = HistGradientBoostingClassifier(
     random_state=0,
     verbose=1,
     interaction_cst=interaction_cst,
+    colsample_bynode=colsample_bynode,
 )
 fit(est, data_train, target_train, "sklearn")
 predict(est, data_test, target_test)

@@ -105,6 +105,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "max_depth": [Interval(Integral, 1, None, closed="left"), None],
         "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
         "l2_regularization": [Interval(Real, 0, None, closed="left")],
+        "colsample_bynode": [Interval(Real, 0, 1, closed="right")],
         "monotonic_cst": ["array-like", dict, None],
         "interaction_cst": [
             list,
@@ -139,6 +140,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         max_depth,
         min_samples_leaf,
         l2_regularization,
+        colsample_bynode,
         max_bins,
         categorical_features,
         monotonic_cst,
@@ -159,6 +161,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
         self.l2_regularization = l2_regularization
+        self.colsample_bynode = colsample_bynode
         self.max_bins = max_bins
         self.monotonic_cst = monotonic_cst
         self.interaction_cst = interaction_cst
@@ -397,6 +400,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # train/val split).
         if not (self.warm_start and self._is_fitted()):
             self._random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
+            self._random_seed2 = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
 
         self._validate_parameters()
         monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
@@ -700,6 +704,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,
                     l2_regularization=self.l2_regularization,
+                    colsample_bynode=self.colsample_bynode,
+                    rng=np.random.default_rng(self._random_seed2),
                     shrinkage=self.learning_rate,
                     n_threads=n_threads,
                 )
@@ -1261,8 +1267,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
     l2_regularization : float, default=0
-        The L2 regularization parameter. Use ``0`` for no regularization
-        (default).
+        The L2 regularization parameter. Use ``0`` for no regularization (default).
+    colsample_bynode : float, default=1
+        Proportion of randomly chosen features in each and every node split.
+        This is a form of regularization, smaller values make the trees weaker
+        learners and might prevent overfitting.
+
+        .. versionchanged:: 1.4
+
     max_bins : int, default=255
         The maximum number of bins to use for non-missing values. Before
         training, each feature of the input array `X` is binned into
@@ -1465,6 +1477,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         max_depth=None,
         min_samples_leaf=20,
         l2_regularization=0.0,
+        colsample_bynode=1.0,
         max_bins=255,
         categorical_features=None,
         monotonic_cst=None,
@@ -1486,6 +1499,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization,
+            colsample_bynode=colsample_bynode,
             max_bins=max_bins,
             monotonic_cst=monotonic_cst,
             interaction_cst=interaction_cst,
@@ -1622,7 +1636,14 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
     l2_regularization : float, default=0
-        The L2 regularization parameter. Use 0 for no regularization.
+        The L2 regularization parameter. Use ``0`` for no regularization (default).
+    colsample_bynode : float, default=1
+        Proportion of randomly chosen features in each and every node split.
+        This is a form of regularization, smaller values make the trees weaker
+        learners and might prevent overfitting.
+
+        .. versionchanged:: 1.4
+
     max_bins : int, default=255
         The maximum number of bins to use for non-missing values. Before
         training, each feature of the input array `X` is binned into
@@ -1825,6 +1846,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         max_depth=None,
         min_samples_leaf=20,
         l2_regularization=0.0,
+        colsample_bynode=1.0,
         max_bins=255,
         categorical_features=None,
         monotonic_cst=None,
@@ -1847,6 +1869,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization,
+            colsample_bynode=colsample_bynode,
             max_bins=max_bins,
             categorical_features=categorical_features,
             monotonic_cst=monotonic_cst,
