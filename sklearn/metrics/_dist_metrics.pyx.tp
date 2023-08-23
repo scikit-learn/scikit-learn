@@ -20,6 +20,7 @@ cnp.import_array()  # required in order to use C-API
 
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 
+from archspec import cpu
 from scipy.sparse import csr_matrix, issparse
 from ..utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
 from ..utils import check_array
@@ -1239,6 +1240,7 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     """
     def __init__(self):
         self.p = 1
+        self.simd_runtime = 'avx' in cpu.host() and WITH_SIMD
 
     cdef inline {{INPUT_DTYPE_t}} dist(
         self,
@@ -1246,7 +1248,10 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         const {{INPUT_DTYPE_t}}* x2,
         intp_t size,
     ) except -1 nogil:
-        return xsimd_manhattan_dist[{{INPUT_DTYPE_t}}](x1, x2, size)
+        if self.simd_runtime:
+            return xsimd_manhattan_dist[{{INPUT_DTYPE_t}}](x1, x2, size)
+        else:
+            return xsimd_manhattan_dist_scalar[{{INPUT_DTYPE_t}}](x1, x2, size)
 
     cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,

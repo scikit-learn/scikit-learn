@@ -12,6 +12,7 @@ import sys
 import traceback
 from os.path import join
 
+from archspec import cpu
 from setuptools import Command, Extension, setup
 from setuptools.command.build_ext import build_ext
 
@@ -29,6 +30,7 @@ except ImportError:
 builtins.__SKLEARN_SETUP__ = True
 
 
+BUILD_WITH_SIMD = int("avx" in cpu.host())
 DISTNAME = "scikit-learn"
 DESCRIPTION = "A set of python modules for machine learning and data mining"
 with open("README.rst") as f:
@@ -261,7 +263,7 @@ extension_config = {
             "include_np": True,
             "language": "c++",
             "extra_compile_args": ["-std=c++11"],
-            "define_macros": [("USE_SIMD", None)],
+            "define_macros": [("DIST_METRICS", None), ("WITH_SIMD", BUILD_WITH_SIMD)],
             "include_dirs": [join("..", "..", "xsimd", "include", "xsimd")],
         },
     ],
@@ -455,8 +457,7 @@ libraries = [
     ),
 ]
 
-make_simd = True
-if make_simd:
+if BUILD_WITH_SIMD:
     libraries.append(
         (
             "avx_dist_metrics",
