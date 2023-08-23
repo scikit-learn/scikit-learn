@@ -532,7 +532,7 @@ sphinx_gallery_conf = {
     "inspect_global_variables": False,
     "remove_config_comments": True,
     "plot_gallery": "True",
-    "recommender": {"enable": True, "n_examples": 5},
+    "recommender": {"enable": True, "n_examples": 5, "min_df": 4},
     "reset_modules": ("matplotlib", "seaborn", reset_sklearn_config),
 }
 if with_jupyterlite:
