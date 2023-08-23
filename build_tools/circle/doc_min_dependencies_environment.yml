@@ -18,7 +18,6 @@ dependencies:
   - pytest-xdist=2.5.0
   - pillow
   - setuptools
-  - archspec
   - scikit-image=0.16.2  # min
   - seaborn
   - memory_profiler
