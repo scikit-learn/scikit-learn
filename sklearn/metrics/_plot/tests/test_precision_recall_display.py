@@ -2,6 +2,7 @@ from collections import Counter
 
 import numpy as np
 import pytest
+from scipy.integrate import trapz as trapezoid
 
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, make_classification
@@ -286,7 +287,7 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
     # we should obtain the statistics of the "cancer" class
     avg_prec_limit = 0.65
     assert display.average_precision < avg_prec_limit
-    assert -np.trapz(display.precision, display.recall) < avg_prec_limit
+    assert -trapezoid(display.precision, display.recall) < avg_prec_limit
 
     # otherwise we should obtain the statistics of the "not cancer" class
     if constructor_name == "from_estimator":
@@ -305,7 +306,7 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
         )
     avg_prec_limit = 0.95
     assert display.average_precision > avg_prec_limit
-    assert -np.trapz(display.precision, display.recall) > avg_prec_limit
+    assert -trapezoid(display.precision, display.recall) > avg_prec_limit
 
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])

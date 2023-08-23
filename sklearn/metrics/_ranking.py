@@ -24,6 +24,7 @@ from functools import partial
 from numbers import Integral, Real
 
 import numpy as np
+from scipy.integrate import trapz as trapezoid
 from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
@@ -104,9 +105,9 @@ def auc(x, y):
         else:
             raise ValueError("x is neither increasing nor decreasing : {}.".format(x))
 
-    area = direction * np.trapz(y, x)
+    area = direction * trapezoid(y, x)
     if isinstance(area, np.memmap):
-        # Reductions such as .sum used internally in np.trapz do not return a
+        # Reductions such as .sum used internally in trapezoid do not return a
         # scalar by default for numpy.memmap instances contrary to
         # regular numpy.ndarray instances.
         area = area.dtype.type(area)
