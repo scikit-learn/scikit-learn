@@ -460,7 +460,7 @@ libraries = [
             "sources": [join(SIMD_DIRECTORY, "simd.cpp")],
             "cflags": ["-std=c++14", "-mavx"],
             "extra_link_args": ["-std=c++14"],
-            "include_dirs": [join("xsimd", "include")],
+            "include_dirs": [join("xsimd", "include", "xsimd")],
         },
     ),
 ]
