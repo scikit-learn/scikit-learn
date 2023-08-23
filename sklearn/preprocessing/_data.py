@@ -1392,7 +1392,7 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     Standardization of a dataset is a common preprocessing for many machine
     learning estimators. Typically this is done by removing the mean and
     scaling to unit variance. However, outliers can often influence the sample
-    mean / variance in a negative way. In such cases, the median and the
+    mean / variance in a negative way. In such cases, using the median and the
     interquartile range often give better results. For an example visualization
     and comparison to other scalers, refer to :ref:`Compare RobustScaler with
     other scalers <plot_all_scaling_robust_scaler_section>`.
