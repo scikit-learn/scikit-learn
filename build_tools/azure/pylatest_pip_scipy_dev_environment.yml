@@ -12,6 +12,7 @@ dependencies:
     - pytest
     - pytest-xdist==2.5.0
     - setuptools
+    - archspec
     - pytest-cov
     - coverage
     - pooch
