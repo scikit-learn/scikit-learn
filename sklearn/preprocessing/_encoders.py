@@ -520,8 +520,8 @@ class OneHotEncoder(_BaseEncoder):
            `sparse_output` instead.
 
     sparse_output : bool, default=True
-        Will return sparse matrix in "Compressed Sparse Row" (CSR) format if
-        set ro True, else will return an array.
+        When ``True``, it returns a :class:`scipy.sparse.csr_matrix`,
+        i.e. a sparse array in "Compressed Sparse Row" (CSR) format.
 
         .. versionadded:: 1.2
            `sparse` was renamed to `sparse_output`
