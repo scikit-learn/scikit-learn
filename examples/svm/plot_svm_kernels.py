@@ -219,7 +219,7 @@ plot_training_data_with_decision_boundary("rbf")
 
 # %%
 # In the plot we can see how the decision boundaries tend to contract around
-# data points, that are close to each other.
+# data points that are close to each other.
 #
 # Sigmoid kernel
 # **************
