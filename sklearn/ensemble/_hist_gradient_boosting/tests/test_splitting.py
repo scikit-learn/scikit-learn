@@ -959,3 +959,86 @@ def test_split_interaction_constraints():
 
     # make sure feature 0 and feature 3 are split on in the constraint setting
     assert set(allowed_features) == set(split_features)
+
+
+def test_split_colsample_bynode():
+    """Check that colsample_bynode is respected."""
+    n_features = 4
+    # # features 1 and 2 are not allowed to be split on
+    # allowed_features = np.array([0, 3], dtype=np.uint32)
+    n_bins = 5
+    n_samples = 40
+    l2_regularization = 0.0
+    min_hessian_to_split = 1e-3
+    min_samples_leaf = 1
+    min_gain_to_split = 0.0
+    rng = np.random.default_rng(42)
+
+    sample_indices = np.arange(n_samples, dtype=np.uint32)
+    all_gradients = rng.uniform(low=0.5, high=1, size=n_samples).astype(G_H_DTYPE)
+    sum_gradients = all_gradients.sum()
+    all_hessians = np.ones(1, dtype=G_H_DTYPE)
+    sum_hessians = n_samples
+    hessians_are_constant = True
+
+    X_binned = np.asfortranarray(
+        rng.integers(low=0, high=n_bins - 1, size=(n_samples, n_features)),
+        dtype=X_BINNED_DTYPE,
+    )
+    X_binned = np.asfortranarray(X_binned, dtype=X_BINNED_DTYPE)
+    builder = HistogramBuilder(
+        X_binned,
+        n_bins,
+        all_gradients,
+        all_hessians,
+        hessians_are_constant,
+        n_threads,
+    )
+    histograms = builder.compute_histograms_brute(sample_indices)
+    value = compute_node_value(
+        sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
+    )
+    n_bins_non_missing = np.array([n_bins] * X_binned.shape[1], dtype=np.uint32)
+    has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
+    monotonic_cst = np.array(
+        [MonotonicConstraint.NO_CST] * X_binned.shape[1], dtype=np.int8
+    )
+    is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
+    missing_values_bin_idx = n_bins - 1
+
+    splitter = Splitter(
+        X_binned=X_binned,
+        n_bins_non_missing=n_bins_non_missing,
+        missing_values_bin_idx=missing_values_bin_idx,
+        has_missing_values=has_missing_values,
+        is_categorical=is_categorical,
+        monotonic_cst=monotonic_cst,
+        l2_regularization=l2_regularization,
+        min_hessian_to_split=min_hessian_to_split,
+        min_samples_leaf=min_samples_leaf,
+        min_gain_to_split=min_gain_to_split,
+        hessians_are_constant=hessians_are_constant,
+        colsample_bynode=0.25,  # THIS is the important setting here.
+        rng=rng,
+    )
+
+    assert np.all(sample_indices == splitter.partition)
+
+    split_features = []
+    # The loop is to ensure that we split at least once on each feature.
+    # This is tracked by split_features and checked at the end.
+    for i in range(20):
+        # with all features allowed, feature 1 should be split on as it is the most
+        # important one by construction of the gradients
+        si_root = splitter.find_node_split(
+            n_samples,
+            histograms,
+            sum_gradients,
+            sum_hessians,
+            value,
+            allowed_features=None,
+        )
+        split_features.append(si_root.feature_idx)
+
+    # make sure all features are split on
+    assert set(split_features) == set(range(n_features))
