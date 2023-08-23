@@ -9,8 +9,21 @@ Version 1.3.1
 
 **In development**
 
+Changes impacting all modules
+-----------------------------
+
+- |Fix| The `set_output` API correctly works with list input. :pr:`27044` by
+  `Thomas Fan`_.
+
 Changelog
 ---------
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.KNNImputer` now correctly adds a missing indicator column in
+  ``transform`` when ``add_indicator`` is set to ``True`` and missing values are observed
+  during ``fit``. :pr:`26600` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -22,6 +35,22 @@ Changelog
 - |Fix| Reintroduce :attr:`sklearn.neighbors.BallTree.valid_metrics` and
   :attr:`sklearn.neighbors.KDTree.valid_metrics` as public class attributes.
   :pr:`26754` by :user:`Julien Jerphanion <jjerphan>`.
+
+- |Fix| :class:`sklearn.model_selection.HalvingRandomSearchCV` no longer raises
+  when the input to the `param_distributions` parameter is a list of dicts.
+  :pr:`26893` by :user:`Stefanie Senger <StefanieSenger>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.LabelEncoder` correctly accepts `y` as a keyword
+  argument. :pr:`26940` by `Thomas Fan`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| :func:`tree.plot_tree` now accepts `class_names=True` as documented.
+  :pr:`26903` by :user:`Thomas Roehr <2maz>`
 
 .. _changes_1_3:
 
@@ -369,7 +398,7 @@ Changelog
 - |Feature| Compute a custom out-of-bag score by passing a callable to
   :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
-  :pr:`25177` by :user:`Tim Head <betatim>`.
+  :pr:`25177` by `Tim Head`_.
 
 - |Feature| :class:`ensemble.GradientBoostingClassifier` now exposes
   out-of-bag scores via the `oob_scores_` or `oob_score_` attributes.
@@ -595,6 +624,13 @@ Changelog
 - |Fix| :class:`gaussian_process.GaussianProcessRegressor` has a new argument
   `n_targets`, which is used to decide the number of outputs when sampling
   from the prior distributions. :pr:`23099` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+:mod:`sklearn.mixture`
+......................
+
+- |Efficiency| :class:`GaussianMixture` is more efficient now and will bypass unnecessary
+  initialization if the weights, means, and precisions are given by users.
+  :pr:`26021` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
 
 :mod:`sklearn.model_selection`
 ..............................

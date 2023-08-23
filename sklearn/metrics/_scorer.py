@@ -35,6 +35,7 @@ from ..utils.metadata_routing import (
     MetadataRequest,
     MetadataRouter,
     _MetadataRequester,
+    _raise_for_params,
     _routing_enabled,
     get_routing_for_object,
     process_routing,
@@ -123,7 +124,7 @@ class _MultimetricScorer:
         cached_call = partial(_cached_call, cache)
 
         if _routing_enabled():
-            routed_params = process_routing(self, "score", kwargs)
+            routed_params = process_routing(self, "score", **kwargs)
         else:
             # they all get the same args, and they all get them all
             routed_params = Bunch(
@@ -253,11 +254,7 @@ class _BaseScorer(_MetadataRequester):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        if kwargs and not _routing_enabled():
-            raise ValueError(
-                "kwargs is only supported if enable_metadata_routing=True. See"
-                " the User Guide for more information."
-            )
+        _raise_for_params(kwargs, self, None)
 
         _kwargs = copy.deepcopy(kwargs)
         if sample_weight is not None:
@@ -296,6 +293,13 @@ class _BaseScorer(_MetadataRequester):
             Arguments should be of the form ``param_name=alias``, and `alias`
             can be one of ``{True, False, None, str}``.
         """
+        if not _routing_enabled():
+            raise RuntimeError(
+                "This method is only available when metadata routing is enabled."
+                " You can enable it using"
+                " sklearn.set_config(enable_metadata_routing=True)."
+            )
+
         self._warn_overlap(
             message=(
                 "You are setting metadata request for parameters which are "

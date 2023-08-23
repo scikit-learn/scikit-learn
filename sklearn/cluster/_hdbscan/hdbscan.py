@@ -462,18 +462,26 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         A distance scaling parameter as used in robust single linkage.
         See [3]_ for more information.
 
-    algorithm : {"auto", "brute", "kdtree", "balltree"}, default="auto"
+    algorithm : {"auto", "brute", "kd_tree", "ball_tree"}, default="auto"
         Exactly which algorithm to use for computing core distances; By default
         this is set to `"auto"` which attempts to use a
         :class:`~sklearn.neighbors.KDTree` tree if possible, otherwise it uses
-        a :class:`~sklearn.neighbors.BallTree` tree. Both `"KDTree"` and
-        `"BallTree"` algorithms use the
+        a :class:`~sklearn.neighbors.BallTree` tree. Both `"kd_tree"` and
+        `"ball_tree"` algorithms use the
         :class:`~sklearn.neighbors.NearestNeighbors` estimator.
 
         If the `X` passed during `fit` is sparse or `metric` is invalid for
         both :class:`~sklearn.neighbors.KDTree` and
         :class:`~sklearn.neighbors.BallTree`, then it resolves to use the
         `"brute"` algorithm.
+
+        .. deprecated:: 1.4
+           The `'kdtree'` option was deprecated in version 1.4,
+           and will be renamed to `'kd_tree'` in 1.6.
+
+        .. deprecated:: 1.4
+           The `'balltree'` option was deprecated in version 1.4,
+           and will be renamed to `'ball_tree'` in 1.6.
 
     leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest neighbour queries when
@@ -625,15 +633,12 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         "metric": [StrOptions(FAST_METRICS | {"precomputed"}), callable],
         "metric_params": [dict, None],
         "alpha": [Interval(Real, left=0, right=None, closed="neither")],
+        # TODO(1.6): Remove "kdtree" and "balltree"  option
         "algorithm": [
             StrOptions(
-                {
-                    "auto",
-                    "brute",
-                    "kdtree",
-                    "balltree",
-                }
-            )
+                {"auto", "brute", "kd_tree", "ball_tree", "kdtree", "balltree"},
+                deprecated={"kdtree", "balltree"},
+            ),
         ],
         "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
         "n_jobs": [Integral, None],
@@ -759,6 +764,31 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 f"min_samples ({self._min_samples}) must be at most the number of"
                 f" samples in X ({X.shape[0]})"
             )
+
+        # TODO(1.6): Remove
+        if self.algorithm == "kdtree":
+            warn(
+                (
+                    "`algorithm='kdtree'`has been deprecated in 1.4 and will be renamed"
+                    " to'kd_tree'`in 1.6. To keep the past behaviour, set"
+                    " `algorithm='kd_tree'`."
+                ),
+                FutureWarning,
+            )
+            self.algorithm = "kd_tree"
+
+        # TODO(1.6): Remove
+        if self.algorithm == "balltree":
+            warn(
+                (
+                    "`algorithm='balltree'`has been deprecated in 1.4 and will be"
+                    " renamed to'ball_tree'`in 1.6. To keep the past behaviour, set"
+                    " `algorithm='ball_tree'`."
+                ),
+                FutureWarning,
+            )
+            self.algorithm = "ball_tree"
+
         mst_func = None
         kwargs = dict(
             X=X,
@@ -768,12 +798,14 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             n_jobs=self.n_jobs,
             **self._metric_params,
         )
-        if self.algorithm == "kdtree" and self.metric not in KDTree.valid_metrics:
+        if self.algorithm == "kd_tree" and self.metric not in KDTree.valid_metrics:
             raise ValueError(
                 f"{self.metric} is not a valid metric for a KDTree-based algorithm."
                 " Please select a different metric."
             )
-        elif self.algorithm == "balltree" and self.metric not in BallTree.valid_metrics:
+        elif (
+            self.algorithm == "ball_tree" and self.metric not in BallTree.valid_metrics
+        ):
             raise ValueError(
                 f"{self.metric} is not a valid metric for a BallTree-based algorithm."
                 " Please select a different metric."
@@ -790,11 +822,11 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             if self.algorithm == "brute":
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = self.copy
-            elif self.algorithm == "kdtree":
+            elif self.algorithm == "kd_tree":
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "kd_tree"
                 kwargs["leaf_size"] = self.leaf_size
-            elif self.algorithm == "balltree":
+            else:
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "ball_tree"
                 kwargs["leaf_size"] = self.leaf_size
@@ -900,7 +932,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             self.medoids_ = np.empty((n_clusters, X.shape[1]), dtype=np.float64)
 
         # Need to handle iteratively seen each cluster may have a different
-        # number of samples, hence we can't create a homogenous 3D array.
+        # number of samples, hence we can't create a homogeneous 3D array.
         for idx in range(n_clusters):
             mask = self.labels_ == idx
             data = X[mask]

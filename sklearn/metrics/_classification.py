@@ -38,6 +38,7 @@ from ..utils import (
     check_consistent_length,
     column_or_1d,
 )
+from ..utils._array_api import _union1d, _weighted_sum, get_namespace
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _nanaverage
 from ..utils.multiclass import type_of_target, unique_labels
@@ -104,11 +105,12 @@ def _check_targets(y_true, y_pred):
         raise ValueError("{0} is not supported".format(y_type))
 
     if y_type in ["binary", "multiclass"]:
+        xp, _ = get_namespace(y_true, y_pred)
         y_true = column_or_1d(y_true)
         y_pred = column_or_1d(y_pred)
         if y_type == "binary":
             try:
-                unique_values = np.union1d(y_true, y_pred)
+                unique_values = _union1d(y_true, y_pred, xp)
             except TypeError as e:
                 # We expect y_true and y_pred to be of the same data type.
                 # If `y_true` was provided to the classifier as strings,
@@ -116,12 +118,12 @@ def _check_targets(y_true, y_pred):
                 # strings. So we raise a meaningful error
                 raise TypeError(
                     "Labels in y_true and y_pred should be of the same type. "
-                    f"Got y_true={np.unique(y_true)} and "
-                    f"y_pred={np.unique(y_pred)}. Make sure that the "
+                    f"Got y_true={xp.unique(y_true)} and "
+                    f"y_pred={xp.unique(y_pred)}. Make sure that the "
                     "predictions provided by the classifier coincides with "
                     "the true labels."
                 ) from e
-            if len(unique_values) > 2:
+            if unique_values.shape[0] > 2:
                 y_type = "multiclass"
 
     if y_type.startswith("multilabel"):
@@ -130,15 +132,6 @@ def _check_targets(y_true, y_pred):
         y_type = "multilabel-indicator"
 
     return y_type, y_true, y_pred
-
-
-def _weighted_sum(sample_score, sample_weight, normalize=False):
-    if normalize:
-        return np.average(sample_score, weights=sample_weight)
-    elif sample_weight is not None:
-        return np.dot(sample_score, sample_weight)
-    else:
-        return sample_score.sum()
 
 
 @validate_params(
@@ -207,7 +200,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     >>> accuracy_score(y_true, y_pred)
     0.5
     >>> accuracy_score(y_true, y_pred, normalize=False)
-    2
+    2.0
 
     In the multilabel case with binary label indicators:
 
@@ -1045,7 +1038,7 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     >>> zero_one_loss(y_true, y_pred)
     0.25
     >>> zero_one_loss(y_true, y_pred, normalize=False)
-    1
+    1.0
 
     In the multilabel case with binary label indicators:
 

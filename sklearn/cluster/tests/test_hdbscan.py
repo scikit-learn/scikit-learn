@@ -4,7 +4,7 @@ Based on the DBSCAN test code
 """
 import numpy as np
 import pytest
-from scipy import sparse, stats
+from scipy import stats
 from scipy.spatial import distance
 
 from sklearn.cluster import HDBSCAN
@@ -21,6 +21,7 @@ from sklearn.neighbors import BallTree, KDTree
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 n_clusters_true = 3
 X, y = make_blobs(n_samples=200, random_state=10)
@@ -28,8 +29,8 @@ X, y = shuffle(X, y, random_state=7)
 X = StandardScaler().fit_transform(X)
 
 ALGORITHMS = [
-    "kdtree",
-    "balltree",
+    "kd_tree",
+    "ball_tree",
     "brute",
     "auto",
 ]
@@ -99,7 +100,7 @@ def test_hdbscan_distance_matrix():
         HDBSCAN(metric="precomputed").fit_predict(D)
 
 
-@pytest.mark.parametrize("sparse_constructor", [sparse.csr_matrix, sparse.csc_matrix])
+@pytest.mark.parametrize("sparse_constructor", [*CSR_CONTAINERS, *CSC_CONTAINERS])
 def test_hdbscan_sparse_distance_matrix(sparse_constructor):
     """
     Tests that HDBSCAN works with sparse distance matrices.
@@ -149,8 +150,8 @@ def test_hdbscan_algorithms(algo, metric):
         return
 
     ALGOS_TREES = {
-        "kdtree": KDTree,
-        "balltree": BallTree,
+        "kd_tree": KDTree,
+        "ball_tree": BallTree,
     }
     metric_params = {
         "mahalanobis": {"V": np.eye(X.shape[1])},
@@ -284,25 +285,41 @@ def test_hdbscan_precomputed_non_brute(tree):
         hdb.fit(X)
 
 
-def test_hdbscan_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_hdbscan_sparse(csr_container):
     """
     Tests that HDBSCAN works correctly when passing sparse feature data.
+    Evaluates correctness by comparing against the same data passed as a dense
+    array.
     """
-    sparse_X = sparse.csr_matrix(X)
 
-    labels = HDBSCAN().fit(sparse_X).labels_
-    n_clusters = len(set(labels) - OUTLIER_SET)
+    dense_labels = HDBSCAN().fit(X).labels_
+    n_clusters = len(set(dense_labels) - OUTLIER_SET)
     assert n_clusters == 3
 
-    sparse_X_nan = sparse_X.copy()
-    sparse_X_nan[0, 0] = np.nan
-    labels = HDBSCAN().fit(sparse_X_nan).labels_
-    n_clusters = len(set(labels) - OUTLIER_SET)
-    assert n_clusters == 3
+    _X_sparse = csr_container(X)
+    X_sparse = _X_sparse.copy()
+    sparse_labels = HDBSCAN().fit(X_sparse).labels_
+    assert_array_equal(dense_labels, sparse_labels)
+
+    # Compare that the sparse and dense non-precomputed routines return the same labels
+    # where the 0th observation contains the outlier.
+    for outlier_val, outlier_type in ((np.inf, "infinite"), (np.nan, "missing")):
+        X_dense = X.copy()
+        X_dense[0, 0] = outlier_val
+        dense_labels = HDBSCAN().fit(X_dense).labels_
+        n_clusters = len(set(dense_labels) - OUTLIER_SET)
+        assert n_clusters == 3
+        assert dense_labels[0] == _OUTLIER_ENCODING[outlier_type]["label"]
+
+        X_sparse = _X_sparse.copy()
+        X_sparse[0, 0] = outlier_val
+        sparse_labels = HDBSCAN().fit(X_sparse).labels_
+        assert_array_equal(dense_labels, sparse_labels)
 
     msg = "Sparse data matrices only support algorithm `brute`."
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(metric="euclidean", algorithm="balltree").fit(sparse_X)
+        HDBSCAN(metric="euclidean", algorithm="ball_tree").fit(X_sparse)
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
@@ -353,7 +370,7 @@ def test_hdbscan_allow_single_cluster_with_epsilon():
         cluster_selection_epsilon=0.18,
         cluster_selection_method="eom",
         allow_single_cluster=True,
-        algorithm="kdtree",
+        algorithm="kd_tree",
     ).fit_predict(no_structure)
     unique_labels, counts = np.unique(labels, return_counts=True)
     assert len(unique_labels) == 2
@@ -394,12 +411,13 @@ def test_hdbscan_usable_inputs(X, kwargs):
     HDBSCAN(min_samples=1, **kwargs).fit(X)
 
 
-def test_hdbscan_sparse_distances_too_few_nonzero():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_hdbscan_sparse_distances_too_few_nonzero(csr_container):
     """
     Tests that HDBSCAN raises the correct error when there are too few
     non-zero distances.
     """
-    X = sparse.csr_matrix(np.zeros((10, 10)))
+    X = csr_container(np.zeros((10, 10)))
 
     msg = "There exists points with fewer than"
     with pytest.raises(ValueError, match=msg):
@@ -418,16 +436,16 @@ def test_hdbscan_tree_invalid_metric():
 
     # Callables are not supported for either
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(algorithm="kdtree", metric=metric_callable).fit(X)
+        HDBSCAN(algorithm="kd_tree", metric=metric_callable).fit(X)
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(algorithm="balltree", metric=metric_callable).fit(X)
+        HDBSCAN(algorithm="ball_tree", metric=metric_callable).fit(X)
 
     # The set of valid metrics for KDTree at the time of writing this test is a
     # strict subset of those supported in BallTree
     metrics_not_kd = list(set(BallTree.valid_metrics) - set(KDTree.valid_metrics))
     if len(metrics_not_kd) > 0:
         with pytest.raises(ValueError, match=msg):
-            HDBSCAN(algorithm="kdtree", metric=metrics_not_kd[0]).fit(X)
+            HDBSCAN(algorithm="kd_tree", metric=metrics_not_kd[0]).fit(X)
 
 
 def test_hdbscan_too_many_min_samples():
@@ -531,3 +549,23 @@ def test_labelling_thresholding():
     # and the largest value is exactly MAX_LAMBDA.
     num_noise = condensed_tree["value"] < MAX_LAMBDA
     assert sum(num_noise) == sum(labels == -1)
+
+
+# TODO(1.6): Remove
+def test_hdbscan_warning_on_deprecated_algorithm_name():
+    # Test that warning message is shown when algorithm='kdtree'
+    msg = (
+        "`algorithm='kdtree'`has been deprecated in 1.4 and will be renamed"
+        " to'kd_tree'`in 1.6. To keep the past behaviour, set `algorithm='kd_tree'`."
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        HDBSCAN(algorithm="kdtree").fit(X)
+
+    # Test that warning message is shown when algorithm='balltree'
+    msg = (
+        "`algorithm='balltree'`has been deprecated in 1.4 and will be renamed"
+        " to'ball_tree'`in 1.6. To keep the past behaviour, set"
+        " `algorithm='ball_tree'`."
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        HDBSCAN(algorithm="balltree").fit(X)
