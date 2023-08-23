@@ -525,7 +525,7 @@ class OneHotEncoder(_BaseEncoder):
         .. versionadded:: 1.2
            `sparse` was renamed to `sparse_output`
 
-    dtype : number type, default=float
+    dtype : number type, default=np.float64
         Desired dtype of output.
 
     handle_unknown : {'error', 'ignore', 'infrequent_if_exist'}, \
@@ -774,8 +774,8 @@ class OneHotEncoder(_BaseEncoder):
         if infrequent_indices is not None and drop_idx in infrequent_indices:
             categories = self.categories_[feature_idx]
             raise ValueError(
-                f"Unable to drop category {categories[drop_idx]!r} from feature"
-                f" {feature_idx} because it is infrequent"
+                f"Unable to drop category {categories[drop_idx].item()!r} from"
+                f" feature {feature_idx} because it is infrequent"
             )
         return default_to_infrequent[drop_idx]
 
@@ -1508,15 +1508,11 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 if infrequent is not None:
                     cardinalities[feature_idx] -= len(infrequent)
 
-        # stores the missing indices per category
-        self._missing_indices = {}
+        # missing values are not considered part of the cardinality
+        # when considering unknown categories or encoded_missing_value
         for cat_idx, categories_for_idx in enumerate(self.categories_):
-            for i, cat in enumerate(categories_for_idx):
+            for cat in categories_for_idx:
                 if is_scalar_nan(cat):
-                    self._missing_indices[cat_idx] = i
-
-                    # missing values are not considered part of the cardinality
-                    # when considering unknown categories or encoded_missing_value
                     cardinalities[cat_idx] -= 1
                     continue
 

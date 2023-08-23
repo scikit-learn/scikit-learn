@@ -22,7 +22,8 @@ from ..base import (
     TransformerMixin,
     _fit_context,
 )
-from ..utils import check_array
+from ..utils import _array_api, check_array
+from ..utils._array_api import get_namespace
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
 from ..utils.sparsefuncs import (
@@ -103,16 +104,18 @@ def _handle_zeros_in_scale(scale, copy=True, constant_mask=None):
         if scale == 0.0:
             scale = 1.0
         return scale
-    elif isinstance(scale, np.ndarray):
+    # scale is an array
+    else:
+        xp, _ = get_namespace(scale)
         if constant_mask is None:
             # Detect near constant values to avoid dividing by a very small
             # value that could lead to surprising results and numerical
             # stability issues.
-            constant_mask = scale < 10 * np.finfo(scale.dtype).eps
+            constant_mask = scale < 10 * xp.finfo(scale.dtype).eps
 
         if copy:
             # New array to avoid side-effects
-            scale = scale.copy()
+            scale = xp.asarray(scale, copy=True)
         scale[constant_mask] = 1.0
         return scale
 
@@ -468,22 +471,24 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 "Consider using MaxAbsScaler instead."
             )
 
+        xp, _ = get_namespace(X)
+
         first_pass = not hasattr(self, "n_samples_seen_")
         X = self._validate_data(
             X,
             reset=first_pass,
-            dtype=FLOAT_DTYPES,
+            dtype=_array_api.supported_float_dtypes(xp),
             force_all_finite="allow-nan",
         )
 
-        data_min = np.nanmin(X, axis=0)
-        data_max = np.nanmax(X, axis=0)
+        data_min = _array_api._nanmin(X, axis=0)
+        data_max = _array_api._nanmax(X, axis=0)
 
         if first_pass:
             self.n_samples_seen_ = X.shape[0]
         else:
-            data_min = np.minimum(self.data_min_, data_min)
-            data_max = np.maximum(self.data_max_, data_max)
+            data_min = xp.minimum(self.data_min_, data_min)
+            data_max = xp.maximum(self.data_max_, data_max)
             self.n_samples_seen_ += X.shape[0]
 
         data_range = data_max - data_min
@@ -511,10 +516,12 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
+        xp, _ = get_namespace(X)
+
         X = self._validate_data(
             X,
             copy=self.copy,
-            dtype=FLOAT_DTYPES,
+            dtype=_array_api.supported_float_dtypes(xp),
             force_all_finite="allow-nan",
             reset=False,
         )
@@ -522,7 +529,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X *= self.scale_
         X += self.min_
         if self.clip:
-            np.clip(X, self.feature_range[0], self.feature_range[1], out=X)
+            xp.clip(X, self.feature_range[0], self.feature_range[1], out=X)
         return X
 
     def inverse_transform(self, X):
@@ -540,8 +547,13 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
+        xp, _ = get_namespace(X)
+
         X = check_array(
-            X, copy=self.copy, dtype=FLOAT_DTYPES, force_all_finite="allow-nan"
+            X,
+            copy=self.copy,
+            dtype=_array_api.supported_float_dtypes(xp),
+            force_all_finite="allow-nan",
         )
 
         X -= self.min_
