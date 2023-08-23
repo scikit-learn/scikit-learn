@@ -1002,9 +1002,9 @@ def _check_large_sparse(X, accept_large_sparse=False):
     """Raise a ValueError if X has 64bit indices and accept_large_sparse=False"""
     if not accept_large_sparse:
         supported_indices = ["int32"]
-        if X.getformat() == "coo":
+        if X.format == "coo":
             index_keys = ["col", "row"]
-        elif X.getformat() in ["csr", "csc", "bsr"]:
+        elif X.format in ["csr", "csc", "bsr"]:
             index_keys = ["indices", "indptr"]
         else:
             return
@@ -1076,7 +1076,8 @@ def check_X_y(
         performed if the dtype of the input is not in the list.
 
     order : {'F', 'C'}, default=None
-        Whether an array will be forced to be fortran or c-style.
+        Whether an array will be forced to be fortran or c-style. If
+        `None`, then the input data's order is preserved when possible.
 
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
@@ -2270,7 +2271,7 @@ def _check_pos_label_consistency(pos_label, y_true):
             or np.array_equal(classes, [1])
         )
     ):
-        classes_repr = ", ".join(repr(c) for c in classes)
+        classes_repr = ", ".join([repr(c) for c in classes.tolist()])
         raise ValueError(
             f"y_true takes value in {{{classes_repr}}} and pos_label is not "
             "specified: either make y_true take value in {0, 1} or "
