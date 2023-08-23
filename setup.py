@@ -203,21 +203,14 @@ extension_config = {
     ],
     "cluster": [
         {"sources": ["_dbscan_inner.pyx"], "language": "c++", "include_np": True},
-        {
-            "sources": ["_hierarchical_fast.pyx"],
-            "language": "c++",
-            "include_np": True,
-        },
+        {"sources": ["_hierarchical_fast.pyx"], "language": "c++", "include_np": True},
         {"sources": ["_k_means_common.pyx"], "include_np": True},
         {"sources": ["_k_means_lloyd.pyx"], "include_np": True},
         {"sources": ["_k_means_elkan.pyx"], "include_np": True},
         {"sources": ["_k_means_minibatch.pyx"], "include_np": True},
     ],
     "cluster._hdbscan": [
-        {
-            "sources": ["_linkage.pyx"],
-            "include_np": True,
-        },
+        {"sources": ["_linkage.pyx"], "include_np": True},
         {"sources": ["_reachability.pyx"], "include_np": True},
         {"sources": ["_tree.pyx"], "include_np": True},
     ],
@@ -323,14 +316,8 @@ extension_config = {
     ],
     "neighbors": [
         {"sources": ["_binary_tree.pxi.tp"], "include_np": True},
-        {
-            "sources": ["_ball_tree.pyx.tp"],
-            "include_np": True,
-        },
-        {
-            "sources": ["_kd_tree.pyx.tp"],
-            "include_np": True,
-        },
+        {"sources": ["_ball_tree.pyx.tp"], "include_np": True},
+        {"sources": ["_kd_tree.pyx.tp"], "include_np": True},
         {"sources": ["_partition_nodes.pyx"], "language": "c++", "include_np": True},
         {"sources": ["_quad_tree.pyx"], "include_np": True},
     ],
@@ -577,7 +564,6 @@ def configure_extension_modules():
                 extra_compile_args.append(f"/{optimization_level}")
 
             libraries_ext = extension.get("libraries", []) + default_libraries
-            # print(f"DEBUG ***\n Extension {name} has macros {define_macros}")
             new_ext = Extension(
                 name=name,
                 sources=sources,
