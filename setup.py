@@ -453,17 +453,22 @@ libraries = [
             "extra_link_args": ["-lstdc++"],
         },
     ),
-    (
-        "avx_dist_metrics",
-        {
-            "language": "c++",
-            "sources": [join(SIMD_DIRECTORY, "simd.cpp")],
-            "cflags": ["-std=c++14", "-mavx"],
-            "extra_link_args": ["-std=c++14"],
-            "include_dirs": [join("xsimd", "include", "xsimd")],
-        },
-    ),
 ]
+
+make_simd = True
+if make_simd:
+    libraries.append(
+        (
+            "avx_dist_metrics",
+            {
+                "language": "c++",
+                "sources": [join(SIMD_DIRECTORY, "simd.cpp")],
+                "cflags": ["-std=c++14", "-mavx"],
+                "extra_link_args": ["-std=c++14"],
+                "include_dirs": [join("xsimd", "include", "xsimd")],
+            },
+        ),
+    )
 
 
 def configure_extension_modules():

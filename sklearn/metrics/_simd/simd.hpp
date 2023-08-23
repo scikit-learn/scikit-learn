@@ -1,4 +1,6 @@
-#include "utils.hpp"
+#include "xsimd.hpp"
+
+namespace xs = xsimd;
 
 template <typename Type>
 Type xsimd_manhattan_dist(const Type* a, const Type* b, const std::size_t size){
