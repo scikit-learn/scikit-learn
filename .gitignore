@@ -107,4 +107,4 @@ sklearn/neighbors/_kd_tree.pyx
 jupyterlite_contents
 
 #SIMD
-sklearn/metrics/simd/simd_dist_metrics.cpp
+!sklearn/metrics/_simd/*
