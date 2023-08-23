@@ -12,7 +12,7 @@ without a final predictor will transform the observed data (:term:`X`) and
 return it. In contrast, pipelines with a final predictor will fit the predictor
 with the transformed data from the previous steps and can then also be used for
 predictions. The methods to be called on the pipeline are the same methods that
-the last contained estimator provides. Pipeline is often used in combination
+the estimator in the last step provides. Pipeline is often used in combination
 with :ref:`FeatureUnion <feature_union>` which concatenates the output of
 transformers into a composite feature space. :ref:`TransformedTargetRegressor
 <transformed_target_regressor>` deals with transforming the :term:`target`
