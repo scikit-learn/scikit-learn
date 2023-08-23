@@ -268,6 +268,7 @@ plot_training_data_with_decision_boundary("sigmoid")
 # quality. They are intended to provide a visual understanding of how the
 # different kernels use the training data.
 #
-# For a comprehensive evaluation, fine-tuning of SVC parameters using techniques
-# such as :class:`~sklearn.model_selection.GridSearchCV` is recommended to
-# capture the underlying structures within the data.
+# For a comprehensive evaluation, fine-tuning of :class:`~sklearn.svm.SVC`
+# parameters using techniques such as
+# :class:`~sklearn.model_selection.GridSearchCV` is recommended to capture the
+# underlying structures within the data.
