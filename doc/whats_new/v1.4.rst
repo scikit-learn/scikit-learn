@@ -244,7 +244,7 @@ Changelog
   and outputs distances in the same dtype as the provided data.
   :pr:`27006` by :user:`Meekail Zain <micky774>`
 
-- |Enhancement| Improve the rendering of the plot obtain with the
+- |Enhancement| Improve the rendering of the plot obtained with the
   :class:`metrics.PrecisionRecallDisplay` and :class:`metrics.RocCurveDisplay`
   classes. the x- and y-axis limits are set to [0, 1] and the aspect ratio between
   both axis is set to be 1 to get a square plot.
