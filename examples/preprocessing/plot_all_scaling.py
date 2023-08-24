@@ -102,11 +102,15 @@ distributions = [
     ),
     (
         "Data after quantile transformation (uniform pdf)",
-        QuantileTransformer(output_distribution="uniform").fit_transform(X),
+        QuantileTransformer(
+            output_distribution="uniform", random_state=42
+        ).fit_transform(X),
     ),
     (
         "Data after quantile transformation (gaussian pdf)",
-        QuantileTransformer(output_distribution="normal").fit_transform(X),
+        QuantileTransformer(
+            output_distribution="normal", random_state=42
+        ).fit_transform(X),
     ),
     ("Data after sample-wise L2 normalizing", Normalizer().fit_transform(X)),
 ]
