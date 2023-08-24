@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =============================================================
 Compare the effect of different scalers on data with outliers
@@ -46,22 +45,22 @@ of the results_.
 #          Thomas Unterthiner
 # License: BSD 3 clause
 
-import numpy as np
-
 import matplotlib as mpl
-from matplotlib import pyplot as plt
+import numpy as np
 from matplotlib import cm
-
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import minmax_scale
-from sklearn.preprocessing import MaxAbsScaler
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import RobustScaler
-from sklearn.preprocessing import Normalizer
-from sklearn.preprocessing import QuantileTransformer
-from sklearn.preprocessing import PowerTransformer
+from matplotlib import pyplot as plt
 
 from sklearn.datasets import fetch_california_housing
+from sklearn.preprocessing import (
+    MaxAbsScaler,
+    MinMaxScaler,
+    Normalizer,
+    PowerTransformer,
+    QuantileTransformer,
+    RobustScaler,
+    StandardScaler,
+    minmax_scale,
+)
 
 dataset = fetch_california_housing()
 X_full, y_full = dataset.data, dataset.target

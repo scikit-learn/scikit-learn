@@ -40,6 +40,7 @@ except ImportError:
 import joblib
 import numpy as np
 from scipy.sparse import csr_matrix
+
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.datasets import fetch_openml
 from sklearn.utils import shuffle

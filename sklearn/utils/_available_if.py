@@ -1,6 +1,5 @@
+from functools import update_wrapper, wraps
 from types import MethodType
-from functools import wraps
-from functools import update_wrapper
 
 
 class _AvailableIfDescriptor:

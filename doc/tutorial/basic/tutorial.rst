@@ -242,7 +242,7 @@ adequate preprocessing<preprocessing_scaler>`.
 
 Keep in mind however that not all scikit-learn estimators attempt to
 work in `float32` mode. For instance, some transformers will always
-cast there input to `float64` and return `float64` transformed
+cast their input to `float64` and return `float64` transformed
 values as a result.
 
 Regression targets are cast to ``float64`` and classification targets are

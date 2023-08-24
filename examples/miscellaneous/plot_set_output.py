@@ -48,9 +48,9 @@ print(f"Configured pandas output type: {type(X_test_df).__name__}")
 # %%
 # In a :class:`pipeline.Pipeline`, `set_output` configures all steps to output
 # DataFrames.
-from sklearn.pipeline import make_pipeline
-from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import SelectPercentile
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
 
 clf = make_pipeline(
     StandardScaler(), SelectPercentile(percentile=75), LogisticRegression()
@@ -65,7 +65,7 @@ clf[-1].feature_names_in_
 
 # %%
 # Next we load the titanic dataset to demonstrate `set_output` with
-# :class:`compose.ColumnTransformer` and heterogenous data.
+# :class:`compose.ColumnTransformer` and heterogeneous data.
 from sklearn.datasets import fetch_openml
 
 X, y = fetch_openml(
@@ -76,10 +76,10 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y)
 # %%
 # The `set_output` API can be configured globally by using :func:`set_config` and
 # setting `transform_output` to `"pandas"`.
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.impute import SimpleImputer
 from sklearn import set_config
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 set_config(transform_output="pandas")
 
@@ -112,8 +112,8 @@ coef = pd.Series(log_reg.coef_.ravel(), index=log_reg.feature_names_in_)
 _ = coef.sort_values().plot.barh()
 
 # %%
-# This resets `transform_output` to its default value to avoid impacting other
-# examples when generating the scikit-learn documentation
+# In order to demonstrate the :func:`config_context` functionality below, let
+# us first reset `transform_output` to its default value.
 set_config(transform_output="default")
 
 # %%

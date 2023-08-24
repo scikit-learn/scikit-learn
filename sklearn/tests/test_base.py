@@ -1,35 +1,39 @@
 # Author: Gael Varoquaux
 # License: BSD 3 clause
 
+import pickle
 import re
-import numpy as np
-import scipy.sparse as sp
-import pytest
 import warnings
+
+import numpy as np
+import pytest
+import scipy.sparse as sp
 from numpy.testing import assert_allclose
 
 import sklearn
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.base import BaseEstimator, clone, is_classifier
-from sklearn.svm import SVC
-from sklearn.preprocessing import StandardScaler
-from sklearn.utils._set_output import _get_output_config
-from sklearn.pipeline import Pipeline
+from sklearn import config_context, datasets
+from sklearn.base import (
+    BaseEstimator,
+    OutlierMixin,
+    TransformerMixin,
+    clone,
+    is_classifier,
+)
 from sklearn.decomposition import PCA
-from sklearn.model_selection import GridSearchCV
-
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
-from sklearn import datasets
 from sklearn.exceptions import InconsistentVersionWarning
-
-from sklearn.base import TransformerMixin
+from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._mocking import MockDataFrame
-from sklearn import config_context
-import pickle
+from sklearn.utils._set_output import _get_output_config
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_array_equal,
+    assert_no_warnings,
+    ignore_warnings,
+)
 
 
 #############################################################################
@@ -186,9 +190,18 @@ def test_clone_nan():
     assert clf.empty is clf2.empty
 
 
+def test_clone_dict():
+    # test that clone creates a clone of a dict
+    orig = {"a": MyEstimator()}
+    cloned = clone(orig)
+    assert orig["a"] is not cloned["a"]
+
+
 def test_clone_sparse_matrices():
     sparse_matrix_classes = [
-        getattr(sp, name) for name in dir(sp) if name.endswith("_matrix")
+        cls
+        for name in dir(sp)
+        if name.endswith("_matrix") and type(cls := getattr(sp, name)) is type
     ]
 
     for cls in sparse_matrix_classes:
@@ -719,6 +732,47 @@ def test_feature_names_in():
         trans.transform(df_mixed)
 
 
+def test_validate_data_cast_to_ndarray():
+    """Check cast_to_ndarray option of _validate_data."""
+
+    pd = pytest.importorskip("pandas")
+    iris = datasets.load_iris()
+    df = pd.DataFrame(iris.data, columns=iris.feature_names)
+    y = pd.Series(iris.target)
+
+    class NoOpTransformer(TransformerMixin, BaseEstimator):
+        pass
+
+    no_op = NoOpTransformer()
+    X_np_out = no_op._validate_data(df, cast_to_ndarray=True)
+    assert isinstance(X_np_out, np.ndarray)
+    assert_allclose(X_np_out, df.to_numpy())
+
+    X_df_out = no_op._validate_data(df, cast_to_ndarray=False)
+    assert X_df_out is df
+
+    y_np_out = no_op._validate_data(y=y, cast_to_ndarray=True)
+    assert isinstance(y_np_out, np.ndarray)
+    assert_allclose(y_np_out, y.to_numpy())
+
+    y_series_out = no_op._validate_data(y=y, cast_to_ndarray=False)
+    assert y_series_out is y
+
+    X_np_out, y_np_out = no_op._validate_data(df, y, cast_to_ndarray=True)
+    assert isinstance(X_np_out, np.ndarray)
+    assert_allclose(X_np_out, df.to_numpy())
+    assert isinstance(y_np_out, np.ndarray)
+    assert_allclose(y_np_out, y.to_numpy())
+
+    X_df_out, y_series_out = no_op._validate_data(df, y, cast_to_ndarray=False)
+    assert X_df_out is df
+    assert y_series_out is y
+
+    msg = "Validation should be done on X, y or both."
+    with pytest.raises(ValueError, match=msg):
+        no_op._validate_data()
+
+
 def test_clone_keeps_output_config():
     """Check that clone keeps the set_output config."""
 
@@ -773,3 +827,95 @@ def test_estimator_getstate_using_slots_error_message():
 
     with pytest.raises(TypeError, match=msg):
         pickle.dumps(Estimator())
+
+
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [
+        ("dataframe", "1.5.0"),
+        ("pyarrow", "12.0.0"),
+        ("polars", "0.18.2"),
+    ],
+)
+def test_dataframe_protocol(constructor_name, minversion):
+    """Uses the dataframe exchange protocol to get feature names."""
+    data = [[1, 4, 2], [3, 3, 6]]
+    columns = ["col_0", "col_1", "col_2"]
+    df = _convert_container(
+        data, constructor_name, columns_name=columns, minversion=minversion
+    )
+
+    class NoOpTransformer(TransformerMixin, BaseEstimator):
+        def fit(self, X, y=None):
+            self._validate_data(X)
+            return self
+
+        def transform(self, X):
+            return self._validate_data(X, reset=False)
+
+    no_op = NoOpTransformer()
+    no_op.fit(df)
+    assert_array_equal(no_op.feature_names_in_, columns)
+    X_out = no_op.transform(df)
+
+    if constructor_name != "pyarrow":
+        # pyarrow does not work with `np.asarray`
+        # https://github.com/apache/arrow/issues/34886
+        assert_allclose(df, X_out)
+
+    bad_names = ["a", "b", "c"]
+    df_bad = _convert_container(data, constructor_name, columns_name=bad_names)
+    with pytest.raises(ValueError, match="The feature names should match"):
+        no_op.transform(df_bad)
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_transformer_fit_transform_with_metadata_in_transform():
+    """Test that having a transformer with metadata for transform raises a
+    warning when calling fit_transform."""
+
+    class CustomTransformer(BaseEstimator, TransformerMixin):
+        def fit(self, X, y=None, prop=None):
+            return self
+
+        def transform(self, X, prop=None):
+            return X
+
+    # passing the metadata to `fit_transform` should raise a warning since it
+    # could potentially be consumed by `transform`
+    with pytest.warns(UserWarning, match="`transform` method which consumes metadata"):
+        CustomTransformer().set_transform_request(prop=True).fit_transform(
+            [[1]], [1], prop=1
+        )
+
+    # not passing a metadata which can potentially be consumed by `transform` should
+    # not raise a warning
+    with warnings.catch_warnings(record=True) as record:
+        CustomTransformer().set_transform_request(prop=True).fit_transform([[1]], [1])
+        assert len(record) == 0
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_outlier_mixin_fit_predict_with_metadata_in_predict():
+    """Test that having an OutlierMixin with metadata for predict raises a
+    warning when calling fit_predict."""
+
+    class CustomOutlierDetector(BaseEstimator, OutlierMixin):
+        def fit(self, X, y=None, prop=None):
+            return self
+
+        def predict(self, X, prop=None):
+            return X
+
+    # passing the metadata to `fit_predict` should raise a warning since it
+    # could potentially be consumed by `predict`
+    with pytest.warns(UserWarning, match="`predict` method which consumes metadata"):
+        CustomOutlierDetector().set_predict_request(prop=True).fit_predict(
+            [[1]], [1], prop=1
+        )
+
+    # not passing a metadata which can potentially be consumed by `predict` should
+    # not raise a warning
+    with warnings.catch_warnings(record=True) as record:
+        CustomOutlierDetector().set_predict_request(prop=True).fit_predict([[1]], [1])
+        assert len(record) == 0

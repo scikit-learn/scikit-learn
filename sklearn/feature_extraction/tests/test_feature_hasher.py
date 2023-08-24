@@ -1,6 +1,6 @@
 import numpy as np
-from numpy.testing import assert_array_equal
 import pytest
+from numpy.testing import assert_array_equal
 
 from sklearn.feature_extraction import FeatureHasher
 from sklearn.feature_extraction._hashing_fast import transform as _hashing_transform

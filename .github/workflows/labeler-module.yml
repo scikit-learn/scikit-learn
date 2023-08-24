@@ -14,7 +14,7 @@ jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-    - uses: thomasjpfan/labeler@v2.5.0
+    - uses: thomasjpfan/labeler@v2.5.1
       continue-on-error: true
       if: github.repository == 'scikit-learn/scikit-learn'
       with:
@@ -25,7 +25,7 @@ jobs:
   triage_file_extensions:
     runs-on: ubuntu-latest
     steps:
-    - uses: thomasjpfan/labeler@v2.5.0
+    - uses: thomasjpfan/labeler@v2.5.1
       continue-on-error: true
       if: github.repository == 'scikit-learn/scikit-learn'
       with:

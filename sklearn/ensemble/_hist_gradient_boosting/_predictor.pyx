@@ -11,6 +11,7 @@ from .common cimport X_BINNED_DTYPE_C
 from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport node_struct
 from ._bitset cimport in_bitset_2d_memoryview
+from sklearn.utils._typedefs cimport intp_t
 
 
 def _predict_from_raw_data(  # raw data = non-binned data
@@ -148,7 +149,8 @@ def _compute_partial_dependence(
     node_struct [:] nodes,
     const X_DTYPE_C [:, ::1] X,
     int [:] target_features,
-    Y_DTYPE_C [:] out):
+    Y_DTYPE_C [:] out
+):
     """Partial dependence of the response on the ``target_features`` set.
 
     For each sample in ``X`` a tree traversal is performed.
@@ -188,7 +190,7 @@ def _compute_partial_dependence(
         node_struct * current_node  # pointer to avoid copying attributes
 
         unsigned int sample_idx
-        unsigned feature_idx
+        intp_t feature_idx
         unsigned stack_size
         Y_DTYPE_C left_sample_frac
         Y_DTYPE_C current_weight
@@ -250,5 +252,4 @@ def _compute_partial_dependence(
 
         # Sanity check. Should never happen.
         if not (0.999 < total_weight < 1.001):
-            raise ValueError("Total weight should be 1.0 but was %.9f" %
-                                total_weight)
+            raise ValueError("Total weight should be 1.0 but was %.9f" %total_weight)

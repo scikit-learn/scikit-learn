@@ -8,7 +8,6 @@ import numpy as np
 from cython cimport floating
 
 
-
 def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
     cdef:
         Py_ssize_t n = y.shape[0], i, k
@@ -85,7 +84,6 @@ def _make_unique(const floating[::1] X,
     cdef floating current_x = X[0]
     cdef floating current_y = 0
     cdef floating current_weight = 0
-    cdef floating y_old = 0
     cdef int i = 0
     cdef int j
     cdef floating x
@@ -114,4 +112,4 @@ def _make_unique(const floating[::1] X,
         np.asarray(x_out[:i+1]),
         np.asarray(y_out[:i+1]),
         np.asarray(weights_out[:i+1]),
-)
+    )
