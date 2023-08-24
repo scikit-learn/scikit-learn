@@ -189,7 +189,7 @@ The figure below shows the permutation feature importance of a
 naive interpretation would suggest that all features are unimportant:
 
 .. figure:: ../auto_examples/inspection/images/sphx_glr_plot_permutation_importance_multicollinear_002.png
-   :target: ../auto_examples/inspection/plot_permutation_importance.html
+   :target: ../auto_examples/inspection/plot_permutation_importance_multicollinear.html
    :align: center
    :scale: 70
 
@@ -197,7 +197,7 @@ One way to handle the issue is to cluster features that are correlated and only
 keep one feature from each cluster.
 
 .. figure:: ../auto_examples/inspection/images/sphx_glr_plot_permutation_importance_multicollinear_004.png
-   :target: ../auto_examples/inspection/plot_permutation_importance.html
+   :target: ../auto_examples/inspection/plot_permutation_importance_multicollinear.html
    :align: center
    :scale: 70
 
