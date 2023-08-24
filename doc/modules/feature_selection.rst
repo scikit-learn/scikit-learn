@@ -215,11 +215,12 @@ alpha parameter, the fewer features selected.
 
    There is no general rule to select an alpha parameter for recovery of
    non-zero coefficients. It can by set by cross-validation
-   (:class:`LassoCV` or :class:`LassoLarsCV`), though this may lead to
-   under-penalized models: including a small number of non-relevant
-   variables is not detrimental to prediction score. BIC
-   (:class:`LassoLarsIC`) tends, on the opposite, to set high values of
-   alpha.
+   (:class:`~sklearn.linear_model.LassoCV` or
+   :class:`~sklearn.linear_model.LassoLarsCV`), though this may lead to
+   under-penalized models: including a small number of non-relevant variables
+   is not detrimental to prediction score. BIC
+   (:class:`~sklearn.linear_model.LassoLarsIC`) tends, on the opposite, to set
+   high values of alpha.
 
    **Reference** Richard G. Baraniuk "Compressive Sensing", IEEE Signal
    Processing Magazine [120] July 2007
@@ -316,7 +317,7 @@ the actual learning. The recommended way to do this in scikit-learn is
 to use a :class:`~pipeline.Pipeline`::
 
   clf = Pipeline([
-    ('feature_selection', SelectFromModel(LinearSVC(penalty="l1"))),
+    ('feature_selection', SelectFromModel(LinearSVC(dual="auto", penalty="l1"))),
     ('classification', RandomForestClassifier())
   ])
   clf.fit(X, y)

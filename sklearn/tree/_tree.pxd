@@ -32,6 +32,7 @@ cdef struct Node:
     DOUBLE_t impurity                    # Impurity of the node (i.e., the value of the criterion)
     SIZE_t n_node_samples                # Number of samples at the node
     DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
+    unsigned char missing_go_to_left     # Whether features have missing values
 
 
 cdef class Tree:
@@ -58,7 +59,8 @@ cdef class Tree:
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
-                          double weighted_n_node_samples) except -1 nogil
+                          double weighted_n_node_samples,
+                          unsigned char missing_go_to_left) except -1 nogil
     cdef int _resize(self, SIZE_t capacity) except -1 nogil
     cdef int _resize_c(self, SIZE_t capacity=*) except -1 nogil
 
@@ -105,6 +107,7 @@ cdef class TreeBuilder:
         object X,
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight=*,
+        const unsigned char[::1] missing_values_in_feature_mask=*,
     )
 
     cdef _check_input(

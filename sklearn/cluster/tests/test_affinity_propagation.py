@@ -3,20 +3,18 @@ Testing for Clustering methods
 
 """
 
-import numpy as np
-import pytest
 import warnings
 
+import numpy as np
+import pytest
 from scipy.sparse import csr_matrix
 
-from sklearn.exceptions import ConvergenceWarning, NotFittedError
-from sklearn.utils._testing import assert_array_equal, assert_allclose
-
-from sklearn.cluster import AffinityPropagation
+from sklearn.cluster import AffinityPropagation, affinity_propagation
 from sklearn.cluster._affinity_propagation import _equal_similarities_and_preferences
-from sklearn.cluster import affinity_propagation
 from sklearn.datasets import make_blobs
+from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.metrics import euclidean_distances
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 n_clusters = 3
 centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10

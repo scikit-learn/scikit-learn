@@ -74,6 +74,19 @@ cdef class Criterion:
         """
         pass
 
+    cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
+        """Initialize sum_missing if there are missing values.
+
+        This method assumes that caller placed the missing samples in
+        self.sample_indices[-n_missing:]
+
+        Parameters
+        ----------
+        n_missing: SIZE_t
+            Number of missing values for specific feature.
+        """
+        pass
+
     cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start.
 
@@ -144,6 +157,16 @@ cdef class Criterion:
         """
         pass
 
+    cdef void clip_node_value(self, double* dest, double lower_bound, double upper_bound) noexcept nogil:
+        pass
+
+    cdef double middle_value(self) noexcept nogil:
+        """Compute the middle value of a split for monotonicity constraints
+
+        This method is implemented in ClassificationCriterion and RegressionCriterion.
+        """
+        pass
+
     cdef double proxy_impurity_improvement(self) noexcept nogil:
         """Compute a proxy of the impurity reduction.
 
@@ -198,6 +221,80 @@ cdef class Criterion:
                                  - (self.weighted_n_left /
                                     self.weighted_n_node_samples * impurity_left)))
 
+    cdef bint check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        double lower_bound,
+        double upper_bound,
+    ) noexcept nogil:
+        pass
+
+    cdef inline bint _check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        double lower_bound,
+        double upper_bound,
+        double value_left,
+        double value_right,
+    ) noexcept nogil:
+        cdef:
+            bint check_lower_bound = (
+                (value_left >= lower_bound) &
+                (value_right >= lower_bound)
+            )
+            bint check_upper_bound = (
+                (value_left <= upper_bound) &
+                (value_right <= upper_bound)
+            )
+            bint check_monotonic_cst = (
+                (value_left - value_right) * monotonic_cst <= 0
+            )
+        return check_lower_bound & check_upper_bound & check_monotonic_cst
+
+    cdef void init_sum_missing(self):
+        """Init sum_missing to hold sums for missing values."""
+
+cdef inline void _move_sums_classification(
+    ClassificationCriterion criterion,
+    double[:, ::1] sum_1,
+    double[:, ::1] sum_2,
+    double* weighted_n_1,
+    double* weighted_n_2,
+    bint put_missing_in_1,
+) noexcept nogil:
+    """Distribute sum_total and sum_missing into sum_1 and sum_2.
+
+    If there are missing values and:
+    - put_missing_in_1 is True, then missing values to go sum_1. Specifically:
+        sum_1 = sum_missing
+        sum_2 = sum_total - sum_missing
+
+    - put_missing_in_1 is False, then missing values go to sum_2. Specifically:
+        sum_1 = 0
+        sum_2 = sum_total
+    """
+    cdef SIZE_t k, c, n_bytes
+    if criterion.n_missing != 0 and put_missing_in_1:
+        for k in range(criterion.n_outputs):
+            n_bytes = criterion.n_classes[k] * sizeof(double)
+            memcpy(&sum_1[k, 0], &criterion.sum_missing[k, 0], n_bytes)
+
+        for k in range(criterion.n_outputs):
+            for c in range(criterion.n_classes[k]):
+                sum_2[k, c] = criterion.sum_total[k, c] - criterion.sum_missing[k, c]
+
+        weighted_n_1[0] = criterion.weighted_n_missing
+        weighted_n_2[0] = criterion.weighted_n_node_samples - criterion.weighted_n_missing
+    else:
+        # Assigning sum_2 = sum_total for all outputs.
+        for k in range(criterion.n_outputs):
+            n_bytes = criterion.n_classes[k] * sizeof(double)
+            memset(&sum_1[k, 0], 0, n_bytes)
+            memcpy(&sum_2[k, 0], &criterion.sum_total[k, 0], n_bytes)
+
+        weighted_n_1[0] = 0.0
+        weighted_n_2[0] = criterion.weighted_n_node_samples
+
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
@@ -216,6 +313,7 @@ cdef class ClassificationCriterion(Criterion):
         self.start = 0
         self.pos = 0
         self.end = 0
+        self.missing_go_to_left = 0
 
         self.n_outputs = n_outputs
         self.n_samples = 0
@@ -223,6 +321,7 @@ cdef class ClassificationCriterion(Criterion):
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
         self.weighted_n_right = 0.0
+        self.weighted_n_missing = 0.0
 
         self.n_classes = np.empty(n_outputs, dtype=np.intp)
 
@@ -318,6 +417,39 @@ cdef class ClassificationCriterion(Criterion):
         self.reset()
         return 0
 
+    cdef void init_sum_missing(self):
+        """Init sum_missing to hold sums for missing values."""
+        self.sum_missing = np.zeros((self.n_outputs, self.max_n_classes), dtype=np.float64)
+
+    cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
+        """Initialize sum_missing if there are missing values.
+
+        This method assumes that caller placed the missing samples in
+        self.sample_indices[-n_missing:]
+        """
+        cdef SIZE_t i, p, k, c
+        cdef DOUBLE_t w = 1.0
+
+        self.n_missing = n_missing
+        if n_missing == 0:
+            return
+
+        memset(&self.sum_missing[0, 0], 0, self.max_n_classes * self.n_outputs * sizeof(double))
+
+        self.weighted_n_missing = 0.0
+
+        # The missing samples are assumed to be in self.sample_indices[-n_missing:]
+        for p in range(self.end - n_missing, self.end):
+            i = self.sample_indices[p]
+            if self.sample_weight is not None:
+                w = self.sample_weight[i]
+
+            for k in range(self.n_outputs):
+                c = <SIZE_t> self.y[i, k]
+                self.sum_missing[k, c] += w
+
+            self.weighted_n_missing += w
+
     cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start.
 
@@ -325,14 +457,14 @@ cdef class ClassificationCriterion(Criterion):
         or 0 otherwise.
         """
         self.pos = self.start
-
-        self.weighted_n_left = 0.0
-        self.weighted_n_right = self.weighted_n_node_samples
-        cdef SIZE_t k
-
-        for k in range(self.n_outputs):
-            memset(&self.sum_left[k, 0], 0, self.n_classes[k] * sizeof(double))
-            memcpy(&self.sum_right[k, 0], &self.sum_total[k, 0], self.n_classes[k] * sizeof(double))
+        _move_sums_classification(
+            self,
+            self.sum_left,
+            self.sum_right,
+            &self.weighted_n_left,
+            &self.weighted_n_right,
+            self.missing_go_to_left,
+        )
         return 0
 
     cdef int reverse_reset(self) except -1 nogil:
@@ -342,14 +474,14 @@ cdef class ClassificationCriterion(Criterion):
         or 0 otherwise.
         """
         self.pos = self.end
-
-        self.weighted_n_left = self.weighted_n_node_samples
-        self.weighted_n_right = 0.0
-        cdef SIZE_t k
-
-        for k in range(self.n_outputs):
-            memset(&self.sum_right[k, 0], 0, self.n_classes[k] * sizeof(double))
-            memcpy(&self.sum_left[k, 0],  &self.sum_total[k, 0], self.n_classes[k] * sizeof(double))
+        _move_sums_classification(
+            self,
+            self.sum_right,
+            self.sum_left,
+            &self.weighted_n_right,
+            &self.weighted_n_left,
+            not self.missing_go_to_left
+        )
         return 0
 
     cdef int update(self, SIZE_t new_pos) except -1 nogil:
@@ -365,7 +497,10 @@ cdef class ClassificationCriterion(Criterion):
             child to the left child.
         """
         cdef SIZE_t pos = self.pos
-        cdef SIZE_t end = self.end
+        # The missing samples are assumed to be in
+        # self.sample_indices[-self.n_missing:] that is
+        # self.sample_indices[end_non_missing:self.end].
+        cdef SIZE_t end_non_missing = self.end - self.n_missing
 
         cdef const SIZE_t[:] sample_indices = self.sample_indices
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
@@ -383,7 +518,7 @@ cdef class ClassificationCriterion(Criterion):
         # and that sum_total is known, we are going to update
         # sum_left from the direction that require the least amount
         # of computations, i.e. from pos to new_pos or from end to new_po.
-        if (new_pos - pos) <= (end - new_pos):
+        if (new_pos - pos) <= (end_non_missing - new_pos):
             for p in range(pos, new_pos):
                 i = sample_indices[p]
 
@@ -398,7 +533,7 @@ cdef class ClassificationCriterion(Criterion):
         else:
             self.reverse_reset()
 
-            for p in range(end - 1, new_pos - 1, -1):
+            for p in range(end_non_missing - 1, new_pos - 1, -1):
                 i = sample_indices[p]
 
                 if sample_weight is not None:
@@ -438,6 +573,47 @@ cdef class ClassificationCriterion(Criterion):
         for k in range(self.n_outputs):
             memcpy(dest, &self.sum_total[k, 0], self.n_classes[k] * sizeof(double))
             dest += self.max_n_classes
+
+    cdef void clip_node_value(self, double * dest, double lower_bound, double upper_bound) noexcept nogil:
+        """Clip the value in dest between lower_bound and upper_bound for monotonic constraints.
+
+        Note that monotonicity constraints are only supported for:
+        - single-output trees and
+        - binary classifications.
+        """
+        if dest[0] < lower_bound:
+            dest[0] = lower_bound
+        elif dest[0] > upper_bound:
+            dest[0] = upper_bound
+
+        # Class proportions for binary classification must sum to 1.
+        dest[1] = 1 - dest[0]
+
+    cdef inline double middle_value(self) noexcept nogil:
+        """Compute the middle value of a split for monotonicity constraints as the simple average
+        of the left and right children values.
+
+        Note that monotonicity constraints are only supported for:
+        - single-output trees and
+        - binary classifications.
+        """
+        return (
+            (self.sum_left[0, 0] / (2 * self.weighted_n_left)) +
+            (self.sum_right[0, 0] / (2 * self.weighted_n_right))
+        )
+
+    cdef inline bint check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        double lower_bound,
+        double upper_bound,
+    ) noexcept nogil:
+        """Check monotonicity constraint is satisfied at the current classification split"""
+        cdef:
+            double value_left = self.sum_left[0][0] / self.weighted_n_left
+            double value_right = self.sum_right[0][0] / self.weighted_n_right
+
+        return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
 
 
 cdef class Entropy(ClassificationCriterion):
@@ -598,6 +774,44 @@ cdef class Gini(ClassificationCriterion):
         impurity_right[0] = gini_right / self.n_outputs
 
 
+cdef inline void _move_sums_regression(
+    RegressionCriterion criterion,
+    double[::1] sum_1,
+    double[::1] sum_2,
+    double* weighted_n_1,
+    double* weighted_n_2,
+    bint put_missing_in_1,
+) noexcept nogil:
+    """Distribute sum_total and sum_missing into sum_1 and sum_2.
+
+    If there are missing values and:
+    - put_missing_in_1 is True, then missing values to go sum_1. Specifically:
+        sum_1 = sum_missing
+        sum_2 = sum_total - sum_missing
+
+    - put_missing_in_1 is False, then missing values go to sum_2. Specifically:
+        sum_1 = 0
+        sum_2 = sum_total
+    """
+    cdef:
+        SIZE_t i
+        SIZE_t n_bytes = criterion.n_outputs * sizeof(double)
+        bint has_missing = criterion.n_missing != 0
+
+    if has_missing and put_missing_in_1:
+        memcpy(&sum_1[0], &criterion.sum_missing[0], n_bytes)
+        for i in range(criterion.n_outputs):
+            sum_2[i] = criterion.sum_total[i] - criterion.sum_missing[i]
+        weighted_n_1[0] = criterion.weighted_n_missing
+        weighted_n_2[0] = criterion.weighted_n_node_samples - criterion.weighted_n_missing
+    else:
+        memset(&sum_1[0], 0, n_bytes)
+        # Assigning sum_2 = sum_total for all outputs.
+        memcpy(&sum_2[0], &criterion.sum_total[0], n_bytes)
+        weighted_n_1[0] = 0.0
+        weighted_n_2[0] = criterion.weighted_n_node_samples
+
+
 cdef class RegressionCriterion(Criterion):
     r"""Abstract regression criterion.
 
@@ -632,6 +846,7 @@ cdef class RegressionCriterion(Criterion):
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
         self.weighted_n_right = 0.0
+        self.weighted_n_missing = 0.0
 
         self.sq_sum_total = 0.0
 
@@ -693,26 +908,66 @@ cdef class RegressionCriterion(Criterion):
         self.reset()
         return 0
 
+    cdef void init_sum_missing(self):
+        """Init sum_missing to hold sums for missing values."""
+        self.sum_missing = np.zeros(self.n_outputs, dtype=np.float64)
+
+    cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
+        """Initialize sum_missing if there are missing values.
+
+        This method assumes that caller placed the missing samples in
+        self.sample_indices[-n_missing:]
+        """
+        cdef SIZE_t i, p, k
+        cdef DOUBLE_t y_ik
+        cdef DOUBLE_t w_y_ik
+        cdef DOUBLE_t w = 1.0
+
+        self.n_missing = n_missing
+        if n_missing == 0:
+            return
+
+        memset(&self.sum_missing[0], 0, self.n_outputs * sizeof(double))
+
+        self.weighted_n_missing = 0.0
+
+        # The missing samples are assumed to be in self.sample_indices[-n_missing:]
+        for p in range(self.end - n_missing, self.end):
+            i = self.sample_indices[p]
+            if self.sample_weight is not None:
+                w = self.sample_weight[i]
+
+            for k in range(self.n_outputs):
+                y_ik = self.y[i, k]
+                w_y_ik = w * y_ik
+                self.sum_missing[k] += w_y_ik
+
+            self.weighted_n_missing += w
+
     cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start."""
-        cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
-        memset(&self.sum_left[0], 0, n_bytes)
-        memcpy(&self.sum_right[0], &self.sum_total[0], n_bytes)
-
-        self.weighted_n_left = 0.0
-        self.weighted_n_right = self.weighted_n_node_samples
         self.pos = self.start
+        _move_sums_regression(
+            self,
+            self.sum_left,
+            self.sum_right,
+            &self.weighted_n_left,
+            &self.weighted_n_right,
+            self.missing_go_to_left
+        )
         return 0
 
     cdef int reverse_reset(self) except -1 nogil:
         """Reset the criterion at pos=end."""
-        cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
-        memset(&self.sum_right[0], 0, n_bytes)
-        memcpy(&self.sum_left[0], &self.sum_total[0], n_bytes)
-
-        self.weighted_n_right = 0.0
-        self.weighted_n_left = self.weighted_n_node_samples
         self.pos = self.end
+        _move_sums_regression(
+            self,
+            self.sum_right,
+            self.sum_left,
+            &self.weighted_n_right,
+            &self.weighted_n_left,
+            not self.missing_go_to_left
+        )
         return 0
 
     cdef int update(self, SIZE_t new_pos) except -1 nogil:
@@ -721,7 +976,11 @@ cdef class RegressionCriterion(Criterion):
         cdef const SIZE_t[:] sample_indices = self.sample_indices
 
         cdef SIZE_t pos = self.pos
-        cdef SIZE_t end = self.end
+
+        # The missing samples are assumed to be in
+        # self.sample_indices[-self.n_missing:] that is
+        # self.sample_indices[end_non_missing:self.end].
+        cdef SIZE_t end_non_missing = self.end - self.n_missing
         cdef SIZE_t i
         cdef SIZE_t p
         cdef SIZE_t k
@@ -734,7 +993,7 @@ cdef class RegressionCriterion(Criterion):
         # and that sum_total is known, we are going to update
         # sum_left from the direction that require the least amount
         # of computations, i.e. from pos to new_pos or from end to new_pos.
-        if (new_pos - pos) <= (end - new_pos):
+        if (new_pos - pos) <= (end_non_missing - new_pos):
             for p in range(pos, new_pos):
                 i = sample_indices[p]
 
@@ -748,7 +1007,7 @@ cdef class RegressionCriterion(Criterion):
         else:
             self.reverse_reset()
 
-            for p in range(end - 1, new_pos - 1, -1):
+            for p in range(end_non_missing - 1, new_pos - 1, -1):
                 i = sample_indices[p]
 
                 if sample_weight is not None:
@@ -781,6 +1040,37 @@ cdef class RegressionCriterion(Criterion):
         for k in range(self.n_outputs):
             dest[k] = self.sum_total[k] / self.weighted_n_node_samples
 
+    cdef inline void clip_node_value(self, double* dest, double lower_bound, double upper_bound) noexcept nogil:
+        """Clip the value in dest between lower_bound and upper_bound for monotonic constraints."""
+        if dest[0] < lower_bound:
+            dest[0] = lower_bound
+        elif dest[0] > upper_bound:
+            dest[0] = upper_bound
+
+    cdef double middle_value(self) noexcept nogil:
+        """Compute the middle value of a split for monotonicity constraints as the simple average
+        of the left and right children values.
+
+        Monotonicity constraints are only supported for single-output trees we can safely assume
+        n_outputs == 1.
+        """
+        return (
+            (self.sum_left[0] / (2 * self.weighted_n_left)) +
+            (self.sum_right[0] / (2 * self.weighted_n_right))
+        )
+
+    cdef bint check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        double lower_bound,
+        double upper_bound,
+    ) noexcept nogil:
+        """Check monotonicity constraint is satisfied at the current regression split"""
+        cdef:
+            double value_left = self.sum_left[0] / self.weighted_n_left
+            double value_right = self.sum_right[0] / self.weighted_n_right
+
+        return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
 
 cdef class MSE(RegressionCriterion):
     """Mean squared error impurity criterion.
@@ -982,6 +1272,13 @@ cdef class MAE(RegressionCriterion):
         self.reset()
         return 0
 
+    cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
+        """Raise error if n_missing != 0."""
+        if n_missing == 0:
+            return
+        with gil:
+            raise ValueError("missing values is not supported for MAE.")
+
     cdef int reset(self) except -1 nogil:
         """Reset the criterion at pos=start.
 
@@ -1103,6 +1400,31 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t k
         for k in range(self.n_outputs):
             dest[k] = <double> self.node_medians[k]
+
+    cdef inline double middle_value(self) noexcept nogil:
+        """Compute the middle value of a split for monotonicity constraints as the simple average
+        of the left and right children values.
+
+        Monotonicity constraints are only supported for single-output trees we can safely assume
+        n_outputs == 1.
+        """
+        return (
+                (<WeightedMedianCalculator> self.left_child_ptr[0]).get_median() +
+                (<WeightedMedianCalculator> self.right_child_ptr[0]).get_median()
+        ) / 2
+
+    cdef inline bint check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        double lower_bound,
+        double upper_bound,
+    ) noexcept nogil:
+        """Check monotonicity constraint is satisfied at the current regression split"""
+        cdef:
+            double value_left = (<WeightedMedianCalculator> self.left_child_ptr[0]).get_median()
+            double value_right = (<WeightedMedianCalculator> self.right_child_ptr[0]).get_median()
+
+        return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, value_left, value_right)
 
     cdef double node_impurity(self) noexcept nogil:
         """Evaluate the impurity of the current node.

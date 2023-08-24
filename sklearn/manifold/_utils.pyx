@@ -3,13 +3,13 @@ import numpy as np
 cimport numpy as cnp
 
 
-
 cdef extern from "numpy/npy_math.h":
     float NPY_INFINITY
 
 
 cdef float EPSILON_DBL = 1e-8
 cdef float PERPLEXITY_TOLERANCE = 1e-5
+
 
 # TODO: have this function support float32 and float64 and preserve inputs' dtypes.
 def _binary_search_perplexity(

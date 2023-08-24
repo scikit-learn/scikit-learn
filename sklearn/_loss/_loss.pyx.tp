@@ -46,6 +46,18 @@ doc_PinballLoss = (
     """
 )
 
+doc_HuberLoss = (
+    """Huber Loss with identity link.
+
+    Domain:
+    y_true and y_pred all real numbers
+    delta in positive real numbers
+
+    Link:
+    y_pred = raw_prediction
+    """
+)
+
 doc_HalfPoissonLoss = (
     """Half Poisson deviance loss with log-link.
 
@@ -176,6 +188,9 @@ class_list = [
     ("CyPinballLoss", doc_PinballLoss, "quantile",
      "closs_pinball_loss", None,
      "cgradient_pinball_loss", "cgrad_hess_pinball_loss"),
+     ("CyHuberLoss", doc_HuberLoss, "delta",
+     "closs_huber_loss", None,
+     "cgradient_huber_loss", "cgrad_hess_huber_loss"),
     ("CyHalfPoissonLoss", doc_HalfPoissonLoss, None,
      "closs_half_poisson", "closs_grad_half_poisson",
      "cgradient_half_poisson", "cgrad_hess_half_poisson"),
@@ -371,6 +386,47 @@ cdef inline double_pair cgrad_hess_pinball_loss(
     # in HGBT, however, need a hessian > 0. Therefore, we assign 1.
     gh.val1 = -quantile if y_true >=raw_prediction else 1. - quantile  # gradient
     gh.val2 = 1.                                                       # hessian
+    return gh
+
+
+# Huber Loss
+cdef inline double closs_huber_loss(
+    double y_true,
+    double raw_prediction,
+    double delta,
+) noexcept nogil:
+    cdef double abserr = fabs(y_true - raw_prediction)
+    if abserr <= delta:
+        return 0.5 * abserr**2
+    else:
+        return delta * (abserr - 0.5 * delta)
+
+
+cdef inline double cgradient_huber_loss(
+    double y_true,
+    double raw_prediction,
+    double delta,
+) noexcept nogil:
+    cdef double res = raw_prediction - y_true
+    if fabs(res) <= delta:
+        return res
+    else:
+        return delta if res >=0 else -delta
+
+
+cdef inline double_pair cgrad_hess_huber_loss(
+    double y_true,
+    double raw_prediction,
+    double delta,
+) noexcept nogil:
+    cdef double_pair gh
+    gh.val2 = raw_prediction - y_true               # used as temporary
+    if fabs(gh.val2) <= delta:
+        gh.val1 = gh.val2                           # gradient
+        gh.val2 = 1                                 # hessian
+    else:
+        gh.val1 = delta if gh.val2 >=0 else -delta  # gradient
+        gh.val2 = 0                                 # hessian
     return gh
 
 

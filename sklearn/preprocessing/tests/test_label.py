@@ -1,29 +1,26 @@
 import numpy as np
-
 import pytest
-
-from scipy.sparse import issparse
-from scipy.sparse import coo_matrix
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import dok_matrix
-from scipy.sparse import lil_matrix
-
-from sklearn.utils.multiclass import type_of_target
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils import _to_object_array
-
-from sklearn.preprocessing._label import LabelBinarizer
-from sklearn.preprocessing._label import MultiLabelBinarizer
-from sklearn.preprocessing._label import LabelEncoder
-from sklearn.preprocessing._label import label_binarize
-
-from sklearn.preprocessing._label import _inverse_binarize_thresholding
-from sklearn.preprocessing._label import _inverse_binarize_multiclass
+from scipy.sparse import (
+    coo_matrix,
+    csc_matrix,
+    csr_matrix,
+    dok_matrix,
+    issparse,
+    lil_matrix,
+)
 
 from sklearn import datasets
+from sklearn.preprocessing._label import (
+    LabelBinarizer,
+    LabelEncoder,
+    MultiLabelBinarizer,
+    _inverse_binarize_multiclass,
+    _inverse_binarize_thresholding,
+    label_binarize,
+)
+from sklearn.utils import _to_object_array
+from sklearn.utils._testing import assert_array_equal, ignore_warnings
+from sklearn.utils.multiclass import type_of_target
 
 iris = datasets.load_iris()
 
@@ -675,3 +672,17 @@ def test_nan_label_encoder():
 
     y_trans = le.transform([np.nan])
     assert_array_equal(y_trans, [2])
+
+
+@pytest.mark.parametrize(
+    "encoder", [LabelEncoder(), LabelBinarizer(), MultiLabelBinarizer()]
+)
+def test_label_encoders_do_not_have_set_output(encoder):
+    """Check that label encoders do not define set_output and work with y as a kwarg.
+
+    Non-regression test for #26854.
+    """
+    assert not hasattr(encoder, "set_output")
+    y_encoded_with_kwarg = encoder.fit_transform(y=["a", "b", "c"])
+    y_encoded_positional = encoder.fit_transform(["a", "b", "c"])
+    assert_array_equal(y_encoded_with_kwarg, y_encoded_positional)

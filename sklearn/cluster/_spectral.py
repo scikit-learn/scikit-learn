@@ -6,20 +6,19 @@
 #         Andrew Knyazev <Andrew.Knyazev@ucdenver.edu>
 # License: BSD 3 clause
 
-from numbers import Integral, Real
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
-
 from scipy.linalg import LinAlgError, qr, svd
 from scipy.sparse import csc_matrix
 
-from ..base import BaseEstimator, ClusterMixin
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils import check_random_state, as_float_array
-from ..metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
-from ..neighbors import kneighbors_graph, NearestNeighbors
+from ..base import BaseEstimator, ClusterMixin, _fit_context
 from ..manifold import spectral_embedding
+from ..metrics.pairwise import KERNEL_PARAMS, pairwise_kernels
+from ..neighbors import NearestNeighbors, kneighbors_graph
+from ..utils import as_float_array, check_random_state
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ._kmeans import k_means
 
 
@@ -190,7 +189,10 @@ def discretize(
     return labels
 
 
-@validate_params({"affinity": ["array-like", "sparse matrix"]})
+@validate_params(
+    {"affinity": ["array-like", "sparse matrix"]},
+    prefer_skip_nested_validation=False,
+)
 def spectral_clustering(
     affinity,
     *,
@@ -437,7 +439,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
            of precomputed distances, and construct a binary affinity matrix
            from the ``n_neighbors`` nearest neighbors of each instance.
          - one of the kernels supported by
-           :func:`~sklearn.metrics.pairwise_kernels`.
+           :func:`~sklearn.metrics.pairwise.pairwise_kernels`.
 
         Only kernels that produce similarity scores (non-negative values that
         increase with similarity) should be used. This property is not checked
@@ -448,7 +450,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         the nearest neighbors method. Ignored for ``affinity='rbf'``.
 
     eigen_tol : float, default="auto"
-        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        Stopping criterion for eigen decomposition of the Laplacian matrix.
         If `eigen_tol="auto"` then the passed tolerance will depend on the
         `eigen_solver`:
 
@@ -649,6 +651,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.verbose = verbose
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Perform spectral clustering from features, or affinity matrix.
 
@@ -671,8 +674,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self : object
             A fitted instance of the estimator.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X,
             accept_sparse=["csr", "csc", "coo"],

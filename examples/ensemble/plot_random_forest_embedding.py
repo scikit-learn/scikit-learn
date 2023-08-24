@@ -26,12 +26,12 @@ original data.
 
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.datasets import make_circles
-from sklearn.ensemble import RandomTreesEmbedding, ExtraTreesClassifier
 from sklearn.decomposition import TruncatedSVD
+from sklearn.ensemble import ExtraTreesClassifier, RandomTreesEmbedding
 from sklearn.naive_bayes import BernoulliNB
 
 # make a synthetic dataset

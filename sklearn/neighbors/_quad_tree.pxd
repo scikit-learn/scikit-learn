@@ -31,12 +31,12 @@ cdef struct Cell:
     # Cell description
     SIZE_t cell_id             # Id of the cell in the cells array in the Tree
     SIZE_t point_index         # Index of the point at this cell (only defined
-                               # in non empty leaf)
+    #                          # in non empty leaf)
     bint is_leaf               # Does this cell have children?
     DTYPE_t squared_max_width  # Squared value of the maximum width w
     SIZE_t depth               # Depth of the cell in the tree
     SIZE_t cumulative_size     # Number of points included in the subtree with
-                               # this cell as a root.
+    #                          # this cell as a root.
 
     # Internal constants
     DTYPE_t[3] center          # Store the center for quick split of cells

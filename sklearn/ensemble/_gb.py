@@ -20,36 +20,26 @@ The module structure is the following:
 #          Arnaud Joly, Jacob Schreiber
 # License: BSD 3 clause
 
-from abc import ABCMeta
-from abc import abstractmethod
-from numbers import Integral, Real
 import warnings
-
-from ._base import BaseEnsemble
-from ..base import ClassifierMixin, RegressorMixin
-from ..base import is_classifier
-
-from ._gradient_boosting import predict_stages
-from ._gradient_boosting import predict_stage
-from ._gradient_boosting import _random_sample_mask
+from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
+from time import time
 
 import numpy as np
+from scipy.sparse import csc_matrix, csr_matrix, issparse
 
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import issparse
-
-from time import time
+from ..base import ClassifierMixin, RegressorMixin, _fit_context, is_classifier
+from ..exceptions import NotFittedError
 from ..model_selection import train_test_split
 from ..tree import DecisionTreeRegressor
-from ..tree._tree import DTYPE, DOUBLE
-from . import _gb_losses
-
+from ..tree._tree import DOUBLE, DTYPE
 from ..utils import check_array, check_random_state, column_or_1d
 from ..utils._param_validation import HasMethods, Interval, StrOptions
-from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
-from ..exceptions import NotFittedError
+from ..utils.validation import _check_sample_weight, check_is_fitted
+from . import _gb_losses
+from ._base import BaseEnsemble
+from ._gradient_boosting import _random_sample_mask, predict_stage, predict_stages
 
 
 class VerboseReporter:
@@ -147,6 +137,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         "tol": [Interval(Real, 0.0, None, closed="left")],
     }
     _parameter_constraints.pop("splitter")
+    _parameter_constraints.pop("monotonic_cst")
 
     @abstractmethod
     def __init__(
@@ -251,13 +242,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 # no inplace multiplication!
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
-            X = X_csr if X_csr is not None else X
+            X = X_csc if X_csc is not None else X
             tree.fit(X, residual, sample_weight=sample_weight, check_input=False)
 
             # update tree leaves
+            X_for_tree_update = X_csr if X_csr is not None else X
             loss.update_terminal_regions(
                 tree.tree_,
-                X,
+                X_for_tree_update,
                 y,
                 residual,
                 raw_predictions,
@@ -376,6 +368,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """Check that the estimator is initialized, raising an error if not."""
         check_is_fitted(self)
 
+    @_fit_context(
+        # GradientBoosting*.init is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
@@ -412,8 +408,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         if not self.warm_start:
             self._clear_state()
 
@@ -440,16 +434,18 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
-            X, X_val, y, y_val, sample_weight, sample_weight_val = train_test_split(
-                X,
-                y,
-                sample_weight,
-                random_state=self.random_state,
-                test_size=self.validation_fraction,
-                stratify=stratify,
+            X_train, X_val, y_train, y_val, sample_weight_train, sample_weight_val = (
+                train_test_split(
+                    X,
+                    y,
+                    sample_weight,
+                    random_state=self.random_state,
+                    test_size=self.validation_fraction,
+                    stratify=stratify,
+                )
             )
             if is_classifier(self):
-                if self._n_classes != np.unique(y).shape[0]:
+                if self._n_classes != np.unique(y_train).shape[0]:
                     # We choose to error here. The problem is that the init
                     # estimator would be trained on y, which has some missing
                     # classes now, so its predictions would not have the
@@ -460,6 +456,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         "seed."
                     )
         else:
+            X_train, y_train, sample_weight_train = X, y, sample_weight
             X_val = y_val = sample_weight_val = None
 
         if not self._is_initialized():
@@ -469,19 +466,21 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # fit initial model and initialize raw predictions
             if self.init_ == "zero":
                 raw_predictions = np.zeros(
-                    shape=(X.shape[0], self._loss.K), dtype=np.float64
+                    shape=(X_train.shape[0], self._loss.K), dtype=np.float64
                 )
             else:
                 # XXX clean this once we have a support_sample_weight tag
                 if sample_weight_is_none:
-                    self.init_.fit(X, y)
+                    self.init_.fit(X_train, y_train)
                 else:
                     msg = (
                         "The initial estimator {} does not support sample "
                         "weights.".format(self.init_.__class__.__name__)
                     )
                     try:
-                        self.init_.fit(X, y, sample_weight=sample_weight)
+                        self.init_.fit(
+                            X_train, y_train, sample_weight=sample_weight_train
+                        )
                     except TypeError as e:
                         if "unexpected keyword argument 'sample_weight'" in str(e):
                             # regular estimator without SW support
@@ -499,7 +498,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         else:  # regular estimator whose input checking failed
                             raise
 
-                raw_predictions = self._loss.get_init_raw_predictions(X, self.init_)
+                raw_predictions = self._loss.get_init_raw_predictions(
+                    X_train, self.init_
+                )
 
             begin_at_stage = 0
 
@@ -519,22 +520,22 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # The requirements of _raw_predict
             # are more constrained than fit. It accepts only CSR
             # matrices. Finite values have already been checked in _validate_data.
-            X = check_array(
-                X,
+            X_train = check_array(
+                X_train,
                 dtype=DTYPE,
                 order="C",
                 accept_sparse="csr",
                 force_all_finite=False,
             )
-            raw_predictions = self._raw_predict(X)
+            raw_predictions = self._raw_predict(X_train)
             self._resize_state()
 
         # fit the boosting stages
         n_stages = self._fit_stages(
-            X,
-            y,
+            X_train,
+            y_train,
             raw_predictions,
-            sample_weight,
+            sample_weight_train,
             self._rng,
             X_val,
             y_val,
@@ -949,7 +950,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
-        ``init`` has to provide :meth:`fit` and :meth:`predict_proba`. If
+        ``init`` has to provide :term:`fit` and :term:`predict_proba`. If
         'zero', the initial raw predictions are set to zero. By default, a
         ``DummyEstimator`` predicting the classes priors is used.
 

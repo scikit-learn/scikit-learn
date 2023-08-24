@@ -23,7 +23,9 @@ cdef enum:
     # Max value for our rand_r replacement (near the bottom).
     # We don't use RAND_MAX because it's different across platforms and
     # particularly tiny on Windows/MSVC.
-    RAND_R_MAX = 0x7FFFFFFF
+    # It corresponds to the maximum representable value for
+    # 32-bit signed integers (i.e. 2^31 - 1).
+    RAND_R_MAX = 2147483647
 
 
 # safe_realloc(&p, n) resizes the allocation of p to n * sizeof(*p) bytes or
@@ -93,9 +95,7 @@ cdef class WeightedMedianCalculator:
     cdef WeightedPQueue samples
     cdef DOUBLE_t total_weight
     cdef SIZE_t k
-    cdef DOUBLE_t sum_w_0_k            # represents sum(weights[0:k])
-                                       # = w[0] + w[1] + ... + w[k-1]
-
+    cdef DOUBLE_t sum_w_0_k  # represents sum(weights[0:k]) = w[0] + w[1] + ... + w[k-1]
     cdef SIZE_t size(self) noexcept nogil
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) except -1 nogil
     cdef int reset(self) except -1 nogil

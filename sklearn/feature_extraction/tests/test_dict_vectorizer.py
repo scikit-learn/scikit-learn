@@ -3,12 +3,11 @@
 # License: BSD 3 clause
 
 from random import Random
-import numpy as np
-import scipy.sparse as sp
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_allclose
 
+import numpy as np
 import pytest
+import scipy.sparse as sp
+from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import SelectKBest, chi2

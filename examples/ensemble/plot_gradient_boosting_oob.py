@@ -26,15 +26,13 @@ but is computationally more demanding.
 #
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy.special import expit
 
 from sklearn import ensemble
-from sklearn.model_selection import KFold
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import log_loss
-
-from scipy.special import expit
+from sklearn.model_selection import KFold, train_test_split
 
 # Generate data (adapted from G. Ridgeway's gbm example)
 n_samples = 1000
