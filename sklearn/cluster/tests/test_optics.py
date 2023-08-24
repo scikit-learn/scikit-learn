@@ -1,818 +1,331 @@
-# Authors: Shane Grigsby <refuge@rocktalus.com>
-#          Adrin Jalali <adrin.jalali@gmail.com>
-# License: BSD 3 clause
-import warnings
+"""Testing for Spectral Clustering methods"""
+import pickle
+import re
 
 import numpy as np
 import pytest
 from scipy import sparse
+from scipy.linalg import LinAlgError
 
-from sklearn.cluster import DBSCAN, OPTICS
-from sklearn.cluster._optics import _extend_region, _extract_xi_labels
-from sklearn.cluster.tests.common import generate_clustered_data
+from sklearn.cluster import SpectralClustering, spectral_clustering
+from sklearn.cluster._spectral import cluster_qr, discretize
 from sklearn.datasets import make_blobs
-from sklearn.exceptions import DataConversionWarning, EfficiencyWarning
-from sklearn.metrics.cluster import contingency_matrix
-from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.utils import shuffle
-from sklearn.utils._testing import assert_allclose, assert_array_equal
-from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.feature_extraction import img_to_graph
+from sklearn.metrics import adjusted_rand_score
+from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import assert_array_equal
 
-rng = np.random.RandomState(0)
-n_points_per_cluster = 10
-C1 = [-5, -2] + 0.8 * rng.randn(n_points_per_cluster, 2)
-C2 = [4, -1] + 0.1 * rng.randn(n_points_per_cluster, 2)
-C3 = [1, -2] + 0.2 * rng.randn(n_points_per_cluster, 2)
-C4 = [-2, 3] + 0.3 * rng.randn(n_points_per_cluster, 2)
-C5 = [3, -2] + 1.6 * rng.randn(n_points_per_cluster, 2)
-C6 = [5, 6] + 2 * rng.randn(n_points_per_cluster, 2)
-X = np.vstack((C1, C2, C3, C4, C5, C6))
+try:
+    from pyamg import smoothed_aggregation_solver  # noqa
 
+    amg_loaded = True
+except ImportError:
+    amg_loaded = False
 
-@pytest.mark.parametrize(
-    ("r_plot", "end"),
-    [
-        [[10, 8.9, 8.8, 8.7, 7, 10], 3],
-        [[10, 8.9, 8.8, 8.7, 8.6, 7, 10], 0],
-        [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4],
-        [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4],
-    ],
+centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
+X, _ = make_blobs(
+    n_samples=60,
+    n_features=2,
+    centers=centers,
+    cluster_std=0.4,
+    shuffle=True,
+    random_state=0,
 )
-def test_extend_downward(r_plot, end):
-    r_plot = np.array(r_plot)
-    ratio = r_plot[:-1] / r_plot[1:]
-    steep_downward = ratio >= 1 / 0.9
-    upward = ratio < 1
-
-    e = _extend_region(steep_downward, upward, 0, 2)
-    assert e == end
 
 
-@pytest.mark.parametrize(
-    ("r_plot", "end"),
-    [
-        [[1, 2, 2.1, 2.2, 4, 8, 8, np.inf], 6],
-        [[1, 2, 2.1, 2.2, 2.3, 4, 8, 8, np.inf], 0],
-        [[1, 2, 2.1, 2, np.inf], 0],
-        [[1, 2, 2.1, np.inf], 2],
-    ],
-)
-def test_extend_upward(r_plot, end):
-    r_plot = np.array(r_plot)
-    ratio = r_plot[:-1] / r_plot[1:]
-    steep_upward = ratio <= 0.9
-    downward = ratio > 1
-
-    e = _extend_region(steep_upward, downward, 0, 2)
-    assert e == end
-
-
-@pytest.mark.parametrize(
-    ("ordering", "clusters", "expected"),
-    [
-        [[0, 1, 2, 3], [[0, 1], [2, 3]], [0, 0, 1, 1]],
-        [[0, 1, 2, 3], [[0, 1], [3, 3]], [0, 0, -1, 1]],
-        [[0, 1, 2, 3], [[0, 1], [3, 3], [0, 3]], [0, 0, -1, 1]],
-        [[3, 1, 2, 0], [[0, 1], [3, 3], [0, 3]], [1, 0, -1, 0]],
-    ],
-)
-def test_the_extract_xi_labels(ordering, clusters, expected):
-    labels = _extract_xi_labels(ordering, clusters)
-
-    assert_array_equal(labels, expected)
-
-
-def test_extract_xi(global_dtype):
-    # small and easy test (no clusters around other clusters)
-    # but with a clear noise data.
-    rng = np.random.RandomState(0)
-    n_points_per_cluster = 5
-
-    C1 = [-5, -2] + 0.8 * rng.randn(n_points_per_cluster, 2)
-    C2 = [4, -1] + 0.1 * rng.randn(n_points_per_cluster, 2)
-    C3 = [1, -2] + 0.2 * rng.randn(n_points_per_cluster, 2)
-    C4 = [-2, 3] + 0.3 * rng.randn(n_points_per_cluster, 2)
-    C5 = [3, -2] + 0.6 * rng.randn(n_points_per_cluster, 2)
-    C6 = [5, 6] + 0.2 * rng.randn(n_points_per_cluster, 2)
-
-    X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]]), C6)).astype(
-        global_dtype, copy=False
-    )
-    expected_labels = np.r_[[2] * 5, [0] * 5, [1] * 5, [3] * 5, [1] * 5, -1, [4] * 5]
-    X, expected_labels = shuffle(X, expected_labels, random_state=rng)
-
-    clust = OPTICS(
-        min_samples=3, min_cluster_size=2, max_eps=20, cluster_method="xi", xi=0.4
-    ).fit(X)
-    assert_array_equal(clust.labels_, expected_labels)
-
-    # check float min_samples and min_cluster_size
-    clust = OPTICS(
-        min_samples=0.1, min_cluster_size=0.08, max_eps=20, cluster_method="xi", xi=0.4
-    ).fit(X)
-    assert_array_equal(clust.labels_, expected_labels)
-
-    X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]] * 2), C6)).astype(
-        global_dtype, copy=False
-    )
-    expected_labels = np.r_[
-        [1] * 5, [3] * 5, [2] * 5, [0] * 5, [2] * 5, -1, -1, [4] * 5
-    ]
-    X, expected_labels = shuffle(X, expected_labels, random_state=rng)
-
-    clust = OPTICS(
-        min_samples=3, min_cluster_size=3, max_eps=20, cluster_method="xi", xi=0.3
-    ).fit(X)
-    # this may fail if the predecessor correction is not at work!
-    assert_array_equal(clust.labels_, expected_labels)
-
-    C1 = [[0, 0], [0, 0.1], [0, -0.1], [0.1, 0]]
-    C2 = [[10, 10], [10, 9], [10, 11], [9, 10]]
-    C3 = [[100, 100], [100, 90], [100, 110], [90, 100]]
-    X = np.vstack((C1, C2, C3)).astype(global_dtype, copy=False)
-    expected_labels = np.r_[[0] * 4, [1] * 4, [2] * 4]
-    X, expected_labels = shuffle(X, expected_labels, random_state=rng)
-
-    clust = OPTICS(
-        min_samples=2, min_cluster_size=2, max_eps=np.inf, cluster_method="xi", xi=0.04
-    ).fit(X)
-    assert_array_equal(clust.labels_, expected_labels)
-
-
-def test_cluster_hierarchy_(global_dtype):
-    rng = np.random.RandomState(0)
-    n_points_per_cluster = 100
-    C1 = [0, 0] + 2 * rng.randn(n_points_per_cluster, 2).astype(
-        global_dtype, copy=False
-    )
-    C2 = [0, 0] + 50 * rng.randn(n_points_per_cluster, 2).astype(
-        global_dtype, copy=False
-    )
-    X = np.vstack((C1, C2))
-    X = shuffle(X, random_state=0)
-
-    clusters = OPTICS(min_samples=20, xi=0.1).fit(X).cluster_hierarchy_
-    assert clusters.shape == (2, 2)
-    diff = np.sum(clusters - np.array([[0, 99], [0, 199]]))
-    assert diff / len(X) < 0.05
-
-
-@pytest.mark.parametrize(
-    "metric, is_sparse",
-    [["minkowski", False], ["euclidean", True]],
-)
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_correct_number_of_clusters(metric, is_sparse):
-    # in 'auto' mode
-
-    n_clusters = 3
-    X = generate_clustered_data(n_clusters=n_clusters)
-    # Parameters chosen specifically for this task.
-    # Compute OPTICS
-    clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4, xi=0.1, metric=metric)
-    clust.fit(sparse.csr_matrix(X) if is_sparse else X)
-    # number of clusters, ignoring noise if present
-    n_clusters_1 = len(set(clust.labels_)) - int(-1 in clust.labels_)
-    assert n_clusters_1 == n_clusters
-
-    # check attribute types and sizes
-    assert clust.labels_.shape == (len(X),)
-    assert clust.labels_.dtype.kind == "i"
-
-    assert clust.reachability_.shape == (len(X),)
-    assert clust.reachability_.dtype.kind == "f"
-
-    assert clust.core_distances_.shape == (len(X),)
-    assert clust.core_distances_.dtype.kind == "f"
-
-    assert clust.ordering_.shape == (len(X),)
-    assert clust.ordering_.dtype.kind == "i"
-    assert set(clust.ordering_) == set(range(len(X)))
-
-
-def test_minimum_number_of_sample_check():
-    # test that we check a minimum number of samples
-    msg = "min_samples must be no greater than"
-
-    # Compute OPTICS
-    X = [[1, 1]]
-    clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10, min_cluster_size=1.0)
-
-    # Run the fit
-    with pytest.raises(ValueError, match=msg):
-        clust.fit(X)
-
-
-def test_bad_extract():
-    # Test an extraction of eps too close to original eps
-    msg = "Specify an epsilon smaller than 0.15. Got 0.3."
-    centers = [[1, 1], [-1, -1], [1, -1]]
-    X, labels_true = make_blobs(
-        n_samples=750, centers=centers, cluster_std=0.4, random_state=0
+@pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg"))
+@pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
+def test_spectral_clustering(eigen_solver, assign_labels):
+    S = np.array(
+        [
+            [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
+            [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
+            [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
+            [0.2, 0.2, 0.2, 1.0, 1.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
+        ]
     )
 
-    # Compute OPTICS
-    clust = OPTICS(max_eps=5.0 * 0.03, cluster_method="dbscan", eps=0.3, min_samples=10)
-    with pytest.raises(ValueError, match=msg):
-        clust.fit(X)
+    for mat in (S, sparse.csr_matrix(S)):
+        model = SpectralClustering(
+            random_state=0,
+            n_clusters=2,
+            affinity="precomputed",
+            eigen_solver=eigen_solver,
+            assign_labels=assign_labels,
+        ).fit(mat)
+        labels = model.labels_
+        if labels[0] == 0:
+            labels = 1 - labels
+
+        assert adjusted_rand_score(labels, [1, 1, 1, 0, 0, 0, 0]) == 1
+
+        model_copy = pickle.loads(pickle.dumps(model))
+        assert model_copy.n_clusters == model.n_clusters
+        assert model_copy.eigen_solver == model.eigen_solver
+        assert_array_equal(model_copy.labels_, model.labels_)
 
 
-def test_bad_reachability():
-    msg = "All reachability values are inf. Set a larger max_eps."
-    centers = [[1, 1], [-1, -1], [1, -1]]
-    X, labels_true = make_blobs(
-        n_samples=750, centers=centers, cluster_std=0.4, random_state=0
+@pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
+def test_spectral_clustering_sparse(assign_labels):
+    X, y = make_blobs(
+        n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
     )
 
-    with pytest.warns(UserWarning, match=msg):
-        clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10, eps=0.015)
-        clust.fit(X)
+    S = rbf_kernel(X, gamma=1)
+    S = np.maximum(S - 1e-4, 0)
+    S = sparse.coo_matrix(S)
 
-
-def test_nowarn_if_metric_bool_data_bool():
-    # make sure no warning is raised if metric and data are both boolean
-    # non-regression test for
-    # https://github.com/scikit-learn/scikit-learn/issues/18996
-
-    pairwise_metric = "rogerstanimoto"
-    X = np.random.randint(2, size=(5, 2), dtype=bool)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", DataConversionWarning)
-
-        OPTICS(metric=pairwise_metric).fit(X)
-
-
-def test_warn_if_metric_bool_data_no_bool():
-    # make sure a *single* conversion warning is raised if metric is boolean
-    # but data isn't
-    # non-regression test for
-    # https://github.com/scikit-learn/scikit-learn/issues/18996
-
-    pairwise_metric = "rogerstanimoto"
-    X = np.random.randint(2, size=(5, 2), dtype=np.int32)
-    msg = f"Data will be converted to boolean for metric {pairwise_metric}"
-
-    with pytest.warns(DataConversionWarning, match=msg) as warn_record:
-        OPTICS(metric=pairwise_metric).fit(X)
-        assert len(warn_record) == 1
-
-
-def test_nowarn_if_metric_no_bool():
-    # make sure no conversion warning is raised if
-    # metric isn't boolean, no matter what the data type is
-    pairwise_metric = "minkowski"
-    X_bool = np.random.randint(2, size=(5, 2), dtype=bool)
-    X_num = np.random.randint(2, size=(5, 2), dtype=np.int32)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", DataConversionWarning)
-
-        # fit boolean data
-        OPTICS(metric=pairwise_metric).fit(X_bool)
-        # fit numeric data
-        OPTICS(metric=pairwise_metric).fit(X_num)
-
-
-def test_close_extract():
-    # Test extract where extraction eps is close to scaled max_eps
-
-    centers = [[1, 1], [-1, -1], [1, -1]]
-    X, labels_true = make_blobs(
-        n_samples=750, centers=centers, cluster_std=0.4, random_state=0
-    )
-
-    # Compute OPTICS
-    clust = OPTICS(max_eps=1.0, cluster_method="dbscan", eps=0.3, min_samples=10).fit(X)
-    # Cluster ordering starts at 0; max cluster label = 2 is 3 clusters
-    assert max(clust.labels_) == 2
-
-
-@pytest.mark.parametrize("eps", [0.1, 0.3, 0.5])
-@pytest.mark.parametrize("min_samples", [3, 10, 20])
-@pytest.mark.parametrize(
-    "metric, is_sparse",
-    [["minkowski", False], ["euclidean", False], ["euclidean", True]],
-)
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_dbscan_optics_parity(eps, min_samples, metric, is_sparse, global_dtype):
-    # Test that OPTICS clustering labels are <= 5% difference of DBSCAN
-
-    centers = [[1, 1], [-1, -1], [1, -1]]
-    X, labels_true = make_blobs(
-        n_samples=150, centers=centers, cluster_std=0.4, random_state=0
-    )
-    X = sparse.csr_matrix(X) if is_sparse else X
-
-    X = X.astype(global_dtype, copy=False)
-
-    # calculate optics with dbscan extract at 0.3 epsilon
-    op = OPTICS(
-        min_samples=min_samples, cluster_method="dbscan", eps=eps, metric=metric
-    ).fit(X)
-
-    # calculate dbscan labels
-    db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
-
-    contingency = contingency_matrix(db.labels_, op.labels_)
-    agree = min(
-        np.sum(np.max(contingency, axis=0)), np.sum(np.max(contingency, axis=1))
-    )
-    disagree = X.shape[0] - agree
-
-    percent_mismatch = np.round((disagree - 1) / X.shape[0], 2)
-
-    # verify label mismatch is <= 5% labels
-    assert percent_mismatch <= 0.05
-
-
-def test_min_samples_edge_case(global_dtype):
-    C1 = [[0, 0], [0, 0.1], [0, -0.1]]
-    C2 = [[10, 10], [10, 9], [10, 11]]
-    C3 = [[100, 100], [100, 96], [100, 106]]
-    X = np.vstack((C1, C2, C3)).astype(global_dtype, copy=False)
-
-    expected_labels = np.r_[[0] * 3, [1] * 3, [2] * 3]
-    clust = OPTICS(min_samples=3, max_eps=7, cluster_method="xi", xi=0.04).fit(X)
-    assert_array_equal(clust.labels_, expected_labels)
-
-    expected_labels = np.r_[[0] * 3, [1] * 3, [-1] * 3]
-    clust = OPTICS(min_samples=3, max_eps=3, cluster_method="xi", xi=0.04).fit(X)
-    assert_array_equal(clust.labels_, expected_labels)
-
-    expected_labels = np.r_[[-1] * 9]
-    with pytest.warns(UserWarning, match="All reachability values"):
-        clust = OPTICS(min_samples=4, max_eps=3, cluster_method="xi", xi=0.04).fit(X)
-        assert_array_equal(clust.labels_, expected_labels)
-
-
-# try arbitrary minimum sizes
-@pytest.mark.parametrize("min_cluster_size", range(2, X.shape[0] // 10, 23))
-def test_min_cluster_size(min_cluster_size, global_dtype):
-    redX = X[::2].astype(global_dtype, copy=False)  # reduce for speed
-    clust = OPTICS(min_samples=9, min_cluster_size=min_cluster_size).fit(redX)
-    cluster_sizes = np.bincount(clust.labels_[clust.labels_ != -1])
-    if cluster_sizes.size:
-        assert min(cluster_sizes) >= min_cluster_size
-    # check behaviour is the same when min_cluster_size is a fraction
-    clust_frac = OPTICS(
-        min_samples=9,
-        min_cluster_size=min_cluster_size / redX.shape[0],
-    )
-    clust_frac.fit(redX)
-    assert_array_equal(clust.labels_, clust_frac.labels_)
-
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_min_cluster_size_invalid2():
-    clust = OPTICS(min_cluster_size=len(X) + 1)
-    with pytest.raises(ValueError, match="must be no greater than the "):
-        clust.fit(X)
-
-    clust = OPTICS(min_cluster_size=len(X) + 1, metric="euclidean")
-    with pytest.raises(ValueError, match="must be no greater than the "):
-        clust.fit(sparse.csr_matrix(X))
-
-
-def test_processing_order():
-    # Ensure that we consider all unprocessed points,
-    # not only direct neighbors. when picking the next point.
-    Y = [[0], [10], [-10], [25]]
-
-    clust = OPTICS(min_samples=3, max_eps=15).fit(Y)
-    assert_array_equal(clust.reachability_, [np.inf, 10, 10, 15])
-    assert_array_equal(clust.core_distances_, [10, 15, np.inf, np.inf])
-    assert_array_equal(clust.ordering_, [0, 1, 2, 3])
-
-
-def test_compare_to_ELKI():
-    # Expected values, computed with (future) ELKI 0.7.5 using:
-    # java -jar elki.jar cli -dbc.in csv -dbc.filter FixedDBIDsFilter
-    #   -algorithm clustering.optics.OPTICSHeap -optics.minpts 5
-    # where the FixedDBIDsFilter gives 0-indexed ids.
-    r1 = [
-        np.inf,
-        1.0574896366427478,
-        0.7587934993548423,
-        0.7290174038973836,
-        0.7290174038973836,
-        0.7290174038973836,
-        0.6861627576116127,
-        0.7587934993548423,
-        0.9280118450166668,
-        1.1748022534146194,
-        3.3355455741292257,
-        0.49618389254482587,
-        0.2552805046961355,
-        0.2552805046961355,
-        0.24944622248445714,
-        0.24944622248445714,
-        0.24944622248445714,
-        0.2552805046961355,
-        0.2552805046961355,
-        0.3086779122185853,
-        4.163024452756142,
-        1.623152630340929,
-        0.45315840475822655,
-        0.25468325192031926,
-        0.2254004358159971,
-        0.18765711877083036,
-        0.1821471333893275,
-        0.1821471333893275,
-        0.18765711877083036,
-        0.18765711877083036,
-        0.2240202988740153,
-        1.154337614548715,
-        1.342604473837069,
-        1.323308536402633,
-        0.8607514948648837,
-        0.27219111215810565,
-        0.13260875220533205,
-        0.13260875220533205,
-        0.09890587675958984,
-        0.09890587675958984,
-        0.13548790801634494,
-        0.1575483940837384,
-        0.17515137170530226,
-        0.17575920159442388,
-        0.27219111215810565,
-        0.6101447895405373,
-        1.3189208094864302,
-        1.323308536402633,
-        2.2509184159764577,
-        2.4517810628594527,
-        3.675977064404973,
-        3.8264795626020365,
-        2.9130735341510614,
-        2.9130735341510614,
-        2.9130735341510614,
-        2.9130735341510614,
-        2.8459300127258036,
-        2.8459300127258036,
-        2.8459300127258036,
-        3.0321982337972537,
-    ]
-    o1 = [
-        0,
-        3,
-        6,
-        4,
-        7,
-        8,
-        2,
-        9,
-        5,
-        1,
-        31,
-        30,
-        32,
-        34,
-        33,
-        38,
-        39,
-        35,
-        37,
-        36,
-        44,
-        21,
-        23,
-        24,
-        22,
-        25,
-        27,
-        29,
-        26,
-        28,
-        20,
-        40,
-        45,
-        46,
-        10,
-        15,
-        11,
-        13,
-        17,
-        19,
-        18,
-        12,
-        16,
-        14,
-        47,
-        49,
-        43,
-        48,
-        42,
-        41,
-        53,
-        57,
-        51,
-        52,
-        56,
-        59,
-        54,
-        55,
-        58,
-        50,
-    ]
-    p1 = [
-        -1,
-        0,
-        3,
-        6,
-        6,
-        6,
-        8,
-        3,
-        7,
-        5,
-        1,
-        31,
-        30,
-        30,
-        34,
-        34,
-        34,
-        32,
-        32,
-        37,
-        36,
-        44,
-        21,
-        23,
-        24,
-        22,
-        25,
-        25,
-        22,
-        22,
-        22,
-        21,
-        40,
-        45,
-        46,
-        10,
-        15,
-        15,
-        13,
-        13,
-        15,
-        11,
-        19,
-        15,
-        10,
-        47,
-        12,
-        45,
-        14,
-        43,
-        42,
-        53,
-        57,
-        57,
-        57,
-        57,
-        59,
-        59,
-        59,
-        58,
-    ]
-
-    # Tests against known extraction array
-    # Does NOT work with metric='euclidean', because sklearn euclidean has
-    # worse numeric precision. 'minkowski' is slower but more accurate.
-    clust1 = OPTICS(min_samples=5).fit(X)
-
-    assert_array_equal(clust1.ordering_, np.array(o1))
-    assert_array_equal(clust1.predecessor_[clust1.ordering_], np.array(p1))
-    assert_allclose(clust1.reachability_[clust1.ordering_], np.array(r1))
-    # ELKI currently does not print the core distances (which are not used much
-    # in literature, but we can at least ensure to have this consistency:
-    for i in clust1.ordering_[1:]:
-        assert clust1.reachability_[i] >= clust1.core_distances_[clust1.predecessor_[i]]
-
-    # Expected values, computed with (future) ELKI 0.7.5 using
-    r2 = [
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        0.27219111215810565,
-        0.13260875220533205,
-        0.13260875220533205,
-        0.09890587675958984,
-        0.09890587675958984,
-        0.13548790801634494,
-        0.1575483940837384,
-        0.17515137170530226,
-        0.17575920159442388,
-        0.27219111215810565,
-        0.4928068613197889,
-        np.inf,
-        0.2666183922512113,
-        0.18765711877083036,
-        0.1821471333893275,
-        0.1821471333893275,
-        0.1821471333893275,
-        0.18715928772277457,
-        0.18765711877083036,
-        0.18765711877083036,
-        0.25468325192031926,
-        np.inf,
-        0.2552805046961355,
-        0.2552805046961355,
-        0.24944622248445714,
-        0.24944622248445714,
-        0.24944622248445714,
-        0.2552805046961355,
-        0.2552805046961355,
-        0.3086779122185853,
-        0.34466409325984865,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-        np.inf,
-    ]
-    o2 = [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-        10,
-        15,
-        11,
-        13,
-        17,
-        19,
-        18,
-        12,
-        16,
-        14,
-        47,
-        46,
-        20,
-        22,
-        25,
-        23,
-        27,
-        29,
-        24,
-        26,
-        28,
-        21,
-        30,
-        32,
-        34,
-        33,
-        38,
-        39,
-        35,
-        37,
-        36,
-        31,
-        40,
-        41,
-        42,
-        43,
-        44,
-        45,
-        48,
-        49,
-        50,
-        51,
-        52,
-        53,
-        54,
-        55,
-        56,
-        57,
-        58,
-        59,
-    ]
-    p2 = [
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        10,
-        15,
-        15,
-        13,
-        13,
-        15,
-        11,
-        19,
-        15,
-        10,
-        47,
-        -1,
-        20,
-        22,
-        25,
-        25,
-        25,
-        25,
-        22,
-        22,
-        23,
-        -1,
-        30,
-        30,
-        34,
-        34,
-        34,
-        32,
-        32,
-        37,
-        38,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-        -1,
-    ]
-    clust2 = OPTICS(min_samples=5, max_eps=0.5).fit(X)
-
-    assert_array_equal(clust2.ordering_, np.array(o2))
-    assert_array_equal(clust2.predecessor_[clust2.ordering_], np.array(p2))
-    assert_allclose(clust2.reachability_[clust2.ordering_], np.array(r2))
-
-    index = np.where(clust1.core_distances_ <= 0.5)[0]
-    assert_allclose(clust1.core_distances_[index], clust2.core_distances_[index])
-
-
-def test_extract_dbscan(global_dtype):
-    # testing an easy dbscan case. Not including clusters with different
-    # densities.
-    rng = np.random.RandomState(0)
-    n_points_per_cluster = 20
-    C1 = [-5, -2] + 0.2 * rng.randn(n_points_per_cluster, 2)
-    C2 = [4, -1] + 0.2 * rng.randn(n_points_per_cluster, 2)
-    C3 = [1, 2] + 0.2 * rng.randn(n_points_per_cluster, 2)
-    C4 = [-2, 3] + 0.2 * rng.randn(n_points_per_cluster, 2)
-    X = np.vstack((C1, C2, C3, C4)).astype(global_dtype, copy=False)
-
-    clust = OPTICS(cluster_method="dbscan", eps=0.5).fit(X)
-    assert_array_equal(np.sort(np.unique(clust.labels_)), [0, 1, 2, 3])
-
-
-@pytest.mark.parametrize("is_sparse", [False, True])
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_precomputed_dists(is_sparse, global_dtype):
-    redX = X[::2].astype(global_dtype, copy=False)
-    dists = pairwise_distances(redX, metric="euclidean")
-    dists = sparse.csr_matrix(dists) if is_sparse else dists
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", EfficiencyWarning)
-        clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(
-            dists
+    labels = (
+        SpectralClustering(
+            random_state=0,
+            n_clusters=2,
+            affinity="precomputed",
+            assign_labels=assign_labels,
         )
-    clust2 = OPTICS(min_samples=10, algorithm="brute", metric="euclidean").fit(redX)
+        .fit(S)
+        .labels_
+    )
+    assert adjusted_rand_score(y, labels) == 1
 
-    assert_allclose(clust1.reachability_, clust2.reachability_)
-    assert_array_equal(clust1.labels_, clust2.labels_)
+
+def test_precomputed_nearest_neighbors_filtering():
+    # Test precomputed graph filtering when containing too many neighbors
+    X, y = make_blobs(
+        n_samples=200, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
+    )
+
+    n_neighbors = 2
+    results = []
+    for additional_neighbors in [0, 10]:
+        nn = NearestNeighbors(n_neighbors=n_neighbors + additional_neighbors).fit(X)
+        graph = nn.kneighbors_graph(X, mode="connectivity")
+        labels = (
+            SpectralClustering(
+                random_state=0,
+                n_clusters=2,
+                affinity="precomputed_nearest_neighbors",
+                n_neighbors=n_neighbors,
+            )
+            .fit(graph)
+            .labels_
+        )
+        results.append(labels)
+
+    assert_array_equal(results[0], results[1])
+
+
+def test_affinities():
+    # Note: in the following, random_state has been selected to have
+    # a dataset that yields a stable eigen decomposition both when built
+    # on OSX and Linux
+    X, y = make_blobs(
+        n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
+    )
+    # nearest neighbors affinity
+    sp = SpectralClustering(n_clusters=2, affinity="nearest_neighbors", random_state=0)
+    with pytest.warns(UserWarning, match="not fully connected"):
+        sp.fit(X)
+    assert adjusted_rand_score(y, sp.labels_) == 1
+
+    sp = SpectralClustering(n_clusters=2, gamma=2, random_state=0)
+    labels = sp.fit(X).labels_
+    assert adjusted_rand_score(y, labels) == 1
+
+    X = check_random_state(10).rand(10, 5) * 10
+
+    kernels_available = kernel_metrics()
+    for kern in kernels_available:
+        # Additive chi^2 gives a negative similarity matrix which
+        # doesn't make sense for spectral clustering
+        if kern != "additive_chi2":
+            sp = SpectralClustering(n_clusters=2, affinity=kern, random_state=0)
+            labels = sp.fit(X).labels_
+            assert (X.shape[0],) == labels.shape
+
+    sp = SpectralClustering(n_clusters=2, affinity=lambda x, y: 1, random_state=0)
+    labels = sp.fit(X).labels_
+    assert (X.shape[0],) == labels.shape
+
+    def histogram(x, y, **kwargs):
+        # Histogram kernel implemented as a callable.
+        assert kwargs == {}  # no kernel_params that we didn't ask for
+        return np.minimum(x, y).sum()
+
+    sp = SpectralClustering(n_clusters=2, affinity=histogram, random_state=0)
+    labels = sp.fit(X).labels_
+    assert (X.shape[0],) == labels.shape
+
+
+def test_cluster_qr():
+    # cluster_qr by itself should not be used for clustering generic data
+    # other than the rows of the eigenvectors within spectral clustering,
+    # but cluster_qr must still preserve the labels for different dtypes
+    # of the generic fixed input even if the labels may be meaningless.
+    random_state = np.random.RandomState(seed=8)
+    n_samples, n_components = 10, 5
+    data = random_state.randn(n_samples, n_components)
+    labels_float64 = cluster_qr(data.astype(np.float64))
+    # Each sample is assigned a cluster identifier
+    assert labels_float64.shape == (n_samples,)
+    # All components should be covered by the assignment
+    assert np.array_equal(np.unique(labels_float64), np.arange(n_components))
+    # Single precision data should yield the same cluster assignments
+    labels_float32 = cluster_qr(data.astype(np.float32))
+    assert np.array_equal(labels_float64, labels_float32)
+
+
+def test_cluster_qr_permutation_invariance():
+    # cluster_qr must be invariant to sample permutation.
+    random_state = np.random.RandomState(seed=8)
+    n_samples, n_components = 100, 5
+    data = random_state.randn(n_samples, n_components)
+    perm = random_state.permutation(n_samples)
+    assert np.array_equal(
+        cluster_qr(data)[perm],
+        cluster_qr(data[perm]),
+    )
+
+
+@pytest.mark.parametrize("n_samples", [50, 100, 150, 500])
+def test_discretize(n_samples):
+    # Test the discretize using a noise assignment matrix
+    random_state = np.random.RandomState(seed=8)
+    for n_class in range(2, 10):
+        # random class labels
+        y_true = random_state.randint(0, n_class + 1, n_samples)
+        y_true = np.array(y_true, float)
+        # noise class assignment matrix
+        y_indicator = sparse.coo_matrix(
+            (np.ones(n_samples), (np.arange(n_samples), y_true)),
+            shape=(n_samples, n_class + 1),
+        )
+        y_true_noisy = y_indicator.toarray() + 0.1 * random_state.randn(
+            n_samples, n_class + 1
+        )
+        y_pred = discretize(y_true_noisy, random_state=random_state)
+        assert adjusted_rand_score(y_true, y_pred) > 0.8
+
+
+# TODO: Remove when pyamg does replaces sp.rand call with np.random.rand
+# https://github.com/scikit-learn/scikit-learn/issues/15913
+@pytest.mark.filterwarnings(
+    "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*"
+)
+# TODO: Remove when pyamg removes the use of np.float
+@pytest.mark.filterwarnings(
+    "ignore:`np.float` is a deprecated alias:DeprecationWarning:pyamg.*"
+)
+# TODO: Remove when pyamg removes the use of pinv2
+@pytest.mark.filterwarnings(
+    "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
+)
+# TODO: Remove when pyamg removes the use of np.find_common_type
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated:DeprecationWarning:pyamg.*"
+)
+def test_spectral_clustering_with_arpack_amg_solvers():
+    # Test that spectral_clustering is the same for arpack and amg solver
+    # Based on toy example from plot_segmentation_toy.py
+
+    # a small two coin image
+    x, y = np.indices((40, 40))
+
+    center1, center2 = (14, 12), (20, 25)
+    radius1, radius2 = 8, 7
+
+    circle1 = (x - center1[0]) ** 2 + (y - center1[1]) ** 2 < radius1**2
+    circle2 = (x - center2[0]) ** 2 + (y - center2[1]) ** 2 < radius2**2
+
+    circles = circle1 | circle2
+    mask = circles.copy()
+    img = circles.astype(float)
+
+    graph = img_to_graph(img, mask=mask)
+    graph.data = np.exp(-graph.data / graph.data.std())
+
+    labels_arpack = spectral_clustering(
+        graph, n_clusters=2, eigen_solver="arpack", random_state=0
+    )
+
+    assert len(np.unique(labels_arpack)) == 2
+
+    if amg_loaded:
+        labels_amg = spectral_clustering(
+            graph, n_clusters=2, eigen_solver="amg", random_state=0
+        )
+        assert adjusted_rand_score(labels_arpack, labels_amg) == 1
+    else:
+        with pytest.raises(ValueError):
+            spectral_clustering(graph, n_clusters=2, eigen_solver="amg", random_state=0)
+
+
+def test_n_components():
+    # Test that after adding n_components, result is different and
+    # n_components = n_clusters by default
+    X, y = make_blobs(
+        n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
+    )
+    sp = SpectralClustering(n_clusters=2, random_state=0)
+    labels = sp.fit(X).labels_
+    # set n_components = n_cluster and test if result is the same
+    labels_same_ncomp = (
+        SpectralClustering(n_clusters=2, n_components=2, random_state=0).fit(X).labels_
+    )
+    # test that n_components=n_clusters by default
+    assert_array_equal(labels, labels_same_ncomp)
+
+    # test that n_components affect result
+    # n_clusters=8 by default, and set n_components=2
+    labels_diff_ncomp = (
+        SpectralClustering(n_components=2, random_state=0).fit(X).labels_
+    )
+    assert not np.array_equal(labels, labels_diff_ncomp)
+
+
+@pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
+def test_verbose(assign_labels, capsys):
+    # Check verbose mode of KMeans for better coverage.
+    X, y = make_blobs(
+        n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
+    )
+
+    SpectralClustering(n_clusters=2, random_state=42, verbose=1).fit(X)
+
+    captured = capsys.readouterr()
+
+    assert re.search(r"Computing label assignment using", captured.out)
+
+    if assign_labels == "kmeans":
+        assert re.search(r"Initialization complete", captured.out)
+        assert re.search(r"Iteration [0-9]+, inertia", captured.out)
+
+
+def test_spectral_clustering_np_matrix_raises():
+    """Check that spectral_clustering raises an informative error when passed
+    a np.matrix. See #10993"""
+    X = np.matrix([[0.0, 2.0], [2.0, 0.0]])
+
+    msg = r"np\.matrix is not supported. Please convert to a numpy array"
+    with pytest.raises(TypeError, match=msg):
+        spectral_clustering(X)
+
+
+def test_spectral_clustering_not_infinite_loop(capsys, monkeypatch):
+    """Check that discretize raises LinAlgError when svd never converges.
+
+    Non-regression test for #21380
+    """
+
+    def new_svd(*args, **kwargs):
+        raise LinAlgError()
+
+    monkeypatch.setattr(np.linalg, "svd", new_svd)
+    vectors = np.ones((10, 4))
+
+    with pytest.raises(LinAlgError, match="SVD did not converge"):
+        discretize(vectors)
