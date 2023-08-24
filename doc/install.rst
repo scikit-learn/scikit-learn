@@ -72,23 +72,23 @@ Then run:
   <div class="highlight">
     <pre class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no"
     ><span class="prompt1">pip3 install -U scikit-learn</span></pre>
-    
+
     <pre class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no"
     ><span class="prompt1">pip install -U scikit-learn</span></pre>
-    
+
     <pre class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no"
     ><span class="prompt1">pip install -U scikit-learn</span></pre>
-    
+
     <pre class="sk-expandable" data-packager="pip" data-os="linux" data-venv=""
     ><span class="prompt1">python3 -m venv sklearn-venv</span>
   <span class="prompt1">source sklearn-venv/bin/activate</span>
   <span class="prompt1">pip3 install -U scikit-learn</span></pre>
-    
+
     <pre class="sk-expandable" data-packager="pip" data-os="windows" data-venv=""
     ><span class="prompt1">python -m venv sklearn-venv</span>
   <span class="prompt1">sklearn-venv\Scripts\activate</span>
   <span class="prompt1">pip install -U scikit-learn</span></pre>
-    
+
     <pre class="sk-expandable" data-packager="pip" data-os="mac" data-venv=""
     ><span class="prompt1">python -m venv sklearn-venv</span>
   <span class="prompt1">source sklearn-venv/bin/activate</span>

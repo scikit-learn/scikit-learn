@@ -1634,4 +1634,3 @@ minimum required number of samples to consider a split ``min_samples_split``).
 
  .. [HTF] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
               Statistical Learning Ed. 2", Springer, 2009.
-

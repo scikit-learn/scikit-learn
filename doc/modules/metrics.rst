@@ -165,14 +165,14 @@ the kernel is known as the Gaussian kernel of variance :math:`\sigma^2`.
 
 Laplacian kernel
 ----------------
-The function :func:`laplacian_kernel` is a variant on the radial basis 
+The function :func:`laplacian_kernel` is a variant on the radial basis
 function kernel defined as:
 
 .. math::
 
     k(x, y) = \exp( -\gamma \| x-y \|_1)
 
-where ``x`` and ``y`` are the input vectors and :math:`\|x-y\|_1` is the 
+where ``x`` and ``y`` are the input vectors and :math:`\|x-y\|_1` is the
 Manhattan distance between the input vectors.
 
 It has proven useful in ML applied to noiseless data.
@@ -229,4 +229,3 @@ The chi squared kernel is most commonly used on histograms (bags) of visual word
       categories: A comprehensive study
       International Journal of Computer Vision 2007
       https://hal.archives-ouvertes.fr/hal-00171412/document
-
