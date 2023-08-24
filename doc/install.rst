@@ -290,7 +290,7 @@ Note that those solvers are not enabled by default, please refer to the
 `scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/what-is-patching.html>`_
 documentation for more details on usage scenarios. Direct export example:
 
-.. prompt:: bash >>>
+.. prompt:: python
 
   from sklearnex.neighbors import NearestNeighbors
 
