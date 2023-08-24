@@ -74,8 +74,10 @@ def compute_class_weight(class_weight, *, classes, y):
 
         n_weighted_classes = len(classes) - len(unweighted_classes)
         if unweighted_classes and n_weighted_classes != len(class_weight):
+            unweighted_classes_user_friendly_str = np.array(unweighted_classes).tolist()
             raise ValueError(
-                f"The classes, {unweighted_classes}, are not in class_weight"
+                f"The classes, {unweighted_classes_user_friendly_str}, are not in"
+                " class_weight"
             )
 
     return weight
