@@ -268,8 +268,28 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
         )
         return self
 
-    def transform(self, X, sample_weight=None):
-        record_metadata(self, "transform", sample_weight=sample_weight)
+    def transform(self, X, sample_weight=None, metadata=None):
+        record_metadata(
+            self, "transform", sample_weight=sample_weight, metadata=metadata
+        )
+        return X
+
+    def fit_transform(self, X, y, sample_weight=None, metadata=None):
+        # implementing ``fit_transform`` is necessary since
+        # ``TransformerMixin.fit_transform`` doesn't route any metadata to
+        # ``transform``, while here we want ``transform`` to receive
+        # ``sample_weight`` and ``metadata``.
+        record_metadata(
+            self, "fit_transform", sample_weight=sample_weight, metadata=metadata
+        )
+        return self.fit(X, y, sample_weight=sample_weight, metadata=metadata).transform(
+            X, sample_weight=sample_weight, metadata=metadata
+        )
+
+    def inverse_transform(self, X, sample_weight=None, metadata=None):
+        record_metadata(
+            self, "inverse_transform", sample_weight=sample_weight, metadata=metadata
+        )
         return X
 
 
