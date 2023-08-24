@@ -10,9 +10,10 @@ The ``sklearn.preprocessing`` package provides several common
 utility functions and transformer classes to change raw feature vectors
 into a representation that is more suitable for the downstream estimators.
 
-In general, learning algorithms benefit from standardization of the data set. If
-some outliers are present in the set, robust scalers or transformers are more
-appropriate. The behaviors of the different scalers, transformers, and
+In general, many learning algorithms such as linear models benefit from standardization of the data set
+(see :ref:`sphx_glr_auto_examples_preprocessing_plot_scaling_importance.py`).
+If some outliers are present in the set, robust scalers or other transformers can
+be more appropriate. The behaviors of the different scalers, transformers, and
 normalizers on a dataset containing marginal outliers is highlighted in
 :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`.
 

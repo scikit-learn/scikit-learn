@@ -652,10 +652,12 @@ class SVC(BaseSVC):
 
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
-        Specifies the kernel type to be used in the algorithm.
-        If none is given, 'rbf' will be used. If a callable is given it is
-        used to pre-compute the kernel matrix from data matrices; that matrix
-        should be an array of shape ``(n_samples, n_samples)``.
+        Specifies the kernel type to be used in the algorithm. If
+        none is given, 'rbf' will be used. If a callable is given it is used to
+        pre-compute the kernel matrix from data matrices; that matrix should be
+        an array of shape ``(n_samples, n_samples)``. For an intuitive
+        visualization of different kernel types see
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_kernels.py`.
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
@@ -916,9 +918,11 @@ class NuSVC(BaseSVC):
 
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
-         Specifies the kernel type to be used in the algorithm.
-         If none is given, 'rbf' will be used. If a callable is given it is
-         used to precompute the kernel matrix.
+        Specifies the kernel type to be used in the algorithm.
+        If none is given, 'rbf' will be used. If a callable is given it is
+        used to precompute the kernel matrix. For an intuitive
+        visualization of different kernel types see
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_kernels.py`.
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
