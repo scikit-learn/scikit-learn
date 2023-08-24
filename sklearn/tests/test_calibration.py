@@ -1048,3 +1048,37 @@ def test_calibrated_classifier_cv_works_with_large_confidence_scores(
     # The AUC score should be the same because it is invariant under
     # strictly monotonic conditions
     assert_allclose(score_sigmoid, score_isotonic)
+
+
+def test_sigmoid_calibration_max_abs_prediction_threshold(global_random_seed):
+    random_state = np.random.RandomState(seed=global_random_seed)
+    n = 100
+    y = random_state.randint(0, 2, size=n)
+
+    # Check that for small predictions ranging from -1 to 1, the threshold
+    # value has no impact on the outcome
+    predictions_small = random_state.uniform(low=-1, high=1, size=100)
+    threshold_1 = 0.1
+    a1, b1 = _sigmoid_calibration(
+        predictions=predictions_small,
+        y=y,
+        max_abs_prediction_threshold=threshold_1,
+    )
+
+    threshold_2 = 10
+    a2, b2 = _sigmoid_calibration(
+        predictions=predictions_small,
+        y=y,
+        max_abs_prediction_threshold=threshold_2,
+    )
+
+    # This uses the default threshold of 30
+    a3, b3 = _sigmoid_calibration(
+        predictions=predictions_small,
+        y=y,
+    )
+
+    assert_allclose(a1, a2)
+    assert_allclose(a2, a3)
+    assert_allclose(b1, b2)
+    assert_allclose(b2, b3)
