@@ -17,8 +17,6 @@ from textwrap import dedent
 from setuptools import Command, Extension, setup
 from setuptools.command.build_ext import build_ext
 
-from sklearn._build_utils.pre_build_helpers import compile_test_program
-
 try:
     import builtins
 except ImportError:
@@ -32,25 +30,6 @@ except ImportError:
 # away from numpy.distutils?
 builtins.__SKLEARN_SETUP__ = True
 
-runtime_check_program = dedent("""
-    #include "xsimd.hpp"
-    #include <iostream>
-    int main(){
-         std::cout << xsimd::available_architectures().avx;
-         return 0;
-    }
-    """)
-# XXX: Can we do this without an absolute path?
-dir_path = os.path.dirname(os.path.realpath(__file__))
-xsimd_include_path = Path(dir_path, "xsimd", "include", "xsimd")
-HAS_AVX_RUNTIME = int(
-    compile_test_program(
-        runtime_check_program,
-        extra_preargs=["-lstdc++"],
-        extra_postargs=[f"-I{xsimd_include_path}"],
-        extension="cpp",
-    )[0]
-)
 DISTNAME = "scikit-learn"
 DESCRIPTION = "A set of python modules for machine learning and data mining"
 with open("README.rst") as f:
@@ -73,6 +52,27 @@ import sklearn  # noqa
 import sklearn._min_dependencies as min_deps  # noqa
 from sklearn._build_utils import _check_cython_version  # noqa
 from sklearn.externals._packaging.version import parse as parse_version  # noqa
+from sklearn._build_utils.pre_build_helpers import compile_test_program  # noqa
+
+runtime_check_program = dedent("""
+    #include "xsimd.hpp"
+    #include <iostream>
+    int main(){
+         std::cout << xsimd::available_architectures().avx;
+         return 0;
+    }
+    """)
+# XXX: Can we do this without an absolute path?
+dir_path = os.path.dirname(os.path.realpath(__file__))
+xsimd_include_path = Path(dir_path, "xsimd", "include", "xsimd")
+HAS_AVX_RUNTIME = int(
+    compile_test_program(
+        runtime_check_program,
+        extra_preargs=["-lstdc++"],
+        extra_postargs=[f"-I{xsimd_include_path}"],
+        extension="cpp",
+    )[0]
+)
 
 
 VERSION = sklearn.__version__
