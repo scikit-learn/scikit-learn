@@ -11,7 +11,7 @@ repos:
     -   id: black
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.0.272
+    rev: v0.0.285
     hooks:
     -   id: ruff
         args: ["--fix", "--show-source"]
