@@ -24,13 +24,21 @@ import pytest
 
 from sklearn import config_context
 from sklearn.exceptions import DataConversionWarning
+
+# TODO: Remove import for PAIRED_DISTANCES, paired_distances,
+# paired_cosine_distances, paired_euclidean_distances, paired_manhattan_distances
+# since paired_*_distances public functions are deprecated in 1.6.
 from sklearn.metrics.pairwise import (
-    # TODO: Remove import for deprecated pairwise_*_distances functions in 1.6
+    _PAIRED_DISTANCES,
     PAIRED_DISTANCES,
     PAIRWISE_BOOLEAN_FUNCTIONS,
     PAIRWISE_DISTANCE_FUNCTIONS,
     PAIRWISE_KERNEL_FUNCTIONS,
     _euclidean_distances_upcast,
+    _paired_cosine_distances,
+    _paired_distances,
+    _paired_euclidean_distances,
+    _paired_manhattan_distances,
     additive_chi2_kernel,
     check_paired_arrays,
     check_pairwise_arrays,
@@ -443,6 +451,28 @@ def test_paired_distances(metric, func):
     Y = rng.random_sample((5, 4))
 
     S = paired_distances(X, Y, metric=metric)
+    S2 = func(X, Y)
+    assert_allclose(S, S2)
+    S3 = func(csr_matrix(X), csr_matrix(Y))
+    assert_allclose(S, S3)
+    if metric in PAIRWISE_DISTANCE_FUNCTIONS:
+        # Check the pairwise_distances implementation
+        # gives the same value
+        distances = PAIRWISE_DISTANCE_FUNCTIONS[metric](X, Y)
+        distances = np.diag(distances)
+        assert_allclose(distances, S)
+
+
+@pytest.mark.parametrize("metric, func", _PAIRED_DISTANCES.items())
+def test__paired_distances(metric, func):
+    # Test the pairwise_distance helper function.
+    rng = np.random.RandomState(0)
+    # Euclidean distance should be equivalent to calling the function.
+    X = rng.random_sample((5, 4))
+    # Euclidean distance, with Y != X.
+    Y = rng.random_sample((5, 4))
+
+    S = _paired_distances(X, Y, metric=metric)
     S2 = func(X, Y)
     assert_allclose(S, S2)
     S3 = func(csr_matrix(X), csr_matrix(Y))
@@ -1161,6 +1191,7 @@ def test_haversine_distances():
 # Paired distances
 
 
+# TODO: Remove test in 1.6
 def test_paired_euclidean_distances():
     # Check the paired Euclidean distances computation
     X = [[0], [0]]
@@ -1169,6 +1200,7 @@ def test_paired_euclidean_distances():
     assert_allclose(D, [1.0, 2.0])
 
 
+# TODO: Remove test in 1.6
 def test_paired_manhattan_distances():
     # Check the paired manhattan distances computation
     X = [[0], [0]]
@@ -1177,11 +1209,36 @@ def test_paired_manhattan_distances():
     assert_allclose(D, [1.0, 2.0])
 
 
+# TODO: Remove test in 1.6
 def test_paired_cosine_distances():
     # Check the paired manhattan distances computation
     X = [[0], [0]]
     Y = [[1], [2]]
     D = paired_cosine_distances(X, Y)
+    assert_allclose(D, [0.5, 0.5])
+
+
+def test__paired_euclidean_distances():
+    # Check the paired Euclidean distances computation
+    X = [[0], [0]]
+    Y = [[1], [2]]
+    D = _paired_euclidean_distances(X, Y)
+    assert_allclose(D, [1.0, 2.0])
+
+
+def test__paired_manhattan_distances():
+    # Check the paired manhattan distances computation
+    X = [[0], [0]]
+    Y = [[1], [2]]
+    D = _paired_manhattan_distances(X, Y)
+    assert_allclose(D, [1.0, 2.0])
+
+
+def test__paired_cosine_distances():
+    # Check the paired manhattan distances computation
+    X = [[0], [0]]
+    Y = [[1], [2]]
+    D = _paired_cosine_distances(X, Y)
     assert_allclose(D, [0.5, 0.5])
 
 

@@ -23,7 +23,7 @@ from ..base import (
 )
 from ..metrics import DistanceMetric
 from ..metrics._dist_metrics import METRIC_MAPPING64
-from ..metrics.pairwise import _VALID_METRICS, paired_distances
+from ..metrics.pairwise import _VALID_METRICS, _paired_distances
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils._param_validation import (
@@ -588,7 +588,7 @@ def linkage_tree(
     else:
         # FIXME We compute all the distances, while we could have only computed
         # the "interesting" distances
-        distances = paired_distances(
+        distances = _paired_distances(
             X[connectivity.row], X[connectivity.col], metric=affinity
         )
     connectivity.data = distances

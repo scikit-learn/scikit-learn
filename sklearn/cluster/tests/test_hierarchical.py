@@ -33,7 +33,7 @@ from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics import DistanceMetric
 from sklearn.metrics.cluster import adjusted_rand_score, normalized_mutual_info_score
 from sklearn.metrics.pairwise import (
-    PAIRED_DISTANCES,
+    _PAIRED_DISTANCES,
     cosine_distances,
     manhattan_distances,
     pairwise_distances,
@@ -236,7 +236,7 @@ def test_agglomerative_clustering(global_random_seed):
         clustering.fit(X)
 
     # Test using another metric than euclidean works with linkage complete
-    for metric in PAIRED_DISTANCES.keys():
+    for metric in _PAIRED_DISTANCES.keys():
         # Compare our (structured) implementation to scipy
         clustering = AgglomerativeClustering(
             n_clusters=10,
