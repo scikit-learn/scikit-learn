@@ -63,6 +63,7 @@ from ._regression import (
     median_absolute_error,
     r2_score,
 )
+from ._runtime_check import get_available_architectures
 from ._scorer import check_scoring, get_scorer, get_scorer_names, make_scorer
 from .cluster import (
     adjusted_mutual_info_score,
@@ -123,6 +124,7 @@ __all__ = [
     "f1_score",
     "fbeta_score",
     "fowlkes_mallows_score",
+    "get_available_architectures",
     "get_scorer",
     "hamming_loss",
     "hinge_loss",

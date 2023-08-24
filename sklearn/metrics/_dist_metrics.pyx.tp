@@ -20,12 +20,11 @@ cnp.import_array()  # required in order to use C-API
 
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 
-from archspec import cpu
 from scipy.sparse import csr_matrix, issparse
 from ..utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
 from ..utils import check_array
 from ..utils.fixes import parse_version, sp_base_version
-
+from ._runtime_check import get_available_architectures
 cdef inline double fmax(double a, double b) noexcept nogil:
     return max(a, b)
 
@@ -1238,7 +1237,7 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     """
     def __init__(self):
         self.p = 1
-        self.simd_runtime = 'avx' in cpu.host() and WITH_SIMD
+        self.simd_runtime = get_available_architectures()["avx"] and WITH_SIMD
 
     cdef inline {{INPUT_DTYPE_t}} dist(
         self,

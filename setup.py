@@ -11,10 +11,13 @@ import shutil
 import sys
 import traceback
 from os.path import join
+from pathlib import Path
+from textwrap import dedent
 
-from archspec import cpu
 from setuptools import Command, Extension, setup
 from setuptools.command.build_ext import build_ext
+
+from sklearn._build_utils.pre_build_helpers import compile_test_program
 
 try:
     import builtins
@@ -29,8 +32,25 @@ except ImportError:
 # away from numpy.distutils?
 builtins.__SKLEARN_SETUP__ = True
 
-
-BUILD_WITH_SIMD = int("avx" in cpu.host())
+runtime_check_program = dedent("""
+    #include "xsimd.hpp"
+    #include <iostream>
+    int main(){
+         std::cout << xsimd::available_architectures().avx;
+         return 0;
+    }
+    """)
+# XXX: Can we do this without an absolute path?
+dir_path = os.path.dirname(os.path.realpath(__file__))
+xsimd_include_path = Path(dir_path, "xsimd", "include", "xsimd")
+HAS_AVX_RUNTIME = int(
+    compile_test_program(
+        runtime_check_program,
+        extra_preargs=["-lstdc++"],
+        extra_postargs=[f"-I{xsimd_include_path}"],
+        extension="cpp",
+    )[0]
+)
 DISTNAME = "scikit-learn"
 DESCRIPTION = "A set of python modules for machine learning and data mining"
 with open("README.rst") as f:
@@ -263,7 +283,14 @@ extension_config = {
             "include_np": True,
             "language": "c++",
             "extra_compile_args": ["-std=c++11"],
-            "define_macros": [("DIST_METRICS", None), ("WITH_SIMD", BUILD_WITH_SIMD)],
+            "define_macros": [("DIST_METRICS", None)],
+            "include_dirs": [join("..", "..", "xsimd", "include", "xsimd")],
+        },
+        {
+            "sources": ["_runtime_check.pyx"],
+            "language": "c++",
+            "include_np": True,
+            "extra_compile_args": ["-std=c++11"],
             "include_dirs": [join("..", "..", "xsimd", "include", "xsimd")],
         },
     ],
@@ -457,20 +484,6 @@ libraries = [
     ),
 ]
 
-if BUILD_WITH_SIMD:
-    libraries.append(
-        (
-            "avx_dist_metrics",
-            {
-                "language": "c++",
-                "sources": [join(SIMD_DIRECTORY, "simd.cpp")],
-                "cflags": ["-std=c++14", "-mavx"],
-                "extra_link_args": ["-std=c++14"],
-                "include_dirs": [join("xsimd", "include", "xsimd")],
-            },
-        ),
-    )
-
 
 def configure_extension_modules():
     # Skip cythonization as we do not want to include the generated
@@ -496,6 +509,23 @@ def configure_extension_modules():
     build_with_debug_symbols = (
         os.environ.get("SKLEARN_BUILD_ENABLE_DEBUG_SYMBOLS", "0") != "0"
     )
+    BUILD_WITH_SIMD = os.environ.get("SKLEARN_NO_SIMD", "0") == "0" and HAS_AVX_RUNTIME
+    if BUILD_WITH_SIMD:
+        libraries.append(
+            (
+                "avx_dist_metrics",
+                {
+                    "language": "c++",
+                    "sources": [join(SIMD_DIRECTORY, "simd.cpp")],
+                    "cflags": ["-std=c++14", "-mavx"],
+                    "extra_link_args": ["-std=c++14"],
+                    "include_dirs": [join("xsimd", "include", "xsimd")],
+                },
+            ),
+        )
+        extension_config["metrics"][1]["define_macros"].append(
+            ("WITH_SIMD", BUILD_WITH_SIMD)
+        )
     if os.name == "posix":
         if build_with_debug_symbols:
             default_extra_compile_args.append("-g")
