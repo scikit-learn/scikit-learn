@@ -1018,7 +1018,6 @@ def test_calibrated_classifier_cv_works_with_large_confidence_scores(
 
     # Check that the decision function of SGDClassifier produces predicted
     # values that are quite large, for the data under consideration.
-    predicted_value_threshold = 1e4
     cv = check_cv(cv=None, y=y, classifier=True)
     indices = cv.split(X, y)
     for train, test in indices:
@@ -1027,7 +1026,7 @@ def test_calibrated_classifier_cv_works_with_large_confidence_scores(
         sgd_clf = SGDClassifier(loss="squared_hinge", random_state=global_random_seed)
         sgd_clf.fit(X_train, y_train)
         predictions = sgd_clf.decision_function(X_test)
-        assert (predictions > predicted_value_threshold).any()
+        assert (predictions > 1e4).any()
 
     # Compare the CalibratedClassifierCV using the sigmoid method with the
     # CalibratedClassifierCV using the isotonic method. The isotonic method
