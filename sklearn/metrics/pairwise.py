@@ -1165,6 +1165,7 @@ def paired_euclidean_distances(X, Y):
         Output array/matrix containing the calculated paired euclidean
         distances.
     """
+
     return _paired_euclidean_distances(X, Y)
 
 
@@ -1354,6 +1355,11 @@ _PAIRED_DISTANCES = {
 }
 
 
+# TODO: Remove in 1.6
+@deprecated(
+    "The public function `sklearn.pairwise.paired_distances` has been "
+    "deprecated and will be removed in 1.6."
+)
 @validate_params(
     {
         "X": ["array-like"],
