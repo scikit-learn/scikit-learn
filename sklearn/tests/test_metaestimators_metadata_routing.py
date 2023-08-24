@@ -293,11 +293,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
             instance = cls(**kwargs)
             with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
                 method = getattr(instance, method_name)
-                if "fit" in method_name:
-                    method(X, y, **method_kwargs)
-                else:
-                    instance.fit(X, y)
-                    method(X, **method_kwargs)
+                method(X, y, **method_kwargs)
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
@@ -335,11 +331,7 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             set_request(estimator, method_name)
             instance = cls(**kwargs)
             method = getattr(instance, method_name)
-            if "fit" in method_name:
-                method(X, y, **method_kwargs)
-            else:
-                instance.fit(X, y)
-                method(X, **method_kwargs)
+            method(X, y, **method_kwargs)
 
             # sanity check that registry is not empty, or else the test passes
             # trivially
@@ -383,10 +375,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
         method_kwargs = {"sample_weight": sample_weight}
         if "fit" not in method_name:
             instance.fit(X, y)
-        try:
-            method(X, y, **method_kwargs)
-        except TypeError:
-            method(X, **method_kwargs)
+        method(X, y, **method_kwargs)
 
         assert registry
         for _scorer in registry:
