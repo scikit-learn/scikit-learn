@@ -74,7 +74,7 @@ def kneighbors_graph(
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Sample data, in the form of a numpy array
+        Sample data, in the form of a numpy array.
 
     n_neighbors : int
         Number of neighbors for each sample.
