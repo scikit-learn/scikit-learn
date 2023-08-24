@@ -171,7 +171,6 @@ jobs:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock'
         COVERAGE: 'true'
-        SHOW_SHORT_SUMMARY: 'true'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
 
 # Check compilation with Ubuntu 22.04 LTS (Jammy Jellyfish) and scipy from conda-forge

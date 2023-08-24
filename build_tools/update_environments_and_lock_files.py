@@ -556,15 +556,15 @@ def check_conda_version():
     # Avoid issues with glibc (https://github.com/conda/conda-lock/issues/292)
     # or osx (https://github.com/conda/conda-lock/issues/408) virtual package.
     # The glibc one has been fixed in conda 23.1.0 and the osx has been fixed
-    # in main and will be fixed when conda >= 23.6 is released.
+    # in conda 23.7.0.
     conda_info_output = execute_command(["conda", "info", "--json"])
 
     conda_info = json.loads(conda_info_output)
     conda_version = Version(conda_info["conda_version"])
 
-    if Version("22.9.0") < conda_version < Version("23.6"):
+    if Version("22.9.0") < conda_version < Version("23.7"):
         raise RuntimeError(
-            f"conda version should be <= 22.9.0 or >= 23.6 got: {conda_version}"
+            f"conda version should be <= 22.9.0 or >= 23.7 got: {conda_version}"
         )
 
 

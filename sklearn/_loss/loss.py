@@ -113,7 +113,7 @@ class BaseLoss:
         Indicates whether n_classes > 2 is allowed.
     """
 
-    # For decision trees:
+    # For gradient boosted decision trees:
     # This variable indicates whether the loss requires the leaves values to
     # be updated once the tree has been trained. The trees are trained to
     # predict a Newton-Raphson step (see grower._finalize_leaf()). But for
@@ -122,8 +122,8 @@ class BaseLoss:
     # procedure. See the original paper Greedy Function Approximation: A
     # Gradient Boosting Machine by Friedman
     # (https://statweb.stanford.edu/~jhf/ftp/trebst.pdf) for the theory.
-    need_update_leaves_values = False
     differentiable = True
+    need_update_leaves_values = False
     is_multiclass = False
 
     def __init__(self, closs, link, n_classes=None):
@@ -543,6 +543,10 @@ class AbsoluteError(BaseLoss):
     For a given sample x_i, the absolute error is defined as::
 
         loss(x_i) = |y_true_i - raw_prediction_i|
+
+    Note that the exact hessian = 0 almost everywhere (except at one point, therefore
+    differentiable = False). Optimization routines like in HGBT, however, need a
+    hessian > 0. Therefore, we assign 1.
     """
 
     differentiable = False
@@ -584,6 +588,10 @@ class PinballLoss(BaseLoss):
                              u * quantile       if u >= 0
 
     Note: 2 * PinballLoss(quantile=0.5) equals AbsoluteError().
+
+    Note that the exact hessian = 0 almost everywhere (except at one point, therefore
+    differentiable = False). Optimization routines like in HGBT, however, need a
+    hessian > 0. Therefore, we assign 1.
 
     Additional Attributes
     ---------------------
