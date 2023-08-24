@@ -141,7 +141,6 @@ def test_predict_translated_data():
 def test_manhattan_metric(csr_container):
     # Test the manhattan metric.
     X_csr = csr_container(X)
-    
 
     clf = NearestCentroid(metric="manhattan")
     clf.fit(X, y)
