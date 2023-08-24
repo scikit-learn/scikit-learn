@@ -22,7 +22,7 @@ from sklearn.utils._testing import (
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 
-def _build_sparse_mtx(csr_container):
+def _build_sparse_array(csr_container):
     # Create 3 topics and each topic has 3 distinct words.
     # (Each word only belongs to a single topic.)
     n_components = 3
@@ -37,7 +37,7 @@ def _build_sparse_mtx(csr_container):
 def test_lda_default_prior_params(csr_container):
     # default prior parameter should be `1 / topics`
     # and verbose params should not affect result
-    n_components, X = _build_sparse_mtx(csr_container)
+    n_components, X = _build_sparse_array(csr_container)
     prior = 1.0 / n_components
     lda_1 = LatentDirichletAllocation(
         n_components=n_components,
@@ -55,7 +55,7 @@ def test_lda_default_prior_params(csr_container):
 def test_lda_fit_batch(csr_container):
     # Test LDA batch learning_offset (`fit` method with 'batch' learning)
     rng = np.random.RandomState(0)
-    n_components, X = _build_sparse_mtx(csr_container)
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components,
         evaluate_every=1,
@@ -75,7 +75,7 @@ def test_lda_fit_batch(csr_container):
 def test_lda_fit_online(csr_container):
     # Test LDA online learning (`fit` method with 'online' learning)
     rng = np.random.RandomState(0)
-    n_components, X = _build_sparse_mtx(csr_container)
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components,
         learning_offset=10.0,
@@ -97,7 +97,7 @@ def test_lda_partial_fit(csr_container):
     # Test LDA online learning (`partial_fit` method)
     # (same as test_lda_batch)
     rng = np.random.RandomState(0)
-    n_components, X = _build_sparse_mtx(csr_container)
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components,
         learning_offset=10.0,
@@ -117,7 +117,7 @@ def test_lda_partial_fit(csr_container):
 def test_lda_dense_input(csr_container):
     # Test LDA with dense input.
     rng = np.random.RandomState(0)
-    n_components, X = _build_sparse_mtx(csr_container)
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components, learning_method="batch", random_state=rng
     )
@@ -183,7 +183,7 @@ def test_lda_no_component_error():
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("method", ("online", "batch"))
 def test_lda_multi_jobs(method, csr_container):
-    n_components, X = _build_sparse_mtx(csr_container)
+    n_components, X = _build_sparse_array(csr_container)
     # Test LDA batch training with multi CPU
     rng = np.random.RandomState(0)
     lda = LatentDirichletAllocation(
@@ -206,7 +206,7 @@ def test_lda_multi_jobs(method, csr_container):
 def test_lda_partial_fit_multi_jobs(csr_container):
     # Test LDA online training with multi CPU
     rng = np.random.RandomState(0)
-    n_components, X = _build_sparse_mtx(csr_container)
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components,
         n_jobs=2,
@@ -251,7 +251,7 @@ def test_lda_preplexity_mismatch():
 def test_lda_perplexity(method, csr_container):
     # Test LDA perplexity for batch training
     # perplexity should be lower after each iteration
-    n_components, X = _build_sparse_mtx(csr_container)
+    n_components, X = _build_sparse_array(csr_container)
     lda_1 = LatentDirichletAllocation(
         n_components=n_components,
         max_iter=1,
@@ -283,7 +283,7 @@ def test_lda_perplexity(method, csr_container):
 def test_lda_score(method, csr_container):
     # Test LDA score for batch training
     # score should be higher after each iteration
-    n_components, X = _build_sparse_mtx(csr_container)
+    n_components, X = _build_sparse_array(csr_container)
     lda_1 = LatentDirichletAllocation(
         n_components=n_components,
         max_iter=1,
@@ -310,7 +310,7 @@ def test_lda_score(method, csr_container):
 def test_perplexity_input_format(csr_container):
     # Test LDA perplexity for sparse and dense input
     # score should be the same for both dense and sparse input
-    n_components, X = _build_sparse_mtx(csr_container)
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components,
         max_iter=1,
@@ -327,7 +327,7 @@ def test_perplexity_input_format(csr_container):
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_lda_score_perplexity(csr_container):
     # Test the relationship between LDA score and perplexity
-    n_components, X = _build_sparse_mtx(csr_container)
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components, max_iter=10, random_state=0
     )
@@ -343,7 +343,7 @@ def test_lda_score_perplexity(csr_container):
 def test_lda_fit_perplexity(csr_container):
     # Test that the perplexity computed during fit is consistent with what is
     # returned by the perplexity method
-    n_components, X = _build_sparse_mtx(csr_container)
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components,
         max_iter=1,
@@ -392,7 +392,7 @@ def test_dirichlet_expectation():
 def check_verbosity(
     verbose, evaluate_every, expected_lines, expected_perplexities, csr_container
 ):
-    n_components, X = _build_sparse_mtx(csr_container)
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
         n_components=n_components,
         max_iter=3,
@@ -436,7 +436,7 @@ def test_verbosity(
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_lda_feature_names_out(csr_container):
     """Check feature names out for LatentDirichletAllocation."""
-    n_components, X = _build_sparse_mtx(csr_container)
+    n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(n_components=n_components).fit(X)
 
     names = lda.get_feature_names_out()
