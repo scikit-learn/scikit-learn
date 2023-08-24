@@ -806,7 +806,7 @@ cdef class BinaryTree{{name_suffix}}:
     cdef readonly const {{INPUT_DTYPE_t}}[::1] sample_weight
     cdef public float64_t sum_weight
 
-    cdef public intp_t[::1] idx_array
+    cdef public const intp_t[::1] idx_array
     cdef public const NodeData_t[::1] node_data
     cdef public {{INPUT_DTYPE_t}}[:, :, ::1] node_bounds
 
