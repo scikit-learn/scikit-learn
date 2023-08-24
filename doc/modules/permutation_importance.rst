@@ -183,9 +183,25 @@ will still have access to the feature through its correlated feature. This will
 result in a lower importance value for both features, where they might
 *actually* be important.
 
-One way to handle this is to cluster features that are correlated and only
-keep one feature from each cluster. This strategy is explored in the following
-example:
+The figure below shows the permutation feature importance of a
+:class:`~sklearn.ensemble.RandomForestClassifier` trained using the
+:ref:`breast_cancer_dataset`, which contains strongly correlated features. A
+naive interpretation would suggest that all features are unimportant:
+
+.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_permutation_importance_multicollinear_002.png
+   :target: ../auto_examples/inspection/plot_permutation_importance.html
+   :align: center
+   :scale: 70
+
+One way to handle the issue is to cluster features that are correlated and only
+keep one feature from each cluster.
+
+.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_permutation_importance_multicollinear_004.png
+   :target: ../auto_examples/inspection/plot_permutation_importance.html
+   :align: center
+   :scale: 70
+
+For more details on such strategy, see the example
 :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance_multicollinear.py`.
 
 .. topic:: Examples:
