@@ -681,11 +681,9 @@ def setup(app):
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve(
     "sklearn",
-    (
-        "https://github.com/scikit-learn/"
-        "scikit-learn/blob/{revision}/"
-        "{package}/{path}#L{lineno}"
-    ),
+    "https://github.com/scikit-learn/"
+    "scikit-learn/blob/{revision}/"
+    "{package}/{path}#L{lineno}",
 )
 
 warnings.filterwarnings(

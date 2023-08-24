@@ -103,10 +103,8 @@ plt.legend()
 plt.xlabel("X")
 plt.ylabel("y")
 _ = plt.title(
-    (
-        f"Initial: {kernel}\nOptimum: {gpr.kernel_}\nLog-Marginal-Likelihood: "
-        f"{gpr.log_marginal_likelihood(gpr.kernel_.theta)}"
-    ),
+    f"Initial: {kernel}\nOptimum: {gpr.kernel_}\nLog-Marginal-Likelihood: "
+    f"{gpr.log_marginal_likelihood(gpr.kernel_.theta)}",
     fontsize=8,
 )
 # %%
@@ -134,10 +132,8 @@ plt.legend()
 plt.xlabel("X")
 plt.ylabel("y")
 _ = plt.title(
-    (
-        f"Initial: {kernel}\nOptimum: {gpr.kernel_}\nLog-Marginal-Likelihood: "
-        f"{gpr.log_marginal_likelihood(gpr.kernel_.theta)}"
-    ),
+    f"Initial: {kernel}\nOptimum: {gpr.kernel_}\nLog-Marginal-Likelihood: "
+    f"{gpr.log_marginal_likelihood(gpr.kernel_.theta)}",
     fontsize=8,
 )
 

@@ -148,11 +148,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             "euclidean",
         ):
             warnings.warn(
-                (
-                    "Support for distance metrics other than euclidean and "
-                    "manhattan and for callables was deprecated in version "
-                    "1.3 and will be removed in version 1.5."
-                ),
+                "Support for distance metrics other than euclidean and "
+                "manhattan and for callables was deprecated in version "
+                "1.3 and will be removed in version 1.5.",
                 FutureWarning,
             )
 

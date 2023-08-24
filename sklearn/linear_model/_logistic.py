@@ -1200,10 +1200,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         # TODO(1.4): Remove "none" option
         if self.penalty == "none":
             warnings.warn(
-                (
-                    "`penalty='none'`has been deprecated in 1.2 and will be removed in"
-                    " 1.4. To keep the past behaviour, set `penalty=None`."
-                ),
+                "`penalty='none'`has been deprecated in 1.2 and will be removed in"
+                " 1.4. To keep the past behaviour, set `penalty=None`.",
                 FutureWarning,
             )
 

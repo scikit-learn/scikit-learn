@@ -90,10 +90,8 @@ class AgglomerationTransform(TransformerMixin):
 
         if Xred is not None:
             warnings.warn(
-                (
-                    "Input argument `Xred` was renamed to `Xt` in v1.3 and will be"
-                    " removed in v1.5."
-                ),
+                "Input argument `Xred` was renamed to `Xt` in v1.3 and will be"
+                " removed in v1.5.",
                 FutureWarning,
             )
             Xt = Xred
