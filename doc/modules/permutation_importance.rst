@@ -10,7 +10,7 @@ Permutation feature importance is a model inspection technique that measures the
 contribution of each feature to a :term:`fitted` model's performance on a given
 tabular dataset. This technique is particularly useful for non-linear or opaque
 :term:`estimators`, and involves randomly shuffling the values of a single
-feature and observing the resulting decrease in the model's score [1]_. By
+feature and observing the resulting degradation of the model's score [1]_. By
 breaking the relationship between the feature and the target, we can determine
 how much the model relies on such feature. One key advantage of permutation
 feature importance is that it is model-agnostic, i.e. it can be applied to any
@@ -179,9 +179,9 @@ Misleading values on strongly correlated features
 -------------------------------------------------
 
 When two features are correlated and one of the features is permuted, the model
-will still have access to the feature through its correlated feature. This will
-result in a lower importance value for both features, where they might
-*actually* be important.
+still has access to the latter through its correlated feature. This results in a
+lower importance value for both features, though they might *actually* be
+important.
 
 The figure below shows the permutation feature importance of a
 :class:`~sklearn.ensemble.RandomForestClassifier` trained using the
