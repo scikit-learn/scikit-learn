@@ -686,7 +686,7 @@ def _lars_path_solver(
                     "with an active set of %i regressors, and "
                     "the smallest cholesky pivot element being %.3e."
                     " Reduce max_iter or increase eps parameters."
-                    % (n_iter, alpha, n_active, diag),
+                    % (n_iter, alpha.item(), n_active, diag),
                     ConvergenceWarning,
                 )
 
@@ -714,7 +714,7 @@ def _lars_path_solver(
                 "are small and the current value of alpha is no "
                 "longer well controlled. %i iterations, alpha=%.3e, "
                 "previous alpha=%.3e, with an active set of %i "
-                "regressors." % (n_iter, alpha, prev_alpha, n_active),
+                "regressors." % (n_iter, alpha.item(), prev_alpha.item(), n_active),
                 ConvergenceWarning,
             )
             break
