@@ -41,6 +41,9 @@ from sklearn.preprocessing import (
 from sklearn.preprocessing._data import BOUNDS_THRESHOLD, _handle_zeros_in_scale
 from sklearn.svm import SVR
 from sklearn.utils import gen_batches, shuffle
+from sklearn.utils._array_api import (
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose,
@@ -50,6 +53,10 @@ from sklearn.utils._testing import (
     assert_array_equal,
     assert_array_less,
     skip_if_32bit,
+)
+from sklearn.utils.estimator_checks import (
+    _get_check_estimator_ids,
+    check_array_api_input_and_values,
 )
 from sklearn.utils.sparsefuncs import mean_variance_axis
 
@@ -682,6 +689,24 @@ def test_standard_check_array_of_inverse_transform():
     # to a float array.
     # If not X *= self.scale_ will fail.
     scaler.inverse_transform(x)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "check",
+    [check_array_api_input_and_values],
+    ids=_get_check_estimator_ids,
+)
+@pytest.mark.parametrize(
+    "estimator",
+    [MaxAbsScaler(), MinMaxScaler()],
+    ids=_get_check_estimator_ids,
+)
+def test_scaler_array_api_compliance(estimator, check, array_namespace, device, dtype):
+    name = estimator.__class__.__name__
+    check(name, estimator, array_namespace, device=device, dtype=dtype)
 
 
 def test_min_max_scaler_iris():

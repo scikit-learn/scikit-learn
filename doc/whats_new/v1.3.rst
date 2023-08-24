@@ -398,7 +398,7 @@ Changelog
 - |Feature| Compute a custom out-of-bag score by passing a callable to
   :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
-  :pr:`25177` by :user:`Tim Head <betatim>`.
+  :pr:`25177` by `Tim Head`_.
 
 - |Feature| :class:`ensemble.GradientBoostingClassifier` now exposes
   out-of-bag scores via the `oob_scores_` or `oob_score_` attributes.
