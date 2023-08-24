@@ -322,8 +322,6 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
 
     for method_name in routing_methods:
         for key in ["sample_weight", "metadata"]:
-            if method_name == "predict":
-                pass
             val = {"sample_weight": sample_weight, "metadata": metadata}[key]
             method_kwargs = {key: val}
 

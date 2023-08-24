@@ -381,37 +381,6 @@ def _estimator_has(attr):
     return check
 
 
-def _get_params_for_method(obj, method, params):
-    """Get routed parameters for a given method.
-
-    If metadata routing is not enabled, params has to be empty, and this method
-    returns an empty dict. If not, routing is done and the right metadata are
-    returned to be passed as kwargs to the underlying estimator's method.
-
-    Parameters
-    ----------
-    obj : object
-        The router object, i.e. the *SearchCV instance.
-
-    method : str
-        The method for which the routing is done.
-
-    params : dict
-        The parameters to be routed.
-
-    Returns
-    -------
-    routed_params : dict
-        Routed params of the form ``process_routing().estimator.method``.
-    """
-    _raise_for_params(params, obj, method)
-
-    if _routing_enabled():
-        return process_routing(obj, method, **params).estimator[method]
-    else:
-        return dict()
-
-
 class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for hyper parameter search with cross-validation."""
 
