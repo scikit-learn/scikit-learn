@@ -30,6 +30,7 @@ from sklearn.metrics import brier_score_loss
 from sklearn.model_selection import (
     KFold,
     LeaveOneOut,
+    check_cv,
     cross_val_predict,
     cross_val_score,
     train_test_split,
@@ -1012,14 +1013,30 @@ def test_calibrated_classifier_cv_works_with_large_confidence_scores(
     n = 1000
     random_noise = np.random.default_rng(global_random_seed).normal(size=n)
 
-    y_train = np.array([1] * int(n * prob) + [0] * (n - int(n * prob)))
-    X_train = 1e5 * y_train.reshape((-1, 1)) + random_noise
+    y = np.array([1] * int(n * prob) + [0] * (n - int(n * prob)))
+    X = 1e5 * y.reshape((-1, 1)) + random_noise
 
+    # Check that the decision function of SGDClassifier produces predicted
+    # values that are quite large, for the data under consideration.
+    predicted_value_threshold = 1e4
+    cv = check_cv(cv=None, y=y, classifier=True)
+    indices = cv.split(X, y)
+    for train, test in indices:
+        X_train, y_train = X[train], y[train]
+        X_test = X[test]
+        sgd_clf = SGDClassifier(loss="squared_hinge", random_state=global_random_seed)
+        sgd_clf.fit(X_train, y_train)
+        predictions = sgd_clf.decision_function(X_test)
+        assert (predictions > predicted_value_threshold).any()
+
+    # Compare the CalibratedClassifierCV using the sigmoid method with the
+    # CalibratedClassifierCV using the isotonic method. The isotonic method
+    # is used for comparison because it is numerically stable.
     clf_sigmoid = CalibratedClassifierCV(
         SGDClassifier(loss="squared_hinge", random_state=global_random_seed),
         method="sigmoid",
     )
-    score_sigmoid = cross_val_score(clf_sigmoid, X_train, y_train, scoring="roc_auc")
+    score_sigmoid = cross_val_score(clf_sigmoid, X, y, scoring="roc_auc")
 
     # The isotonic method is used for comparison because it is numerically
     # stable.
@@ -1027,7 +1044,7 @@ def test_calibrated_classifier_cv_works_with_large_confidence_scores(
         SGDClassifier(loss="squared_hinge", random_state=global_random_seed),
         method="isotonic",
     )
-    score_isotonic = cross_val_score(clf_isotonic, X_train, y_train, scoring="roc_auc")
+    score_isotonic = cross_val_score(clf_isotonic, X, y, scoring="roc_auc")
 
     # The AUC score should be the same because it is invariant under
     # strictly monotonic conditions
