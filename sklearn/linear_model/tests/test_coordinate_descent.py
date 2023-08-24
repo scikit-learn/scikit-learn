@@ -84,12 +84,10 @@ def test_set_order_sparse(order, input_order):
     X = X.asformat(sparse_format)
     y = X.asformat(sparse_format)
     X2, y2 = _set_order(X, y, order=order)
-    if order == "C":
-        assert sparse.isspmatrix_csr(X2)
-        assert sparse.isspmatrix_csr(y2)
-    elif order == "F":
-        assert sparse.isspmatrix_csc(X2)
-        assert sparse.isspmatrix_csc(y2)
+
+    format = "csc" if order == "F" else "csr"
+    assert sparse.issparse(X2) and X2.format == format
+    assert sparse.issparse(y2) and y2.format == format
 
 
 def test_lasso_zero():

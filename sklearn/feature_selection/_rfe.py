@@ -33,7 +33,12 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
         X_train,
         y_train,
         lambda estimator, features: _score(
-            estimator, X_test[:, features], y_test, scorer
+            # TODO(SLEP6): pass score_params here
+            estimator,
+            X_test[:, features],
+            y_test,
+            scorer,
+            score_params=None,
         ),
     ).scores_
 

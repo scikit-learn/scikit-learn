@@ -1519,27 +1519,6 @@ def test_ridgecv_alphas_scalar(Estimator):
     Estimator(alphas=1).fit(X, y)
 
 
-def test_raises_value_error_if_solver_not_supported():
-    # Tests whether a ValueError is raised if a non-identified solver
-    # is passed to ridge_regression
-
-    wrong_solver = "This is not a solver (MagritteSolveCV QuantumBitcoin)"
-
-    exception = ValueError
-    message = (
-        "Known solvers are 'sparse_cg', 'cholesky', 'svd'"
-        " 'lsqr', 'sag' or 'saga'. Got %s." % wrong_solver
-    )
-
-    def func():
-        X = np.eye(3)
-        y = np.ones(3)
-        ridge_regression(X, y, alpha=1.0, solver=wrong_solver)
-
-        with pytest.raises(exception, match=message):
-            func()
-
-
 def test_sparse_cg_max_iter():
     reg = Ridge(solver="sparse_cg", max_iter=1)
     reg.fit(X_diabetes, y_diabetes)

@@ -236,3 +236,18 @@ def test_mutual_information_symmetry_classif_regression(correlated, global_rando
     )
 
     assert mi_classif == pytest.approx(mi_regression)
+
+
+def test_mutual_info_regression_X_int_dtype(global_random_seed):
+    """Check that results agree when X is integer dtype and float dtype.
+
+    Non-regression test for Issue #26696.
+    """
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.randint(100, size=(100, 10))
+    X_float = X.astype(np.float64, copy=True)
+    y = rng.randint(100, size=100)
+
+    expected = mutual_info_regression(X_float, y, random_state=global_random_seed)
+    result = mutual_info_regression(X, y, random_state=global_random_seed)
+    assert_allclose(result, expected)

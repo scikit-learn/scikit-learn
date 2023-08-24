@@ -159,10 +159,10 @@ def test_classification_report_dictionary_output():
             for metric in expected_report[key]:
                 assert_almost_equal(expected_report[key][metric], report[key][metric])
 
-    assert type(expected_report["setosa"]["precision"]) == float
-    assert type(expected_report["macro avg"]["precision"]) == float
-    assert type(expected_report["setosa"]["support"]) == int
-    assert type(expected_report["macro avg"]["support"]) == int
+    assert isinstance(expected_report["setosa"]["precision"], float)
+    assert isinstance(expected_report["macro avg"]["precision"], float)
+    assert isinstance(expected_report["setosa"]["support"], int)
+    assert isinstance(expected_report["macro avg"]["support"], int)
 
 
 def test_classification_report_output_dict_empty_input():

@@ -219,7 +219,7 @@ def test_lda_predict_proba(solver, n_classes):
 
     assert prob_ref == pytest.approx(prob_ref_2)
     # check that the probability of LDA are close to the theoretical
-    # probabilties
+    # probabilities
     assert_allclose(
         lda.predict_proba(sample), np.hstack([prob, prob_ref])[np.newaxis], atol=1e-2
     )

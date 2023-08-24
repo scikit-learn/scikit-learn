@@ -54,7 +54,7 @@ from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _allclose_dense_sparse,
     _check_feature_names_in,
-    _check_fit_params,
+    _check_method_params,
     _check_psd_eigenvalues,
     _check_response_method,
     _check_sample_weight,
@@ -1503,9 +1503,9 @@ def test_deprecate_positional_args_warns_for_class():
 
 
 @pytest.mark.parametrize("indices", [None, [1, 3]])
-def test_check_fit_params(indices):
+def test_check_method_params(indices):
     X = np.random.randn(4, 2)
-    fit_params = {
+    _params = {
         "list": [1, 2, 3, 4],
         "array": np.array([1, 2, 3, 4]),
         "sparse-col": sp.csc_matrix([1, 2, 3, 4]).T,
@@ -1514,16 +1514,16 @@ def test_check_fit_params(indices):
         "scalar-str": "xxx",
         "None": None,
     }
-    result = _check_fit_params(X, fit_params, indices)
+    result = _check_method_params(X, params=_params, indices=indices)
     indices_ = indices if indices is not None else list(range(X.shape[0]))
 
     for key in ["sparse-row", "scalar-int", "scalar-str", "None"]:
-        assert result[key] is fit_params[key]
+        assert result[key] is _params[key]
 
-    assert result["list"] == _safe_indexing(fit_params["list"], indices_)
-    assert_array_equal(result["array"], _safe_indexing(fit_params["array"], indices_))
+    assert result["list"] == _safe_indexing(_params["list"], indices_)
+    assert_array_equal(result["array"], _safe_indexing(_params["array"], indices_))
     assert_allclose_dense_sparse(
-        result["sparse-col"], _safe_indexing(fit_params["sparse-col"], indices_)
+        result["sparse-col"], _safe_indexing(_params["sparse-col"], indices_)
     )
 
 

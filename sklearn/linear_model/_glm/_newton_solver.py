@@ -375,6 +375,7 @@ class NewtonSolver(ABC):
 
         self.iteration = 1
         self.converged = False
+        self.use_fallback_lbfgs_solve = False
 
         while self.iteration <= self.max_iter and not self.converged:
             if self.verbose:

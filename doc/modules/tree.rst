@@ -27,8 +27,8 @@ Some advantages of decision trees are:
 
     - Requires little data preparation. Other techniques often require data
       normalization, dummy variables need to be created and blank values to
-      be removed. Note however that this module does not support missing
-      values.
+      be removed. Some tree and algorithm combinations support 
+      :ref:`missing values <tree_missing_value_support>`.
 
     - The cost of using the tree (i.e., predicting data) is logarithmic in the
       number of data points used to train the tree.
@@ -577,7 +577,7 @@ Note that it fits much slower than the MSE criterion.
 Missing Values Support
 ======================
 
-:class:`~tree.DecisionTreeClassifier` and :class:`~tree.DecisionTreeRegressor`
+:class:`DecisionTreeClassifier` and :class:`DecisionTreeRegressor`
 have built-in support for missing values when `splitter='best'` and criterion is
 `'gini'`, `'entropy`', or `'log_loss'`, for classification or
 `'squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.
