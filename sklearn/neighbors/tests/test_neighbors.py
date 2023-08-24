@@ -24,6 +24,9 @@ from sklearn import (
 )
 from sklearn.base import clone
 from sklearn.exceptions import DataConversionWarning, EfficiencyWarning, NotFittedError
+from sklearn.metrics._dist_metrics import (
+    DistanceMetric,
+)
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.tests.test_dist_metrics import BOOL_METRICS
 from sklearn.metrics.tests.test_pairwise_distances_reduction import (
@@ -69,12 +72,32 @@ ALGORITHMS = ("ball_tree", "brute", "kd_tree", "auto")
 COMMON_VALID_METRICS = sorted(
     set.intersection(*map(set, neighbors.VALID_METRICS.values()))
 )  # type: ignore
+
 P = (1, 2, 3, 4, np.inf)
 JOBLIB_BACKENDS = list(joblib.parallel.BACKENDS.keys())
 
 # Filter deprecation warnings.
 neighbors.kneighbors_graph = ignore_warnings(neighbors.kneighbors_graph)
 neighbors.radius_neighbors_graph = ignore_warnings(neighbors.radius_neighbors_graph)
+
+# A list containing metrics where the string specifies the use of the
+# DistanceMetric object directly (as resolved in _parse_metric)
+DISTANCE_METRIC_OBJS = ["DM_euclidean"]
+
+
+def _parse_metric(metric: str, dtype=None):
+    """
+    Helper function for properly building a type-specialized DistanceMetric instances.
+
+    Constructs a type-specialized DistanceMetric instance from a string
+    beginning with "DM_" while allowing a pass-through for other metric-specifying
+    strings. This is necessary since we wish to parameterize dtype independent of
+    metric, yet DistanceMetric requires it for construction.
+
+    """
+    if metric[:3] == "DM_":
+        return DistanceMetric.get_metric(metric[3:], dtype=dtype)
+    return metric
 
 
 def _generate_test_params_for(metric: str, n_features: int):
@@ -129,7 +152,7 @@ WEIGHTS = ["uniform", "distance", _weight_func]
     ],
 )
 @pytest.mark.parametrize("query_is_train", [False, True])
-@pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)  # type: ignore # noqa
 def test_unsupervised_kneighbors(
     global_dtype,
     n_samples,
@@ -142,6 +165,8 @@ def test_unsupervised_kneighbors(
     # The different algorithms must return identical results
     # on their common metrics, with and without returning
     # distances
+
+    metric = _parse_metric(metric, global_dtype)
 
     # Redefining the rng locally to use the same generated X
     local_rng = np.random.RandomState(0)
@@ -157,6 +182,12 @@ def test_unsupervised_kneighbors(
     results = []
 
     for algorithm in ALGORITHMS:
+        if isinstance(metric, DistanceMetric) and global_dtype == np.float32:
+            if "tree" in algorithm:  # pragma: nocover
+                pytest.skip(
+                    "Neither KDTree nor BallTree support 32-bit distance metric"
+                    " objects."
+                )
         neigh = neighbors.NearestNeighbors(
             n_neighbors=n_neighbors, algorithm=algorithm, metric=metric
         )
@@ -206,7 +237,7 @@ def test_unsupervised_kneighbors(
         (1000, 5, 100),
     ],
 )
-@pytest.mark.parametrize("metric", COMMON_VALID_METRICS)
+@pytest.mark.parametrize("metric", COMMON_VALID_METRICS + DISTANCE_METRIC_OBJS)  # type: ignore # noqa
 @pytest.mark.parametrize("n_neighbors, radius", [(1, 100), (50, 500), (100, 1000)])
 @pytest.mark.parametrize(
     "NeighborsMixinSubclass",
@@ -230,6 +261,19 @@ def test_neigh_predictions_algorithm_agnosticity(
     # The different algorithms must return identical predictions results
     # on their common metrics.
 
+    metric = _parse_metric(metric, global_dtype)
+    if isinstance(metric, DistanceMetric):
+        if "Classifier" in NeighborsMixinSubclass.__name__:
+            pytest.skip(
+                "Metrics of type `DistanceMetric` are not yet supported for"
+                " classifiers."
+            )
+        if "Radius" in NeighborsMixinSubclass.__name__:
+            pytest.skip(
+                "Metrics of type `DistanceMetric` are not yet supported for"
+                " radius-neighbor estimators."
+            )
+
     # Redefining the rng locally to use the same generated X
     local_rng = np.random.RandomState(0)
     X = local_rng.rand(n_samples, n_features).astype(global_dtype, copy=False)
@@ -244,6 +288,12 @@ def test_neigh_predictions_algorithm_agnosticity(
     )
 
     for algorithm in ALGORITHMS:
+        if isinstance(metric, DistanceMetric) and global_dtype == np.float32:
+            if "tree" in algorithm:  # pragma: nocover
+                pytest.skip(
+                    "Neither KDTree nor BallTree support 32-bit distance metric"
+                    " objects."
+                )
         neigh = NeighborsMixinSubclass(parameter, algorithm=algorithm, metric=metric)
         neigh.fit(X, y)
 
@@ -985,15 +1035,26 @@ def test_query_equidistant_kth_nn(algorithm):
 
 @pytest.mark.parametrize(
     ["algorithm", "metric"],
-    [
-        ("ball_tree", "euclidean"),
-        ("kd_tree", "euclidean"),
+    list(
+        product(
+            ("kd_tree", "ball_tree", "brute"),
+            ("euclidean", *DISTANCE_METRIC_OBJS),
+        )
+    )
+    + [
         ("brute", "euclidean"),
         ("brute", "precomputed"),
     ],
 )
 def test_radius_neighbors_sort_results(algorithm, metric):
     # Test radius_neighbors[_graph] output when sort_result is True
+
+    metric = _parse_metric(metric, np.float64)
+    if isinstance(metric, DistanceMetric):
+        pytest.skip(
+            "Metrics of type `DistanceMetric` are not yet supported for radius-neighbor"
+            " estimators."
+        )
     n_samples = 10
     rng = np.random.RandomState(42)
     X = rng.random_sample((n_samples, 4))
@@ -1560,11 +1621,14 @@ def test_nearest_neighbors_validate_params():
             neighbors.VALID_METRICS["brute"]
         )
         - set(["pyfunc", *BOOL_METRICS])
-    ),
+    )
+    + DISTANCE_METRIC_OBJS,
 )
 def test_neighbors_metrics(
     global_dtype, metric, n_samples=20, n_features=3, n_query_pts=2, n_neighbors=5
 ):
+    metric = _parse_metric(metric, global_dtype)
+
     # Test computing the neighbors for various metrics
     algorithms = ["brute", "ball_tree", "kd_tree"]
     X_train = rng.rand(n_samples, n_features).astype(global_dtype, copy=False)
@@ -1574,12 +1638,21 @@ def test_neighbors_metrics(
 
     for metric_params in metric_params_list:
         # Some metric (e.g. Weighted minkowski) are not supported by KDTree
-        exclude_kd_tree = metric not in neighbors.VALID_METRICS["kd_tree"] or (
-            "minkowski" in metric and "w" in metric_params
+        exclude_kd_tree = (
+            False
+            if isinstance(metric, DistanceMetric)
+            else metric not in neighbors.VALID_METRICS["kd_tree"]
+            or ("minkowski" in metric and "w" in metric_params)
         )
         results = {}
         p = metric_params.pop("p", 2)
         for algorithm in algorithms:
+            if isinstance(metric, DistanceMetric) and global_dtype == np.float32:
+                if "tree" in algorithm:  # pragma: nocover
+                    pytest.skip(
+                        "Neither KDTree nor BallTree support 32-bit distance metric"
+                        " objects."
+                    )
             neigh = neighbors.NearestNeighbors(
                 n_neighbors=n_neighbors,
                 algorithm=algorithm,
@@ -1684,10 +1757,14 @@ def test_callable_metric():
     assert_allclose(dist1, dist2)
 
 
-@pytest.mark.parametrize("metric", neighbors.VALID_METRICS["brute"])
+@pytest.mark.parametrize(
+    "metric", neighbors.VALID_METRICS["brute"] + DISTANCE_METRIC_OBJS
+)
 def test_valid_brute_metric_for_auto_algorithm(
     global_dtype, metric, n_samples=20, n_features=12
 ):
+    metric = _parse_metric(metric, global_dtype)
+
     X = rng.rand(n_samples, n_features).astype(global_dtype, copy=False)
     Xcsr = csr_matrix(X)
 
@@ -2207,3 +2284,22 @@ def test_predict_dataframe():
 
     knn = neighbors.KNeighborsClassifier(n_neighbors=2).fit(X, y)
     knn.predict(X)
+
+
+def test_nearest_neighbours_works_with_p_less_than_1():
+    """Check that NearestNeighbors works with :math:`p \\in (0,1)` when `algorithm`
+    is `"auto"` or `"brute"` regardless of the dtype of X.
+
+    Non-regression test for issue #26548
+    """
+    X = np.array([[1.0, 0.0], [0.0, 0.0], [0.0, 1.0]])
+    neigh = neighbors.NearestNeighbors(
+        n_neighbors=3, algorithm="brute", metric_params={"p": 0.5}
+    )
+    neigh.fit(X)
+
+    y = neigh.radius_neighbors(X[0].reshape(1, -1), radius=4, return_distance=False)
+    assert_allclose(y[0], [0, 1, 2])
+
+    y = neigh.kneighbors(X[0].reshape(1, -1), return_distance=False)
+    assert_allclose(y[0], [0, 1, 2])

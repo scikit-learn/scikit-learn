@@ -825,7 +825,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     def _check_proba(self):
         if not self.probability:
             raise AttributeError(
-                "predict_proba is not available when  probability=False"
+                "predict_proba is not available when probability=False"
             )
         if self._impl not in ("c_svc", "nu_svc"):
             raise AttributeError("predict_proba only implemented for SVC and NuSVC")
@@ -835,7 +835,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     def predict_proba(self, X):
         """Compute probabilities of possible outcomes for samples in X.
 
-        The model need to have probability information computed at training
+        The model needs to have probability information computed at training
         time: fit with attribute `probability` set to True.
 
         Parameters
@@ -1095,18 +1095,26 @@ def _fit_liblinear(
         Target vector relative to X
 
     C : float
-        Inverse of cross-validation parameter. Lower the C, the more
+        Inverse of cross-validation parameter. The lower the C, the higher
         the penalization.
 
     fit_intercept : bool
-        Whether or not to fit the intercept, that is to add a intercept
-        term to the decision function.
+        Whether or not to fit an intercept. If set to True, the feature vector
+        is extended to include an intercept term: ``[x_1, ..., x_n, 1]``, where
+        1 corresponds to the intercept. If set to False, no intercept will be
+        used in calculations (i.e. data is expected to be already centered).
 
     intercept_scaling : float
-        LibLinear internally penalizes the intercept and this term is subject
-        to regularization just like the other terms of the feature vector.
-        In order to avoid this, one should increase the intercept_scaling.
-        such that the feature vector becomes [x, intercept_scaling].
+        Liblinear internally penalizes the intercept, treating it like any
+        other term in the feature vector. To reduce the impact of the
+        regularization on the intercept, the `intercept_scaling` parameter can
+        be set to a value greater than 1; the higher the value of
+        `intercept_scaling`, the lower the impact of regularization on it.
+        Then, the weights become `[w_x_1, ..., w_x_n,
+        w_intercept*intercept_scaling]`, where `w_x_1, ..., w_x_n` represent
+        the feature weights and the intercept weight is scaled by
+        `intercept_scaling`. This scaling allows the intercept term to have a
+        different regularization behavior compared to the other features.
 
     class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
