@@ -184,17 +184,31 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             else:
                 routed_params = Bunch(estimator=Bunch(partial_fit=Bunch()))
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_partial_fit_estimator)(
-                self.estimators_[i] if not first_time else self.estimator,
-                X,
-                y[:, i],
-                classes[i] if classes is not None else None,
-                partial_fit_params=routed_params.estimator.partial_fit,
-                first_time=first_time,
+        if self.features_in is not None:
+            self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+                delayed(_partial_fit_estimator)(
+                    self.estimators_[i] if not first_time else self.estimator,
+                    X[:, self.features_in[i]],
+                    y[:, i],
+                    classes[i] if classes is not None else None,
+                    partial_fit_params=routed_params.estimator.partial_fit,
+                    first_time=first_time,
+                )
+                for i in range(y.shape[1])
             )
-            for i in range(y.shape[1])
-        )
+
+        else:
+            self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+                delayed(_partial_fit_estimator)(
+                    self.estimators_[i] if not first_time else self.estimator,
+                    X,
+                    y[:, i],
+                    classes[i] if classes is not None else None,
+                    partial_fit_params=routed_params.estimator.partial_fit,
+                    first_time=first_time,
+                )
+                for i in range(y.shape[1])
+            )
 
         if first_time and hasattr(self.estimators_[0], "n_features_in_"):
             self.n_features_in_ = self.estimators_[0].n_features_in_
@@ -533,8 +547,8 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
            [1, 0, 1]])
     """
 
-    def __init__(self, estimator, *, n_jobs=None):
-        super().__init__(estimator, n_jobs=n_jobs)
+    def __init__(self, estimator, *, n_jobs=None, features_in=None):
+        super().__init__(estimator, n_jobs=n_jobs, features_in=features_in)
 
     def fit(self, X, Y, sample_weight=None, **fit_params):
         """Fit the model to data matrix X and targets Y.
