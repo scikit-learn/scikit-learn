@@ -229,15 +229,14 @@ plot_training_data_with_decision_boundary("rbf")
 #   K(\mathbf{x}_1, \mathbf{x}_2) = \tanh(\gamma \cdot
 #       \mathbf{x}_1^\top\mathbf{x}_2 + r)
 #
-# where :math:`{\gamma}` (`gamma`) controls the influence of each individual
-# training sample on the decision boundary and :math:`{r}` is the bias term
-# (`coef0`) that shifts the data up or down.
+# where the kernel coefficient :math:`{\gamma}` (`gamma`) controls the influence
+# of each individual training sample on the decision boundary and :math:`{r}` is
+# the bias term (`coef0`) that shifts the data up or down.
 #
 # In the sigmoid kernel, the similarity between two data points is computed
-# using the hyperbolic tangent function (:math:`tanh`). The kernel function
-# takes into account the dot product of the two points (:math:`\mathbf{x}_1`
-# and :math:`\mathbf{x}_2`), scaled by the kernel coefficient :math:`{\gamma}`
-# (`gamma`), and shifted by a bias term :math:`{r}` (`coef0`).
+# using the hyperbolic tangent function (:math:`\tanh`). The kernel function
+# scales and possibly shifts the dot product of the two points
+# (:math:`\mathbf{x}_1` and :math:`\mathbf{x}_2`).
 
 plot_training_data_with_decision_boundary("sigmoid")
 
