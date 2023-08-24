@@ -315,7 +315,7 @@ def test_sample_weights_infinite():
 
 
 @pytest.mark.parametrize(
-    "sparse_container, sparse_type",
+    "sparse_container, expected_internal_type",
     zip(
         [
             *CSC_CONTAINERS,
@@ -327,7 +327,7 @@ def test_sample_weights_infinite():
         CSC_CONTAINERS + 4 * CSR_CONTAINERS,
     ),
 )
-def test_sparse_classification(sparse_container, sparse_type):
+def test_sparse_classification(sparse_container, expected_internal_type):
     # Check classification with sparse input.
 
     class CustomSVC(SVC):
@@ -365,62 +365,62 @@ def test_sparse_classification(sparse_container, sparse_type):
     ).fit(X_train, y_train)
 
     # predict
-    sparse_results = sparse_classifier.predict(X_test_sparse)
-    dense_results = dense_classifier.predict(X_test)
-    assert_array_equal(sparse_results, dense_results)
+    sparse_clf_results = sparse_classifier.predict(X_test_sparse)
+    dense_clf_results = dense_classifier.predict(X_test)
+    assert_array_equal(sparse_clf_results, dense_clf_results)
 
     # decision_function
-    sparse_results = sparse_classifier.decision_function(X_test_sparse)
-    dense_results = dense_classifier.decision_function(X_test)
-    assert_array_almost_equal(sparse_results, dense_results)
+    sparse_clf_results = sparse_classifier.decision_function(X_test_sparse)
+    dense_clf_results = dense_classifier.decision_function(X_test)
+    assert_array_almost_equal(sparse_clf_results, dense_clf_results)
 
     # predict_log_proba
-    sparse_results = sparse_classifier.predict_log_proba(X_test_sparse)
-    dense_results = dense_classifier.predict_log_proba(X_test)
-    assert_array_almost_equal(sparse_results, dense_results)
+    sparse_clf_results = sparse_classifier.predict_log_proba(X_test_sparse)
+    dense_clf_results = dense_classifier.predict_log_proba(X_test)
+    assert_array_almost_equal(sparse_clf_results, dense_clf_results)
 
     # predict_proba
-    sparse_results = sparse_classifier.predict_proba(X_test_sparse)
-    dense_results = dense_classifier.predict_proba(X_test)
-    assert_array_almost_equal(sparse_results, dense_results)
+    sparse_clf_results = sparse_classifier.predict_proba(X_test_sparse)
+    dense_clf_results = dense_classifier.predict_proba(X_test)
+    assert_array_almost_equal(sparse_clf_results, dense_clf_results)
 
     # score
-    sparse_results = sparse_classifier.score(X_test_sparse, y_test)
-    dense_results = dense_classifier.score(X_test, y_test)
-    assert_array_almost_equal(sparse_results, dense_results)
+    sparse_clf_results = sparse_classifier.score(X_test_sparse, y_test)
+    dense_clf_results = dense_classifier.score(X_test, y_test)
+    assert_array_almost_equal(sparse_clf_results, dense_clf_results)
 
     # staged_decision_function
-    sparse_results = sparse_classifier.staged_decision_function(X_test_sparse)
-    dense_results = dense_classifier.staged_decision_function(X_test)
-    for sprase_res, dense_res in zip(sparse_results, dense_results):
-        assert_array_almost_equal(sprase_res, dense_res)
+    sparse_clf_results = sparse_classifier.staged_decision_function(X_test_sparse)
+    dense_clf_results = dense_classifier.staged_decision_function(X_test)
+    for sparse_clf_res, dense_clf_res in zip(sparse_clf_results, dense_clf_results):
+        assert_array_almost_equal(sparse_clf_res, dense_clf_res)
 
     # staged_predict
-    sparse_results = sparse_classifier.staged_predict(X_test_sparse)
-    dense_results = dense_classifier.staged_predict(X_test)
-    for sprase_res, dense_res in zip(sparse_results, dense_results):
-        assert_array_equal(sprase_res, dense_res)
+    sparse_clf_results = sparse_classifier.staged_predict(X_test_sparse)
+    dense_clf_results = dense_classifier.staged_predict(X_test)
+    for sparse_clf_res, dense_clf_res in zip(sparse_clf_results, dense_clf_results):
+        assert_array_equal(sparse_clf_res, dense_clf_res)
 
     # staged_predict_proba
-    sparse_results = sparse_classifier.staged_predict_proba(X_test_sparse)
-    dense_results = dense_classifier.staged_predict_proba(X_test)
-    for sprase_res, dense_res in zip(sparse_results, dense_results):
-        assert_array_almost_equal(sprase_res, dense_res)
+    sparse_clf_results = sparse_classifier.staged_predict_proba(X_test_sparse)
+    dense_clf_results = dense_classifier.staged_predict_proba(X_test)
+    for sparse_clf_res, dense_clf_res in zip(sparse_clf_results, dense_clf_results):
+        assert_array_almost_equal(sparse_clf_res, dense_clf_res)
 
     # staged_score
-    sparse_results = sparse_classifier.staged_score(X_test_sparse, y_test)
-    dense_results = dense_classifier.staged_score(X_test, y_test)
-    for sprase_res, dense_res in zip(sparse_results, dense_results):
-        assert_array_equal(sprase_res, dense_res)
+    sparse_clf_results = sparse_classifier.staged_score(X_test_sparse, y_test)
+    dense_clf_results = dense_classifier.staged_score(X_test, y_test)
+    for sparse_clf_res, dense_clf_res in zip(sparse_clf_results, dense_clf_results):
+        assert_array_equal(sparse_clf_res, dense_clf_res)
 
     # Verify sparsity of data is maintained during training
     types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-    assert all([t == sparse_type for t in types])
+    assert all([t == expected_internal_type for t in types])
 
 
 @pytest.mark.parametrize(
-    "sparse_container, sparse_type",
+    "sparse_container, expected_internal_type",
     zip(
         [
             *CSC_CONTAINERS,
@@ -432,7 +432,7 @@ def test_sparse_classification(sparse_container, sparse_type):
         CSC_CONTAINERS + 4 * CSR_CONTAINERS,
     ),
 )
-def test_sparse_regression(sparse_container, sparse_type):
+def test_sparse_regression(sparse_container, expected_internal_type):
     # Check regression with sparse input.
 
     class CustomSVR(SVR):
@@ -454,29 +454,29 @@ def test_sparse_regression(sparse_container, sparse_type):
     X_test_sparse = sparse_container(X_test)
 
     # Trained on sparse format
-    sparse_classifier = AdaBoostRegressor(estimator=CustomSVR(), random_state=1).fit(
+    sparse_regressor = AdaBoostRegressor(estimator=CustomSVR(), random_state=1).fit(
         X_train_sparse, y_train
     )
 
     # Trained on dense format
-    dense_classifier = dense_results = AdaBoostRegressor(
-        estimator=CustomSVR(), random_state=1
-    ).fit(X_train, y_train)
+    dense_regressor = AdaBoostRegressor(estimator=CustomSVR(), random_state=1).fit(
+        X_train, y_train
+    )
 
     # predict
-    sparse_results = sparse_classifier.predict(X_test_sparse)
-    dense_results = dense_classifier.predict(X_test)
-    assert_array_almost_equal(sparse_results, dense_results)
+    sparse_regr_results = sparse_regressor.predict(X_test_sparse)
+    dense_regr_results = dense_regressor.predict(X_test)
+    assert_array_almost_equal(sparse_regr_results, dense_regr_results)
 
     # staged_predict
-    sparse_results = sparse_classifier.staged_predict(X_test_sparse)
-    dense_results = dense_classifier.staged_predict(X_test)
-    for sprase_res, dense_res in zip(sparse_results, dense_results):
-        assert_array_almost_equal(sprase_res, dense_res)
+    sparse_regr_results = sparse_regressor.staged_predict(X_test_sparse)
+    dense_regr_results = dense_regressor.staged_predict(X_test)
+    for sparse_regr_res, dense_regr_res in zip(sparse_regr_results, dense_regr_results):
+        assert_array_almost_equal(sparse_regr_res, dense_regr_res)
 
-    types = [i.data_type_ for i in sparse_classifier.estimators_]
+    types = [i.data_type_ for i in sparse_regressor.estimators_]
 
-    assert all([t == sparse_type for t in types])
+    assert all([t == expected_internal_type for t in types])
 
 
 def test_sample_weight_adaboost_regressor():
