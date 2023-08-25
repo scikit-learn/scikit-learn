@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 import warnings
 
@@ -116,12 +118,14 @@ def test_pca_sparse(
         sp.sparse.random(
             SPARSE_M,
             SPARSE_N,
-            format=matrix_class.format,
             random_state=random_state,
             density=density,
         )
     )
-    np.multiply(X.data, scale, out=X.data)
+    # Scale the data + vary the column means
+    scale_vector = random_state.random(X.shape[1]) * scale
+    X = X.multiply(scale_vector)
+
     pca = PCA(n_components=n_components, svd_solver=svd_solver)
     pca.fit(X)
 
@@ -141,7 +145,6 @@ def test_sparse_pca_solver_error(global_random_seed, svd_solver, matrix_class):
         sp.sparse.random(
             SPARSE_M,
             SPARSE_N,
-            format=matrix_class.format,
             random_state=random_state,
         )
     )
