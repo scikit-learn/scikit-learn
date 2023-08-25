@@ -218,6 +218,10 @@ Changelog
   our usual rolling deprecation cycle policy. See
   :ref:`array_api` for more details. :pr:`26243` by `Tim Head`_ and :pr:`27110` by :user:`Edoardo Abati <EdAbati>`.
 
+- |Fix| :class:`preprocessing.PolynomialFeatures` now supports the new scipy sparse arrays.
+  :pr:`27166` by :user:`Mohit Joshi <work-mohit>`.
+
+
 :mod:`sklearn.tree`
 ...................
 
