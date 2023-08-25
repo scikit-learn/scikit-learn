@@ -209,37 +209,48 @@ cdef class HistogramBuilder:
             G_H_DTYPE_C [::1] ordered_gradients = self.ordered_gradients
             G_H_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
             unsigned char hessians_are_constant = self.hessians_are_constant
-            unsigned int bin_idx = 0
+            unsigned int n_bins = self.n_bins
             time_t tic1 = 0
             time_t tic2 = 0
-
-        for bin_idx in range(self.n_bins):
-            histograms[feature_idx, bin_idx].sum_gradients = 0.
-            histograms[feature_idx, bin_idx].sum_hessians = 0.
-            histograms[feature_idx, bin_idx].count = 0
 
         if root_node:
             libc_time(&tic1)
             if hessians_are_constant:
-                _build_histogram_root_no_hessian(feature_idx, X_binned,
-                                                 ordered_gradients,
-                                                 histograms)
+                _build_histogram_root_no_hessian(
+                    feature_idx, X_binned, ordered_gradients, histograms, n_bins
+                )
             else:
-                _build_histogram_root(feature_idx, X_binned,
-                                      ordered_gradients, ordered_hessians,
-                                      histograms)
+                _build_histogram_root(
+                    feature_idx,
+                    X_binned,
+                    ordered_gradients,
+                    ordered_hessians,
+                    histograms,
+                    n_bins,
+                )
             libc_time(&tic2)
             time_vec[0] += difftime(tic2, tic1)
         else:
             libc_time(&tic1)
             if hessians_are_constant:
-                _build_histogram_no_hessian(feature_idx,
-                                            sample_indices, X_binned,
-                                            ordered_gradients, histograms)
+                _build_histogram_no_hessian(
+                    feature_idx,
+                    sample_indices,
+                    X_binned,
+                    ordered_gradients,
+                    histograms,
+                    n_bins,
+                )
             else:
-                _build_histogram(feature_idx, sample_indices,
-                                 X_binned, ordered_gradients,
-                                 ordered_hessians, histograms)
+                _build_histogram(
+                    feature_idx,
+                    sample_indices,
+                    X_binned,
+                    ordered_gradients,
+                    ordered_hessians,
+                    histograms,
+                    n_bins,
+                )
             libc_time(&tic2)
             time_vec[1] += difftime(tic2, tic1)
 
@@ -249,7 +260,7 @@ cdef class HistogramBuilder:
         const unsigned int [::1] sample_indices,  # IN
         hist_struct [:, ::1] histograms,          # OUT
         double [:] time_vec,
-    ) nogil:
+    ) noexcept nogil:
         """Compute the histogram for a given feature."""
 
         cdef:
@@ -259,33 +270,55 @@ cdef class HistogramBuilder:
             G_H_DTYPE_C [::1] ordered_gradients = self.ordered_gradients
             G_H_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
             unsigned char hessians_are_constant = self.hessians_are_constant
-            unsigned int bin_idx = 0
             unsigned int i = 0
+            unsigned int n_bins = self.n_bins
             time_t tic1 = 0
             time_t tic2 = 0
-
-        for i in range(4):
-            for bin_idx in range(self.n_bins):
-                histograms[feature_idx + i, bin_idx].sum_gradients = 0.
-                histograms[feature_idx + i, bin_idx].sum_hessians = 0.
-                histograms[feature_idx + i, bin_idx].count = 0
 
         if root_node:
             libc_time(&tic1)
             if hessians_are_constant:
                 for i in range(4):
-                    _build_histogram_root_no_hessian(feature_idx + i, X_binned[:, feature_idx + i], ordered_gradients, histograms)
+                    _build_histogram_root_no_hessian(
+                        feature_idx + i,
+                        X_binned[:, feature_idx + i],
+                        ordered_gradients,
+                        histograms,
+                        n_bins,
+                    )
             else:
-                _build_histogram_root4(feature_idx, X_binned, ordered_gradients, ordered_hessians, histograms)
+                _build_histogram_root4(
+                    feature_idx,
+                    X_binned,
+                    ordered_gradients,
+                    ordered_hessians,
+                    histograms,
+                    n_bins,
+                )
             libc_time(&tic2)
             time_vec[0] += difftime(tic2, tic1)
         else:
             libc_time(&tic1)
             if hessians_are_constant:
                 for i in range(4):
-                    _build_histogram_no_hessian(feature_idx + i, sample_indices, X_binned[:, feature_idx + i], ordered_gradients, histograms)
+                    _build_histogram_no_hessian(
+                        feature_idx + i,
+                        sample_indices,
+                        X_binned[:, feature_idx + i],
+                        ordered_gradients,
+                        histograms,
+                        n_bins,
+                    )
             else:
-                _build_histogram4(feature_idx, sample_indices, X_binned, ordered_gradients, ordered_hessians, histograms)
+                _build_histogram4(
+                    feature_idx,
+                    sample_indices,
+                    X_binned,
+                    ordered_gradients,
+                    ordered_hessians,
+                    histograms,
+                    n_bins,
+                )
             libc_time(&tic2)
             time_vec[1] += difftime(tic2, tic1)
 
@@ -383,7 +416,7 @@ cpdef void _subtract_histograms(
     unsigned int n_bins,
     hist_struct [:, ::1] hist_a,  # IN
     hist_struct [:, ::1] hist_b,  # IN
-    hist_struct [:, ::1] out,     # OUT
+    hist_struct [:, ::1] out,      # OUT
 ) noexcept nogil:
     """compute (hist_a - hist_b) in out"""
     cdef:
@@ -410,6 +443,7 @@ cpdef void _build_histogram(
     const G_H_DTYPE_C [::1] ordered_gradients,    # IN
     const G_H_DTYPE_C [::1] ordered_hessians,     # IN
     hist_struct [:, ::1] out,                     # OUT
+    unsigned int n_bins=256,
 ) noexcept nogil:
     """Return histogram for a given feature."""
     cdef:
@@ -422,6 +456,11 @@ cpdef void _build_histogram(
         unsigned int bin_2
         unsigned int bin_3
         unsigned int bin_idx
+
+    for bin_idx in range(n_bins):
+        out[feature_idx, bin_idx].sum_gradients = 0.
+        out[feature_idx, bin_idx].sum_hessians = 0.
+        out[feature_idx, bin_idx].count = 0
 
     for i in range(0, unrolled_upper, 4):
         bin_0 = binned_feature[sample_indices[i]]
@@ -457,6 +496,7 @@ cpdef void _build_histogram_no_hessian(
     const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
     const G_H_DTYPE_C [::1] ordered_gradients,    # IN
     hist_struct [:, ::1] out,                     # OUT
+    unsigned int n_bins=256,
 ) noexcept nogil:
     """Return histogram for a given feature, not updating hessians.
 
@@ -473,6 +513,11 @@ cpdef void _build_histogram_no_hessian(
         unsigned int bin_2
         unsigned int bin_3
         unsigned int bin_idx
+
+    for bin_idx in range(n_bins):
+        out[feature_idx, bin_idx].sum_gradients = 0.
+        out[feature_idx, bin_idx].sum_hessians = 0.
+        out[feature_idx, bin_idx].count = 0
 
     for i in range(0, unrolled_upper, 4):
         bin_0 = binned_feature[sample_indices[i]]
@@ -502,6 +547,7 @@ cpdef void _build_histogram_root(
     const G_H_DTYPE_C [::1] all_gradients,        # IN
     const G_H_DTYPE_C [::1] all_hessians,         # IN
     hist_struct [:, ::1] out,                     # OUT
+    unsigned int n_bins=256,
 ) noexcept nogil:
     """Compute histogram of the root node.
 
@@ -520,6 +566,11 @@ cpdef void _build_histogram_root(
         unsigned int bin_2
         unsigned int bin_3
         unsigned int bin_idx
+
+    for bin_idx in range(n_bins):
+        out[feature_idx, bin_idx].sum_gradients = 0.
+        out[feature_idx, bin_idx].sum_hessians = 0.
+        out[feature_idx, bin_idx].count = 0
 
     for i in range(0, unrolled_upper, 4):
         bin_0 = binned_feature[i]
@@ -554,6 +605,7 @@ cpdef void _build_histogram_root_no_hessian(
     const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
     const G_H_DTYPE_C [::1] all_gradients,        # IN
     hist_struct [:, ::1] out,                     # OUT
+    unsigned int n_bins=256,
 ) noexcept nogil:
     """Compute histogram of the root node, not updating hessians.
 
@@ -570,6 +622,11 @@ cpdef void _build_histogram_root_no_hessian(
         unsigned int bin_2
         unsigned int bin_3
         unsigned int bin_idx
+
+    for bin_idx in range(n_bins):
+        out[feature_idx, bin_idx].sum_gradients = 0.
+        out[feature_idx, bin_idx].sum_hessians = 0.
+        out[feature_idx, bin_idx].count = 0
 
     for i in range(0, unrolled_upper, 4):
         bin_0 = binned_feature[i]
@@ -599,6 +656,7 @@ cpdef void _build_histogram_root4(
     const G_H_DTYPE_C [::1] all_gradients,     # IN
     const G_H_DTYPE_C [::1] all_hessians,      # IN
     hist_struct [:, ::1] out,                  # OUT
+    unsigned int n_bins=256,
 ) noexcept nogil:
     """Compute histogram of the root node.
 
@@ -614,6 +672,12 @@ cpdef void _build_histogram_root4(
         unsigned int bin_1
         unsigned int bin_2
         unsigned int bin_3
+
+    for i in range(4):
+        for bin_idx in range(n_bins):
+            out[feature_idx + i, bin_idx].sum_gradients = 0.
+            out[feature_idx + i, bin_idx].sum_hessians = 0.
+            out[feature_idx + i, bin_idx].count = 0
 
     for i in range(n_samples):
         bin_0 = X_binned[i, feature_idx]
@@ -644,6 +708,7 @@ cpdef void _build_histogram4(
     const G_H_DTYPE_C [::1] ordered_gradients,  # IN
     const G_H_DTYPE_C [::1] ordered_hessians,   # IN
     hist_struct [:, ::1] out,                   # OUT
+    unsigned int n_bins=256,
 ) noexcept nogil:
     """Return histogram for a given feature."""
     cdef:
@@ -653,6 +718,12 @@ cpdef void _build_histogram4(
         unsigned int bin_1
         unsigned int bin_2
         unsigned int bin_3
+
+    for i in range(4):
+        for bin_idx in range(n_bins):
+            out[feature_idx + i, bin_idx].sum_gradients = 0.
+            out[feature_idx + i, bin_idx].sum_hessians = 0.
+            out[feature_idx + i, bin_idx].count = 0
 
     for i in range(n_node_samples):
         bin_0 = X_binned[sample_indices[i], feature_idx]
