@@ -128,15 +128,23 @@ def test_unrolled_equivalent_to_naive(constant_hessian):
     hist_ghc = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
     hist_naive = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
 
-    _build_histogram_root_no_hessian(0, binned_feature, ordered_gradients, hist_gc_root)
+    _build_histogram_root_no_hessian(
+        0, binned_feature, ordered_gradients, hist_gc_root, n_bins
+    )
     _build_histogram_root(
-        0, binned_feature, ordered_gradients, ordered_hessians, hist_ghc_root
+        0, binned_feature, ordered_gradients, ordered_hessians, hist_ghc_root, n_bins
     )
     _build_histogram_no_hessian(
-        0, sample_indices, binned_feature, ordered_gradients, hist_gc
+        0, sample_indices, binned_feature, ordered_gradients, hist_gc, n_bins
     )
     _build_histogram(
-        0, sample_indices, binned_feature, ordered_gradients, ordered_hessians, hist_ghc
+        0,
+        sample_indices,
+        binned_feature,
+        ordered_gradients,
+        ordered_hessians,
+        hist_ghc,
+        n_bins,
     )
     _build_histogram_naive(
         0,
@@ -179,7 +187,7 @@ def test_hist_subtraction(constant_hessian):
     hist_parent = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
     if constant_hessian:
         _build_histogram_no_hessian(
-            0, sample_indices, binned_feature, ordered_gradients, hist_parent
+            0, sample_indices, binned_feature, ordered_gradients, hist_parent, n_bins
         )
     else:
         _build_histogram(
@@ -189,6 +197,7 @@ def test_hist_subtraction(constant_hessian):
             ordered_gradients,
             ordered_hessians,
             hist_parent,
+            n_bins,
         )
 
     mask = rng.randint(0, 2, n_samples).astype(bool)
@@ -199,7 +208,12 @@ def test_hist_subtraction(constant_hessian):
     hist_left = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
     if constant_hessian:
         _build_histogram_no_hessian(
-            0, sample_indices_left, binned_feature, ordered_gradients_left, hist_left
+            0,
+            sample_indices_left,
+            binned_feature,
+            ordered_gradients_left,
+            hist_left,
+            n_bins,
         )
     else:
         _build_histogram(
@@ -209,6 +223,7 @@ def test_hist_subtraction(constant_hessian):
             ordered_gradients_left,
             ordered_hessians_left,
             hist_left,
+            n_bins,
         )
 
     sample_indices_right = sample_indices[~mask]
@@ -217,7 +232,12 @@ def test_hist_subtraction(constant_hessian):
     hist_right = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
     if constant_hessian:
         _build_histogram_no_hessian(
-            0, sample_indices_right, binned_feature, ordered_gradients_right, hist_right
+            0,
+            sample_indices_right,
+            binned_feature,
+            ordered_gradients_right,
+            hist_right,
+            n_bins,
         )
     else:
         _build_histogram(
@@ -227,6 +247,7 @@ def test_hist_subtraction(constant_hessian):
             ordered_gradients_right,
             ordered_hessians_right,
             hist_right,
+            n_bins,
         )
 
     hist_left_sub = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
