@@ -100,19 +100,26 @@ def test_implit_center_rmatvec(centered_matrices):
 
 @pytest.mark.parametrize("density", [0.01, 0.05, 0.10, 0.30])
 @pytest.mark.parametrize("n_components", [1, 2, 3, 10, SPARSE_MAX_COMPONENTS])
-@pytest.mark.parametrize("format", ["csr", "csc"])
+@pytest.mark.parametrize("matrix_class", CSR_CONTAINERS + CSC_CONTAINERS)
 @pytest.mark.parametrize("svd_solver", ["arpack"])
 @pytest.mark.parametrize("scale", [1, 10, 100])
 def test_pca_sparse(
-    global_random_seed, svd_solver, format, n_components, density, scale
+    global_random_seed, svd_solver, matrix_class, n_components, density, scale
 ):
     RTOL = 1e-07  # 1e0-8 can result in occasional failures
 
     if svd_solver in ["lobpcg", "arpack"] and n_components == SPARSE_MAX_COMPONENTS:
         pytest.skip("lobpcg and arpack don't support full solves")
-    random_state = np.random.RandomState(global_random_seed)
-    X = sp.sparse.random(
-        SPARSE_M, SPARSE_N, format=format, random_state=random_state, density=density
+
+    random_state = np.random.default_rng(global_random_seed)
+    X = matrix_class(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            format=matrix_class.format,
+            random_state=random_state,
+            density=density,
+        )
     )
     np.multiply(X.data, scale, out=X.data)
     pca = PCA(n_components=n_components, svd_solver=svd_solver)
@@ -127,12 +134,16 @@ def test_pca_sparse(
 
 
 @pytest.mark.parametrize("svd_solver", ["randomized", "logpcg", "full", "auto"])
-def test_sparse_pca_solver_error(global_random_seed, svd_solver):
+@pytest.mark.parametrize("matrix_class", CSR_CONTAINERS + CSC_CONTAINERS)
+def test_sparse_pca_solver_error(global_random_seed, svd_solver, matrix_class):
     random_state = np.random.RandomState(global_random_seed)
-    X = sp.sparse.random(
-        SPARSE_M,
-        SPARSE_N,
-        random_state=random_state,
+    X = matrix_class(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            format=matrix_class.format,
+            random_state=random_state,
+        )
     )
     pca = PCA(n_components=30, svd_solver=svd_solver)
     with pytest.raises(TypeError):
