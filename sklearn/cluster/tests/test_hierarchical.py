@@ -176,6 +176,7 @@ def test_agglomerative_clustering_distances(
     else:
         assert not hasattr(clustering, "distances_")
 
+
 @pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
 def test_agglomerative_clustering(global_random_seed, lil_container):
     # Check that we obtain the correct number of clusters with
@@ -909,5 +910,3 @@ def test_deprecate_affinity():
         af.fit(X)
     with pytest.raises(ValueError, match=msg):
         af.fit_predict(X)
-
-
