@@ -1055,9 +1055,12 @@ def test_sigmoid_calibration_max_abs_prediction_threshold(global_random_seed):
     n = 100
     y = random_state.randint(0, 2, size=n)
 
-    # Check that for small predictions ranging from -1 to 1, the threshold
-    # value has no impact on the outcome
+    # Check that for small enough predictions ranging from -2 to 2, the
+    # threshold value has no impact on the outcome
     predictions_small = random_state.uniform(low=-2, high=2, size=100)
+
+    # Using a threshold lower than than maximum absolute value of the
+    # predictions enables internal re-scaling by max(abs(predictions_small)).
     threshold_1 = 0.1
     a1, b1 = _sigmoid_calibration(
         predictions=predictions_small,
@@ -1065,6 +1068,7 @@ def test_sigmoid_calibration_max_abs_prediction_threshold(global_random_seed):
         max_abs_prediction_threshold=threshold_1,
     )
 
+    # Using a larger threshold disables rescaling.
     threshold_2 = 10
     a2, b2 = _sigmoid_calibration(
         predictions=predictions_small,
@@ -1072,13 +1076,16 @@ def test_sigmoid_calibration_max_abs_prediction_threshold(global_random_seed):
         max_abs_prediction_threshold=threshold_2,
     )
 
-    # This uses the default threshold of 30
+    # Using default threshold of 30 also disables the scaling.
     a3, b3 = _sigmoid_calibration(
         predictions=predictions_small,
         y=y,
     )
 
-    assert_allclose(a1, a2)
-    assert_allclose(a2, a3)
-    assert_allclose(b1, b2)
-    assert_allclose(b2, b3)
+    # Depends on the tolerance of the underlying quasy-newton solver which is
+    # not too strict by default.
+    atol = 1e-6
+    assert_allclose(a1, a2, atol=atol)
+    assert_allclose(a2, a3, atol=atol)
+    assert_allclose(b1, b2, atol=atol)
+    assert_allclose(b2, b3, atol=atol)

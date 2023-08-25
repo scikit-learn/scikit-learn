@@ -868,7 +868,9 @@ def _sigmoid_calibration(
     # constant.
     if max_prediction >= max_abs_prediction_threshold:
         scale_constant = max_prediction
-        F /= scale_constant
+        # We rescale the features in a copy: inplace rescaling could confuse
+        # the caller and make the code harder to reason about.
+        F = F / scale_constant
 
     # Bayesian priors (see Platt end of section 2.2):
     # It corresponds to the number of samples, taking into account the
@@ -906,9 +908,11 @@ def _sigmoid_calibration(
 
     AB0 = np.array([0.0, log((prior0 + 1.0) / (prior1 + 1.0))])
     AB_ = fmin_bfgs(objective, AB0, fprime=grad, disp=False)
-    # The tuned parameters are converted back to the original scale and offset.
-    AB_ /= scale_constant
-    return AB_[0], AB_[1]
+
+    # The tuned multiplicative parameter is converted back to the original
+    # input feature scale. The offset parameter does not need rescaling since
+    # we did not rescale the outcome variable.
+    return AB_[0] / scale_constant, AB_[1]
 
 
 class _SigmoidCalibration(RegressorMixin, BaseEstimator):
