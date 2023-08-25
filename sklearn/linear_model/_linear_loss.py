@@ -287,6 +287,7 @@ class LinearModelLoss:
 
         if not self.base_loss.is_multiclass:
             grad = np.empty_like(coef, dtype=weights.dtype)
+            print("grad_pointwise value", grad_pointwise) # TEMPORARY to check gradient
             grad[:n_features] = X.T @ grad_pointwise + l2_reg_strength * weights
             if self.fit_intercept:
                 grad[-1] = grad_pointwise.sum()
