@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from scipy.sparse import csr_matrix
 
 from sklearn.datasets import load_iris
 from sklearn.linear_model import Perceptron
