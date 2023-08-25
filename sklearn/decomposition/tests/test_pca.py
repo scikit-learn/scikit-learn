@@ -21,6 +21,7 @@ from sklearn.utils.estimator_checks import (
     _get_check_estimator_ids,
     check_array_api_input_and_values,
 )
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
@@ -54,7 +55,7 @@ def test_pca(svd_solver, n_components):
     assert_allclose(np.dot(cov, precision), np.eye(X.shape[1]), atol=1e-12)
 
 
-@pytest.fixture(scope="module", params=[sp.sparse.csr_matrix, sp.sparse.csc_matrix])
+@pytest.fixture(scope="module", params=CSR_CONTAINERS + CSC_CONTAINERS)
 def centered_matrices(request) -> tuple[sp.sparse.linalg.LinearOperator, np.ndarray]:
     matrix_class = request.param
     from sklearn.decomposition._base import _implicitly_center

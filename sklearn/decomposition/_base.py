@@ -16,7 +16,7 @@ from scipy.sparse import issparse
 from scipy.sparse.linalg import LinearOperator
 
 from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
-from ..utils._array_api import _add_to_diagonal, get_namespace
+from ..utils._array_api import _add_to_diagonal, device, get_namespace
 from ..utils.validation import check_is_fitted
 
 
@@ -69,7 +69,9 @@ class _BasePCA(
             components_ = components_ * xp.sqrt(exp_var[:, np.newaxis])
         exp_var_diff = exp_var - self.noise_variance_
         exp_var_diff = xp.where(
-            exp_var > self.noise_variance_, exp_var_diff, xp.asarray(0.0)
+            exp_var > self.noise_variance_,
+            exp_var_diff,
+            xp.asarray(0.0, device=device(exp_var)),
         )
         cov = (components_.T * exp_var_diff) @ components_
         _add_to_diagonal(cov, self.noise_variance_, xp)
@@ -109,7 +111,9 @@ class _BasePCA(
             components_ = components_ * xp.sqrt(exp_var[:, np.newaxis])
         exp_var_diff = exp_var - self.noise_variance_
         exp_var_diff = xp.where(
-            exp_var > self.noise_variance_, exp_var_diff, xp.asarray(0.0)
+            exp_var > self.noise_variance_,
+            exp_var_diff,
+            xp.asarray(0.0, device=device(exp_var)),
         )
         precision = components_ @ components_.T / self.noise_variance_
         _add_to_diagonal(precision, 1.0 / exp_var_diff, xp)
