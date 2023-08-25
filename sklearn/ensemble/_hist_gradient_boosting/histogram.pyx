@@ -157,6 +157,9 @@ cdef class HistogramBuilder:
             # interaction constraints
             n_feature_groups = 0  # (n_allowed_features // 4)
 
+        if n_feature_groups < n_threads:
+            n_feature_groups = 0
+
         with nogil:
             time_hist_copy_gradients = 0.0
             libc_time(&tic1)
