@@ -103,6 +103,11 @@ Changelog
   :pr:`26315` by :user:`Mateusz Sokół <mtsokol>` and
   :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| :class:`decomposition.PCA` now supports computing directly on scipy sparse
+  matrices when using the `arpack` solver. When used on :func:`datasets.fetch_20newsgroups_vectorized`
+  this can lead to speed ups of 100x (single threaded) and 70x less memory.
+  :pr:`18689` by :user:`Isaac Virshup <ivirshup>` and :user:`Andrey Portnoy <andportnoy>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
