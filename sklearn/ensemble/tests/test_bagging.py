@@ -9,7 +9,6 @@ from itertools import cycle, product
 import joblib
 import numpy as np
 import pytest
-from scipy.sparse import csc_matrix, csr_matrix
 
 from sklearn.base import BaseEstimator
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
@@ -31,6 +30,7 @@ from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 rng = check_random_state(0)
 
@@ -83,9 +83,9 @@ def test_classification():
 
 
 @pytest.mark.parametrize(
-    "sparse_format, params, method",
+    "sparse_container, params, method",
     product(
-        [csc_matrix, csr_matrix],
+        CSR_CONTAINERS + CSC_CONTAINERS,
         [
             {
                 "max_samples": 0.5,
@@ -105,7 +105,7 @@ def test_classification():
         ["predict", "predict_proba", "predict_log_proba", "decision_function"],
     ),
 )
-def test_sparse_classification(sparse_format, params, method):
+def test_sparse_classification(sparse_container, params, method):
     # Check classification for various parameter settings on sparse input.
 
     class CustomSVC(SVC):
@@ -121,8 +121,8 @@ def test_sparse_classification(sparse_format, params, method):
         scale(iris.data), iris.target, random_state=rng
     )
 
-    X_train_sparse = sparse_format(X_train)
-    X_test_sparse = sparse_format(X_test)
+    X_train_sparse = sparse_container(X_train)
+    X_test_sparse = sparse_container(X_test)
     # Trained on sparse format
     sparse_classifier = BaggingClassifier(
         estimator=CustomSVC(kernel="linear", decision_function_shape="ovr"),
@@ -174,7 +174,8 @@ def test_regression():
             ).predict(X_test)
 
 
-def test_sparse_regression():
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+def test_sparse_regression(sparse_container):
     # Check regression for various parameter settings on sparse input.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(
@@ -206,7 +207,7 @@ def test_sparse_regression():
         {"max_samples": 0.5, "bootstrap": True, "bootstrap_features": False},
     ]
 
-    for sparse_format in [csc_matrix, csr_matrix]:
+    for sparse_format in sparse_container:
         X_train_sparse = sparse_format(X_train)
         X_test_sparse = sparse_format(X_test)
         for params in parameter_sets:
