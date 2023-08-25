@@ -1057,7 +1057,7 @@ def test_sigmoid_calibration_max_abs_prediction_threshold(global_random_seed):
 
     # Check that for small predictions ranging from -1 to 1, the threshold
     # value has no impact on the outcome
-    predictions_small = random_state.uniform(low=-1, high=1, size=100)
+    predictions_small = random_state.uniform(low=-2, high=2, size=100)
     threshold_1 = 0.1
     a1, b1 = _sigmoid_calibration(
         predictions=predictions_small,

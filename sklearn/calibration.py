@@ -906,6 +906,8 @@ def _sigmoid_calibration(
 
     AB0 = np.array([0.0, log((prior0 + 1.0) / (prior1 + 1.0))])
     AB_ = fmin_bfgs(objective, AB0, fprime=grad, disp=False)
+    # The tuned parameters are converted back to the original scale and offset.
+    AB_ /= scale_constant
     return AB_[0], AB_[1]
 
 
