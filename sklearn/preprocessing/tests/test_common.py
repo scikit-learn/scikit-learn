@@ -2,7 +2,6 @@ import warnings
 
 import numpy as np
 import pytest
-from scipy import sparse
 
 from sklearn.base import clone
 from sklearn.datasets import load_iris
@@ -22,6 +21,14 @@ from sklearn.preprocessing import (
     scale,
 )
 from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils.fixes import (
+    BSR_CONTAINERS,
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    DOK_CONTAINERS,
+    LIL_CONTAINERS,
+)
 
 iris = load_iris()
 
@@ -45,8 +52,19 @@ def _get_valid_samples_by_column(X, col):
         (RobustScaler(with_centering=False), robust_scale, True, False, []),
     ],
 )
+@pytest.mark.parametrize(
+    "sparse_container",
+    [
+        CSR_CONTAINERS,
+        CSC_CONTAINERS,
+        COO_CONTAINERS,
+        LIL_CONTAINERS,
+        DOK_CONTAINERS,
+        BSR_CONTAINERS,
+    ],
+)
 def test_missing_value_handling(
-    est, func, support_sparse, strictly_positive, omit_kwargs
+    est, func, support_sparse, strictly_positive, omit_kwargs, sparse_container
 ):
     # check that the preprocessing method let pass nan
     rng = np.random.RandomState(42)
@@ -113,15 +131,7 @@ def test_missing_value_handling(
             Xt_dense = est_dense.fit(X_train).transform(X_test)
             Xt_inv_dense = est_dense.inverse_transform(Xt_dense)
 
-        for sparse_constructor in (
-            sparse.csr_matrix,
-            sparse.csc_matrix,
-            sparse.bsr_matrix,
-            sparse.coo_matrix,
-            sparse.dia_matrix,
-            sparse.dok_matrix,
-            sparse.lil_matrix,
-        ):
+        for sparse_constructor in sparse_container:
             # check that the dense and sparse inputs lead to the same results
             # precompute the matrix to avoid catching side warnings
             X_train_sp = sparse_constructor(X_train)
