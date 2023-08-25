@@ -28,7 +28,7 @@ from ..utils.deprecation import deprecated
 from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import check_is_fitted
-from ._base import _BasePCA, _implicitly_center
+from ._base import _BasePCA, _implicit_column_offset
 
 
 def _assess_dimension(spectrum, rank, n_samples):
@@ -630,7 +630,7 @@ class PCA(_BasePCA):
         if issparse(X):
             self.mean_, var = mean_variance_axis(X, axis=0)
             total_var = var.sum() * n_samples / (n_samples - 1)  # ddof=1
-            X = _implicitly_center(X, self.mean_)
+            X = _implicit_column_offset(X, self.mean_)
         else:
             self.mean_ = xp.mean(X, axis=0)
             X -= self.mean_

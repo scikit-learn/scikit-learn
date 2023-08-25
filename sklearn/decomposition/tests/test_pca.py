@@ -58,7 +58,7 @@ def test_pca(svd_solver, n_components):
 @pytest.fixture(scope="module", params=CSR_CONTAINERS + CSC_CONTAINERS)
 def centered_matrices(request) -> tuple[sp.sparse.linalg.LinearOperator, np.ndarray]:
     matrix_class = request.param
-    from sklearn.decomposition._base import _implicitly_center
+    from sklearn.decomposition._base import _implicit_column_offset
 
     random_state = np.random.default_rng(42)
 
@@ -68,7 +68,7 @@ def centered_matrices(request) -> tuple[sp.sparse.linalg.LinearOperator, np.ndar
     X_dense = X_sparse.toarray()
     mu = np.asarray(X_sparse.mean(axis=0)).ravel()
 
-    X_sparse_centered = _implicitly_center(X_sparse, mu)
+    X_sparse_centered = _implicit_column_offset(X_sparse, mu)
     X_dense_centered = X_dense - mu
 
     return X_sparse_centered, X_dense_centered

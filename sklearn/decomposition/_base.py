@@ -20,7 +20,7 @@ from ..utils._array_api import _add_to_diagonal, device, get_namespace
 from ..utils.validation import check_is_fitted
 
 
-def _implicitly_center(
+def _implicit_column_offset(
     X: "sparse.spmatrix | sparse.sparray", mu: np.ndarray
 ) -> LinearOperator:
     """Create an implicitly centered linear operator.
@@ -167,7 +167,7 @@ class _BasePCA(
         )
         if self.mean_ is not None:
             if issparse(X):
-                X = _implicitly_center(X, self.mean_)
+                X = _implicit_column_offset(X, self.mean_)
             else:
                 X = X - self.mean_
         X_transformed = X @ self.components_.T
