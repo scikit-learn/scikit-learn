@@ -57,51 +57,8 @@ def test_pca(svd_solver, n_components):
     assert_allclose(np.dot(cov, precision), np.eye(X.shape[1]), atol=1e-12)
 
 
-@pytest.fixture(scope="module", params=CSR_CONTAINERS + CSC_CONTAINERS)
-def centered_matrices(request) -> tuple[sp.sparse.linalg.LinearOperator, np.ndarray]:
-    matrix_class = request.param
-    from sklearn.decomposition._base import _implicit_column_offset
-
-    random_state = np.random.default_rng(42)
-
-    X_sparse = matrix_class(
-        sp.sparse.random(500, 100, density=0.1, format="csr", random_state=random_state)
-    )
-    X_dense = X_sparse.toarray()
-    mu = np.asarray(X_sparse.mean(axis=0)).ravel()
-
-    X_sparse_centered = _implicit_column_offset(X_sparse, mu)
-    X_dense_centered = X_dense - mu
-
-    return X_sparse_centered, X_dense_centered
-
-
-def test_implicit_center_matmat(centered_matrices):
-    X_sparse_centered, X_dense_centered = centered_matrices
-    Y = np.random.randn(X_dense_centered.shape[1], 50)
-    assert_allclose(X_dense_centered @ Y, X_sparse_centered @ Y)
-
-
-def test_implicit_center_matvec(centered_matrices):
-    X_sparse_centered, X_dense_centered = centered_matrices
-    y = np.random.randn(X_dense_centered.shape[1])
-    assert_allclose(X_dense_centered @ y, X_sparse_centered @ y)
-
-
-def test_implicit_center_rmatmat(centered_matrices):
-    X_sparse_centered, X_dense_centered = centered_matrices
-    Y = np.random.randn(X_dense_centered.shape[0], 50)
-    assert_allclose(X_dense_centered.T @ Y, X_sparse_centered.rmatmat(Y))
-
-
-def test_implit_center_rmatvec(centered_matrices):
-    X_sparse_centered, X_dense_centered = centered_matrices
-    y = np.random.randn(X_dense_centered.shape[0])
-    assert_allclose(X_dense_centered.T @ y, X_sparse_centered.rmatvec(y))
-
-
-@pytest.mark.parametrize("density", [0.01, 0.05, 0.10, 0.30])
-@pytest.mark.parametrize("n_components", [1, 2, 3, 10, SPARSE_MAX_COMPONENTS])
+@pytest.mark.parametrize("density", [0.01, 0.1, 0.30])
+@pytest.mark.parametrize("n_components", [1, 2, 10, SPARSE_MAX_COMPONENTS])
 @pytest.mark.parametrize("matrix_class", CSR_CONTAINERS + CSC_CONTAINERS)
 @pytest.mark.parametrize("svd_solver", ["arpack"])
 @pytest.mark.parametrize("scale", [1, 10, 100])

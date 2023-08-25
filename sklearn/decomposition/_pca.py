@@ -26,9 +26,9 @@ from ..utils._array_api import get_namespace
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.deprecation import deprecated
 from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
-from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
 from ..utils.validation import check_is_fitted
-from ._base import _BasePCA, _implicit_column_offset
+from ._base import _BasePCA
 
 
 def _assess_dimension(spectrum, rank, n_samples):

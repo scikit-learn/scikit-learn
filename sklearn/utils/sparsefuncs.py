@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 import numpy as np
 import scipy.sparse as sp
+from scipy.sparse.linalg import LinearOperator
 
 from ..utils.validation import _check_sample_weight
 from .sparsefuncs_fast import (
@@ -628,3 +629,23 @@ def csc_median_axis_0(X):
         median[f_ind] = _get_median(data, nz)
 
     return median
+
+
+def _implicit_column_offset(
+    X: "sp.spmatrix | sp.sparray", offset: np.ndarray
+) -> LinearOperator:
+    """Create an implicitly offset linear operator.
+
+    Allows us to perform a PCA on  sparse data without ever densifying the whole data
+    matrix.
+    """
+    offset = offset[None, :]
+    XT = X.T.conj(copy=False)
+    return LinearOperator(
+        matvec=lambda x: X @ x - offset @ x,
+        matmat=lambda x: X @ x - offset @ x,
+        rmatvec=lambda x: XT @ x - (offset * x.sum()),
+        rmatmat=lambda x: XT @ x - offset.T @ x.sum(axis=0)[None, :],
+        dtype=X.dtype,
+        shape=X.shape,
+    )

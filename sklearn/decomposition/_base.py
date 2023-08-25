@@ -11,33 +11,13 @@
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-from scipy import linalg, sparse
+from scipy import linalg
 from scipy.sparse import issparse
-from scipy.sparse.linalg import LinearOperator
 
 from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
 from ..utils._array_api import _add_to_diagonal, device, get_namespace
+from ..utils.sparsefuncs import _implicit_column_offset
 from ..utils.validation import check_is_fitted
-
-
-def _implicit_column_offset(
-    X: "sparse.spmatrix | sparse.sparray", mu: np.ndarray
-) -> LinearOperator:
-    """Create an implicitly centered linear operator.
-
-    Allows us to perform a PCA on  sparse data without ever densifying the whole data
-    matrix.
-    """
-    mu = mu[None, :]
-    XT = X.T.conj(copy=False)
-    return LinearOperator(
-        matvec=lambda x: X @ x - mu @ x,
-        matmat=lambda x: X @ x - mu @ x,
-        rmatvec=lambda x: XT @ x - (mu * x.sum()),
-        rmatmat=lambda x: XT @ x - mu.T @ x.sum(axis=0)[None, :],
-        dtype=X.dtype,
-        shape=X.shape,
-    )
 
 
 class _BasePCA(
