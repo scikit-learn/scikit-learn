@@ -12,10 +12,8 @@ from tempfile import mkdtemp
 
 import numpy as np
 import pytest
-from scipy import sparse
 from scipy.cluster import hierarchy
 from scipy.sparse.csgraph import connected_components
-from sklearn.utils.fixes import LIL_CONTAINERS
 
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration, ward_tree
 from sklearn.cluster._agglomerative import (
@@ -49,6 +47,7 @@ from sklearn.utils._testing import (
     create_memmap_backed_data,
     ignore_warnings,
 )
+from sklearn.utils.fixes import LIL_CONTAINERS
 
 
 def test_linkage_misc():
