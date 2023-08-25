@@ -36,8 +36,9 @@ from libc.time cimport time_t, difftime
 #       array[i + 2] = i + 2
 #       array[i + 3] = i + 3
 #
-#   This is to hint gcc that it can auto-vectorize these 4 operations and
-#   perform them all at once.
+#   This is to hint gcc that it can use instruction-level parallelism for these 4
+#   operations and perform them all at once. As 2 points may both update the same
+#   bin, SIMD is not possible here.
 
 
 @cython.final
