@@ -1758,10 +1758,14 @@ def precision_recall_fscore_support(
         # score = (1 + beta**2) * precision * recall / (beta**2 * precision + recall)
         # We set to `zero_division_value` if the denominator is 0 **or** if **both**
         # precision and recall are ill-defined.
+        numer = (1 + beta2) * precision * recall
         denom = beta2 * precision + recall
-        mask = np.isclose(denom, 0) | np.isclose(pred_sum + true_sum, 0)
-        denom[mask] = 1  # avoid division by 0
-        f_score = (1 + beta2) * precision * recall / denom
+        denom_mask = np.isclose(denom, 0)
+        mask = (np.not_equal(numer, 0) & np.isclose(denom, 0)) | np.isclose(
+            pred_sum + true_sum, 0
+        )
+        denom[denom_mask] = 1  # avoid division by 0
+        f_score = numer / denom
         f_score[mask] = zero_division_value
 
     # Average the results

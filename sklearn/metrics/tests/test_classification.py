@@ -1863,7 +1863,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
     assert_almost_equal(r, 1 / 3)
     assert_almost_equal(f, 1 / 3)
     assert s is None
-    expected_result = {1: 0.666, np.nan: 1.0}
+    expected_result = {1: 0.333, np.nan: 0.5}
     assert_almost_equal(
         fbeta_score(
             y_true, y_pred, beta=2, average="samples", zero_division=zero_division
@@ -2802,3 +2802,22 @@ def test_classification_metric_pos_label_types(metric, classes):
         y_pred = y_true.copy()
     result = metric(y_true, y_pred, pos_label=pos_label)
     assert not np.any(np.isnan(result))
+
+
+def test_f1_for_small_binary_inputs_with_zero_division():
+    """Non-regression test for gh-26965"""
+    y_true = np.array([0, 1])
+    y_pred = np.array([1, 0])
+    assert f1_score(y_true, y_pred, zero_division=1) == 0.0
+
+    y_true = np.array([0, 1])
+    y_pred = np.array([0, 1])
+    assert f1_score(y_true, y_pred, zero_division=1) == 1.0
+
+    y_true = np.array([0, 1])
+    y_pred = np.array([0, 0])
+    assert f1_score(y_true, y_pred, zero_division=1) == 0.0
+
+    y_true = np.array([0, 0])
+    y_pred = np.array([0, 0])
+    assert f1_score(y_true, y_pred, zero_division=1) == 1.0
