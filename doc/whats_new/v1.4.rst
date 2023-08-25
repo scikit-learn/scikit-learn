@@ -78,6 +78,13 @@ Changelog
   and all metadata are passed as keyword arguments. :pr:`26909` by `Adrin
   Jalali`_.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| :class:`calibration.CalibratedClassifierCV` can now handle models that
+  produce large prediction scores. Before it was numerically unstable.
+  :pr:`26913` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.cluster`
 ............................
 
