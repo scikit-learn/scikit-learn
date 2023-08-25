@@ -5,9 +5,7 @@ from sklearn.datasets import load_iris
 from sklearn.linear_model import Perceptron
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose, assert_array_almost_equal
-
 from sklearn.utils.fixes import CSR_CONTAINERS
-
 
 iris = load_iris()
 random_state = check_random_state(12)
@@ -15,7 +13,6 @@ indices = np.arange(iris.data.shape[0])
 random_state.shuffle(indices)
 X = iris.data[indices]
 y = iris.target[indices]
-
 
 
 class MyPerceptron:
@@ -39,6 +36,7 @@ class MyPerceptron:
     def predict(self, X):
         X = np.atleast_2d(X)
         return np.sign(self.project(X))
+
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_perceptron_accuracy(csr_container):

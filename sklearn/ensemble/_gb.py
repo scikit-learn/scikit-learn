@@ -434,15 +434,20 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
-            X_train, X_val, y_train, y_val, sample_weight_train, sample_weight_val = (
-                train_test_split(
-                    X,
-                    y,
-                    sample_weight,
-                    random_state=self.random_state,
-                    test_size=self.validation_fraction,
-                    stratify=stratify,
-                )
+            (
+                X_train,
+                X_val,
+                y_train,
+                y_val,
+                sample_weight_train,
+                sample_weight_val,
+            ) = train_test_split(
+                X,
+                y,
+                sample_weight,
+                random_state=self.random_state,
+                test_size=self.validation_fraction,
+                stratify=stratify,
             )
             if is_classifier(self):
                 if self._n_classes != np.unique(y_train).shape[0]:
