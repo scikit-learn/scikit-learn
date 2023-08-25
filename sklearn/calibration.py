@@ -823,7 +823,11 @@ class _CalibratedClassifier:
         return proba
 
 
-def _sigmoid_calibration(predictions, y, sample_weight=None):
+# The max_abs_prediction_threshold was approximated using
+# logit(np.finfo(np.float64).eps) which is about -36
+def _sigmoid_calibration(
+    predictions, y, sample_weight=None, max_abs_prediction_threshold=30
+):
     """Probability Calibration with sigmoid method (Platt 2000)
 
     Parameters
@@ -853,6 +857,20 @@ def _sigmoid_calibration(predictions, y, sample_weight=None):
     y = column_or_1d(y)
 
     F = predictions  # F follows Platt's notations
+
+    scale_constant = 1.0
+    max_prediction = np.max(np.abs(F))
+
+    # If the predictions have large values we scale them in order to bring
+    # them within a suitable range. This has no effect on the final
+    # (prediction) result because linear models like Logisitic Regression
+    # without a penalty are invariant to multiplying the features by a
+    # constant.
+    if max_prediction >= max_abs_prediction_threshold:
+        scale_constant = max_prediction
+        # We rescale the features in a copy: inplace rescaling could confuse
+        # the caller and make the code harder to reason about.
+        F = F / scale_constant
 
     # Bayesian priors (see Platt end of section 2.2):
     # It corresponds to the number of samples, taking into account the
@@ -890,7 +908,11 @@ def _sigmoid_calibration(predictions, y, sample_weight=None):
 
     AB0 = np.array([0.0, log((prior0 + 1.0) / (prior1 + 1.0))])
     AB_ = fmin_bfgs(objective, AB0, fprime=grad, disp=False)
-    return AB_[0], AB_[1]
+
+    # The tuned multiplicative parameter is converted back to the original
+    # input feature scale. The offset parameter does not need rescaling since
+    # we did not rescale the outcome variable.
+    return AB_[0] / scale_constant, AB_[1]
 
 
 class _SigmoidCalibration(RegressorMixin, BaseEstimator):
