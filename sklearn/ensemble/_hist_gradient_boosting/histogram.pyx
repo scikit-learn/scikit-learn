@@ -199,7 +199,7 @@ cdef class HistogramBuilder:
         const unsigned int [::1] sample_indices,  # IN
         hist_struct [:, ::1] histograms,          # OUT
         double [:] time_vec,                      # OUT
-    ) nogil:  # OUT
+    ) noexcept nogil:
         """Compute the histogram for a given feature."""
 
         cdef:
@@ -354,12 +354,13 @@ cdef class HistogramBuilder:
 
 
 cpdef void _build_histogram_naive(
-        const int feature_idx,
-        unsigned int [:] sample_indices,  # IN
-        X_BINNED_DTYPE_C [:] binned_feature,  # IN
-        G_H_DTYPE_C [:] ordered_gradients,  # IN
-        G_H_DTYPE_C [:] ordered_hessians,  # IN
-        hist_struct [:, :] out) noexcept nogil:  # OUT
+    const int feature_idx,
+    unsigned int [:] sample_indices,      # IN
+    X_BINNED_DTYPE_C [:] binned_feature,  # IN
+    G_H_DTYPE_C [:] ordered_gradients,    # IN
+    G_H_DTYPE_C [:] ordered_hessians,     # IN
+    hist_struct [:, :] out,               # OUT
+) noexcept nogil:
     """Build histogram in a naive way, without optimizing for cache hit.
 
     Used in tests to compare with the optimized version."""
@@ -378,11 +379,12 @@ cpdef void _build_histogram_naive(
 
 
 cpdef void _subtract_histograms(
-        const int feature_idx,
-        unsigned int n_bins,
-        hist_struct [:, ::1] hist_a,  # IN
-        hist_struct [:, ::1] hist_b,  # IN
-        hist_struct [:, ::1] out) noexcept nogil:  # OUT
+    const int feature_idx,
+    unsigned int n_bins,
+    hist_struct [:, ::1] hist_a,  # IN
+    hist_struct [:, ::1] hist_b,  # IN
+    hist_struct [:, ::1] out,     # OUT
+) noexcept nogil:
     """compute (hist_a - hist_b) in out"""
     cdef:
         unsigned int i = 0
@@ -402,12 +404,13 @@ cpdef void _subtract_histograms(
 
 
 cpdef void _build_histogram(
-        const int feature_idx,
-        const unsigned int [::1] sample_indices,  # IN
-        const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
-        const G_H_DTYPE_C [::1] ordered_gradients,  # IN
-        const G_H_DTYPE_C [::1] ordered_hessians,  # IN
-        hist_struct [:, ::1] out) noexcept nogil:  # OUT
+    const int feature_idx,
+    const unsigned int [::1] sample_indices,      # IN
+    const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
+    const G_H_DTYPE_C [::1] ordered_gradients,    # IN
+    const G_H_DTYPE_C [::1] ordered_hessians,     # IN
+    hist_struct [:, ::1] out,                     # OUT
+) noexcept nogil:
     """Return histogram for a given feature."""
     cdef:
         unsigned int i = 0
@@ -449,11 +452,12 @@ cpdef void _build_histogram(
 
 
 cpdef void _build_histogram_no_hessian(
-        const int feature_idx,
-        const unsigned int [::1] sample_indices,  # IN
-        const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
-        const G_H_DTYPE_C [::1] ordered_gradients,  # IN
-        hist_struct [:, ::1] out) noexcept nogil:  # OUT
+    const int feature_idx,
+    const unsigned int [::1] sample_indices,      # IN
+    const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
+    const G_H_DTYPE_C [::1] ordered_gradients,    # IN
+    hist_struct [:, ::1] out,                     # OUT
+) noexcept nogil:
     """Return histogram for a given feature, not updating hessians.
 
     Used when the hessians of the loss are constant (typically LS loss).
@@ -493,11 +497,12 @@ cpdef void _build_histogram_no_hessian(
 
 
 cpdef void _build_histogram_root(
-        const int feature_idx,
-        const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
-        const G_H_DTYPE_C [::1] all_gradients,  # IN
-        const G_H_DTYPE_C [::1] all_hessians,  # IN
-        hist_struct [:, ::1] out) noexcept nogil:  # OUT
+    const int feature_idx,
+    const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
+    const G_H_DTYPE_C [::1] all_gradients,        # IN
+    const G_H_DTYPE_C [::1] all_hessians,         # IN
+    hist_struct [:, ::1] out,                     # OUT
+) noexcept nogil:
     """Compute histogram of the root node.
 
     Unlike other nodes, the root node has to find the split among *all* the
@@ -517,7 +522,6 @@ cpdef void _build_histogram_root(
         unsigned int bin_idx
 
     for i in range(0, unrolled_upper, 4):
-
         bin_0 = binned_feature[i]
         bin_1 = binned_feature[i + 1]
         bin_2 = binned_feature[i + 2]
@@ -546,10 +550,11 @@ cpdef void _build_histogram_root(
 
 
 cpdef void _build_histogram_root_no_hessian(
-        const int feature_idx,
-        const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
-        const G_H_DTYPE_C [::1] all_gradients,  # IN
-        hist_struct [:, ::1] out) noexcept nogil:  # OUT
+    const int feature_idx,
+    const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
+    const G_H_DTYPE_C [::1] all_gradients,        # IN
+    hist_struct [:, ::1] out,                     # OUT
+) noexcept nogil:
     """Compute histogram of the root node, not updating hessians.
 
     Used when the hessians of the loss are constant (typically LS loss).
@@ -594,7 +599,7 @@ cpdef void _build_histogram_root4(
     const G_H_DTYPE_C [::1] all_gradients,     # IN
     const G_H_DTYPE_C [::1] all_hessians,      # IN
     hist_struct [:, ::1] out,                  # OUT
-) nogil:
+) noexcept nogil:
     """Compute histogram of the root node.
 
     Unlike other nodes, the root node has to find the split among *all* the
@@ -633,12 +638,13 @@ cpdef void _build_histogram_root4(
 
 
 cpdef void _build_histogram4(
-        const int feature_idx,
-        const unsigned int [::1] sample_indices,  # IN
-        const X_BINNED_DTYPE_C [::1, :] X_binned,  # IN
-        const G_H_DTYPE_C [::1] ordered_gradients,  # IN
-        const G_H_DTYPE_C [::1] ordered_hessians,  # IN
-        hist_struct [:, ::1] out) nogil:  # OUT
+    const int feature_idx,
+    const unsigned int [::1] sample_indices,    # IN
+    const X_BINNED_DTYPE_C [::1, :] X_binned,   # IN
+    const G_H_DTYPE_C [::1] ordered_gradients,  # IN
+    const G_H_DTYPE_C [::1] ordered_hessians,   # IN
+    hist_struct [:, ::1] out,                   # OUT
+) noexcept nogil:
     """Return histogram for a given feature."""
     cdef:
         unsigned int i = 0
