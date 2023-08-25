@@ -508,18 +508,25 @@ class BisectingKMeans(_BaseKMeans):
             self._n_threads,
             return_inertia=False,
         )
-        mask = cluster_labels == 0
+        first_cluster_mask = cluster_labels == 0
 
         # Compute the labels for each subset of the data points.
         labels = np.full(X.shape[0], -1, dtype=np.int32)
 
-        labels[mask] = self._predict_recursive(
-            X[mask], sample_weight[mask], cluster_node.left
-        )
+        if first_cluster_mask.any():
+            labels[first_cluster_mask] = self._predict_recursive(
+                X[first_cluster_mask],
+                sample_weight[first_cluster_mask],
+                cluster_node.left,
+            )
 
-        labels[~mask] = self._predict_recursive(
-            X[~mask], sample_weight[~mask], cluster_node.right
-        )
+        other_cluster_mask = ~first_cluster_mask
+        if other_cluster_mask.any():
+            labels[other_cluster_mask] = self._predict_recursive(
+                X[other_cluster_mask],
+                sample_weight[other_cluster_mask],
+                cluster_node.right,
+            )
 
         return labels
 
