@@ -1059,7 +1059,7 @@ def test_sigmoid_calibration_max_abs_prediction_threshold(global_random_seed):
     # threshold value has no impact on the outcome
     predictions_small = random_state.uniform(low=-2, high=2, size=100)
 
-    # Using a threshold lower than than maximum absolute value of the
+    # Using a threshold lower than the maximum absolute value of the
     # predictions enables internal re-scaling by max(abs(predictions_small)).
     threshold_1 = 0.1
     a1, b1 = _sigmoid_calibration(
