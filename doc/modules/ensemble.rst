@@ -1546,6 +1546,12 @@ computationally expensive.
 
 .. _adaboost:
 
+
+
+
+
+
+
 AdaBoost
 ========
 
