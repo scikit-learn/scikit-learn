@@ -135,7 +135,7 @@ def test_float32_float64_equivalence(csr_container):
     assert_array_equal(km32.labels_, km64.labels_)
 
 
-@pytest.mark.parametrize("algorithm", ("lloyd", "elkan")):
+@pytest.mark.parametrize("algorithm", ("lloyd", "elkan"))
 def test_no_crash_on_empty_bisections(algorithm):
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/27081
