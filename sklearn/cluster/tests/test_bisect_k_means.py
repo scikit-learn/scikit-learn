@@ -146,5 +146,5 @@ def test_no_crash_on_empty_bisections(algorithm):
     # predict on scaled data to trigger pathologic case
     # where the inner mask leads to empty bisections.
     X_test = 50 * rng.rand(100, 10)
-    labels = bkm.predict(X_test)  # should not segfault
+    labels = bkm.predict(X_test)  # should not crash with idiv by 0
     assert np.isin(np.unique(labels), np.arange(10)).all()
