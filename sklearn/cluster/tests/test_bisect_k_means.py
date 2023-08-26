@@ -135,12 +135,13 @@ def test_float32_float64_equivalence(csr_container):
     assert_array_equal(km32.labels_, km64.labels_)
 
 
-def test_non_regression_segfault_on_empty_bisections():
+@pytest.mark.parametrize("algorithm", ("lloyd", "elkan")):
+def test_no_crash_on_empty_bisections(algorithm):
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/27081
     rng = np.random.RandomState(0)
     X_train = rng.rand(3000, 10)
-    bkm = BisectingKMeans(n_clusters=10).fit(X_train)
+    bkm = BisectingKMeans(n_clusters=10, algorithm=algorithm).fit(X_train)
 
     # predict on scaled data to trigger pathologic case
     # where the inner mask leads to empty bisections.
