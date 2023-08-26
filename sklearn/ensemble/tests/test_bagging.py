@@ -207,29 +207,28 @@ def test_sparse_regression(sparse_container):
         {"max_samples": 0.5, "bootstrap": True, "bootstrap_features": False},
     ]
 
-    for sparse_format in sparse_container:
-        X_train_sparse = sparse_format(X_train)
-        X_test_sparse = sparse_format(X_test)
-        for params in parameter_sets:
-            # Trained on sparse format
-            sparse_classifier = BaggingRegressor(
-                estimator=CustomSVR(), random_state=1, **params
-            ).fit(X_train_sparse, y_train)
-            sparse_results = sparse_classifier.predict(X_test_sparse)
+    X_train_sparse = sparse_container(X_train)
+    X_test_sparse = sparse_container(X_test)
+    for params in parameter_sets:
+        # Trained on sparse format
+        sparse_classifier = BaggingRegressor(
+            estimator=CustomSVR(), random_state=1, **params
+        ).fit(X_train_sparse, y_train)
+        sparse_results = sparse_classifier.predict(X_test_sparse)
 
-            # Trained on dense format
-            dense_results = (
-                BaggingRegressor(estimator=CustomSVR(), random_state=1, **params)
-                .fit(X_train, y_train)
-                .predict(X_test)
-            )
+        # Trained on dense format
+        dense_results = (
+            BaggingRegressor(estimator=CustomSVR(), random_state=1, **params)
+            .fit(X_train, y_train)
+            .predict(X_test)
+        )
 
-            sparse_type = type(X_train_sparse)
-            types = [i.data_type_ for i in sparse_classifier.estimators_]
+        sparse_type = type(X_train_sparse)
+        types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-            assert_array_almost_equal(sparse_results, dense_results)
-            assert all([t == sparse_type for t in types])
-            assert_array_almost_equal(sparse_results, dense_results)
+        assert_array_almost_equal(sparse_results, dense_results)
+        assert all([t == sparse_type for t in types])
+        assert_array_almost_equal(sparse_results, dense_results)
 
 
 class DummySizeEstimator(BaseEstimator):
