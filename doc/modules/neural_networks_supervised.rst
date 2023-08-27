@@ -147,7 +147,7 @@ See the examples below and the docstring of
 
  * :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`
  * See :ref:`sphx_glr_auto_examples_neural_networks_plot_mnist_filters.py` for
-   visualization of varying regularization in MLP.
+   visualized representation of trained weights.
 
 Regression
 ==========
