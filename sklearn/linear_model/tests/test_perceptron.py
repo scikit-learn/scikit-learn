@@ -38,13 +38,13 @@ class MyPerceptron:
         return np.sign(self.project(X))
 
 
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_perceptron_accuracy(csr_container):
-    for data in (X, csr_container(X)):
-        clf = Perceptron(max_iter=100, tol=None, shuffle=False)
-        clf.fit(data, y)
-        score = clf.score(data, y)
-        assert score > 0.7
+@pytest.mark.parametrize("container", CSR_CONTAINERS + [np.array])
+def test_perceptron_accuracy(container):
+    data = container(X)
+    clf = Perceptron(max_iter=100, tol=None, shuffle=False)
+    clf.fit(data, y)
+    score = clf.score(data, y)
+    assert score > 0.7
 
 
 def test_perceptron_correctness():
