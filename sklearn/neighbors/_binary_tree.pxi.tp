@@ -808,6 +808,7 @@ cdef class BinaryTree{{name_suffix}}:
 
     # TODO: idx_array and node_bounds must not be const, but this change needs
     # to happen in a way which preserves pickling
+    # See also: https://github.com/cython/cython/issues/5639
     cdef public const intp_t[::1] idx_array
     cdef public const NodeData_t[::1] node_data
     cdef public const {{INPUT_DTYPE_t}}[:, :, ::1] node_bounds
