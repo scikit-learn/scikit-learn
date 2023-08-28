@@ -97,7 +97,7 @@ the test data::
   >>> from sklearn.pipeline import make_pipeline
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.model_selection import train_test_split
-  >>> from sklearn.metrics import accuracy_score
+  >>> from sklearn.metrics import r2_score
   ...
   >>> # create a pipeline object
   >>> pipe = make_pipeline(
@@ -114,8 +114,8 @@ the test data::
   Pipeline(steps=[('standardscaler', StandardScaler()),
                   ('logisticregression', LogisticRegression())])
   >>> # we can now use it like any other estimator
-  >>> accuracy_score(pipe.predict(X_test), y_test)
-  0.97...
+  >>> r2_score(pipe.predict(X_test), y_test)
+  0.89...
 
 Model evaluation
 ----------------
