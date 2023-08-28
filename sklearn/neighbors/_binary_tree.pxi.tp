@@ -806,9 +806,11 @@ cdef class BinaryTree{{name_suffix}}:
     cdef readonly const {{INPUT_DTYPE_t}}[::1] sample_weight
     cdef public float64_t sum_weight
 
+    # TODO: idx_array and node_bounds must not be const, but this change needs
+    # to happen in a way which preserves pickling
     cdef public const intp_t[::1] idx_array
     cdef public const NodeData_t[::1] node_data
-    cdef public {{INPUT_DTYPE_t}}[:, :, ::1] node_bounds
+    cdef public const {{INPUT_DTYPE_t}}[:, :, ::1] node_bounds
 
     cdef intp_t leaf_size
     cdef intp_t n_levels
