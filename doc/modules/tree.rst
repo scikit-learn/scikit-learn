@@ -516,7 +516,7 @@ Log Loss or Entropy:
     H(Q_m) = - \sum_k p_{mk} \log(p_{mk})
 
 |details-start|
-**note:**
+Shannon entropy:
 |details-split|
 
   The entropy criterion computes the Shannon entropy of the possible classes. It
