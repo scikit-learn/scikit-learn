@@ -461,13 +461,26 @@ def _logistic_regression_path(
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)
             ]
+            # To be kept in sync with LogisticRegression's default value of tol.
+            default_lr_tol = 1e-4
+            default_lbfgsb_ftol = 1e7 * np.finfo(float).eps
             opt_res = optimize.minimize(
                 func,
                 w0,
                 method="L-BFGS-B",
                 jac=True,
                 args=(X, target, sample_weight, l2_reg_strength, n_threads),
-                options={"iprint": iprint, "gtol": tol, "maxiter": max_iter},
+                options={
+                    "iprint": iprint,
+                    "gtol": tol,
+                    # Preserve the default ratio between gtol and ftol: setting
+                    # LogisticRegression(tol=1e-4) should result in scipy's
+                    # default value of ftol to not change the default behavior
+                    # of LogisticRregression while making it possible to ask
+                    # for high precision convergence.
+                    "ftol": tol / default_lr_tol * default_lbfgsb_ftol,
+                    "maxiter": max_iter,
+                },
             )
             n_iter_i = _check_optimize_result(
                 solver,
