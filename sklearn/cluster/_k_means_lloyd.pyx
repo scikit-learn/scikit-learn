@@ -83,7 +83,7 @@ def lloyd_iter_chunked_dense(
         int n_clusters = centers_old.shape[0]
 
     if n_samples == 0:
-        # An empty array was passed, do no thing and return early (before
+        # An empty array was passed, do nothing and return early (before
         # attempting to compute n_chunks). This can typically happen when
         # calling the prediction function of a bisecting k-means model with a
         # large fraction of outiers.
@@ -281,7 +281,7 @@ def lloyd_iter_chunked_sparse(
         int n_clusters = centers_old.shape[0]
 
     if n_samples == 0:
-        # An empty array was passed, do no thing and return early (before
+        # An empty array was passed, do nothing and return early (before
         # attempting to compute n_chunks). This can typically happen when
         # calling the prediction function of a bisecting k-means model with a
         # large fraction of outiers.
