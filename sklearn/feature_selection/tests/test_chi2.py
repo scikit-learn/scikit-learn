@@ -59,7 +59,7 @@ def test_chi2_coo(coo_container):
     # if we got here without an exception, we're safe
 
 
-@pytest.mark.parametrize("csr_container", COO_CONTAINERS)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_chi2_negative(csr_container):
     # Check for proper error on negative numbers in the input X.
     X, y = [[0, 1], [-1e-20, 1]], [0, 1]
