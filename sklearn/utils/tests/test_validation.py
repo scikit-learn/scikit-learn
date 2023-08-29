@@ -1585,7 +1585,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
 @pytest.mark.parametrize(
     "ntype1, ntype2, expected_subtype",
     [
-        ("longfloat", "longdouble", np.floating),
+        ("double", "longdouble", np.floating),
         ("float16", "half", np.floating),
         ("single", "float32", np.floating),
         ("double", "float64", np.floating),
