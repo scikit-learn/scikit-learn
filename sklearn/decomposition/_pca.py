@@ -10,6 +10,7 @@
 #
 # License: BSD 3 clause
 
+import os
 from math import log, sqrt
 from numbers import Integral, Real
 
@@ -22,7 +23,7 @@ from scipy.special import gammaln
 from ..base import _fit_context
 from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
-from ..utils._array_api import get_namespace
+from ..utils._array_api import device, get_namespace
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.deprecation import deprecated
 from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
@@ -475,6 +476,17 @@ class PCA(_BasePCA):
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
         xp, is_array_api_compliant = get_namespace(X)
+
+        if (
+            xp.__name__ in {"array_api_compat.torch", "torch"}
+            and device(X).type == "mps"
+            and os.getenv("PYTORCH_ENABLE_MPS_FALLBACK") != "1"
+        ):
+            raise RuntimeError(
+                "PCA does not support inputs located on the MPS device. "
+                "You can enable CPU fallback with PYTORCH_ENABLE_MPS_FALLBACK=1 "
+                "or move your inputs to a different device."
+            )
 
         # Raise an error for sparse input.
         # This is more informative than the generic one raised by check_array.
