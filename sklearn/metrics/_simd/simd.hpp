@@ -12,23 +12,24 @@ Type simd_manhattan_dist(
     const hn::ScalableTag<Type> d;
     auto simd_sum_1 = hn::Zero(d);
     auto simd_sum_2 = hn::Zero(d);
-    auto lane_step = hn::Lanes(d);
-    size_t loop_iter = lane_step * 2;
+
+    auto lane_size = hn::Lanes(d);
+    size_t loop_iter = lane_size * 2;
     size_t vec_size = size - size % loop_iter;
-    size_t vec_remainder_size = size - size % lane_step;
+    size_t vec_remainder_size = size - size % lane_size;
 
     for (size_t i = 0; i < vec_size; i += loop_iter) {
-        const auto simd_x_1 = hn::Load(d, x + i);
-        const auto simd_y_1 = hn::Load(d, y + i);
+        const auto simd_x_1 = hn::LoadU(d, x + i);
+        const auto simd_y_1 = hn::LoadU(d, y + i);
         simd_sum_1 += hn::AbsDiff(simd_x_1, simd_y_1);
 
-        const auto simd_x_2 = hn::Load(d, x + i + lane_step);
-        const auto simd_y_2 = hn::Load(d, y + i + lane_step);
+        const auto simd_x_2 = hn::LoadU(d, x + i + lane_size);
+        const auto simd_y_2 = hn::LoadU(d, y + i + lane_size);
         simd_sum_2 += hn::AbsDiff(simd_x_2, simd_y_2);
     }
-    for (size_t i = vec_size; i < vec_remainder_size; i += lane_step) {
-        const auto simd_x_1 = hn::Load(d, x + i);
-        const auto simd_y_1 = hn::Load(d, y + i);
+    for (size_t i = vec_size; i < vec_remainder_size; i += loop_iter) {
+        const auto simd_x_1 = hn::LoadU(d, x + i);
+        const auto simd_y_1 = hn::LoadU(d, y + i);
         simd_sum_1 += hn::AbsDiff(simd_x_1, simd_y_1);
     }
     simd_sum_1 += simd_sum_2;

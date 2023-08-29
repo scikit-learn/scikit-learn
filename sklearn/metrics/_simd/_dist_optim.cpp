@@ -4,7 +4,6 @@ otherwise we remain empty so as to bypass Cython's forced inclusion of
 this file due to cimporting _dist_metrics
 */
 #ifdef DIST_METRICS
-#include <iostream>
 
 /* If built with SIMD support, include the compiled library code */
 #if WITH_SIMD == 1

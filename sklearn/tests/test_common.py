@@ -179,7 +179,7 @@ def test_configure():
             # Blas/Atlas development headers
             warnings.simplefilter("ignore", UserWarning)
             with open("setup.py") as f:
-                exec(f.read(), dict(__name__="__main__"))
+                exec(f.read(), dict(__name__="__main__", __file__=setup_filename))
     finally:
         sys.argv = old_argv
         os.chdir(cwd)

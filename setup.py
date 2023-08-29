@@ -63,13 +63,13 @@ from sklearn._build_utils.pre_build_helpers import compile_test_program  # noqa
 #     """)
 # # XXX: Can we do this without an absolute path?
 dir_path = os.path.dirname(os.path.realpath(__file__))
-hwy_include_path = Path(dir_path, "highway")
+HWY_INCLUDE_PATH = Path(dir_path, "highway")
 HAS_AVX_RUNTIME = True
 # HAS_AVX_RUNTIME = int(
 #     compile_test_program(
 #         runtime_check_program,
 #         extra_preargs=["-lstdc++"],
-#         extra_postargs=[f"-I{hwy_include_path}"],
+#         extra_postargs=[f"-I{HWY_INCLUDE_PATH}"],
 #         extension="cpp",
 #     )[0]
 # )
@@ -284,7 +284,7 @@ extension_config = {
             "language": "c++",
             "extra_compile_args": ["-std=c++11"],
             "define_macros": [("DIST_METRICS", None)],
-            "include_dirs": [".", join("..", "..", hwy_include_path)],
+            "include_dirs": [".", join("..", "..", HWY_INCLUDE_PATH)],
         },
     ],
     "metrics.cluster": [
@@ -514,7 +514,7 @@ def configure_extension_modules():
                     "sources": [join(SIMD_DIRECTORY, "simd.cpp")],
                     "cflags": ["-std=c++14", "-mavx"],
                     "extra_link_args": ["-std=c++14"],
-                    "include_dirs": [hwy_include_path],
+                    "include_dirs": [HWY_INCLUDE_PATH],
                 },
             ),
         )
