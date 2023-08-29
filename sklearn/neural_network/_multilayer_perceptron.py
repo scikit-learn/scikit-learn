@@ -800,7 +800,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         - 'adam' refers to a stochastic gradient-based optimizer proposed
           by Kingma, Diederik, and Jimmy Ba
 
-        For example usage and comparison with Adam optimizer, see
+        For a comparison between Adam optimizer and SGD, see
         :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`
 
         Note: The default solver 'adam' works pretty well on relatively
@@ -1299,7 +1299,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         - 'adam' refers to a stochastic gradient-based optimizer proposed by
           Kingma, Diederik, and Jimmy Ba
 
-        For example usage and comparison with Adam optimizer, see
+        For a comparison between Adam optimizer and SGD, see
         :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`
 
         Note: The default solver 'adam' works pretty well on relatively
