@@ -763,9 +763,6 @@ def test_logistic_regression_solvers_multinomial(C, global_random_seed):
         "sag": int(1e5),
         "saga": int(1e5),
     }
-    multinomial_solvers = list(SOLVERS)
-    multinomial_solvers.remove("liblinear")
-    multinomial_solvers.remove("newton-cholesky")
     regressors = {
         solver: LogisticRegression(
             solver=solver,
@@ -773,7 +770,8 @@ def test_logistic_regression_solvers_multinomial(C, global_random_seed):
             max_iter=solver_specific_max_iter.get(solver, max_iter),
             **params,
         ).fit(X, y)
-        for solver in multinomial_solvers
+        for solver in SOLVERS
+        if solver not in ("liblinear", "newton-cholesky")
     }
 
     for solver_1, solver_2 in itertools.combinations(regressors, r=2):
