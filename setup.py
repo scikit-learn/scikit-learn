@@ -12,7 +12,6 @@ import sys
 import traceback
 from os.path import join
 from pathlib import Path
-from textwrap import dedent
 
 from setuptools import Command, Extension, setup
 from setuptools.command.build_ext import build_ext
@@ -54,25 +53,26 @@ from sklearn._build_utils import _check_cython_version  # noqa
 from sklearn.externals._packaging.version import parse as parse_version  # noqa
 from sklearn._build_utils.pre_build_helpers import compile_test_program  # noqa
 
-runtime_check_program = dedent("""
-    #include <highway.h>
-    #include <iostream>
-    int main(){
-         std::cout << xsimd::available_architectures().avx;
-         return 0;
-    }
-    """)
-# XXX: Can we do this without an absolute path?
+# runtime_check_program = dedent("""
+#     #include <highway.h>
+#     #include <iostream>
+#     int main(){
+#          std::cout << xsimd::available_architectures().avx;
+#          return 0;
+#     }
+#     """)
+# # XXX: Can we do this without an absolute path?
 dir_path = os.path.dirname(os.path.realpath(__file__))
-hwy_include_path = Path(dir_path, "highway", "hwy")
-HAS_AVX_RUNTIME = int(
-    compile_test_program(
-        runtime_check_program,
-        extra_preargs=["-lstdc++"],
-        extra_postargs=[f"-I{hwy_include_path}"],
-        extension="cpp",
-    )[0]
-)
+hwy_include_path = Path(dir_path, "highway")
+HAS_AVX_RUNTIME = True
+# HAS_AVX_RUNTIME = int(
+#     compile_test_program(
+#         runtime_check_program,
+#         extra_preargs=["-lstdc++"],
+#         extra_postargs=[f"-I{hwy_include_path}"],
+#         extension="cpp",
+#     )[0]
+# )
 
 
 VERSION = sklearn.__version__
@@ -284,14 +284,7 @@ extension_config = {
             "language": "c++",
             "extra_compile_args": ["-std=c++11"],
             "define_macros": [("DIST_METRICS", None)],
-            "include_dirs": [join("..", "..", hwy_include_path)],
-        },
-        {
-            "sources": ["_runtime_check.pyx"],
-            "language": "c++",
-            "include_np": True,
-            "extra_compile_args": ["-std=c++11"],
-            "include_dirs": [join("..", "..", hwy_include_path)],
+            "include_dirs": [".", join("..", "..", hwy_include_path)],
         },
     ],
     "metrics.cluster": [
@@ -509,7 +502,9 @@ def configure_extension_modules():
     build_with_debug_symbols = (
         os.environ.get("SKLEARN_BUILD_ENABLE_DEBUG_SYMBOLS", "0") != "0"
     )
-    BUILD_WITH_SIMD = os.environ.get("SKLEARN_NO_SIMD", "0") == "0" and HAS_AVX_RUNTIME
+    BUILD_WITH_SIMD = int(
+        os.environ.get("SKLEARN_NO_SIMD", "0") == "0" and HAS_AVX_RUNTIME
+    )
     if BUILD_WITH_SIMD:
         libraries.append(
             (

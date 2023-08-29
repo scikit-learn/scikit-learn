@@ -24,7 +24,6 @@ from scipy.sparse import csr_matrix, issparse
 from ..utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
 from ..utils import check_array
 from ..utils.fixes import parse_version, sp_base_version
-from ._runtime_check import get_available_architectures
 cdef inline double fmax(double a, double b) noexcept nogil:
     return max(a, b)
 
@@ -1237,7 +1236,7 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     """
     def __init__(self):
         self.p = 1
-        self.simd_runtime = get_available_architectures()["avx"] and WITH_SIMD
+        self.simd_runtime = True
 
     cdef inline {{INPUT_DTYPE_t}} dist(
         self,
@@ -1246,9 +1245,9 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         intp_t size,
     ) except -1 nogil:
         if self.simd_runtime:
-            return xsimd_manhattan_dist[{{INPUT_DTYPE_t}}](x1, x2, size)
+            return simd_manhattan_dist[{{INPUT_DTYPE_t}}](x1, x2, size)
         else:
-            return xsimd_manhattan_dist_scalar[{{INPUT_DTYPE_t}}](x1, x2, size)
+            return simd_manhattan_dist_scalar[{{INPUT_DTYPE_t}}](x1, x2, size)
 
     cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
