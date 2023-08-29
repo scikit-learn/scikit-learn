@@ -172,10 +172,11 @@ def test_resample_stratify_sparse_error(csr_container):
         X, y = resample(X, y, n_samples=50, random_state=rng, stratify=stratify)
 
 
-def test_safe_mask():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_safe_mask(csr_container):
     random_state = check_random_state(0)
     X = random_state.rand(5, 4)
-    X_csr = CSR_CONTAINERS(X)
+    X_csr = csr_container(X)
     mask = [False, False, True, True, True]
 
     mask = safe_mask(X, mask)
