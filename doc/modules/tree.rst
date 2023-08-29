@@ -408,17 +408,18 @@ Tips on practical use
 Splitting Strategies
 ---------------------
 
-Decision trees use various strategies to determine how to split nodes during tree construction. These strategies impact the tree's quality and computational complexity. The following strategies are commonly used:
+Decision trees employ different strategies to determine node splits during tree construction. These strategies impact tree quality and computational complexity. The following commonly used strategies are:
 
-   - Best Split Strategy:
-Scikit-learn's decision tree implementation employs the "best split" strategy as the default approach for identifying candidate splits. This strategy considers all unique values present in the training data as potential splitting points for each feature. The criterion, such as Gini impurity or entropy, is computed for each unique value, and the value that maximizes the reduction in impurity is selected as the splitting point.
+1. Best Split Strategy:
+   Scikit-learn's decision tree implementation uses the "best split" strategy as the default approach to find candidate splits. This strategy considers all unique values in the training data as potential split points for each feature. The criterion (e.g., Gini impurity, entropy) is computed for each unique value. The value that maximizes impurity reduction becomes the splitting point.
 
-:class:`DecisionTreeClassifier` and :class:`DecisionTreeRegressor` have built-in support for missing values when `splitter='best'` and the criterion is 'gini', 'entropy', or 'log_loss' (for classification) or 'squared_error', 'friedman_mse', or 'poisson' (for regression).
+   Both :class:`DecisionTreeClassifier` and :class:`DecisionTreeRegressor` support missing values when `splitter='best'`, and the criterion is 'gini', 'entropy', or 'log_loss' (classification), or 'squared_error', 'friedman_mse', or 'poisson' (regression).
 
-    - Random Split Strategy (Alternative):
-An alternative approach for selecting candidate splits is the "random split" strategy. This involves randomly selecting a subset of candidate values from the feature's range and evaluating the criterion for each value. This approach significantly reduces computational complexity, especially for features with a large number of unique values.
+2. Random Split Strategy (Alternative):
+   An alternate approach for selecting candidate splits is the "random split" strategy. This entails randomly choosing a subset of candidate values from the feature's range and computing the criterion for each value. This significantly reduces computational complexity, especially for features with numerous unique values.
 
-It's important to note that the choice of splitting strategy can influence the resulting tree's performance, interpretability, and computational efficiency. Users should consider the characteristics of their dataset and the specific requirements of their task when selecting a suitable splitting strategy.
+   The choice of splitting strategy can affect the resulting tree's performance, interpretability, and computational efficiency. When choosing a strategy, users should consider their dataset's characteristics and their task-specific requirements.
+
 
 
 .. _tree_algorithms:
