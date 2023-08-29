@@ -32,6 +32,14 @@ Changelog
   ``transform`` when ``add_indicator`` is set to ``True`` and missing values are observed
   during ``fit``. :pr:`26600` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
+:mode:`sklearn.linear_model`
+............................
+
+- |Fix| :class:`linear_model.LogisticRegression` with `solver="lbfgs"`
+  converges to a higher precision solution when setting `tol` to values orders
+  of magnitude smaller than the default value of `1e-4`. :pr:`27191` by
+  `Olivier Grisel`_.
+
 :mod:`sklearn.neighbors`
 ........................
 
