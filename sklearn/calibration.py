@@ -886,39 +886,23 @@ def _sigmoid_calibration(
     T = np.zeros_like(y, dtype=np.float64)
     T[y > 0] = (prior1 + 1.0) / (prior1 + 2.0)
     T[y <= 0] = 1.0 / (prior0 + 2.0)
-    1.0 - T
 
     bin_loss = HalfBinomialLoss()
 
     def loss_grad(AB):
+        P = bin_loss.link.inverse(-(AB[0] * F + AB[1]))
+        raw_prediction = bin_loss.link.link(P)
         _loss, _grad = bin_loss.loss_gradient(
             y_true=T,
-            raw_prediction=(AB[0] * F + AB[1]),
+            raw_prediction=raw_prediction,
             sample_weight=sample_weight,
         )
+        _grad = -_grad
         grad = np.array([_grad @ F, _grad.sum()])
         return _loss.sum(), grad
 
-    # def loss_grad(AB):
-    #     # From Platt (beginning of Section 2.2)
-    #     P = expit(-(AB[0] * F + AB[1]))
-    #     loss = -(xlogy(T, P) + xlogy(T1, 1.0 - P))
-    #     if sample_weight is not None:
-    #         ret_loss = (sample_weight * loss).sum()
-    #     else:
-    #         ret_loss = loss.sum()
-    #
-    #     # gradient of the objective function
-    #     P = expit(-(AB[0] * F + AB[1]))
-    #     TEP_minus_T1P = T - P
-    #     if sample_weight is not None:
-    #         TEP_minus_T1P *= sample_weight
-    #     dA = np.dot(TEP_minus_T1P, F)
-    #     dB = np.sum(TEP_minus_T1P)
-    #
-    #     return ret_loss, np.array([dA, dB])
-
     AB0 = np.array([0.0, log((prior0 + 1.0) / (prior1 + 1.0))])
+
     opt_result = minimize(
         loss_grad,
         AB0,
@@ -926,7 +910,7 @@ def _sigmoid_calibration(
         jac=True,
         options={
             "iprint": 1,
-            "maxls": 100,
+            "maxls": 50,
             "gtol": 1e-6,
             "ftol": 64 * np.finfo(float).eps,
         },
