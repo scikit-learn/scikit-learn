@@ -404,6 +404,23 @@ Tips on practical use
     most of the samples.
 
 
+
+Splitting Strategies
+---------------------
+
+Decision trees use various strategies to determine how to split nodes during tree construction. These strategies impact the tree's quality and computational complexity. The following strategies are commonly used:
+
+   - Best Split Strategy:
+Scikit-learn's decision tree implementation employs the "best split" strategy as the default approach for identifying candidate splits. This strategy considers all unique values present in the training data as potential splitting points for each feature. The criterion, such as Gini impurity or entropy, is computed for each unique value, and the value that maximizes the reduction in impurity is selected as the splitting point.
+
+:class:`DecisionTreeClassifier` and :class:`DecisionTreeRegressor` have built-in support for missing values when `splitter='best'` and the criterion is 'gini', 'entropy', or 'log_loss' (for classification) or 'squared_error', 'friedman_mse', or 'poisson' (for regression).
+
+    - Random Split Strategy (Alternative):
+An alternative approach for selecting candidate splits is the "random split" strategy. This involves randomly selecting a subset of candidate values from the feature's range and evaluating the criterion for each value. This approach significantly reduces computational complexity, especially for features with a large number of unique values.
+
+It's important to note that the choice of splitting strategy can influence the resulting tree's performance, interpretability, and computational efficiency. Users should consider the characteristics of their dataset and the specific requirements of their task when selecting a suitable splitting strategy.
+
+
 .. _tree_algorithms:
 
 Tree algorithms: ID3, C4.5, C5.0 and CART
