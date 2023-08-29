@@ -676,45 +676,111 @@ def test_ovr_multinomial_iris():
         assert scores.shape == (3, n_cv, 10)
 
 
-def test_logistic_regression_solvers():
+@pytest.mark.parametrize("C", [1e-6, 1, 1e6])
+def test_logistic_regression_solvers_binary(C, global_random_seed):
     """Test solvers converge to the same result."""
-    X, y = make_classification(n_features=10, n_informative=5, random_state=0)
-
-    params = dict(fit_intercept=False, random_state=42, multi_class="ovr")
-
-    regressors = {
-        solver: LogisticRegression(solver=solver, **params).fit(X, y)
-        for solver in SOLVERS
-    }
-
-    for solver_1, solver_2 in itertools.combinations(regressors, r=2):
-        assert_array_almost_equal(
-            regressors[solver_1].coef_, regressors[solver_2].coef_, decimal=3
-        )
-
-
-def test_logistic_regression_solvers_multiclass():
-    """Test solvers converge to the same result for multiclass problems."""
     X, y = make_classification(
-        n_samples=20, n_features=20, n_informative=10, n_classes=3, random_state=0
+        n_samples=100,
+        n_features=10,
+        n_informative=5,
+        n_classes=2,
+        random_state=global_random_seed,
     )
-    tol = 1e-7
-    params = dict(fit_intercept=False, tol=tol, random_state=42, multi_class="ovr")
+    params = dict(
+        C=C,
+        fit_intercept=False,
+        random_state=global_random_seed,
+    )
 
-    # Override max iteration count for specific solvers to allow for
-    # proper convergence.
-    solver_max_iter = {"sag": 1000, "saga": 10000}
-
+    # XXX: newton-cg raises a ConvergenceWarning smaller tol values, it
+    # probably needs a secondary stopping criterion as implemented by the ftol
+    # criterion in lbfgs.
+    #
+    # XXX: lbgs can get a ConvergenceWarning for ABNORMAL_TERMINATION_IN_LNSRCH
+    # for lower tol values.
+    tol = 1e-10
+    solver_specific_tol = {
+        "newton-cg": 1e-8,
+        "lbfgs": 1e-8,
+    }
+    # sag solvers need many iterations on this small dataset but since their
+    # per-iteration cost is comparatively lower, this is ok to increase
+    # max_iter specifically for those.
+    max_iter = int(1e4)
+    solver_specific_max_iter = {
+        "sag": int(1e5),
+        "saga": int(1e5),
+    }
     regressors = {
         solver: LogisticRegression(
-            solver=solver, max_iter=solver_max_iter.get(solver, 100), **params
+            solver=solver,
+            tol=solver_specific_tol.get(solver, tol),
+            max_iter=solver_specific_max_iter.get(solver, max_iter),
+            **params,
         ).fit(X, y)
         for solver in SOLVERS
     }
 
     for solver_1, solver_2 in itertools.combinations(regressors, r=2):
-        assert_array_almost_equal(
-            regressors[solver_1].coef_, regressors[solver_2].coef_, decimal=4
+        assert_allclose(
+            regressors[solver_1].coef_,
+            regressors[solver_2].coef_,
+            atol=1e-6,
+        )
+
+
+@pytest.mark.parametrize("C", [1e-6, 1, 1e6])
+def test_logistic_regression_solvers_multinomial(C, global_random_seed):
+    """Test solvers converge to the same result for multiclass problems."""
+    # XXX: this test would fail for lower values of n_samples. This could be
+    # related to some of the ConvergenceWarning observed with low tol values
+    # for some solvers (see below). This should be investigated.
+    X, y = make_classification(
+        n_samples=300,
+        n_features=20,
+        n_informative=10,
+        n_classes=3,
+        random_state=global_random_seed,
+    )
+    params = dict(
+        C=C,
+        fit_intercept=False,
+        random_state=global_random_seed,
+        multi_class="multinomial",
+    )
+    # XXX: newton-cg raises a ConvergenceWarning smaller tol values, it
+    # probably needs a secondary stopping criterion as implemented by the ftol
+    # criterion in lbfgs.
+    tol = 1e-10
+    solver_specific_tol = {
+        "newton-cg": 1e-8,
+    }
+    # sag solvers need many iterations on this small dataset but since their
+    # per-iteration cost is comparatively lower, this is ok to increase
+    # max_iter specifically for those.
+    max_iter = int(1e4)
+    solver_specific_max_iter = {
+        "sag": int(1e5),
+        "saga": int(1e5),
+    }
+    multinomial_solvers = list(SOLVERS)
+    multinomial_solvers.remove("liblinear")
+    multinomial_solvers.remove("newton-cholesky")
+    regressors = {
+        solver: LogisticRegression(
+            solver=solver,
+            tol=solver_specific_tol.get(solver, tol),
+            max_iter=solver_specific_max_iter.get(solver, max_iter),
+            **params,
+        ).fit(X, y)
+        for solver in multinomial_solvers
+    }
+
+    for solver_1, solver_2 in itertools.combinations(regressors, r=2):
+        assert_allclose(
+            regressors[solver_1].coef_,
+            regressors[solver_2].coef_,
+            atol=1e-6,
         )
 
 
