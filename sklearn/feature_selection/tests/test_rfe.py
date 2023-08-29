@@ -177,7 +177,7 @@ def test_rfe_mockclassifier():
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_rfecv(csr_container):
     generator = check_random_state(0)
-    iris = load_iris(csr_container)
+    iris = load_iris()
     # Add some irrelevant features. Random seed is set to make sure that
     # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
