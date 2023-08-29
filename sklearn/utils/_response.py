@@ -52,7 +52,7 @@ def _get_response_values(
 
     Returns
     -------
-    y_pred : ndarray of shape (n_samples,)
+    y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
         Target scores calculated from the provided response_method
         and `pos_label`.
 
@@ -89,7 +89,7 @@ def _get_response_values(
 
         y_pred = prediction_method(X)
 
-        # select/rescale the raw predictions depending on the response method
+        # we need to provide a vector of (`n_samples`,)
         if prediction_method.__name__ == "predict_proba":
             if target_type == "binary" and y_pred.shape[1] <= 2:
                 if y_pred.shape[1] == 2:
