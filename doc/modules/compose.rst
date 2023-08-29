@@ -41,6 +41,15 @@ All estimators in a pipeline, except the last one, must be transformers
 (i.e. must have a :term:`transform` method).
 The last estimator may be any type (transformer, classifier, etc.).
 
+.. note::
+
+    Calling ``fit`` on the pipeline is the same as calling ``fit`` on
+    each estimator in turn, ``transform`` the input and pass it on to the next step.
+    The pipeline has all the methods that the last estimator in the pipeline has,
+    i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
+    as a classifier. If the last estimator is a transformer, again, so is the
+    pipeline.
+
 
 Usage
 -----
@@ -180,15 +189,6 @@ You can also provide custom feature names for the input data using
  * :ref:`composite_grid_search`
 
 |details-end|
-
-.. note::
-
-    Calling ``fit`` on the pipeline is the same as calling ``fit`` on
-    each estimator in turn, ``transform`` the input and pass it on to the next step.
-    The pipeline has all the methods that the last estimator in the pipeline has,
-    i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
-    as a classifier. If the last estimator is a transformer, again, so is the
-    pipeline.
 
 .. _pipeline_cache:
 
