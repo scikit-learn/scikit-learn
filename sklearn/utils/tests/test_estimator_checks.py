@@ -10,6 +10,7 @@ from numbers import Integral, Real
 
 import joblib
 import numpy as np
+import pytest
 import scipy.sparse as sp
 
 from sklearn import config_context, get_config
@@ -64,6 +65,7 @@ from sklearn.utils.estimator_checks import (
     check_requires_y_none,
     set_random_state,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.metaestimators import available_if
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
@@ -379,6 +381,10 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
 
 
 class SparseTransformer(BaseEstimator):
+    def __init__(self, sparse_container=None):
+        super().__init__()
+        self.sparse_container = sparse_container
+
     def fit(self, X, y=None):
         self.X_shape_ = self._validate_data(X).shape
         return self
@@ -390,7 +396,7 @@ class SparseTransformer(BaseEstimator):
         X = check_array(X)
         if X.shape[1] != self.X_shape_[1]:
             raise ValueError("Bad number of features")
-        return sp.csr_matrix(X)
+        return self.sparse_container(X)
 
 
 class EstimatorInconsistentForPandas(BaseEstimator):
@@ -540,7 +546,8 @@ def test_check_fit_score_takes_y_works_on_deprecated_fit():
     check_fit_score_takes_y("test", TestEstimatorWithDeprecatedFitMethod())
 
 
-def test_check_estimator():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_check_estimator(csr_container):
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
 
@@ -660,7 +667,7 @@ def test_check_estimator():
         check_estimator(UntaggedBinaryClassifier())
 
     # non-regression test for estimators transforming to sparse data
-    check_estimator(SparseTransformer())
+    check_estimator(SparseTransformer(sparse_container=csr_container))
 
     # doesn't error on actual estimator
     check_estimator(LogisticRegression())
@@ -901,7 +908,8 @@ def test_check_classifiers_multilabel_output_format_predict():
         check_classifiers_multilabel_output_format_predict(clf.__class__.__name__, clf)
 
 
-def test_check_classifiers_multilabel_output_format_predict_proba():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_check_classifiers_multilabel_output_format_predict_proba(csr_container):
     n_samples, test_size, n_outputs = 100, 25, 5
     _, y = make_multilabel_classification(
         n_samples=n_samples,
@@ -919,9 +927,9 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
             return self.response_output
 
     # 1. unknown output type
-    clf = MultiLabelClassifierPredictProba(response_output=sp.csr_matrix(y_test))
+    clf = MultiLabelClassifierPredictProba(response_output=csr_container(y_test))
     err_msg = (
-        "Unknown returned type .*csr_matrix.* by "
+        f"Unknown returned type .*{csr_container.__name__}.* by "
         r"MultiLabelClassifierPredictProba.predict_proba. A list or a Numpy "
         r"array is expected."
     )
