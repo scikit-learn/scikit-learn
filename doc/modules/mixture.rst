@@ -336,7 +336,8 @@ from the two resulting mixtures.
 
 .. _dirichlet_process:
 
-**The Dirichlet Process**
+The Dirichlet Process
+---------------------
 
 Here we describe variational inference algorithms on Dirichlet process
 mixture. The Dirichlet process is a prior probability distribution on
