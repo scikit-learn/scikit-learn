@@ -395,6 +395,52 @@ Tips on practical use
     most of the samples.
 
 
+Splitting Strategies
+-----------------------------
+
+Decision trees make decisions on the basis of node splitting. Various methods are 
+used for finding the best split. Every method has a different complexity associated 
+with it. Here are the methods used:
+
+1. Variance Reduction : This method is mostly used for regression where the 
+target variable is continuous. This method uses variance as a factor for deciding a 
+feature on which a node is split. Here if the variance is zero the node is said to be 
+homogenous.
+
+2. Information Gain : This is method is used for classification problems where the
+target variable is categorical,i.e. Classification tasks . It works on the concept of entropy. Entropy is
+measure of information contained in a state. The lower the entropy , the higher 
+the purity of the node. Also here our aim is to maximize information gain. 
+
+3. Gini Impurity: Gini Impurity is the probability of misclassifying information.
+The lower the value of Gini impurity the higher the purity of the node and hence
+lower the misclassification. Gini Impurity is also used for classification
+tasks and deals with categorical data.
+
+4. Chi-Square Method: It determines the statistical significance of differences between
+parent node and child node. It works on categorical data and is capable of performing
+two or more splits. The major advantage of Chi-Square is that it can do multiple
+splits, which results in greater precision . Chi-Square is calculated as sum of the square of 
+standardized discrepancies between observed and expected frequencies of the target variable.
+
+
+Above methods are used to find best splits for various classification and regression
+problems. But these methods could be used according to the task requirements.
+
+Information Gain is used for smaller and varied distributions . Information gain
+depends on entropy for calculation best split.
+Gini impurity is used for larger and simpler distributions. Gini impurity calculates
+best split binary splitting.
+
+Other than the above methods there is also an alternative technique to perform splitting
+called Random Splitting. This method randomly selects the feature values that should be 
+considered for a split. It is suitable for dataset containing large number of unique values.
+
+The method for splitting should be selected on the basis of dataset and problem
+requirement while taking into account computational complexity and accuracy of the 
+resulting model.
+
+
 .. _tree_algorithms:
 
 Tree algorithms: ID3, C4.5, C5.0 and CART
@@ -408,7 +454,7 @@ The algorithm creates a multiway tree, finding for each node (i.e. in
 a greedy manner) the categorical feature that will yield the largest
 information gain for categorical targets. Trees are grown to their
 maximum size and then a pruning step is usually applied to improve the
-ability of the tree to generalize to unseen data.
+Above  of the tree to generalize to unseen data.
 
 C4.5 is the successor to ID3 and removed the restriction that features
 must be categorical by dynamically defining a discrete attribute (based
