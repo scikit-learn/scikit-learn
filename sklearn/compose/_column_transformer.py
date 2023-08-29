@@ -137,12 +137,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     Attributes
     ----------
     transformers_ : list
-        The collection of fitted transformers as tuples of
-        (name, fitted_transformer, column). `fitted_transformer` can be an
-        estimator, 'drop', or 'passthrough'. In case there were no columns
-        selected, this will be the unfitted transformer.
-        If there are remaining columns, the final element is a tuple of the
-        form:
+        The collection of fitted transformers as tuples of (name,
+        fitted_transformer, column). `fitted_transformer` can be an estimator,
+        or `'drop'`; `'passthrough'` is replaced with an equivalent
+        :class:`~sklearn.preprocessing.FunctionTransformer`. In case there were
+        no columns selected, this will be the unfitted transformer. If there
+        are remaining columns, the final element is a tuple of the form:
         ('remainder', transformer, remaining_columns) corresponding to the
         ``remainder`` parameter. If there are remaining columns, then
         ``len(transformers_)==len(transformers)+1``, otherwise
@@ -370,6 +370,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         Generate (name, trans, column, weight) tuples.
 
+
         Parameters
         ----------
         fitted : bool
@@ -421,6 +422,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             yield (name, trans, columns, get_weight(name))
 
     def _validate_transformers(self):
+        """Validate names of transformers and the transformers themselves.
+
+        This checks whether given transformers have the required methods, i.e.
+        `fit` or `fit_transform` and `transform` implemented.
+        """
         if not self.transformers:
             return
 
@@ -446,6 +452,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def _validate_column_callables(self, X):
         """
         Converts callable column specifications.
+
+        This stores a dictionary of the form {step_name: column_indices} and
+        calls the `columns` on `X` if `columns` is a callable for a given
+        transformer.
+
+        The results are then stored in `self._transformer_to_input_indices`.
         """
         all_columns = []
         transformer_to_input_indices = {}
@@ -480,9 +492,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # Use Bunch object to improve autocomplete
         return Bunch(**{name: trans for name, trans, _ in self.transformers_})
 
-    def _get_feature_name_out_for_transformer(
-        self, name, trans, column, feature_names_in
-    ):
+    def _get_feature_name_out_for_transformer(self, name, trans, feature_names_in):
         """Gets feature names of transformer.
 
         Used in conjunction with self._iter(fitted=True) in get_feature_names_out.
@@ -522,14 +532,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         # List of tuples (name, feature_names_out)
         transformer_with_feature_names_out = []
-        for name, trans, column, _ in self._iter(
+        for name, trans, *_ in self._iter(
             fitted=True,
             column_as_strings=False,
             filter_empty_columns=True,
             filter_drop=True,
         ):
             feature_names_out = self._get_feature_name_out_for_transformer(
-                name, trans, column, input_features
+                name, trans, input_features
             )
             if feature_names_out is None:
                 continue
@@ -592,6 +602,18 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         )
 
     def _update_fitted_transformers(self, transformers):
+        """Sets self.transformers_ from given transformers.
+
+        Parameters
+        ----------
+        transformers : list of estimators
+            The fitted estimators as the output of
+            `self._call_func_on_transformers(func=_fit_transform_one, ...)`.
+            That function doesn't include 'drop' or transformers for which no
+            column is selected. 'drop' is kept as is, and for the no-column
+            transformers the unfitted transformer is put in
+            `self.transformers_`.
+        """
         # transformers are fitted; excludes 'drop' cases
         fitted_transformers = iter(transformers)
         transformers_ = []
