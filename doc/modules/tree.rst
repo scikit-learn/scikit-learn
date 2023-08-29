@@ -406,7 +406,7 @@ Tips on practical use
 
 
 Splitting Strategies
----------------------
+=====================
 
 Decision trees employ different strategies to determine node splits during tree construction. These strategies impact tree quality and computational complexity. The following commonly used strategies are:
 
