@@ -20,9 +20,10 @@ engineering.
 # -----------------------------------------
 #
 # We start by loading the data from the OpenML repository.
-from sklearn.datasets import fetch_openml
 import numpy as np
 import pandas as pd
+
+from sklearn.datasets import fetch_openml
 
 bike_sharing = fetch_openml(
     "Bike_Sharing_Demand", version=2, as_frame=True, parser="pandas"
@@ -104,8 +105,8 @@ print("X shape: {}\ny shape: {}".format(X.shape, y.shape))
 # the "i.i.d" (independent and identically distributed) assumption does not
 # hold true as the data points are not independent and have a temporal
 # relationship.
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.model_selection import train_test_split
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
@@ -170,10 +171,9 @@ print(f"CV MAPE: {cv_mape_scores.mean():.3f} ± {cv_mape_scores.std():.3f}")
 # To get a finer evaluation of our models we can compute and report several
 # cross-validation metrics at once using a dedicated helper function:
 from time import perf_counter
+
+from sklearn.metrics import mean_absolute_error, mean_pinball_loss, mean_squared_error
 from sklearn.model_selection import cross_validate
-from sklearn.metrics import mean_pinball_loss
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_squared_error
 
 (
     model_names_list,
