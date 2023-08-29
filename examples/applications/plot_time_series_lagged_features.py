@@ -194,7 +194,6 @@ def evaluate_and_store_results(names, model, X, y, cv):
         return {
             "mean_absolute_percentage_error": mean_absolute_percentage_error(y, y_pred),
             "root_mean_squared_error": mean_squared_error(y, y_pred, squared=False),
-
             "mean_absolute_error": mean_absolute_error(y, y_pred),
             "mean_pinball_05_loss": mean_pinball_loss(y, y_pred, alpha=0.05),
             "mean_pinball_50_loss": mean_pinball_loss(y, y_pred, alpha=0.50),
