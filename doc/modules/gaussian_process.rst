@@ -6,7 +6,7 @@ Gaussian Processes
 
 .. currentmodule:: sklearn.gaussian_process
 
-**Gaussian Processes (GP)** are a generic supervised learning method designed
+**Gaussian Processes (GP)** are a nonparametric supervised learning method used
 to solve *regression* and *probabilistic classification* problems.
 
 The advantages of Gaussian processes are:
@@ -25,7 +25,7 @@ The advantages of Gaussian processes are:
 
 The disadvantages of Gaussian processes include:
 
-    - They are not sparse, i.e., they use the whole samples/features
+    - Our implementation is not sparse, i.e., they use the whole samples/features
       information to perform the prediction.
 
     - They lose efficiency in high dimensional spaces -- namely when the number
@@ -63,10 +63,10 @@ should be kept fixed, `None` can be passed as optimizer.
 
 The noise level in the targets can be specified by passing it via the parameter
 `alpha`, either globally as a scalar or per datapoint. Note that a moderate
-noise level can also be helpful for dealing with numeric issues during fitting
-as it is effectively implemented as Tikhonov regularization, i.e., by adding it
-to the diagonal of the kernel matrix. An alternative to specifying the noise
-level explicitly is to include a
+noise level can also be helpful for dealing with numeric instabilities during
+fitting as it is effectively implemented as Tikhonov regularization, i.e., by
+adding it to the diagonal of the kernel matrix. An alternative to specifying
+the noise level explicitly is to include a
 :class:`~sklearn.gaussian_process.kernels.WhiteKernel` component into the
 kernel, which can estimate the global noise level from the data (see example
 below). The figure below shows the effect of noisy target handled by setting
