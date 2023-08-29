@@ -15,7 +15,7 @@ def expected_mutual_information(contingency, cnp.int64_t n_samples):
         cnp.int64_t n_rows, n_cols
         cnp.float64_t term2, term3, gln
         cnp.int64_t[::1] a_view, b_view
-        cnp.float64_t[::1] nijs_view, term1
+        cnp.float64_t[::1] term1
         cnp.float64_t[::1] gln_a, gln_b, gln_Na, gln_Nb, gln_Nnij, log_Nnij
         cnp.float64_t[::1] log_a, log_b
         Py_ssize_t i, j, nij
@@ -36,7 +36,6 @@ def expected_mutual_information(contingency, cnp.int64_t n_samples):
     # While nijs[0] will never be used, having it simplifies the indexing.
     nijs = np.arange(0, max(np.max(a), np.max(b)) + 1, dtype='float')
     nijs[0] = 1  # Stops divide by zero warnings. As its not used, no issue.
-    nijs_view = nijs
     # term1 is nij / N
     term1 = nijs / n_samples
     # term2 is log((N*nij) / (a * b)) == log(N * nij) - log(a * b)
@@ -61,9 +60,9 @@ def expected_mutual_information(contingency, cnp.int64_t n_samples):
                 term2 = log_Nnij[nij] - log_a[i] - log_b[j]
                 # Numerators are positive, denominators are negative.
                 gln = (gln_a[i] + gln_b[j] + gln_Na[i] + gln_Nb[j]
-                     - gln_Nnij[nij] - lgamma(a_view[i] - nij + 1)
-                     - lgamma(b_view[j] - nij + 1)
-                     - lgamma(n_samples - a_view[i] - b_view[j] + nij + 1))
+                       - gln_Nnij[nij] - lgamma(a_view[i] - nij + 1)
+                       - lgamma(b_view[j] - nij + 1)
+                       - lgamma(n_samples - a_view[i] - b_view[j] + nij + 1))
                 term3 = exp(gln)
                 emi += (term1[nij] * term2 * term3)
     return emi

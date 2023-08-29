@@ -1,28 +1,26 @@
-import warnings
-import numpy as np
-import pickle
 import copy
+import pickle
+import warnings
 
+import numpy as np
 import pytest
+from scipy.special import expit
 
 import sklearn
 from sklearn.datasets import make_regression
 from sklearn.isotonic import (
-    check_increasing,
-    isotonic_regression,
     IsotonicRegression,
     _make_unique,
-)
-
-from sklearn.utils.validation import check_array
-from sklearn.utils._testing import (
-    assert_allclose,
-    assert_array_equal,
-    assert_array_almost_equal,
+    check_increasing,
+    isotonic_regression,
 )
 from sklearn.utils import shuffle
-
-from scipy.special import expit
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.validation import check_array
 
 
 def test_permutation_invariance():

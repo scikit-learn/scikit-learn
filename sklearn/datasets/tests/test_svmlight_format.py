@@ -1,22 +1,23 @@
-from bz2 import BZ2File
 import gzip
-from io import BytesIO
-import numpy as np
-import scipy.sparse as sp
 import os
 import shutil
+from bz2 import BZ2File
+from io import BytesIO
 from tempfile import NamedTemporaryFile
 
+import numpy as np
 import pytest
-
-from sklearn.utils.fixes import _open_binary, _path
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal, assert_allclose
-from sklearn.utils._testing import fails_if_pypy
+import scipy.sparse as sp
 
 import sklearn
-from sklearn.datasets import load_svmlight_file, load_svmlight_files, dump_svmlight_file
-
+from sklearn.datasets import dump_svmlight_file, load_svmlight_file, load_svmlight_files
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+    fails_if_pypy,
+)
+from sklearn.utils.fixes import _open_binary, _path
 
 TEST_DATA_MODULE = "sklearn.datasets.tests.data"
 datafile = "svmlight_classification.txt"
@@ -53,7 +54,6 @@ def test_load_svmlight_file():
         (1, 12, -3),
         (2, 20, 27),
     ):
-
         assert X[i, j] == val
 
     # tests X's zero values
@@ -133,7 +133,6 @@ def test_load_svmlight_file_n_features():
 
     # test X's non-zero values
     for i, j, val in ((0, 2, 2.5), (0, 10, -5.2), (1, 5, 1.0), (1, 12, -3)):
-
         assert X[i, j] == val
 
     # 21 features in file
@@ -251,7 +250,7 @@ def test_not_a_filename():
 
 
 def test_invalid_filename():
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         load_svmlight_file("trou pic nic douille")
 
 

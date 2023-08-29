@@ -1,11 +1,11 @@
 """Helpers to check build environment before actual build of scikit-learn"""
 
-import os
-import sys
 import glob
+import os
+import subprocess
+import sys
 import tempfile
 import textwrap
-import subprocess
 
 from setuptools.command.build_ext import customize_compiler, new_compiler
 
@@ -64,12 +64,10 @@ def basic_check_build():
         # The following check won't work in pyodide
         return
 
-    code = textwrap.dedent(
-        """\
+    code = textwrap.dedent("""\
         #include <stdio.h>
         int main(void) {
         return 0;
         }
-        """
-    )
+        """)
     compile_test_program(code)

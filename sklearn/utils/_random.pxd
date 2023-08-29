@@ -14,7 +14,7 @@ cdef enum:
     # particularly tiny on Windows/MSVC.
     # It corresponds to the maximum representable value for
     # 32-bit signed integers (i.e. 2^31 - 1).
-    RAND_R_MAX = 0x7FFFFFFF
+    RAND_R_MAX = 2147483647
 
 cpdef sample_without_replacement(cnp.int_t n_population,
                                  cnp.int_t n_samples,
@@ -26,7 +26,8 @@ cpdef sample_without_replacement(cnp.int_t n_population,
 cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
     """Generate a pseudo-random np.uint32 from a np.uint32 seed"""
     # seed shouldn't ever be 0.
-    if (seed[0] == 0): seed[0] = DEFAULT_SEED
+    if (seed[0] == 0):
+        seed[0] = DEFAULT_SEED
 
     seed[0] ^= <UINT32_t>(seed[0] << 13)
     seed[0] ^= <UINT32_t>(seed[0] >> 17)

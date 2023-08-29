@@ -6,16 +6,11 @@
 #
 # License: BSD 3 clause
 
-#!python
+from libc.math cimport fabs, sqrt, isnan
 
-from libc.math cimport fabs, sqrt
 cimport numpy as cnp
 import numpy as np
 from cython cimport floating
-from cython.parallel cimport prange
-from numpy.math cimport isnan
-
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 cnp.import_array()
 
@@ -30,27 +25,25 @@ def csr_row_norms(X):
     """Squared L2 norm of each row in CSR matrix X."""
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
-    n_threads = _openmp_effective_n_threads()
-    return _sqeuclidean_row_norms_sparse(X.data, X.indptr, n_threads)
+    return _sqeuclidean_row_norms_sparse(X.data, X.indptr)
 
 
 def _sqeuclidean_row_norms_sparse(
     const floating[::1] X_data,
     const integral[::1] X_indptr,
-    int n_threads,
 ):
     cdef:
         integral n_samples = X_indptr.shape[0] - 1
         integral i, j
-        double sum_
 
     dtype = np.float32 if floating is float else np.float64
 
     cdef floating[::1] squared_row_norms = np.zeros(n_samples, dtype=dtype)
 
-    for i in prange(n_samples, schedule='static', nogil=True, num_threads=n_threads):
-        for j in range(X_indptr[i], X_indptr[i + 1]):
-            squared_row_norms[i] += X_data[j] * X_data[j]
+    with nogil:
+        for i in range(n_samples):
+            for j in range(X_indptr[i], X_indptr[i + 1]):
+                squared_row_norms[i] += X_data[j] * X_data[j]
 
     return np.asarray(squared_row_norms)
 
@@ -501,7 +494,6 @@ def _inplace_csr_row_normalize_l1(
 ):
     cdef:
         unsigned long long n_samples = shape[0]
-        unsigned long long n_features = shape[1]
 
         # the column indices for row i are stored in:
         #    indices[indptr[i]:indices[i+1]]
@@ -539,7 +531,6 @@ def _inplace_csr_row_normalize_l2(
 ):
     cdef:
         unsigned long long n_samples = shape[0]
-        unsigned long long n_features = shape[1]
         unsigned long long i
         integral j
         double sum_

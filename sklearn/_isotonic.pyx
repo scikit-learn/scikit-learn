@@ -5,10 +5,7 @@
 # pool at each step.
 
 import numpy as np
-cimport numpy as cnp
 from cython cimport floating
-
-cnp.import_array()
 
 
 def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
@@ -62,9 +59,9 @@ def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
             i = k
 
 
-def _make_unique(cnp.ndarray[dtype=floating] X,
-                 cnp.ndarray[dtype=floating] y,
-                 cnp.ndarray[dtype=floating] sample_weights):
+def _make_unique(const floating[::1] X,
+                 const floating[::1] y,
+                 const floating[::1] sample_weights):
     """Average targets for duplicate X, drop duplicates.
 
     Aggregates duplicate X values into a single X value where
@@ -75,20 +72,23 @@ def _make_unique(cnp.ndarray[dtype=floating] X,
     """
     unique_values = len(np.unique(X))
 
-    cdef cnp.ndarray[dtype=floating] y_out = np.empty(unique_values,
-                                                     dtype=X.dtype)
-    cdef cnp.ndarray[dtype=floating] x_out = np.empty_like(y_out)
-    cdef cnp.ndarray[dtype=floating] weights_out = np.empty_like(y_out)
+    if floating is float:
+        dtype = np.float32
+    else:
+        dtype = np.float64
+
+    cdef floating[::1] y_out = np.empty(unique_values, dtype=dtype)
+    cdef floating[::1] x_out = np.empty_like(y_out)
+    cdef floating[::1] weights_out = np.empty_like(y_out)
 
     cdef floating current_x = X[0]
     cdef floating current_y = 0
     cdef floating current_weight = 0
-    cdef floating y_old = 0
     cdef int i = 0
     cdef int j
     cdef floating x
     cdef int n_samples = len(X)
-    cdef floating eps = np.finfo(X.dtype).resolution
+    cdef floating eps = np.finfo(dtype).resolution
 
     for j in range(n_samples):
         x = X[j]
@@ -108,4 +108,8 @@ def _make_unique(cnp.ndarray[dtype=floating] X,
     x_out[i] = current_x
     weights_out[i] = current_weight
     y_out[i] = current_y / current_weight
-    return x_out[:i+1], y_out[:i+1], weights_out[:i+1]
+    return(
+        np.asarray(x_out[:i+1]),
+        np.asarray(y_out[:i+1]),
+        np.asarray(weights_out[:i+1]),
+    )

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =============================================================
 Compare the effect of different scalers on data with outliers
@@ -46,22 +45,22 @@ of the results_.
 #          Thomas Unterthiner
 # License: BSD 3 clause
 
-import numpy as np
-
 import matplotlib as mpl
-from matplotlib import pyplot as plt
+import numpy as np
 from matplotlib import cm
-
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import minmax_scale
-from sklearn.preprocessing import MaxAbsScaler
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import RobustScaler
-from sklearn.preprocessing import Normalizer
-from sklearn.preprocessing import QuantileTransformer
-from sklearn.preprocessing import PowerTransformer
+from matplotlib import pyplot as plt
 
 from sklearn.datasets import fetch_california_housing
+from sklearn.preprocessing import (
+    MaxAbsScaler,
+    MinMaxScaler,
+    Normalizer,
+    PowerTransformer,
+    QuantileTransformer,
+    RobustScaler,
+    StandardScaler,
+    minmax_scale,
+)
 
 dataset = fetch_california_housing()
 X_full, y_full = dataset.data, dataset.target
@@ -266,6 +265,8 @@ def make_plot(item_idx):
 make_plot(0)
 
 # %%
+# .. _plot_all_scaling_standard_scaler_section:
+#
 # StandardScaler
 # --------------
 #
@@ -286,6 +287,8 @@ make_plot(0)
 make_plot(1)
 
 # %%
+# .. _plot_all_scaling_minmax_scaler_section:
+#
 # MinMaxScaler
 # ------------
 #
@@ -302,6 +305,8 @@ make_plot(1)
 make_plot(2)
 
 # %%
+# .. _plot_all_scaling_max_abs_scaler_section:
+#
 # MaxAbsScaler
 # ------------
 #
@@ -319,6 +324,8 @@ make_plot(2)
 make_plot(3)
 
 # %%
+# .. _plot_all_scaling_robust_scaler_section:
+#
 # RobustScaler
 # ------------
 #
@@ -336,6 +343,8 @@ make_plot(3)
 make_plot(4)
 
 # %%
+# .. _plot_all_scaling_power_transformer_section:
+#
 # PowerTransformer
 # ----------------
 #
@@ -354,6 +363,8 @@ make_plot(5)
 make_plot(6)
 
 # %%
+# .. _plot_all_scaling_quantile_transformer_section:
+#
 # QuantileTransformer (uniform output)
 # ------------------------------------
 #
@@ -385,6 +396,8 @@ make_plot(7)
 make_plot(8)
 
 # %%
+# .. _plot_all_scaling_normalizer_section:
+#
 # Normalizer
 # ----------
 #

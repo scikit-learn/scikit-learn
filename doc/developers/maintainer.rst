@@ -208,7 +208,9 @@ Making a release
    - Update the release date in ``whats_new.rst``
 
    - Edit the ``doc/templates/index.html`` to change the 'News' entry of the
-     front page (with the release month as well).
+     front page (with the release month as well). Do not forget to remove
+     the old entries (two years or three releases are typically good
+     enough)
 
 2. On the branch for releasing, update the version number in
    ``sklearn/__init__.py``, the ``__version__``.

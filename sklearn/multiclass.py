@@ -34,29 +34,36 @@ case.
 # License: BSD 3 clause
 
 import array
-from numbers import Integral, Real
-import numpy as np
-import warnings
-import scipy.sparse as sp
 import itertools
+import warnings
+from numbers import Integral, Real
 
-from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
-from .base import MultiOutputMixin
-from .base import MetaEstimatorMixin, is_regressor
-from .preprocessing import LabelBinarizer
+import numpy as np
+import scipy.sparse as sp
+
+from .base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MetaEstimatorMixin,
+    MultiOutputMixin,
+    _fit_context,
+    clone,
+    is_classifier,
+    is_regressor,
+)
 from .metrics.pairwise import pairwise_distances_argmin
+from .preprocessing import LabelBinarizer
 from .utils import check_random_state
 from .utils._param_validation import HasMethods, Interval
 from .utils._tags import _safe_tags
-from .utils.validation import _num_samples
-from .utils.validation import check_is_fitted
+from .utils.metaestimators import _safe_split, available_if
 from .utils.multiclass import (
     _check_partial_fit_first_call,
-    check_classification_targets,
     _ovr_decision_function,
+    check_classification_targets,
 )
-from .utils.metaestimators import _safe_split, available_if
-from .utils.parallel import delayed, Parallel
+from .utils.parallel import Parallel, delayed
+from .utils.validation import _num_samples, check_is_fitted
 
 __all__ = [
     "OneVsRestClassifier",
@@ -296,6 +303,10 @@ class OneVsRestClassifier(
         self.n_jobs = n_jobs
         self.verbose = verbose
 
+    @_fit_context(
+        # OneVsRestClassifier.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit underlying estimators.
 
@@ -313,8 +324,6 @@ class OneVsRestClassifier(
         self : object
             Instance of fitted estimator.
         """
-        self._validate_params()
-
         # A sparse LabelBinarizer, with sparse_output=True, has been shown to
         # outperform or match a dense label binarizer in all cases and has also
         # resulted in less or equal memory consumption in the fit_ovr function
@@ -348,6 +357,10 @@ class OneVsRestClassifier(
         return self
 
     @available_if(_estimators_has("partial_fit"))
+    @_fit_context(
+        # OneVsRestClassifier.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def partial_fit(self, X, y, classes=None):
         """Partially fit underlying estimators.
 
@@ -376,8 +389,6 @@ class OneVsRestClassifier(
             Instance of partially fitted estimator.
         """
         if _check_partial_fit_first_call(self, classes):
-            self._validate_params()
-
             if not hasattr(self.estimator, "partial_fit"):
                 raise ValueError(
                     ("Base estimator {0}, doesn't have partial_fit method").format(
@@ -641,7 +652,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, test_size=0.33, shuffle=True, random_state=0)
     >>> clf = OneVsOneClassifier(
-    ...     LinearSVC(random_state=0)).fit(X_train, y_train)
+    ...     LinearSVC(dual="auto", random_state=0)).fit(X_train, y_train)
     >>> clf.predict(X_test[:10])
     array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
     """
@@ -655,6 +666,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
+    @_fit_context(
+        # OneVsOneClassifier.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit underlying estimators.
 
@@ -671,7 +686,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self : object
             The fitted underlying estimator.
         """
-        self._validate_params()
         # We need to validate the data because we do a safe_indexing later.
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc"], force_all_finite=False
@@ -706,6 +720,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         return self
 
     @available_if(_estimators_has("partial_fit"))
+    @_fit_context(
+        # OneVsOneClassifier.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def partial_fit(self, X, y, classes=None):
         """Partially fit underlying estimators.
 
@@ -735,8 +753,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
         first_call = _check_partial_fit_first_call(self, classes)
         if first_call:
-            self._validate_params()
-
             self.estimators_ = [
                 clone(self.estimator)
                 for _ in range(self.n_classes_ * (self.n_classes_ - 1) // 2)
@@ -968,6 +984,10 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self.random_state = random_state
         self.n_jobs = n_jobs
 
+    @_fit_context(
+        # OutputCodeClassifier.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit underlying estimators.
 
@@ -984,7 +1004,6 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
-        self._validate_params()
         y = self._validate_data(X="no_validation", y=y)
 
         random_state = check_random_state(self.random_state)

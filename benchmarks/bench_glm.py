@@ -5,12 +5,12 @@ Data comes from a random square matrix.
 
 """
 from datetime import datetime
+
 import numpy as np
+
 from sklearn import linear_model
 
-
 if __name__ == "__main__":
-
     import matplotlib.pyplot as plt
 
     n_iter = 40
@@ -22,7 +22,6 @@ if __name__ == "__main__":
     dimensions = 500 * np.arange(1, n_iter + 1)
 
     for i in range(n_iter):
-
         print("Iteration %s of %s" % (i, n_iter))
 
         n_samples, n_features = 10 * i + 3, 10 * i + 3
