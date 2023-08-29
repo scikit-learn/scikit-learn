@@ -158,9 +158,7 @@ Key Steps of RFECV
 
     - **Convergence Check**: Continue iterating until a stopping criterion is met, such as reaching a specified feature count or desired performance threshold.
 
-    -**Optimal Subset Selection**: At the end of iteration, select the feature subset with the highest cross-validated performance. This subset is accessible through the `support_` attribute of the `RFECV` object.
-
-.. topic:: Examples:
+    - **Optimal Subset Selection**: At the end of iteration, select the feature subset with the highest cross-validated performance. This subset is accessible through the `support_` attribute of the `RFECV` object.
 
 .. code-block:: python
 
@@ -176,7 +174,10 @@ Key Steps of RFECV
 
 In this example, `RFECV` identifies the optimal subset of features for an `SVC` classifier using cross-validation and stores the results in `selected_features`.
 
-``:ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py` `` provides a more detailed example of using `RFECV` in practice.
+.. topic:: Examples:
+
+     * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`: provides a more detailed example 
+       of using `RFECV` in practice.
 
 
 .. _select_from_model:
