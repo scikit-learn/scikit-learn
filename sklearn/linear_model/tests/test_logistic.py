@@ -782,6 +782,31 @@ def test_logistic_regression_solvers_multinomial(C, global_random_seed):
         )
 
 
+@pytest.mark.parametrize("solver", SOLVERS)
+def test_logistic_regression_progressive_tolerance(solver, global_random_seed):
+    # Check that progressively decreasing the tolerance leads larger number of
+    # iterations.
+    X, y = make_classification(
+        n_samples=100,
+        n_features=10,
+        n_informative=5,
+        n_classes=2,
+        random_state=global_random_seed,
+    )
+    n_iters = [
+        LogisticRegression(
+            solver=solver,
+            tol=tol,
+            max_iter=int(1e4),
+            random_state=global_random_seed,
+        )
+        .fit(X, y)
+        .n_iter_[0]
+        for tol in [1e-1, 1e-4, 1e-8]
+    ]
+    assert (np.diff(n_iters) > 0).all(), n_iters
+
+
 @pytest.mark.parametrize("weight", [{0: 0.1, 1: 0.2}, {0: 0.1, 1: 0.2, 2: 0.5}])
 @pytest.mark.parametrize("class_weight", ["weight", "balanced"])
 def test_logistic_regressioncv_class_weights(weight, class_weight):
