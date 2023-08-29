@@ -74,6 +74,10 @@ def _get_response_values(
         prediction_method = _check_response_method(estimator, response_method)
         classes = estimator.classes_
         target_type = type_of_target(classes)
+
+        # validate `pos_label`:
+        # - if `None` then we infer it for the binary case;
+        # - else we check the provided value is valid.
         if target_type in ("binary", "multiclass"):
             if pos_label is not None and pos_label not in classes.tolist():
                 raise ValueError(
@@ -84,9 +88,12 @@ def _get_response_values(
                 pos_label = classes[-1]
 
         y_pred = prediction_method(X)
+
+        # select/rescale the raw predictions depending on the response method
         if prediction_method.__name__ == "predict_proba":
             if target_type == "binary" and y_pred.shape[1] <= 2:
                 if y_pred.shape[1] == 2:
+                    # select the column corresponding to the positive class
                     col_idx = np.flatnonzero(classes == pos_label)[0]
                     y_pred = y_pred[:, col_idx]
                 else:
@@ -103,8 +110,12 @@ def _get_response_values(
         elif prediction_method.__name__ == "decision_function":
             if target_type == "binary":
                 if pos_label == classes[0]:
+                    # The raw predictions are reported in regards to the `classes[1]`.
+                    # If the positive class is `classes[0]`, we need to flip the
+                    # decision function to provide results in regards to `classes[0]`.
                     y_pred *= -1
             elif target_type == "multilabel-indicator" and isinstance(y_pred, list):
+                # Use a compress format of shape `(n_samples, n_output)`.
                 y_pred = np.vstack([p for p in y_pred]).T
     else:  # estimator is a regressor
         if response_method != "predict":
