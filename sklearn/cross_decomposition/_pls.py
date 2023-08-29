@@ -505,7 +505,7 @@ class PLSRegression(_PLS):
     PLSRegression is also known as PLS2 or PLS1, depending on the number of
     targets.
 
-    For an example on usage, see
+    For a comparison between other cross decomposition algorithms, see
     :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
@@ -656,7 +656,7 @@ class PLSRegression(_PLS):
 class PLSCanonical(_PLS):
     """Partial Least Squares transformer and regressor.
 
-    For an example on usage, see
+    For a comparison between other cross decomposition algorithms, see
     :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
