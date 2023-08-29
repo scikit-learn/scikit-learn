@@ -101,6 +101,10 @@ Changelog
   according to :ref:`metadata routing user guide <metadata_routing>`. :pr:`27005`
   by `Adrin Jalali`_.
 
+- |API| :class:`~compose.ColumnTransformer` now replaces `"passthrough"` with a
+  corresponding :class:`~preprocessing.FunctionTransformer` in the fitted
+  ``transformers_`` attribute. :pr:`27204` by `Adrin Jalali`_.
+
 :mod:`sklearn.cross_decomposition`
 ..................................
 
