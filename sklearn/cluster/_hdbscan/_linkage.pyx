@@ -90,7 +90,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
     mst = np.empty(n_samples - 1, dtype=MST_edge_dtype)
     current_labels = np.arange(n_samples, dtype=np.int64)
     current_node = 0
-    min_reachability = np.full(n_samples, fill_value=np.infty, dtype=np.float64)
+    min_reachability = np.full(n_samples, fill_value=np.inf, dtype=np.float64)
     for i in range(0, n_samples - 1):
         label_filter = current_labels != current_node
         current_labels = current_labels[label_filter]
@@ -156,7 +156,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
     mst = np.empty(n_samples - 1, dtype=MST_edge_dtype)
 
     in_tree = np.zeros(n_samples, dtype=np.uint8)
-    min_reachability = np.full(n_samples, fill_value=np.infty, dtype=np.float64)
+    min_reachability = np.full(n_samples, fill_value=np.inf, dtype=np.float64)
     current_sources = np.ones(n_samples, dtype=np.int64)
 
     current_node = 0
