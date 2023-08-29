@@ -142,25 +142,25 @@ number of features.
       selected with cross-validation.
 
 Recursive Feature Elimination with Cross-Validation (RFECV)
------------------------------------------------------------
+============================================================
 
 RFECV is a feature selection technique that aims to find an optimal subset of features by iteratively eliminating the least important features in a cross-validation loop. This process helps to balance model complexity and performance, ensuring selected features contribute meaningfully to the model's predictive power.
 
 Key Steps of RFECV
 
-   -**Initialization**: Begin with all available features from the dataset.
+   - **Initialization**: Begin with all available features from the dataset.
 
-   -**Iteration**:
+   - **Iteration**:
        - **Feature Importance Estimation**: Train an estimator on the current feature subset and assess feature importance. Importance is determined based on coefficients, feature importances, or a provided callable function.
        - **Cross-Validation**: Evaluate estimator performance using cross-validation on the current feature subset.
 
-    -**Feature Elimination**: Remove the least important features based on the results of the previous step.
+    - **Feature Elimination**: Remove the least important features based on the results of the previous step.
 
-    -**Convergence Check**: Continue iterating until a stopping criterion is met, such as reaching a specified feature count or desired performance threshold.
+    - **Convergence Check**: Continue iterating until a stopping criterion is met, such as reaching a specified feature count or desired performance threshold.
 
     -**Optimal Subset Selection**: At the end of iteration, select the feature subset with the highest cross-validated performance. This subset is accessible through the `support_` attribute of the `RFECV` object.
 
-Example Usage
+.. topic:: Examples:
 
 .. code-block:: python
 
