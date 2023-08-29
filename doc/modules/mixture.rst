@@ -336,9 +336,7 @@ from the two resulting mixtures.
 
 .. _dirichlet_process:
 
-|details-start|
 **The Dirichlet Process**
-|details-split|
 
 Here we describe variational inference algorithms on Dirichlet process
 mixture. The Dirichlet process is a prior probability distribution on
@@ -371,5 +369,3 @@ use, one just specifies the concentration parameter and an upper bound
 on the number of mixture components (this upper bound, assuming it is
 higher than the "true" number of components, affects only algorithmic
 complexity, not the actual number of components used).
-
-|details-end|
