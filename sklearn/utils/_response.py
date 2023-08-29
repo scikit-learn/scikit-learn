@@ -71,13 +71,21 @@ def _get_response_values(
     from sklearn.base import is_classifier  # noqa
 
     if is_classifier(estimator):
+        # The output of the response methods return results that are agnostic to the
+        # positive class or in the binary case, it returns as if the positive class
+        # is `estimator.classes_[1]`.
+        #
+        # Here, we need to reshape the output to get an array of shape
+        # `(n_samples,)` or `(n_samples, n_outputs)`. We therefore need to return the
+        # array according to the positive class in the binary and multiclass cases.
+        # For the multilabel-indicator case, we need to return a compress format of
+        # shape `(n_samples, n_outputs)`.
         prediction_method = _check_response_method(estimator, response_method)
         classes = estimator.classes_
         target_type = type_of_target(classes)
 
-        # validate `pos_label`:
-        # - if `None` then we infer it for the binary case;
-        # - else we check the provided value is valid.
+        # Validate `pos_label` for the binary and multiclass cases. We check the label
+        # if it is provided or infer it in the binary case.
         if target_type in ("binary", "multiclass"):
             if pos_label is not None and pos_label not in classes.tolist():
                 raise ValueError(
@@ -89,11 +97,10 @@ def _get_response_values(
 
         y_pred = prediction_method(X)
 
-        # we need to provide a vector of (`n_samples`,)
         if prediction_method.__name__ == "predict_proba":
             if target_type == "binary" and y_pred.shape[1] <= 2:
                 if y_pred.shape[1] == 2:
-                    # select the column corresponding to the positive class
+                    # we need to select the column corresponding to the positive class
                     col_idx = np.flatnonzero(classes == pos_label)[0]
                     y_pred = y_pred[:, col_idx]
                 else:
