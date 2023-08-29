@@ -508,9 +508,6 @@ class PLSRegression(_PLS):
     For an example on usage, see
     :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`.
 
-    For comparison between PLS Regression and PCR, see
-    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_pcr_vs_pls.py`.
-
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
     .. versionadded:: 0.8
@@ -592,6 +589,9 @@ class PLSRegression(_PLS):
     See Also
     --------
     PLSCanonical : Partial Least Squares transformer and regressor.
+
+    For a comparison between PLS Regression and :class:`~sklearn.decomposition.PCA`, see
+    :ref:`sphx_glr_auto_examples_cross_decomposition_plot_pcr_vs_pls.py`.
 
     Examples
     --------
