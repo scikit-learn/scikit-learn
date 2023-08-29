@@ -141,6 +141,44 @@ number of features.
       elimination example with automatic tuning of the number of features
       selected with cross-validation.
 
+Recursive Feature Elimination with Cross-Validation (RFECV)
+-----------------------------------------------------------
+
+RFECV is a feature selection technique that aims to find an optimal subset of features by iteratively eliminating the least important features in a cross-validation loop. This process helps to balance model complexity and performance, ensuring selected features contribute meaningfully to the model's predictive power.
+
+Key Steps of RFECV
+
+   -**Initialization**: Begin with all available features from the dataset.
+
+   -**Iteration**:
+       - **Feature Importance Estimation**: Train an estimator on the current feature subset and assess feature importance. Importance is determined based on coefficients, feature importances, or a provided callable function.
+       - **Cross-Validation**: Evaluate estimator performance using cross-validation on the current feature subset.
+
+    -**Feature Elimination**: Remove the least important features based on the results of the previous step.
+
+    -**Convergence Check**: Continue iterating until a stopping criterion is met, such as reaching a specified feature count or desired performance threshold.
+
+    -**Optimal Subset Selection**: At the end of iteration, select the feature subset with the highest cross-validated performance. This subset is accessible through the `support_` attribute of the `RFECV` object.
+
+Example Usage
+
+.. code-block:: python
+
+   from sklearn.datasets import load_iris
+   from sklearn.feature_selection import RFECV
+   from sklearn.svm import SVC
+
+   X, y = load_iris(return_X_y=True)
+   estimator = SVC(kernel="linear")
+   rfecv = RFECV(estimator, step=1, cv=5)
+   rfecv.fit(X, y)
+   selected_features = rfecv.support_
+
+In this example, `RFECV` identifies the optimal subset of features for an `SVC` classifier using cross-validation and stores the results in `selected_features`.
+
+``:ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py` `` provides a more detailed example of using `RFECV` in practice.
+
+
 .. _select_from_model:
 
 Feature selection using SelectFromModel
