@@ -463,7 +463,27 @@ def _logistic_regression_path(
             ]
             # To be kept in sync with LogisticRegression's default value of tol.
             default_lr_tol = 1e-4
+
+            # Default value recommended in the documentation of scipy's l_bfgs_b.
             default_lbfgsb_ftol = 1e7 * np.finfo(float).eps
+
+            # According to scipy documentation this is the strictest recommended
+            # valued for ftol:
+            min_lbfgsb_ftol = 10 * np.finfo(float).eps
+
+            # Linearly interpolate ftol between its default value and the
+            # minimum value recommended in scipy's documentation: setting
+            # LogisticRegression(tol=1e-4) should result in scipy's default
+            # value of ftol to not change the default behavior of
+            # LogisticRregression. Setting tol to 0 should set ftol to
+            # min_lbfgsb_ftol which is one order of magnitude larger than
+            # machine precision: this makes it possible for the user to ask for
+            # high precision convergence.
+            ftol = max(
+                tol * (default_lbfgsb_ftol - min_lbfgsb_ftol) / default_lr_tol
+                + min_lbfgsb_ftol,
+                min_lbfgsb_ftol,
+            )
             opt_res = optimize.minimize(
                 func,
                 w0,
@@ -473,12 +493,7 @@ def _logistic_regression_path(
                 options={
                     "iprint": iprint,
                     "gtol": tol,
-                    # Preserve the default ratio between gtol and ftol: setting
-                    # LogisticRegression(tol=1e-4) should result in scipy's
-                    # default value of ftol to not change the default behavior
-                    # of LogisticRregression while making it possible to ask
-                    # for high precision convergence.
-                    "ftol": tol / default_lr_tol * default_lbfgsb_ftol,
+                    "ftol": ftol,
                     "maxiter": max_iter,
                 },
             )
