@@ -463,6 +463,8 @@ class OneHotEncoder(_BaseEncoder):
     instead.
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
+    For a comparison of different encoders, refer to:
+    :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`.
 
     Parameters
     ----------
@@ -525,7 +527,7 @@ class OneHotEncoder(_BaseEncoder):
         .. versionadded:: 1.2
            `sparse` was renamed to `sparse_output`
 
-    dtype : number type, default=float
+    dtype : number type, default=np.float64
         Desired dtype of output.
 
     handle_unknown : {'error', 'ignore', 'infrequent_if_exist'}, \
@@ -774,8 +776,8 @@ class OneHotEncoder(_BaseEncoder):
         if infrequent_indices is not None and drop_idx in infrequent_indices:
             categories = self.categories_[feature_idx]
             raise ValueError(
-                f"Unable to drop category {categories[drop_idx]!r} from feature"
-                f" {feature_idx} because it is infrequent"
+                f"Unable to drop category {categories[drop_idx].item()!r} from"
+                f" feature {feature_idx} because it is infrequent"
             )
         return default_to_infrequent[drop_idx]
 
@@ -1243,6 +1245,8 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     a single column of integers (0 to n_categories - 1) per feature.
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
+    For a comparison of different encoders, refer to:
+    :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`.
 
     .. versionadded:: 0.20
 
