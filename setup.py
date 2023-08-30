@@ -600,6 +600,7 @@ def setup_package():
         python_requires=python_requires,
         install_requires=min_deps.tag_to_packages["install"],
         package_data={"": ["*.csv", "*.gz", "*.txt", "*.pxd", "*.rst", "*.jpg"]},
+        entry_points={"pytest11": ["sklearn_plugin_testing = sklearn._engine.testing"]},
         zip_safe=False,  # the package can run out of an .egg file
         extras_require={
             key: min_deps.tag_to_packages[key]
