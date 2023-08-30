@@ -266,7 +266,7 @@ extension_config = {
             "language": "c++",
             "extra_compile_args": ["-std=c++11"],
             "define_macros": [("DIST_METRICS", None)],
-            "include_dirs": [join("..", "..", HWY_INCLUDE_PATH), "."],
+            "include_dirs": [join("..", "..", HWY_INCLUDE_PATH), "_simd"],
         },
     ],
     "metrics.cluster": [

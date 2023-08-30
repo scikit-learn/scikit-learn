@@ -1245,13 +1245,13 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         intp_t size,
     ) except -1 nogil:
         if self.simd_runtime:
-            {{if name_suffix == "32"}}
-            return manhattan_dist_float(x1, x2, size)
-            {{else}}
-            return manhattan_dist_double(x1, x2, size)
-            {{endif}}
+            # {{if name_suffix == "32"}}
+            # return manhattan_dist_float(x1, x2, size)
+            # {{else}}
+            # return manhattan_dist_double(x1, x2, size)
+            # {{endif}}
             # using the template function below fails, citing missing symbol
-            # simd_manhattan_dist[{{INPUT_DTYPE_t}}](x1, x2, size)
+            simd_manhattan_dist[{{INPUT_DTYPE_t}}](x1, x2, size)
         else:
             return simd_manhattan_dist_scalar[{{INPUT_DTYPE_t}}](x1, x2, size)
 
