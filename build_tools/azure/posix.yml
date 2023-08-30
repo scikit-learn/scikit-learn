@@ -22,7 +22,6 @@ jobs:
     PYTEST_XDIST_VERSION: 'latest'
     COVERAGE: 'true'
     CREATE_ISSUE_ON_TRACKER: 'true'
-    SHOW_SHORT_SUMMARY: 'false'
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}

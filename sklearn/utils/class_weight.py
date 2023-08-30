@@ -74,8 +74,10 @@ def compute_class_weight(class_weight, *, classes, y):
 
         n_weighted_classes = len(classes) - len(unweighted_classes)
         if unweighted_classes and n_weighted_classes != len(class_weight):
+            unweighted_classes_user_friendly_str = np.array(unweighted_classes).tolist()
             raise ValueError(
-                f"The classes, {unweighted_classes}, are not in class_weight"
+                f"The classes, {unweighted_classes_user_friendly_str}, are not in"
+                " class_weight"
             )
 
     return weight
@@ -155,10 +157,11 @@ def compute_sample_weight(class_weight, y, *, indices=None):
 
     expanded_class_weight = []
     for k in range(n_outputs):
-        y_full = y[:, k]
-        if sparse.issparse(y_full):
+        if sparse.issparse(y):
             # Ok to densify a single column at a time
-            y_full = y_full.toarray().flatten()
+            y_full = y[:, [k]].toarray().flatten()
+        else:
+            y_full = y[:, k]
         classes_full = np.unique(y_full)
         classes_missing = None
 

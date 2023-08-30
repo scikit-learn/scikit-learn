@@ -10,9 +10,10 @@ The ``sklearn.preprocessing`` package provides several common
 utility functions and transformer classes to change raw feature vectors
 into a representation that is more suitable for the downstream estimators.
 
-In general, learning algorithms benefit from standardization of the data set. If
-some outliers are present in the set, robust scalers or transformers are more
-appropriate. The behaviors of the different scalers, transformers, and
+In general, many learning algorithms such as linear models benefit from standardization of the data set
+(see :ref:`sphx_glr_auto_examples_preprocessing_plot_scaling_importance.py`).
+If some outliers are present in the set, robust scalers or other transformers can
+be more appropriate. The behaviors of the different scalers, transformers, and
 normalizers on a dataset containing marginal outliers is highlighted in
 :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`.
 
@@ -910,16 +911,16 @@ For continuous targets, the formulation is similar to binary classification:
 where :math:`L_i` is the set of observations with category :math:`i` and
 :math:`n_i` is the number of observations with category :math:`i`.
 
-:meth:`~TargetEncoder.fit_transform` internally relies on a cross fitting
+:meth:`~TargetEncoder.fit_transform` internally relies on a :term:`cross fitting`
 scheme to prevent target information from leaking into the train-time
 representation, especially for non-informative high-cardinality categorical
 variables, and help prevent the downstream model from overfitting spurious
 correlations. Note that as a result, `fit(X, y).transform(X)` does not equal
 `fit_transform(X, y)`. In :meth:`~TargetEncoder.fit_transform`, the training
-data is split into *k* folds (determined by the `cv` parameter) and encodes each
-fold using the encodings trained on the other *k-1* folds. The following diagram
-shows the cross fitting scheme in :meth:`~TargetEncoder.fit_transform` with
-the default `cv=5`:
+data is split into *k* folds (determined by the `cv` parameter) and each fold is
+encoded using the encodings learnt using the other *k-1* folds. The following
+diagram shows the :term:`cross fitting` scheme in
+:meth:`~TargetEncoder.fit_transform` with the default `cv=5`:
 
 .. image:: ../images/target_encoder_cross_validation.svg
    :width: 600
@@ -929,10 +930,10 @@ the default `cv=5`:
 the whole training set. This is never used in
 :meth:`~TargetEncoder.fit_transform` but is saved to the attribute `encodings_`,
 for use when :meth:`~TargetEncoder.transform` is called. Note that the encodings
-learned for each fold during the cross fitting scheme are not saved to an
-attribute.
+learned for each fold during the :term:`cross fitting` scheme are not saved to
+an attribute.
 
-The :meth:`~TargetEncoder.fit` method does **not** use any cross fitting
+The :meth:`~TargetEncoder.fit` method does **not** use any :term:`cross fitting`
 schemes and learns one encoding on the entire training set, which is used to
 encode categories in :meth:`~TargetEncoder.transform`.
 This encoding is the same as the 'full data'

@@ -3,7 +3,7 @@
 Classifier comparison
 =====================
 
-A comparison of a several classifiers in scikit-learn on synthetic datasets.
+A comparison of several classifiers in scikit-learn on synthetic datasets.
 The point of this example is to illustrate the nature of decision boundaries
 of different classifiers.
 This should be taken with a grain of salt, as the intuition conveyed by
@@ -58,13 +58,15 @@ names = [
 
 classifiers = [
     KNeighborsClassifier(3),
-    SVC(kernel="linear", C=0.025),
-    SVC(gamma=2, C=1),
-    GaussianProcessClassifier(1.0 * RBF(1.0)),
-    DecisionTreeClassifier(max_depth=5),
-    RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
-    MLPClassifier(alpha=1, max_iter=1000),
-    AdaBoostClassifier(),
+    SVC(kernel="linear", C=0.025, random_state=42),
+    SVC(gamma=2, C=1, random_state=42),
+    GaussianProcessClassifier(1.0 * RBF(1.0), random_state=42),
+    DecisionTreeClassifier(max_depth=5, random_state=42),
+    RandomForestClassifier(
+        max_depth=5, n_estimators=10, max_features=1, random_state=42
+    ),
+    MLPClassifier(alpha=1, max_iter=1000, random_state=42),
+    AdaBoostClassifier(random_state=42),
     GaussianNB(),
     QuadraticDiscriminantAnalysis(),
 ]
