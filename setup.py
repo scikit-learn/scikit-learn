@@ -514,7 +514,7 @@ def configure_extension_modules():
                     "sources": [join(SIMD_DIRECTORY, "simd.cpp")],
                     "cflags": ["-std=c++14", "-mavx"],
                     "extra_link_args": ["-std=c++14"],
-                    "include_dirs": [HWY_INCLUDE_PATH],
+                    "include_dirs": [SIMD_DIRECTORY, HWY_INCLUDE_PATH],
                 },
             ),
         )
