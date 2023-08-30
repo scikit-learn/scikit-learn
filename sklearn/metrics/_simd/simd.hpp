@@ -4,9 +4,10 @@
 
 namespace manhattan{
 
-    HWY_DLLEXPORT float _simd_manhattan_dist(
-        const float* x,
-        const float* y,
+    template <typename Type>
+    HWY_DLLEXPORT Type simd_manhattan_dist(
+        const Type* x,
+        const Type* y,
         const size_t size
     );
 }

@@ -5,8 +5,8 @@
 #define HWY_TARGET_INCLUDE "simd.cpp"
 #include "hwy/foreach_target.h"
 #include "hwy/highway.h"
+HWY_BEFORE_NAMESPACE();  // at file scope
 
-HWY_BEFORE_NAMESPACE();
 namespace manhattan {
 
     namespace HWY_NAMESPACE {
@@ -14,7 +14,7 @@ namespace manhattan {
 
 
         template <typename Type>
-        HWY_ATTR Type manhattan_dist(
+        inline Type manhattan_dist(
             const Type* x,
             const Type* y,
             const size_t size
@@ -49,8 +49,20 @@ namespace manhattan {
             }
             return scalar_sum;
         }
-    auto manhattan_dist_float = manhattan_dist<float>;
-    auto manhattan_dist_double = manhattan_dist<double>;
+        inline float manhattan_dist_float(
+            const float* x,
+            const float* y,
+            const size_t size
+        ) {
+            return manhattan_dist<float>(x, y, size);
+        }
+        inline double manhattan_dist_double(
+            const double* x,
+            const double* y,
+            const size_t size
+        ) {
+            return manhattan_dist<double>(x, y, size);
+        }
     }
 }
 HWY_AFTER_NAMESPACE();
@@ -63,7 +75,7 @@ namespace manhattan {
     HWY_EXPORT(manhattan_dist_double);
 
     template <typename Type>
-    HWY_DLLEXPORT Type _simd_manhattan_dist(
+    HWY_DLLEXPORT Type simd_manhattan_dist(
         const Type* x,
         const Type* y,
         const size_t size

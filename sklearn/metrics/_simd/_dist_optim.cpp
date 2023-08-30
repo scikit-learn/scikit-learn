@@ -8,10 +8,6 @@ this file due to cimporting _dist_metrics
 /* If built with SIMD support, include the compiled library code */
 #if WITH_SIMD == 1
 #include "simd.hpp"
-#include "hwy/highway.h"
-
-template<typename T>
-auto simd_manhattan_dist = manhattan::_simd_manhattan_dist;
 #else
 #include <cstddef>
 

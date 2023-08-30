@@ -17,9 +17,10 @@ cdef class DistanceMetric:
     pass
 
 cdef extern from "_simd/_dist_optim.cpp":
-    cdef Type simd_manhattan_dist[Type](Type * x, Type * y, intp_t size) nogil
     cdef Type simd_manhattan_dist_scalar[Type](Type * x, Type * y, intp_t size) nogil
     int WITH_SIMD
+cdef extern from "_simd/_dist_optim.cpp" namespace "manhattan":
+    cdef Type simd_manhattan_dist[Type](Type * x, Type * y, intp_t size) nogil
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
