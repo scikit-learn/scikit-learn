@@ -11,7 +11,6 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
-from scipy.sparse import csc_matrix, csr_matrix
 
 from sklearn.datasets import load_diabetes, load_iris, make_classification
 from sklearn.ensemble import IsolationForest
@@ -25,6 +24,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 # load iris & diabetes dataset
 iris = load_iris()
@@ -53,9 +53,9 @@ def test_iforest_sparse(global_random_seed):
     X_train, X_test = train_test_split(diabetes.data[:50], random_state=rng)
     grid = ParameterGrid({"max_samples": [0.5, 1.0], "bootstrap": [True, False]})
 
-    for sparse_format in [csc_matrix, csr_matrix]:
-        X_train_sparse = sparse_format(X_train)
-        X_test_sparse = sparse_format(X_test)
+    for sparse_container in [*CSC_CONTAINERS, *CSR_CONTAINERS]:
+        X_train_sparse = sparse_container(X_train)
+        X_test_sparse = sparse_container(X_test)
 
         for params in grid:
             # Trained on sparse format
@@ -314,13 +314,14 @@ def test_iforest_with_uniform_data():
     assert all(iforest.predict(np.ones((100, 10))) == 1)
 
 
-def test_iforest_with_n_jobs_does_not_segfault():
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_iforest_with_n_jobs_does_not_segfault(csc_container):
     """Check that Isolation Forest does not segfault with n_jobs=2
 
     Non-regression test for #23252
     """
     X, _ = make_classification(n_samples=85_000, n_features=100, random_state=0)
-    X = csc_matrix(X)
+    X = csc_container(X)
     IsolationForest(n_estimators=10, max_samples=256, n_jobs=2).fit(X)
 
 
