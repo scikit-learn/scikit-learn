@@ -7,6 +7,7 @@ from numpy.testing import assert_allclose, assert_array_equal
 from sklearn._config import config_context
 from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import (
+    _array_api_atol,
     _ArrayAPIWrapper,
     _asarray_with_order,
     _convert_to_numpy,
@@ -189,7 +190,7 @@ def test_weighted_sum(
         result = _weighted_sum(sample_score, sample_weight, normalize)
 
     assert isinstance(result, float)
-    assert_allclose(result, expected)
+    assert_allclose(result, expected, atol=_array_api_atol(dtype))
 
 
 @skip_if_array_api_compat_not_configured
