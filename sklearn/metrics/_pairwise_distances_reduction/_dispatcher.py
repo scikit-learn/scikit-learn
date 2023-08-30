@@ -451,35 +451,15 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
     """
 
     @classmethod
-    def is_usable_for(cls, X, Y, metric) -> bool:
-        """Return True if the dispatcher can be used for the given parameters.
-
-        Parameters
-        ----------
-        X : ndarray of shape (n_samples_X, n_features)
-            The input array to be labelled.
-
-        Y : ndarray of shape (n_samples_Y, n_features)
-            The input array whose labels are provided through the `Y_labels`
-            parameter.
-
-        metric : str, default='euclidean'
-            The distance metric to use. For a list of available metrics, see
-            the documentation of :class:`~sklearn.metrics.DistanceMetric`.
-            Currently does not support `'precomputed'`.
-
-        Returns
-        -------
-        True if the PairwiseDistancesReduction can be used, else False.
-        """
-        return (
-            ArgKmin.is_usable_for(X, Y, metric)
-            # TODO: Support CSR matrices.
-            and not issparse(X)
-            and not issparse(Y)
-            # TODO: implement Euclidean specialization with GEMM.
-            and metric not in ("euclidean", "sqeuclidean")
-        )
+    def valid_metrics(cls) -> List[str]:
+        excluded = {
+            # Euclidean is technically usable for ArgKminClassMode
+            # but its current implementation would not be competitive.
+            # TODO: implement Euclidean specialization using GEMM.
+            "euclidean",
+            "sqeuclidean",
+        }
+        return list(set(BaseDistancesReductionDispatcher.valid_metrics()) - excluded)
 
     @classmethod
     def compute(

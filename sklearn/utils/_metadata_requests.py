@@ -160,7 +160,7 @@ def _raise_for_params(params, owner, method):
             " enable_metadata_routing=True, which you can set using"
             " `sklearn.set_config`. See the User Guide"
             " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-            " details."
+            f" details. Extra parameters passed are: {set(params)}"
         )
 
 

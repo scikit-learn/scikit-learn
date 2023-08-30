@@ -3,7 +3,7 @@
 Classifier comparison
 =====================
 
-A comparison of a several classifiers in scikit-learn on synthetic datasets.
+A comparison of several classifiers in scikit-learn on synthetic datasets.
 The point of this example is to illustrate the nature of decision boundaries
 of different classifiers.
 This should be taken with a grain of salt, as the intuition conveyed by
