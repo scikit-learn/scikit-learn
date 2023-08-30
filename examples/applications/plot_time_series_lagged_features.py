@@ -225,36 +225,28 @@ for loss_func in loss_functions:
 #
 # Quantile regression makes it possible to give a finer description of that
 # distribution without making strong assumptions on its shape.
-#
-# The conditional 5th percentile (a.k.a. 0.05-quantile) can be estimated with:
-gbrt_percentile_05 = HistGradientBoostingRegressor(loss="quantile", quantile=0.05)
-evaluate_and_store_results("gbrt_percentile_05", gbrt_percentile_05, X, y, cv=ts_cv)
+quantile_list = [0.05, 0.5, 0.95]
 
-# %%
-# The conditional median (0.50-quantile) can be estimated with:
-gbrt_median = HistGradientBoostingRegressor(loss="quantile", quantile=0.5)
-evaluate_and_store_results("gbrt_median", gbrt_median, X, y, cv=ts_cv)
+for quantile in quantile_list:
+    model = HistGradientBoostingRegressor(loss="quantile", quantile=quantile)
+    cv_results = cross_validate(
+        model,
+        X,
+        y,
+        cv=ts_cv,
+        scoring=scoring,
+    )
+    time = cv_results["fit_time"]
+    scores["fit_time"].append(f"{time.mean():.2f} ± {time.std():.2f} s")
+    scores["loss"].append(f"quantile {int(quantile*100)}")
+    for key, value in cv_results.items():
+        if key.startswith("test_"):
+            metric = key.split("test_")[1]
+            scores[metric].append(f"{value.mean():.3f} ± {value.std():.3f}")
 
-# %%
-# And finally the 0.95 quantile:
-gbrt_percentile_95 = HistGradientBoostingRegressor(loss="quantile", quantile=0.95)
-evaluate_and_store_results("gbrt_percentile_95", gbrt_percentile_95, X, y, cv=ts_cv)
+scores = pd.DataFrame(scores)
+scores
 
-# %%
-# We can now compare the performance of the different models we trained
-dataframe_dict = {
-    "Models": model_names_list,
-    "MAPE": mape_list,
-    "RMSE": rmse_list,
-    "MAE": mae_list,
-    "Mean Pinball 05 Loss": mean_pinball_05_loss_list,
-    "Mean Pinball 50 Loss": mean_pinball_50_loss_list,
-    "Mean Pinball 95 Loss": mean_pinball_95_loss_list,
-    "Time": time_list,
-}
-
-df_model_comparison = pd.DataFrame(dataframe_dict)
-df_model_comparison
 
 # %%
 # The minimal value for the Mean Pinball Loss is achieved by the GBRT
