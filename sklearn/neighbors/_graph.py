@@ -147,7 +147,18 @@ def kneighbors_graph(
     query = _query_include_self(X._fit_X, include_self, mode)
     return X.kneighbors_graph(X=query, n_neighbors=n_neighbors, mode=mode)
 
-
+@validate_params(
+    {
+        "X": ["array-like", "BallTree", "RadiusNeighborsMixin"],
+        "radius": [Interval(Real, 0, None, closed="right")]
+        "mode": [StrOptions({"connectivity", "distance"})],
+        "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
+        "p": [Interval(Real, 0, None, closed="right"), None],
+        "metric_params": [dict, None],
+        "include_self": ["boolean", StrOptions({"auto"})],
+        "n_jobs": [Integral, None],
+    }
+)
 def radius_neighbors_graph(
     X,
     radius,
