@@ -55,6 +55,7 @@ from sklearn.metrics._base import _average_binary_score
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
+    _array_api_atol,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -1730,10 +1731,10 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
         metric(y1, y2)
 
 
-def check_array_api_metric(metric, array_namespace, device, dtype):
+def check_array_api_metric(
+    metric, array_namespace, device, dtype, y_true_np, y_pred_np
+):
     xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
-    y_true_np = np.array([0, 0, 1, 1])
-    y_pred_np = np.array([0, 1, 0, 1])
     y_true_xp = xp.asarray(y_true_np, device=device)
     y_pred_xp = xp.asarray(y_pred_np, device=device)
 
@@ -1745,16 +1746,60 @@ def check_array_api_metric(metric, array_namespace, device, dtype):
         assert_allclose(
             metric_xp,
             metric_np,
-            atol=np.finfo(dtype).eps * 100,
+            atol=_array_api_atol(dtype),
         )
+
+
+def check_array_api_binary_classification_metric(
+    metric, array_namespace, device, dtype
+):
+    return check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype,
+        y_true_np=np.array([0, 0, 1, 1]),
+        y_pred_np=np.array([0, 1, 0, 1]),
+    )
+
+
+def check_array_api_multiclass_classification_metric(
+    metric, array_namespace, device, dtype
+):
+    return check_array_api_metric(
+        metric,
+        array_namespace,
+        device,
+        dtype,
+        y_true_np=np.array([0, 1, 2, 3]),
+        y_pred_np=np.array([0, 1, 0, 2]),
+    )
+
+
+metric_checkers = {
+    accuracy_score: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+    ],
+    zero_one_loss: [
+        check_array_api_binary_classification_metric,
+        check_array_api_multiclass_classification_metric,
+    ],
+}
+
+
+def yield_metric_checker_combinations(metric_checkers=metric_checkers):
+    for metric, checkers in metric_checkers.items():
+        for checker in checkers:
+            yield metric, checker
 
 
 @pytest.mark.parametrize(
     "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
-    "metric",
-    [accuracy_score, zero_one_loss],
+    "metric, check_func",
+    yield_metric_checker_combinations(),
 )
-def test_array_api_compliance(metric, array_namespace, device, dtype):
-    check_array_api_metric(metric, array_namespace, device, dtype)
+def test_array_api_compliance(metric, array_namespace, device, dtype, check_func):
+    check_func(metric, array_namespace, device, dtype)
