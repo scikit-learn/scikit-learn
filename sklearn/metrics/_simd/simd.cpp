@@ -19,6 +19,7 @@ namespace manhattan {
             const Type* y,
             const size_t size
         ) {
+            printf("DEBUG *** %s\n", hwy::TargetName(HWY_TARGET));
             const hn::ScalableTag<Type> d;
             auto simd_sum_1 = hn::Zero(d);
             auto simd_sum_2 = hn::Zero(d);
@@ -49,14 +50,14 @@ namespace manhattan {
             }
             return scalar_sum;
         }
-        inline float manhattan_dist_float(
+        float manhattan_dist_float(
             const float* x,
             const float* y,
             const size_t size
         ) {
             return manhattan_dist<float>(x, y, size);
         }
-        inline double manhattan_dist_double(
+        double manhattan_dist_double(
             const double* x,
             const double* y,
             const size_t size
@@ -74,6 +75,8 @@ namespace manhattan {
     HWY_EXPORT(manhattan_dist_float);
     HWY_EXPORT(manhattan_dist_double);
 
+    // This seems to not get compiled correctly? At least, it is cited as a
+    // missing symbol at runtime
     template <typename Type>
     HWY_DLLEXPORT Type simd_manhattan_dist(
         const Type* x,

@@ -11,4 +11,19 @@ namespace manhattan{
         const size_t size
     );
 }
+
+namespace manhattan{
+    namespace N_AVX2{
+        float manhattan_dist_float(
+            const float* x,
+            const float* y,
+            const size_t size
+        );
+        double manhattan_dist_double(
+            const double* x,
+            const double* y,
+            const size_t size
+        );
+    }
+}
 #endif /*SIMD_HPP*/

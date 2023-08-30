@@ -512,9 +512,9 @@ def configure_extension_modules():
                 {
                     "language": "c++",
                     "sources": [join(SIMD_DIRECTORY, "simd.cpp")],
-                    "cflags": ["-std=c++14", "-march=native"],
+                    "cflags": ["-std=c++14", "-march=nocona"],
                     "extra_link_args": ["-std=c++14"],
-                    "include_dirs": [SIMD_DIRECTORY, HWY_INCLUDE_PATH],
+                    "include_dirs": [HWY_INCLUDE_PATH, SIMD_DIRECTORY],
                 },
             ),
         )
