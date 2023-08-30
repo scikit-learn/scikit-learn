@@ -150,7 +150,7 @@ def kneighbors_graph(
 @validate_params(
     {
         "X": ["array-like", "BallTree", "RadiusNeighborsMixin"],
-        "radius": [Interval(Real, 0, None, closed="right")]
+        "radius": [Interval(Real, 0, None, closed="right")],
         "mode": [StrOptions({"connectivity", "distance"})],
         "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
         "p": [Interval(Real, 0, None, closed="right"), None],
