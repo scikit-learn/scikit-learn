@@ -168,81 +168,45 @@ cv_mape_scores
 print(f"CV MAPE: {cv_mape_scores.mean():.3f} ± {cv_mape_scores.std():.3f}")
 
 # %%
-# To get a finer evaluation of our models we can compute and report several
-# cross-validation metrics at once using a dedicated helper function:
-from time import perf_counter
-
-from sklearn.metrics import mean_absolute_error, mean_pinball_loss, mean_squared_error
+# We can compute several combinations of evaluation metrics and loss functions,
+# which are reported a bit below.
+from sklearn.metrics import (
+    make_scorer,
+    mean_absolute_error,
+    mean_pinball_loss,
+    mean_squared_error,
+)
 from sklearn.model_selection import cross_validate
 
-(
-    model_names_list,
-    mape_list,
-    rmse_list,
-    mae_list,
-    mean_pinball_05_loss_list,
-    mean_pinball_50_loss_list,
-    mean_pinball_95_loss_list,
-    time_list,
-) = ([], [], [], [], [], [], [], [])
-
-
-def evaluate_and_store_results(names, model, X, y, cv):
-    def score_func(estimator, X, y):
-        y_pred = estimator.predict(X)
-
-        return {
-            "mean_absolute_percentage_error": mean_absolute_percentage_error(y, y_pred),
-            "root_mean_squared_error": mean_squared_error(y, y_pred, squared=False),
-            "mean_absolute_error": mean_absolute_error(y, y_pred),
-            "mean_pinball_05_loss": mean_pinball_loss(y, y_pred, alpha=0.05),
-            "mean_pinball_50_loss": mean_pinball_loss(y, y_pred, alpha=0.50),
-            "mean_pinball_95_loss": mean_pinball_loss(y, y_pred, alpha=0.95),
-        }
-
-    tic = perf_counter()
+scoring = {
+    "MAPE": make_scorer(mean_absolute_percentage_error),
+    "RMSE": make_scorer(mean_squared_error, squared=False),
+    "MAE": make_scorer(mean_absolute_error),
+    "pinball_loss_05": make_scorer(mean_pinball_loss, alpha=0.05),
+    "pinball_loss_50": make_scorer(mean_pinball_loss, alpha=0.50),
+    "pinball_loss_95": make_scorer(mean_pinball_loss, alpha=0.95),
+}
+loss_functions = ["squared_error", "poisson", "absolute_error"]
+scores = {"loss": [], "fit_time": []}
+scores.update({key: [] for key in scoring.keys()})
+for loss_func in loss_functions:
+    model = HistGradientBoostingRegressor(loss=loss_func)
     cv_results = cross_validate(
         model,
         X,
         y,
-        cv=cv,
-        scoring=score_func,
+        cv=ts_cv,
+        scoring=scoring,
     )
-    toc = perf_counter()
-
-    model_names_list.append(names)
+    time = cv_results["fit_time"]
+    scores["loss"].append(loss_func)
+    scores["fit_time"].append(f"{time.mean():.2f} ± {time.std():.2f} s")
 
     for key, value in cv_results.items():
         if key.startswith("test_"):
-            if key.endswith("percentage_error"):
-                mape_list.append(f"{value.mean():.3f} ± {value.std():.3f}")
-            if key.endswith("squared_error"):
-                rmse_list.append(f"{value.mean():.3f} ± {value.std():.3f}")
-            if key.endswith("absolute_error"):
-                mae_list.append(f"{value.mean():.3f} ± {value.std():.3f}")
-            if key.endswith("05_loss"):
-                mean_pinball_05_loss_list.append(
-                    f"{value.mean():.3f} ± {value.std():.3f}"
-                )
-            if key.endswith("50_loss"):
-                mean_pinball_50_loss_list.append(
-                    f"{value.mean():.3f} ± {value.std():.3f}"
-                )
-            if key.endswith("95_loss"):
-                mean_pinball_95_loss_list.append(
-                    f"{value.mean():.3f} ± {value.std():.3f}"
-                )
+            metric = key.split("test_")[1]
+            scores[metric].append(f"{value.mean():.3f} ± {value.std():.3f}")
 
-    time_list.append(f"{toc - tic:.3f} s")
-
-
-gbrt_mse = HistGradientBoostingRegressor(loss="squared_error")
-evaluate_and_store_results("gbrt_mse", gbrt_mse, X, y, cv=ts_cv)
-
-# %%
-# Model evaluation using `loss="poisson"`
-gbrt_poisson = HistGradientBoostingRegressor(loss="poisson")
-evaluate_and_store_results("gbrt_poisson", gbrt_poisson, X, y, cv=ts_cv)
 
 # %%
 # Modeling Predictive Uncertainty via Quantile Regression
