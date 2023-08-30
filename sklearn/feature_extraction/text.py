@@ -1647,7 +1647,7 @@ class TfidfTransformer(
 
         Parameters
         ----------
-        X : sparse matrix of shape n_samples, n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             A matrix of term/token counts.
 
         y : None
@@ -1724,7 +1724,7 @@ class TfidfTransformer(
             check_is_fitted(self, attributes=["idf_"], msg="idf vector is not fitted")
 
             # *= doesn't work
-            X = X * self._idf_diag
+            X = (self._idf_diag.T * X.T).T
 
         if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
