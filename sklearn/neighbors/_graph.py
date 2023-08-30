@@ -54,7 +54,7 @@ def _query_include_self(X, include_self, mode):
         "include_self": ["boolean", StrOptions({"auto"})],
         "n_jobs": [Integral, None],
     },
-    prefer_skip_nested_validation=False,
+    prefer_skip_nested_validation=False,  # metric is not validated yet
 )
 def kneighbors_graph(
     X,
