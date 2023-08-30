@@ -907,8 +907,6 @@ def _sigmoid_calibration(
         method="L-BFGS-B",
         jac=True,
         options={
-            "iprint": 1,
-            "maxls": 50,
             "gtol": 1e-6,
             "ftol": 64 * np.finfo(float).eps,
         },
