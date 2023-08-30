@@ -1208,6 +1208,10 @@ div.install > input:checked + label {
   display: none;
 }
 
+pre.sk-expandable > span:before {
+  content: "$ ";
+}
+
 /* Show hidden content when the checkbox is checked */
 /* for conda */
 #quickstart-conda:checked  ~* [data-packager="conda"] {
