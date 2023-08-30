@@ -53,26 +53,8 @@ from sklearn._build_utils import _check_cython_version  # noqa
 from sklearn.externals._packaging.version import parse as parse_version  # noqa
 from sklearn._build_utils.pre_build_helpers import compile_test_program  # noqa
 
-# runtime_check_program = dedent("""
-#     #include <highway.h>
-#     #include <iostream>
-#     int main(){
-#          std::cout << xsimd::available_architectures().avx;
-#          return 0;
-#     }
-#     """)
-# # XXX: Can we do this without an absolute path?
 dir_path = os.path.dirname(os.path.realpath(__file__))
 HWY_INCLUDE_PATH = Path(dir_path, "highway")
-HAS_AVX_RUNTIME = True
-# HAS_AVX_RUNTIME = int(
-#     compile_test_program(
-#         runtime_check_program,
-#         extra_preargs=["-lstdc++"],
-#         extra_postargs=[f"-I{HWY_INCLUDE_PATH}"],
-#         extension="cpp",
-#     )[0]
-# )
 
 
 VERSION = sklearn.__version__
@@ -502,9 +484,7 @@ def configure_extension_modules():
     build_with_debug_symbols = (
         os.environ.get("SKLEARN_BUILD_ENABLE_DEBUG_SYMBOLS", "0") != "0"
     )
-    BUILD_WITH_SIMD = int(
-        os.environ.get("SKLEARN_NO_SIMD", "0") == "0" and HAS_AVX_RUNTIME
-    )
+    BUILD_WITH_SIMD = int(os.environ.get("SKLEARN_NO_SIMD", "0") == "0")
     if BUILD_WITH_SIMD:
         libraries.append(
             (
