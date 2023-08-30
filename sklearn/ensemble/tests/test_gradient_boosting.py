@@ -7,7 +7,6 @@ import warnings
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
-from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from scipy.special import expit
 
 from sklearn import datasets
@@ -31,6 +30,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     skip_if_32bit,
 )
+from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 
 GRADIENT_BOOSTING_ESTIMATORS = [GradientBoostingClassifier, GradientBoostingRegressor]
 
@@ -269,11 +269,12 @@ def test_single_class_with_sample_weight():
         clf.fit(X, y, sample_weight=sample_weight)
 
 
-def test_check_inputs_predict_stages():
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_check_inputs_predict_stages(csc_container):
     # check that predict_stages through an error if the type of X is not
     # supported
     x, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    x_sparse_csc = csc_matrix(x)
+    x_sparse_csc = csc_container(x)
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     clf.fit(x, y)
     score = np.zeros((y.shape)).reshape(-1, 1)
@@ -897,7 +898,7 @@ def test_warm_start_oob(Cls):
 def test_warm_start_sparse(Cls):
     # Test that all sparse matrix types are supported
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    sparse_matrix_type = [csr_matrix, csc_matrix, coo_matrix]
+    sparse_container_type = [*COO_CONTAINERS, *CSR_CONTAINERS, *CSC_CONTAINERS]
     est_dense = Cls(
         n_estimators=100, max_depth=1, subsample=0.5, random_state=1, warm_start=True
     )
@@ -907,7 +908,7 @@ def test_warm_start_sparse(Cls):
     est_dense.fit(X, y)
     y_pred_dense = est_dense.predict(X)
 
-    for sparse_constructor in sparse_matrix_type:
+    for sparse_constructor in sparse_container_type:
         X_sparse = sparse_constructor(X)
 
         est_sparse = Cls(
@@ -1170,13 +1171,15 @@ def test_non_uniform_weights_toy_edge_case_clf():
 @pytest.mark.parametrize(
     "EstimatorClass", (GradientBoostingClassifier, GradientBoostingRegressor)
 )
-@pytest.mark.parametrize("sparse_matrix", (csr_matrix, csc_matrix, coo_matrix))
-def test_sparse_input(EstimatorClass, sparse_matrix):
+@pytest.mark.parametrize(
+    "sparse_container", [*COO_CONTAINERS, *CSC_CONTAINERS, *CSR_CONTAINERS]
+)
+def test_sparse_input(EstimatorClass, sparse_container):
     y, X = datasets.make_multilabel_classification(
         random_state=0, n_samples=50, n_features=1, n_classes=20
     )
     y = y[:, 0]
-    X_sparse = sparse_matrix(X)
+    X_sparse = sparse_container(X)
 
     dense = EstimatorClass(
         n_estimators=10, random_state=0, max_depth=2, min_impurity_decrease=1e-7
