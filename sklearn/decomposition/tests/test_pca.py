@@ -21,6 +21,7 @@ from sklearn.utils.estimator_checks import (
     _get_check_estimator_ids,
     check_array_api_input_and_values,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
@@ -502,9 +503,10 @@ def test_pca_svd_solver_auto(data, n_components, expected_solver):
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_sparse_input(svd_solver):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_pca_sparse_input(svd_solver, csr_container):
     X = np.random.RandomState(0).rand(5, 4)
-    X = sp.sparse.csr_matrix(X)
+    X = csr_container(X)
     assert sp.sparse.issparse(X)
 
     pca = PCA(n_components=3, svd_solver=svd_solver)
