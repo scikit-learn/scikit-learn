@@ -176,8 +176,10 @@ def test_asarray_with_order_ignored():
     [
         (None, False, 10.0),
         (None, True, 2.5),
-        ([0.1, 0.2, 0.3, 0.4], False, 3.0),
-        ([0.1, 0.2, 0.3, 0.4], True, 3.0),
+        ([0.4, 0.4, 0.5, 0.7], False, 5.5),
+        ([0.4, 0.4, 0.5, 0.7], True, 2.75),
+        ([1, 2, 3, 4], False, 30.0),
+        ([1, 2, 3, 4], True, 3.0),
     ],
 )
 def test_weighted_sum(
