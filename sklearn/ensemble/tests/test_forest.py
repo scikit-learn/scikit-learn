@@ -20,7 +20,6 @@ from unittest.mock import patch
 import joblib
 import numpy as np
 import pytest
-from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from scipy.special import comb
 
 import sklearn
@@ -53,6 +52,7 @@ from sklearn.utils._testing import (
     ignore_warnings,
     skip_if_no_parallel,
 )
+from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.parallel import Parallel
 from sklearn.utils.validation import check_random_state
 
@@ -909,11 +909,12 @@ def test_random_hasher():
     assert linear_clf.score(X_reduced, y) == 1.0
 
 
-def test_random_hasher_sparse_data():
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_random_hasher_sparse_data(csc_container):
     X, y = datasets.make_multilabel_classification(random_state=0)
     hasher = RandomTreesEmbedding(n_estimators=30, random_state=1)
     X_transformed = hasher.fit_transform(X)
-    X_transformed_sparse = hasher.fit_transform(csc_matrix(X))
+    X_transformed_sparse = hasher.fit_transform(csc_container(X))
     assert_array_equal(X_transformed_sparse.toarray(), X_transformed.toarray())
 
 
@@ -1127,11 +1128,13 @@ def check_sparse_input(name, X, X_sparse, y):
 
 
 @pytest.mark.parametrize("name", FOREST_ESTIMATORS)
-@pytest.mark.parametrize("sparse_matrix", (csr_matrix, csc_matrix, coo_matrix))
-def test_sparse_input(name, sparse_matrix):
+@pytest.mark.parametrize(
+    "sparse_container", [*COO_CONTAINERS, *CSC_CONTAINERS, *CSR_CONTAINERS]
+)
+def test_sparse_input(name, sparse_container):
     X, y = datasets.make_multilabel_classification(random_state=0, n_samples=50)
 
-    check_sparse_input(name, X, sparse_matrix(X), y)
+    check_sparse_input(name, X, sparse_container(X), y)
 
 
 def check_memory_layout(name, dtype):
@@ -1160,20 +1163,23 @@ def check_memory_layout(name, dtype):
     assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
     if est.estimator.splitter in SPARSE_SPLITTERS:
-        # csr matrix
-        X = csr_matrix(iris.data, dtype=dtype)
-        y = iris.target
-        assert_array_almost_equal(est.fit(X, y).predict(X), y)
+        # csr
+        for csr_container in CSR_CONTAINERS:
+            X = csr_container(iris.data, dtype=dtype)
+            y = iris.target
+            assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
-        # csc_matrix
-        X = csc_matrix(iris.data, dtype=dtype)
-        y = iris.target
-        assert_array_almost_equal(est.fit(X, y).predict(X), y)
+        # csc
+        for csc_container in CSC_CONTAINERS:
+            X = csc_container(iris.data, dtype=dtype)
+            y = iris.target
+            assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
-        # coo_matrix
-        X = coo_matrix(iris.data, dtype=dtype)
-        y = iris.target
-        assert_array_almost_equal(est.fit(X, y).predict(X), y)
+        # coo
+        for coo_container in COO_CONTAINERS:
+            X = coo_container(iris.data, dtype=dtype)
+            y = iris.target
+            assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
     # Strided
     X = np.asarray(iris.data[::3], dtype=dtype)
@@ -1678,9 +1684,10 @@ def test_max_samples_boundary_classifiers(name):
     np.testing.assert_allclose(ms_1_proba, ms_None_proba)
 
 
-def test_forest_y_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_forest_y_sparse(csr_container):
     X = [[1, 2, 3]]
-    y = csr_matrix([4, 5, 6])
+    y = csr_container([4, 5, 6])
     est = RandomForestClassifier()
     msg = "sparse multilabel-indicator for y is not supported."
     with pytest.raises(ValueError, match=msg):
@@ -1779,7 +1786,8 @@ def test_base_estimator_property_deprecated(name):
         model.base_estimator_
 
 
-def test_read_only_buffer(monkeypatch):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_read_only_buffer(csr_container, monkeypatch):
     """RandomForestClassifier must work on readonly sparse data.
 
     Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/25333
@@ -1792,7 +1800,7 @@ def test_read_only_buffer(monkeypatch):
     rng = np.random.RandomState(seed=0)
 
     X, y = make_classification(n_samples=100, n_features=200, random_state=rng)
-    X = csr_matrix(X, copy=True)
+    X = csr_container(X, copy=True)
 
     clf = RandomForestClassifier(n_jobs=2, random_state=rng)
     cross_val_score(clf, X, y, cv=2)
