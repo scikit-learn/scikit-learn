@@ -42,6 +42,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     Features that do not occur in a sample (mapping) will have a zero value
     in the resulting array/matrix.
 
+    For an efficiency comparision of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
+
     Read more in the :ref:`User Guide <dict_feature_extraction>`.
 
     Parameters
