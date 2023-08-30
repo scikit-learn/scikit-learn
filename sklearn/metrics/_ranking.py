@@ -24,9 +24,14 @@ from functools import partial
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.integrate import trapz as trapezoid
 from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
+
+try:
+    from scipy.integrate import trapezoid
+except ImportError:
+    # NOTE: remove once 1.6.0 is minimum supported scipy version
+    from scipy.integrate import trapz as trapezoid
 
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize

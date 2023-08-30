@@ -2,7 +2,12 @@ from collections import Counter
 
 import numpy as np
 import pytest
-from scipy.integrate import trapz as trapezoid
+
+try:
+    from scipy.integrate import trapezoid
+except ImportError:
+    # NOTE: remove once 1.6.0 is minimum supported scipy version
+    from scipy.integrate import trapz as trapezoid
 
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, make_classification
