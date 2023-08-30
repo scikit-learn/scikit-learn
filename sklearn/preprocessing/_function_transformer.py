@@ -248,9 +248,9 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             and not _is_pandas_df(out)
         ):
             warnings.warn(
-                "When set_output is configured to be 'pandas', either `func` returns a "
-                "DataFrame to follow the set_output API  or `feature_names_out` is "
-                "defined"
+                "When `set_output` is configured to be 'pandas', `func` should return "
+                "a DataFrame to follow the `set_output` API  or `feature_names_out` "
+                "should be defined."
             )
         return out
 

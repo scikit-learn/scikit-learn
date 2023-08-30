@@ -468,7 +468,7 @@ def test_set_output_func():
     ft_np = FunctionTransformer(lambda x: np.asarray(x))
     ft_np.set_output(transform="pandas")
 
-    msg = "When set_output is configured to be 'pandas'"
+    msg = "When `set_output` is configured to be 'pandas'"
     with pytest.warns(UserWarning, match=msg):
         ft_np.fit_transform(X)
 
