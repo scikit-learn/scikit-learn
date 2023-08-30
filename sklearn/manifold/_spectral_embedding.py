@@ -64,7 +64,9 @@ def _graph_connected_component(graph, node_id):
         nodes_to_explore.fill(False)
         for i in indices:
             if sparse.issparse(graph):
-                neighbors = graph[i].toarray().ravel()
+                # scipy not yet implemented 1D sparse slices; can be changed back to
+                # `neighbors = graph[i].toarray().ravel()` once implemented
+                neighbors = graph[[i], :].toarray().ravel()
             else:
                 neighbors = graph[i]
             np.logical_or(nodes_to_explore, neighbors, out=nodes_to_explore)
