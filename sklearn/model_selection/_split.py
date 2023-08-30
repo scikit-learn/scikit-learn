@@ -410,7 +410,7 @@ class KFold(_BaseKFold):
 
     Read more in the :ref:`User Guide <k_fold>`.
 
-    For visualisation of cross-validation behaviour and a
+    For visualisation of cross-validation behaviour and
     comparison between common scikit-learn split methods
     refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
@@ -506,7 +506,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
 
     Read more in the :ref:`User Guide <group_k_fold>`.
 
-    For visualisation of cross-validation behaviour and a
+    For visualisation of cross-validation behaviour and
     comparison between common scikit-learn split methods
     refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
@@ -634,7 +634,7 @@ class StratifiedKFold(_BaseKFold):
 
     Read more in the :ref:`User Guide <stratified_k_fold>`.
 
-    For visualisation of cross-validation behaviour and a
+    For visualisation of cross-validation behaviour and
     comparison between common scikit-learn split methods
     refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
@@ -829,7 +829,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
-    For visualisation of cross-validation behaviour and a
+    For visualisation of cross-validation behaviour and
     comparison between common scikit-learn split methods
     refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
@@ -1032,7 +1032,7 @@ class TimeSeriesSplit(_BaseKFold):
 
     Read more in the :ref:`User Guide <time_series_split>`.
 
-    For visualisation of cross-validation behaviour and a
+    For visualisation of cross-validation behaviour and
     comparison between common scikit-learn split methods
     refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
@@ -1786,7 +1786,7 @@ class ShuffleSplit(BaseShuffleSplit):
 
     Read more in the :ref:`User Guide <ShuffleSplit>`.
 
-    For visualisation of cross-validation behaviour and a
+    For visualisation of cross-validation behaviour and
     comparison between common scikit-learn split methods
     refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
@@ -1920,7 +1920,7 @@ class GroupShuffleSplit(GroupsConsumerMixin, ShuffleSplit):
 
     Read more in the :ref:`User Guide <group_shuffle_split>`.
 
-    For visualisation of cross-validation behaviour and a
+    For visualisation of cross-validation behaviour and
     comparison between common scikit-learn split methods
     refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
@@ -2054,7 +2054,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     Read more in the :ref:`User Guide <stratified_shuffle_split>`.
 
-    For visualisation of cross-validation behaviour and a
+    For visualisation of cross-validation behaviour and
     comparison between common scikit-learn split methods
     refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
