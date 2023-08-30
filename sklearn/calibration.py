@@ -890,16 +890,14 @@ def _sigmoid_calibration(
     bin_loss = HalfBinomialLoss()
 
     def loss_grad(AB):
-        P = bin_loss.link.inverse(-(AB[0] * F + AB[1]))
-        raw_prediction = bin_loss.link.link(P)
-        _loss, _grad = bin_loss.loss_gradient(
+        l, g = bin_loss.loss_gradient(
             y_true=T,
-            raw_prediction=raw_prediction,
+            raw_prediction=-(AB[0] * F + AB[1]),
             sample_weight=sample_weight,
         )
-        _grad = -_grad
-        grad = np.array([_grad @ F, _grad.sum()])
-        return _loss.sum(), grad
+        loss = l.sum()
+        grad = np.array([-g @ F, -g.sum()])
+        return loss, grad
 
     AB0 = np.array([0.0, log((prior0 + 1.0) / (prior1 + 1.0))])
 
