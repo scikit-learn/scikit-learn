@@ -107,7 +107,13 @@ fig, axes = plt.subplots(3, 1, figsize=(10, 12))
 hdb = HDBSCAN()
 for idx, scale in enumerate([1, 0.5, 3]):
     hdb.fit(X * scale)
-    plot(X * scale, hdb.labels_, hdb.probabilities_, ax=axes[idx], parameters={"scale": scale})
+    plot(
+        X * scale,
+        hdb.labels_,
+        hdb.probabilities_,
+        ax=axes[idx],
+        parameters={"scale": scale},
+    )
 # %%
 # Multi-Scale Clustering
 # ----------------------
