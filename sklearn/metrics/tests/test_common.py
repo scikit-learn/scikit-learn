@@ -1797,9 +1797,6 @@ def yield_metric_checker_combinations(metric_checkers=metric_checkers):
 @pytest.mark.parametrize(
     "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
 )
-@pytest.mark.parametrize(
-    "metric, check_func",
-    yield_metric_checker_combinations(),
-)
+@pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
 def test_array_api_compliance(metric, array_namespace, device, dtype, check_func):
     check_func(metric, array_namespace, device, dtype)
