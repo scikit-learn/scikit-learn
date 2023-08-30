@@ -453,7 +453,12 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
     # with lazy Array API implementations. See:
     # https://github.com/data-apis/array-api/issues/642
     if xp is None:
-        xp, _ = get_namespace(sample_score)
+        # Make sure the scores and weights belong to the same namespace
+        if sample_weight is not None:
+            xp, _ = get_namespace(sample_score, sample_weight)
+        else:
+            xp, _ = get_namespace(sample_score)
+
     if normalize and _is_numpy_namespace(xp):
         sample_score_np = numpy.asarray(sample_score)
         if sample_weight is not None:
@@ -463,14 +468,17 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         return float(numpy.average(sample_score_np, weights=sample_weight_np))
 
     if not xp.isdtype(sample_score.dtype, "real floating"):
-        # We move to cpu device ahead of time since certain devices may not support
-        # float64, but we want the same precision for all devices and namespaces.
-        sample_score = xp.astype(xp.asarray(sample_score, device="cpu"), xp.float64)
+        # The MPS device does not support float64
+        if (
+            xp.__name__ in {"array_api_compat.torch", "torch"}
+            and device(sample_score).type == "mps"
+        ):
+            sample_score = xp.astype(sample_score, xp.float32)
+        else:
+            sample_score = xp.astype(sample_score, xp.float64)
 
     if sample_weight is not None:
         sample_weight = xp.asarray(sample_weight, dtype=sample_score.dtype)
-        if not xp.isdtype(sample_weight.dtype, "real floating"):
-            sample_weight = xp.astype(sample_weight, xp.float64)
 
     if normalize:
         if sample_weight is not None:
