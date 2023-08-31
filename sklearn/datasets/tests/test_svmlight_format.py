@@ -7,7 +7,9 @@ from tempfile import NamedTemporaryFile
 
 import numpy as np
 import pytest
-import scipy.sparse as sp
+from scipy.sparse import issparse, vstack
+from sklearn.utils.fixes import CSR_CONTAINERS
+
 
 import sklearn
 from sklearn.datasets import dump_svmlight_file, load_svmlight_file, load_svmlight_files
@@ -254,10 +256,11 @@ def test_invalid_filename():
         load_svmlight_file("trou pic nic douille")
 
 
-def test_dump():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_dump(csr_container):
     X_sparse, y_dense = _load_svmlight_local_test_file(datafile)
     X_dense = X_sparse.toarray()
-    y_sparse = sp.csr_matrix(y_dense)
+    y_sparse = csr_container(y_dense)
 
     # slicing a csr_matrix can unsort its .indices, so test that we sort
     # those correctly
@@ -273,7 +276,7 @@ def test_dump():
                     # LibSVM doesn't grok comments so they're not put in by
                     # default anymore.
 
-                    if sp.issparse(y) and y.shape[0] == 1:
+                    if issparse(y) and y.shape[0] == 1:
                         # make sure y's shape is: (n_samples, n_labels)
                         # when it is sparse
                         y = y.T
@@ -304,7 +307,7 @@ def test_dump():
                     assert_array_equal(X2.sorted_indices().indices, X2.indices)
 
                     X2_dense = X2.toarray()
-                    if sp.issparse(X_input):
+                    if issparse(X_input):
                         X_input_dense = X_input.toarray()
                     else:
                         X_input_dense = X_input
@@ -323,10 +326,11 @@ def test_dump():
                         )
 
 
-def test_dump_multilabel():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_dump_multilabel(csr_container):
     X = [[1, 0, 3, 0, 5], [0, 0, 0, 0, 0], [0, 5, 0, 1, 0]]
     y_dense = [[0, 1, 0], [1, 0, 1], [1, 1, 0]]
-    y_sparse = sp.csr_matrix(y_dense)
+    y_sparse = csr_container(y_dense)
     for y in [y_dense, y_sparse]:
         f = BytesIO()
         dump_svmlight_file(X, y, f, multilabel=True)
@@ -465,9 +469,10 @@ def test_load_with_long_qid():
     assert_array_equal(X.toarray(), true_X)
 
 
-def test_load_zeros():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_load_zeros(csr_container):
     f = BytesIO()
-    true_X = sp.csr_matrix(np.zeros(shape=(3, 4)))
+    true_X = csr_container(np.zeros(shape=(3, 4)))
     true_y = np.array([0, 1, 0])
     dump_svmlight_file(true_X, true_y, f)
 
@@ -481,12 +486,13 @@ def test_load_zeros():
 @pytest.mark.parametrize("sparsity", [0, 0.1, 0.5, 0.99, 1])
 @pytest.mark.parametrize("n_samples", [13, 101])
 @pytest.mark.parametrize("n_features", [2, 7, 41])
-def test_load_with_offsets(sparsity, n_samples, n_features):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_load_with_offsets(sparsity, n_samples, n_features, csr_container):
     rng = np.random.RandomState(0)
     X = rng.uniform(low=0.0, high=1.0, size=(n_samples, n_features))
     if sparsity:
         X[X < sparsity] = 0.0
-    X = sp.csr_matrix(X)
+    X = csr_container(X)
     y = rng.randint(low=0, high=2, size=n_samples)
 
     f = BytesIO()
@@ -512,12 +518,13 @@ def test_load_with_offsets(sparsity, n_samples, n_features):
     X_2, y_2 = load_svmlight_file(f, n_features=n_features, offset=mark_2)
 
     y_concat = np.concatenate([y_0, y_1, y_2])
-    X_concat = sp.vstack([X_0, X_1, X_2])
+    X_concat = vstack([X_0, X_1, X_2])
     assert_array_almost_equal(y, y_concat)
     assert_array_almost_equal(X.toarray(), X_concat.toarray())
 
 
-def test_load_offset_exhaustive_splits():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_load_offset_exhaustive_splits(csr_container):
     rng = np.random.RandomState(0)
     X = np.array(
         [
@@ -530,7 +537,7 @@ def test_load_offset_exhaustive_splits():
             [1, 0, 0, 0, 0, 0],
         ]
     )
-    X = sp.csr_matrix(X)
+    X = csr_container(X)
     n_samples, n_features = X.shape
     y = rng.randint(low=0, high=2, size=n_samples)
     query_id = np.arange(n_samples) // 2
@@ -553,7 +560,7 @@ def test_load_offset_exhaustive_splits():
         )
         q_concat = np.concatenate([q_0, q_1])
         y_concat = np.concatenate([y_0, y_1])
-        X_concat = sp.vstack([X_0, X_1])
+        X_concat = vstack([X_0, X_1])
         assert_array_almost_equal(y, y_concat)
         assert_array_equal(query_id, q_concat)
         assert_array_almost_equal(X.toarray(), X_concat.toarray())
@@ -564,7 +571,8 @@ def test_load_with_offsets_error():
         _load_svmlight_local_test_file(datafile, offset=3, length=3)
 
 
-def test_multilabel_y_explicit_zeros(tmp_path):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_multilabel_y_explicit_zeros(tmp_path, csr_container):
     """
     Ensure that if y contains explicit zeros (i.e. elements of y.data equal to
     0) then those explicit zeros are not encoded.
@@ -576,7 +584,7 @@ def test_multilabel_y_explicit_zeros(tmp_path):
     indices = np.array([0, 2, 2, 0, 1, 2])
     # The first and last element are explicit zeros.
     data = np.array([0, 1, 1, 1, 1, 0])
-    y = sp.csr_matrix((data, indices, indptr), shape=(3, 3))
+    y = csr_container((data, indices, indptr), shape=(3, 3))
     # y as a dense array would look like
     # [[0, 0, 1],
     #  [0, 0, 1],
