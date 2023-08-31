@@ -87,7 +87,7 @@ Changelog
 
 - |Enhancement| The internal objective and gradient of the `sigmoid` method
   of :class:`calibration.CalibratedClassifierCV` have been replaced by the
-  private loss module. :pr:27185 by :user:`Omar Salman <OmarManzoor>`.
+  private loss module. :pr:`27185` by :user:`Omar Salman <OmarManzoor>`.
 
 :mod:`sklearn.cluster`
 ............................
