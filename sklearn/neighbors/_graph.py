@@ -147,6 +147,7 @@ def kneighbors_graph(
     query = _query_include_self(X._fit_X, include_self, mode)
     return X.kneighbors_graph(X=query, n_neighbors=n_neighbors, mode=mode)
 
+
 @validate_params(
     {
         "X": ["array-like", "BallTree", "RadiusNeighborsMixin"],
@@ -157,7 +158,8 @@ def kneighbors_graph(
         "metric_params": [dict, None],
         "include_self": ["boolean", StrOptions({"auto"})],
         "n_jobs": [Integral, None],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def radius_neighbors_graph(
     X,
