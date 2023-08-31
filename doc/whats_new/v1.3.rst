@@ -18,6 +18,13 @@ Changes impacting all modules
 Changelog
 ---------
 
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| :class:`cluster.BisectingKMeans` could crash when predicting on data
+  with a different scale than the data used to fit the model.
+  :pr:`27167` by `Olivier Grisel`_.
+
 :mod:`sklearn.impute`
 .....................
 
