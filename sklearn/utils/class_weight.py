@@ -157,10 +157,11 @@ def compute_sample_weight(class_weight, y, *, indices=None):
 
     expanded_class_weight = []
     for k in range(n_outputs):
-        y_full = y[:, k]
-        if sparse.issparse(y_full):
+        if sparse.issparse(y):
             # Ok to densify a single column at a time
-            y_full = y_full.toarray().flatten()
+            y_full = y[:, [k]].toarray().flatten()
+        else:
+            y_full = y[:, k]
         classes_full = np.unique(y_full)
         classes_missing = None
 
