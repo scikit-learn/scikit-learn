@@ -4634,7 +4634,7 @@ def _check_set_output_transform_dataframe(
 def _check_set_output_transform_pandas_context(name, transformer_orig, context):
     try:
         import pandas as pd
-    except ImportError:
+    except ImportError:  # pragma: no cover
         raise SkipTest("pandas is not installed: not checking set output")
 
     _check_set_output_transform_dataframe(
