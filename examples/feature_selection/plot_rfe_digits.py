@@ -83,11 +83,31 @@ print(f"Accuracy using all {X_train.shape[1]} features: {accuracy_all_features:.
 
 # %%
 from sklearn.feature_selection import RFE
+from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline
 
-# Arbitrarily chosen; can be adjusted based on domain knowledge or iterative testing
-num_features_to_select = 40
-rfe = RFE(estimator=svc, n_features_to_select=num_features_to_select, step=10)
-rfe.fit(X_train, y_train)
+# Define the parameters for the grid search
+param_grid = {"rfe__n_features_to_select": [1, 5, 10, 20, 30, 40, 50, 64]}
+
+# Create a pipeline with feature selection followed by SVM
+pipe = Pipeline(
+    [
+        ("rfe", RFE(estimator=SVC(kernel="linear", C=1))),
+        ("svc", SVC(kernel="linear", C=1)),
+    ]
+)
+
+# Create the grid search object
+grid_search = GridSearchCV(pipe, param_grid, cv=5, scoring="accuracy", n_jobs=-1)
+
+# Fit to the data and get the best estimator
+grid_search.fit(X_train, y_train)
+best_pipeline = grid_search.best_estimator_
+
+# Extract the optimal number of features from the best estimator
+optimal_num_features = best_pipeline.named_steps["rfe"].n_features_
+
+print(f"Optimal number of features: {optimal_num_features}")
 
 # %%
 # Evaluating SVM on Selected Features
@@ -98,13 +118,15 @@ rfe.fit(X_train, y_train)
 # observe if there's any significant change in accuracy, ideally aiming for improvement.
 
 # %%
-X_train_rfe = rfe.transform(X_train)
-X_test_rfe = rfe.transform(X_test)
+best_pipeline.fit(X_train, y_train)
+y_pred_rfe = best_pipeline.predict(X_test)
 
-svc_rfe = SVC(kernel="linear", C=1)
-svc_rfe.fit(X_train_rfe, y_train)
-y_pred_rfe = svc_rfe.predict(X_test_rfe)
+# Get accuracy of model using selected features
 accuracy_selected_features = accuracy_score(y_test, y_pred_rfe)
+
+# get num selected features
+selected_features = best_pipeline.named_steps["rfe"].support_
+num_features_to_select = selected_features.sum()
 
 print(
     f"Accuracy using {num_features_to_select} selected features:"
@@ -121,7 +143,7 @@ print(
 # in the digit classification task.
 
 # %%
-ranking = rfe.ranking_.reshape(digits.images[0].shape)
+ranking = best_pipeline.named_steps["rfe"].ranking_.reshape(digits.images[0].shape)
 plt.matshow(ranking, cmap=plt.cm.Blues)
 plt.colorbar()
 plt.title("Ranking of pixels with RFE")
