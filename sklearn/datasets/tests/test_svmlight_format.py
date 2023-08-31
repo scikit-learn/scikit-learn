@@ -8,8 +8,6 @@ from tempfile import NamedTemporaryFile
 import numpy as np
 import pytest
 from scipy.sparse import issparse, vstack
-from sklearn.utils.fixes import CSR_CONTAINERS
-
 
 import sklearn
 from sklearn.datasets import dump_svmlight_file, load_svmlight_file, load_svmlight_files
@@ -19,7 +17,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     fails_if_pypy,
 )
-from sklearn.utils.fixes import _open_binary, _path
+from sklearn.utils.fixes import CSR_CONTAINERS, _open_binary, _path
 
 TEST_DATA_MODULE = "sklearn.datasets.tests.data"
 datafile = "svmlight_classification.txt"
