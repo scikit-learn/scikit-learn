@@ -900,18 +900,16 @@ def check_cv_results_array_types(search, param_keys, score_keys):
         assert cv_results["rank_test_%s" % key].dtype == np.int32
 
 
-def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
+def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand, extra_keys=()):
     # Test the search.cv_results_ contains all the required results
-    assert_array_equal(
-        sorted(cv_results.keys()), sorted(param_keys + score_keys + ("params",))
-    )
+    all_keys = param_keys + score_keys + extra_keys
+    assert_array_equal(sorted(cv_results.keys()), sorted(all_keys + ("params",)))
     assert all(cv_results[key].shape == (n_cand,) for key in param_keys + score_keys)
 
 
 def test_grid_search_cv_results():
     X, y = make_classification(n_samples=50, n_features=4, random_state=42)
 
-    n_splits = 3
     n_grid_points = 6
     params = [
         dict(
@@ -949,9 +947,7 @@ def test_grid_search_cv_results():
     )
     n_candidates = n_grid_points
 
-    search = GridSearchCV(
-        SVC(), cv=n_splits, param_grid=params, return_train_score=True
-    )
+    search = GridSearchCV(SVC(), cv=3, param_grid=params, return_train_score=True)
     search.fit(X, y)
     cv_results = search.cv_results_
     # Check if score and timing are reasonable
@@ -967,17 +963,20 @@ def test_grid_search_cv_results():
     check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
     # Check masking
     cv_results = search.cv_results_
-    n_candidates = len(search.cv_results_["params"])
-    assert all(
+
+    poly_results = [
         (
             cv_results["param_C"].mask[i]
             and cv_results["param_gamma"].mask[i]
             and not cv_results["param_degree"].mask[i]
         )
         for i in range(n_candidates)
-        if cv_results["param_kernel"][i] == "linear"
-    )
-    assert all(
+        if cv_results["param_kernel"][i] == "poly"
+    ]
+    assert all(poly_results)
+    assert len(poly_results) == 2
+
+    rbf_results = [
         (
             not cv_results["param_C"].mask[i]
             and not cv_results["param_gamma"].mask[i]
@@ -985,13 +984,14 @@ def test_grid_search_cv_results():
         )
         for i in range(n_candidates)
         if cv_results["param_kernel"][i] == "rbf"
-    )
+    ]
+    assert all(rbf_results)
+    assert len(rbf_results) == 4
 
 
 def test_random_search_cv_results():
     X, y = make_classification(n_samples=50, n_features=4, random_state=42)
 
-    n_splits = 3
     n_search_iter = 30
 
     params = [
@@ -1016,12 +1016,12 @@ def test_random_search_cv_results():
         "mean_score_time",
         "std_score_time",
     )
-    n_cand = n_search_iter
+    n_candidates = n_search_iter
 
     search = RandomizedSearchCV(
         SVC(),
         n_iter=n_search_iter,
-        cv=n_splits,
+        cv=3,
         param_distributions=params,
         return_train_score=True,
     )
@@ -1029,8 +1029,7 @@ def test_random_search_cv_results():
     cv_results = search.cv_results_
     # Check results structure
     check_cv_results_array_types(search, param_keys, score_keys)
-    check_cv_results_keys(cv_results, param_keys, score_keys, n_cand)
-    n_candidates = len(search.cv_results_["params"])
+    check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
     assert all(
         (
             cv_results["param_C"].mask[i]
@@ -1038,7 +1037,7 @@ def test_random_search_cv_results():
             and not cv_results["param_degree"].mask[i]
         )
         for i in range(n_candidates)
-        if cv_results["param_kernel"][i] == "linear"
+        if cv_results["param_kernel"][i] == "poly"
     )
     assert all(
         (
