@@ -190,7 +190,7 @@ def test_ovr_fit_predict_sparse(sparse_container):
     clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
     Y_pred = clf.predict(X_test)
 
-    clf_sprs = OneVsRestClassifier(base_clf).fit(X_train, sparse(Y_train))
+    clf_sprs = OneVsRestClassifier(base_clf).fit(X_train, sparse_container(Y_train))
     Y_pred_sprs = clf_sprs.predict(X_test)
 
     assert clf.multilabel_
