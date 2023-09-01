@@ -59,13 +59,13 @@ from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_almost_equal,
     assert_array_equal,
     assert_array_less,
     ignore_warnings,
 )
-from sklearn.utils.estimator_checks import _array_api_for_tests
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import _num_samples, check_random_state
 

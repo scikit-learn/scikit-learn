@@ -20,8 +20,10 @@ from sklearn.utils._array_api import (
     supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._testing import skip_if_array_api_compat_not_configured
-from sklearn.utils.estimator_checks import _array_api_for_tests
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    skip_if_array_api_compat_not_configured,
+)
 
 pytestmark = pytest.mark.filterwarnings(
     "ignore:The numpy.array_api submodule:UserWarning"

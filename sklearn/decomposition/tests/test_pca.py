@@ -16,9 +16,8 @@ from sklearn.utils._array_api import (
     _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 from sklearn.utils.estimator_checks import (
-    _array_api_for_tests,
     _get_check_estimator_ids,
     check_array_api_input_and_values,
 )
