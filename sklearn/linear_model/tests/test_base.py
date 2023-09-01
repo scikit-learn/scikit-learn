@@ -615,7 +615,7 @@ def test_csr_preprocess_data(csr_container):
     X[X < 2.5] = 0.0
     csr = csr_container(X)
     csr_, y, _, _, _ = _preprocess_data(csr, y, True)
-    assert csr_.getformat() == "csr"
+    assert csr_.format == "csr"
 
 
 @pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS])
