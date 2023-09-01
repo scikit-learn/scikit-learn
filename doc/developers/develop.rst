@@ -709,6 +709,20 @@ only wrap the first array and not alter the other arrays.
 See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
 for an example on how to use the API.
 
+.. _developer_api_check_is_fitted:
+
+Developer API for `check_is_fitted`
+===================================
+
+By default :func:`~sklearn.utils.validation.check_is_fitted` checks if there
+are any attributes in the instance with a trailing underscore, e.g. `coef_`.
+An estimator can change the behavior by implementing a `__sklearn_is_fitted__`
+method taking no input and returning a boolean. If this method exists,
+:func:`~sklearn.utils.validation.check_is_fitted` simply returns its output.
+
+See :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
+for an example on how to use the API.
+
 .. _coding-guidelines:
 
 Coding guidelines

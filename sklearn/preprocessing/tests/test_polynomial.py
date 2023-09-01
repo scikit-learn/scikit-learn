@@ -423,8 +423,10 @@ def test_spline_transformer_sparse_output(
     splt_dense.fit(X)
     splt_sparse.fit(X)
 
-    assert sparse.isspmatrix_csr(splt_sparse.transform(X))
-    assert_allclose(splt_dense.transform(X), splt_sparse.transform(X).toarray())
+    X_trans_sparse = splt_sparse.transform(X)
+    X_trans_dense = splt_dense.transform(X)
+    assert sparse.issparse(X_trans_sparse) and X_trans_sparse.format == "csr"
+    assert_allclose(X_trans_dense, X_trans_sparse.toarray())
 
     # extrapolation regime
     X_min = np.amin(X, axis=0)
@@ -721,7 +723,7 @@ def test_polynomial_features_csc_X(deg, include_bias, interaction_only, dtype):
     Xt_csc = est.fit_transform(X_csc.astype(dtype))
     Xt_dense = est.fit_transform(X.astype(dtype))
 
-    assert sparse.isspmatrix_csc(Xt_csc)
+    assert sparse.issparse(Xt_csc) and Xt_csc.format == "csc"
     assert Xt_csc.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csc.A, Xt_dense)
 
@@ -748,7 +750,7 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
     Xt_csr = est.fit_transform(X_csr.astype(dtype))
     Xt_dense = est.fit_transform(X.astype(dtype, copy=False))
 
-    assert sparse.isspmatrix_csr(Xt_csr)
+    assert sparse.issparse(Xt_csr) and Xt_csr.format == "csr"
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
@@ -807,7 +809,7 @@ def test_polynomial_features_csr_X_floats(deg, include_bias, interaction_only, d
     Xt_csr = est.fit_transform(X_csr.astype(dtype))
     Xt_dense = est.fit_transform(X.astype(dtype))
 
-    assert sparse.isspmatrix_csr(Xt_csr)
+    assert sparse.issparse(Xt_csr) and Xt_csr.format == "csr"
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
@@ -838,7 +840,7 @@ def test_polynomial_features_csr_X_zero_row(zero_row_index, deg, interaction_onl
     Xt_csr = est.fit_transform(X_csr)
     Xt_dense = est.fit_transform(X)
 
-    assert sparse.isspmatrix_csr(Xt_csr)
+    assert sparse.issparse(Xt_csr) and Xt_csr.format == "csr"
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
@@ -859,7 +861,7 @@ def test_polynomial_features_csr_X_degree_4(include_bias, interaction_only):
     Xt_csr = est.fit_transform(X_csr)
     Xt_dense = est.fit_transform(X)
 
-    assert sparse.isspmatrix_csr(X_csr)
+    assert sparse.issparse(Xt_csr) and Xt_csr.format == "csr"
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
@@ -887,7 +889,7 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
     Xt_csr = est.fit_transform(X_csr)
     Xt_dense = est.fit_transform(X)
 
-    assert sparse.isspmatrix_csr(Xt_csr)
+    assert sparse.issparse(Xt_csr) and Xt_csr.format == "csr"
     assert Xt_csr.dtype == Xt_dense.dtype
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
