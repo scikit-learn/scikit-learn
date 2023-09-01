@@ -25,6 +25,9 @@ Changelog
   with a different scale than the data used to fit the model.
   :pr:`27167` by `Olivier Grisel`_.
 
+- |Fix| :class:`cluster.BisectingKMeans` now works with data that has a single feature.
+  :pr:`27243` by `Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.impute`
 .....................
 
