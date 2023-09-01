@@ -602,7 +602,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         )
 
     def _update_fitted_transformers(self, transformers):
-        """Sets self.transformers_ from given transformers.
+        """Set self.transformers_ from given transformers.
 
         Parameters
         ----------
