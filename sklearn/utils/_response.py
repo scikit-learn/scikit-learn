@@ -9,6 +9,110 @@ from .multiclass import type_of_target
 from .validation import _check_response_method, check_is_fitted
 
 
+def _process_predict_proba(*, y_pred, target_type, classes, pos_label):
+    """Get the response values when the response method is `predict_proba`.
+
+    This function should process the `y_pred` in the binary and multi-label cases.
+    In the binary case, it should select the column corresponding to the positive
+    class. In the multi-label case, it should stack the predictions if they are not
+    in the "compressed" format `(n_samples, n_outputs)`.
+
+    Parameters
+    ----------
+    y_pred : ndarray
+        Output of `estimator.predict_proba`. The shape depends on the target type:
+
+        - for binary classification, it is a 2d array of shape `(n_samples, 2)`;
+        - for multiclass classification, it is a 2d array of shape
+          `(n_samples, n_classes)`;
+        - for multilabel classification, it is either a list of 2d arrays of shape
+          `(n_samples, 2)` (e.g. `RandomForestClassifier` or `KNeighborsClassifier`) or
+          an array of shape `(n_samples, n_outputs)` (e.g. `MLPClassifier` or
+          `RidgeClassifier`).
+
+    target_type : {"binary", "multiclass", "multilabel-indicator"}
+        Type of the target.
+
+    classes : ndarray of shape (n_classes,) or list of such arrays
+        Class labels as reported by `estimator.classes_`.
+
+    pos_label : int, float, bool or str
+        Only used with binary and multiclass targets.
+
+    Returns
+    -------
+    y_pred : ndarray of shape (n_samples,), (n_samples, n_classes) or \
+            (n_samples, n_output)
+        Compressed predictions format as requested by the metrics.
+    """
+    if target_type == "binary" and y_pred.shape[1] < 2:
+        # We don't handle classifiers trained on a single class.
+        raise ValueError(
+            f"Got predict_proba of shape {y_pred.shape}, but need "
+            "classifier with two classes."
+        )
+
+    if target_type == "binary":
+        col_idx = np.flatnonzero(classes == pos_label)[0]
+        return y_pred[:, col_idx]
+    elif target_type == "multilabel-indicator" and isinstance(y_pred, list):
+        # Use a compress format of shape `(n_samples, n_output)`.
+        # Only `MLPClassifier` and `RidgeClassifier` return an array of shape
+        # `(n_samples, n_outputs)`.
+        return np.vstack([p[:, -1] for p in y_pred]).T
+
+    return y_pred
+
+
+def _process_decision_function(*, y_pred, target_type, classes, pos_label):
+    """Get the response values when the response method is `decision_function`.
+
+    This function should process the `y_pred` in the binary and multi-label cases.
+    In the binary case, it should invert the sign of the score if the positive label
+    is not `classes[1]`. In the multi-label case, it should stack the predictions if
+    they are not in the "compressed" format `(n_samples, n_outputs)`.
+
+    Parameters
+    ----------
+    y_pred : ndarray
+        Output of `estimator.predict_proba`. The shape depends on the target type:
+
+        - for binary classification, it is a 1d array of shape `(n_samples,)` where the
+          sign is assuming that `classes[1]` is the positive class;
+        - for multiclass classification, it is a 2d array of shape
+          `(n_samples, n_classes)`;
+        - for multilabel classification, it is a 2d array of shape `(n_samples,
+          n_outputs)`.
+
+    target_type : {"binary", "multiclass", "multilabel-indicator"}
+        Type of the target.
+
+    classes : ndarray of shape (n_classes,) or list of such arrays
+        Class labels as reported by `estimator.classes_`.
+
+    pos_label : int, float, bool or str
+        Only used with binary and multiclass targets.
+
+    Returns
+    -------
+    y_pred : ndarray of shape (n_samples,), (n_samples, n_classes) or \
+            (n_samples, n_output)
+        Compressed predictions format as requested by the metrics.
+    """
+    if target_type == "binary" and pos_label == classes[0]:
+        return -1 * y_pred
+    elif target_type == "multilabel-indicator" and isinstance(y_pred, list):
+        # This is some legacy code where it was assume that the decision function could
+        # be a list of arrays of shape `(n_samples, 2)`.
+        # Currently, this does not exist in scikit-learn. The only estimator supporting
+        # multilabel-indicator and decision_function is `RidgeClassifier` which
+        # returns an array of shape `(n_samples, n_outputs)`.
+        # We could remove this code in the future?
+        return np.vstack([p for p in y_pred]).T
+
+    return y_pred
+
+
 def _get_response_values(
     estimator,
     X,
@@ -17,11 +121,17 @@ def _get_response_values(
 ):
     """Compute the response values of a classifier or a regressor.
 
-    The response values are predictions, one scalar value for each sample in X
-    that depends on the specific choice of `response_method`.
+    The response values are predictions such that it follows the following shape:
+
+    - for binary classification, it is a 1d array of shape `(n_samples,)`;
+    - for multiclass classification, it is a 2d array of shape `(n_samples, n_classes)`;
+    - for multilabel classification, it is a 2d array of shape `(n_samples, n_outputs)`;
+    - for regression, it is a 1d array of shape `(n_samples,)`.
 
     If `estimator` is a binary classifier, also return the label for the
     effective positive class.
+
+    This utility is used primarily in the binary displays and the scikit-learn scorer.
 
     .. versionadded:: 1.3
 
@@ -52,8 +162,9 @@ def _get_response_values(
 
     Returns
     -------
-    y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
-        Target scores calculated from the provided response_method
+    y_pred : ndarray of shape (n_samples,), (n_samples, n_classes) or \
+            (n_samples, n_outputs)
+        Target scores calculated from the provided `response_method`
         and `pos_label`.
 
     pos_label : int, float, bool, str or None
@@ -71,21 +182,10 @@ def _get_response_values(
     from sklearn.base import is_classifier  # noqa
 
     if is_classifier(estimator):
-        # The output of the response methods return results that are agnostic to the
-        # positive class or in the binary case, it returns as if the positive class
-        # is `estimator.classes_[1]`.
-        #
-        # Here, we need to reshape the output to get an array of shape
-        # `(n_samples,)` or `(n_samples, n_outputs)`. We therefore need to return the
-        # array according to the positive class in the binary and multiclass cases.
-        # For the multilabel-indicator case, we need to return a compress format of
-        # shape `(n_samples, n_outputs)`.
         prediction_method = _check_response_method(estimator, response_method)
         classes = estimator.classes_
         target_type = type_of_target(classes)
 
-        # Validate `pos_label` for the binary and multiclass cases. We check the label
-        # if it is provided or infer it in the binary case.
         if target_type in ("binary", "multiclass"):
             if pos_label is not None and pos_label not in classes.tolist():
                 raise ValueError(
@@ -98,32 +198,19 @@ def _get_response_values(
         y_pred = prediction_method(X)
 
         if prediction_method.__name__ == "predict_proba":
-            if target_type == "binary" and y_pred.shape[1] <= 2:
-                if y_pred.shape[1] == 2:
-                    # we need to select the column corresponding to the positive class
-                    col_idx = np.flatnonzero(classes == pos_label)[0]
-                    y_pred = y_pred[:, col_idx]
-                else:
-                    err_msg = (
-                        f"Got predict_proba of shape {y_pred.shape}, but need "
-                        "classifier with two classes."
-                    )
-                    raise ValueError(err_msg)
-            elif target_type == "multilabel-indicator" and isinstance(y_pred, list):
-                # Use a compress format of shape `(n_samples, n_output)`.
-                # Only `MLPClassifier` and `RidgeClassifier` already return
-                # such output in a form of a NumPy array.
-                y_pred = np.vstack([p[:, -1] for p in y_pred]).T
+            y_pred = _process_predict_proba(
+                y_pred=y_pred,
+                target_type=target_type,
+                classes=classes,
+                pos_label=pos_label,
+            )
         elif prediction_method.__name__ == "decision_function":
-            if target_type == "binary":
-                if pos_label == classes[0]:
-                    # The raw predictions are reported in regards to the `classes[1]`.
-                    # If the positive class is `classes[0]`, we need to flip the
-                    # decision function to provide results in regards to `classes[0]`.
-                    y_pred *= -1
-            elif target_type == "multilabel-indicator" and isinstance(y_pred, list):
-                # Use a compress format of shape `(n_samples, n_output)`.
-                y_pred = np.vstack([p for p in y_pred]).T
+            y_pred = _process_decision_function(
+                y_pred=y_pred,
+                target_type=target_type,
+                classes=classes,
+                pos_label=pos_label,
+            )
     else:  # estimator is a regressor
         if response_method != "predict":
             raise ValueError(
