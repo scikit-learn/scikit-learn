@@ -74,7 +74,7 @@ def kneighbors_graph(
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Sample data, in the form of a numpy array.
+        Sample data.
 
     n_neighbors : int
         Number of neighbors for each sample.
@@ -181,9 +181,8 @@ def radius_neighbors_graph(
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features) or BallTree
-        Sample data, in the form of a numpy array or a precomputed
-        :class:`BallTree`.
+    X : array-like of shape (n_samples, n_features)
+        Sample data.
 
     radius : float
         Radius of neighborhoods.
