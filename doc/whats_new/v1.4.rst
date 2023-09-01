@@ -246,7 +246,6 @@ Changelog
   :class:`metric.DistanceMetric` objects.
   :pr:`26267` by :user:`Meekail Zain <micky774>`
 
-
 :mod:`sklearn.metrics`
 ......................
 
