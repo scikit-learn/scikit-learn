@@ -169,17 +169,6 @@ def test_label_binarizer_errors():
     with pytest.raises(ValueError, match=err_msg):
         lb.fit(input_labels)
 
-    # Fail on y_type
-    err_msg = "foo format is not supported"
-    for csr_container in CSR_CONTAINERS:
-        with pytest.raises(ValueError, match=err_msg):
-            _inverse_binarize_thresholding(
-                y=csr_container([[1, 2], [2, 1]]),
-                output_type="foo",
-                classes=[1, 2],
-                threshold=0,
-            )
-
     # Sequence of seq type should raise ValueError
     y_seq_of_seqs = [[], [1, 2], [3], [0, 1, 3], [2]]
     err_msg = "You appear to be using a legacy multi-label data representation"
@@ -206,6 +195,16 @@ def test_label_binarizer_errors():
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_label_binarizer_sparse_errors(csr_container):
+    # Fail on y_type
+    err_msg = "foo format is not supported"
+    with pytest.raises(ValueError, match=err_msg):
+        _inverse_binarize_thresholding(
+            y=csr_container([[1, 2], [2, 1]]),
+            output_type="foo",
+            classes=[1, 2],
+            threshold=0,
+        )
+
     # Fail on the number of classes
     err_msg = "The number of class is not equal to the number of dimension of y."
     with pytest.raises(ValueError, match=err_msg):
