@@ -186,17 +186,6 @@ def test_label_binarizer_errors():
     with pytest.raises(ValueError, match=err_msg):
         LabelBinarizer().fit_transform(y_seq_of_seqs)
 
-    # Fail on the number of classes
-    err_msg = "The number of class is not equal to the number of dimension of y."
-    for csr_container in CSR_CONTAINERS:
-        with pytest.raises(ValueError, match=err_msg):
-            _inverse_binarize_thresholding(
-                y=csr_container([[1, 2], [2, 1]]),
-                output_type="foo",
-                classes=[1, 2, 3],
-                threshold=0,
-            )
-
     # Fail on the dimension of 'binary'
     err_msg = "output_type='binary', but y.shape"
     with pytest.raises(ValueError, match=err_msg):
@@ -213,6 +202,19 @@ def test_label_binarizer_errors():
         LabelBinarizer().fit(np.array([[1, 3], [2, 1]]))
     with pytest.raises(ValueError, match=err_msg):
         label_binarize(np.array([[1, 3], [2, 1]]), classes=[1, 2, 3])
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_label_binarizer_sparse_errors(csr_container):
+    # Fail on the number of classes
+    err_msg = "The number of class is not equal to the number of dimension of y."
+    with pytest.raises(ValueError, match=err_msg):
+        _inverse_binarize_thresholding(
+            y=csr_container([[1, 2], [2, 1]]),
+            output_type="foo",
+            classes=[1, 2, 3],
+            threshold=0,
+        )
 
 
 @pytest.mark.parametrize(
@@ -352,11 +354,16 @@ def test_sparse_output_multilabel_binarizer():
             assert_array_equal([1, 2, 3], mlb.classes_)
             assert mlb.inverse_transform(got) == inverse
 
-    for csr_container in CSR_CONTAINERS:
-        with pytest.raises(ValueError):
-            mlb.inverse_transform(
-                csr_container(np.array([[0, 1, 1], [2, 0, 0], [1, 1, 0]]))
-            )
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_output_multilabel_binarizer_errors(csr_container):
+    inp = iter([iter((2, 3)), iter((1,)), {1, 2}])
+    mlb = MultiLabelBinarizer(sparse_output=False)
+    mlb.fit(inp)
+    with pytest.raises(ValueError):
+        mlb.inverse_transform(
+            csr_container(np.array([[0, 1, 1], [2, 0, 0], [1, 1, 0]]))
+        )
 
 
 def test_multilabel_binarizer():
