@@ -453,7 +453,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         Converts callable column specifications.
 
-        This stores a dictionary of the form {step_name: column_indices} and
+        This stores a dictionary of the form `{step_name: column_indices}` and
         calls the `columns` on `X` if `columns` is a callable for a given
         transformer.
 
