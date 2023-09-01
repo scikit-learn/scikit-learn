@@ -1136,6 +1136,9 @@ estimation.
    representations of feature space, also these approaches focus also on
    dimensionality reduction.
 
+.. dropdown:: Click to Expand
+   :label: Bagging meta-estimator
+   
 .. _bagging:
 
 Bagging meta-estimator
