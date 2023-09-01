@@ -55,7 +55,7 @@ from sklearn.metrics._base import _average_binary_score
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
-    _array_api_atol,
+    _atol_for_type,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -1746,7 +1746,7 @@ def check_array_api_metric(
         assert_allclose(
             metric_xp,
             metric_np,
-            atol=_array_api_atol(dtype),
+            atol=_atol_for_type(dtype),
         )
 
 
