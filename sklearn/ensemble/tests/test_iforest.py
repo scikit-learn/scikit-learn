@@ -47,30 +47,30 @@ def test_iforest(global_random_seed):
             ).predict(X_test)
 
 
-def test_iforest_sparse(global_random_seed):
+@pytest.mark.parametrize("sparse_container", [*CSC_CONTAINERS, *CSR_CONTAINERS])
+def test_iforest_sparse(global_random_seed, sparse_container):
     """Check IForest for various parameter settings on sparse input."""
     rng = check_random_state(global_random_seed)
     X_train, X_test = train_test_split(diabetes.data[:50], random_state=rng)
     grid = ParameterGrid({"max_samples": [0.5, 1.0], "bootstrap": [True, False]})
 
-    for sparse_container in [*CSC_CONTAINERS, *CSR_CONTAINERS]:
-        X_train_sparse = sparse_container(X_train)
-        X_test_sparse = sparse_container(X_test)
+    X_train_sparse = sparse_container(X_train)
+    X_test_sparse = sparse_container(X_test)
 
-        for params in grid:
-            # Trained on sparse format
-            sparse_classifier = IsolationForest(
-                n_estimators=10, random_state=global_random_seed, **params
-            ).fit(X_train_sparse)
-            sparse_results = sparse_classifier.predict(X_test_sparse)
+    for params in grid:
+        # Trained on sparse format
+        sparse_classifier = IsolationForest(
+            n_estimators=10, random_state=global_random_seed, **params
+        ).fit(X_train_sparse)
+        sparse_results = sparse_classifier.predict(X_test_sparse)
 
-            # Trained on dense format
-            dense_classifier = IsolationForest(
-                n_estimators=10, random_state=global_random_seed, **params
-            ).fit(X_train)
-            dense_results = dense_classifier.predict(X_test)
+        # Trained on dense format
+        dense_classifier = IsolationForest(
+            n_estimators=10, random_state=global_random_seed, **params
+        ).fit(X_train)
+        dense_results = dense_classifier.predict(X_test)
 
-            assert_array_equal(sparse_results, dense_results)
+        assert_array_equal(sparse_results, dense_results)
 
 
 def test_iforest_error():
