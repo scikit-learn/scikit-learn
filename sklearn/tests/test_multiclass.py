@@ -168,10 +168,10 @@ def test_ovr_ovo_regressor():
 
 
 @pytest.mark.parametrize(
-    "sparse",
+    "sparse_container",
     CSR_CONTAINERS + CSC_CONTAINERS + COO_CONTAINERS + DOK_CONTAINERS + LIL_CONTAINERS,
 )
-def test_ovr_fit_predict_sparse(sparse):
+def test_ovr_fit_predict_sparse(sparse_container):
     base_clf = MultinomialNB(alpha=1)
 
     X, Y = datasets.make_multilabel_classification(
