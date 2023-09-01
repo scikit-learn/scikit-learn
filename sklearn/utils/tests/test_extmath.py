@@ -37,21 +37,27 @@ from sklearn.utils.extmath import (
     svd_flip,
     weighted_mode,
 )
-from sklearn.utils.fixes import _mode
+from sklearn.utils.fixes import (
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    DOK_CONTAINERS,
+    LIL_CONTAINERS,
+    _mode,
+)
 
 
-def test_density():
+@pytest.mark.parametrize(
+    "sparse_container",
+    [*COO_CONTAINERS, *CSC_CONTAINERS, *CSR_CONTAINERS, *LIL_CONTAINERS],
+)
+def test_density(sparse_container):
     rng = np.random.RandomState(0)
     X = rng.randint(10, size=(10, 5))
     X[1, 2] = 0
     X[5, 3] = 0
-    X_csr = sparse.csr_matrix(X)
-    X_csc = sparse.csc_matrix(X)
-    X_coo = sparse.coo_matrix(X)
-    X_lil = sparse.lil_matrix(X)
 
-    for X_ in (X_csr, X_csc, X_coo, X_lil):
-        assert density(X_) == density(X)
+    assert density(sparse_container(X)) == density(X)
 
 
 # TODO(1.4): Remove test
@@ -100,7 +106,9 @@ def test_random_weights():
     assert_array_almost_equal(score.ravel(), w[:, :5].sum(1))
 
 
-def check_randomized_svd_low_rank(dtype):
+@pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize("dtype", (np.int32, np.int64, np.float32, np.float64))
+def test_randomized_svd_low_rank_all_dtypes(sparse_container, dtype):
     # Check that extmath.randomized_svd is consistent with linalg.svd
     n_samples = 100
     n_features = 500
@@ -127,6 +135,9 @@ def check_randomized_svd_low_rank(dtype):
     U = U.astype(dtype, copy=False)
     s = s.astype(dtype, copy=False)
     Vt = Vt.astype(dtype, copy=False)
+
+    if sparse_container is not None:
+        X = sparse_container(X)
 
     for normalizer in ["auto", "LU", "QR"]:  # 'none' would not be stable
         # compute the singular values of X using the fast approximate method
@@ -158,29 +169,6 @@ def check_randomized_svd_low_rank(dtype):
         assert_almost_equal(
             np.dot(U[:, :k], Vt[:k, :]), np.dot(Ua, Va), decimal=decimal
         )
-
-        # check the sparse matrix representation
-        X = sparse.csr_matrix(X)
-
-        # compute the singular values of X using the fast approximate method
-        Ua, sa, Va = randomized_svd(
-            X, k, power_iteration_normalizer=normalizer, random_state=0
-        )
-        if dtype.kind == "f":
-            assert Ua.dtype == dtype
-            assert sa.dtype == dtype
-            assert Va.dtype == dtype
-        else:
-            assert Ua.dtype.kind == "f"
-            assert sa.dtype.kind == "f"
-            assert Va.dtype.kind == "f"
-
-        assert_almost_equal(s[:rank], sa[:rank], decimal=decimal)
-
-
-@pytest.mark.parametrize("dtype", (np.int32, np.int64, np.float32, np.float64))
-def test_randomized_svd_low_rank_all_dtypes(dtype):
-    check_randomized_svd_low_rank(dtype)
 
 
 @pytest.mark.parametrize("dtype", (np.int32, np.int64, np.float32, np.float64))
@@ -316,7 +304,8 @@ def test_randomized_eigsh_reconst_low_rank(n, rank):
 
 
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
-def test_row_norms(dtype):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_row_norms(dtype, csr_container):
     X = np.random.RandomState(42).randn(100, 100)
     if dtype is np.float32:
         precision = 4
@@ -330,7 +319,7 @@ def test_row_norms(dtype):
     assert_array_almost_equal(np.sqrt(sq_norm), row_norms(X), precision)
 
     for csr_index_dtype in [np.int32, np.int64]:
-        Xcsr = sparse.csr_matrix(X, dtype=dtype)
+        Xcsr = csr_container(X, dtype=dtype)
         # csr_matrix will use int32 indices by default,
         # up-casting those to int64 when necessary
         if csr_index_dtype is np.int64:
@@ -501,19 +490,21 @@ def test_randomized_svd_power_iteration_normalizer():
             assert 15 > np.abs(error_2 - error)
 
 
-def test_randomized_svd_sparse_warnings():
+@pytest.mark.parametrize("sparse_container", [*DOK_CONTAINERS, *LIL_CONTAINERS])
+def test_randomized_svd_sparse_warnings(sparse_container):
     # randomized_svd throws a warning for lil and dok matrix
     rng = np.random.RandomState(42)
     X = make_low_rank_matrix(50, 20, effective_rank=10, random_state=rng)
     n_components = 5
-    for cls in (sparse.lil_matrix, sparse.dok_matrix):
-        X = cls(X)
-        warn_msg = (
-            "Calculating SVD of a {} is expensive. "
-            "csr_matrix is more efficient.".format(cls.__name__)
+
+    X = sparse_container(X)
+    warn_msg = (
+        "Calculating SVD of a {} is expensive. csr_matrix is more efficient.".format(
+            sparse_container.__name__
         )
-        with pytest.warns(sparse.SparseEfficiencyWarning, match=warn_msg):
-            randomized_svd(X, n_components, n_iter=1, power_iteration_normalizer="none")
+    )
+    with pytest.warns(sparse.SparseEfficiencyWarning, match=warn_msg):
+        randomized_svd(X, n_components, n_iter=1, power_iteration_normalizer="none")
 
 
 def test_svd_flip():
@@ -984,34 +975,33 @@ def test_stable_cumsum():
     assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))
 
 
-@pytest.mark.parametrize(
-    "A_array_constr", [np.array, sparse.csr_matrix], ids=["dense", "sparse"]
-)
-@pytest.mark.parametrize(
-    "B_array_constr", [np.array, sparse.csr_matrix], ids=["dense", "sparse"]
-)
-def test_safe_sparse_dot_2d(A_array_constr, B_array_constr):
+@pytest.mark.parametrize("A_sparse_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize("B_sparse_container", [None, *CSR_CONTAINERS])
+def test_safe_sparse_dot_2d(A_sparse_container, B_sparse_container):
     rng = np.random.RandomState(0)
 
     A = rng.random_sample((30, 10))
     B = rng.random_sample((10, 20))
     expected = np.dot(A, B)
 
-    A = A_array_constr(A)
-    B = B_array_constr(B)
+    if A_sparse_container is not None:
+        A = A_sparse_container(A)
+    if B_sparse_container is not None:
+        B = B_sparse_container(B)
     actual = safe_sparse_dot(A, B, dense_output=True)
 
     assert_allclose(actual, expected)
 
 
-def test_safe_sparse_dot_nd():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_safe_sparse_dot_nd(csr_container):
     rng = np.random.RandomState(0)
 
     # dense ND / sparse
     A = rng.random_sample((2, 3, 4, 5, 6))
     B = rng.random_sample((6, 7))
     expected = np.dot(A, B)
-    B = sparse.csr_matrix(B)
+    B = csr_container(B)
     actual = safe_sparse_dot(A, B)
     assert_allclose(actual, expected)
 
@@ -1019,15 +1009,13 @@ def test_safe_sparse_dot_nd():
     A = rng.random_sample((2, 3))
     B = rng.random_sample((4, 5, 3, 6))
     expected = np.dot(A, B)
-    A = sparse.csr_matrix(A)
+    A = csr_container(A)
     actual = safe_sparse_dot(A, B)
     assert_allclose(actual, expected)
 
 
-@pytest.mark.parametrize(
-    "A_array_constr", [np.array, sparse.csr_matrix], ids=["dense", "sparse"]
-)
-def test_safe_sparse_dot_2d_1d(A_array_constr):
+@pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
+def test_safe_sparse_dot_2d_1d(csr_container):
     rng = np.random.RandomState(0)
 
     B = rng.random_sample((10))
@@ -1035,14 +1023,16 @@ def test_safe_sparse_dot_2d_1d(A_array_constr):
     # 2D @ 1D
     A = rng.random_sample((30, 10))
     expected = np.dot(A, B)
-    A = A_array_constr(A)
+    if csr_container is not None:
+        A = csr_container(A)
     actual = safe_sparse_dot(A, B)
     assert_allclose(actual, expected)
 
     # 1D @ 2D
     A = rng.random_sample((10, 30))
     expected = np.dot(B, A)
-    A = A_array_constr(A)
+    if csr_container is not None:
+        A = csr_container(A)
     actual = safe_sparse_dot(B, A)
     assert_allclose(actual, expected)
 
