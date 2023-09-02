@@ -26,7 +26,10 @@ from sklearn.utils._testing import (
     assert_array_equal,
     fails_if_pypy,
 )
-from sklearn.utils.fixes import _open_binary, CSR_CONTAINERS
+from sklearn.utils.fixes import (
+    _open_binary,
+    CSR_CONTAINERS,
+)
 
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
 # if True, urlopen will be monkey patched to only use local files
