@@ -331,8 +331,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         (unlabeled_idx,) = np.where(normalizer[:, 0] == 0)
         if unlabeled_idx.size > 0:
             warnings.warn(
-                "%d instances remain unlabeled"
-                " after %d iterations." % unlabeled_idx.size,
+                "%d instances remain unlabeled after %d iterations."
+                % unlabeled_idx.size,
                 self.max_iter,
                 ConvergenceWarning,
             )
