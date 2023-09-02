@@ -18,6 +18,7 @@ indices = np.arange(iris.data.shape[0])
 random_state.shuffle(indices)
 X = iris.data[indices]
 y = iris.target[indices]
+X_csr_lst = [csr_container(X) for csr_container in CSR_CONTAINERS]
 
 
 class MyPassiveAggressive(ClassifierMixin):
@@ -69,20 +70,37 @@ class MyPassiveAggressive(ClassifierMixin):
         return np.dot(X, self.w) + self.b
 
 
-@pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
-def test_classifier_accuracy(csr_container):
-    data = csr_container(X) if csr_container is not None else X
-    for fit_intercept in (True, False):
+def test_classifier_accuracy():
+    for data in (X, *X_csr_lst):
+        for fit_intercept in (True, False):
+            for average in (False, True):
+                clf = PassiveAggressiveClassifier(
+                    C=1.0,
+                    max_iter=30,
+                    fit_intercept=fit_intercept,
+                    random_state=1,
+                    average=average,
+                    tol=None,
+                )
+                clf.fit(data, y)
+                score = clf.score(data, y)
+                assert score > 0.79
+                if average:
+                    assert hasattr(clf, "_average_coef")
+                    assert hasattr(clf, "_average_intercept")
+                    assert hasattr(clf, "_standard_intercept")
+                    assert hasattr(clf, "_standard_coef")
+
+
+def test_classifier_partial_fit():
+    classes = np.unique(y)
+    for data in (X, *X_csr_lst):
         for average in (False, True):
             clf = PassiveAggressiveClassifier(
-                C=1.0,
-                max_iter=30,
-                fit_intercept=fit_intercept,
-                random_state=1,
-                average=average,
-                tol=None,
+                random_state=0, average=average, max_iter=5
             )
-            clf.fit(data, y)
+            for t in range(30):
+                clf.partial_fit(data, y, classes)
             score = clf.score(data, y)
             assert score > 0.79
             if average:
@@ -90,23 +108,6 @@ def test_classifier_accuracy(csr_container):
                 assert hasattr(clf, "_average_intercept")
                 assert hasattr(clf, "_standard_intercept")
                 assert hasattr(clf, "_standard_coef")
-
-
-@pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
-def test_classifier_partial_fit(csr_container):
-    classes = np.unique(y)
-    data = csr_container(X) if csr_container is not None else X
-    for average in (False, True):
-        clf = PassiveAggressiveClassifier(random_state=0, average=average, max_iter=5)
-        for t in range(30):
-            clf.partial_fit(data, y, classes)
-        score = clf.score(data, y)
-        assert score > 0.79
-        if average:
-            assert hasattr(clf, "_average_coef")
-            assert hasattr(clf, "_average_intercept")
-            assert hasattr(clf, "_standard_intercept")
-            assert hasattr(clf, "_standard_coef")
 
 
 def test_classifier_refit():
@@ -118,20 +119,21 @@ def test_classifier_refit():
     assert_array_equal(clf.classes_, iris.target_names)
 
 
-@pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("loss", ("hinge", "squared_hinge"))
-def test_classifier_correctness(loss, csr_container):
+def test_classifier_correctness(loss):
     y_bin = y.copy()
     y_bin[y != 1] = -1
 
     clf1 = MyPassiveAggressive(loss=loss, n_iter=2)
     clf1.fit(X, y_bin)
 
-    data = csr_container(X) if csr_container is not None else X
-    clf2 = PassiveAggressiveClassifier(loss=loss, max_iter=2, shuffle=False, tol=None)
-    clf2.fit(data, y_bin)
+    for data in (X, *X_csr_lst):
+        clf2 = PassiveAggressiveClassifier(
+            loss=loss, max_iter=2, shuffle=False, tol=None
+        )
+        clf2.fit(data, y_bin)
 
-    assert_array_almost_equal(clf1.w, clf2.coef_.ravel(), decimal=2)
+        assert_array_almost_equal(clf1.w, clf2.coef_.ravel(), decimal=2)
 
 
 @pytest.mark.parametrize(
@@ -202,22 +204,41 @@ def test_wrong_class_weight_label():
         clf.fit(X2, y2)
 
 
-@pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
-def test_regressor_mse(csr_container):
+def test_regressor_mse():
     y_bin = y.copy()
     y_bin[y != 1] = -1
 
-    data = csr_container(X) if csr_container is not None else X
-    for fit_intercept in (True, False):
+    for data in (X, *X_csr_lst):
+        for fit_intercept in (True, False):
+            for average in (False, True):
+                reg = PassiveAggressiveRegressor(
+                    C=1.0,
+                    fit_intercept=fit_intercept,
+                    random_state=0,
+                    average=average,
+                    max_iter=5,
+                )
+                reg.fit(data, y_bin)
+                pred = reg.predict(data)
+                assert np.mean((pred - y_bin) ** 2) < 1.7
+                if average:
+                    assert hasattr(reg, "_average_coef")
+                    assert hasattr(reg, "_average_intercept")
+                    assert hasattr(reg, "_standard_intercept")
+                    assert hasattr(reg, "_standard_coef")
+
+
+def test_regressor_partial_fit():
+    y_bin = y.copy()
+    y_bin[y != 1] = -1
+
+    for data in (X, *X_csr_lst):
         for average in (False, True):
             reg = PassiveAggressiveRegressor(
-                C=1.0,
-                fit_intercept=fit_intercept,
-                random_state=0,
-                average=average,
-                max_iter=5,
+                random_state=0, average=average, max_iter=100
             )
-            reg.fit(data, y_bin)
+            for t in range(50):
+                reg.partial_fit(data, y_bin)
             pred = reg.predict(data)
             assert np.mean((pred - y_bin) ** 2) < 1.7
             if average:
@@ -227,39 +248,21 @@ def test_regressor_mse(csr_container):
                 assert hasattr(reg, "_standard_coef")
 
 
-@pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
-def test_regressor_partial_fit(csr_container):
-    y_bin = y.copy()
-    y_bin[y != 1] = -1
-
-    data = csr_container(X) if csr_container is not None else X
-    for average in (False, True):
-        reg = PassiveAggressiveRegressor(random_state=0, average=average, max_iter=100)
-        for t in range(50):
-            reg.partial_fit(data, y_bin)
-        pred = reg.predict(data)
-        assert np.mean((pred - y_bin) ** 2) < 1.7
-        if average:
-            assert hasattr(reg, "_average_coef")
-            assert hasattr(reg, "_average_intercept")
-            assert hasattr(reg, "_standard_intercept")
-            assert hasattr(reg, "_standard_coef")
-
-
-@pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("loss", ("epsilon_insensitive", "squared_epsilon_insensitive"))
-def test_regressor_correctness(loss, csr_container):
+def test_regressor_correctness(loss):
     y_bin = y.copy()
     y_bin[y != 1] = -1
 
     reg1 = MyPassiveAggressive(loss=loss, n_iter=2)
     reg1.fit(X, y_bin)
 
-    data = csr_container(X) if csr_container is not None else X
-    reg2 = PassiveAggressiveRegressor(tol=None, loss=loss, max_iter=2, shuffle=False)
-    reg2.fit(data, y_bin)
+    for data in (X, *X_csr_lst):
+        reg2 = PassiveAggressiveRegressor(
+            tol=None, loss=loss, max_iter=2, shuffle=False
+        )
+        reg2.fit(data, y_bin)
 
-    assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)
+        assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)
 
 
 def test_regressor_undefined_methods():
