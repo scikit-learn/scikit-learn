@@ -75,6 +75,7 @@ def test_min_dependencies_pyproject_toml():
     for requirement in build_requirements:
         if ">=" in requirement:
             package, version = requirement.split(">=")
+            version = version.split("<")[0]
             package = package.lower()
             pyproject_build_min_versions[package] = version
 
