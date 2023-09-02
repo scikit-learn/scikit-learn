@@ -18,27 +18,15 @@ def test_kernel_ridge():
     assert_array_almost_equal(pred, pred2)
 
 
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_kernel_ridge_csr(csr_container):
-    Xcsr = csr_container(X)
+@pytest.mark.parametrize("sparse_container", [*CSR_CONTAINERS, *CSC_CONTAINERS])
+def test_kernel_ridge_sparse(sparse_container):
+    X_sparse = sparse_container(X)
     pred = (
         Ridge(alpha=1, fit_intercept=False, solver="cholesky")
-        .fit(Xcsr, y)
-        .predict(Xcsr)
+        .fit(X_sparse, y)
+        .predict(X_sparse)
     )
-    pred2 = KernelRidge(kernel="linear", alpha=1).fit(Xcsr, y).predict(Xcsr)
-    assert_array_almost_equal(pred, pred2)
-
-
-@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
-def test_kernel_ridge_csc(csc_container):
-    Xcsc = csc_container(X)
-    pred = (
-        Ridge(alpha=1, fit_intercept=False, solver="cholesky")
-        .fit(Xcsc, y)
-        .predict(Xcsc)
-    )
-    pred2 = KernelRidge(kernel="linear", alpha=1).fit(Xcsc, y).predict(Xcsc)
+    pred2 = KernelRidge(kernel="linear", alpha=1).fit(X_sparse, y).predict(X_sparse)
     assert_array_almost_equal(pred, pred2)
 
 
