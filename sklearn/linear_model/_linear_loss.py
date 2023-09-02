@@ -287,14 +287,21 @@ class LinearModelLoss:
 
         if not self.base_loss.is_multiclass:
             grad = np.empty_like(coef, dtype=weights.dtype)
-            print("grad_pointwise value", grad_pointwise) # TEMPORARY to check gradient
-            grad[:n_features] = X.T @ grad_pointwise + l2_reg_strength * weights
+            with np.errstate(all='raise'):
+                try:
+                    grad[:n_features] = X.T @ grad_pointwise + l2_reg_strength * weights
+                except Exception as e:
+                    raise ValueError(f"{e}. Overflow detected. Try scaling the target variable or features, or using a different solver")
             if self.fit_intercept:
                 grad[-1] = grad_pointwise.sum()
         else:
             grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
             # grad_pointwise.shape = (n_samples, n_classes)
-            grad[:, :n_features] = grad_pointwise.T @ X + l2_reg_strength * weights
+            with np.errstate(all='raise'):
+                try:
+                    grad[:, :n_features] = grad_pointwise.T @ X + l2_reg_strength * weights
+                except Exception as e:
+                    raise ValueError(f"{e}. Overflow detected. Try scaling the target variable or features, or using a different solver")
             if self.fit_intercept:
                 grad[:, -1] = grad_pointwise.sum(axis=0)
             if coef.ndim == 1:
