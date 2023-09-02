@@ -9,7 +9,6 @@ from urllib.error import HTTPError
 
 import numpy as np
 import pytest
-import scipy.sparse
 
 import sklearn
 from sklearn import config_context
@@ -27,7 +26,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     fails_if_pypy,
 )
-from sklearn.utils.fixes import _open_binary
+from sklearn.utils.fixes import _open_binary, CSR_CONTAINERS
 
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
 # if True, urlopen will be monkey patched to only use local files
@@ -1080,7 +1079,7 @@ def test_fetch_openml_sparse_arff_error(monkeypatch, params, err_msg):
     "data_id, data_type",
     [
         (61, "dataframe"),  # iris dataset version 1
-        (292, "sparse"),  # Australian dataset version 1
+        (292, CSR_CONTAINERS),  # Australian dataset version 1
     ],
 )
 def test_fetch_openml_auto_mode(monkeypatch, data_id, data_type):
@@ -1089,7 +1088,7 @@ def test_fetch_openml_auto_mode(monkeypatch, data_id, data_type):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     data = fetch_openml(data_id=data_id, as_frame="auto", parser="auto", cache=False)
-    klass = pd.DataFrame if data_type == "dataframe" else scipy.sparse.csr_matrix
+    klass = pd.DataFrame if data_type == "dataframe" else data_type[0]
     assert isinstance(data.data, klass)
 
 
