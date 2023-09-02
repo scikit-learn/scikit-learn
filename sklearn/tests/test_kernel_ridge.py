@@ -1,15 +1,14 @@
 import numpy as np
-import scipy.sparse as sp
+import pytest
 
 from sklearn.datasets import make_regression
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.linear_model import Ridge
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.utils._testing import assert_array_almost_equal, ignore_warnings
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 X, y = make_regression(n_features=10, random_state=0)
-Xcsr = sp.csr_matrix(X)
-Xcsc = sp.csc_matrix(X)
 Y = np.array([y, y]).T
 
 
@@ -19,7 +18,9 @@ def test_kernel_ridge():
     assert_array_almost_equal(pred, pred2)
 
 
-def test_kernel_ridge_csr():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_kernel_ridge_csr(csr_container):
+    Xcsr = csr_container(X)
     pred = (
         Ridge(alpha=1, fit_intercept=False, solver="cholesky")
         .fit(Xcsr, y)
@@ -29,7 +30,9 @@ def test_kernel_ridge_csr():
     assert_array_almost_equal(pred, pred2)
 
 
-def test_kernel_ridge_csc():
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_kernel_ridge_csc(csc_container):
+    Xcsc = csc_container(X)
     pred = (
         Ridge(alpha=1, fit_intercept=False, solver="cholesky")
         .fit(Xcsc, y)
