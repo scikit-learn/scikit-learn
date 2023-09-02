@@ -27,8 +27,8 @@ from sklearn.utils._testing import (
     fails_if_pypy,
 )
 from sklearn.utils.fixes import (
-    _open_binary,
     CSR_CONTAINERS,
+    _open_binary,
 )
 
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
