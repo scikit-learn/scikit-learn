@@ -15,6 +15,7 @@ from sklearn.semi_supervised import _label_propagation as label_propagation
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose,
+    assert_array_almost_equal,
     assert_array_equal,
 )
 
@@ -236,3 +237,10 @@ def test_predict_sparse_callable_kernel(global_dtype):
     model = label_propagation.LabelPropagation(kernel=topk_rbf)
     model.fit(X_train, y_train)
     assert model.score(X_test, y_test) >= 0.9
+
+@pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
+def test_unlabeled(Estimator, parameters):
+    samples = [[1., 0.], [0., 1.], [1., 2.5]]
+    labels = [0, 1, -1]
+    clf = Estimator(max_iter=0, default_label=-5, **parameters).fit(samples, labels)
+    assert_array_almost_equal(clf.transduction_, np.array([0, 1, -5]))

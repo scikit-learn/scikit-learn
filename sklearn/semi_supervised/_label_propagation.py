@@ -105,6 +105,10 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
          ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
          ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
          for more details.
+
+    default_label : int, default=0
+        Default label for unpropagated instances.
+        A ConvergenceWarning will be raised if any instance remains unlabeled.
     """
 
     _parameter_constraints: dict = {
@@ -115,6 +119,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         "max_iter": [Interval(Integral, 0, None, closed="neither")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "n_jobs": [None, Integral],
+        "default_label": [None, Integral],
     }
 
     def __init__(
@@ -127,9 +132,11 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         max_iter=30,
         tol=1e-3,
         n_jobs=None,
+        default_label=0,
     ):
         self.max_iter = max_iter
         self.tol = tol
+        self.default_label = default_label
 
         # kernel parameters
         self.kernel = kernel
@@ -325,12 +332,20 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             )
             self.n_iter_ += 1
 
+        # handle unpropagated instances
+        unlabeled_idx, = np.where(normalizer[:,0] == 0)
+        if unlabeled_idx.size > 0:
+            warnings.warn("%d instances remain unlabeled"
+                          " after %d iterations." % unlabeled_idx.size,
+                          self.max_iter, ConvergenceWarning)
+
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
         normalizer[normalizer == 0] = 1
         self.label_distributions_ /= normalizer
 
         # set the transduction item
         transduction = self.classes_[np.argmax(self.label_distributions_, axis=1)]
+        transduction[unlabeled_idx] = self.default_label
         self.transduction_ = transduction.ravel()
         return self
 
@@ -366,6 +381,10 @@ class LabelPropagation(BaseLabelPropagation):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    default_label : int, default=0
+        Default label for unpropagated instances.
+        A ConvergenceWarning will be raised if any instance remains unlabeled.
 
     Attributes
     ----------
@@ -434,6 +453,7 @@ class LabelPropagation(BaseLabelPropagation):
         max_iter=1000,
         tol=1e-3,
         n_jobs=None,
+        default_label=0
     ):
         super().__init__(
             kernel=kernel,
@@ -443,6 +463,7 @@ class LabelPropagation(BaseLabelPropagation):
             tol=tol,
             n_jobs=n_jobs,
             alpha=None,
+            default_label=0,
         )
 
     def _build_graph(self):
@@ -526,6 +547,10 @@ class LabelSpreading(BaseLabelPropagation):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    default_label : int, default=0
+        Default label for unpropagated instances.
+        A ConvergenceWarning will be raised if any instance remains unlabeled.
+
     Attributes
     ----------
     X_ : ndarray of shape (n_samples, n_features)
@@ -594,6 +619,7 @@ class LabelSpreading(BaseLabelPropagation):
         max_iter=30,
         tol=1e-3,
         n_jobs=None,
+        default_label=0,
     ):
         # this one has different base parameters
         super().__init__(
@@ -604,6 +630,7 @@ class LabelSpreading(BaseLabelPropagation):
             max_iter=max_iter,
             tol=tol,
             n_jobs=n_jobs,
+            default_label=0,
         )
 
     def _build_graph(self):
