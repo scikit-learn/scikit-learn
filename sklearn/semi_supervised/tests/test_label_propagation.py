@@ -176,7 +176,6 @@ def test_convergence_warning():
     with warnings.catch_warnings():
         warnings.simplefilter("error", ConvergenceWarning)
         mdl.fit(X, y)
-
     mdl = label_propagation.LabelPropagation(kernel="rbf", max_iter=500)
     with warnings.catch_warnings():
         warnings.simplefilter("error", ConvergenceWarning)
@@ -238,9 +237,10 @@ def test_predict_sparse_callable_kernel(global_dtype):
     model.fit(X_train, y_train)
     assert model.score(X_test, y_test) >= 0.9
 
+
 @pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
 def test_unlabeled(Estimator, parameters):
-    samples = [[1., 0.], [0., 1.], [1., 2.5]]
+    samples = [[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]]
     labels = [0, 1, -1]
     clf = Estimator(max_iter=0, default_label=-5, **parameters).fit(samples, labels)
     assert_array_almost_equal(clf.transduction_, np.array([0, 1, -5]))

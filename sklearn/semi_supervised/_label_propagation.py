@@ -289,7 +289,6 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self.label_distributions_ = np.zeros((n_samples, n_classes))
         for label in classes:
             self.label_distributions_[y == label, classes == label] = 1
-
         y_static = np.copy(self.label_distributions_)
         if self._variant == "propagation":
             # LabelPropagation
@@ -297,17 +296,14 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             # LabelSpreading
             y_static *= 1 - self.alpha
-
         l_previous = np.zeros((self.X_.shape[0], n_classes))
 
         unlabeled = unlabeled[:, np.newaxis]
         if sparse.issparse(graph_matrix):
             graph_matrix = graph_matrix.tocsr()
-
         for self.n_iter_ in range(self.max_iter):
             if np.abs(self.label_distributions_ - l_previous).sum() < self.tol:
                 break
-
             l_previous = self.label_distributions_
             self.label_distributions_ = safe_sparse_dot(
                 graph_matrix, self.label_distributions_
@@ -331,14 +327,15 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
                 category=ConvergenceWarning,
             )
             self.n_iter_ += 1
-
         # handle unpropagated instances
-        unlabeled_idx, = np.where(normalizer[:,0] == 0)
+        (unlabeled_idx,) = np.where(normalizer[:, 0] == 0)
         if unlabeled_idx.size > 0:
-            warnings.warn("%d instances remain unlabeled"
-                          " after %d iterations." % unlabeled_idx.size,
-                          self.max_iter, ConvergenceWarning)
-
+            warnings.warn(
+                "%d instances remain unlabeled"
+                " after %d iterations." % unlabeled_idx.size,
+                self.max_iter,
+                ConvergenceWarning,
+            )
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
         normalizer[normalizer == 0] = 1
         self.label_distributions_ /= normalizer
@@ -453,7 +450,7 @@ class LabelPropagation(BaseLabelPropagation):
         max_iter=1000,
         tol=1e-3,
         n_jobs=None,
-        default_label=0
+        default_label=0,
     ):
         super().__init__(
             kernel=kernel,
