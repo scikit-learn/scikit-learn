@@ -10,7 +10,6 @@ from tempfile import mkdtemp
 import joblib
 import numpy as np
 import pytest
-from scipy import sparse
 
 from sklearn.base import BaseEstimator, TransformerMixin, clone, is_classifier
 from sklearn.cluster import KMeans
