@@ -212,16 +212,16 @@ for loss_func in loss_functions:
 # Modeling Predictive Uncertainty via Quantile Regression
 # -------------------------------------------------------
 # Instead of modeling the expected value of the distribution of
-# `Y|X` like the least squares and Poisson losses do, one could try to
+# :math:`Y|X` like the least squares and Poisson losses do, one could try to
 # estimate quantiles of the conditional distribution.
 #
-# :math:`Y|X=x_i` is expected to be a random variable for a given data point `xi`
-# because we expect that the number of rentals cannot be 100% accurately
-# predicted from the features. It can be influenced by other variables
-# not properly captured by the existing lagged features. For instance
-# whether or not it will rain in the next hour cannot be fully anticipated
-# from the past hours bike rental data. This is what we call aleatoric
-# uncertainty.
+# :math:`Y|X=x_i` is expected to be a random variable for a given data point
+# :math:`x_i` because we expect that the number of rentals cannot be 100%
+# accurately predicted from the features. It can be influenced by other
+# variables not properly captured by the existing lagged features. For
+# instance whether or not it will rain in the next hour cannot be fully
+# anticipated from the past hours bike rental data. This is what we
+# call aleatoric uncertainty.
 #
 # Quantile regression makes it possible to give a finer description of that
 # distribution without making strong assumptions on its shape.
