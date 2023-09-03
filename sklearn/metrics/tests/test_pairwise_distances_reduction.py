@@ -107,6 +107,35 @@ def test_relative_rounding():
     assert relative_rounding(123.456789, 10) == 123.456789
 
 
+def quasi_equality_error_message(
+    n_significant_digits,
+    rtol,
+    query_idx,
+    ref_dist_row,
+    dist_row,
+    rounded_dist,
+    group_rank,
+    reference_neighbors_group,
+    effective_neighbors_group,
+):
+    # Turning formatting off to avoid black reformatting the message.
+    # fmt: off
+    error_message = (
+        "Neighbors indices are not matching when rounding distances at\n"
+        f"{n_significant_digits} significant digits derived from rtol={rtol:.1e}.\n\n"
+        f"Query vector index         : {query_idx}\n"
+        f"Reference ordered distances: {ref_dist_row}\n"
+        f"Computed ordered distances : {dist_row}\n"
+        f"Norm. abs. ord. dist. diff.: {np.mean(np.abs(dist_row - ref_dist_row))}\n"
+        f"Rounded distance           : {rounded_dist}\n"
+        f"Neighbors group rank       : {group_rank}\n"
+        f"Reference neighbors indices: {list(sorted(reference_neighbors_group))}\n"
+        f"Computed neighbors indices : {list(sorted(effective_neighbors_group))}"
+    )
+    # fmt: on
+    return error_message
+
+
 def assert_argkmin_results_quasi_equality(
     ref_dist,
     dist,
@@ -162,16 +191,21 @@ def assert_argkmin_results_quasi_equality(
             effective_neighbors_groups[rounded_dist].add(indices_row[neighbor_rank])
 
         # Asserting equality of groups (sets) for each distance
-        msg = (
-            f"Neighbors indices for query {query_idx} are not matching "
-            f"when rounding distances at {n_significant_digits} significant digits "
-            f"derived from rtol={rtol:.1e}"
-        )
-        for rounded_distance in reference_neighbors_groups.keys():
+        for group_rank, rounded_dist in enumerate(reference_neighbors_groups.keys()):
             assert (
-                reference_neighbors_groups[rounded_distance]
-                == effective_neighbors_groups[rounded_distance]
-            ), msg
+                reference_neighbors_groups[rounded_dist]
+                == effective_neighbors_groups[rounded_dist]
+            ), quasi_equality_error_message(
+                n_significant_digits,
+                rtol,
+                query_idx,
+                ref_dist_row,
+                dist_row,
+                rounded_dist,
+                group_rank,
+                reference_neighbors_groups[rounded_dist],
+                effective_neighbors_groups[rounded_dist],
+            )
 
 
 def assert_radius_neighbors_results_equality(
@@ -272,16 +306,21 @@ def assert_radius_neighbors_results_quasi_equality(
             effective_neighbors_groups[rounded_dist].add(indices_row[neighbor_rank])
 
         # Asserting equality of groups (sets) for each distance
-        msg = (
-            f"Neighbors indices for query {query_idx} are not matching "
-            f"when rounding distances at {n_significant_digits} significant digits "
-            f"derived from rtol={rtol:.1e}"
-        )
-        for rounded_distance in reference_neighbors_groups.keys():
+        for group_rank, rounded_dist in enumerate(reference_neighbors_groups.keys()):
             assert (
-                reference_neighbors_groups[rounded_distance]
-                == effective_neighbors_groups[rounded_distance]
-            ), msg
+                reference_neighbors_groups[rounded_dist]
+                == effective_neighbors_groups[rounded_dist]
+            ), quasi_equality_error_message(
+                n_significant_digits,
+                rtol,
+                query_idx,
+                ref_dist_row,
+                dist_row,
+                rounded_dist,
+                group_rank,
+                reference_neighbors_groups[rounded_dist],
+                effective_neighbors_groups[rounded_dist],
+            )
 
 
 ASSERT_RESULT = {
@@ -358,7 +397,7 @@ def test_assert_argkmin_results_quasi_equality():
     # Apply invalid permutation on indices: permuting the ranks
     # of the 2 nearest neighbors is invalid because the distance
     # values are too different.
-    msg = "Neighbors indices for query 0 are not matching"
+    msg = "Neighbors indices are not matching"
     with pytest.raises(AssertionError, match=msg):
         assert_argkmin_results_quasi_equality(
             np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
@@ -369,7 +408,7 @@ def test_assert_argkmin_results_quasi_equality():
         )
 
     # Indices aren't properly sorted w.r.t their distances
-    msg = "Neighbors indices for query 0 are not matching"
+    msg = "Neighbors indices are not matching"
     with pytest.raises(AssertionError, match=msg):
         assert_argkmin_results_quasi_equality(
             np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
@@ -439,7 +478,7 @@ def test_assert_radius_neighbors_results_quasi_equality():
     )
 
     # Apply invalid permutation on indices
-    msg = "Neighbors indices for query 0 are not matching"
+    msg = "Neighbors indices are not matching"
     with pytest.raises(AssertionError, match=msg):
         assert_radius_neighbors_results_quasi_equality(
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
@@ -475,7 +514,7 @@ def test_assert_radius_neighbors_results_quasi_equality():
         )
 
     # Indices aren't properly sorted w.r.t their distances
-    msg = "Neighbors indices for query 0 are not matching"
+    msg = "Neighbors indices are not matching"
     with pytest.raises(AssertionError, match=msg):
         assert_radius_neighbors_results_quasi_equality(
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
