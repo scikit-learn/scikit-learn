@@ -327,7 +327,9 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
                 category=ConvergenceWarning,
             )
             self.n_iter_ += 1
-        # handle unpropagated instances
+
+        # normalize distributions
+        normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
         (unlabeled_idx,) = np.where(normalizer[:, 0] == 0)
         if unlabeled_idx.size > 0:
             warnings.warn(
@@ -336,7 +338,6 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
                 self.max_iter,
                 ConvergenceWarning,
             )
-        normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
         normalizer[normalizer == 0] = 1
         self.label_distributions_ /= normalizer
 
