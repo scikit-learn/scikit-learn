@@ -290,11 +290,11 @@ class LinearModelLoss:
             with np.errstate(all="raise"):
                 try:
                     grad[:n_features] = X.T @ grad_pointwise + l2_reg_strength * weights
-                except Exception as e:
+                except FloatingPointError:
                     raise ValueError(
-                        f"Overflow detected. Try scaling the target variable or"
-                        f" features, or using a different solver"
-                    )
+                        "Overflow detected. Try scaling the target variable or"
+                        " features, or using a different solver"
+                    ) from None
             if self.fit_intercept:
                 grad[-1] = grad_pointwise.sum()
         else:
@@ -305,11 +305,11 @@ class LinearModelLoss:
                     grad[:, :n_features] = (
                         grad_pointwise.T @ X + l2_reg_strength * weights
                     )
-                except Exception as e:
+                except FloatingPointError:
                     raise ValueError(
-                        f"Overflow detected. Try scaling the target variable or"
-                        f" features, or using a different solver"
-                    )
+                        "Overflow detected. Try scaling the target variable or"
+                        " features, or using a different solver"
+                    ) from None
             if self.fit_intercept:
                 grad[:, -1] = grad_pointwise.sum(axis=0)
             if coef.ndim == 1:
