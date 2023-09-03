@@ -2,7 +2,6 @@ import re
 
 import numpy as np
 import pytest
-from scipy.sparse import csr_matrix
 
 from sklearn.datasets import make_classification
 from sklearn.kernel_approximation import (
@@ -23,6 +22,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 # generate data
 rng = np.random.RandomState(0)
@@ -64,6 +64,7 @@ def test_polynomial_count_sketch(gamma, degree, coef0, n_components):
 @pytest.mark.parametrize("gamma", [0.1, 1.0])
 @pytest.mark.parametrize("degree", [1, 2, 3])
 @pytest.mark.parametrize("coef0", [0, 2.5])
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_polynomial_count_sketch_dense_sparse(gamma, degree, coef0):
     """Check that PolynomialCountSketch results are the same for dense and sparse
     input.
@@ -77,8 +78,8 @@ def test_polynomial_count_sketch_dense_sparse(gamma, degree, coef0):
     ps_sparse = PolynomialCountSketch(
         n_components=500, gamma=gamma, degree=degree, coef0=coef0, random_state=42
     )
-    Xt_sparse = ps_sparse.fit_transform(csr_matrix(X))
-    Yt_sparse = ps_sparse.transform(csr_matrix(Y))
+    Xt_sparse = ps_sparse.fit_transform(csr_container(X))
+    Yt_sparse = ps_sparse.transform(csr_container(Y))
 
     assert_allclose(Xt_dense, Xt_sparse)
     assert_allclose(Yt_dense, Yt_sparse)
@@ -87,7 +88,7 @@ def test_polynomial_count_sketch_dense_sparse(gamma, degree, coef0):
 def _linear_kernel(X, Y):
     return np.dot(X, Y.T)
 
-
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_additive_chi2_sampler():
     # test that AdditiveChi2Sampler approximates kernel on random data
 
@@ -110,8 +111,8 @@ def test_additive_chi2_sampler():
 
     assert_array_almost_equal(kernel, kernel_approx, 1)
 
-    X_sp_trans = transform.fit_transform(csr_matrix(X))
-    Y_sp_trans = transform.transform(csr_matrix(Y))
+    X_sp_trans = transform.fit_transform(csr_container(X))
+    Y_sp_trans = transform.transform(csr_container(Y))
 
     assert_array_equal(X_trans, X_sp_trans.A)
     assert_array_equal(Y_trans, Y_sp_trans.A)
@@ -302,7 +303,7 @@ def test_skewed_chi2_sampler_dtype_equivalence():
         skewed_chi2_sampler_32.random_weights_, skewed_chi2_sampler_64.random_weights_
     )
 
-
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_input_validation():
     # Regression test: kernel approx. transformers should work on lists
     # No assertions; the old versions would simply crash
@@ -311,7 +312,7 @@ def test_input_validation():
     SkewedChi2Sampler().fit(X).transform(X)
     RBFSampler().fit(X).transform(X)
 
-    X = csr_matrix(X)
+    X = csr_container(X)
     RBFSampler().fit(X).transform(X)
 
 
