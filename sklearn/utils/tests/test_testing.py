@@ -26,6 +26,7 @@ from sklearn.utils._testing import (
     set_random_state,
 )
 from sklearn.utils.deprecation import deprecated
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.metaestimators import available_if
 
 
@@ -38,10 +39,11 @@ def test_set_random_state():
     assert tree.random_state == 3
 
 
-def test_assert_allclose_dense_sparse():
+@pytest.mark.parametrize("csr_container", CSC_CONTAINERS)
+def test_assert_allclose_dense_sparse(csr_container):
     x = np.arange(9).reshape(3, 3)
     msg = "Not equal to tolerance "
-    y = sparse.csc_matrix(x)
+    y = csr_container(x)
     for X in [x, y]:
         # basic compare
         with pytest.raises(AssertionError, match=msg):
@@ -52,7 +54,7 @@ def test_assert_allclose_dense_sparse():
         assert_allclose_dense_sparse(x, y)
 
     A = sparse.diags(np.ones(5), offsets=0).tocsr()
-    B = sparse.csr_matrix(np.ones((1, 5)))
+    B = csr_container(np.ones((1, 5)))
     with pytest.raises(AssertionError, match="Arrays are not equal"):
         assert_allclose_dense_sparse(B, A)
 
@@ -645,8 +647,8 @@ def test_create_memmap_backed_data(monkeypatch, aligned):
         ("tuple", tuple),
         ("array", np.ndarray),
         ("sparse", sparse.csr_matrix),
-        ("sparse_csr", sparse.csr_matrix),
-        ("sparse_csc", sparse.csc_matrix),
+        *zip(["sparse_csr", "sparse_csr_array"], CSR_CONTAINERS),
+        *zip(["sparse_csc", "sparse_csc_array"], CSC_CONTAINERS),
         ("dataframe", lambda: pytest.importorskip("pandas").DataFrame),
         ("series", lambda: pytest.importorskip("pandas").Series),
         ("index", lambda: pytest.importorskip("pandas").Index),

@@ -835,8 +835,12 @@ def _convert_container(
         return slice(container[0], container[1])
     elif constructor_name == "sparse_csr":
         return sp.sparse.csr_matrix(container, dtype=dtype)
+    elif constructor_name == "sparse_csr_array":
+        return sp.sparse.csr_array(container, dtype=dtype)
     elif constructor_name == "sparse_csc":
         return sp.sparse.csc_matrix(container, dtype=dtype)
+    elif constructor_name == "sparse_csc_array":
+        return sp.sparse.csc_array(container, dtype=dtype)
 
 
 def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
