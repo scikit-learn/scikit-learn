@@ -184,21 +184,18 @@ def test_decision_boundary_display(pyplot, fitted_clf, response_method, plot_met
 
 
 @pytest.mark.parametrize(
-    "response_method, type_err, msg",
+    "response_method, msg",
     [
         (
             "predict_proba",
-            AttributeError,
             "MyClassifier has none of the following attributes: predict_proba",
         ),
         (
             "decision_function",
-            AttributeError,
             "MyClassifier has none of the following attributes: decision_function",
         ),
         (
             "auto",
-            AttributeError,
             (
                 "MyClassifier has none of the following attributes: decision_function, "
                 "predict_proba, predict"
@@ -206,12 +203,11 @@ def test_decision_boundary_display(pyplot, fitted_clf, response_method, plot_met
         ),
         (
             "bad_method",
-            AttributeError,
             "MyClassifier has none of the following attributes: bad_method",
         ),
     ],
 )
-def test_error_bad_response(pyplot, response_method, type_err, msg):
+def test_error_bad_response(pyplot, response_method, msg):
     """Check errors for bad response."""
 
     class MyClassifier(BaseEstimator, ClassifierMixin):
@@ -222,7 +218,7 @@ def test_error_bad_response(pyplot, response_method, type_err, msg):
 
     clf = MyClassifier().fit(X, y)
 
-    with pytest.raises(type_err, match=msg):
+    with pytest.raises(AttributeError, match=msg):
         DecisionBoundaryDisplay.from_estimator(clf, X, response_method=response_method)
 
 
