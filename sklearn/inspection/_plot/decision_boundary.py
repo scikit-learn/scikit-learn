@@ -1,10 +1,9 @@
-from functools import reduce
-
 import numpy as np
 
 from ...base import is_regressor
 from ...preprocessing import LabelEncoder
 from ...utils import _safe_indexing, check_matplotlib_support
+from ...utils._response import _get_response_values
 from ...utils.validation import (
     _is_arraylike_not_scalar,
     _num_features,
@@ -12,8 +11,8 @@ from ...utils.validation import (
 )
 
 
-def _check_boundary_response_method(estimator, response_method):
-    """Return prediction method from the `response_method` for decision boundary.
+def _check_boundary_response_method(estimator, response_method, pos_label):
+    """Validate the response methods to be used with the fitted estimator.
 
     Parameters
     ----------
@@ -26,10 +25,17 @@ def _check_boundary_response_method(estimator, response_method):
         If set to 'auto', the response method is tried in the following order:
         :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
 
+    pos_label : int, float, bool or str
+        The class considered as the positive class when plotting the decision.
+        If the label is specified, it then possible to plot the decision boundary in
+        multiclass settings.
+
+        .. versionadded:: 1.4
+
     Returns
     -------
-    prediction_method: callable
-        Prediction method of estimator.
+    prediction_method : list of str or str
+        The name of the response methods to use or a list of such names.
     """
     has_classes = hasattr(estimator, "classes_")
     if has_classes and _is_arraylike_not_scalar(estimator.classes_[0]):
@@ -37,25 +43,18 @@ def _check_boundary_response_method(estimator, response_method):
         raise ValueError(msg)
 
     if has_classes and len(estimator.classes_) > 2:
-        if response_method not in {"auto", "predict"}:
+        if response_method not in {"auto", "predict"} and pos_label is None:
             msg = (
                 "Multiclass classifiers are only supported when response_method is"
-                " 'predict' or 'auto'"
+                " 'predict' or 'auto', or you must provide `pos_label` to select a"
+                " specific class to plot the decision boundary."
             )
             raise ValueError(msg)
-        methods_list = ["predict"]
+        prediction_method = "predict" if response_method == "auto" else response_method
     elif response_method == "auto":
-        methods_list = ["decision_function", "predict_proba", "predict"]
+        prediction_method = ["decision_function", "predict_proba", "predict"]
     else:
-        methods_list = [response_method]
-
-    prediction_method = [getattr(estimator, method, None) for method in methods_list]
-    prediction_method = reduce(lambda x, y: x or y, prediction_method)
-    if prediction_method is None:
-        raise ValueError(
-            f"{estimator.__class__.__name__} has none of the following attributes: "
-            f"{', '.join(methods_list)}."
-        )
+        prediction_method = response_method
 
     return prediction_method
 
@@ -206,6 +205,7 @@ class DecisionBoundaryDisplay:
         eps=1.0,
         plot_method="contourf",
         response_method="auto",
+        pos_label=None,
         xlabel=None,
         ylabel=None,
         ax=None,
@@ -247,6 +247,12 @@ class DecisionBoundaryDisplay:
             :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
             For multiclass problems, :term:`predict` is selected when
             `response_method="auto"`.
+
+        pos_label : int, float, bool or str, default=None
+            The class considered as the positive class when plotting the decision.
+            By default, `estimators.classes_[1]` is considered as the positive class.
+
+            .. versionadded:: 1.4
 
         xlabel : str, default=None
             The label used for the x-axis. If `None`, an attempt is made to
@@ -342,11 +348,19 @@ class DecisionBoundaryDisplay:
         else:
             X_grid = np.c_[xx0.ravel(), xx1.ravel()]
 
-        pred_func = _check_boundary_response_method(estimator, response_method)
-        response = pred_func(X_grid)
+        prediction_method = _check_boundary_response_method(
+            estimator, response_method, pos_label
+        )
+        response, _, response_method_used = _get_response_values(
+            estimator,
+            X_grid,
+            response_method=prediction_method,
+            pos_label=pos_label,
+            return_response_method_used=True,
+        )
 
         # convert classes predictions into integers
-        if pred_func.__name__ == "predict" and hasattr(estimator, "classes_"):
+        if response_method_used == "predict" and hasattr(estimator, "classes_"):
             encoder = LabelEncoder()
             encoder.classes_ = estimator.classes_
             response = encoder.transform(response)
@@ -355,8 +369,13 @@ class DecisionBoundaryDisplay:
             if is_regressor(estimator):
                 raise ValueError("Multi-output regressors are not supported")
 
-            # TODO: Support pos_label
-            response = response[:, 1]
+            # For the multiclass case, `_get_response_values` returns the response
+            # as-is. Thus, we have a column per class and we need to select the column
+            # corresponding to the positive class.
+            if pos_label is None:
+                pos_label = estimator.classes_[1]
+            col_idx = np.flatnonzero(estimator.classes_ == pos_label)[0]
+            response = response[:, col_idx]
 
         if xlabel is None:
             xlabel = X.columns[0] if hasattr(X, "columns") else ""

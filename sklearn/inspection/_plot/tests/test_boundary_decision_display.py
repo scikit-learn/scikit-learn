@@ -49,40 +49,26 @@ def test_input_data_dimension(pyplot):
 def test_check_boundary_response_method_auto():
     """Check _check_boundary_response_method behavior with 'auto'."""
 
+    expected_methods = ["decision_function", "predict_proba", "predict"]
+
     class A:
         def decision_function(self):
             pass
-
-    a_inst = A()
-    method = _check_boundary_response_method(a_inst, "auto")
-    assert method == a_inst.decision_function
 
     class B:
         def predict_proba(self):
             pass
 
-    b_inst = B()
-    method = _check_boundary_response_method(b_inst, "auto")
-    assert method == b_inst.predict_proba
-
-    class C:
-        def predict_proba(self):
-            pass
-
-        def decision_function(self):
-            pass
-
-    c_inst = C()
-    method = _check_boundary_response_method(c_inst, "auto")
-    assert method == c_inst.decision_function
+    class C(A, B):
+        pass
 
     class D:
         def predict(self):
             pass
 
-    d_inst = D()
-    method = _check_boundary_response_method(d_inst, "auto")
-    assert method == d_inst.predict
+    for Klass in [A, B, C, D]:
+        methods = _check_boundary_response_method(Klass(), "auto", None)
+        assert methods == expected_methods
 
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
@@ -198,18 +184,21 @@ def test_decision_boundary_display(pyplot, fitted_clf, response_method, plot_met
 
 
 @pytest.mark.parametrize(
-    "response_method, msg",
+    "response_method, type_err, msg",
     [
         (
             "predict_proba",
+            AttributeError,
             "MyClassifier has none of the following attributes: predict_proba",
         ),
         (
             "decision_function",
+            AttributeError,
             "MyClassifier has none of the following attributes: decision_function",
         ),
         (
             "auto",
+            AttributeError,
             (
                 "MyClassifier has none of the following attributes: decision_function, "
                 "predict_proba, predict"
@@ -217,11 +206,12 @@ def test_decision_boundary_display(pyplot, fitted_clf, response_method, plot_met
         ),
         (
             "bad_method",
+            AttributeError,
             "MyClassifier has none of the following attributes: bad_method",
         ),
     ],
 )
-def test_error_bad_response(pyplot, response_method, msg):
+def test_error_bad_response(pyplot, response_method, type_err, msg):
     """Check errors for bad response."""
 
     class MyClassifier(BaseEstimator, ClassifierMixin):
@@ -232,7 +222,7 @@ def test_error_bad_response(pyplot, response_method, msg):
 
     clf = MyClassifier().fit(X, y)
 
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(type_err, match=msg):
         DecisionBoundaryDisplay.from_estimator(clf, X, response_method=response_method)
 
 
@@ -274,7 +264,7 @@ def test_multioutput_regressor_error(pyplot):
     y = np.asarray([[0, 1], [4, 1]])
     tree = DecisionTreeRegressor().fit(X, y)
     with pytest.raises(ValueError, match="Multi-output regressors are not supported"):
-        DecisionBoundaryDisplay.from_estimator(tree, X)
+        DecisionBoundaryDisplay.from_estimator(tree, X, response_method="predict")
 
 
 @pytest.mark.filterwarnings(
