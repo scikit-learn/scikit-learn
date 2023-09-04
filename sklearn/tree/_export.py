@@ -78,7 +78,7 @@ SENTINEL = Sentinel()
     {
         "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
         "max_depth": [Interval(Integral, 0, None, closed="left"), None],
-        "feature_names": [list, None],
+        "feature_names": [list, "array-like", None],
         "class_names": ["array-like", "boolean", None],
         "label": [StrOptions({"all", "root", "none"})],
         "filled": ["boolean"],
