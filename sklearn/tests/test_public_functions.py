@@ -306,6 +306,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.model_selection.train_test_split",
     "sklearn.model_selection.validation_curve",
     "sklearn.neighbors.kneighbors_graph",
+    "sklearn.neighbors.radius_neighbors_graph",
     "sklearn.neighbors.sort_graph_by_row_values",
     "sklearn.preprocessing.add_dummy_feature",
     "sklearn.preprocessing.binarize",
