@@ -71,7 +71,7 @@ Changelog
   :pr:`26903` by :user:`Thomas Roehr <2maz>`
 
 - |Fix| :func:`tree.plot_tree` now accepts `feature_names` as array-like
-  rather than as a list. :pr:`27292` by :user:`Rahil Parikh <rprkh>`
+  rather than as a list. :pr:`27292` by :user:`Rahil Parikh <rprkh>`.
 
 .. _changes_1_3:
 
