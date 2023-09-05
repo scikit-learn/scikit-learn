@@ -32,11 +32,6 @@ iris = datasets.load_iris()
 # --------------------------------
 import matplotlib.pyplot as plt  # noqa: E402
 
-# unused but required import for doing 3d projections with matplotlib < 3.2
-import mpl_toolkits.mplot3d  # noqa: F401, E402
-
-# Plot the training points across the 1st and 2nd feature
-# (sepal length and sepal width)
 _, ax = plt.subplots()
 scatter = ax.scatter(iris.data[:, 0], iris.data[:, 1], c=iris.target)
 ax.set(xlabel=iris.feature_names[0], ylabel=iris.feature_names[1])
@@ -59,6 +54,10 @@ _ = ax.legend(
 # Let's apply a Principal Component Analysis (PCA) to the iris dataset
 # and then plot the irises across the first three PCA dimensions.
 # This will allow us to better differentiate between the three types!
+
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401, E402
+
 from sklearn.decomposition import PCA  # noqa: E402
 
 fig = plt.figure(1, figsize=(8, 6))
