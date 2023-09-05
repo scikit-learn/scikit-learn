@@ -754,18 +754,7 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
 )
 def test_pca_array_api_compliance(estimator, check, array_namepsace, device, dtype):
     name = estimator.__class__.__name__
-    if device == "mps":
-        with pytest.raises(
-            RuntimeError,
-            match=(
-                "PCA does not support inputs located on the MPS device. You can enable"
-                " CPU fallback with PYTORCH_ENABLE_MPS_FALLBACK=1 or move your inputs"
-                " to a different device."
-            ),
-        ):
-            check(name, estimator, array_namepsace, device=device, dtype=dtype)
-    else:
-        check(name, estimator, array_namepsace, device=device, dtype=dtype)
+    check(name, estimator, array_namepsace, device=device, dtype=dtype)
 
 
 def test_array_api_error_and_warnings_on_unsupported_params():
