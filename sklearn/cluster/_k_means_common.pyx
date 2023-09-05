@@ -4,10 +4,6 @@
 #
 # License: BSD 3 clause
 
-# TODO: We still need to use ndarrays instead of typed memoryviews when using
-# fused types and when the array may be read-only (for instance when it's
-# provided by the user). This is fixed in cython > 0.3.
-
 import numpy as np
 from cython cimport floating
 from cython.parallel cimport prange

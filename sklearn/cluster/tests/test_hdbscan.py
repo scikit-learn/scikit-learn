@@ -4,7 +4,7 @@ Based on the DBSCAN test code
 """
 import numpy as np
 import pytest
-from scipy import sparse, stats
+from scipy import stats
 from scipy.spatial import distance
 
 from sklearn.cluster import HDBSCAN
@@ -21,6 +21,7 @@ from sklearn.neighbors import BallTree, KDTree
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 n_clusters_true = 3
 X, y = make_blobs(n_samples=200, random_state=10)
@@ -99,7 +100,7 @@ def test_hdbscan_distance_matrix():
         HDBSCAN(metric="precomputed").fit_predict(D)
 
 
-@pytest.mark.parametrize("sparse_constructor", [sparse.csr_matrix, sparse.csc_matrix])
+@pytest.mark.parametrize("sparse_constructor", [*CSR_CONTAINERS, *CSC_CONTAINERS])
 def test_hdbscan_sparse_distance_matrix(sparse_constructor):
     """
     Tests that HDBSCAN works with sparse distance matrices.
@@ -284,7 +285,8 @@ def test_hdbscan_precomputed_non_brute(tree):
         hdb.fit(X)
 
 
-def test_hdbscan_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_hdbscan_sparse(csr_container):
     """
     Tests that HDBSCAN works correctly when passing sparse feature data.
     Evaluates correctness by comparing against the same data passed as a dense
@@ -295,7 +297,7 @@ def test_hdbscan_sparse():
     n_clusters = len(set(dense_labels) - OUTLIER_SET)
     assert n_clusters == 3
 
-    _X_sparse = sparse.csr_matrix(X)
+    _X_sparse = csr_container(X)
     X_sparse = _X_sparse.copy()
     sparse_labels = HDBSCAN().fit(X_sparse).labels_
     assert_array_equal(dense_labels, sparse_labels)
@@ -409,12 +411,13 @@ def test_hdbscan_usable_inputs(X, kwargs):
     HDBSCAN(min_samples=1, **kwargs).fit(X)
 
 
-def test_hdbscan_sparse_distances_too_few_nonzero():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_hdbscan_sparse_distances_too_few_nonzero(csr_container):
     """
     Tests that HDBSCAN raises the correct error when there are too few
     non-zero distances.
     """
-    X = sparse.csr_matrix(np.zeros((10, 10)))
+    X = csr_container(np.zeros((10, 10)))
 
     msg = "There exists points with fewer than"
     with pytest.raises(ValueError, match=msg):
