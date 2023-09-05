@@ -41,12 +41,22 @@ All estimators in a pipeline, except the last one, must be transformers
 (i.e. must have a :term:`transform` method).
 The last estimator may be any type (transformer, classifier, etc.).
 
+.. note::
+
+    Calling ``fit`` on the pipeline is the same as calling ``fit`` on
+    each estimator in turn, ``transform`` the input and pass it on to the next step.
+    The pipeline has all the methods that the last estimator in the pipeline has,
+    i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
+    as a classifier. If the last estimator is a transformer, again, so is the
+    pipeline.
+
 
 Usage
 -----
 
-Construction
-............
+|details-start|
+**Construction**
+|details-split|
 
 The :class:`Pipeline` is built using a list of ``(key, value)`` pairs, where
 the ``key`` is a string containing the name you want to give this step and ``value``
@@ -69,8 +79,12 @@ filling in the names automatically::
     >>> make_pipeline(PCA(), SVC())
     Pipeline(steps=[('pca', PCA()), ('svc', SVC())])
 
-Accessing steps
-...............
+|details-end|
+
+|details-start|
+**Accessing steps**
+|details-split|
+
 
 The estimators of a pipeline are stored as a list in the ``steps`` attribute,
 but can be accessed by index or name by indexing (with ``[idx]``) the
@@ -99,11 +113,13 @@ permitted). This is convenient for performing only some of the transformations
     >>> pipe[-1:]
     Pipeline(steps=[('clf', SVC())])
 
+|details-end|
 
 .. _pipeline_nested_parameters:
 
-Nested parameters
-.................
+|details-start|
+**Nested parameters**
+|details-split|
 
 Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
@@ -172,16 +188,7 @@ You can also provide custom feature names for the input data using
 
  * :ref:`composite_grid_search`
 
-
-Notes
------
-
-Calling ``fit`` on the pipeline is the same as calling ``fit`` on
-each estimator in turn, ``transform`` the input and pass it on to the next step.
-The pipeline has all the methods that the last estimator in the pipeline has,
-i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
-as a classifier. If the last estimator is a transformer, again, so is the
-pipeline.
+|details-end|
 
 .. _pipeline_cache:
 
@@ -217,43 +224,49 @@ object::
     >>> # Clear the cache directory when you don't need it anymore
     >>> rmtree(cachedir)
 
-.. warning:: **Side effect of caching transformers**
+|details-start|
+**Warning: Side effect of caching transformers**
+|details-split|
 
-   Using a :class:`Pipeline` without cache enabled, it is possible to
-   inspect the original instance such as::
+Using a :class:`Pipeline` without cache enabled, it is possible to
+inspect the original instance such as::
 
-     >>> from sklearn.datasets import load_digits
-     >>> X_digits, y_digits = load_digits(return_X_y=True)
-     >>> pca1 = PCA()
-     >>> svm1 = SVC()
-     >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
-     >>> pipe.fit(X_digits, y_digits)
-     Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
-     >>> # The pca instance can be inspected directly
-     >>> print(pca1.components_)
-         [[-1.77484909e-19  ... 4.07058917e-18]]
+    >>> from sklearn.datasets import load_digits
+    >>> X_digits, y_digits = load_digits(return_X_y=True)
+    >>> pca1 = PCA()
+    >>> svm1 = SVC()
+    >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
+    >>> pipe.fit(X_digits, y_digits)
+    Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
+    >>> # The pca instance can be inspected directly
+    >>> print(pca1.components_)
+        [[-1.77484909e-19  ... 4.07058917e-18]]
 
-   Enabling caching triggers a clone of the transformers before fitting.
-   Therefore, the transformer instance given to the pipeline cannot be
-   inspected directly.
-   In following example, accessing the :class:`~sklearn.decomposition.PCA`
-   instance ``pca2`` will raise an ``AttributeError`` since ``pca2`` will be an
-   unfitted transformer.
-   Instead, use the attribute ``named_steps`` to inspect estimators within
-   the pipeline::
 
-     >>> cachedir = mkdtemp()
-     >>> pca2 = PCA()
-     >>> svm2 = SVC()
-     >>> cached_pipe = Pipeline([('reduce_dim', pca2), ('clf', svm2)],
-     ...                        memory=cachedir)
-     >>> cached_pipe.fit(X_digits, y_digits)
-     Pipeline(memory=...,
+Enabling caching triggers a clone of the transformers before fitting.
+Therefore, the transformer instance given to the pipeline cannot be
+inspected directly.
+In following example, accessing the :class:`~sklearn.decomposition.PCA`
+instance ``pca2`` will raise an ``AttributeError`` since ``pca2`` will be an
+unfitted transformer.
+Instead, use the attribute ``named_steps`` to inspect estimators within
+the pipeline::
+
+    >>> cachedir = mkdtemp()
+    >>> pca2 = PCA()
+    >>> svm2 = SVC()
+    >>> cached_pipe = Pipeline([('reduce_dim', pca2), ('clf', svm2)],
+    ...                        memory=cachedir)
+    >>> cached_pipe.fit(X_digits, y_digits)
+    Pipeline(memory=...,
              steps=[('reduce_dim', PCA()), ('clf', SVC())])
-     >>> print(cached_pipe.named_steps['reduce_dim'].components_)
-         [[-1.77484909e-19  ... 4.07058917e-18]]
-     >>> # Remove the cache directory
-     >>> rmtree(cachedir)
+    >>> print(cached_pipe.named_steps['reduce_dim'].components_)
+        [[-1.77484909e-19  ... 4.07058917e-18]]
+    >>> # Remove the cache directory
+    >>> rmtree(cachedir)
+
+
+|details-end|
 
 .. topic:: Examples:
 
