@@ -339,3 +339,48 @@ def test_dataframe_support(pyplot):
         # no warnings linked to feature names validation should be raised
         warnings.simplefilter("error", UserWarning)
         DecisionBoundaryDisplay.from_estimator(estimator, df, response_method="predict")
+
+
+@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
+def test_pos_label(pyplot, response_method):
+    """Check the behaviour of passing `pos_label` for plotting the output of
+    `predict_proba` and `decision_function`.
+    """
+    iris = load_iris()
+    X = iris.data[:, :2]
+    y = iris.target  # the target are numerical labels
+    pos_label_idx = 2
+
+    estimator = LogisticRegression().fit(X, y)
+    disp = DecisionBoundaryDisplay.from_estimator(
+        estimator, X, response_method=response_method, pos_label=pos_label_idx
+    )
+
+    # we will check that we plot the expected values as response
+    grid = np.concatenate([disp.xx0.reshape(-1, 1), disp.xx1.reshape(-1, 1)], axis=1)
+    response = getattr(estimator, response_method)(grid)[:, pos_label_idx]
+    assert_allclose(response.reshape(*disp.response.shape), disp.response)
+
+    # make the same test but this time using target as strings
+    y = iris.target_names[iris.target]
+    estimator = LogisticRegression().fit(X, y)
+
+    disp = DecisionBoundaryDisplay.from_estimator(
+        estimator,
+        X,
+        response_method=response_method,
+        pos_label=iris.target_names[pos_label_idx],
+    )
+
+    grid = np.concatenate([disp.xx0.reshape(-1, 1), disp.xx1.reshape(-1, 1)], axis=1)
+    response = getattr(estimator, response_method)(grid)[:, pos_label_idx]
+    assert_allclose(response.reshape(*disp.response.shape), disp.response)
+
+    # check that we raise an error for unknown labels
+    # this test should already be handled in `_get_response_values` but we can have this
+    # test here as well
+    err_msg = "pos_label=2 is not a valid label: It should be one of"
+    with pytest.raises(ValueError, match=err_msg):
+        DecisionBoundaryDisplay.from_estimator(
+            estimator, X, response_method=response_method, pos_label=pos_label_idx
+        )
