@@ -47,6 +47,8 @@ ax.set(xlabel=iris.feature_names[0], ylabel=iris.feature_names[1])
 _ = ax.legend(
     scatter.legend_elements()[0], iris.target_names, loc="lower right", title="Classes"
 )
+
+# %%
 # Each point in the scatter plot refers to one of the 150 iris flowers
 # in the dataset, with the color indicating their respective type
 # (Setosa, Versicolour, and Virginica).
