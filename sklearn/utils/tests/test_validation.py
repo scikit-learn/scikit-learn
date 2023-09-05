@@ -2008,3 +2008,11 @@ def test_check_array_multiple_extensions(
     X_regular_checked = check_array(X_regular, dtype=None)
     X_extension_checked = check_array(X_extension, dtype=None)
     assert_array_equal(X_regular_checked, X_extension_checked)
+
+
+def test_num_samples_dataframe_protocol():
+    """Use DataFrame protocol to get n_samples from polars dataframe."""
+    pl = pytest.importorskip("polars")
+
+    df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    assert _num_samples(df) == 3

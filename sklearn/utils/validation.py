@@ -328,12 +328,20 @@ def _num_features(X):
         raise TypeError(message) from err
 
 
+def _use_interchange_protocol(X):
+    """Use interchange protocol for non-pandas dataframes that follow the protocol."""
+    return not _is_pandas_df(X) and hasattr(X, "__dataframe__")
+
+
 def _num_samples(x):
     """Return number of samples in array-like x."""
     message = "Expected sequence or array-like, got %s" % type(x)
     if hasattr(x, "fit") and callable(x.fit):
         # Don't get num_samples from an ensembles length!
         raise TypeError(message)
+
+    if _use_interchange_protocol(x):
+        return x.__dataframe__().num_rows()
 
     if not hasattr(x, "__len__") and not hasattr(x, "shape"):
         if hasattr(x, "__array__"):
