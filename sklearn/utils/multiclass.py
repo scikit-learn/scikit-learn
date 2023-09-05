@@ -337,8 +337,19 @@ def type_of_target(y, input_name=""):
                 # see NEP 34
                 y = check_array(y, dtype=object, **check_y_kwargs)
 
-    # The old sequence of sequences format
     try:
+        # TODO(1.5): Change to ValueError when byte labels is deprecated.
+        # labels in bytes format
+        if isinstance(y[0], bytes):
+            warnings.warn(
+                (
+                    "Support for labels represented as bytes is deprecated in v1.4 and"
+                    " will error in v1.6. Convert the labels to a string or integer"
+                    " format."
+                ),
+                FutureWarning,
+            )
+        # The old sequence of sequences format
         if (
             not hasattr(y[0], "__array__")
             and isinstance(y[0], Sequence)
