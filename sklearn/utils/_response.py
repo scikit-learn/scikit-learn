@@ -131,7 +131,7 @@ def _get_response_values(
     If `estimator` is a binary classifier, also return the label for the
     effective positive class.
 
-    This utility is used primarily in the binary displays and the scikit-learn scorer.
+    This utility is used primarily in the displays and the scikit-learn scorers.
 
     .. versionadded:: 1.3
 

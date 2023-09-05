@@ -35,7 +35,7 @@ Changelog
 :mod:`sklearn.metrics`
 .......................
 
-- |Fix| scorers used with :func:`metrics.get_scorer` handles properly
+- |Fix| Scorers used with :func:`metrics.get_scorer` handle properly
   multilabel-indicator matrix.
   :pr:`27002` by :user:`Guillaume Lemaitre <glemaitre>`.
 
