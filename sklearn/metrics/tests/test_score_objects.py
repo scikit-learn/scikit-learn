@@ -52,7 +52,6 @@ from sklearn.metrics._scorer import (
 )
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.multioutput import ClassifierChain
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
@@ -1382,9 +1381,7 @@ def test_get_scorer_multilabel_indicator():
     X, Y = make_multilabel_classification(n_samples=72, n_classes=3, random_state=0)
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, random_state=0)
 
-    base_lr = LogisticRegression(solver="lbfgs", random_state=0)
-    chain = ClassifierChain(base_lr, order="random", random_state=0)
-    chain.fit(X_train, Y_train)
+    estimator = KNeighborsClassifier().fit(X_train, Y_train)
 
-    score = get_scorer("average_precision")(chain, X_test, Y_test)
+    score = get_scorer("average_precision")(estimator, X_test, Y_test)
     assert score > 0.8

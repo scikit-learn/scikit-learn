@@ -12,9 +12,9 @@ from .validation import _check_response_method, check_is_fitted
 def _process_predict_proba(*, y_pred, target_type, classes, pos_label):
     """Get the response values when the response method is `predict_proba`.
 
-    This function should process the `y_pred` in the binary and multi-label cases.
-    In the binary case, it should select the column corresponding to the positive
-    class. In the multi-label case, it should stack the predictions if they are not
+    This function process the `y_pred` array in the binary and multi-label cases.
+    In the binary case, it selects the column corresponding to the positive
+    class. In the multi-label case, it stacks the predictions if they are not
     in the "compressed" format `(n_samples, n_outputs)`.
 
     Parameters
@@ -67,9 +67,9 @@ def _process_predict_proba(*, y_pred, target_type, classes, pos_label):
 def _process_decision_function(*, y_pred, target_type, classes, pos_label):
     """Get the response values when the response method is `decision_function`.
 
-    This function should process the `y_pred` in the binary and multi-label cases.
-    In the binary case, it should invert the sign of the score if the positive label
-    is not `classes[1]`. In the multi-label case, it should stack the predictions if
+    This function process the `y_pred` array in the binary and multi-label cases.
+    In the binary case, it inverts the sign of the score if the positive label
+    is not `classes[1]`. In the multi-label case, it stacks the predictions if
     they are not in the "compressed" format `(n_samples, n_outputs)`.
 
     Parameters
