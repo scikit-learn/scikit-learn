@@ -22,7 +22,7 @@ macos_arm64_wheel_task:
         CIBW_BUILD: cp311-macosx_arm64
 
   conda_script:
-    - curl -L -o ~/mambaforge.sh https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh
+    - curl -L --retry 10 -o ~/mambaforge.sh https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh
     - bash ~/mambaforge.sh -b -p ~/mambaforge
 
   cibuildwheel_script:
