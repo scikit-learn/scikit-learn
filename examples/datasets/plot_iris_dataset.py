@@ -35,10 +35,6 @@ import matplotlib.pyplot as plt  # noqa: E402
 # unused but required import for doing 3d projections with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401, E402
 
-# Prepare the plot size
-plt.figure(2, figsize=(8, 6))
-plt.clf()
-
 # Plot the training points across the 1st and 2nd feature
 # (sepal length and sepal width)
 _, ax = plt.subplots()
