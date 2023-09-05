@@ -10,12 +10,17 @@ this file due to cimporting _dist_metrics
 #include "simd.hpp"
 #else
 #include <cstddef>
+#include "hwy/base.h"
 
 /* Else, we provide trivial functions for compilation */
-template <typename Type>
-Type simd_manhattan_dist(
-    const Type* x,
-    const Type* y,
+HWY_DLLEXPORT float simd_manhattan_dist_f32(
+    const float* x,
+    const float* y,
+    const size_t size
+){return -1;}
+HWY_DLLEXPORT double simd_manhattan_dist_f64(
+    const double* x,
+    const double* y,
     const size_t size
 ){return -1;}
 #endif

@@ -21,10 +21,8 @@ cdef extern from "_simd/_dist_optim.cpp":
     int WITH_SIMD
 cdef extern from "_simd/_dist_optim.cpp" namespace "manhattan":
     # using the template function below fails, citing missing symbol
-    cdef Type simd_manhattan_dist[Type](Type * x, Type * y, intp_t size) nogil
-cdef extern from "_simd/_dist_optim.cpp" namespace "manhattan::N_AVX2":
-    cdef float32_t manhattan_dist_float(float32_t * x, float32_t * y, intp_t size) nogil
-    cdef float64_t manhattan_dist_double(float64_t * x, float64_t * y, intp_t size) nogil
+    cdef float simd_manhattan_dist_f32(float * x, float * y, intp_t size) nogil
+    cdef double simd_manhattan_dist_f64(double * x, double * y, intp_t size) nogil
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 

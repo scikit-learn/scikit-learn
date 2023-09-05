@@ -486,13 +486,21 @@ def configure_extension_modules():
     )
     BUILD_WITH_SIMD = int(os.environ.get("SKLEARN_NO_SIMD", "0") == "0")
     if BUILD_WITH_SIMD:
+        hwy_srcs = [
+            "hwy/aligned_allocator.cc",
+            "hwy/per_target.cc",
+            "hwy/print.cc",
+            "hwy/targets.cc",
+            "hwy/timer.cc",
+        ]
+        hwy_src_paths = [join(HWY_INCLUDE_PATH, src) for src in hwy_srcs]
         libraries.append(
             (
                 "avx_dist_metrics",
                 {
                     "language": "c++",
-                    "sources": [join(SIMD_DIRECTORY, "simd.cpp")],
-                    "cflags": ["-std=c++14", "-march=nocona"],
+                    "sources": [join(SIMD_DIRECTORY, "simd.cpp"), *hwy_src_paths],
+                    "cflags": ["-std=c++14"],
                     "extra_link_args": ["-std=c++14"],
                     "include_dirs": [HWY_INCLUDE_PATH, SIMD_DIRECTORY],
                 },

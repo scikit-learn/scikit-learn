@@ -1,6 +1,6 @@
-#include "simd.hpp"
-#include <cmath>
+// #define HWY_TARGETS HWY_AVX2
 
+#include <cmath>
 #undef HWY_TARGET_INCLUDE
 #define HWY_TARGET_INCLUDE "simd.cpp"
 #include "hwy/foreach_target.h"
@@ -19,7 +19,7 @@ namespace manhattan {
             const Type* y,
             const size_t size
         ) {
-            printf("DEBUG *** %s\n", hwy::TargetName(HWY_TARGET));
+            // printf("DEBUG *** %s\n", hwy::TargetName(HWY_TARGET));
             const hn::ScalableTag<Type> d;
             auto simd_sum_1 = hn::Zero(d);
             auto simd_sum_2 = hn::Zero(d);
@@ -50,14 +50,14 @@ namespace manhattan {
             }
             return scalar_sum;
         }
-        float manhattan_dist_float(
+        float manhattan_dist_f32(
             const float* x,
             const float* y,
             const size_t size
         ) {
             return manhattan_dist<float>(x, y, size);
         }
-        double manhattan_dist_double(
+        double manhattan_dist_f64(
             const double* x,
             const double* y,
             const size_t size
@@ -69,26 +69,26 @@ namespace manhattan {
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
+#include "simd.hpp"
 
 namespace manhattan {
 
-    HWY_EXPORT(manhattan_dist_float);
-    HWY_EXPORT(manhattan_dist_double);
+    HWY_EXPORT(manhattan_dist_f32);
+    HWY_EXPORT(manhattan_dist_f64);
 
-    // This seems to not get compiled correctly? At least, it is cited as a
-    // missing symbol at runtime
-    template <typename Type>
-    HWY_DLLEXPORT Type simd_manhattan_dist(
-        const Type* x,
-        const Type* y,
+    HWY_DLLEXPORT float simd_manhattan_dist_f32(
+        const float* x,
+        const float* y,
         const size_t size
     ){
-        if(std::is_same<Type, float>::value){
-            return HWY_DYNAMIC_DISPATCH(manhattan_dist_float)(x,  y, size);
-        }
-        else{
-            return HWY_DYNAMIC_DISPATCH(manhattan_dist_double)(x,  y, size);
-        }
+        return HWY_DYNAMIC_DISPATCH(manhattan_dist_f32)(x,  y, size);
+    }
+    HWY_DLLEXPORT double simd_manhattan_dist_f64(
+        const double* x,
+        const double* y,
+        const size_t size
+    ){
+        return HWY_DYNAMIC_DISPATCH(manhattan_dist_f64)(x,  y, size);
     }
 }
 #endif  // HWY_ONCE
