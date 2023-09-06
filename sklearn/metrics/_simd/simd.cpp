@@ -1,5 +1,4 @@
 // #define HWY_TARGETS HWY_AVX2
-
 #include <cmath>
 #undef HWY_TARGET_INCLUDE
 #define HWY_TARGET_INCLUDE "simd.cpp"
@@ -19,7 +18,6 @@ namespace manhattan {
             const Type* y,
             const size_t size
         ) {
-            // printf("DEBUG *** %s\n", hwy::TargetName(HWY_TARGET));
             const hn::ScalableTag<Type> d;
             auto simd_sum_1 = hn::Zero(d);
             auto simd_sum_2 = hn::Zero(d);

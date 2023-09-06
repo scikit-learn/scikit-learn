@@ -1244,14 +1244,13 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         const {{INPUT_DTYPE_t}}* x2,
         intp_t size,
     ) except -1 nogil:
-        if self.simd_runtime:
-            # {{if name_suffix == "32"}}
-            # return manhattan_dist_float(x1, x2, size)
-            # {{else}}
-            # return manhattan_dist_double(x1, x2, size)
-            # {{endif}}
-            # using the template function below fails, citing missing symbol
+        if WITH_SIMD:
+            # The SIMD build offers scalar implementations as well,
+            # hence we do not need any runtime check.
             return simd_manhattan_dist_f{{name_suffix}}(x1, x2, size)
+        # This ensures we do not need to go through a hwy inclusive build if we
+        # know we only want scalar operations.
+        return simd_manhattan_dist_scalar[{{INPUT_DTYPE_t}}](x1, x2, size)
     cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
         const {{INPUT_DTYPE_t}}* x1_data,

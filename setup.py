@@ -260,7 +260,6 @@ extension_config = {
             "sources": [
                 "_dist_metrics.pyx.tp",
                 "_dist_metrics.pxd.tp",
-                join("_simd", "_dist_optim.cpp"),
             ],
             "include_np": True,
             "language": "c++",
@@ -506,9 +505,9 @@ def configure_extension_modules():
                 },
             ),
         )
-        extension_config["metrics"][1]["define_macros"].append(
-            ("WITH_SIMD", BUILD_WITH_SIMD)
-        )
+    extension_config["metrics"][1]["define_macros"].append(
+        ("WITH_SIMD", BUILD_WITH_SIMD)
+    )
     if os.name == "posix":
         if build_with_debug_symbols:
             default_extra_compile_args.append("-g")
