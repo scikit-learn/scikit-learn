@@ -25,6 +25,17 @@ Changelog
   with a different scale than the data used to fit the model.
   :pr:`27167` by `Olivier Grisel`_.
 
+- |Fix| :class:`cluster.BisectingKMeans` now works with data that has a single feature.
+  :pr:`27243` by `Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Fix a bug in :class:`ensemble.AdaBoostClassifier` with `algorithm="SAMME"`
+  where the decision function of each weak learner should be symmetric (i.e.
+  the sum of the scores should sum to zero for a sample).
+  :pr:`26521` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.impute`
 .....................
 
