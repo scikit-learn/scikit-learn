@@ -141,7 +141,7 @@ Changelog
 
 - |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` got the new parameter
-  `colsample_bynode` to specify the proportion of randomly chosen features considered
+  `max_features` to specify the proportion of randomly chosen features considered
   in each split.
   :pr:`27139` by :user:`Christian Lorentzen <lorentzenchr>`.
 
