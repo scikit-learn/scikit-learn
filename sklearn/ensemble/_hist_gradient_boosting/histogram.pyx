@@ -190,13 +190,12 @@ cdef class HistogramBuilder:
                     feature_idx = f_idx
 
                 if has_parent_hist and feature_idx == split_feature_idx:
-                    self._compute_histogram_of_split_feature(
-                        feature_idx,
-                        sample_indices,
-                        histograms,
-                        split_bin_start,
-                        split_bin_end,
-                        parent_histograms,
+                    self._compute_histogram_single_feature_from_parent(
+                        feature_idx=feature_idx,
+                        split_bin_start=split_bin_start,
+                        split_bin_end=split_bin_end,
+                        histograms=histograms,
+                        parent_histograms=parent_histograms,
                     )
                 else:
                     self._compute_histogram_brute_single_feature(
@@ -205,29 +204,27 @@ cdef class HistogramBuilder:
 
         return histograms
 
-    cdef void _compute_histogram_of_split_feature(
+    cdef void _compute_histogram_single_feature_from_parent(
         HistogramBuilder self,
         const int feature_idx,
-        const unsigned int [::1] sample_indices,  # IN
-        hist_struct [:, ::1] histograms,          # OUT
-        const unsigned int split_bin_start,       # IN
-        const unsigned int split_bin_end,         # IN
+        const unsigned int split_bin_start,           # IN
+        const unsigned int split_bin_end,             # IN
         const hist_struct [:, ::1] parent_histograms, # IN
-    ) noexcept nogil:  # OUT
+        hist_struct [:, ::1] histograms,              # OUT
+    ) noexcept nogil:
         """Compute the histogram for the feature that was split on."""
         cdef:
             unsigned int bin_idx = 0
 
-        if split_bin_start == 0:
-            for bin_idx in range(split_bin_end, self.n_bins):
-                histograms[feature_idx, bin_idx].sum_gradients = 0.
-                histograms[feature_idx, bin_idx].sum_hessians = 0.
-                histograms[feature_idx, bin_idx].count = 0
-        else:
-            for bin_idx in range(split_bin_start):
-                histograms[feature_idx, bin_idx].sum_gradients = 0.
-                histograms[feature_idx, bin_idx].sum_hessians = 0.
-                histograms[feature_idx, bin_idx].count = 0
+        for bin_idx in range(split_bin_start):
+            histograms[feature_idx, bin_idx].sum_gradients = 0.
+            histograms[feature_idx, bin_idx].sum_hessians = 0.
+            histograms[feature_idx, bin_idx].count = 0
+
+        for bin_idx in range(split_bin_end, self.n_bins):
+            histograms[feature_idx, bin_idx].sum_gradients = 0.
+            histograms[feature_idx, bin_idx].sum_hessians = 0.
+            histograms[feature_idx, bin_idx].count = 0
 
         for bin_idx in range(split_bin_start, split_bin_end):
             histograms[feature_idx, bin_idx].sum_gradients = (
