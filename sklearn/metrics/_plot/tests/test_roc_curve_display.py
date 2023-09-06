@@ -11,6 +11,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
+from sklearn.utils.fixes import trapezoid
 
 
 @pytest.fixture(scope="module")
@@ -290,7 +291,7 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
     roc_auc_limit = 0.95679
 
     assert display.roc_auc == pytest.approx(roc_auc_limit)
-    assert np.trapz(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
+    assert trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
 
     if constructor_name == "from_estimator":
         display = RocCurveDisplay.from_estimator(
@@ -308,4 +309,4 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
         )
 
     assert display.roc_auc == pytest.approx(roc_auc_limit)
-    assert np.trapz(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
+    assert trapezoid(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
