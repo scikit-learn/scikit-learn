@@ -210,12 +210,15 @@ def _update_terminal_regions(
         elif isinstance(loss, ExponentialLoss):
 
             def compute_update(y_, indices, neg_gradient, raw_prediction, k):
-                z = 2.0 * y_ - 1.0  # z is -1 or +1
-                raw_pred = raw_prediction[indices, k]
-                # numerator = negative gradient
-                numerator = np.average(z * np.exp(-z * raw_pred), weights=sw)
-                # denominator = hessian
-                denominator = np.average(np.exp(-z * raw_pred), weights=sw)
+                neg_g = neg_gradient.take(indices, axis=0)
+                # numerator = negative gradient = y * exp(-raw) - (1-y) * exp(raw)
+                numerator = np.average(neg_g, weights=sw)
+                # denominator = hessian = y * exp(-raw) + (1-y) * exp(raw)
+                # if y=0: hessian = exp(raw) = -neg_g
+                #    y=1: hessian = exp(-raw) = neg_g
+                hessian = neg_g.copy()
+                hessian[y_ == 0] *= -1
+                denominator = np.average(hessian, weights=sw)
                 return _safe_divide(numerator, denominator)
 
         else:
