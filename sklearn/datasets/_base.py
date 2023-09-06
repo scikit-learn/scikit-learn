@@ -756,9 +756,9 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         target : {ndarray, Series} of shape (569,)
             The classification target. If `as_frame=True`, `target` will be
             a pandas Series.
-        feature_names : list
+        feature_names : ndarray of shape (30,)
             The names of the dataset columns.
-        target_names : list
+        target_names : ndarray of shape (2,)
             The names of target classes.
         frame : DataFrame of shape (569, 31)
             Only present when `as_frame=True`. DataFrame with `data` and
