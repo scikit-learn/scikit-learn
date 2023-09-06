@@ -127,7 +127,7 @@ def _update_terminal_regions(
 ):
     """Update the leaf values to be predicted by the tree and raw_prediction.
 
-    The current predictions of the model (of this stage) are updated.
+    The current raw predictions of the model (of this stage) are updated.
 
     Additionally, the terminal regions (=leaves) of the given tree are updated as well.
     This corresponds to the line search step in "Greedy Function Approximation" by
@@ -138,6 +138,10 @@ def _update_terminal_regions(
 
     For non-trivial cases like the Binomial loss, the update has no closed formula and
     is an approximation, again, see the Friedman paper.
+
+    Also note that the update formula for the SquaredError is the identity. Therefore,
+    in this case, the leaf values don't need an update and only the raw_predictions are
+    updated (with the learning rate included).
 
     Parameters
     ----------
