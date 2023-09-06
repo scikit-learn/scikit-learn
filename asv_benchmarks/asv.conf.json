@@ -71,6 +71,10 @@
     // pip (with all the conda available packages installed first,
     // followed by the pip installed packages).
     //
+    // The versions of the dependencies should be bumped in a dedicated commit
+    // to easily identify regressions/imrovements due to code changes from
+    // those due to dependency changes.
+    //
     "matrix": {
         "numpy": ["1.25.2"],
         "scipy": ["1.11.2"],
