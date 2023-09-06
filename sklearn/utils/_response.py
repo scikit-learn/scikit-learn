@@ -55,11 +55,16 @@ def _process_predict_proba(*, y_pred, target_type, classes, pos_label):
     if target_type == "binary":
         col_idx = np.flatnonzero(classes == pos_label)[0]
         return y_pred[:, col_idx]
-    elif target_type == "multilabel-indicator" and isinstance(y_pred, list):
+    elif target_type == "multilabel-indicator":
         # Use a compress format of shape `(n_samples, n_output)`.
         # Only `MLPClassifier` and `RidgeClassifier` return an array of shape
         # `(n_samples, n_outputs)`.
-        return np.vstack([p[:, -1] for p in y_pred]).T
+        if isinstance(y_pred, list):
+            # list of arrays of shape `(n_samples, 2)`
+            return np.vstack([p[:, -1] for p in y_pred]).T
+        else:
+            # array of shape `(n_samples, n_outputs)`
+            return y_pred
 
     return y_pred
 
@@ -101,14 +106,17 @@ def _process_decision_function(*, y_pred, target_type, classes, pos_label):
     """
     if target_type == "binary" and pos_label == classes[0]:
         return -1 * y_pred
-    elif target_type == "multilabel-indicator" and isinstance(y_pred, list):
+    elif target_type == "multilabel-indicator":
         # This is some legacy code where it was assume that the decision function could
         # be a list of arrays of shape `(n_samples, 2)`.
         # Currently, this does not exist in scikit-learn. The only estimator supporting
         # multilabel-indicator and decision_function is `RidgeClassifier` which
         # returns an array of shape `(n_samples, n_outputs)`.
         # We could remove this code in the future?
-        return np.vstack([p for p in y_pred]).T
+        if isinstance(y_pred, list):
+            return np.vstack([p for p in y_pred]).T
+        else:
+            return y_pred
 
     return y_pred
 
