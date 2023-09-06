@@ -76,9 +76,7 @@ def _mask_edges_weights(mask, edges, weights=None):
     """Apply a mask to edges (weighted or not)"""
     inds = np.arange(mask.size)
     inds = inds[mask.ravel()]
-    ind_mask = np.logical_and(
-        np.isin(edges[0], inds).ravel(), np.isin(edges[1], inds).ravel()
-    )
+    ind_mask = np.logical_and(np.isin(edges[0], inds), np.isin(edges[1], inds))
     edges = edges[:, ind_mask]
     if weights is not None:
         weights = weights[ind_mask]
