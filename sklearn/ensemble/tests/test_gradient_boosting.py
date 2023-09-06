@@ -64,7 +64,7 @@ def test_exponential_n_classes_gt_2():
 
 
 def test_raise_if_init_has_no_predict_proba():
-    """Test raise if init_ has not predict_proba method."""
+    """Test raise if init_ has no predict_proba method."""
     clf = GradientBoostingClassifier(init=GradientBoostingRegressor)
     msg = (
         "The 'init' parameter of GradientBoostingClassifier must be a str among "
@@ -1144,7 +1144,7 @@ def test_warm_start_wo_nestimators_change():
     [
         ("squared_error", 0.5),
         ("absolute_error", 0.0),
-        ("huber", 0.0),
+        ("huber", 0.5),
         ("quantile", 0.5),
     ],
 )
@@ -1438,8 +1438,9 @@ def test_huber_vs_mean_and_median():
     gbt_huber = GradientBoostingRegressor(loss="huber").fit(X, y)
     gbt_squared_error = GradientBoostingRegressor().fit(X, y)
 
-    assert np.all(gbt_absolute_error.predict(X) <= gbt_huber.predict(X))
-    assert np.all(gbt_huber.predict(X) <= gbt_squared_error.predict(X))
+    gbt_huber_predictions = gbt_huber.predict(X)
+    assert np.all(gbt_absolute_error.predict(X) <= gbt_huber_predictions)
+    assert np.all(gbt_huber_predictions <= gbt_squared_error.predict(X))
 
 
 def test_safe_divide():

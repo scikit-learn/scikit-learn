@@ -253,8 +253,6 @@ def set_huber_delta(loss, y_true, raw_prediction, sample_weight=None):
     """Calculate and set self.closs.delta based on self.quantile."""
     abserr = np.abs(y_true - raw_prediction.squeeze())
     # sample_weight is always a ndarray, never None.
-    # if sample_weight is None:
-    #     delta = np.quantile(abserr, loss.quantile, axis=0)
     delta = _weighted_percentile(abserr, sample_weight, 100 * loss.quantile)
     loss.closs.delta = float(delta)
 
@@ -1306,8 +1304,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         .. versionadded:: 0.20
 
     n_trees_per_iteration_ : int
-        The number of trees that are built at each iteration. For regressors, this is
-        always 1.
+        The number of trees that are built at each iteration. For binary classifiers,
+        this is always 1.
 
         .. versionadded:: 1.4.0
 
