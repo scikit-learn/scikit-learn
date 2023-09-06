@@ -48,7 +48,7 @@ from sklearn.utils import (
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils._array_api import _check_array_api_dispatch
-from sklearn.utils.fixes import CSR_CONTAINERS, threadpool_info
+from sklearn.utils.fixes import threadpool_info
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -773,14 +773,8 @@ def assert_run_python_script(source_code, timeout=60):
         os.unlink(source_file)
 
 
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def _convert_container(
-    csr_container,
-    container,
-    constructor_name,
-    columns_name=None,
-    dtype=None,
-    minversion=None,
+    container, constructor_name, columns_name=None, dtype=None, minversion=None
 ):
     """Convert a given container to a specific array-like with a dtype.
 
@@ -817,7 +811,7 @@ def _convert_container(
     elif constructor_name == "array":
         return np.asarray(container, dtype=dtype)
     elif constructor_name == "sparse":
-        return csr_container(container, dtype=dtype)
+        return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == "dataframe":
         pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
@@ -840,9 +834,9 @@ def _convert_container(
     elif constructor_name == "slice":
         return slice(container[0], container[1])
     elif constructor_name == "sparse_csr":
-        return csr_container(container, dtype=dtype)
+        return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == "sparse_csc":
-        return csr_container(container, dtype=dtype)
+        return sp.sparse.csc_matrix(container, dtype=dtype)
 
 
 def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
