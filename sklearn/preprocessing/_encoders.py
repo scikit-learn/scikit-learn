@@ -123,6 +123,15 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     )
                     raise ValueError(msg)
 
+                num_cats = len(cats)
+                for idx, category in enumerate(cats):
+                    if is_scalar_nan(category) and idx != num_cats:
+                        raise ValueError(
+                            "Nan should be the last element in user"
+                            " provided categories, see categories {0}"
+                            " in column {1}".format(cats, i)
+                        )
+
                 if Xi.dtype.kind not in "OUS":
                     sorted_cats = np.sort(cats)
                     error_msg = (
