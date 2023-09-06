@@ -123,9 +123,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     )
                     raise ValueError(msg)
 
-                num_cats = len(cats)
+                last_idx = len(cats) - 1
                 for idx, category in enumerate(cats):
-                    if is_scalar_nan(category) and idx != num_cats:
+                    if is_scalar_nan(category) and idx != last_idx:
                         raise ValueError(
                             "Nan should be the last element in user"
                             " provided categories, see categories {0}"
