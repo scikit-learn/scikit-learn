@@ -278,6 +278,10 @@ Changelog
   which can be used to check whether a given set of parameters would be consumed.
   :pr:`26831` by `Adrin Jalali`_.
 
+- |Enhancement| :func`sklearn.utils.multiclass.type_of_target` now deals with sparse
+  arrays correctly.
+  :pr:`27274` by `Yao Xiao <Charlie-XIAO>`
+
 Code and Documentation Contributors
 -----------------------------------
 
