@@ -452,7 +452,7 @@ fold cross validation should be preferred to LOO.
  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
    <https://people.csail.mit.edu/romer/papers/CrossVal_SDM08.pdf>`_, SIAM 2008;
  * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
-   Statistical Learning <https://www-bcf.usc.edu/~gareth/ISL/>`_, Springer 2013.
+   Statistical Learning <https://www.statlearning.com>`_, Springer 2013.
 
 .. _leave_p_out:
 
