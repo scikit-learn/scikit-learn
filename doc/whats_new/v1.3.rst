@@ -70,6 +70,9 @@ Changelog
 - |Fix| :func:`tree.plot_tree` now accepts `class_names=True` as documented.
   :pr:`26903` by :user:`Thomas Roehr <2maz>`
 
+- |Fix| The `feature_names` parameter of :func:`tree.plot_tree` now accepts any kind of
+  array-like instead of just a list. :pr:`27292` by :user:`Rahil Parikh <rprkh>`.
+
 .. _changes_1_3:
 
 Version 1.3.0
