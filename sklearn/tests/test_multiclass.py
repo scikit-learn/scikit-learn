@@ -5,7 +5,8 @@ import pytest
 import scipy.sparse as sp
 from numpy.testing import assert_allclose
 
-from sklearn import datasets, svm
+from sklearn import config_context, datasets, svm
+from sklearn.base import clone
 from sklearn.datasets import load_breast_cancer
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
@@ -921,3 +922,108 @@ def test_ovo_consistent_binary_classification():
     ovo.fit(X, y)
 
     assert_array_equal(clf.predict(X), ovo.predict(X))
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_fitted_coefs_differ_when_sample_weight_differs():
+    """Assert if coefficients differ when estimators are fitted with different
+    `sample_weights`."""
+    sample_weight = np.ones_like(iris.target, dtype=np.float64)
+    multiclass_classifiers = [
+        OneVsRestClassifier,
+        OneVsOneClassifier,
+        OutputCodeClassifier,
+    ]
+    for classifier in multiclass_classifiers:
+        clf = classifier(
+            estimator=SGDClassifier(random_state=42).set_fit_request(sample_weight=True)
+        )
+        # fitting with sample_weight=sample_weight
+        clf.fit(iris.data, iris.target, sample_weight=sample_weight)
+        # TODO: should we raise an error if sample weight is requested but is not
+        # passed in the router's fit method when enable slep006 is True?
+        # clf.fit(iris.data, iris.target)
+
+        # fitting with sample_weight=sample_weight_new
+        clf_with_different_weight = clone(clf)
+        sample_weight_new = sample_weight.copy()
+        sample_weight_new[::2] /= 2
+        clf_with_different_weight.fit(
+            iris.data, iris.target, sample_weight=sample_weight_new
+        )
+
+        # test if coefficients are different
+        for est, est_with_different_weight in zip(
+            clf.estimators_, clf_with_different_weight.estimators_
+        ):
+            # we need "if hasattr" because OutputCodeClassifier
+            # might make use of class _ConstantPredictor
+            if hasattr(est, "coef_") and hasattr(est_with_different_weight, "coef_"):
+                assert not np.allclose(est.coef_, est_with_different_weight.coef_)
+
+
+@pytest.mark.usefixtures("enable_slep006")
+def test_partial_fitted_coefs_differ_when_sample_weight_differs():
+    """Assert if coefficients differ when estimators are partial_fitted with different
+    `sample_weights`."""
+    sample_weight = np.ones_like(iris.target, dtype=np.float64)
+    multiclass_classifiers = [OneVsRestClassifier, OneVsOneClassifier]
+    for classifier in multiclass_classifiers:
+        clf = classifier(
+            estimator=SGDClassifier(random_state=42).set_partial_fit_request(
+                sample_weight=True
+            )
+        )
+        # partial_fitting with sample_weight=sample_weight
+        clf.partial_fit(
+            iris.data,
+            iris.target,
+            classes=np.unique(iris.target),
+            sample_weight=sample_weight,
+        )
+
+        # partial_fitting with sample_weight=sample_weight_new
+        clf_with_different_weight = clone(clf)
+        sample_weight_new = sample_weight.copy()
+        sample_weight_new[::2] /= 2
+        clf_with_different_weight.partial_fit(
+            iris.data,
+            iris.target,
+            classes=np.unique(iris.target),
+            sample_weight=sample_weight_new,
+        )
+
+        # test if coefficients are different
+        for est, est_with_different_weight in zip(
+            clf.estimators_, clf_with_different_weight.estimators_
+        ):
+            assert not np.allclose(est.coef_, est_with_different_weight.coef_)
+
+
+def test_passing_params_without_enabling_metadata_routing():
+    """Test that the right error message is raised when metadata params
+    are passed while `enable_metadata_routing=False`."""
+    sample_weight = np.ones_like(iris.target, dtype=np.float64)
+    multiclass_classifiers = [
+        OneVsRestClassifier,
+        OneVsOneClassifier,
+        OutputCodeClassifier,
+    ]
+    for classifier in multiclass_classifiers:
+        clf = classifier(
+            estimator=SGDClassifier(
+                random_state=42
+            )  # error messages don't match with set_fit_request(sample_weight=True)
+        )
+        msg = "is only supported if enable_metadata_routing=True"
+        with config_context(enable_metadata_routing=False):
+            params = {"sample_weight": sample_weight}
+
+            with pytest.raises(ValueError, match=msg):
+                clf.fit(iris.data, iris.target, **params)
+
+            if classifier != OutputCodeClassifier:
+                with pytest.raises(ValueError, match=msg):
+                    clf.partial_fit(
+                        iris.data, iris.target, classes=np.unique(iris.target), **params
+                    )
