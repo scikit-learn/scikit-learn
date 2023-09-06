@@ -61,7 +61,12 @@ def _encode_target(X_ordinal, y_int, n_categories, smooth):
 @pytest.mark.parametrize("smooth", [5.0, "auto"])
 @pytest.mark.parametrize("target_type", ["binary", "continuous"])
 def test_encoding(categories, unknown_value, global_random_seed, smooth, target_type):
-    """Check encoding for binary and continuous targets."""
+    """Check encoding for binary and continuous targets.
+
+    Compare the values returned by `TargetEncoder.fit_transform` against the
+    expected encodings for cv splits from a naive reference Python
+    implementation in _encode_target.
+    """
 
     n_categories = 3
     X_train_int_array = np.array([[0] * 20 + [1] * 30 + [2] * 40], dtype=np.int64).T
@@ -95,17 +100,15 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     y_int = y_int[shuffled_idx]
 
     # Define our CV splitting strategy
-    cv_random_seed = global_random_seed
     if target_type == "binary":
         cv = StratifiedKFold(
-            n_splits=n_splits, random_state=cv_random_seed, shuffle=True
+            n_splits=n_splits, random_state=global_random_seed, shuffle=True
         )
     else:
-        cv = KFold(n_splits=n_splits, random_state=cv_random_seed, shuffle=True)
+        cv = KFold(n_splits=n_splits, random_state=global_random_seed, shuffle=True)
 
-    # Compute the expected encodings for cv splits using a naive reference
-    # Python implementation in _encode_target to validate
-    # `TargetEncoder.fit_transform` against:
+    # Compute the expected values using our reference Python implementation of
+    # target encoding:
     expected_X_fit_transform = np.empty_like(X_train_int_array, dtype=np.float64)
 
     for train_idx, test_idx in cv.split(X_train_int_array, y_train):
@@ -121,7 +124,7 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
         smooth=smooth,
         categories=categories,
         cv=n_splits,
-        random_state=cv_random_seed,
+        random_state=global_random_seed,
     )
 
     X_fit_transform = target_encoder.fit_transform(X_train, y_train)
