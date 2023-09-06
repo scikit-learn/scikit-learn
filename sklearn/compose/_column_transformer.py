@@ -40,9 +40,11 @@ from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_feature_names_in,
     _dataframe_module_as_str,
+    _get_feature_names,
     _interchange_to_dataframe,
     _is_pandas_df,
     _num_samples,
+    _use_interchange_protocol,
     check_array,
     check_is_fitted,
 )
@@ -57,16 +59,13 @@ _ERR_MSG_1DCOLUMN = (
 )
 
 
-def _use_interchange_protocol(X):
-    return not _is_pandas_df(X) and hasattr(X, "__dataframe__")
-
-
 def _make_indexing_axis_1(X, use_interchange_protocol, *, estimator):
     """Return a callable that indexes along axis=1."""
     if use_interchange_protocol:
         original_dataframe_module = _dataframe_module_as_str(X, estimator=estimator)
 
-        def indexing_axis_1(df_interchange, columns):
+        def indexing_axis_1(X, columns):
+            df_interchange = X.__dataframe__()
             sliced_df = df_interchange.select_columns_by_name(list(columns))
             return _interchange_to_dataframe(sliced_df, original_dataframe_module)
 
@@ -870,12 +869,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         indexing_axis_1 = _make_indexing_axis_1(
             X, use_interchange_protocol, estimator=self
         )
-
-        if use_interchange_protocol:
-            X = X.__dataframe__()
-            n_samples = X.num_rows()
-        else:
-            n_samples = X.shape[0]
+        n_samples = _num_samples(X)
 
         self._validate_column_callables(
             X, use_interchange_protocol=use_interchange_protocol
@@ -960,21 +954,18 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             _is_pandas_df(X) or hasattr(X, "__dataframe__")
         )
         use_interchange_protocol = _use_interchange_protocol(X)
+
+        if _use_interchange_protocol(X) and not hasattr(self, "feature_names_in_"):
+            raise ValueError(
+                "Using the dataframe protocol requires fitting on dataframes."
+            )
+
         indexing_axis_1 = _make_indexing_axis_1(
             X, use_interchange_protocol, estimator=self
         )
 
-        if use_interchange_protocol:
-            if not hasattr(self, "feature_names_in_"):
-                raise ValueError(
-                    "Using the dataframe protocol requires fitting on dataframes too."
-                )
-            X = X.__dataframe__()
-            n_samples = X.num_rows()
-            column_names = X.column_names()
-        else:
-            n_samples = X.shape[0]
-            column_names = getattr(X, "columns", None)
+        n_samples = _num_samples(X)
+        column_names = _get_feature_names(X)
 
         if fit_dataframe_and_transform_dataframe:
             named_transformers = self.named_transformers_

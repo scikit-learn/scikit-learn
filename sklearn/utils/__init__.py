@@ -468,8 +468,9 @@ def _get_column_indices(X, key):
         return column_indices
 
 
-def _get_column_indices_interchange(X_interchange, key):
+def _get_column_indices_interchange(X, key):
     """Same as _get_column_indices but for X with __dataframe__ protocol."""
+    X_interchange = X.__dataframe__()
     n_columns = X_interchange.num_columns()
     key_dtype = _determine_key_type(key)
 
