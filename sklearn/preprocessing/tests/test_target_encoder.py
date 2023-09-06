@@ -61,64 +61,70 @@ def _encode_target(X_ordinal, y_int, n_categories, smooth):
 @pytest.mark.parametrize("smooth", [5.0, "auto"])
 @pytest.mark.parametrize("target_type", ["binary", "continuous"])
 def test_encoding(categories, unknown_value, global_random_seed, smooth, target_type):
-    """Check encoding for binary and continuous targets."""
+    """Check encoding for binary and continuous targets.
 
-    X_train_array = np.array([[0] * 20 + [1] * 30 + [2] * 40], dtype=np.int64).T
-    X_test_array = np.array([[0, 1, 2]], dtype=np.int64).T
+    Compare the values returned by `TargetEncoder.fit_transform` against the
+    expected encodings for cv splits from a naive reference Python
+    implementation in _encode_target.
+    """
+
     n_categories = 3
-    n_samples = X_train_array.shape[0]
+    X_train_int_array = np.array([[0] * 20 + [1] * 30 + [2] * 40], dtype=np.int64).T
+    X_test_int_array = np.array([[0, 1, 2]], dtype=np.int64).T
+    n_samples = X_train_int_array.shape[0]
 
     if categories == "auto":
-        X_train = X_train_array
-        X_test = X_test_array
+        X_train = X_train_int_array
+        X_test = X_test_int_array
     else:
-        X_train = categories[0][X_train_array]
-        X_test = categories[0][X_test_array]
+        X_train = categories[0][X_train_int_array]
+        X_test = categories[0][X_test_int_array]
 
     X_test = np.concatenate((X_test, [[unknown_value]]))
 
-    rng = np.random.RandomState(global_random_seed)
-    # We use this to set the same state before passing `rng` to cv iterator/target
-    # encoder. Required for cv shuffle to be consistent when calculating manually and
-    # inside target encoder
-    rng_state = rng.get_state()
-
+    data_rng = np.random.RandomState(global_random_seed)
     n_splits = 3
-    random_state = 0
     if target_type == "binary":
-        y_int = rng.randint(low=0, high=2, size=n_samples)
+        y_int = data_rng.randint(low=0, high=2, size=n_samples)
         target_names = np.array(["cat", "dog"], dtype=object)
         y_train = target_names[y_int]
-        rng.set_state(rng_state)
-        cv = StratifiedKFold(n_splits=n_splits, random_state=random_state, shuffle=True)
-    else:  # target_type == continuous
-        y_int = rng.uniform(low=-10, high=20, size=n_samples)
-        y_train = y_int
-        rng.set_state(rng_state)
-        cv = KFold(n_splits=n_splits, random_state=random_state, shuffle=True)
 
-    shuffled_idx = rng.permutation(n_samples)
-    X_train_array = X_train_array[shuffled_idx]
+    else:  # target_type == continuous
+        y_int = data_rng.uniform(low=-10, high=20, size=n_samples)
+        y_train = y_int
+
+    shuffled_idx = data_rng.permutation(n_samples)
+    X_train_int_array = X_train_int_array[shuffled_idx]
     X_train = X_train[shuffled_idx]
     y_train = y_train[shuffled_idx]
     y_int = y_int[shuffled_idx]
 
-    # Get encodings for cv splits to validate `fit_transform`
-    expected_X_fit_transform = np.empty_like(X_train_array, dtype=np.float64)
+    # Define our CV splitting strategy
+    if target_type == "binary":
+        cv = StratifiedKFold(
+            n_splits=n_splits, random_state=global_random_seed, shuffle=True
+        )
+    else:
+        cv = KFold(n_splits=n_splits, random_state=global_random_seed, shuffle=True)
 
-    for train_idx, test_idx in cv.split(X_train_array, y_train):
-        X_, y_ = X_train_array[train_idx, 0], y_int[train_idx]
+    # Compute the expected values using our reference Python implementation of
+    # target encoding:
+    expected_X_fit_transform = np.empty_like(X_train_int_array, dtype=np.float64)
+
+    for train_idx, test_idx in cv.split(X_train_int_array, y_train):
+        X_, y_ = X_train_int_array[train_idx, 0], y_int[train_idx]
         cur_encodings = _encode_target(X_, y_, n_categories, smooth)
         expected_X_fit_transform[test_idx, 0] = cur_encodings[
-            X_train_array[test_idx, 0]
+            X_train_int_array[test_idx, 0]
         ]
 
-    rng.set_state(rng_state)
+    # Check that we can obtain the same encodings by calling `fit_transform` on
+    # the estimator with the same CV parameters:
     target_encoder = TargetEncoder(
         smooth=smooth,
         categories=categories,
         cv=n_splits,
-        random_state=random_state,
+        random_state=global_random_seed,
     )
 
     X_fit_transform = target_encoder.fit_transform(X_train, y_train)
@@ -130,7 +136,7 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     # compute encodings for all data to validate `transform`
     y_mean = np.mean(y_int)
     expected_encodings = _encode_target(
-        X_train_array[:, 0], y_int, n_categories, smooth
+        X_train_int_array[:, 0], y_int, n_categories, smooth
     )
     assert_allclose(target_encoder.encodings_[0], expected_encodings)
     assert target_encoder.target_mean_ == pytest.approx(y_mean)
