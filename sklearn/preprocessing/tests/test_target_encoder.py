@@ -115,8 +115,8 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
             X_train_int_array[test_idx, 0]
         ]
 
-    # Check that we can obtain the same encodings by calling `fit_transform` using
-    # the estimator with the CV parameters:
+    # Check that we can obtain the same encodings by calling `fit_transform` on
+    # the estimator with the same CV parameters:
     target_encoder = TargetEncoder(
         smooth=smooth,
         categories=categories,
