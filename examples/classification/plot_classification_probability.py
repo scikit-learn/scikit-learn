@@ -59,7 +59,9 @@ classifiers = {
 n_classifiers = len(classifiers)
 
 fig, axes = plt.subplots(
-    nrows=n_classifiers, ncols=len(iris.target_names), figsize=(10, 16)
+    nrows=n_classifiers,
+    ncols=len(iris.target_names),
+    figsize=(3 * 2, n_classifiers * 2),
 )
 for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
     y_pred = classifier.fit(X, y).predict(X)
