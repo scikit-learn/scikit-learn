@@ -167,6 +167,21 @@ Changelog
   ``**score_params`` which are passed to the underlying scorer.
   :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
 
+:mod:`sklearn.multiclass`
+...........................
+
+- |Enhancement| :class:`multiclass.OneVsRestClassifier`,
+  :class:`multiclass.OneVsOneClassifier` and
+  :class:`multiclass.OutputCodeClassifier` now support metadata routing.
+  :meth:`multiclass.OneVsRestClassifier.fit`,
+  :meth:`multiclass.OneVsOneClassifier.fit` and
+  :meth:`multiclass.OutputCodeClassifier.fit` now accept ``**fit_params`` which
+  are passed to the estimator used.
+  :meth:`multiclass.OneVsRestClassifier.partial_fit` and
+  :meth:`multiclass.OneVsOneClassifier.partial_fit` now accept
+  ``**partial_fit_params`` which are passed to the estimator used. :pr:`27308`
+  by :user:`Stefanie Senger <StefanieSenger>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
