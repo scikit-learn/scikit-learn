@@ -207,10 +207,10 @@ cdef class HistogramBuilder:
     cdef void _compute_histogram_single_feature_from_parent(
         HistogramBuilder self,
         const int feature_idx,
-        const unsigned int split_bin_start,           # IN
-        const unsigned int split_bin_end,             # IN
-        const hist_struct [:, ::1] parent_histograms, # IN
-        hist_struct [:, ::1] histograms,              # OUT
+        const unsigned int split_bin_start,            # IN
+        const unsigned int split_bin_end,              # IN
+        const hist_struct [:, ::1] parent_histograms,  # IN
+        hist_struct [:, ::1] histograms,               # OUT
     ) noexcept nogil:
         """Compute the histogram for the feature that was split on."""
         cdef:
