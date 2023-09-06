@@ -830,7 +830,7 @@ def test_stratified_shuffle_split_iter():
             assert len(train) + len(test) == y.size
             assert len(train) == train_size
             assert len(test) == test_size
-            assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
+            assert_array_equal(np.intersect1d(train, test), [])
 
 
 def test_stratified_shuffle_split_even():
