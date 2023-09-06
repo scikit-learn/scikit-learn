@@ -161,9 +161,10 @@ Changelog
 .........................
 
 - |Enhancement| :class:`inspection.DecisionBoundaryDisplay` now accepts a parameter
-  `pos_label` to select the class of interest when plotting the response provided by
-  `response_method="predict_proba"` or `response_method="decision_function"`. It allows
-  to plot the decision boundary for both binary and multiclass classifiers.
+  `class_of_interest` to select the class of interest when plotting the response
+  provided by `response_method="predict_proba"` or
+  `response_method="decision_function"`. It allows to plot the decision boundary for
+  both binary and multiclass classifiers.
   :pr:`27291` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.linear_model`

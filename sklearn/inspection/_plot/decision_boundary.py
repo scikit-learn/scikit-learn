@@ -11,7 +11,7 @@ from ...utils.validation import (
 )
 
 
-def _check_boundary_response_method(estimator, response_method, pos_label):
+def _check_boundary_response_method(estimator, response_method, class_of_interest):
     """Validate the response methods to be used with the fitted estimator.
 
     Parameters
@@ -25,10 +25,9 @@ def _check_boundary_response_method(estimator, response_method, pos_label):
         If set to 'auto', the response method is tried in the following order:
         :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
 
-    pos_label : int, float, bool or str
-        The class considered as the positive class when plotting the decision.
-        If the label is specified, it then possible to plot the decision boundary in
-        multiclass settings.
+    class_of_interest : int, float, bool or str
+        The class considered when plotting the decision. If the label is specified, it
+        then possible to plot the decision boundary in multiclass settings.
 
         .. versionadded:: 1.4
 
@@ -43,11 +42,11 @@ def _check_boundary_response_method(estimator, response_method, pos_label):
         raise ValueError(msg)
 
     if has_classes and len(estimator.classes_) > 2:
-        if response_method not in {"auto", "predict"} and pos_label is None:
+        if response_method not in {"auto", "predict"} and class_of_interest is None:
             msg = (
                 "Multiclass classifiers are only supported when response_method is"
-                " 'predict' or 'auto', or you must provide `pos_label` to select a"
-                " specific class to plot the decision boundary."
+                " 'predict' or 'auto', or you must provide `class_of_interest` to "
+                " select a specific class to plot the decision boundary."
             )
             raise ValueError(msg)
         prediction_method = "predict" if response_method == "auto" else response_method
@@ -205,7 +204,7 @@ class DecisionBoundaryDisplay:
         eps=1.0,
         plot_method="contourf",
         response_method="auto",
-        pos_label=None,
+        class_of_interest=None,
         xlabel=None,
         ylabel=None,
         ax=None,
@@ -248,9 +247,9 @@ class DecisionBoundaryDisplay:
             For multiclass problems, :term:`predict` is selected when
             `response_method="auto"`.
 
-        pos_label : int, float, bool or str, default=None
-            The class considered as the positive class when plotting the decision.
-            By default, `estimators.classes_[1]` is considered as the positive class.
+        class_of_interest : int, float, bool or str, default=None
+            The class considered when plotting the decision. By default,
+            `estimators.classes_[1]` is considered as the positive class.
 
             .. versionadded:: 1.4
 
@@ -349,13 +348,13 @@ class DecisionBoundaryDisplay:
             X_grid = np.c_[xx0.ravel(), xx1.ravel()]
 
         prediction_method = _check_boundary_response_method(
-            estimator, response_method, pos_label
+            estimator, response_method, class_of_interest
         )
         response, _, response_method_used = _get_response_values(
             estimator,
             X_grid,
             response_method=prediction_method,
-            pos_label=pos_label,
+            pos_label=class_of_interest,
             return_response_method_used=True,
         )
 
@@ -372,9 +371,13 @@ class DecisionBoundaryDisplay:
             # For the multiclass case, `_get_response_values` returns the response
             # as-is. Thus, we have a column per class and we need to select the column
             # corresponding to the positive class.
-            if pos_label is None:
-                pos_label = estimator.classes_[1]
-            col_idx = np.flatnonzero(estimator.classes_ == pos_label)[0]
+            if class_of_interest is None and len(estimator.classes_) > 2:
+                raise ValueError(
+                    "With multiclass classification, you must specify the class of "
+                    "interest, via the `class_of_interest` parameter, to plot the "
+                    "decision boundary."
+                )
+            col_idx = np.flatnonzero(estimator.classes_ == class_of_interest)[0]
             response = response[:, col_idx]
 
         if xlabel is None:

@@ -71,7 +71,7 @@ for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
             classifier,
             X,
             response_method="predict_proba",
-            pos_label=label,
+            class_of_interest=label,
             ax=axes[classifier_idx, label],
             vmin=0,
             vmax=1,
