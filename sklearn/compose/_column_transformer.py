@@ -270,6 +270,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         DO NOT USE: This is for the implementation of get_params via
         BaseComposition._get_params which expects lists of tuples of len 2.
+
+        To iterate through the transformers, use ``self._iter`` instead.
         """
         try:
             return [(name, trans) for name, trans, _ in self.transformers]
