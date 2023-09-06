@@ -455,7 +455,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         Converts callable column specifications.
 
-        This stores a dictionary of the form {step_name: column_indices} and
+        This stores a dictionary of the form `{step_name: column_indices}` and
         calls the `columns` on `X` if `columns` is a callable for a given
         transformer.
 
@@ -604,7 +604,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         )
 
     def _update_fitted_transformers(self, transformers):
-        """Sets self.transformers_ from given transformers.
+        """Set self.transformers_ from given transformers.
 
         Parameters
         ----------
