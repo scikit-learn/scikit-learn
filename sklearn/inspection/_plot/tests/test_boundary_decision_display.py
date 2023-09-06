@@ -382,7 +382,7 @@ def test_class_of_interest(pyplot, response_method):
     # check that we raise an error for unknown labels
     # this test should already be handled in `_get_response_values` but we can have this
     # test here as well
-    err_msg = "pos_label=2 is not a valid label: It should be one of"
+    err_msg = "class_of_interest=2 is not a valid label: It should be one of"
     with pytest.raises(ValueError, match=err_msg):
         DecisionBoundaryDisplay.from_estimator(
             estimator,

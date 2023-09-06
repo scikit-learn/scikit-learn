@@ -350,13 +350,24 @@ class DecisionBoundaryDisplay:
         prediction_method = _check_boundary_response_method(
             estimator, response_method, class_of_interest
         )
-        response, _, response_method_used = _get_response_values(
-            estimator,
-            X_grid,
-            response_method=prediction_method,
-            pos_label=class_of_interest,
-            return_response_method_used=True,
-        )
+        try:
+            response, _, response_method_used = _get_response_values(
+                estimator,
+                X_grid,
+                response_method=prediction_method,
+                pos_label=class_of_interest,
+                return_response_method_used=True,
+            )
+        except ValueError as exc:
+            if "is not a valid label" in str(exc):
+                # re-raise a more informative error message since `pos_label` is unknown
+                # to our user when interacting with
+                # `DecisionBoundaryDisplay.from_estimator`
+                raise ValueError(
+                    f"class_of_interest={class_of_interest} is not a valid label: It "
+                    f"should be one of {estimator.classes_}"
+                ) from exc
+            raise exc
 
         # convert classes predictions into integers
         if response_method_used == "predict" and hasattr(estimator, "classes_"):
@@ -371,12 +382,6 @@ class DecisionBoundaryDisplay:
             # For the multiclass case, `_get_response_values` returns the response
             # as-is. Thus, we have a column per class and we need to select the column
             # corresponding to the positive class.
-            if class_of_interest is None and len(estimator.classes_) > 2:
-                raise ValueError(
-                    "With multiclass classification, you must specify the class of "
-                    "interest, via the `class_of_interest` parameter, to plot the "
-                    "decision boundary."
-                )
             col_idx = np.flatnonzero(estimator.classes_ == class_of_interest)[0]
             response = response[:, col_idx]
 
