@@ -37,7 +37,7 @@ n_trees = args.n_trees
 subsample = args.subsample
 lr = args.learning_rate
 max_bins = args.max_bins
-colsample_bynode = args.colsample_bynode
+max_features = args.max_features
 
 
 @m.cache
@@ -106,7 +106,7 @@ est = HistGradientBoostingClassifier(
     random_state=0,
     verbose=1,
     interaction_cst=interaction_cst,
-    colsample_bynode=colsample_bynode,
+    max_features=max_features,
 )
 fit(est, data_train, target_train, "sklearn")
 predict(est, data_test, target_test)
