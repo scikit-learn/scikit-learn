@@ -134,9 +134,12 @@ def set_config(
 
         - `"default"`: Default output format of a transformer
         - `"pandas"`: DataFrame output
+        - `"polars"`: Polars output
         - `None`: Transform configuration is unchanged
 
         .. versionadded:: 1.2
+        .. versionadded:: 1.4
+            `"polars"` option was added
 
     enable_metadata_routing : bool, default=None
         Enable metadata routing. By default this feature is disabled.
@@ -281,9 +284,12 @@ def config_context(
 
         - `"default"`: Default output format of a transformer
         - `"pandas"`: DataFrame output
+        - `"polars"`: Polars output
         - `None`: Transform configuration is unchanged
 
         .. versionadded:: 1.2
+        .. versionadded:: 1.4
+            `"polars"` option was added
 
     enable_metadata_routing : bool, default=None
         Enable metadata routing. By default this feature is disabled.

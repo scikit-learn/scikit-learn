@@ -16,11 +16,15 @@ from scipy import sparse
 from ..base import TransformerMixin, _fit_context, clone
 from ..pipeline import _fit_transform_one, _name_estimators, _transform_one
 from ..preprocessing import FunctionTransformer
-from ..utils import Bunch, _get_column_indices, _safe_indexing, check_pandas_support
+from ..utils import Bunch, _get_column_indices, _safe_indexing
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._metadata_requests import METHODS
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
-from ..utils._set_output import _get_output_config, _safe_set_output
+from ..utils._set_output import (
+    _get_container_adapter,
+    _get_output_config,
+    _safe_set_output,
+)
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -298,7 +302,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
             - `"default"`: Default output format of a transformer
             - `"pandas"`: DataFrame output
+            - `"polars"`: Polars output
             - `None`: Transform configuration is unchanged
+
+            .. versionadded:: 1.4
+                `"polars"` option was added
 
         Returns
         -------
@@ -980,10 +988,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return sparse.hstack(converted_Xs).tocsr()
         else:
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
-            config = _get_output_config("transform", self)
-            if config["dense"] == "pandas" and all(hasattr(X, "iloc") for X in Xs):
-                pd = check_pandas_support("transform")
-                output = pd.concat(Xs, axis=1)
+            adapter = _get_container_adapter("transform", self)
+            if adapter and adapter.is_supported_container(Xs):
+                output = adapter.hstack(Xs)
 
                 output_samples = output.shape[0]
                 if any(_num_samples(X) != output_samples for X in Xs):
@@ -1013,8 +1020,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 names_out = self._add_prefix_for_feature_names_out(
                     list(zip(transformer_names, feature_names_outs))
                 )
-                output.columns = names_out
-                return output
+                return adapter.update_columns(output, names_out)
 
             return np.hstack(Xs)
 

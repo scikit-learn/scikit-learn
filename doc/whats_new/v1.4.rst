@@ -41,6 +41,9 @@ Changes impacting all modules
   to work with our estimators and functions.
   :pr:`26464` by `Thomas Fan`_.
 
+- |Feature| Transformers now support polars output with `set_output(transform="polars")`.
+  :pr:`xxxxx` by `Thomas Fan`_.
+
 Changelog
 ---------
 

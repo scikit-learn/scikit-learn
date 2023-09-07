@@ -76,10 +76,12 @@ from sklearn.utils.estimator_checks import (
     check_estimator,
     check_get_feature_names_out_error,
     check_global_output_transform_pandas,
+    check_global_set_output_transform_polars,
     check_n_features_in_after_fitting,
     check_param_validation,
     check_set_output_transform,
     check_set_output_transform_pandas,
+    check_set_output_transform_polars,
     check_transformer_get_feature_names_out,
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
@@ -577,28 +579,22 @@ def test_set_output_transform(estimator):
 @pytest.mark.parametrize(
     "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
-def test_set_output_transform_pandas(estimator):
+@pytest.mark.parametrize(
+    "check_func",
+    [
+        check_set_output_transform_pandas,
+        check_global_output_transform_pandas,
+        check_set_output_transform_polars,
+        check_global_set_output_transform_polars,
+    ],
+)
+def test_set_output_transform_configured(estimator, check_func):
     name = estimator.__class__.__name__
     if not hasattr(estimator, "set_output"):
         pytest.skip(
-            f"Skipping check_set_output_transform_pandas for {name}: Does not support"
+            f"Skipping {check_func.__name__} for {name}: Does not support"
             " set_output API yet"
         )
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
-        check_set_output_transform_pandas(estimator.__class__.__name__, estimator)
-
-
-@pytest.mark.parametrize(
-    "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
-)
-def test_global_output_transform_pandas(estimator):
-    name = estimator.__class__.__name__
-    if not hasattr(estimator, "set_output"):
-        pytest.skip(
-            f"Skipping check_global_output_transform_pandas for {name}: Does not"
-            " support set_output API yet"
-        )
-    _set_checking_parameters(estimator)
-    with ignore_warnings(category=(FutureWarning)):
-        check_global_output_transform_pandas(estimator.__class__.__name__, estimator)
+        check_func(estimator.__class__.__name__, estimator)

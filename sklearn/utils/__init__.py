@@ -27,6 +27,9 @@ from .fixes import parse_version, threadpool_info
 from .murmurhash import murmurhash3_32
 from .validation import (
     _is_arraylike_not_scalar,
+    _is_pandas_df,
+    _is_polars_df,
+    _use_interchange_protocol,
     as_float_array,
     assert_all_finite,
     check_array,
@@ -218,6 +221,18 @@ def _list_indexing(X, key, key_dtype):
     return [X[idx] for idx in key]
 
 
+def _polars_indexing(X, key, key_dtype, axis):
+    """Indexing X with polars interchange protocol."""
+    # Polars behavior is more consistent with lists
+    if isinstance(key, np.ndarray):
+        key = key.tolist()
+
+    if axis == 1:
+        return X[:, key]
+    else:
+        return X[key]
+
+
 def _determine_key_type(key, accept_slice=True):
     """Determine the data type of key.
 
@@ -343,14 +358,18 @@ def _safe_indexing(X, indices, *, axis=0):
     if axis == 0 and indices_dtype == "str":
         raise ValueError("String indexing is not supported with 'axis=0'")
 
-    if axis == 1 and X.ndim != 2:
+    if axis == 1 and hasattr(X, "ndim") and X.ndim != 2:
         raise ValueError(
             "'X' should be a 2D NumPy array, 2D sparse matrix or pandas "
             "dataframe when indexing the columns (i.e. 'axis=1'). "
             "Got {} instead with {} dimension(s).".format(type(X), X.ndim)
         )
 
-    if axis == 1 and indices_dtype == "str" and not hasattr(X, "loc"):
+    if (
+        axis == 1
+        and indices_dtype == "str"
+        and not (_is_pandas_df(X) or _use_interchange_protocol(X))
+    ):
         raise ValueError(
             "Specifying the columns using strings is only supported for "
             "pandas DataFrames"
@@ -358,6 +377,8 @@ def _safe_indexing(X, indices, *, axis=0):
 
     if hasattr(X, "iloc"):
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
+    elif _is_polars_df(X):
+        return _polars_indexing(X, indices, indices_dtype, axis=axis)
     elif hasattr(X, "shape"):
         return _array_indexing(X, indices, indices_dtype, axis=axis)
     else:
@@ -401,31 +422,36 @@ def _safe_assign(X, values, *, row_indexer=None, column_indexer=None):
         X[row_indexer, column_indexer] = values
 
 
+def _get_column_indices_bool_int(key, n_columns):
+    # Convert key into positive indexes
+    try:
+        idx = _safe_indexing(np.arange(n_columns), key)
+    except IndexError as e:
+        raise ValueError(
+            "all features must be in [0, {}] or [-{}, 0]".format(
+                n_columns - 1, n_columns
+            )
+        ) from e
+    return np.atleast_1d(idx).tolist()
+
+
 def _get_column_indices(X, key):
     """Get feature column indices for input data X and key.
 
     For accepted values of `key`, see the docstring of
     :func:`_safe_indexing`.
     """
-    n_columns = X.shape[1]
-
     key_dtype = _determine_key_type(key)
+    if _use_interchange_protocol(X):
+        return _get_column_indices_interchange(X.__dataframe__(), key, key_dtype)
 
+    n_columns = X.shape[1]
     if isinstance(key, (list, tuple)) and not key:
         # we get an empty list
         return []
     elif key_dtype in ("bool", "int"):
-        # Convert key into positive indexes
-        try:
-            idx = _safe_indexing(np.arange(n_columns), key)
-        except IndexError as e:
-            raise ValueError(
-                "all features must be in [0, {}] or [-{}, 0]".format(
-                    n_columns - 1, n_columns
-                )
-            ) from e
-        return np.atleast_1d(idx).tolist()
-    elif key_dtype == "str":
+        return _get_column_indices_bool_int(key, n_columns)
+    else:
         try:
             all_columns = X.columns
         except AttributeError:
@@ -462,12 +488,37 @@ def _get_column_indices(X, key):
             raise ValueError("A given column is not a column of the dataframe") from e
 
         return column_indices
+
+
+def _get_column_indices_interchange(X_interchange, key, key_dtype):
+    """Same as _get_column_indices but for X with __dataframe__ protocol."""
+    n_columns = X_interchange.num_columns()
+
+    if isinstance(key, (list, tuple)) and not key:
+        # we get an empty list
+        return []
+    elif key_dtype in ("bool", "int"):
+        return _get_column_indices_bool_int(key, n_columns)
     else:
-        raise ValueError(
-            "No valid specification of the columns. Only a "
-            "scalar, list or slice of all integers or all "
-            "strings, or boolean mask is allowed"
-        )
+        column_names = list(X_interchange.column_names())
+
+        if isinstance(key, slice):
+            start, stop = key.start, key.stop
+            if start is not None:
+                start = column_names.index(start)
+
+            if stop is not None:
+                stop = column_names.index(stop) + 1
+            else:
+                stop = n_columns + 1
+            return list(islice(range(n_columns), start, stop))
+
+        selected_columns = [key] if np.isscalar(key) else key
+
+        try:
+            return [column_names.index(col) for col in selected_columns]
+        except ValueError as e:
+            raise ValueError("A given column is not a column of the dataframe") from e
 
 
 @validate_params(

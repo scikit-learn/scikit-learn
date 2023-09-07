@@ -1012,11 +1012,12 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         transform_output = _get_output_config("transform", estimator=self)["dense"]
-        if transform_output == "pandas" and self.sparse_output:
+        if transform_output != "default" and self.sparse_output:
+            capitalize_transform_output = transform_output.capitalize()
             raise ValueError(
-                "Pandas output does not support sparse data. Set sparse_output=False to"
-                " output pandas DataFrames or disable pandas output via"
-                ' `ohe.set_output(transform="default").'
+                f"{capitalize_transform_output} output does not support sparse data."
+                f" Set sparse_output=False to output {transform_output} DataFrames or"
+                ' disable pandas output via `ohe.set_output(transform="default").'
             )
 
         # validation of X happens in _check_X called by _transform

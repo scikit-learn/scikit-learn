@@ -1,64 +1,183 @@
+import importlib
 from functools import wraps
+from typing import Protocol, runtime_checkable
 
+import numpy as np
 from scipy.sparse import issparse
 
 from .._config import get_config
-from . import check_pandas_support
 from ._available_if import available_if
-from .validation import _is_pandas_df
 
 
-def _wrap_in_pandas_container(
-    data_to_wrap,
-    *,
-    columns,
-    index=None,
-):
-    """Create a Pandas DataFrame.
+def check_library_installed(library):
+    """Check library is installed"""
+    try:
+        return importlib.import_module(library)
+    except ImportError as e:
+        raise ImportError(
+            f"Setting output container to '{library}' requires {library} to be"
+            " installed"
+        ) from e
 
-    If `data_to_wrap` is a DataFrame, then the `columns` and `index` will be changed
-    inplace. If `data_to_wrap` is a ndarray, then a new DataFrame is created with
-    `columns` and `index`.
 
-    Parameters
-    ----------
-    data_to_wrap : {ndarray, dataframe}
-        Data to be wrapped as pandas dataframe.
-
-    columns : callable, ndarray, or None
-        The column names or a callable that returns the column names. The
-        callable is useful if the column names require some computation.
-        If `columns` is a callable that raises an error, `columns` will have
-        the same semantics as `None`. If `None` and `data_to_wrap` is already a
-        dataframe, then the column names are not changed. If `None` and
-        `data_to_wrap` is **not** a dataframe, then columns are
-        `range(n_features)`.
-
-    index : array-like, default=None
-        Index for data. `index` is ignored if `data_to_wrap` is already a DataFrame.
-
-    Returns
-    -------
-    dataframe : DataFrame
-        Container with column names or unchanged `output`.
-    """
-    if issparse(data_to_wrap):
-        raise ValueError("Pandas output does not support sparse data.")
-
+def get_columns(columns):
     if callable(columns):
         try:
-            columns = columns()
+            return columns()
         except Exception:
-            columns = None
+            return None
+    return columns
 
-    pd = check_pandas_support("Setting output container to 'pandas'")
 
-    if isinstance(data_to_wrap, pd.DataFrame):
-        if columns is not None:
-            data_to_wrap.columns = columns
-        return data_to_wrap
+@runtime_checkable
+class ContainerAdapaterProtocol(Protocol):
+    container_lib: str
 
-    return pd.DataFrame(data_to_wrap, index=index, columns=columns, copy=False)
+    def create_container(self, X_output, X_original, columns):
+        """Create container from X with additional metadata.
+
+        Parameters
+        ----------
+        X_output : {ndarray, dataframe}
+            Data to wrap
+
+        X_original : {ndarray, dataframe}
+            Original input dataframe. This is used to extract the metadata that should
+            be passed to `X_output`.
+
+        columns : callable, ndarray, or None
+            The column names or a callable that returns the column names. The
+            callable is useful if the column names require some computation. If `None`,
+            then no columns are passed to the container's constructor.
+
+        Returns
+        -------
+        wrapped_output : container_type
+            `X_output` wrapped into the container type.
+        """
+
+    def is_supported_container(self, X):
+        """Return True if X are the supported container.
+
+        Parameters
+        ----------
+        X : container or list of containers
+            Containers to be checked.
+
+        Returns
+        -------
+        is_supported_container : bool
+            True if all items in `X` are the supported container.
+        """
+
+    def update_columns(self, X, columns):
+        """Update columns in X.
+
+        Parameters
+        ----------
+        X : container
+            Container which columns is updated.
+
+        columns : ndarray of str
+            Columns to container columns with.
+
+        Returns
+        -------
+        updated-X : container
+            Container with new names.
+        """
+
+    def hstack(self, Xs):
+        """Stack containers horizontally (column-wise).
+
+        Parameters
+        ----------
+        Xs : list of containers
+            List of containers to stack.
+
+        Returns
+        -------
+        stacked_Xs : container
+            Stacked containers.
+        """
+
+
+class PandasAdapter:
+    container_lib = "pandas"
+
+    def create_container(self, X_output, X_original, columns):
+        pd = check_library_installed("pandas")
+        columns = get_columns(columns)
+        index = X_original.index if isinstance(X_original, pd.DataFrame) else None
+
+        if isinstance(X_output, pd.DataFrame):
+            if columns is not None:
+                X_output.columns = columns
+            return X_output
+
+        return pd.DataFrame(X_output, index=index, columns=columns, copy=False)
+
+    def is_supported_container(self, X):
+        pd = check_library_installed("pandas")
+        if not isinstance(X, list):
+            X = [X]
+        return all(isinstance(item, pd.DataFrame) for item in X)
+
+    def update_columns(self, X, columns):
+        X.columns = columns
+        return X
+
+    def hstack(self, Xs):
+        pd = check_library_installed("pandas")
+        return pd.concat(Xs, axis=1)
+
+
+class PolarsAdapter:
+    container_lib = "polars"
+
+    def create_container(self, X_output, X_original, columns):
+        pl = check_library_installed("polars")
+        columns = get_columns(columns)
+
+        if isinstance(X_output, pl.DataFrame):
+            if columns is not None:
+                return self.update_columns(X_output, columns)
+            return X_output
+
+        if isinstance(columns, np.ndarray):
+            columns = columns.tolist()
+
+        return pl.DataFrame(X_output, schema=columns)
+
+    def is_supported_container(self, X):
+        pl = check_library_installed("polars")
+        return isinstance(X, pl.DataFrame)
+
+    def update_columns(self, X, columns):
+        return X.rename(dict(zip(X.columns, columns)))
+
+    def hstack(self, Xs):
+        pl = check_library_installed("polars")
+        return pl.concat(Xs, how="horizontal")
+
+
+CONTAINER_ADAPTERS = {
+    obj.container_lib: obj  # type: ignore
+    for obj in [
+        PandasAdapter(),
+        PolarsAdapter(),
+    ]
+}
+supported_outputs = {"default"} | set(CONTAINER_ADAPTERS)
+
+
+def _get_container_adapter(method, estimator=None):
+    """Get container adapter."""
+    dense_config = _get_output_config(method, estimator)["dense"]
+    try:
+        return CONTAINER_ADAPTERS[dense_config]
+    except KeyError:
+        return None
 
 
 def _get_output_config(method, estimator=None):
@@ -87,9 +206,9 @@ def _get_output_config(method, estimator=None):
     else:
         dense_config = get_config()[f"{method}_output"]
 
-    if dense_config not in {"default", "pandas"}:
+    if dense_config not in supported_outputs:
         raise ValueError(
-            f"output config must be 'default' or 'pandas' got {dense_config}"
+            f"output config must be in {sorted(supported_outputs)}, got {dense_config}"
         )
 
     return {"dense": dense_config}
@@ -125,11 +244,16 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
     if output_config["dense"] == "default" or not _auto_wrap_is_configured(estimator):
         return data_to_wrap
 
-    # dense_config == "pandas"
-    index = original_input.index if _is_pandas_df(original_input) else None
-    return _wrap_in_pandas_container(
-        data_to_wrap=data_to_wrap,
-        index=index,
+    dense_config = output_config["dense"]
+    if issparse(data_to_wrap):
+        raise ValueError(
+            f"{dense_config.capitalize()} output does not support sparse data."
+        )
+
+    adapter = CONTAINER_ADAPTERS[dense_config]
+    return adapter.create_container(
+        data_to_wrap,
+        original_input,
         columns=estimator.get_feature_names_out,
     )
 
@@ -226,7 +350,11 @@ class _SetOutputMixin:
 
             - `"default"`: Default output format of a transformer
             - `"pandas"`: DataFrame output
+            - `"polars"`: Polars output
             - `None`: Transform configuration is unchanged
+
+            .. versionadded:: 1.4
+                `"polars"` option was added
 
         Returns
         -------

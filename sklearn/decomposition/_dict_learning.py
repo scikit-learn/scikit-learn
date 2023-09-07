@@ -1227,7 +1227,7 @@ def dict_learning(
         positive_code=positive_code,
         positive_dict=positive_dict,
         transform_max_iter=method_max_iter,
-    )
+    ).set_output(transform="default")
     code = estimator.fit_transform(X)
     if return_n_iter:
         return (
