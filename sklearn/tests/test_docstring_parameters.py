@@ -201,6 +201,9 @@ def _construct_sparse_coder(Estimator):
 
 
 @ignore_warnings(category=sklearn.exceptions.ConvergenceWarning)
+# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
+# and substituted with the SAMME algorithm as a default
+@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
 @pytest.mark.parametrize("name, Estimator", all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
     pytest.importorskip("numpydoc")
