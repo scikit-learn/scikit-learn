@@ -182,6 +182,16 @@ def supported_float_dtypes(xp):
         return (xp.float64, xp.float32)
 
 
+def max_precision_float_dtype(xp, device):
+    """Highest precision float dtype support by namespace and device"""
+    # temporary hack while waiting for a proper inspection API, see:
+    # https://github.com/data-apis/array-api/issues/640
+    if xp.__name__ in {"array_api_compat.torch", "torch"} and device.type == "mps":
+        return xp.float32
+    else:
+        return xp.float64
+
+
 class _ArrayAPIWrapper:
     """sklearn specific Array API compatibility wrapper
 
@@ -468,17 +478,14 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         return float(numpy.average(sample_score_np, weights=sample_weight_np))
 
     if not xp.isdtype(sample_score.dtype, "real floating"):
-        # The MPS device does not support float64
-        if (
-            xp.__name__ in {"array_api_compat.torch", "torch"}
-            and device(sample_score).type == "mps"
-        ):
-            sample_score = xp.astype(sample_score, xp.float32)
-        else:
-            sample_score = xp.astype(sample_score, xp.float64)
+        sample_score = xp.astype(
+            sample_score, max_precision_float_dtype(xp, device(sample_score))
+        )
 
     if sample_weight is not None:
-        sample_weight = xp.asarray(sample_weight, dtype=sample_score.dtype)
+        sample_weight = xp.asarray(
+            sample_weight, dtype=sample_score.dtype, device=device(sample_score)
+        )
 
     if normalize:
         if sample_weight is not None:
