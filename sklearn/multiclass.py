@@ -629,14 +629,7 @@ def _fit_ovo_binary(estimator, X, y, i, j, fit_params):
     y_binary[y == j] = 1
     indcond = np.arange(_num_samples(X))[cond]
 
-    # Split fit_params using the same indices as for splitting the data
-    fit_params_subset = {}
-    for key, value in fit_params.items():
-        if isinstance(value, (np.ndarray, list)):
-            fit_params_subset[key] = np.array(value)[indcond]
-        else:
-            # For non-array-like values, use the original value
-            fit_params_subset[key] = value
+    fit_params_subset = _check_method_params(X, params=fit_params, indices=indcond)
     return (
         _fit_binary(
             estimator,
