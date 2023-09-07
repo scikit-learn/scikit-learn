@@ -148,7 +148,7 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
         ([np.array(["cat", "dog", "snake"], dtype=object)], ["bear", "rabbit"]),
     ],
 )
-@pytest.mark.parametrize("target", [[np.array([1, 2, 3])], [np.array(['a', 'b', 'c'])]])
+@pytest.mark.parametrize("target", [[np.array([1, 2, 3])], [np.array(["a", "b", "c"])]])
 @pytest.mark.parametrize("smooth", [5.0, "auto"])
 def test_encoding_multiclass(
     global_random_seed, categories, unknown_values, target, smooth
@@ -172,7 +172,9 @@ def test_encoding_multiclass(
     y_train_enc = LabelBinarizer().fit_transform(y_train)
 
     n_splits = 3
-    cv = StratifiedKFold(n_splits=n_splits, random_state=global_random_seed, shuffle=True)
+    cv = StratifiedKFold(
+        n_splits=n_splits, random_state=global_random_seed, shuffle=True
+    )
 
     # Manually compute encodings for cv splits to validate `fit_transform`
     expected_X_fit_transform = np.empty(
