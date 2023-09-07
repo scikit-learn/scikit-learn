@@ -1,11 +1,9 @@
 import numpy as np
 import pytest
-
-from sklearn.utils._testing import assert_array_equal
-
 from scipy.sparse import bsr_matrix, csc_matrix, csr_matrix
 
 from sklearn.feature_selection import VarianceThreshold
+from sklearn.utils._testing import assert_array_equal
 
 data = [[0, 1, 2, 3, 4], [0, 2, 2, 3, 5], [1, 1, 2, 4, 0]]
 

@@ -148,8 +148,6 @@ else
     make_args=html
 fi
 
-make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
-
 # Installing required system packages to support the rendering of math
 # notation in the HTML documentation and to optimize the image files
 sudo -E apt-get -yq update --allow-releaseinfo-change
@@ -174,7 +172,7 @@ export CCACHE_COMPRESS=1
 # pin conda-lock to latest released version (needs manual update from time to time)
 mamba install "$(get_dep conda-lock min)" -y
 
-conda-lock install --log-level WARNING --name $CONDA_ENV_NAME $LOCK_FILE
+conda-lock install --log-level DEBUG --name $CONDA_ENV_NAME $LOCK_FILE
 source activate $CONDA_ENV_NAME
 
 show_installed_libraries

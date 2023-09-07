@@ -3,39 +3,37 @@
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
 
-import pytest
-import numpy as np
 from inspect import signature
 
-from sklearn.gaussian_process.kernels import _approx_fprime
+import numpy as np
+import pytest
 
+from sklearn.base import clone
+from sklearn.gaussian_process.kernels import (
+    RBF,
+    CompoundKernel,
+    ConstantKernel,
+    DotProduct,
+    Exponentiation,
+    ExpSineSquared,
+    KernelOperator,
+    Matern,
+    PairwiseKernel,
+    RationalQuadratic,
+    WhiteKernel,
+    _approx_fprime,
+)
 from sklearn.metrics.pairwise import (
     PAIRWISE_KERNEL_FUNCTIONS,
     euclidean_distances,
     pairwise_kernels,
 )
-from sklearn.gaussian_process.kernels import (
-    RBF,
-    Matern,
-    RationalQuadratic,
-    ExpSineSquared,
-    DotProduct,
-    ConstantKernel,
-    WhiteKernel,
-    PairwiseKernel,
-    KernelOperator,
-    Exponentiation,
-    CompoundKernel,
-)
-from sklearn.base import clone
-
 from sklearn.utils._testing import (
-    assert_almost_equal,
-    assert_array_equal,
-    assert_array_almost_equal,
     assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
 )
-
 
 X = np.random.RandomState(0).normal(0, 1, (5, 2))
 Y = np.random.RandomState(0).normal(0, 1, (6, 2))

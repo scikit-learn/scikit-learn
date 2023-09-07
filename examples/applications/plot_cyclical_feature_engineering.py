@@ -35,7 +35,6 @@ df = bike_sharing.frame
 # demand around the middle of the days:
 import matplotlib.pyplot as plt
 
-
 fig, ax = plt.subplots(figsize=(12, 4))
 average_week_demand = df.groupby(["weekday", "hour"])["count"].mean()
 average_week_demand.plot(ax=ax)
@@ -181,12 +180,11 @@ X.iloc[train_4]
 #
 # The numerical variables need no preprocessing and, for the sake of simplicity,
 # we only try the default hyper-parameters for this model:
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import OrdinalEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import cross_validate
-
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OrdinalEncoder
 
 categorical_columns = [
     "weather",
@@ -262,11 +260,10 @@ evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 # For consistency, we scale the numerical features to the same 0-1 range using
 # class:`sklearn.preprocessing.MinMaxScaler`, although in this case it does not
 # impact the results much because they are already on comparable scales:
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.linear_model import RidgeCV
 import numpy as np
 
+from sklearn.linear_model import RidgeCV
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 
 one_hot_encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
 alphas = np.logspace(-6, 6, 25)
@@ -619,9 +616,8 @@ cyclic_spline_linear_pipeline[:-1].transform(X).shape
 # However, it is possible to use the `PolynomialFeatures` class on coarse
 # grained spline encoded hours to model the "workingday"/"hours" interaction
 # explicitly without introducing too many new variables:
-from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import FeatureUnion
-
+from sklearn.preprocessing import PolynomialFeatures
 
 hour_workday_interaction = make_pipeline(
     ColumnTransformer(
@@ -667,7 +663,6 @@ evaluate(cyclic_spline_interactions_pipeline, X, y, cv=ts_cv)
 # Alternatively, we can use the Nyström method to compute an approximate
 # polynomial kernel expansion. Let us try the latter:
 from sklearn.kernel_approximation import Nystroem
-
 
 cyclic_spline_poly_pipeline = make_pipeline(
     cyclic_spline_transformer,

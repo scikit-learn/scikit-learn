@@ -14,12 +14,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from sklearn.svm import SVC
 from sklearn import datasets
-from sklearn.model_selection import GridSearchCV
 from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.model_selection import HalvingGridSearchCV
-
+from sklearn.model_selection import GridSearchCV, HalvingGridSearchCV
+from sklearn.svm import SVC
 
 # %%
 # We first define the parameter space for an :class:`~sklearn.svm.SVC`

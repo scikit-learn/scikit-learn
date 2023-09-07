@@ -15,8 +15,8 @@ class has its own standard deviation with QDA.
 # Colormap
 # --------
 
-import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 from matplotlib import colors
 
 cmap = colors.LinearSegmentedColormap(
@@ -172,8 +172,10 @@ plt.suptitle(
     fontsize=15,
 )
 
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.discriminant_analysis import (
+    LinearDiscriminantAnalysis,
+    QuadraticDiscriminantAnalysis,
+)
 
 for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
     # Linear Discriminant Analysis

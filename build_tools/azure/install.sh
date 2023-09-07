@@ -67,7 +67,7 @@ python_environment_install_and_activate() {
 
     if [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
         echo "Installing development dependency wheels"
-        dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
+        dev_anaconda_url=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
         echo "Installing Cython from latest sources"
         pip install https://github.com/cython/cython/archive/master.zip

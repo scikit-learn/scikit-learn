@@ -11,9 +11,6 @@ from libc.math cimport fabs, sqrt, isnan
 cimport numpy as cnp
 import numpy as np
 from cython cimport floating
-from cython.parallel cimport prange
-
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 cnp.import_array()
 
@@ -28,14 +25,12 @@ def csr_row_norms(X):
     """Squared L2 norm of each row in CSR matrix X."""
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
-    n_threads = _openmp_effective_n_threads()
-    return _sqeuclidean_row_norms_sparse(X.data, X.indptr, n_threads)
+    return _sqeuclidean_row_norms_sparse(X.data, X.indptr)
 
 
 def _sqeuclidean_row_norms_sparse(
     const floating[::1] X_data,
     const integral[::1] X_indptr,
-    int n_threads,
 ):
     cdef:
         integral n_samples = X_indptr.shape[0] - 1
@@ -45,9 +40,10 @@ def _sqeuclidean_row_norms_sparse(
 
     cdef floating[::1] squared_row_norms = np.zeros(n_samples, dtype=dtype)
 
-    for i in prange(n_samples, schedule='static', nogil=True, num_threads=n_threads):
-        for j in range(X_indptr[i], X_indptr[i + 1]):
-            squared_row_norms[i] += X_data[j] * X_data[j]
+    with nogil:
+        for i in range(n_samples):
+            for j in range(X_indptr[i], X_indptr[i + 1]):
+                squared_row_norms[i] += X_data[j] * X_data[j]
 
     return np.asarray(squared_row_norms)
 

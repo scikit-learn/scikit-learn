@@ -60,7 +60,7 @@ Highlights
 - :class:`cluster.Birch` clustering method for large-scale datasets.
 
 - Scalable approximate nearest neighbors search with Locality-sensitive
-  hashing forests in :class:`neighbors.LSHForest`.
+  hashing forests in `neighbors.LSHForest`.
 
 - Improved error messages and better validation when using malformed input data.
 
@@ -72,7 +72,7 @@ Changelog
 New features
 ............
 
-- The new :class:`neighbors.LSHForest` implements locality-sensitive hashing
+- The new `neighbors.LSHForest` implements locality-sensitive hashing
   for approximate nearest neighbors search. By :user:`Maheshakya Wijewardena<maheshakya>`.
 
 - Added :class:`svm.LinearSVR`. This class uses the liblinear implementation
@@ -109,7 +109,7 @@ New features
   and :class:`SGDRegressor <linear_model.SGDRegressor>` By
   :user:`Danny Sullivan <dsullivan7>`.
 
-- Added :func:`cross_val_predict <cross_validation.cross_val_predict>`
+- Added `cross_val_predict`
   function which computes cross-validated estimates. By `Luis Pedro Coelho`_
 
 - Added :class:`linear_model.TheilSenRegressor`, a robust
@@ -131,7 +131,7 @@ New features
 - All solvers in :class:`linear_model.Ridge` now support `sample_weight`.
   By `Mathieu Blondel`_.
 
-- Added :class:`cross_validation.PredefinedSplit` cross-validation
+- Added `cross_validation.PredefinedSplit` cross-validation
   for fixed user-provided cross-validation folds.
   By :user:`Thomas Unterthiner <untom>`.
 
@@ -144,10 +144,10 @@ New features
 Enhancements
 ............
 
-- Add option ``return_distance`` in :func:`hierarchical.ward_tree`
+- Add option ``return_distance`` in `hierarchical.ward_tree`
   to return distances between nodes for both structured and unstructured
   versions of the algorithm. By `Matteo Visconti di Oleggio Castello`_.
-  The same option was added in :func:`hierarchical.linkage_tree`.
+  The same option was added in `hierarchical.linkage_tree`.
   By `Manoj Kumar`_
 
 - Add support for sample weights in scorer objects.  Metrics with sample
@@ -162,7 +162,7 @@ Enhancements
   and related. By `Manoj Kumar`_.
 
 - Add ``sample_weight`` parameter to
-  :func:`metrics.jaccard_similarity_score` and :func:`metrics.log_loss`.
+  `metrics.jaccard_similarity_score` and :func:`metrics.log_loss`.
   By :user:`Jatin Shah <jatinshah>`.
 
 - Support sparse multilabel indicator representation in
@@ -191,11 +191,11 @@ Enhancements
   single pass, when giving the option ``sort=False``. By :user:`Dan
   Blanchard <dan-blanchard>`.
 
-- :class:`GridSearchCV` and :class:`RandomizedSearchCV` can now be
-  configured to work with estimators that may fail and raise errors on
-  individual folds. This option is controlled by the `error_score`
-  parameter. This does not affect errors raised on re-fit. By
-  :user:`Michal Romaniuk <romaniukm>`.
+- :class:`model_selection.GridSearchCV` and
+  :class:`model.selection.RandomizedSearchCV` can now be configured to work
+  with estimators that may fail and raise errors on individual folds. This
+  option is controlled by the `error_score` parameter. This does not affect
+  errors raised on re-fit. By :user:`Michal Romaniuk <romaniukm>`.
 
 - Add ``digits`` parameter to `metrics.classification_report` to allow
   report to show different precision of floating point numbers. By
@@ -223,14 +223,14 @@ Enhancements
 - Added decision function for :class:`multiclass.OneVsOneClassifier`
   By `Raghav RV`_ and :user:`Kyle Beauchamp <kyleabeauchamp>`.
 
-- :func:`neighbors.kneighbors_graph` and :func:`radius_neighbors_graph`
+- `neighbors.kneighbors_graph` and `radius_neighbors_graph`
   support non-Euclidean metrics. By `Manoj Kumar`_
 
 - Parameter ``connectivity`` in :class:`cluster.AgglomerativeClustering`
   and family now accept callables that return a connectivity matrix.
   By `Manoj Kumar`_.
 
-- Sparse support for :func:`paired_distances`. By `Joel Nothman`_.
+- Sparse support for :func:`metrics.pairwise.paired_distances`. By `Joel Nothman`_.
 
 - :class:`cluster.DBSCAN` now supports sparse input and sample weights and
   has been optimized: the inner loop has been rewritten in Cython and
@@ -242,10 +242,10 @@ Enhancements
   :class:`tree.DecisionTreeClassifier`, :class:`ensemble.ExtraTreesClassifier`
   and :class:`tree.ExtraTreeClassifier`. By `Trevor Stephens`_.
 
-- :class:`grid_search.RandomizedSearchCV` now does sampling without
+- `grid_search.RandomizedSearchCV` now does sampling without
   replacement if all parameters are given as lists. By `Andreas Müller`_.
 
-- Parallelized calculation of :func:`pairwise_distances` is now supported
+- Parallelized calculation of :func:`metrics.pairwise_distances` is now supported
   for scipy metrics and custom callables. By `Joel Nothman`_.
 
 - Allow the fitting and scoring of all clustering algorithms in
@@ -254,8 +254,8 @@ Enhancements
 - More robust seeding and improved error messages in :class:`cluster.MeanShift`
   by `Andreas Müller`_.
 
-- Make the stopping criterion for :class:`mixture.GMM`,
-  :class:`mixture.DPGMM` and :class:`mixture.VBGMM` less dependent on the
+- Make the stopping criterion for `mixture.GMM`,
+  `mixture.DPGMM` and `mixture.VBGMM` less dependent on the
   number of samples by thresholding the average log-likelihood change
   instead of its sum over all samples. By `Hervé Bredin`_.
 
@@ -271,14 +271,14 @@ Enhancements
 - :class:`svm.SVC` fitted on sparse input now implements ``decision_function``.
   By `Rob Zinkov`_ and `Andreas Müller`_.
 
-- :func:`cross_validation.train_test_split` now preserves the input type,
+- `cross_validation.train_test_split` now preserves the input type,
   instead of converting to numpy arrays.
 
 
 Documentation improvements
 ..........................
 
-- Added example of using :class:`FeatureUnion` for heterogeneous input.
+- Added example of using :class:`pipeline.FeatureUnion` for heterogeneous input.
   By :user:`Matt Terry <mrterry>`
 
 - Documentation on scorers was improved, to highlight the handling of loss
@@ -306,16 +306,16 @@ Bug fixes
 .........
 - Metaestimators now support ducktyping for the presence of ``decision_function``,
   ``predict_proba`` and other methods. This fixes behavior of
-  :class:`grid_search.GridSearchCV`,
-  :class:`grid_search.RandomizedSearchCV`, :class:`pipeline.Pipeline`,
+  `grid_search.GridSearchCV`,
+  `grid_search.RandomizedSearchCV`, :class:`pipeline.Pipeline`,
   :class:`feature_selection.RFE`, :class:`feature_selection.RFECV` when nested.
   By `Joel Nothman`_
 
 - The ``scoring`` attribute of grid-search and cross-validation methods is no longer
-  ignored when a :class:`grid_search.GridSearchCV` is given as a base estimator or
+  ignored when a `grid_search.GridSearchCV` is given as a base estimator or
   the base estimator doesn't have predict.
 
-- The function :func:`hierarchical.ward_tree` now returns the children in
+- The function `hierarchical.ward_tree` now returns the children in
   the same order for both the structured and unstructured versions. By
   `Matteo Visconti di Oleggio Castello`_.
 
@@ -327,7 +327,7 @@ Bug fixes
   length. By :user:`Michael Eickenberg <eickenberg>`.
 
 - Fix incomplete download of the dataset when
-  :func:`datasets.download_20newsgroups` is called. By `Manoj Kumar`_.
+  `datasets.download_20newsgroups` is called. By `Manoj Kumar`_.
 
 - Various fixes to the Gaussian processes subpackage by Vincent Dubourg
   and Jan Hendrik Metzen.
@@ -384,7 +384,7 @@ Bug fixes
   :class:`sklearn.neighbors.NearestNeighbors` and family, when the query
   data is not the same as fit data. By `Manoj Kumar`_.
 
-- Fix log-density calculation in the :class:`mixture.GMM` with
+- Fix log-density calculation in the `mixture.GMM` with
   tied covariance. By `Will Dawson`_
 
 - Fixed a scaling error in :class:`feature_selection.SelectFdr`
@@ -415,15 +415,15 @@ Bug fixes
 API changes summary
 -------------------
 
-- :class:`GridSearchCV <grid_search.GridSearchCV>` and
-  :func:`cross_val_score <cross_validation.cross_val_score>` and other
+- `GridSearchCV` and
+  `cross_val_score` and other
   meta-estimators don't convert pandas DataFrames into arrays any more,
   allowing DataFrame specific operations in custom estimators.
 
-- :func:`multiclass.fit_ovr`, :func:`multiclass.predict_ovr`,
-  :func:`predict_proba_ovr`,
-  :func:`multiclass.fit_ovo`, :func:`multiclass.predict_ovo`,
-  :func:`multiclass.fit_ecoc` and :func:`multiclass.predict_ecoc`
+- `multiclass.fit_ovr`, `multiclass.predict_ovr`,
+  `predict_proba_ovr`,
+  `multiclass.fit_ovo`, `multiclass.predict_ovo`,
+  `multiclass.fit_ecoc` and `multiclass.predict_ecoc`
   are deprecated. Use the underlying estimators instead.
 
 - Nearest neighbors estimators used to take arbitrary keyword arguments
@@ -439,11 +439,11 @@ API changes summary
   but previous versions accidentally returned only the positive
   probability. Fixed by Will Lamond and `Lars Buitinck`_.
 
-- Change default value of precompute in :class:`ElasticNet` and :class:`Lasso`
-  to False. Setting precompute to "auto" was found to be slower when
-  n_samples > n_features since the computation of the Gram matrix is
-  computationally expensive and outweighs the benefit of fitting the Gram
-  for just one alpha.
+- Change default value of precompute in :class:`linear_model.ElasticNet` and
+  :class:`linear_model.Lasso` to False. Setting precompute to "auto" was found
+  to be slower when n_samples > n_features since the computation of the Gram
+  matrix is computationally expensive and outweighs the benefit of fitting the
+  Gram for just one alpha.
   ``precompute="auto"`` is now deprecated and will be removed in 0.18
   By `Manoj Kumar`_.
 
@@ -467,8 +467,8 @@ API changes summary
   been removed. They were deprecated since 0.14
 
 - From now onwards, all estimators will uniformly raise ``NotFittedError``
-  (:class:`utils.validation.NotFittedError`), when any of the ``predict``
-  like methods are called before the model is fit. By `Raghav RV`_.
+  when any of the ``predict`` like methods are called before the model is fit.
+  By `Raghav RV`_.
 
 - Input data validation was refactored for more consistent input
   validation. The ``check_arrays`` function was replaced by ``check_array``
@@ -486,7 +486,7 @@ API changes summary
   as the first nearest neighbor.
 
 - `thresh` parameter is deprecated in favor of new `tol` parameter in
-  :class:`GMM`, :class:`DPGMM` and :class:`VBGMM`. See `Enhancements`
+  `GMM`, `DPGMM` and `VBGMM`. See `Enhancements`
   section for details. By `Hervé Bredin`_.
 
 - Estimators will treat input with dtype object as numeric when possible.
@@ -538,4 +538,3 @@ terrycojones, Thomas Delteil, Thomas Unterthiner, Tomas Kazmar, trevorstephens,
 tttthomasssss, Tzu-Ming Kuo, ugurcaliskan, ugurthemaster, Vinayak Mehta,
 Vincent Dubourg, Vjacheslav Murashkin, Vlad Niculae, wadawson, Wei Xue, Will
 Lamond, Wu Jiang, x0l, Xinfan Meng, Yan Yi, Yu-Chin
-

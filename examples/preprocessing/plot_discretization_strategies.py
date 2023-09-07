@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 ==========================================================
 Demonstrating the different strategies of KBinsDiscretizer
@@ -20,11 +19,11 @@ The plot shows the regions where the discretized encoding is constant.
 # Author: Tom Dupré la Tour
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.datasets import make_blobs
+from sklearn.preprocessing import KBinsDiscretizer
 
 strategies = ["uniform", "quantile", "kmeans"]
 

@@ -12,15 +12,18 @@ Extended math utilities.
 # License: BSD 3 clause
 
 import warnings
+from functools import partial
+from numbers import Integral
 
 import numpy as np
 from scipy import linalg, sparse
 
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from . import check_random_state
+from ._array_api import _is_numpy_namespace, device, get_namespace
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from ._array_api import get_namespace, _is_numpy_namespace
 
 
 def squared_norm(x):
@@ -72,8 +75,7 @@ def row_norms(X, squared=False):
         The row-wise (squared) Euclidean norm of X.
     """
     if sparse.issparse(X):
-        if not isinstance(X, sparse.csr_matrix):
-            X = sparse.csr_matrix(X)
+        X = X.tocsr()
         norms = csr_row_norms(X)
     else:
         norms = np.einsum("ij,ij->i", X, X)
@@ -116,9 +118,10 @@ def fast_logdet(A):
     >>> fast_logdet(a)
     3.6375861597263857
     """
-    sign, ld = np.linalg.slogdet(A)
+    xp, _ = get_namespace(A)
+    sign, ld = xp.linalg.slogdet(A)
     if not sign > 0:
-        return -np.inf
+        return -xp.inf
     return ld
 
 
@@ -253,41 +256,89 @@ def randomized_range_finder(
     analysis
     A. Szlam et al. 2014
     """
+    xp, is_array_api_compliant = get_namespace(A)
     random_state = check_random_state(random_state)
 
     # Generating normal random vectors with shape: (A.shape[1], size)
-    Q = random_state.normal(size=(A.shape[1], size))
-    if hasattr(A, "dtype") and A.dtype.kind == "f":
-        # Ensure f32 is preserved as f32
-        Q = Q.astype(A.dtype, copy=False)
+    # XXX: generate random number directly from xp if it's possible
+    # one day.
+    Q = xp.asarray(random_state.normal(size=(A.shape[1], size)))
+    if hasattr(A, "dtype") and xp.isdtype(A.dtype, kind="real floating"):
+        # Use float32 computation and components if A has a float32 dtype.
+        Q = xp.astype(Q, A.dtype, copy=False)
+
+    # Move Q to device if needed only after converting to float32 if needed to
+    # avoid allocating unnecessary memory on the device.
+
+    # Note: we cannot combine the astype and to_device operations in one go
+    # using xp.asarray(..., dtype=dtype, device=device) because downcasting
+    # from float64 to float32 in asarray might not always be accepted as only
+    # casts following type promotion rules are guarateed to work.
+    # https://github.com/data-apis/array-api/issues/647
+    if is_array_api_compliant:
+        Q = xp.asarray(Q, device=device(A))
 
     # Deal with "auto" mode
     if power_iteration_normalizer == "auto":
         if n_iter <= 2:
             power_iteration_normalizer = "none"
+        elif is_array_api_compliant:
+            # XXX: https://github.com/data-apis/array-api/issues/627
+            warnings.warn(
+                "Array API does not support LU factorization, falling back to QR"
+                " instead. Set `power_iteration_normalizer='QR'` explicitly to silence"
+                " this warning."
+            )
+            power_iteration_normalizer = "QR"
         else:
             power_iteration_normalizer = "LU"
+    elif power_iteration_normalizer == "LU" and is_array_api_compliant:
+        raise ValueError(
+            "Array API does not support LU factorization. Set "
+            "`power_iteration_normalizer='QR'` instead."
+        )
+
+    if is_array_api_compliant:
+        qr_normalizer = partial(xp.linalg.qr, mode="reduced")
+    else:
+        # Use scipy.linalg instead of numpy.linalg when not explicitly
+        # using the Array API.
+        qr_normalizer = partial(linalg.qr, mode="economic")
+
+    if power_iteration_normalizer == "QR":
+        normalizer = qr_normalizer
+    elif power_iteration_normalizer == "LU":
+        normalizer = partial(linalg.lu, permute_l=True)
+    else:
+        normalizer = lambda x: (x, None)
 
     # Perform power iterations with Q to further 'imprint' the top
     # singular vectors of A in Q
-    for i in range(n_iter):
-        if power_iteration_normalizer == "none":
-            Q = safe_sparse_dot(A, Q)
-            Q = safe_sparse_dot(A.T, Q)
-        elif power_iteration_normalizer == "LU":
-            Q, _ = linalg.lu(safe_sparse_dot(A, Q), permute_l=True)
-            Q, _ = linalg.lu(safe_sparse_dot(A.T, Q), permute_l=True)
-        elif power_iteration_normalizer == "QR":
-            Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode="economic")
-            Q, _ = linalg.qr(safe_sparse_dot(A.T, Q), mode="economic")
+    for _ in range(n_iter):
+        Q, _ = normalizer(A @ Q)
+        Q, _ = normalizer(A.T @ Q)
 
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
-    Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode="economic")
+    Q, _ = qr_normalizer(A @ Q)
 
     return Q
 
 
+@validate_params(
+    {
+        "M": [np.ndarray, "sparse matrix"],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "n_oversamples": [Interval(Integral, 0, None, closed="left")],
+        "n_iter": [Interval(Integral, 0, None, closed="left"), StrOptions({"auto"})],
+        "power_iteration_normalizer": [StrOptions({"auto", "QR", "LU", "none"})],
+        "transpose": ["boolean", StrOptions({"auto"})],
+        "flip_sign": ["boolean"],
+        "random_state": ["random_state"],
+        "svd_lapack_driver": [StrOptions({"gesdd", "gesvd"})],
+    },
+    prefer_skip_nested_validation=True,
+)
 def randomized_svd(
     M,
     n_components,
@@ -314,9 +365,9 @@ def randomized_svd(
         Number of singular values and vectors to extract.
 
     n_oversamples : int, default=10
-        Additional number of random vectors to sample the range of M so as
+        Additional number of random vectors to sample the range of `M` so as
         to ensure proper conditioning. The total number of random vectors
-        used to find the range of M is n_components + n_oversamples. Smaller
+        used to find the range of `M` is `n_components + n_oversamples`. Smaller
         number can improve speed but can negatively impact the quality of
         approximation of singular vectors and singular values. Users might wish
         to increase this parameter up to `2*k - n_components` where k is the
@@ -425,7 +476,7 @@ def randomized_svd(
     >>> U.shape, s.shape, Vh.shape
     ((3, 2), (2,), (2, 4))
     """
-    if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
+    if sparse.issparse(M) and M.format in ("lil", "dok"):
         warnings.warn(
             "Calculating SVD of a {} is expensive. "
             "csr_matrix is more efficient.".format(type(M).__name__),
@@ -456,13 +507,21 @@ def randomized_svd(
     )
 
     # project M to the (k + p) dimensional space using the basis vectors
-    B = safe_sparse_dot(Q.T, M)
+    B = Q.T @ M
 
     # compute the SVD on the thin matrix: (k + p) wide
-    Uhat, s, Vt = linalg.svd(B, full_matrices=False, lapack_driver=svd_lapack_driver)
-
+    xp, is_array_api_compliant = get_namespace(B)
+    if is_array_api_compliant:
+        Uhat, s, Vt = xp.linalg.svd(B, full_matrices=False)
+    else:
+        # When when array_api_dispatch is disabled, rely on scipy.linalg
+        # instead of numpy.linalg to avoid introducing a behavior change w.r.t.
+        # previous versions of scikit-learn.
+        Uhat, s, Vt = linalg.svd(
+            B, full_matrices=False, lapack_driver=svd_lapack_driver
+        )
     del B
-    U = np.dot(Q, Uhat)
+    U = Q @ Uhat
 
     if flip_sign:
         if not transpose:
@@ -567,7 +626,7 @@ def _randomized_eigsh(
 
     Strategy 'value': not implemented yet.
     Algorithms 5.3, 5.4 and 5.5 in the Halko et al paper should provide good
-    condidates for a future implementation.
+    candidates for a future implementation.
 
     Strategy 'module':
     The principle is that for diagonalizable matrices, the singular values and
@@ -773,6 +832,10 @@ def svd_flip(u, v, u_based_decision=True):
     Adjusts the columns of u and the rows of v such that the loadings in the
     columns in u that are largest in absolute value are always positive.
 
+    If u_based_decision is False, then the same sign correction is applied to
+    so that the rows in v that are largest in absolute value are always
+    positive.
+
     Parameters
     ----------
     u : ndarray
@@ -783,9 +846,8 @@ def svd_flip(u, v, u_based_decision=True):
     v : ndarray
         Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
-        dimensions so one can compute `np.dot(u * s, v)`.
-        The input v should really be called vt to be consistent with scipy's
-        output.
+        dimensions so one can compute `np.dot(u * s, v)`. The input v should
+        really be called vt to be consistent with scipy's output.
 
     u_based_decision : bool, default=True
         If True, use the columns of u as the basis for sign flipping.
@@ -800,17 +862,24 @@ def svd_flip(u, v, u_based_decision=True):
     v_adjusted : ndarray
         Array v with adjusted rows and the same dimensions as v.
     """
+    xp, _ = get_namespace(u, v)
+    device = getattr(u, "device", None)
+
     if u_based_decision:
-        # columns of u, rows of v
-        max_abs_cols = np.argmax(np.abs(u), axis=0)
-        signs = np.sign(u[max_abs_cols, range(u.shape[1])])
-        u *= signs
+        # columns of u, rows of v, or equivalently rows of u.T and v
+        max_abs_u_cols = xp.argmax(xp.abs(u.T), axis=1)
+        shift = xp.arange(u.T.shape[0], device=device)
+        indices = max_abs_u_cols + shift * u.T.shape[1]
+        signs = xp.sign(xp.take(xp.reshape(u.T, (-1,)), indices, axis=0))
+        u *= signs[np.newaxis, :]
         v *= signs[:, np.newaxis]
     else:
         # rows of v, columns of u
-        max_abs_rows = np.argmax(np.abs(v), axis=1)
-        signs = np.sign(v[range(v.shape[0]), max_abs_rows])
-        u *= signs
+        max_abs_v_rows = xp.argmax(xp.abs(v), axis=1)
+        shift = xp.arange(v.shape[0], device=device)
+        indices = max_abs_v_rows + shift * v.shape[1]
+        signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices))
+        u *= signs[np.newaxis, :]
         v *= signs[:, np.newaxis]
     return u, v
 
@@ -1139,10 +1208,12 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     out : ndarray
         Array with the cumulative sums along the chosen axis.
     """
-    out = np.cumsum(arr, axis=axis, dtype=np.float64)
-    expected = np.sum(arr, axis=axis, dtype=np.float64)
-    if not np.all(
-        np.isclose(
+    xp, _ = get_namespace(arr)
+
+    out = xp.cumsum(arr, axis=axis, dtype=np.float64)
+    expected = xp.sum(arr, axis=axis, dtype=np.float64)
+    if not xp.all(
+        xp.isclose(
             out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
         )
     ):
