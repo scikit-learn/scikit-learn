@@ -12,6 +12,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 def test_one_hot_encoder_sparse_dense():
@@ -414,7 +415,7 @@ def test_X_is_not_1D_pandas(method):
             np.object_,
         ),
         (np.array([["A", "cat"], ["B", "cat"]]), [["A", "B"], ["cat"]], np.str_),
-        (np.array([[1, 2], [np.nan, 2]]), [[1, np.nan], [2]], np.float_),
+        (np.array([[1, 2], [np.nan, 2]]), [[1, np.nan], [2]], np.float64),
         (
             np.array([["A", np.nan], [None, np.nan]], dtype=object),
             [["A", None], [np.nan]],
@@ -1761,13 +1762,14 @@ def test_ordinal_encoder_handle_missing_and_unknown(X, expected_X_trans, X_test)
     assert_allclose(oe.transform(X_test), [[-1.0]])
 
 
-def test_ordinal_encoder_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_ordinal_encoder_sparse(csr_container):
     """Check that we raise proper error with sparse input in OrdinalEncoder.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/19878
     """
     X = np.array([[3, 2, 1], [0, 1, 1]])
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
 
     encoder = OrdinalEncoder()
 
@@ -1778,7 +1780,7 @@ def test_ordinal_encoder_sparse():
         encoder.fit_transform(X_sparse)
 
     X_trans = encoder.fit_transform(X)
-    X_trans_sparse = sparse.csr_matrix(X_trans)
+    X_trans_sparse = csr_container(X_trans)
     with pytest.raises(TypeError, match=err_msg):
         encoder.inverse_transform(X_trans_sparse)
 

@@ -68,6 +68,7 @@ extensions = [
 # Specify how to identify the prompt when copying code snippets
 copybutton_prompt_text = r">>> |\.\.\. "
 copybutton_prompt_is_regexp = True
+copybutton_exclude = "style"
 
 try:
     import jupyterlite_sphinx  # noqa: F401
