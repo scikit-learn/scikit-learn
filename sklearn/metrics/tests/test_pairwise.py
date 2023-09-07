@@ -781,12 +781,20 @@ def test_pairwise_distances_chunked(global_dtype):
 @pytest.mark.parametrize(
     "x_array_constr",
     [np.array] + CSR_CONTAINERS,
-    ids=["dense", "sparse_matrix", "sparse_array"],
+    ids=(
+        ["dense", "sparse_matrix"]
+        if len(CSR_CONTAINERS) == 1
+        else ["dense", "sparse_matrix", "sparse_array"]
+    ),
 )
 @pytest.mark.parametrize(
     "y_array_constr",
     [np.array] + CSR_CONTAINERS,
-    ids=["dense", "sparse_matrix", "sparse_array"],
+    ids=(
+        ["dense", "sparse_matrix"]
+        if len(CSR_CONTAINERS) == 1
+        else ["dense", "sparse_matrix", "sparse_array"]
+    ),
 )
 def test_euclidean_distances_known_result(x_array_constr, y_array_constr):
     # Check the pairwise Euclidean distances computation on known result
