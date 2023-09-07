@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
@@ -329,7 +331,14 @@ def test_use_regression_target():
     y = np.array([1.0, 2.0, 3.0, 2.0, 3.0, 4.0])
 
     enc = TargetEncoder(cv=2)
-    enc.fit_transform(X, y)
+    with pytest.warns(
+        UserWarning,
+        match=re.escape(
+            "The least populated class in y has only 1 members, which is less than"
+            " n_splits=2."
+        ),
+    ):
+        enc.fit_transform(X, y)
     assert enc.target_type_ == "multiclass"
 
     enc = TargetEncoder(cv=2, target_type="continuous")
