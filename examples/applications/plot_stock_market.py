@@ -170,7 +170,7 @@ for i in range(n_labels + 1):
 from sklearn import manifold
 
 node_position_model = manifold.LocallyLinearEmbedding(
-    n_components=2, eigen_solver="dense", n_neighbors=6, random_state=42
+    n_components=2, eigen_solver="dense", n_neighbors=6
 )
 
 embedding = node_position_model.fit_transform(X.T).T
