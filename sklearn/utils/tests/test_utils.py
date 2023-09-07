@@ -823,14 +823,21 @@ def test_dataframe_interchange_indexing():
 
 
 def test_dataframe_interchange_indexing_errors():
+    """Dataframe interchange indexing does only supports axis=1."""
     pl = pytest.importorskip("polars", minversion="0.18.2")
 
-    df_pl = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [1, 4, 1]})
-
-    msg = "Only polars dataframes are accepted with the dataframe interchange protocol"
-    with pytest.raises(ValueError, match=msg):
-        _dataframe_interchange_indexing(np.array([[1, 2, 3]]), ["a"], "str", axis=1)
+    df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [1, 4, 1]})
 
     msg = "Only axis=1 is support with the dataframe interchange protocol"
     with pytest.raises(ValueError, match=msg):
-        _dataframe_interchange_indexing(df_pl, ["a"], "str", axis=0)
+        _dataframe_interchange_indexing(df, [0], "int", axis=0)
+
+
+def test_dataframe_interchange_indexing_pandas_errors():
+    """Dataframe interchange indexing does not support pandas."""
+    pd = pytest.importorskip("polars", minversion="2.0")
+    df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [1, 4, 1]})
+
+    msg = "Only polars dataframes are accepted with the dataframe interchange protocol"
+    with pytest.raises(ValueError, match=msg):
+        _dataframe_interchange_indexing(df, [0], "int", axis=1)
