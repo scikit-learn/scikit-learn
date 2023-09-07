@@ -22,6 +22,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.fixes import COO_CONTAINERS, CSR_CONTAINERS
 
 all_sparse_random_matrix: List[Any] = [_sparse_random_matrix]
 all_dense_random_matrix: List[Any] = [_gaussian_random_matrix]
@@ -32,11 +33,14 @@ all_DenseRandomProjection: List[Any] = [GaussianRandomProjection]
 all_RandomProjection = all_SparseRandomProjection + all_DenseRandomProjection
 
 
-# Make some random data with uniformly located non zero entries with
-# Gaussian distributed values
-def make_sparse_random_data(n_samples, n_features, n_nonzeros, random_state=0):
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def make_sparse_random_data(
+    coo_container, n_samples, n_features, n_nonzeros, random_state=0
+):
+    # Make some random data with uniformly located non zero entries with
+    # Gaussian distributed values
     rng = np.random.RandomState(random_state)
-    data_coo = sp.coo_matrix(
+    data_coo = coo_container(
         (
             rng.randn(n_nonzeros),
             (
@@ -58,7 +62,9 @@ def densify(matrix):
 
 n_samples, n_features = (10, 1000)
 n_nonzeros = int(n_samples * n_features / 100.0)
-data, data_csr = make_sparse_random_data(n_samples, n_features, n_nonzeros)
+data, data_csr = make_sparse_random_data(
+    sp.csr_array, n_samples, n_features, n_nonzeros
+)
 
 
 ###############################################################################
@@ -227,8 +233,9 @@ def test_try_to_transform_before_fit():
             RandomProjection(n_components="auto").transform(data)
 
 
-def test_too_many_samples_to_find_a_safe_embedding():
-    data, _ = make_sparse_random_data(1000, 100, 1000)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_too_many_samples_to_find_a_safe_embedding(csr_container):
+    data, _ = make_sparse_random_data(csr_container, 1000, 100, 1000)
 
     for RandomProjection in all_RandomProjection:
         rp = RandomProjection(n_components="auto", eps=0.1)
@@ -241,8 +248,9 @@ def test_too_many_samples_to_find_a_safe_embedding():
             rp.fit(data)
 
 
-def test_random_projection_embedding_quality():
-    data, _ = make_sparse_random_data(8, 5000, 15000)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_random_projection_embedding_quality(csr_container):
+    data, _ = make_sparse_random_data(csr_container, 8, 5000, 15000)
     eps = 0.2
 
     original_distances = euclidean_distances(data, squared=True)
@@ -271,7 +279,8 @@ def test_random_projection_embedding_quality():
         assert 1 - eps < distances_ratio.min()
 
 
-def test_SparseRandomProj_output_representation():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_SparseRandomProj_output_representation(csr_container):
     for SparseRandomProj in all_SparseRandomProjection:
         # when using sparse input, the projected data can be forced to be a
         # dense numpy array
@@ -279,7 +288,7 @@ def test_SparseRandomProj_output_representation():
         rp.fit(data)
         assert isinstance(rp.transform(data), np.ndarray)
 
-        sparse_data = sp.csr_matrix(data)
+        sparse_data = csr_container(data)
         assert isinstance(rp.transform(sparse_data), np.ndarray)
 
         # the output can be left to a sparse matrix instead
@@ -334,23 +343,25 @@ def test_correct_RandomProjection_dimensions_embedding():
             assert 85 < rp.components_.nnz  # close to 1% density
 
 
-def test_warning_n_components_greater_than_n_features():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_warning_n_components_greater_than_n_features(csr_container):
     n_features = 20
-    data, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
+    data, _ = make_sparse_random_data(csr_container, 5, n_features, int(n_features / 4))
 
     for RandomProjection in all_RandomProjection:
         with pytest.warns(DataDimensionalityWarning):
             RandomProjection(n_components=n_features + 1).fit(data)
 
 
-def test_works_with_sparse_data():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_works_with_sparse_data(csr_container):
     n_features = 20
-    data, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
+    data, _ = make_sparse_random_data(sp.csr_array, 5, n_features, int(n_features / 4))
 
     for RandomProjection in all_RandomProjection:
         rp_dense = RandomProjection(n_components=3, random_state=1).fit(data)
         rp_sparse = RandomProjection(n_components=3, random_state=1).fit(
-            sp.csr_matrix(data)
+            csr_container(data)
         )
         assert_array_almost_equal(
             densify(rp_dense.components_), densify(rp_sparse.components_)
@@ -399,6 +410,7 @@ def test_inverse_transform(
     )
 
     X_dense, X_csr = make_sparse_random_data(
+        sp.csr_array,
         n_samples,
         n_features,
         n_samples * n_features // 100 + 1,
