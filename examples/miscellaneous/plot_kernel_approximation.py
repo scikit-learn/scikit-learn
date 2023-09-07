@@ -71,7 +71,7 @@ data_test, targets_test = (data[n_samples // 2 :], digits.target[n_samples // 2 
 # data_test = scaler.transform(data_test)
 
 # Create a classifier: a support vector classifier
-kernel_svm = svm.SVC(gamma=0.2, random_state=42)
+kernel_svm = svm.SVC(gamma=0.2)
 linear_svm = svm.LinearSVC(dual="auto", random_state=42)
 
 # create pipeline from kernel approximation
