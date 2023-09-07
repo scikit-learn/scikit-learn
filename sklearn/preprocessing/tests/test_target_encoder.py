@@ -95,7 +95,8 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
         target_names = np.array(["cat", "dog"], dtype=object)
         y_train = target_names[y_int]
 
-    else:  # target_type == continuous
+    else:
+        assert target_type == "continuous"
         y_int = data_rng.uniform(low=-10, high=20, size=n_samples)
         y_train = y_int
 
