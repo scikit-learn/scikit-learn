@@ -21,12 +21,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     Each category is encoded based on a shrunk estimate of the average target
     values for observations belonging to the category. The encoding scheme mixes
     the global target mean with the target mean conditioned on the value of the
-    category. [MIC]_ When the target type is "multiclass", encodings are based
+    category (see [MIC]_).
+
+    When the target type is "multiclass", encodings are based
     on the conditional probability estimate for each class. The target is first
     binarized using the "one-vs-all" scheme via
     :class:`~sklearn.preprocessing.LabelBinarizer`, then the average target
     value for each class and each category is used for encoding, resulting in
-    `len(classes_)` * `n_features_in_` encoded output features.
+    `n_features` * `n_classes` encoded output features.
 
     :class:`TargetEncoder` considers missing values, such as `np.nan` or `None`,
     as another category and encodes them like any other category. Categories
@@ -72,7 +74,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             problem. The `target_type_` attribute gives the target type used by the
             encoder.
 
-        .. versionadded:: 1.4
+        .. versionchanged:: 1.4
            Added the option 'multiclass'.
 
     smooth : "auto" or float, default="auto"
@@ -130,7 +132,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         has feature names that are all strings.
 
     classes_ : ndarray or None
-        If `target_type_` is 'multiclass', holds the label for each class,
+        If `target_type_` is 'binary' or 'multiclass', holds the label for each class,
         otherwise `None`.
 
     See Also
@@ -272,14 +274,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             y_train_mean = np.mean(y_train, axis=0)
 
             if self.target_type_ == "multiclass":
-                encodings = self._learn_multiclass_encodings(
+                encodings = self._fit_multiclass_encodings(
                     X_train,
                     y_train,
                     n_categories,
                     y_train_mean,
                 )
             else:
-                encodings = self._learn_binary_or_continuous_encoding(
+                encodings = self._fit_encoding_binary_or_continuous(
                     X_train,
                     y_train,
                     n_categories,
@@ -363,7 +365,9 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         self.classes_ = None
         if self.target_type_ == "binary":
-            y = LabelEncoder().fit_transform(y)
+            label_encoder = LabelEncoder()
+            y = label_encoder.fit_transform(y)
+            self.classes_ = label_encoder.classes_
         elif self.target_type_ == "multiclass":
             label_binarizer = LabelBinarizer()
             y = label_binarizer.fit_transform(y)
@@ -382,14 +386,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             count=len(self.categories_),
         )
         if self.target_type_ == "multiclass":
-            encodings = self._learn_multiclass_encodings(
+            encodings = self._fit_multiclass_encodings(
                 X_ordinal,
                 y,
                 n_categories,
                 self.target_mean_,
             )
         else:
-            encodings = self._learn_binary_or_continuous_encoding(
+            encodings = self._fit_encoding_binary_or_continuous(
                 X_ordinal,
                 y,
                 n_categories,
@@ -399,7 +403,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         return X_ordinal, X_known_mask, y, n_categories
 
-    def _learn_binary_or_continuous_encoding(
+    def _fit_encoding_binary_or_continuous(
         self, X_ordinal, y, n_categories, target_mean
     ):
         """Learn target encodings."""
@@ -422,7 +426,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             )
         return encodings
 
-    def _learn_multiclass_encodings(self, X_ordinal, y, n_categories, target_mean):
+    def _fit_multiclass_encodings(self, X_ordinal, y, n_categories, target_mean):
         """Learn multiclass encodings.
 
         Learn encodings for each class (c) then reorder encodings such that
@@ -438,7 +442,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         encodings = []
         for i in range(n_classes):
             y_class = y[:, i]
-            encoding = self._learn_binary_or_continuous_encoding(
+            encoding = self._fit_encoding_binary_or_continuous(
                 X_ordinal,
                 y_class,
                 n_categories,
@@ -467,7 +471,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         In the multiclass case, `X_ordinal` and `X_unknown_mask` have column
         (axis=1) size `n_features`, while `encodings` has length of size
         `n_features * n_classes`. `feat_idx` deals with this by repeating
-        feature indicies by `n_classes` E.g., for 3 features, 2 classes:
+        feature indices by `n_classes` E.g., for 3 features, 2 classes:
         0,0,1,1,2,2
 
         Additionally, `target_mean` is of shape (`n_classes`,) so `mean_idx`
