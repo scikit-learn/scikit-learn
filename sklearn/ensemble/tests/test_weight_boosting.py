@@ -732,6 +732,10 @@ def test_deprecated_base_estimator_parameters_can_be_set():
         clf.set_params(base_estimator__max_depth=2)
 
 
+# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
+# and substituted with the SAMME algorithm as a default; also re-write test to
+# only consider "SAMME"
+@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
 def test_adaboost_decision_function(algorithm, global_random_seed):
     """Check that the decision function respects the symmetric constraint for weak
