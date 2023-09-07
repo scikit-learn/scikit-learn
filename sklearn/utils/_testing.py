@@ -13,6 +13,7 @@
 import atexit
 import contextlib
 import functools
+import importlib
 import inspect
 import os
 import os.path as op
@@ -1047,3 +1048,43 @@ class MinimalTransformer:
 
     def fit_transform(self, X, y=None):
         return self.fit(X, y).transform(X, y)
+
+
+def _array_api_for_tests(array_namespace, device, dtype):
+    try:
+        array_mod = importlib.import_module(array_namespace)
+    except ModuleNotFoundError:
+        raise SkipTest(
+            f"{array_namespace} is not installed: not checking array_api input"
+        )
+    try:
+        import array_api_compat  # noqa
+    except ImportError:
+        raise SkipTest(
+            "array_api_compat is not installed: not checking array_api input"
+        )
+
+    # First create an array using the chosen array module and then get the
+    # corresponding (compatibility wrapped) array namespace based on it.
+    # This is because `cupy` is not the same as the compatibility wrapped
+    # namespace of a CuPy array.
+    xp = array_api_compat.get_namespace(array_mod.asarray(1))
+    if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
+        raise SkipTest("PyTorch test requires cuda, which is not available")
+    elif array_namespace == "torch" and device == "mps" and not xp.has_mps:
+        if not xp.backends.mps.is_built():
+            raise SkipTest(
+                "MPS is not available because the current PyTorch install was not "
+                "built with MPS enabled."
+            )
+        else:
+            raise SkipTest(
+                "MPS is not available because the current MacOS version is not 12.3+ "
+                "and/or you do not have an MPS-enabled device on this machine."
+            )
+    elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
+        import cupy
+
+        if cupy.cuda.runtime.getDeviceCount() == 0:
+            raise SkipTest("CuPy test requires cuda, which is not available")
+    return xp, device, dtype

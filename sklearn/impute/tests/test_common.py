@@ -192,9 +192,9 @@ def test_imputation_adds_missing_indicator_if_add_indicator_is_true(
 
     Non-regression test for gh-26590.
     """
-    X_train = np.array([[0, np.NaN], [1, 2]])
+    X_train = np.array([[0, np.nan], [1, 2]])
 
-    # Test data where missing_value_test variable can be set to np.NaN or 1.
+    # Test data where missing_value_test variable can be set to np.nan or 1.
     X_test = np.array([[0, missing_value_test], [1, 2]])
 
     imputer.set_params(add_indicator=True)

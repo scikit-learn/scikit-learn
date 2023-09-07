@@ -71,13 +71,17 @@
     // pip (with all the conda available packages installed first,
     // followed by the pip installed packages).
     //
+    // The versions of the dependencies should be bumped in a dedicated commit
+    // to easily identify regressions/imrovements due to code changes from
+    // those due to dependency changes.
+    //
     "matrix": {
-        "numpy": [],
-        "scipy": [],
-        "cython": [],
-        "joblib": [],
-        "threadpoolctl": [],
-        "pandas": []
+        "numpy": ["1.25.2"],
+        "scipy": ["1.11.2"],
+        "cython": ["0.29.36"],
+        "joblib": ["1.3.2"],
+        "threadpoolctl": ["3.2.0"],
+        "pandas": ["2.1.0"]
     },
 
     // Combinations of libraries/python versions can be excluded/included
