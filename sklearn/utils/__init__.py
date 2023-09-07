@@ -223,11 +223,10 @@ def _list_indexing(X, key, key_dtype):
 
 def _polars_indexing(X, key, key_dtype, axis):
     """Indexing X with polars interchange protocol."""
+    # Polars behavior is more consistent with lists
+    if isinstance(key, np.ndarray):
+        key = key.tolist()
 
-    X_interchange = X.__dataframe__()
-    key = _get_column_indices_interchange(X_interchange, key, key_dtype)
-
-    # Convert the output to the same container as the input.
     if axis == 1:
         return X[:, key]
     else:
@@ -369,7 +368,7 @@ def _safe_indexing(X, indices, *, axis=0):
     if (
         axis == 1
         and indices_dtype == "str"
-        and not (_is_pandas_df(X) or _use_interchange_protocol(X))
+        and not (_is_pandas_df(X) or _is_polars_df(X))
     ):
         raise ValueError(
             "Specifying the columns using strings is only supported for "
