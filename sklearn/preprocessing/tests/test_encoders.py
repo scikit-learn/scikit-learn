@@ -414,7 +414,7 @@ def test_X_is_not_1D_pandas(method):
             np.object_,
         ),
         (np.array([["A", "cat"], ["B", "cat"]]), [["A", "B"], ["cat"]], np.str_),
-        (np.array([[1, 2], [np.nan, 2]]), [[1, np.nan], [2]], np.float_),
+        (np.array([[1, 2], [np.nan, 2]]), [[1, np.nan], [2]], np.float64),
         (
             np.array([["A", np.nan], [None, np.nan]], dtype=object),
             [["A", None], [np.nan]],

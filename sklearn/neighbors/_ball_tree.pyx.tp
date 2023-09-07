@@ -96,14 +96,14 @@ cdef int init_node{{name_suffix}}(
 
     cdef intp_t i, j
     cdef float64_t radius
-    cdef {{INPUT_DTYPE_t}} *this_pt
+    cdef const {{INPUT_DTYPE_t}} *this_pt
 
     cdef intp_t* idx_array = &tree.idx_array[0]
-    cdef {{INPUT_DTYPE_t}}* data = &tree.data[0, 0]
+    cdef const {{INPUT_DTYPE_t}}* data = &tree.data[0, 0]
     cdef {{INPUT_DTYPE_t}}* centroid = &tree.node_bounds[0, i_node, 0]
 
     cdef bint with_sample_weight = tree.sample_weight is not None
-    cdef {{INPUT_DTYPE_t}}* sample_weight
+    cdef const {{INPUT_DTYPE_t}}* sample_weight
     cdef float64_t sum_weight_node
     if with_sample_weight:
         sample_weight = &tree.sample_weight[0]
@@ -148,7 +148,7 @@ cdef int init_node{{name_suffix}}(
 cdef inline float64_t min_dist{{name_suffix}}(
     BinaryTree{{name_suffix}} tree,
     intp_t i_node,
-    {{INPUT_DTYPE_t}}* pt,
+    const {{INPUT_DTYPE_t}}* pt,
 ) except -1 nogil:
     """Compute the minimum distance between a point and a node"""
     cdef float64_t dist_pt = tree.dist(pt, &tree.node_bounds[0, i_node, 0],
@@ -159,7 +159,7 @@ cdef inline float64_t min_dist{{name_suffix}}(
 cdef inline float64_t max_dist{{name_suffix}}(
     BinaryTree{{name_suffix}} tree,
     intp_t i_node,
-    {{INPUT_DTYPE_t}}* pt,
+    const {{INPUT_DTYPE_t}}* pt,
 ) except -1:
     """Compute the maximum distance between a point and a node"""
     cdef float64_t dist_pt = tree.dist(pt, &tree.node_bounds[0, i_node, 0],
@@ -170,7 +170,7 @@ cdef inline float64_t max_dist{{name_suffix}}(
 cdef inline int min_max_dist{{name_suffix}}(
     BinaryTree{{name_suffix}} tree,
     intp_t i_node,
-    {{INPUT_DTYPE_t}}* pt,
+    const {{INPUT_DTYPE_t}}* pt,
     float64_t* min_dist,
     float64_t* max_dist,
 ) except -1 nogil:
@@ -186,7 +186,7 @@ cdef inline int min_max_dist{{name_suffix}}(
 cdef inline float64_t min_rdist{{name_suffix}}(
     BinaryTree{{name_suffix}} tree,
     intp_t i_node,
-    {{INPUT_DTYPE_t}}* pt,
+    const {{INPUT_DTYPE_t}}* pt,
 ) except -1 nogil:
     """Compute the minimum reduced-distance between a point and a node"""
     if tree.euclidean:
@@ -202,7 +202,7 @@ cdef inline float64_t min_rdist{{name_suffix}}(
 cdef inline float64_t max_rdist{{name_suffix}}(
     BinaryTree{{name_suffix}} tree,
     intp_t i_node,
-    {{INPUT_DTYPE_t}}* pt,
+    const {{INPUT_DTYPE_t}}* pt,
 ) except -1:
     """Compute the maximum reduced-distance between a point and a node"""
     if tree.euclidean:
