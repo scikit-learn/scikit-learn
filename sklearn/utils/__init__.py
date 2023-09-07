@@ -27,6 +27,9 @@ from .fixes import parse_version, threadpool_info
 from .murmurhash import murmurhash3_32
 from .validation import (
     _is_arraylike_not_scalar,
+    _is_pandas_df,
+    _is_polars_df,
+    _use_interchange_protocol,
     as_float_array,
     assert_all_finite,
     check_array,
@@ -218,6 +221,32 @@ def _list_indexing(X, key, key_dtype):
     return [X[idx] for idx in key]
 
 
+def _dataframe_interchange_indexing(X, key, key_dtype, axis):
+    """Indexing X with the dataframe interchange protocol."""
+    if key_dtype != "str":
+        raise ValueError(
+            "Only string keys are accepted with the dataframe interchange protocol"
+        )
+
+    if axis != 1:
+        raise ValueError(
+            "Only axis=1 is support with the dataframe interchange protocol"
+        )
+
+    if _is_polars_df(X):
+        import polars as pl
+
+        X_interchange = X.__dataframe__()
+        sliced_df = X_interchange.select_columns_by_name(list(key))
+        return pl.from_dataframe(sliced_df)
+
+    else:
+        raise ValueError(
+            "Only polars dataframes are accepted with the dataframe interchange"
+            " protocol"
+        )
+
+
 def _determine_key_type(key, accept_slice=True):
     """Determine the data type of key.
 
@@ -343,14 +372,18 @@ def _safe_indexing(X, indices, *, axis=0):
     if axis == 0 and indices_dtype == "str":
         raise ValueError("String indexing is not supported with 'axis=0'")
 
-    if axis == 1 and X.ndim != 2:
+    if axis == 1 and hasattr(X, "ndim") and X.ndim != 2:
         raise ValueError(
             "'X' should be a 2D NumPy array, 2D sparse matrix or pandas "
             "dataframe when indexing the columns (i.e. 'axis=1'). "
             "Got {} instead with {} dimension(s).".format(type(X), X.ndim)
         )
 
-    if axis == 1 and indices_dtype == "str" and not hasattr(X, "loc"):
+    if (
+        axis == 1
+        and indices_dtype == "str"
+        and not (_is_pandas_df(X) or _use_interchange_protocol(X))
+    ):
         raise ValueError(
             "Specifying the columns using strings is only supported for "
             "pandas DataFrames"
@@ -358,6 +391,8 @@ def _safe_indexing(X, indices, *, axis=0):
 
     if hasattr(X, "iloc"):
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
+    elif _use_interchange_protocol(X):
+        return _dataframe_interchange_indexing(X, indices, indices_dtype, axis=axis)
     elif hasattr(X, "shape"):
         return _array_indexing(X, indices, indices_dtype, axis=axis)
     else:
@@ -420,6 +455,9 @@ def _get_column_indices(X, key):
     For accepted values of `key`, see the docstring of
     :func:`_safe_indexing`.
     """
+    if _use_interchange_protocol(X):
+        return _get_column_indices_interchange(X, key)
+
     n_columns = X.shape[1]
 
     key_dtype = _determine_key_type(key)

@@ -11,6 +11,7 @@ import scipy.sparse as sp
 from sklearn import config_context
 from sklearn.utils import (
     _approximate_mode,
+    _dataframe_interchange_indexing,
     _determine_key_type,
     _get_column_indices,
     _get_column_indices_interchange,
@@ -788,3 +789,35 @@ def test_get_column_indices_interchange():
     msg = "A given column is not a column of the dataframe"
     with pytest.raises(ValueError, match=msg):
         _get_column_indices_interchange(df_interchange, ["not_a_column"])
+
+
+def test_dataframe_interchange_indexing():
+    """Check _dataframe_interchange_indexing."""
+    pl = pytest.importorskip("polars", minversion="0.18.2")
+    df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [1, 4, 1]})
+
+    from polars.testing import assert_frame_equal
+
+    keys = [["b"], ["a", "b"], ["b", "a", "c"], ["c"], ["a"]]
+
+    for key in keys:
+        out = _dataframe_interchange_indexing(df, key, "str", axis=1)
+        assert_frame_equal(df[key], out)
+
+
+def test_dataframe_interchange_indexing_errors():
+    pl = pytest.importorskip("polars", minversion="0.18.2")
+
+    df_pl = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [1, 4, 1]})
+
+    msg = "Only string keys are accepted with the dataframe interchange protocol"
+    with pytest.raises(ValueError, match=msg):
+        _dataframe_interchange_indexing(df_pl, [0], "int", axis=1)
+
+    msg = "Only polars dataframes are accepted with the dataframe interchange protocol"
+    with pytest.raises(ValueError, match=msg):
+        _dataframe_interchange_indexing(np.array([[1, 2, 3]]), ["a"], "str", axis=1)
+
+    msg = "Only axis=1 is support with the dataframe interchange protocol"
+    with pytest.raises(ValueError, match=msg):
+        _dataframe_interchange_indexing(df_pl, ["a"], "str", axis=0)

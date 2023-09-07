@@ -7,7 +7,6 @@ different columns.
 #         Joris Van den Bossche
 # License: BSD
 from collections import Counter
-from functools import partial
 from itertools import chain
 from numbers import Integral, Real
 
@@ -20,7 +19,6 @@ from ..preprocessing import FunctionTransformer
 from ..utils import (
     Bunch,
     _get_column_indices,
-    _get_column_indices_interchange,
     _safe_indexing,
     check_pandas_support,
 )
@@ -39,9 +37,7 @@ from ..utils.metaestimators import _BaseComposition
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_feature_names_in,
-    _dataframe_module_as_str,
     _get_feature_names,
-    _interchange_to_dataframe,
     _is_pandas_df,
     _num_samples,
     _use_interchange_protocol,
@@ -57,22 +53,6 @@ _ERR_MSG_1DCOLUMN = (
     "Try to specify the column selection as a list of one "
     "item instead of a scalar."
 )
-
-
-def _make_indexing_axis_1(X, use_interchange_protocol, *, estimator):
-    """Return a callable that indexes along axis=1."""
-    if use_interchange_protocol:
-        original_dataframe_module = _dataframe_module_as_str(X, estimator=estimator)
-
-        def indexing_axis_1(X, columns):
-            df_interchange = X.__dataframe__()
-            sliced_df = df_interchange.select_columns_by_name(list(columns))
-            return _interchange_to_dataframe(sliced_df, original_dataframe_module)
-
-    else:
-        indexing_axis_1 = partial(_safe_indexing, axis=1)
-
-    return indexing_axis_1
 
 
 class ColumnTransformer(TransformerMixin, _BaseComposition):
@@ -488,23 +468,18 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     "specifiers. '%s' (type %s) doesn't." % (t, type(t))
                 )
 
-    def _validate_column_callables(self, X, use_interchange_protocol=False):
+    def _validate_column_callables(self, X):
         """
         Converts callable column specifications.
         """
         all_columns = []
         transformer_to_input_indices = {}
 
-        if use_interchange_protocol:
-            get_column_indices = partial(_get_column_indices_interchange, X)
-        else:
-            get_column_indices = partial(_get_column_indices, X)
-
         for name, _, columns in self.transformers:
             if callable(columns):
                 columns = columns(X)
             all_columns.append(columns)
-            transformer_to_input_indices[name] = get_column_indices(columns)
+            transformer_to_input_indices[name] = _get_column_indices(X, columns)
 
         self._columns = all_columns
         self._transformer_to_input_indices = transformer_to_input_indices
@@ -719,7 +694,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         return "(%d of %d) Processing %s" % (idx, total, name)
 
     def _call_func_on_transformers(
-        self, X, y, func, indexing_axis_1, fitted, column_as_strings, routed_params
+        self, X, y, func, fitted, column_as_strings, routed_params
     ):
         """
         Private function to fit and/or transform on demand.
@@ -735,9 +710,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         func : callable
             Function to call, which can be _fit_transform_one or
             _transform_one.
-
-        indexing_axis_1 : callable
-            Function to use index `X` on axis=1..
 
         fitted : bool
             Used to get an iterable of transformers. If True, use the fitted
@@ -776,7 +748,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 jobs.append(
                     delayed(func)(
                         transformer=clone(trans) if not fitted else trans,
-                        X=indexing_axis_1(X, column),
+                        X=_safe_indexing(X, column, axis=1),
                         y=y,
                         weight=weight,
                         **extra_args,
@@ -865,15 +837,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # set n_features_in_ attribute
         self._check_n_features(X, reset=True)
         self._validate_transformers()
-        use_interchange_protocol = _use_interchange_protocol(X)
-        indexing_axis_1 = _make_indexing_axis_1(
-            X, use_interchange_protocol, estimator=self
-        )
         n_samples = _num_samples(X)
 
-        self._validate_column_callables(
-            X, use_interchange_protocol=use_interchange_protocol
-        )
+        self._validate_column_callables(X)
         self._validate_remainder(X)
 
         if _routing_enabled():
@@ -885,9 +851,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             X,
             y,
             _fit_transform_one,
-            indexing_axis_1=indexing_axis_1,
             fitted=False,
-            column_as_strings=use_interchange_protocol,
+            column_as_strings=_use_interchange_protocol(X),
             routed_params=routed_params,
         )
 
@@ -953,16 +918,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         fit_dataframe_and_transform_dataframe = hasattr(self, "feature_names_in_") and (
             _is_pandas_df(X) or hasattr(X, "__dataframe__")
         )
-        use_interchange_protocol = _use_interchange_protocol(X)
-
-        if _use_interchange_protocol(X) and not hasattr(self, "feature_names_in_"):
-            raise ValueError(
-                "Using the dataframe protocol requires fitting on dataframes."
-            )
-
-        indexing_axis_1 = _make_indexing_axis_1(
-            X, use_interchange_protocol, estimator=self
-        )
 
         n_samples = _num_samples(X)
         column_names = _get_feature_names(X)
@@ -1001,7 +956,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             func=_transform_one,
             fitted=True,
             column_as_strings=fit_dataframe_and_transform_dataframe,
-            indexing_axis_1=indexing_axis_1,
             routed_params=routed_params,
         )
         self._validate_output(Xs)
