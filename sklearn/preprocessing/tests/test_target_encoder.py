@@ -82,9 +82,9 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
         X_test = categories[0][X_test_int_array]
 
     if categories == "auto":
-        X_test = X_test_array
+        X_test = X_test_int_array
     else:
-        X_test = categories[0][X_test_array]
+        X_test = categories[0][X_test_int_array]
 
     X_test = np.concatenate((X_test, [[unknown_value]]))
 
@@ -168,10 +168,12 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
         ([np.array(["cat", "dog", "snake"], dtype=object)], ["bear", "rabbit"]),
     ],
 )
-@pytest.mark.parametrize("target", [[np.array([1, 2, 3])], [np.array(["a", "b", "c"])]])
+@pytest.mark.parametrize(
+    "target_labels", [np.array([1, 2, 3]), np.array(["a", "b", "c"])]
+)
 @pytest.mark.parametrize("smooth", [5.0, "auto"])
 def test_encoding_multiclass(
-    global_random_seed, categories, unknown_values, target, smooth
+    global_random_seed, categories, unknown_values, target_labels, smooth
 ):
     """Check encoding for multiclass targets."""
     rng = np.random.RandomState(global_random_seed)
@@ -188,7 +190,7 @@ def test_encoding_multiclass(
 
     n_classes = 3
     y_train_int = np.array(rng.randint(low=0, high=n_classes, size=n_samples))
-    y_train = target[0][y_train_int]
+    y_train = target_labels[y_train_int]
     y_train_enc = LabelBinarizer().fit_transform(y_train)
 
     n_splits = 3
@@ -238,7 +240,7 @@ def test_encoding_multiclass(
     assert len(target_encoder.encodings_) == n_features * n_classes
     for i in range(n_features * n_classes):
         assert_allclose(target_encoder.encodings_[i], expected_encodings[i])
-    assert_array_equal(target_encoder.classes_, target[0])
+    assert_array_equal(target_encoder.classes_, target_labels)
 
     # Include unknown values at the end
     X_test_int = np.array([[0, 1], [1, 2], [4, 5]])
