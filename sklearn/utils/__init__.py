@@ -229,11 +229,8 @@ def _dataframe_interchange_indexing(X, key, key_dtype, axis):
         )
 
     X_interchange = X.__dataframe__()
-    if key_dtype in ("int", "bool"):
-        key = _get_column_indices_interchange(X_interchange, key, key_dtype)
-        sliced_df = X_interchange.select_columns(key)
-    else:  # key_dtype == "str"
-        sliced_df = X_interchange.select_columns_by_name(list(key))
+    key = _get_column_indices_interchange(X_interchange, key, key_dtype)
+    sliced_df = X_interchange.select_columns(key)
 
     # Convert the output to the same container as the input.
     if _is_polars_df(X):

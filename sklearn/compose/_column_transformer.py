@@ -40,7 +40,6 @@ from ..utils.validation import (
     _get_feature_names,
     _is_pandas_df,
     _num_samples,
-    _use_interchange_protocol,
     check_array,
     check_is_fitted,
 )
@@ -850,7 +849,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             y,
             _fit_transform_one,
             fitted=False,
-            column_as_strings=_use_interchange_protocol(X),
+            column_as_strings=False,
             routed_params=routed_params,
         )
 
