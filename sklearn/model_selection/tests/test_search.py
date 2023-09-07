@@ -1418,7 +1418,7 @@ def test_grid_search_correct_score_results():
         expected_keys = ("mean_test_score", "rank_test_score") + tuple(
             "split%d_test_score" % cv_i for cv_i in range(n_splits)
         )
-        assert all(np.in1d(expected_keys, result_keys))
+        assert all(np.isin(expected_keys, result_keys))
 
         cv = StratifiedKFold(n_splits=n_splits)
         n_splits = grid_search.n_splits_
