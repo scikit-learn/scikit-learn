@@ -85,6 +85,10 @@ Changelog
   produce large prediction scores. Before it was numerically unstable.
   :pr:`26913` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Enhancement| The internal objective and gradient of the `sigmoid` method
+  of :class:`calibration.CalibratedClassifierCV` have been replaced by the
+  private loss module. :pr:`27185` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.cluster`
 ............................
 
