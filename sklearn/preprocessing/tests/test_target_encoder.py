@@ -20,15 +20,15 @@ from sklearn.preprocessing import (
 )
 
 
-def _encode_target(X_ordinal, y_int, n_categories, smooth):
+def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
     """Simple Python implementation of target encoding."""
     cur_encodings = np.zeros(n_categories, dtype=np.float64)
-    y_mean = np.mean(y_int)
+    y_mean = np.mean(y_numeric)
 
     if smooth == "auto":
-        y_variance = np.var(y_int)
+        y_variance = np.var(y_numeric)
         for c in range(n_categories):
-            y_subset = y_int[X_ordinal == c]
+            y_subset = y_numeric[X_ordinal == c]
             n_i = y_subset.shape[0]
 
             if n_i == 0:
@@ -43,7 +43,7 @@ def _encode_target(X_ordinal, y_int, n_categories, smooth):
         return cur_encodings
     else:  # float
         for c in range(n_categories):
-            y_subset = y_int[X_ordinal == c]
+            y_subset = y_numeric[X_ordinal == c]
             current_sum = np.sum(y_subset) + y_mean * smooth
             current_cnt = y_subset.shape[0] + smooth
             cur_encodings[c] = current_sum / current_cnt
@@ -86,20 +86,20 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     data_rng = np.random.RandomState(global_random_seed)
     n_splits = 3
     if target_type == "binary":
-        y_int = data_rng.randint(low=0, high=2, size=n_samples)
+        y_numeric = data_rng.randint(low=0, high=2, size=n_samples)
         target_names = np.array(["cat", "dog"], dtype=object)
-        y_train = target_names[y_int]
+        y_train = target_names[y_numeric]
 
     else:
         assert target_type == "continuous"
-        y_int = data_rng.uniform(low=-10, high=20, size=n_samples)
-        y_train = y_int
+        y_numeric = data_rng.uniform(low=-10, high=20, size=n_samples)
+        y_train = y_numeric
 
     shuffled_idx = data_rng.permutation(n_samples)
     X_train_int_array = X_train_int_array[shuffled_idx]
     X_train = X_train[shuffled_idx]
     y_train = y_train[shuffled_idx]
-    y_int = y_int[shuffled_idx]
+    y_numeric = y_numeric[shuffled_idx]
 
     # Define our CV splitting strategy
     if target_type == "binary":
@@ -114,7 +114,7 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     expected_X_fit_transform = np.empty_like(X_train_int_array, dtype=np.float64)
 
     for train_idx, test_idx in cv.split(X_train_int_array, y_train):
-        X_, y_ = X_train_int_array[train_idx, 0], y_int[train_idx]
+        X_, y_ = X_train_int_array[train_idx, 0], y_numeric[train_idx]
         cur_encodings = _encode_target(X_, y_, n_categories, smooth)
         expected_X_fit_transform[test_idx, 0] = cur_encodings[
             X_train_int_array[test_idx, 0]
@@ -140,9 +140,9 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
         assert target_encoder.classes_ is None
 
     # compute encodings for all data to validate `transform`
-    y_mean = np.mean(y_int)
+    y_mean = np.mean(y_numeric)
     expected_encodings = _encode_target(
-        X_train_int_array[:, 0], y_int, n_categories, smooth
+        X_train_int_array[:, 0], y_numeric, n_categories, smooth
     )
     assert_allclose(target_encoder.encodings_[0], expected_encodings)
     assert target_encoder.target_mean_ == pytest.approx(y_mean)
