@@ -124,7 +124,7 @@ class _BaseCurveDisplay:
             # smallest gap of the x values is a good indicator to choose between linear
             # and log scale.
             if _interval_max_min_ratio(x_data) > 5:
-                xscale = "symlog" if x_data.min() <= 0 else "log"
+                xscale = "symlog" if np.min(x_data) <= 0 else "log"
             else:
                 xscale = "linear"
         ax.set_xscale(xscale)
