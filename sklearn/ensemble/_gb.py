@@ -64,7 +64,7 @@ _LOSSES.update(
 
 def _safe_divide(numerator, denominator):
     """Prevents overflow and division by zero."""
-    with np.errstate(divide="raise"):
+    with np.errstate(divide="raise", invalid="raise"):
         try:
             return numerator / denominator
         except FloatingPointError:
