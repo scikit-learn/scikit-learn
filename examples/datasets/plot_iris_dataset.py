@@ -30,7 +30,7 @@ iris = datasets.load_iris()
 # %%
 # Scatter Plot of the Iris dataset
 # --------------------------------
-import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.pyplot as plt
 
 _, ax = plt.subplots()
 scatter = ax.scatter(iris.data[:, 0], iris.data[:, 1], c=iris.target)
@@ -56,9 +56,9 @@ _ = ax.legend(
 # This will allow us to better differentiate between the three types!
 
 # unused but required import for doing 3d projections with matplotlib < 3.2
-import mpl_toolkits.mplot3d  # noqa: F401, E402
+import mpl_toolkits.mplot3d  # noqa: F401
 
-from sklearn.decomposition import PCA  # noqa: E402
+from sklearn.decomposition import PCA
 
 fig = plt.figure(1, figsize=(8, 6))
 ax = fig.add_subplot(111, projection="3d", elev=-150, azim=110)
