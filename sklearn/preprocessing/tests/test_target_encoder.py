@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
@@ -14,20 +16,21 @@ from sklearn.model_selection import (
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import (
     KBinsDiscretizer,
+    LabelBinarizer,
     LabelEncoder,
     TargetEncoder,
 )
 
 
-def _encode_target(X_ordinal, y_int, n_categories, smooth):
+def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
     """Simple Python implementation of target encoding."""
     cur_encodings = np.zeros(n_categories, dtype=np.float64)
-    y_mean = np.mean(y_int)
+    y_mean = np.mean(y_numeric)
 
     if smooth == "auto":
-        y_variance = np.var(y_int)
+        y_variance = np.var(y_numeric)
         for c in range(n_categories):
-            y_subset = y_int[X_ordinal == c]
+            y_subset = y_numeric[X_ordinal == c]
             n_i = y_subset.shape[0]
 
             if n_i == 0:
@@ -42,7 +45,7 @@ def _encode_target(X_ordinal, y_int, n_categories, smooth):
         return cur_encodings
     else:  # float
         for c in range(n_categories):
-            y_subset = y_int[X_ordinal == c]
+            y_subset = y_numeric[X_ordinal == c]
             current_sum = np.sum(y_subset) + y_mean * smooth
             current_cnt = y_subset.shape[0] + smooth
             cur_encodings[c] = current_sum / current_cnt
@@ -85,19 +88,20 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     data_rng = np.random.RandomState(global_random_seed)
     n_splits = 3
     if target_type == "binary":
-        y_int = data_rng.randint(low=0, high=2, size=n_samples)
+        y_numeric = data_rng.randint(low=0, high=2, size=n_samples)
         target_names = np.array(["cat", "dog"], dtype=object)
-        y_train = target_names[y_int]
+        y_train = target_names[y_numeric]
 
-    else:  # target_type == continuous
-        y_int = data_rng.uniform(low=-10, high=20, size=n_samples)
-        y_train = y_int
+    else:
+        assert target_type == "continuous"
+        y_numeric = data_rng.uniform(low=-10, high=20, size=n_samples)
+        y_train = y_numeric
 
     shuffled_idx = data_rng.permutation(n_samples)
     X_train_int_array = X_train_int_array[shuffled_idx]
     X_train = X_train[shuffled_idx]
     y_train = y_train[shuffled_idx]
-    y_int = y_int[shuffled_idx]
+    y_numeric = y_numeric[shuffled_idx]
 
     # Define our CV splitting strategy
     if target_type == "binary":
@@ -112,7 +116,7 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     expected_X_fit_transform = np.empty_like(X_train_int_array, dtype=np.float64)
 
     for train_idx, test_idx in cv.split(X_train_int_array, y_train):
-        X_, y_ = X_train_int_array[train_idx, 0], y_int[train_idx]
+        X_, y_ = X_train_int_array[train_idx, 0], y_numeric[train_idx]
         cur_encodings = _encode_target(X_, y_, n_categories, smooth)
         expected_X_fit_transform[test_idx, 0] = cur_encodings[
             X_train_int_array[test_idx, 0]
@@ -132,11 +136,15 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     assert target_encoder.target_type_ == target_type
     assert_allclose(X_fit_transform, expected_X_fit_transform)
     assert len(target_encoder.encodings_) == 1
+    if target_type == "binary":
+        assert_array_equal(target_encoder.classes_, target_names)
+    else:
+        assert target_encoder.classes_ is None
 
     # compute encodings for all data to validate `transform`
-    y_mean = np.mean(y_int)
+    y_mean = np.mean(y_numeric)
     expected_encodings = _encode_target(
-        X_train_int_array[:, 0], y_int, n_categories, smooth
+        X_train_int_array[:, 0], y_numeric, n_categories, smooth
     )
     assert_allclose(target_encoder.encodings_[0], expected_encodings)
     assert target_encoder.target_mean_ == pytest.approx(y_mean)
@@ -146,6 +154,121 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     expected_X_test_transform = np.concatenate(
         (expected_encodings, np.array([y_mean]))
     ).reshape(-1, 1)
+
+    X_test_transform = target_encoder.transform(X_test)
+    assert_allclose(X_test_transform, expected_X_test_transform)
+
+
+@pytest.mark.parametrize(
+    "categories, unknown_values",
+    [
+        ([np.array([0, 1, 2], dtype=np.int64)], "auto"),
+        ([np.array(["cat", "dog", "snake"], dtype=object)], ["bear", "rabbit"]),
+    ],
+)
+@pytest.mark.parametrize(
+    "target_labels", [np.array([1, 2, 3]), np.array(["a", "b", "c"])]
+)
+@pytest.mark.parametrize("smooth", [5.0, "auto"])
+def test_encoding_multiclass(
+    global_random_seed, categories, unknown_values, target_labels, smooth
+):
+    """Check encoding for multiclass targets."""
+    rng = np.random.RandomState(global_random_seed)
+
+    n_samples = 80
+    n_features = 2
+    feat_1_int = np.array(rng.randint(low=0, high=2, size=n_samples))
+    feat_2_int = np.array(rng.randint(low=0, high=3, size=n_samples))
+    feat_1 = categories[0][feat_1_int]
+    feat_2 = categories[0][feat_2_int]
+    X_train = np.column_stack((feat_1, feat_2))
+    X_train_int = np.column_stack((feat_1_int, feat_2_int))
+    categories_ = [[0, 1], [0, 1, 2]]
+
+    n_classes = 3
+    y_train_int = np.array(rng.randint(low=0, high=n_classes, size=n_samples))
+    y_train = target_labels[y_train_int]
+    y_train_enc = LabelBinarizer().fit_transform(y_train)
+
+    n_splits = 3
+    cv = StratifiedKFold(
+        n_splits=n_splits, random_state=global_random_seed, shuffle=True
+    )
+
+    # Manually compute encodings for cv splits to validate `fit_transform`
+    expected_X_fit_transform = np.empty(
+        (X_train_int.shape[0], X_train_int.shape[1] * n_classes),
+        dtype=np.float64,
+    )
+    for f_idx, cats in enumerate(categories_):
+        for c_idx in range(n_classes):
+            for train_idx, test_idx in cv.split(X_train, y_train):
+                y_class = y_train_enc[:, c_idx]
+                X_, y_ = X_train_int[train_idx, f_idx], y_class[train_idx]
+                current_encoding = _encode_target(X_, y_, len(cats), smooth)
+                # f_idx:   0, 0, 0, 1, 1, 1
+                # c_idx:   0, 1, 2, 0, 1, 2
+                # exp_idx: 0, 1, 2, 3, 4, 5
+                exp_idx = c_idx + (f_idx * n_classes)
+                expected_X_fit_transform[test_idx, exp_idx] = current_encoding[
+                    X_train_int[test_idx, f_idx]
+                ]
+
+    target_encoder = TargetEncoder(
+        smooth=smooth,
+        cv=n_splits,
+        random_state=global_random_seed,
+    )
+    X_fit_transform = target_encoder.fit_transform(X_train, y_train)
+
+    assert target_encoder.target_type_ == "multiclass"
+    assert_allclose(X_fit_transform, expected_X_fit_transform)
+
+    # Manually compute encoding to validate `transform`
+    expected_encodings = []
+    for f_idx, cats in enumerate(categories_):
+        for c_idx in range(n_classes):
+            y_class = y_train_enc[:, c_idx]
+            current_encoding = _encode_target(
+                X_train_int[:, f_idx], y_class, len(cats), smooth
+            )
+            expected_encodings.append(current_encoding)
+
+    assert len(target_encoder.encodings_) == n_features * n_classes
+    for i in range(n_features * n_classes):
+        assert_allclose(target_encoder.encodings_[i], expected_encodings[i])
+    assert_array_equal(target_encoder.classes_, target_labels)
+
+    # Include unknown values at the end
+    X_test_int = np.array([[0, 1], [1, 2], [4, 5]])
+    if unknown_values == "auto":
+        X_test = X_test_int
+    else:
+        X_test = np.empty_like(X_test_int[:-1, :], dtype=object)
+        for column_idx in range(X_test_int.shape[1]):
+            X_test[:, column_idx] = categories[0][X_test_int[:-1, column_idx]]
+        # Add unknown values at end
+        X_test = np.vstack((X_test, unknown_values))
+
+    y_mean = np.mean(y_train_enc, axis=0)
+    expected_X_test_transform = np.empty(
+        (X_test_int.shape[0], X_test_int.shape[1] * n_classes),
+        dtype=np.float64,
+    )
+    n_rows = X_test_int.shape[0]
+    f_idx = [0, 0, 0, 1, 1, 1]
+    # Last row are unknowns, dealt with later
+    for row_idx in range(n_rows - 1):
+        for i, enc in enumerate(expected_encodings):
+            expected_X_test_transform[row_idx, i] = enc[X_test_int[row_idx, f_idx[i]]]
+
+    # Unknowns encoded as target mean for each class
+    # `y_mean` contains target mean for each class, thus cycle through mean of
+    # each class, `n_features` times
+    mean_idx = [0, 1, 2, 0, 1, 2]
+    for i in range(n_classes * n_features):
+        expected_X_test_transform[n_rows - 1, i] = y_mean[mean_idx[i]]
 
     X_test_transform = target_encoder.transform(X_test)
     assert_allclose(X_test_transform, expected_X_test_transform)
@@ -191,7 +314,6 @@ def test_custom_categories(X, categories, smooth):
             np.array([[1, 2, 0], [1, 2, 3]]).T,
             "Target type was inferred to be 'multiclass-multioutput'",
         ),
-        (["cat", "dog", "bear"], "Target type was inferred to be 'multiclass'"),
     ],
 )
 def test_errors(y, msg):
@@ -204,29 +326,42 @@ def test_errors(y, msg):
 
 
 def test_use_regression_target():
-    """Custom target_type to avoid inferring the target type."""
+    """Check inferred and specified `target_type` on regression target."""
     X = np.array([[0, 1, 0, 1, 0, 1]]).T
-
-    # XXX: When multiclass is supported, then the following `y`
-    # is considered a multiclass problem and `TargetEncoder` will not error.
-    # type_of_target would be 'multiclass'
     y = np.array([1.0, 2.0, 3.0, 2.0, 3.0, 4.0])
-    enc = TargetEncoder()
-    msg = "Target type was inferred to be 'multiclass'"
-    with pytest.raises(ValueError, match=msg):
-        enc.fit_transform(X, y)
 
-    enc = TargetEncoder(target_type="continuous")
+    enc = TargetEncoder(cv=2)
+    with pytest.warns(
+        UserWarning,
+        match=re.escape(
+            "The least populated class in y has only 1 members, which is less than"
+            " n_splits=2."
+        ),
+    ):
+        enc.fit_transform(X, y)
+    assert enc.target_type_ == "multiclass"
+
+    enc = TargetEncoder(cv=2, target_type="continuous")
     enc.fit_transform(X, y)
     assert enc.target_type_ == "continuous"
 
 
-def test_feature_names_out_set_output():
+@pytest.mark.parametrize(
+    "y, feature_names",
+    [
+        ([1, 2] * 10, ["A", "B"]),
+        ([1, 2, 3] * 6 + [1, 2], ["A_1", "A_2", "A_3", "B_1", "B_2", "B_3"]),
+        (
+            ["y1", "y2", "y3"] * 6 + ["y1", "y2"],
+            ["A_y1", "A_y2", "A_y3", "B_y1", "B_y2", "B_y3"],
+        ),
+    ],
+)
+def test_feature_names_out_set_output(y, feature_names):
     """Check TargetEncoder works with set_output."""
     pd = pytest.importorskip("pandas")
 
     X_df = pd.DataFrame({"A": ["a", "b"] * 10, "B": [1, 2] * 10})
-    y = [1, 2] * 10
 
     enc_default = TargetEncoder(cv=2, smooth=3.0, random_state=0)
     enc_default.set_output(transform="default")
@@ -237,7 +372,7 @@ def test_feature_names_out_set_output():
     X_pandas = enc_pandas.fit_transform(X_df, y)
 
     assert_allclose(X_pandas.to_numpy(), X_default)
-    assert_array_equal(enc_pandas.get_feature_names_out(), ["A", "B"])
+    assert_array_equal(enc_pandas.get_feature_names_out(), feature_names)
     assert_array_equal(enc_pandas.get_feature_names_out(), X_pandas.columns)
 
 

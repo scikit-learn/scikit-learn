@@ -178,6 +178,12 @@ Changelog
   to :ref:`metadata routing user guide <metadata_routing>`. :pr:`26789` by
   `Adrin Jalali`_.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| :class:`preprocessing.TargetEncoder` now supports `target_type`
+  'multiclass'. :pr:`26674` by :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
