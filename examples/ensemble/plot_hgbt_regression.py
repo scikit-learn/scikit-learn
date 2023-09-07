@@ -3,10 +3,12 @@
 Usecase of advanced features in Histogram Boosting Regression
 =============================================================
 
-:ref:`histogram_based_gradient_boosting` (HGBT) may be the most useful supervised learning model in scikit-learn. It is a modern gradient boosting implementation
-comparable to LightGBM and XGBoost. As such, it is more feature rich than and often
-outperforms alternative models like random forests, especially when the number of samples is larger
-than tens of thousands of samples (see
+:ref:`histogram_based_gradient_boosting` (HGBT) models may be the most useful
+supervised learning models in scikit-learn. They are based on a modern gradient
+boosting implementation comparable to LightGBM and XGBoost. As such, HGBT models
+are more feature rich than -and often outperforms- alternative models like
+random forests, especially when the number of samples is larger than tens of
+thousands of samples (see
 :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`).
 
 The top usability features of HGBT models are:
@@ -292,10 +294,10 @@ _ = ax.legend()
 # Support for quantile loss
 # =========================
 #
-# The quantile loss in regression enables a view of the variability or uncertainty
-# of the target variable. For instance, predicting the 5th and 95th percentiles can provide
-# a 90% prediction interval, i.e. the range within which we expect the true
-# value to fall with 90% probability.
+# The quantile loss in regression enables a view of the variability or
+# uncertainty of the target variable. For instance, predicting the 5th and 95th
+# percentiles can provide a 90% prediction interval, i.e. the range within which
+# we expect the true value to fall with 90% probability.
 
 from sklearn.metrics import make_scorer, mean_pinball_loss
 
