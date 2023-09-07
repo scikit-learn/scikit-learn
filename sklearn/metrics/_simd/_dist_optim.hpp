@@ -25,24 +25,6 @@ namespace manhattan{
         const size_t size
     ){return -1;}
 }
-
-/*
-In case of a runtime machine without AVX, we need to
-provide alternative scalar implementations.
-*/
-template <typename Type>
-Type simd_manhattan_dist_scalar(
-    const Type* x,
-    const Type* y,
-    const size_t size
-){
-    double scalar_sum = 0;
-
-    for(std::size_t idx = 0; idx < size; ++idx) {
-        scalar_sum += fabs(x[idx] - y[idx]);
-    }
-    return (Type) scalar_sum;
-}
 #endif
 #else
 /* Empty body */
