@@ -342,9 +342,52 @@ def test_dataframe_support(pyplot):
 
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
-def test_class_of_interest(pyplot, response_method):
+def test_class_of_interest_binary(pyplot, response_method):
     """Check the behaviour of passing `class_of_interest` for plotting the output of
-    `predict_proba` and `decision_function`.
+    `predict_proba` and `decision_function` in the binary case.
+    """
+    iris = load_iris()
+    X = iris.data[:100, :2]
+    y = iris.target[:100]  # the target are numerical labels
+
+    estimator = LogisticRegression().fit(X, y)
+    # We will check that `class_of_interest=None` is equivalent to
+    # `class_of_interest=estimator.classes_[1]`
+    disp_default = DecisionBoundaryDisplay.from_estimator(
+        estimator,
+        X,
+        response_method=response_method,
+        class_of_interest=None,
+    )
+    disp_class_1 = DecisionBoundaryDisplay.from_estimator(
+        estimator,
+        X,
+        response_method=response_method,
+        class_of_interest=estimator.classes_[1],
+    )
+
+    assert_allclose(disp_default.response, disp_class_1.response)
+
+    # we can check that `_get_response_values` modifies the response when targeting
+    # the other class, i.e. 1 - p(y=1|x) for `predict_proba` and -decision_function
+    # for `decision_function`.
+    disp_class_0 = DecisionBoundaryDisplay.from_estimator(
+        estimator,
+        X,
+        response_method=response_method,
+        class_of_interest=estimator.classes_[0],
+    )
+
+    if response_method == "predict_proba":
+        assert_allclose(disp_default.response, 1 - disp_class_0.response)
+    else:
+        assert_allclose(disp_default.response, -disp_class_0.response)
+
+
+@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
+def test_class_of_interest_multiclass(pyplot, response_method):
+    """Check the behaviour of passing `class_of_interest` for plotting the output of
+    `predict_proba` and `decision_function` in the multiclass case.
     """
     iris = load_iris()
     X = iris.data[:, :2]
@@ -389,4 +432,16 @@ def test_class_of_interest(pyplot, response_method):
             X,
             response_method=response_method,
             class_of_interest=class_of_interest_idx,
+        )
+
+    # TODO: remove this test when we handle multiclass with class_of_interest=None
+    # by showing the max of the decision function or the max of the predicted
+    # probabilities.
+    err_msg = "Multiclass classifiers are only supported"
+    with pytest.raises(ValueError, match=err_msg):
+        DecisionBoundaryDisplay.from_estimator(
+            estimator,
+            X,
+            response_method=response_method,
+            class_of_interest=None,
         )

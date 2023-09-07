@@ -249,7 +249,9 @@ class DecisionBoundaryDisplay:
 
         class_of_interest : int, float, bool or str, default=None
             The class considered when plotting the decision. By default,
-            `estimators.classes_[1]` is considered as the positive class.
+            `estimators.classes_[1]` is considered as the positive class
+            for binary classifiers. For multiclass classifier, passing
+            and explicit value for `class_of_interest` is mandatory.
 
             .. versionadded:: 1.4
 
