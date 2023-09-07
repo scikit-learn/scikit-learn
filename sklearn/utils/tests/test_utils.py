@@ -11,11 +11,11 @@ import scipy.sparse as sp
 from sklearn import config_context
 from sklearn.utils import (
     _approximate_mode,
-    _dataframe_interchange_indexing,
     _determine_key_type,
     _get_column_indices,
     _get_column_indices_interchange,
     _message_with_time,
+    _polars_indexing,
     _print_elapsed_time,
     _safe_assign,
     _safe_indexing,
@@ -796,8 +796,8 @@ def test_get_column_indices_interchange():
         _get_column_indices_interchange(df_interchange, ["not_a_column"], "str")
 
 
-def test_dataframe_interchange_indexing():
-    """Check _dataframe_interchange_indexing."""
+def test_polars_indexing():
+    """Check _polars_indexing works as expected."""
     pl = pytest.importorskip("polars", minversion="0.18.2")
     df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [1, 4, 1]})
 
@@ -806,38 +806,17 @@ def test_dataframe_interchange_indexing():
     str_keys = [["b"], ["a", "b"], ["b", "a", "c"], ["c"], ["a"]]
 
     for key in str_keys:
-        out = _dataframe_interchange_indexing(df, key, "str", axis=1)
+        out = _polars_indexing(df, key, "str", axis=1)
         assert_frame_equal(df[key], out)
 
     bool_keys = [([True, False, True], ["a", "c"]), ([False, False, True], ["c"])]
 
     for bool_key, str_key in bool_keys:
-        out = _dataframe_interchange_indexing(df, bool_key, "bool", axis=1)
+        out = _polars_indexing(df, bool_key, "bool", axis=1)
         assert_frame_equal(df[str_key], out)
 
     int_keys = [([0, 1], ["a", "b"]), ([2], ["c"])]
 
     for int_key, str_key in int_keys:
-        out = _dataframe_interchange_indexing(df, int_key, "int", axis=1)
+        out = _polars_indexing(df, int_key, "int", axis=1)
         assert_frame_equal(df[str_key], out)
-
-
-def test_dataframe_interchange_indexing_errors():
-    """Dataframe interchange indexing does only supports axis=1."""
-    pl = pytest.importorskip("polars", minversion="0.18.2")
-
-    df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [1, 4, 1]})
-
-    msg = "Only axis=1 is support with the dataframe interchange protocol"
-    with pytest.raises(ValueError, match=msg):
-        _dataframe_interchange_indexing(df, [0], "int", axis=0)
-
-
-def test_dataframe_interchange_indexing_pandas_errors():
-    """Dataframe interchange indexing does not support pandas."""
-    pd = pytest.importorskip("polars", minversion="2.0")
-    df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [1, 4, 1]})
-
-    msg = "Only polars dataframes are accepted with the dataframe interchange protocol"
-    with pytest.raises(ValueError, match=msg):
-        _dataframe_interchange_indexing(df, [0], "int", axis=1)

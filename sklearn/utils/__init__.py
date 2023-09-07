@@ -221,27 +221,17 @@ def _list_indexing(X, key, key_dtype):
     return [X[idx] for idx in key]
 
 
-def _dataframe_interchange_indexing(X, key, key_dtype, axis):
-    """Indexing X with the dataframe interchange protocol."""
-    if axis != 1:
-        raise ValueError(
-            "Only axis=1 is support with the dataframe interchange protocol"
-        )
+def _polars_indexing(X, key, key_dtype, axis):
+    """Indexing X with polars interchange protocol."""
 
     X_interchange = X.__dataframe__()
     key = _get_column_indices_interchange(X_interchange, key, key_dtype)
-    sliced_df = X_interchange.select_columns(key)
 
     # Convert the output to the same container as the input.
-    if _is_polars_df(X):
-        import polars as pl
-
-        return pl.from_dataframe(sliced_df)
+    if axis == 1:
+        return X[:, key]
     else:
-        raise ValueError(
-            "Only polars dataframes are accepted with the dataframe interchange"
-            " protocol"
-        )
+        return X[key]
 
 
 def _determine_key_type(key, accept_slice=True):
@@ -388,8 +378,8 @@ def _safe_indexing(X, indices, *, axis=0):
 
     if hasattr(X, "iloc"):
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
-    elif _use_interchange_protocol(X):
-        return _dataframe_interchange_indexing(X, indices, indices_dtype, axis=axis)
+    elif _is_polars_df(X):
+        return _polars_indexing(X, indices, indices_dtype, axis=axis)
     elif hasattr(X, "shape"):
         return _array_indexing(X, indices, indices_dtype, axis=axis)
     else:
