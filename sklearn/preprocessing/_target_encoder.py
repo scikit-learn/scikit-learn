@@ -279,7 +279,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             y_train_mean = np.mean(y_train, axis=0)
 
             if self.target_type_ == "multiclass":
-                encodings = self._fit_multiclass_encodings(
+                encodings = self._fit_encoding_multiclass(
                     X_train,
                     y_train,
                     n_categories,
@@ -391,7 +391,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             count=len(self.categories_),
         )
         if self.target_type_ == "multiclass":
-            encodings = self._fit_multiclass_encodings(
+            encodings = self._fit_encoding_multiclass(
                 X_ordinal,
                 y,
                 n_categories,
@@ -431,7 +431,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             )
         return encodings
 
-    def _fit_multiclass_encodings(self, X_ordinal, y, n_categories, target_mean):
+    def _fit_encoding_multiclass(self, X_ordinal, y, n_categories, target_mean):
         """Learn multiclass encodings.
 
         Learn encodings for each class (c) then reorder encodings such that
