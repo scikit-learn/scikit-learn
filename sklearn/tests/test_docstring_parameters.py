@@ -56,6 +56,7 @@ _DOCSTRING_IGNORES = [
     "sklearn.pipeline.make_union",
     "sklearn.utils.extmath.safe_sparse_dot",
     "sklearn.utils._joblib",
+    "HalfBinomialLoss",
 ]
 
 # Methods where y param should be ignored if y=None by default
