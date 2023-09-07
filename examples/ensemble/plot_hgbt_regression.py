@@ -3,20 +3,25 @@
 Usecase of advanced features in Histogram Boosting Regression
 =============================================================
 
-:ref:`histogram_based_gradient_boosting` (HGBT) models can be a competitive
-alternative to random forests, especially when the number of samples is larger
+:ref:`histogram_based_gradient_boosting` (HGBT) may be the most useful supervised learning model in scikit-learn. It is a modern gradient boosting implementation
+comparable to LightGBM and XGBoost. As such, it is more feature rich than and often
+outperforms alternative models like random forests, especially when the number of samples is larger
 than tens of thousands of samples (see
 :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`).
 
-HGBT models have additional advantages such as:
+The top usability features of HGBT models are:
 
 - :ref:`categorical_support_gbdt` (see
   :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`).
 - :ref:`nan_support_hgbt`, which avoids the need for an imputer.
 - :ref:`Quantile loss support <quantile_support_hgbdt>`.
 - :ref:`monotonic_cst_gbdt`.
+- :ref:`_interaction_cst_hgbt`.
+- early stopping
 
-This example aims at showcasing the last three points in a real setting.
+Note that random forests have none of those capabilities.
+
+This example aims at showcasing points 2-4 in a real life setting.
 """
 
 # %%
@@ -287,8 +292,8 @@ _ = ax.legend()
 # Support for quantile loss
 # =========================
 #
-# The quantile loss in regression enables a view of the potential variability in
-# predictions. For instance, predicting the 5th and 95th percentiles can provide
+# The quantile loss in regression enables a view of the variability or uncertainty
+# of the target variable. For instance, predicting the 5th and 95th percentiles can provide
 # a 90% prediction interval, i.e. the range within which we expect the true
 # value to fall with 90% probability.
 
@@ -349,7 +354,7 @@ _ = ax.legend()
 # - engineering more predictive features from the same data (see
 #   :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`).
 #
-# Monotonic Constraints
+# Monotonic constraints
 # =====================
 #
 # Given specific domain knowledge that requires the relationship between a
