@@ -57,7 +57,7 @@ def compute_class_weight(class_weight, *, classes, y):
         # Find the weight of each class as present in y.
         le = LabelEncoder()
         y_ind = le.fit_transform(y)
-        if not all(np.in1d(classes, le.classes_)):
+        if not all(np.isin(classes, le.classes_)):
             raise ValueError("classes should have valid labels that are in y")
 
         recip_freq = len(y) / (len(le.classes_) * np.bincount(y_ind).astype(np.float64))
@@ -195,7 +195,7 @@ def compute_sample_weight(class_weight, y, *, indices=None):
 
         if classes_missing:
             # Make missing classes' weight zero
-            weight_k[np.in1d(y_full, list(classes_missing))] = 0.0
+            weight_k[np.isin(y_full, list(classes_missing))] = 0.0
 
         expanded_class_weight.append(weight_k)
 
