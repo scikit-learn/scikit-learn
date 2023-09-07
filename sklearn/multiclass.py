@@ -69,7 +69,7 @@ from .utils.multiclass import (
     check_classification_targets,
 )
 from .utils.parallel import Parallel, delayed
-from .utils.validation import _num_samples, check_is_fitted
+from .utils.validation import _check_method_params, _num_samples, check_is_fitted
 
 __all__ = [
     "OneVsRestClassifier",
@@ -650,16 +650,9 @@ def _partial_fit_ovo_binary(estimator, X, y, i, j, partial_fit_params):
     if len(y) != 0:
         y_binary = np.zeros_like(y)
         y_binary[y == j] = 1
-
-        # Split partial_fit_params using the same indices as for splitting the data
-        partial_fit_params_subset = {}
-        for key, value in partial_fit_params.items():
-            if isinstance(value, (np.ndarray, list)):
-                partial_fit_params_subset[key] = np.array(value)[cond]
-            else:
-                # For non-array-like values, use the original value
-                partial_fit_params_subset[key] = value
-
+        partial_fit_params_subset = _check_method_params(
+            X, params=partial_fit_params, indices=cond
+        )
         return _partial_fit_binary(
             estimator, X[cond], y_binary, partial_fit_params=partial_fit_params_subset
         )

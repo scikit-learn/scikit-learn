@@ -60,7 +60,7 @@ def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
         if key in split_params and recorded_value is not None:
             assert np.isin(recorded_value, value).all()
         else:
-            assert recorded_value is value
+            assert np.allclose(recorded_value, value)
 
 
 record_metadata_not_default = partial(record_metadata, record_default=False)

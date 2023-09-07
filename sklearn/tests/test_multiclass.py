@@ -1014,11 +1014,7 @@ def test_passing_params_without_enabling_metadata_routing():
         OutputCodeClassifier,
     ]
     for classifier in multiclass_classifiers:
-        clf = classifier(
-            estimator=SGDClassifier(
-                random_state=42
-            )  # error messages don't match with set_fit_request(sample_weight=True)
-        )
+        clf = classifier(estimator=SGDClassifier(random_state=42))
         msg = "is only supported if enable_metadata_routing=True"
         with config_context(enable_metadata_routing=False):
             params = {"sample_weight": sample_weight}

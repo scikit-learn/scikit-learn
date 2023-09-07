@@ -8,6 +8,11 @@ from sklearn import config_context
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.linear_model import LogisticRegressionCV
+from sklearn.multiclass import (
+    OneVsOneClassifier,
+    OneVsRestClassifier,
+    OutputCodeClassifier,
+)
 from sklearn.multioutput import (
     ClassifierChain,
     MultiOutputClassifier,
@@ -82,6 +87,30 @@ METAESTIMATORS: list = [
         "estimator": ConsumingRegressor,
         "X": X,
         "y": y_multi,
+        "routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": OneVsRestClassifier,
+        "estimator_name": "estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y,
+        "routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": OneVsOneClassifier,
+        "estimator_name": "estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y,
+        "routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": OutputCodeClassifier,
+        "estimator_name": "estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y,
         "routing_methods": ["fit"],
     },
 ]
