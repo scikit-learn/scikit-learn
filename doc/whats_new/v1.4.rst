@@ -235,7 +235,7 @@ Changelog
   :pr:`26931` by `Thomas Fan`_.
 
 - |MajorFeature| :class:`preprocessing.MinMaxScaler` and :class:`preprocessing.MaxAbsScaler` now
-  supports the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
+  support the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
   support is considered experimental and might evolve without being subject to
   our usual rolling deprecation cycle policy. See
   :ref:`array_api` for more details. :pr:`26243` by `Tim Head`_ and :pr:`27110` by :user:`Edoardo Abati <EdAbati>`.
@@ -278,6 +278,9 @@ Changelog
   classes. the x- and y-axis limits are set to [0, 1] and the aspect ratio between
   both axis is set to be 1 to get a square plot.
   :pr:`26366` by :user:`Mojdeh Rastgoo <mrastgoo>`.
+
+- |Enhancement| :func:`sklearn.metrics.accuracy_score` and :func:`sklearn.metrics.zero_one_loss` now support
+  Array API compatible inputs. :pr:`27137` by :user:`Edoardo Abati <EdAbati>`.
 
 :mod:`sklearn.utils`
 ....................
