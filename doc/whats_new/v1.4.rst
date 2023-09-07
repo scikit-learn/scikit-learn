@@ -150,6 +150,11 @@ Changelog
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
   initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
 
+- |Efficiency| :class:`ensemble.GradientBoostingClassifier` is faster,
+  for binary and in particular for multiclass problems thanks to the private loss
+  function module.
+  :pr:`26278` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| Improves runtime and memory usage for
   :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
