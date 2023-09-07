@@ -326,9 +326,13 @@ class OneVsRestClassifier(
             classification.
 
         **fit_params : dict
-            Parameters to pass to the estimator used.
+            Parameters passed to the ``estimator.fit`` method of each
+            sub-estimator.
 
             .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
@@ -359,7 +363,7 @@ class OneVsRestClassifier(
                 self.estimator,
                 X,
                 column,
-                routed_params.estimator.fit,
+                fit_params=routed_params.estimator.fit,
                 classes=[
                     "not %s" % self.label_binarizer_.classes_[i],
                     self.label_binarizer_.classes_[i],
@@ -403,9 +407,13 @@ class OneVsRestClassifier(
             and can be omitted in the subsequent calls.
 
         **partial_fit_params : dict
-            Parameters to pass to the estimator used.
+            Parameters passed to the ``estimator.partial_fit`` method of each
+            sub-estimator.
 
             .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
@@ -452,7 +460,7 @@ class OneVsRestClassifier(
                 estimator,
                 X,
                 column,
-                routed_params.estimator.partial_fit,
+                partial_fit_params=routed_params.estimator.partial_fit,
             )
             for estimator, column in zip(self.estimators_, columns)
         )
@@ -612,7 +620,7 @@ class OneVsRestClassifier(
         return router
 
 
-def _fit_ovo_binary(estimator, X, y, fit_params, i, j):
+def _fit_ovo_binary(estimator, X, y, i, j, fit_params):
     """Fit a single binary estimator (one-vs-one)."""
     cond = np.logical_or(y == i, y == j)
     y = y[cond]
@@ -634,14 +642,14 @@ def _fit_ovo_binary(estimator, X, y, fit_params, i, j):
             estimator,
             _safe_split(estimator, X, None, indices=indcond)[0],
             y_binary,
-            fit_params_subset,
+            fit_params=fit_params_subset,
             classes=[i, j],
         ),
         indcond,
     )
 
 
-def _partial_fit_ovo_binary(estimator, X, y, partial_fit_params, i, j):
+def _partial_fit_ovo_binary(estimator, X, y, i, j, partial_fit_params):
     """Partially fit a single binary estimator(one-vs-one)."""
 
     cond = np.logical_or(y == i, y == j)
@@ -660,7 +668,7 @@ def _partial_fit_ovo_binary(estimator, X, y, partial_fit_params, i, j):
                 partial_fit_params_subset[key] = value
 
         return _partial_fit_binary(
-            estimator, X[cond], y_binary, partial_fit_params_subset
+            estimator, X[cond], y_binary, partial_fit_params=partial_fit_params_subset
         )
     return estimator
 
@@ -768,9 +776,13 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             Multi-class targets.
 
         **fit_params : dict
-            Parameters to pass to the estimator used.
+            Parameters passed to the ``estimator.fit`` method of each
+            sub-estimator.
 
             .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
@@ -805,9 +817,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                             self.estimator,
                             X,
                             y,
-                            routed_params.estimator.fit,
                             self.classes_[i],
                             self.classes_[j],
+                            fit_params=routed_params.estimator.fit,
                         )
                         for i in range(n_classes)
                         for j in range(i + 1, n_classes)
@@ -851,9 +863,13 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             and can be omitted in the subsequent calls.
 
         **partial_fit_params : dict
-            Parameters to pass to the estimator used.
+            Parameters passed to the ``estimator.partial_fit`` method of each
+            sub-estimator.
 
             .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
@@ -896,9 +912,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                 estimator,
                 X,
                 y,
-                routed_params.estimator.partial_fit,
                 self.classes_[i],
                 self.classes_[j],
+                partial_fit_params=routed_params.estimator.partial_fit,
             )
             for estimator, (i, j) in zip(self.estimators_, (combinations))
         )
@@ -1149,9 +1165,13 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             Multi-class targets.
 
         **fit_params : dict
-            Parameters to pass to the estimator used.
+            Parameters passed to the ``estimator.fit`` method of each
+            sub-estimator.
 
             .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
@@ -1198,7 +1218,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_binary)(
-                self.estimator, X, Y[:, i], routed_params.estimator.fit
+                self.estimator, X, Y[:, i], fit_params=routed_params.estimator.fit
             )
             for i in range(Y.shape[1])
         )

@@ -924,6 +924,10 @@ def test_ovo_consistent_binary_classification():
     assert_array_equal(clf.predict(X), ovo.predict(X))
 
 
+# Test that metadata is routed correctly for multiclass-classifiers
+# =================================================================
+
+
 @pytest.mark.usefixtures("enable_slep006")
 def test_fitted_coefs_differ_when_sample_weight_differs():
     """Assert if coefficients differ when estimators are fitted with different
