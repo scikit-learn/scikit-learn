@@ -339,7 +339,8 @@ def test_base_estimator_property_deprecated():
         model.base_estimator_
 
 
-def test_iforest_preserve_feature_names():
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_iforest_preserve_feature_names(use_pyarrow_dtypes):
     """Check that feature names are preserved when contamination is not "auto".
 
     Feature names are required for consistency checks during scoring.
@@ -350,6 +351,10 @@ def test_iforest_preserve_feature_names():
     rng = np.random.RandomState(0)
 
     X = pd.DataFrame(data=rng.randn(4), columns=["a"])
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        X.convert_dtypes(dtype_backend="pyarrow")
+
     model = IsolationForest(random_state=0, contamination=0.05)
 
     with warnings.catch_warnings():

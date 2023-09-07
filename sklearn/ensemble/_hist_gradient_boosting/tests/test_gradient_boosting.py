@@ -1112,10 +1112,11 @@ def test_categorical_spec_errors(
         est.fit(X, y)
 
 
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize(
     "Est", (HistGradientBoostingClassifier, HistGradientBoostingRegressor)
 )
-def test_categorical_spec_errors_with_feature_names(Est):
+def test_categorical_spec_errors_with_feature_names(use_pyarrow_dtypes, Est):
     pd = pytest.importorskip("pandas")
     n_samples = 10
     X = pd.DataFrame(
@@ -1126,6 +1127,9 @@ def test_categorical_spec_errors_with_feature_names(Est):
         }
     )
     y = [0, 1] * (n_samples // 2)
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        X.convert_dtypes(dtype_backend="pyarrow")
 
     est = Est(categorical_features=["f0", "f1", "f3"])
     expected_msg = re.escape(
@@ -1161,13 +1165,16 @@ def test_categorical_spec_no_categories(Est, categorical_features, as_array):
     assert est.is_categorical_ is None
 
 
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 @pytest.mark.parametrize(
     "Est", (HistGradientBoostingClassifier, HistGradientBoostingRegressor)
 )
 @pytest.mark.parametrize(
     "use_pandas, feature_name", [(False, "at index 0"), (True, "'f0'")]
 )
-def test_categorical_bad_encoding_errors(Est, use_pandas, feature_name):
+def test_categorical_bad_encoding_errors(
+    use_pyarrow_dtypes, Est, use_pandas, feature_name
+):
     # Test errors when categories are encoded incorrectly
 
     gb = Est(categorical_features=[True], max_bins=2)
@@ -1175,6 +1182,9 @@ def test_categorical_bad_encoding_errors(Est, use_pandas, feature_name):
     if use_pandas:
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame({"f0": [0, 1, 2]})
+        if use_pyarrow_dtypes:
+            pytest.importorskip("pyarrow")
+            X.convert_dtypes(dtype_backend="pyarrow")
     else:
         X = np.array([[0, 1, 2]]).T
     y = np.arange(3)
@@ -1187,6 +1197,8 @@ def test_categorical_bad_encoding_errors(Est, use_pandas, feature_name):
 
     if use_pandas:
         X = pd.DataFrame({"f0": [0, 2]})
+        if use_pyarrow_dtypes:
+            X.convert_dtypes(dtype_backend="pyarrow")
     else:
         X = np.array([[0, 2]]).T
     y = np.arange(2)
@@ -1292,7 +1304,8 @@ def test_interaction_cst_numerically():
     )
 
 
-def test_no_user_warning_with_scoring():
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_no_user_warning_with_scoring(use_pyarrow_dtypes):
     """Check that no UserWarning is raised when scoring is set.
 
     Non-regression test for #22907.
@@ -1300,6 +1313,9 @@ def test_no_user_warning_with_scoring():
     pd = pytest.importorskip("pandas")
     X, y = make_regression(n_samples=50, random_state=0)
     X_df = pd.DataFrame(X, columns=[f"col{i}" for i in range(X.shape[1])])
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        X_df.convert_dtypes(dtype_backend="pyarrow")
 
     est = HistGradientBoostingRegressor(
         random_state=0, scoring="neg_mean_absolute_error", early_stopping=True

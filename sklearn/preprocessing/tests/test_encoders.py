@@ -108,10 +108,14 @@ def test_one_hot_encoder_dtype(input_dtype, output_dtype):
 
 
 @pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
-def test_one_hot_encoder_dtype_pandas(output_dtype):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_one_hot_encoder_dtype_pandas(output_dtype, use_pyarrow_dtypes):
     pd = pytest.importorskip("pandas")
 
     X_df = pd.DataFrame({"A": ["a", "b"], "B": [1, 2]})
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        X_df = X_df.convert_dtypes(dtype_backend="pyarrow")
     X_expected = np.array([[1, 0, 1, 0], [0, 1, 0, 1]], dtype=output_dtype)
 
     oh = OneHotEncoder(dtype=output_dtype)
@@ -393,9 +397,13 @@ def test_X_is_not_1D(X, method):
 
 
 @pytest.mark.parametrize("method", ["fit", "fit_transform"])
-def test_X_is_not_1D_pandas(method):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_X_is_not_1D_pandas(method, use_pyarrow_dtypes):
     pd = pytest.importorskip("pandas")
     X = pd.Series([6, 3, 4, 6])
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        X = X.convert_dtypes(dtype_backend="pyarrow")
     oh = OneHotEncoder()
 
     msg = "Expected 2D array, got 1D array instead"
@@ -567,10 +575,14 @@ def test_one_hot_encoder_specified_categories_mixed_columns():
     assert np.issubdtype(enc.categories_[1].dtype, np.object_)
 
 
-def test_one_hot_encoder_pandas():
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_one_hot_encoder_pandas(use_pyarrow_dtypes):
     pd = pytest.importorskip("pandas")
 
     X_df = pd.DataFrame({"A": ["a", "b"], "B": [1, 2]})
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        X_df = X_df.convert_dtypes(dtype_backend="pyarrow")
 
     Xtr = check_categorical_onehot(X_df)
     assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
@@ -1265,7 +1277,8 @@ def test_ohe_infrequent_multiple_categories():
     assert_array_equal(expected_inv, X_inv)
 
 
-def test_ohe_infrequent_multiple_categories_dtypes():
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_ohe_infrequent_multiple_categories_dtypes(use_pyarrow_dtypes):
     """Test infrequent categories with a pandas dataframe with multiple dtypes."""
 
     pd = pytest.importorskip("pandas")
@@ -1276,6 +1289,9 @@ def test_ohe_infrequent_multiple_categories_dtypes():
         },
         columns=["str", "int"],
     )
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        X = X.convert_dtypes(dtype_backend="pyarrow")
 
     ohe = OneHotEncoder(
         categories="auto", max_categories=3, handle_unknown="infrequent_if_exist"
@@ -1305,6 +1321,8 @@ def test_ohe_infrequent_multiple_categories_dtypes():
     assert_allclose(expected, X_trans)
 
     X_test = pd.DataFrame({"str": ["b", "f"], "int": [14, 12]}, columns=["str", "int"])
+    if use_pyarrow_dtypes:
+        X_test = X_test.convert_dtypes(dtype_backend="pyarrow")
 
     expected = [[0, 0, 1, 0, 0, 1], [0, 1, 0, 0, 0, 1]]
     X_test_trans = ohe.transform(X_test)
@@ -1319,6 +1337,8 @@ def test_ohe_infrequent_multiple_categories_dtypes():
 
     # only infrequent or known categories
     X_test = pd.DataFrame({"str": ["c", "b"], "int": [12, 5]}, columns=["str", "int"])
+    if use_pyarrow_dtypes:
+        X_test = X_test.convert_dtypes(dtype_backend="pyarrow")
     X_test_trans = ohe.transform(X_test).toarray()
     expected = [[1, 0, 0, 0, 0, 1], [0, 0, 1, 1, 0, 0]]
     assert_allclose(expected, X_test_trans)
@@ -1431,7 +1451,8 @@ def test_ohe_missing_values_get_feature_names(missing_value):
     assert_array_equal(names, ["x0_a", "x0_b", f"x0_{missing_value}"])
 
 
-def test_ohe_missing_value_support_pandas():
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_ohe_missing_value_support_pandas(use_pyarrow_dtypes):
     # check support for pandas with mixed dtypes and missing values
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(
@@ -1441,6 +1462,9 @@ def test_ohe_missing_value_support_pandas():
         },
         columns=["col1", "col2"],
     )
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        df = df.convert_dtypes(dtype_backend="pyarrow")
     expected_df_trans = np.array(
         [
             [0, 1, 0, 0, 1, 0, 0],
@@ -1456,7 +1480,10 @@ def test_ohe_missing_value_support_pandas():
 
 @pytest.mark.parametrize("handle_unknown", ["infrequent_if_exist", "ignore"])
 @pytest.mark.parametrize("pd_nan_type", ["pd.NA", "np.nan"])
-def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknown):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_ohe_missing_value_support_pandas_categorical(
+    pd_nan_type, handle_unknown, use_pyarrow_dtypes
+):
     # checks pandas dataframe with categorical features
     pd = pytest.importorskip("pandas")
 
@@ -1467,6 +1494,9 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknow
             "col1": pd.Series(["c", "a", pd_missing_value, "b", "a"], dtype="category"),
         }
     )
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        df = df.convert_dtypes(dtype_backend="pyarrow")
     expected_df_trans = np.array(
         [
             [0, 0, 1, 0],
@@ -1642,8 +1672,9 @@ def test_ordinal_encoder_passthrough_missing_values_float(encoded_missing_value)
 
 @pytest.mark.parametrize("pd_nan_type", ["pd.NA", "np.nan"])
 @pytest.mark.parametrize("encoded_missing_value", [np.nan, -2])
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
 def test_ordinal_encoder_missing_value_support_pandas_categorical(
-    pd_nan_type, encoded_missing_value
+    pd_nan_type, encoded_missing_value, use_pyarrow_dtypes
 ):
     """Check ordinal encoder is compatible with pandas."""
     # checks pandas dataframe with categorical features
@@ -1656,6 +1687,9 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(
             "col1": pd.Series(["c", "a", pd_missing_value, "b", "a"], dtype="category"),
         }
     )
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        df = df.convert_dtypes(dtype_backend="pyarrow")
 
     oe = OrdinalEncoder(encoded_missing_value=encoded_missing_value).fit(df)
     assert len(oe.categories_) == 1
@@ -1848,12 +1882,16 @@ def test_ordinal_encoder_python_integer():
     assert_array_equal(X_trans, [[0], [3], [2], [1]])
 
 
-def test_ordinal_encoder_features_names_out_pandas():
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_ordinal_encoder_features_names_out_pandas(use_pyarrow_dtypes):
     """Check feature names out is same as the input."""
     pd = pytest.importorskip("pandas")
 
     names = ["b", "c", "a"]
     X = pd.DataFrame([[1, 2, 3]], columns=names)
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        X = X.convert_dtypes(dtype_backend="pyarrow")
     enc = OrdinalEncoder().fit(X)
 
     feature_names_out = enc.get_feature_names_out()
@@ -1891,7 +1929,8 @@ def test_ordinal_encoder_unknown_missing_interaction():
 
 
 @pytest.mark.parametrize("with_pandas", [True, False])
-def test_ordinal_encoder_encoded_missing_value_error(with_pandas):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_ordinal_encoder_encoded_missing_value_error(with_pandas, use_pyarrow_dtypes):
     """Check OrdinalEncoder errors when encoded_missing_value is used by
     an known category."""
     X = np.array([["a", "dog"], ["b", "cat"], ["c", np.nan]], dtype=object)
@@ -1907,6 +1946,9 @@ def test_ordinal_encoder_encoded_missing_value_error(with_pandas):
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame(X, columns=["letter", "pet"])
         error_msg = error_msg + r"\['pet'\]"
+        if use_pyarrow_dtypes:
+            pytest.importorskip("pyarrow")
+            X = X.convert_dtypes(dtype_backend="pyarrow")
     else:
         error_msg = error_msg + r"\[1\]"
 
@@ -1968,11 +2010,15 @@ def test_ordinal_encoder_unknown_missing_interaction_both_nan(
             assert val == expected_val
 
 
-def test_one_hot_encoder_set_output():
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_one_hot_encoder_set_output(use_pyarrow_dtypes):
     """Check OneHotEncoder works with set_output."""
     pd = pytest.importorskip("pandas")
 
     X_df = pd.DataFrame({"A": ["a", "b"], "B": [1, 2]})
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        X_df = X_df.convert_dtypes(dtype_backend="pyarrow")
     ohe = OneHotEncoder()
 
     ohe.set_output(transform="pandas")
@@ -1991,11 +2037,16 @@ def test_one_hot_encoder_set_output():
     assert_array_equal(ohe_pandas.get_feature_names_out(), X_pandas.columns)
 
 
-def test_ordinal_set_output():
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_ordinal_set_output(use_pyarrow_dtypes):
     """Check OrdinalEncoder works with set_output."""
     pd = pytest.importorskip("pandas")
 
     X_df = pd.DataFrame({"A": ["a", "b"], "B": [1, 2]})
+
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        X_df = X_df.convert_dtypes(dtype_backend="pyarrow")
 
     ord_default = OrdinalEncoder().set_output(transform="default")
     ord_pandas = OrdinalEncoder().set_output(transform="pandas")
@@ -2168,7 +2219,8 @@ def test_ordinal_encoder_infrequent_mixed():
     assert_array_equal(X_inverse, expected_inverse)
 
 
-def test_ordinal_encoder_infrequent_multiple_categories_dtypes():
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_ordinal_encoder_infrequent_multiple_categories_dtypes(use_pyarrow_dtypes):
     """Test infrequent categories with a pandas DataFrame with multiple dtypes."""
 
     pd = pytest.importorskip("pandas")
@@ -2184,6 +2236,9 @@ def test_ordinal_encoder_infrequent_multiple_categories_dtypes():
         },
         columns=["str", "int", "categorical"],
     )
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        X = X.convert_dtypes(dtype_backend="pyarrow")
 
     ordinal = OrdinalEncoder(max_categories=3).fit(X)
     # X[:, 0] 'a', 'b', 'c' have the same frequency. 'a' and 'b' will be
@@ -2210,6 +2265,8 @@ def test_ordinal_encoder_infrequent_multiple_categories_dtypes():
         },
         columns=["str", "int", "categorical"],
     )
+    if use_pyarrow_dtypes:
+        X_test = X_test.convert_dtypes(dtype_backend="pyarrow")
     expected_trans = [[2, 2, 0], [2, 2, 2], [1, 1, 2], [0, 0, 1]]
 
     X_trans = ordinal.transform(X_test)

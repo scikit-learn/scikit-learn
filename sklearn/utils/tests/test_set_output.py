@@ -27,10 +27,17 @@ def test__wrap_in_pandas_container_dense():
     assert_array_equal(dense_named.index, index)
 
 
-def test__wrap_in_pandas_container_dense_update_columns_and_index():
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test__wrap_in_pandas_container_dense_update_columns_and_index(use_pyarrow_dtypes):
     """Check that _wrap_in_pandas_container overrides columns and index."""
     pd = pytest.importorskip("pandas")
+
     X_df = pd.DataFrame([[1, 0, 3], [0, 0, 1]], columns=["a", "b", "c"])
+
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        X_df = X_df.convert_dtypes(dtype_backend="pyarrow")
+
     new_columns = np.asarray(["f0", "f1", "f2"], dtype=object)
     new_index = [10, 12]
 
@@ -227,7 +234,8 @@ def test_set_output_mixin_custom_mixin():
     assert hasattr(est, "set_output")
 
 
-def test__wrap_in_pandas_container_column_errors():
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test__wrap_in_pandas_container_column_errors(use_pyarrow_dtypes):
     """If a callable `columns` errors, it has the same semantics as columns=None."""
     pd = pytest.importorskip("pandas")
 
@@ -235,6 +243,10 @@ def test__wrap_in_pandas_container_column_errors():
         raise ValueError("No feature names defined")
 
     X_df = pd.DataFrame({"feat1": [1, 2, 3], "feat2": [3, 4, 5]})
+
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        X_df = X_df.convert_dtypes(dtype_backend="pyarrow")
 
     X_wrapped = _wrap_in_pandas_container(X_df, columns=get_columns)
     assert_array_equal(X_wrapped.columns, X_df.columns)
@@ -282,7 +294,8 @@ class EstimatorWithSetOutputIndex(_SetOutputMixin):
         return np.asarray([f"X{i}" for i in range(self.n_features_in_)], dtype=object)
 
 
-def test_set_output_pandas_keep_index():
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_set_output_pandas_keep_index(use_pyarrow_dtypes):
     """Check that set_output does not override index.
 
     Non-regression test for gh-25730.
@@ -290,6 +303,11 @@ def test_set_output_pandas_keep_index():
     pd = pytest.importorskip("pandas")
 
     X = pd.DataFrame([[1, 2, 3], [4, 5, 6]], index=[0, 1])
+
+    if use_pyarrow_dtypes:
+        pytest.importorskip("pyarrow")
+        X = X.convert_dtypes(dtype_backend="pyarrow")
+
     est = EstimatorWithSetOutputIndex().set_output(transform="pandas")
     est.fit(X)
 

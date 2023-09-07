@@ -53,7 +53,8 @@ def test_parallel_delayed_warnings():
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
-def test_dispatch_config_parallel(n_jobs):
+@pytest.mark.parametrize("use_pyarrow_dtypes", [True, False])
+def test_dispatch_config_parallel(n_jobs, use_pyarrow_dtypes):
     """Check that we properly dispatch the configuration in parallel processing.
 
     Non-regression test for:
@@ -61,6 +62,9 @@ def test_dispatch_config_parallel(n_jobs):
     """
     pd = pytest.importorskip("pandas")
     iris = load_iris(as_frame=True)
+
+    if use_pyarrow_dtypes:
+        iris.data = iris.data.convert_dtypes(dtype_backend="pyarrow")
 
     class TransformerRequiredDataFrame(StandardScaler):
         def fit(self, X, y=None):
