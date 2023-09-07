@@ -6,11 +6,10 @@ from functools import partial, wraps
 from inspect import signature
 from numbers import Integral, Real
 
+import joblib
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
-
-import joblib
 
 from .. import config_context
 from ..base import (

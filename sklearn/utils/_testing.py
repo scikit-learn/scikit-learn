@@ -29,6 +29,7 @@ from inspect import signature
 from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
 from unittest import TestCase
 
+import joblib
 import numpy as np
 import scipy as sp
 from numpy.testing import assert_allclose as np_assert_allclose
@@ -41,7 +42,6 @@ from numpy.testing import (
     assert_no_warnings,
 )
 
-import joblib
 import sklearn
 from sklearn.utils import (
     _IS_32BIT,
