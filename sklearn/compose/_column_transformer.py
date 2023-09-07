@@ -474,7 +474,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         all_columns = []
         transformer_to_input_indices = {}
-
         for name, _, columns in self.transformers:
             if callable(columns):
                 columns = columns(X)
@@ -734,7 +733,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 fitted=fitted, replace_strings=True, column_as_strings=column_as_strings
             )
         )
-
         try:
             jobs = []
             for idx, (name, trans, column, weight) in enumerate(transformers, start=1):

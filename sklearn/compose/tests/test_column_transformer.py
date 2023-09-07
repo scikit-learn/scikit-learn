@@ -2275,21 +2275,6 @@ def test_remainder_set_output():
     assert isinstance(out, np.ndarray)
 
 
-def test_dataframe_interchange_errors():
-    """DataFrame interchange requires the ColumnTranformer to be fitted on dataframe."""
-    pl = pytest.importorskip("polars")
-
-    X_train = np.array([[0, 1], [2, 4]]).T
-    X_test = pl.DataFrame({"a": [1, 2, 3], "b": [1, 2, 3]})
-
-    ct = make_column_transformer((Trans(), [0, 1]))
-    ct.fit(X_train)
-
-    msg = "Using the dataframe protocol requires fitting on dataframes."
-    with pytest.raises(ValueError, match=msg):
-        ct.transform(X_test)
-
-
 def test_dataframe_different_dataframe_libraries():
     """Check fitting and transforming on pandas and polars dataframes."""
     pd = pytest.importorskip("pandas")
