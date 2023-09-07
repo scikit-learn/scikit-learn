@@ -14,6 +14,7 @@ from scipy.sparse import (
 )
 from scipy.special import comb
 
+from sklearn import config_context
 from sklearn.datasets import load_digits, make_classification
 from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import (
@@ -44,12 +45,23 @@ from sklearn.model_selection._split import (
 )
 from sklearn.svm import SVC
 from sklearn.tests.metadata_routing_common import assert_request_is_empty
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    get_namespace,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._array_api import (
+    device as array_api_device,
+)
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
     ignore_warnings,
+)
+from sklearn.utils.estimator_checks import (
+    _array_api_for_tests,
 )
 from sklearn.utils.validation import _num_samples
 
@@ -818,7 +830,7 @@ def test_stratified_shuffle_split_iter():
             assert len(train) + len(test) == y.size
             assert len(train) == train_size
             assert len(test) == test_size
-            assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
+            assert_array_equal(np.intersect1d(train, test), [])
 
 
 def test_stratified_shuffle_split_even():
@@ -975,8 +987,8 @@ def test_group_shuffle_split():
             # First test: no train group is in the test set and vice versa
             l_train_unique = np.unique(l[train])
             l_test_unique = np.unique(l[test])
-            assert not np.any(np.in1d(l[train], l_test_unique))
-            assert not np.any(np.in1d(l[test], l_train_unique))
+            assert not np.any(np.isin(l[train], l_test_unique))
+            assert not np.any(np.isin(l[test], l_train_unique))
 
             # Second test: train and test add up to all the data
             assert l[train].size + l[test].size == l.size
@@ -1257,6 +1269,70 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
 
     assert len(X_train) == exp_train
     assert len(X_test) == exp_test
+
+
+@pytest.mark.parametrize(
+    "array_namepsace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "shuffle,stratify",
+    (
+        (True, None),
+        (True, np.hstack((np.ones(6), np.zeros(4)))),
+        # stratification only works with shuffling
+        (False, None),
+    ),
+)
+def test_array_api_train_test_split(shuffle, stratify, array_namepsace, device, dtype):
+    xp, device, dtype = _array_api_for_tests(array_namepsace, device, dtype)
+
+    X = np.arange(100).reshape((10, 10))
+    y = np.arange(10)
+
+    X_np = X.astype(dtype)
+    X_xp = xp.asarray(X_np, device=device)
+
+    y_np = y.astype(dtype)
+    y_xp = xp.asarray(y_np, device=device)
+
+    X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
+        X_np, y, random_state=0, shuffle=shuffle, stratify=stratify
+    )
+    with config_context(array_api_dispatch=True):
+        if stratify is not None:
+            stratify_xp = xp.asarray(stratify)
+        else:
+            stratify_xp = stratify
+        X_train_xp, X_test_xp, y_train_xp, y_test_xp = train_test_split(
+            X_xp, y_xp, shuffle=shuffle, stratify=stratify_xp, random_state=0
+        )
+
+        # Check that namespace is preserved, has to happen with
+        # array_api_dispatch enabled.
+        assert get_namespace(X_train_xp)[0] == get_namespace(X_xp)[0]
+        assert get_namespace(X_test_xp)[0] == get_namespace(X_xp)[0]
+        assert get_namespace(y_train_xp)[0] == get_namespace(y_xp)[0]
+        assert get_namespace(y_test_xp)[0] == get_namespace(y_xp)[0]
+
+    # Check device and dtype is preserved on output
+    assert array_api_device(X_train_xp) == array_api_device(X_xp)
+    assert array_api_device(y_train_xp) == array_api_device(y_xp)
+    assert array_api_device(X_test_xp) == array_api_device(X_xp)
+    assert array_api_device(y_test_xp) == array_api_device(y_xp)
+
+    assert X_train_xp.dtype == X_xp.dtype
+    assert y_train_xp.dtype == y_xp.dtype
+    assert X_test_xp.dtype == X_xp.dtype
+    assert y_test_xp.dtype == y_xp.dtype
+
+    assert_allclose(
+        _convert_to_numpy(X_train_xp, xp=xp),
+        X_train_np,
+    )
+    assert_allclose(
+        _convert_to_numpy(X_test_xp, xp=xp),
+        X_test_np,
+    )
 
 
 def test_train_test_split():
