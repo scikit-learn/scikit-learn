@@ -975,19 +975,17 @@ def test_stable_cumsum():
     assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))
 
 
-@pytest.mark.parametrize("A_sparse_container", [None, *CSR_CONTAINERS])
-@pytest.mark.parametrize("B_sparse_container", [None, *CSR_CONTAINERS])
-def test_safe_sparse_dot_2d(A_sparse_container, B_sparse_container):
+@pytest.mark.parametrize("A_container", [np.array, *CSR_CONTAINERS])
+@pytest.mark.parametrize("B_container", [np.array, *CSR_CONTAINERS])
+def test_safe_sparse_dot_2d(A_container, B_container):
     rng = np.random.RandomState(0)
 
     A = rng.random_sample((30, 10))
     B = rng.random_sample((10, 20))
     expected = np.dot(A, B)
 
-    if A_sparse_container is not None:
-        A = A_sparse_container(A)
-    if B_sparse_container is not None:
-        B = B_sparse_container(B)
+    A = A_container(A)
+    B = B_container(B)
     actual = safe_sparse_dot(A, B, dense_output=True)
 
     assert_allclose(actual, expected)
@@ -1014,26 +1012,21 @@ def test_safe_sparse_dot_nd(csr_container):
     assert_allclose(actual, expected)
 
 
-@pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
-def test_safe_sparse_dot_2d_1d(csr_container):
+@pytest.mark.parametrize("container", [np.array, *CSR_CONTAINERS])
+def test_safe_sparse_dot_2d_1d(container):
     rng = np.random.RandomState(0)
-
     B = rng.random_sample((10))
 
     # 2D @ 1D
     A = rng.random_sample((30, 10))
     expected = np.dot(A, B)
-    if csr_container is not None:
-        A = csr_container(A)
-    actual = safe_sparse_dot(A, B)
+    actual = safe_sparse_dot(container(A), B)
     assert_allclose(actual, expected)
 
     # 1D @ 2D
     A = rng.random_sample((10, 30))
     expected = np.dot(B, A)
-    if csr_container is not None:
-        A = csr_container(A)
-    actual = safe_sparse_dot(B, A)
+    actual = safe_sparse_dot(B, container(A))
     assert_allclose(actual, expected)
 
 
