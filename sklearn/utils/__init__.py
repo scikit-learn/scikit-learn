@@ -223,11 +223,6 @@ def _list_indexing(X, key, key_dtype):
 
 def _dataframe_interchange_indexing(X, key, key_dtype, axis):
     """Indexing X with the dataframe interchange protocol."""
-    if key_dtype != "str":
-        raise ValueError(
-            "Only string keys are accepted with the dataframe interchange protocol"
-        )
-
     if axis != 1:
         raise ValueError(
             "Only axis=1 is support with the dataframe interchange protocol"
@@ -237,7 +232,12 @@ def _dataframe_interchange_indexing(X, key, key_dtype, axis):
         import polars as pl
 
         X_interchange = X.__dataframe__()
-        sliced_df = X_interchange.select_columns_by_name(list(key))
+        if key_dtype in ("int", "bool"):
+            key = _get_column_indices_interchange(X_interchange, key, key_dtype)
+            sliced_df = X_interchange.select_columns(key)
+        else:  # key_dtype == "str"
+            sliced_df = X_interchange.select_columns_by_name(list(key))
+
         return pl.from_dataframe(sliced_df)
 
     else:
@@ -455,13 +455,11 @@ def _get_column_indices(X, key):
     For accepted values of `key`, see the docstring of
     :func:`_safe_indexing`.
     """
+    key_dtype = _determine_key_type(key)
     if _use_interchange_protocol(X):
-        return _get_column_indices_interchange(X, key)
+        return _get_column_indices_interchange(X.__dataframe__(), key, key_dtype)
 
     n_columns = X.shape[1]
-
-    key_dtype = _determine_key_type(key)
-
     if isinstance(key, (list, tuple)) and not key:
         # we get an empty list
         return []
@@ -506,11 +504,9 @@ def _get_column_indices(X, key):
         return column_indices
 
 
-def _get_column_indices_interchange(X, key):
+def _get_column_indices_interchange(X_interchange, key, key_dtype):
     """Same as _get_column_indices but for X with __dataframe__ protocol."""
-    X_interchange = X.__dataframe__()
     n_columns = X_interchange.num_columns()
-    key_dtype = _determine_key_type(key)
 
     if isinstance(key, (list, tuple)) and not key:
         # we get an empty list

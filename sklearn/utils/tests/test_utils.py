@@ -784,11 +784,16 @@ def test_get_column_indices_interchange():
         ([], []),
     ]
     for key, result in key_results:
-        assert _get_column_indices_interchange(df_interchange, key) == result
+        assert (
+            _get_column_indices_interchange(
+                df_interchange, key, _determine_key_type(key)
+            )
+            == result
+        )
 
     msg = "A given column is not a column of the dataframe"
     with pytest.raises(ValueError, match=msg):
-        _get_column_indices_interchange(df_interchange, ["not_a_column"])
+        _get_column_indices_interchange(df_interchange, ["not_a_column"], "str")
 
 
 def test_dataframe_interchange_indexing():
@@ -798,21 +803,29 @@ def test_dataframe_interchange_indexing():
 
     from polars.testing import assert_frame_equal
 
-    keys = [["b"], ["a", "b"], ["b", "a", "c"], ["c"], ["a"]]
+    str_keys = [["b"], ["a", "b"], ["b", "a", "c"], ["c"], ["a"]]
 
-    for key in keys:
+    for key in str_keys:
         out = _dataframe_interchange_indexing(df, key, "str", axis=1)
         assert_frame_equal(df[key], out)
+
+    bool_keys = [([True, False, True], ["a", "c"]), ([False, False, True], ["c"])]
+
+    for bool_key, str_key in bool_keys:
+        out = _dataframe_interchange_indexing(df, bool_key, "bool", axis=1)
+        assert_frame_equal(df[str_key], out)
+
+    int_keys = [([0, 1], ["a", "b"]), ([2], ["c"])]
+
+    for int_key, str_key in int_keys:
+        out = _dataframe_interchange_indexing(df, int_key, "int", axis=1)
+        assert_frame_equal(df[str_key], out)
 
 
 def test_dataframe_interchange_indexing_errors():
     pl = pytest.importorskip("polars", minversion="0.18.2")
 
     df_pl = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [1, 4, 1]})
-
-    msg = "Only string keys are accepted with the dataframe interchange protocol"
-    with pytest.raises(ValueError, match=msg):
-        _dataframe_interchange_indexing(df_pl, [0], "int", axis=1)
 
     msg = "Only polars dataframes are accepted with the dataframe interchange protocol"
     with pytest.raises(ValueError, match=msg):
