@@ -13,8 +13,8 @@ COPY $CONFTEST_NAME $CONFTEST_NAME
 RUN if ( $env:CIBW_PRERELEASE_PYTHONS -eq 'True' ) { \
   $env:PIP_EXTRA_INDEX_URL = 'https://pypi.anaconda.org/scientific-python-nightly-wheels/simple'; \
   $env:PIP_PRE = '1'; \
-}
-RUN pip install $env:WHEEL_NAME
+}; \
+pip install $env:WHEEL_NAME
 
 # Install the testing dependencies
 RUN pip install $env:CIBW_TEST_REQUIRES.split(" ")
