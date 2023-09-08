@@ -69,7 +69,6 @@ def _safe_divide(numerator, denominator):
         # on `np.errstate` that is not supported by Pyodide.
         result = float(numerator) / float(denominator)
         if np.isinf(result):
-            # Raise a runtime warning if overflow.
             warnings.warn("overflow encountered in divide", RuntimeWarning)
         return result
     except ZeroDivisionError:
