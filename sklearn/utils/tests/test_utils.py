@@ -15,7 +15,6 @@ from sklearn.utils import (
     _get_column_indices,
     _get_column_indices_interchange,
     _message_with_time,
-    _polars_indexing,
     _print_elapsed_time,
     _safe_assign,
     _safe_indexing,
@@ -797,26 +796,31 @@ def test_get_column_indices_interchange():
 
 
 def test_polars_indexing():
-    """Check _polars_indexing works as expected."""
+    """Check _safe_indexing for polars as expected."""
     pl = pytest.importorskip("polars", minversion="0.18.2")
-    df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [1, 4, 1]})
+    df = pl.DataFrame({"a": [1, 2, 3, 4], "b": [4, 5, 6, 8], "c": [1, 4, 1, 10]})
 
     from polars.testing import assert_frame_equal
 
     str_keys = [["b"], ["a", "b"], ["b", "a", "c"], ["c"], ["a"]]
 
     for key in str_keys:
-        out = _polars_indexing(df, key, "str", axis=1)
+        out = _safe_indexing(df, key, axis=1)
         assert_frame_equal(df[key], out)
 
     bool_keys = [([True, False, True], ["a", "c"]), ([False, False, True], ["c"])]
 
     for bool_key, str_key in bool_keys:
-        out = _polars_indexing(df, bool_key, "bool", axis=1)
-        assert_frame_equal(df[str_key], out)
+        out = _safe_indexing(df, bool_key, axis=1)
+        assert_frame_equal(df[:, str_key], out)
 
     int_keys = [([0, 1], ["a", "b"]), ([2], ["c"])]
 
     for int_key, str_key in int_keys:
-        out = _polars_indexing(df, int_key, "int", axis=1)
-        assert_frame_equal(df[str_key], out)
+        out = _safe_indexing(df, int_key, axis=1)
+        assert_frame_equal(df[:, str_key], out)
+
+    axis_0_keys = [[0, 1], [1, 3], [3, 2]]
+    for key in axis_0_keys:
+        out = _safe_indexing(df, key, axis=0)
+        assert_frame_equal(df[key], out)

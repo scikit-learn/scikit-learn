@@ -2018,21 +2018,6 @@ def _is_polars_df(X):
     return False
 
 
-def _interchange_to_dataframe(df_interchange, to_dataframe_library):
-    """Converts to DataFrame using interchange protocol.
-
-    Only pandas and polars are supported.
-    """
-    if to_dataframe_library == "pandas":
-        import pandas as pd
-
-        return pd.api.interchange.from_dataframe(df_interchange)
-    else:
-        import polars as pl
-
-        return pl.from_dataframe(df_interchange)
-
-
 def _get_feature_names(X):
     """Get feature names from X.
 
