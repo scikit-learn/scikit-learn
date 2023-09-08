@@ -49,7 +49,7 @@ Changelog
 - |Fix| Fix bug in :class:`sklearn.metrics.ConfusionMatrixDisplay` where text colors do
   do not always contrast with background if the confusion matrix input contains `nan`
   values.
-  :pr:`27306` by :user:`Ravi Selker <raviselker>`
+  :pr:`27320` by :user:`Ravi Selker <raviselker>`
 
 :mod:`sklearn.neighbors`
 ........................
