@@ -13,6 +13,7 @@ from sklearn.datasets import (
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.inspection._plot.decision_boundary import _check_boundary_response_method
 from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import scale
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
     assert_allclose,
@@ -35,6 +36,12 @@ X, y = make_classification(
 )
 
 
+def load_iris_scaled():
+    X, y = load_iris(return_X_y=True)
+    X = scale(X)[:, :2]
+    return X, y
+
+
 @pytest.fixture(scope="module")
 def fitted_clf():
     return LogisticRegression().fit(X, y)
@@ -50,29 +57,73 @@ def test_input_data_dimension(pyplot):
         DecisionBoundaryDisplay.from_estimator(estimator=clf, X=X)
 
 
-def test_check_boundary_response_method_auto():
-    """Check _check_boundary_response_method behavior with 'auto'."""
+def test_check_boundary_response_method_error():
+    """Check that we raise an error for the cases not supported by
+    `_check_boundary_response_method`.
+    """
 
-    expected_methods = ["decision_function", "predict_proba", "predict"]
+    class MultiLabelClassifier:
+        classes_ = [np.array([0, 1]), np.array([0, 1])]
 
-    class A:
-        def decision_function(self):
-            pass
+    err_msg = "Multi-label and multi-output multi-class classifiers are not supported"
+    with pytest.raises(ValueError, match=err_msg):
+        _check_boundary_response_method(MultiLabelClassifier(), "predict", None)
 
-    class B:
-        def predict_proba(self):
-            pass
+    class MulticlassClassifier:
+        classes_ = [0, 1, 2]
 
-    class C(A, B):
-        pass
+    err_msg = "Multiclass classifiers are only supported when response_method is"
+    for response_method in ("predict_proba", "decision_function"):
+        with pytest.raises(ValueError, match=err_msg):
+            _check_boundary_response_method(
+                MulticlassClassifier(), response_method, None
+            )
 
-    class D:
-        def predict(self):
-            pass
 
-    for Klass in [A, B, C, D]:
-        methods = _check_boundary_response_method(Klass(), "auto", None)
-        assert methods == expected_methods
+@pytest.mark.parametrize(
+    "estimator, response_method, class_of_interest, expected_prediction_method",
+    [
+        (DecisionTreeRegressor(), "predict", None, "predict"),
+        (DecisionTreeRegressor(), "auto", None, "predict"),
+        (LogisticRegression().fit(*load_iris_scaled()), "predict", None, "predict"),
+        (LogisticRegression().fit(*load_iris_scaled()), "auto", None, "predict"),
+        (
+            LogisticRegression().fit(*load_iris_scaled()),
+            "predict_proba",
+            0,
+            "predict_proba",
+        ),
+        (
+            LogisticRegression().fit(*load_iris_scaled()),
+            "decision_function",
+            0,
+            "decision_function",
+        ),
+        (
+            LogisticRegression().fit(X, y),
+            "auto",
+            None,
+            ["decision_function", "predict_proba", "predict"],
+        ),
+        (LogisticRegression().fit(X, y), "predict", None, "predict"),
+        (
+            LogisticRegression().fit(X, y),
+            ["predict_proba", "decision_function"],
+            None,
+            ["predict_proba", "decision_function"],
+        ),
+    ],
+)
+def test_check_boundary_response_method(
+    estimator, response_method, class_of_interest, expected_prediction_method
+):
+    """Check the behaviour of `_check_boundary_response_method` for the supported
+    cases.
+    """
+    prediction_method = _check_boundary_response_method(
+        estimator, response_method, class_of_interest
+    )
+    assert prediction_method == expected_prediction_method
 
 
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
