@@ -2503,5 +2503,26 @@ def test_multi_metric_search_forwards_metadata(SearchCV, param_search):
         )
 
 
+@pytest.mark.parametrize(
+    "SearchCV, param_search",
+    [
+        (GridSearchCV, "param_grid"),
+        (RandomizedSearchCV, "param_distributions"),
+        (HalvingGridSearchCV, "param_grid"),
+    ],
+)
+def test_score_rejects_params_with_no_routing_enabled(SearchCV, param_search):
+    """*SearchCV should reject **params when metadata routing is not enabled
+    since this is added only when routing is enabled."""
+    X, y = make_classification(random_state=42)
+    est = LinearSVC(dual="auto")
+    param_grid_search = {param_search: {"C": [1]}}
+
+    gs = SearchCV(est, cv=2, **param_grid_search).fit(X, y)
+
+    with pytest.raises(ValueError, match="is only supported if"):
+        gs.score(X, y, metadata=1)
+
+
 # End of Metadata Routing Tests
 # =============================

@@ -458,7 +458,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             None for unsupervised learning.
 
         **params : dict
-            Parameters to be passed the underlying scorer(s).
+            Parameters to be passed to the underlying scorer(s).
 
             ..versionadded:: 1.4
                 Only available if `enable_metadata_routing=True`. See
