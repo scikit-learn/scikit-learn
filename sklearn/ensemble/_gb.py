@@ -64,6 +64,16 @@ _LOSSES.update(
 
 def _safe_divide(numerator, denominator):
     """Prevents overflow and division by zero."""
+    try:
+        # Cast to a Python float to triggers a ZeroDivisionError without relying
+        # on `np.errstate` that is not supported by Pyodide.
+        result = float(numerator) / float(denominator)
+        if np.isinf(result):
+            # Raise a runtime warning if overflow.
+            warnings.warn("overflow encountered in divide", RuntimeWarning)
+    except ZeroDivisionError:
+        return 0.0
+
     # We could implement the following using `np.errstate` but, at the time of
     # writing (scikit-learn 1.4), `np.errstate` is not handled properly by Pyodide.
     # We therefore risk to issue `nan` values, making GBDT training fail.
