@@ -10,7 +10,11 @@ from sklearn.base import BaseEstimator
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
 from sklearn.datasets import make_friedman1
 from sklearn.decomposition import PCA
-from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    RandomForestClassifier,
+    RandomForestRegressor,
+)
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import (
@@ -402,7 +406,7 @@ def test_partial_fit():
     assert_array_almost_equal(X_transform, transformer.transform(data))
 
     # check that if est doesn't have partial_fit, neither does SelectFromModel
-    transformer = SelectFromModel(estimator=RandomForestClassifier())
+    transformer = SelectFromModel(estimator=RandomForestRegressor())
     assert not hasattr(transformer, "partial_fit")
 
 

@@ -4,19 +4,23 @@
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
+#          Adam Li <adam2392@gmail.com>
+#          Jong Shin <jshinm@gmail.com>
 #
 # License: BSD 3 clause
 
 # See _splitter.pyx for details.
 cimport numpy as cnp
 
-from ._criterion cimport Criterion
+from libcpp.vector cimport vector
 
-from ._tree cimport DTYPE_t          # Type of X
-from ._tree cimport DOUBLE_t         # Type of y, sample_weight
-from ._tree cimport SIZE_t           # Type for indices and counters
-from ._tree cimport INT32_t          # Signed 32 bit integer
-from ._tree cimport UINT32_t         # Unsigned 32 bit integer
+from ._criterion cimport BaseCriterion, Criterion
+from ._tree cimport DOUBLE_t  # Type of y, sample_weight
+from ._tree cimport DTYPE_t  # Type of X
+from ._tree cimport INT32_t  # Signed 32 bit integer
+from ._tree cimport SIZE_t  # Type for indices and counters
+from ._tree cimport UINT32_t  # Unsigned 32 bit integer
+
 
 cdef struct SplitRecord:
     # Data to track sample split
@@ -33,14 +37,15 @@ cdef struct SplitRecord:
     unsigned char missing_go_to_left  # Controls if missing values go to the left node.
     SIZE_t n_missing       # Number of missing values for the feature being split on
 
-cdef class Splitter:
+cdef class BaseSplitter:
+    """Abstract interface for splitter."""
+
     # The splitter searches in the input space for a feature and a threshold
     # to split the samples samples[start:end].
     #
     # The impurity computations are delegated to a criterion object.
 
     # Internal structures
-    cdef public Criterion criterion      # Impurity criterion
     cdef public SIZE_t max_features      # Number of features to test
     cdef public SIZE_t min_samples_leaf  # Min samples in a leaf
     cdef public double min_weight_leaf   # Minimum weight in a leaf
@@ -59,14 +64,6 @@ cdef class Splitter:
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current node
 
-    cdef const DOUBLE_t[:, ::1] y
-    # Monotonicity constraints for each feature.
-    # The encoding is as follows:
-    #   -1: monotonic decrease
-    #    0: no constraint
-    #   +1: monotonic increase
-    cdef const cnp.int8_t[:] monotonic_cst
-    cdef bint with_monotonic_cst
     cdef const DOUBLE_t[:] sample_weight
 
     # The samples vector `samples` is maintained by the Splitter object such
@@ -86,21 +83,12 @@ cdef class Splitter:
     # This allows optimization with depth-based tree building.
 
     # Methods
-    cdef int init(
-        self,
-        object X,
-        const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight,
-        const unsigned char[::1] missing_values_in_feature_mask,
-    ) except -1
-
     cdef int node_reset(
         self,
         SIZE_t start,
         SIZE_t end,
         double* weighted_n_node_samples
     ) except -1 nogil
-
     cdef int node_split(
         self,
         double impurity,   # Impurity of the node
@@ -109,9 +97,49 @@ cdef class Splitter:
         double lower_bound,
         double upper_bound,
     ) except -1 nogil
-
     cdef void node_value(self, double* dest) noexcept nogil
-
-    cdef void clip_node_value(self, double* dest, double lower_bound, double upper_bound) noexcept nogil
-
     cdef double node_impurity(self) noexcept nogil
+    cdef int pointer_size(self) noexcept nogil
+
+cdef class Splitter(BaseSplitter):
+    """Base class for supervised splitters."""
+    
+    cdef public Criterion criterion      # Impurity criterion
+    cdef const DOUBLE_t[:, ::1] y
+
+    # Monotonicity constraints for each feature.
+    # The encoding is as follows:
+    #   -1: monotonic decrease
+    #    0: no constraint
+    #   +1: monotonic increase
+    cdef const cnp.int8_t[:] monotonic_cst
+    cdef bint with_monotonic_cst
+
+    cdef int init(
+        self,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight,
+        const unsigned char[::1] missing_values_in_feature_mask,
+    ) except -1
+
+    cdef void node_samples(self, vector[vector[DOUBLE_t]]& dest) noexcept nogil
+
+    # Methods that allow modifications to stopping conditions
+    cdef bint check_presplit_conditions(
+        self,
+        SplitRecord* current_split,
+        SIZE_t n_missing,
+        bint missing_go_to_left,
+    ) noexcept nogil
+
+    cdef bint check_postsplit_conditions(
+        self
+    ) noexcept nogil
+
+    cdef void clip_node_value(
+        self,
+        double* dest,
+        double lower_bound,
+        double upper_bound
+    ) noexcept nogil

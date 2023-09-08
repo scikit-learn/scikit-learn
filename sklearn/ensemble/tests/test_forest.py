@@ -115,6 +115,120 @@ FOREST_CLASSIFIERS_REGRESSORS: Dict[str, Any] = FOREST_CLASSIFIERS.copy()
 FOREST_CLASSIFIERS_REGRESSORS.update(FOREST_REGRESSORS)
 
 
+def _sparse_parity(n, p=20, p_star=3, random_state=None):
+    """Generate sparse parity dataset.
+
+    Sparse parity is a multivariate generalization of the
+    XOR problem.
+
+    Parameters
+    ----------
+    n : int
+        Number of sample to generate.
+    p : int, optional
+        The dimensionality of the dataset, by default 20
+    p_star : int, optional
+        The number of informative dimensions, by default 3.
+    random_state : Random State, optional
+        Random state, by default None.
+
+    Returns
+    -------
+    X : np.ndarray of shape (n, p)
+        Sparse parity dataset as a dense array.
+    y : np.ndarray of shape (n,)
+        Labels of the dataset
+    """
+    rng = np.random.RandomState(seed=random_state)
+    X = rng.uniform(-1, 1, (n, p))
+    y = np.zeros(n)
+
+    for i in range(0, n):
+        y[i] = sum(X[i, :p_star] > 0) % 2
+
+    return X, y
+
+
+def _orthant(n, p=6, random_state=None):
+    """Generate orthant dataset.
+
+    Parameters
+    ----------
+    n : int
+        Number of sample to generate.
+    p : int, optional
+        The dimensionality of the dataset and the number of
+        unique labels, by default 6.
+    rec : int, optional
+        _description_, by default 1
+    random_state : Random State, optional
+        Random state, by default None.
+
+    Returns
+    -------
+    X : np.ndarray of shape (n, p)
+        Orthant dataset as a dense array.
+    y : np.ndarray of shape (n,)
+        Labels of the dataset
+    """
+    rng = np.random.RandomState(seed=random_state)
+    orth_labels = np.asarray([2**i for i in range(0, p)][::-1])
+
+    X = rng.uniform(-1, 1, (n, p))
+    y = np.zeros(n)
+
+    for i in range(0, n):
+        idx = np.where(X[i, :] > 0)[0]
+        y[i] = sum(orth_labels[idx])
+
+    if len(np.unique(y)) < 2**p:
+        raise RuntimeError("Increase sample size to get a label in each orthant.")
+
+    return X, y
+
+
+def _trunk(n, p=10, random_state=None):
+    """Generate trunk dataset.
+
+    Parameters
+    ----------
+    n : int
+        Number of sample to generate.
+    p : int, optional
+        The dimensionality of the dataset and the number of
+        unique labels, by default 10.
+    random_state : Random State, optional
+        Random state, by default None.
+
+    Returns
+    -------
+    X : np.ndarray of shape (n, p)
+        Trunk dataset as a dense array.
+    y : np.ndarray of shape (n,)
+        Labels of the dataset
+
+    References
+    ----------
+    [1] Gerard V. Trunk. A problem of dimensionality: A
+    simple example. IEEE Transactions on Pattern Analysis
+    and Machine Intelligence, 1(3):306–307, 1979.
+    """
+    rng = np.random.RandomState(seed=random_state)
+
+    mu_1 = np.array([1 / i for i in range(1, p + 1)])
+    mu_0 = -1 * mu_1
+    cov = np.identity(p)
+
+    X = np.vstack(
+        (
+            rng.multivariate_normal(mu_0, cov, int(n / 2)),
+            rng.multivariate_normal(mu_1, cov, int(n / 2)),
+        )
+    )
+    y = np.concatenate((np.zeros(int(n / 2)), np.ones(int(n / 2))))
+    return X, y
+
+
 def check_classification_toy(name):
     """Check classification on a toy dataset."""
     ForestClassifier = FOREST_CLASSIFIERS[name]
@@ -1809,6 +1923,114 @@ def test_round_samples_to_one_when_samples_too_low(class_weight):
         n_estimators=10, max_samples=1e-4, class_weight=class_weight, random_state=0
     )
     forest.fit(X, y)
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
+def test_classification_toy_withbins(name):
+    """Check classification on a toy dataset."""
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+
+    clf = ForestClassifier(n_estimators=10, random_state=1, max_bins=255)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert 10 == len(clf)
+
+    clf = ForestClassifier(
+        n_estimators=10, max_features=1, random_state=1, max_bins=255
+    )
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert 10 == len(clf)
+
+    # also test apply
+    leaf_indices = clf.apply(X)
+    assert leaf_indices.shape == (len(X), clf.n_estimators)
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+@pytest.mark.parametrize(
+    "criterion", ("squared_error", "absolute_error", "friedman_mse")
+)
+def test_regression_criterion_withbins(name, criterion):
+    # Check consistency on regression dataset.
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    reg = ForestRegressor(
+        n_estimators=5, criterion=criterion, random_state=1, max_bins=250
+    )
+    reg.fit(X_reg, y_reg)
+    score = reg.score(X_reg, y_reg)
+    assert (
+        score > 0.93
+    ), "Failed with max_features=None, criterion %s and score = %f" % (
+        criterion,
+        score,
+    )
+
+    reg = ForestRegressor(
+        n_estimators=5,
+        criterion=criterion,
+        max_features=6,
+        random_state=1,
+        max_bins=250,
+    )
+    reg.fit(X_reg, y_reg)
+    score = reg.score(X_reg, y_reg)
+    assert score > 0.92, "Failed with max_features=6, criterion %s and score = %f" % (
+        criterion,
+        score,
+    )
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_multioutput_quantiles(name):
+    # Check estimators on multi-output problems.
+    X_train = [
+        [-2, -1],
+        [-1, -1],
+        [-1, -2],
+        [1, 1],
+        [1, 2],
+        [2, 1],
+        [-2, 1],
+        [-1, 1],
+        [-1, 2],
+        [2, -1],
+        [1, -1],
+        [1, -2],
+    ]
+    y_train = [
+        [-1, 0],
+        [-1, 0],
+        [-1, 0],
+        [1, 1],
+        [1, 1],
+        [1, 1],
+        [-1, 2],
+        [-1, 2],
+        [-1, 2],
+        [1, 3],
+        [1, 3],
+        [1, 3],
+    ]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
+    est = FOREST_ESTIMATORS[name](
+        random_state=0, bootstrap=False, store_leaf_values=True
+    )
+    est.fit(X_train, y_train)
+
+    y_pred = est.predict_quantiles(X_test, quantiles=[0.25, 0.5, 0.75])
+    assert_array_almost_equal(y_pred[:, 1, :], y_test)
+    assert_array_almost_equal(y_pred[:, 0, :], y_test)
+    assert_array_almost_equal(y_pred[:, 2, :], y_test)
+
+    # test the leaf nodes samples
+    leaf_nodes_samples = est.get_leaf_node_samples(X_test)
+    assert len(leaf_nodes_samples) == len(X_test)
+    for node_samples in leaf_nodes_samples:
+        assert node_samples.shape[1] == est.n_outputs_
 
 
 @pytest.mark.parametrize(

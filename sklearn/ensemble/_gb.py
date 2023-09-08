@@ -351,6 +351,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left"), None],
         "tol": [Interval(Real, 0.0, None, closed="left")],
     }
+    _parameter_constraints.pop("store_leaf_values")
     _parameter_constraints.pop("splitter")
     _parameter_constraints.pop("monotonic_cst")
 

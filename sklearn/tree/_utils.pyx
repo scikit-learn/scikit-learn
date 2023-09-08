@@ -1,3 +1,6 @@
+# cython: language_level=3
+# cython: boundscheck=False, wraparound=False, initializedcheck=False, cdivision=True
+
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
@@ -7,16 +10,17 @@
 #
 # License: BSD 3 clause
 
-from libc.stdlib cimport free
-from libc.stdlib cimport realloc
-from libc.math cimport log as ln
 from libc.math cimport isnan
+from libc.math cimport log as ln
+from libc.stdlib cimport free, realloc
 
 import numpy as np
+
 cimport numpy as cnp
+
 cnp.import_array()
 
-from ..utils._random cimport our_rand_r
+from sklearn.utils._random cimport our_rand_r
 
 # =============================================================================
 # Helper functions

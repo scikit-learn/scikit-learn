@@ -62,3 +62,6 @@ doc-noplot: inplace
 
 code-analysis:
 	build_tools/linting.sh
+
+build-dev:
+	pip install --verbose --no-build-isolation --editable .
