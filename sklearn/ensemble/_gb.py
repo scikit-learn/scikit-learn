@@ -72,6 +72,7 @@ def _safe_divide(numerator, denominator):
             # Raise a runtime warning if overflow.
             warnings.warn("overflow encountered in divide", RuntimeWarning)
     except ZeroDivisionError:
+        warnings.warn("divide by zero encountered in divide", RuntimeWarning)
         return 0.0
 
 
