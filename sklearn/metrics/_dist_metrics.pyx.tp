@@ -1247,7 +1247,7 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         if WITH_SIMD:
             # The SIMD build offers scalar implementations as well,
             # hence we do not need any runtime check.
-            return simd_manhattan_dist_f{{name_suffix}}(x1, x2, size)
+            return dispatched_manhattan_dist_f{{name_suffix}}(x1, x2, size)
         # This ensures we do not need to go through a hwy inclusive build if we
         # know we only want scalar operations.
         cdef float64_t d = 0

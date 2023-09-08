@@ -95,5 +95,7 @@ namespace manhattan {
     ){
         return HWY_DYNAMIC_DISPATCH(manhattan_dist_f64)(x,  y, size);
     }
+    func32_t dispatched_manhattan_dist_f32 = HWY_DYNAMIC_POINTER(manhattan_dist_f32);
+    func64_t dispatched_manhattan_dist_f64 = HWY_DYNAMIC_POINTER(manhattan_dist_f64);
 }
 #endif  // HWY_ONCE

@@ -4,11 +4,10 @@ otherwise we remain empty so as to bypass Cython's forced inclusion of
 this file due to cimporting _dist_metrics
 */
 #if defined(DIST_METRICS)
+#include "simd.hpp"
 
 /* If building with SIMD support, include the compiled library code */
-#if WITH_SIMD == 1
-#include "simd.hpp"
-#else
+#if WITH_SIMD != 1
 #include <cstddef>
 #include "hwy/base.h"
 
@@ -24,6 +23,8 @@ namespace manhattan{
         const double* y,
         const size_t size
     ){return -1;}
+    func32_t dispatched_manhattan_dist_f32 = nullptr;
+    func64_t dispatched_manhattan_dist_f64 = nullptr;
 }
 #endif
 #else
