@@ -4,8 +4,6 @@ macos_arm64_wheel_task:
   env:
     CONFTEST_PATH: ${CIRRUS_WORKING_DIR}/conftest.py
     CONFTEST_NAME: conftest.py
-    # Temporary for Python 3.12 testing
-    CIBW_PRERELEASE_PYTHONS: True
     CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
                       SKLEARN_BUILD_PARALLEL=5
     CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
@@ -22,6 +20,8 @@ macos_arm64_wheel_task:
     # macos arm64 builds are on GitHub Actions
     - env:
         CIBW_BUILD: cp312-macosx_arm64
+        # Temporary for Python 3.12 testing
+        CIBW_PRERELEASE_PYTHONS: True
 
   conda_script:
     - curl -L -o ~/mambaforge.sh https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh
@@ -48,8 +48,6 @@ linux_arm64_wheel_task:
   env:
     CONFTEST_PATH: ${CIRRUS_WORKING_DIR}/conftest.py
     CONFTEST_NAME: conftest.py
-    # Temporary for Python 3.12 testing
-    CIBW_PRERELEASE_PYTHONS: True
     # TODO: next lines with PIP_ fetch nightly numpy and scipy releases. They
     # can be removed when there are numpy and scipy releases that supports
     # Python 3.12
@@ -77,6 +75,8 @@ linux_arm64_wheel_task:
         CIBW_BUILD: cp311-manylinux_aarch64
     - env:
         CIBW_BUILD: cp312-manylinux_aarch64
+        # Temporary for Python 3.12 testing
+        CIBW_PRERELEASE_PYTHONS: True
 
   cibuildwheel_script:
     - apt install -y python3 python-is-python3
