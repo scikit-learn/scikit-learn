@@ -1973,8 +1973,8 @@ class GroupShuffleSplit(GroupsConsumerMixin, ShuffleSplit):
             # these are the indices of classes in the partition
             # invert them into data indices
 
-            train = np.flatnonzero(np.in1d(group_indices, group_train))
-            test = np.flatnonzero(np.in1d(group_indices, group_test))
+            train = np.flatnonzero(np.isin(group_indices, group_train))
+            test = np.flatnonzero(np.isin(group_indices, group_test))
 
             yield train, test
 
@@ -2673,7 +2673,7 @@ def _pprint(params, offset=0, printer=repr):
     this_line_length = offset
     line_sep = ",\n" + (1 + offset // 2) * " "
     for i, (k, v) in enumerate(sorted(params.items())):
-        if type(v) is float:
+        if isinstance(v, float):
             # use str for representing floating point numbers
             # this way we get consistent representation across
             # architectures and versions.
