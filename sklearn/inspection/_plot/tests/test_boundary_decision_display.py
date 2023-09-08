@@ -2,7 +2,6 @@ import warnings
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.datasets import (
@@ -14,6 +13,10 @@ from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.inspection._plot.decision_boundary import _check_boundary_response_method
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_equal,
+)
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
