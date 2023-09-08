@@ -1449,7 +1449,6 @@ def test_safe_divide():
         assert _safe_divide(np.float64(1e300), 0) == 0
     with pytest.warns(RuntimeWarning, match="divide"):
         assert _safe_divide(np.float64(0.0), np.float64(0.0)) == 0
-
     with pytest.warns(RuntimeWarning, match="overflow"):
         # np.finfo(float).max = 1.7976931348623157e+308
         print(_safe_divide(np.float64(1e300), 1e-10))
