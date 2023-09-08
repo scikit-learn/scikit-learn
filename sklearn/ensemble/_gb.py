@@ -65,7 +65,7 @@ _LOSSES.update(
 def _safe_divide(numerator, denominator):
     """Prevents overflow and division by zero."""
     try:
-        # Cast to a Python float to triggers a ZeroDivisionError without relying
+        # Cast to Python float to trigger a ZeroDivisionError without relying
         # on `np.errstate` that is not supported by Pyodide.
         result = float(numerator) / float(denominator)
         if np.isinf(result):
