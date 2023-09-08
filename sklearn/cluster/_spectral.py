@@ -682,7 +682,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             self.gamma,
             "gamma",
             target_type=numbers.Real,
-            min_val=1.0,
+            min_val=0.0,
             include_boundaries="left",
         )
 

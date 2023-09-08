@@ -131,8 +131,7 @@ def test_spectral_unknown_assign_labels():
             TypeError,
             "n_init must be an instance of int, not float",
         ),
-        (X, {"gamma": -1}, ValueError, "gamma == -1, must be >= 1"),
-        (X, {"gamma": 0}, ValueError, "gamma == 0, must be >= 1"),
+        (X, {"gamma": -1}, ValueError, "gamma == -1, must be >= 0"),
         (X, {"n_neighbors": -1}, ValueError, "n_neighbors == -1, must be >= 1"),
         (X, {"n_neighbors": 0}, ValueError, "n_neighbors == 0, must be >= 1"),
         (
