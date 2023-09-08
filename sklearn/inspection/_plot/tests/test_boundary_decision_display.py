@@ -152,7 +152,9 @@ def test_display_plot_input_error(pyplot, fitted_clf):
     "response_method", ["auto", "predict", "predict_proba", "decision_function"]
 )
 @pytest.mark.parametrize("plot_method", ["contourf", "contour"])
-def test_decision_boundary_display(pyplot, fitted_clf, response_method, plot_method):
+def test_decision_boundary_display_classifier(
+    pyplot, fitted_clf, response_method, plot_method
+):
     """Check that decision boundary is correct."""
     fig, ax = pyplot.subplots()
     eps = 2.0
@@ -164,6 +166,45 @@ def test_decision_boundary_display(pyplot, fitted_clf, response_method, plot_met
         plot_method=plot_method,
         eps=eps,
         ax=ax,
+    )
+    assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
+    assert disp.ax_ == ax
+    assert disp.figure_ == fig
+
+    x0, x1 = X[:, 0], X[:, 1]
+
+    x0_min, x0_max = x0.min() - eps, x0.max() + eps
+    x1_min, x1_max = x1.min() - eps, x1.max() + eps
+
+    assert disp.xx0.min() == pytest.approx(x0_min)
+    assert disp.xx0.max() == pytest.approx(x0_max)
+    assert disp.xx1.min() == pytest.approx(x1_min)
+    assert disp.xx1.max() == pytest.approx(x1_max)
+
+    fig2, ax2 = pyplot.subplots()
+    # change plotting method for second plot
+    disp.plot(plot_method="pcolormesh", ax=ax2, shading="auto")
+    assert isinstance(disp.surface_, pyplot.matplotlib.collections.QuadMesh)
+    assert disp.ax_ == ax2
+    assert disp.figure_ == fig2
+
+
+@pytest.mark.parametrize("response_method", ["auto", "predict"])
+@pytest.mark.parametrize("plot_method", ["contourf", "contour"])
+def test_decision_boundary_display_regressor(pyplot, response_method, plot_method):
+    """Check that we can display the decision boundary for a regressor."""
+    X, y = load_diabetes(return_X_y=True)
+    X = X[:, :2]
+    tree = DecisionTreeRegressor().fit(X, y)
+    fig, ax = pyplot.subplots()
+    eps = 2.0
+    disp = DecisionBoundaryDisplay.from_estimator(
+        tree,
+        X,
+        response_method=response_method,
+        ax=ax,
+        eps=eps,
+        plot_method=plot_method,
     )
     assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
     assert disp.ax_ == ax
@@ -265,15 +306,6 @@ def test_multioutput_regressor_error(pyplot):
     tree = DecisionTreeRegressor().fit(X, y)
     with pytest.raises(ValueError, match="Multi-output regressors are not supported"):
         DecisionBoundaryDisplay.from_estimator(tree, X, response_method="predict")
-
-
-@pytest.mark.parametrize("response_method", ["auto", "predict"])
-def test_regressor(pyplot, response_method):
-    """Check that we can display the decision boundary for a regressor."""
-    X, y = load_diabetes(return_X_y=True)
-    X = X[:, :2]
-    tree = DecisionTreeRegressor().fit(X, y)
-    DecisionBoundaryDisplay.from_estimator(tree, X, response_method=response_method)
 
 
 @pytest.mark.parametrize(
