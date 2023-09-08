@@ -20,6 +20,7 @@ The module structure is the following:
 #          Arnaud Joly, Jacob Schreiber
 # License: BSD 3 clause
 
+import math
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
@@ -68,7 +69,7 @@ def _safe_divide(numerator, denominator):
         # Cast to Python float to trigger a ZeroDivisionError without relying
         # on `np.errstate` that is not supported by Pyodide.
         result = float(numerator) / float(denominator)
-        if np.isinf(result):
+        if math.isinf(result):
             warnings.warn("overflow encountered in _safe_divide", RuntimeWarning)
         return result
     except ZeroDivisionError:
