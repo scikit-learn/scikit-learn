@@ -150,18 +150,21 @@ def test_get_response_values_binary_classifier_predict_proba(
     assert_allclose(results[0], classifier.predict_proba(X)[:, 1])
     assert results[1] == 1
     if return_response_method_used:
+        assert len(results) == 3
         assert results[2] == "predict_proba"
+    else:
+        assert len(results) == 2
 
     # when forcing `pos_label=classifier.classes_[0]`
-    results = _get_response_values(
+    y_pred, pos_label, *_ = _get_response_values(
         classifier,
         X,
         response_method=response_method,
         pos_label=classifier.classes_[0],
         return_response_method_used=return_response_method_used,
     )
-    assert_allclose(results[0], classifier.predict_proba(X)[:, 0])
-    assert results[1] == 0
+    assert_allclose(y_pred, classifier.predict_proba(X)[:, 0])
+    assert pos_label == 0
 
 
 @pytest.mark.parametrize(

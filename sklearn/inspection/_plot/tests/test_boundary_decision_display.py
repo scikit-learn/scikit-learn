@@ -348,7 +348,8 @@ def test_class_of_interest_binary(pyplot, response_method):
     """
     iris = load_iris()
     X = iris.data[:100, :2]
-    y = iris.target[:100]  # the target are numerical labels
+    y = iris.target[:100]
+    assert_array_equal(np.unique(y), [0, 1])
 
     estimator = LogisticRegression().fit(X, y)
     # We will check that `class_of_interest=None` is equivalent to
@@ -381,6 +382,7 @@ def test_class_of_interest_binary(pyplot, response_method):
     if response_method == "predict_proba":
         assert_allclose(disp_default.response, 1 - disp_class_0.response)
     else:
+        assert response_method == "decision_function"
         assert_allclose(disp_default.response, -disp_class_0.response)
 
 

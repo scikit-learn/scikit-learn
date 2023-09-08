@@ -25,7 +25,7 @@ def _check_boundary_response_method(estimator, response_method, class_of_interes
         If set to 'auto', the response method is tried in the following order:
         :term:`decision_function`, :term:`predict_proba`, :term:`predict`.
 
-    class_of_interest : int, float, bool or str
+    class_of_interest : int, float, bool, str or None
         The class considered when plotting the decision. If the label is specified, it
         then possible to plot the decision boundary in multiclass settings.
 
@@ -369,7 +369,7 @@ class DecisionBoundaryDisplay:
                     f"class_of_interest={class_of_interest} is not a valid label: It "
                     f"should be one of {estimator.classes_}"
                 ) from exc
-            raise exc
+            raise
 
         # convert classes predictions into integers
         if response_method_used == "predict" and hasattr(estimator, "classes_"):
