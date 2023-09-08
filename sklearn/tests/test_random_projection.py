@@ -63,7 +63,7 @@ def densify(matrix):
 n_samples, n_features = (10, 1000)
 n_nonzeros = int(n_samples * n_features / 100.0)
 data, data_csr = make_sparse_random_data(
-    sp.csr_array, n_samples, n_features, n_nonzeros
+    sp.coo_array, n_samples, n_features, n_nonzeros
 )
 
 
@@ -233,9 +233,9 @@ def test_try_to_transform_before_fit():
             RandomProjection(n_components="auto").transform(data)
 
 
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_too_many_samples_to_find_a_safe_embedding(csr_container):
-    data, _ = make_sparse_random_data(csr_container, 1000, 100, 1000)
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_too_many_samples_to_find_a_safe_embedding(coo_container):
+    data, _ = make_sparse_random_data(coo_container, 1000, 100, 1000)
 
     for RandomProjection in all_RandomProjection:
         rp = RandomProjection(n_components="auto", eps=0.1)
@@ -248,9 +248,9 @@ def test_too_many_samples_to_find_a_safe_embedding(csr_container):
             rp.fit(data)
 
 
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_random_projection_embedding_quality(csr_container):
-    data, _ = make_sparse_random_data(csr_container, 8, 5000, 15000)
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_random_projection_embedding_quality(coo_container):
+    data, _ = make_sparse_random_data(coo_container, 8, 5000, 15000)
     eps = 0.2
 
     original_distances = euclidean_distances(data, squared=True)
@@ -343,10 +343,10 @@ def test_correct_RandomProjection_dimensions_embedding():
             assert 85 < rp.components_.nnz  # close to 1% density
 
 
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_warning_n_components_greater_than_n_features(csr_container):
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_warning_n_components_greater_than_n_features(coo_container):
     n_features = 20
-    data, _ = make_sparse_random_data(csr_container, 5, n_features, int(n_features / 4))
+    data, _ = make_sparse_random_data(coo_container, 5, n_features, int(n_features / 4))
 
     for RandomProjection in all_RandomProjection:
         with pytest.warns(DataDimensionalityWarning):
@@ -354,9 +354,10 @@ def test_warning_n_components_greater_than_n_features(csr_container):
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_works_with_sparse_data(csr_container):
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_works_with_sparse_data(csr_container, coo_container):
     n_features = 20
-    data, _ = make_sparse_random_data(sp.csr_array, 5, n_features, int(n_features / 4))
+    data, _ = make_sparse_random_data(coo_container, 5, n_features, int(n_features / 4))
 
     for RandomProjection in all_RandomProjection:
         rp_dense = RandomProjection(n_components=3, random_state=1).fit(data)
@@ -390,11 +391,13 @@ def test_random_projection_feature_names_out(random_projection_cls):
     assert_array_equal(names_out, expected_names_out)
 
 
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 @pytest.mark.parametrize("n_samples", (2, 9, 10, 11, 1000))
 @pytest.mark.parametrize("n_features", (2, 9, 10, 11, 1000))
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
 @pytest.mark.parametrize("compute_inverse_components", [True, False])
 def test_inverse_transform(
+    coo_container,
     n_samples,
     n_features,
     random_projection_cls,
@@ -410,7 +413,7 @@ def test_inverse_transform(
     )
 
     X_dense, X_csr = make_sparse_random_data(
-        sp.csr_array,
+        coo_container,
         n_samples,
         n_features,
         n_samples * n_features // 100 + 1,
