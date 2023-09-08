@@ -501,7 +501,7 @@ def test_tweedie_deviance_continuity():
 
     # Ws we get closer to the limit, with 1e-12 difference the absolute
     # tolerance to pass the below check increases. There are likely
-    # numerical metric issues on the edges of different definition
+    # numerical estimator issues on the edges of different definition
     # regions.
     assert_allclose(
         mean_tweedie_deviance(y_true, y_pred, power=1 + 1e-10),
@@ -586,7 +586,7 @@ def test_mean_pinball_loss_on_constant_predictions(distribution, target_quantile
 def test_dummy_quantile_parameter_tuning():
     # Integration test to check that it is possible to use the pinball loss to
     # tune the hyperparameter of a quantile regressor. This is conceptually
-    # similar to the previous test but using the scikit-learn metric and
+    # similar to the previous test but using the scikit-learn estimator and
     # scoring API instead.
     n_samples = 1000
     rng = np.random.RandomState(0)
@@ -628,14 +628,14 @@ def check_array_api_compute_metric(name, metric, array_namepsace, _device, dtype
     y_pred_np = np.array([[1, 4], [1, 1]], dtype=float)
     y_true_xp = xp.asarray(y_true_np, device=_device)
     y_pred_xp = xp.asarray(y_pred_np, device=_device)
-
     metric_np = metric(y_true_np, y_pred_np)
 
     with config_context(array_api_dispatch=True):
         metric_xp = metric(y_true_xp, y_pred_xp)
         assert metric_xp.shape == ()
         assert metric_xp.dtype == y_true_xp.dtype
-        assert device(metric_xp) == device(y_true_xp)
+        target_device = "<CUDA Device 0>" if "cupy" in xp.__name__ else "cpu"
+        assert str(device(metric_xp)) == target_device  # R2_score gets moved to CPU
 
         assert_allclose(
             _convert_to_numpy(metric_xp, xp=xp),

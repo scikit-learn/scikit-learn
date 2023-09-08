@@ -669,9 +669,9 @@ def _assemble_r2_explained_variance(
 ):
     """Common part used by explained variance score and :math:`R^2` score."""
     if xp is None:
-        xp, _ = get_namespace(numerator)
+        xp, _ = get_namespace(numerator, denominator)
 
-    _device = device(numerator)
+    device_ = device(numerator)
     dtype = numerator.dtype
 
     nonzero_denominator = denominator != 0
@@ -683,11 +683,11 @@ def _assemble_r2_explained_variance(
         nonzero_numerator = numerator != 0
         # Default = Zero Numerator = perfect predictions. Set to 1.0
         # (note: even if denominator is zero, thus avoiding NaN scores)
-        output_scores = xp.ones([n_outputs], device=_device, dtype=dtype)
+        output_scores = xp.ones([n_outputs], device=device_, dtype=dtype)
         # Non-zero Numerator and Non-zero Denominator: use the formula
         valid_score = nonzero_denominator & nonzero_numerator
 
-        output_scores[valid_score] = xp.ones(1, device=_device, dtype=dtype) - (
+        output_scores[valid_score] = xp.ones(1, device=device_, dtype=dtype) - (
             numerator[valid_score] / denominator[valid_score]
         )
 
@@ -994,7 +994,7 @@ def r2_score(
     >>> r2_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    xp, _ = get_namespace(y_true)
+    xp, _ = get_namespace(y_true, y_pred)
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
     )
@@ -1011,13 +1011,21 @@ def r2_score(
     else:
         weight = 1.0
 
-    numerator = xp.sum(weight * (y_true - y_pred) ** 2, axis=0, dtype=xp.float64)
-
+    weighted = weight * (y_true - y_pred) ** 2
     weighted_difference = weight * (
         y_true - _average(y_true, axis=0, weights=sample_weight, xp=xp)
     )
-    # weighted_difference has to be typecast to xp.array in case of NumPy array
-    weighted_difference = xp.asarray(weighted_difference)
+
+    # We move to cpu device ahead of time since certain devices may not support
+    # float64, but we want the same precision for all devices and namespaces.
+    # This works for all protocols, except for CuPy which does not support
+    # moving data to the CPU using xp.asarray(..., device="cpu").
+    # For CuPy, keep data on GPU.
+    if "cupy" not in xp.__name__:
+        weighted = xp.asarray(weighted, device="cpu")
+        weighted_difference = xp.asarray(weighted_difference, device="cpu")
+
+    numerator = xp.sum(weighted, axis=0, dtype=xp.float64)
     denominator = xp.sum(weighted_difference**2, axis=0, dtype=xp.float64)
 
     return _assemble_r2_explained_variance(

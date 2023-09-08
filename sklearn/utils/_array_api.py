@@ -487,6 +487,7 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
 
 
 def _average(array, axis=None, weights=None, xp=None):
+    """Port of np.average to support the Array API."""
     if xp is None:
         xp, _ = get_namespace(array)
     if _is_numpy_namespace(xp):
