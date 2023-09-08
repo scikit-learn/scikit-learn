@@ -64,6 +64,9 @@ _LOSSES.update(
 
 def _safe_divide(numerator, denominator):
     """Prevents overflow and division by zero."""
+    # We could implement the following using `np.errstate` but, at the time of
+    # writing (scikit-learn 1.4), `np.errstate` is not handled properly by Pyodide.
+    # We therefore risk to issue `nan` values, making GBDT training fail.
     if abs(denominator) < 1e-150:
         return 0.0
     return numerator / denominator
