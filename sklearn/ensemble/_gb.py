@@ -71,6 +71,7 @@ def _safe_divide(numerator, denominator):
         if np.isinf(result):
             # Raise a runtime warning if overflow.
             warnings.warn("overflow encountered in divide", RuntimeWarning)
+        return result
     except ZeroDivisionError:
         warnings.warn("divide by zero encountered in divide", RuntimeWarning)
         return 0.0
