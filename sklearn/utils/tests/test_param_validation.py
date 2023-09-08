@@ -2,7 +2,6 @@ from numbers import Integral, Real
 
 import numpy as np
 import pytest
-from scipy.sparse import csr_matrix
 
 from sklearn._config import config_context, get_config
 from sklearn.base import BaseEstimator, _fit_context
@@ -26,13 +25,14 @@ from sklearn.utils._param_validation import (
     _NoneConstraint,
     _PandasNAConstraint,
     _RandomStates,
-    _SparseMatrices,
+    _SparseContainers,
     _VerboseHelper,
     generate_invalid_param_val,
     generate_valid_param,
     make_constraint,
     validate_params,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 # Some helpers for the tests
@@ -321,7 +321,7 @@ def test_generate_invalid_param_val_2_intervals(integer_interval, real_interval)
         _Callables(),
         _NoneConstraint(),
         _RandomStates(),
-        _SparseMatrices(),
+        _SparseContainers(),
         _Booleans(),
         Interval(Integral, None, None, closed="neither"),
     ],
@@ -342,7 +342,7 @@ def test_generate_invalid_param_val_all_valid(constraint):
         _InstancesOf(list),
         _NoneConstraint(),
         _RandomStates(),
-        _SparseMatrices(),
+        _SparseContainers(),
         _Booleans(),
         _VerboseHelper(),
         MissingValues(),
@@ -378,7 +378,6 @@ def test_generate_valid_param(constraint):
         (None, None),
         ("array-like", [[1, 2], [3, 4]]),
         ("array-like", np.array([[1, 2], [3, 4]])),
-        ("sparse matrix", csr_matrix([[1, 2], [3, 4]])),
         ("random_state", 0),
         ("random_state", np.random.RandomState(0)),
         ("random_state", None),
@@ -403,6 +402,13 @@ def test_is_satisfied_by(constraint_declaration, value):
     assert constraint.is_satisfied_by(value)
 
 
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_is_satisfied_by_csr_containers(csr_container):
+    """Sanity check for the is_satisfied_by method"""
+    constraint = make_constraint("sparse container")
+    assert constraint.is_satisfied_by(csr_container([[1, 2], [3, 4]]))
+
+
 @pytest.mark.parametrize(
     "constraint_declaration, expected_constraint_class",
     [
@@ -410,7 +416,7 @@ def test_is_satisfied_by(constraint_declaration, value):
         (StrOptions({"option1", "option2"}), StrOptions),
         (Options(Real, {0.42, 1.23}), Options),
         ("array-like", _ArrayLikes),
-        ("sparse matrix", _SparseMatrices),
+        ("sparse container", _SparseContainers),
         ("random_state", _RandomStates),
         (None, _NoneConstraint),
         (callable, _Callables),

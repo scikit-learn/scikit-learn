@@ -113,8 +113,8 @@ def make_constraint(constraint):
     """
     if isinstance(constraint, str) and constraint == "array-like":
         return _ArrayLikes()
-    if isinstance(constraint, str) and constraint == "sparse matrix":
-        return _SparseMatrices()
+    if isinstance(constraint, str) and constraint == "sparse container":
+        return _SparseContainers()
     if isinstance(constraint, str) and constraint == "random_state":
         return _RandomStates()
     if constraint is callable:
@@ -525,14 +525,14 @@ class _ArrayLikes(_Constraint):
         return "an array-like"
 
 
-class _SparseMatrices(_Constraint):
-    """Constraint representing sparse matrices."""
+class _SparseContainers(_Constraint):
+    """Constraint representing sparse containers."""
 
     def is_satisfied_by(self, val):
         return issparse(val)
 
     def __str__(self):
-        return "a sparse matrix"
+        return "a sparse container"
 
 
 class _Callables(_Constraint):
@@ -845,7 +845,7 @@ def generate_valid_param(constraint):
     if isinstance(constraint, _ArrayLikes):
         return np.array([1, 2, 3])
 
-    if isinstance(constraint, _SparseMatrices):
+    if isinstance(constraint, _SparseContainers):
         return csr_matrix([[0, 1], [1, 0]])
 
     if isinstance(constraint, _RandomStates):
