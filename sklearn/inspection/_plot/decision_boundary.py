@@ -51,7 +51,10 @@ def _check_boundary_response_method(estimator, response_method, class_of_interes
             raise ValueError(msg)
         prediction_method = "predict" if response_method == "auto" else response_method
     elif response_method == "auto":
-        prediction_method = ["decision_function", "predict_proba", "predict"]
+        if is_regressor(estimator):
+            prediction_method = "predict"
+        else:
+            prediction_method = ["decision_function", "predict_proba", "predict"]
     else:
         prediction_method = response_method
 
