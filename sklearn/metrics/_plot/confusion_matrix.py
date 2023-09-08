@@ -153,7 +153,7 @@ class ConfusionMatrixDisplay:
             self.text_ = np.empty_like(cm, dtype=object)
 
             # print text with appropriate color depending on background
-            thresh = (cm.max() + cm.min()) / 2.0
+            thresh = (np.nanmax(cm) + np.nanmin(cm)) / 2.0
 
             for i, j in product(range(n_classes), range(n_classes)):
                 color = cmap_max if cm[i, j] < thresh else cmap_min

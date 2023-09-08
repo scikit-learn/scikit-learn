@@ -267,6 +267,23 @@ def test_confusion_matrix_contrast(pyplot):
     assert_allclose(disp.text_[1, 1].get_color(), min_color)
 
 
+def test_confusion_matrix_with_nan_values_contrast(pyplot):
+    """Text values are displayed in contrasting colors for matrices with nans.
+
+    This is a regression test for #27306
+    """
+    cm = np.array([[1, 2], [3, np.nan]])
+    disp = ConfusionMatrixDisplay(cm)
+
+    disp.plot(cmap=pyplot.cm.Blues)
+    min_color = pyplot.cm.Blues(0)
+    max_color = pyplot.cm.Blues(255)
+    assert_allclose(disp.text_[0, 0].get_color(), max_color)
+    assert_allclose(disp.text_[0, 1].get_color(), min_color)
+    assert_allclose(disp.text_[1, 0].get_color(), min_color)
+    assert_allclose(disp.text_[1, 1].get_color(), min_color)
+
+
 @pytest.mark.parametrize(
     "clf",
     [
