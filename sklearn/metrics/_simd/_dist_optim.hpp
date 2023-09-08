@@ -23,8 +23,12 @@ namespace manhattan{
         const double* y,
         const size_t size
     ){return -1;}
-    func32_t dispatched_manhattan_dist_f32 = nullptr;
-    func64_t dispatched_manhattan_dist_f64 = nullptr;
+    HWY_DLLEXPORT func32_t get_simd_manhattan_f32(){
+        return nullptr;
+    }
+    HWY_DLLEXPORT func64_t get_simd_manhattan_f64(){
+        return nullptr;
+    }
 }
 #endif
 #else

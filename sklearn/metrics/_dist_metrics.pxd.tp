@@ -25,8 +25,8 @@ cdef extern from "_simd/_dist_optim.hpp" namespace "manhattan":
     # using the template function below fails, citing missing symbol
     cdef float simd_manhattan_dist_f32(float * x, float * y, intp_t size) nogil
     cdef double simd_manhattan_dist_f64(double * x, double * y, intp_t size) nogil
-    cdef func32_t dispatched_manhattan_dist_f32
-    cdef func64_t dispatched_manhattan_dist_f64
+    cdef func32_t get_simd_manhattan_f32() nogil
+    cdef func64_t get_simd_manhattan_f64() nogil
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
