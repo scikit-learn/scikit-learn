@@ -13,6 +13,7 @@
 import atexit
 import contextlib
 import functools
+import importlib
 import inspect
 import os
 import os.path as op
@@ -38,6 +39,7 @@ from numpy.testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
+    assert_no_warnings,
 )
 
 import sklearn
@@ -65,6 +67,7 @@ __all__ = [
     "assert_approx_equal",
     "assert_allclose",
     "assert_run_python_script",
+    "assert_no_warnings",
     "SkipTest",
 ]
 
@@ -78,32 +81,6 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
-
-
-# To remove when we support numpy 1.7
-def assert_no_warnings(func, *args, **kw):
-    """
-    Parameters
-    ----------
-    func
-    *args
-    **kw
-    """
-    # very important to avoid uncontrolled state propagation
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-
-        result = func(*args, **kw)
-        if hasattr(np, "FutureWarning"):
-            # Filter out numpy-specific warnings in numpy >= 1.9
-            w = [e for e in w if e.category is not np.VisibleDeprecationWarning]
-
-        if len(w) > 0:
-            raise AssertionError(
-                "Got warnings when calling %s: [%s]"
-                % (func.__name__, ", ".join(str(warning) for warning in w))
-            )
-    return result
 
 
 def ignore_warnings(obj=None, category=Warning):
@@ -1071,3 +1048,52 @@ class MinimalTransformer:
 
     def fit_transform(self, X, y=None):
         return self.fit(X, y).transform(X, y)
+
+
+def _array_api_for_tests(array_namespace, device, dtype):
+    try:
+        array_mod = importlib.import_module(array_namespace)
+    except ModuleNotFoundError:
+        raise SkipTest(
+            f"{array_namespace} is not installed: not checking array_api input"
+        )
+    try:
+        import array_api_compat  # noqa
+    except ImportError:
+        raise SkipTest(
+            "array_api_compat is not installed: not checking array_api input"
+        )
+
+    # First create an array using the chosen array module and then get the
+    # corresponding (compatibility wrapped) array namespace based on it.
+    # This is because `cupy` is not the same as the compatibility wrapped
+    # namespace of a CuPy array.
+    xp = array_api_compat.get_namespace(array_mod.asarray(1))
+    if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
+        raise SkipTest("PyTorch test requires cuda, which is not available")
+    elif array_namespace == "torch" and device == "mps":
+        if os.getenv("PYTORCH_ENABLE_MPS_FALLBACK") != "1":
+            # For now we need PYTORCH_ENABLE_MPS_FALLBACK=1 for all estimators to work
+            # when using the MPS device.
+            raise SkipTest(
+                "Skipping MPS device test because PYTORCH_ENABLE_MPS_FALLBACK is not "
+                "set."
+            )
+        if not xp.has_mps:
+            if not xp.backends.mps.is_built():
+                raise SkipTest(
+                    "MPS is not available because the current PyTorch install was not "
+                    "built with MPS enabled."
+                )
+            else:
+                raise SkipTest(
+                    "MPS is not available because the current MacOS version is not"
+                    " 12.3+ and/or you do not have an MPS-enabled device on this"
+                    " machine."
+                )
+    elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
+        import cupy
+
+        if cupy.cuda.runtime.getDeviceCount() == 0:
+            raise SkipTest("CuPy test requires cuda, which is not available")
+    return xp, device, dtype
