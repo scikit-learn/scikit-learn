@@ -64,11 +64,9 @@ _LOSSES.update(
 
 def _safe_divide(numerator, denominator):
     """Prevents overflow and division by zero."""
-    with np.errstate(divide="raise", invalid="raise"):
-        try:
-            return numerator / denominator
-        except FloatingPointError:
-            return 0.0
+    if abs(denominator) < 1e-150:
+        return 0.0
+    return numerator / denominator
 
 
 def _init_raw_predictions(X, estimator, loss, use_predict_proba):
@@ -235,7 +233,9 @@ def _update_terminal_regions(
 
         # update each leaf (= perform line search)
         for leaf in np.nonzero(tree.children_left == TREE_LEAF)[0]:
-            indices = np.nonzero(terminal_regions == leaf)[0]  # of terminal regions
+            indices = np.nonzero(masked_terminal_regions == leaf)[
+                0
+            ]  # of terminal regions
             y_ = y.take(indices, axis=0)
             sw = None if sample_weight is None else sample_weight[indices]
             update = compute_update(y_, indices, neg_gradient, raw_prediction, k)
