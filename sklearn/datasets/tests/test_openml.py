@@ -28,6 +28,7 @@ from sklearn.utils._testing import (
     fails_if_pypy,
 )
 from sklearn.utils.fixes import _open_binary
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
 # if True, urlopen will be monkey patched to only use local files
@@ -1083,13 +1084,15 @@ def test_fetch_openml_sparse_arff_error(monkeypatch, params, err_msg):
         (292, "sparse"),  # Australian dataset version 1
     ],
 )
-def test_fetch_openml_auto_mode(monkeypatch, data_id, data_type):
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_fetch_openml_auto_mode(monkeypatch, data_id, data_type, csr_container):
     """Check the auto mode of `fetch_openml`."""
     pd = pytest.importorskip("pandas")
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     data = fetch_openml(data_id=data_id, as_frame="auto", parser="auto", cache=False)
-    klass = pd.DataFrame if data_type == "dataframe" else scipy.sparse.csr_matrix
+    klass = pd.DataFrame if data_type == "dataframe" else scipy.sparse.csr_container
     assert isinstance(data.data, klass)
 
 
