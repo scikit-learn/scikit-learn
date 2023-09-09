@@ -1084,7 +1084,6 @@ def test_fetch_openml_sparse_arff_error(monkeypatch, params, err_msg):
         (292, "sparse"),  # Australian dataset version 1
     ],
 )
-
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_fetch_openml_auto_mode(monkeypatch, data_id, data_type, csr_container):
     """Check the auto mode of `fetch_openml`."""
@@ -1219,10 +1218,8 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response, dataset_params):
             40945,
             {"data_id": 40945, "as_frame": False},
             ValueError,
-            (
-                "STRING attributes are not supported for array representation. Try"
-                " as_frame=True"
-            ),
+            "STRING attributes are not supported for array representation. Try"
+            " as_frame=True",
         ),
         (
             2,
