@@ -477,6 +477,7 @@ def test_grid_search_bad_param_grid():
     with pytest.raises(ValueError):
         search.fit(X, y)
 
+
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_grid_search_sparse(csr_container):
     # Test that grid search works with both dense and sparse matrices
@@ -497,6 +498,7 @@ def test_grid_search_sparse(csr_container):
 
     assert np.mean(y_pred == y_pred2) >= 0.9
     assert C == C2
+
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_grid_search_sparse_scoring(csr_container):
@@ -1638,10 +1640,8 @@ def test_grid_search_classifier_all_fits_fail():
     )
 
     warning_message = re.compile(
-        (
-            "All the 15 fits failed.+15 fits failed with the following"
-            " error.+ValueError.+Failing classifier failed as required"
-        ),
+        "All the 15 fits failed.+15 fits failed with the following"
+        " error.+ValueError.+Failing classifier failed as required",
         flags=re.DOTALL,
     )
     with pytest.raises(ValueError, match=warning_message):
@@ -2182,10 +2182,8 @@ def test_callable_multimetric_clf_all_fits_fail():
 
     individual_fit_error_message = "ValueError: Failing classifier failed as required"
     error_message = re.compile(
-        (
-            "All the 15 fits failed.+your model is misconfigured.+"
-            f"{individual_fit_error_message}"
-        ),
+        "All the 15 fits failed.+your model is misconfigured.+"
+        f"{individual_fit_error_message}",
         flags=re.DOTALL,
     )
 
