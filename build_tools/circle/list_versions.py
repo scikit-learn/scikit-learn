@@ -4,9 +4,9 @@
 import json
 import re
 import sys
+from urllib.request import urlopen
 
 from sklearn.utils.fixes import parse_version
-from urllib.request import urlopen
 
 
 def json_urlread(url):

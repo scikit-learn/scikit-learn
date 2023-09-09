@@ -4,30 +4,25 @@ Testing Recursive feature elimination
 
 from operator import attrgetter
 
-import pytest
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
+import pytest
+from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
-from sklearn.feature_selection import RFE, RFECV
-from sklearn.datasets import load_iris, make_friedman1
-from sklearn.metrics import zero_one_loss
-from sklearn.svm import SVC, SVR, LinearSVR
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import GroupKFold
 from sklearn.compose import TransformedTargetRegressor
+from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
+from sklearn.datasets import load_iris, make_friedman1
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_selection import RFE, RFECV
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import get_scorer, make_scorer, zero_one_loss
+from sklearn.model_selection import GroupKFold, cross_val_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-
+from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import ignore_warnings
-
-from sklearn.metrics import make_scorer
-from sklearn.metrics import get_scorer
 
 
 class MockClassifier:
@@ -278,8 +273,8 @@ def test_rfecv_mockclassifier():
 
 def test_rfecv_verbose_output():
     # Check verbose=1 is producing an output.
-    from io import StringIO
     import sys
+    from io import StringIO
 
     sys.stdout = StringIO()
 
@@ -466,7 +461,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/15312
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
-    estimator = LinearSVR(random_state=0)
+    estimator = LinearSVR(dual="auto", random_state=0)
 
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
@@ -488,7 +483,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
 @pytest.mark.parametrize("Selector", [RFE, RFECV])
 def test_rfe_importance_getter_validation(importance_getter, err_type, Selector):
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=42)
-    estimator = LinearSVR()
+    estimator = LinearSVR(dual="auto")
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
     )
@@ -505,8 +500,8 @@ def test_rfe_allow_nan_inf_in_x(cv):
     y = iris.target
 
     # add nan and inf value to X
-    X[0][0] = np.NaN
-    X[0][1] = np.Inf
+    X[0][0] = np.nan
+    X[0][1] = np.inf
 
     clf = MockClassifier()
     if cv is not None:

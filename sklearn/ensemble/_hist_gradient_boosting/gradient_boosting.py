@@ -1,51 +1,54 @@
 """Fast Gradient Boosting decision trees for classification and regression."""
 # Author: Nicolas Hug
 
+import itertools
 from abc import ABC, abstractmethod
 from functools import partial
-import itertools
-from numbers import Real, Integral
-import warnings
+from numbers import Integral, Real
+from timeit import default_timer as time
 
 import numpy as np
-from timeit import default_timer as time
+
 from ..._loss.loss import (
     _LOSSES,
     BaseLoss,
     HalfBinomialLoss,
+    HalfGammaLoss,
     HalfMultinomialLoss,
     HalfPoissonLoss,
     PinballLoss,
 )
-from ...base import BaseEstimator, RegressorMixin, ClassifierMixin, is_classifier
-from ...utils import check_random_state, resample, compute_sample_weight
-from ...utils.validation import (
-    check_is_fitted,
-    check_consistent_length,
-    _check_sample_weight,
-    _check_monotonic_cst,
+from ...base import (
+    BaseEstimator,
+    ClassifierMixin,
+    RegressorMixin,
+    _fit_context,
+    is_classifier,
 )
-from ...utils._param_validation import Interval, StrOptions
-from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
+from ...utils import check_random_state, compute_sample_weight, resample
+from ...utils._openmp_helpers import _openmp_effective_n_threads
+from ...utils._param_validation import Interval, RealNotInt, StrOptions
+from ...utils.multiclass import check_classification_targets
+from ...utils.validation import (
+    _check_monotonic_cst,
+    _check_sample_weight,
+    check_consistent_length,
+    check_is_fitted,
+)
 from ._gradient_boosting import _update_raw_predictions
-from .common import Y_DTYPE, X_DTYPE, G_H_DTYPE
-
 from .binning import _BinMapper
+from .common import G_H_DTYPE, X_DTYPE, Y_DTYPE
 from .grower import TreeGrower
 
-
 _LOSSES = _LOSSES.copy()
-# TODO(1.3): Remove "binary_crossentropy" and "categorical_crossentropy"
 _LOSSES.update(
     {
         "poisson": HalfPoissonLoss,
+        "gamma": HalfGammaLoss,
         "quantile": PinballLoss,
-        "binary_crossentropy": HalfBinomialLoss,
-        "categorical_crossentropy": HalfMultinomialLoss,
     }
 )
 
@@ -56,13 +59,23 @@ def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
     Update equals:
         loss.fit_intercept_only(y_true - raw_prediction)
 
-    This is only applied if loss.need_update_leaves_values is True.
+    This is only applied if loss.differentiable is False.
     Note: It only works, if the loss is a function of the residual, as is the
     case for AbsoluteError and PinballLoss. Otherwise, one would need to get
     the minimum of loss(y_true, raw_prediction + x) in x. A few examples:
       - AbsoluteError: median(y_true - raw_prediction).
       - PinballLoss: quantile(y_true - raw_prediction).
-    See also notes about need_update_leaves_values in BaseLoss.
+
+    More background:
+    For the standard gradient descent method according to "Greedy Function
+    Approximation: A Gradient Boosting Machine" by Friedman, all loss functions but the
+    squared loss need a line search step. BaseHistGradientBoosting, however, implements
+    a so called Newton boosting where the trees are fitted to a 2nd order
+    approximations of the loss in terms of gradients and hessians. In this case, the
+    line search step is only necessary if the loss is not smooth, i.e. not
+    differentiable, which renders the 2nd order approximation invalid. In fact,
+    non-smooth losses arbitrarily set hessians to 1 and effectively use the standard
+    gradient descent method with line search.
     """
     # TODO: Ideally this should be computed in parallel over the leaves using something
     # similar to _update_raw_predictions(), but this requires a cython version of
@@ -101,7 +114,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         ],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "validation_fraction": [
-            Interval(Real, 0, 1, closed="neither"),
+            Interval(RealNotInt, 0, 1, closed="neither"),
             Interval(Integral, 1, None, closed="left"),
             None,
         ],
@@ -270,6 +283,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if missing.any():
                     categories = categories[~missing]
 
+                # Treat negative values for categorical features as missing values.
+                negative_categories = categories < 0
+                if negative_categories.any():
+                    categories = categories[~negative_categories]
+
                 if hasattr(self, "feature_names_in_"):
                     feature_name = f"'{self.feature_names_in_[f_idx]}'"
                 else:
@@ -332,6 +350,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         return constraints
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the gradient boosting model.
 
@@ -353,8 +372,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         fit_start_time = time()
         acc_find_split_time = 0.0  # time spent finding the best splits
         acc_apply_split_time = 0.0  # time spent splitting nodes
@@ -375,7 +392,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         rng = check_random_state(self.random_state)
 
-        # When warm starting, we want to re-use the same seed that was used
+        # When warm starting, we want to reuse the same seed that was used
         # the first time fit was called (e.g. for subsampling or for the
         # train/val split).
         if not (self.warm_start and self._is_fitted()):
@@ -531,7 +548,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # we're going to compute scoring w.r.t the loss. As losses
                     # take raw predictions as input (unlike the scorers), we
                     # can optimize a bit and avoid repeating computing the
-                    # predictions of the previous trees. We'll re-use
+                    # predictions of the previous trees. We'll reuse
                     # raw_predictions (as it's needed for training anyway) for
                     # evaluating the training loss, and create
                     # raw_predictions_val for storing the raw predictions of
@@ -628,7 +645,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         )
 
         for iteration in range(begin_at_stage, self.max_iter):
-
             if self.verbose:
                 iteration_start_time = time()
                 print(
@@ -693,7 +709,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 acc_find_split_time += grower.total_find_split_time
                 acc_compute_hist_time += grower.total_compute_hist_time
 
-                if self._loss.need_update_leaves_values:
+                if not self._loss.differentiable:
                     _update_leaves_values(
                         loss=self._loss,
                         grower=grower,
@@ -1204,13 +1220,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'squared_error', 'absolute_error', 'poisson', 'quantile'}, \
+    loss : {'squared_error', 'absolute_error', 'gamma', 'poisson', 'quantile'}, \
             default='squared_error'
         The loss function to use in the boosting process. Note that the
-        "squared error" and "poisson" losses actually implement
-        "half least squares loss" and "half poisson deviance" to simplify the
-        computation of the gradient. Furthermore, "poisson" loss internally
-        uses a log-link and requires ``y >= 0``.
+        "squared error", "gamma" and "poisson" losses actually implement
+        "half least squares loss", "half gamma deviance" and "half poisson
+        deviance" to simplify the computation of the gradient. Furthermore,
+        "gamma" and "poisson" losses internally use a log-link, "gamma"
+        requires ``y > 0`` and "poisson" requires ``y >= 0``.
         "quantile" uses the pinball loss.
 
         .. versionchanged:: 0.23
@@ -1218,6 +1235,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         .. versionchanged:: 1.1
            Added option 'quantile'.
+
+        .. versionchanged:: 1.3
+           Added option 'gamma'.
 
     quantile : float, default=None
         If loss is "quantile", this parameter specifies which quantile to be estimated
@@ -1262,9 +1282,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           data has feature names).
 
         For each categorical feature, there must be at most `max_bins` unique
-        categories, and each categorical value must be in [0, max_bins -1].
-        During prediction, categories encoded as a negative value are treated as
-        missing values.
+        categories, and each categorical value must be less then `max_bins - 1`.
+        Negative values for categorical features are treated as missing values.
+        All categorical values are converted to floating point numbers.
+        This means that categorical values of 1.0 and 1 are treated as
+        the same category.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
@@ -1294,7 +1316,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Accept dict of constraints with feature names as keys.
 
-    interaction_cst : {"pairwise", "no_interaction"} or sequence of lists/tuples/sets \
+    interaction_cst : {"pairwise", "no_interactions"} or sequence of lists/tuples/sets \
             of int, default=None
         Specify interaction constraints, the sets of features which can
         interact with each other in child node splits.
@@ -1418,7 +1440,15 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     _parameter_constraints: dict = {
         **BaseHistGradientBoosting._parameter_constraints,
         "loss": [
-            StrOptions({"squared_error", "absolute_error", "poisson", "quantile"}),
+            StrOptions(
+                {
+                    "squared_error",
+                    "absolute_error",
+                    "poisson",
+                    "gamma",
+                    "quantile",
+                }
+            ),
             BaseLoss,
         ],
         "quantile": [Interval(Real, 0, 1, closed="both"), None],
@@ -1514,7 +1544,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         # Just convert y to the expected dtype
         self.n_trees_per_iteration_ = 1
         y = y.astype(Y_DTYPE, copy=False)
-        if self.loss == "poisson":
+        if self.loss == "gamma":
+            # Ensure y > 0
+            if not np.all(y > 0):
+                raise ValueError("loss='gamma' requires strictly positive y.")
+        elif self.loss == "poisson":
             # Ensure y >= 0 and sum(y) > 0
             if not (np.all(y >= 0) and np.sum(y) > 0):
                 raise ValueError(
@@ -1555,8 +1589,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'log_loss', 'auto', 'binary_crossentropy', 'categorical_crossentropy'}, \
-            default='log_loss'
+    loss : {'log_loss'}, default='log_loss'
         The loss function to use in the boosting process.
 
         For binary classification problems, 'log_loss' is also known as logistic loss,
@@ -1568,11 +1601,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         deviance or categorical crossentropy. Internally, the model fits one tree per
         boosting iteration and per class and uses the softmax function as inverse link
         function to compute the predicted probabilities of the classes.
-
-        .. deprecated:: 1.1
-            The loss arguments 'auto', 'binary_crossentropy' and
-            'categorical_crossentropy' were deprecated in v1.1 and will be removed in
-            version 1.3. Use `loss='log_loss'` which is equivalent.
 
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
@@ -1614,9 +1642,11 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
           data has feature names).
 
         For each categorical feature, there must be at most `max_bins` unique
-        categories, and each categorical value must be in [0, max_bins -1].
-        During prediction, categories encoded as a negative value are treated as
-        missing values.
+        categories, and each categorical value must be less then `max_bins - 1`.
+        Negative values for categorical features are treated as missing values.
+        All categorical values are converted to floating point numbers.
+        This means that categorical values of 1.0 and 1 are treated as
+        the same category.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
@@ -1646,7 +1676,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Accept dict of constraints with feature names as keys.
 
-    interaction_cst : {"pairwise", "no_interaction"} or sequence of lists/tuples/sets \
+    interaction_cst : {"pairwise", "no_interactions"} or sequence of lists/tuples/sets \
             of int, default=None
         Specify interaction constraints, the sets of features which can
         interact with each other in child node splits.
@@ -1779,25 +1809,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     1.0
     """
 
-    # TODO(1.3): Remove "binary_crossentropy", "categorical_crossentropy", "auto"
     _parameter_constraints: dict = {
         **BaseHistGradientBoosting._parameter_constraints,
-        "loss": [
-            StrOptions(
-                {
-                    "log_loss",
-                    "binary_crossentropy",
-                    "categorical_crossentropy",
-                    "auto",
-                },
-                deprecated={
-                    "auto",
-                    "binary_crossentropy",
-                    "categorical_crossentropy",
-                },
-            ),
-            BaseLoss,
-        ],
+        "loss": [StrOptions({"log_loss"}), BaseLoss],
         "class_weight": [dict, StrOptions({"balanced"}), None],
     }
 
@@ -1996,37 +2010,10 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         return encoded_y
 
     def _get_loss(self, sample_weight):
-        # TODO(1.3): Remove "auto", "binary_crossentropy", "categorical_crossentropy"
-        if self.loss in ("auto", "binary_crossentropy", "categorical_crossentropy"):
-            warnings.warn(
-                f"The loss '{self.loss}' was deprecated in v1.1 and will be removed in "
-                "version 1.3. Use 'log_loss' which is equivalent.",
-                FutureWarning,
+        # At this point self.loss == "log_loss"
+        if self.n_trees_per_iteration_ == 1:
+            return HalfBinomialLoss(sample_weight=sample_weight)
+        else:
+            return HalfMultinomialLoss(
+                sample_weight=sample_weight, n_classes=self.n_trees_per_iteration_
             )
-
-        if self.loss in ("log_loss", "auto"):
-            if self.n_trees_per_iteration_ == 1:
-                return HalfBinomialLoss(sample_weight=sample_weight)
-            else:
-                return HalfMultinomialLoss(
-                    sample_weight=sample_weight, n_classes=self.n_trees_per_iteration_
-                )
-        if self.loss == "categorical_crossentropy":
-            if self.n_trees_per_iteration_ == 1:
-                raise ValueError(
-                    f"loss='{self.loss}' is not suitable for a binary classification "
-                    "problem. Please use loss='log_loss' instead."
-                )
-            else:
-                return HalfMultinomialLoss(
-                    sample_weight=sample_weight, n_classes=self.n_trees_per_iteration_
-                )
-        if self.loss == "binary_crossentropy":
-            if self.n_trees_per_iteration_ > 1:
-                raise ValueError(
-                    f"loss='{self.loss}' is not defined for multiclass "
-                    f"classification with n_classes={self.n_trees_per_iteration_}, "
-                    "use loss='log_loss' instead."
-                )
-            else:
-                return HalfBinomialLoss(sample_weight=sample_weight)

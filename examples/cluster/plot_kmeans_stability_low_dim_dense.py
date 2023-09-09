@@ -10,7 +10,7 @@ distances to the nearest cluster center).
 
 The first plot shows the best inertia reached for each combination
 of the model (``KMeans`` or ``MiniBatchKMeans``), and the init method
-(``init="random"`` or ``init="kmeans++"``) for increasing values of the
+(``init="random"`` or ``init="k-means++"``) for increasing values of the
 ``n_init`` parameter that controls the number of initializations.
 
 The second plot demonstrates one single run of the ``MiniBatchKMeans``
@@ -26,14 +26,12 @@ clusters widely spaced.
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.utils import shuffle
-from sklearn.utils import check_random_state
-from sklearn.cluster import MiniBatchKMeans
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, MiniBatchKMeans
+from sklearn.utils import check_random_state, shuffle
 
 random_state = np.random.RandomState(0)
 

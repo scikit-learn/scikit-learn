@@ -8,13 +8,12 @@ Approximating (OAS) estimators of covariance can improve classification.
 
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
+from sklearn.covariance import OAS
 from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.covariance import OAS
-
 
 n_train = 20  # samples for training
 n_test = 200  # samples for testing
@@ -47,8 +46,8 @@ for n_features in n_features_range:
     for _ in range(n_averages):
         X, y = generate_data(n_train, n_features)
 
-        clf1 = LinearDiscriminantAnalysis(solver="lsqr", shrinkage="auto").fit(X, y)
-        clf2 = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=None).fit(X, y)
+        clf1 = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=None).fit(X, y)
+        clf2 = LinearDiscriminantAnalysis(solver="lsqr", shrinkage="auto").fit(X, y)
         oa = OAS(store_precision=False, assume_centered=False)
         clf3 = LinearDiscriminantAnalysis(solver="lsqr", covariance_estimator=oa).fit(
             X, y
@@ -69,23 +68,23 @@ plt.plot(
     features_samples_ratio,
     acc_clf1,
     linewidth=2,
-    label="Linear Discriminant Analysis with Ledoit Wolf",
-    color="navy",
-    linestyle="dashed",
-)
-plt.plot(
-    features_samples_ratio,
-    acc_clf2,
-    linewidth=2,
-    label="Linear Discriminant Analysis",
+    label="LDA",
     color="gold",
     linestyle="solid",
 )
 plt.plot(
     features_samples_ratio,
+    acc_clf2,
+    linewidth=2,
+    label="LDA with Ledoit Wolf",
+    color="navy",
+    linestyle="dashed",
+)
+plt.plot(
+    features_samples_ratio,
     acc_clf3,
     linewidth=2,
-    label="Linear Discriminant Analysis with OAS",
+    label="LDA with OAS",
     color="red",
     linestyle="dotted",
 )
@@ -93,12 +92,13 @@ plt.plot(
 plt.xlabel("n_features / n_samples")
 plt.ylabel("Classification accuracy")
 
-plt.legend(loc=3, prop={"size": 12})
+plt.legend(loc="lower left")
+plt.ylim((0.65, 1.0))
 plt.suptitle(
-    "Linear Discriminant Analysis vs. "
+    "LDA (Linear Discriminant Analysis) vs. "
     + "\n"
-    + "Shrinkage Linear Discriminant Analysis vs. "
+    + "LDA with Ledoit Wolf vs. "
     + "\n"
-    + "OAS Linear Discriminant Analysis (1 discriminative feature)"
+    + "LDA with OAS (1 discriminative feature)"
 )
 plt.show()

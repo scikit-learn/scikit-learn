@@ -1,21 +1,28 @@
 import re
 
 import numpy as np
-from scipy.sparse import csr_matrix
 import pytest
+from scipy.sparse import csr_matrix
 
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
-
-from sklearn.metrics.pairwise import kernel_metrics
-from sklearn.kernel_approximation import RBFSampler
-from sklearn.kernel_approximation import AdditiveChi2Sampler
-from sklearn.kernel_approximation import SkewedChi2Sampler
-from sklearn.kernel_approximation import Nystroem
-from sklearn.kernel_approximation import PolynomialCountSketch
 from sklearn.datasets import make_classification
-from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel, chi2_kernel
+from sklearn.kernel_approximation import (
+    AdditiveChi2Sampler,
+    Nystroem,
+    PolynomialCountSketch,
+    RBFSampler,
+    SkewedChi2Sampler,
+)
+from sklearn.metrics.pairwise import (
+    chi2_kernel,
+    kernel_metrics,
+    polynomial_kernel,
+    rbf_kernel,
+)
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 # generate data
 rng = np.random.RandomState(0)
@@ -114,34 +121,49 @@ def test_additive_chi2_sampler():
     Y_neg[0, 0] = -1
     msg = "Negative values in data passed to"
     with pytest.raises(ValueError, match=msg):
-        transform.transform(Y_neg)
+        transform.fit(Y_neg)
 
-    # test error on invalid sample_steps
-    transform = AdditiveChi2Sampler(sample_steps=4)
+
+@pytest.mark.parametrize("method", ["fit", "fit_transform", "transform"])
+@pytest.mark.parametrize("sample_steps", range(1, 4))
+def test_additive_chi2_sampler_sample_steps(method, sample_steps):
+    """Check that the input sample step doesn't raise an error
+    and that sample interval doesn't change after fit.
+    """
+    transformer = AdditiveChi2Sampler(sample_steps=sample_steps)
+    getattr(transformer, method)(X)
+
+    sample_interval = 0.5
+    transformer = AdditiveChi2Sampler(
+        sample_steps=sample_steps,
+        sample_interval=sample_interval,
+    )
+    getattr(transformer, method)(X)
+    transformer.sample_interval == sample_interval
+
+
+# TODO(1.5): remove
+def test_additive_chi2_sampler_future_warnings():
+    """Check that we raise a FutureWarning when accessing to `sample_interval_`."""
+    transformer = AdditiveChi2Sampler()
+    transformer.fit(X)
+    msg = re.escape(
+        "The ``sample_interval_`` attribute was deprecated in version 1.3 and "
+        "will be removed 1.5."
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        assert transformer.sample_interval_ is not None
+
+
+@pytest.mark.parametrize("method", ["fit", "fit_transform", "transform"])
+def test_additive_chi2_sampler_wrong_sample_steps(method):
+    """Check that we raise a ValueError on invalid sample_steps"""
+    transformer = AdditiveChi2Sampler(sample_steps=4)
     msg = re.escape(
         "If sample_steps is not in [1, 2, 3], you need to provide sample_interval"
     )
     with pytest.raises(ValueError, match=msg):
-        transform.fit(X)
-
-    # test that the sample interval is set correctly
-    sample_steps_available = [1, 2, 3]
-    for sample_steps in sample_steps_available:
-
-        # test that the sample_interval is initialized correctly
-        transform = AdditiveChi2Sampler(sample_steps=sample_steps)
-        assert transform.sample_interval is None
-
-        # test that the sample_interval is changed in the fit method
-        transform.fit(X)
-        assert transform.sample_interval_ is not None
-
-    # test that the sample_interval is set correctly
-    sample_interval = 0.3
-    transform = AdditiveChi2Sampler(sample_steps=4, sample_interval=sample_interval)
-    assert transform.sample_interval == sample_interval
-    transform.fit(X)
-    assert transform.sample_interval_ == sample_interval
+        getattr(transformer, method)(X)
 
 
 def test_skewed_chi2_sampler():

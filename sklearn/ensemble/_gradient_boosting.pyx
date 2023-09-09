@@ -32,10 +32,8 @@ cdef void _predict_regression_tree_inplace_fast_dense(
     double *value,
     double scale,
     Py_ssize_t k,
-    Py_ssize_t n_samples,
-    Py_ssize_t n_features,
     cnp.float64_t[:, :] out
-) nogil:
+) noexcept nogil:
     """Predicts output for regression tree and stores it in ``out[i, k]``.
 
     This function operates directly on the data arrays of the tree
@@ -60,16 +58,12 @@ cdef void _predict_regression_tree_inplace_fast_dense(
     k : int
         The index of the tree output to be predicted. Must satisfy
         0 <= ``k`` < ``K``.
-    n_samples : int
-        The number of samples in the input array ``X``;
-        ``n_samples == X.shape[0]``.
-    n_features : int
-        The number of features; ``n_samples == X.shape[1]``.
     out : memory view on array of type np.float64_t
         The data array where the predictions are stored.
         ``out`` is assumed to be a two-dimensional array of
         shape ``(n_samples, K)``.
     """
+    cdef SIZE_t n_samples = X.shape[0]
     cdef Py_ssize_t i
     cdef Node *node
     for i in range(n_samples):
@@ -81,6 +75,7 @@ cdef void _predict_regression_tree_inplace_fast_dense(
             else:
                 node = root_node + node.right_child
         out[i, k] += scale * value[node - root_node]
+
 
 def _predict_regression_tree_stages_sparse(
     object[:, :] estimators,
@@ -211,11 +206,9 @@ def predict_stages(
                     value=tree.value,
                     scale=scale,
                     k=k,
-                    n_samples=X.shape[0],
-                    n_features=X.shape[1],
                     out=out
                 )
-                ## out[:, k] += scale * tree.predict(X).ravel()
+                # out[:, k] += scale * tree.predict(X).ravel()
 
 
 def predict_stage(
@@ -240,34 +233,34 @@ def _random_sample_mask(
     cnp.npy_intp n_total_in_bag,
     random_state
 ):
-     """Create a random sample mask where ``n_total_in_bag`` elements are set.
+    """Create a random sample mask where ``n_total_in_bag`` elements are set.
 
-     Parameters
-     ----------
-     n_total_samples : int
-         The length of the resulting mask.
+    Parameters
+    ----------
+    n_total_samples : int
+        The length of the resulting mask.
 
-     n_total_in_bag : int
-         The number of elements in the sample mask which are set to 1.
+    n_total_in_bag : int
+        The number of elements in the sample mask which are set to 1.
 
-     random_state : RandomState
-         A numpy ``RandomState`` object.
+    random_state : RandomState
+        A numpy ``RandomState`` object.
 
-     Returns
-     -------
-     sample_mask : np.ndarray, shape=[n_total_samples]
-         An ndarray where ``n_total_in_bag`` elements are set to ``True``
-         the others are ``False``.
-     """
-     cdef cnp.float64_t[::1] rand = random_state.uniform(size=n_total_samples)
-     cdef cnp.uint8_t[::1] sample_mask = np_zeros((n_total_samples,), dtype=bool)
+    Returns
+    -------
+    sample_mask : np.ndarray, shape=[n_total_samples]
+        An ndarray where ``n_total_in_bag`` elements are set to ``True``
+        the others are ``False``.
+    """
+    cdef cnp.float64_t[::1] rand = random_state.uniform(size=n_total_samples)
+    cdef cnp.uint8_t[::1] sample_mask = np_zeros((n_total_samples,), dtype=bool)
 
-     cdef cnp.npy_intp n_bagged = 0
-     cdef cnp.npy_intp i = 0
+    cdef cnp.npy_intp n_bagged = 0
+    cdef cnp.npy_intp i = 0
 
-     for i in range(n_total_samples):
-         if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
-             sample_mask[i] = 1
-             n_bagged += 1
+    for i in range(n_total_samples):
+        if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
+            sample_mask[i] = 1
+            n_bagged += 1
 
-     return sample_mask.base
+    return sample_mask.base

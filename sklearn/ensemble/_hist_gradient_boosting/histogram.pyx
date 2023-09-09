@@ -129,9 +129,7 @@ cdef class HistogramBuilder:
             int f_idx
             int i
             # need local views to avoid python interactions
-            unsigned char hessians_are_constant = \
-                self.hessians_are_constant
-            int n_features = self.n_features
+            unsigned char hessians_are_constant = self.hessians_are_constant
             int n_allowed_features = self.n_features
             G_H_DTYPE_C [::1] ordered_gradients = self.ordered_gradients
             G_H_DTYPE_C [::1] gradients = self.gradients
@@ -184,7 +182,7 @@ cdef class HistogramBuilder:
             HistogramBuilder self,
             const int feature_idx,
             const unsigned int [::1] sample_indices,  # IN
-            hist_struct [:, ::1] histograms) nogil:  # OUT
+            hist_struct [:, ::1] histograms) noexcept nogil:  # OUT
         """Compute the histogram for a given feature."""
 
         cdef:
@@ -259,7 +257,6 @@ cdef class HistogramBuilder:
         cdef:
             int feature_idx
             int f_idx
-            int n_features = self.n_features
             int n_allowed_features = self.n_features
             hist_struct [:, ::1] histograms = np.empty(
                 shape=(self.n_features, self.n_bins),
@@ -295,7 +292,7 @@ cpdef void _build_histogram_naive(
         X_BINNED_DTYPE_C [:] binned_feature,  # IN
         G_H_DTYPE_C [:] ordered_gradients,  # IN
         G_H_DTYPE_C [:] ordered_hessians,  # IN
-        hist_struct [:, :] out) nogil:  # OUT
+        hist_struct [:, :] out) noexcept nogil:  # OUT
     """Build histogram in a naive way, without optimizing for cache hit.
 
     Used in tests to compare with the optimized version."""
@@ -318,7 +315,7 @@ cpdef void _subtract_histograms(
         unsigned int n_bins,
         hist_struct [:, ::1] hist_a,  # IN
         hist_struct [:, ::1] hist_b,  # IN
-        hist_struct [:, ::1] out) nogil:  # OUT
+        hist_struct [:, ::1] out) noexcept nogil:  # OUT
     """compute (hist_a - hist_b) in out"""
     cdef:
         unsigned int i = 0
@@ -343,7 +340,7 @@ cpdef void _build_histogram(
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] ordered_gradients,  # IN
         const G_H_DTYPE_C [::1] ordered_hessians,  # IN
-        hist_struct [:, ::1] out) nogil:  # OUT
+        hist_struct [:, ::1] out) noexcept nogil:  # OUT
     """Return histogram for a given feature."""
     cdef:
         unsigned int i = 0
@@ -389,7 +386,7 @@ cpdef void _build_histogram_no_hessian(
         const unsigned int [::1] sample_indices,  # IN
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] ordered_gradients,  # IN
-        hist_struct [:, ::1] out) nogil:  # OUT
+        hist_struct [:, ::1] out) noexcept nogil:  # OUT
     """Return histogram for a given feature, not updating hessians.
 
     Used when the hessians of the loss are constant (typically LS loss).
@@ -433,7 +430,7 @@ cpdef void _build_histogram_root(
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] all_gradients,  # IN
         const G_H_DTYPE_C [::1] all_hessians,  # IN
-        hist_struct [:, ::1] out) nogil:  # OUT
+        hist_struct [:, ::1] out) noexcept nogil:  # OUT
     """Compute histogram of the root node.
 
     Unlike other nodes, the root node has to find the split among *all* the
@@ -485,7 +482,7 @@ cpdef void _build_histogram_root_no_hessian(
         const int feature_idx,
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] all_gradients,  # IN
-        hist_struct [:, ::1] out) nogil:  # OUT
+        hist_struct [:, ::1] out) noexcept nogil:  # OUT
     """Compute histogram of the root node, not updating hessians.
 
     Used when the hessians of the loss are constant (typically LS loss).

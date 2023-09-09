@@ -14,22 +14,18 @@ are supervised learning methods based on applying Bayes' theorem with strong
 #
 # License: BSD 3 clause
 import warnings
-
 from abc import ABCMeta, abstractmethod
-from numbers import Real, Integral
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.special import logsumexp
 
-from .base import BaseEstimator, ClassifierMixin
-from .preprocessing import binarize
-from .preprocessing import LabelBinarizer
-from .preprocessing import label_binarize
+from .base import BaseEstimator, ClassifierMixin, _fit_context
+from .preprocessing import LabelBinarizer, binarize, label_binarize
+from .utils._param_validation import Hidden, Interval, StrOptions
 from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.validation import check_is_fitted, check_non_negative
-from .utils.validation import _check_sample_weight
-from .utils._param_validation import Interval, Hidden, StrOptions
+from .utils.validation import _check_sample_weight, check_is_fitted, check_non_negative
 
 __all__ = [
     "BernoulliNB",
@@ -239,6 +235,7 @@ class GaussianNB(_BaseNB):
         self.priors = priors
         self.var_smoothing = var_smoothing
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y.
 
@@ -262,7 +259,6 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         y = self._validate_data(y=y)
         return self._partial_fit(
             X, y, np.unique(y), _refit=True, sample_weight=sample_weight
@@ -346,6 +342,7 @@ class GaussianNB(_BaseNB):
 
         return total_mu, total_var
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
 
@@ -386,8 +383,6 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-
         return self._partial_fit(
             X, y, classes, _refit=False, sample_weight=sample_weight
         )
@@ -472,7 +467,7 @@ class GaussianNB(_BaseNB):
         classes = self.classes_
 
         unique_y = np.unique(y)
-        unique_y_in_classes = np.in1d(unique_y, classes)
+        unique_y_in_classes = np.isin(unique_y, classes)
 
         if not np.all(unique_y_in_classes):
             raise ValueError(
@@ -627,8 +622,11 @@ class _BaseDiscreteNB(_BaseNB):
         if _force_alpha == "warn" and alpha_min < alpha_lower_bound:
             _force_alpha = False
             warnings.warn(
-                "The default value for `force_alpha` will change to `True` in 1.4. To"
-                " suppress this warning, manually set the value of `force_alpha`.",
+                (
+                    "The default value for `force_alpha` will change to `True` in 1.4."
+                    " To suppress this warning, manually set the value of"
+                    " `force_alpha`."
+                ),
                 FutureWarning,
             )
         if alpha_min < alpha_lower_bound and not _force_alpha:
@@ -640,6 +638,7 @@ class _BaseDiscreteNB(_BaseNB):
             return np.maximum(alpha, alpha_lower_bound)
         return alpha
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
 
@@ -678,9 +677,6 @@ class _BaseDiscreteNB(_BaseNB):
             Returns the instance itself.
         """
         first_call = not hasattr(self, "classes_")
-
-        if first_call:
-            self._validate_params()
 
         X, y = self._check_X_y(X, y, reset=first_call)
         _, n_features = X.shape
@@ -725,6 +721,7 @@ class _BaseDiscreteNB(_BaseNB):
         self._update_class_log_prior(class_prior=class_prior)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit Naive Bayes classifier according to X, y.
 
@@ -745,7 +742,6 @@ class _BaseDiscreteNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         X, y = self._check_X_y(X, y)
         _, n_features = X.shape
 

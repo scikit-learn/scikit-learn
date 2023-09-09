@@ -1,38 +1,45 @@
 import sys
 from io import StringIO
-import numpy as np
-from numpy.testing import assert_allclose
-import scipy.sparse as sp
-import pytest
 
-from sklearn.neighbors import NearestNeighbors
-from sklearn.neighbors import kneighbors_graph
+import numpy as np
+import pytest
+import scipy.sparse as sp
+from numpy.testing import assert_allclose
+from scipy.optimize import check_grad
+from scipy.spatial.distance import pdist, squareform
+
+from sklearn import config_context
+from sklearn.datasets import make_blobs
 from sklearn.exceptions import EfficiencyWarning
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import skip_if_32bit
-from sklearn.utils import check_random_state
-from sklearn.manifold._t_sne import _joint_probabilities
-from sklearn.manifold._t_sne import _joint_probabilities_nn
-from sklearn.manifold._t_sne import _kl_divergence
-from sklearn.manifold._t_sne import _kl_divergence_bh
-from sklearn.manifold._t_sne import _gradient_descent
-from sklearn.manifold._t_sne import trustworthiness
-from sklearn.manifold import TSNE
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
-from sklearn.manifold import _barnes_hut_tsne  # type: ignore
+from sklearn.manifold import (  # type: ignore
+    TSNE,
+    _barnes_hut_tsne,
+)
+from sklearn.manifold._t_sne import (
+    _gradient_descent,
+    _joint_probabilities,
+    _joint_probabilities_nn,
+    _kl_divergence,
+    _kl_divergence_bh,
+    trustworthiness,
+)
 from sklearn.manifold._utils import _binary_search_perplexity
-from sklearn.datasets import make_blobs
-from scipy.optimize import check_grad
-from scipy.spatial.distance import pdist
-from scipy.spatial.distance import squareform
-from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.metrics.pairwise import manhattan_distances
-from sklearn.metrics.pairwise import cosine_distances
-
+from sklearn.metrics.pairwise import (
+    cosine_distances,
+    manhattan_distances,
+    pairwise_distances,
+)
+from sklearn.neighbors import NearestNeighbors, kneighbors_graph
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+    skip_if_32bit,
+)
 
 x = np.linspace(0, 1, 10)
 xx, yy = np.meshgrid(x, x)
@@ -1137,45 +1144,6 @@ def test_tsne_with_mahalanobis_distance():
     assert_allclose(X_trans, X_trans_expected)
 
 
-# FIXME: remove in 1.3 after deprecation of `square_distances`
-def test_tsne_deprecation_square_distances():
-    """Check that we raise a warning regarding the removal of
-    `square_distances`.
-
-    Also check the parameters do not have any effect.
-    """
-    random_state = check_random_state(0)
-    X = random_state.randn(30, 10)
-    tsne = TSNE(
-        n_components=2,
-        init="pca",
-        learning_rate="auto",
-        perplexity=25.0,
-        angle=0,
-        n_jobs=1,
-        random_state=0,
-        square_distances=True,
-    )
-    warn_msg = (
-        "The parameter `square_distances` has not effect and will be removed in"
-        " version 1.3"
-    )
-    with pytest.warns(FutureWarning, match=warn_msg):
-        X_trans_1 = tsne.fit_transform(X)
-
-    tsne = TSNE(
-        n_components=2,
-        init="pca",
-        learning_rate="auto",
-        perplexity=25.0,
-        angle=0,
-        n_jobs=1,
-        random_state=0,
-    )
-    X_trans_2 = tsne.fit_transform(X)
-    assert_allclose(X_trans_1, X_trans_2)
-
-
 @pytest.mark.parametrize("perplexity", (20, 30))
 def test_tsne_perplexity_validation(perplexity):
     """Make sure that perplexity > n_samples results in a ValueError"""
@@ -1191,3 +1159,14 @@ def test_tsne_perplexity_validation(perplexity):
     msg = "perplexity must be less than n_samples"
     with pytest.raises(ValueError, match=msg):
         est.fit_transform(X)
+
+
+def test_tsne_works_with_pandas_output():
+    """Make sure that TSNE works when the output is set to "pandas".
+
+    Non-regression test for gh-25365.
+    """
+    pytest.importorskip("pandas")
+    with config_context(transform_output="pandas"):
+        arr = np.arange(35 * 4).reshape(35, 4)
+        TSNE(n_components=2).fit_transform(arr)

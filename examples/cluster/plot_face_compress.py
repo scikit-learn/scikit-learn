@@ -99,7 +99,7 @@ _ = fig.suptitle("Raccoon face compressed using 3 bits and a uniform strategy")
 # image is still looking good.
 #
 # We observe that the distribution of pixels values have been mapped to 8
-# different values. We can check the correspondance between such values and the
+# different values. We can check the correspondence between such values and the
 # original pixel values.
 
 bin_edges = encoder.bin_edges_[0]

@@ -1,36 +1,32 @@
-import warnings
-import unittest
-import os
 import atexit
+import os
+import unittest
+import warnings
 
 import numpy as np
-
+import pytest
 from scipy import sparse
 
-import pytest
-
-from sklearn.utils.deprecation import deprecated
-from sklearn.utils.metaestimators import available_if, if_delegate_has_method
-from sklearn.utils._readonly_array_wrapper import _test_sum
-from sklearn.utils._testing import (
-    assert_raises,
-    assert_no_warnings,
-    set_random_state,
-    assert_raise_message,
-    ignore_warnings,
-    check_docstring_parameters,
-    assert_allclose_dense_sparse,
-    assert_raises_regex,
-    TempMemmap,
-    create_memmap_backed_data,
-    _delete_folder,
-    _convert_container,
-    raises,
-    assert_allclose,
-)
-
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils._testing import (
+    TempMemmap,
+    _convert_container,
+    _delete_folder,
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    assert_no_warnings,
+    assert_raise_message,
+    assert_raises,
+    assert_raises_regex,
+    check_docstring_parameters,
+    create_memmap_backed_data,
+    ignore_warnings,
+    raises,
+    set_random_state,
+)
+from sklearn.utils.deprecation import deprecated
+from sklearn.utils.metaestimators import available_if
 
 
 def test_set_random_state():
@@ -431,64 +427,7 @@ class MockMetaEstimator:
         """Incorrect docstring but should not be tested"""
 
 
-class MockMetaEstimatorDeprecatedDelegation:
-    def __init__(self, delegate):
-        """MetaEstimator to check if doctest on delegated methods work.
-
-        Parameters
-        ---------
-        delegate : estimator
-            Delegated estimator.
-        """
-        self.delegate = delegate
-
-    @if_delegate_has_method(delegate="delegate")
-    def predict(self, X):
-        """This is available only if delegate has predict.
-
-        Parameters
-        ----------
-        y : ndarray
-            Parameter y
-        """
-        return self.delegate.predict(X)
-
-    @if_delegate_has_method(delegate="delegate")
-    @deprecated("Testing a deprecated delegated method")
-    def score(self, X):
-        """This is available only if delegate has score.
-
-        Parameters
-        ---------
-        y : ndarray
-            Parameter y
-        """
-
-    @if_delegate_has_method(delegate="delegate")
-    def predict_proba(self, X):
-        """This is available only if delegate has predict_proba.
-
-        Parameters
-        ---------
-        X : ndarray
-            Parameter X
-        """
-        return X
-
-    @deprecated("Testing deprecated function with wrong params")
-    def fit(self, X, y):
-        """Incorrect docstring but should not be tested"""
-
-
-@pytest.mark.filterwarnings("ignore:if_delegate_has_method was deprecated")
-@pytest.mark.parametrize(
-    "mock_meta",
-    [
-        MockMetaEstimator(delegate=MockEst()),
-        MockMetaEstimatorDeprecatedDelegation(delegate=MockEst()),
-    ],
-)
-def test_check_docstring_parameters(mock_meta):
+def test_check_docstring_parameters():
     pytest.importorskip(
         "numpydoc",
         reason="numpydoc is required to test the docstrings",
@@ -507,21 +446,30 @@ def test_check_docstring_parameters(mock_meta):
         check_docstring_parameters(Klass.f_bad_sections)
 
     incorrect = check_docstring_parameters(f_check_param_definition)
+    mock_meta = MockMetaEstimator(delegate=MockEst())
     mock_meta_name = mock_meta.__class__.__name__
     assert incorrect == [
-        "sklearn.utils.tests.test_testing.f_check_param_definition There "
-        "was no space between the param name and colon ('a: int')",
-        "sklearn.utils.tests.test_testing.f_check_param_definition There "
-        "was no space between the param name and colon ('b:')",
-        "sklearn.utils.tests.test_testing.f_check_param_definition There "
-        "was no space between the param name and colon ('d:int')",
+        (
+            "sklearn.utils.tests.test_testing.f_check_param_definition There "
+            "was no space between the param name and colon ('a: int')"
+        ),
+        (
+            "sklearn.utils.tests.test_testing.f_check_param_definition There "
+            "was no space between the param name and colon ('b:')"
+        ),
+        (
+            "sklearn.utils.tests.test_testing.f_check_param_definition There "
+            "was no space between the param name and colon ('d:int')"
+        ),
     ]
 
     messages = [
         [
             "In function: sklearn.utils.tests.test_testing.f_bad_order",
-            "There's a parameter name mismatch in function docstring w.r.t."
-            " function signature, at index 0 diff: 'b' != 'a'",
+            (
+                "There's a parameter name mismatch in function docstring w.r.t."
+                " function signature, at index 0 diff: 'b' != 'a'"
+            ),
             "Full diff:",
             "- ['b', 'a']",
             "+ ['a', 'b']",
@@ -529,8 +477,10 @@ def test_check_docstring_parameters(mock_meta):
         [
             "In function: "
             + "sklearn.utils.tests.test_testing.f_too_many_param_docstring",
-            "Parameters in function docstring have more items w.r.t. function"
-            " signature, first extra item: c",
+            (
+                "Parameters in function docstring have more items w.r.t. function"
+                " signature, first extra item: c"
+            ),
             "Full diff:",
             "- ['a', 'b']",
             "+ ['a', 'b', 'c']",
@@ -538,16 +488,20 @@ def test_check_docstring_parameters(mock_meta):
         ],
         [
             "In function: sklearn.utils.tests.test_testing.f_missing",
-            "Parameters in function docstring have less items w.r.t. function"
-            " signature, first missing item: b",
+            (
+                "Parameters in function docstring have less items w.r.t. function"
+                " signature, first missing item: b"
+            ),
             "Full diff:",
             "- ['a', 'b']",
             "+ ['a']",
         ],
         [
             "In function: sklearn.utils.tests.test_testing.Klass.f_missing",
-            "Parameters in function docstring have less items w.r.t. function"
-            " signature, first missing item: X",
+            (
+                "Parameters in function docstring have less items w.r.t. function"
+                " signature, first missing item: X"
+            ),
             "Full diff:",
             "- ['X', 'y']",
             "+ []",
@@ -555,8 +509,10 @@ def test_check_docstring_parameters(mock_meta):
         [
             "In function: "
             + f"sklearn.utils.tests.test_testing.{mock_meta_name}.predict",
-            "There's a parameter name mismatch in function docstring w.r.t."
-            " function signature, at index 0 diff: 'X' != 'y'",
+            (
+                "There's a parameter name mismatch in function docstring w.r.t."
+                " function signature, at index 0 diff: 'X' != 'y'"
+            ),
             "Full diff:",
             "- ['X']",
             "?   ^",
@@ -580,8 +536,10 @@ def test_check_docstring_parameters(mock_meta):
         ],
         [
             "In function: " + f"sklearn.utils.tests.test_testing.{mock_meta_name}.fit",
-            "Parameters in function docstring have less items w.r.t. function"
-            " signature, first missing item: X",
+            (
+                "Parameters in function docstring have less items w.r.t. function"
+                " signature, first missing item: X"
+            ),
             "Full diff:",
             "- ['X', 'y']",
             "+ []",
@@ -678,26 +636,6 @@ def test_create_memmap_backed_data(monkeypatch, aligned):
         ),
     ):
         create_memmap_backed_data([input_array, "not-an-array"], aligned=True)
-
-
-@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
-def test_memmap_on_contiguous_data(dtype):
-    """Test memory mapped array on contiguous memoryview."""
-    x = np.arange(10).astype(dtype)
-    assert x.flags["C_CONTIGUOUS"]
-    assert x.flags["ALIGNED"]
-
-    # _test_sum consumes contiguous arrays
-    # def _test_sum(NUM_TYPES[::1] x):
-    sum_origin = _test_sum(x)
-
-    # now on memory mapped data
-    # aligned=True so avoid https://github.com/joblib/joblib/issues/563
-    # without alignment, this can produce segmentation faults, see
-    # https://github.com/scikit-learn/scikit-learn/pull/21654
-    x_mmap = create_memmap_backed_data(x, mmap_mode="r+", aligned=True)
-    sum_mmap = _test_sum(x_mmap)
-    assert sum_mmap == pytest.approx(sum_origin, rel=1e-11)
 
 
 @pytest.mark.parametrize(

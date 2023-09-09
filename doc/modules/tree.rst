@@ -27,8 +27,8 @@ Some advantages of decision trees are:
 
     - Requires little data preparation. Other techniques often require data
       normalization, dummy variables need to be created and blank values to
-      be removed. Note however that this module does not support missing
-      values.
+      be removed. Some tree and algorithm combinations support 
+      :ref:`missing values <tree_missing_value_support>`.
 
     - The cost of using the tree (i.e., predicting data) is logarithmic in the
       number of data points used to train the tree.
@@ -146,6 +146,10 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
    :scale: 75
    :align: center
 
+|details-start|
+**Alternative ways to export trees**
+|details-split|
+
 We can also export the tree in `Graphviz
 <https://www.graphviz.org/>`_ format using the :func:`export_graphviz`
 exporter. If you use the `conda <https://conda.io>`_ package manager, the graphviz binaries
@@ -211,6 +215,8 @@ of external libraries and is more compact:
     |   |--- petal width (cm) >  1.75
     |   |   |--- class: 2
     <BLANKLINE>
+
+|details-end|
 
 .. topic:: Examples:
 
@@ -281,7 +287,6 @@ of shape ``(n_samples, n_outputs)`` then the resulting estimator will:
   * Output a list of n_output arrays of class probabilities upon
     ``predict_proba``.
 
-
 The use of multi-output trees for regression is demonstrated in
 :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`. In this example, the input
 X is a single real value and the outputs Y are the sine and cosine of X.
@@ -303,15 +308,19 @@ the lower half of those faces.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
- * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
+  * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
+  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
  * M. Dumont et al,  `Fast multi-class image annotation with random subwindows
    and multiple output randomized trees
    <http://www.montefiore.ulg.ac.be/services/stochastic/pubs/2009/DMWG09/dumont-visapp09-shortpaper.pdf>`_, International Conference on
    Computer Vision Theory and Applications 2009
+
+|details-end|
 
 .. _tree_complexity:
 
@@ -403,6 +412,10 @@ Tree algorithms: ID3, C4.5, C5.0 and CART
 What are all the various decision tree algorithms and how do they differ
 from each other? Which one is implemented in scikit-learn?
 
+|details-start|
+**Various decision tree algorithms**
+|details-split|
+
 ID3_ (Iterative Dichotomiser 3) was developed in 1986 by Ross Quinlan.
 The algorithm creates a multiway tree, finding for each node (i.e. in
 a greedy manner) the categorical feature that will yield the largest
@@ -427,6 +440,8 @@ CART (Classification and Regression Trees) is very similar to C4.5, but
 it differs in that it supports numerical target variables (regression) and
 does not compute rule sets. CART constructs binary trees using the feature
 and threshold that yield the largest information gain at each node.
+
+|details-end|
 
 scikit-learn uses an optimized version of the CART algorithm; however, the
 scikit-learn implementation does not support categorical variables for now.
@@ -500,15 +515,16 @@ Log Loss or Entropy:
 
     H(Q_m) = - \sum_k p_{mk} \log(p_{mk})
 
-
-.. note::
+|details-start|
+Shannon entropy:
+|details-split|
 
   The entropy criterion computes the Shannon entropy of the possible classes. It
   takes the class frequencies of the training data points that reached a given
   leaf :math:`m` as their probability. Using the **Shannon entropy as tree node
   splitting criterion is equivalent to minimizing the log loss** (also known as
   cross-entropy and multinomial deviance) between the true labels :math:`y_i`
-  and the probalistic predictions :math:`T_k(x_i)` of the tree model :math:`T` for class :math:`k`.
+  and the probabilistic predictions :math:`T_k(x_i)` of the tree model :math:`T` for class :math:`k`.
 
   To see this, first recall that the log loss of a tree model :math:`T`
   computed on a dataset :math:`D` is defined as follows:
@@ -530,6 +546,8 @@ Log Loss or Entropy:
   .. math::
 
       \mathrm{LL}(D, T) = \sum_{m \in T} \frac{n_m}{n} H(Q_m)
+
+|details-end|
 
 Regression criteria
 -------------------
@@ -572,6 +590,65 @@ Mean Absolute Error:
 
 Note that it fits much slower than the MSE criterion.
 
+.. _tree_missing_value_support:
+
+Missing Values Support
+======================
+
+:class:`DecisionTreeClassifier` and :class:`DecisionTreeRegressor`
+have built-in support for missing values when `splitter='best'` and criterion is
+`'gini'`, `'entropy`', or `'log_loss'`, for classification or
+`'squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.
+
+For each potential threshold on the non-missing data, the splitter will evaluate
+the split with all the missing values going to the left node or the right node.
+
+Decisions are made as follows:
+
+    - By default when predicting, the samples with missing values are classified
+      with the class used in the split found during training::
+
+        >>> from sklearn.tree import DecisionTreeClassifier
+        >>> import numpy as np
+
+        >>> X = np.array([0, 1, 6, np.nan]).reshape(-1, 1)
+        >>> y = [0, 0, 1, 1]
+
+        >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+        >>> tree.predict(X)
+        array([0, 0, 1, 1])
+
+    - If the the criterion evaluation is the same for both nodes,
+      then the tie for missing value at predict time is broken by going to the
+      right node. The splitter also checks the split where all the missing
+      values go to one child and non-missing values go to the other::
+
+        >>> from sklearn.tree import DecisionTreeClassifier
+        >>> import numpy as np
+
+        >>> X = np.array([np.nan, -1, np.nan, 1]).reshape(-1, 1)
+        >>> y = [0, 0, 1, 1]
+
+        >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+
+        >>> X_test = np.array([np.nan]).reshape(-1, 1)
+        >>> tree.predict(X_test)
+        array([1])
+
+    - If no missing values are seen during training for a given feature, then during
+      prediction missing values are mapped to the child with the most samples::
+
+        >>> from sklearn.tree import DecisionTreeClassifier
+        >>> import numpy as np
+
+        >>> X = np.array([0, 1, 2, 3]).reshape(-1, 1)
+        >>> y = [0, 1, 1, 1]
+
+        >>> tree = DecisionTreeClassifier(random_state=0).fit(X, y)
+
+        >>> X_test = np.array([np.nan]).reshape(-1, 1)
+        >>> tree.predict(X_test)
+        array([1])
 
 .. _minimal_cost_complexity_pruning:
 
@@ -612,7 +689,9 @@ be pruned. This process stops when the pruned tree's minimal
 
     * :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
     .. [BRE] L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification
       and Regression Trees. Wadsworth, Belmont, CA, 1984.
@@ -626,3 +705,5 @@ be pruned. This process stops when the pruned tree's minimal
 
     * T. Hastie, R. Tibshirani and J. Friedman. Elements of Statistical
       Learning, Springer, 2009.
+
+|details-end|

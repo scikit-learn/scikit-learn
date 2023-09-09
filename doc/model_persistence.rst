@@ -55,6 +55,19 @@ with::
    available `here
    <https://joblib.readthedocs.io/en/latest/persistence.html>`_.
 
+When an estimator is unpickled with a scikit-learn version that is inconsistent
+with the version the estimator was pickled with, a
+:class:`~sklearn.exceptions.InconsistentVersionWarning` is raised. This warning
+can be caught to obtain the original version the estimator was pickled with:
+
+  from sklearn.exceptions import InconsistentVersionWarning
+  warnings.simplefilter("error", InconsistentVersionWarning)
+
+  try:
+      est = pickle.loads("model_from_prevision_version.pickle")
+  except InconsistentVersionWarning as w:
+      print(w.original_sklearn_version)
+
 .. _persistence_limitations:
 
 Security & maintainability limitations
@@ -113,7 +126,7 @@ trusted by you. You can get existing unknown types in a dumped object / file
 using :func:`skops.io.get_untrusted_types`, and after checking its contents,
 pass it to the load function::
 
-    unknown_types = sio.get_untrusted_types(obj)
+    unknown_types = sio.get_untrusted_types(data=obj)
     clf = sio.loads(obj, trusted=unknown_types)
 
 If you trust the source of the file / object, you can pass ``trusted=True``::

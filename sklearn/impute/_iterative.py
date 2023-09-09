@@ -1,30 +1,25 @@
-from time import time
+import warnings
 from collections import namedtuple
 from numbers import Integral, Real
-import warnings
+from time import time
 
-from scipy import stats
 import numpy as np
+from scipy import stats
 
-from ..base import clone
+from ..base import _fit_context, clone
 from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
 from ..utils import (
+    _safe_assign,
+    _safe_indexing,
     check_array,
     check_random_state,
     is_scalar_nan,
-    _safe_assign,
-    _safe_indexing,
 )
-from ..utils.validation import FLOAT_DTYPES, check_is_fitted
-from ..utils.validation import _check_feature_names_in
 from ..utils._mask import _get_mask
 from ..utils._param_validation import HasMethods, Interval, StrOptions
-
-from ._base import _BaseImputer
-from ._base import SimpleImputer
-from ._base import _check_inputs_dtype
-
+from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
+from ._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
 
 _ImputerTriplet = namedtuple(
     "_ImputerTriplet", ["feat_idx", "neighbor_feat_idx", "estimator"]
@@ -116,6 +111,15 @@ class IterativeImputer(_BaseImputer):
             default='mean'
         Which strategy to use to initialize the missing values. Same as the
         `strategy` parameter in :class:`~sklearn.impute.SimpleImputer`.
+
+    fill_value : str or numerical value, default=None
+        When `strategy="constant"`, `fill_value` is used to replace all
+        occurrences of missing_values. For string or object data types,
+        `fill_value` must be a string.
+        If `None`, `fill_value` will be 0 when imputing numerical
+        data and "missing_value" for strings or object data types.
+
+        .. versionadded:: 1.3
 
     imputation_order : {'ascending', 'descending', 'roman', 'arabic', \
             'random'}, default='ascending'
@@ -281,6 +285,7 @@ class IterativeImputer(_BaseImputer):
         "initial_strategy": [
             StrOptions({"mean", "median", "most_frequent", "constant"})
         ],
+        "fill_value": "no_validation",  # any object is valid
         "imputation_order": [
             StrOptions({"ascending", "descending", "roman", "arabic", "random"})
         ],
@@ -301,6 +306,7 @@ class IterativeImputer(_BaseImputer):
         tol=1e-3,
         n_nearest_features=None,
         initial_strategy="mean",
+        fill_value=None,
         imputation_order="ascending",
         skip_complete=False,
         min_value=-np.inf,
@@ -322,6 +328,7 @@ class IterativeImputer(_BaseImputer):
         self.tol = tol
         self.n_nearest_features = n_nearest_features
         self.initial_strategy = initial_strategy
+        self.fill_value = fill_value
         self.imputation_order = imputation_order
         self.skip_complete = skip_complete
         self.min_value = min_value
@@ -613,8 +620,9 @@ class IterativeImputer(_BaseImputer):
             self.initial_imputer_ = SimpleImputer(
                 missing_values=self.missing_values,
                 strategy=self.initial_strategy,
+                fill_value=self.fill_value,
                 keep_empty_features=self.keep_empty_features,
-            )
+            ).set_output(transform="default")
             X_filled = self.initial_imputer_.fit_transform(X)
         else:
             X_filled = self.initial_imputer_.transform(X)
@@ -668,6 +676,10 @@ class IterativeImputer(_BaseImputer):
             )
         return limit
 
+    @_fit_context(
+        # IterativeImputer.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit_transform(self, X, y=None):
         """Fit the imputer on `X` and return the transformed `X`.
 
@@ -685,7 +697,6 @@ class IterativeImputer(_BaseImputer):
         Xt : array-like, shape (n_samples, n_features)
             The imputed input data.
         """
-        self._validate_params()
         self.random_state_ = getattr(
             self, "random_state_", check_random_state(self.random_state)
         )
@@ -884,6 +895,7 @@ class IterativeImputer(_BaseImputer):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         input_features = _check_feature_names_in(self, input_features)
         names = self.initial_imputer_.get_feature_names_out(input_features)
         return self._concatenate_indicator_feature_names_out(names, input_features)

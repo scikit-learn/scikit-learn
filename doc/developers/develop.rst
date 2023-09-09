@@ -414,7 +414,7 @@ trailing ``_`` is used to check if the estimator has been fitted.
 
 Cloning
 -------
-For use with the :mod:`model_selection` module,
+For use with the :mod:`~sklearn.model_selection` module,
 an estimator must support the ``base.clone`` function to replicate an estimator.
 This can be done by providing a ``get_params`` method.
 If ``get_params`` is present, then ``clone(estimator)`` will be an instance of
@@ -424,6 +424,31 @@ the result of ``estimator.get_params()``.
 Objects that do not provide this method will be deep-copied
 (using the Python standard function ``copy.deepcopy``)
 if ``safe=False`` is passed to ``clone``.
+
+Estimators can customize the behavior of :func:`base.clone` by defining a
+`__sklearn_clone__` method. `__sklearn_clone__` must return an instance of the
+estimator. `__sklearn_clone__` is useful when an estimator needs to hold on to
+some state when :func:`base.clone` is called on the estimator. For example, a
+frozen meta-estimator for transformers can be defined as follows::
+
+    class FrozenTransformer(BaseEstimator):
+        def __init__(self, fitted_transformer):
+            self.fitted_transformer = fitted_transformer
+
+        def __getattr__(self, name):
+            # `fitted_transformer`'s attributes are now accessible
+            return getattr(self.fitted_transformer, name)
+
+        def __sklearn_clone__(self):
+            return self
+
+        def fit(self, X, y):
+            # Fitting does not change the state of the estimator
+            return self
+
+        def fit_transform(self, X, y=None):
+            # fit_transform only transforms the data
+            return self.fitted_transformer.transform(X, y)
 
 Pipeline compatibility
 ----------------------
@@ -483,7 +508,7 @@ independent term is stored in ``intercept_``.  ``sklearn.linear_model._base``
 contains a few base classes and mixins that implement common linear model
 patterns.
 
-The :mod:`sklearn.utils.multiclass` module contains useful functions
+The :mod:`~sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
 
 .. _estimator_tags:
@@ -508,7 +533,10 @@ general only be determined at runtime.
 The current set of estimator tags are:
 
 allow_nan (default=False)
-    whether the estimator supports data with missing values encoded as np.NaN
+    whether the estimator supports data with missing values encoded as np.nan
+
+array_api_support (default=False)
+    whether the estimator supports Array API compatible inputs.
 
 binary_only (default=False)
     whether estimator supports binary classification but lacks multi-class
@@ -540,7 +568,7 @@ pairwise (default=False)
     or a cross validation procedure that extracts a sub-sample of data intended
     for a pairwise estimator, where the data needs to be indexed on both axes.
     Specifically, this tag is used by
-    :func:`~sklearn.utils.metaestimators._safe_split` to slice rows and
+    `sklearn.utils.metaestimators._safe_split` to slice rows and
     columns.
 
 preserves_dtype (default=``[np.float64]``)
@@ -679,6 +707,20 @@ For transformers that return multiple arrays in `transform`, auto wrapping will
 only wrap the first array and not alter the other arrays.
 
 See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
+for an example on how to use the API.
+
+.. _developer_api_check_is_fitted:
+
+Developer API for `check_is_fitted`
+===================================
+
+By default :func:`~sklearn.utils.validation.check_is_fitted` checks if there
+are any attributes in the instance with a trailing underscore, e.g. `coef_`.
+An estimator can change the behavior by implementing a `__sklearn_is_fitted__`
+method taking no input and returning a boolean. If this method exists,
+:func:`~sklearn.utils.validation.check_is_fitted` simply returns its output.
+
+See :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
 for an example on how to use the API.
 
 .. _coding-guidelines:
@@ -827,7 +869,7 @@ Numerical assertions in tests
 -----------------------------
 
 When asserting the quasi-equality of arrays of continuous values,
-do use :func:`sklearn.utils._testing.assert_allclose`.
+do use `sklearn.utils._testing.assert_allclose`.
 
 The relative tolerance is automatically inferred from the provided arrays
 dtypes (for float32 and float64 dtypes in particular) but you can override
@@ -837,4 +879,4 @@ When comparing arrays of zero-elements, please do provide a non-zero value for
 the absolute tolerance via ``atol``.
 
 For more information, please refer to the docstring of
-:func:`sklearn.utils._testing.assert_allclose`.
+`sklearn.utils._testing.assert_allclose`.

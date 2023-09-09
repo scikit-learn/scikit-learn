@@ -17,7 +17,7 @@ dependencies:
   - pytest
   - pytest-xdist=2.5.0
   - pillow
-  - codecov
+  - setuptools
   - pytest-cov
   - coverage
   - ccache

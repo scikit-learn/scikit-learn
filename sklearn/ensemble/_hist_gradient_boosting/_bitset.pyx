@@ -12,7 +12,7 @@ from .common cimport X_BINNED_DTYPE_C
 # https://en.wikipedia.org/wiki/Bitwise_operation
 
 
-cdef inline void init_bitset(BITSET_DTYPE_C bitset) nogil: # OUT
+cdef inline void init_bitset(BITSET_DTYPE_C bitset) noexcept nogil:  # OUT
     cdef:
         unsigned int i
 
@@ -21,23 +21,23 @@ cdef inline void init_bitset(BITSET_DTYPE_C bitset) nogil: # OUT
 
 
 cdef inline void set_bitset(BITSET_DTYPE_C bitset,  # OUT
-                            X_BINNED_DTYPE_C val) nogil:
+                            X_BINNED_DTYPE_C val) noexcept nogil:
     bitset[val // 32] |= (1 << (val % 32))
 
 
 cdef inline unsigned char in_bitset(BITSET_DTYPE_C bitset,
-                                    X_BINNED_DTYPE_C val) nogil:
+                                    X_BINNED_DTYPE_C val) noexcept nogil:
 
     return (bitset[val // 32] >> (val % 32)) & 1
 
 
 cpdef inline unsigned char in_bitset_memoryview(const BITSET_INNER_DTYPE_C[:] bitset,
-                                                X_BINNED_DTYPE_C val) nogil:
+                                                X_BINNED_DTYPE_C val) noexcept nogil:
     return (bitset[val // 32] >> (val % 32)) & 1
 
 cdef inline unsigned char in_bitset_2d_memoryview(const BITSET_INNER_DTYPE_C [:, :] bitset,
                                                   X_BINNED_DTYPE_C val,
-                                                  unsigned int row) nogil:
+                                                  unsigned int row) noexcept nogil:
 
     # Same as above but works on 2d memory views to avoid the creation of 1d
     # memory views. See https://github.com/scikit-learn/scikit-learn/issues/17299

@@ -12,12 +12,7 @@ import warnings
 from .pre_build_helpers import compile_test_program
 
 
-def get_openmp_flag(compiler):
-    if hasattr(compiler, "compiler"):
-        compiler = compiler.compiler[0]
-    else:
-        compiler = compiler.__class__.__name__
-
+def get_openmp_flag():
     if sys.platform == "win32":
         return ["/openmp"]
     elif sys.platform == "darwin" and "openmp" in os.getenv("CPPFLAGS", ""):
@@ -43,8 +38,7 @@ def check_openmp_support():
         # Pyodide doesn't support OpenMP
         return False
 
-    code = textwrap.dedent(
-        """\
+    code = textwrap.dedent("""\
         #include <omp.h>
         #include <stdio.h>
         int main(void) {
@@ -52,8 +46,7 @@ def check_openmp_support():
         printf("nthreads=%d\\n", omp_get_num_threads());
         return 0;
         }
-        """
-    )
+        """)
 
     extra_preargs = os.getenv("LDFLAGS", None)
     if extra_preargs is not None:
@@ -66,7 +59,7 @@ def check_openmp_support():
             if flag.startswith(("-L", "-Wl,-rpath", "-l", "-Wl,--sysroot=/"))
         ]
 
-    extra_postargs = get_openmp_flag
+    extra_postargs = get_openmp_flag()
 
     openmp_exception = None
     try:
@@ -101,8 +94,7 @@ def check_openmp_support():
                 "Failed to build scikit-learn with OpenMP support"
             ) from openmp_exception
         else:
-            message = textwrap.dedent(
-                """
+            message = textwrap.dedent("""
 
                                 ***********
                                 * WARNING *
@@ -125,8 +117,7 @@ def check_openmp_support():
                   parallelism.
 
                                     ***
-                """
-            )
+                """)
             warnings.warn(message)
 
     return openmp_supported

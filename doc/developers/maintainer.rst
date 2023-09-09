@@ -17,6 +17,11 @@ Before a release
 
 1. Update authors table:
 
+   Create a `classic token on GitHub <https://github.com/settings/tokens/new>`_
+   with the ``read:org`` following permission.
+
+   Run the following script, entering the token in:
+
    .. prompt:: bash $
 
        cd build_tools; make authors; cd ..
@@ -43,14 +48,16 @@ Before a release
 
 **Permissions**
 
-The release manager requires a set of permissions on top of the usual
-permissions given to maintainers, which includes:
+The release manager must be a *maintainer* of the ``scikit-learn/scikit-learn``
+repository to be able to publish on ``pypi.org`` and ``test.pypi.org``
+(via a manual trigger of a dedicated Github Actions workflow).
 
-- *maintainer* role on ``scikit-learn`` projects on ``pypi.org`` and
-  ``test.pypi.org``, separately.
-- become a member of the *scikit-learn* team on conda-forge by editing the
-  ``recipe/meta.yaml`` file on
-  ``https://github.com/conda-forge/scikit-learn-feedstock``
+The release manager does not need extra permissions on ``pypi.org`` to publish a
+release in particular.
+
+The release manager must be a *maintainer* of the ``conda-forge/scikit-learn-feedstock``
+repository. This can be changed by editing the ``recipe/meta.yaml`` file in the
+first release pull-request.
 
 .. _preparing_a_release_pr:
 
@@ -107,34 +114,74 @@ under the ``doc/whats_new/`` folder so PRs that target the next version can
 contribute their changelog entries to this file in parallel to the release
 process.
 
-Minor version release
-~~~~~~~~~~~~~~~~~~~~~
+Minor version release (also known as bug-fix release)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The minor releases should include bug fixes and some relevant documentation
 changes only. Any PR resulting in a behavior change which is not a bug fix
-should be excluded.
+should be excluded. As an example, instructions are given for the `1.2.2` release.
 
-First, create a branch, **on your own fork** (to release e.g. `0.99.3`):
+ - Create a branch, **on your own fork** (here referred to as `fork`) for the release
+   from `upstream/main`.
 
-.. prompt:: bash $
+    .. prompt:: bash $
 
-    # assuming main and upstream/main are the same
-    git checkout -b release-0.99.3 main
+        git fetch upstream/main
+        git checkout -b release-1.2.2 upstream/main
+        git push -u fork release-1.2.2:release-1.2.2
 
-Then, create a PR **to the** `scikit-learn/0.99.X` **branch** (not to
-main!) with all the desired changes:
+ - Create a **draft** PR to the `upstream/1.2.X` branch (not to `upstream/main`)
+   with all the desired changes.
 
-.. prompt:: bash $
+ - Do not push anything on that branch yet.
 
-	git rebase -i upstream/0.99.2
+ - Locally rebase `release-1.2.2` from the `upstream/1.2.X` branch using:
 
-Copy the :ref:`release_checklist` templates in the description of the Pull
-Request to track progress.
+    .. prompt:: bash $
 
-Do not forget to add a commit updating ``sklearn.__version__``.
+        git rebase -i upstream/1.2.X
 
-It's nice to have a copy of the ``git rebase -i`` log in the PR to help others
-understand what's included.
+   This will open an interactive rebase with the `git-rebase-todo` containing all
+   the latest commit on `main`. At this stage, you have to perform
+   this interactive rebase with at least someone else (being three people rebasing
+   is better not to forget something and to avoid any doubt).
+
+     - **Do not remove lines but drop commit by replace** ``pick`` **with** ``drop``
+
+     - Commits to pick for bug-fix release *generally* are prefixed with: `FIX`, `CI`,
+       `DOC`. They should at least include all the commits of the merged PRs
+       that were milestoned for this release on GitHub and/or documented as such in
+       the changelog. It's likely that some bugfixes were documented in the
+       changelog of the main major release instead of the next bugfix release,
+       in which case, the matching changelog entries will need to be moved,
+       first in the `main` branch then backported in the release PR.
+
+     - Commits to drop for bug-fix release *generally* are prefixed with: `FEAT`,
+       `MAINT`, `ENH`, `API`. Reasons for not including them is to prevent change of
+       behavior (which only must feature in breaking or major releases).
+
+     - After having dropped or picked commit, **do no exit** but paste the content
+       of the `git-rebase-todo` message in the PR.
+       This file is located at `.git/rebase-merge/git-rebase-todo`.
+
+     - Save and exit, starting the interactive rebase.
+
+     - Resolve merge conflicts when they happen.
+
+ - Force push the result of the rebase and the extra release commits to the release PR:
+
+   .. prompt:: bash $
+
+       git push -f fork release-1.2.2:release-1.2.2
+
+ - Copy the :ref:`release_checklist` template and paste it in the description of the
+   Pull Request to track progress.
+
+ - Review all the commits included in the release to make sure that they do not
+   introduce any new feature. We should not blindly trust the commit message prefixes.
+
+ - Remove the draft status of the release PR and invite other maintainers to review the
+   list of included commits.
 
 .. _making_a_release:
 
@@ -161,7 +208,9 @@ Making a release
    - Update the release date in ``whats_new.rst``
 
    - Edit the ``doc/templates/index.html`` to change the 'News' entry of the
-     front page (with the release month as well).
+     front page (with the release month as well). Do not forget to remove
+     the old entries (two years or three releases are typically good
+     enough)
 
 2. On the branch for releasing, update the version number in
    ``sklearn/__init__.py``, the ``__version__``.
@@ -328,7 +377,7 @@ Before merging,
   the `Co-authored-by: name <name@example.com>` tags in the detailed
   description. This will mark the PR as having `multiple co-authors
   <https://help.github.com/en/github/committing-changes-to-your-project/creating-a-commit-with-multiple-authors>`_.
-  Whether code contributions are significanly enough to merit co-authorship is
+  Whether code contributions are significantly enough to merit co-authorship is
   left to the maintainer's discretion, same as for the "what's new" entry.
 
 
@@ -342,30 +391,6 @@ updates can be made by pushing to master (for /dev) or a release branch
 like 0.99.X, from which Circle CI builds and uploads the documentation
 automatically.
 
-Travis Cron jobs
-----------------
-
-From `<https://docs.travis-ci.com/user/cron-jobs>`_: Travis CI cron jobs work
-similarly to the cron utility, they run builds at regular scheduled intervals
-independently of whether any commits were pushed to the repository. Cron jobs
-always fetch the most recent commit on a particular branch and build the project
-at that state. Cron jobs can run daily, weekly or monthly, which in practice
-means up to an hour after the selected time span, and you cannot set them to run
-at a specific time.
-
-For scikit-learn, Cron jobs are used for builds that we do not want to run in
-each PR. As an example the build with the dev versions of numpy and scipy is
-run as a Cron job. Most of the time when this numpy-dev build fail, it is
-related to a numpy change and not a scikit-learn one, so it would not make sense
-to blame the PR author for the Travis failure.
-
-The definition of what gets run in the Cron job is done in the .travis.yml
-config file, exactly the same way as the other Travis jobs. We use a ``if: type
-= cron`` filter in order for the build to be run only in Cron jobs.
-
-The branch targeted by the Cron job and the frequency of the Cron job is set
-via the web UI at https://www.travis-ci.org/scikit-learn/scikit-learn/settings.
-
 Experimental features
 ---------------------
 
@@ -374,8 +399,8 @@ experimental features / estimators that are subject to change without
 deprecation cycle.
 
 To create an experimental module, you can just copy and modify the content of
-`enable_hist_gradient_boosting.py
-<https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/experimental/enable_hist_gradient_boosting.py>`__,
+`enable_halving_search_cv.py
+<https://github.com/scikit-learn/scikit-learn/blob/362cb92bb2f5b878229ea4f59519ad31c2fcee76/sklearn/experimental/enable_halving_search_cv.py>`__,
 or
 `enable_iterative_imputer.py
 <https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/experimental/enable_iterative_imputer.py>`_.

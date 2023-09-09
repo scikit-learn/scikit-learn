@@ -39,6 +39,13 @@ in the FAQ.
 
    :ref:`How you can contribute to the project <contributing>`
 
+Documentation Team
+------------------
+
+The following people help with documenting the project:
+
+.. include:: documentation_team.rst
+
 Contributor Experience Team
 ---------------------------
 
@@ -73,6 +80,13 @@ past, but no longer have communication responsibilities:
 
 .. include:: communication_team_emeritus.rst
 
+Emeritus Contributor Experience Team
+------------------------------------
+
+The following people have been active in the contributor experience team in the
+past:
+
+.. include:: contributor_experience_team_emeritus.rst
 
 .. _citing-scikit-learn:
 
@@ -619,7 +633,7 @@ Infrastructure support
 ----------------------
 
 - We would also like to thank `Microsoft Azure
-  <https://azure.microsoft.com/en-us/>`_, `Travis Cl <https://travis-ci.org/>`_,
+  <https://azure.microsoft.com/en-us/>`_, `Cirrus Cl <https://cirrus-ci.org>`_,
   `CircleCl <https://circleci.com/>`_ for free CPU time on their Continuous
   Integration servers, and `Anaconda Inc. <https://www.anaconda.com>`_ for the
   storage they provide for our staging and nightly builds.

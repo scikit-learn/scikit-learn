@@ -1,15 +1,15 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
 
-from numbers import Integral
 from itertools import chain
+from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
-from ._hashing_fast import transform as _hashing_transform
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils._param_validation import Interval, StrOptions
+from ._hashing_fast import transform as _hashing_transform
 
 
 def _iteritems(d):
@@ -33,6 +33,9 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     CountVectorizer, intended for large-scale (online) learning and situations
     where memory is tight, e.g. when running prediction code on embedded
     devices.
+
+    For an efficiency comparision of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
     Read more in the :ref:`User Guide <feature_hashing>`.
 
@@ -71,6 +74,13 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     --------
     DictVectorizer : Vectorizes string-valued features using a hash table.
     sklearn.preprocessing.OneHotEncoder : Handles nominal/categorical features.
+
+    Notes
+    -----
+    This estimator is :term:`stateless` and does not need to be fitted.
+    However, we recommend to call :meth:`fit_transform` instead of
+    :meth:`transform`, as parameter validation is only performed in
+    :meth:`fit`.
 
     Examples
     --------
@@ -114,11 +124,12 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         self.n_features = n_features
         self.alternate_sign = alternate_sign
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X=None, y=None):
-        """No-op.
+        """Only validates estimator's parameters.
 
-        This method doesn't do anything. It exists purely for compatibility
-        with the scikit-learn transformer API.
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
@@ -133,8 +144,6 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         self : object
             FeatureHasher class instance.
         """
-        # repeat input validation for grid search (which calls set_params)
-        self._validate_params()
         return self
 
     def transform(self, raw_X):

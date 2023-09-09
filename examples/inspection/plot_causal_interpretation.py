@@ -124,8 +124,7 @@ coef = pd.concat(
 ax = coef.plot.barh()
 ax.set_xlabel("Coefficient values")
 ax.set_title("Coefficients of the linear regression including the ability features")
-plt.tight_layout()
-plt.show()
+_ = plt.tight_layout()
 
 # %%
 # Income prediction with partial observations
@@ -158,6 +157,8 @@ coef = pd.concat(
 ax = coef.plot.barh()
 ax.set_xlabel("Coefficient values")
 _ = ax.set_title("Coefficients of the linear regression excluding the ability feature")
+plt.tight_layout()
+plt.show()
 
 # %%
 # To compensate for the omitted variable, the model inflates the coefficient of

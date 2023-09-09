@@ -1,33 +1,31 @@
-import pytest
+import io
 import warnings
 
 import numpy as np
+import pytest
 from scipy import sparse
 from scipy.stats import kstest
 
-import io
-
-from sklearn.utils._testing import _convert_container
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn import tree
+from sklearn.datasets import load_diabetes
+from sklearn.dummy import DummyRegressor
+from sklearn.exceptions import ConvergenceWarning
 
 # make IterativeImputer available
 from sklearn.experimental import enable_iterative_imputer  # noqa
-
-from sklearn.datasets import load_diabetes
-from sklearn.impute import MissingIndicator
-from sklearn.impute import SimpleImputer, IterativeImputer, KNNImputer
-from sklearn.dummy import DummyRegressor
-from sklearn.linear_model import BayesianRidge, ARDRegression, RidgeCV
-from sklearn.pipeline import Pipeline
-from sklearn.pipeline import make_union
-from sklearn.model_selection import GridSearchCV
-from sklearn import tree
-from sklearn.random_projection import _sparse_random_matrix
-from sklearn.exceptions import ConvergenceWarning
+from sklearn.impute import IterativeImputer, KNNImputer, MissingIndicator, SimpleImputer
 from sklearn.impute._base import _most_frequent
+from sklearn.linear_model import ARDRegression, BayesianRidge, RidgeCV
+from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline, make_union
+from sklearn.random_projection import _sparse_random_matrix
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 
 def _assert_array_equal_and_same_dtype(x, y):
@@ -98,11 +96,7 @@ def test_imputation_shape(strategy):
 def test_imputation_deletion_warning(strategy):
     X = np.ones((3, 5))
     X[:, 0] = np.nan
-    imputer = SimpleImputer(strategy=strategy, verbose=1)
-
-    # TODO: Remove in 1.3
-    with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
-        imputer.fit(X)
+    imputer = SimpleImputer(strategy=strategy).fit(X)
 
     with pytest.warns(UserWarning, match="Skipping"):
         imputer.transform(X)
@@ -110,7 +104,6 @@ def test_imputation_deletion_warning(strategy):
 
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
 def test_imputation_deletion_warning_feature_names(strategy):
-
     pd = pytest.importorskip("pandas")
 
     missing_values = np.nan
@@ -123,11 +116,7 @@ def test_imputation_deletion_warning_feature_names(strategy):
         columns=feature_names,
     )
 
-    imputer = SimpleImputer(strategy=strategy, verbose=1)
-
-    # TODO: Remove in 1.3
-    with pytest.warns(FutureWarning, match="The 'verbose' parameter"):
-        imputer.fit(X)
+    imputer = SimpleImputer(strategy=strategy).fit(X)
 
     # check SimpleImputer returning feature name attribute correctly
     assert_array_equal(imputer.feature_names_in_, feature_names)
@@ -270,7 +259,7 @@ def test_imputation_median_special_cases():
 @pytest.mark.parametrize("dtype", [None, object, str])
 def test_imputation_mean_median_error_invalid_type(strategy, dtype):
     X = np.array([["a", "b", 3], [4, "e", 6], ["g", "h", 9]], dtype=dtype)
-    msg = "non-numeric data:\ncould not convert string to float: '"
+    msg = "non-numeric data:\ncould not convert string to float:"
     with pytest.raises(ValueError, match=msg):
         imputer = SimpleImputer(strategy=strategy)
         imputer.fit_transform(X)
@@ -283,7 +272,7 @@ def test_imputation_mean_median_error_invalid_type_list_pandas(strategy, type):
     if type == "dataframe":
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame(X)
-    msg = "non-numeric data:\ncould not convert string to float: '"
+    msg = "non-numeric data:\ncould not convert string to float:"
     with pytest.raises(ValueError, match=msg):
         imputer = SimpleImputer(strategy=strategy)
         imputer.fit_transform(X)
@@ -1522,6 +1511,21 @@ def test_iterative_imputer_keep_empty_features(initial_strategy):
     assert_allclose(X_imputed[:, 1], 0)
     X_imputed = imputer.transform(X)
     assert_allclose(X_imputed[:, 1], 0)
+
+
+def test_iterative_imputer_constant_fill_value():
+    """Check that we propagate properly the parameter `fill_value`."""
+    X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])
+
+    fill_value = 100
+    imputer = IterativeImputer(
+        missing_values=-1,
+        initial_strategy="constant",
+        fill_value=fill_value,
+        max_iter=0,
+    )
+    imputer.fit_transform(X)
+    assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)
 
 
 @pytest.mark.parametrize("keep_empty_features", [True, False])

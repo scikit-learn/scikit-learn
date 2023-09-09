@@ -147,10 +147,7 @@ in the kernel and by the regularization parameter alpha of KRR.
    :align: center
 
 The figure shows that both methods learn reasonable models of the target
-function. GPR correctly identifies the periodicity of the function to be
-roughly :math:`2*\pi` (6.28), while KRR chooses the doubled periodicity
-:math:`4*\pi` . Besides
-that, GPR provides reasonable confidence bounds on the prediction which are not
+function. GPR provides reasonable confidence bounds on the prediction which are not
 available for KRR. A major difference between the two methods is the time
 required for fitting and predicting: while fitting KRR is fast in principle,
 the grid-search for hyperparameter optimization scales exponentially with the
@@ -404,15 +401,17 @@ The specification of each hyperparameter is stored in the form of an instance of
 hyperparameter with name "x" must have the attributes self.x and self.x_bounds.
 
 The abstract base class for all kernels is :class:`Kernel`. Kernel implements a
-similar interface as :class:`Estimator`, providing the methods ``get_params()``,
-``set_params()``, and ``clone()``. This allows setting kernel values also via
-meta-estimators such as :class:`Pipeline` or :class:`GridSearch`. Note that due to the nested
+similar interface as :class:`~sklearn.base.BaseEstimator`, providing the
+methods ``get_params()``, ``set_params()``, and ``clone()``. This allows
+setting kernel values also via meta-estimators such as
+:class:`~sklearn.pipeline.Pipeline` or
+:class:`~sklearn.model_selection.GridSearchCV`. Note that due to the nested
 structure of kernels (by applying kernel operators, see below), the names of
-kernel parameters might become relatively complicated. In general, for a
-binary kernel operator, parameters of the left operand are prefixed with ``k1__``
-and parameters of the right operand with ``k2__``. An additional convenience
-method is ``clone_with_theta(theta)``, which returns a cloned version of the
-kernel but with the hyperparameters set to ``theta``. An illustrative example:
+kernel parameters might become relatively complicated. In general, for a binary
+kernel operator, parameters of the left operand are prefixed with ``k1__`` and
+parameters of the right operand with ``k2__``. An additional convenience method
+is ``clone_with_theta(theta)``, which returns a cloned version of the kernel
+but with the hyperparameters set to ``theta``. An illustrative example:
 
     >>> from sklearn.gaussian_process.kernels import ConstantKernel, RBF
     >>> kernel = ConstantKernel(constant_value=1.0, constant_value_bounds=(0.0, 10.0)) * RBF(length_scale=0.5, length_scale_bounds=(0.0, 10.0)) + RBF(length_scale=2.0, length_scale_bounds=(0.0, 10.0))

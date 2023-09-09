@@ -10,9 +10,9 @@
 cimport cython
 from cython.parallel import prange
 import numpy as np
+from libc.math cimport INFINITY
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
-from numpy.math cimport INFINITY
 
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
@@ -499,9 +499,9 @@ cdef class Splitter:
                 split_infos[split_info_idx].feature_idx = feature_idx
 
                 # For each feature, find best bin to split on
-                # Start with a gain of -1 (if no better split is found, that
+                # Start with a gain of -1 if no better split is found, that
                 # means one of the constraints isn't respected
-                # (min_samples_leaf, etc) and the grower will later turn the
+                # (min_samples_leaf, etc.) and the grower will later turn the
                 # node into a leaf.
                 split_infos[split_info_idx].gain = -1
                 split_infos[split_info_idx].is_categorical = is_categorical[feature_idx]
@@ -569,15 +569,15 @@ cdef class Splitter:
         free(split_infos)
         return out
 
-    cdef unsigned int _find_best_feature_to_split_helper(
+    cdef int _find_best_feature_to_split_helper(
         self,
         split_info_struct * split_infos,  # IN
         int n_allowed_features,
-    ) nogil:
+    ) noexcept nogil:
         """Return the index of split_infos with the best feature split."""
         cdef:
-            unsigned int split_info_idx
-            unsigned int best_split_info_idx = 0
+            int split_info_idx
+            int best_split_info_idx = 0
 
         for split_info_idx in range(1, n_allowed_features):
             if (split_infos[split_info_idx].gain > split_infos[best_split_info_idx].gain):
@@ -596,7 +596,7 @@ cdef class Splitter:
             signed char monotonic_cst,
             Y_DTYPE_C lower_bound,
             Y_DTYPE_C upper_bound,
-            split_info_struct * split_info) nogil:  # OUT
+            split_info_struct * split_info) noexcept nogil:  # OUT
         """Find best bin to split on for a given feature.
 
         Splits that do not satisfy the splitting constraints
@@ -710,7 +710,7 @@ cdef class Splitter:
             signed char monotonic_cst,
             Y_DTYPE_C lower_bound,
             Y_DTYPE_C upper_bound,
-            split_info_struct * split_info) nogil:  # OUT
+            split_info_struct * split_info) noexcept nogil:  # OUT
         """Find best bin to split on for a given feature.
 
         Splits that do not satisfy the splitting constraints
@@ -825,7 +825,7 @@ cdef class Splitter:
             char monotonic_cst,
             Y_DTYPE_C lower_bound,
             Y_DTYPE_C upper_bound,
-            split_info_struct * split_info) nogil:  # OUT
+            split_info_struct * split_info) noexcept nogil:  # OUT
         """Find best split for categorical features.
 
         Categories are first sorted according to their variance, and then
@@ -961,7 +961,7 @@ cdef class Splitter:
 
             for i in range(middle):
                 sorted_cat_idx = i if direction == 1 else n_used_bins - 1 - i
-                bin_idx = cat_infos[sorted_cat_idx].bin_idx;
+                bin_idx = cat_infos[sorted_cat_idx].bin_idx
 
                 n_samples_left += feature_hist[bin_idx].count
                 n_samples_right = n_samples - n_samples_left
@@ -975,18 +975,22 @@ cdef class Splitter:
                 sum_gradient_left += feature_hist[bin_idx].sum_gradients
                 sum_gradient_right = sum_gradients - sum_gradient_left
 
-                if (n_samples_left < self.min_samples_leaf or
-                    sum_hessian_left < self.min_hessian_to_split):
+                if (
+                    n_samples_left < self.min_samples_leaf or
+                    sum_hessian_left < self.min_hessian_to_split
+                ):
                     continue
-                if (n_samples_right < self.min_samples_leaf or
-                    sum_hessian_right < self.min_hessian_to_split):
+                if (
+                    n_samples_right < self.min_samples_leaf or
+                    sum_hessian_right < self.min_hessian_to_split
+                ):
                     break
 
                 gain = _split_gain(sum_gradient_left, sum_hessian_left,
-                                    sum_gradient_right, sum_hessian_right,
-                                    loss_current_node, monotonic_cst,
-                                    lower_bound, upper_bound,
-                                    self.l2_regularization)
+                                   sum_gradient_right, sum_hessian_right,
+                                   loss_current_node, monotonic_cst,
+                                   lower_bound, upper_bound,
+                                   self.l2_regularization)
                 if gain > best_gain and gain > self.min_gain_to_split:
                     found_better_split = True
                     best_gain = gain
@@ -995,7 +999,6 @@ cdef class Splitter:
                     best_sum_hessian_left = sum_hessian_left
                     best_n_samples_left = n_samples_left
                     best_direction = direction
-
 
         if found_better_split:
             split_info.gain = best_gain
@@ -1038,7 +1041,7 @@ cdef class Splitter:
         free(cat_infos)
 
 
-cdef int compare_cat_infos(const void * a, const void * b) nogil:
+cdef int compare_cat_infos(const void * a, const void * b) noexcept nogil:
     return -1 if (<categorical_info *>a).value < (<categorical_info *>b).value else 1
 
 cdef inline Y_DTYPE_C _split_gain(
@@ -1050,7 +1053,7 @@ cdef inline Y_DTYPE_C _split_gain(
         signed char monotonic_cst,
         Y_DTYPE_C lower_bound,
         Y_DTYPE_C upper_bound,
-        Y_DTYPE_C l2_regularization) nogil:
+        Y_DTYPE_C l2_regularization) noexcept nogil:
     """Loss reduction
 
     Compute the reduction in loss after taking a split, compared to keeping
@@ -1070,8 +1073,8 @@ cdef inline Y_DTYPE_C _split_gain(
                                     lower_bound, upper_bound,
                                     l2_regularization)
     value_right = compute_node_value(sum_gradient_right, sum_hessian_right,
-                                    lower_bound, upper_bound,
-                                    l2_regularization)
+                                     lower_bound, upper_bound,
+                                     l2_regularization)
 
     if ((monotonic_cst == MonotonicConstraint.POS and value_left > value_right) or
             (monotonic_cst == MonotonicConstraint.NEG and value_left < value_right)):
@@ -1092,7 +1095,7 @@ cdef inline Y_DTYPE_C _split_gain(
 
 cdef inline Y_DTYPE_C _loss_from_value(
         Y_DTYPE_C value,
-        Y_DTYPE_C sum_gradient) nogil:
+        Y_DTYPE_C sum_gradient) noexcept nogil:
     """Return loss of a node from its (bounded) value
 
     See Equation 6 of:
@@ -1107,7 +1110,7 @@ cdef inline unsigned char sample_goes_left(
         X_BINNED_DTYPE_C split_bin_idx,
         X_BINNED_DTYPE_C bin_value,
         unsigned char is_categorical,
-        BITSET_DTYPE_C left_cat_bitset) nogil:
+        BITSET_DTYPE_C left_cat_bitset) noexcept nogil:
     """Helper to decide whether sample should go to left or right child."""
 
     if is_categorical:
@@ -1129,7 +1132,7 @@ cpdef inline Y_DTYPE_C compute_node_value(
         Y_DTYPE_C sum_hessian,
         Y_DTYPE_C lower_bound,
         Y_DTYPE_C upper_bound,
-        Y_DTYPE_C l2_regularization) nogil:
+        Y_DTYPE_C l2_regularization) noexcept nogil:
     """Compute a node's value.
 
     The value is capped in the [lower_bound, upper_bound] interval to respect

@@ -78,7 +78,7 @@ cpdef _sample_without_replacement_with_tracking_selection(
 
     cdef cnp.int_t i
     cdef cnp.int_t j
-    cdef cnp.ndarray[cnp.int_t, ndim=1] out = np.empty((n_samples, ), dtype=int)
+    cdef cnp.int_t[::1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -94,7 +94,7 @@ cpdef _sample_without_replacement_with_tracking_selection(
         selected.add(j)
         out[i] = j
 
-    return out
+    return np.asarray(out)
 
 
 cpdef _sample_without_replacement_with_pool(cnp.int_t n_population,
@@ -133,10 +133,8 @@ cpdef _sample_without_replacement_with_pool(cnp.int_t n_population,
 
     cdef cnp.int_t i
     cdef cnp.int_t j
-    cdef cnp.ndarray[cnp.int_t, ndim=1] out = np.empty((n_samples, ), dtype=int)
-
-    cdef cnp.ndarray[cnp.int_t, ndim=1] pool = np.empty((n_population, ),
-                                                      dtype=int)
+    cdef cnp.int_t[::1] out = np.empty((n_samples,), dtype=int)
+    cdef cnp.int_t[::1] pool = np.empty((n_population,), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -150,16 +148,16 @@ cpdef _sample_without_replacement_with_pool(cnp.int_t n_population,
     for i in range(n_samples):
         j = rng_randint(n_population - i)  # invariant: non-selected at [0,n-i)
         out[i] = pool[j]
-        pool[j] = pool[n_population - i - 1]  # move non-selected item into
-                                              # vacancy
+        pool[j] = pool[n_population - i - 1]  # move non-selected item into vacancy
 
-    return out
+    return np.asarray(out)
 
 
 cpdef _sample_without_replacement_with_reservoir_sampling(
     cnp.int_t n_population,
     cnp.int_t n_samples,
-    random_state=None):
+    random_state=None
+):
     """Sample integers without replacement.
 
     Select n_samples integers from the set [0, n_population) without
@@ -195,7 +193,7 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
 
     cdef cnp.int_t i
     cdef cnp.int_t j
-    cdef cnp.ndarray[cnp.int_t, ndim=1] out = np.empty((n_samples, ), dtype=int)
+    cdef cnp.int_t[::1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -212,7 +210,7 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
         if j < n_samples:
             out[j] = i
 
-    return out
+    return np.asarray(out)
 
 
 cpdef sample_without_replacement(cnp.int_t n_population,

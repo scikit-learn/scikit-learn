@@ -8,17 +8,17 @@ from abc import ABCMeta, abstractmethod
 from operator import attrgetter
 
 import numpy as np
-from scipy.sparse import issparse, csc_matrix
+from scipy.sparse import csc_matrix, issparse
 
 from ..base import TransformerMixin
-from ..cross_decomposition._pls import _PLS
 from ..utils import (
+    _safe_indexing,
     check_array,
-    safe_mask,
     safe_sqr,
 )
+from ..utils._set_output import _get_output_config
 from ..utils._tags import _safe_tags
-from ..utils.validation import _check_feature_names_in
+from ..utils.validation import _check_feature_names_in, check_is_fitted
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
@@ -78,6 +78,11 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
+        # Preserve X when X is a dataframe and the output is configured to
+        # be pandas.
+        output_config_dense = _get_output_config("transform", estimator=self)["dense"]
+        preserve_X = hasattr(X, "iloc") and output_config_dense == "pandas"
+
         # note: we use _safe_tags instead of _get_tags because this is a
         # public Mixin.
         X = self._validate_data(
@@ -85,6 +90,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             dtype=None,
             accept_sparse="csr",
             force_all_finite=not _safe_tags(self, key="allow_nan"),
+            cast_to_ndarray=not preserve_X,
             reset=False,
         )
         return self._transform(X)
@@ -94,14 +100,16 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         mask = self.get_support()
         if not mask.any():
             warnings.warn(
-                "No features were selected: either the data is"
-                " too noisy or the selection test too strict.",
+                (
+                    "No features were selected: either the data is"
+                    " too noisy or the selection test too strict."
+                ),
                 UserWarning,
             )
+            if hasattr(X, "iloc"):
+                return X.iloc[:, :0]
             return np.empty(0, dtype=X.dtype).reshape((X.shape[0], 0))
-        if len(mask) != X.shape[1]:
-            raise ValueError("X has a different shape than during fitting.")
-        return X[:, safe_mask(X, mask)]
+        return _safe_indexing(X, mask, axis=1)
 
     def inverse_transform(self, X):
         """Reverse the transformation operation.
@@ -163,6 +171,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self)
         input_features = _check_feature_names_in(self, input_features)
         return input_features[self.get_support()]
 
@@ -197,10 +206,7 @@ def _get_feature_importances(estimator, getter, transform_func=None, norm_order=
     """
     if isinstance(getter, str):
         if getter == "auto":
-            if isinstance(estimator, _PLS):
-                # TODO(1.3): remove this branch
-                getter = attrgetter("_coef_")
-            elif hasattr(estimator, "coef_"):
+            if hasattr(estimator, "coef_"):
                 getter = attrgetter("coef_")
             elif hasattr(estimator, "feature_importances_"):
                 getter = attrgetter("feature_importances_")

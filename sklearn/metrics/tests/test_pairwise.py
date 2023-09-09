@@ -3,10 +3,15 @@ from types import GeneratorType
 
 import numpy as np
 from numpy import linalg
-
-from scipy.sparse import dok_matrix, csr_matrix, issparse
-from scipy.spatial.distance import cosine, cityblock, minkowski
-from scipy.spatial.distance import cdist, pdist, squareform
+from scipy.sparse import csr_matrix, dok_matrix, issparse
+from scipy.spatial.distance import (
+    cdist,
+    cityblock,
+    cosine,
+    minkowski,
+    pdist,
+    squareform,
+)
 
 try:
     from scipy.spatial.distance import wminkowski
@@ -15,46 +20,50 @@ except ImportError:
     # should be used instead.
     from scipy.spatial.distance import minkowski as wminkowski
 
-from sklearn.utils.fixes import sp_version, parse_version
-
 import pytest
 
 from sklearn import config_context
-
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.metrics.pairwise import nan_euclidean_distances
-from sklearn.metrics.pairwise import manhattan_distances
-from sklearn.metrics.pairwise import haversine_distances
-from sklearn.metrics.pairwise import linear_kernel
-from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
-from sklearn.metrics.pairwise import polynomial_kernel
-from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.metrics.pairwise import laplacian_kernel
-from sklearn.metrics.pairwise import sigmoid_kernel
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.metrics.pairwise import cosine_distances
-from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.metrics.pairwise import pairwise_distances_chunked
-from sklearn.metrics.pairwise import pairwise_distances_argmin_min
-from sklearn.metrics.pairwise import pairwise_distances_argmin
-from sklearn.metrics.pairwise import pairwise_kernels
-from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
-from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from sklearn.metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
-from sklearn.metrics.pairwise import PAIRED_DISTANCES
-from sklearn.metrics.pairwise import check_pairwise_arrays
-from sklearn.metrics.pairwise import check_paired_arrays
-from sklearn.metrics.pairwise import paired_distances
-from sklearn.metrics.pairwise import paired_euclidean_distances
-from sklearn.metrics.pairwise import paired_manhattan_distances
-from sklearn.metrics.pairwise import _euclidean_distances_upcast
-from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
+from sklearn.metrics.pairwise import (
+    PAIRED_DISTANCES,
+    PAIRWISE_BOOLEAN_FUNCTIONS,
+    PAIRWISE_DISTANCE_FUNCTIONS,
+    PAIRWISE_KERNEL_FUNCTIONS,
+    _euclidean_distances_upcast,
+    additive_chi2_kernel,
+    check_paired_arrays,
+    check_pairwise_arrays,
+    chi2_kernel,
+    cosine_distances,
+    cosine_similarity,
+    euclidean_distances,
+    haversine_distances,
+    laplacian_kernel,
+    linear_kernel,
+    manhattan_distances,
+    nan_euclidean_distances,
+    paired_cosine_distances,
+    paired_distances,
+    paired_euclidean_distances,
+    paired_manhattan_distances,
+    pairwise_distances,
+    pairwise_distances_argmin,
+    pairwise_distances_argmin_min,
+    pairwise_distances_chunked,
+    pairwise_kernels,
+    polynomial_kernel,
+    rbf_kernel,
+    sigmoid_kernel,
+)
+from sklearn.preprocessing import normalize
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
+from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.parallel import Parallel, delayed
 
 
 def test_pairwise_distances(global_dtype):
@@ -191,10 +200,6 @@ def test_pairwise_distances(global_dtype):
     with pytest.raises(TypeError):
         pairwise_distances(X, Y_sparse, metric="minkowski")
 
-    # Test that a value error is raised if the metric is unknown
-    with pytest.raises(ValueError):
-        pairwise_distances(X, Y, metric="blah")
-
 
 # TODO(1.4): Remove test when `sum_over_features` parameter is removed
 @pytest.mark.parametrize("sum_over_features", [True, False])
@@ -225,7 +230,7 @@ def test_pairwise_boolean_distance(metric):
     with ignore_warnings(category=DataConversionWarning):
         for Z in [Y, None]:
             res = pairwise_distances(X, Z, metric=metric)
-            res[np.isnan(res)] = 0
+            np.nan_to_num(res, nan=0, posinf=0, neginf=0, copy=False)
             assert np.sum(res != 0) == 0
 
     # non-boolean arrays are converted to boolean for boolean
@@ -296,11 +301,10 @@ _wminkowski_kwds = {"w": np.arange(1, 5).astype("double", copy=False), "p": 1}
 def callable_rbf_kernel(x, y, **kwds):
     # Callable version of pairwise.rbf_kernel.
     K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
-    return K
+    # unpack the output since this is a scalar packed in a 0-dim array
+    return K.item()
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "func, metric, kwds",
     [
@@ -390,8 +394,6 @@ def test_pairwise_kernels(metric):
     Y_sparse = csr_matrix(Y)
     if metric in ["chi2", "additive_chi2"]:
         # these don't support sparse matrices yet
-        with pytest.raises(ValueError):
-            pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
         return
     K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
     assert_allclose(K1, K2)
@@ -746,9 +748,6 @@ def test_pairwise_distances_chunked(global_dtype):
     # "cityblock" uses scikit-learn metric, cityblock (function) is
     # scipy.spatial.
     check_pairwise_distances_chunked(X, Y, working_memory=1, metric="cityblock")
-    # Test that a value error is raised if the metric is unknown
-    with pytest.raises(ValueError):
-        next(pairwise_distances_chunked(X, Y, metric="blah"))
 
     # Test precomputed returns all at once
     D = pairwise_distances(X)
@@ -978,7 +977,6 @@ def test_nan_euclidean_distances_equal_to_euclidean_distance(squared):
 @pytest.mark.parametrize("X", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]])])
 @pytest.mark.parametrize("Y", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]]), None])
 def test_nan_euclidean_distances_infinite_values(X, Y):
-
     with pytest.raises(ValueError) as excinfo:
         nan_euclidean_distances(X, Y=Y)
 
@@ -1002,7 +1000,6 @@ def test_nan_euclidean_distances_infinite_values(X, Y):
     ],
 )
 def test_nan_euclidean_distances_2x2(X, X_diag, missing_value):
-
     exp_dist = np.array([[0.0, X_diag], [X_diag, 0]])
 
     dist = nan_euclidean_distances(X, missing_values=missing_value)
@@ -1178,6 +1175,14 @@ def test_paired_manhattan_distances():
     assert_allclose(D, [1.0, 2.0])
 
 
+def test_paired_cosine_distances():
+    # Check the paired manhattan distances computation
+    X = [[0], [0]]
+    Y = [[1], [2]]
+    D = paired_cosine_distances(X, Y)
+    assert_allclose(D, [0.5, 0.5])
+
+
 def test_chi_square_kernel():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
@@ -1230,12 +1235,6 @@ def test_chi_square_kernel():
     # different n_features in X and Y
     with pytest.raises(ValueError):
         chi2_kernel([[0, 1]], [[0.2, 0.2, 0.6]])
-
-    # sparse matrices
-    with pytest.raises(ValueError):
-        chi2_kernel(csr_matrix(X), csr_matrix(Y))
-    with pytest.raises(ValueError):
-        additive_chi2_kernel(csr_matrix(X), csr_matrix(Y))
 
 
 @pytest.mark.parametrize(
@@ -1549,3 +1548,14 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
     dist = pairwise_distances(X, Y, metric=metric, **params)
 
     assert_allclose(dist, expected_dist)
+
+
+def test_sparse_manhattan_readonly_dataset():
+    # Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/7981
+    matrices1 = [csr_matrix(np.ones((5, 5)))]
+    matrices2 = [csr_matrix(np.ones((5, 5)))]
+    # Joblib memory maps datasets which makes them read-only.
+    # The following call was reporting as failing in #7981, but this must pass.
+    Parallel(n_jobs=2, max_nbytes=0)(
+        delayed(manhattan_distances)(m1, m2) for m1, m2 in zip(matrices1, matrices2)
+    )

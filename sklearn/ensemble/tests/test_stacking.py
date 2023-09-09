@@ -3,55 +3,47 @@
 # Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: BSD 3 clause
 
-import pytest
+from unittest.mock import Mock
+
 import numpy as np
-from numpy.testing import assert_array_equal
+import pytest
 import scipy.sparse as sparse
+from numpy.testing import assert_array_equal
 
-from sklearn.base import BaseEstimator
-from sklearn.base import ClassifierMixin
-from sklearn.base import RegressorMixin
-from sklearn.base import clone
-
-from sklearn.exceptions import ConvergenceWarning
-
-from sklearn.datasets import load_iris
-from sklearn.datasets import load_diabetes
-from sklearn.datasets import load_breast_cancer
-from sklearn.datasets import make_regression
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_multilabel_classification
-
-from sklearn.dummy import DummyClassifier
-from sklearn.dummy import DummyRegressor
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import Ridge
-from sklearn.linear_model import RidgeClassifier
-from sklearn.svm import LinearSVC
-from sklearn.svm import LinearSVR
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
+from sklearn.datasets import (
+    load_breast_cancer,
+    load_diabetes,
+    load_iris,
+    make_classification,
+    make_multilabel_classification,
+    make_regression,
+)
+from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.ensemble import (
+    RandomForestClassifier,
+    RandomForestRegressor,
+    StackingClassifier,
+    StackingRegressor,
+)
+from sklearn.exceptions import ConvergenceWarning, NotFittedError
+from sklearn.linear_model import (
+    LinearRegression,
+    LogisticRegression,
+    Ridge,
+    RidgeClassifier,
+)
+from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import scale
-
-from sklearn.ensemble import StackingClassifier
-from sklearn.ensemble import StackingRegressor
-
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import KFold
-
+from sklearn.svm import SVC, LinearSVC, LinearSVR
 from sklearn.utils._mocking import CheckingClassifier
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.exceptions import NotFittedError
-
-from unittest.mock import Mock
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    ignore_warnings,
+)
 
 diabetes = load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
@@ -76,7 +68,7 @@ def test_stacking_classifier_iris(cv, final_estimator, passthrough):
     X_train, X_test, y_train, y_test = train_test_split(
         scale(X_iris), y_iris, stratify=y_iris, random_state=42
     )
-    estimators = [("lr", LogisticRegression()), ("svc", LinearSVC())]
+    estimators = [("lr", LogisticRegression()), ("svc", LinearSVC(dual="auto"))]
     clf = StackingClassifier(
         estimators=estimators,
         final_estimator=final_estimator,
@@ -128,7 +120,7 @@ def test_stacking_classifier_drop_column_binary_classification():
     assert X_trans.shape[1] == 2
 
     # LinearSVC does not implement 'predict_proba' and will not drop one column
-    estimators = [("lr", LogisticRegression()), ("svc", LinearSVC())]
+    estimators = [("lr", LogisticRegression()), ("svc", LinearSVC(dual="auto"))]
     clf.set_params(estimators=estimators)
 
     clf.fit(X_train, y_train)
@@ -142,10 +134,12 @@ def test_stacking_classifier_drop_estimator():
     X_train, X_test, y_train, _ = train_test_split(
         scale(X_iris), y_iris, stratify=y_iris, random_state=42
     )
-    estimators = [("lr", "drop"), ("svc", LinearSVC(random_state=0))]
+    estimators = [("lr", "drop"), ("svc", LinearSVC(dual="auto", random_state=0))]
     rf = RandomForestClassifier(n_estimators=10, random_state=42)
     clf = StackingClassifier(
-        estimators=[("svc", LinearSVC(random_state=0))], final_estimator=rf, cv=5
+        estimators=[("svc", LinearSVC(dual="auto", random_state=0))],
+        final_estimator=rf,
+        cv=5,
     )
     clf_drop = StackingClassifier(estimators=estimators, final_estimator=rf, cv=5)
 
@@ -162,10 +156,12 @@ def test_stacking_regressor_drop_estimator():
     X_train, X_test, y_train, _ = train_test_split(
         scale(X_diabetes), y_diabetes, random_state=42
     )
-    estimators = [("lr", "drop"), ("svr", LinearSVR(random_state=0))]
+    estimators = [("lr", "drop"), ("svr", LinearSVR(dual="auto", random_state=0))]
     rf = RandomForestRegressor(n_estimators=10, random_state=42)
     reg = StackingRegressor(
-        estimators=[("svr", LinearSVR(random_state=0))], final_estimator=rf, cv=5
+        estimators=[("svr", LinearSVR(dual="auto", random_state=0))],
+        final_estimator=rf,
+        cv=5,
     )
     reg_drop = StackingRegressor(estimators=estimators, final_estimator=rf, cv=5)
 
@@ -191,7 +187,7 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params, passth
     X_train, X_test, y_train, _ = train_test_split(
         scale(X_diabetes), y_diabetes, random_state=42
     )
-    estimators = [("lr", LinearRegression()), ("svr", LinearSVR())]
+    estimators = [("lr", LinearRegression()), ("svr", LinearSVR(dual="auto"))]
     reg = StackingRegressor(
         estimators=estimators,
         final_estimator=final_estimator,
@@ -227,7 +223,7 @@ def test_stacking_regressor_sparse_passthrough(fmt):
     X_train, X_test, y_train, _ = train_test_split(
         sparse.coo_matrix(scale(X_diabetes)).asformat(fmt), y_diabetes, random_state=42
     )
-    estimators = [("lr", LinearRegression()), ("svr", LinearSVR())]
+    estimators = [("lr", LinearRegression()), ("svr", LinearSVR(dual="auto"))]
     rf = RandomForestRegressor(n_estimators=10, random_state=42)
     clf = StackingRegressor(
         estimators=estimators, final_estimator=rf, cv=5, passthrough=True
@@ -245,7 +241,7 @@ def test_stacking_classifier_sparse_passthrough(fmt):
     X_train, X_test, y_train, _ = train_test_split(
         sparse.coo_matrix(scale(X_iris)).asformat(fmt), y_iris, random_state=42
     )
-    estimators = [("lr", LogisticRegression()), ("svc", LinearSVC())]
+    estimators = [("lr", LogisticRegression()), ("svc", LinearSVC(dual="auto"))]
     rf = RandomForestClassifier(n_estimators=10, random_state=42)
     clf = StackingClassifier(
         estimators=estimators, final_estimator=rf, cv=5, passthrough=True
@@ -318,7 +314,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             {
                 "estimators": [
                     ("lr", LogisticRegression()),
-                    ("cor", LinearSVC(max_iter=50_000)),
+                    ("cor", LinearSVC(dual="auto", max_iter=50_000)),
                 ],
                 "final_estimator": NoWeightClassifier(),
             },
@@ -346,7 +342,10 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
         (
             y_diabetes,
             {
-                "estimators": [("lr", LinearRegression()), ("cor", LinearSVR())],
+                "estimators": [
+                    ("lr", LinearRegression()),
+                    ("cor", LinearSVR(dual="auto")),
+                ],
                 "final_estimator": NoWeightRegressor(),
             },
             TypeError,
@@ -367,7 +366,7 @@ def test_stacking_regressor_error(y, params, type_err, msg_err):
             StackingClassifier(
                 estimators=[
                     ("lr", LogisticRegression(random_state=0)),
-                    ("svm", LinearSVC(random_state=0)),
+                    ("svm", LinearSVC(dual="auto", random_state=0)),
                 ]
             ),
             X_iris[:100],
@@ -377,7 +376,7 @@ def test_stacking_regressor_error(y, params, type_err, msg_err):
             StackingRegressor(
                 estimators=[
                     ("lr", LinearRegression()),
-                    ("svm", LinearSVR(random_state=0)),
+                    ("svm", LinearSVR(dual="auto", random_state=0)),
                 ]
             ),
             X_diabetes,
@@ -411,7 +410,7 @@ def test_stacking_classifier_stratify_default():
     clf = StackingClassifier(
         estimators=[
             ("lr", LogisticRegression(max_iter=10_000)),
-            ("svm", LinearSVC(max_iter=10_000)),
+            ("svm", LinearSVC(dual="auto", max_iter=10_000)),
         ]
     )
     # since iris is not shuffled, a simple k-fold would not contain the
@@ -426,7 +425,7 @@ def test_stacking_classifier_stratify_default():
             StackingClassifier(
                 estimators=[
                     ("lr", LogisticRegression()),
-                    ("svm", LinearSVC(random_state=42)),
+                    ("svm", LinearSVC(dual="auto", random_state=42)),
                 ],
                 final_estimator=LogisticRegression(),
                 cv=KFold(shuffle=True, random_state=42),
@@ -437,7 +436,7 @@ def test_stacking_classifier_stratify_default():
             StackingRegressor(
                 estimators=[
                     ("lr", LinearRegression()),
-                    ("svm", LinearSVR(random_state=42)),
+                    ("svm", LinearSVR(dual="auto", random_state=42)),
                 ],
                 final_estimator=LinearRegression(),
                 cv=KFold(shuffle=True, random_state=42),
@@ -494,7 +493,7 @@ def test_stacking_classifier_sample_weight_fit_param():
             StackingClassifier(
                 estimators=[
                     ("lr", LogisticRegression()),
-                    ("svm", LinearSVC(random_state=42)),
+                    ("svm", LinearSVC(dual="auto", random_state=42)),
                 ],
                 final_estimator=LogisticRegression(),
             ),
@@ -504,7 +503,7 @@ def test_stacking_classifier_sample_weight_fit_param():
             StackingRegressor(
                 estimators=[
                     ("lr", LinearRegression()),
-                    ("svm", LinearSVR(random_state=42)),
+                    ("svm", LinearSVR(dual="auto", random_state=42)),
                 ],
                 final_estimator=LinearRegression(),
             ),
@@ -572,9 +571,13 @@ def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y
 
     # mock out fit and stack_method to be asserted later
     for _, estimator in estimators:
-        estimator.fit = Mock()
+        estimator.fit = Mock(name="fit")
         stack_func = getattr(estimator, stack_method)
-        setattr(estimator, stack_method, Mock(side_effect=stack_func))
+        predict_method_mocked = Mock(side_effect=stack_func)
+        # Mocking a method will not provide a `__name__` while Python methods
+        # do and we are using it in `_get_response_method`.
+        predict_method_mocked.__name__ = stack_method
+        setattr(estimator, stack_method, predict_method_mocked)
 
     stacker = Stacker(
         estimators=estimators, cv="prefit", final_estimator=final_estimator
@@ -606,7 +609,7 @@ def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y
             StackingRegressor(
                 estimators=[
                     ("lr", LinearRegression()),
-                    ("svm", LinearSVR()),
+                    ("svm", LinearSVR(dual="auto")),
                 ],
                 cv="prefit",
             ),
@@ -772,7 +775,7 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
             StackingClassifier(
                 estimators=[
                     ("lr", LogisticRegression(random_state=0)),
-                    ("svm", LinearSVC(random_state=0)),
+                    ("svm", LinearSVC(dual="auto", random_state=0)),
                 ]
             ),
             iris.feature_names,
@@ -792,7 +795,7 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
                 estimators=[
                     ("lr", LogisticRegression(random_state=0)),
                     ("other", "drop"),
-                    ("svm", LinearSVC(random_state=0)),
+                    ("svm", LinearSVC(dual="auto", random_state=0)),
                 ]
             ),
             iris.feature_names,
@@ -807,7 +810,7 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
             StackingRegressor(
                 estimators=[
                     ("lr", LinearRegression()),
-                    ("svm", LinearSVR(random_state=0)),
+                    ("svm", LinearSVR(dual="auto", random_state=0)),
                 ]
             ),
             diabetes.feature_names,

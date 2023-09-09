@@ -387,7 +387,7 @@ DBSCAN with Levenshtein distances::
     array([[0],
            [1],
            [2]])
-    >>> # We need to specify algoritum='brute' as the default assumes
+    >>> # We need to specify algorithm='brute' as the default assumes
     >>> # a continuous feature space.
     >>> dbscan(X, metric=lev_metric, eps=5, min_samples=2, algorithm='brute')
     ... # doctest: +SKIP

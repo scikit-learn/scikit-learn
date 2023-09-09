@@ -43,7 +43,7 @@ confidence ellipsoids for multivariate models, and compute the
 Bayesian Information Criterion to assess the number of clusters in the
 data. A :meth:`GaussianMixture.fit` method is provided that learns a Gaussian
 Mixture Model from train data. Given test data, it can assign to each
-sample the Gaussian it mostly probably belongs to using
+sample the Gaussian it most probably belongs to using
 the :meth:`GaussianMixture.predict` method.
 
 ..
