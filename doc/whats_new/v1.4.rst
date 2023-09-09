@@ -150,6 +150,10 @@ Changelog
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
   initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
 
+- |API| In :class:`AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
+  deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
+  <StefanieSenger>`.
+
 - |Efficiency| :class:`ensemble.GradientBoostingClassifier` is faster,
   for binary and in particular for multiclass problems thanks to the private loss
   function module.
