@@ -160,6 +160,17 @@ Changelog
   :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
   :pr:`26957` by `Thomas Fan`_.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |API| Changed error type from :class:`AttributeError` to
+  :class:`exceptions.NotFittedError` in unfitted instances of
+  :class:`feature_extraction.DictVectorizer` for the following methods:
+  :func:`feature_extraction.DictVectorizer.inverse_transform`,
+  :func:`feature_extraction.DictVectorizer.restrict`,
+  :func:`feature_extraction.DictVectorizer.transform`.
+  :pr:`24838` by :user:`Lorenz Hertel <LoHertel>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 

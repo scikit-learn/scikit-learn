@@ -240,15 +240,21 @@ def test_dict_vectorizer_get_feature_names_out():
     assert_array_equal(feature_names, ["1", "2", "3"])
 
 
-def test_dict_vectorizer_not_fitted_error():
-    """Check that unfitted DictVectorizer instance raises NotFittedError."""
+@pytest.mark.parametrize(
+    "method, input",
+    [
+        ("transform", [{1: 2, 3: 4}, {2: 4}]),
+        ("inverse_transform", [{1: 2, 3: 4}, {2: 4}]),
+        ("restrict", [True, False, True]),
+    ],
+)
+def test_dict_vectorizer_not_fitted_error(method, input):
+    """Check that unfitted DictVectorizer instance raises NotFittedError.
 
-    X = [{1: 2, 3: 4}, {2: 4}]
+    This should be part of the common test but currently they test estimator accepting
+    text input.
+    """
     dv = DictVectorizer(sparse=False)
 
     with pytest.raises(NotFittedError):
-        dv.transform(X)
-    with pytest.raises(NotFittedError):
-        dv.inverse_transform(X)
-    with pytest.raises(NotFittedError):
-        dv.restrict(support=[True, False, True])
+        getattr(dv, method)(input)
