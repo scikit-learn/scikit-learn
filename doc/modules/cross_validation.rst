@@ -198,6 +198,7 @@ indices, for example::
       array([0.977..., 0.933..., 0.955..., 0.933..., 0.977...])
 
     See :ref:`combining_estimators`.
+
 |details-end|
 
 
