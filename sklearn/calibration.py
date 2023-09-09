@@ -14,11 +14,12 @@ from math import log
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.optimize import fmin_bfgs
-from scipy.special import expit, xlogy
+from scipy.optimize import minimize
+from scipy.special import expit
 
 from sklearn.utils import Bunch
 
+from ._loss import HalfBinomialLoss
 from .base import (
     BaseEstimator,
     ClassifierMixin,
@@ -823,7 +824,11 @@ class _CalibratedClassifier:
         return proba
 
 
-def _sigmoid_calibration(predictions, y, sample_weight=None):
+# The max_abs_prediction_threshold was approximated using
+# logit(np.finfo(np.float64).eps) which is about -36
+def _sigmoid_calibration(
+    predictions, y, sample_weight=None, max_abs_prediction_threshold=30
+):
     """Probability Calibration with sigmoid method (Platt 2000)
 
     Parameters
@@ -854,6 +859,20 @@ def _sigmoid_calibration(predictions, y, sample_weight=None):
 
     F = predictions  # F follows Platt's notations
 
+    scale_constant = 1.0
+    max_prediction = np.max(np.abs(F))
+
+    # If the predictions have large values we scale them in order to bring
+    # them within a suitable range. This has no effect on the final
+    # (prediction) result because linear models like Logisitic Regression
+    # without a penalty are invariant to multiplying the features by a
+    # constant.
+    if max_prediction >= max_abs_prediction_threshold:
+        scale_constant = max_prediction
+        # We rescale the features in a copy: inplace rescaling could confuse
+        # the caller and make the code harder to reason about.
+        F = F / scale_constant
+
     # Bayesian priors (see Platt end of section 2.2):
     # It corresponds to the number of samples, taking into account the
     # `sample_weight`.
@@ -867,30 +886,37 @@ def _sigmoid_calibration(predictions, y, sample_weight=None):
     T = np.zeros_like(y, dtype=np.float64)
     T[y > 0] = (prior1 + 1.0) / (prior1 + 2.0)
     T[y <= 0] = 1.0 / (prior0 + 2.0)
-    T1 = 1.0 - T
 
-    def objective(AB):
-        # From Platt (beginning of Section 2.2)
-        P = expit(-(AB[0] * F + AB[1]))
-        loss = -(xlogy(T, P) + xlogy(T1, 1.0 - P))
-        if sample_weight is not None:
-            return (sample_weight * loss).sum()
-        else:
-            return loss.sum()
+    bin_loss = HalfBinomialLoss()
 
-    def grad(AB):
-        # gradient of the objective function
-        P = expit(-(AB[0] * F + AB[1]))
-        TEP_minus_T1P = T - P
-        if sample_weight is not None:
-            TEP_minus_T1P *= sample_weight
-        dA = np.dot(TEP_minus_T1P, F)
-        dB = np.sum(TEP_minus_T1P)
-        return np.array([dA, dB])
+    def loss_grad(AB):
+        l, g = bin_loss.loss_gradient(
+            y_true=T,
+            raw_prediction=-(AB[0] * F + AB[1]),
+            sample_weight=sample_weight,
+        )
+        loss = l.sum()
+        grad = np.array([-g @ F, -g.sum()])
+        return loss, grad
 
     AB0 = np.array([0.0, log((prior0 + 1.0) / (prior1 + 1.0))])
-    AB_ = fmin_bfgs(objective, AB0, fprime=grad, disp=False)
-    return AB_[0], AB_[1]
+
+    opt_result = minimize(
+        loss_grad,
+        AB0,
+        method="L-BFGS-B",
+        jac=True,
+        options={
+            "gtol": 1e-6,
+            "ftol": 64 * np.finfo(float).eps,
+        },
+    )
+    AB_ = opt_result.x
+
+    # The tuned multiplicative parameter is converted back to the original
+    # input feature scale. The offset parameter does not need rescaling since
+    # we did not rescale the outcome variable.
+    return AB_[0] / scale_constant, AB_[1]
 
 
 class _SigmoidCalibration(RegressorMixin, BaseEstimator):
