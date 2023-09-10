@@ -467,18 +467,15 @@ def test_stacking_with_sample_weight(stacker, X, y):
         X, y, total_sample_weight, random_state=42
     )
 
-    with ignore_warnings(category=ConvergenceWarning):
-        stacker.fit(X_train, y_train)
+    stacker.fit(X_train, y_train)
     y_pred_no_weight = stacker.predict(X_test)
 
-    with ignore_warnings(category=ConvergenceWarning):
-        stacker.fit(X_train, y_train, sample_weight=np.ones(y_train.shape))
+    stacker.fit(X_train, y_train, sample_weight=np.ones(y_train.shape))
     y_pred_unit_weight = stacker.predict(X_test)
 
     assert_allclose(y_pred_no_weight, y_pred_unit_weight)
 
-    with ignore_warnings(category=ConvergenceWarning):
-        stacker.fit(X_train, y_train, sample_weight=sample_weight_train)
+    stacker.fit(X_train, y_train, sample_weight=sample_weight_train)
     y_pred_biased = stacker.predict(X_test)
 
     assert np.abs(y_pred_no_weight - y_pred_biased).sum() > 0
@@ -493,7 +490,6 @@ def test_stacking_classifier_sample_weight_fit_param():
     stacker.fit(X_iris, y_iris, sample_weight=np.ones(X_iris.shape[0]))
 
 
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize(
     "stacker, X, y",
     [
