@@ -123,6 +123,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     )
                     raise ValueError(msg)
 
+                if len(cats) != len(set(cats)):
+                    msg = (
+                        f"In column {i}, the predefined categories"
+                        " have duplicate values"
+                    )
+                    raise ValueError(msg)
+
                 if Xi.dtype.kind not in "OUS":
                     sorted_cats = np.sort(cats)
                     error_msg = (
