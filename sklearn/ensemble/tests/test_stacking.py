@@ -26,7 +26,7 @@ from sklearn.ensemble import (
     StackingClassifier,
     StackingRegressor,
 )
-from sklearn.exceptions import ConvergenceWarning, NotFittedError
+from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import (
     LinearRegression,
     LogisticRegression,
@@ -42,7 +42,6 @@ from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import (
     assert_allclose,
     assert_allclose_dense_sparse,
-    ignore_warnings,
 )
 from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 
