@@ -435,7 +435,10 @@ def test_stacking_classifier_stratify_default():
                 final_estimator=LogisticRegression(),
                 cv=KFold(shuffle=True, random_state=42),
             ),
-            *load_breast_cancer(return_X_y=True),
+            *[
+                scale(data) if idx == 0 else data
+                for idx, data in list(enumerate(load_breast_cancer(return_X_y=True)))
+            ],
         ),
         (
             StackingRegressor(
@@ -502,7 +505,10 @@ def test_stacking_classifier_sample_weight_fit_param():
                 ],
                 final_estimator=LogisticRegression(),
             ),
-            *load_breast_cancer(return_X_y=True),
+            *[
+                scale(data) if idx == 0 else data
+                for idx, data in list(enumerate(load_breast_cancer(return_X_y=True)))
+            ],
         ),
         (
             StackingRegressor(
