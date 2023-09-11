@@ -1445,11 +1445,13 @@ def test_huber_vs_mean_and_median():
 
 def test_safe_divide():
     """Test that _safe_divide handles division by zero."""
-    assert _safe_divide(np.array([1e300]), 0) == 0
-
+    with pytest.warns(RuntimeWarning, match="divide"):
+        assert _safe_divide(np.float64(1e300), 0) == 0
+    with pytest.warns(RuntimeWarning, match="divide"):
+        assert _safe_divide(np.float64(0.0), np.float64(0.0)) == 0
     with pytest.warns(RuntimeWarning, match="overflow"):
         # np.finfo(float).max = 1.7976931348623157e+308
-        _safe_divide(np.array([1e300]), 1e-10)
+        _safe_divide(np.float64(1e300), 1e-10)
 
 
 def test_squared_error_exact_backward_compat():
