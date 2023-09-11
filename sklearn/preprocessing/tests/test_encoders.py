@@ -1727,6 +1727,21 @@ def test_ordinal_encoder_specified_categories_missing_passthrough(
 
 
 @pytest.mark.parametrize(
+    "encoder",
+    [OneHotEncoder, OrdinalEncoder],
+)
+def test_encoder_duplicate_specified_categories(encoder):
+    """Test encoder for specified categories have duplicate values."""
+    cats = [np.array(["a", "b", "a"], dtype=object)]
+    enc = encoder(categories=cats)
+    X = np.array([["a", "b"]], dtype=object).T
+    with pytest.raises(
+        ValueError, match="the predefined categories have duplicate values"
+    ):
+        enc.fit(X)
+
+
+@pytest.mark.parametrize(
     "X, expected_X_trans, X_test",
     [
         (
