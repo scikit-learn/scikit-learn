@@ -173,8 +173,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
-        Names of features seen during :term:`fit`. Only defined if the
-        underlying estimators expose such an attribute when fit.
+        Names of features seen during :term:`fit`. Only defined if `X` has
+        feature names during `fit`.
 
         .. versionadded:: 1.0
 
