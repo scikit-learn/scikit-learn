@@ -300,6 +300,12 @@ Changelog
   which can be used to check whether a given set of parameters would be consumed.
   :pr:`26831` by `Adrin Jalali`_.
 
+- |Fix| :func:`sklearn.utils.check_array` should accept both matrix and array from
+  the sparse SciPy module. The previous implementation would fail if `copy=True` by
+  calling specific NumPy `np.may_share_memory` that does not work with SciPy sparse
+  array and does not return the correct result for SciPy sparse matrix.
+  :pr:`27336` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
