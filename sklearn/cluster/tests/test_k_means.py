@@ -252,8 +252,8 @@ def test_predict_sample_weight_deprecation_warning(Estimator):
         kmeans.predict(X, sample_weight=sample_weight)
 
 
-@pytest.mark.parametrize("X_container", X_csr_containers)
-def test_minibatch_update_consistency(X_container, global_random_seed):
+@pytest.mark.parametrize("X_csr", X_csr_containers)
+def test_minibatch_update_consistency(X_csr, global_random_seed):
     # Check that dense and sparse minibatch update give the same results
     rng = np.random.RandomState(global_random_seed)
 
@@ -270,7 +270,7 @@ def test_minibatch_update_consistency(X_container, global_random_seed):
 
     # extract a small minibatch
     X_mb = X[:10]
-    X_mb_csr = X_container[:10]
+    X_mb_csr = X_csr[:10]
     sample_weight_mb = sample_weight[:10]
 
     # step 1: compute the dense minibatch update
@@ -331,7 +331,7 @@ def _check_fitted_model(km):
 
 
 @pytest.mark.parametrize(
-    "X_container",
+    "input_data",
     [X] + X_csr_containers,
     ids=data_containers_ids,
 )
@@ -341,12 +341,12 @@ def _check_fitted_model(km):
     ids=["random", "k-means++", "ndarray", "callable"],
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_all_init(Estimator, X_container, init):
+def test_all_init(Estimator, input_data, init):
     # Check KMeans and MiniBatchKMeans with all possible init.
     n_init = 10 if isinstance(init, str) else 1
     km = Estimator(
         init=init, n_clusters=n_clusters, random_state=42, n_init=n_init
-    ).fit(X_container)
+    ).fit(input_data)
     _check_fitted_model(km)
 
 
@@ -505,11 +505,11 @@ def test_minibatch_sensible_reassign(global_random_seed):
 
 
 @pytest.mark.parametrize(
-    "X_container",
+    "input_data",
     [X] + X_csr_containers,
     ids=data_containers_ids,
 )
-def test_minibatch_reassign(X_container, global_random_seed):
+def test_minibatch_reassign(input_data, global_random_seed):
     # Check the reassignment part of the minibatch step with very high or very
     # low reassignment ratio.
     perfect_centers = np.empty((n_clusters, n_features))
@@ -522,10 +522,10 @@ def test_minibatch_reassign(X_container, global_random_seed):
     # Give a perfect initialization, but a large reassignment_ratio, as a
     # result many centers should be reassigned and the model should no longer
     # be good
-    score_before = -_labels_inertia(X_container, sample_weight, perfect_centers, 1)[1]
+    score_before = -_labels_inertia(input_data, sample_weight, perfect_centers, 1)[1]
 
     _mini_batch_step(
-        X_container,
+        input_data,
         sample_weight,
         perfect_centers,
         centers_new,
@@ -535,14 +535,14 @@ def test_minibatch_reassign(X_container, global_random_seed):
         reassignment_ratio=1,
     )
 
-    score_after = -_labels_inertia(X_container, sample_weight, centers_new, 1)[1]
+    score_after = -_labels_inertia(input_data, sample_weight, centers_new, 1)[1]
 
     assert score_before > score_after
 
     # Give a perfect initialization, with a small reassignment_ratio,
     # no center should be reassigned.
     _mini_batch_step(
-        X_container,
+        input_data,
         sample_weight,
         perfect_centers,
         centers_new,
@@ -709,9 +709,9 @@ def test_kmeans_predict(
     assert_array_equal(pred, np.arange(10))
 
 
-@pytest.mark.parametrize("X_container", X_csr_containers)
+@pytest.mark.parametrize("X_csr", X_csr_containers)
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_dense_sparse(Estimator, X_container, global_random_seed):
+def test_dense_sparse(Estimator, X_csr, global_random_seed):
     # Check that the results are the same for dense and sparse input.
     sample_weight = np.random.RandomState(global_random_seed).random_sample(
         (n_samples,)
@@ -723,28 +723,28 @@ def test_dense_sparse(Estimator, X_container, global_random_seed):
     km_sparse = Estimator(
         n_clusters=n_clusters, random_state=global_random_seed, n_init=1
     )
-    km_sparse.fit(X_container, sample_weight=sample_weight)
+    km_sparse.fit(X_csr, sample_weight=sample_weight)
 
     assert_array_equal(km_dense.labels_, km_sparse.labels_)
     assert_allclose(km_dense.cluster_centers_, km_sparse.cluster_centers_)
 
 
-@pytest.mark.parametrize("X_container", X_csr_containers)
+@pytest.mark.parametrize("X_csr", X_csr_containers)
 @pytest.mark.parametrize(
     "init", ["random", "k-means++", centers], ids=["random", "k-means++", "ndarray"]
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_predict_dense_sparse(Estimator, init, X_container):
+def test_predict_dense_sparse(Estimator, init, X_csr):
     # check that models trained on sparse input also works for dense input at
     # predict time and vice versa.
     n_init = 10 if isinstance(init, str) else 1
     km = Estimator(n_clusters=n_clusters, init=init, n_init=n_init, random_state=0)
 
-    km.fit(X_container)
+    km.fit(X_csr)
     assert_array_equal(km.predict(X), km.labels_)
 
     km.fit(X)
-    assert_array_equal(km.predict(X_container), km.labels_)
+    assert_array_equal(km.predict(X_csr), km.labels_)
 
 
 @pytest.mark.parametrize(
@@ -840,12 +840,12 @@ def test_k_means_function(global_random_seed):
 
 
 @pytest.mark.parametrize(
-    "X_container",
+    "input_data",
     [X] + X_csr_containers,
     ids=data_containers_ids,
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_float_precision(Estimator, X_container, global_random_seed):
+def test_float_precision(Estimator, input_data, global_random_seed):
     # Check that the results are the same for single and double precision.
     km = Estimator(n_init=1, random_state=global_random_seed)
 
@@ -855,7 +855,7 @@ def test_float_precision(Estimator, X_container, global_random_seed):
     labels = {}
 
     for dtype in [np.float64, np.float32]:
-        X = X_container.astype(dtype, copy=False)
+        X = input_data.astype(dtype, copy=False)
         km.fit(X)
 
         inertia[dtype] = km.inertia_
@@ -897,16 +897,16 @@ def test_centers_not_mutated(Estimator, dtype):
 
 
 @pytest.mark.parametrize(
-    "X_container",
+    "input_data",
     [X] + X_csr_containers,
     ids=data_containers_ids,
 )
-def test_kmeans_init_fitted_centers(X_container):
+def test_kmeans_init_fitted_centers(input_data):
     # Check that starting fitting from a local optimum shouldn't change the
     # solution
-    km1 = KMeans(n_clusters=n_clusters).fit(X_container)
+    km1 = KMeans(n_clusters=n_clusters).fit(input_data)
     km2 = KMeans(n_clusters=n_clusters, init=km1.cluster_centers_, n_init=1).fit(
-        X_container
+        input_data
     )
 
     assert_allclose(km1.cluster_centers_, km2.cluster_centers_)
@@ -960,38 +960,38 @@ def test_weighted_vs_repeated(global_random_seed):
 
 
 @pytest.mark.parametrize(
-    "X_container",
+    "input_data",
     [X] + X_csr_containers,
     ids=data_containers_ids,
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_unit_weights_vs_no_weights(Estimator, X_container, global_random_seed):
+def test_unit_weights_vs_no_weights(Estimator, input_data, global_random_seed):
     # Check that not passing sample weights should be equivalent to passing
     # sample weights all equal to one.
     sample_weight = np.ones(n_samples)
 
     km = Estimator(n_clusters=n_clusters, random_state=global_random_seed, n_init=1)
-    km_none = clone(km).fit(X_container, sample_weight=None)
-    km_ones = clone(km).fit(X_container, sample_weight=sample_weight)
+    km_none = clone(km).fit(input_data, sample_weight=None)
+    km_ones = clone(km).fit(input_data, sample_weight=sample_weight)
 
     assert_array_equal(km_none.labels_, km_ones.labels_)
     assert_allclose(km_none.cluster_centers_, km_ones.cluster_centers_)
 
 
 @pytest.mark.parametrize(
-    "X_container",
+    "input_data",
     [X] + X_csr_containers,
     ids=data_containers_ids,
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_scaled_weights(Estimator, X_container, global_random_seed):
+def test_scaled_weights(Estimator, input_data, global_random_seed):
     # Check that scaling all sample weights by a common factor
     # shouldn't change the result
     sample_weight = np.random.RandomState(global_random_seed).uniform(size=n_samples)
 
     km = Estimator(n_clusters=n_clusters, random_state=global_random_seed, n_init=1)
-    km_orig = clone(km).fit(X_container, sample_weight=sample_weight)
-    km_scaled = clone(km).fit(X_container, sample_weight=0.5 * sample_weight)
+    km_orig = clone(km).fit(input_data, sample_weight=sample_weight)
+    km_scaled = clone(km).fit(input_data, sample_weight=0.5 * sample_weight)
 
     assert_array_equal(km_orig.labels_, km_scaled.labels_)
     assert_allclose(km_orig.cluster_centers_, km_scaled.cluster_centers_)
@@ -1248,13 +1248,13 @@ def test_kmeans_plusplus_wrong_params(param, match):
 
 
 @pytest.mark.parametrize(
-    "X_container",
+    "input_data",
     [X] + X_csr_containers,
 )
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
-def test_kmeans_plusplus_output(X_container, dtype, global_random_seed):
+def test_kmeans_plusplus_output(input_data, dtype, global_random_seed):
     # Check for the correct number of seeds and all positive values
-    data = X_container.astype(dtype)
+    data = input_data.astype(dtype)
     centers, indices = kmeans_plusplus(
         data, n_clusters, random_state=global_random_seed
     )
