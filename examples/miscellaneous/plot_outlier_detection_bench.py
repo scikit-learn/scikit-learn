@@ -339,8 +339,10 @@ n_samples = X.shape[0]
 n_neighbors_list = (n_samples * np.array([0.2, 0.02, 0.01, 0.001])).astype(np.int32)
 model = make_pipeline(RobustScaler(), LocalOutlierFactor())
 
+linestyles = ["solid", "dashed", "dashdot", ":", (5, (10, 3))]
+
 fig, ax = plt.subplots()
-for model_idx, n_neighbors in enumerate(n_neighbors_list):
+for model_idx, (linestyle, n_neighbors) in enumerate(zip(linestyles, n_neighbors_list)):
     model.set_params(localoutlierfactor__n_neighbors=n_neighbors)
     model.fit(X)
     y_pred = model[-1].negative_outlier_factor_
@@ -351,7 +353,9 @@ for model_idx, n_neighbors in enumerate(n_neighbors_list):
         name=f"n_neighbors = {n_neighbors}",
         ax=ax,
         plot_chance_level=(model_idx == len(n_neighbors_list) - 1),
-        chance_level_kw={"linestyle": ":"},
+        chance_level_kw={"linestyle": (0, (1, 10))},
+        linestyle=linestyle,
+        linewidth=2,
     )
 _ = ax.set_title("RobustScaler with varying n_neighbors\non forestcover dataset")
 
@@ -376,7 +380,9 @@ expected_anomaly_fraction = 0.02
 lof = LocalOutlierFactor(n_neighbors=int(n_samples * expected_anomaly_fraction))
 
 fig, ax = plt.subplots()
-for model_idx, preprocessor in enumerate(preprocessor_list):
+for model_idx, (linestyle, preprocessor) in enumerate(
+    zip(linestyles, preprocessor_list)
+):
     model = make_pipeline(preprocessor, lof)
     model.fit(X)
     y_pred = model[-1].negative_outlier_factor_
@@ -387,7 +393,9 @@ for model_idx, preprocessor in enumerate(preprocessor_list):
         name=str(preprocessor).split("(")[0],
         ax=ax,
         plot_chance_level=(model_idx == len(preprocessor_list) - 1),
-        chance_level_kw={"linestyle": ":"},
+        chance_level_kw={"linestyle": (0, (1, 10))},
+        linestyle=linestyle,
+        linewidth=2,
     )
 _ = ax.set_title("Fixed n_neighbors with varying preprocessing\non forestcover dataset")
 
@@ -424,7 +432,9 @@ n_samples, expected_anomaly_fraction = X.shape[0], 0.025
 lof = LocalOutlierFactor(n_neighbors=int(n_samples * expected_anomaly_fraction))
 
 fig, ax = plt.subplots()
-for model_idx, preprocessor in enumerate(preprocessor_list):
+for model_idx, (linestyle, preprocessor) in enumerate(
+    zip(linestyles, preprocessor_list)
+):
     model = make_pipeline(preprocessor, lof)
     model.fit(X)
     y_pred = model[-1].negative_outlier_factor_
@@ -435,7 +445,9 @@ for model_idx, preprocessor in enumerate(preprocessor_list):
         name=str(preprocessor).split("(")[0],
         ax=ax,
         plot_chance_level=(model_idx == len(preprocessor_list) - 1),
-        chance_level_kw={"linestyle": ":"},
+        chance_level_kw={"linestyle": (0, (1, 10))},
+        linestyle=linestyle,
+        linewidth=2,
     )
 ax.set_title(
     "Fixed n_neighbors with varying preprocessing\non cardiotocography dataset"
