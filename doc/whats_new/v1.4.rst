@@ -98,7 +98,8 @@ Changelog
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
-- |Fix| :func:`cluster.kmeans_plusplus` now support :class:`scipy.sparse.sparray`.
+- |Fix| :func:`cluster.kmeans_plusplus`, :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans` now support :class:`scipy.sparse.sparray`.
   :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`.
 
 :mod:`sklearn.compose`
