@@ -85,6 +85,10 @@ Changelog
   produce large prediction scores. Before it was numerically unstable.
   :pr:`26913` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Enhancement| The internal objective and gradient of the `sigmoid` method
+  of :class:`calibration.CalibratedClassifierCV` have been replaced by the
+  private loss module. :pr:`27185` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.cluster`
 ............................
 
@@ -146,6 +150,15 @@ Changelog
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
   initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
 
+- |API| In :class:`AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
+  deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
+  <StefanieSenger>`.
+
+- |Efficiency| :class:`ensemble.GradientBoostingClassifier` is faster,
+  for binary and in particular for multiclass problems thanks to the private loss
+  function module.
+  :pr:`26278` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| Improves runtime and memory usage for
   :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
@@ -180,6 +193,12 @@ Changelog
   to :ref:`metadata routing user guide <metadata_routing>`. :pr:`26789` by
   `Adrin Jalali`_.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| :class:`preprocessing.TargetEncoder` now supports `target_type`
+  'multiclass'. :pr:`26674` by :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -198,6 +217,14 @@ Changelog
   parameter is also not accepted as a separate argument when metadata routing
   is enabled and should be passed via the `params` parameter. :pr:`26896` by
   `Adrin Jalali`_.
+
+- |Feature| :class:`~model_selection.GridSearchCV`,
+  :class:`~model_selection.RandomizedSearchCV`,
+  :class:`~model_selection.HalvingGridSearchCV`, and
+  :class:`~model_selection.HalvingRandomSearchCV` now support metadata routing
+  in their ``fit`` and ``score``, and route metadata to the underlying
+  estimator's ``fit``, the CV splitter, and the scorer. :pr:`27058` by `Adrin
+  Jalali`_.
 
 - |Enhancement| :func:`sklearn.model_selection.train_test_split` now supports
   Array API compatible inputs. :pr:`26855` by `Tim Head`_.
@@ -226,7 +253,7 @@ Changelog
   :pr:`26931` by `Thomas Fan`_.
 
 - |MajorFeature| :class:`preprocessing.MinMaxScaler` and :class:`preprocessing.MaxAbsScaler` now
-  supports the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
+  support the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
   support is considered experimental and might evolve without being subject to
   our usual rolling deprecation cycle policy. See
   :ref:`array_api` for more details. :pr:`26243` by `Tim Head`_ and :pr:`27110` by :user:`Edoardo Abati <EdAbati>`.
@@ -270,6 +297,9 @@ Changelog
   both axis is set to be 1 to get a square plot.
   :pr:`26366` by :user:`Mojdeh Rastgoo <mrastgoo>`.
 
+- |Enhancement| :func:`sklearn.metrics.accuracy_score` and :func:`sklearn.metrics.zero_one_loss` now support
+  Array API compatible inputs. :pr:`27137` by :user:`Edoardo Abati <EdAbati>`.
+
 :mod:`sklearn.utils`
 ....................
 
@@ -283,6 +313,12 @@ Changelog
   :class:`~utils.metadata_routing.MetadataRouter` now have a ``consumes`` method
   which can be used to check whether a given set of parameters would be consumed.
   :pr:`26831` by `Adrin Jalali`_.
+
+- |Fix| :func:`sklearn.utils.check_array` should accept both matrix and array from
+  the sparse SciPy module. The previous implementation would fail if `copy=True` by
+  calling specific NumPy `np.may_share_memory` that does not work with SciPy sparse
+  array and does not return the correct result for SciPy sparse matrix.
+  :pr:`27336` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Code and Documentation Contributors
 -----------------------------------

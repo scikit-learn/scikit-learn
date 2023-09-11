@@ -148,3 +148,11 @@ def test_no_crash_on_empty_bisections(algorithm):
     X_test = 50 * rng.rand(100, 10)
     labels = bkm.predict(X_test)  # should not crash with idiv by 0
     assert np.isin(np.unique(labels), np.arange(10)).all()
+
+
+def test_one_feature():
+    # Check that no error is raised when there is only one feature
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/27236
+    X = np.random.normal(size=(128, 1))
+    BisectingKMeans(bisecting_strategy="biggest_inertia", random_state=0).fit(X)
