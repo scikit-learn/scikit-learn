@@ -64,8 +64,8 @@ data_containers_ids = (
 
 @pytest.mark.parametrize(
     "X_container",
-    [np.array] + CSR_CONTAINERS,
-    ids=parametrize_ids,
+    data_containers,
+    ids=data_containers_ids,
 )
 @pytest.mark.parametrize("algo", ["lloyd", "elkan"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -92,8 +92,8 @@ def test_kmeans_results(X_container, algo, dtype):
 
 @pytest.mark.parametrize(
     "X_container",
-    [np.array] + CSR_CONTAINERS,
-    ids=parametrize_ids,
+    data_containers,
+    ids=data_containers_ids,
 )
 @pytest.mark.parametrize("algo", ["lloyd", "elkan"])
 def test_kmeans_relocated_clusters(X_container, algo):
@@ -127,8 +127,8 @@ def test_kmeans_relocated_clusters(X_container, algo):
 
 @pytest.mark.parametrize(
     "X_container",
-    [np.array] + CSR_CONTAINERS,
-    ids=parametrize_ids,
+    data_containers,
+    ids=data_containers_ids,
 )
 def test_relocate_empty_clusters(X_container):
     # test for the _relocate_empty_clusters_(dense/sparse) helpers
@@ -174,8 +174,8 @@ def test_relocate_empty_clusters(X_container):
 @pytest.mark.parametrize("distribution", ["normal", "blobs"])
 @pytest.mark.parametrize(
     "X_container",
-    [np.array] + CSR_CONTAINERS,
-    ids=parametrize_ids,
+    data_containers,
+    ids=data_containers_ids,
 )
 @pytest.mark.parametrize("tol", [1e-2, 1e-8, 1e-100, 0])
 def test_kmeans_elkan_results(distribution, X_container, tol, global_random_seed):
@@ -333,7 +333,7 @@ def _check_fitted_model(km):
 @pytest.mark.parametrize(
     "X_container",
     [X] + X_csr_containers,
-    ids=parametrize_ids,
+    ids=data_containers_ids,
 )
 @pytest.mark.parametrize(
     "init",
@@ -507,7 +507,7 @@ def test_minibatch_sensible_reassign(global_random_seed):
 @pytest.mark.parametrize(
     "X_container",
     [X] + X_csr_containers,
-    ids=parametrize_ids,
+    ids=data_containers_ids,
 )
 def test_minibatch_reassign(X_container, global_random_seed):
     # Check the reassignment part of the minibatch step with very high or very
@@ -666,8 +666,8 @@ def test_score_max_iter(Estimator, global_random_seed):
 
 @pytest.mark.parametrize(
     "X_container",
-    [np.array] + CSR_CONTAINERS,
-    ids=parametrize_ids,
+    data_containers,
+    ids=data_containers_ids,
 )
 @pytest.mark.parametrize(
     "Estimator, algorithm",
@@ -749,8 +749,8 @@ def test_predict_dense_sparse(Estimator, init, X_container):
 
 @pytest.mark.parametrize(
     "X_container",
-    [np.array] + CSR_CONTAINERS,
-    ids=parametrize_ids,
+    data_containers,
+    ids=data_containers_ids,
 )
 @pytest.mark.parametrize("dtype", [np.int32, np.int64])
 @pytest.mark.parametrize("init", ["k-means++", "ndarray"])
@@ -842,7 +842,7 @@ def test_k_means_function(global_random_seed):
 @pytest.mark.parametrize(
     "X_container",
     [X] + X_csr_containers,
-    ids=parametrize_ids,
+    ids=data_containers_ids,
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_float_precision(Estimator, X_container, global_random_seed):
@@ -899,7 +899,7 @@ def test_centers_not_mutated(Estimator, dtype):
 @pytest.mark.parametrize(
     "X_container",
     [X] + X_csr_containers,
-    ids=parametrize_ids,
+    ids=data_containers_ids,
 )
 def test_kmeans_init_fitted_centers(X_container):
     # Check that starting fitting from a local optimum shouldn't change the
@@ -962,7 +962,7 @@ def test_weighted_vs_repeated(global_random_seed):
 @pytest.mark.parametrize(
     "X_container",
     [X] + X_csr_containers,
-    ids=parametrize_ids,
+    ids=data_containers_ids,
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_unit_weights_vs_no_weights(Estimator, X_container, global_random_seed):
@@ -981,7 +981,7 @@ def test_unit_weights_vs_no_weights(Estimator, X_container, global_random_seed):
 @pytest.mark.parametrize(
     "X_container",
     [X] + X_csr_containers,
-    ids=parametrize_ids,
+    ids=data_containers_ids,
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_scaled_weights(Estimator, X_container, global_random_seed):
@@ -1006,8 +1006,8 @@ def test_kmeans_elkan_iter_attribute():
 
 @pytest.mark.parametrize(
     "X_container",
-    [np.array] + CSR_CONTAINERS,
-    ids=parametrize_ids,
+    data_containers,
+    ids=data_containers_ids,
 )
 def test_kmeans_empty_cluster_relocated(X_container):
     # check that empty clusters are correctly relocated when using sample
@@ -1056,8 +1056,8 @@ def test_warning_elkan_1_cluster():
 
 @pytest.mark.parametrize(
     "X_container",
-    [np.array] + CSR_CONTAINERS,
-    ids=parametrize_ids,
+    data_containers,
+    ids=data_containers_ids,
 )
 @pytest.mark.parametrize("algo", ["lloyd", "elkan"])
 def test_k_means_1_iteration(X_container, algo, global_random_seed):
