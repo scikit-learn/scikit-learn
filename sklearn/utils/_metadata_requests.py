@@ -160,7 +160,7 @@ def _raise_for_params(params, owner, method):
             " enable_metadata_routing=True, which you can set using"
             " `sklearn.set_config`. See the User Guide"
             " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-            " details."
+            f" details. Extra parameters passed are: {set(params)}"
         )
 
 
@@ -985,7 +985,7 @@ class MetadataRouter:
     def validate_metadata(self, *, method, params):
         """Validate given metadata for a method.
 
-        This raises a ``ValueError`` if some of the passed metadata are not
+        This raises a ``TypeError`` if some of the passed metadata are not
         understood by child objects.
 
         Parameters
@@ -1010,8 +1010,8 @@ class MetadataRouter:
         extra_keys = set(params.keys()) - param_names - self_params
         if extra_keys:
             raise TypeError(
-                f"{method} got unexpected argument(s) {extra_keys}, which are "
-                "not requested metadata in any object."
+                f"{self.owner}.{method} got unexpected argument(s) {extra_keys}, which"
+                " are not requested metadata in any object."
             )
 
     def _serialize(self):

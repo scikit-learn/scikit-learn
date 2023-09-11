@@ -229,10 +229,13 @@ console:
 For 64-bit Python, configure the build environment by running the following
 commands in ``cmd`` or an Anaconda Prompt (if you use Anaconda):
 
-    ::
+.. sphinx-prompt 1.3.0 (used in doc-min-dependencies CI task) does not support `batch` prompt type,
+.. so we work around by using a known prompt type and an explicit prompt text.
+..
+.. prompt:: bash C:\>
 
-      $ SET DISTUTILS_USE_SDK=1
-      $ "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+    SET DISTUTILS_USE_SDK=1
+    "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
 
 Replace ``x64`` by ``x86`` to build for 32-bit Python.
 

@@ -21,12 +21,10 @@ import joblib
 import numpy as np
 import scipy.sparse as sp
 
-# mypy error: Module 'numpy.core.numeric' has no attribute 'ComplexWarning'
-from numpy.core.numeric import ComplexWarning  # type: ignore
-
 from .. import get_config as _get_config
 from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
 from ..utils._array_api import _asarray_with_order, _is_numpy_namespace, get_namespace
+from ..utils.fixes import ComplexWarning
 from ._isfinite import FiniteStatus, cy_isfinite
 from .fixes import _object_dtype_isnan
 
@@ -964,6 +962,19 @@ def check_array(
                 allow_nan=force_all_finite == "allow-nan",
             )
 
+        if copy:
+            if _is_numpy_namespace(xp):
+                # only make a copy if `array` and `array_orig` may share memory`
+                if np.may_share_memory(array, array_orig):
+                    array = _asarray_with_order(
+                        array, dtype=dtype, order=order, copy=True, xp=xp
+                    )
+            else:
+                # always make a copy for non-numpy arrays
+                array = _asarray_with_order(
+                    array, dtype=dtype, order=order, copy=True, xp=xp
+                )
+
     if ensure_min_samples > 0:
         n_samples = _num_samples(array)
         if n_samples < ensure_min_samples:
@@ -980,19 +991,6 @@ def check_array(
                 "Found array with %d feature(s) (shape=%s) while"
                 " a minimum of %d is required%s."
                 % (n_features, array.shape, ensure_min_features, context)
-            )
-
-    if copy:
-        if _is_numpy_namespace(xp):
-            # only make a copy if `array` and `array_orig` may share memory`
-            if np.may_share_memory(array, array_orig):
-                array = _asarray_with_order(
-                    array, dtype=dtype, order=order, copy=True, xp=xp
-                )
-        else:
-            # always make a copy for non-numpy arrays
-            array = _asarray_with_order(
-                array, dtype=dtype, order=order, copy=True, xp=xp
             )
 
     return array
@@ -2271,7 +2269,7 @@ def _check_pos_label_consistency(pos_label, y_true):
             or np.array_equal(classes, [1])
         )
     ):
-        classes_repr = ", ".join(repr(c) for c in classes)
+        classes_repr = ", ".join([repr(c) for c in classes.tolist()])
         raise ValueError(
             f"y_true takes value in {{{classes_repr}}} and pos_label is not "
             "specified: either make y_true take value in {0, 1} or "
