@@ -1028,3 +1028,24 @@ def test_discrete_naive_bayes_deprecation_prior(DiscreteNaiveBayes, params):
     msg = "class_prior/fit_prior are deprecated in 1.4 and will be removed in 1.6"
     with pytest.warns(FutureWarning, match=msg):
         DiscreteNaiveBayes(**params).fit(X, y)
+
+
+# TODO(1.6): remove the following test
+@pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"priors": "empirical", "class_prior": [0.5, 0.5]},
+        {"priors": "empirical", "fit_prior": False},
+    ],
+)
+def test_naive_bayes_errors_both_priors_and_class_prior(DiscreteNaiveBayes, params):
+    """Check that we raise an error if both `priors` and `class_prior`/`fit_prior` are
+    passed.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 2, size=(10, 5))
+    y = rng.randint(0, 2, size=10)
+
+    with pytest.raises(ValueError, match="Cannot specify both `priors` and"):
+        DiscreteNaiveBayes(**params).fit(X, y)
