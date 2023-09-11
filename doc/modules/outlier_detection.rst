@@ -415,3 +415,53 @@ Novelty detection with Local Outlier Factor is illustrated below.
      :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html
      :align: center
      :scale: 75%
+
+.. _local_outlier_probabilities:
+
+Local Outlier Probabilties
+--------------------------
+A variant of LOF that produces scores scaled from 0 to 1 are the Local
+Outlier Probabilities (LoOP).
+
+The :class:`neighbors.LocalOutlierProbabilities` (LoOP) algorithm computes a
+score (called local outlier probabilities) reflecting a kind of probability that
+observations are abnormal.
+
+Similar to the local outlier factor LOF it compares the local density of a point
+with the densities of its neighbors, and considers samples of a substantially
+lower density to be outliers, but it uses the quadratic mean distance.
+A half-gaussian distibution is assumed on the factors exceeding 1,
+and the Gaussian error function is used to transform this value into a
+probability-like value between 0 and 1.
+
+Similar to LOF, the number of neighbors (parameter n_neighbors) often works
+well with small values such as 10 to 20, but if the proportion of outliers
+is high, increasing the value may help.
+
+The n_lambda parameter (originally just lambda, but this is a reserved key word in
+python) controls the number of standard deviations in the Gaussian assumption.
+It usually does not need to be changed, but increasing the value makes the detector
+produce smaller probabilities, at the benefit of increased contrast among the most
+anomalous objects, while decreasing the value will cause less objects to be close
+to 0, and hence allow better discrimination amongst normal objects.
+
+As with LOF, there are no ``predict``, ``decision_function`` and ``score_samples``
+methods but only a ``fit_predict`` method. The scores of abnormality of the training
+samples are accessible through the ``negative_outlier_probabilities_`` attribute
+(for consistency with the semantics of other scikit-learn classes, the values are negative).
+The ``predict``, ``decision_function`` and ``score_samples`` can be used
+on new unseen data when LoOP is applied for novelty detection, i.e. when the
+``novelty`` parameter is set to ``True``, but the result of ``predict`` may
+differ from that of ``fit_predict``.
+
+
+.. topic:: References:
+   *  Kriegel, H. P., Kröger, P., Schubert, E., & Zimek, A. (2009).
+      `LoOP: local outlier probabilities.
+      <https://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf>`_
+      Proc. CIKM (pp. 1649-1652).
+   *  Schubert, E., Zimek, A., & Kriegel, H. P. (2014).
+      `Local outlier detection reconsidered: a generalized view on locality
+      with applications to spatial, video, and network outlier detection.
+      <https://link.springer.com/article/10.1007/s10618-012-0300-z>`_
+      Data mining and knowledge discovery, 28, 190-237.
