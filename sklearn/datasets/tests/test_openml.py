@@ -27,8 +27,10 @@ from sklearn.utils._testing import (
     assert_array_equal,
     fails_if_pypy,
 )
-from sklearn.utils.fixes import _open_binary
-from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.fixes import (
+    CSR_CONTAINERS,
+    _open_binary,
+)
 
 OPENML_TEST_DATA_MODULE = "sklearn.datasets.tests.data.openml"
 # if True, urlopen will be monkey patched to only use local files
@@ -1218,8 +1220,10 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response, dataset_params):
             40945,
             {"data_id": 40945, "as_frame": False},
             ValueError,
-            "STRING attributes are not supported for array representation. Try"
-            " as_frame=True",
+            (
+                "STRING attributes are not supported for array representation. Try"
+                " as_frame=True"
+            ),
         ),
         (
             2,
