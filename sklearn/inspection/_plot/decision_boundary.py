@@ -274,10 +274,10 @@ class DecisionBoundaryDisplay:
         See Also
         --------
         DecisionBoundaryDisplay : Decision boundary visualization.
-        ConfusionMatrixDisplay.from_estimator : Plot the confusion matrix
-            given an estimator, the data, and the label.
-        ConfusionMatrixDisplay.from_predictions : Plot the confusion matrix
-            given the true and predicted labels.
+        sklearn.metrics.ConfusionMatrixDisplay.from_estimator : Plot the
+            confusion matrix given an estimator, the data, and the label.
+        sklearn.metrics.ConfusionMatrixDisplay.from_predictions : Plot the
+            confusion matrix given the true and predicted labels.
 
         Examples
         --------

@@ -78,6 +78,10 @@
     <p>Hanmin Qin</p>
     </div>
     <div>
+    <a href='https://github.com/OmarManzoor'><img src='https://avatars.githubusercontent.com/u/17495884?v=4' class='avatar' /></a> <br />
+    <p>Omar Salman</p>
+    </div>
+    <div>
     <a href='https://github.com/bthirion'><img src='https://avatars.githubusercontent.com/u/234454?v=4' class='avatar' /></a> <br />
     <p>Bertrand Thirion</p>
     </div>
