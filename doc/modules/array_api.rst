@@ -99,6 +99,12 @@ Estimators
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
 
+Metrics
+-------
+
+- :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.zero_one_loss`
+
 Tools
 -----
 

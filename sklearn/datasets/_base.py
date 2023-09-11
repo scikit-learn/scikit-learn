@@ -667,6 +667,9 @@ def load_iris(*, return_X_y=False, as_frame=False):
     array([0, 0, 1])
     >>> list(data.target_names)
     ['setosa', 'versicolor', 'virginica']
+
+    See :ref:`sphx_glr_auto_examples_datasets_plot_iris_dataset.py` for a more
+    detailed example of how to work with the iris dataset.
     """
     data_file_name = "iris.csv"
     data, target, target_names, fdescr = load_csv_data(
