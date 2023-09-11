@@ -1753,7 +1753,7 @@ def check_array_api_metric(
 def check_array_api_binary_classification_metric(
     metric, array_namespace, device, dtype
 ):
-    return check_array_api_metric(
+    check_array_api_metric(
         metric,
         array_namespace,
         device,
@@ -1766,7 +1766,7 @@ def check_array_api_binary_classification_metric(
 def check_array_api_multiclass_classification_metric(
     metric, array_namespace, device, dtype
 ):
-    return check_array_api_metric(
+    check_array_api_metric(
         metric,
         array_namespace,
         device,
