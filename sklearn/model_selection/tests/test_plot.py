@@ -548,3 +548,24 @@ def test_learning_curve_display_deprecate_log_scale(data, pyplot):
 
     assert display.ax_.get_xscale() == "linear"
     assert display.ax_.get_yscale() == "linear"
+
+
+@pytest.mark.parametrize(
+    "param_range, xscale",
+    [([5, 10, 15], "linear"), ([-50, 5, 50, 500], "symlog"), ([5, 50, 500], "log")],
+)
+def test_validation_curve_display_accepts_list(pyplot, data, param_range, xscale):
+    """Check the behaviour of setting the `score_type` parameter."""
+    X, y = data
+    estimator = DecisionTreeClassifier(random_state=0)
+
+    param_name = "max_depth"
+    display = ValidationCurveDisplay.from_estimator(
+        estimator,
+        X,
+        y,
+        param_name=param_name,
+        param_range=param_range,
+    )
+
+    assert display.ax_.get_xscale() == xscale
