@@ -33,6 +33,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 class Trans(TransformerMixin, BaseEstimator):
@@ -58,12 +59,15 @@ class DoubleTrans(BaseEstimator):
 
 
 class SparseMatrixTrans(BaseEstimator):
+    def __init__(self, csr_container):
+        self.csr_container = csr_container
+
     def fit(self, X, y=None):
         return self
 
     def transform(self, X, y=None):
         n_samples = len(X)
-        return sparse.eye(n_samples, n_samples).tocsr()
+        return self.csr_container(sparse.eye(n_samples, n_samples))
 
 
 class TransNo2D(BaseEstimator):
@@ -431,14 +435,15 @@ def test_column_transformer_output_indices_df():
     assert_array_equal(X_trans[:, []], X_trans[:, ct.output_indices_["remainder"]])
 
 
-def test_column_transformer_sparse_array():
-    X_sparse = sparse.eye(3, 2).tocsr()
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_column_transformer_sparse_array(csr_container):
+    X_sparse = csr_container(sparse.eye(3, 2))
 
     # no distinction between 1D and 2D
-    X_res_first = X_sparse[:, 0]
+    X_res_first = X_sparse[:, [0]]
     X_res_both = X_sparse
 
-    for col in [0, [0], slice(0, 1)]:
+    for col in [(0,), [0], slice(0, 1)]:
         for remainder, res in [("drop", X_res_first), ("passthrough", X_res_both)]:
             ct = ColumnTransformer(
                 [("trans", Trans(), col)], remainder=remainder, sparse_threshold=0.8
@@ -474,10 +479,11 @@ def test_column_transformer_list():
     assert_array_equal(ct.fit(X_list).transform(X_list), expected_result)
 
 
-def test_column_transformer_sparse_stacking():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_column_transformer_sparse_stacking(csr_container):
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     col_trans = ColumnTransformer(
-        [("trans1", Trans(), [0]), ("trans2", SparseMatrixTrans(), 1)],
+        [("trans1", Trans(), [0]), ("trans2", SparseMatrixTrans(csr_container), 1)],
         sparse_threshold=0.8,
     )
     col_trans.fit(X_array)
@@ -489,7 +495,7 @@ def test_column_transformer_sparse_stacking():
     assert col_trans.transformers_[-1][0] != "remainder"
 
     col_trans = ColumnTransformer(
-        [("trans1", Trans(), [0]), ("trans2", SparseMatrixTrans(), 1)],
+        [("trans1", Trans(), [0]), ("trans2", SparseMatrixTrans(csr_container), 1)],
         sparse_threshold=0.1,
     )
     col_trans.fit(X_array)
@@ -999,11 +1005,14 @@ def test_column_transformer_drops_all_remainder_transformer():
     assert_array_equal(ct.transformers_[-1][2], [1, 2])
 
 
-def test_column_transformer_sparse_remainder_transformer():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_column_transformer_sparse_remainder_transformer(csr_container):
     X_array = np.array([[0, 1, 2], [2, 4, 6], [8, 6, 4]]).T
 
     ct = ColumnTransformer(
-        [("trans1", Trans(), [0])], remainder=SparseMatrixTrans(), sparse_threshold=0.8
+        [("trans1", Trans(), [0])],
+        remainder=SparseMatrixTrans(csr_container),
+        sparse_threshold=0.8,
     )
 
     X_trans = ct.fit_transform(X_array)
@@ -1020,10 +1029,13 @@ def test_column_transformer_sparse_remainder_transformer():
     assert_array_equal(ct.transformers_[-1][2], [1, 2])
 
 
-def test_column_transformer_drop_all_sparse_remainder_transformer():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_column_transformer_drop_all_sparse_remainder_transformer(csr_container):
     X_array = np.array([[0, 1, 2], [2, 4, 6], [8, 6, 4]]).T
     ct = ColumnTransformer(
-        [("trans1", "drop", [0])], remainder=SparseMatrixTrans(), sparse_threshold=0.8
+        [("trans1", "drop", [0])],
+        remainder=SparseMatrixTrans(csr_container),
+        sparse_threshold=0.8,
     )
 
     X_trans = ct.fit_transform(X_array)
@@ -1231,7 +1243,7 @@ def test_column_transformer_negative_column_indexes():
     assert_array_equal(tf_1.fit_transform(X), tf_2.fit_transform(X))
 
 
-@pytest.mark.parametrize("array_type", [np.asarray, sparse.csr_matrix])
+@pytest.mark.parametrize("array_type", [np.asarray, *CSR_CONTAINERS])
 def test_column_transformer_mask_indexing(array_type):
     # Regression test for #14510
     # Boolean array-like does not behave as boolean array with sparse matrices.

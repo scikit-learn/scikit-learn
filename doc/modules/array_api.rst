@@ -96,7 +96,14 @@ Estimators
 - :class:`decomposition.PCA` (with `svd_solver="full"`,
   `svd_solver="randomized"` and `power_iteration_normalizer="QR"`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
+- :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
+
+Metrics
+-------
+
+- :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.zero_one_loss`
 
 Tools
 -----
@@ -124,8 +131,8 @@ automatically skipped. Therefore it's important to run the tests with the
 
 .. prompt:: bash $
 
-    $ pip install array-api-compat  # and other libraries as needed
-    $ pytest -k "array_api" -v
+    pip install array-api-compat  # and other libraries as needed
+    pytest -k "array_api" -v
 
 Note on MPS device support
 --------------------------
@@ -142,7 +149,7 @@ To enable the MPS support in PyTorch, set the environment variable
 
 .. prompt:: bash $
 
-    $ PYTORCH_ENABLE_MPS_FALLBACK=1 pytest -k "array_api" -v
+    PYTORCH_ENABLE_MPS_FALLBACK=1 pytest -k "array_api" -v
 
 At the time of writing all scikit-learn tests should pass, however, the
 computational speed is not necessarily better than with the CPU device.

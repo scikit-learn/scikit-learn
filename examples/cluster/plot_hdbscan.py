@@ -84,7 +84,7 @@ plot(X, labels=labels_true, ground_truth=True)
 # rescaled versions of the dataset.
 fig, axes = plt.subplots(3, 1, figsize=(10, 12))
 dbs = DBSCAN(eps=0.3)
-for idx, scale in enumerate((1, 0.5, 3)):
+for idx, scale in enumerate([1, 0.5, 3]):
     dbs.fit(X * scale)
     plot(X * scale, dbs.labels_, parameters={"scale": scale, "eps": 0.3}, ax=axes[idx])
 
@@ -105,9 +105,15 @@ plot(3 * X, dbs.labels_, parameters={"scale": 3, "eps": 0.9}, ax=axis)
 # One immediate advantage is that HDBSCAN is scale-invariant.
 fig, axes = plt.subplots(3, 1, figsize=(10, 12))
 hdb = HDBSCAN()
-for idx, scale in enumerate((1, 0.5, 3)):
-    hdb.fit(X)
-    plot(X, hdb.labels_, hdb.probabilities_, ax=axes[idx], parameters={"scale": scale})
+for idx, scale in enumerate([1, 0.5, 3]):
+    hdb.fit(X * scale)
+    plot(
+        X * scale,
+        hdb.labels_,
+        hdb.probabilities_,
+        ax=axes[idx],
+        parameters={"scale": scale},
+    )
 # %%
 # Multi-Scale Clustering
 # ----------------------
