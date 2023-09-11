@@ -1,7 +1,7 @@
 # DO NOT EDIT: this file is generated from the specification found in the
 # following script to centralize the configuration for CI builds:
 # build_tools/update_environments_and_lock_files.py
-cython
+cython<3.0.0
 joblib==1.1.1  # min
 threadpoolctl==2.2.0
 pytest==7.1.2  # min
