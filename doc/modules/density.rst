@@ -114,7 +114,7 @@ forms, which are shown in the following figure:
 .. centered:: |kde_kernels|
 
 |details-start|
-**kernels details**
+**kernels' mathematical expressions**
 |details-split|
 
 The form of these kernels is as follows:
