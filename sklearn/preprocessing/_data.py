@@ -3083,12 +3083,13 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     References
     ----------
 
-    .. [1] I.K. Yeo and R.A. Johnson, "A new family of power transformations to
-           improve normality or symmetry." Biometrika, 87(4), pp.954-959,
-           (2000).
+    .. [1] :doi:`I.K. Yeo and R.A. Johnson, "A new family of power
+           transformations to improve normality or symmetry." Biometrika,
+           87(4), pp.954-959, (2000). <10.1093/biomet/87.4.954>`
 
-    .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
-           of the Royal Statistical Society B, 26, 211-252 (1964).
+    .. [2] :doi:`G.E.P. Box and D.R. Cox, "An Analysis of Transformations",
+           Journal of the Royal Statistical Society B, 26, 211-252 (1964).
+           <10.1111/j.2517-6161.1964.tb00553.x>`
 
     Examples
     --------
