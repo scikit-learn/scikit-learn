@@ -212,6 +212,14 @@ Changelog
   is enabled and should be passed via the `params` parameter. :pr:`26896` by
   `Adrin Jalali`_.
 
+- |Feature| :class:`~model_selection.GridSearchCV`,
+  :class:`~model_selection.RandomizedSearchCV`,
+  :class:`~model_selection.HalvingGridSearchCV`, and
+  :class:`~model_selection.HalvingRandomSearchCV` now support metadata routing
+  in their ``fit`` and ``score``, and route metadata to the underlying
+  estimator's ``fit``, the CV splitter, and the scorer. :pr:`27058` by `Adrin
+  Jalali`_.
+
 - |Enhancement| :func:`sklearn.model_selection.train_test_split` now supports
   Array API compatible inputs. :pr:`26855` by `Tim Head`_.
 
