@@ -107,7 +107,7 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
     """
     _raise_error_wrong_axis(axis)
 
-    if sp.isspmatrix_csr(X):
+    if sp.issparse(X) and X.format == "csr":
         if axis == 0:
             return _csr_mean_var_axis0(
                 X, weights=weights, return_sum_weights=return_sum_weights
@@ -116,7 +116,7 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
             return _csc_mean_var_axis0(
                 X.T, weights=weights, return_sum_weights=return_sum_weights
             )
-    elif sp.isspmatrix_csc(X):
+    elif sp.issparse(X) and X.format == "csc":
         if axis == 0:
             return _csc_mean_var_axis0(
                 X, weights=weights, return_sum_weights=return_sum_weights
@@ -191,7 +191,7 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n, weights=Non
     """
     _raise_error_wrong_axis(axis)
 
-    if not (sp.isspmatrix_csr(X) or sp.isspmatrix_csc(X)):
+    if not (sp.issparse(X) and X.format in ("csc", "csr")):
         _raise_typeerror(X)
 
     if np.size(last_n) == 1:
@@ -238,9 +238,9 @@ def inplace_column_scale(X, scale):
     scale : ndarray of shape (n_features,), dtype={np.float32, np.float64}
         Array of precomputed feature-wise values to use for scaling.
     """
-    if sp.isspmatrix_csc(X):
+    if sp.issparse(X) and X.format == "csc":
         inplace_csr_row_scale(X.T, scale)
-    elif sp.isspmatrix_csr(X):
+    elif sp.issparse(X) and X.format == "csr":
         inplace_csr_column_scale(X, scale)
     else:
         _raise_typeerror(X)
@@ -260,9 +260,9 @@ def inplace_row_scale(X, scale):
     scale : ndarray of shape (n_features,), dtype={np.float32, np.float64}
         Array of precomputed sample-wise values to use for scaling.
     """
-    if sp.isspmatrix_csc(X):
+    if sp.issparse(X) and X.format == "csc":
         inplace_csr_column_scale(X.T, scale)
-    elif sp.isspmatrix_csr(X):
+    elif sp.issparse(X) and X.format == "csr":
         inplace_csr_row_scale(X, scale)
     else:
         _raise_typeerror(X)
@@ -376,9 +376,9 @@ def inplace_swap_row(X, m, n):
     n : int
         Index of the row of X to be swapped.
     """
-    if sp.isspmatrix_csc(X):
+    if sp.issparse(X) and X.format == "csc":
         inplace_swap_row_csc(X, m, n)
-    elif sp.isspmatrix_csr(X):
+    elif sp.issparse(X) and X.format == "csr":
         inplace_swap_row_csr(X, m, n)
     else:
         _raise_typeerror(X)
@@ -404,9 +404,9 @@ def inplace_swap_column(X, m, n):
         m += X.shape[1]
     if n < 0:
         n += X.shape[1]
-    if sp.isspmatrix_csc(X):
+    if sp.issparse(X) and X.format == "csc":
         inplace_swap_row_csr(X, m, n)
-    elif sp.isspmatrix_csr(X):
+    elif sp.issparse(X) and X.format == "csr":
         inplace_swap_row_csc(X, m, n)
     else:
         _raise_typeerror(X)
@@ -505,7 +505,7 @@ def min_max_axis(X, axis, ignore_nan=False):
     maxs : ndarray of shape (n_features,), dtype={np.float32, np.float64}
         Feature-wise maxima.
     """
-    if sp.isspmatrix_csr(X) or sp.isspmatrix_csc(X):
+    if sp.issparse(X) and X.format in ("csr", "csc"):
         if ignore_nan:
             return _sparse_nan_min_max(X, axis=axis)
         else:
@@ -614,7 +614,7 @@ def csc_median_axis_0(X):
     median : ndarray of shape (n_features,)
         Median.
     """
-    if not sp.isspmatrix_csc(X):
+    if not (sp.issparse(X) and X.format == "csc"):
         raise TypeError("Expected matrix of CSC format, got %s" % X.format)
 
     indptr = X.indptr
