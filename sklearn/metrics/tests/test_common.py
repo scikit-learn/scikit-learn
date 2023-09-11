@@ -1760,7 +1760,7 @@ def check_array_api_binary_classification_metric(
     check_array_api_metric(
         metric, array_namespace, device, dtype, y_true_np=y_true_np, y_pred_np=y_pred_np
     )
-    if signature(metric).parameters.get("sample_weight"):
+    if "sample_weight" in signature(metric).parameters:
         check_array_api_metric(
             metric,
             array_namespace,
