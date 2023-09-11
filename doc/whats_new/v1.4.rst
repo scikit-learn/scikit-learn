@@ -304,7 +304,7 @@ Changelog
   the sparse SciPy module. The current implementation would fail if `copy=True` by
   calling specific NumPy `np.may_share_memory` that does not work with SciPy sparse
   array and does not return the correct result for SciPy sparse matrix.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`27336` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Code and Documentation Contributors
 -----------------------------------
