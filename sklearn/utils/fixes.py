@@ -15,6 +15,7 @@ from importlib import resources
 
 import numpy as np
 import scipy
+import scipy.sparse.linalg
 import scipy.stats
 import threadpoolctl
 
@@ -129,6 +130,19 @@ def _mode(a, axis=0):
     return scipy.stats.mode(a, axis=axis)
 
 
+# TODO: Remove when Scipy 1.12 is the minimum supported version
+if sp_base_version >= parse_version("1.12.0"):
+    _sparse_linalg_cg = scipy.sparse.linalg.cg
+else:
+
+    def _sparse_linalg_cg(A, b, **kwargs):
+        if "rtol" in kwargs:
+            kwargs["tol"] = kwargs.pop("rtol")
+        if "atol" not in kwargs:
+            kwargs["atol"] = "legacy"
+        return scipy.sparse.linalg.cg(A, b, **kwargs)
+
+
 ###############################################################################
 # Backport of Python 3.9's importlib.resources
 # TODO: Remove when Python 3.9 is the minimum supported version
@@ -183,6 +197,13 @@ def _contents(data_module):
 # For +1.25 NumPy versions exceptions and warnings are being moved
 # to a dedicated submodule.
 if np_version >= parse_version("1.25.0"):
-    from numpy.exceptions import VisibleDeprecationWarning
+    from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 else:
-    from numpy import VisibleDeprecationWarning  # type: ignore  # noqa
+    from numpy import ComplexWarning, VisibleDeprecationWarning  # type: ignore  # noqa
+
+
+# TODO: Remove when Scipy 1.6 is the minimum supported version
+try:
+    from scipy.integrate import trapezoid  # type: ignore  # noqa
+except ImportError:
+    from scipy.integrate import trapz as trapezoid  # type: ignore  # noqa

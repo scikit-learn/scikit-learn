@@ -24,6 +24,13 @@ random sampling procedures.
   and has been fixed.
   :pr:`26416` by :user:`Yang Tao <mchikyt3>`.
 
+- |Fix| Ridge models with `solver='sparse_cg'` may have slightly different
+  results with scipy>=1.12, because of an underlying change in the scipy solver
+  (see `scipy#18488 <https://github.com/scipy/scipy/pull/18488>`_ for more
+  details)
+  :pr:`26814` by :user:`Loïc Estève <lesteve>`
+
+
 Changes impacting all modules
 -----------------------------
 
@@ -71,6 +78,17 @@ Changelog
   and all metadata are passed as keyword arguments. :pr:`26909` by `Adrin
   Jalali`_.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| :class:`calibration.CalibratedClassifierCV` can now handle models that
+  produce large prediction scores. Before it was numerically unstable.
+  :pr:`26913` by :user:`Omar Salman <OmarManzoor>`.
+
+- |Enhancement| The internal objective and gradient of the `sigmoid` method
+  of :class:`calibration.CalibratedClassifierCV` have been replaced by the
+  private loss module. :pr:`27185` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.cluster`
 ............................
 
@@ -79,6 +97,13 @@ Changelog
   :class:`cluster.HDBSCAN` ensuring consistency in naming convention.
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
+:mod:`sklearn.compose`
+......................
+
+- |Enhancement| :class:`~compose.ColumnTransformer` now supports metadata routing
+  according to :ref:`metadata routing user guide <metadata_routing>`. :pr:`27005`
+  by `Adrin Jalali`_.
 
 :mod:`sklearn.cross_decomposition`
 ..................................
@@ -100,8 +125,13 @@ Changelog
 - |Enhancement| :class:`decomposition.PCA` now supports the Array API for the
   `full` and `randomized` solvers (with QR power iterations). See
   :ref:`array_api` for more details.
-  :pr:`26315` by :user:`Mateusz Sokół <mtsokol>` and
-  :user:`Olivier Grisel <ogrisel>`.
+  :pr:`26315` and :pr:`27098` by :user:`Mateusz Sokół <mtsokol>`,
+  :user:`Olivier Grisel <ogrisel>` and :user:`Edoardo Abati <EdAbati>`.
+
+- |Enhancement| :func:`decomposition.non_negative_factorization`, :class:`decomposition.NMF`,
+  and :class:`decomposition.MiniBatchNMF` now support :class:`scipy.sparse.sparray`
+  subclasses.
+  :pr:`27100` by :user:`Isaac Virshup <ivirshup>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -119,6 +149,15 @@ Changelog
   Missing values in the train data and multi-output targets are not supported.
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
   initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
+
+- |API| In :class:`AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
+  deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
+  <StefanieSenger>`.
+
+- |Efficiency| :class:`ensemble.GradientBoostingClassifier` is faster,
+  for binary and in particular for multiclass problems thanks to the private loss
+  function module.
+  :pr:`26278` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Efficiency| Improves runtime and memory usage for
   :class:`ensemble.GradientBoostingClassifier` and
@@ -148,6 +187,12 @@ Changelog
   to :ref:`metadata routing user guide <metadata_routing>`. :pr:`26789` by
   `Adrin Jalali`_.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| :class:`preprocessing.TargetEncoder` now supports `target_type`
+  'multiclass'. :pr:`26674` by :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -166,6 +211,9 @@ Changelog
   parameter is also not accepted as a separate argument when metadata routing
   is enabled and should be passed via the `params` parameter. :pr:`26896` by
   `Adrin Jalali`_.
+
+- |Enhancement| :func:`sklearn.model_selection.train_test_split` now supports
+  Array API compatible inputs. :pr:`26855` by `Tim Head`_.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -190,8 +238,11 @@ Changelog
   when `sparse_output=True` and the output is configured to be pandas.
   :pr:`26931` by `Thomas Fan`_.
 
-- |Enhancement| :func:`sklearn.model_selection.train_test_split` now supports
-  Array API compatible inputs. :pr:`26855` by `Tim Head`_.
+- |MajorFeature| :class:`preprocessing.MinMaxScaler` and :class:`preprocessing.MaxAbsScaler` now
+  support the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
+  support is considered experimental and might evolve without being subject to
+  our usual rolling deprecation cycle policy. See
+  :ref:`array_api` for more details. :pr:`26243` by `Tim Head`_ and :pr:`27110` by :user:`Edoardo Abati <EdAbati>`.
 
 :mod:`sklearn.tree`
 ...................
@@ -225,6 +276,15 @@ Changelog
   for CSR × CSR, Dense × CSR, and CSR × Dense now uses ~50% less memory,
   and outputs distances in the same dtype as the provided data.
   :pr:`27006` by :user:`Meekail Zain <micky774>`
+
+- |Enhancement| Improve the rendering of the plot obtained with the
+  :class:`metrics.PrecisionRecallDisplay` and :class:`metrics.RocCurveDisplay`
+  classes. the x- and y-axis limits are set to [0, 1] and the aspect ratio between
+  both axis is set to be 1 to get a square plot.
+  :pr:`26366` by :user:`Mojdeh Rastgoo <mrastgoo>`.
+
+- |Enhancement| :func:`sklearn.metrics.accuracy_score` and :func:`sklearn.metrics.zero_one_loss` now support
+  Array API compatible inputs. :pr:`27137` by :user:`Edoardo Abati <EdAbati>`.
 
 :mod:`sklearn.utils`
 ....................
