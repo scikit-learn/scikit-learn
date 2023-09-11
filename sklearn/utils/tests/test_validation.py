@@ -374,7 +374,7 @@ def test_check_array():
             + DOK_CONTAINERS
         ]
     )
-    Xs.extend([Xs[0].astype(int), Xs[0].astype(float)])
+    Xs.extend([Xs[0].astype(np.int64), Xs[0].astype(np.float64)])
 
     accept_sparses = [["csr", "coo"], ["coo", "dok"]]
     # scipy sparse matrices do not support the object dtype so
