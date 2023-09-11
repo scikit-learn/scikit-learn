@@ -54,7 +54,8 @@ X, true_labels = make_blobs(
     n_samples=n_samples, centers=centers, cluster_std=1.0, random_state=42
 )
 X_csr_containers = [container(X) for container in CSR_CONTAINERS]
-parametrize_ids = (
+data_containers = [np.array] + CSR_CONTAINERS
+data_containers_ids = (
     ["dense", "sparse_matrix", "sparse_array"]
     if len(X_csr_containers) == 2
     else ["dense", "sparse_matrix"]
