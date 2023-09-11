@@ -256,6 +256,9 @@ class SimpleImputer(_BaseImputer):
     [[ 7.   2.   3. ]
      [ 4.   3.5  6. ]
      [10.   3.5  9. ]]
+
+    For a more detailed example see
+    :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
     """
 
     _parameter_constraints: dict = {

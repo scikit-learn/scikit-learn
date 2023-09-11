@@ -22,9 +22,14 @@ from sklearn.datasets import (
     make_multilabel_classification,
 )
 from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.exceptions import FitFailedWarning
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LinearRegression, Ridge, SGDClassifier
+from sklearn.linear_model import (
+    LinearRegression,
+    Ridge,
+    SGDClassifier,
+)
 from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
@@ -51,11 +56,15 @@ from sklearn.model_selection import (
     train_test_split,
 )
 from sklearn.model_selection._search import BaseSearchCV
-from sklearn.model_selection._validation import FitFailedWarning
 from sklearn.model_selection.tests.common import OneTimeSplitter
 from sklearn.neighbors import KernelDensity, KNeighborsClassifier, LocalOutlierFactor
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC, LinearSVC
+from sklearn.tests.metadata_routing_common import (
+    ConsumingScorer,
+    _Registry,
+    check_recorded_metadata,
+)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 from sklearn.utils._testing import (
@@ -68,6 +77,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
+from sklearn.utils.validation import _num_samples
 
 
 # Neither of the following two estimators inherit from BaseEstimator,
@@ -2449,3 +2459,70 @@ def test_search_estimator_param(SearchCV, param_search):
     assert params["clf"][0].C == orig_C
     # testing that the GS is setting the parameter of the step correctly
     assert gs.best_estimator_.named_steps["clf"].C == 0.01
+
+
+# Metadata Routing Tests
+# ======================
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize(
+    "SearchCV, param_search",
+    [
+        (GridSearchCV, "param_grid"),
+        (RandomizedSearchCV, "param_distributions"),
+    ],
+)
+def test_multi_metric_search_forwards_metadata(SearchCV, param_search):
+    """Test that *SearchCV forwards metadata correctly when passed multiple metrics."""
+    X, y = make_classification(random_state=42)
+    n_samples = _num_samples(X)
+    rng = np.random.RandomState(0)
+    score_weights = rng.rand(n_samples)
+    score_metadata = rng.rand(n_samples)
+
+    est = LinearSVC(dual="auto")
+    param_grid_search = {param_search: {"C": [1]}}
+
+    scorer_registry = _Registry()
+    scorer = ConsumingScorer(registry=scorer_registry).set_score_request(
+        sample_weight="score_weights", metadata="score_metadata"
+    )
+    scoring = dict(my_scorer=scorer, accuracy="accuracy")
+    SearchCV(est, refit="accuracy", cv=2, scoring=scoring, **param_grid_search).fit(
+        X, y, score_weights=score_weights, score_metadata=score_metadata
+    )
+    assert len(scorer_registry)
+    for _scorer in scorer_registry:
+        check_recorded_metadata(
+            obj=_scorer,
+            method="score",
+            split_params=("sample_weight", "metadata"),
+            sample_weight=score_weights,
+            metadata=score_metadata,
+        )
+
+
+@pytest.mark.parametrize(
+    "SearchCV, param_search",
+    [
+        (GridSearchCV, "param_grid"),
+        (RandomizedSearchCV, "param_distributions"),
+        (HalvingGridSearchCV, "param_grid"),
+    ],
+)
+def test_score_rejects_params_with_no_routing_enabled(SearchCV, param_search):
+    """*SearchCV should reject **params when metadata routing is not enabled
+    since this is added only when routing is enabled."""
+    X, y = make_classification(random_state=42)
+    est = LinearSVC(dual="auto")
+    param_grid_search = {param_search: {"C": [1]}}
+
+    gs = SearchCV(est, cv=2, **param_grid_search).fit(X, y)
+
+    with pytest.raises(ValueError, match="is only supported if"):
+        gs.score(X, y, metadata=1)
+
+
+# End of Metadata Routing Tests
+# =============================
