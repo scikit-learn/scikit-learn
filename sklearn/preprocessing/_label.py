@@ -31,7 +31,7 @@ __all__ = [
 ]
 
 
-class LabelEncoder(TransformerMixin, BaseEstimator):
+class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
     """Encode target labels with value between 0 and n_classes-1.
 
     This transformer should be used to encode target values, *i.e.* `y`, and
@@ -165,7 +165,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         return {"X_types": ["1dlabels"]}
 
 
-class LabelBinarizer(TransformerMixin, BaseEstimator):
+class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
     """Binarize labels in a one-vs-all fashion.
 
     Several regression and binary classification algorithms are
@@ -553,7 +553,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         y = column_or_1d(y)
 
         # pick out the known labels from y
-        y_in_classes = np.in1d(y, classes)
+        y_in_classes = np.isin(y, classes)
         y_seen = y[y_in_classes]
         indices = np.searchsorted(sorted_class, y_seen)
         indptr = np.hstack((0, np.cumsum(y_in_classes)))
@@ -685,7 +685,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
         raise ValueError("{0} format is not supported".format(output_type))
 
 
-class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
+class MultiLabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
     """Transform between iterable of iterables and a multilabel format.
 
     Although a list of sets or tuples is a very intuitive format for multilabel
