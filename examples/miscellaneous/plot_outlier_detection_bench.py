@@ -122,13 +122,11 @@ import numpy as np
 from sklearn.datasets import fetch_kddcup99
 from sklearn.model_selection import train_test_split
 
-rng = np.random.RandomState(42)
-
 X, y = fetch_kddcup99(
-    subset="SA", percent10=True, random_state=rng, return_X_y=True, as_frame=True
+    subset="SA", percent10=True, random_state=42, return_X_y=True, as_frame=True
 )
 y = (y != b"normal.").astype(np.int32)
-X, _, y, _ = train_test_split(X, y, train_size=0.1, stratify=y, random_state=rng)
+X, _, y, _ = train_test_split(X, y, train_size=0.1, stratify=y, random_state=42)
 
 n_samples, anomaly_frac = X.shape[0], y.mean()
 print(f"{n_samples} datapoints with {y.sum()} anomalies ({anomaly_frac:.02%})")
@@ -149,7 +147,7 @@ for model_name in model_names:
         name=model_name,
         categorical_columns=cat_columns,
         lof_kw={"n_neighbors": int(n_samples * anomaly_frac)},
-        iforest_kw={"random_state": rng},
+        iforest_kw={"random_state": 42},
     )
     y_pred[model_name]["KDDCup99 - SA"] = fit_predict(model, X)
 
@@ -172,7 +170,7 @@ X = X.loc[s]
 y = y.loc[s]
 y = (y != 2).astype(np.int32)
 
-X, _, y, _ = train_test_split(X, y, train_size=0.05, stratify=y, random_state=rng)
+X, _, y, _ = train_test_split(X, y, train_size=0.05, stratify=y, random_state=42)
 X_forestcover = X  # save X for later use
 
 n_samples, anomaly_frac = X.shape[0], y.mean()
@@ -184,7 +182,7 @@ for model_name in model_names:
     model = make_estimator(
         name=model_name,
         lof_kw={"n_neighbors": int(n_samples * anomaly_frac)},
-        iforest_kw={"random_state": rng},
+        iforest_kw={"random_state": 42},
     )
     y_pred[model_name]["forestcover"] = fit_predict(model, X)
 
@@ -243,7 +241,7 @@ for model_name in model_names:
         name=model_name,
         categorical_columns=cat_columns,
         lof_kw={"n_neighbors": int(n_samples * anomaly_frac)},
-        iforest_kw={"random_state": rng},
+        iforest_kw={"random_state": 42},
     )
     y_pred[model_name]["ames_housing"] = fit_predict(model, X)
 
@@ -274,7 +272,7 @@ for model_name in model_names:
     model = make_estimator(
         name=model_name,
         lof_kw={"n_neighbors": int(n_samples * anomaly_frac)},
-        iforest_kw={"random_state": rng},
+        iforest_kw={"random_state": 42},
     )
     y_pred[model_name]["cardiotocography"] = fit_predict(model, X)
 
