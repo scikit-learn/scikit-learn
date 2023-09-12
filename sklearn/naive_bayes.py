@@ -1756,7 +1756,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     _required_parameters = ["nb_estimators"]
 
     _parameter_constraints = {
-        "nb_estimators": "no_validation",
+        "nb_estimators": [list],
         "priors": ["array-like", str, None],
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
