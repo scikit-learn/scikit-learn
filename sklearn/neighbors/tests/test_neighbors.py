@@ -66,13 +66,13 @@ perm = rng.permutation(digits.target.size)
 digits.data = digits.data[perm]
 digits.target = digits.target[perm]
 
-SPARSE_TYPES = (
-    *BSR_CONTAINERS,
-    *COO_CONTAINERS,
-    *CSC_CONTAINERS,
-    *CSR_CONTAINERS,
-    *DOK_CONTAINERS,
-    *LIL_CONTAINERS,
+SPARSE_TYPES = tuple(
+    BSR_CONTAINERS
+    + COO_CONTAINERS
+    + CSC_CONTAINERS
+    + CSR_CONTAINERS
+    + DOK_CONTAINERS
+    + LIL_CONTAINERS
 )
 SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
@@ -564,7 +564,7 @@ def test_sort_graph_by_row_values_warning(csr_container):
 
 
 @pytest.mark.parametrize(
-    "sparse_container", [*DOK_CONTAINERS, *BSR_CONTAINERS, *DIA_CONTAINERS]
+    "sparse_container", DOK_CONTAINERS + BSR_CONTAINERS + DIA_CONTAINERS
 )
 def test_sort_graph_by_row_values_bad_sparse_format(sparse_container):
     # Test that sort_graph_by_row_values and _check_precomputed error on bad formats
@@ -1388,7 +1388,7 @@ def test_kneighbors_regressor_sparse(
             assert np.mean(knn.predict(X2).round() == y) > 0.95
 
             X2_pre = sparsev(pairwise_distances(X, metric="euclidean"))
-            if sparsev in [*DOK_CONTAINERS, *BSR_CONTAINERS]:
+            if sparsev in DOK_CONTAINERS + BSR_CONTAINERS:
                 msg = "not supported due to its handling of explicit zeros"
                 with pytest.raises(TypeError, match=msg):
                     knn_pre.predict(X2_pre)
