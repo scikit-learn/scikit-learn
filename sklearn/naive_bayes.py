@@ -1565,19 +1565,19 @@ class _select_half:
 
 
 def _nb_estimators_have(attr):
-    """Check if all self.nb_estimators or self.nb_estimators_ have attr.
+    """Check if all self.estimators or self.nb_estimators_ have attr.
 
     Used together with `available_if` in `ColumnwiseNB`."""
 
     # This function is used with `_available_if` before validation.
     # The try statement suppresses errors caused by incorrect specification of
-    # self.nb_estimators. Informative errors are raised at validation elsewhere.
+    # self.estimators. Informative errors are raised at validation elsewhere.
     def chk(obj):
         try:
             if hasattr(obj, "nb_estimators_"):
                 out = all(hasattr(triplet[1], attr) for triplet in obj.nb_estimators_)
             else:
-                out = all(hasattr(triplet[1], attr) for triplet in obj.nb_estimators)
+                out = all(hasattr(triplet[1], attr) for triplet in obj.estimators)
         except (TypeError, IndexError, AttributeError):
             return False
         return out
@@ -1628,7 +1628,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
 
     Parameters
     ----------
-    nb_estimators : list of tuples
+    estimators : list of tuples
         List of `(name, naive_bayes_estimator, columns)` tuples specifying the naive
         Bayes estimators to be combined into a single naive Bayes meta-estimator.
 
@@ -1742,21 +1742,21 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     >>> X = rng.randint(5, size=(6, 100))
     >>> y = np.array([0, 0, 1, 1, 2, 2])
     >>> from sklearn.naive_bayes import MultinomialNB, GaussianNB, ColumnwiseNB
-    >>> clf = ColumnwiseNB(nb_estimators=[('mnb1', MultinomialNB(), [0, 1]),
+    >>> clf = ColumnwiseNB(estimators=[('mnb1', MultinomialNB(), [0, 1]),
     ...                                   ('mnb2', MultinomialNB(), [3, 4]),
     ...                                   ('gnb1', GaussianNB(), [5])])
     >>> clf.fit(X, y)
-    ColumnwiseNB(nb_estimators=[('mnb1', MultinomialNB(), [0, 1]),
+    ColumnwiseNB(estimators=[('mnb1', MultinomialNB(), [0, 1]),
                             ('mnb2', MultinomialNB(), [3, 4]),
                             ('gnb1', GaussianNB(), [5])])
     >>> print(clf.predict(X))
     [0 0 1 0 2 2]
     """
 
-    _required_parameters = ["nb_estimators"]
+    _required_parameters = ["estimators"]
 
     _parameter_constraints = {
-        "nb_estimators": [list],
+        "estimators": [list],
         "priors": ["array-like", str, None],
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
@@ -1767,8 +1767,8 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             return None
         return f"({idx} of {total}) Processing {name}"
 
-    def __init__(self, nb_estimators, *, priors=None, n_jobs=None, verbose=False):
-        self.nb_estimators = nb_estimators
+    def __init__(self, estimators, *, priors=None, n_jobs=None, verbose=False):
+        self.estimators = estimators
         self.priors = priors
         self.n_jobs = n_jobs
         self.verbose = verbose
@@ -1809,7 +1809,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
 
     def _validate_estimators(self, check_partial=False):
         try:
-            names, estimators, _ = zip(*self.nb_estimators)
+            names, estimators, _ = zip(*self.estimators)
         except (TypeError, AttributeError, ValueError) as exc:
             raise ValueError(
                 "A list of naive Bayes estimators must be provided "
@@ -1838,7 +1838,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         """
         all_columns = []
         estimator_to_input_indices = {}
-        for name, _, columns in self.nb_estimators:
+        for name, _, columns in self.estimators:
             if callable(columns):
                 columns = columns(X)
             all_columns.append(columns)
@@ -1898,7 +1898,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
                 else:
                     yield (name, estimator, cols)
         else:  # fitted=False
-            for (name, estimator, _), cols in zip(self.nb_estimators, self._columns):
+            for (name, estimator, _), cols in zip(self.estimators, self._columns):
                 if replace_strings and _is_empty_column_selection(cols):
                     continue
                 else:
@@ -2010,7 +2010,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         return self
 
     @_fit_context(
-        # estimators in ColumnwiseNB.nb_estimators are not validated yet
+        # estimators in ColumnwiseNB.estimators are not validated yet
         prefer_skip_nested_validation=False
     )
     def fit(self, X, y, sample_weight=None):
@@ -2084,25 +2084,24 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         which expects lists of tuples of len 2.
         """
         try:
-            return [(name, e) for name, e, _ in self.nb_estimators]
+            return [(name, e) for name, e, _ in self.estimators]
         except (TypeError, ValueError):
             # This try-except clause is needed to pass the test from test_common.py:
             # test_estimators_do_not_raise_errors_in_init_or_set_params().
             # ColumnTransformer does the same. See PR #21355 for details.
-            return self.nb_estimators
+            return self.estimators
 
     @_estimators.setter
     def _estimators(self, value):
-        self.nb_estimators = [
-            (name, e, col)
-            for ((name, e), (_, _, col)) in zip(value, self.nb_estimators)
+        self.estimators = [
+            (name, e, col) for ((name, e), (_, _, col)) in zip(value, self.estimators)
         ]
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
         Returns the parameters listed in the constructor as well as the
-        subestimators contained within the `nb_estimators` of the `ColumnwiseNB`
+        subestimators contained within the `estimators` of the `ColumnwiseNB`
         instance.
 
         Parameters
@@ -2123,7 +2122,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
 
         Valid parameter keys can be listed with `get_params()`. Note that you
         can directly set the parameters of the estimators contained in
-        `nb_estimators` of `ColumnwiseNB`.
+        `estimators` of `ColumnwiseNB`.
 
         Parameters
         ----------
@@ -2140,7 +2139,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
 
     def _sk_visual_block_(self):
         """HTML representation of this estimator."""
-        names, estimators, name_details = zip(*self.nb_estimators)
+        names, estimators, name_details = zip(*self.estimators)
         return _VisualBlock(
             "parallel", estimators, names=names, name_details=name_details
         )

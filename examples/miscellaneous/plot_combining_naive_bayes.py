@@ -66,7 +66,7 @@ preprocessor = ColumnTransformer(
 )
 
 classifier = ColumnwiseNB(
-    nb_estimators=[
+    estimators=[
         ("gnb", GaussianNB(), numeric_features),
         ("cnb", CategoricalNB(), categorical_features),
     ]
