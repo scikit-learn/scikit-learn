@@ -394,7 +394,7 @@ def _incr_mean_variance_axis0(
     floating n_samples,
     uint64_t n_features,
     const int[:] X_indices,
-    # X_indptr might be either in32 or int64
+    # X_indptr might be either int32 or int64
     const integral[:] X_indptr,
     str X_format,
     floating[:] last_mean,
