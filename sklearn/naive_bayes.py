@@ -1629,8 +1629,8 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     Parameters
     ----------
     nb_estimators : list of tuples
-        List of `(name, naive_bayes_estimator, columns)` tuples specifying the naive Bayes
-        estimators to be combined into a single naive Bayes meta-estimator.
+        List of `(name, naive_bayes_estimator, columns)` tuples specifying the naive
+        Bayes estimators to be combined into a single naive Bayes meta-estimator.
 
         name : str
             Name of the naive Bayes estimator, by which the subestimator and
