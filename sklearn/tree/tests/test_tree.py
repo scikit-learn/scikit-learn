@@ -1319,7 +1319,7 @@ def check_sparse_input(tree, dataset, max_depth=None):
         X = X[:n_samples]
         y = y[:n_samples]
 
-    for sparse_container in [*COO_CONTAINERS, *CSC_CONTAINERS, *CSR_CONTAINERS]:
+    for sparse_container in COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS:
         X_sparse = sparse_container(X)
 
         # Check the default (depth first search)
@@ -1337,11 +1337,7 @@ def check_sparse_input(tree, dataset, max_depth=None):
             y_proba = d.predict_proba(X)
             y_log_proba = d.predict_log_proba(X)
 
-        for sparse_container_test in [
-            *COO_CONTAINERS,
-            *CSC_CONTAINERS,
-            *CSR_CONTAINERS,
-        ]:
+        for sparse_container_test in COO_CONTAINERS + CSR_CONTAINERS + CSC_CONTAINERS:
             X_sparse_test = sparse_container_test(X_sparse, dtype=np.float32)
 
             assert_array_almost_equal(s.predict(X_sparse_test), y_pred)
@@ -1383,7 +1379,7 @@ def test_sparse_input_reg_trees(tree_type, dataset):
 @pytest.mark.parametrize("tree_type", SPARSE_TREES)
 @pytest.mark.parametrize("dataset", ["sparse-pos", "sparse-neg", "sparse-mix", "zeros"])
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
-def test_sparse_parameters_and_criterion(tree_type, dataset, csc_container):
+def test_sparse_parameters(tree_type, dataset, csc_container):
     TreeEstimator = ALL_TREES[tree_type]
     X = DATASETS[dataset]["X"]
     X_sparse = csc_container(X)
@@ -1433,20 +1429,31 @@ def test_sparse_parameters_and_criterion(tree_type, dataset, csc_container):
     )
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
-    # Check various criterion
-    CRITERIONS = REG_CRITERIONS if tree_type in REG_TREES else CLF_CRITERIONS
-    for criterion in CRITERIONS:
-        d = TreeEstimator(random_state=0, max_depth=3, criterion=criterion).fit(X, y)
-        s = TreeEstimator(random_state=0, max_depth=3, criterion=criterion).fit(
-            X_sparse, y
-        )
 
-        assert_tree_equal(
-            d.tree_,
-            s.tree_,
-            "{0} with dense and sparse format gave different trees".format(tree_type),
-        )
-        assert_array_almost_equal(s.predict(X), d.predict(X))
+@pytest.mark.parametrize(
+    "tree_type,criterion",
+    [
+        *product(set(SPARSE_TREES).intersection(set(REG_TREES)), REG_CRITERIONS),
+        *product(set(SPARSE_TREES).difference(set(REG_TREES)), CLF_CRITERIONS),
+    ],
+)
+@pytest.mark.parametrize("dataset", ["sparse-pos", "sparse-neg", "sparse-mix", "zeros"])
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_sparse_criteria(tree_type, dataset, csc_container, criterion):
+    TreeEstimator = ALL_TREES[tree_type]
+    X = DATASETS[dataset]["X"]
+    X_sparse = csc_container(X)
+    y = DATASETS[dataset]["y"]
+
+    d = TreeEstimator(random_state=0, max_depth=3, criterion=criterion).fit(X, y)
+    s = TreeEstimator(random_state=0, max_depth=3, criterion=criterion).fit(X_sparse, y)
+
+    assert_tree_equal(
+        d.tree_,
+        s.tree_,
+        "{0} with dense and sparse format gave different trees".format(tree_type),
+    )
+    assert_array_almost_equal(s.predict(X), d.predict(X))
 
 
 @pytest.mark.parametrize("tree_type", SPARSE_TREES)
@@ -1478,7 +1485,8 @@ def test_explicit_sparse_zeros(tree_type, csc_container, csr_container):
         offset += n_nonzero_i
         indptr.append(offset)
 
-    indices = np.concatenate(indices)
+    indices = np.concatenate(indices).astype(np.int32)
+    indptr = np.array(indptr, dtype=np.int32)
     data = np.array(np.concatenate(data), dtype=np.float32)
     X_sparse = csc_container((data, indices, indptr), shape=(n_samples, n_features))
     X = X_sparse.toarray()
