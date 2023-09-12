@@ -24,10 +24,10 @@ cdef struct Node:
     intp_t left_child                    # id of the left child of the node
     intp_t right_child                   # id of the right child of the node
     intp_t feature                       # Feature used for splitting the node
-    float64_t threshold                   # Threshold value at the node
-    float64_t impurity                    # Impurity of the node (i.e., the value of the criterion)
+    float64_t threshold                  # Threshold value at the node
+    float64_t impurity                   # Impurity of the node (i.e., the value of the criterion)
     intp_t n_node_samples                # Number of samples at the node
-    float64_t weighted_n_node_samples     # Weighted number of samples at the node
+    float64_t weighted_n_node_samples    # Weighted number of samples at the node
     unsigned char missing_go_to_left     # Whether features have missing values
 
 

@@ -51,7 +51,7 @@ cdef class Splitter:
     cdef intp_t[::1] features            # Feature indices in X
     cdef intp_t[::1] constant_features   # Constant features indices
     cdef intp_t n_features               # X.shape[1]
-    cdef float32_t[::1] feature_values     # temp. array holding feature values
+    cdef float32_t[::1] feature_values   # temp. array holding feature values
 
     cdef intp_t start                    # Start position for the current node
     cdef intp_t end                      # End position for the current node

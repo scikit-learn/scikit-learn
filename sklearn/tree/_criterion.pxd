@@ -22,21 +22,21 @@ cdef class Criterion:
     cdef const float64_t[:, ::1] y         # Values of y
     cdef const float64_t[:] sample_weight  # Sample weights
 
-    cdef const intp_t[:] sample_indices   # Sample indices in X, y
-    cdef intp_t start                     # samples[start:pos] are the samples in the left node
-    cdef intp_t pos                       # samples[pos:end] are the samples in the right node
+    cdef const intp_t[:] sample_indices    # Sample indices in X, y
+    cdef intp_t start                      # samples[start:pos] are the samples in the left node
+    cdef intp_t pos                        # samples[pos:end] are the samples in the right node
     cdef intp_t end
-    cdef intp_t n_missing                # Number of missing values for the feature being evaluated
-    cdef bint missing_go_to_left         # Whether missing values go to the left node
+    cdef intp_t n_missing                  # Number of missing values for the feature being evaluated
+    cdef bint missing_go_to_left           # Whether missing values go to the left node
 
-    cdef intp_t n_outputs                 # Number of outputs
-    cdef intp_t n_samples                 # Number of samples
-    cdef intp_t n_node_samples            # Number of samples in the node (end-start)
-    cdef double weighted_n_samples        # Weighted number of samples (in total)
-    cdef double weighted_n_node_samples   # Weighted number of samples in the node
-    cdef double weighted_n_left           # Weighted number of samples in the left node
-    cdef double weighted_n_right          # Weighted number of samples in the right node
-    cdef double weighted_n_missing       # Weighted number of samples that are missing
+    cdef intp_t n_outputs                  # Number of outputs
+    cdef intp_t n_samples                  # Number of samples
+    cdef intp_t n_node_samples             # Number of samples in the node (end-start)
+    cdef double weighted_n_samples         # Weighted number of samples (in total)
+    cdef double weighted_n_node_samples    # Weighted number of samples in the node
+    cdef double weighted_n_left            # Weighted number of samples in the left node
+    cdef double weighted_n_right           # Weighted number of samples in the right node
+    cdef double weighted_n_missing         # Weighted number of samples that are missing
 
     # The criterion object is maintained such that left and right collected
     # statistics correspond to samples[start:pos] and samples[pos:end].
