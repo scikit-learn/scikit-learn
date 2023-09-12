@@ -90,7 +90,7 @@ print(f"Test accuracy: {accuracy_score(y_test, y_pred)}")
 # of other hyperparameters with the help of :class:`~.model_selection.GridSearchCV`.
 
 param_grid = {
-    "classifier__nb_estimators": [
+    "classifier__estimators": [
         [
             ("gnb", GaussianNB(), ["age", "fare"]),
             ("cnb", CategoricalNB(), categorical_features),
@@ -119,7 +119,7 @@ print(grid_search.best_params_)
 
 cv_results = pd.DataFrame(grid_search.cv_results_)
 cv_results = cv_results.sort_values("mean_test_score", ascending=False)
-cv_results["Columns dictionary"] = cv_results["param_classifier__nb_estimators"].map(
+cv_results["Columns dictionary"] = cv_results["param_classifier__estimators"].map(
     lambda l: {e[0]: e[-1] for e in l}
 )
 cv_results["'gnb' columns"] = cv_results["Columns dictionary"].map(lambda d: d["gnb"])

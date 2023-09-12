@@ -1564,8 +1564,8 @@ class _select_half:
             return list(range((X.shape[1] + 1) // 2, X.shape[1]))
 
 
-def _nb_estimators_have(attr):
-    """Check if all self.estimators or self.nb_estimators_ have attr.
+def _estimators_have(attr):
+    """Check if all self.estimators or self.estimators_ have attr.
 
     Used together with `available_if` in `ColumnwiseNB`."""
 
@@ -1574,8 +1574,8 @@ def _nb_estimators_have(attr):
     # self.estimators. Informative errors are raised at validation elsewhere.
     def chk(obj):
         try:
-            if hasattr(obj, "nb_estimators_"):
-                out = all(hasattr(triplet[1], attr) for triplet in obj.nb_estimators_)
+            if hasattr(obj, "estimators_"):
+                out = all(hasattr(triplet[1], attr) for triplet in obj.estimators_)
             else:
                 out = all(hasattr(triplet[1], attr) for triplet in obj.estimators)
         except (TypeError, IndexError, AttributeError):
@@ -2041,7 +2041,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             X, y, partial=False, classes=None, sample_weight=sample_weight
         )
 
-    @available_if(_nb_estimators_have("partial_fit"))
+    @available_if(_estimators_have("partial_fit"))
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Fit incrementally the naive Bayes meta-estimator on a batch of samples.
 
