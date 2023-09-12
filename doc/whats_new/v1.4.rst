@@ -170,6 +170,13 @@ Changelog
 - |Fix| :func:`feature_selection.mutual_info_regression` now correctly computes the
   result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.kernel_approximation`
+...................................
+
+- |Enhancement| :func:`kernel_approximation.PolynomialCountSketch` now supports
+  :class:`scipy.sparse.sparray` subclasses.
+  :pr:`27301` by :user:`Lohit SundaramahaLingam <lohitslohit>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
