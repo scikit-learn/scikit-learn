@@ -9,15 +9,21 @@ from sklearn.base import BaseEstimator
 from sklearn.utils._array_api import (
     _ArrayAPIWrapper,
     _asarray_with_order,
+    _atol_for_type,
     _convert_to_numpy,
     _estimator_with_converted_arrays,
     _nanmax,
     _nanmin,
     _NumPyAPIWrapper,
+    _weighted_sum,
     get_namespace,
     supported_float_dtypes,
+    yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._testing import skip_if_array_api_compat_not_configured
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    skip_if_array_api_compat_not_configured,
+)
 
 pytestmark = pytest.mark.filterwarnings(
     "ignore:The numpy.array_api submodule:UserWarning"
@@ -162,6 +168,37 @@ def test_asarray_with_order_ignored():
     X_new_np = numpy.asarray(X_new)
     assert X_new_np.flags["C_CONTIGUOUS"]
     assert not X_new_np.flags["F_CONTIGUOUS"]
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "sample_weight, normalize, expected",
+    [
+        (None, False, 10.0),
+        (None, True, 2.5),
+        ([0.4, 0.4, 0.5, 0.7], False, 5.5),
+        ([0.4, 0.4, 0.5, 0.7], True, 2.75),
+        ([1, 2, 3, 4], False, 30.0),
+        ([1, 2, 3, 4], True, 3.0),
+    ],
+)
+def test_weighted_sum(
+    array_namespace, device, dtype, sample_weight, normalize, expected
+):
+    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
+    sample_score = numpy.asarray([1, 2, 3, 4], dtype=dtype)
+    sample_score = xp.asarray(sample_score, device=device)
+    if sample_weight is not None:
+        sample_weight = numpy.asarray(sample_weight, dtype=dtype)
+        sample_weight = xp.asarray(sample_weight, device=device)
+
+    with config_context(array_api_dispatch=True):
+        result = _weighted_sum(sample_score, sample_weight, normalize)
+
+    assert isinstance(result, float)
+    assert_allclose(result, expected, atol=_atol_for_type(dtype))
 
 
 @skip_if_array_api_compat_not_configured

@@ -7,7 +7,6 @@ from operator import attrgetter
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
-from scipy import sparse
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.compose import TransformedTargetRegressor
@@ -23,6 +22,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 class MockClassifier:
@@ -79,13 +79,14 @@ def test_rfe_features_importance():
     assert_array_equal(rfe.get_support(), rfe_svc.get_support())
 
 
-def test_rfe():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_rfe(csr_container):
     generator = check_random_state(0)
     iris = load_iris()
     # Add some irrelevant features. Random seed is set to make sure that
     # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
     y = iris.target
 
     # dense model
@@ -173,7 +174,8 @@ def test_rfe_mockclassifier():
     assert X_r.shape == iris.data.shape
 
 
-def test_rfecv():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_rfecv(csr_container):
     generator = check_random_state(0)
     iris = load_iris()
     # Add some irrelevant features. Random seed is set to make sure that
@@ -197,7 +199,7 @@ def test_rfecv():
 
     # same in sparse
     rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=1)
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
     assert_array_equal(X_r_sparse.toarray(), iris.data)
@@ -241,14 +243,14 @@ def test_rfecv():
     assert_array_equal(X_r, iris.data)
 
     rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=2)
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
     assert_array_equal(X_r_sparse.toarray(), iris.data)
 
     # Verifying that steps < 1 don't blow up.
     rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=0.2)
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
     assert_array_equal(X_r_sparse.toarray(), iris.data)
