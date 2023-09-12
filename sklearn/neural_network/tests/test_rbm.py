@@ -69,7 +69,7 @@ def test_small_sparse(csr_container):
     BernoulliRBM().fit(X)  # no exception
 
 
-@pytest.mark.parametrize("sparse_container", [*CSC_CONTAINERS, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
 def test_small_sparse_partial_fit(sparse_container):
     X_sparse = sparse_container(Xdigits[:100])
     X = Xdigits[:100].copy()
