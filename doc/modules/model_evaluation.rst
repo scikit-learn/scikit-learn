@@ -451,7 +451,7 @@ where :math:`1(x)` is the `indicator function
   >>> accuracy_score(y_true, y_pred)
   0.5
   >>> accuracy_score(y_true, y_pred, normalize=False)
-  2
+  2.0
 
 In the multilabel case with binary label indicators::
 
@@ -823,8 +823,8 @@ binary case. The :func:`average_precision_score` function supports multiclass
 and multilabel formats by computing each class score in a One-vs-the-rest (OvR)
 fashion and averaging them or not depending of its ``average`` argument value.
 
-The :func:`PredictionRecallDisplay.from_estimator` and
-:func:`PredictionRecallDisplay.from_predictions` functions will plot the
+The :func:`PrecisionRecallDisplay.from_estimator` and
+:func:`PrecisionRecallDisplay.from_predictions` functions will plot the
 precision-recall curve as follows.
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_precision_recall_001.png
@@ -1696,7 +1696,7 @@ loss can also be computed as :math:`zero-one loss = 1 - accuracy`.
   >>> zero_one_loss(y_true, y_pred)
   0.25
   >>> zero_one_loss(y_true, y_pred, normalize=False)
-  1
+  1.0
 
 In the multilabel case with binary label indicators, where the first label
 set [0,1] has an error::
@@ -1705,7 +1705,7 @@ set [0,1] has an error::
   0.5
 
   >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)),  normalize=False)
-  1
+  1.0
 
 .. topic:: Example:
 
@@ -2785,8 +2785,8 @@ model would grow with the predicted value of `E[y|X]` (either linearly for
 Poisson or quadratically for Gamma).
 
 When fitting a linear least squares regression model (see
-:class:`~sklearn.linear_mnodel.LinearRegression` and
-:class:`~sklearn.linear_mnodel.Ridge`), we can use this plot to check
+:class:`~sklearn.linear_model.LinearRegression` and
+:class:`~sklearn.linear_model.Ridge`), we can use this plot to check
 if some of the `model assumptions
 <https://en.wikipedia.org/wiki/Ordinary_least_squares#Assumptions>`_
 are met, in particular that the residuals should be uncorrelated, their

@@ -21,12 +21,10 @@ import joblib
 import numpy as np
 import scipy.sparse as sp
 
-# mypy error: Module 'numpy.core.numeric' has no attribute 'ComplexWarning'
-from numpy.core.numeric import ComplexWarning  # type: ignore
-
 from .. import get_config as _get_config
 from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
 from ..utils._array_api import _asarray_with_order, _is_numpy_namespace, get_namespace
+from ..utils.fixes import ComplexWarning
 from ._isfinite import FiniteStatus, cy_isfinite
 from .fixes import _object_dtype_isnan
 
@@ -964,6 +962,19 @@ def check_array(
                 allow_nan=force_all_finite == "allow-nan",
             )
 
+        if copy:
+            if _is_numpy_namespace(xp):
+                # only make a copy if `array` and `array_orig` may share memory`
+                if np.may_share_memory(array, array_orig):
+                    array = _asarray_with_order(
+                        array, dtype=dtype, order=order, copy=True, xp=xp
+                    )
+            else:
+                # always make a copy for non-numpy arrays
+                array = _asarray_with_order(
+                    array, dtype=dtype, order=order, copy=True, xp=xp
+                )
+
     if ensure_min_samples > 0:
         n_samples = _num_samples(array)
         if n_samples < ensure_min_samples:
@@ -982,19 +993,6 @@ def check_array(
                 % (n_features, array.shape, ensure_min_features, context)
             )
 
-    if copy:
-        if _is_numpy_namespace(xp):
-            # only make a copy if `array` and `array_orig` may share memory`
-            if np.may_share_memory(array, array_orig):
-                array = _asarray_with_order(
-                    array, dtype=dtype, order=order, copy=True, xp=xp
-                )
-        else:
-            # always make a copy for non-numpy arrays
-            array = _asarray_with_order(
-                array, dtype=dtype, order=order, copy=True, xp=xp
-            )
-
     return array
 
 
@@ -1002,9 +1000,9 @@ def _check_large_sparse(X, accept_large_sparse=False):
     """Raise a ValueError if X has 64bit indices and accept_large_sparse=False"""
     if not accept_large_sparse:
         supported_indices = ["int32"]
-        if X.getformat() == "coo":
+        if X.format == "coo":
             index_keys = ["col", "row"]
-        elif X.getformat() in ["csr", "csc", "bsr"]:
+        elif X.format in ["csr", "csc", "bsr"]:
             index_keys = ["indices", "indptr"]
         else:
             return
@@ -1076,7 +1074,8 @@ def check_X_y(
         performed if the dtype of the input is not in the list.
 
     order : {'F', 'C'}, default=None
-        Whether an array will be forced to be fortran or c-style.
+        Whether an array will be forced to be fortran or c-style. If
+        `None`, then the input data's order is preserved when possible.
 
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
@@ -1946,44 +1945,45 @@ def _check_response_method(estimator, response_method):
     return prediction_method
 
 
-def _check_fit_params(X, fit_params, indices=None):
-    """Check and validate the parameters passed during `fit`.
+def _check_method_params(X, params, indices=None):
+    """Check and validate the parameters passed to a specific
+    method like `fit`.
 
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
         Data array.
 
-    fit_params : dict
-        Dictionary containing the parameters passed at fit.
+    params : dict
+        Dictionary containing the parameters passed to the method.
 
     indices : array-like of shape (n_samples,), default=None
         Indices to be selected if the parameter has the same size as `X`.
 
     Returns
     -------
-    fit_params_validated : dict
+    method_params_validated : dict
         Validated parameters. We ensure that the values support indexing.
     """
     from . import _safe_indexing
 
-    fit_params_validated = {}
-    for param_key, param_value in fit_params.items():
+    method_params_validated = {}
+    for param_key, param_value in params.items():
         if not _is_arraylike(param_value) or _num_samples(param_value) != _num_samples(
             X
         ):
             # Non-indexable pass-through (for now for backward-compatibility).
             # https://github.com/scikit-learn/scikit-learn/issues/15805
-            fit_params_validated[param_key] = param_value
+            method_params_validated[param_key] = param_value
         else:
-            # Any other fit_params should support indexing
+            # Any other method_params should support indexing
             # (e.g. for cross-validation).
-            fit_params_validated[param_key] = _make_indexable(param_value)
-            fit_params_validated[param_key] = _safe_indexing(
-                fit_params_validated[param_key], indices
+            method_params_validated[param_key] = _make_indexable(param_value)
+            method_params_validated[param_key] = _safe_indexing(
+                method_params_validated[param_key], indices
             )
 
-    return fit_params_validated
+    return method_params_validated
 
 
 def _is_pandas_df(X):
@@ -2269,7 +2269,7 @@ def _check_pos_label_consistency(pos_label, y_true):
             or np.array_equal(classes, [1])
         )
     ):
-        classes_repr = ", ".join(repr(c) for c in classes)
+        classes_repr = ", ".join([repr(c) for c in classes.tolist()])
         raise ValueError(
             f"y_true takes value in {{{classes_repr}}} and pos_label is not "
             "specified: either make y_true take value in {0, 1} or "
