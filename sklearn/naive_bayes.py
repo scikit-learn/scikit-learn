@@ -1636,7 +1636,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             Name of the naive Bayes estimator, by which the subestimator and
             its parameters can be set using :term:`set_params` and searched in
             grid search.
-        nb_estimator : estimator
+        naive_bayes_estimator : estimator
             The estimator must support :term:`fit` or :term:`partial_fit`,
             depending on how the meta-estimator is fitted. In addition, the
             estimator must support `predict_joint_log_proba` method, which
@@ -1678,8 +1678,8 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         List of `(name, fitted_estimator, columns)` tuples, which follow
         the order of `estimators`. Here, `fitted_estimator` is a fitted naive
         Bayes estimator, except when `columns` presents an empty selection of
-        columns, in which case it is the original unfitted `nb_estimator`. If
-        the original specification of `columns` in `estimators` was a
+        columns, in which case it is the original unfitted `naive_bayes_estimator`.
+        If the original specification of `columns` in `estimators` was a
         callable, then `columns` is converted to a list of column indices.
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
@@ -1813,7 +1813,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         except (TypeError, AttributeError, ValueError) as exc:
             raise ValueError(
                 "A list of naive Bayes estimators must be provided "
-                "in the form [(name, nb_estimator, columns), ... ]."
+                "in the form [(name, naive_bayes_estimator, columns), ... ]."
             ) from exc
         for e in estimators:
             if (not check_partial) and (
@@ -1847,7 +1847,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         self._estimator_to_input_indices = estimator_to_input_indices
 
     def _iter(self, *, fitted=False, replace_strings=False):
-        """Generate `(name, nb_estimator, columns)` tuples.
+        """Generate `(name, naive_bayes_estimator, columns)` tuples.
 
         This is a private method, similar to ColumnTransformer._iter.
         Must not be called before _validate_column_callables.
@@ -1869,7 +1869,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         Yields
         ------
         tuple
-            of the form `(name, nb_estimator, columns)`.
+            of the form `(name, naive_bayes_estimator, columns)`.
 
         Notes
         -----
@@ -2016,9 +2016,9 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     def fit(self, X, y, sample_weight=None):
         """Fit the naive Bayes meta-estimator.
 
-        Calls `fit` of each subestimator `nb_estimator`.  Only a corresponding
-        subset of columns of `X` is passed to each subestimator; `sample_weight`
-        and `y` are passed to the subestimators as they are.
+        Calls `fit` of each subestimator `naive_bayes_estimator`.
+        Only a corresponding subset of columns of `X` is passed to each subestimator;
+        `sample_weight` and `y` are passed to the subestimators as they are.
 
         Parameters
         ----------
