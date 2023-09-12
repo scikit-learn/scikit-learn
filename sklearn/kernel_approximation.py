@@ -223,7 +223,7 @@ class PolynomialCountSketch(
                     iHashIndex = self.indexHash_[d, j]
                     iHashBit = self.bitHash_[d, j]
                     count_sketches[:, d, iHashIndex] += (
-                        (iHashBit * X_gamma[:, j]).toarray().ravel()
+                        (iHashBit * X_gamma[:, [j]]).toarray().ravel()
                     )
 
         else:
