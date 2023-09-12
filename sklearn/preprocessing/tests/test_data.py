@@ -256,18 +256,14 @@ def test_standard_scaler_constant_features(
     # Constant features should not be scaled (scale of 1.):
     assert_allclose(scaler.scale_, np.ones(X.shape[1]))
 
-    if hasattr(X_scaled, "toarray"):
-        assert_allclose(X_scaled.toarray(), X_array)
-    else:
-        assert_allclose(X_scaled, X_array)
+    assert X_scaled is not X  # make sure we make a copy
+    assert_allclose_dense_sparse(X_scaled, X)
 
     if isinstance(scaler, StandardScaler) and not add_sample_weight:
         # Also check consistency with the standard scale function.
         X_scaled_2 = scale(X, with_mean=scaler.with_mean)
-        if hasattr(X_scaled_2, "toarray"):
-            assert_allclose(X_scaled_2.toarray(), X_array)
-        else:
-            assert_allclose(X_scaled_2, X_array)
+        assert X_scaled_2 is not X  # make sure we did a copy
+        assert_allclose_dense_sparse(X_scaled_2, X)
 
 
 @pytest.mark.parametrize("n_samples", [10, 100, 10_000])
@@ -559,7 +555,7 @@ def test_standard_scaler_partial_fit():
         assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
 
 
-@pytest.mark.parametrize("sparse_container", [*CSC_CONTAINERS, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
 def test_standard_scaler_partial_fit_numerical_stability(sparse_container):
     # Test if the incremental computation introduces significative errors
     # for large datasets with values of large magniture
@@ -603,7 +599,7 @@ def test_standard_scaler_partial_fit_numerical_stability(sparse_container):
 
 
 @pytest.mark.parametrize("sample_weight", [True, None])
-@pytest.mark.parametrize("sparse_container", [*CSC_CONTAINERS, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
 def test_partial_fit_sparse_input(sample_weight, sparse_container):
     # Check that sparsity is not destroyed
     X = sparse_container(np.array([[1.0], [0.0], [0.0], [5.0]]))
@@ -812,7 +808,7 @@ def test_min_max_scaler_1d():
 
 
 @pytest.mark.parametrize("sample_weight", [True, None])
-@pytest.mark.parametrize("sparse_container", [*CSC_CONTAINERS, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
 def test_scaler_without_centering(sample_weight, sparse_container):
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
@@ -824,13 +820,6 @@ def test_scaler_without_centering(sample_weight, sparse_container):
 
     with pytest.raises(ValueError):
         StandardScaler().fit(X_sparse)
-
-    if sparse_container in CSR_CONTAINERS:
-        null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
-        X_null = null_transform.fit_transform(X_sparse)
-        assert_array_equal(X_null.data, X_sparse.data)
-        X_orig = null_transform.inverse_transform(X_null)
-        assert_array_equal(X_orig.data, X_sparse.data)
 
     scaler = StandardScaler(with_mean=False).fit(X, sample_weight=sample_weight)
     X_scaled = scaler.transform(X, copy=True)
@@ -871,6 +860,13 @@ def test_scaler_without_centering(sample_weight, sparse_container):
     assert X_sparse_scaled_back is not X_sparse_scaled
     assert_array_almost_equal(X_sparse_scaled_back.toarray(), X)
 
+    if sparse_container in CSR_CONTAINERS:
+        null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
+        X_null = null_transform.fit_transform(X_sparse)
+        assert_array_equal(X_null.data, X_sparse.data)
+        X_orig = null_transform.inverse_transform(X_null)
+        assert_array_equal(X_orig.data, X_sparse.data)
+
 
 @pytest.mark.parametrize("with_mean", [True, False])
 @pytest.mark.parametrize("with_std", [True, False])
@@ -898,7 +894,7 @@ def _check_identity_scalers_attributes(scaler_1, scaler_2):
     assert scaler_1.n_samples_seen_ == scaler_2.n_samples_seen_
 
 
-@pytest.mark.parametrize("sparse_container", [*CSC_CONTAINERS, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
 def test_scaler_return_identity(sparse_container):
     # test that the scaler return identity when with_mean and with_std are
     # False
@@ -924,7 +920,7 @@ def test_scaler_return_identity(sparse_container):
     _check_identity_scalers_attributes(transformer_dense, transformer_sparse)
 
 
-@pytest.mark.parametrize("sparse_container", [*CSC_CONTAINERS, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
 def test_scaler_int(sparse_container):
     # test that scaler converts integer input to floating
     # for both sparse and dense matrices
@@ -932,14 +928,6 @@ def test_scaler_int(sparse_container):
     X = rng.randint(20, size=(4, 5))
     X[:, 0] = 0  # first feature is always of zero
     X_sparse = sparse_container(X)
-
-    if sparse_container in CSR_CONTAINERS:
-        null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
-        with warnings.catch_warnings(record=True):
-            X_null = null_transform.fit_transform(X_sparse)
-        assert_array_equal(X_null.data, X_sparse.data)
-        X_orig = null_transform.inverse_transform(X_null)
-        assert_array_equal(X_orig.data, X_sparse.data)
 
     with warnings.catch_warnings(record=True):
         scaler = StandardScaler(with_mean=False).fit(X)
@@ -980,8 +968,16 @@ def test_scaler_int(sparse_container):
     assert X_sparse_scaled_back is not X_sparse_scaled
     assert_array_almost_equal(X_sparse_scaled_back.toarray(), X)
 
+    if sparse_container in CSR_CONTAINERS:
+        null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
+        with warnings.catch_warnings(record=True):
+            X_null = null_transform.fit_transform(X_sparse)
+        assert_array_equal(X_null.data, X_sparse.data)
+        X_orig = null_transform.inverse_transform(X_null)
+        assert_array_equal(X_orig.data, X_sparse.data)
 
-@pytest.mark.parametrize("sparse_container", [*CSR_CONTAINERS, *CSC_CONTAINERS])
+
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
 def test_scaler_without_copy(sparse_container):
     # Check that StandardScaler.fit does not change input
     rng = np.random.RandomState(42)
@@ -998,7 +994,7 @@ def test_scaler_without_copy(sparse_container):
     assert_array_equal(X_sparse.toarray(), X_sparse_copy.toarray())
 
 
-@pytest.mark.parametrize("sparse_container", [*CSR_CONTAINERS, *CSC_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
 def test_scale_sparse_with_mean_raise_exception(sparse_container):
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
@@ -1166,7 +1162,7 @@ def test_quantile_transform_iris(csc_container):
     X_sparse = csc_container(X)
     X_sparse_tran = transformer.fit_transform(X_sparse)
     X_sparse_tran_inv = transformer.inverse_transform(X_sparse_tran)
-    assert_array_almost_equal(X_sparse.A, X_sparse_tran_inv.A)
+    assert_array_almost_equal(X_sparse.toarray(), X_sparse_tran_inv.toarray())
 
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
@@ -1244,7 +1240,7 @@ def test_quantile_transform_sparse_ignore_zeros(csc_container):
 
     X_expected = np.array([[0, 0], [0, 0], [0, 1], [0, 1], [0, 0]])
     X_trans = transformer.fit_transform(X_sparse)
-    assert_almost_equal(X_expected, X_trans.A)
+    assert_almost_equal(X_expected, X_trans.toarray())
 
     # consider the case where sparse entries are missing values and user-given
     # zeros are to be considered
@@ -1266,7 +1262,7 @@ def test_quantile_transform_sparse_ignore_zeros(csc_container):
             [0.0, 0.0],
         ]
     )
-    assert_almost_equal(X_expected, X_trans.A)
+    assert_almost_equal(X_expected, X_trans.toarray())
 
     transformer = QuantileTransformer(ignore_implicit_zeros=True, n_quantiles=5)
     X_data = np.array([-1, -1, 1, 0, 0, 0, 1, -1, 1])
@@ -1277,16 +1273,20 @@ def test_quantile_transform_sparse_ignore_zeros(csc_container):
     X_expected = np.array(
         [[0, 1], [0, 0.375], [0, 0.375], [0, 0.375], [0, 1], [0, 0], [0, 1]]
     )
-    assert_almost_equal(X_expected, X_trans.A)
-    assert_almost_equal(X_sparse.A, transformer.inverse_transform(X_trans).A)
+    assert_almost_equal(X_expected, X_trans.toarray())
+    assert_almost_equal(
+        X_sparse.toarray(), transformer.inverse_transform(X_trans).toarray()
+    )
 
     # check in conjunction with subsampling
     transformer = QuantileTransformer(
         ignore_implicit_zeros=True, n_quantiles=5, subsample=8, random_state=0
     )
     X_trans = transformer.fit_transform(X_sparse)
-    assert_almost_equal(X_expected, X_trans.A)
-    assert_almost_equal(X_sparse.A, transformer.inverse_transform(X_trans).A)
+    assert_almost_equal(X_expected, X_trans.toarray())
+    assert_almost_equal(
+        X_sparse.toarray(), transformer.inverse_transform(X_trans).toarray()
+    )
 
 
 def test_quantile_transform_dense_toy():
@@ -1428,8 +1428,8 @@ def test_quantile_transform_bounds(csc_container):
     X_trans_sp = QuantileTransformer(n_quantiles=3, random_state=0).fit_transform(
         X_sparse
     )
-    assert_array_almost_equal(X_trans_sp.A, X_dense)
-    assert_array_almost_equal(X_trans, X_trans_sp.A)
+    assert_array_almost_equal(X_trans_sp.toarray(), X_dense)
+    assert_array_almost_equal(X_trans, X_trans_sp.toarray())
 
     # check the consistency of the bounds by learning on 1 matrix
     # and transforming another
@@ -1607,7 +1607,7 @@ def test_robust_scaler_unit_variance():
     assert X_trans.std() == pytest.approx(1, abs=1e-2)
 
 
-@pytest.mark.parametrize("sparse_container", [*CSC_CONTAINERS, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
 def test_maxabs_scaler_zero_variance_features(sparse_container):
     # Check MaxAbsScaler on toy data with zero variance features
     X = [[0.0, 1.0, +0.5], [0.0, 1.0, -0.3], [0.0, 1.0, +1.5], [0.0, 0.0, +0.0]]
@@ -1771,6 +1771,27 @@ def test_maxabs_scaler_partial_fit(csr_container):
             )
 
 
+def check_normalizer(norm, X_norm):
+    """
+    Convenient checking function for `test_normalizer_l1_l2_max` and
+    `test_normalizer_l1_l2_max_non_csr`
+    """
+    if norm == "l1":
+        row_sums = np.abs(X_norm).sum(axis=1)
+        for i in range(3):
+            assert_almost_equal(row_sums[i], 1.0)
+        assert_almost_equal(row_sums[3], 0.0)
+    elif norm == "l2":
+        for i in range(3):
+            assert_almost_equal(la.norm(X_norm[i]), 1.0)
+        assert_almost_equal(la.norm(X_norm[3]), 0.0)
+    elif norm == "max":
+        row_maxs = abs(X_norm).max(axis=1)
+        for i in range(3):
+            assert_almost_equal(row_maxs[i], 1.0)
+        assert_almost_equal(row_maxs[3], 0.0)
+
+
 @pytest.mark.parametrize("norm", ["l1", "l2", "max"])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_normalizer_l1_l2_max(norm, csr_container):
@@ -1802,25 +1823,12 @@ def test_normalizer_l1_l2_max(norm, csr_container):
         X_norm2 = toarray(X_norm2)
 
         for X_norm in (X_norm1, X_norm2):
-            if norm == "l1":
-                row_sums = np.abs(X_norm).sum(axis=1)
-                for i in range(3):
-                    assert_almost_equal(row_sums[i], 1.0)
-                assert_almost_equal(row_sums[3], 0.0)
-            elif norm == "l2":
-                for i in range(3):
-                    assert_almost_equal(la.norm(X_norm[i]), 1.0)
-                assert_almost_equal(la.norm(X_norm[3]), 0.0)
-            elif norm == "max":
-                row_maxs = abs(X_norm).max(axis=1)
-                for i in range(3):
-                    assert_almost_equal(row_maxs[i], 1.0)
-                assert_almost_equal(row_maxs[3], 0.0)
+            check_normalizer(norm, X_norm)
 
 
 @pytest.mark.parametrize("norm", ["l1", "l2", "max"])
 @pytest.mark.parametrize(
-    "sparse_container", [*COO_CONTAINERS, *CSC_CONTAINERS, *LIL_CONTAINERS]
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + LIL_CONTAINERS
 )
 def test_normalizer_l1_l2_max_non_csr(norm, sparse_container):
     rng = np.random.RandomState(0)
@@ -1836,20 +1844,7 @@ def test_normalizer_l1_l2_max_non_csr(norm, sparse_container):
     assert sparse.issparse(X_norm) and X_norm.format == "csr"
 
     X_norm = toarray(X_norm)
-    if norm == "l1":
-        row_sums = np.abs(X_norm).sum(axis=1)
-        for i in range(3):
-            assert_almost_equal(row_sums[i], 1.0)
-        assert_almost_equal(row_sums[3], 0.0)
-    elif norm == "l2":
-        for i in range(3):
-            assert_almost_equal(la.norm(X_norm[i]), 1.0)
-        assert_almost_equal(la.norm(X_norm[3]), 0.0)
-    elif norm == "max":
-        row_maxs = abs(X_norm).max(axis=1)
-        for i in range(3):
-            assert_almost_equal(row_maxs[i], 1.0)
-        assert_almost_equal(row_maxs[3], 0.0)
+    check_normalizer(norm, X_norm)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -1920,7 +1915,7 @@ def test_normalize(csr_container):
 
 
 @pytest.mark.parametrize(
-    "constructor", [np.array, list, *CSC_CONTAINERS, *CSR_CONTAINERS]
+    "constructor", [np.array, list] + CSC_CONTAINERS + CSR_CONTAINERS
 )
 def test_binarizer(constructor):
     X_ = np.array([[1, 0, 5], [2, 3, -1]])
@@ -2110,7 +2105,7 @@ def test_add_dummy_feature():
 
 
 @pytest.mark.parametrize(
-    "sparse_container", [*COO_CONTAINERS, *CSC_CONTAINERS, *CSR_CONTAINERS]
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
 )
 def test_add_dummy_feature_sparse(sparse_container):
     X = sparse_container([[1, 0], [0, 1], [0, 1]])
