@@ -1973,8 +1973,8 @@ class GroupShuffleSplit(GroupsConsumerMixin, ShuffleSplit):
             # these are the indices of classes in the partition
             # invert them into data indices
 
-            train = np.flatnonzero(np.in1d(group_indices, group_train))
-            test = np.flatnonzero(np.in1d(group_indices, group_test))
+            train = np.flatnonzero(np.isin(group_indices, group_train))
+            test = np.flatnonzero(np.isin(group_indices, group_test))
 
             yield train, test
 
