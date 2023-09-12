@@ -1624,7 +1624,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
 
     Read more in the :ref:`User Guide <columnwise_naive_bayes>`.
 
-    .. versionadded:: 1.3
+    .. versionadded:: 1.4
 
     Parameters
     ----------
