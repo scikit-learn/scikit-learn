@@ -259,29 +259,6 @@ that all categories for each feature :math:`i` are represented with numbers
 :math:`0, ..., n_i - 1` where :math:`n_i` is the number of available categories
 of feature :math:`i`.
 
-Out-of-core naive Bayes model fitting
--------------------------------------
-
-Naive Bayes models can be used to tackle large scale classification problems
-for which the full training set might not fit in memory. To handle this case,
-:class:`MultinomialNB`, :class:`BernoulliNB`, and :class:`GaussianNB`
-expose a ``partial_fit`` method that can be used
-incrementally as done with other classifiers as demonstrated in
-:ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`. All naive Bayes
-classifiers support sample weighting.
-
-Contrary to the ``fit`` method, the first call to ``partial_fit`` needs to be
-passed the list of all the expected class labels.
-
-For an overview of available strategies in scikit-learn, see also the
-:ref:`out-of-core learning <scaling_strategies>` documentation.
-
-.. note::
-
-   The ``partial_fit`` method call of naive Bayes models introduces some
-   computational overhead. It is recommended to use data chunk sizes that are as
-   large as possible, that is as the available RAM allows.
-
 .. _columnwise_naive_bayes:
 
 Mix and match naive Bayes models
@@ -316,3 +293,26 @@ for an example of a mixed naive Bayes model implementation.
 See also :ref:`voting_classifier` for a way of combining general classifiers.
 An introduction to processing datasets with heterogeneous features is available at
 :ref:`column_transformer`.
+
+Out-of-core naive Bayes model fitting
+-------------------------------------
+
+Naive Bayes models can be used to tackle large scale classification problems
+for which the full training set might not fit in memory. To handle this case,
+:class:`MultinomialNB`, :class:`BernoulliNB`, and :class:`GaussianNB`
+expose a ``partial_fit`` method that can be used
+incrementally as done with other classifiers as demonstrated in
+:ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`. All naive Bayes
+classifiers support sample weighting.
+
+Contrary to the ``fit`` method, the first call to ``partial_fit`` needs to be
+passed the list of all the expected class labels.
+
+For an overview of available strategies in scikit-learn, see also the
+:ref:`out-of-core learning <scaling_strategies>` documentation.
+
+.. note::
+
+   The ``partial_fit`` method call of naive Bayes models introduces some
+   computational overhead. It is recommended to use data chunk sizes that are as
+   large as possible, that is as the available RAM allows.
