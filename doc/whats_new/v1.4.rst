@@ -285,7 +285,7 @@ Changelog
 
 - |Enhancement| :meth:`neural_network.BernoulliRBM.score_samples` now supports Scipy
   sparse arrays.
-  :pr:`27274` by `Yao Xiao <Charlie-XIAO>`
+  :pr:`27252` by `Yao Xiao <Charlie-XIAO>`
 
 :mod:`sklearn.metrics`
 ......................
