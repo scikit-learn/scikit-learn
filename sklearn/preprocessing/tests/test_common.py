@@ -54,14 +54,12 @@ def _get_valid_samples_by_column(X, col):
 )
 @pytest.mark.parametrize(
     "sparse_container",
-    [
-        CSR_CONTAINERS,
-        CSC_CONTAINERS,
-        COO_CONTAINERS,
-        LIL_CONTAINERS,
-        DOK_CONTAINERS,
-        BSR_CONTAINERS,
-    ],
+    CSR_CONTAINERS
+    + CSC_CONTAINERS
+    + COO_CONTAINERS
+    + LIL_CONTAINERS
+    + DOK_CONTAINERS
+    + BSR_CONTAINERS,
 )
 def test_missing_value_handling(
     est, func, support_sparse, strictly_positive, omit_kwargs, sparse_container
@@ -131,21 +129,20 @@ def test_missing_value_handling(
             Xt_dense = est_dense.fit(X_train).transform(X_test)
             Xt_inv_dense = est_dense.inverse_transform(Xt_dense)
 
-        for sparse_constructor in sparse_container:
             # check that the dense and sparse inputs lead to the same results
             # precompute the matrix to avoid catching side warnings
-            X_train_sp = sparse_constructor(X_train)
-            X_test_sp = sparse_constructor(X_test)
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", PendingDeprecationWarning)
-                warnings.simplefilter("error", RuntimeWarning)
-                Xt_sp = est_sparse.fit(X_train_sp).transform(X_test_sp)
+        X_train_sp = sparse_container(X_train)
+        X_test_sp = sparse_container(X_test)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", PendingDeprecationWarning)
+            warnings.simplefilter("error", RuntimeWarning)
+            Xt_sp = est_sparse.fit(X_train_sp).transform(X_test_sp)
 
-            assert_allclose(Xt_sp.A, Xt_dense)
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", PendingDeprecationWarning)
-                warnings.simplefilter("error", RuntimeWarning)
-                Xt_inv_sp = est_sparse.inverse_transform(Xt_sp)
+        assert_allclose(Xt_sp.A, Xt_dense)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", PendingDeprecationWarning)
+            warnings.simplefilter("error", RuntimeWarning)
+            Xt_inv_sp = est_sparse.inverse_transform(Xt_sp)
 
             assert_allclose(Xt_inv_sp.A, Xt_inv_dense)
 
