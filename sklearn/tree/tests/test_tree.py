@@ -1433,8 +1433,10 @@ def test_sparse_parameters(tree_type, dataset, csc_container):
 @pytest.mark.parametrize(
     "tree_type,criterion",
     [
-        *product(set(SPARSE_TREES).intersection(set(REG_TREES)), REG_CRITERIONS),
-        *product(set(SPARSE_TREES).difference(set(REG_TREES)), CLF_CRITERIONS),
+        *product(
+            sorted(set(SPARSE_TREES).intersection(set(REG_TREES))), REG_CRITERIONS
+        ),
+        *product(sorted(set(SPARSE_TREES).difference(set(REG_TREES))), CLF_CRITERIONS),
     ],
 )
 @pytest.mark.parametrize("dataset", ["sparse-pos", "sparse-neg", "sparse-mix", "zeros"])
