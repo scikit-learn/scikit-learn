@@ -554,8 +554,10 @@ def test_learning_curve_display_deprecate_log_scale(data, pyplot):
     "param_range, xscale",
     [([5, 10, 15], "linear"), ([-50, 5, 50, 500], "symlog"), ([5, 50, 500], "log")],
 )
-def test_validation_curve_display_accepts_list(pyplot, data, param_range, xscale):
-    """Check the behaviour of setting the `score_type` parameter."""
+def test_validation_curve_xscale_from_param_range_provided_as_a_list(
+    pyplot, data, param_range, xscale
+):
+    """Check the induced xscale from the provided param_range values."""
     X, y = data
     estimator = DecisionTreeClassifier(random_state=0)
 
