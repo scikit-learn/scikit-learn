@@ -26,7 +26,7 @@ from sklearn.utils._testing import (
     set_random_state,
 )
 from sklearn.utils.deprecation import deprecated
-from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS, sp_version
 from sklearn.utils.metaestimators import available_if
 
 
@@ -677,21 +677,33 @@ def test_convert_container(
         # instead of the whole file
         container_type = container_type()
     container = [0, 1]
-    container_converted = _convert_container(
-        container,
-        constructor_name,
-        dtype=dtype,
-    )
-    assert isinstance(container_converted, container_type)
 
-    if constructor_name in ("list", "tuple", "index"):
-        # list and tuple will use Python class dtype: int, float
-        # pandas index will always use high precision: np.int64 and np.float64
-        assert np.issubdtype(type(container_converted[0]), superdtype)
-    elif hasattr(container_converted, "dtype"):
-        assert container_converted.dtype == dtype
-    elif hasattr(container_converted, "dtypes"):
-        assert container_converted.dtypes[0] == dtype
+    if container_type in ("sparse_csr_array", "sparse_csc_array"):
+        with pytest.raises(
+            ValueError,
+            match=(
+                f"{container_type} is only available with scipy>=1.8.0, got"
+                f" {sp_version}"
+            ),
+        ):
+            _convert_container(container, constructor_name, dtype=dtype)
+
+    else:
+        container_converted = _convert_container(
+            container,
+            constructor_name,
+            dtype=dtype,
+        )
+        assert isinstance(container_converted, container_type)
+
+        if constructor_name in ("list", "tuple", "index"):
+            # list and tuple will use Python class dtype: int, float
+            # pandas index will always use high precision: np.int64 and np.float64
+            assert np.issubdtype(type(container_converted[0]), superdtype)
+        elif hasattr(container_converted, "dtype"):
+            assert container_converted.dtype == dtype
+        elif hasattr(container_converted, "dtypes"):
+            assert container_converted.dtypes[0] == dtype
 
 
 def test_raises():
