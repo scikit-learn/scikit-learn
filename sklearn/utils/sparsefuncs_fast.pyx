@@ -12,7 +12,7 @@ from libc.stdint cimport intptr_t
 cimport numpy as cnp
 import numpy as np
 from cython cimport floating
-from ..utils._typedefs cimport float64_t, intp_t, uint64_t
+from ..utils._typedefs cimport float64_t, int32_t, intp_t, uint64_t
 
 cnp.import_array()
 
@@ -576,11 +576,11 @@ def assign_rows_csr(
     cdef:
         # intptr_t (npy_intp, np.intp in Python) is what np.where returns,
         # but int is what scipy.sparse uses.
-        int i, ind, j, k
+        intp_t i, ind, j, k
         intptr_t rX
         const floating[:] data = X.data
-        const int[:] indices = X.indices
-        const int[:] indptr = X.indptr
+        const int32_t[:] indices = X.indices
+        const int32_t[:] indptr = X.indptr
 
     if X_rows.shape[0] != out_rows.shape[0]:
         raise ValueError("cannot assign %d rows to %d"
