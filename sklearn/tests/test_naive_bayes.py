@@ -1252,7 +1252,7 @@ def test_cwnb_estimators_nonempty_list(global_random_seed):
     clf = ColumnwiseNB(
         nb_estimators=None,
     )
-    msg = "A list of naive Bayes estimators must be provided*"
+    msg = "The 'nb_estimators' parameter of ColumnwiseNB must be an instance of 'list'*"
     with pytest.raises(ValueError, match=msg):
         clf.fit(X1, y1)
 
@@ -1260,7 +1260,7 @@ def test_cwnb_estimators_nonempty_list(global_random_seed):
     clf = ColumnwiseNB(
         nb_estimators=GaussianNB(),
     )
-    msg = "A list of naive Bayes estimators must be provided*"
+    msg = "The 'nb_estimators' parameter of ColumnwiseNB must be an instance of 'list'*"
     with pytest.raises(ValueError, match=msg):
         clf.fit(X1, y1)
 
