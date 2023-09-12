@@ -106,9 +106,8 @@ def test_random_weights():
     assert_array_almost_equal(score.ravel(), w[:, :5].sum(1))
 
 
-@pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS])
 @pytest.mark.parametrize("dtype", (np.int32, np.int64, np.float32, np.float64))
-def test_randomized_svd_low_rank_all_dtypes(sparse_container, dtype):
+def test_randomized_svd_low_rank_all_dtypes(dtype):
     # Check that extmath.randomized_svd is consistent with linalg.svd
     n_samples = 100
     n_features = 500
@@ -135,9 +134,6 @@ def test_randomized_svd_low_rank_all_dtypes(sparse_container, dtype):
     U = U.astype(dtype, copy=False)
     s = s.astype(dtype, copy=False)
     Vt = Vt.astype(dtype, copy=False)
-
-    if sparse_container is not None:
-        X = sparse_container(X)
 
     for normalizer in ["auto", "LU", "QR"]:  # 'none' would not be stable
         # compute the singular values of X using the fast approximate method
@@ -169,6 +165,25 @@ def test_randomized_svd_low_rank_all_dtypes(sparse_container, dtype):
         assert_almost_equal(
             np.dot(U[:, :k], Vt[:k, :]), np.dot(Ua, Va), decimal=decimal
         )
+
+        # check the sparse matrix representation
+        for csr_container in CSR_CONTAINERS:
+            X = csr_container(X)
+
+            # compute the singular values of X using the fast approximate method
+            Ua, sa, Va = randomized_svd(
+                X, k, power_iteration_normalizer=normalizer, random_state=0
+            )
+            if dtype.kind == "f":
+                assert Ua.dtype == dtype
+                assert sa.dtype == dtype
+                assert Va.dtype == dtype
+            else:
+                assert Ua.dtype.kind == "f"
+                assert sa.dtype.kind == "f"
+                assert Va.dtype.kind == "f"
+
+            assert_almost_equal(s[:rank], sa[:rank], decimal=decimal)
 
 
 @pytest.mark.parametrize("dtype", (np.int32, np.int64, np.float32, np.float64))
