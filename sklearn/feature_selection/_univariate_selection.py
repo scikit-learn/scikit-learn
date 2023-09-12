@@ -10,7 +10,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import special, stats
-from scipy.sparse import issparse
+from scipy.sparse import issparse, isspmatrix
 
 from ..base import BaseEstimator, _fit_context
 from ..preprocessing import LabelBinarizer
@@ -323,7 +323,7 @@ def r_regression(X, y, *, center=True, force_finite=True):
     # need not center X
     if center:
         y = y - np.mean(y)
-        if issparse(X):
+        if isspmatrix(X):
             X_means = X.mean(axis=0).getA1()
         else:
             X_means = X.mean(axis=0)
