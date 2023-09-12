@@ -438,26 +438,26 @@ def test_incr_mean_variance_axis_dim_mismatch(sparse_constructor):
             sp.random(5, 2, density=0.8, format="csr", random_state=0),
             sp.random(13, 2, density=0.8, format="csr", random_state=0),
         ),
-        *[
-            (
-                sp.random(5, 2, density=0.8, format="csr", random_state=0),
-                sp.hstack(
-                    [
-                        csr_container(np.full((13, 1), fill_value=np.nan)),
-                        sp.random(13, 1, density=0.8, random_state=42),
-                    ],
-                    format="csr",
-                ),
-            )
-            for csr_container in CSR_CONTAINERS
-        ],
+        (
+            sp.random(5, 2, density=0.8, format="csr", random_state=0),
+            sp.hstack(
+                [
+                    np.full((13, 1), fill_value=np.nan),
+                    sp.random(13, 1, density=0.8, random_state=42),
+                ],
+                format="csr",
+            ),
+        ),
     ],
 )
-def test_incr_mean_variance_axis_equivalence_mean_variance(X1, X2):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_incr_mean_variance_axis_equivalence_mean_variance(X1, X2, csr_container):
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/16448
     # check that computing the incremental mean and variance is equivalent to
     # computing the mean and variance on the stacked dataset.
+    X1 = csr_container(X1)
+    X2 = csr_container(X2)
     axis = 0
     last_mean, last_var = np.zeros(X1.shape[1]), np.zeros(X1.shape[1])
     last_n = np.zeros(X1.shape[1], dtype=np.int64)
