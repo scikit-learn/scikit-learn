@@ -249,7 +249,7 @@ def test_ransac_warn_exceed_max_skips():
 
 
 @pytest.mark.parametrize(
-    "sparse_container", [*COO_CONTAINERS, *CSR_CONTAINERS, *CSC_CONTAINERS]
+    "sparse_container", COO_CONTAINERS + CSR_CONTAINERS + CSC_CONTAINERS
 )
 def test_ransac_sparse(sparse_container):
     X_sparse = sparse_container(X)
