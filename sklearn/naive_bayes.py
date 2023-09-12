@@ -1629,7 +1629,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     Parameters
     ----------
     nb_estimators : list of tuples
-        List of (name, nb_estimator, columns) tuples specifying the naive Bayes
+        List of `(name, naive_bayes_estimator, columns)` tuples specifying the naive Bayes
         estimators to be combined into a single naive Bayes meta-estimator.
 
         name : str
@@ -1647,7 +1647,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name.  A scalar string or int should be used where
-            `nb_estimator` expects X to be a 1d array-like (vector),
+            `naive_bayes_estimator` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
             above. To select multiple columns by name or dtype, you can use
@@ -1756,7 +1756,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     _required_parameters = ["nb_estimators"]
 
     _parameter_constraints = {
-        "nb_estimators": "no_validation",
+        "nb_estimators": [list],
         "priors": ["array-like", str, None],
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
