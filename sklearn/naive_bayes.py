@@ -1959,7 +1959,6 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         X = self._check_array_if_not_pandas(X)
         first_call = not hasattr(self, "classes_")
         if first_call:  # in fit() or the first call of partial_fit()
-            self._validate_params()
             self._check_feature_names(X, reset=True)
             self._check_n_features(X, reset=True)
             self._validate_estimators(check_partial=partial)
@@ -2042,6 +2041,10 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         )
 
     @available_if(_estimators_have("partial_fit"))
+    @_fit_context(
+        # estimators in ColumnwiseNB.estimators are not validated yet
+        prefer_skip_nested_validation=False
+    )
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Fit incrementally the naive Bayes meta-estimator on a batch of samples.
 
