@@ -321,6 +321,10 @@ Changelog
   array and does not return the correct result for SciPy sparse matrix.
   :pr:`27336` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :func`sklearn.utils.multiclass.type_of_target` now supports Scipy
+  sparse arrays.
+  :pr:`27274` by `Yao Xiao <Charlie-XIAO>`
+
 Code and Documentation Contributors
 -----------------------------------
 
