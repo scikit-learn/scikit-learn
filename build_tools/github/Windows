@@ -15,6 +15,4 @@ RUN if ( $env:CIBW_PRERELEASE_PYTHONS -eq 'True' ) { \
         $env:PIP_PRE = '1'; \
     }; \
     pip install $env:WHEEL_NAME
-
-# Install the testing dependencies
-RUN pip install $env:CIBW_TEST_REQUIRES.split(" ")
+    pip install $env:CIBW_TEST_REQUIRES.split(" ")
