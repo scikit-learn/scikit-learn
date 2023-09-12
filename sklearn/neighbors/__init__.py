@@ -18,6 +18,7 @@ from ._lof import LocalOutlierFactor
 from ._loop import LocalOutlierProbabilities
 from ._nca import NeighborhoodComponentsAnalysis
 from ._nearest_centroid import NearestCentroid
+from ._outlier import NearestNeighborOutlierDetection
 from ._regression import KNeighborsRegressor, RadiusNeighborsRegressor
 from ._unsupervised import NearestNeighbors
 
@@ -28,6 +29,7 @@ __all__ = [
     "KNeighborsRegressor",
     "KNeighborsTransformer",
     "NearestCentroid",
+    "NearestNeighborOutlierDetection",
     "NearestNeighbors",
     "RadiusNeighborsClassifier",
     "RadiusNeighborsRegressor",
