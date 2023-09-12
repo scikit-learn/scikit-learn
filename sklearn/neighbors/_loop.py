@@ -176,8 +176,8 @@ class LocalOutlierProbabilities(KNeighborsMixin, OutlierMixin, NeighborsBase):
     >>> clf = LocalOutlierProbabilities(n_neighbors=2)
     >>> clf.fit_predict(X)
     array([ 1,  1, -1,  1])
-    >>> clf.outlier_probabilities_
-    array([ -0.9821...,  -1.0370..., -73.3697...,  -0.9821...])
+    >>> -1 * clf.negative_outlier_probabilities_
+    array([ 0.00314472,  0., 0.68268573,  0.])
     """
 
     _parameter_constraints: dict = {
@@ -303,7 +303,6 @@ class LocalOutlierProbabilities(KNeighborsMixin, OutlierMixin, NeighborsBase):
         fit_plof = np.maximum(
             0, (self._pdists / self._pdists[_neighbors_indices_fit_X_].mean(axis=1)) - 1
         )
-        print(fit_plof)
 
         # normalization factor
         self._nplof = self.n_lambda * np.sqrt(np.power(fit_plof, 2).mean())
@@ -486,35 +485,6 @@ class LocalOutlierProbabilities(KNeighborsMixin, OutlierMixin, NeighborsBase):
         )
         # loop scores
         return -np.maximum(0, erf(X_plof / (self._nplof * np.sqrt(2))))
-
-    def _probabilistic_distances(self, distances_X, neighbors_indices):
-        """The probabilistic distances (pdist) of LoOP
-
-        The pdist is an expected distance for the k nearest neighbors used
-        by LoOP for density estimation. It is simply the quadratic mean
-        of the distances to the neighbors.
-
-        Compared to the initial publication, this implementation uses lambda=1,
-        as this term cancels out (c.f., thesis of Erich Schubert).
-
-        Parameters
-        ----------
-        distances_X : ndarray of shape (n_queries, self.n_neighbors)
-            Distances to the neighbors (in the training samples `self._fit_X`)
-            of each query point to compute the LRD.
-
-        neighbors_indices : ndarray of shape (n_queries, self.n_neighbors)
-            Neighbors indices (of each query point) among training samples
-            self._fit_X.
-
-        Returns
-        -------
-        pdists : ndarray of shape (n_queries,)
-            The probabilistic distance of each sample.
-        """
-        return np.sqrt(
-            np.power(self._distances_fit_X_[neighbors_indices], 2).mean(axis=1)
-        )
 
     def _more_tags(self):
         return {
