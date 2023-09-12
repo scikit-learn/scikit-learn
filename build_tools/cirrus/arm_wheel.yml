@@ -20,7 +20,8 @@ macos_arm64_wheel_task:
     # macos arm64 builds are on GitHub Actions
     - env:
         CIBW_BUILD: cp312-macosx_arm64
-        # Temporary for Python 3.12 testing
+        # TODO: remove when Python 3.12 is released and there are numpy and
+        # scipy releases that supports Python 3.12
         CIBW_PRERELEASE_PYTHONS: True
 
   conda_script:
@@ -48,9 +49,6 @@ linux_arm64_wheel_task:
   env:
     CONFTEST_PATH: ${CIRRUS_WORKING_DIR}/conftest.py
     CONFTEST_NAME: conftest.py
-    # TODO: next lines with PIP_ fetch nightly numpy and scipy releases. They
-    # can be removed when there are numpy and scipy releases that supports
-    # Python 3.12
     CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
                       SKLEARN_BUILD_PARALLEL=5
     CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
@@ -75,7 +73,8 @@ linux_arm64_wheel_task:
         CIBW_BUILD: cp311-manylinux_aarch64
     - env:
         CIBW_BUILD: cp312-manylinux_aarch64
-        # Temporary for Python 3.12 testing
+        # TODO: remove when Python 3.12 is released and there are numpy and
+        # scipy releases that supports Python 3.12
         CIBW_PRERELEASE_PYTHONS: True
 
   cibuildwheel_script:
