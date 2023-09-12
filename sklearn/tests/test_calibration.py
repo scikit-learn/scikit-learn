@@ -4,7 +4,6 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
-from scipy import sparse
 
 from sklearn.base import BaseEstimator, clone
 from sklearn.calibration import (
@@ -48,6 +47,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
 )
 from sklearn.utils.extmath import softmax
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 N_SAMPLES = 200
 
@@ -58,9 +58,10 @@ def data():
     return X, y
 
 
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
-def test_calibration(data, method, ensemble):
+def test_calibration(data, method, csr_container, ensemble):
     # Test calibration objects with isotonic and sigmoid
     n_samples = N_SAMPLES // 2
     X, y = data
@@ -83,7 +84,7 @@ def test_calibration(data, method, ensemble):
     # Naive Bayes with calibration
     for this_X_train, this_X_test in [
         (X_train, X_test),
-        (sparse.csr_matrix(X_train), sparse.csr_matrix(X_test)),
+        (csr_container(X_train), csr_container(X_test)),
     ]:
         cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
         # Note that this fit overwrites the fit on the entire training
@@ -284,7 +285,8 @@ def test_calibration_zero_probability():
     assert_allclose(probas, 1.0 / clf.n_classes_)
 
 
-def test_calibration_prefit():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_calibration_prefit(csr_container):
     """Test calibration for prefitted classifiers"""
     n_samples = 50
     X, y = make_classification(n_samples=3 * n_samples, n_features=6, random_state=42)
@@ -314,7 +316,7 @@ def test_calibration_prefit():
     # Naive Bayes with calibration
     for this_X_calib, this_X_test in [
         (X_calib, X_test),
-        (sparse.csr_matrix(X_calib), sparse.csr_matrix(X_test)),
+        (csr_container(X_calib), csr_container(X_test)),
     ]:
         for method in ["isotonic", "sigmoid"]:
             cal_clf = CalibratedClassifierCV(clf, method=method, cv="prefit")

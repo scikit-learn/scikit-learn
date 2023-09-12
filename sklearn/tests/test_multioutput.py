@@ -2,7 +2,6 @@ import re
 
 import numpy as np
 import pytest
-import scipy.sparse as sp
 from joblib import cpu_count
 
 from sklearn import datasets
@@ -48,6 +47,14 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+)
+from sklearn.utils.fixes import (
+    BSR_CONTAINERS,
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    DOK_CONTAINERS,
+    LIL_CONTAINERS,
 )
 
 
@@ -101,25 +108,29 @@ def test_multi_target_regression_one_target():
         rgr.fit(X, y)
 
 
-def test_multi_target_sparse_regression():
+@pytest.mark.parametrize(
+    "sparse_container",
+    CSR_CONTAINERS
+    + CSC_CONTAINERS
+    + COO_CONTAINERS
+    + LIL_CONTAINERS
+    + DOK_CONTAINERS
+    + BSR_CONTAINERS,
+)
+def test_multi_target_sparse_regression(sparse_container):
     X, y = datasets.make_regression(n_targets=3, random_state=0)
     X_train, y_train = X[:50], y[:50]
     X_test = X[50:]
 
-    for sparse in [
-        sp.csr_matrix,
-        sp.csc_matrix,
-        sp.coo_matrix,
-        sp.dok_matrix,
-        sp.lil_matrix,
-    ]:
-        rgr = MultiOutputRegressor(Lasso(random_state=0))
-        rgr_sparse = MultiOutputRegressor(Lasso(random_state=0))
+    rgr = MultiOutputRegressor(Lasso(random_state=0))
+    rgr_sparse = MultiOutputRegressor(Lasso(random_state=0))
 
-        rgr.fit(X_train, y_train)
-        rgr_sparse.fit(sparse(X_train), y_train)
+    rgr.fit(X_train, y_train)
+    rgr_sparse.fit(sparse_container(X_train), y_train)
 
-        assert_almost_equal(rgr.predict(X_test), rgr_sparse.predict(sparse(X_test)))
+    assert_almost_equal(
+        rgr.predict(X_test), rgr_sparse.predict(sparse_container(X_test))
+    )
 
 
 def test_multi_target_sample_weights_api():
@@ -497,10 +508,11 @@ def test_classifier_chain_fit_and_predict_with_linear_svc():
     assert not hasattr(classifier_chain, "predict_proba")
 
 
-def test_classifier_chain_fit_and_predict_with_sparse_data():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_classifier_chain_fit_and_predict_with_sparse_data(csr_container):
     # Fit classifier chain with sparse data
     X, Y = generate_multilabel_dataset_with_correlations()
-    X_sparse = sp.csr_matrix(X)
+    X_sparse = csr_container(X)
 
     classifier_chain = ClassifierChain(LogisticRegression())
     classifier_chain.fit(X_sparse, Y)
@@ -555,10 +567,11 @@ def test_base_chain_fit_and_predict():
     assert isinstance(chains[1], ClassifierMixin)
 
 
-def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_base_chain_fit_and_predict_with_sparse_data_and_cv(csr_container):
     # Fit base chain with sparse data cross_val_predict
     X, Y = generate_multilabel_dataset_with_correlations()
-    X_sparse = sp.csr_matrix(X)
+    X_sparse = csr_container(X)
     base_chains = [
         ClassifierChain(LogisticRegression(), cv=3),
         RegressorChain(Ridge(), cv=3),
