@@ -36,13 +36,13 @@ multilabel_explicit_zero[:, 0] = 0
 
 def _generate_sparse(
     data,
-    sparse_containers=[
-        *COO_CONTAINERS,
-        *CSC_CONTAINERS,
-        *CSR_CONTAINERS,
-        *DOK_CONTAINERS,
-        *LIL_CONTAINERS,
-    ],
+    sparse_containers=tuple(
+        COO_CONTAINERS
+        + CSC_CONTAINERS
+        + CSR_CONTAINERS
+        + DOK_CONTAINERS
+        + LIL_CONTAINERS
+    ),
     dtypes=(bool, int, np.int8, np.uint8, float, np.float32),
 ):
     return [
@@ -100,7 +100,7 @@ EXAMPLES = {
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float32),
         *_generate_sparse(
             [[1, 0, 2, 2], [1, 4, 2, 4]],
-            sparse_containers=[*CSC_CONTAINERS, *CSR_CONTAINERS],
+            sparse_containers=CSC_CONTAINERS + CSR_CONTAINERS,
             dtypes=(int, np.int8, np.uint8, float, np.float32),
         ),
         np.array([["a", "b"], ["c", "d"]]),
@@ -143,12 +143,12 @@ EXAMPLES = {
         np.array([[0, 0.5]]),
         *_generate_sparse(
             [[0, 0.5], [0.5, 0]],
-            sparse_containers=[*CSC_CONTAINERS, *CSR_CONTAINERS],
+            sparse_containers=CSC_CONTAINERS + CSR_CONTAINERS,
             dtypes=(float, np.float32),
         ),
         *_generate_sparse(
             [[0, 0.5]],
-            sparse_containers=[*CSC_CONTAINERS, *CSR_CONTAINERS],
+            sparse_containers=CSC_CONTAINERS + CSR_CONTAINERS,
             dtypes=(float, np.float32),
         ),
     ],
@@ -285,13 +285,13 @@ def test_is_multilabel():
             ):
                 examples_sparse = [
                     sparse_container(example)
-                    for sparse_container in [
-                        *COO_CONTAINERS,
-                        *CSC_CONTAINERS,
-                        *CSR_CONTAINERS,
-                        *DOK_CONTAINERS,
-                        *LIL_CONTAINERS,
-                    ]
+                    for sparse_container in (
+                        COO_CONTAINERS
+                        + CSC_CONTAINERS
+                        + CSR_CONTAINERS
+                        + DOK_CONTAINERS
+                        + LIL_CONTAINERS
+                    )
                 ]
                 for exmpl_sparse in examples_sparse:
                     assert sparse_exp == is_multilabel(
