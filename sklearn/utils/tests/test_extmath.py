@@ -49,7 +49,7 @@ from sklearn.utils.fixes import (
 
 @pytest.mark.parametrize(
     "sparse_container",
-    [*COO_CONTAINERS, *CSC_CONTAINERS, *CSR_CONTAINERS, *LIL_CONTAINERS],
+    COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS + LIL_CONTAINERS,
 )
 def test_density(sparse_container):
     rng = np.random.RandomState(0)
@@ -490,7 +490,7 @@ def test_randomized_svd_power_iteration_normalizer():
             assert 15 > np.abs(error_2 - error)
 
 
-@pytest.mark.parametrize("sparse_container", [*DOK_CONTAINERS, *LIL_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", DOK_CONTAINERS + LIL_CONTAINERS)
 def test_randomized_svd_sparse_warnings(sparse_container):
     # randomized_svd throws a warning for lil and dok matrix
     rng = np.random.RandomState(42)
@@ -975,8 +975,16 @@ def test_stable_cumsum():
     assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))
 
 
-@pytest.mark.parametrize("A_container", [np.array, *CSR_CONTAINERS])
-@pytest.mark.parametrize("B_container", [np.array, *CSR_CONTAINERS])
+@pytest.mark.parametrize(
+    "A_container",
+    [np.array, *CSR_CONTAINERS],
+    ids=["dense"] + [container.__name__ for container in CSR_CONTAINERS],
+)
+@pytest.mark.parametrize(
+    "B_container",
+    [np.array, *CSR_CONTAINERS],
+    ids=["dense"] + [container.__name__ for container in CSR_CONTAINERS],
+)
 def test_safe_sparse_dot_2d(A_container, B_container):
     rng = np.random.RandomState(0)
 
@@ -1012,7 +1020,11 @@ def test_safe_sparse_dot_nd(csr_container):
     assert_allclose(actual, expected)
 
 
-@pytest.mark.parametrize("container", [np.array, *CSR_CONTAINERS])
+@pytest.mark.parametrize(
+    "container",
+    [np.array, *CSR_CONTAINERS],
+    ids=["dense"] + [container.__name__ for container in CSR_CONTAINERS],
+)
 def test_safe_sparse_dot_2d_1d(container):
     rng = np.random.RandomState(0)
     B = rng.random_sample((10))
