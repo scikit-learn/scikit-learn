@@ -121,7 +121,7 @@ def test_inverse_transform():
     )
 
 
-@pytest.mark.parametrize("sparse_container", [None, *CSC_CONTAINERS, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS + CSR_CONTAINERS)
 def test_check_inverse(sparse_container):
     X = np.array([1, 4, 9, 16], dtype=np.float64).reshape((2, 2))
     if sparse_container is not None:
