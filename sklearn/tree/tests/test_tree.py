@@ -1431,13 +1431,11 @@ def test_sparse_parameters(tree_type, dataset, csc_container):
 
 
 @pytest.mark.parametrize(
-    "tree_type,criterion",
-    [
-        *product(
-            sorted(set(SPARSE_TREES).intersection(set(REG_TREES))), REG_CRITERIONS
-        ),
-        *product(sorted(set(SPARSE_TREES).difference(set(REG_TREES))), CLF_CRITERIONS),
-    ],
+    "tree_type, criterion",
+    list(product([tree for tree in SPARSE_TREES if tree in REG_TREES], REG_CRITERIONS))
+    + list(
+        product([tree for tree in SPARSE_TREES if tree in CLF_TREES], CLF_CRITERIONS)
+    ),
 )
 @pytest.mark.parametrize("dataset", ["sparse-pos", "sparse-neg", "sparse-mix", "zeros"])
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
@@ -1794,12 +1792,11 @@ def test_empty_leaf_infinite_threshold(sparse_container):
     assert len(empty_leaf) == 0
 
 
-@pytest.mark.parametrize("criterion", CLF_CRITERIONS)
 @pytest.mark.parametrize(
     "dataset", sorted(set(DATASETS.keys()) - {"reg_small", "diabetes"})
 )
 @pytest.mark.parametrize("tree_cls", [DecisionTreeClassifier, ExtraTreeClassifier])
-def test_prune_tree_classifier_are_subtrees(criterion, dataset, tree_cls):
+def test_prune_tree_classifier_are_subtrees(dataset, tree_cls):
     dataset = DATASETS[dataset]
     X, y = dataset["X"], dataset["y"]
     est = tree_cls(max_leaf_nodes=20, random_state=0)
@@ -1813,10 +1810,9 @@ def test_prune_tree_classifier_are_subtrees(criterion, dataset, tree_cls):
     assert_pruning_creates_subtree(tree_cls, X, y, pruning_path)
 
 
-@pytest.mark.parametrize("criterion", REG_CRITERIONS)
 @pytest.mark.parametrize("dataset", DATASETS.keys())
 @pytest.mark.parametrize("tree_cls", [DecisionTreeRegressor, ExtraTreeRegressor])
-def test_prune_tree_regression_are_subtrees(criterion, dataset, tree_cls):
+def test_prune_tree_regression_are_subtrees(dataset, tree_cls):
     dataset = DATASETS[dataset]
     X, y = dataset["X"], dataset["y"]
 
