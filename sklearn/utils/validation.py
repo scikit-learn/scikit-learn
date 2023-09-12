@@ -962,6 +962,19 @@ def check_array(
                 allow_nan=force_all_finite == "allow-nan",
             )
 
+        if copy:
+            if _is_numpy_namespace(xp):
+                # only make a copy if `array` and `array_orig` may share memory`
+                if np.may_share_memory(array, array_orig):
+                    array = _asarray_with_order(
+                        array, dtype=dtype, order=order, copy=True, xp=xp
+                    )
+            else:
+                # always make a copy for non-numpy arrays
+                array = _asarray_with_order(
+                    array, dtype=dtype, order=order, copy=True, xp=xp
+                )
+
     if ensure_min_samples > 0:
         n_samples = _num_samples(array)
         if n_samples < ensure_min_samples:
@@ -978,19 +991,6 @@ def check_array(
                 "Found array with %d feature(s) (shape=%s) while"
                 " a minimum of %d is required%s."
                 % (n_features, array.shape, ensure_min_features, context)
-            )
-
-    if copy:
-        if _is_numpy_namespace(xp):
-            # only make a copy if `array` and `array_orig` may share memory`
-            if np.may_share_memory(array, array_orig):
-                array = _asarray_with_order(
-                    array, dtype=dtype, order=order, copy=True, xp=xp
-                )
-        else:
-            # always make a copy for non-numpy arrays
-            array = _asarray_with_order(
-                array, dtype=dtype, order=order, copy=True, xp=xp
             )
 
     return array
