@@ -370,11 +370,9 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         ind = (np.arange(v.shape[0]), rng.randint(0, v.shape[1], v.shape[0]))
         if sp.issparse(v):
             data = -2 * v[ind] + 1
-            if sp.isspmatrix(v):
-                # `data` is a NumPy matrix with the previous indexing
+            if isinstance(data, np.matrix):  # v is a sparse matrix
                 v_ = v + sp.csr_matrix((data.A.ravel(), ind), shape=v.shape)
-            else:
-                # `data` is a NumPy array with the previous indexing
+            else:  # v is a sparse array
                 v_ = v + sp.csr_array((data.ravel(), ind), shape=v.shape)
         else:
             v_ = v.copy()
