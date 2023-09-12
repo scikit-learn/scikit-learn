@@ -1420,7 +1420,7 @@ def test_train_test_split_pandas():
 
 
 @pytest.mark.parametrize(
-    "sparse_container", [*COO_CONTAINERS, *CSC_CONTAINERS, *CSR_CONTAINERS]
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
 )
 def test_train_test_split_sparse(sparse_container):
     # check that train_test_split converts scipy sparse matrices
