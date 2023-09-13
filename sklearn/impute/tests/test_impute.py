@@ -1,5 +1,6 @@
 import io
 import warnings
+from itertools import product
 
 import numpy as np
 import pytest
@@ -1112,18 +1113,27 @@ def test_missing_indicator_error(X_fit, X_trans, params, msg_err):
         indicator.fit(X_fit).transform(X_trans)
 
 
+def _generate_missing_indicator_cases():
+    missing_values_dtypes = [(0, np.int32), (np.nan, np.float64), (-1, np.int32)]
+    arr_types = (
+        [np.array]
+        + CSC_CONTAINERS
+        + CSR_CONTAINERS
+        + COO_CONTAINERS
+        + LIL_CONTAINERS
+        + BSR_CONTAINERS
+    )
+    return [
+        (arr_type, missing_values, dtype)
+        for arr_type, (missing_values, dtype) in product(
+            arr_types, missing_values_dtypes
+        )
+        if not (missing_values == 0 and arr_type is not np.array)
+    ]
+
+
 @pytest.mark.parametrize(
-    "arr_type",
-    [np.array]
-    + CSC_CONTAINERS
-    + CSR_CONTAINERS
-    + COO_CONTAINERS
-    + LIL_CONTAINERS
-    + BSR_CONTAINERS,
-)
-@pytest.mark.parametrize(
-    "missing_values, dtype",
-    [(0, np.int32), (np.nan, np.float64), (-1, np.int32)],
+    "arr_type, missing_values, dtype", _generate_missing_indicator_cases()
 )
 @pytest.mark.parametrize(
     "param_features, n_features, features_indices",
@@ -1132,9 +1142,6 @@ def test_missing_indicator_error(X_fit, X_trans, params, msg_err):
 def test_missing_indicator_new(
     missing_values, arr_type, dtype, param_features, n_features, features_indices
 ):
-    if missing_values == 0 and arr_type is not np.array:
-        return
-
     X_fit = np.array([[missing_values, missing_values, 1], [4, 2, missing_values]])
     X_trans = np.array([[missing_values, missing_values, 1], [4, 12, 10]])
     X_fit_expected = np.array([[1, 1, 0], [0, 0, 1]])
@@ -1203,14 +1210,20 @@ def test_missing_indicator_raise_on_sparse_with_missing_0(arr_type):
 
 @pytest.mark.parametrize("param_sparse", [True, False, "auto"])
 @pytest.mark.parametrize(
-    "arr_type",
-    [np.array] + CSC_CONTAINERS + CSR_CONTAINERS + COO_CONTAINERS + LIL_CONTAINERS,
+    "arr_type, missing_values",
+    [(np.array, 0)]
+    + list(
+        product(
+            CSC_CONTAINERS
+            + CSR_CONTAINERS
+            + COO_CONTAINERS
+            + LIL_CONTAINERS
+            + BSR_CONTAINERS,
+            [np.nan],
+        )
+    ),
 )
-@pytest.mark.parametrize("missing_values", [0, np.nan])
 def test_missing_indicator_sparse_param(arr_type, missing_values, param_sparse):
-    if missing_values == 0 and arr_type is not np.array:
-        return
-
     # check the format of the output with different sparse parameter
     X_fit = np.array([[missing_values, missing_values, 1], [4, missing_values, 2]])
     X_trans = np.array([[missing_values, missing_values, 1], [4, 12, 10]])
