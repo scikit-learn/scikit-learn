@@ -351,8 +351,10 @@ class MethodMetadataRequest:
             warn(
                 f"Support for {param} has recently been added to this class. "
                 "To maintain backward compatibility, it is ignored now. "
-                "You can set the request value to False to silence this "
-                "warning, or to True to consume and use the metadata."
+                f"Using `set_{{method}}_request({param}={{boolean}})` "
+                "on this method of the class, you can set the request value "
+                "to False to silence this warning, or to True to consume and "
+                "use the metadata."
             )
 
     def _route_params(self, params):
@@ -390,7 +392,8 @@ class MethodMetadataRequest:
                 message=(
                     f"[{', '.join([key for key in unrequested])}] are passed but are"
                     " not explicitly set as requested or not for"
-                    f" {self.owner}.{self.method}"
+                    f" {self.owner}.{self.method}. To set them, use"
+                    f" `set_{self.method}_request({{metadata}}={{boolean}})` on it."
                 ),
                 unrequested_params=unrequested,
                 routed_params=res,
@@ -942,9 +945,8 @@ class MetadataRouter:
     def route_params(self, *, caller, params):
         """Return the input parameters requested by child objects.
 
-        The output of this method is a bunch, which includes the inputs for all
-        methods of each child object that are used in the router's `caller`
-        method.
+        The output of this method is a bunch, which includes the metadata for all
+        methods of each child object that is used in the router's `caller` method.
 
         If the router is also a consumer, it also checks for warnings of
         `self`'s/consumer's requested metadata.
@@ -963,7 +965,7 @@ class MetadataRouter:
         -------
         params : Bunch
             A :class:`~utils.Bunch` of the form
-            ``{"object_name": {"method_name": {prop: value}}}`` which can be
+            ``{"object_name": {"method_name": {params: value}}}`` which can be
             used to pass the required metadata to corresponding methods or
             corresponding child objects.
         """
@@ -1024,7 +1026,9 @@ class MetadataRouter:
         """
         res = dict()
         if self._self_request:
-            res["$self_request"] = self._self_request._serialize()
+            res["$self_request"] = (
+                self._self_request._serialize()
+            )  # <-- why is `$` part of the key name?
         for name, route_mapping in self._route_mappings.items():
             res[name] = dict()
             res[name]["mapping"] = route_mapping.mapping._serialize()
@@ -1063,12 +1067,12 @@ def get_routing_for_object(obj=None):
     Parameters
     ----------
     obj : object
+        - If the object provides a `get_metadata_routing` method, return a copy
+            of the output of that method.
         - If the object is already a
             :class:`~sklearn.utils.metadata_routing.MetadataRequest` or a
             :class:`~sklearn.utils.metadata_routing.MetadataRouter`, return a copy
             of that.
-        - If the object provides a `get_metadata_routing` method, return a copy
-            of the output of that method.
         - Returns an empty :class:`~sklearn.utils.metadata_routing.MetadataRequest`
             otherwise.
 
@@ -1446,9 +1450,10 @@ def process_routing(_obj, _method, /, **kwargs):
     This function is used inside a router's method, e.g. :term:`fit`,
     to validate the metadata and handle the routing.
 
-    Assuming this signature: ``fit(self, X, y, sample_weight=None, **fit_params)``,
+    Assuming this signature of a router's fit method:
+    ``fit(self, X, y, sample_weight=None, **fit_params)``,
     a call to this function would be:
-    ``process_routing(self, sample_weight=sample_weight, **fit_params)``.
+    ``process_routing(self, "fit", sample_weight=sample_weight, **fit_params)``.
 
     .. versionadded:: 1.3
 
@@ -1468,7 +1473,7 @@ def process_routing(_obj, _method, /, **kwargs):
     -------
     routed_params : Bunch
         A :class:`~utils.Bunch` of the form ``{"object_name": {"method_name":
-        {prop: value}}}`` which can be used to pass the required metadata to
+        {params: value}}}`` which can be used to pass the required metadata to
         corresponding methods or corresponding child objects. The object names
         are those defined in `obj.get_metadata_routing()`.
     """
