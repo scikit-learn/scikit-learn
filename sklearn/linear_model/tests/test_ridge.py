@@ -443,7 +443,7 @@ def test_ridge_regression_unpenalized_vstacked_X(
 
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("alpha", [1.0, 1e-2])
 def test_ridge_regression_sample_weights(
     solver,
@@ -724,7 +724,7 @@ def _make_sparse_offset_regression(
         (solver, sparse_container)
         for (solver, sparse_container) in product(
             ["cholesky", "sag", "sparse_cg", "lsqr", "saga", "ridgecv"],
-            [None, *CSR_CONTAINERS],
+            [None] + CSR_CONTAINERS,
         )
         if sparse_container is None or solver in ["sparse_cg", "ridgecv"]
     ),
@@ -768,7 +768,7 @@ def test_solver_consistency(
 
 
 @pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
-@pytest.mark.parametrize("X_constructor", [np.asarray, *CSR_CONTAINERS])
+@pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
 @pytest.mark.parametrize("X_shape", [(11, 8), (11, 20)])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize(
@@ -780,7 +780,7 @@ def test_solver_consistency(
     ],
 )
 def test_ridge_gcv_vs_ridge_loo_cv(
-    gcv_mode, X_constructor, X_shape, y_shape, fit_intercept, noise
+    gcv_mode, X_container, X_shape, y_shape, fit_intercept, noise
 ):
     n_samples, n_features = X_shape
     n_targets = y_shape[-1] if len(y_shape) == 2 else 1
@@ -810,7 +810,7 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 
     loo_ridge.fit(X, y)
 
-    X_gcv = X_constructor(X)
+    X_gcv = X_container(X)
     gcv_ridge.fit(X_gcv, y)
 
     assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_)
@@ -849,7 +849,7 @@ def test_ridge_loo_cv_asym_scoring():
 
 
 @pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
-@pytest.mark.parametrize("X_constructor", [np.asarray, *CSR_CONTAINERS])
+@pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
 @pytest.mark.parametrize("n_features", [8, 20])
 @pytest.mark.parametrize(
     "y_shape, fit_intercept, noise",
@@ -861,7 +861,7 @@ def test_ridge_loo_cv_asym_scoring():
     ],
 )
 def test_ridge_gcv_sample_weights(
-    gcv_mode, X_constructor, fit_intercept, n_features, y_shape, noise
+    gcv_mode, X_container, fit_intercept, n_features, y_shape, noise
 ):
     alphas = [1e-3, 0.1, 1.0, 10.0, 1e3]
     rng = np.random.RandomState(0)
@@ -901,7 +901,7 @@ def test_ridge_gcv_sample_weights(
     ]
     kfold_errors = np.asarray(kfold_errors)
 
-    X_gcv = X_constructor(X)
+    X_gcv = X_container(X)
     gcv_ridge = RidgeCV(
         alphas=alphas,
         store_cv_values=True,
@@ -920,7 +920,7 @@ def test_ridge_gcv_sample_weights(
     assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=1e-3)
 
 
-@pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize(
     "mode, mode_n_greater_than_p, mode_p_greater_than_n",
     [
@@ -1156,7 +1156,7 @@ def _test_ridge_classifiers(sparse_container):
 
 @pytest.mark.parametrize("scoring", [None, "accuracy", _accuracy_callable])
 @pytest.mark.parametrize("cv", [None, KFold(5)])
-@pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 def test_ridge_classifier_with_scoring(sparse_container, scoring, cv):
     # non-regression test for #14672
     # check that RidgeClassifierCV works with all sort of scoring and
@@ -1169,7 +1169,7 @@ def test_ridge_classifier_with_scoring(sparse_container, scoring, cv):
 
 
 @pytest.mark.parametrize("cv", [None, KFold(5)])
-@pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 def test_ridge_regression_custom_scoring(sparse_container, cv):
     # check that custom scoring is working as expected
     # check the tie breaking strategy (keep the first alpha tried)
@@ -1449,13 +1449,7 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
 @pytest.mark.parametrize("n_samples,n_features", [[2, 3], [3, 2]])
 @pytest.mark.parametrize(
     "sparse_container",
-    [
-        *COO_CONTAINERS,
-        *CSR_CONTAINERS,
-        *CSC_CONTAINERS,
-        *LIL_CONTAINERS,
-        *DOK_CONTAINERS,
-    ],
+    COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS + DOK_CONTAINERS + LIL_CONTAINERS,
 )
 def test_sparse_design_with_sample_weights(n_samples, n_features, sparse_container):
     # Sample weights must work with sparse matrices
@@ -1638,12 +1632,12 @@ def test_ridge_fit_intercept_sparse_sag(
 
 @pytest.mark.parametrize("return_intercept", [False, True])
 @pytest.mark.parametrize("sample_weight", [None, np.ones(1000)])
-@pytest.mark.parametrize("arr_type", [np.array, *CSR_CONTAINERS])
+@pytest.mark.parametrize("container", [np.array] + CSR_CONTAINERS)
 @pytest.mark.parametrize(
     "solver", ["auto", "sparse_cg", "cholesky", "lsqr", "sag", "saga", "lbfgs"]
 )
 def test_ridge_regression_check_arguments_validity(
-    return_intercept, sample_weight, arr_type, solver
+    return_intercept, sample_weight, container, solver
 ):
     """check if all combinations of arguments give valid estimations"""
 
@@ -1657,7 +1651,7 @@ def test_ridge_regression_check_arguments_validity(
     if return_intercept:
         true_intercept = 10000.0
     y += true_intercept
-    X_testing = arr_type(X)
+    X_testing = container(X)
 
     alpha, tol = 1e-3, 1e-6
     atol = 1e-3 if _IS_32BIT else 1e-4
@@ -1972,7 +1966,7 @@ def test_lbfgs_solver_error():
 
 
 @pytest.mark.parametrize("fit_intercept", [False, True])
-@pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("data", ["tall", "wide"])
 @pytest.mark.parametrize("solver", SOLVERS + ["lbfgs"])
 def test_ridge_sample_weight_consistency(
