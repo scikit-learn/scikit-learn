@@ -40,7 +40,7 @@ from sklearn.utils._testing import (
     ignore_warnings,
     skip_if_32bit,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.fixes import CSR_CONTAINERS, LIL_CONTAINERS
 
 x = np.linspace(0, 1, 10)
 xx, yy = np.meshgrid(x, x)
@@ -443,7 +443,8 @@ def test_high_perplexity_precomputed_sparse_distances(csr_container):
 
 
 @ignore_warnings(category=EfficiencyWarning)
-def test_sparse_precomputed_distance():
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + LIL_CONTAINERS)
+def test_sparse_precomputed_distance(sparse_container):
     """Make sure that TSNE works identically for sparse and dense matrix"""
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
@@ -458,9 +459,8 @@ def test_sparse_precomputed_distance():
     )
     Xt_dense = tsne.fit_transform(D)
 
-    for fmt in ["csr", "lil"]:
-        Xt_sparse = tsne.fit_transform(D_sparse.asformat(fmt))
-        assert_almost_equal(Xt_dense, Xt_sparse)
+    Xt_sparse = tsne.fit_transform(sparse_container(D_sparse))
+    assert_almost_equal(Xt_dense, Xt_sparse)
 
 
 def test_non_positive_computed_distances():
@@ -574,7 +574,8 @@ def test_n_iter_used():
             assert tsne.n_iter_ == n_iter - 1
 
 
-def test_answer_gradient_two_points():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_answer_gradient_two_points(csr_container):
     # Test the tree with only a single set of children.
     #
     # These tests & answers have been checked against the reference
@@ -587,10 +588,11 @@ def test_answer_gradient_two_points():
     grad_output = np.array(
         [[-2.37012478e-05, -6.29044398e-05], [2.37012478e-05, 6.29044398e-05]]
     )
-    _run_answer_test(pos_input, pos_output, neighbors, grad_output)
+    _run_answer_test(pos_input, pos_output, neighbors, grad_output, csr_container)
 
 
-def test_answer_gradient_four_points():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_answer_gradient_four_points(csr_container):
     # Four points tests the tree with multiple levels of children.
     #
     # These tests & answers have been checked against the reference
@@ -613,10 +615,11 @@ def test_answer_gradient_four_points():
             [-2.58720939e-09, 7.52706374e-09],
         ]
     )
-    _run_answer_test(pos_input, pos_output, neighbors, grad_output)
+    _run_answer_test(pos_input, pos_output, neighbors, grad_output, csr_container)
 
 
-def test_skip_num_points_gradient():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_skip_num_points_gradient(csr_container):
     # Test the kwargs option skip_num_points.
     #
     # Skip num points should make it such that the Barnes_hut gradient
@@ -642,7 +645,9 @@ def test_skip_num_points_gradient():
             [-2.58720939e-09, 7.52706374e-09],
         ]
     )
-    _run_answer_test(pos_input, pos_output, neighbors, grad_output, False, 0.1, 2)
+    _run_answer_test(
+        pos_input, pos_output, neighbors, grad_output, csr_container, False, 0.1, 2
+    )
 
 
 def _run_answer_test(
@@ -650,6 +655,7 @@ def _run_answer_test(
     pos_output,
     neighbors,
     grad_output,
+    csr_container,
     verbose=False,
     perplexity=0.1,
     skip_num_points=0,
@@ -662,9 +668,7 @@ def _run_answer_test(
     pij_input = squareform(pij_input).astype(np.float32)
     grad_bh = np.zeros(pos_output.shape, dtype=np.float32)
 
-    from scipy.sparse import csr_matrix
-
-    P = csr_matrix(pij_input)
+    P = csr_container(pij_input)
 
     neighbors = P.indices.astype(np.int64)
     indptr = P.indptr.astype(np.int64)
