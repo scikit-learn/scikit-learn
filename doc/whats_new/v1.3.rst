@@ -133,6 +133,10 @@ Changed displays
   past behaviour.
   :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`model_selection.ValidationCurveDisplay` now accepts passing a
+  list to the `param_range` parameter.
+  :pr:`27311` by :user:`Arturo Amor <ArturoAmorQ>`.
+
 Changes impacting all modules
 -----------------------------
 
