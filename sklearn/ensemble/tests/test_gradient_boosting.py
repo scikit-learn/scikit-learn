@@ -920,7 +920,6 @@ def test_warm_start_oob(Cls):
 def test_warm_start_sparse(Cls, sparse_container):
     # Test that all sparse matrix types are supported
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
     est_dense = Cls(
         n_estimators=100, max_depth=1, subsample=0.5, random_state=1, warm_start=True
     )
