@@ -187,6 +187,13 @@ Changelog
   ``**score_params`` which are passed to the underlying scorer.
   :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| :func:`metrics.f_regression` and :func:`metrics.r_regression` now
+  support SciPy sparse arrays.
+  :pr:`27239` by :user:`Yaroslav Korobko <Tialo>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
@@ -286,6 +293,13 @@ Changelog
   argument allowing for the use of accelerated third-party
   :class:`metric.DistanceMetric` objects.
   :pr:`26267` by :user:`Meekail Zain <micky774>`
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Enhancement| :meth:`neural_network.BernoulliRBM.score_samples` now supports Scipy
+  sparse arrays.
+  :pr:`27252` by `Yao Xiao <Charlie-XIAO>`
 
 :mod:`sklearn.metrics`
 ......................
