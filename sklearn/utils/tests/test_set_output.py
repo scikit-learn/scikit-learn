@@ -3,7 +3,6 @@ from collections import namedtuple
 import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
-from scipy.sparse import csr_matrix
 
 from sklearn._config import config_context, get_config
 from sklearn.utils._set_output import (
@@ -12,6 +11,7 @@ from sklearn.utils._set_output import (
     _SetOutputMixin,
     _wrap_in_pandas_container,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 def test__wrap_in_pandas_container_dense():
@@ -41,10 +41,11 @@ def test__wrap_in_pandas_container_dense_update_columns_and_index():
     assert_array_equal(new_df.index, X_df.index)
 
 
-def test__wrap_in_pandas_container_error_validation():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test__wrap_in_pandas_container_error_validation(csr_container):
     """Check errors in _wrap_in_pandas_container."""
     X = np.asarray([[1, 0, 3], [0, 0, 1]])
-    X_csr = csr_matrix(X)
+    X_csr = csr_container(X)
     match = "Pandas output does not support sparse data"
     with pytest.raises(ValueError, match=match):
         _wrap_in_pandas_container(X_csr, columns=["a", "b", "c"])
