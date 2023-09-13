@@ -53,17 +53,19 @@ def test_linear_regression():
     assert_array_almost_equal(reg.predict(X), [0])
 
 
-@pytest.mark.parametrize("array_constr", [np.array, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_linear_regression_sample_weights(
-    array_constr, fit_intercept, global_random_seed
+    sparse_container, fit_intercept, global_random_seed
 ):
     rng = np.random.RandomState(global_random_seed)
 
     # It would not work with under-determined systems
     n_samples, n_features = 6, 5
 
-    X = array_constr(rng.normal(size=(n_samples, n_features)))
+    X = rng.normal(size=(n_samples, n_features))
+    if sparse_container is not None:
+        X = sparse_container(X)
     y = rng.normal(size=n_samples)
 
     sample_weight = 1.0 + rng.uniform(size=n_samples)
@@ -317,7 +319,7 @@ def test_linear_regression_positive_vs_nonpositive_when_positive(global_random_s
     assert np.mean((reg.coef_ - regn.coef_) ** 2) < 1e-6
 
 
-@pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("use_sw", [True, False])
 def test_inplace_data_preprocessing(sparse_container, use_sw, global_random_seed):
     # Check that the data is not modified inplace by the linear regression
@@ -439,7 +441,7 @@ def test_preprocess_data(global_random_seed):
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
-@pytest.mark.parametrize("sparse_container", [None, *CSC_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
 def test_preprocess_data_multioutput(global_random_seed, sparse_container):
     rng = np.random.RandomState(global_random_seed)
     n_samples = 200
@@ -465,7 +467,7 @@ def test_preprocess_data_multioutput(global_random_seed, sparse_container):
     assert_array_almost_equal(yt, y - y_mean)
 
 
-@pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 def test_preprocess_data_weighted(sparse_container, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     n_samples = 200
@@ -618,7 +620,7 @@ def test_csr_preprocess_data(csr_container):
     assert csr_.format == "csr"
 
 
-@pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("to_copy", (True, False))
 def test_preprocess_copy_data_no_checks(sparse_container, to_copy):
     X, y = make_regression()
@@ -718,7 +720,7 @@ def test_dtype_preprocess_data(global_random_seed):
 
 
 @pytest.mark.parametrize("n_targets", [None, 2])
-@pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 def test_rescale_data(n_targets, sparse_container, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     n_samples = 200
@@ -806,7 +808,7 @@ def test_fused_types_make_dataset(csr_container):
     assert_array_equal(yi_64, yicsr_64)
 
 
-@pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_linear_regression_sample_weight_consistency(
     sparse_container, fit_intercept, global_random_seed
