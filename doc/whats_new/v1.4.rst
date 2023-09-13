@@ -187,6 +187,13 @@ Changelog
   ``**score_params`` which are passed to the underlying scorer.
   :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| :func:`metrics.f_regression` and :func:`metrics.r_regression` now
+  support SciPy sparse arrays.
+  :pr:`27239` by :user:`Yaroslav Korobko <Tialo>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
