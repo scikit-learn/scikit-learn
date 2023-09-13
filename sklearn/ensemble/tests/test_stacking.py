@@ -7,8 +7,8 @@ from unittest.mock import Mock
 
 import numpy as np
 import pytest
-import scipy.sparse as sparse
 from numpy.testing import assert_array_equal
+from scipy import sparse
 
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
 from sklearn.datasets import (
