@@ -914,10 +914,13 @@ def test_warm_start_oob(Cls):
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
-def test_warm_start_sparse(Cls):
+@pytest.mark.parametrize(
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
+)
+def test_warm_start_sparse(Cls, sparse_container):
     # Test that all sparse matrix types are supported
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    sparse_container_type = COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
+    COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
     est_dense = Cls(
         n_estimators=100, max_depth=1, subsample=0.5, random_state=1, warm_start=True
     )
@@ -927,31 +930,28 @@ def test_warm_start_sparse(Cls):
     est_dense.fit(X, y)
     y_pred_dense = est_dense.predict(X)
 
-    for sparse_constructor in sparse_container_type:
-        X_sparse = sparse_constructor(X)
+    X_sparse = sparse_container(X)
 
-        est_sparse = Cls(
-            n_estimators=100,
-            max_depth=1,
-            subsample=0.5,
-            random_state=1,
-            warm_start=True,
-        )
-        est_sparse.fit(X_sparse, y)
-        est_sparse.predict(X)
-        est_sparse.set_params(n_estimators=200)
-        est_sparse.fit(X_sparse, y)
-        y_pred_sparse = est_sparse.predict(X)
+    est_sparse = Cls(
+        n_estimators=100,
+        max_depth=1,
+        subsample=0.5,
+        random_state=1,
+        warm_start=True,
+    )
+    est_sparse.fit(X_sparse, y)
+    est_sparse.predict(X)
+    est_sparse.set_params(n_estimators=200)
+    est_sparse.fit(X_sparse, y)
+    y_pred_sparse = est_sparse.predict(X)
 
-        assert_array_almost_equal(
-            est_dense.oob_improvement_[:100], est_sparse.oob_improvement_[:100]
-        )
-        assert est_dense.oob_scores_[-1] == pytest.approx(est_dense.oob_score_)
-        assert_array_almost_equal(
-            est_dense.oob_scores_[:100], est_sparse.oob_scores_[:100]
-        )
-        assert est_sparse.oob_scores_[-1] == pytest.approx(est_sparse.oob_score_)
-        assert_array_almost_equal(y_pred_dense, y_pred_sparse)
+    assert_array_almost_equal(
+        est_dense.oob_improvement_[:100], est_sparse.oob_improvement_[:100]
+    )
+    assert est_dense.oob_scores_[-1] == pytest.approx(est_dense.oob_score_)
+    assert_array_almost_equal(est_dense.oob_scores_[:100], est_sparse.oob_scores_[:100])
+    assert est_sparse.oob_scores_[-1] == pytest.approx(est_sparse.oob_score_)
+    assert_array_almost_equal(y_pred_dense, y_pred_sparse)
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
