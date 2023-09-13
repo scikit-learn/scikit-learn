@@ -187,6 +187,13 @@ Changelog
   ``**score_params`` which are passed to the underlying scorer.
   :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| :func:`metrics.f_regression` and :func:`metrics.r_regression` now
+  support SciPy sparse arrays.
+  :pr:`27239` by :user:`Yaroslav Korobko <Tialo>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
@@ -280,6 +287,13 @@ Changelog
   :class:`metric.DistanceMetric` objects.
   :pr:`26267` by :user:`Meekail Zain <micky774>`
 
+:mod:`sklearn.neural_network`
+.............................
+
+- |Enhancement| :meth:`neural_network.BernoulliRBM.score_samples` now supports Scipy
+  sparse arrays.
+  :pr:`27252` by `Yao Xiao <Charlie-XIAO>`
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -320,6 +334,10 @@ Changelog
   calling specific NumPy `np.may_share_memory` that does not work with SciPy sparse
   array and does not return the correct result for SciPy sparse matrix.
   :pr:`27336` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| :func`sklearn.utils.multiclass.type_of_target` now supports Scipy
+  sparse arrays.
+  :pr:`27274` by `Yao Xiao <Charlie-XIAO>`
 
 Code and Documentation Contributors
 -----------------------------------
