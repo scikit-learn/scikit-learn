@@ -1731,7 +1731,7 @@ functions or non-estimator constructors.
         For these models, the number of iterations, reported via
         ``len(estimators_)`` or ``n_iter_``, corresponds the total number of
         estimators/iterations learnt since the initialization of the model.
-        Thus, if a model was already initialized with `N`` estimators, and `fit`
+        Thus, if a model was already initialized with `N` estimators, and `fit`
         is called with ``n_estimators`` or ``max_iter`` set to `M`, the model
         will train `M - N` new estimators.
 
