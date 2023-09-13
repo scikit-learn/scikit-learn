@@ -150,7 +150,7 @@ def make_sparse_data(
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 @pytest.mark.parametrize(
-    "alpha,fit_intercept,positive",
+    "alpha, fit_intercept, positive",
     [(0.1, False, False), (0.1, True, False), (1e-3, False, True), (1e-3, True, True)],
 )
 def test_sparse_enet_not_as_toy_dataset(csc_container, alpha, fit_intercept, positive):
