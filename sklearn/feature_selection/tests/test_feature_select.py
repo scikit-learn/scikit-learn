@@ -397,7 +397,7 @@ def test_select_percentile_classif_sparse(csr_container):
     assert X_r2inv.shape == X.shape
     assert_array_equal(X_r2inv[:, support_mask].toarray(), X_r.toarray())
     # Check other columns are empty
-    assert X_r2inv.getnnz() == X_r.getnnz()
+    assert X_r2inv.nnz == X_r.nnz
 
 
 ##############################################################################
