@@ -10,7 +10,6 @@ from numbers import Integral, Real
 
 import joblib
 import numpy as np
-import pytest
 import scipy.sparse as sp
 
 from sklearn import config_context, get_config
@@ -382,7 +381,6 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
 
 class SparseTransformer(BaseEstimator):
     def __init__(self, sparse_container=None):
-        super().__init__()
         self.sparse_container = sparse_container
 
     def fit(self, X, y=None):
@@ -546,8 +544,7 @@ def test_check_fit_score_takes_y_works_on_deprecated_fit():
     check_fit_score_takes_y("test", TestEstimatorWithDeprecatedFitMethod())
 
 
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_check_estimator(csr_container):
+def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
 
@@ -666,8 +663,9 @@ def test_check_estimator(csr_container):
     with raises(ValueError, match=msg):
         check_estimator(UntaggedBinaryClassifier())
 
-    # non-regression test for estimators transforming to sparse data
-    check_estimator(SparseTransformer(sparse_container=csr_container))
+    for csr_container in CSR_CONTAINERS:
+        # non-regression test for estimators transforming to sparse data
+        check_estimator(SparseTransformer(sparse_container=csr_container))
 
     # doesn't error on actual estimator
     check_estimator(LogisticRegression())
@@ -908,8 +906,7 @@ def test_check_classifiers_multilabel_output_format_predict():
         check_classifiers_multilabel_output_format_predict(clf.__class__.__name__, clf)
 
 
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_check_classifiers_multilabel_output_format_predict_proba(csr_container):
+def test_check_classifiers_multilabel_output_format_predict_proba():
     n_samples, test_size, n_outputs = 100, 25, 5
     _, y = make_multilabel_classification(
         n_samples=n_samples,
@@ -926,18 +923,19 @@ def test_check_classifiers_multilabel_output_format_predict_proba(csr_container)
         def predict_proba(self, X):
             return self.response_output
 
-    # 1. unknown output type
-    clf = MultiLabelClassifierPredictProba(response_output=csr_container(y_test))
-    err_msg = (
-        f"Unknown returned type .*{csr_container.__name__}.* by "
-        r"MultiLabelClassifierPredictProba.predict_proba. A list or a Numpy "
-        r"array is expected."
-    )
-    with raises(ValueError, match=err_msg):
-        check_classifiers_multilabel_output_format_predict_proba(
-            clf.__class__.__name__,
-            clf,
+    for csr_container in CSR_CONTAINERS:
+        # 1. unknown output type
+        clf = MultiLabelClassifierPredictProba(response_output=csr_container(y_test))
+        err_msg = (
+            f"Unknown returned type .*{csr_container.__name__}.* by "
+            r"MultiLabelClassifierPredictProba.predict_proba. A list or a Numpy "
+            r"array is expected."
         )
+        with raises(ValueError, match=err_msg):
+            check_classifiers_multilabel_output_format_predict_proba(
+                clf.__class__.__name__,
+                clf,
+            )
     # 2. for list output
     # 2.1. inconsistent length
     clf = MultiLabelClassifierPredictProba(response_output=y_test.tolist())
