@@ -325,7 +325,7 @@ def r_regression(X, y, *, center=True, force_finite=True):
         y = y - np.mean(y)
         # TODO: for Scipy <= 1.10, `isspmatrix(X)` returns `True` for sparse arrays.
         # Here, we check the output of the `.mean` operation that returns a `np.matrix`
-        # for sparse matrix while a `np.array` for dense and sparse arrays.
+        # for sparse matrices while a `np.array` for dense and sparse arrays.
         # We can reconsider using `isspmatrix` when the minimum version is
         # SciPy >= 1.11
         X_means = X.mean(axis=0)
