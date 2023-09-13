@@ -5,6 +5,7 @@ from collections import defaultdict
 from collections.abc import Mapping
 from functools import partial
 from io import StringIO
+from itertools import product
 
 import numpy as np
 import pytest
@@ -1286,7 +1287,7 @@ def test_tfidf_transformer_type(X_dtype):
 
 
 @pytest.mark.parametrize(
-    "csc_container,csr_container", zip(CSC_CONTAINERS, CSR_CONTAINERS)
+    "csc_container, csr_container", product(CSC_CONTAINERS, CSR_CONTAINERS)
 )
 def test_tfidf_transformer_sparse(csc_container, csr_container):
     X = sparse.rand(10, 20000, dtype=np.float64, random_state=42)
