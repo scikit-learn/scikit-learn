@@ -987,7 +987,7 @@ class MetadataRouter:
     def validate_metadata(self, *, method, params):
         """Validate given metadata for a method.
 
-        This raises a ``ValueError`` if some of the passed metadata are not
+        This raises a ``TypeError`` if some of the passed metadata are not
         understood by child objects.
 
         Parameters
@@ -1012,8 +1012,8 @@ class MetadataRouter:
         extra_keys = set(params.keys()) - param_names - self_params
         if extra_keys:
             raise TypeError(
-                f"{method} got unexpected argument(s) {extra_keys}, which are "
-                "not requested metadata in any object."
+                f"{self.owner}.{method} got unexpected argument(s) {extra_keys}, which"
+                " are not requested metadata in any object."
             )
 
     def _serialize(self):
