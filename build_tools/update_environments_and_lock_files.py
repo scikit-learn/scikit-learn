@@ -27,6 +27,10 @@ To run this script you need:
   sklearn/_min_dependencies.py
 - pip-tools
 
+To only update the environment and lock files for specific builds, you can use
+the command line argument `--select-build` which will take a regex. For example,
+to only update the documentation builds you can use:
+`python build_tools/update_environments_and_lock_files.py --select-build doc`
 """
 
 import json
@@ -124,6 +128,10 @@ conda_build_metadata_list = [
         "conda_dependencies": common_dependencies + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
+            # TODO: temporary pin for numpy to avoid what seems a loky issue,
+            # for more details see
+            # https://github.com/scikit-learn/scikit-learn/pull/26845#issuecomment-1639917135
+            "numpy": "<1.25",
         },
     },
     {
@@ -149,6 +157,9 @@ conda_build_metadata_list = [
             "scipy": "min",
             "matplotlib": "min",
             "threadpoolctl": "2.2.0",
+            # Regression have been observed with Cython>=3.0.0.
+            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
+            "cython": "<3.0.0",
         },
     },
     {
@@ -157,7 +168,13 @@ conda_build_metadata_list = [
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies_without_coverage + ["ccache"],
-        "package_constraints": {"python": "3.8", "blas": "[build=openblas]"},
+        "package_constraints": {
+            "python": "3.8",
+            "blas": "[build=openblas]",
+            # Regression have been observed with Cython>=3.0.0.
+            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
+            "cython": "<3.0.0",
+        },
     },
     {
         "build_name": "pylatest_pip_openblas_pandas",
@@ -221,6 +238,9 @@ conda_build_metadata_list = [
         "package_constraints": {
             "blas": "[build=openblas]",
             "python": "3.9",
+            # Regression have been observed with Cython>=3.0.0.
+            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
+            "cython": "<3.0.0",
         },
     },
     {
@@ -235,6 +255,9 @@ conda_build_metadata_list = [
         "package_constraints": {
             "python": "3.8",
             "blas": "[build=mkl]",
+            # Regression have been observed with Cython>=3.0.0.
+            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
+            "cython": "<3.0.0",
         },
     },
     {
@@ -297,6 +320,9 @@ conda_build_metadata_list = [
             "python": "3.9",
             # XXX: sphinx > 6.0 does not correctly generate searchindex.js
             "sphinx": "6.0.0",
+            # Regression have been observed with Cython>=3.0.0.
+            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
+            "cython": "<3.0.0",
         },
     },
     {
@@ -309,6 +335,9 @@ conda_build_metadata_list = [
         ) + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.9",
+            # Regression have been observed with Cython>=3.0.0.
+            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
+            "cython": "<3.0.0",
         },
     },
 ]
@@ -331,6 +360,9 @@ pip_build_metadata_list = [
             "pytest": "min",
             "pytest-cov": "min",
             # no pytest-xdist because it causes issue on 32bit
+            # Regression have been observed with Cython>=3.0.0.
+            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
+            "cython": "<3.0.0",
         },
         # same Python version as in debian-32 build
         "python_version": "3.9.2",
@@ -345,7 +377,13 @@ pip_build_metadata_list = [
             "pytest",
             "pytest-xdist",
         ],
-        "package_constraints": {"joblib": "min", "threadpoolctl": "min"},
+        "package_constraints": {
+            "joblib": "min",
+            "threadpoolctl": "min",
+            # Regression have been observed with Cython>=3.0.0.
+            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
+            "cython": "<3.0.0",
+        },
         "python_version": "3.10.4",
     },
 ]
@@ -548,15 +586,15 @@ def check_conda_version():
     # Avoid issues with glibc (https://github.com/conda/conda-lock/issues/292)
     # or osx (https://github.com/conda/conda-lock/issues/408) virtual package.
     # The glibc one has been fixed in conda 23.1.0 and the osx has been fixed
-    # in main and will be fixed when conda > 23.5.0 is released.
+    # in conda 23.7.0.
     conda_info_output = execute_command(["conda", "info", "--json"])
 
     conda_info = json.loads(conda_info_output)
     conda_version = Version(conda_info["conda_version"])
 
-    if Version("22.9.0") < conda_version <= Version("23.5.0"):
+    if Version("22.9.0") < conda_version < Version("23.7"):
         raise RuntimeError(
-            f"conda version should be <= 22.9.0 or > 23.5.0, got: {conda_version}"
+            f"conda version should be <= 22.9.0 or >= 23.7 got: {conda_version}"
         )
 
 

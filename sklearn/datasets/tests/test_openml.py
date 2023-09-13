@@ -1534,7 +1534,7 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir, pars
         modified_gzip.write(data)
 
     # Requests are already mocked by monkey_patch_webbased_functions.
-    # We want to re-use that mock for all requests except file download,
+    # We want to reuse that mock for all requests except file download,
     # hence creating a thin mock over the original mock
     mocked_openml_url = sklearn.datasets._openml.urlopen
 

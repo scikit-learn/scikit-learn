@@ -1,12 +1,34 @@
-#id {
-  color: black;
+#$id {
+  --sklearn-color-text: black;
+  --sklearn-color-line: gray;
+  --sklearn-color-background: white;
+  --sklearn-color-background-box: #f0f8ff;
+  --sklearn-color-border-box: black;
+  --sklearn-color-icon: #696969;
+  --sklearn-color-active: #d4ebff;
+  --sklearn-color-highlight: #d4ebff;
+
+  @media (prefers-color-scheme: dark) {
+    --sklearn-color-text: white;
+    --sklearn-color-line: gray;
+    --sklearn-color-background: #111;
+    --sklearn-color-background-box: #424242;
+    --sklearn-color-border-box: white;
+    --sklearn-color-icon: #878787;
+    --sklearn-color-active: #616161;
+    --sklearn-color-highlight: #616161;
+  }
+}
+
+#$id {
+  color: var(--sklearn-color-text);
 }
 #$id pre{
   padding: 0;
 }
 
 #$id div.sk-toggleable {
-  background-color: white;
+  background-color: var(--sklearn-color-background);
 }
 #$id label.sk-toggleable__label {
   cursor: pointer;
@@ -21,13 +43,13 @@
   content: "▸";
   float: left;
   margin-right: 0.25em;
-  color: #696969;
+  color: var(--sklearn-color-icon);
 }
 #$id label.sk-toggleable__label-arrow:hover:before {
-  color: black;
+  color: var(--sklearn-color-text);
 }
 #$id div.sk-estimator:hover label.sk-toggleable__label-arrow:before {
-  color: black;
+  color: var(--sklearn-color-text);
 }
 
 /* Drop-down, unfitted case */
@@ -47,9 +69,9 @@
 /* Content of drop-down, unfitted case */
 #$id div.sk-toggleable__content pre {
   margin: 0.2em;
-  color: black;
+  color: var(--sklearn-color-text);
   border-radius: 0.25em;
-  background-color: #fff5e6; /* Light Orange */
+  background-color: var(--sklearn-color-background-box);
 }
 
 /* Content of drop-down, fitted case */
@@ -103,7 +125,7 @@
 #$id div.sk-estimator {
   font-family: monospace;
   background-color: #fff5e6; /* Light Orange */
-  border: 1px dotted black;
+  border: 1px dotted var(--sklearn-color-border-box);
   border-radius: 0.25em;
   box-sizing: border-box;
   margin-bottom: 0.5em;
@@ -128,7 +150,7 @@
 #$id div.sk-parallel-item::after {
   content: "";
   width: 100%;
-  border-bottom: 1px solid gray;
+  border-bottom: 1px solid var(--sklearn-color-line);
   flex-grow: 1;
 }
 
@@ -145,7 +167,7 @@
 #$id div.sk-serial::before {
   content: "";
   position: absolute;
-  border-left: 1px solid gray;
+  border-left: 1px solid var(--sklearn-color-line);
   box-sizing: border-box;
   top: 0;
   bottom: 0;
@@ -156,25 +178,26 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: white;
+  background-color: var(--sklearn-color-background);
   padding-right: 0.2em;
   padding-left: 0.2em;
   position: relative;
 }
 #$id div.sk-item {
   position: relative;
+  z-index: 1;
 }
 #$id div.sk-parallel {
   display: flex;
   align-items: stretch;
   justify-content: center;
-  background-color: white;
+  background-color: var(--sklearn-color-background);
   position: relative;
 }
 #$id div.sk-item::before, #$id div.sk-parallel-item::before {
   content: "";
   position: absolute;
-  border-left: 1px solid gray;
+  border-left: 1px solid var(--sklearn-color-line);
   box-sizing: border-box;
   top: 0;
   bottom: 0;
@@ -186,7 +209,7 @@
   flex-direction: column;
   z-index: 1;
   position: relative;
-  background-color: white;
+  background-color: var(--sklearn-color-background);
 }
 #$id div.sk-parallel-item:first-child::after {
   align-self: flex-end;
@@ -200,11 +223,11 @@
   width: 0;
 }
 #$id div.sk-dashed-wrapped {
-  border: 1px dashed gray;
+  border: 1px dashed var(--sklearn-color-line);
   margin: 0 0.4em 0.5em 0.4em;
   box-sizing: border-box;
   padding-bottom: 0.4em;
-  background-color: white;
+  background-color: var(--sklearn-color-background);
 }
 
 /* Estimator doc link, unfitted */
@@ -244,23 +267,23 @@
 
 
 #$id div.sk-label label {
-font-family: monospace;
-font-weight: bold;
-display: inline-block;
-line-height: 1.2em;
+  font-family: monospace;
+  font-weight: bold;
+  display: inline-block;
+  line-height: 1.2em;
 }
 #$id div.sk-label-container {
-text-align: center;
+  text-align: center;
 }
 
 #$id div.sk-container {
-/* jupyter's `normalize.less` sets `[hidden] { display: none; }`
-   but bootstrap.min.css set `[hidden] { display: none !important; }`
-   so we also need the `!important` here to be able to override the
-   default hidden behavior on the sphinx rendered scikit-learn.org.
-   See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
-display: inline-block !important;
-position: relative;
+  /* jupyter's `normalize.less` sets `[hidden] { display: none; }`
+     but bootstrap.min.css set `[hidden] { display: none !important; }`
+     so we also need the `!important` here to be able to override the
+     default hidden behavior on the sphinx rendered scikit-learn.org.
+     See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
+  display: inline-block !important;
+  position: relative;
 }
 #$id div.sk-text-repr-fallback {
 display: none;
