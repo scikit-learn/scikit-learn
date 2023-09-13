@@ -498,7 +498,7 @@ Again please see the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details on all the parameters.
 
 |details-start|
-Numeric example of a tf-idf matrix
+**Numeric example of a tf-idf matrix**
 |details-split|
 
 Let's take an example with the following counts. The first term is present
