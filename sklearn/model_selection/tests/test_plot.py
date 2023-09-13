@@ -117,7 +117,6 @@ def test_validation_curve_display_default_usage(pyplot, data):
     )
 
     assert_array_equal(display.param_range, param_range)
-    assert_array_equal(display.param_range, param_range)
     assert_allclose(display.train_scores, train_scores)
     assert_allclose(display.test_scores, test_scores)
 
