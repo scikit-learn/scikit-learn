@@ -24,7 +24,12 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.fixes import (
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    LIL_CONTAINERS,
+)
 
 rtol = 1e-6
 
@@ -572,12 +577,13 @@ def test_preprocess_data_weighted(sparse_container, global_random_seed):
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
-def test_sparse_preprocess_data_offsets(global_random_seed):
+@pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
+def test_sparse_preprocess_data_offsets(global_random_seed, lil_container):
     rng = np.random.RandomState(global_random_seed)
     n_samples = 200
     n_features = 2
     X = sparse.rand(n_samples, n_features, density=0.5, random_state=rng)
-    X = X.tolil()
+    X = lil_container(X)
     y = rng.rand(n_samples)
     XA = X.toarray()
     expected_X_scale = np.std(XA, axis=0) * np.sqrt(X.shape[0])
