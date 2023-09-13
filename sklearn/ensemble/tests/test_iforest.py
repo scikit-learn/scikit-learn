@@ -47,7 +47,7 @@ def test_iforest(global_random_seed):
             ).predict(X_test)
 
 
-@pytest.mark.parametrize("sparse_container", [*CSC_CONTAINERS, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
 def test_iforest_sparse(global_random_seed, sparse_container):
     """Check IForest for various parameter settings on sparse input."""
     rng = check_random_state(global_random_seed)
