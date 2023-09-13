@@ -196,7 +196,7 @@ def test_standard_scaler_1d():
     assert scaler.n_samples_seen_ == X.shape[0]
 
 
-@pytest.mark.parametrize("sparse_container", [None, *CSC_CONTAINERS, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS + CSR_CONTAINERS)
 @pytest.mark.parametrize("add_sample_weight", [False, True])
 def test_standard_scaler_dtype(add_sample_weight, sparse_container):
     # Ensure scaling does not affect dtype
@@ -228,7 +228,7 @@ def test_standard_scaler_dtype(add_sample_weight, sparse_container):
         RobustScaler(with_centering=False),
     ],
 )
-@pytest.mark.parametrize("sparse_container", [None, *CSC_CONTAINERS, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS + CSR_CONTAINERS)
 @pytest.mark.parametrize("add_sample_weight", [False, True])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("constant", [0, 1.0, 100.0])
@@ -269,7 +269,7 @@ def test_standard_scaler_constant_features(
 @pytest.mark.parametrize("n_samples", [10, 100, 10_000])
 @pytest.mark.parametrize("average", [1e-10, 1, 1e10])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("sparse_container", [None, *CSC_CONTAINERS, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS + CSR_CONTAINERS)
 def test_standard_scaler_near_constant_features(
     n_samples, sparse_container, average, dtype
 ):
@@ -870,7 +870,7 @@ def test_scaler_without_centering(sample_weight, sparse_container):
 
 @pytest.mark.parametrize("with_mean", [True, False])
 @pytest.mark.parametrize("with_std", [True, False])
-@pytest.mark.parametrize("sparse_container", [None, *CSC_CONTAINERS, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS + CSR_CONTAINERS)
 def test_scaler_n_samples_seen_with_nan(with_mean, with_std, sparse_container):
     X = np.array(
         [[0, 1, 3], [np.nan, 6, 10], [5, 4, np.nan], [8, 0, np.nan]], dtype=np.float64
