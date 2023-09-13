@@ -29,7 +29,6 @@ from ..exceptions import NotFittedError
 from ..preprocessing import normalize
 from ..utils import _IS_32BIT
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
-from ..utils.fixes import parse_version, sp_version
 from ..utils.validation import FLOAT_DTYPES, check_array, check_is_fitted
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
@@ -1714,13 +1713,6 @@ class TfidfTransformer(
         if not sp.issparse(X):
             X = sp.csr_matrix(X, dtype=np.float64)
 
-        # We need X * self._idf_diag later but this cannot be done with sparse arrays
-        # since they have different shapes; cannot do sp.isspmatrix because it does not
-        # distinguish sparse matrices/arrays until Scipy 1.11
-        if sp_version >= parse_version("1.8"):
-            if isinstance(X, sp.csr_array):
-                X = sp.csr_matrix(X, dtype=np.float64)
-
         if self.sublinear_tf:
             np.log(X.data, X.data)
             X.data += 1
@@ -1731,8 +1723,7 @@ class TfidfTransformer(
             # name:
             check_is_fitted(self, attributes=["idf_"], msg="idf vector is not fitted")
 
-            # *= doesn't work
-            X = X * self._idf_diag
+            X = X @ self._idf_diag
 
         if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)

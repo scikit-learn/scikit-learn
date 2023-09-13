@@ -164,6 +164,13 @@ Changelog
   :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
   :pr:`26957` by `Thomas Fan`_.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Enhancement| :class:`feature_extraction.text.TfidfTransformer` now supports
+  the SciPy sparse arrays.
+  :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
