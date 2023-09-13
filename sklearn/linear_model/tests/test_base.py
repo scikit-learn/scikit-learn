@@ -594,7 +594,7 @@ def test_sparse_preprocess_data_offsets(global_random_seed, lil_container):
     assert_array_almost_equal(X_mean, np.zeros(n_features))
     assert_array_almost_equal(y_mean, 0)
     assert_array_almost_equal(X_scale, np.ones(n_features))
-    assert_array_almost_equal(Xt.A, XA)
+    assert_array_almost_equal(Xt.toarray(), XA)
     assert_array_almost_equal(yt, y)
 
     Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
@@ -603,7 +603,7 @@ def test_sparse_preprocess_data_offsets(global_random_seed, lil_container):
     assert_array_almost_equal(X_mean, np.mean(XA, axis=0))
     assert_array_almost_equal(y_mean, np.mean(y, axis=0))
     assert_array_almost_equal(X_scale, np.ones(n_features))
-    assert_array_almost_equal(Xt.A, XA)
+    assert_array_almost_equal(Xt.toarray(), XA)
     assert_array_almost_equal(yt, y - np.mean(y, axis=0))
 
     Xt, yt, X_mean, y_mean, X_scale = _preprocess_data(
@@ -612,7 +612,7 @@ def test_sparse_preprocess_data_offsets(global_random_seed, lil_container):
     assert_array_almost_equal(X_mean, np.mean(XA, axis=0))
     assert_array_almost_equal(y_mean, np.mean(y, axis=0))
     assert_array_almost_equal(X_scale, expected_X_scale)
-    assert_array_almost_equal(Xt.A, XA / expected_X_scale)
+    assert_array_almost_equal(Xt.toarray(), XA / expected_X_scale)
     assert_array_almost_equal(yt, y - np.mean(y, axis=0))
 
 
