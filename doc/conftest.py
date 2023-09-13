@@ -187,6 +187,9 @@ def pytest_collection_modifyitems(config, items):
     """
     skip_doctests = False
     if np_base_version >= parse_version("2"):
+        # Skip doctests when using numpy 2 for now. See the following discussion
+        # to decide what to do in the longer term:
+        # https://github.com/scikit-learn/scikit-learn/issues/27339
         reason = "Due to NEP 51 numpy scalar repr has changed in numpy 2"
         skip_doctests = True
 
