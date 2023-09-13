@@ -898,7 +898,7 @@ def test_warm_start_oob(Cls):
 def test_warm_start_sparse(Cls):
     # Test that all sparse matrix types are supported
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    sparse_container_type = [*COO_CONTAINERS, *CSR_CONTAINERS, *CSC_CONTAINERS]
+    sparse_container_type = COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
     est_dense = Cls(
         n_estimators=100, max_depth=1, subsample=0.5, random_state=1, warm_start=True
     )
@@ -1172,7 +1172,7 @@ def test_non_uniform_weights_toy_edge_case_clf():
     "EstimatorClass", (GradientBoostingClassifier, GradientBoostingRegressor)
 )
 @pytest.mark.parametrize(
-    "sparse_container", [*COO_CONTAINERS, *CSC_CONTAINERS, *CSR_CONTAINERS]
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
 )
 def test_sparse_input(EstimatorClass, sparse_container):
     y, X = datasets.make_multilabel_classification(
