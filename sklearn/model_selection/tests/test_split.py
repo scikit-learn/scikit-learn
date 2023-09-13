@@ -6,12 +6,7 @@ from itertools import combinations, combinations_with_replacement, permutations
 import numpy as np
 import pytest
 from scipy import stats
-from scipy.sparse import (
-    coo_matrix,
-    csc_matrix,
-    csr_matrix,
-    issparse,
-)
+from scipy.sparse import issparse
 from scipy.special import comb
 
 from sklearn import config_context
@@ -63,6 +58,7 @@ from sklearn.utils._testing import (
 from sklearn.utils.estimator_checks import (
     _array_api_for_tests,
 )
+from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
 NO_GROUP_SPLITTERS = [
@@ -90,7 +86,6 @@ ALL_SPLITTERS = NO_GROUP_SPLITTERS + GROUP_SPLITTERS  # type: ignore
 
 X = np.ones(10)
 y = np.arange(10) // 2
-P_sparse = coo_matrix(np.eye(5))
 test_groups = (
     np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
     np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
@@ -1335,9 +1330,10 @@ def test_array_api_train_test_split(shuffle, stratify, array_namepsace, device, 
     )
 
 
-def test_train_test_split():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_train_test_split(coo_container):
     X = np.arange(100).reshape((10, 10))
-    X_s = coo_matrix(X)
+    X_s = coo_container(X)
     y = np.arange(10)
 
     # simple test
@@ -1423,16 +1419,17 @@ def test_train_test_split_pandas():
         assert isinstance(X_test, InputFeatureType)
 
 
-def test_train_test_split_sparse():
+@pytest.mark.parametrize(
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
+)
+def test_train_test_split_sparse(sparse_container):
     # check that train_test_split converts scipy sparse matrices
     # to csr, as stated in the documentation
     X = np.arange(100).reshape((10, 10))
-    sparse_types = [csr_matrix, csc_matrix, coo_matrix]
-    for InputFeatureType in sparse_types:
-        X_s = InputFeatureType(X)
-        X_train, X_test = train_test_split(X_s)
-        assert issparse(X_train) and X_train.format == "csr"
-        assert issparse(X_test) and X_test.format == "csr"
+    X_s = sparse_container(X)
+    X_train, X_test = train_test_split(X_s)
+    assert issparse(X_train) and X_train.format == "csr"
+    assert issparse(X_test) and X_test.format == "csr"
 
 
 def test_train_test_split_mock_pandas():
