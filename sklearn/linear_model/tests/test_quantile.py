@@ -270,14 +270,14 @@ def test_linprog_failure():
     reason="Solvers are available as of scipy 1.6.0",
 )
 @pytest.mark.parametrize(
-    "sparse_format", [*CSC_CONTAINERS, *CSR_CONTAINERS, *COO_CONTAINERS]
+    "sparse_container", CSC_CONTAINERS + CSR_CONTAINERS + COO_CONTAINERS
 )
 @pytest.mark.parametrize("solver", ["highs", "highs-ds", "highs-ipm"])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_sparse_input(sparse_format, solver, fit_intercept, default_solver):
+def test_sparse_input(sparse_container, solver, fit_intercept, default_solver):
     """Test that sparse and dense X give same results."""
     X, y = make_regression(n_samples=100, n_features=20, random_state=1, noise=1.0)
-    X_sparse = sparse_format(X)
+    X_sparse = sparse_container(X)
     alpha = 1e-4
     quant_dense = QuantileRegressor(
         alpha=alpha, fit_intercept=fit_intercept, solver=default_solver
