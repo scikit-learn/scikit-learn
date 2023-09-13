@@ -169,7 +169,7 @@ Changelog
 
 - |Enhancement| :class:`feature_extraction.text.TfidfTransformer` now supports
   the SciPy sparse arrays.
-  :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
+  :pr:`27219` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.feature_selection`
 ................................
