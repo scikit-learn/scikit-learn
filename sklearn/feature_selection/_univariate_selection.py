@@ -10,7 +10,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import special, stats
-from scipy.sparse import issparse, isspmatrix
+from scipy.sparse import issparse
 
 from ..base import BaseEstimator, _fit_context
 from ..preprocessing import LabelBinarizer
