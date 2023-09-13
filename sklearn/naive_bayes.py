@@ -1846,7 +1846,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         self._columns = all_columns
         self._estimator_to_input_indices = estimator_to_input_indices
 
-    def _iter(self, *, fitted=False, replace_strings=False):
+    def _iter(self, *, fitted, replace_strings):
         """Generate `(name, naive_bayes_estimator, columns)` tuples.
 
         This is a private method, similar to ColumnTransformer._iter.
@@ -1942,7 +1942,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         estimators_ = []
         fitted_estimators = iter(fitted_estimators)
 
-        for name, nb_estimator, cols in self._iter():
+        for name, nb_estimator, cols in self._iter(fitted=False, replace_strings=False):
             if not _is_empty_column_selection(cols):
                 updated_nb_estimator = next(fitted_estimators)
             else:  # don't advance fitted_estimators; use original
