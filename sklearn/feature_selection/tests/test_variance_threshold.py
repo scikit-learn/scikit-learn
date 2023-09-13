@@ -11,7 +11,7 @@ data2 = [[-0.13725701]] * 10
 
 
 @pytest.mark.parametrize(
-    "sparse_container", [None, *BSR_CONTAINERS, *CSC_CONTAINERS, *CSR_CONTAINERS]
+    "sparse_container", [None] + BSR_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
 )
 def test_zero_variance(sparse_container):
     # Test VarianceThreshold with default setting, zero variance.
@@ -28,7 +28,7 @@ def test_zero_variance_value_error():
         VarianceThreshold().fit([[0, 1], [0, 1]])
 
 
-@pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 def test_variance_threshold(sparse_container):
     # Test VarianceThreshold with custom variance.
     X = data if sparse_container is None else sparse_container(data)
@@ -44,7 +44,7 @@ def test_variance_threshold(sparse_container):
     ),
 )
 @pytest.mark.parametrize(
-    "sparse_container", [None, *BSR_CONTAINERS, *CSC_CONTAINERS, *CSR_CONTAINERS]
+    "sparse_container", [None] + BSR_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
 )
 def test_zero_variance_floating_point_error(sparse_container):
     # Test that VarianceThreshold(0.0).fit eliminates features that have
@@ -58,7 +58,7 @@ def test_zero_variance_floating_point_error(sparse_container):
 
 
 @pytest.mark.parametrize(
-    "sparse_container", [None, *BSR_CONTAINERS, *CSC_CONTAINERS, *CSR_CONTAINERS]
+    "sparse_container", [None] + BSR_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
 )
 def test_variance_nan(sparse_container):
     arr = np.array(data, dtype=np.float64)
