@@ -79,7 +79,7 @@ for i in range(max_iterations):
     # select up to 5 digit examples that the classifier is most uncertain about
     uncertainty_index = np.argsort(pred_entropies)[::-1]
     uncertainty_index = uncertainty_index[
-        np.in1d(uncertainty_index, unlabeled_indices)
+        np.isin(uncertainty_index, unlabeled_indices)
     ][:5]
 
     # keep track of indices that we get labels for
