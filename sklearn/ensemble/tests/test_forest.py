@@ -818,7 +818,7 @@ def test_random_trees_dense_type():
     X_transformed = hasher.fit_transform(X)
 
     # Assert that type is ndarray, not scipy.sparse.csr_matrix
-    assert type(X_transformed) == np.ndarray
+    assert isinstance(X_transformed, np.ndarray)
 
 
 def test_random_trees_dense_equal():
