@@ -26,6 +26,12 @@ from sklearn.utils._testing import (
     set_random_state,
 )
 from sklearn.utils.deprecation import deprecated
+from sklearn.utils.fixes import (
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    parse_version,
+    sp_version,
+)
 from sklearn.utils.metaestimators import available_if
 
 
@@ -38,10 +44,11 @@ def test_set_random_state():
     assert tree.random_state == 3
 
 
-def test_assert_allclose_dense_sparse():
+@pytest.mark.parametrize("csr_container", CSC_CONTAINERS)
+def test_assert_allclose_dense_sparse(csr_container):
     x = np.arange(9).reshape(3, 3)
     msg = "Not equal to tolerance "
-    y = sparse.csc_matrix(x)
+    y = csr_container(x)
     for X in [x, y]:
         # basic compare
         with pytest.raises(AssertionError, match=msg):
@@ -52,7 +59,7 @@ def test_assert_allclose_dense_sparse():
         assert_allclose_dense_sparse(x, y)
 
     A = sparse.diags(np.ones(5), offsets=0).tocsr()
-    B = sparse.csr_matrix(np.ones((1, 5)))
+    B = csr_container(np.ones((1, 5)))
     with pytest.raises(AssertionError, match="Arrays are not equal"):
         assert_allclose_dense_sparse(B, A)
 
@@ -645,8 +652,10 @@ def test_create_memmap_backed_data(monkeypatch, aligned):
         ("tuple", tuple),
         ("array", np.ndarray),
         ("sparse", sparse.csr_matrix),
-        ("sparse_csr", sparse.csr_matrix),
-        ("sparse_csc", sparse.csc_matrix),
+        # using `zip` will only keep the available sparse containers
+        # depending of the installed SciPy version
+        *zip(["sparse_csr", "sparse_csr_array"], CSR_CONTAINERS),
+        *zip(["sparse_csc", "sparse_csc_array"], CSC_CONTAINERS),
         ("dataframe", lambda: pytest.importorskip("pandas").DataFrame),
         ("series", lambda: pytest.importorskip("pandas").Series),
         ("index", lambda: pytest.importorskip("pandas").Index),
@@ -675,6 +684,7 @@ def test_convert_container(
         # instead of the whole file
         container_type = container_type()
     container = [0, 1]
+
     container_converted = _convert_container(
         container,
         constructor_name,
@@ -690,6 +700,24 @@ def test_convert_container(
         assert container_converted.dtype == dtype
     elif hasattr(container_converted, "dtypes"):
         assert container_converted.dtypes[0] == dtype
+
+
+@pytest.mark.skipif(
+    sp_version >= parse_version("1.8"),
+    reason="sparse arrays are available as of scipy 1.8.0",
+)
+@pytest.mark.parametrize("constructor_name", ["sparse_csr_array", "sparse_csc_array"])
+@pytest.mark.parametrize("dtype", [np.int32, np.int64, np.float32, np.float64])
+def test_convert_container_raise_when_sparray_not_available(constructor_name, dtype):
+    """Check that if we convert to sparse array but sparse array are not supported
+    (scipy<1.8.0), we should raise an explicit error."""
+    container = [0, 1]
+
+    with pytest.raises(
+        ValueError,
+        match=f"only available with scipy>=1.8.0, got {sp_version}",
+    ):
+        _convert_container(container, constructor_name, dtype=dtype)
 
 
 def test_raises():
