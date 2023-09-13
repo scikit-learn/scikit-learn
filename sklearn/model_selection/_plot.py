@@ -552,7 +552,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
     param_name : str
         Name of the parameter that has been varied.
 
-    param_range : ndarray of shape (n_ticks,)
+    param_range : array-like of shape (n_ticks,)
         The values of the parameter that have been evaluated.
 
     train_scores : ndarray of shape (n_ticks, n_cv_folds)
@@ -891,7 +891,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
 
         viz = cls(
             param_name=param_name,
-            param_range=param_range,
+            param_range=np.array(param_range, copy=False),
             train_scores=train_scores,
             test_scores=test_scores,
             score_name=score_name,
