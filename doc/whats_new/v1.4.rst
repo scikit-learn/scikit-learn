@@ -187,6 +187,23 @@ Changelog
   ``**score_params`` which are passed to the underlying scorer.
   :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
 
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |API| Deprecates `class_prior` and `fit_prior` in :class:`naive_bayes.MultinomialNB`,
+  :class:`naive_bayes.BernoulliNB`, :class:`naive_bayes.ComplementNB`, and
+  :class:`naive_bayes.CategoricalNB` in favor of `priors`. These two parameters will be
+  removed in scikit-learn 1.6.
+  :pr:`27135` by `Guillaume Lemaitre <glemaitre>`.
+
+- |API| add the options `"empirical"` and `"uniform"` to `priors` parameter for
+  :class:`naive_bayes.GaussianNB`.
+  :pr:`27135` by `Guillaume Lemaitre <glemaitre>`.
+
+- |API| Add the fitted attribute `class_log_prior_` in :class:`naive_bayes.GaussianNB`.
+  :pr:`27135` by `Guillaume Lemaitre <glemaitre>`.
+
+
 :mod:`sklearn.pipeline`
 .......................
 

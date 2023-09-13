@@ -39,6 +39,83 @@ __all__ = [
 class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for naive Bayes estimators"""
 
+    _parameter_constraints: dict = {
+        "priors": ["array-like", StrOptions({"uniform", "empirical"}), None],
+    }
+
+    def __init__(self, *, priors=None):
+        self.priors = priors
+
+    def _validate_priors(self):
+        """Helper function to deprecate `class_prior` and `fit_prior` in favor
+        of `priors` for a consistent API.
+        """
+        if not (hasattr(self, "class_prior") or hasattr(self, "fit_prior")):
+            # consistent API with early return
+            self._priors = "empirical" if self.priors is None else self.priors
+            return
+
+        deprecation_msg = (
+            "class_prior/fit_prior are deprecated in 1.4 and will be removed in 1.6."
+        )
+        if self.priors is not None and (
+            self.class_prior != "deprecated" or self.fit_prior != "deprecated"
+        ):
+            raise ValueError(
+                "Cannot specify both `priors` and `class_prior`/`fit_prior`. Use only "
+                "`priors`. "
+                + deprecation_msg
+            )
+
+        if self.priors is not None:
+            self._priors = self.priors
+        else:
+            if self.class_prior != "deprecated" or self.fit_prior != "deprecated":
+                warnings.warn(deprecation_msg, FutureWarning)
+
+            if not (isinstance(self.class_prior, str) or self.class_prior is None):
+                # certainly an array-like then
+                self._priors = self.class_prior
+            elif self.fit_prior:
+                self._priors = "empirical"
+            else:
+                self._priors = "uniform"
+
+    def _update_class_log_prior(self):
+        """Update class log priors.
+
+        The class log priors are based on `class_prior`, class count or the
+        number of classes. This method is called each time `fit` or
+        `partial_fit` update the model.
+        """
+        n_classes = len(self.classes_)
+        if isinstance(self._priors, str):
+            if self._priors == "empirical":
+                with warnings.catch_warnings():
+                    # silence the warning when count is 0 because class was not yet
+                    # observed
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    log_class_count = np.log(self.class_count_)
+
+                # empirical prior, with sample_weight taken into account
+                self.class_log_prior_ = log_class_count - np.log(
+                    self.class_count_.sum()
+                )
+            elif self._priors == "uniform":
+                self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
+        else:
+            if len(self._priors) != n_classes:
+                raise ValueError("Number of priors must match number of classes.")
+            elif not np.isclose(np.sum(self._priors), 1.0):
+                raise ValueError("The sum of the priors should be 1.")
+            elif np.min(self._priors) < 0:
+                raise ValueError("Priors must be non-negative")
+            with warnings.catch_warnings():
+                # silence the warning when count is 0 because class was not yet
+                # observed
+                warnings.simplefilter("ignore", RuntimeWarning)
+                self.class_log_prior_ = np.log(self._priors)
+
     @abstractmethod
     def _joint_log_likelihood(self, X):
         """Compute the unnormalized posterior log probability of X
@@ -158,9 +235,17 @@ class GaussianNB(_BaseNB):
 
     Parameters
     ----------
-    priors : array-like of shape (n_classes,), default=None
-        Prior probabilities of the classes. If specified, the priors are not
-        adjusted according to the data.
+    priors : {"uniform", "empirical"} or array-like of shape (n_classes,), default=None
+        Prior probabilities of the classes.
+
+        - if `"uniform"`: a uniform prior is used for each class;
+        - if `"empirical"`: the prior uses the class proportions from the
+          training data;
+        - if `None`: equivalent to `"empirical"`;
+        - if an array-like: the priors are used as-is.
+
+        .. versionadded:: 1.4
+           `"empirical"` and `"uniform"` options.
 
     var_smoothing : float, default=1e-9
         Portion of the largest variance of all features that is added to
@@ -175,6 +260,11 @@ class GaussianNB(_BaseNB):
 
     class_prior_ : ndarray of shape (n_classes,)
         probability of each class.
+
+    class_log_prior_ : ndarray of shape (n_classes,)
+        empirical log probability for each class.
+
+        .. versionadded:: 1.4
 
     classes_ : ndarray of shape (n_classes,)
         class labels known to the classifier.
@@ -227,12 +317,12 @@ class GaussianNB(_BaseNB):
     """
 
     _parameter_constraints: dict = {
-        "priors": ["array-like", None],
+        **_BaseNB._parameter_constraints,
         "var_smoothing": [Interval(Real, 0, None, closed="left")],
     }
 
     def __init__(self, *, priors=None, var_smoothing=1e-9):
-        self.priors = priors
+        super().__init__(priors=priors)
         self.var_smoothing = var_smoothing
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -416,6 +506,7 @@ class GaussianNB(_BaseNB):
         -------
         self : object
         """
+        self._validate_priors()
         if _refit:
             self.classes_ = None
 
@@ -439,24 +530,6 @@ class GaussianNB(_BaseNB):
             self.var_ = np.zeros((n_classes, n_features))
 
             self.class_count_ = np.zeros(n_classes, dtype=np.float64)
-
-            # Initialise the class prior
-            # Take into account the priors
-            if self.priors is not None:
-                priors = np.asarray(self.priors)
-                # Check that the provided prior matches the number of classes
-                if len(priors) != n_classes:
-                    raise ValueError("Number of priors must match number of classes.")
-                # Check that the sum is 1
-                if not np.isclose(priors.sum(), 1.0):
-                    raise ValueError("The sum of the priors should be 1.")
-                # Check that the priors are non-negative
-                if (priors < 0).any():
-                    raise ValueError("Priors must be non-negative.")
-                self.class_prior_ = priors
-            else:
-                # Initialize the priors to zeros for each class
-                self.class_prior_ = np.zeros(len(self.classes_), dtype=np.float64)
         else:
             if X.shape[1] != self.theta_.shape[1]:
                 msg = "Number of features %d does not match previous data %d."
@@ -496,10 +569,8 @@ class GaussianNB(_BaseNB):
 
         self.var_[:, :] += self.epsilon_
 
-        # Update if only no priors is provided
-        if self.priors is None:
-            # Empirical prior, with sample_weight taken into account
-            self.class_prior_ = self.class_count_ / self.class_count_.sum()
+        self._update_class_log_prior()
+        self.class_prior_ = np.exp(self.class_log_prior_)
 
         return self
 
@@ -527,13 +598,22 @@ class _BaseDiscreteNB(_BaseNB):
     """
 
     _parameter_constraints: dict = {
+        **_BaseNB._parameter_constraints,
         "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
-        "fit_prior": ["boolean"],
-        "class_prior": ["array-like", None],
+        "fit_prior": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "class_prior": ["array-like", None, Hidden(StrOptions({"deprecated"}))],
         "force_alpha": ["boolean", Hidden(StrOptions({"warn"}))],
     }
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None, force_alpha="warn"):
+    def __init__(
+        self,
+        alpha=1.0,
+        priors=None,
+        fit_prior=True,
+        class_prior=None,
+        force_alpha="warn",
+    ):
+        super().__init__(priors=priors)
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
@@ -576,30 +656,6 @@ class _BaseDiscreteNB(_BaseNB):
     def _check_X_y(self, X, y, reset=True):
         """Validate X and y in fit methods."""
         return self._validate_data(X, y, accept_sparse="csr", reset=reset)
-
-    def _update_class_log_prior(self, class_prior=None):
-        """Update class log priors.
-
-        The class log priors are based on `class_prior`, class count or the
-        number of classes. This method is called each time `fit` or
-        `partial_fit` update the model.
-        """
-        n_classes = len(self.classes_)
-        if class_prior is not None:
-            if len(class_prior) != n_classes:
-                raise ValueError("Number of priors must match number of classes.")
-            self.class_log_prior_ = np.log(class_prior)
-        elif self.fit_prior:
-            with warnings.catch_warnings():
-                # silence the warning when count is 0 because class was not yet
-                # observed
-                warnings.simplefilter("ignore", RuntimeWarning)
-                log_class_count = np.log(self.class_count_)
-
-            # empirical prior, with sample_weight taken into account
-            self.class_log_prior_ = log_class_count - np.log(self.class_count_.sum())
-        else:
-            self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
 
     def _check_alpha(self):
         alpha = (
@@ -676,6 +732,7 @@ class _BaseDiscreteNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
+        self._validate_priors()
         first_call = not hasattr(self, "classes_")
 
         X, y = self._check_X_y(X, y, reset=first_call)
@@ -706,8 +763,6 @@ class _BaseDiscreteNB(_BaseNB):
             sample_weight = np.atleast_2d(sample_weight)
             Y *= sample_weight.T
 
-        class_prior = self.class_prior
-
         # Count raw events from data before updating the class log prior
         # and feature log probas
         self._count(X, Y)
@@ -718,7 +773,7 @@ class _BaseDiscreteNB(_BaseNB):
         # to avoid computing the smooth log probas at each call to partial fit
         alpha = self._check_alpha()
         self._update_feature_log_prob(alpha)
-        self._update_class_log_prior(class_prior=class_prior)
+        self._update_class_log_prior()
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -742,6 +797,7 @@ class _BaseDiscreteNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
+        self._validate_priors()
         X, y = self._check_X_y(X, y)
         _, n_features = X.shape
 
@@ -763,8 +819,6 @@ class _BaseDiscreteNB(_BaseNB):
             sample_weight = np.atleast_2d(sample_weight)
             Y *= sample_weight.T
 
-        class_prior = self.class_prior
-
         # Count raw events from data before updating the class log prior
         # and feature log probas
         n_classes = Y.shape[1]
@@ -772,7 +826,7 @@ class _BaseDiscreteNB(_BaseNB):
         self._count(X, Y)
         alpha = self._check_alpha()
         self._update_feature_log_prob(alpha)
-        self._update_class_log_prior(class_prior=class_prior)
+        self._update_class_log_prior()
         return self
 
     def _init_counters(self, n_classes, n_features):
@@ -809,13 +863,32 @@ class MultinomialNB(_BaseDiscreteNB):
         .. deprecated:: 1.2
            The default value of `force_alpha` will change to `True` in v1.4.
 
+    priors : {"uniform", "empirical"} or array-like of shape (n_classes,), default=None
+        Prior probabilities of the classes.
+
+        - if `"uniform"`: a uniform prior is used for each class;
+        - if `"empirical"`: the prior uses the class proportions from the
+          training data;
+        - if `None`: equivalent to `"empirical"`;
+        - if an array-like: the priors are used as-is.
+
+        .. versionadded:: 1.4
+
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
+        .. deprecated:: 1.4
+           `fit_prior` is deprecated in 1.4 and will be removed in 1.6. Use `priors`
+           instead.
+
     class_prior : array-like of shape (n_classes,), default=None
         Prior probabilities of the classes. If specified, the priors are not
         adjusted according to the data.
+
+        .. deprecated:: 1.4
+           `class_prior` is deprecated in 1.4 and will be removed in 1.6. Use `priors`
+           instead.
 
     Attributes
     ----------
@@ -877,10 +950,17 @@ class MultinomialNB(_BaseDiscreteNB):
     """
 
     def __init__(
-        self, *, alpha=1.0, force_alpha="warn", fit_prior=True, class_prior=None
+        self,
+        *,
+        alpha=1.0,
+        force_alpha="warn",
+        priors=None,
+        fit_prior="deprecated",
+        class_prior="deprecated",
     ):
         super().__init__(
             alpha=alpha,
+            priors=priors,
             fit_prior=fit_prior,
             class_prior=class_prior,
             force_alpha=force_alpha,
@@ -935,11 +1015,32 @@ class ComplementNB(_BaseDiscreteNB):
         .. deprecated:: 1.2
            The default value of `force_alpha` will change to `True` in v1.4.
 
+    priors : {"uniform", "empirical"} or array-like of shape (n_classes,), default=None
+        Prior probabilities of the classes.
+
+        - if `"uniform"`: a uniform prior is used for each class;
+        - if `"empirical"`: the prior uses the class proportions from the
+          training data;
+        - if `None`: equivalent to `"empirical"`;
+        - if an array-like: the priors are used as-is.
+
+        .. versionadded:: 1.4
+
     fit_prior : bool, default=True
-        Only used in edge case with a single class in the training set.
+        Whether to learn class prior probabilities or not.
+        If false, a uniform prior will be used.
+
+        .. deprecated:: 1.4
+           `fit_prior` is deprecated in 1.4 and will be removed in 1.6. Use `priors`
+           instead.
 
     class_prior : array-like of shape (n_classes,), default=None
-        Prior probabilities of the classes. Not used.
+        Prior probabilities of the classes. If specified, the priors are not
+        adjusted according to the data.
+
+        .. deprecated:: 1.4
+           `class_prior` is deprecated in 1.4 and will be removed in 1.6. Use `priors`
+           instead.
 
     norm : bool, default=False
         Whether or not a second normalization of the weights is performed. The
@@ -1020,13 +1121,15 @@ class ComplementNB(_BaseDiscreteNB):
         *,
         alpha=1.0,
         force_alpha="warn",
-        fit_prior=True,
-        class_prior=None,
+        priors=None,
+        fit_prior="deprecated",
+        class_prior="deprecated",
         norm=False,
     ):
         super().__init__(
             alpha=alpha,
             force_alpha=force_alpha,
+            priors=priors,
             fit_prior=fit_prior,
             class_prior=class_prior,
         )
@@ -1090,13 +1193,32 @@ class BernoulliNB(_BaseDiscreteNB):
         Threshold for binarizing (mapping to booleans) of sample features.
         If None, input is presumed to already consist of binary vectors.
 
+    priors : {"uniform", "empirical"} or array-like of shape (n_classes,), default=None
+        Prior probabilities of the classes.
+
+        - if `"uniform"`: a uniform prior is used for each class;
+        - if `"empirical"`: the prior uses the class proportions from the
+          training data;
+        - if `None`: equivalent to `"empirical"`;
+        - if an array-like: the priors are used as-is.
+
+        .. versionadded:: 1.4
+
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
+        .. deprecated:: 1.4
+           `fit_prior` is deprecated in 1.4 and will be removed in 1.6. Use `priors`
+           instead.
+
     class_prior : array-like of shape (n_classes,), default=None
         Prior probabilities of the classes. If specified, the priors are not
         adjusted according to the data.
+
+        .. deprecated:: 1.4
+           `class_prior` is deprecated in 1.4 and will be removed in 1.6. Use `priors`
+           instead.
 
     Attributes
     ----------
@@ -1175,11 +1297,13 @@ class BernoulliNB(_BaseDiscreteNB):
         alpha=1.0,
         force_alpha="warn",
         binarize=0.0,
-        fit_prior=True,
-        class_prior=None,
+        priors=None,
+        fit_prior="deprecated",
+        class_prior="deprecated",
     ):
         super().__init__(
             alpha=alpha,
+            priors=priors,
             fit_prior=fit_prior,
             class_prior=class_prior,
             force_alpha=force_alpha,
@@ -1256,13 +1380,32 @@ class CategoricalNB(_BaseDiscreteNB):
         .. deprecated:: 1.2
            The default value of `force_alpha` will change to `True` in v1.4.
 
+    priors : {"uniform", "empirical"} or array-like of shape (n_classes,), default=None
+        Prior probabilities of the classes.
+
+        - if `"uniform"`: a uniform prior is used for each class;
+        - if `"empirical"`: the prior uses the class proportions from the
+          training data;
+        - if `None`: equivalent to `"empirical"`;
+        - if an array-like: the priors are used as-is.
+
+        .. versionadded:: 1.4
+
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
+        .. deprecated:: 1.4
+           `fit_prior` is deprecated in 1.4 and will be removed in 1.6. Use `priors`
+           instead.
+
     class_prior : array-like of shape (n_classes,), default=None
         Prior probabilities of the classes. If specified, the priors are not
         adjusted according to the data.
+
+        .. deprecated:: 1.4
+           `class_prior` is deprecated in 1.4 and will be removed in 1.6. Use `priors`
+           instead.
 
     min_categories : int or array-like of shape (n_features,), default=None
         Minimum number of categories per feature.
@@ -1351,13 +1494,15 @@ class CategoricalNB(_BaseDiscreteNB):
         *,
         alpha=1.0,
         force_alpha="warn",
-        fit_prior=True,
-        class_prior=None,
+        priors=None,
+        fit_prior="deprecated",
+        class_prior="deprecated",
         min_categories=None,
     ):
         super().__init__(
             alpha=alpha,
             force_alpha=force_alpha,
+            priors=priors,
             fit_prior=fit_prior,
             class_prior=class_prior,
         )
