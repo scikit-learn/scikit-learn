@@ -1273,7 +1273,7 @@ def test_multi_task_lasso_cv_dtype():
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("alpha", [0.01])
 @pytest.mark.parametrize("precompute", [False, True])
-@pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 def test_enet_sample_weight_consistency(
     fit_intercept, alpha, precompute, sparse_container, global_random_seed
 ):
@@ -1360,7 +1360,7 @@ def test_enet_sample_weight_consistency(
 
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize("sparse_container", [None, *CSC_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
 def test_enet_cv_sample_weight_correctness(fit_intercept, sparse_container):
     """Test that ElasticNetCV with sample weights gives correct results."""
     rng = np.random.RandomState(42)
@@ -1450,7 +1450,7 @@ def test_enet_cv_grid_search(sample_weight):
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("l1_ratio", [0, 0.5, 1])
 @pytest.mark.parametrize("precompute", [False, True])
-@pytest.mark.parametrize("sparse_container", [None, *CSC_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
 def test_enet_cv_sample_weight_consistency(
     fit_intercept, l1_ratio, precompute, sparse_container
 ):
