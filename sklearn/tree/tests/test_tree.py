@@ -1559,7 +1559,7 @@ def test_1d_input(name):
 
 
 @pytest.mark.parametrize("name", ALL_TREES)
-@pytest.mark.parametrize("sparse_container", [None, *CSC_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
 def test_min_weight_leaf_split_level(name, sparse_container):
     TreeEstimator = ALL_TREES[name]
 
@@ -1773,7 +1773,7 @@ def test_criterion_copy():
             assert n_samples == n_samples_
 
 
-@pytest.mark.parametrize("sparse_container", [None, *CSC_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
 def test_empty_leaf_infinite_threshold(sparse_container):
     # try to make empty leaf by using near infinite value.
     data = np.random.RandomState(0).randn(100, 11) * 2e38
@@ -1896,7 +1896,7 @@ def assert_is_subtree(tree, subtree):
 
 @pytest.mark.parametrize("name", ALL_TREES)
 @pytest.mark.parametrize("splitter", ["best", "random"])
-@pytest.mark.parametrize("sparse_container", [None, *CSC_CONTAINERS, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS + CSR_CONTAINERS)
 def test_apply_path_readonly_all_trees(name, splitter, sparse_container):
     dataset = DATASETS["clf_small"]
     X_small = dataset["X"].astype(tree._tree.DTYPE, copy=False)
@@ -2473,7 +2473,7 @@ def test_missing_values_missing_both_classes_has_nan(criterion):
     assert_array_equal(y_pred, [1, 0, 1])
 
 
-@pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS])
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 @pytest.mark.parametrize(
     "tree",
     [
