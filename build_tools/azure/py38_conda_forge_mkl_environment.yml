@@ -8,7 +8,7 @@ dependencies:
   - numpy
   - blas[build=mkl]
   - scipy
-  - cython
+  - cython<3.0.0
   - joblib
   - threadpoolctl
   - matplotlib
