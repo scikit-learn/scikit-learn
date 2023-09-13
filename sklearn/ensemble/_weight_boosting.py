@@ -341,13 +341,13 @@ def _samme_proba(estimator, n_classes, X):
 class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     """An AdaBoost classifier.
 
-    An AdaBoost [1] classifier is a meta-estimator that begins by fitting a
+    An AdaBoost [1]_ classifier is a meta-estimator that begins by fitting a
     classifier on the original dataset and then fits additional copies of the
     classifier on the same dataset but where the weights of incorrectly
     classified instances are adjusted such that subsequent classifiers focus
     more on difficult cases.
 
-    This class implements the algorithm known as AdaBoost-SAMME [2].
+    This class implements the algorithm based on [2]_.
 
     Read more in the :ref:`User Guide <adaboost>`.
 
@@ -382,6 +382,10 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         If 'SAMME' then use the SAMME discrete boosting algorithm.
         The SAMME.R algorithm typically converges faster than SAMME,
         achieving a lower test error with fewer boosting iterations.
+
+        .. deprecated:: 1.4
+            `"SAMME.R"` is deprecated and will be removed in version 1.6.
+            '"SAMME"' will become the default.
 
     random_state : int, RandomState instance or None, default=None
         Controls the random seed given at each `estimator` at each
@@ -474,7 +478,9 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
            on-Line Learning and an Application to Boosting", 1995.
 
-    .. [2] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
+    .. [2] :doi:`J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class adaboost."
+           Statistics and its Interface 2.3 (2009): 349-360.
+           <10.4310/SII.2009.v2.n3.a8>`
 
     Examples
     --------
@@ -483,20 +489,25 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     >>> X, y = make_classification(n_samples=1000, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
-    >>> clf = AdaBoostClassifier(n_estimators=100, random_state=0)
+    >>> clf = AdaBoostClassifier(n_estimators=100, algorithm="SAMME", random_state=0)
     >>> clf.fit(X, y)
-    AdaBoostClassifier(n_estimators=100, random_state=0)
+    AdaBoostClassifier(algorithm='SAMME', n_estimators=100, random_state=0)
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
     >>> clf.score(X, y)
-    0.983...
+    0.96...
     """
 
+    # TODO(1.6): Modify _parameter_constraints for "algorithm" to only check
+    # for "SAMME"
     _parameter_constraints: dict = {
         **BaseWeightBoosting._parameter_constraints,
-        "algorithm": [StrOptions({"SAMME", "SAMME.R"})],
+        "algorithm": [
+            StrOptions({"SAMME", "SAMME.R"}),
+        ],
     }
 
+    # TODO(1.6): Change default "algorithm" value to "SAMME"
     def __init__(
         self,
         estimator=None,
@@ -521,8 +532,18 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         """Check the estimator and set the estimator_ attribute."""
         super()._validate_estimator(default=DecisionTreeClassifier(max_depth=1))
 
-        #  SAMME-R requires predict_proba-enabled base estimators
-        if self.algorithm == "SAMME.R":
+        # TODO(1.6): Remove, as "SAMME.R" value for "algorithm" param will be
+        # removed in 1.6
+        # SAMME-R requires predict_proba-enabled base estimators
+        if self.algorithm != "SAMME":
+            warnings.warn(
+                (
+                    "The SAMME.R algorithm (the default) is deprecated and will be"
+                    " removed in 1.6. Use the SAMME algorithm to circumvent this"
+                    " warning."
+                ),
+                FutureWarning,
+            )
             if not hasattr(self.estimator_, "predict_proba"):
                 raise TypeError(
                     "AdaBoostClassifier with algorithm='SAMME.R' requires "
@@ -531,11 +552,17 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
                     "Please change the base estimator or set "
                     "algorithm='SAMME' instead."
                 )
+
         if not has_fit_parameter(self.estimator_, "sample_weight"):
             raise ValueError(
                 f"{self.estimator.__class__.__name__} doesn't support sample_weight."
             )
 
+    # TODO(1.6): Redefine the scope of the `_boost` and `_boost_discrete`
+    # functions to be the same since SAMME will be the default value for the
+    # "algorithm" parameter in version 1.6. Thus, a distinguishing function is
+    # no longer needed. (Or adjust code here, if another algorithm, shall be
+    # used instead of SAMME.R.)
     def _boost(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost.
 
@@ -581,6 +608,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         else:  # elif self.algorithm == "SAMME":
             return self._boost_discrete(iboost, X, y, sample_weight, random_state)
 
+    # TODO(1.6): Remove function. The `_boost_real` function won't be used any
+    # longer, because the SAMME.R algorithm will be deprecated in 1.6.
     def _boost_real(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost using the SAMME.R real algorithm."""
         estimator = self._make_estimator(random_state=random_state)
@@ -773,6 +802,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
 
+        # TODO(1.6): Remove, because "algorithm" param will be deprecated in 1.6
         if self.algorithm == "SAMME.R":
             # The weights are all 1. for SAMME.R
             pred = sum(
@@ -780,7 +810,11 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             )
         else:  # self.algorithm == "SAMME"
             pred = sum(
-                (estimator.predict(X) == classes).T * w
+                np.where(
+                    (estimator.predict(X) == classes).T,
+                    w,
+                    -1 / (n_classes - 1) * w,
+                )
                 for estimator, w in zip(self.estimators_, self.estimator_weights_)
             )
 
@@ -823,12 +857,17 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         for weight, estimator in zip(self.estimator_weights_, self.estimators_):
             norm += weight
 
+            # TODO(1.6): Remove, because "algorithm" param will be deprecated in
+            # 1.6
             if self.algorithm == "SAMME.R":
                 # The weights are all 1. for SAMME.R
                 current_pred = _samme_proba(estimator, n_classes, X)
             else:  # elif self.algorithm == "SAMME":
-                current_pred = estimator.predict(X)
-                current_pred = (current_pred == classes).T * weight
+                current_pred = np.where(
+                    (estimator.predict(X) == classes).T,
+                    weight,
+                    -1 / (n_classes - 1) * weight,
+                )
 
             if pred is None:
                 pred = current_pred
