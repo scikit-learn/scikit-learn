@@ -186,11 +186,14 @@ def assert_argkmin_results_quasi_equality(
 
         # Check that any neighbor with distances below the rounding error threshold have
         # matching indices.
-        threshold = (1 - rtol) * np.max(dist_row_a) - atol
-        mask_a = dist_row_a <= threshold
-        mask_b = dist_row_b <= threshold
-        missing_from_b = np.setdiff1d(indices_row_a[mask_a], indices_row_b[mask_b])
-        missing_from_a = np.setdiff1d(indices_row_b[mask_b], indices_row_a[mask_a])
+        threshold = np.minimum(
+            (1 - rtol) * np.max(dist_row_a) - atol,
+            (1 - rtol) * np.max(dist_row_b) - atol,
+        )
+        mask_a = dist_row_a < threshold
+        mask_b = dist_row_b < threshold
+        missing_from_b = np.setdiff1d(indices_row_a[mask_a], indices_row_b)
+        missing_from_a = np.setdiff1d(indices_row_b[mask_b], indices_row_a)
         if len(missing_from_a) > 0 or len(missing_from_b) > 0:
             raise AssertionError(
                 f"Query vector with index {query_idx} lead to mismatched result indices"
