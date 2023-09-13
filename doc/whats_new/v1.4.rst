@@ -192,7 +192,7 @@ Changelog
 
 - |Enhancement| :func:`metrics.f_regression` and :func:`metrics.r_regression` now
   support SciPy sparse arrays.
-  :pr:`27239` by :user:`Tialo <Tialo>`.
+  :pr:`27239` by :user:`Yaroslav Korobko <Tialo>`.
 
 :mod:`sklearn.pipeline`
 .......................
