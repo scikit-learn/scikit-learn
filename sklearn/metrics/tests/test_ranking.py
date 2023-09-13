@@ -1720,8 +1720,7 @@ def test_coverage_1d_error_message(y_true, y_score):
         coverage_error(y_true, y_score)
 
 
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_label_ranking_loss(csr_container):
+def test_label_ranking_loss():
     assert_almost_equal(label_ranking_loss([[0, 1]], [[0.25, 0.75]]), 0)
     assert_almost_equal(label_ranking_loss([[0, 1]], [[0.75, 0.25]]), 1)
 
@@ -1763,7 +1762,9 @@ def test_label_ranking_loss(csr_container):
         (0 + 2 / 2 + 1 / 2) / 3.0,
     )
 
-    # Sparse csr matrices
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_label_ranking_loss_sparse(csr_container):
     assert_almost_equal(
         label_ranking_loss(
             csr_container(np.array([[0, 1, 0], [1, 1, 0]])), [[0.1, 10, -3], [3, 1, 3]]
