@@ -468,7 +468,7 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         sample_score = xp.astype(xp.asarray(sample_score, device="cpu"), xp.float64)
 
     if sample_weight is not None:
-        sample_weight = xp.asarray(sample_weight)
+        sample_weight = xp.asarray(sample_weight, dtype=sample_score.dtype)
         if not xp.isdtype(sample_weight.dtype, "real floating"):
             sample_weight = xp.astype(sample_weight, xp.float64)
 
@@ -590,3 +590,8 @@ def _estimator_with_converted_arrays(estimator, converter):
             attribute = converter(attribute)
         setattr(new_estimator, key, attribute)
     return new_estimator
+
+
+def _atol_for_type(dtype):
+    """Return the absolute tolerance for a given dtype."""
+    return numpy.finfo(dtype).eps * 100

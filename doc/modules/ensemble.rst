@@ -1570,15 +1570,15 @@ ever-increasing influence. Each subsequent weak learner is thereby forced to
 concentrate on the examples that are missed by the previous ones in the sequence
 [HTF]_.
 
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_adaboost_hastie_10_2_001.png
-   :target: ../auto_examples/ensemble/plot_adaboost_hastie_10_2.html
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_adaboost_multiclass_001.png
+   :target: ../auto_examples/ensemble/plot_adaboost_multiclass.html
    :align: center
    :scale: 75
 
 AdaBoost can be used both for classification and regression problems:
 
   - For multi-class classification, :class:`AdaBoostClassifier` implements
-    AdaBoost-SAMME and AdaBoost-SAMME.R [ZZRH2009]_.
+    AdaBoost.SAMME [ZZRH2009]_.
 
   - For regression, :class:`AdaBoostRegressor` implements AdaBoost.R2 [D1997]_.
 
@@ -1593,7 +1593,7 @@ learners::
     >>> from sklearn.ensemble import AdaBoostClassifier
 
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = AdaBoostClassifier(n_estimators=100)
+    >>> clf = AdaBoostClassifier(n_estimators=100, algorithm="SAMME",)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
     0.9...
@@ -1608,12 +1608,8 @@ minimum required number of samples to consider a split ``min_samples_split``).
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_hastie_10_2.py` compares the
-   classification error of a decision stump, decision tree, and a boosted
-   decision stump using AdaBoost-SAMME and AdaBoost-SAMME.R.
-
  * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py` shows the performance
-   of AdaBoost-SAMME and AdaBoost-SAMME.R on a multi-class problem.
+   of AdaBoost on a multi-class problem.
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py` shows the decision boundary
    and decision function values for a non-linearly separable two-class problem
@@ -1634,4 +1630,3 @@ minimum required number of samples to consider a split ``min_samples_split``).
 
  .. [HTF] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
               Statistical Learning Ed. 2", Springer, 2009.
-
