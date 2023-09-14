@@ -778,24 +778,8 @@ def test_pairwise_distances_chunked(global_dtype):
         next(gen)
 
 
-@pytest.mark.parametrize(
-    "x_array_constr",
-    [np.array] + CSR_CONTAINERS,
-    ids=(
-        ["dense", "sparse_matrix"]
-        if len(CSR_CONTAINERS) == 1
-        else ["dense", "sparse_matrix", "sparse_array"]
-    ),
-)
-@pytest.mark.parametrize(
-    "y_array_constr",
-    [np.array] + CSR_CONTAINERS,
-    ids=(
-        ["dense", "sparse_matrix"]
-        if len(CSR_CONTAINERS) == 1
-        else ["dense", "sparse_matrix", "sparse_array"]
-    ),
-)
+@pytest.mark.parametrize("x_array_constr", [np.array] + CSR_CONTAINERS)
+@pytest.mark.parametrize("y_array_constr", [np.array] + CSR_CONTAINERS)
 def test_euclidean_distances_known_result(x_array_constr, y_array_constr):
     # Check the pairwise Euclidean distances computation on known result
     X = x_array_constr([[0]])
@@ -804,11 +788,7 @@ def test_euclidean_distances_known_result(x_array_constr, y_array_constr):
     assert_allclose(D, [[1.0, 2.0]])
 
 
-@pytest.mark.parametrize(
-    "y_array_constr",
-    [np.array] + CSR_CONTAINERS,
-    ids=["dense", "sparse_matrix", "sparse_array"],
-)
+@pytest.mark.parametrize("y_array_constr", [np.array] + CSR_CONTAINERS)
 def test_euclidean_distances_with_norms(global_dtype, y_array_constr):
     # check that we still get the right answers with {X,Y}_norm_squared
     # and that we get a wrong answer with wrong {X,Y}_norm_squared
@@ -875,16 +855,8 @@ def test_euclidean_distances_norm_shapes():
         euclidean_distances(X, Y, Y_norm_squared=Y_norm_squared[:5])
 
 
-@pytest.mark.parametrize(
-    "x_array_constr",
-    [np.array] + CSR_CONTAINERS,
-    ids=["dense", "sparse_matrix", "sparse_array"],
-)
-@pytest.mark.parametrize(
-    "y_array_constr",
-    [np.array] + CSR_CONTAINERS,
-    ids=["dense", "sparse_matrix", "sparse_array"],
-)
+@pytest.mark.parametrize("x_array_constr", [np.array] + CSR_CONTAINERS)
+@pytest.mark.parametrize("y_array_constr", [np.array] + CSR_CONTAINERS)
 def test_euclidean_distances(global_dtype, x_array_constr, y_array_constr):
     # check that euclidean distances gives same result as scipy cdist
     # when X and Y != X are provided
@@ -906,11 +878,7 @@ def test_euclidean_distances(global_dtype, x_array_constr, y_array_constr):
     assert distances.dtype == global_dtype
 
 
-@pytest.mark.parametrize(
-    "x_array_constr",
-    [np.array] + CSR_CONTAINERS,
-    ids=["dense", "sparse_matrix", "sparse_array"],
-)
+@pytest.mark.parametrize("x_array_constr", [np.array] + CSR_CONTAINERS)
 def test_euclidean_distances_sym(global_dtype, x_array_constr):
     # check that euclidean distances gives same result as scipy pdist
     # when only X is provided
@@ -930,16 +898,8 @@ def test_euclidean_distances_sym(global_dtype, x_array_constr):
 
 
 @pytest.mark.parametrize("batch_size", [None, 5, 7, 101])
-@pytest.mark.parametrize(
-    "x_array_constr",
-    [np.array] + CSR_CONTAINERS,
-    ids=["dense", "sparse_matrix", "sparse_array"],
-)
-@pytest.mark.parametrize(
-    "y_array_constr",
-    [np.array] + CSR_CONTAINERS,
-    ids=["dense", "sparse_matrix", "sparse_array"],
-)
+@pytest.mark.parametrize("x_array_constr", [np.array] + CSR_CONTAINERS)
+@pytest.mark.parametrize("y_array_constr", [np.array] + CSR_CONTAINERS)
 def test_euclidean_distances_upcast(batch_size, x_array_constr, y_array_constr):
     # check batches handling when Y != X (#13910)
     rng = np.random.RandomState(0)
@@ -961,11 +921,7 @@ def test_euclidean_distances_upcast(batch_size, x_array_constr, y_array_constr):
 
 
 @pytest.mark.parametrize("batch_size", [None, 5, 7, 101])
-@pytest.mark.parametrize(
-    "x_array_constr",
-    [np.array] + CSR_CONTAINERS,
-    ids=["dense", "sparse_matrix", "sparse_array"],
-)
+@pytest.mark.parametrize("x_array_constr", [np.array] + CSR_CONTAINERS)
 def test_euclidean_distances_upcast_sym(batch_size, x_array_constr):
     # check batches handling when X is Y (#13910)
     rng = np.random.RandomState(0)
