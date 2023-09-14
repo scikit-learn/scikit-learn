@@ -108,8 +108,8 @@ def test_relative_rounding():
 
 
 def assert_argkmin_results_quasi_equality(
-    neighbors_dists_b,
     neighbors_dists_a,
+    neighbors_dists_b,
     neighbors_indices_a,
     neighbors_indices_b,
     rtol=1e-5,
@@ -149,19 +149,6 @@ def assert_argkmin_results_quasi_equality(
         assert is_sorted(dist_row_a), f"Distances aren't sorted on row {query_idx}"
         assert is_sorted(dist_row_b), f"Distances aren't sorted on row {query_idx}"
 
-        # The distances should match, irrespective of neighbors index swappping
-        # because of rounding errors.
-        try:
-            assert_allclose(dist_row_a, dist_row_b, rtol=rtol, atol=atol)
-        except AssertionError as e:
-            # Wrap exception to provide more context while also including the original
-            # exception with the computed absolute and relative differences.
-            raise AssertionError(
-                f"Query vector with index {query_idx} lead to different neighbors'"
-                f" distances (with atol={atol} and"
-                f" rtol={rtol}):\ndist_row_a={dist_row_a}\ndist_row_b={dist_row_b}"
-            ) from e
-
         # Compute a mapping from indices to distances for each result set and
         # check that the computed neighbors with matching indices are withing
         # the expected distance tolerance.
@@ -177,6 +164,9 @@ def assert_argkmin_results_quasi_equality(
             try:
                 assert_allclose(dist_a, dist_b, rtol=rtol, atol=atol)
             except AssertionError as e:
+                # Wrap exception to provide more context while also including
+                # the original exception with the computed absolute and
+                # relative differences.
                 raise AssertionError(
                     f"Query vector with index {query_idx} lead to different distances"
                     f" for common neighbor with index {idx}:"
@@ -186,10 +176,9 @@ def assert_argkmin_results_quasi_equality(
 
         # Check that any neighbor with distances below the rounding error threshold have
         # matching indices.
-        threshold = np.minimum(
-            (1 - rtol) * np.max(dist_row_a) - atol,
-            (1 - rtol) * np.max(dist_row_b) - atol,
-        )
+        threshold = (1 - rtol) * np.maximum(
+            np.max(dist_row_a), np.max(dist_row_b)
+        ) - atol
         mask_a = dist_row_a < threshold
         mask_b = dist_row_b < threshold
         missing_from_b = np.setdiff1d(indices_row_a[mask_a], indices_row_b)
@@ -440,6 +429,20 @@ def test_assert_argkmin_results_quasi_equality():
             np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
             np.array([[1, 2, 3, 4, 5]]),
             np.array([[12, 2, 4, 11, 3]]),
+            atol=atol,
+            rtol=rtol,
+        )
+
+    # Indices aren't properly sorted w.r.t their distances
+    msg = re.escape(
+        "neighors in b missing from a: []\nneighors in a missing from b: [3]"
+    )
+    with pytest.raises(AssertionError, match=msg):
+        assert_argkmin_results_quasi_equality(
+            np.array([[_1m, 1.0, _6_1m, 6.1, _6_1p]]),
+            np.array([[1.0, 1.0, _6_1m, 6.1, 7]]),
+            np.array([[1, 2, 3, 4, 5]]),
+            np.array([[2, 1, 4, 5, 12]]),
             atol=atol,
             rtol=rtol,
         )
