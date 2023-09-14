@@ -28,7 +28,7 @@ def laplacian(
     Parameters
     ----------
     csgraph : array_like or sparse matrix, 2 dimensions
-        compressed-sparse graph, with shape (N, N).
+        Compressed-sparse graph, with shape (N, N).
     normed : bool, optional
         If True, then compute symmetrically normalized Laplacian.
         Default: False.
@@ -39,11 +39,11 @@ def laplacian(
         If True, then use out-degree instead of in-degree.
         This distinction matters only if the graph is asymmetric.
         Default: False.
-    copy: bool, optional
+    copy : bool, optional
         If False, then change `csgraph` in place if possible,
         avoiding doubling the memory use.
         Default: True, for backward compatibility.
-    form: 'array', or 'function', or 'lo'
+    form : 'array', or 'function', or 'lo'
         Determines the format of the output Laplacian:
 
         * 'array' is a numpy array;
@@ -54,14 +54,14 @@ def laplacian(
         Choosing 'function' or 'lo' always avoids doubling
         the memory use, ignoring `copy` value.
         Default: 'array', for backward compatibility.
-    dtype: None or one of numeric numpy dtypes, optional
+    dtype : None or one of numeric numpy dtypes, optional
         The dtype of the output. If ``dtype=None``, the dtype of the
         output matches the dtype of the input csgraph, except for
         the case ``normed=True`` and integer-like csgraph, where
         the output dtype is 'float' allowing accurate normalization,
         but dramatically increasing the memory use.
         Default: None, for backward compatibility.
-    symmetrized: bool, optional
+    symmetrized : bool, optional
         If True, then the output Laplacian is symmetric/Hermitian.
         The symmetrization is done by ``csgraph + csgraph.T.conj``
         without dividing by 2 to preserve integer dtypes if possible
