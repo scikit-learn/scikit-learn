@@ -10,7 +10,6 @@ from tempfile import mkdtemp
 import joblib
 import numpy as np
 import pytest
-from scipy import sparse
 
 from sklearn.base import BaseEstimator, TransformerMixin, clone, is_classifier
 from sklearn.cluster import KMeans
@@ -46,6 +45,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import check_is_fitted
 
 iris = load_iris()
@@ -485,7 +485,8 @@ def test_predict_methods_with_predict_params(method_name):
     assert pipe.named_steps["clf"].got_attribute
 
 
-def test_feature_union():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_feature_union(csr_container):
     # basic sanity check for feature union
     X = iris.data
     X -= X.mean(axis=0)
@@ -504,7 +505,7 @@ def test_feature_union():
     # test if it also works for sparse input
     # We use a different svd object to control the random_state stream
     fs = FeatureUnion([("svd", svd), ("select", select)])
-    X_sp = sparse.csr_matrix(X)
+    X_sp = csr_container(X)
     X_sp_transformed = fs.fit_transform(X_sp, y)
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
 

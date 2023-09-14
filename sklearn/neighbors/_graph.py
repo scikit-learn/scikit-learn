@@ -74,7 +74,7 @@ def kneighbors_graph(
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Sample data, in the form of a numpy array.
+        Sample data.
 
     n_neighbors : int
         Number of neighbors for each sample.
@@ -148,6 +148,19 @@ def kneighbors_graph(
     return X.kneighbors_graph(X=query, n_neighbors=n_neighbors, mode=mode)
 
 
+@validate_params(
+    {
+        "X": ["array-like", RadiusNeighborsMixin],
+        "radius": [Interval(Real, 0, None, closed="both")],
+        "mode": [StrOptions({"connectivity", "distance"})],
+        "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
+        "p": [Interval(Real, 0, None, closed="right"), None],
+        "metric_params": [dict, None],
+        "include_self": ["boolean", StrOptions({"auto"})],
+        "n_jobs": [Integral, None],
+    },
+    prefer_skip_nested_validation=False,  # metric is not validated yet
+)
 def radius_neighbors_graph(
     X,
     radius,
@@ -168,9 +181,8 @@ def radius_neighbors_graph(
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features) or BallTree
-        Sample data, in the form of a numpy array or a precomputed
-        :class:`BallTree`.
+    X : array-like of shape (n_samples, n_features)
+        Sample data.
 
     radius : float
         Radius of neighborhoods.
