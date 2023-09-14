@@ -1,6 +1,7 @@
 import itertools
 import re
 import warnings
+from functools import partial
 
 import numpy as np
 import pytest
@@ -61,20 +62,6 @@ def _get_metric_params_list(metric: str, n_features: int, seed: int = 1):
     # Case of: "euclidean", "manhattan", "chebyshev", "haversine" or any other metric.
     # In those cases, no kwargs is needed.
     return [{}]
-
-
-def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices, rtol=1e-7):
-    assert_array_equal(
-        ref_indices,
-        indices,
-        err_msg="Query vectors have different neighbors' indices",
-    )
-    assert_allclose(
-        ref_dist,
-        dist,
-        err_msg="Query vectors have different neighbors' distances",
-        rtol=rtol,
-    )
 
 
 def assert_same_distances_for_common_neighbors(
@@ -139,7 +126,7 @@ def assert_no_missing_neighbors(
         )
 
 
-def assert_argkmin_results_quasi_equality(
+def assert_compatible_argkmin_results(
     neighbors_dists_a,
     neighbors_dists_b,
     neighbors_indices_a,
@@ -206,30 +193,7 @@ def assert_argkmin_results_quasi_equality(
         )
 
 
-def assert_radius_neighbors_results_equality(
-    neighbors_dists_a,
-    neighbors_dists_b,
-    neighbors_indices_a,
-    neighbors_indices_b,
-    radius,
-):
-    # We get arrays of arrays and we need to check for individual pairs
-    for i in range(neighbors_dists_a.shape[0]):
-        assert (neighbors_dists_a[i] <= radius).all()
-        assert_array_equal(
-            neighbors_indices_a[i],
-            neighbors_indices_b[i],
-            err_msg=f"Query vector #{i} has different neighbors' indices",
-        )
-        assert_allclose(
-            neighbors_dists_a[i],
-            neighbors_dists_b[i],
-            err_msg=f"Query vector #{i} has different neighbors' distances",
-            rtol=1e-7,
-        )
-
-
-def assert_radius_neighbors_results_quasi_equality(
+def assert_compatible_radius_results(
     neighbors_dists_a,
     neighbors_dists_b,
     neighbors_indices_a,
@@ -309,34 +273,34 @@ def assert_radius_neighbors_results_quasi_equality(
         )
 
 
+FLOAT32_TOLS = {
+    "atol": 1e-7,
+    "rtol": 1e-5,
+}
+FLOAT64_TOLS = {
+    "atol": 1e-9,
+    "rtol": 1e-7,
+}
 ASSERT_RESULT = {
-    # In the case of 64bit, we test for exact equality of the results rankings
-    # and standard tolerance levels for the computed distance values.
-    #
-    # XXX: Note that in the future we might be interested in using quasi equality
-    # checks also for float64 data (with a larger number of significant digits)
-    # as the tests could be unstable because of numerically tied distances on
-    # some datasets (e.g. uniform grids).
-    (ArgKmin, np.float64): assert_argkmin_results_equality,
+    (ArgKmin, np.float64): partial(assert_compatible_argkmin_results, **FLOAT64_TOLS),
+    (ArgKmin, np.float32): partial(assert_compatible_argkmin_results, **FLOAT32_TOLS),
     (
         RadiusNeighbors,
         np.float64,
-    ): assert_radius_neighbors_results_equality,
-    # In the case of 32bit, indices can be permuted due to small difference
-    # in the computations of their associated distances, hence we test equality of
-    # results up to valid permutations.
-    (ArgKmin, np.float32): assert_argkmin_results_quasi_equality,
+    ): partial(assert_compatible_radius_results, **FLOAT64_TOLS),
     (
         RadiusNeighbors,
         np.float32,
-    ): assert_radius_neighbors_results_quasi_equality,
+    ): partial(assert_compatible_radius_results, **FLOAT32_TOLS),
 }
 
 
-def test_assert_argkmin_results_quasi_equality():
-    atol = 0.0
-    rtol = 1e-7
-    eps = 1e-7 / 2
+def test_assert_compatible_argkmin_results():
+    atol = 1e-7
+    rtol = 0.0
+    tols = dict(atol=atol, rtol=rtol)
+
+    eps = atol / 3
     _1m = 1.0 - eps
     _1p = 1.0 + eps
 
@@ -357,13 +321,13 @@ def test_assert_argkmin_results_quasi_equality():
     )
 
     # Sanity check: compare the reference results to themselves.
-    assert_argkmin_results_quasi_equality(
+    assert_compatible_argkmin_results(
         ref_dist, ref_dist, ref_indices, ref_indices, rtol
     )
 
     # Apply valid permutation on indices: the last 3 points are all very close
     # to one another so we accept any permutation on their rankings.
-    assert_argkmin_results_quasi_equality(
+    assert_compatible_argkmin_results(
         np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
         np.array([[1.2, 2.5, 6.1, 6.1, 6.1]]),
         np.array([[1, 2, 3, 4, 5]]),
@@ -374,7 +338,7 @@ def test_assert_argkmin_results_quasi_equality():
 
     # The last few indices do not necessarily have to match because of the rounding
     # errors on the distances: their could be tied results at the boundary.
-    assert_argkmin_results_quasi_equality(
+    assert_compatible_argkmin_results(
         np.array([[1.2, 2.5, 3.0, 6.1, _6_1p]]),
         np.array([[1.2, 2.5, 3.0, _6_1m, 6.1]]),
         np.array([[1, 2, 3, 4, 5]]),
@@ -385,24 +349,22 @@ def test_assert_argkmin_results_quasi_equality():
 
     # All points are have close distances so any ranking permutation
     # is valid for this query result.
-    assert_argkmin_results_quasi_equality(
+    assert_compatible_argkmin_results(
         np.array([[1, 1, _1p, _1p, _1p]]),
         np.array([[1, 1, 1, 1, _1p]]),
         np.array([[7, 6, 8, 10, 9]]),
         np.array([[6, 9, 7, 8, 10]]),
-        atol=atol,
-        rtol=rtol,
+        **tols,
     )
 
     # They could also be nearly truncation of very large nearly tied result
     # sets hence all indices can also be distinct in this case:
-    assert_argkmin_results_quasi_equality(
+    assert_compatible_argkmin_results(
         np.array([[1, 1, _1p, _1p, _1p]]),
         np.array([[1, 1, 1, 1, _1p]]),
         np.array([[34, 30, 8, 12, 24]]),
         np.array([[42, 1, 21, 13, 3]]),
-        atol=atol,
-        rtol=rtol,
+        **tols,
     )
 
     # Apply invalid permutation on indices: permuting the ranks of the 2
@@ -410,16 +372,15 @@ def test_assert_argkmin_results_quasi_equality():
     # different.
     msg = re.escape(
         "Query vector with index 0 lead to different distances for common neighbor with"
-        " index 1: dist_a=1.2 vs dist_b=2.5 (with atol=0.0 and rtol=1e-07)"
+        " index 1: dist_a=1.2 vs dist_b=2.5"
     )
     with pytest.raises(AssertionError, match=msg):
-        assert_argkmin_results_quasi_equality(
+        assert_compatible_argkmin_results(
             np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
             np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
             np.array([[1, 2, 3, 4, 5]]),
             np.array([[2, 1, 3, 4, 5]]),
-            atol=atol,
-            rtol=rtol,
+            **tols,
         )
 
     # Detect missing indices within the expected precision level, even when the
@@ -428,13 +389,12 @@ def test_assert_argkmin_results_quasi_equality():
         "neighors in b missing from a: [12]\nneighors in a missing from b: [1]"
     )
     with pytest.raises(AssertionError, match=msg):
-        assert_argkmin_results_quasi_equality(
+        assert_compatible_argkmin_results(
             np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
             np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
             np.array([[1, 2, 3, 4, 5]]),
             np.array([[12, 2, 4, 11, 3]]),
-            atol=atol,
-            rtol=rtol,
+            **tols,
         )
 
     # Detect missing indices outside the expected precision level.
@@ -442,13 +402,12 @@ def test_assert_argkmin_results_quasi_equality():
         "neighors in b missing from a: []\nneighors in a missing from b: [3]"
     )
     with pytest.raises(AssertionError, match=msg):
-        assert_argkmin_results_quasi_equality(
+        assert_compatible_argkmin_results(
             np.array([[_1m, 1.0, _6_1m, 6.1, _6_1p]]),
             np.array([[1.0, 1.0, _6_1m, 6.1, 7]]),
             np.array([[1, 2, 3, 4, 5]]),
             np.array([[2, 1, 4, 5, 12]]),
-            atol=atol,
-            rtol=rtol,
+            **tols,
         )
 
     # Detect missing indices outside the expected precision level, in the other
@@ -457,34 +416,34 @@ def test_assert_argkmin_results_quasi_equality():
         "neighors in b missing from a: [5]\nneighors in a missing from b: []"
     )
     with pytest.raises(AssertionError, match=msg):
-        assert_argkmin_results_quasi_equality(
+        assert_compatible_argkmin_results(
             np.array([[_1m, 1.0, _6_1m, 6.1, 7]]),
             np.array([[1.0, 1.0, _6_1m, 6.1, _6_1p]]),
             np.array([[1, 2, 3, 4, 12]]),
             np.array([[2, 1, 5, 3, 4]]),
-            atol=atol,
-            rtol=rtol,
+            **tols,
         )
 
     # Distances aren't properly sorted
     msg = "Distances aren't sorted on row 0"
     with pytest.raises(AssertionError, match=msg):
-        assert_argkmin_results_quasi_equality(
+        assert_compatible_argkmin_results(
             np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
             np.array([[2.5, 1.2, _6_1m, 6.1, _6_1p]]),
             np.array([[1, 2, 3, 4, 5]]),
             np.array([[2, 1, 4, 5, 3]]),
-            atol=atol,
-            rtol=rtol,
+            **tols,
         )
 
 
-def test_assert_radius_neighbors_results_quasi_equality():
-    rtol = 1e-7
-    eps = 1e-7 / 2
+def test_assert_compatible_radius_results():
+    atol = 1e-7
+    rtol = 0.0
+    tols = dict(atol=atol, rtol=rtol)
+
+    eps = atol / 3
     _1m = 1.0 - eps
     _1p = 1.0 + eps
-
     _6_1m = 6.1 - eps
     _6_1p = 6.1 + eps
 
@@ -499,57 +458,57 @@ def test_assert_radius_neighbors_results_quasi_equality():
     ]
 
     # Sanity check: compare the reference results to themselves.
-    assert_radius_neighbors_results_quasi_equality(
+    assert_compatible_radius_results(
         ref_dist,
         ref_dist,
         ref_indices,
         ref_indices,
         radius=7.0,
-        rtol=rtol,
+        **tols,
     )
 
     # Apply valid permutation on indices
-    assert_radius_neighbors_results_quasi_equality(
+    assert_compatible_radius_results(
         np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
         np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
         np.array([np.array([1, 2, 3, 4, 5])]),
         np.array([np.array([1, 2, 4, 5, 3])]),
         radius=7.0,
-        rtol=rtol,
+        **tols,
     )
-    assert_radius_neighbors_results_quasi_equality(
+    assert_compatible_radius_results(
         np.array([np.array([_1m, _1m, 1, _1p, _1p])]),
         np.array([np.array([_1m, _1m, 1, _1p, _1p])]),
         np.array([np.array([6, 7, 8, 9, 10])]),
         np.array([np.array([6, 9, 7, 8, 10])]),
         radius=7.0,
-        rtol=rtol,
+        **tols,
     )
 
     # Apply invalid permutation on indices
     msg = re.escape(
         "Query vector with index 0 lead to different distances for common neighbor with"
-        " index 1: dist_a=1.2 vs dist_b=2.5 (with atol=1e-06 and rtol=1e-07)"
+        " index 1: dist_a=1.2 vs dist_b=2.5"
     )
     with pytest.raises(AssertionError, match=msg):
-        assert_radius_neighbors_results_quasi_equality(
+        assert_compatible_radius_results(
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([1, 2, 3, 4, 5])]),
             np.array([np.array([2, 1, 3, 4, 5])]),
             radius=7.0,
-            rtol=rtol,
+            **tols,
         )
 
     # Having extra last or missing elements is valid if they are in the
     # tolerated rounding error range: [(1 - rtol) * radius - atol, radius]
-    assert_radius_neighbors_results_quasi_equality(
+    assert_compatible_radius_results(
         np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p, _6_1p])]),
         np.array([np.array([1.2, 2.5, _6_1m, 6.1])]),
         np.array([np.array([1, 2, 3, 4, 5, 7])]),
         np.array([np.array([1, 2, 3, 6])]),
         radius=_6_1p,
-        rtol=rtol,
+        **tols,
     )
 
     # Any discrepancy outside the tolerated rounding error range is invalid and
@@ -559,62 +518,62 @@ def test_assert_radius_neighbors_results_quasi_equality():
         " missing from a: []\nneighors in a missing from b: [3]"
     )
     with pytest.raises(AssertionError, match=msg):
-        assert_radius_neighbors_results_quasi_equality(
+        assert_compatible_radius_results(
             np.array([np.array([1.2, 2.5, 6])]),
             np.array([np.array([1.2, 2.5])]),
             np.array([np.array([1, 2, 3])]),
             np.array([np.array([1, 2])]),
             radius=6.1,
-            rtol=rtol,
+            **tols,
         )
     msg = re.escape(
         "Query vector with index 0 lead to mismatched result indices:\nneighors in b"
         " missing from a: [4]\nneighors in a missing from b: [2]"
     )
     with pytest.raises(AssertionError, match=msg):
-        assert_radius_neighbors_results_quasi_equality(
+        assert_compatible_radius_results(
             np.array([np.array([1.2, 2.1, 2.5])]),
             np.array([np.array([1.2, 2, 2.5])]),
             np.array([np.array([1, 2, 3])]),
             np.array([np.array([1, 4, 3])]),
             radius=6.1,
-            rtol=rtol,
+            **tols,
         )
 
     # Radius upper bound is strictly checked
     msg = re.escape(
-        "Largest returned distance 6.100000049999999 not within requested radius 6.1 on"
+        "Largest returned distance 6.100000033333333 not within requested radius 6.1 on"
         " row 0"
     )
     with pytest.raises(AssertionError, match=msg):
-        assert_radius_neighbors_results_quasi_equality(
+        assert_compatible_radius_results(
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, 6.1])]),
             np.array([np.array([1, 2, 3, 4, 5])]),
             np.array([np.array([2, 1, 4, 5, 3])]),
             radius=6.1,
-            rtol=rtol,
+            **tols,
         )
     with pytest.raises(AssertionError, match=msg):
-        assert_radius_neighbors_results_quasi_equality(
+        assert_compatible_radius_results(
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, 6.1])]),
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([1, 2, 3, 4, 5])]),
             np.array([np.array([2, 1, 4, 5, 3])]),
             radius=6.1,
-            rtol=rtol,
+            **tols,
         )
 
     # Distances aren't properly sorted
     msg = "Distances aren't sorted on row 0"
     with pytest.raises(AssertionError, match=msg):
-        assert_radius_neighbors_results_quasi_equality(
+        assert_compatible_radius_results(
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([2.5, 1.2, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([1, 2, 3, 4, 5])]),
             np.array([np.array([2, 1, 4, 5, 3])]),
             radius=6.1,
-            rtol=rtol,
+            **tols,
         )
 
 
