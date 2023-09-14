@@ -1350,7 +1350,7 @@ def test_predict_does_not_change_cluster_centers(csr_format):
     Non-regression test for gh-24253.
     """
     X, _ = make_blobs(n_samples=200, n_features=10, centers=10, random_state=0)
-    if csr_format is not None:
+    if csr_container is not None:
         X = csr_format(X)
 
     kmeans = KMeans()
