@@ -187,6 +187,13 @@ Changelog
   ``**score_params`` which are passed to the underlying scorer.
   :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
 
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| :func:`manifold.spectral_embedding` and :class:`manifold.SpectralEmbedding`
+  now correctly handles SciPy sparse arrays.
+  :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.metrics`
 ......................
 

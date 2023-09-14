@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 from scipy import sparse
 from scipy.linalg import eigh
-from scipy.sparse import csgraph
 from scipy.sparse.linalg import eigsh, lobpcg
 
 from sklearn.cluster import KMeans
@@ -19,7 +18,14 @@ from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
-from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.fixes import (
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+)
+from sklearn.utils.fixes import (
+    laplacian as csgraph_laplacian,
+)
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa
@@ -410,7 +416,7 @@ def test_spectral_embedding_unnormalized():
     )
 
     # Verify using manual computation with dense eigh
-    laplacian, dd = csgraph.laplacian(sims, normed=False, return_diag=True)
+    laplacian, dd = csgraph_laplacian(sims, normed=False, return_diag=True)
     _, diffusion_map = eigh(laplacian)
     embedding_2 = diffusion_map.T[:n_components]
     embedding_2 = _deterministic_vector_sign_flip(embedding_2).T

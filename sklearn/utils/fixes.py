@@ -211,7 +211,7 @@ except ImportError:
 
 
 # TODO: Remove when Scipy 1.12 is the minimum supported version
-if sp_version < parse_version("1.12.0"):
+if sp_version < parse_version("1.12"):
     from ..externals._scipy.sparse.csgraph import laplacian  # type: ignore  # noqa
 else:
     from scipy.sparse.csgraph import laplacian  # type: ignore  # noqa

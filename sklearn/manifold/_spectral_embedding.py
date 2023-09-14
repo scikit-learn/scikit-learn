@@ -26,7 +26,6 @@ from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import laplacian as csgraph_laplacian
-from ..utils.fixes import parse_version, sp_version
 
 
 def _graph_connected_component(graph, node_id):
@@ -348,12 +347,11 @@ def spectral_embedding(
         # matrix to the solver and afterward set it back to the original.
         diag_shift = 1e-5 * sparse.eye(laplacian.shape[0])
         laplacian += diag_shift
-
-        laplacian_matrix = check_array(laplacian, accept_sparse="csr")
-        if sp_version >= parse_version("1.8"):
-            if isinstance(laplacian_matrix, sparse.csr_array):
-                laplacian_matrix = sparse.csr_matrix(laplacian_matrix)
-        ml = smoothed_aggregation_solver(laplacian_matrix)
+        if isinstance(laplacian, getattr(sparse, "csr_array", None)):
+            # `pyamg` does not work with `csr_array` and we need to convert it to a
+            # `csr_matrix` object.
+            laplacian = sparse.csr_matrix(laplacian)
+        ml = smoothed_aggregation_solver(check_array(laplacian, accept_sparse="csr"))
         laplacian -= diag_shift
 
         M = ml.aspreconditioner()
