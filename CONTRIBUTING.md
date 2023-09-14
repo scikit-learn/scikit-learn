@@ -39,4 +39,4 @@ Here are some quick links to assist you in various aspects of contributing to sc
 
 We adhere to the principles of openness, respect, and consideration for others, as outlined by the Python Software Foundation. You can find our Code of Conduct [here](https://scikit-learn.org/dev/developers/contributing.html#code-of-conduct).
 
-Your contributions, no matter how big or small, play a vital role in making scikit-learn even better. Thank you for considering joining our community of contributors!
+Your contribution(s), no matter how big or small, play a vital role in making scikit-learn even better. Thank you for considering joining our community of contributors!
