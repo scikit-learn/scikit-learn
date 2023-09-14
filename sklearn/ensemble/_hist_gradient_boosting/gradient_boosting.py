@@ -704,7 +704,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,
                     l2_regularization=self.l2_regularization,
-                    colsample_bynode=self.max_features,
+                    feature_fraction_per_split=self.max_features,
                     rng=np.random.default_rng(self._random_seed2),
                     shrinkage=self.learning_rate,
                     n_threads=n_threads,

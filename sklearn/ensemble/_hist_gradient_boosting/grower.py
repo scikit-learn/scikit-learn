@@ -193,7 +193,7 @@ class TreeGrower:
         List of interaction constraints.
     l2_regularization : float, default=0.
         The L2 regularization parameter.
-    colsample_bynode : float, default=1
+    feature_fraction_per_split : float, default=1
         Proportion of randomly chosen features in each and every node split.
         This is a form of regularization, smaller values make the trees weaker
         learners and might prevent overfitting.
@@ -247,7 +247,7 @@ class TreeGrower:
         monotonic_cst=None,
         interaction_cst=None,
         l2_regularization=0.0,
-        colsample_bynode=1.0,
+        feature_fraction_per_split=1.0,
         rng=np.random.default_rng(),
         shrinkage=1.0,
         n_threads=None,
@@ -315,7 +315,7 @@ class TreeGrower:
             min_samples_leaf=min_samples_leaf,
             min_gain_to_split=min_gain_to_split,
             hessians_are_constant=hessians_are_constant,
-            colsample_bynode=colsample_bynode,
+            feature_fraction_per_split=feature_fraction_per_split,
             rng=rng,
             n_threads=n_threads,
         )

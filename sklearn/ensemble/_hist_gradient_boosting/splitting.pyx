@@ -158,7 +158,7 @@ cdef class Splitter:
         be ignored.
     hessians_are_constant: bool, default is False
         Whether hessians are constant.
-    colsample_bynode : float, default=1
+    feature_fraction_per_split : float, default=1
         Proportion of randomly chosen features in each and every node split.
         This is a form of regularization, smaller values make the trees weaker
         learners and might prevent overfitting.
@@ -179,7 +179,7 @@ cdef class Splitter:
         Y_DTYPE_C min_hessian_to_split
         unsigned int min_samples_leaf
         Y_DTYPE_C min_gain_to_split
-        Y_DTYPE_C colsample_bynode
+        Y_DTYPE_C feature_fraction_per_split
         rng
 
         unsigned int [::1] partition
@@ -199,7 +199,7 @@ cdef class Splitter:
                  unsigned int min_samples_leaf=20,
                  Y_DTYPE_C min_gain_to_split=0.,
                  unsigned char hessians_are_constant=False,
-                 Y_DTYPE_C colsample_bynode=1.0,
+                 Y_DTYPE_C feature_fraction_per_split=1.0,
                  rng=np.random.RandomState(),
                  unsigned int n_threads=1):
 
@@ -215,7 +215,7 @@ cdef class Splitter:
         self.min_samples_leaf = min_samples_leaf
         self.min_gain_to_split = min_gain_to_split
         self.hessians_are_constant = hessians_are_constant
-        self.colsample_bynode = colsample_bynode
+        self.feature_fraction_per_split = feature_fraction_per_split
         self.rng = rng
         self.n_threads = n_threads
 
@@ -489,7 +489,7 @@ cdef class Splitter:
             const signed char [::1] monotonic_cst = self.monotonic_cst
             int n_threads = self.n_threads
             bint has_interaction_cst = False
-            Y_DTYPE_C colsample_bynode = self.colsample_bynode
+            Y_DTYPE_C feature_fraction_per_split = self.feature_fraction_per_split
             cnp.npy_bool [:] subsample_mask
             int n_subsampled_features
 
@@ -499,12 +499,12 @@ cdef class Splitter:
         else:
             n_allowed_features = self.n_features
 
-        if colsample_bynode < 1.0:
+        if feature_fraction_per_split < 1.0:
             # We do all random sampling before the nogil and make sure that we sample
             # exactly n_subsampled_features >= 1 features.
             n_subsampled_features = max(
                 1,
-                int(ceil(colsample_bynode * n_allowed_features)),
+                int(ceil(feature_fraction_per_split * n_allowed_features)),
             )
             subsample_mask_arr = np.full(n_allowed_features, False)
             subsample_mask_arr[:n_subsampled_features] = True
@@ -536,7 +536,7 @@ cdef class Splitter:
                 split_infos[split_info_idx].gain = -1
                 split_infos[split_info_idx].is_categorical = is_categorical[feature_idx]
 
-                if colsample_bynode < 1.0 and not subsample_mask[split_info_idx]:
+                if feature_fraction_per_split < 1.0 and not subsample_mask[split_info_idx]:
                     continue
 
                 if is_categorical[feature_idx]:

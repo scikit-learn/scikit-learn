@@ -961,10 +961,10 @@ def test_split_interaction_constraints():
     assert set(allowed_features) == set(split_features)
 
 
-def test_split_colsample_bynode():
-    """Check that colsample_bynode is respected."""
+def test_split_feature_fraction_per_split():
+    """Check that feature_fraction_per_split is respected."""
     n_features = 4
-    # # features 1 and 2 are not allowed to be split on
+    # features 1 and 2 are not allowed to be split on
     # allowed_features = np.array([0, 3], dtype=np.uint32)
     n_bins = 5
     n_samples = 40
@@ -1018,7 +1018,7 @@ def test_split_colsample_bynode():
         min_samples_leaf=min_samples_leaf,
         min_gain_to_split=min_gain_to_split,
         hessians_are_constant=hessians_are_constant,
-        colsample_bynode=0.25,  # THIS is the important setting here.
+        feature_fraction_per_split=0.25,  # THIS is the important setting here.
         rng=rng,
     )
 
