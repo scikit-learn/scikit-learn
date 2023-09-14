@@ -2592,9 +2592,12 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self.quantiles_ = []
         for col in X.T:
             if self.subsample < n_samples:
+                min_idx, max_idx = col.argmin(), col.argmax()
+                indices = np.delete(np.arange(n_samples), [min_idx, max_idx])
                 subsample_idx = random_state.choice(
-                    n_samples, size=self.subsample, replace=False
+                    indices, size=self.subsample - 2, replace=False
                 )
+                subsample_idx = np.hstack((min_idx, max_idx, subsample_idx))
                 col = col.take(subsample_idx, mode="clip")
             self.quantiles_.append(np.nanpercentile(col, references))
         self.quantiles_ = np.transpose(self.quantiles_)
@@ -2626,9 +2629,13 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                     column_data = np.zeros(shape=column_subsample, dtype=X.dtype)
                 else:
                     column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
-                column_data[:column_subsample] = random_state.choice(
-                    column_nnz_data, size=column_subsample, replace=False
+                min_idx, max_idx = column_nnz_data.argmin(), column_nnz_data.argmax()
+                indices = np.delete(np.arange(len(column_nnz_data)), [min_idx, max_idx])
+                subsample_idx = random_state.choice(
+                    indices, size=column_subsample - 2, replace=False
                 )
+                subsample_idx = np.hstack((min_idx, max_idx, subsample_idx))
+                column_data[:column_subsample] = column_nnz_data[subsample_idx]
             else:
                 if self.ignore_implicit_zeros:
                     column_data = np.zeros(shape=len(column_nnz_data), dtype=X.dtype)
