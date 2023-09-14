@@ -951,16 +951,17 @@ The objective for the optimization becomes
 
 Where :math:`[P]` represents the Iverson bracket which evaluates to :math:`0`
 if :math:`P` is false, otherwise it evaluates to :math:`1`. We currently provide four choices
-for the regularization term :math:`r(W)` via the `penalty` argument:
+for the regularization term :math:`r(W)` via the `penalty` argument, where :math:`m`
+is the number of features:
 
 +----------------+----------------------------------------------------------------------------------+
 | penalty        | :math:`r(W)`                                                                     |
 +================+==================================================================================+
 | `None`         | :math:`0`                                                                        |
 +----------------+----------------------------------------------------------------------------------+
-| :math:`\ell_1` | :math:`\|W\|_{1,1} = \sum_{i=1}^n\sum_{j=1}^{K}|W_{i,j}|`                        |
+| :math:`\ell_1` | :math:`\|W\|_{1,1} = \sum_{i=1}^m\sum_{j=1}^{K}|W_{i,j}|`                        |
 +----------------+----------------------------------------------------------------------------------+
-| :math:`\ell_2` | :math:`\frac{1}{2}\|W\|_F^2 = \frac{1}{2}\sum_{i=1}^n\sum_{j=1}^{K} W_{i,j}^2`   |
+| :math:`\ell_2` | :math:`\frac{1}{2}\|W\|_F^2 = \frac{1}{2}\sum_{i=1}^m\sum_{j=1}^{K} W_{i,j}^2`   |
 +----------------+----------------------------------------------------------------------------------+
 | `ElasticNet`   | :math:`\frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_{1,1}`                           |
 +----------------+----------------------------------------------------------------------------------+
