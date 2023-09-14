@@ -88,6 +88,8 @@ def _graph_is_connected(graph):
         True means the graph is fully connected and False means not.
     """
     if sparse.issparse(graph):
+        # `connected_components` only works with 32-bits indices
+        graph = check_array(graph, accept_sparse=True, accept_large_sparse=False)
         # sparse graph, find all the connected components
         n_connected_components, _ = connected_components(graph)
         return n_connected_components == 1

@@ -287,16 +287,28 @@ def test_spectral_embedding_amg_solver(dtype, coo_container, seed=36):
     # same with special case in which amg is not actually used
     # regression test for #10715
     # affinity between nodes
-    row = [0, 0, 1, 2, 3, 3, 4]
-    col = [1, 2, 2, 3, 4, 5, 5]
-    val = [100, 100, 100, 1, 100, 100, 100]
+    row = np.array([0, 0, 1, 2, 3, 3, 4], dtype=np.int32)
+    col = np.array([1, 2, 2, 3, 4, 5, 5], dtype=np.int32)
+    val = np.array([100, 100, 100, 1, 100, 100, 100], dtype=np.int64)
 
-    affinity = coo_container((val + val, (row + col, col + row)), shape=(6, 6))
+    affinity = coo_container(
+        (np.hstack([val, val]), (np.hstack([row, col]), np.hstack([col, row]))),
+        shape=(6, 6),
+    )
     se_amg.affinity = "precomputed"
     se_arpack.affinity = "precomputed"
     embed_amg = se_amg.fit_transform(affinity.astype(dtype))
     embed_arpack = se_arpack.fit_transform(affinity.astype(dtype))
     _assert_equal_with_sign_flipping(embed_amg, embed_arpack, 1e-5)
+
+    # Check that passing a sparse matrix with `np.int64` indices dtype raises an error
+    # Use a CSR matrix to avoid any conversion during the validation
+    affinity = affinity.tocsr()
+    affinity.indptr = affinity.indptr.astype(np.int64)
+    affinity.indices = affinity.indices.astype(np.int64)
+    err_msg = "Only sparse matrices with 32-bit integer indices are accepted"
+    with pytest.raises(ValueError, match=err_msg):
+        se_amg.fit_transform(affinity)
 
 
 # TODO: Remove filterwarnings when pyamg does replaces sp.rand call with
