@@ -53,7 +53,9 @@ from sklearn.utils.fixes import (
     COO_CONTAINERS,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
+    DIA_CONTAINERS,
     DOK_CONTAINERS,
+    LIL_CONTAINERS,
     parse_version,
 )
 from sklearn.utils.validation import (
@@ -1961,3 +1963,25 @@ def test_check_array_multiple_extensions(
     X_regular_checked = check_array(X_regular, dtype=None)
     X_extension_checked = check_array(X_extension, dtype=None)
     assert_array_equal(X_regular_checked, X_extension_checked)
+
+
+@pytest.mark.parametrize(
+    "sparse_container",
+    CSR_CONTAINERS
+    + CSC_CONTAINERS
+    + COO_CONTAINERS
+    + DOK_CONTAINERS
+    + DIA_CONTAINERS
+    + LIL_CONTAINERS,
+)
+@pytest.mark.parametrize("output_format", ["csr", "csc", "coo"])
+def test_check_array_downcast_indices_dtype(sparse_container, output_format):
+    """Check the consistence of the indices dtype with sparse matrices/arrays."""
+    X = sparse_container([[0, 1], [1, 0]], dtype=np.float64)
+    X_checked = check_array(X, accept_sparse=output_format)
+    if output_format == "coo":
+        assert X_checked.row.dtype == np.int32
+        assert X_checked.col.dtype == np.int32
+    else:  # output_format in ["csr", "csc"]
+        assert X_checked.indices.dtype == np.int32
+        assert X_checked.indptr.dtype == np.int32

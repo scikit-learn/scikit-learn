@@ -522,6 +522,7 @@ def _ensure_sparse_format(
         dtype = spmatrix.dtype
 
     changed_format = False
+    spmatrix_type = type(spmatrix).__name__
 
     if isinstance(accept_sparse, str):
         accept_sparse = [accept_sparse]
@@ -576,7 +577,85 @@ def _ensure_sparse_format(
                 input_name=input_name,
             )
 
+    # With SciPy sparse arrays, conversion from DIA format to COO, CSR, or BSR will not
+    # downcast indices to `np.int32` while with SciPy sparse matrices, it is the case.
+    # Since not all algorithms support large indices, we should try to downcast them.
+    if (
+        spmatrix_type == "dia_array"
+        and changed_format
+        and accept_sparse[0] in ("csr", "coo", "bsr")
+    ):
+        if accept_sparse[0] == "csr":
+            index_dtype = _get_sparse_index_dtype(
+                arrays=(spmatrix.indptr, spmatrix.indices),
+                maxval=max(spmatrix.nnz, spmatrix.shape[1]),
+                check_contents=True,
+            )
+            if index_dtype != spmatrix.indices.dtype:
+                spmatrix.indices = spmatrix.indices.astype(index_dtype)
+                spmatrix.indptr = spmatrix.indptr.astype(index_dtype)
+        else:  # accept_sparse[0] == "coo"
+            index_dtype = _get_sparse_index_dtype(maxval=max(spmatrix.shape))
+            if index_dtype != spmatrix.row.dtype:
+                spmatrix.row = spmatrix.row.astype(index_dtype)
+                spmatrix.col = spmatrix.col.astype(index_dtype)
+
     return spmatrix
+
+
+def _get_sparse_index_dtype(arrays=(), maxval=None, check_contents=False):
+    """
+    Based on input (integer) arrays `a`, determine a suitable index data
+    type that can hold the data in the arrays.
+
+    Parameters
+    ----------
+    arrays : tuple of array_like
+        Input arrays whose types/contents to check
+
+    maxval : float, optional
+        Maximum value needed
+
+    check_contents : bool, optional
+        Whether to check the values in the arrays and not just their types.
+        Default: False (check only the types)
+
+    Returns
+    -------
+    dtype : dtype
+        Suitable index data type (int32 or int64)
+    """
+
+    int32min = np.int32(np.iinfo(np.int32).min)
+    int32max = np.int32(np.iinfo(np.int32).max)
+
+    dtype = np.intc
+    if maxval is not None:
+        maxval = np.int64(maxval)
+        if maxval > int32max:
+            dtype = np.int64
+
+    if isinstance(arrays, np.ndarray):
+        arrays = (arrays,)
+
+    for arr in arrays:
+        arr = np.asarray(arr)
+        if not np.can_cast(arr.dtype, np.int32):
+            if check_contents:
+                if arr.size == 0:
+                    # a bigger type not needed
+                    continue
+                elif np.issubdtype(arr.dtype, np.integer):
+                    maxval = arr.max()
+                    minval = arr.min()
+                    if minval >= int32min and maxval <= int32max:
+                        # a bigger type not needed
+                        continue
+
+            dtype = np.int64
+            break
+
+    return dtype
 
 
 def _ensure_no_complex_data(array):
