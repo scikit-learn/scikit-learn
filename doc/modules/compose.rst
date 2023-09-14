@@ -8,12 +8,17 @@ Pipelines and composite estimators
 To build a composite estimator, transformers are usually combined with other
 transformers or with :term:`predictors` (such as classifiers or regressors).
 The most common tool used for this is a :ref:`Pipeline <pipeline>`. Pipelines
-without a final predictor will transform the observed data (:term:`X`) and
-return it. In contrast, pipelines with a final predictor will fit the predictor
-with the transformed data from the previous steps and can then also be used for
-predictions. The methods to be called on the pipeline are the same methods that
-the estimator in the last step provides. Pipeline is often used in combination
-with :ref:`FeatureUnion <feature_union>` which concatenates the output of
+require all steps except the last to be a :ref:`transformer`. The last step can
+be anything, a transformer, a :term:`predictor`, or a classifier which might
+have or not have a `.predict(...)` method. The pipeline would then expose all
+methods provided by the last estimator, meaning if the last step provides a
+`transform` method, then the pipeline would have a `transform` method and
+behave like a transformer. If the last step provides a `predict` method, then
+the pipeline would also expose that method, and given a data :term:`X`, it uses
+all steps except the last to transform the data, and then give that transformed
+data to the `predict` method of the last step of the pipeline. `Pipeline` is
+often used in combination with :ref:`Column Transformer <column_transformer>`
+or :ref:`FeatureUnion <feature_union>` which concatenate the output of
 transformers into a composite feature space. :ref:`TransformedTargetRegressor
 <transformed_target_regressor>` deals with transforming the :term:`target`
 (i.e. log-transform :term:`y`).
