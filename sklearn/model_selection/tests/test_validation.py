@@ -275,10 +275,7 @@ y = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
 # The number of samples per class needs to be > n_splits,
 # for StratifiedKFold(n_splits=3)
 y2 = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 3])
-if len(COO_CONTAINERS) > 1:
-    P_sparse = COO_CONTAINERS[1](np.eye(5))
-else:
-    P_sparse = COO_CONTAINERS[0](np.eye(5))
+P_sparse = COO_CONTAINERS[-1](np.eye(5))
 
 
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
