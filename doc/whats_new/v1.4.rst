@@ -164,6 +164,13 @@ Changelog
   :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
   :pr:`26957` by `Thomas Fan`_.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Enhancement| :class:`feature_extraction.text.TfidfTransformer` now supports
+  SciPy sparse arrays.
+  :pr:`27219` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
@@ -186,6 +193,13 @@ Changelog
   scorer. :meth:`linear_model.LogisticRegressionCV.score` now accepts
   ``**score_params`` which are passed to the underlying scorer.
   :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| :func:`metrics.f_regression` and :func:`metrics.r_regression` now
+  support SciPy sparse arrays.
+  :pr:`27239` by :user:`Yaroslav Korobko <Tialo>`.
 
 :mod:`sklearn.pipeline`
 .......................
@@ -285,6 +299,13 @@ Changelog
   argument allowing for the use of accelerated third-party
   :class:`metric.DistanceMetric` objects.
   :pr:`26267` by :user:`Meekail Zain <micky774>`
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Enhancement| :meth:`neural_network.BernoulliRBM.score_samples` now supports Scipy
+  sparse arrays.
+  :pr:`27252` by `Yao Xiao <Charlie-XIAO>`
 
 :mod:`sklearn.metrics`
 ......................
