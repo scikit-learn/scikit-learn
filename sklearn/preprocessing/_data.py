@@ -2535,6 +2535,10 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
     NaNs are treated as missing values: disregarded in fit, and maintained in
     transform.
 
+    To alleviate the clipping effect potentially introduced by the `subsampling`
+    parameter, the minimum and maximum values of each feature are always
+    preserved and map to the quantile 0 and 1 respectively.
+
     Examples
     --------
     >>> import numpy as np
@@ -2974,6 +2978,10 @@ def quantile_transform(
     -----
     NaNs are treated as missing values: disregarded in fit, and maintained in
     transform.
+
+    To alleviate the clipping effect potentially introduced by the `subsampling`
+    parameter, the minimum and maximum values of each feature are always
+    preserved and map to the quantile 0 and 1 respectively.
 
     .. warning:: Risk of data leak
 
