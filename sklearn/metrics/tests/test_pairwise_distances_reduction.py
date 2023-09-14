@@ -1,8 +1,6 @@
 import itertools
 import re
 import warnings
-from collections import defaultdict
-from math import floor, log10
 
 import numpy as np
 import pytest
@@ -79,32 +77,66 @@ def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices, rtol=1
     )
 
 
-def relative_rounding(scalar, n_significant_digits):
-    """Round a scalar to a number of significant digits relatively to its value."""
-    if scalar == 0:
-        return 0.0
-    magnitude = int(floor(log10(abs(scalar)))) + 1
-    return round(scalar, n_significant_digits - magnitude)
+def assert_same_distances_for_common_neighbors(
+    query_idx,
+    dist_row_a,
+    dist_row_b,
+    indices_row_a,
+    indices_row_b,
+    rtol,
+    atol,
+):
+    """Check that the distances of common neighbors are equal up to tolerance.
+
+    This does not check if there are missing neighbors in either result set.
+    Missingness is handled by assert_no_missing_neighbors.
+    """
+    # Compute a mapping from indices to distances for each result set and
+    # check that the computed neighbors with matching indices are withing
+    # the expected distance tolerance.
+    indices_to_dist_a = {idx: dist for idx, dist in zip(indices_row_a, dist_row_a)}
+    indices_to_dist_b = {idx: dist for idx, dist in zip(indices_row_b, dist_row_b)}
+
+    common_indices = set(indices_row_a).intersection(set(indices_row_b))
+    for idx in common_indices:
+        dist_a = indices_to_dist_a[idx]
+        dist_b = indices_to_dist_b[idx]
+        try:
+            assert_allclose(dist_a, dist_b, rtol=rtol, atol=atol)
+        except AssertionError as e:
+            # Wrap exception to provide more context while also including
+            # the original exception with the computed absolute and
+            # relative differences.
+            raise AssertionError(
+                f"Query vector with index {query_idx} lead to different distances"
+                f" for common neighbor with index {idx}:"
+                f" dist_a={dist_a} vs dist_b={dist_b} (with atol={atol} and"
+                f" rtol={rtol})"
+            ) from e
 
 
-def test_relative_rounding():
-    assert relative_rounding(0, 1) == 0.0
-    assert relative_rounding(0, 10) == 0.0
-    assert relative_rounding(0, 123456) == 0.0
-
-    assert relative_rounding(123456789, 0) == 0
-    assert relative_rounding(123456789, 2) == 120000000
-    assert relative_rounding(123456789, 3) == 123000000
-    assert relative_rounding(123456789, 10) == 123456789
-    assert relative_rounding(123456789, 20) == 123456789
-
-    assert relative_rounding(1.23456789, 2) == 1.2
-    assert relative_rounding(1.23456789, 3) == 1.23
-    assert relative_rounding(1.23456789, 10) == 1.23456789
-
-    assert relative_rounding(123.456789, 3) == 123.0
-    assert relative_rounding(123.456789, 9) == 123.456789
-    assert relative_rounding(123.456789, 10) == 123.456789
+def assert_no_missing_neighbors(
+    query_idx,
+    dist_row_a,
+    dist_row_b,
+    indices_row_a,
+    indices_row_b,
+    threshold,
+):
+    mask_a = dist_row_a < threshold
+    mask_b = dist_row_b < threshold
+    missing_from_b = np.setdiff1d(indices_row_a[mask_a], indices_row_b)
+    missing_from_a = np.setdiff1d(indices_row_b[mask_b], indices_row_a)
+    if len(missing_from_a) > 0 or len(missing_from_b) > 0:
+        raise AssertionError(
+            f"Query vector with index {query_idx} lead to mismatched result indices:\n"
+            f"neighors in b missing from a: {missing_from_a}\n"
+            f"neighors in a missing from b: {missing_from_b}\n"
+            f"dist_row_a={dist_row_a}\n"
+            f"dist_row_b={dist_row_b}\n"
+            f"indices_row_a={indices_row_a}\n"
+            f"indices_row_b={indices_row_b}\n"
+        )
 
 
 def assert_argkmin_results_quasi_equality(
@@ -149,82 +181,66 @@ def assert_argkmin_results_quasi_equality(
         assert is_sorted(dist_row_a), f"Distances aren't sorted on row {query_idx}"
         assert is_sorted(dist_row_b), f"Distances aren't sorted on row {query_idx}"
 
-        # Compute a mapping from indices to distances for each result set and
-        # check that the computed neighbors with matching indices are withing
-        # the expected distance tolerance.
-        # It's ok if they are missing indices on either side, as long as the
-        # distances match in the previous assertions.
-        indices_to_dist_a = {idx: dist for idx, dist in zip(indices_row_a, dist_row_a)}
-        indices_to_dist_b = {idx: dist for idx, dist in zip(indices_row_b, dist_row_b)}
-
-        common_indices = set(indices_row_a).intersection(set(indices_row_b))
-        for idx in common_indices:
-            dist_a = indices_to_dist_a[idx]
-            dist_b = indices_to_dist_b[idx]
-            try:
-                assert_allclose(dist_a, dist_b, rtol=rtol, atol=atol)
-            except AssertionError as e:
-                # Wrap exception to provide more context while also including
-                # the original exception with the computed absolute and
-                # relative differences.
-                raise AssertionError(
-                    f"Query vector with index {query_idx} lead to different distances"
-                    f" for common neighbor with index {idx}:"
-                    f" dist_a={dist_a} vs dist_b={dist_b} (with atol={atol} and"
-                    f" rtol={rtol})"
-                ) from e
+        assert_same_distances_for_common_neighbors(
+            query_idx,
+            dist_row_a,
+            dist_row_b,
+            indices_row_a,
+            indices_row_b,
+            rtol,
+            atol,
+        )
 
         # Check that any neighbor with distances below the rounding error threshold have
         # matching indices.
         threshold = (1 - rtol) * np.maximum(
             np.max(dist_row_a), np.max(dist_row_b)
         ) - atol
-        mask_a = dist_row_a < threshold
-        mask_b = dist_row_b < threshold
-        missing_from_b = np.setdiff1d(indices_row_a[mask_a], indices_row_b)
-        missing_from_a = np.setdiff1d(indices_row_b[mask_b], indices_row_a)
-        if len(missing_from_a) > 0 or len(missing_from_b) > 0:
-            raise AssertionError(
-                f"Query vector with index {query_idx} lead to mismatched result indices"
-                f" (with atol={atol} and rtol={rtol}):\n"
-                f"neighors in b missing from a: {missing_from_a}\n"
-                f"neighors in a missing from b: {missing_from_b}\n"
-                f"dist_row_a={dist_row_a}\n"
-                f"dist_row_b={dist_row_b}\n"
-                f"indices_row_a={indices_row_a}\n"
-                f"indices_row_b={indices_row_b}\n"
-            )
+        assert_no_missing_neighbors(
+            query_idx,
+            dist_row_a,
+            dist_row_b,
+            indices_row_a,
+            indices_row_b,
+            threshold,
+        )
 
 
 def assert_radius_neighbors_results_equality(
-    ref_dist, dist, ref_indices, indices, radius
+    neighbors_dists_a,
+    neighbors_dists_b,
+    neighbors_indices_a,
+    neighbors_indices_b,
+    radius,
 ):
     # We get arrays of arrays and we need to check for individual pairs
-    for i in range(ref_dist.shape[0]):
-        assert (ref_dist[i] <= radius).all()
+    for i in range(neighbors_dists_a.shape[0]):
+        assert (neighbors_dists_a[i] <= radius).all()
         assert_array_equal(
-            ref_indices[i],
-            indices[i],
+            neighbors_indices_a[i],
+            neighbors_indices_b[i],
             err_msg=f"Query vector #{i} has different neighbors' indices",
         )
         assert_allclose(
-            ref_dist[i],
-            dist[i],
+            neighbors_dists_a[i],
+            neighbors_dists_b[i],
             err_msg=f"Query vector #{i} has different neighbors' distances",
             rtol=1e-7,
         )
 
 
 def assert_radius_neighbors_results_quasi_equality(
-    ref_dist,
-    dist,
-    ref_indices,
-    indices,
+    neighbors_dists_a,
+    neighbors_dists_b,
+    neighbors_indices_a,
+    neighbors_indices_b,
     radius,
-    rtol=1e-4,
+    rtol=1e-5,
+    atol=1e-6,
 ):
     """Assert that radius neighborhood results are valid up to:
-      - relative tolerance on computed distance values
+
+      - relative and absolute tolerance on computed distance values
       - permutations of indices for distances values that differ up to
         a precision level
       - missing or extra last elements if their distance is
@@ -238,72 +254,59 @@ def assert_radius_neighbors_results_quasi_equality(
     """
     is_sorted = lambda a: np.all(a[:-1] <= a[1:])
 
-    n_significant_digits = -(int(floor(log10(abs(rtol)))) + 1)
-
     assert (
-        len(ref_dist) == len(dist) == len(ref_indices) == len(indices)
+        len(neighbors_dists_a)
+        == len(neighbors_dists_b)
+        == len(neighbors_indices_a)
+        == len(neighbors_indices_b)
     ), "Arrays of results have various lengths."
 
-    n_queries = len(ref_dist)
+    n_queries = len(neighbors_dists_a)
 
     # Asserting equality of results one vector at a time
     for query_idx in range(n_queries):
-        ref_dist_row = ref_dist[query_idx]
-        dist_row = dist[query_idx]
+        dist_row_a = neighbors_dists_a[query_idx]
+        dist_row_b = neighbors_dists_b[query_idx]
+        indices_row_a = neighbors_indices_a[query_idx]
+        indices_row_b = neighbors_indices_b[query_idx]
 
-        assert is_sorted(
-            ref_dist_row
-        ), f"Reference distances aren't sorted on row {query_idx}"
-        assert is_sorted(dist_row), f"Distances aren't sorted on row {query_idx}"
+        assert is_sorted(dist_row_a), f"Distances aren't sorted on row {query_idx}"
+        assert is_sorted(dist_row_b), f"Distances aren't sorted on row {query_idx}"
 
-        # Vectors' lengths might be different due to small
-        # numerical differences of distance w.r.t the `radius` threshold.
-        largest_row = ref_dist_row if len(ref_dist_row) > len(dist_row) else dist_row
+        assert len(dist_row_a) == len(indices_row_a)
+        assert len(dist_row_b) == len(indices_row_b)
 
-        # For the longest distances vector, we check that last extra elements
-        # that aren't present in the other vector are all in: [radius ± rtol]
-        min_length = min(len(ref_dist_row), len(dist_row))
-        last_extra_elements = largest_row[min_length:]
-        if last_extra_elements.size > 0:
-            assert np.all(radius - rtol <= last_extra_elements <= radius + rtol), (
-                f"The last extra elements ({last_extra_elements}) aren't in [radius ±"
-                f" rtol]=[{radius} ± {rtol}]"
+        # Check that all distances are within the requested radius
+        if len(dist_row_a) > 0:
+            assert dist_row_a[-1] <= radius, (
+                f"Largest returned distance {dist_row_a[-1]} not within requested"
+                f" radius {radius} on row {query_idx}"
+            )
+        if len(dist_row_b) > 0:
+            assert dist_row_b[-1] <= radius, (
+                f"Largest returned distance {dist_row_b[-1]} not within requested"
+                f" radius {radius} on row {query_idx}"
             )
 
-        # We truncate the neighbors results list on the smallest length to
-        # be able to compare them, ignoring the elements checked above.
-        ref_dist_row = ref_dist_row[:min_length]
-        dist_row = dist_row[:min_length]
-
-        assert_allclose(ref_dist_row, dist_row, rtol=rtol)
-
-        ref_indices_row = ref_indices[query_idx]
-        indices_row = indices[query_idx]
-
-        # Grouping indices by distances using sets on a rounded distances up
-        # to a given number of significant digits derived from rtol.
-        reference_neighbors_groups = defaultdict(set)
-        effective_neighbors_groups = defaultdict(set)
-
-        for neighbor_rank in range(min_length):
-            rounded_dist = relative_rounding(
-                ref_dist_row[neighbor_rank],
-                n_significant_digits=n_significant_digits,
-            )
-            reference_neighbors_groups[rounded_dist].add(ref_indices_row[neighbor_rank])
-            effective_neighbors_groups[rounded_dist].add(indices_row[neighbor_rank])
-
-        # Asserting equality of groups (sets) for each distance
-        msg = (
-            f"Neighbors indices for query {query_idx} are not matching "
-            f"when rounding distances at {n_significant_digits} significant digits "
-            f"derived from rtol={rtol:.1e}"
+        assert_same_distances_for_common_neighbors(
+            query_idx,
+            dist_row_a,
+            dist_row_b,
+            indices_row_a,
+            indices_row_b,
+            rtol,
+            atol,
         )
-        for rounded_distance in reference_neighbors_groups.keys():
-            assert (
-                reference_neighbors_groups[rounded_distance]
-                == effective_neighbors_groups[rounded_distance]
-            ), msg
+
+        threshold = (1 - rtol) * radius - atol
+        assert_no_missing_neighbors(
+            query_idx,
+            dist_row_a,
+            dist_row_b,
+            indices_row_a,
+            indices_row_b,
+            threshold,
+        )
 
 
 ASSERT_RESULT = {
@@ -478,7 +481,7 @@ def test_assert_argkmin_results_quasi_equality():
 
 def test_assert_radius_neighbors_results_quasi_equality():
     rtol = 1e-7
-    eps = 1e-7
+    eps = 1e-7 / 2
     _1m = 1.0 - eps
     _1p = 1.0 + eps
 
@@ -501,7 +504,7 @@ def test_assert_radius_neighbors_results_quasi_equality():
         ref_dist,
         ref_indices,
         ref_indices,
-        radius=6.1,
+        radius=7.0,
         rtol=rtol,
     )
 
@@ -511,7 +514,7 @@ def test_assert_radius_neighbors_results_quasi_equality():
         np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
         np.array([np.array([1, 2, 3, 4, 5])]),
         np.array([np.array([1, 2, 4, 5, 3])]),
-        radius=6.1,
+        radius=7.0,
         rtol=rtol,
     )
     assert_radius_neighbors_results_quasi_equality(
@@ -519,35 +522,41 @@ def test_assert_radius_neighbors_results_quasi_equality():
         np.array([np.array([_1m, _1m, 1, _1p, _1p])]),
         np.array([np.array([6, 7, 8, 9, 10])]),
         np.array([np.array([6, 9, 7, 8, 10])]),
-        radius=6.1,
+        radius=7.0,
         rtol=rtol,
     )
 
     # Apply invalid permutation on indices
-    msg = "Neighbors indices for query 0 are not matching"
+    msg = re.escape(
+        "Query vector with index 0 lead to different distances for common neighbor with"
+        " index 1: dist_a=1.2 vs dist_b=2.5 (with atol=1e-06 and rtol=1e-07)"
+    )
     with pytest.raises(AssertionError, match=msg):
         assert_radius_neighbors_results_quasi_equality(
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([1, 2, 3, 4, 5])]),
             np.array([np.array([2, 1, 3, 4, 5])]),
-            radius=6.1,
+            radius=7.0,
             rtol=rtol,
         )
 
-    # Having extra last elements is valid if they are in: [radius ± rtol]
+    # Having extra last or missing elements is valid if they are in the
+    # tolerated rounding error range: [(1 - rtol) * radius - atol, radius]
     assert_radius_neighbors_results_quasi_equality(
-        np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
+        np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p, _6_1p])]),
         np.array([np.array([1.2, 2.5, _6_1m, 6.1])]),
-        np.array([np.array([1, 2, 3, 4, 5])]),
-        np.array([np.array([1, 2, 3, 4])]),
-        radius=6.1,
+        np.array([np.array([1, 2, 3, 4, 5, 7])]),
+        np.array([np.array([1, 2, 3, 6])]),
+        radius=_6_1p,
         rtol=rtol,
     )
 
-    # Having extra last elements is invalid if they are lesser than radius - rtol
+    # Any discrepancy outside the tolerated rounding error range is invalid and
+    # indicates a missing neighbor in one of the result sets.
     msg = re.escape(
-        "The last extra elements ([6.]) aren't in [radius ± rtol]=[6.1 ± 1e-07]"
+        "Query vector with index 0 lead to mismatched result indices:\nneighors in b"
+        " missing from a: []\nneighors in a missing from b: [3]"
     )
     with pytest.raises(AssertionError, match=msg):
         assert_radius_neighbors_results_quasi_equality(
@@ -558,12 +567,37 @@ def test_assert_radius_neighbors_results_quasi_equality():
             radius=6.1,
             rtol=rtol,
         )
+    msg = re.escape(
+        "Query vector with index 0 lead to mismatched result indices:\nneighors in b"
+        " missing from a: [4]\nneighors in a missing from b: [2]"
+    )
+    with pytest.raises(AssertionError, match=msg):
+        assert_radius_neighbors_results_quasi_equality(
+            np.array([np.array([1.2, 2.1, 2.5])]),
+            np.array([np.array([1.2, 2, 2.5])]),
+            np.array([np.array([1, 2, 3])]),
+            np.array([np.array([1, 4, 3])]),
+            radius=6.1,
+            rtol=rtol,
+        )
 
-    # Indices aren't properly sorted w.r.t their distances
-    msg = "Neighbors indices for query 0 are not matching"
+    # Radius upper bound is strictly checked
+    msg = re.escape(
+        "Largest returned distance 6.100000049999999 not within requested radius 6.1 on"
+        " row 0"
+    )
     with pytest.raises(AssertionError, match=msg):
         assert_radius_neighbors_results_quasi_equality(
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
+            np.array([np.array([1.2, 2.5, _6_1m, 6.1, 6.1])]),
+            np.array([np.array([1, 2, 3, 4, 5])]),
+            np.array([np.array([2, 1, 4, 5, 3])]),
+            radius=6.1,
+            rtol=rtol,
+        )
+    with pytest.raises(AssertionError, match=msg):
+        assert_radius_neighbors_results_quasi_equality(
+            np.array([np.array([1.2, 2.5, _6_1m, 6.1, 6.1])]),
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([1, 2, 3, 4, 5])]),
             np.array([np.array([2, 1, 4, 5, 3])]),
@@ -937,22 +971,18 @@ def test_radius_neighbors_factory_method_wrong_usages():
         )
 
 
-@pytest.mark.parametrize(
-    "n_samples_X, n_samples_Y", [(100, 100), (500, 100), (100, 500)]
-)
 @pytest.mark.parametrize("Dispatcher", [ArgKmin, RadiusNeighbors])
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_chunk_size_agnosticism(
     global_random_seed,
     Dispatcher,
-    n_samples_X,
-    n_samples_Y,
     dtype,
     n_features=100,
 ):
     """Check that results do not depend on the chunk size."""
     rng = np.random.RandomState(global_random_seed)
     spread = 100
+    n_samples_X, n_samples_Y = rng.choice([97, 100, 101, 500], size=2, replace=False)
     X = rng.rand(n_samples_X, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples_Y, n_features).astype(dtype) * spread
 
@@ -992,21 +1022,17 @@ def test_chunk_size_agnosticism(
     )
 
 
-@pytest.mark.parametrize(
-    "n_samples_X, n_samples_Y", [(100, 100), (500, 100), (100, 500)]
-)
 @pytest.mark.parametrize("Dispatcher", [ArgKmin, RadiusNeighbors])
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_n_threads_agnosticism(
     global_random_seed,
     Dispatcher,
-    n_samples_X,
-    n_samples_Y,
     dtype,
     n_features=100,
 ):
     """Check that results do not depend on the number of threads."""
     rng = np.random.RandomState(global_random_seed)
+    n_samples_X, n_samples_Y = rng.choice([97, 100, 101, 500], size=2, replace=False)
     spread = 100
     X = rng.rand(n_samples_X, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples_Y, n_features).astype(dtype) * spread
@@ -1114,9 +1140,6 @@ def test_format_agnosticism(
 
 
 @pytest.mark.parametrize(
-    "n_samples_X, n_samples_Y", [(100, 100), (100, 500), (500, 100)]
-)
-@pytest.mark.parametrize(
     "metric",
     ["euclidean", "minkowski", "manhattan", "infinity", "seuclidean", "haversine"],
 )
@@ -1126,13 +1149,12 @@ def test_strategies_consistency(
     global_random_seed,
     Dispatcher,
     metric,
-    n_samples_X,
-    n_samples_Y,
     dtype,
     n_features=10,
 ):
     """Check that the results do not depend on the strategy used."""
     rng = np.random.RandomState(global_random_seed)
+    n_samples_X, n_samples_Y = rng.choice([97, 100, 101, 500], size=2, replace=False)
     spread = 100
     X = rng.rand(n_samples_X, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples_Y, n_features).astype(dtype) * spread
@@ -1374,21 +1396,18 @@ def test_memmap_backed_data(
     )
 
 
-@pytest.mark.parametrize("n_samples", [100, 1000])
-@pytest.mark.parametrize("n_features", [5, 10, 100])
-@pytest.mark.parametrize("num_threads", [1, 2, 8])
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sqeuclidean_row_norms(
     global_random_seed,
-    n_samples,
-    n_features,
-    num_threads,
     dtype,
     csr_container,
 ):
     rng = np.random.RandomState(global_random_seed)
     spread = 100
+    n_samples = rng.choice([97, 100, 101, 1000])
+    n_features = rng.choice([5, 10, 100])
+    num_threads = rng.choice([1, 2, 8])
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
 
     X_csr = csr_container(X)
