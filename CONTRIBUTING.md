@@ -1,42 +1,42 @@
+# Introduction
 
-Contributing to scikit-learn
-============================
+If you're interested in contributing to scikit-learn, whether through code, documentation, bug investigation, or other means, you're making a valuable contribution to the project's growth and success. Here, we outline various ways you can get involved and help improve scikit-learn.
 
-The latest contributing guide is available in the repository at
-`doc/developers/contributing.rst`, or online at:
+## Documentation Contributions
 
-https://scikit-learn.org/dev/developers/contributing.html
+Contributing to the documentation is just as important as enhancing the library itself. Whether you spot a typo or have made improvements, we encourage you to notify us. You can either send an email to the mailing list or, preferably, submit a pull request on GitHub. You can find the documentation under the `doc/` directory in the scikit-learn repository.
 
-There are many ways to contribute to scikit-learn, with the most common ones
-being contribution of code or documentation to the project. Improving the
-documentation is no less important than improving the library itself. If you
-find a typo in the documentation, or have made improvements, do not hesitate to
-send an email to the mailing list or preferably submit a GitHub pull request.
-Documentation can be found under the
-[doc/](https://github.com/scikit-learn/scikit-learn/tree/main/doc) directory.
+## Code Contributions
 
-But there are many other ways to help. In particular answering queries on the
-[issue tracker](https://github.com/scikit-learn/scikit-learn/issues),
-investigating bugs, and [reviewing other developers' pull
-requests](http://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines)
-are very valuable contributions that decrease the burden on the project
-maintainers.
+One of the primary ways to contribute is by submitting code enhancements or bug fixes. If you're interested in this avenue, please follow the guidelines provided in our [Contributing Code](https://scikit-learn.org/dev/developers/contributing.html#contributing-code) section.
 
-Another way to contribute is to report issues you're facing, and give a "thumbs
-up" on issues that others reported and that are relevant to you. It also helps
-us if you spread the word: reference the project from your blog and articles,
-link to it from your website, or simply star it in GitHub to say "I use it".
+## Reviewing Contributions
 
-Quick links
------------
+Reviewing other developers' pull requests is another valuable way to contribute. Your feedback and insights help lighten the load on project maintainers. Check out our Code Review [Guidelines](https://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines) to get started.
 
-* [Submitting a bug report or feature request](http://scikit-learn.org/dev/developers/contributing.html#submitting-a-bug-report-or-a-feature-request)
-* [Contributing code](http://scikit-learn.org/dev/developers/contributing.html#contributing-code)
-* [Coding guidelines](https://scikit-learn.org/dev/developers/develop.html#coding-guidelines)
-* [Tips to read current code](https://scikit-learn.org/dev/developers/contributing.html#reading-the-existing-code-base)
+## Issue Tracker Participation
 
-Code of Conduct
----------------
+Answering queries on the [issue tracker](https://github.com/scikit-learn/scikit-learn/issues) and investigating bugs are highly appreciated contributions. This assistance is instrumental in resolving issues and improving the project's overall quality.
 
-We abide by the principles of openness, respect, and consideration of others
-of the Python Software Foundation: https://www.python.org/psf/codeofconduct/.
+## Reporting and Acknowledging Issues
+
+You can also contribute by reporting issues you encounter or giving a "thumbs up" to issues reported by others that are relevant to you. This simple act of engagement helps us prioritize and address problems effectively.
+
+## Spreading the Word
+
+Help us by spreading the word about scikit-learn. You can reference the project in your blog posts, articles, or on your website. Additionally, you can show your support by starring the project on GitHub to indicate that you use and appreciate it.
+
+## Quick Links for Reference
+
+Here are some quick links to assist you in various aspects of contributing to scikit-learn:
+
+- [Submitting a Bug Report or Feature Request](https://scikit-learn.org/dev/developers/contributing.html#submitting-a-bug-report-or-a-feature-request)
+- [Contributing Code](https://scikit-learn.org/dev/developers/contributing.html#contributing-code)
+- [Coding Guidelines](https://scikit-learn.org/dev/developers/develop.html#coding-guidelines)
+- [Tips for Reading the Current Codebase](https://scikit-learn.org/dev/developers/contributing.html#reading-the-existing-code-base)
+
+## Code of Conduct
+
+We adhere to the principles of openness, respect, and consideration for others, as outlined by the Python Software Foundation. You can find our Code of Conduct [here](https://scikit-learn.org/dev/developers/contributing.html#code-of-conduct).
+
+Your contributions, no matter how big or small, play a vital role in making scikit-learn even better. Thank you for considering joining our community of contributors!
