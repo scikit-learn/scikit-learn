@@ -214,6 +214,12 @@ Changelog
 - |Enhancement| :class:`preprocessing.TargetEncoder` now supports `target_type`
   'multiclass'. :pr:`26674` by :user:`Lucy Liu <lucyleeow>`.
 
+- |Enhancement| Alleviate the clipping effect due to subsampling in
+  :class:`preprocessing.QuantileTransformer` and
+  :func:`preprocessing.quantile_transform` by always picking the min-max samples values
+  for each feature.
+  :pr:`27374` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
