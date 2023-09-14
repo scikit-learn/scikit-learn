@@ -12,7 +12,6 @@ import numpy as np
 from scipy import sparse
 from scipy.linalg import eigh
 from scipy.sparse.csgraph import connected_components
-from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 from scipy.sparse.linalg import eigsh, lobpcg
 
 from ..base import BaseEstimator, _fit_context
@@ -26,6 +25,7 @@ from ..utils import (
 from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import _deterministic_vector_sign_flip
+from ..utils.fixes import laplacian as csgraph_laplacian
 
 
 def _graph_connected_component(graph, node_id):
