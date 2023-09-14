@@ -517,8 +517,8 @@ cdef class Splitter:
             split_infos = <split_info_struct *> malloc(
                 n_allowed_features * sizeof(split_info_struct))
 
-            # split_info_idx is index of split_infos of size n_features_allowed
-            # features_idx is the index of the feature column in X
+            # split_info_idx is index of split_infos of size n_allowed_features.
+            # features_idx is the index of the feature column in X.
             for split_info_idx in prange(n_allowed_features, schedule='static',
                                          num_threads=n_threads):
                 if has_interaction_cst:
@@ -536,6 +536,10 @@ cdef class Splitter:
                 split_infos[split_info_idx].gain = -1
                 split_infos[split_info_idx].is_categorical = is_categorical[feature_idx]
 
+                # Note that subsample_mask is indexed by split_info_idx and not by
+                # feature_idx because we only need to exclude the same features again
+                # and again. We do NOT need to access the features directly by using
+                # allowed_features.
                 if feature_fraction_per_split < 1.0 and not subsample_mask[split_info_idx]:
                     continue
 

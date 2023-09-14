@@ -961,11 +961,13 @@ def test_split_interaction_constraints():
     assert set(allowed_features) == set(split_features)
 
 
-def test_split_feature_fraction_per_split():
+@pytest.mark.parametrize("forbidden_features", [set(), {1, 3}])
+def test_split_feature_fraction_per_split(forbidden_features):
     """Check that feature_fraction_per_split is respected."""
     n_features = 4
-    # features 1 and 2 are not allowed to be split on
-    # allowed_features = np.array([0, 3], dtype=np.uint32)
+    allowed_features = np.array(
+        list(set(range(n_features)) - forbidden_features), dtype=np.uint32
+    )
     n_bins = 5
     n_samples = 40
     l2_regularization = 0.0
@@ -1028,17 +1030,15 @@ def test_split_feature_fraction_per_split():
     # The loop is to ensure that we split at least once on each feature.
     # This is tracked by split_features and checked at the end.
     for i in range(20):
-        # with all features allowed, feature 1 should be split on as it is the most
-        # important one by construction of the gradients
         si_root = splitter.find_node_split(
             n_samples,
             histograms,
             sum_gradients,
             sum_hessians,
             value,
-            allowed_features=None,
+            allowed_features=allowed_features,
         )
         split_features.append(si_root.feature_idx)
 
     # make sure all features are split on
-    assert set(split_features) == set(range(n_features))
+    assert set(split_features) == set(allowed_features)
