@@ -455,9 +455,9 @@ def test_incr_mean_variance_axis_equivalence_mean_variance(X1, X2):
         X2, axis=axis, last_mean=updated_mean, last_var=updated_var, last_n=updated_n
     )
     X = sp.vstack([X1, X2])
-    assert_allclose(updated_mean, np.nanmean(X.A, axis=axis))
-    assert_allclose(updated_var, np.nanvar(X.A, axis=axis))
-    assert_allclose(updated_n, np.count_nonzero(~np.isnan(X.A), axis=0))
+    assert_allclose(updated_mean, np.nanmean(X.toarray(), axis=axis))
+    assert_allclose(updated_var, np.nanvar(X.toarray(), axis=axis))
+    assert_allclose(updated_n, np.count_nonzero(~np.isnan(X.toarray()), axis=0))
 
 
 def test_incr_mean_variance_no_new_n():

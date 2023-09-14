@@ -113,8 +113,8 @@ def test_additive_chi2_sampler():
     X_sp_trans = transform.fit_transform(csr_matrix(X))
     Y_sp_trans = transform.transform(csr_matrix(Y))
 
-    assert_array_equal(X_trans, X_sp_trans.A)
-    assert_array_equal(Y_trans, Y_sp_trans.A)
+    assert_array_equal(X_trans, X_sp_trans.toarray())
+    assert_array_equal(Y_trans, Y_sp_trans.toarray())
 
     # test error is raised on negative input
     Y_neg = Y.copy()
