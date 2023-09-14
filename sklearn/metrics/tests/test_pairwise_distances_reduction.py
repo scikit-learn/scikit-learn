@@ -199,6 +199,7 @@ def assert_compatible_radius_results(
     neighbors_indices_a,
     neighbors_indices_b,
     radius,
+    check_sorted=True,
     rtol=1e-5,
     atol=1e-6,
 ):
@@ -234,8 +235,9 @@ def assert_compatible_radius_results(
         indices_row_a = neighbors_indices_a[query_idx]
         indices_row_b = neighbors_indices_b[query_idx]
 
-        assert is_sorted(dist_row_a), f"Distances aren't sorted on row {query_idx}"
-        assert is_sorted(dist_row_b), f"Distances aren't sorted on row {query_idx}"
+        if check_sorted:
+            assert is_sorted(dist_row_a), f"Distances aren't sorted on row {query_idx}"
+            assert is_sorted(dist_row_b), f"Distances aren't sorted on row {query_idx}"
 
         assert len(dist_row_a) == len(indices_row_a)
         assert len(dist_row_b) == len(indices_row_b)
@@ -436,7 +438,8 @@ def test_assert_compatible_argkmin_results():
         )
 
 
-def test_assert_compatible_radius_results():
+@pytest.mark.parametrize("check_sorted", [True, False])
+def test_assert_compatible_radius_results(check_sorted):
     atol = 1e-7
     rtol = 0.0
     tols = dict(atol=atol, rtol=rtol)
@@ -464,6 +467,7 @@ def test_assert_compatible_radius_results():
         ref_indices,
         ref_indices,
         radius=7.0,
+        check_sorted=check_sorted,
         **tols,
     )
 
@@ -474,6 +478,7 @@ def test_assert_compatible_radius_results():
         np.array([np.array([1, 2, 3, 4, 5])]),
         np.array([np.array([1, 2, 4, 5, 3])]),
         radius=7.0,
+        check_sorted=check_sorted,
         **tols,
     )
     assert_compatible_radius_results(
@@ -482,6 +487,7 @@ def test_assert_compatible_radius_results():
         np.array([np.array([6, 7, 8, 9, 10])]),
         np.array([np.array([6, 9, 7, 8, 10])]),
         radius=7.0,
+        check_sorted=check_sorted,
         **tols,
     )
 
@@ -497,6 +503,7 @@ def test_assert_compatible_radius_results():
             np.array([np.array([1, 2, 3, 4, 5])]),
             np.array([np.array([2, 1, 3, 4, 5])]),
             radius=7.0,
+            check_sorted=check_sorted,
             **tols,
         )
 
@@ -508,6 +515,7 @@ def test_assert_compatible_radius_results():
         np.array([np.array([1, 2, 3, 4, 5, 7])]),
         np.array([np.array([1, 2, 3, 6])]),
         radius=_6_1p,
+        check_sorted=check_sorted,
         **tols,
     )
 
@@ -524,6 +532,7 @@ def test_assert_compatible_radius_results():
             np.array([np.array([1, 2, 3])]),
             np.array([np.array([1, 2])]),
             radius=6.1,
+            check_sorted=check_sorted,
             **tols,
         )
     msg = re.escape(
@@ -537,6 +546,7 @@ def test_assert_compatible_radius_results():
             np.array([np.array([1, 2, 3])]),
             np.array([np.array([1, 4, 3])]),
             radius=6.1,
+            check_sorted=check_sorted,
             **tols,
         )
 
@@ -552,6 +562,7 @@ def test_assert_compatible_radius_results():
             np.array([np.array([1, 2, 3, 4, 5])]),
             np.array([np.array([2, 1, 4, 5, 3])]),
             radius=6.1,
+            check_sorted=check_sorted,
             **tols,
         )
     with pytest.raises(AssertionError, match=msg):
@@ -561,18 +572,31 @@ def test_assert_compatible_radius_results():
             np.array([np.array([1, 2, 3, 4, 5])]),
             np.array([np.array([2, 1, 4, 5, 3])]),
             radius=6.1,
+            check_sorted=check_sorted,
             **tols,
         )
 
-    # Distances aren't properly sorted
-    msg = "Distances aren't sorted on row 0"
-    with pytest.raises(AssertionError, match=msg):
+    if check_sorted:
+        # Distances aren't properly sorted
+        msg = "Distances aren't sorted on row 0"
+        with pytest.raises(AssertionError, match=msg):
+            assert_compatible_radius_results(
+                np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
+                np.array([np.array([2.5, 1.2, _6_1m, 6.1, _6_1p])]),
+                np.array([np.array([1, 2, 3, 4, 5])]),
+                np.array([np.array([2, 1, 4, 5, 3])]),
+                radius=_6_1p,
+                check_sorted=True,
+                **tols,
+            )
+    else:
         assert_compatible_radius_results(
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([2.5, 1.2, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([1, 2, 3, 4, 5])]),
             np.array([np.array([2, 1, 4, 5, 3])]),
-            radius=6.1,
+            radius=_6_1p,
+            check_sorted=False,
             **tols,
         )
 
