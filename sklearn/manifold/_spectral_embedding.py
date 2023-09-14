@@ -314,6 +314,9 @@ def spectral_embedding(
             tol = 0 if eigen_tol == "auto" else eigen_tol
             laplacian *= -1
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
+            laplacian = check_array(
+                laplacian, accept_sparse="csr", accept_large_sparse=False
+            )
             _, diffusion_map = eigsh(
                 laplacian, k=n_components, sigma=1.0, which="LM", tol=tol, v0=v0
             )
@@ -349,7 +352,7 @@ def spectral_embedding(
         # matrix to the solver and afterward set it back to the original.
         diag_shift = 1e-5 * sparse.eye(laplacian.shape[0])
         laplacian += diag_shift
-        if isinstance(laplacian, getattr(sparse, "csr_array", None)):
+        if hasattr(sparse, "csr_array") and isinstance(laplacian, sparse.csr_array):
             # `pyamg` does not work with `csr_array` and we need to convert it to a
             # `csr_matrix` object.
             laplacian = sparse.csr_matrix(laplacian)
