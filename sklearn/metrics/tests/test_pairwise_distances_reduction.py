@@ -977,7 +977,10 @@ def test_chunk_size_agnosticism(
         compute_parameters = {}
     else:
         # Scaling the radius slightly with the numbers of dimensions
-        radius = 10 ** np.log(n_features)
+        expected_n_neighbors = 10
+        dist_sample = euclidean_distances(X[:10], Y)
+        dist_sample.sort(axis=1)
+        radius = dist_sample[:, expected_n_neighbors].mean()
         parameter = radius
         check_parameters = {"radius": radius}
         compute_parameters = {"sort_results": True}
@@ -1093,7 +1096,10 @@ def test_format_agnosticism(
         compute_parameters = {}
     else:
         # Scaling the radius slightly with the numbers of dimensions
-        radius = 10 ** np.log(n_features)
+        expected_n_neighbors = 10
+        dist_sample = euclidean_distances(X[:10], Y)
+        dist_sample.sort(axis=1)
+        radius = dist_sample[:, expected_n_neighbors].mean()
         parameter = radius
         check_parameters = {"radius": radius}
         compute_parameters = {"sort_results": True}
