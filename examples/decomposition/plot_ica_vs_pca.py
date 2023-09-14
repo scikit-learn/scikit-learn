@@ -109,7 +109,7 @@ plot_samples(S_pca_ / np.std(S_pca_, axis=0))
 plt.title("PCA recovered signals")
 
 plt.subplot(2, 2, 4)
-plot_samples(S_ica_ / np.std(S_ica_))
+plot_samples(S_ica_)
 plt.title("ICA recovered signals")
 
 plt.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.36)
