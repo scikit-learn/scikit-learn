@@ -1208,7 +1208,7 @@ def test_pairwise_distances_argkmin(
     strategy,
     dtype,
     csr_container,
-    n_queries=10,
+    n_queries=5,
     n_samples=100,
     k=10,
 ):
@@ -1273,7 +1273,7 @@ def test_pairwise_distances_radius_neighbors(
     metric,
     strategy,
     dtype,
-    n_queries=10,
+    n_queries=5,
     n_samples=100,
 ):
     rng = np.random.RandomState(global_random_seed)

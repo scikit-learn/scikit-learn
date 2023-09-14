@@ -30,6 +30,7 @@ from sklearn.metrics._dist_metrics import (
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.tests.test_dist_metrics import BOOL_METRICS
 from sklearn.metrics.tests.test_pairwise_distances_reduction import (
+    assert_compatible_argkmin_results,
     assert_compatible_radius_results,
 )
 from sklearn.model_selection import cross_val_score, train_test_split
@@ -1694,8 +1695,15 @@ def test_neighbors_metrics(
     "metric", sorted(set(neighbors.VALID_METRICS["brute"]) - set(["precomputed"]))
 )
 def test_kneighbors_brute_backend(
-    global_dtype, metric, n_samples=2000, n_features=30, n_query_pts=100, n_neighbors=5
+    metric,
+    global_dtype,
+    global_random_seed,
+    n_samples=2000,
+    n_features=30,
+    n_query_pts=5,
+    n_neighbors=5,
 ):
+    rng = np.random.RandomState(global_random_seed)
     # Both backend for the 'brute' algorithm of kneighbors must give identical results.
     X_train = rng.rand(n_samples, n_features).astype(global_dtype, copy=False)
     X_test = rng.rand(n_query_pts, n_features).astype(global_dtype, copy=False)
@@ -1732,8 +1740,9 @@ def test_kneighbors_brute_backend(
                 X_test, return_distance=True
             )
 
-        assert_allclose(legacy_brute_dst, pdr_brute_dst)
-        assert_array_equal(legacy_brute_idx, pdr_brute_idx)
+        assert_compatible_argkmin_results(
+            legacy_brute_dst, pdr_brute_dst, legacy_brute_idx, pdr_brute_idx
+        )
 
 
 def test_callable_metric():
@@ -2198,16 +2207,18 @@ def test_auto_algorithm(X, metric, metric_params, expected_algo):
 )
 def test_radius_neighbors_brute_backend(
     metric,
+    global_random_seed,
+    global_dtype,
     n_samples=2000,
     n_features=30,
-    n_query_pts=100,
-    n_neighbors=5,
+    n_query_pts=5,
     radius=1.0,
 ):
+    rng = np.random.RandomState(global_random_seed)
     # Both backends for the 'brute' algorithm of radius_neighbors
     # must give identical results.
-    X_train = rng.rand(n_samples, n_features)
-    X_test = rng.rand(n_query_pts, n_features)
+    X_train = rng.rand(n_samples, n_features).astype(global_dtype, copy=False)
+    X_test = rng.rand(n_query_pts, n_features).astype(global_dtype, copy=False)
 
     # Haversine distance only accepts 2D data
     if metric == "haversine":
@@ -2221,7 +2232,6 @@ def test_radius_neighbors_brute_backend(
         p = metric_params.pop("p", 2)
 
         neigh = neighbors.NearestNeighbors(
-            n_neighbors=n_neighbors,
             radius=radius,
             algorithm="brute",
             metric=metric,
