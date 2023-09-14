@@ -1340,6 +1340,11 @@ def test_quantile_transform_subsampling():
             subsample=n_samples // 10,
         )
         transformer.fit(X)
+        # to limit the clipping effect the min-max are always sampled, check this is the
+        # case
+        X_min, X_max = X.min(axis=0), X.max(axis=0)
+        assert_allclose(transformer.quantiles_[0], X_min)
+        assert_allclose(transformer.quantiles_[-1], X_max)
         diff = np.linspace(0, 1, n_quantiles) - np.ravel(transformer.quantiles_)
         inf_norm = np.max(np.abs(diff))
         assert inf_norm < 1e-2
@@ -1359,6 +1364,11 @@ def test_quantile_transform_subsampling():
             subsample=n_samples // 10,
         )
         transformer.fit(X)
+        # to limit the clipping effect the min-max are always sampled, check this is the
+        # case
+        X_min, X_max = X.min(axis=0).toarray(), X.max(axis=0).toarray()
+        assert_allclose(transformer.quantiles_[0], X_min[0])
+        assert_allclose(transformer.quantiles_[-1], X_max[0])
         diff = np.linspace(0, 1, n_quantiles) - np.ravel(transformer.quantiles_)
         inf_norm = np.max(np.abs(diff))
         assert inf_norm < 1e-1
