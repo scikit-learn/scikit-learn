@@ -1847,7 +1847,7 @@ def test_non_euclidean_kneighbors():
             X, radius, metric=metric, mode="connectivity", include_self=True
         ).toarray()
         nbrs1 = neighbors.NearestNeighbors(metric=metric, radius=radius).fit(X)
-        assert_array_equal(nbrs_graph, nbrs1.radius_neighbors_graph(X).A)
+        assert_array_equal(nbrs_graph, nbrs1.radius_neighbors_graph(X).toarray())
 
     # Raise error when wrong parameters are supplied,
     X_nbrs = neighbors.NearestNeighbors(n_neighbors=3, metric="manhattan")
@@ -1884,13 +1884,15 @@ def test_k_and_radius_neighbors_train_is_not_query():
         check_object_arrays(ind, [[1], [0, 1]])
 
         # Test the graph variants.
-        assert_array_equal(nn.kneighbors_graph(test_data).A, [[0.0, 1.0], [0.0, 1.0]])
         assert_array_equal(
-            nn.kneighbors_graph([[2], [1]], mode="distance").A,
+            nn.kneighbors_graph(test_data).toarray(), [[0.0, 1.0], [0.0, 1.0]]
+        )
+        assert_array_equal(
+            nn.kneighbors_graph([[2], [1]], mode="distance").toarray(),
             np.array([[0.0, 1.0], [0.0, 0.0]]),
         )
         rng = nn.radius_neighbors_graph([[2], [1]], radius=1.5)
-        assert_array_equal(rng.A, [[0, 1], [1, 1]])
+        assert_array_equal(rng.toarray(), [[0, 1], [1, 1]])
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
@@ -1912,7 +1914,7 @@ def test_k_and_radius_neighbors_X_None(algorithm):
     rng = nn.radius_neighbors_graph(None, radius=1.5)
     kng = nn.kneighbors_graph(None)
     for graph in [rng, kng]:
-        assert_array_equal(graph.A, [[0, 1], [1, 0]])
+        assert_array_equal(graph.toarray(), [[0, 1], [1, 0]])
         assert_array_equal(graph.data, [1, 1])
         assert_array_equal(graph.indices, [1, 0])
 
@@ -1920,7 +1922,7 @@ def test_k_and_radius_neighbors_X_None(algorithm):
     nn = neighbors.NearestNeighbors(n_neighbors=2, algorithm=algorithm)
     nn.fit(X)
     assert_array_equal(
-        nn.kneighbors_graph().A,
+        nn.kneighbors_graph().toarray(),
         np.array([[0.0, 1.0, 1.0], [1.0, 0.0, 1.0], [1.0, 1.0, 0]]),
     )
 
@@ -1978,13 +1980,15 @@ def test_k_and_radius_neighbors_duplicates(algorithm):
 def test_include_self_neighbors_graph():
     # Test include_self parameter in neighbors_graph
     X = [[2, 3], [4, 5]]
-    kng = neighbors.kneighbors_graph(X, 1, include_self=True).A
-    kng_not_self = neighbors.kneighbors_graph(X, 1, include_self=False).A
+    kng = neighbors.kneighbors_graph(X, 1, include_self=True).toarray()
+    kng_not_self = neighbors.kneighbors_graph(X, 1, include_self=False).toarray()
     assert_array_equal(kng, [[1.0, 0.0], [0.0, 1.0]])
     assert_array_equal(kng_not_self, [[0.0, 1.0], [1.0, 0.0]])
 
-    rng = neighbors.radius_neighbors_graph(X, 5.0, include_self=True).A
-    rng_not_self = neighbors.radius_neighbors_graph(X, 5.0, include_self=False).A
+    rng = neighbors.radius_neighbors_graph(X, 5.0, include_self=True).toarray()
+    rng_not_self = neighbors.radius_neighbors_graph(
+        X, 5.0, include_self=False
+    ).toarray()
     assert_array_equal(rng, [[1.0, 1.0], [1.0, 1.0]])
     assert_array_equal(rng_not_self, [[0.0, 1.0], [1.0, 0.0]])
 
@@ -2073,7 +2077,7 @@ def test_dtype_convert():
 def test_sparse_metric_callable():
     def sparse_metric(x, y):  # Metric accepting sparse matrix input (only)
         assert issparse(x) and issparse(y)
-        return x.dot(y.T).A.item()
+        return x.dot(y.T).toarray().item()
 
     X = csr_matrix(
         [[1, 1, 1, 1, 1], [1, 0, 1, 0, 1], [0, 0, 1, 0, 0]]  # Population matrix
