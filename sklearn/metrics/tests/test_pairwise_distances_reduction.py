@@ -1174,16 +1174,12 @@ def test_strategies_consistency(
 # "Concrete Dispatchers"-specific tests
 
 
-@pytest.mark.parametrize("n_features", [50, 500])
-@pytest.mark.parametrize("translation", [0, 1e6])
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
 @pytest.mark.parametrize("strategy", ("parallel_on_X", "parallel_on_Y"))
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_pairwise_distances_argkmin(
     global_random_seed,
-    n_features,
-    translation,
     metric,
     strategy,
     dtype,
@@ -1193,6 +1189,8 @@ def test_pairwise_distances_argkmin(
     k=10,
 ):
     rng = np.random.RandomState(global_random_seed)
+    n_features = rng.choice([50, 500])
+    translation = rng.choice([0, 1e6])
     spread = 1000
     X = translation + rng.rand(n_queries, n_features).astype(dtype) * spread
     Y = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
@@ -1243,15 +1241,11 @@ def test_pairwise_distances_argkmin(
         )
 
 
-@pytest.mark.parametrize("n_features", [50, 500])
-@pytest.mark.parametrize("translation", [0, 1e6])
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
 @pytest.mark.parametrize("strategy", ("parallel_on_X", "parallel_on_Y"))
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_pairwise_distances_radius_neighbors(
     global_random_seed,
-    n_features,
-    translation,
     metric,
     strategy,
     dtype,
@@ -1259,6 +1253,8 @@ def test_pairwise_distances_radius_neighbors(
     n_samples=100,
 ):
     rng = np.random.RandomState(global_random_seed)
+    n_features = rng.choice([50, 500])
+    translation = rng.choice([0, 1e6])
     spread = 1000
     radius = spread * np.log(n_features)
     X = translation + rng.rand(n_queries, n_features).astype(dtype) * spread
