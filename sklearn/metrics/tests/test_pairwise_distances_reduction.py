@@ -1183,12 +1183,13 @@ def test_pairwise_distances_argkmin(
     metric,
     strategy,
     dtype,
+    n_queries=10,
     n_samples=100,
     k=10,
 ):
     rng = np.random.RandomState(global_random_seed)
     spread = 1000
-    X = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
+    X = translation + rng.rand(n_queries, n_features).astype(dtype) * spread
     Y = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
 
     X_csr = csr_matrix(X)
@@ -1249,12 +1250,13 @@ def test_pairwise_distances_radius_neighbors(
     metric,
     strategy,
     dtype,
+    n_queries=10,
     n_samples=100,
 ):
     rng = np.random.RandomState(global_random_seed)
     spread = 1000
     radius = spread * np.log(n_features)
-    X = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
+    X = translation + rng.rand(n_queries, n_features).astype(dtype) * spread
     Y = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
 
     metric_kwargs = _get_metric_params_list(
