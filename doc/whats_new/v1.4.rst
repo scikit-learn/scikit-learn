@@ -346,6 +346,11 @@ Changelog
   sparse arrays.
   :pr:`27274` by `Yao Xiao <Charlie-XIAO>`
 
+- |Enhancement| Downcast `dtype` indices of CSR and COO arrays converted from
+  DIA arrays. It ensure that we have the same behaviour between sparse matrices and
+  arrays.
+  :pr:`27372` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
