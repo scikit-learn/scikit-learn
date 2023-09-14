@@ -300,6 +300,9 @@ redirects = {
     "auto_examples/decomposition/plot_beta_divergence": (
         "auto_examples/applications/plot_topics_extraction_with_nmf_lda"
     ),
+    "auto_examples/ensemble/plot_adaboost_hastie_10_2": (
+        "auto_examples/ensemble/plot_adaboost_multiclass"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
