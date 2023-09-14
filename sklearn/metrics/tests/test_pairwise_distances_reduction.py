@@ -419,7 +419,8 @@ def test_assert_argkmin_results_quasi_equality():
             rtol=rtol,
         )
 
-    # Indices aren't properly sorted w.r.t their distances
+    # Detect missing indices within the expected precision level, even when the
+    # distances match exactly.
     msg = re.escape(
         "neighors in b missing from a: [12]\nneighors in a missing from b: [1]"
     )
@@ -433,7 +434,7 @@ def test_assert_argkmin_results_quasi_equality():
             rtol=rtol,
         )
 
-    # Indices aren't properly sorted w.r.t their distances
+    # Detect missing indices outside the expected precision level.
     msg = re.escape(
         "neighors in b missing from a: []\nneighors in a missing from b: [3]"
     )
@@ -443,6 +444,21 @@ def test_assert_argkmin_results_quasi_equality():
             np.array([[1.0, 1.0, _6_1m, 6.1, 7]]),
             np.array([[1, 2, 3, 4, 5]]),
             np.array([[2, 1, 4, 5, 12]]),
+            atol=atol,
+            rtol=rtol,
+        )
+
+    # Detect missing indices outside the expected precision level, in the other
+    # direction:
+    msg = re.escape(
+        "neighors in b missing from a: [5]\nneighors in a missing from b: []"
+    )
+    with pytest.raises(AssertionError, match=msg):
+        assert_argkmin_results_quasi_equality(
+            np.array([[_1m, 1.0, _6_1m, 6.1, 7]]),
+            np.array([[1.0, 1.0, _6_1m, 6.1, _6_1p]]),
+            np.array([[1, 2, 3, 4, 12]]),
+            np.array([[2, 1, 5, 3, 4]]),
             atol=atol,
             rtol=rtol,
         )
