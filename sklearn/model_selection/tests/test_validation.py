@@ -245,11 +245,11 @@ class MockClassifier:
                 "MockClassifier extra fit_param sparse_param.shape "
                 "is ({0}, {1}), should be ({2}, {3})"
             )
-            assert sparse_param.shape == P_sparse.shape, fmt.format(
+            assert sparse_param.shape == P.shape, fmt.format(
                 sparse_param.shape[0],
                 sparse_param.shape[1],
-                P_sparse.shape[0],
-                P_sparse.shape[1],
+                P.shape[0],
+                P.shape[1],
             )
         return self
 
@@ -275,7 +275,7 @@ y = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
 # The number of samples per class needs to be > n_splits,
 # for StratifiedKFold(n_splits=3)
 y2 = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 3])
-P_sparse = COO_CONTAINERS[-1](np.eye(5))
+P = np.eye(5)
 
 
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
