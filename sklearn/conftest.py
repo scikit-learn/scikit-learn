@@ -25,7 +25,7 @@ from sklearn.datasets import (
 )
 from sklearn.tests import random_seed
 from sklearn.utils import _IS_32BIT
-from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.fixes import np_base_version, parse_version, sp_version
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
@@ -185,6 +185,10 @@ def pytest_collection_modifyitems(config, items):
             "doctests are not run for Windows because numpy arrays "
             "repr is inconsistent across platforms."
         )
+        skip_doctests = True
+
+    if np_base_version >= parse_version("2"):
+        reason = "Due to NEP 51 numpy scalar repr has changed in numpy 2"
         skip_doctests = True
 
     # Normally doctest has the entire module's scope. Here we set globs to an empty dict
