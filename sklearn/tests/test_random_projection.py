@@ -62,9 +62,6 @@ def densify(matrix):
 
 n_samples, n_features = (10, 1000)
 n_nonzeros = int(n_samples * n_features / 100.0)
-data, data_csr = make_sparse_random_data(
-    sp.coo_array, n_samples, n_features, n_nonzeros
-)
 
 
 ###############################################################################
@@ -228,6 +225,7 @@ def test_random_projection_transformer_invalid_input():
 
 
 def test_try_to_transform_before_fit():
+    data, _ = make_sparse_random_data(sp.coo_array, n_samples, n_features, n_nonzeros)
     for RandomProjection in all_RandomProjection:
         with pytest.raises(ValueError):
             RandomProjection(n_components="auto").transform(data)
@@ -281,6 +279,7 @@ def test_random_projection_embedding_quality(coo_container):
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_SparseRandomProj_output_representation(csr_container):
+    data, _ = make_sparse_random_data(csr_container, n_samples, n_features, n_nonzeros)
     for SparseRandomProj in all_SparseRandomProjection:
         # when using sparse input, the projected data can be forced to be a
         # dense numpy array
@@ -301,7 +300,9 @@ def test_SparseRandomProj_output_representation(csr_container):
         assert sp.issparse(rp.transform(sparse_data))
 
 
-def test_correct_RandomProjection_dimensions_embedding():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_correct_RandomProjection_dimensions_embedding(coo_container):
+    data, _ = make_sparse_random_data(coo_container, n_samples, n_features, n_nonzeros)
     for RandomProjection in all_RandomProjection:
         rp = RandomProjection(n_components="auto", random_state=0, eps=0.5).fit(data)
 
@@ -379,6 +380,7 @@ def test_johnson_lindenstrauss_min_dim():
 
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
 def test_random_projection_feature_names_out(random_projection_cls):
+    data, _ = make_sparse_random_data(sp.coo_array, n_samples, n_features, n_nonzeros)
     random_projection = random_projection_cls(n_components=2)
     random_projection.fit(data)
     names_out = random_projection.get_feature_names_out()
