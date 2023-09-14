@@ -329,9 +329,9 @@ def test_assert_compatible_argkmin_results():
     # to one another so we accept any permutation on their rankings.
     assert_compatible_argkmin_results(
         np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
-        np.array([[1.2, 2.5, 6.1, 6.1, 6.1]]),
+        np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
         np.array([[1, 2, 3, 4, 5]]),
-        np.array([[1, 2, 4, 5, 3]]),
+        np.array([[1, 2, 5, 4, 3]]),
         atol=atol,
         rtol=rtol,
     )
@@ -350,7 +350,7 @@ def test_assert_compatible_argkmin_results():
     # All points are have close distances so any ranking permutation
     # is valid for this query result.
     assert_compatible_argkmin_results(
-        np.array([[1, 1, _1p, _1p, _1p]]),
+        np.array([[_1m, 1, _1p, _1p, _1p]]),
         np.array([[1, 1, 1, 1, _1p]]),
         np.array([[7, 6, 8, 10, 9]]),
         np.array([[6, 9, 7, 8, 10]]),
@@ -360,8 +360,8 @@ def test_assert_compatible_argkmin_results():
     # They could also be nearly truncation of very large nearly tied result
     # sets hence all indices can also be distinct in this case:
     assert_compatible_argkmin_results(
-        np.array([[1, 1, _1p, _1p, _1p]]),
-        np.array([[1, 1, 1, 1, _1p]]),
+        np.array([[_1m, 1, _1p, _1p, _1p]]),
+        np.array([[_1m, 1, 1, 1, _1p]]),
         np.array([[34, 30, 8, 12, 24]]),
         np.array([[42, 1, 21, 13, 3]]),
         **tols,
