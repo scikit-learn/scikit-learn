@@ -1351,7 +1351,7 @@ def test_predict_does_not_change_cluster_centers(csr_container):
     """
     X, _ = make_blobs(n_samples=200, n_features=10, centers=10, random_state=0)
     if csr_container is not None:
-        X = csr_format(X)
+        X = csr_container(X)
 
     kmeans = KMeans()
     y_pred1 = kmeans.fit_predict(X)
