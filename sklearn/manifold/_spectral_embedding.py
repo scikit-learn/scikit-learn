@@ -349,7 +349,7 @@ def spectral_embedding(
         # matrix to the solver and afterward set it back to the original.
         diag_shift = 1e-5 * sparse.eye(laplacian.shape[0])
         laplacian += diag_shift
-        if isinstance(laplacian, getattr(sparse, "csr_array", None)):
+        if hasattr(sparse, "csr_array") and isinstance(laplacian, sparse.csr_array):
             # `pyamg` does not work with `csr_array` and we need to convert it to a
             # `csr_matrix` object.
             laplacian = sparse.csr_matrix(laplacian)
