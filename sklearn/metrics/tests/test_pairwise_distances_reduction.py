@@ -8,7 +8,7 @@ import pytest
 import threadpoolctl
 from scipy.spatial.distance import cdist
 
-from sklearn.metrics import euclidean_distances
+from sklearn.metrics import euclidean_distances, pairwise_distances
 from sklearn.metrics._pairwise_distances_reduction import (
     ArgKmin,
     ArgKminClassMode,
@@ -1122,25 +1122,30 @@ def test_format_agnosticism(
         )
 
 
-@pytest.mark.parametrize(
-    "metric",
-    ["euclidean", "minkowski", "manhattan", "infinity", "seuclidean", "haversine"],
-)
 @pytest.mark.parametrize("Dispatcher", [ArgKmin, RadiusNeighbors])
-@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_strategies_consistency(
     global_random_seed,
+    global_dtype,
     Dispatcher,
-    metric,
-    dtype,
     n_features=10,
 ):
     """Check that the results do not depend on the strategy used."""
     rng = np.random.RandomState(global_random_seed)
+    metric = rng.choice(
+        np.array(
+            [
+                "euclidean",
+                "minkowski",
+                "manhattan",
+                "haversine",
+            ],
+            dtype=object,
+        )
+    )
     n_samples_X, n_samples_Y = rng.choice([97, 100, 101, 500], size=2, replace=False)
     spread = 100
-    X = rng.rand(n_samples_X, n_features).astype(dtype) * spread
-    Y = rng.rand(n_samples_Y, n_features).astype(dtype) * spread
+    X = rng.rand(n_samples_X, n_features).astype(global_dtype) * spread
+    Y = rng.rand(n_samples_Y, n_features).astype(global_dtype) * spread
 
     # Haversine distance only accepts 2D data
     if metric == "haversine":
@@ -1152,8 +1157,15 @@ def test_strategies_consistency(
         check_parameters = {}
         compute_parameters = {}
     else:
-        # Scaling the radius slightly with the numbers of dimensions
-        radius = 10 ** np.log(n_features)
+        # Find a non-trivial radius using a small subsample of X and Y: we want
+        # to return around expected_n_neighbors on average. Yielding too many
+        # results would make the test slow (because checking the results is
+        # expensive for large result sets), yielding 0 most of the time would
+        # make the test useless.
+        expected_n_neighbors = 10
+        sample_dists = pairwise_distances(X[:10], Y, metric=metric)
+        sample_dists.sort(axis=1)
+        radius = sample_dists[:, expected_n_neighbors].mean()
         parameter = radius
         check_parameters = {"radius": radius}
         compute_parameters = {"sort_results": True}
@@ -1190,7 +1202,7 @@ def test_strategies_consistency(
         **compute_parameters,
     )
 
-    ASSERT_RESULT[(Dispatcher, dtype)](
+    ASSERT_RESULT[(Dispatcher, global_dtype)](
         dist_par_X, dist_par_Y, indices_par_X, indices_par_Y, **check_parameters
     )
 
