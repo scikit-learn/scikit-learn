@@ -1344,7 +1344,7 @@ def test_feature_names_out(Klass, method):
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS + [None])
-def test_predict_does_not_change_cluster_centers(csr_format):
+def test_predict_does_not_change_cluster_centers(csr_container):
     """Check that predict does not change cluster centers.
 
     Non-regression test for gh-24253.
