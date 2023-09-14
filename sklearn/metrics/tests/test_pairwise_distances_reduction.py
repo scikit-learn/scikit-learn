@@ -1314,7 +1314,7 @@ def test_pairwise_distances_radius_neighbors(
     # expensive for large result sets), yielding 0 most of the time would make
     # the test useless.
     expected_n_neighbors = 10
-    sample_dists = dist_matrix[:10]
+    sample_dists = dist_matrix[:10].copy()
     sample_dists.sort(axis=1)
     radius = sample_dists[:, expected_n_neighbors].mean()
 
