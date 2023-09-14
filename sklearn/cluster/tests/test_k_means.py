@@ -1343,7 +1343,7 @@ def test_feature_names_out(Klass, method):
     assert_array_equal([f"{class_name}{i}" for i in range(n_clusters)], names_out)
 
 
-@pytest.mark.parametrize("csr_format", CSR_CONTAINERS + [None])
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS + [None])
 def test_predict_does_not_change_cluster_centers(csr_format):
     """Check that predict does not change cluster centers.
 
