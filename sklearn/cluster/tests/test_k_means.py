@@ -62,11 +62,7 @@ data_containers_ids = (
 )
 
 
-@pytest.mark.parametrize(
-    "array_constr",
-    data_containers,
-    ids=data_containers_ids,
-)
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
 @pytest.mark.parametrize("algo", ["lloyd", "elkan"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_kmeans_results(array_constr, algo, dtype):
@@ -90,11 +86,7 @@ def test_kmeans_results(array_constr, algo, dtype):
     assert kmeans.n_iter_ == expected_n_iter
 
 
-@pytest.mark.parametrize(
-    "array_constr",
-    data_containers,
-    ids=data_containers_ids,
-)
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
 @pytest.mark.parametrize("algo", ["lloyd", "elkan"])
 def test_kmeans_relocated_clusters(array_constr, algo):
     # check that empty clusters are relocated as expected
@@ -125,11 +117,7 @@ def test_kmeans_relocated_clusters(array_constr, algo):
         assert_allclose(kmeans.cluster_centers_, expected_centers)
 
 
-@pytest.mark.parametrize(
-    "array_constr",
-    data_containers,
-    ids=data_containers_ids,
-)
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
 def test_relocate_empty_clusters(array_constr):
     # test for the _relocate_empty_clusters_(dense/sparse) helpers
 
@@ -172,11 +160,7 @@ def test_relocate_empty_clusters(array_constr):
 
 
 @pytest.mark.parametrize("distribution", ["normal", "blobs"])
-@pytest.mark.parametrize(
-    "array_constr",
-    data_containers,
-    ids=data_containers_ids,
-)
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
 @pytest.mark.parametrize("tol", [1e-2, 1e-8, 1e-100, 0])
 def test_kmeans_elkan_results(distribution, array_constr, tol, global_random_seed):
     # Check that results are identical between lloyd and elkan algorithms
@@ -664,11 +648,7 @@ def test_score_max_iter(Estimator, global_random_seed):
     assert s2 > s1
 
 
-@pytest.mark.parametrize(
-    "array_constr",
-    data_containers,
-    ids=data_containers_ids,
-)
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
 @pytest.mark.parametrize(
     "Estimator, algorithm",
     [(KMeans, "lloyd"), (KMeans, "elkan"), (MiniBatchKMeans, None)],
@@ -747,11 +727,7 @@ def test_predict_dense_sparse(Estimator, init, X_csr):
     assert_array_equal(km.predict(X_csr), km.labels_)
 
 
-@pytest.mark.parametrize(
-    "array_constr",
-    data_containers,
-    ids=data_containers_ids,
-)
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
 @pytest.mark.parametrize("dtype", [np.int32, np.int64])
 @pytest.mark.parametrize("init", ["k-means++", "ndarray"])
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
@@ -1004,11 +980,7 @@ def test_kmeans_elkan_iter_attribute():
     assert km.n_iter_ == 1
 
 
-@pytest.mark.parametrize(
-    "array_constr",
-    data_containers,
-    ids=data_containers_ids,
-)
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
 def test_kmeans_empty_cluster_relocated(array_constr):
     # check that empty clusters are correctly relocated when using sample
     # weights (#13486)
@@ -1054,11 +1026,7 @@ def test_warning_elkan_1_cluster():
         KMeans(n_clusters=1, algorithm="elkan").fit(X)
 
 
-@pytest.mark.parametrize(
-    "array_constr",
-    data_containers,
-    ids=data_containers_ids,
-)
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
 @pytest.mark.parametrize("algo", ["lloyd", "elkan"])
 def test_k_means_1_iteration(array_constr, algo, global_random_seed):
     # check the results after a single iteration (E-step M-step E-step) by
