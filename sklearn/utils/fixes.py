@@ -25,6 +25,7 @@ from ..externals._packaging.version import parse as parse_version
 from .deprecation import deprecated
 
 np_version = parse_version(np.__version__)
+np_base_version = parse_version(np_version.base_version)
 sp_version = parse_version(scipy.__version__)
 sp_base_version = parse_version(sp_version.base_version)
 
@@ -197,6 +198,13 @@ def _contents(data_module):
 # For +1.25 NumPy versions exceptions and warnings are being moved
 # to a dedicated submodule.
 if np_version >= parse_version("1.25.0"):
-    from numpy.exceptions import VisibleDeprecationWarning
+    from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 else:
-    from numpy import VisibleDeprecationWarning  # type: ignore  # noqa
+    from numpy import ComplexWarning, VisibleDeprecationWarning  # type: ignore  # noqa
+
+
+# TODO: Remove when Scipy 1.6 is the minimum supported version
+try:
+    from scipy.integrate import trapezoid  # type: ignore  # noqa
+except ImportError:
+    from scipy.integrate import trapz as trapezoid  # type: ignore  # noqa
