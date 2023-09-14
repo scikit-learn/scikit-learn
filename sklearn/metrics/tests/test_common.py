@@ -1785,6 +1785,9 @@ metric_checkers = {
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
     ],
+    f1_score: [
+        check_array_api_binary_classification_metric,
+    ],
 }
 
 

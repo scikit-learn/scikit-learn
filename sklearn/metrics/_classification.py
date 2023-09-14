@@ -38,7 +38,13 @@ from ..utils import (
     check_consistent_length,
     column_or_1d,
 )
-from ..utils._array_api import _union1d, _weighted_sum, get_namespace
+from ..utils._array_api import (
+    _convert_to_numpy,
+    _setdiff1d,
+    _union1d,
+    _weighted_sum,
+    get_namespace,
+)
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _nanaverage
 from ..utils.multiclass import type_of_target, unique_labels
@@ -495,6 +501,7 @@ def multilabel_confusion_matrix(
            [[2, 1],
             [1, 2]]])
     """
+    xp, _ = get_namespace(y_true, y_pred)
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
@@ -509,8 +516,10 @@ def multilabel_confusion_matrix(
         n_labels = None
     else:
         n_labels = len(labels)
-        labels = np.hstack(
-            [labels, np.setdiff1d(present_labels, labels, assume_unique=True)]
+        labels = xp.asarray(labels)
+        labels = xp.concat(
+            [labels, _setdiff1d(present_labels, labels, assume_unique=True, xp=xp)],
+            axis=-1,
         )
 
     if y_true.ndim == 1:
@@ -530,46 +539,50 @@ def multilabel_confusion_matrix(
         tp = y_true == y_pred
         tp_bins = y_true[tp]
         if sample_weight is not None:
-            tp_bins_weights = np.asarray(sample_weight)[tp]
+            tp_bins_weights = xp.asarray(sample_weight)[tp]
         else:
             tp_bins_weights = None
 
         if len(tp_bins):
-            tp_sum = np.bincount(
-                tp_bins, weights=tp_bins_weights, minlength=len(labels)
+            tp_sum = xp.bincount(
+                tp_bins, weights=tp_bins_weights, minlength=labels.shape[0]
             )
         else:
             # Pathological case
-            true_sum = pred_sum = tp_sum = np.zeros(len(labels))
+            true_sum = pred_sum = tp_sum = xp.zeros(labels.shape[0], dtype=labels.dtype)
         if len(y_pred):
-            pred_sum = np.bincount(y_pred, weights=sample_weight, minlength=len(labels))
+            pred_sum = xp.bincount(
+                y_pred, weights=sample_weight, minlength=labels.shape[0]
+            )
         if len(y_true):
-            true_sum = np.bincount(y_true, weights=sample_weight, minlength=len(labels))
+            true_sum = xp.bincount(
+                y_true, weights=sample_weight, minlength=labels.shape[0]
+            )
 
         # Retain only selected labels
-        indices = np.searchsorted(sorted_labels, labels[:n_labels])
-        tp_sum = tp_sum[indices]
-        true_sum = true_sum[indices]
-        pred_sum = pred_sum[indices]
+        indices = xp.searchsorted(sorted_labels, labels[:n_labels])
+        tp_sum = xp.take(tp_sum, indices, axis=0)
+        true_sum = xp.take(true_sum, indices, axis=0)
+        pred_sum = xp.take(pred_sum, indices, axis=0)
 
     else:
         sum_axis = 1 if samplewise else 0
 
         # All labels are index integers for multilabel.
         # Select labels:
-        if not np.array_equal(labels, present_labels):
-            if np.max(labels) > np.max(present_labels):
+        if not xp.array_equal(labels, present_labels):
+            if xp.max(labels) > xp.max(present_labels):
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
-                    "Got %d > %d" % (np.max(labels), np.max(present_labels))
+                    "Got %d > %d" % (xp.max(labels), xp.max(present_labels))
                 )
-            if np.min(labels) < 0:
+            if xp.min(labels) < 0:
                 raise ValueError(
                     "All labels must be in [0, n labels) for "
                     "multilabel targets. "
                     "Got %d < 0"
-                    % np.min(labels)
+                    % xp.min(labels)
                 )
 
         if n_labels is not None:
@@ -589,19 +602,19 @@ def multilabel_confusion_matrix(
     tp = tp_sum
 
     if sample_weight is not None and samplewise:
-        sample_weight = np.array(sample_weight)
-        tp = np.array(tp)
-        fp = np.array(fp)
-        fn = np.array(fn)
+        sample_weight = xp.asarray(sample_weight, dtype=sample_weight.dtype)
+        tp = xp.asarray(tp, dtype=tp.dtype)
+        fp = xp.asarray(fp, dtype=fp.dtype)
+        fn = xp.asarray(fn, dtype=fn.dtype)
         tn = sample_weight * y_true.shape[1] - tp - fp - fn
     elif sample_weight is not None:
-        tn = sum(sample_weight) - tp - fp - fn
+        tn = xp.sum(sample_weight) - tp - fp - fn
     elif samplewise:
         tn = y_true.shape[1] - tp - fp - fn
     else:
         tn = y_true.shape[0] - tp - fp - fn
 
-    return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
+    return xp.reshape(xp.asarray([tn, fp, fn, tp]).T, (-1, 2, 2))
 
 
 @validate_params(
@@ -1493,7 +1506,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     # Convert to Python primitive type to avoid NumPy type / Python str
     # comparison. See https://github.com/numpy/numpy/issues/6784
-    present_labels = unique_labels(y_true, y_pred).tolist()
+    present_labels = _convert_to_numpy(unique_labels(y_true, y_pred)).tolist()
     if average == "binary":
         if y_type == "binary":
             if pos_label not in present_labels:

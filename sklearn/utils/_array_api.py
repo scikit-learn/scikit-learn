@@ -232,6 +232,14 @@ class _ArrayAPIWrapper:
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self._namespace)
 
+    def bincount(self, X, weights=None, minlength=None):
+        count = numpy.bincount(X, weights=weights, minlength=minlength)
+        return self._namespace.asarray(count)
+
+    def searchsorted(self, a, v, *, side="left", sorter=None):
+        indices = numpy.searchsorted(a, v, side=side, sorter=sorter)
+        return self._namespace.asarray(indices)
+
 
 def _check_device_cpu(device):  # noqa
     if device not in {"cpu", None}:
@@ -549,8 +557,11 @@ def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
         return xp.asarray(array, dtype=dtype, copy=copy)
 
 
-def _convert_to_numpy(array, xp):
+def _convert_to_numpy(array, xp=None):
     """Convert X into a NumPy ndarray on the CPU."""
+    if xp is None:
+        xp, _ = get_namespace(array)
+
     xp_name = xp.__name__
 
     if xp_name in {"array_api_compat.torch", "torch"}:
@@ -595,3 +606,34 @@ def _estimator_with_converted_arrays(estimator, converter):
 def _atol_for_type(dtype):
     """Return the absolute tolerance for a given dtype."""
     return numpy.finfo(dtype).eps * 100
+
+
+def _setdiff1d(ar1, ar2, assume_unique=False, xp=None):
+    if xp is None:
+        xp, _ = get_namespace(ar1, ar2)
+
+    if _is_numpy_namespace(xp):
+        return xp.asarray(
+            numpy.setdiff1d(
+                ar1=ar1,
+                ar2=ar2,
+                assume_unique=assume_unique,
+            )
+        )
+
+    if assume_unique:
+        ar1 = xp.reshape(xp.asarray(ar1), (-1,))
+    else:
+        ar1 = xp.unique_values(ar1)
+        ar2 = xp.unique_values(ar2)
+
+    ar = xp.concat((ar1, ar2))
+    order = ar.argsort(stable=True)
+    sar = ar[order]
+    bool_ar = sar[1:] != sar[:-1]
+
+    flag = xp.concat((bool_ar, xp.asarray([True])))
+    ret = xp.empty(ar.shape, dtype=xp.bool)
+    ret[order] = flag
+
+    return ar1[ret[: len(ar1)]]
