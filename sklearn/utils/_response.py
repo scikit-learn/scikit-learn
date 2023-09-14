@@ -106,18 +106,6 @@ def _process_decision_function(*, y_pred, target_type, classes, pos_label):
     """
     if target_type == "binary" and pos_label == classes[0]:
         return -1 * y_pred
-    elif target_type == "multilabel-indicator":
-        # This is some legacy code where it was assume that the decision function could
-        # be a list of arrays of shape `(n_samples, 2)`.
-        # Currently, this does not exist in scikit-learn. The only estimator supporting
-        # multilabel-indicator and decision_function is `RidgeClassifier` which
-        # returns an array of shape `(n_samples, n_outputs)`.
-        # We could remove this code in the future?
-        if isinstance(y_pred, list):
-            return np.vstack([p for p in y_pred]).T
-        else:
-            return y_pred
-
     return y_pred
 
 
