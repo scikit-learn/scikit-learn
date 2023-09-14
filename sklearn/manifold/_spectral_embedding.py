@@ -314,6 +314,9 @@ def spectral_embedding(
             tol = 0 if eigen_tol == "auto" else eigen_tol
             laplacian *= -1
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
+            laplacian = check_array(
+                laplacian, accept_sparse="csr", accept_large_sparse=False
+            )
             _, diffusion_map = eigsh(
                 laplacian, k=n_components, sigma=1.0, which="LM", tol=tol, v0=v0
             )
