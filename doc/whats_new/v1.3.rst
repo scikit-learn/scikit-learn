@@ -18,6 +18,24 @@ Changes impacting all modules
 Changelog
 ---------
 
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| :class:`cluster.BisectingKMeans` could crash when predicting on data
+  with a different scale than the data used to fit the model.
+  :pr:`27167` by `Olivier Grisel`_.
+
+- |Fix| :class:`cluster.BisectingKMeans` now works with data that has a single feature.
+  :pr:`27243` by `Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Fix a bug in :class:`ensemble.AdaBoostClassifier` with `algorithm="SAMME"`
+  where the decision function of each weak learner should be symmetric (i.e.
+  the sum of the scores should sum to zero for a sample).
+  :pr:`26521` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -51,6 +69,9 @@ Changelog
 
 - |Fix| :func:`tree.plot_tree` now accepts `class_names=True` as documented.
   :pr:`26903` by :user:`Thomas Roehr <2maz>`
+
+- |Fix| The `feature_names` parameter of :func:`tree.plot_tree` now accepts any kind of
+  array-like instead of just a list. :pr:`27292` by :user:`Rahil Parikh <rprkh>`.
 
 .. _changes_1_3:
 
@@ -111,6 +132,10 @@ Changed displays
   train and test curves by default. You can set `score_type="test"` to keep the
   past behaviour.
   :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :class:`model_selection.ValidationCurveDisplay` now accepts passing a
+  list to the `param_range` parameter.
+  :pr:`27311` by :user:`Arturo Amor <ArturoAmorQ>`.
 
 Changes impacting all modules
 -----------------------------

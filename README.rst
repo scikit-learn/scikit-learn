@@ -17,7 +17,7 @@
 .. |Nightly wheels| image:: https://github.com/scikit-learn/scikit-learn/workflows/Wheel%20builder/badge.svg?event=schedule
 .. _`Nightly wheels`: https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Wheel+builder%22+event%3Aschedule
 
-.. |PythonVersion| image:: https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue
+.. |PythonVersion| image:: https://img.shields.io/pypi/pyversions/scikit-learn.svg
 .. _PythonVersion: https://pypi.org/project/scikit-learn/
 
 .. |PyPi| image:: https://img.shields.io/pypi/v/scikit-learn
