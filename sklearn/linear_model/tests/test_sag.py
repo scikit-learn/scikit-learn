@@ -449,7 +449,8 @@ def test_sag_regressor_computed_correctly(csr_container):
     n_features = 10
     n_samples = 40
     max_iter = 100
-    tol = 0.000001
+    max_iter_sparse = 1000
+    tol = 1.5e-4
     fit_intercept = True
     rng = np.random.RandomState(0)
     X = rng.normal(size=(n_samples, n_features))
@@ -465,7 +466,13 @@ def test_sag_regressor_computed_correctly(csr_container):
         max_iter=max_iter,
         random_state=rng,
     )
-    clf2 = clone(clf1)
+    clf2 = Ridge(
+        fit_intercept=fit_intercept,
+        tol=tol,
+        solver="sag",
+        alpha=alpha * n_samples,
+        random_state=rng,
+    )
 
     clf1.fit(X, y)
     clf2.fit(csr_container(X), y)
@@ -486,7 +493,7 @@ def test_sag_regressor_computed_correctly(csr_container):
         y,
         step_size,
         alpha,
-        n_iter=max_iter,
+        n_iter=max_iter_sparse,
         dloss=squared_dloss,
         sparse=True,
         fit_intercept=fit_intercept,
@@ -496,11 +503,8 @@ def test_sag_regressor_computed_correctly(csr_container):
     assert_array_almost_equal(clf1.coef_.ravel(), spweights1.ravel(), decimal=3)
     assert_almost_equal(clf1.intercept_, spintercept1, decimal=1)
 
-    # TODO: uncomment when sparse Ridge with intercept will be fixed (#4710)
-    # assert_array_almost_equal(clf2.coef_.ravel(),
-    #                          spweights2.ravel(),
-    #                          decimal=3)
-    # assert_almost_equal(clf2.intercept_, spintercept2, decimal=1)'''
+    assert_array_almost_equal(clf2.coef_.ravel(), spweights2.ravel(), decimal=2)
+    assert_almost_equal(clf2.intercept_, spintercept2, decimal=1)
 
 
 def test_get_auto_step_size():
