@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """A Sphinx extension for linking to your project's issue tracker.
 
 Copyright 2014 Steven Loria
@@ -76,7 +75,6 @@ def cve_role(name, rawtext, text, lineno, inliner, options=None, content=None):
 
 
 class IssueRole(object):
-
     EXTERNAL_REPO_REGEX = re.compile(r"^(\w+)/(.+)([#@])([\w]+)$")
 
     def __init__(
@@ -120,8 +118,9 @@ class IssueRole(object):
                 )
             else:
                 raise ValueError(
-                    "Neither {} nor issues_github_path "
-                    "is set".format(self.uri_config_option)
+                    "Neither {} nor issues_github_path is set".format(
+                        self.uri_config_option
+                    )
                 )
             issue_text = self.format_text(issue_no)
             link = nodes.reference(text=issue_text, refuri=ref, **options)

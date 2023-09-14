@@ -51,7 +51,7 @@ external to the core library.
   (i.e. rectangular data largely invariant to column and row order;
   predicting targets with simple structure)
 * improve the ease for users to develop and publish external components
-* improve inter-operability with modern data science tools (e.g. Pandas, Dask)
+* improve interoperability with modern data science tools (e.g. Pandas, Dask)
   and infrastructures (e.g. distributed processing)
 
 Many of the more fine-grained goals can be found under the `API tag
@@ -70,16 +70,16 @@ the document up to date as we work on these issues.
 
    * document current handling
    * column reordering issue :issue:`7242`
-   * avoiding unnecessary conversion to ndarray :issue:`12147`
+   * avoiding unnecessary conversion to ndarray |ss| :issue:`12147` |se|
    * returning DataFrames from transformers :issue:`5523`
-   * getting DataFrames from dataset loaders :issue:`10733`,
+   * getting DataFrames from dataset loaders |ss| :issue:`10733` |se|,
      |ss| :issue:`13902` |se|
-   * Sparse currently not considered :issue:`12800`
+   * Sparse currently not considered |ss| :issue:`12800` |se|
 
 #. Improved handling of categorical features
 
    * Tree-based models should be able to handle both continuous and categorical
-     features :issue:`12866` and :issue:`15550`.
+     features :issue:`12866` and |ss| :issue:`15550` |se|.
    * |ss| In dataset loaders :issue:`13902` |se|
    * As generic transformers to be used with ColumnTransforms (e.g. ordinal
      encoding supervised by correlation with target variable) :issue:`5853`,
@@ -89,7 +89,7 @@ the document up to date as we work on these issues.
 #. Improved handling of missing data
 
    * Making sure meta-estimators are lenient towards missing data,
-     :issue:`15319`
+     |ss| :issue:`15319` |se|
    * Non-trivial imputers |ss| :issue:`11977`, :issue:`12852` |se|
    * Learners directly handling missing data |ss| :issue:`13911` |se|
    * An amputation sample generator to make parts of a dataset go missing
@@ -125,19 +125,20 @@ the document up to date as we work on these issues.
    components
 
    * More flexible estimator checks that do not select by estimator name
-     :issue:`6599` :issue:`6715`
-   * Example of how to develop an estimator or a meta-estimator, :issue:`14582`
+     |ss| :issue:`6599` |se| :issue:`6715`
+   * Example of how to develop an estimator or a meta-estimator,
+     |ss| :issue:`14582` |se|
    * More self-sufficient running of scikit-learn-contrib or a similar resource
 
 #. Support resampling and sample reduction
 
    * Allow subsampling of majority classes (in a pipeline?) :issue:`3855`
-   * Implement random forests with resampling :issue:`8732`
+   * Implement random forests with resampling :issue:`13227`
 
 #. Better interfaces for interactive development
 
-   * |ss| __repr__ |se| and HTML visualisations of estimators
-     |ss| :issue:`6323` |se| and :pr:`14180`.
+   * |ss| __repr__ and HTML visualisations of estimators
+     :issue:`6323` and :pr:`14180` |se|.
    * Include plotting tools, not just as examples. :issue:`9173`
 
 #. Improved tools for model diagnostics and basic inference
@@ -223,7 +224,7 @@ the document up to date as we work on these issues.
    (to be discussed);
 
    * Extend documentation to mention how to deploy models in Python-free
-     environments for instance  `ONNX <https://github.com/onnx/onnxmltools>`_.
+     environments for instance `ONNX <https://github.com/onnx/sklearn-onnx>`_.
      and use the above best practices to assess predictive consistency between
      scikit-learn and ONNX prediction functions on validation set.
    * Document good practices to detect temporal distribution drift for deployed
@@ -249,15 +250,15 @@ Subpackage-specific goals
 * perhaps we want to be able to get back more than multiple metrics
 * the handling of random states in CV splitters is a poor design and
   contradicts the validation of similar parameters in estimators,
-  :issue:`15177`
+  `SLEP011 <https://github.com/scikit-learn/enhancement_proposals/pull/24>`_
 * exploit warm-starting and path algorithms so the benefits of `EstimatorCV`
   objects can be accessed via `GridSearchCV` and used in Pipelines.
   :issue:`1626`
 * Cross-validation should be able to be replaced by OOB estimates whenever a
   cross-validation iterator is used.
 * Redundant computations in pipelines should be avoided (related to point
-  above) cf `daskml
-  <https://dask-ml.readthedocs.io/en/latest/hyper-parameter-search.html#avoid-repeated-work>`_
+  above) cf `dask-ml
+  <https://ml.dask.org/hyper-parameter-search.html#avoid-repeated-work>`_
 
 :mod:`sklearn.neighbors`
 

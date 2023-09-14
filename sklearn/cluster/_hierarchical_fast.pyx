@@ -1,49 +1,32 @@
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 
 import numpy as np
-cimport numpy as np
 cimport cython
 
-ctypedef np.float64_t DOUBLE
-ctypedef np.npy_intp INTP
-ctypedef np.int8_t INT8
-
-# Numpy must be initialized. When using numpy from C or Cython you must
-# _always_ do that, or you will have segfaults
-
-np.import_array()
-
-from ..neighbors._dist_metrics cimport DistanceMetric
+from ..metrics._dist_metrics cimport DistanceMetric64
 from ..utils._fast_dict cimport IntFloatDict
+from ..utils._typedefs cimport float64_t, intp_t, uint8_t
 
 # C++
 from cython.operator cimport dereference as deref, preincrement as inc
 from libcpp.map cimport map as cpp_map
-from libc.math cimport fmax
+from libc.math cimport fmax, INFINITY
 
-DTYPE = np.float64
-ctypedef np.float64_t DTYPE_t
-
-ITYPE = np.intp
-ctypedef np.intp_t ITYPE_t
-
-from numpy.math cimport INFINITY
 
 ###############################################################################
 # Utilities for computing the ward momentum
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def compute_ward_dist(np.ndarray[DOUBLE, ndim=1, mode='c'] m_1,
-                      np.ndarray[DOUBLE, ndim=2, mode='c'] m_2,
-                      np.ndarray[INTP, ndim=1, mode='c'] coord_row,
-                      np.ndarray[INTP, ndim=1, mode='c'] coord_col,
-                      np.ndarray[DOUBLE, ndim=1, mode='c'] res):
-    cdef INTP size_max = coord_row.shape[0]
-    cdef INTP n_features = m_2.shape[1]
-    cdef INTP i, j, row, col
-    cdef DOUBLE pa, n
+def compute_ward_dist(
+    const float64_t[::1] m_1,
+    const float64_t[:, ::1] m_2,
+    const intp_t[::1] coord_row,
+    const intp_t[::1] coord_col,
+    float64_t[::1] res
+):
+    cdef intp_t size_max = coord_row.shape[0]
+    cdef intp_t n_features = m_2.shape[1]
+    cdef intp_t i, j, row, col
+    cdef float64_t pa, n
 
     for i in range(size_max):
         row = coord_row[i]
@@ -53,13 +36,12 @@ def compute_ward_dist(np.ndarray[DOUBLE, ndim=1, mode='c'] m_1,
         for j in range(n_features):
             pa += (m_2[row, j] / m_1[row] - m_2[col, j] / m_1[col]) ** 2
         res[i] = pa * n
-    return res
 
 
 ###############################################################################
 # Utilities for cutting and exploring a hierarchical tree
 
-def _hc_get_descendent(INTP node, children, INTP n_leaves):
+def _hc_get_descendent(intp_t node, children, intp_t n_leaves):
     """
     Function returning all the descendent leaves of a set of nodes in the tree.
 
@@ -88,7 +70,7 @@ def _hc_get_descendent(INTP node, children, INTP n_leaves):
     # It is actually faster to do the accounting of the number of
     # elements is the list ourselves: len is a lengthy operation on a
     # chained list
-    cdef INTP i, n_indices = 1
+    cdef intp_t i, n_indices = 1
 
     while n_indices:
         i = ind.pop()
@@ -101,9 +83,7 @@ def _hc_get_descendent(INTP node, children, INTP n_leaves):
     return descendent
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-def hc_get_heads(np.ndarray[INTP, ndim=1] parents, copy=True):
+def hc_get_heads(intp_t[:] parents, copy=True):
     """Returns the heads of the forest, as defined by parents.
 
     Parameters
@@ -119,7 +99,7 @@ def hc_get_heads(np.ndarray[INTP, ndim=1] parents, copy=True):
         The indices in the 'parents' of the tree heads
 
     """
-    cdef INTP parent, node0, node, size
+    cdef intp_t parent, node0, node, size
     if copy:
         parents = np.copy(parents)
     size = parents.size
@@ -135,10 +115,12 @@ def hc_get_heads(np.ndarray[INTP, ndim=1] parents, copy=True):
     return parents
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-def _get_parents(nodes, heads, np.ndarray[INTP, ndim=1] parents,
-                 np.ndarray[INT8, ndim=1, mode='c'] not_visited):
+def _get_parents(
+    nodes,
+    heads,
+    const intp_t[:] parents,
+    uint8_t[::1] not_visited
+):
     """Returns the heads of the given nodes, as defined by parents.
 
     Modifies 'heads' and 'not_visited' in-place.
@@ -155,7 +137,7 @@ def _get_parents(nodes, heads, np.ndarray[INTP, ndim=1] parents,
         The tree nodes to consider (modified inplace)
 
     """
-    cdef INTP parent, node
+    cdef intp_t parent, node
 
     for node in nodes:
         parent = parents[node]
@@ -165,7 +147,6 @@ def _get_parents(nodes, heads, np.ndarray[INTP, ndim=1] parents,
         if not_visited[node]:
             not_visited[node] = 0
             heads.append(node)
-    return heads
 
 
 ###############################################################################
@@ -176,11 +157,13 @@ def _get_parents(nodes, heads, np.ndarray[INTP, ndim=1] parents,
 # as keys and edge weights as values.
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-def max_merge(IntFloatDict a, IntFloatDict b,
-              np.ndarray[ITYPE_t, ndim=1] mask,
-              ITYPE_t n_a, ITYPE_t n_b):
+def max_merge(
+    IntFloatDict a,
+    IntFloatDict b,
+    const intp_t[:] mask,
+    intp_t n_a,
+    intp_t n_b
+):
     """Merge two IntFloatDicts with the max strategy: when the same key is
     present in the two dicts, the max of the two values is used.
 
@@ -201,10 +184,10 @@ def max_merge(IntFloatDict a, IntFloatDict b,
         The IntFloatDict resulting from the merge
     """
     cdef IntFloatDict out_obj = IntFloatDict.__new__(IntFloatDict)
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_it = a.my_map.begin()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_end = a.my_map.end()
-    cdef ITYPE_t key
-    cdef DTYPE_t value
+    cdef cpp_map[intp_t, float64_t].iterator a_it = a.my_map.begin()
+    cdef cpp_map[intp_t, float64_t].iterator a_end = a.my_map.end()
+    cdef intp_t key
+    cdef float64_t value
     # First copy a into out
     while a_it != a_end:
         key = deref(a_it).first
@@ -213,10 +196,10 @@ def max_merge(IntFloatDict a, IntFloatDict b,
         inc(a_it)
 
     # Then merge b into out
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator out_it = out_obj.my_map.begin()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator out_end = out_obj.my_map.end()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator b_it = b.my_map.begin()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator b_end = b.my_map.end()
+    cdef cpp_map[intp_t, float64_t].iterator out_it = out_obj.my_map.begin()
+    cdef cpp_map[intp_t, float64_t].iterator out_end = out_obj.my_map.end()
+    cdef cpp_map[intp_t, float64_t].iterator b_it = b.my_map.begin()
+    cdef cpp_map[intp_t, float64_t].iterator b_end = b.my_map.end()
     while b_it != b_end:
         key = deref(b_it).first
         value = deref(b_it).second
@@ -231,13 +214,15 @@ def max_merge(IntFloatDict a, IntFloatDict b,
     return out_obj
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-def average_merge(IntFloatDict a, IntFloatDict b,
-              np.ndarray[ITYPE_t, ndim=1] mask,
-              ITYPE_t n_a, ITYPE_t n_b):
-    """Merge two IntFloatDicts with the average strategy: when the 
-    same key is present in the two dicts, the weighted average of the two 
+def average_merge(
+    IntFloatDict a,
+    IntFloatDict b,
+    const intp_t[:] mask,
+    intp_t n_a,
+    intp_t n_b
+):
+    """Merge two IntFloatDicts with the average strategy: when the
+    same key is present in the two dicts, the weighted average of the two
     values is used.
 
     Parameters
@@ -257,11 +242,11 @@ def average_merge(IntFloatDict a, IntFloatDict b,
         The IntFloatDict resulting from the merge
     """
     cdef IntFloatDict out_obj = IntFloatDict.__new__(IntFloatDict)
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_it = a.my_map.begin()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_end = a.my_map.end()
-    cdef ITYPE_t key
-    cdef DTYPE_t value
-    cdef DTYPE_t n_out = <DTYPE_t> (n_a + n_b)
+    cdef cpp_map[intp_t, float64_t].iterator a_it = a.my_map.begin()
+    cdef cpp_map[intp_t, float64_t].iterator a_end = a.my_map.end()
+    cdef intp_t key
+    cdef float64_t value
+    cdef float64_t n_out = <float64_t> (n_a + n_b)
     # First copy a into out
     while a_it != a_end:
         key = deref(a_it).first
@@ -270,10 +255,10 @@ def average_merge(IntFloatDict a, IntFloatDict b,
         inc(a_it)
 
     # Then merge b into out
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator out_it = out_obj.my_map.begin()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator out_end = out_obj.my_map.end()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator b_it = b.my_map.begin()
-    cdef cpp_map[ITYPE_t, DTYPE_t].iterator b_end = b.my_map.end()
+    cdef cpp_map[intp_t, float64_t].iterator out_it = out_obj.my_map.begin()
+    cdef cpp_map[intp_t, float64_t].iterator out_end = out_obj.my_map.end()
+    cdef cpp_map[intp_t, float64_t].iterator b_it = b.my_map.begin()
+    cdef cpp_map[intp_t, float64_t].iterator b_end = b.my_map.end()
     while b_it != b_end:
         key = deref(b_it).first
         value = deref(b_it).second
@@ -290,19 +275,18 @@ def average_merge(IntFloatDict a, IntFloatDict b,
 
 
 ###############################################################################
-# An edge object for fast comparisons 
+# An edge object for fast comparisons
 
 cdef class WeightedEdge:
-    cdef public ITYPE_t a
-    cdef public ITYPE_t b
-    cdef public DTYPE_t weight
-    
-    def __init__(self, DTYPE_t weight, ITYPE_t a, ITYPE_t b):
+    cdef public intp_t a
+    cdef public intp_t b
+    cdef public float64_t weight
+
+    def __init__(self, float64_t weight, intp_t a, intp_t b):
         self.weight = weight
         self.a = a
         self.b = b
 
-    @cython.nonecheck(False)
     def __richcmp__(self, WeightedEdge other, int op):
         """Cython-specific comparison method.
 
@@ -326,7 +310,7 @@ cdef class WeightedEdge:
             return self.weight > other.weight
         elif op == 5:
             return self.weight >= other.weight
-        
+
     def __repr__(self):
         return "%s(weight=%f, a=%i, b=%i)" % (self.__class__.__name__,
                                               self.weight,
@@ -338,30 +322,22 @@ cdef class WeightedEdge:
 
 cdef class UnionFind(object):
 
-    cdef ITYPE_t next_label
-    cdef ITYPE_t[:] parent
-    cdef ITYPE_t[:] size
-
     def __init__(self, N):
-        self.parent = np.full(2 * N - 1, -1., dtype=ITYPE, order='C')
+        self.parent = np.full(2 * N - 1, -1., dtype=np.intp, order='C')
         self.next_label = N
-        self.size = np.hstack((np.ones(N, dtype=ITYPE),
-                               np.zeros(N - 1, dtype=ITYPE)))
+        self.size = np.hstack((np.ones(N, dtype=np.intp),
+                               np.zeros(N - 1, dtype=np.intp)))
 
-    @cython.boundscheck(False)
-    @cython.nonecheck(False)
-    cdef void union(self, ITYPE_t m, ITYPE_t n):
+    cdef void union(self, intp_t m, intp_t n) noexcept:
         self.parent[m] = self.next_label
         self.parent[n] = self.next_label
         self.size[self.next_label] = self.size[m] + self.size[n]
         self.next_label += 1
-
         return
 
-    @cython.boundscheck(False)
-    @cython.nonecheck(False)
-    cdef ITYPE_t fast_find(self, ITYPE_t n):
-        cdef ITYPE_t p
+    @cython.wraparound(True)
+    cdef intp_t fast_find(self, intp_t n) noexcept:
+        cdef intp_t p
         p = n
         # find the highest node in the linkage graph so far
         while self.parent[n] != -1:
@@ -371,10 +347,8 @@ cdef class UnionFind(object):
             p, self.parent[p] = self.parent[p], n
         return n
 
-@cython.boundscheck(False)
-@cython.nonecheck(False)
-cpdef np.ndarray[DTYPE_t, ndim=2] _single_linkage_label(
-    np.ndarray[DTYPE_t, ndim=2] L):
+
+def _single_linkage_label(const float64_t[:, :] L):
     """
     Convert an linkage array or MST to a tree by labelling clusters at merges.
     This is done by using a Union find structure to keep track of merges
@@ -394,35 +368,34 @@ cpdef np.ndarray[DTYPE_t, ndim=2] _single_linkage_label(
     A tree in the format used by scipy.cluster.hierarchy.
     """
 
-    cdef np.ndarray[DTYPE_t, ndim=2] result_arr
-    cdef DTYPE_t[:, ::1] result
+    cdef float64_t[:, ::1] result_arr
 
-    cdef ITYPE_t left, left_cluster, right, right_cluster, index
-    cdef DTYPE_t delta
+    cdef intp_t left, left_cluster, right, right_cluster, index
+    cdef float64_t delta
 
-    result_arr = np.zeros((L.shape[0], 4), dtype=DTYPE)
-    result = result_arr
+    result_arr = np.zeros((L.shape[0], 4), dtype=np.float64)
     U = UnionFind(L.shape[0] + 1)
 
     for index in range(L.shape[0]):
 
-        left = <ITYPE_t> L[index, 0]
-        right = <ITYPE_t> L[index, 1]
+        left = <intp_t> L[index, 0]
+        right = <intp_t> L[index, 1]
         delta = L[index, 2]
 
         left_cluster = U.fast_find(left)
         right_cluster = U.fast_find(right)
 
-        result[index][0] = left_cluster
-        result[index][1] = right_cluster
-        result[index][2] = delta
-        result[index][3] = U.size[left_cluster] + U.size[right_cluster]
+        result_arr[index][0] = left_cluster
+        result_arr[index][1] = right_cluster
+        result_arr[index][2] = delta
+        result_arr[index][3] = U.size[left_cluster] + U.size[right_cluster]
 
         U.union(left_cluster, right_cluster)
 
-    return result_arr
+    return np.asarray(result_arr)
 
 
+@cython.wraparound(True)
 def single_linkage_label(L):
     """
     Convert an linkage array or MST to a tree by labelling clusters at merges.
@@ -452,17 +425,15 @@ def single_linkage_label(L):
 
 
 # Implements MST-LINKAGE-CORE from https://arxiv.org/abs/1109.2378
-@cython.boundscheck(False)
-@cython.nonecheck(False)
 def mst_linkage_core(
-        DTYPE_t [:, ::1] raw_data,
-        DistanceMetric dist_metric):
+        const float64_t [:, ::1] raw_data,
+        DistanceMetric64 dist_metric):
     """
     Compute the necessary elements of a minimum spanning
     tree for computation of single linkage clustering. This
     represents the MST-LINKAGE-CORE algorithm (Figure 6) from
-    *Modern hierarchical, agglomerative clustering algorithms*
-    by Daniel Mullner (https://arxiv.org/abs/1109.2378).
+    :arxiv:`Daniel Mullner, "Modern hierarchical, agglomerative clustering
+    algorithms" <1109.2378>`.
 
     In contrast to the scipy implementation is never computes
     a full distance matrix, generating distances only as they
@@ -473,9 +444,9 @@ def mst_linkage_core(
     raw_data: array of shape (n_samples, n_features)
         The array of feature data to be clustered. Must be C-aligned
 
-    dist_metric: DistanceMetric
-        A DistanceMetric object conforming to the API from
-        ``sklearn.neighbors._dist_metrics.pxd`` that will be
+    dist_metric: DistanceMetric64
+        A DistanceMetric64 object conforming to the API from
+        ``sklearn.metrics._dist_metrics.pxd`` that will be
         used to compute distances.
 
     Returns
@@ -483,27 +454,26 @@ def mst_linkage_core(
     mst_core_data: array of shape (n_samples, 3)
         An array providing information from which one
         can either compute an MST, or the linkage hierarchy
-        very efficiently. See https://arxiv.org/abs/1109.2378
-        algorithm MST-LINKAGE-CORE for more details.
+        very efficiently. See :arxiv:`Daniel Mullner, "Modern hierarchical,
+        agglomerative clustering algorithms" <1109.2378>` algorithm
+        MST-LINKAGE-CORE for more details.
     """
     cdef:
-        ITYPE_t n_samples = raw_data.shape[0]
-        np.int8_t[:] in_tree = np.zeros(n_samples, dtype=np.int8)
-        DTYPE_t[:, ::1] result = np.zeros((n_samples - 1, 3))
+        intp_t n_samples = raw_data.shape[0]
+        uint8_t[:] in_tree = np.zeros(n_samples, dtype=bool)
+        float64_t[:, ::1] result = np.zeros((n_samples - 1, 3))
 
-        np.ndarray label_filter
+        intp_t current_node = 0
+        intp_t new_node
+        intp_t i
+        intp_t j
+        intp_t num_features = raw_data.shape[1]
 
-        ITYPE_t current_node = 0
-        ITYPE_t new_node
-        ITYPE_t i
-        ITYPE_t j
-        ITYPE_t num_features = raw_data.shape[1]
+        float64_t right_value
+        float64_t left_value
+        float64_t new_distance
 
-        DTYPE_t right_value
-        DTYPE_t left_value
-        DTYPE_t new_distance
-
-        DTYPE_t[:] current_distances = np.full(n_samples, INFINITY)
+        float64_t[:] current_distances = np.full(n_samples, INFINITY)
 
     for i in range(n_samples - 1):
 
@@ -534,4 +504,3 @@ def mst_linkage_core(
         current_node = new_node
 
     return np.array(result)
-

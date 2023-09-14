@@ -10,7 +10,7 @@ Linnerrud dataset
     :Missing Attribute Values: None
 
 The Linnerud dataset is a multi-output regression dataset. It consists of three
-excercise (data) and three physiological (target) variables collected from
+exercise (data) and three physiological (target) variables collected from
 twenty middle-aged men in a fitness club:
 
 - *physiological* - CSV containing 20 observations on 3 physiological variables:
@@ -18,7 +18,11 @@ twenty middle-aged men in a fitness club:
 - *exercise* - CSV containing 20 observations on 3 exercise variables:
    Chins, Situps and Jumps.
 
-.. topic:: References
+|details-start|
+**References**
+|details-split|
 
-  * Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
-    Editions Technic.
+* Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
+  Editions Technic.
+
+|details-end|

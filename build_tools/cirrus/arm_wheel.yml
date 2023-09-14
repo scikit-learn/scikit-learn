@@ -1,0 +1,121 @@
+macos_arm64_wheel_task:
+  macos_instance:
+    image: ghcr.io/cirruslabs/macos-monterey-xcode
+  env:
+    CONFTEST_PATH: ${CIRRUS_WORKING_DIR}/conftest.py
+    CONFTEST_NAME: conftest.py
+    CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
+                      SKLEARN_BUILD_PARALLEL=5
+    CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
+    CIBW_TEST_REQUIRES: pytest pandas threadpoolctl pytest-xdist
+    CIBW_BUILD_VERBOSITY: 1
+    PATH: $HOME/mambaforge/bin/:$PATH
+    CONDA_HOME: $HOME/mambaforge
+    # Upload tokens have been encrypted via the CirrusCI interface:
+    # https://cirrus-ci.org/guide/writing-tasks/#encrypted-variables
+    # See `maint_tools/update_tracking_issue.py` for details on the permissions the token requires.
+    BOT_GITHUB_TOKEN: ENCRYPTED[9b50205e2693f9e4ce9a3f0fcb897a259289062fda2f5a3b8aaa6c56d839e0854a15872f894a70fca337dd4787274e0f]
+  matrix:
+    # Only the latest Python version is built and tested on CirrusCI, the other
+    # macos arm64 builds are on GitHub Actions
+    - env:
+        CIBW_BUILD: cp311-macosx_arm64
+
+  conda_script:
+    - curl -L --retry 10 -o ~/mambaforge.sh https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh
+    - bash ~/mambaforge.sh -b -p ~/mambaforge
+
+  cibuildwheel_script:
+    - bash build_tools/wheels/build_wheels.sh
+
+  on_failure:
+    update_tracker_script:
+      - bash build_tools/cirrus/update_tracking_issue.sh false
+
+  wheels_artifacts:
+    path: "wheelhouse/*"
+
+linux_arm64_wheel_task:
+  compute_engine_instance:
+    image_project: cirrus-images
+    image: family/docker-builder-arm64
+    architecture: arm64
+    platform: linux
+    cpu: 4
+    memory: 4G
+  env:
+    CONFTEST_PATH: ${CIRRUS_WORKING_DIR}/conftest.py
+    CONFTEST_NAME: conftest.py
+    CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
+                      SKLEARN_BUILD_PARALLEL=5
+    CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh
+    CIBW_TEST_REQUIRES: pytest pandas threadpoolctl pytest-xdist
+    CIBW_BUILD_VERBOSITY: 1
+    # Upload tokens have been encrypted via the CirrusCI interface:
+    # https://cirrus-ci.org/guide/writing-tasks/#encrypted-variables
+    # See `maint_tools/update_tracking_issue.py` for details on the permissions the token requires.
+    BOT_GITHUB_TOKEN: ENCRYPTED[9b50205e2693f9e4ce9a3f0fcb897a259289062fda2f5a3b8aaa6c56d839e0854a15872f894a70fca337dd4787274e0f]
+  matrix:
+    # Only the latest Python version is tested
+    - env:
+        CIBW_BUILD: cp38-manylinux_aarch64
+        CIBW_TEST_SKIP: "*_aarch64"
+    - env:
+        CIBW_BUILD: cp39-manylinux_aarch64
+        CIBW_TEST_SKIP: "*_aarch64"
+    - env:
+        CIBW_BUILD: cp310-manylinux_aarch64
+        CIBW_TEST_SKIP: "*_aarch64"
+    - env:
+        CIBW_BUILD: cp311-manylinux_aarch64
+
+  cibuildwheel_script:
+    - apt install -y python3 python-is-python3
+    - bash build_tools/wheels/build_wheels.sh
+
+  on_failure:
+    update_tracker_script:
+      - bash build_tools/cirrus/update_tracking_issue.sh false
+
+  wheels_artifacts:
+    path: "wheelhouse/*"
+
+# Update tracker when all jobs are successful
+update_tracker_success:
+  depends_on:
+    - macos_arm64_wheel
+    - linux_arm64_wheel
+  container:
+    image: python:3.11
+  # Only update tracker for nightly builds
+  only_if: $CIRRUS_CRON == "nightly"
+  update_script:
+    - bash build_tools/cirrus/update_tracking_issue.sh true
+
+wheels_upload_task:
+  depends_on:
+    - macos_arm64_wheel
+    - linux_arm64_wheel
+  container:
+    image: continuumio/miniconda3:22.11.1
+  # Artifacts are not uploaded on PRs
+  only_if: $CIRRUS_PR == ""
+  env:
+    # Upload tokens have been encrypted via the CirrusCI interface:
+    # https://cirrus-ci.org/guide/writing-tasks/#encrypted-variables
+    SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ENCRYPTED[9cf0529227577d503f2e19ef31cb690a2272cb243a217fb9a1ceda5cc608e8ccc292050fde9dca94cab766e1dd418519]
+    SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ENCRYPTED[8fade46af37fa645e57bd1ee21683337aa369ba56f6307ce13889f1e74df94e5bdd21d323baac21e332fd87b8949659a]
+    ARTIFACTS_PATH: wheelhouse
+  upload_script: |
+    conda install curl unzip -y
+
+    if [[ "$CIRRUS_CRON" == "nightly" ]]; then
+      export GITHUB_EVENT_NAME="schedule"
+    fi
+
+    # Download and show wheels
+    curl https://api.cirrus-ci.com/v1/artifact/build/$CIRRUS_BUILD_ID/wheels.zip --output wheels.zip
+    unzip wheels.zip
+    ls wheelhouse
+
+    bash build_tools/github/upload_anaconda.sh

@@ -1,14 +1,15 @@
-# cython: language_level=3
-import numpy as np
-cimport numpy as np
+cimport numpy as cnp
+from sklearn.utils._typedefs cimport intp_t
 
-np.import_array()
+cnp.import_array()
 
 
-ctypedef np.npy_float64 X_DTYPE_C
-ctypedef np.npy_uint8 X_BINNED_DTYPE_C
-ctypedef np.npy_float64 Y_DTYPE_C
-ctypedef np.npy_float32 G_H_DTYPE_C
+ctypedef cnp.npy_float64 X_DTYPE_C
+ctypedef cnp.npy_uint8 X_BINNED_DTYPE_C
+ctypedef cnp.npy_float64 Y_DTYPE_C
+ctypedef cnp.npy_float32 G_H_DTYPE_C
+ctypedef cnp.npy_uint32 BITSET_INNER_DTYPE_C
+ctypedef BITSET_INNER_DTYPE_C[8] BITSET_DTYPE_C
 
 cdef packed struct hist_struct:
     # Same as histogram dtype but we need a struct to declare views. It needs
@@ -23,7 +24,7 @@ cdef packed struct node_struct:
     # needs to be packed since by default numpy dtypes aren't aligned
     Y_DTYPE_C value
     unsigned int count
-    unsigned int feature_idx
+    intp_t feature_idx
     X_DTYPE_C num_threshold
     unsigned char missing_go_to_left
     unsigned int left
@@ -32,7 +33,10 @@ cdef packed struct node_struct:
     unsigned int depth
     unsigned char is_leaf
     X_BINNED_DTYPE_C bin_threshold
-
+    unsigned char is_categorical
+    # The index of the corresponding bitsets in the Predictor's bitset arrays.
+    # Only used if is_categorical is True
+    unsigned int bitset_idx
 
 cpdef enum MonotonicConstraint:
     NO_CST = 0

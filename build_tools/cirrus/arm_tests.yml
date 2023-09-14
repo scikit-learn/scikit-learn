@@ -1,0 +1,30 @@
+linux_aarch64_test_task:
+  compute_engine_instance:
+    image_project: cirrus-images
+    image: family/docker-builder-arm64
+    architecture: arm64
+    platform: linux
+    cpu: 4
+    memory: 6G
+  env:
+    CONDA_ENV_NAME: testenv
+    LOCK_FILE: build_tools/cirrus/py39_conda_forge_linux-aarch64_conda.lock
+    CONDA_PKGS_DIRS: /root/.conda/pkgs
+    HOME: /  # $HOME is not defined in image and is required to install mambaforge
+  ccache_cache:
+    folder: /root/.cache/ccache
+  conda_cache:
+    folder: /root/.conda/pkgs
+    fingerprint_script: cat build_tools/cirrus/py39_conda_forge_linux-aarch64_conda.lock
+
+  install_python_script: |
+    # Install python so that update_tracking_issue has access to a Python
+    apt install -y python3 python-is-python3
+
+  test_script: |
+    bash build_tools/cirrus/build_test_arm.sh
+    # On success, this script is run updating the issue.
+    bash build_tools/cirrus/update_tracking_issue.sh true
+
+  on_failure:
+    update_tracker_script: bash build_tools/cirrus/update_tracking_issue.sh false

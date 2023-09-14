@@ -10,13 +10,13 @@ a digit classification task.
 
     See also :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`
 
-"""
-print(__doc__)
+"""  # noqa: E501
 
-from sklearn.svm import SVC
+import matplotlib.pyplot as plt
+
 from sklearn.datasets import load_digits
 from sklearn.feature_selection import RFE
-import matplotlib.pyplot as plt
+from sklearn.svm import SVC
 
 # Load the digits dataset
 digits = load_digits()

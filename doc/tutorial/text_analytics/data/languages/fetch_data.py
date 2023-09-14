@@ -54,7 +54,8 @@ for lang, page in pages.items():
         # downloading a couple of articles should not be considered abusive
         request.add_header('User-Agent', 'OpenAnything/1.0')
         html_content = opener.open(request).read()
-        open(html_filename, 'wb').write(html_content)
+        with open(html_filename, 'wb') as f:
+            f.write(html_content)
 
     # decode the payload explicitly as UTF-8 since lxml is confused for some
     # reason
@@ -73,7 +74,8 @@ for lang, page in pages.items():
         text_filename = os.path.join(text_lang_folder,
                                      '%s_%04d.txt' % (lang, i))
         print("Writing %s" % text_filename)
-        open(text_filename, 'wb').write(content.encode('utf-8', 'ignore'))
+        with open(text_filename, 'wb') as f:
+            f.write(content.encode('utf-8', 'ignore'))
         i += 1
 
         # split the paragraph into fake smaller paragraphs to make the
@@ -93,8 +95,8 @@ for lang, page in pages.items():
             short_text_filename = os.path.join(short_text_lang_folder,
                                                '%s_%04d.txt' % (lang, j))
             print("Writing %s" % short_text_filename)
-            open(short_text_filename, 'wb').write(
-                small_content.encode('utf-8', 'ignore'))
+            with open(short_text_filename, 'wb') as f:
+                f.write(small_content.encode('utf-8', 'ignore'))
             j += 1
             if j >= 1000:
                 break

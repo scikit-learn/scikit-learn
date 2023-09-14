@@ -1,6 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 """
 =========================================================
 SVM Margins Example
@@ -15,15 +12,14 @@ A small value of `C` includes more/all the observations, allowing
 the margins to be calculated using all the data in the area.
 
 """
-print(__doc__)
-
 
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import svm
 
 # we create 40 separable points
@@ -35,9 +31,8 @@ Y = [0] * 20 + [1] * 20
 fignum = 1
 
 # fit the model
-for name, penalty in (('unreg', 1), ('reg', 0.05)):
-
-    clf = svm.SVC(kernel='linear', C=penalty)
+for name, penalty in (("unreg", 1), ("reg", 0.05)):
+    clf = svm.SVC(kernel="linear", C=penalty)
     clf.fit(X, Y)
 
     # get the separating hyperplane
@@ -50,35 +45,42 @@ for name, penalty in (('unreg', 1), ('reg', 0.05)):
     # support vectors (margin away from hyperplane in direction
     # perpendicular to hyperplane). This is sqrt(1+a^2) away vertically in
     # 2-d.
-    margin = 1 / np.sqrt(np.sum(clf.coef_ ** 2))
-    yy_down = yy - np.sqrt(1 + a ** 2) * margin
-    yy_up = yy + np.sqrt(1 + a ** 2) * margin
+    margin = 1 / np.sqrt(np.sum(clf.coef_**2))
+    yy_down = yy - np.sqrt(1 + a**2) * margin
+    yy_up = yy + np.sqrt(1 + a**2) * margin
 
     # plot the line, the points, and the nearest vectors to the plane
     plt.figure(fignum, figsize=(4, 3))
     plt.clf()
-    plt.plot(xx, yy, 'k-')
-    plt.plot(xx, yy_down, 'k--')
-    plt.plot(xx, yy_up, 'k--')
+    plt.plot(xx, yy, "k-")
+    plt.plot(xx, yy_down, "k--")
+    plt.plot(xx, yy_up, "k--")
 
-    plt.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], s=80,
-                facecolors='none', zorder=10, edgecolors='k')
-    plt.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.cm.Paired,
-                edgecolors='k')
+    plt.scatter(
+        clf.support_vectors_[:, 0],
+        clf.support_vectors_[:, 1],
+        s=80,
+        facecolors="none",
+        zorder=10,
+        edgecolors="k",
+        cmap=plt.get_cmap("RdBu"),
+    )
+    plt.scatter(
+        X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.get_cmap("RdBu"), edgecolors="k"
+    )
 
-    plt.axis('tight')
+    plt.axis("tight")
     x_min = -4.8
     x_max = 4.2
     y_min = -6
     y_max = 6
 
-    XX, YY = np.mgrid[x_min:x_max:200j, y_min:y_max:200j]
-    Z = clf.predict(np.c_[XX.ravel(), YY.ravel()])
+    YY, XX = np.meshgrid(yy, xx)
+    xy = np.vstack([XX.ravel(), YY.ravel()]).T
+    Z = clf.decision_function(xy).reshape(XX.shape)
 
-    # Put the result into a color plot
-    Z = Z.reshape(XX.shape)
-    plt.figure(fignum, figsize=(4, 3))
-    plt.pcolormesh(XX, YY, Z, cmap=plt.cm.Paired)
+    # Put the result into a contour plot
+    plt.contourf(XX, YY, Z, cmap=plt.get_cmap("RdBu"), alpha=0.5, linestyles=["-"])
 
     plt.xlim(x_min, x_max)
     plt.ylim(y_min, y_max)
