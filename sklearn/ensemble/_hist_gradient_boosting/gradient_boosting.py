@@ -1272,6 +1272,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Proportion of randomly chosen features in each and every node split.
         This is a form of regularization, smaller values make the trees weaker
         learners and might prevent overfitting.
+        If interaction constraints from `interaction_cst` are present, only allowed
+        features taken into account for the subsampling.
 
         .. versionchanged:: 1.4
 
@@ -1641,6 +1643,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         Proportion of randomly chosen features in each and every node split.
         This is a form of regularization, smaller values make the trees weaker
         learners and might prevent overfitting.
+        If interaction constraints from `interaction_cst` are present, only allowed
+        features taken into account for the subsampling.
 
         .. versionchanged:: 1.4
 
