@@ -244,13 +244,15 @@ def assert_compatible_radius_results(
 
         # Check that all distances are within the requested radius
         if len(dist_row_a) > 0:
-            assert dist_row_a[-1] <= radius, (
-                f"Largest returned distance {dist_row_a[-1]} not within requested"
+            max_dist_a = np.max(dist_row_a)
+            assert max_dist_a <= radius, (
+                f"Largest returned distance {max_dist_a} not within requested"
                 f" radius {radius} on row {query_idx}"
             )
         if len(dist_row_b) > 0:
-            assert dist_row_b[-1] <= radius, (
-                f"Largest returned distance {dist_row_b[-1]} not within requested"
+            max_dist_b = np.max(dist_row_b)
+            assert max_dist_b <= radius, (
+                f"Largest returned distance {max_dist_b} not within requested"
                 f" radius {radius} on row {query_idx}"
             )
 
@@ -1292,7 +1294,6 @@ def test_pairwise_distances_radius_neighbors(
     n_features = rng.choice([50, 500])
     translation = rng.choice([0, 1e6])
     spread = 1000
-    radius = spread * np.log(n_features)
     X = translation + rng.rand(n_queries, n_features).astype(dtype) * spread
     Y = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
 
@@ -1306,6 +1307,16 @@ def test_pairwise_distances_radius_neighbors(
         dist_matrix = euclidean_distances(X, Y)
     else:
         dist_matrix = cdist(X, Y, metric=metric, **metric_kwargs)
+
+    # Find a non-trivial radius using a small subsample of the dist_matrix:
+    # we want to return around expected_n_neighbors on average. Yielding too
+    # many results would make the test slow (because checking the results is
+    # expensive for large result sets), yielding 0 most of the time would make
+    # the test useless.
+    expected_n_neighbors = 10
+    sample_dists = dist_matrix[:10]
+    sample_dists.sort(axis=1)
+    radius = sample_dists[:, expected_n_neighbors].mean()
 
     # Getting the neighbors for a given radius
     neigh_indices_ref = []
