@@ -96,9 +96,11 @@ namespace manhattan {
         return HWY_DYNAMIC_DISPATCH(manhattan_dist_f64)(x,  y, size);
     }
     HWY_DLLEXPORT func32_t get_simd_manhattan_f32(){
+        hwy::GetChosenTarget().Update(hwy::SupportedTargets());
         return HWY_DYNAMIC_POINTER(manhattan_dist_f32);
     }
     HWY_DLLEXPORT func64_t get_simd_manhattan_f64(){
+        hwy::GetChosenTarget().Update(hwy::SupportedTargets());
         return HWY_DYNAMIC_POINTER(manhattan_dist_f64);
     }
 }
