@@ -1,4 +1,6 @@
 """
+This file is a copy of the scipy.sparse.csgraph._laplacian module from SciPy 1.12
+
 Laplacian of a compressed-sparse graph
 """
 

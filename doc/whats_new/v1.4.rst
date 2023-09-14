@@ -98,6 +98,11 @@ Changelog
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
+- |Fix| raise an explicit error message that sparse matrices and arrays with `np.int64`
+  indices are not supported in :func:`cluster.spectral_clustering` and
+  :class:`cluster.SpectralClustering`.
+  :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -190,8 +195,11 @@ Changelog
 :mod:`sklearn.manifold`
 .......................
 
-- |Fix| :func:`manifold.spectral_embedding` and :class:`manifold.SpectralEmbedding`
-  now correctly handles SciPy sparse arrays.
+- |Enhancement| :func:`manifold.spectral_embedding` and
+  :class:`manifold.SpectralEmbedding` now correctly handles SciPy sparse arrays.
+  Also, an explicit error message is raised if indices of type `np.int64` of sparse
+  arrays and matrices is used :func:`cluster.spectral_clustering` and
+  :class:`cluster.SpectralClustering`.
   :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.metrics`
