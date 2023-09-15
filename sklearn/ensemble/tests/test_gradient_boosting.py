@@ -99,6 +99,10 @@ def test_classification_toy(loss, global_random_seed):
 def test_classification_synthetic(loss, global_random_seed):
     # Test GradientBoostingClassifier on synthetic dataset used by
     # Hastie et al. in ESLII - Figure 10.9
+    # Note that Figure 10.9 reuses the dataset generated for figure 10.2
+    # and should have 2_000 train data points and 10_000 test data points.
+    # Here we intentionally use a smaller variant to make the test run faster,
+    # but the conclusions are still the same, despite the smaller datasets.
     X, y = datasets.make_hastie_10_2(n_samples=2000, random_state=global_random_seed)
 
     split_idx = 500
