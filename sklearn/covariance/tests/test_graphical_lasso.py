@@ -278,3 +278,20 @@ def test_graphical_lasso_cov_init_deprecation():
     emp_cov = empirical_covariance(X)
     with pytest.warns(FutureWarning, match="cov_init parameter is deprecated"):
         graphical_lasso(emp_cov, alpha=0.1, cov_init=emp_cov)
+
+
+# Parameterised test which compares the results of the graphical lasso with the actual true structure of our data
+@pytest.mark.parametrize("alpha", [1]) 
+def test_graphical_lasso_structure(alpha):
+    data = np.array([[1.0, 0.2, 0.3], [0.2, 1.0, 0.5], [0.3, 0.5, 1.0]])
+    true_structure = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+
+    estimated_structure = graphical_lasso(data, alpha=alpha)[0]
+    print(estimated_structure)
+    print(true_structure)
+
+    # Comparing the estimated structure to our true structure
+    assert np.all(estimated_structure == true_structure), "Graphical Lasso did not match the true structure."
+
+
+    
