@@ -1065,6 +1065,7 @@ class MinimalTransformer:
 def _array_api_for_tests(array_namespace, device, dtype):
     try:
         if array_namespace == "numpy.array_api":
+            # FIXME: once it is not experimental anymore
             with ignore_warnings(category=UserWarning):
                 # UserWarning: numpy.array_api submodule is still experimental.
                 array_mod = importlib.import_module(array_namespace)
