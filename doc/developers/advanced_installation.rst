@@ -431,6 +431,12 @@ in the user folder using conda:
     conda activate sklearn-dev
     pip install -v --no-use-pep517 --no-build-isolation -e .
 
+.. note::
+
+   If you installed these packages after creating and activating a new conda
+   environment, you will need to first deactivate and then reactivate the
+   environment for these changes to take effect.
+
 .. _compiler_freebsd:
 
 FreeBSD
