@@ -90,10 +90,6 @@ def test_imputers_add_indicator_sparse(imputer, marker, csr_container):
     imputer.set_params(missing_values=marker, add_indicator=True)
 
     X_trans = imputer.fit_transform(X)
-    # scipy.sparse.hstack in the imputer transform will cause the output to become
-    # coo_matrix if there is no fast path, and coo_matrix does not support slicing
-    if X_trans.format == "coo":
-        X_trans = X_trans.tocsr()
     assert_allclose_dense_sparse(X_trans[:, -4:], X_true_indicator)
     assert_array_equal(imputer.indicator_.features_, np.array([0, 1, 2, 3]))
 
