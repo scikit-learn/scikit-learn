@@ -130,7 +130,7 @@ jobs:
     # Pyodide version. For example, for Pyodide version 0.24.0, see
     # https://github.com/pyodide/pyodide/blob/0.24.0/Makefile.envs
     PYODIDE_VERSION: '0.24.0'
-    EMSCRIPTEN_VERSION: '3.1.44'
+    EMSCRIPTEN_VERSION: '3.1.45'
     PYTHON_VERSION: '3.11.3'
 
   dependsOn: [git_commit, linting]
