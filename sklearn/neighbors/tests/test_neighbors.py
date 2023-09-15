@@ -1714,7 +1714,7 @@ def test_kneighbors_brute_backend(
         X_train = np.ascontiguousarray(X_train[:, feature_sl])
         X_test = np.ascontiguousarray(X_test[:, feature_sl])
 
-    if metric in metric in PAIRWISE_BOOLEAN_FUNCTIONS:
+    if metric in PAIRWISE_BOOLEAN_FUNCTIONS:
         X_train = X_train > 0.5
         X_test = X_test > 0.5
 
