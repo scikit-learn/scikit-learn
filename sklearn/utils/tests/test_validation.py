@@ -1977,7 +1977,7 @@ def test_check_array_multiple_extensions(
 )
 @pytest.mark.parametrize("output_format", ["csr", "csc", "coo"])
 def test_check_array_downcast_indices_dtype(sparse_container, output_format):
-    """Check the consistence of the indices dtype with sparse matrices/arrays."""
+    """Check the consistency of the indices dtype with sparse matrices/arrays."""
     X = sparse_container([[0, 1], [1, 0]], dtype=np.float64)
     X_checked = check_array(X, accept_sparse=output_format)
     if output_format == "coo":
