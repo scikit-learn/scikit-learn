@@ -17,6 +17,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import column_or_1d
+from ..utils._array_api import _setdiff1d, get_namespace
 from ..utils._encode import _encode, _unique
 from ..utils._param_validation import Interval, validate_params
 from ..utils.multiclass import type_of_target, unique_labels
@@ -129,10 +130,11 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
             Labels as normalized encodings.
         """
         check_is_fitted(self)
+        xp, _ = get_namespace(y)
         y = column_or_1d(y, dtype=self.classes_.dtype, warn=True)
         # transform of empty array is empty array
         if _num_samples(y) == 0:
-            return np.array([])
+            return xp.asarray([])
 
         return _encode(y, uniques=self.classes_)
 
@@ -150,16 +152,17 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
             Original encoding.
         """
         check_is_fitted(self)
+        xp, _ = get_namespace(y)
         y = column_or_1d(y, warn=True)
         # inverse transform of empty array is empty array
         if _num_samples(y) == 0:
-            return np.array([])
+            return xp.asarray([])
 
-        diff = np.setdiff1d(y, np.arange(len(self.classes_)))
-        if len(diff):
+        diff = _setdiff1d(ar1=y, ar2=xp.arange(self.classes_.shape[0]), xp=xp)
+        if diff.shape[0]:
             raise ValueError("y contains previously unseen labels: %s" % str(diff))
-        y = np.asarray(y)
-        return self.classes_[y]
+        y = xp.asarray(y)
+        return xp.take(self.classes_, y, axis=0)
 
     def _more_tags(self):
         return {"X_types": ["1dlabels"]}

@@ -232,6 +232,12 @@ class _ArrayAPIWrapper:
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self._namespace)
 
+    def searchsorted(self, a, v, *, side="left", sorter=None):
+        a = _convert_to_numpy(a, xp=self._namespace)
+        v = _convert_to_numpy(v, xp=self._namespace)
+        indices = numpy.searchsorted(a, v, side=side, sorter=sorter)
+        return self._namespace.asarray(indices)
+
 
 def _check_device_cpu(device):  # noqa
     if device not in {"cpu", None}:
@@ -329,6 +335,11 @@ class _NumPyAPIWrapper:
 
     def unique_values(self, x):
         return numpy.unique(x)
+
+    def unique_all(self, x):
+        return numpy.unique(
+            x, return_index=True, return_inverse=True, return_counts=True
+        )
 
     def concat(self, arrays, *, axis=None):
         return numpy.concatenate(arrays, axis=axis)
@@ -595,3 +606,84 @@ def _estimator_with_converted_arrays(estimator, converter):
 def _atol_for_type(dtype):
     """Return the absolute tolerance for a given dtype."""
     return numpy.finfo(dtype).eps * 100
+
+
+def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
+    """Checks whether each element of an array is also present in a
+    second array.
+
+    Returns a boolean array the same length as `ar1` that is True
+    where an element of `ar1` is in `ar2` and False otherwise
+    """
+    if not assume_unique:
+        ar1, rev_idx = xp.unique_inverse(ar1)
+        ar2 = xp.unique_values(ar2)
+
+    ar = xp.concat((ar1, ar2))
+    # We need this to be a stable sort.
+    order = ar.argsort(stable=True)
+    sar = ar[order]
+    if invert:
+        bool_ar = sar[1:] != sar[:-1]
+    else:
+        bool_ar = sar[1:] == sar[:-1]
+    flag = xp.concat((bool_ar, xp.asarray([invert])))
+    ret = xp.empty(ar.shape, dtype=xp.bool)
+    ret[order] = flag
+
+    if assume_unique:
+        return ret[: len(ar1)]
+    else:
+        return ret[rev_idx]
+
+
+def _setdiff1d(ar1, ar2, xp, assume_unique=False):
+    """Find the set difference of two arrays.
+
+    Return the unique values in `ar1` that are not in `ar2`.
+    """
+    if _is_numpy_namespace(xp):
+        return xp.asarray(
+            numpy.setdiff1d(
+                ar1=ar1,
+                ar2=ar2,
+                assume_unique=assume_unique,
+            )
+        )
+
+    if assume_unique:
+        ar1 = xp.reshape(xp.asarray(ar1), (-1,))
+    else:
+        ar1 = xp.unique_values(ar1)
+        ar2 = xp.unique_values(ar2)
+    return ar1[_in1d(ar1=ar1, ar2=ar2, xp=xp, assume_unique=True, invert=True)]
+
+
+def _isin(element, test_elements, xp, assume_unique=False, invert=False):
+    """Calculates ``element in test_elements``, broadcasting over `element`
+    only.
+
+    Returns a boolean array of the same shape as `element` that is True
+    where an element of `element` is in `test_elements` and False otherwise.
+    """
+    if _is_numpy_namespace(xp):
+        return xp.asarray(
+            numpy.isin(
+                element=element,
+                test_elements=test_elements,
+                assume_unique=assume_unique,
+                invert=invert,
+            )
+        )
+
+    element = xp.asarray(element)
+    return xp.reshape(
+        _in1d(
+            ar1=element,
+            ar2=test_elements,
+            xp=xp,
+            assume_unique=assume_unique,
+            invert=invert,
+        ),
+        element.shape,
+    )

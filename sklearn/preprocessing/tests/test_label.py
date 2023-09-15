@@ -12,7 +12,12 @@ from sklearn.preprocessing._label import (
     label_binarize,
 )
 from sklearn.utils import _to_object_array
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._testing import assert_array_equal, ignore_warnings
+from sklearn.utils.estimator_checks import (
+    _get_check_estimator_ids,
+    check_array_api_input_and_values,
+)
 from sklearn.utils.fixes import (
     COO_CONTAINERS,
     CSC_CONTAINERS,
@@ -697,3 +702,23 @@ def test_label_encoders_do_not_have_set_output(encoder):
     y_encoded_with_kwarg = encoder.fit_transform(y=["a", "b", "c"])
     y_encoded_positional = encoder.fit_transform(["a", "b", "c"])
     assert_array_equal(y_encoded_with_kwarg, y_encoded_positional)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "check",
+    [check_array_api_input_and_values],
+    ids=_get_check_estimator_ids,
+)
+@pytest.mark.parametrize(
+    "estimator",
+    [LabelEncoder()],
+    ids=_get_check_estimator_ids,
+)
+def test_label_encoder_array_api_compliance(
+    estimator, check, array_namespace, device, dtype
+):
+    name = estimator.__class__.__name__
+    check(name, estimator, array_namespace, device=device, dtype=dtype)
