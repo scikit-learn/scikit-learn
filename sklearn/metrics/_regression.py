@@ -453,8 +453,8 @@ def mean_squared_error(
 
         .. deprecated:: 1.4
            `squared` is deprecated in 1.4 and will be removed in 1.6.
-           Use `root_mean_squared_error` instead to calculate
-           the root mean squared error.
+           Use :func:`~sklearn.metrics.root_mean_squared_error`
+           instead to calculate the root mean squared error.
 
     Returns
     -------
@@ -523,6 +523,10 @@ def root_mean_squared_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
     """Root mean squared error regression loss.
+
+    Read more in the :ref:`User Guide <mean_squared_error>`.
+
+    .. versionadded:: 1.4
 
     Parameters
     ----------
@@ -625,14 +629,15 @@ def mean_squared_log_error(
 
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
+
     squared : bool, default=True
         If True returns MSLE (mean squared log error) value.
         If False returns RMSLE (root mean squared log error) value.
 
         .. deprecated:: 1.4
            `squared` is deprecated in 1.4 and will be removed in 1.6.
-           Use `root_mean_squared_log_error` instead to calculate
-           the root mean squared error.
+           Use :func:`~sklearn.metrics.root_mean_squared_log_error`
+           instead to calculate the root mean squared logarithmic error.
 
     Returns
     -------
@@ -705,6 +710,10 @@ def root_mean_squared_log_error(
 ):
     """Root mean squared logarithmic error regression loss.
 
+    Read more in the :ref:`User Guide <mean_squared_log_error>`.
+
+    .. versionadded:: 1.4
+
     Parameters
     ----------
     y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
@@ -743,9 +752,7 @@ def root_mean_squared_log_error(
     >>> root_mean_squared_log_error(y_true, y_pred)
     0.199...
     """
-    y_type, y_true, y_pred, multioutput = _check_reg_targets(
-        y_true, y_pred, multioutput
-    )
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     check_consistent_length(y_true, y_pred, sample_weight)
 
     if (y_true < 0).any() or (y_pred < 0).any():

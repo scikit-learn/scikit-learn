@@ -625,35 +625,13 @@ def test_pinball_loss_relation_with_mae():
 
 
 # TODO(1.6): remove this test
-def test_mean_squared_error_deprecation():
-    # check the deprecation warning of mean_squared_error
-    depr_msg = (
-        "'squared' is deprecated in version 1.4 and "
-        "will be removed in 1.6. To calculate the "
-        "root mean squared error, use the function"
-        "'root_mean_squared_error'."
-    )
-    y_true = np.arange(10)
-    y_pred = y_true + 1
-
+@pytest.mark.parametrize("metric", [mean_squared_error, mean_squared_log_error])
+def test_mean_squared_deprecation_squared(metric):
+    """Check the deprecation warning of the squared parameter"""
+    depr_msg = "'squared' is deprecated in version 1.4 and will be removed in 1.6."
+    y_true, y_pred = np.arange(10), np.arange(1, 11)
     with pytest.warns(FutureWarning, match=depr_msg):
-        mean_squared_error(y_true, y_pred, squared=False)
-
-
-# TODO(1.6): remove this test
-def test_mean_squared_log_error_deprecation():
-    # check the deprecation warning of mean_squared_log_error
-    depr_msg = (
-        "'squared' is deprecated in version 1.4 and "
-        "will be removed in 1.6. To calculate the "
-        "root mean squared logarithmic error, use the function"
-        "'root_mean_squared_log_error'."
-    )
-    y_true = np.arange(10)
-    y_pred = y_true + 1
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        mean_squared_log_error(y_true, y_pred, squared=False)
+        metric(y_true, y_pred, squared=False)
 
 
 # TODO(1.6): remove this test

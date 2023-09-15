@@ -64,6 +64,7 @@ from . import (
     recall_score,
     roc_auc_score,
     root_mean_squared_error,
+    root_mean_squared_log_error,
     top_k_accuracy_score,
 )
 from .cluster import (
@@ -760,6 +761,9 @@ neg_median_absolute_error_scorer = make_scorer(
 )
 neg_root_mean_squared_error_scorer = make_scorer(
     root_mean_squared_error, greater_is_better=False
+)
+neg_root_mean_squared_log_error_scorer = make_scorer(
+    root_mean_squared_log_error, greater_is_better=False
 )
 neg_mean_poisson_deviance_scorer = make_scorer(
     mean_poisson_deviance, greater_is_better=False
