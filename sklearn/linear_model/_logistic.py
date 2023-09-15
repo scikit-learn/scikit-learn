@@ -306,17 +306,6 @@ def _logistic_regression_path(
 
     if sample_weight is not None or class_weight is not None:
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype, copy=True)
-    # IMPORTANT NOTE:
-    # All solvers relying on LinearModelLoss need to scale the penalty with n_samples
-    # or the sum of sample weights as the here implemented logistic regression
-    # objective is (unfortunately)
-    #     C * sum(pointwise_loss) + penalty
-    # instead of (as LinearModelLoss does)
-    #     mean(pointwise_loss) + 1/C * penalty
-    if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
-        # This needs to be calculated before sample_weight is multiplied by
-        # class_weight.
-        sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
 
     # If class_weights is a dict (provided by the user), the weights
     # are assigned to the original labels. If it is "balanced", then
@@ -368,6 +357,19 @@ def _logistic_regression_path(
         w0 = np.zeros(
             (classes.size, n_features + int(fit_intercept)), order="F", dtype=X.dtype
         )
+
+    # IMPORTANT NOTE:
+    # All solvers relying on LinearModelLoss need to scale the penalty with n_samples
+    # or the sum of sample weights because the implemented logistic regression
+    # objective here is (unfortunately)
+    #     C * sum(pointwise_loss) + penalty
+    # instead of (as LinearModelLoss does)
+    #     mean(pointwise_loss) + 1/C * penalty
+    if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
+        # This needs to be calculated after sample_weight is multiplied by
+        # class_weight. It is even tested that passing class_weight is equivalent to
+        # passing sample_weights according to class_weight.
+        sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
 
     if coef is not None:
         # it must work both giving the bias term and not

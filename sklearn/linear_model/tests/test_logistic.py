@@ -754,28 +754,6 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
     clf_lbfgs = LogisticRegressionCV(solver="lbfgs", **params)
     clf_lbfgs.fit(X, y)
 
-    from sklearn.linear_model._linear_loss import LinearModelLoss
-    from sklearn._loss.loss import HalfMultinomialLoss, HalfBinomialLoss
-
-    if n_classes > 2:
-        loss = LinearModelLoss(
-            base_loss=HalfMultinomialLoss(n_classes=n_classes),
-            fit_intercept=False,
-        )
-    else:
-        loss = LinearModelLoss(
-            base_loss=HalfBinomialLoss(),
-            fit_intercept=False,
-        )
-    l_lbfgs = loss.loss(
-        coef=clf_lbfgs.coef_.squeeze(),
-        X=X,
-        y=LabelEncoder().fit_transform(y).astype(float),
-        sample_weight=None,
-        l2_reg_strength=1 / 20,
-    )
-    print(f"loss lbfgs = {l_lbfgs} C_={clf_lbfgs.C_}")
-
     for solver in set(SOLVERS) - set(["lbfgs"]):
         clf = LogisticRegressionCV(solver=solver, **params)
         if solver in ("sag", "saga"):
@@ -783,15 +761,6 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
                 tol=1e-18, max_iter=10000, random_state=global_random_seed + 1
             )
         clf.fit(X, y)
-
-        l_solver = loss.loss(
-            coef=clf.coef_.squeeze(),
-            X=X,
-            y=LabelEncoder().fit_transform(y).astype(float),
-            sample_weight=None,
-            l2_reg_strength=1 / 20,
-        )
-        print(f"loss {solver} = {l_solver} C_={clf.C_}")
 
         assert_allclose(
             clf.coef_, clf_lbfgs.coef_, rtol=1e-3, err_msg=f"{solver} vs lbfgs"
@@ -820,7 +789,7 @@ def test_logistic_regression_sample_weights():
 
         # Test that sample weights work the same with the lbfgs,
         # newton-cg, newton-cholesky and 'sag' solvers
-        clf_sw_lbfgs = LR(**kw)
+        clf_sw_lbfgs = LR(**kw, tol=1e-5)
         clf_sw_lbfgs.fit(X, y, sample_weight=sample_weight)
         for solver in set(SOLVERS) - set(("lbfgs", "saga")):
             clf_sw = LR(solver=solver, tol=1e-10 if solver == "sag" else 1e-5, **kw)
@@ -946,9 +915,9 @@ def test_logistic_regression_multinomial():
 
     # 'lbfgs' is used as a referenced
     solver = "lbfgs"
-    ref_i = LogisticRegression(solver=solver, multi_class="multinomial")
+    ref_i = LogisticRegression(solver=solver, multi_class="multinomial", tol=1e-6)
     ref_w = LogisticRegression(
-        solver=solver, multi_class="multinomial", fit_intercept=False
+        solver=solver, multi_class="multinomial", fit_intercept=False, tol=1e-6
     )
     ref_i.fit(X, y)
     ref_w.fit(X, y)
@@ -976,9 +945,9 @@ def test_logistic_regression_multinomial():
         assert clf_w.coef_.shape == (n_classes, n_features)
 
         # Compare solutions between lbfgs and the other solvers
-        assert_allclose(ref_i.coef_, clf_i.coef_, rtol=1e-2)
+        assert_allclose(ref_i.coef_, clf_i.coef_, rtol=1e-3)
         assert_allclose(ref_w.coef_, clf_w.coef_, rtol=1e-2)
-        assert_allclose(ref_i.intercept_, clf_i.intercept_, rtol=1e-2)
+        assert_allclose(ref_i.intercept_, clf_i.intercept_, rtol=1e-3)
 
     # Test that the path give almost the same results. However since in this
     # case we take the average of the coefs after fitting across all the
@@ -988,8 +957,8 @@ def test_logistic_regression_multinomial():
             solver=solver, max_iter=2000, tol=1e-6, multi_class="multinomial", Cs=[1.0]
         )
         clf_path.fit(X, y)
-        assert_allclose(clf_path.coef_, ref_i.coef_, rtol=2e-2)
-        assert_allclose(clf_path.intercept_, ref_i.intercept_, rtol=2e-2)
+        assert_allclose(clf_path.coef_, ref_i.coef_, rtol=1e-2)
+        assert_allclose(clf_path.intercept_, ref_i.intercept_, rtol=1e-2)
 
 
 def test_liblinear_decision_function_zero():
