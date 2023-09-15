@@ -16,9 +16,9 @@ wget https://github.com/lesteve/pyodide/raw/pywasmcross-include/pyodide-build/py
 PYODIDE_BUILD_DIR=$(python -c 'import os; import pyodide_build; print(os.path.dirname(pyodide_build.__file__))')
 echo ${PYODIDE_BUILD_DIR}
 ls ${PYODIDE_BUILD_DIR}
-diff -u pywasmcross.py ${PYODIDE_BUILD_DIR}/pywasmcross.py
+diff -u ${PYODIDE_BUILD_DIR}/pywasmcross.py pywasmcross.py || echo different && echo same
 cp -f pywasmcross.py ${PYODIDE_BUILD_DIR}/pywasmcross.py
-diff -u pywasmcross.py ${PYODIDE_BUILD_DIR}/pywasmcross.py
+diff -u ${PYODIDE_BUILD_DIR}/pywasmcross.py pywasmcross.py || echo different && echo same
 
 pyodide build
 
