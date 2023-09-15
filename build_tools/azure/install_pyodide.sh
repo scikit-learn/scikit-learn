@@ -11,6 +11,13 @@ cd -
 
 pip install pyodide-build==$PYODIDE_VERSION pyodide-cli
 
+# TODO: temporary fix for pywasmcross.py taken from https://github.com/pyodide/pyodide/pull/4136
+wget https://github.com/lesteve/pyodide/raw/pywasmcross-include/pyodide-build/pyodide_build/pywasmcross.py
+PYODIDE_BUILD_DIR=$(python -c 'import os; import pyodide_build; print(os.path.dirname(pyodide_build.__file__)))
+diff -u pywasmcross.py ${PYODIDE_BUILD_DIR}/pywasmcross.py
+cp -f pywasmcross.py ${PYODIDE_BUILD_DIR}/pywasmcross.py
+diff -u pywasmcross.py ${PYODIDE_BUILD_DIR}/pywasmcross.py
+
 pyodide build
 
 ls -ltrh dist
