@@ -88,7 +88,8 @@ class Pipeline(_BaseComposition):
         List of (name of step, transformer implementing `transform`) tuples
         that are to be chained in sequential order. To be compatible with the
         scikit-learn API, all steps must define `fit`. All non-last steps must
-        also define `transform`.
+        also define `transform`. See :ref:`Combining Estimators
+        <combining_estimators>` for more details.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. The last step
@@ -418,9 +419,8 @@ class Pipeline(_BaseComposition):
     def fit(self, X, y=None, **params):
         """Fit the model.
 
-        Fit all the transformers sequentially to the input data and transform
-        it. Finally, fit the final estimator using the transformed data from
-        the previous steps.
+        Fit all the transformers one after the other and sequentially transform the
+        data. Finally, fit the transformed data using the final estimator.
 
         Parameters
         ----------
@@ -483,8 +483,9 @@ class Pipeline(_BaseComposition):
     def fit_transform(self, X, y=None, **params):
         """Fit the model and transform with the final estimator.
 
-        Fit all the transformers sequentially to the input data and transform
-        it. Only valid if the final estimator implements `fit_transform`.
+        Fit all the transformers one after the other and sequentially transform
+        the data. Only valid if the final estimator either implements
+        `fit_transform` or `fit` and `transform`.
 
         Parameters
         ----------
