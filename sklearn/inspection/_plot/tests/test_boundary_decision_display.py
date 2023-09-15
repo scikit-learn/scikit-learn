@@ -1,21 +1,19 @@
 import warnings
 
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 
-from sklearn.base import BaseEstimator
-from sklearn.base import ClassifierMixin
-from sklearn.datasets import make_classification
-from sklearn.linear_model import LogisticRegression
-from sklearn.datasets import load_iris
-from sklearn.datasets import make_multilabel_classification
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.tree import DecisionTreeClassifier
-
+from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.datasets import (
+    load_iris,
+    make_classification,
+    make_multilabel_classification,
+)
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.inspection._plot.decision_boundary import _check_boundary_response_method
-
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(

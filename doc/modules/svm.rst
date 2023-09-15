@@ -60,14 +60,19 @@ capable of performing binary and multi-class classification on a dataset.
    :align: center
 
 
-:class:`SVC` and :class:`NuSVC` are similar methods, but accept
-slightly different sets of parameters and have different mathematical
-formulations (see section :ref:`svm_mathematical_formulation`). On the
-other hand, :class:`LinearSVC` is another (faster) implementation of Support
-Vector Classification for the case of a linear kernel. Note that
-:class:`LinearSVC` does not accept parameter ``kernel``, as this is
-assumed to be linear. It also lacks some of the attributes of
-:class:`SVC` and :class:`NuSVC`, like ``support_``.
+:class:`SVC` and :class:`NuSVC` are similar methods, but accept slightly
+different sets of parameters and have different mathematical formulations (see
+section :ref:`svm_mathematical_formulation`). On the other hand,
+:class:`LinearSVC` is another (faster) implementation of Support Vector
+Classification for the case of a linear kernel. It also
+lacks some of the attributes of :class:`SVC` and :class:`NuSVC`, like
+`support_`. :class:`LinearSVC` uses `squared_hinge` loss and due to its
+implementation in `liblinear` it also regularizes the intercept, if considered.
+This effect can however be reduced by carefully fine tuning its
+`intercept_scaling` parameter, which allows the intercept term to have a
+different regularization behavior compared to the other features. The
+classification results and score can therefore differ from the other two
+classifiers.
 
 As other classifiers, :class:`SVC`, :class:`NuSVC` and
 :class:`LinearSVC` take as input two arrays: an array `X` of shape
@@ -149,6 +154,10 @@ multi-class strategy, thus training `n_classes` models.
 See :ref:`svm_mathematical_formulation` for a complete description of
 the decision function.
 
+|details-start|
+**Details on multi-class strategies**
+|details-split|
+
 Note that the :class:`LinearSVC` also implements an alternative multi-class
 strategy, the so-called multi-class SVM formulated by Crammer and Singer
 [#8]_, by using the option ``multi_class='crammer_singer'``. In practice,
@@ -198,6 +207,8 @@ Then ``dual_coef_`` looks like this:
 |Coefficients                                                              |Coefficients                                     |Coefficients                                     |
 |for SVs of class 0                                                        |for SVs of class 1                               |for SVs of class 2                               |
 +--------------------------------------------------------------------------+-------------------------------------------------+-------------------------------------------------+
+
+|details-end|
 
 .. topic:: Examples:
 
@@ -308,10 +319,15 @@ target.
 
 There are three different implementations of Support Vector Regression:
 :class:`SVR`, :class:`NuSVR` and :class:`LinearSVR`. :class:`LinearSVR`
-provides a faster implementation than :class:`SVR` but only considers
-the linear kernel, while :class:`NuSVR` implements a slightly different
-formulation than :class:`SVR` and :class:`LinearSVR`. See
-:ref:`svm_implementation_details` for further details.
+provides a faster implementation than :class:`SVR` but only considers the
+linear kernel, while :class:`NuSVR` implements a slightly different formulation
+than :class:`SVR` and :class:`LinearSVR`. Due to its implementation in
+`liblinear` :class:`LinearSVR` also regularizes the intercept, if considered.
+This effect can however be reduced by carefully fine tuning its
+`intercept_scaling` parameter, which allows the intercept term to have a
+different regularization behavior compared to the other features. The
+classification results and score can therefore differ from the other two
+classifiers. See :ref:`svm_implementation_details` for further details.
 
 As with classification classes, the fit method will take as
 argument vectors X, y, only that in this case y is expected to have
@@ -505,7 +521,6 @@ is advised to use :class:`~sklearn.model_selection.GridSearchCV` with
  * :ref:`sphx_glr_auto_examples_svm_plot_rbf_parameters.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
 
-
 Custom Kernels
 --------------
 
@@ -523,8 +538,9 @@ classifiers, except that:
       use of ``fit()`` and ``predict()`` you will have unexpected results.
 
 
-Using Python functions as kernels
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+|details-start|
+**Using Python functions as kernels**
+|details-split|  
 
 You can use your own defined kernels by passing a function to the
 ``kernel`` parameter.
@@ -542,13 +558,13 @@ instance that will use that kernel::
     ...     return np.dot(X, Y.T)
     ...
     >>> clf = svm.SVC(kernel=my_kernel)
+  
+|details-end|
 
-.. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_svm_plot_custom_kernel.py`.
-
-Using the Gram matrix
-~~~~~~~~~~~~~~~~~~~~~
+|details-start|
+**Using the Gram matrix**
+|details-split|  
 
 You can pass pre-computed kernels by using the ``kernel='precomputed'``
 option. You should then pass Gram matrix instead of X to the `fit` and
@@ -571,6 +587,11 @@ test vectors must be provided:
     >>> clf.predict(gram_test)
     array([0, 1, 0])
 
+|details-end|
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_svm_plot_custom_kernel.py`.
 
 .. _svm_mathematical_formulation:
 
@@ -667,8 +688,9 @@ term :math:`b`
     estimator used is :class:`~sklearn.linear_model.Ridge` regression,
     the relation between them is given as :math:`C = \frac{1}{alpha}`.
 
-LinearSVC
----------
+|details-start|
+**LinearSVC**
+|details-split|
 
 The primal problem can be equivalently formulated as
 
@@ -683,10 +705,13 @@ does not involve inner products between samples, so the famous kernel trick
 cannot be applied. This is why only the linear kernel is supported by
 :class:`LinearSVC` (:math:`\phi` is the identity function).
 
+|details-end|
+
 .. _nu_svc:
 
-NuSVC
------
+|details-start|
+**NuSVC**
+|details-split|
 
 The :math:`\nu`-SVC formulation [#7]_ is a reparameterization of the
 :math:`C`-SVC and therefore mathematically equivalent.
@@ -699,6 +724,7 @@ to a sample that lies on the wrong side of its margin boundary: it is either
 misclassified, or it is correctly classified but does not lie beyond the
 margin.
 
+|details-end|
 
 SVR
 ---
@@ -747,8 +773,9 @@ which holds the difference :math:`\alpha_i - \alpha_i^*`, ``support_vectors_`` w
 holds the support vectors, and ``intercept_`` which holds the independent
 term :math:`b`
 
-LinearSVR
----------
+|details-start|
+**LinearSVR**
+|details-split|
 
 The primal problem can be equivalently formulated as
 
@@ -759,6 +786,8 @@ The primal problem can be equivalently formulated as
 where we make use of the epsilon-insensitive loss, i.e. errors of less than
 :math:`\varepsilon` are ignored. This is the form that is directly optimized
 by :class:`LinearSVR`.
+
+|details-end|
 
 .. _svm_implementation_details:
 

@@ -1,6 +1,6 @@
+import argparse
 import os
 import subprocess
-import argparse
 
 
 def get_commit_message():

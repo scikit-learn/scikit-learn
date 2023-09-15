@@ -100,8 +100,9 @@ categorical_features = X_train.columns.drop(numerical_features)
 # We plot the average number of bike rentals by grouping the data by season and
 # by year.
 from itertools import product
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 days = ("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
 hours = tuple(range(24))
@@ -157,8 +158,7 @@ for ax, (idx, df) in zip(axs, average_bike_rentals.groupby("year")):
 # numerical features and encode the categorical features with a
 # :class:`~sklearn.preprocessing.OneHotEncoder`.
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import QuantileTransformer
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, QuantileTransformer
 
 mlp_preprocessor = ColumnTransformer(
     transformers=[
@@ -203,6 +203,7 @@ hgbdt_preprocessor
 # Let's fit a :class:`~sklearn.neural_network.MLPRegressor` and compute
 # single-variable partial dependence plots.
 from time import time
+
 from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import make_pipeline
 
@@ -242,6 +243,7 @@ print(f"Test R2 score: {mlp_model.score(X_test, y_test):.2f}")
 #
 # We will plot the averaged partial dependence.
 import matplotlib.pyplot as plt
+
 from sklearn.inspection import PartialDependenceDisplay
 
 common_params = {
@@ -529,10 +531,9 @@ _ = display.figure_.suptitle(
 #
 # Let's make the same partial dependence plot for the 2 features interaction,
 # this time in 3 dimensions.
-import numpy as np
-
 # unused but required import for doing 3d projections with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401
+import numpy as np
 
 from sklearn.inspection import partial_dependence
 

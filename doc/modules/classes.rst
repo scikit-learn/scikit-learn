@@ -36,6 +36,7 @@ Base classes
    base.TransformerMixin
    base.MetaEstimatorMixin
    base.OneToOneFeatureMixin
+   base.OutlierMixin
    base.ClassNamePrefixFeaturesOutMixin
    feature_selection.SelectorMixin
 
@@ -1249,6 +1250,7 @@ Visualization
    :template: display_only_from_estimator.rst
 
    model_selection.LearningCurveDisplay
+   model_selection.ValidationCurveDisplay
 
 .. _multiclass_ref:
 

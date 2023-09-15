@@ -37,21 +37,18 @@ For an example of using this dataset, see
 #
 # License: BSD 3 clause
 
+import logging
 from io import BytesIO
 from os import makedirs, remove
 from os.path import exists
 
-import logging
+import joblib
 import numpy as np
 
-import joblib
-
-from . import get_data_home
-from ._base import _fetch_remote
-from ._base import RemoteFileMetadata
 from ..utils import Bunch
-from ._base import _pkl_filepath
 from ..utils._param_validation import validate_params
+from . import get_data_home
+from ._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath
 
 # The original data can be found at:
 # https://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
@@ -138,7 +135,10 @@ def construct_grids(batch):
     return (xgrid, ygrid)
 
 
-@validate_params({"data_home": [str, None], "download_if_missing": ["boolean"]})
+@validate_params(
+    {"data_home": [str, None], "download_if_missing": ["boolean"]},
+    prefer_skip_nested_validation=True,
+)
 def fetch_species_distributions(*, data_home=None, download_if_missing=True):
     """Loader for species distribution dataset from Phillips et. al. (2006).
 

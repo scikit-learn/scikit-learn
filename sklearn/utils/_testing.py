@@ -10,53 +10,52 @@
 #          Giorgio Patrini
 #          Thierry Guillemot
 # License: BSD 3 clause
+import atexit
+import contextlib
+import functools
+import importlib
+import inspect
 import os
 import os.path as op
-import inspect
-import warnings
-import sys
-import functools
-import tempfile
-from subprocess import check_output, STDOUT, CalledProcessError
-from subprocess import TimeoutExpired
 import re
-import contextlib
-from collections.abc import Iterable
-from collections.abc import Sequence
-
-import scipy as sp
+import shutil
+import sys
+import tempfile
+import unittest
+import warnings
+from collections.abc import Iterable, Sequence
 from functools import wraps
 from inspect import signature
-
-import shutil
-import atexit
-import unittest
+from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
 from unittest import TestCase
 
-from numpy.testing import assert_allclose as np_assert_allclose
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_approx_equal
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_less
-import numpy as np
 import joblib
+import numpy as np
+import scipy as sp
+from numpy.testing import assert_allclose as np_assert_allclose
+from numpy.testing import (
+    assert_almost_equal,
+    assert_approx_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_less,
+    assert_no_warnings,
+)
 
 import sklearn
 from sklearn.utils import (
-    IS_PYPY,
     _IS_32BIT,
+    IS_PYPY,
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils._array_api import _check_array_api_dispatch
+from sklearn.utils.fixes import parse_version, sp_version, threadpool_info
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
     check_is_fitted,
     check_X_y,
 )
-from sklearn.utils.fixes import threadpool_info
-
 
 __all__ = [
     "assert_raises",
@@ -68,6 +67,7 @@ __all__ = [
     "assert_approx_equal",
     "assert_allclose",
     "assert_run_python_script",
+    "assert_no_warnings",
     "SkipTest",
 ]
 
@@ -81,32 +81,6 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
-
-
-# To remove when we support numpy 1.7
-def assert_no_warnings(func, *args, **kw):
-    """
-    Parameters
-    ----------
-    func
-    *args
-    **kw
-    """
-    # very important to avoid uncontrolled state propagation
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-
-        result = func(*args, **kw)
-        if hasattr(np, "FutureWarning"):
-            # Filter out numpy-specific warnings in numpy >= 1.9
-            w = [e for e in w if e.category is not np.VisibleDeprecationWarning]
-
-        if len(w) > 0:
-            raise AssertionError(
-                "Got warnings when calling %s: [%s]"
-                % (func.__name__, ", ".join(str(warning) for warning in w))
-            )
-    return result
 
 
 def ignore_warnings(obj=None, category=Warning):
@@ -800,7 +774,9 @@ def assert_run_python_script(source_code, timeout=60):
         os.unlink(source_file)
 
 
-def _convert_container(container, constructor_name, columns_name=None, dtype=None):
+def _convert_container(
+    container, constructor_name, columns_name=None, dtype=None, minversion=None
+):
     """Convert a given container to a specific array-like with a dtype.
 
     Parameters
@@ -816,6 +792,8 @@ def _convert_container(container, constructor_name, columns_name=None, dtype=Non
     dtype : dtype, default=None
         Force the dtype of the container. Does not apply to `"slice"`
         container.
+    minversion : str, default=None
+        Minimum version for package to install.
 
     Returns
     -------
@@ -836,20 +814,42 @@ def _convert_container(container, constructor_name, columns_name=None, dtype=Non
     elif constructor_name == "sparse":
         return sp.sparse.csr_matrix(container, dtype=dtype)
     elif constructor_name == "dataframe":
-        pd = pytest.importorskip("pandas")
+        pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
+    elif constructor_name == "pyarrow":
+        pa = pytest.importorskip("pyarrow", minversion=minversion)
+        array = np.asarray(container)
+        if columns_name is None:
+            columns_name = [f"col{i}" for i in range(array.shape[1])]
+        data = {name: array[:, i] for i, name in enumerate(columns_name)}
+        return pa.Table.from_pydict(data)
+    elif constructor_name == "polars":
+        pl = pytest.importorskip("polars", minversion=minversion)
+        return pl.DataFrame(container, schema=columns_name)
     elif constructor_name == "series":
-        pd = pytest.importorskip("pandas")
+        pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Series(container, dtype=dtype)
     elif constructor_name == "index":
-        pd = pytest.importorskip("pandas")
+        pd = pytest.importorskip("pandas", minversion=minversion)
         return pd.Index(container, dtype=dtype)
     elif constructor_name == "slice":
         return slice(container[0], container[1])
     elif constructor_name == "sparse_csr":
         return sp.sparse.csr_matrix(container, dtype=dtype)
+    elif constructor_name == "sparse_csr_array":
+        if sp_version >= parse_version("1.8"):
+            return sp.sparse.csr_array(container, dtype=dtype)
+        raise ValueError(
+            f"sparse_csr_array is only available with scipy>=1.8.0, got {sp_version}"
+        )
     elif constructor_name == "sparse_csc":
         return sp.sparse.csc_matrix(container, dtype=dtype)
+    elif constructor_name == "sparse_csc_array":
+        if sp_version >= parse_version("1.8"):
+            return sp.sparse.csc_array(container, dtype=dtype)
+        raise ValueError(
+            f"sparse_csc_array is only available with scipy>=1.8.0, got {sp_version}"
+        )
 
 
 def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
@@ -1060,3 +1060,52 @@ class MinimalTransformer:
 
     def fit_transform(self, X, y=None):
         return self.fit(X, y).transform(X, y)
+
+
+def _array_api_for_tests(array_namespace, device, dtype):
+    try:
+        array_mod = importlib.import_module(array_namespace)
+    except ModuleNotFoundError:
+        raise SkipTest(
+            f"{array_namespace} is not installed: not checking array_api input"
+        )
+    try:
+        import array_api_compat  # noqa
+    except ImportError:
+        raise SkipTest(
+            "array_api_compat is not installed: not checking array_api input"
+        )
+
+    # First create an array using the chosen array module and then get the
+    # corresponding (compatibility wrapped) array namespace based on it.
+    # This is because `cupy` is not the same as the compatibility wrapped
+    # namespace of a CuPy array.
+    xp = array_api_compat.get_namespace(array_mod.asarray(1))
+    if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
+        raise SkipTest("PyTorch test requires cuda, which is not available")
+    elif array_namespace == "torch" and device == "mps":
+        if os.getenv("PYTORCH_ENABLE_MPS_FALLBACK") != "1":
+            # For now we need PYTORCH_ENABLE_MPS_FALLBACK=1 for all estimators to work
+            # when using the MPS device.
+            raise SkipTest(
+                "Skipping MPS device test because PYTORCH_ENABLE_MPS_FALLBACK is not "
+                "set."
+            )
+        if not xp.has_mps:
+            if not xp.backends.mps.is_built():
+                raise SkipTest(
+                    "MPS is not available because the current PyTorch install was not "
+                    "built with MPS enabled."
+                )
+            else:
+                raise SkipTest(
+                    "MPS is not available because the current MacOS version is not"
+                    " 12.3+ and/or you do not have an MPS-enabled device on this"
+                    " machine."
+                )
+    elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
+        import cupy
+
+        if cupy.cuda.runtime.getDeviceCount() == 0:
+            raise SkipTest("CuPy test requires cuda, which is not available")
+    return xp, device, dtype

@@ -147,6 +147,61 @@ div.clearer {
   clear: both;
 }
 
+/* details / summary */
+
+div.sk-page-content details {
+    margin: 4ex 0pt;
+}
+
+div.sk-page-content summary.btn {
+    display: list-item;
+    padding: 6px 20px;
+    border: 1pt solid #999;
+}
+
+div.sk-page-content details div.card {
+    padding: 0pt .5ex;
+    margin: 1ex 0pt;
+    border: 1px solid #e9ecef;
+    border-left-width: .25rem;
+    border-radius: .25rem;
+    background: rgb(250, 252, 253)
+}
+
+div.sk-page-content summary {
+  position: relative; /* Needed for the tooltips */
+}
+
+div.sk-page-content summary .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 150%;
+  left: 50%;
+  margin-left: -60px;
+}
+
+div.sk-page-content summary .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: black transparent transparent transparent;
+}
+
+div.sk-page-content summary:hover .tooltiptext {
+  visibility: visible;
+}
+
 /* Button */
 
 .sk-btn-primary {
@@ -606,10 +661,17 @@ div.sk-sidebar-global-toc ul ul {
 div.sk-page-content h1 {
   background-color: #cde8ef;
   padding: 0.5rem;
+  margin-top: calc(max(1rem, 1vh));
   border-radius: 0 1rem;
   text-align: center;
   font-size: 2rem;
   word-wrap: break-word;
+}
+
+/* General sibling selector: does not apply to first h1, to avoid gap in
+ * top of page */
+div.sk-page-content ~ h1 {
+    margin-top: calc(max(2.5rem, 1vh));
 }
 
 div.sk-page-content h2 {
@@ -617,6 +679,7 @@ div.sk-page-content h2 {
   background-color: #BED4EB;
   border-radius: 0.3rem;
   font-size: 1.5rem;
+  margin-top: calc(max(2rem, .7vh));
   margin-bottom: 1rem;
   word-wrap: break-word;
 }
@@ -627,6 +690,7 @@ div.sk-page-content h3 {
   border-radius: 0.3rem;
   font-size: 1.2rem;
   word-wrap: break-word;
+  margin-top: 1.5rem;
 }
 
 div.sk-page-content h4 {
@@ -865,14 +929,8 @@ dt.label {
   padding-right: 0.5rem;
 }
 
-/* copy button */
-div.highlight:hover span.copybutton {
-  background-color: #3F556B;
-  color: white;
-}
-
-div.highlight:hover span.copybutton:hover {
-    background-color: #20252B;
+button.copybtn {
+  border: 0;
 }
 
 div.body img {
@@ -898,34 +956,6 @@ img.align-right, figure.align-right,
   clear: right;
   float: right;
   margin-left: 1em;
-}
-
-/* copybutton */
-
-.copybutton {
-  cursor: pointer;
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  border: 1px solid rgb(221, 221, 221);
-  color: rgb(221, 221, 221);
-  font-family: monospace;
-  padding-left: 0.2rem;
-  padding-right: 0.2rem;
-}
-
-div.highlight:hover span.copybutton::after {
-  background: #3F556B;
-  border-radius: 0.25rem;
-  color: white;
-  content: attr(title);
-  padding: 0.25rem;
-  position: absolute;
-  z-index: 98;
-  width: 100px;
-  font-size: 0.7rem;
-  top: 0;
-  right: 0;
 }
 
 /* world */
@@ -995,13 +1025,12 @@ div.sphx-glr-thumbcontainer {
   padding: 0;
 }
 
-
 @media screen and (min-width: 1540px) {
-  .sphx-glr-download-link-note {
-    position: absolute;
+  div.sphx-glr-download-link-note.admonition.note {
     position: absolute;
     left: 98%;
     width: 20ex;
+    margin-top: calc(max(5.75rem, 1vh));
   }
 }
 
@@ -1175,8 +1204,11 @@ div.install > input:checked + label {
 .sk-expandable {
   display: none;
 }
+.sk-expandable + .copybtn {
+  display: none;
+}
 
-div.highlight span.sk-expandable:before {
+pre.sk-expandable > span:before {
   content: "$ ";
 }
 
@@ -1185,13 +1217,22 @@ div.highlight span.sk-expandable:before {
 #quickstart-conda:checked  ~* [data-packager="conda"] {
   display: block;
 }
+#quickstart-conda:checked  ~* [data-packager="conda"] + .copybtn {
+  display: block;
+}
 
 #quickstart-conda:checked ~ #quickstart-venv ~ label[for="quickstart-venv"] {
+  display: none;
+}
+#quickstart-conda:checked ~ #quickstart-venv ~ label[for="quickstart-venv"] + .copybtn {
   display: none;
 }
 
 /* for pip */
 #quickstart-pip:checked ~* [data-packager="pip"] {
+  display: block;
+}
+#quickstart-pip:checked ~* [data-packager="pip"] + .copybtn {
   display: block;
 }
 
@@ -1202,18 +1243,35 @@ div.highlight span.sk-expandable:before {
 #quickstart-win:not(:checked) ~* [data-os="windows"] {
   display: none;
 }
+#quickstart-win:not(:checked) ~* [data-os="windows"] + .copybtn {
+  display: none;
+}
+
 #quickstart-lin:not(:checked) ~* [data-os="linux"] {
   display: none;
 }
+#quickstart-lin:not(:checked) ~* [data-os="linux"] + .copybtn {
+  display: none;
+}
+
 #quickstart-mac:not(:checked) ~* [data-os="mac"] {
+  display: none;
+}
+#quickstart-mac:not(:checked) ~* [data-os="mac"] + .copybtn {
   display: none;
 }
 
 #quickstart-venv:not(:checked) ~* [data-venv=""] {
   display: none;
 }
+#quickstart-venv:not(:checked) ~* [data-venv=""] + .copybtn {
+  display: none;
+}
 
 #quickstart-venv:checked ~* [data-venv="no"] {
+  display: none;
+}
+#quickstart-venv:checked ~* [data-venv="no"] + .copybtn {
   display: none;
 }
 

@@ -4,7 +4,7 @@ set -e
 set -x
 
 if [ "$GITHUB_EVENT_NAME" == "schedule" ]; then
-    ANACONDA_ORG="scipy-wheels-nightly"
+    ANACONDA_ORG="scientific-python-nightly-wheels"
     ANACONDA_TOKEN="$SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN"
 else
     ANACONDA_ORG="scikit-learn-wheels-staging"

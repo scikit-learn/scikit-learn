@@ -112,9 +112,10 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, shuffle
 # :class:`~sklearn.model_selection.TimeSeriesSplit` cross-validation strategy to a
 # :class:`~sklearn.linear_model.LassoCV`. To keep the example simple and fast to
 # execute, we directly set the optimal value for alpha here.
+from time import time
+
 from sklearn.linear_model import Lasso
 from sklearn.metrics import r2_score
-from time import time
 
 t0 = time()
 lasso = Lasso(alpha=0.14).fit(X_train, y_train)
@@ -181,8 +182,8 @@ print(f"ElasticNet r^2 on test data : {r2_score_enet:.3f}")
 # and estimated coefficients of the respective linear models.
 
 import matplotlib.pyplot as plt
-import seaborn as sns
 import pandas as pd
+import seaborn as sns
 from matplotlib.colors import SymLogNorm
 
 df = pd.DataFrame(

@@ -9,25 +9,20 @@ The dataset page is available at
 # License: BSD 3 clause
 
 import logging
-
-from os import remove, makedirs
-from os.path import exists, join
 from gzip import GzipFile
+from os import makedirs, remove
+from os.path import exists, join
 
+import joblib
 import numpy as np
 import scipy.sparse as sp
-import joblib
 
-from . import get_data_home
-from ._base import _pkl_filepath
-from ._base import _fetch_remote
-from ._base import RemoteFileMetadata
-from ._base import load_descr
-from ._svmlight_format_io import load_svmlight_files
-from ..utils import shuffle as shuffle_
 from ..utils import Bunch
-from ..utils._param_validation import validate_params, StrOptions
-
+from ..utils import shuffle as shuffle_
+from ..utils._param_validation import StrOptions, validate_params
+from . import get_data_home
+from ._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath, load_descr
+from ._svmlight_format_io import load_svmlight_files
 
 # The original vectorized data can be found at:
 #    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt0.dat.gz
@@ -85,7 +80,8 @@ logger = logging.getLogger(__name__)
         "random_state": ["random_state"],
         "shuffle": ["boolean"],
         "return_X_y": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_rcv1(
     *,
