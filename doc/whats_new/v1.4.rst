@@ -256,6 +256,12 @@ Changelog
   metric parameter `p` is in the range `0 < p < 1`, regardless of the `dtype` of `X`.
   :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
+- |Fix| :meth:`neighbors.KNeighborsClassifier.predict` and
+  :meth:`neighbors.KNeighborsClassifier.predict_proba` now raises an error when the
+  weights of all neighbors of some sample are zero. This can happen when `weights`
+  is a user-defined function.
+  :pr:`26410` by :user:`Yao Xiao <Charlie-XIAO>`
+
 :mod:`sklearn.preprocessing`
 ............................
 
