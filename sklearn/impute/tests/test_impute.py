@@ -1684,7 +1684,7 @@ def test_simple_imputer_constant_keep_empty_features(array_type, keep_empty_feat
         X_imputed = getattr(imputer, method)(X)
         assert X_imputed.shape == X.shape
         constant_feature = (
-            X_imputed[:, 0].A if array_type == "sparse" else X_imputed[:, 0]
+            X_imputed[:, 0].toarray() if array_type == "sparse" else X_imputed[:, 0]
         )
         assert_array_equal(constant_feature, fill_value)
 
@@ -1705,7 +1705,7 @@ def test_simple_imputer_keep_empty_features(strategy, array_type, keep_empty_fea
         if keep_empty_features:
             assert X_imputed.shape == X.shape
             constant_feature = (
-                X_imputed[:, 0].A if array_type == "sparse" else X_imputed[:, 0]
+                X_imputed[:, 0].toarray() if array_type == "sparse" else X_imputed[:, 0]
             )
             assert_array_equal(constant_feature, 0)
         else:
