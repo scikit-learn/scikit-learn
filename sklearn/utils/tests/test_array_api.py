@@ -1,6 +1,7 @@
 from functools import partial
 
 import numpy
+import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
@@ -12,6 +13,7 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     _estimator_with_converted_arrays,
+    _isin,
     _nanmax,
     _nanmin,
     _NumPyAPIWrapper,
@@ -141,6 +143,29 @@ def test_array_api_wrapper_take():
 
     with pytest.raises(ValueError, match=r"Only X.ndim in \(1, 2\) is supported"):
         xp.take(xp.asarray([[[0]]]), xp.asarray([0]), axis=0)
+
+
+def test_array_api_wrapper_searchsorted():
+    """Test _ArrayAPIWrapper API for searchsorted."""
+    numpy_array_api = pytest.importorskip("numpy.array_api")
+    xp_ = _AdjustableNameAPITestWrapper(numpy_array_api, "wrapped_numpy.array_api")
+    xp = _ArrayAPIWrapper(xp_)
+
+    # Check searchsorted compared to numpy's
+    a = xp.asarray([1, 2, 3, 4, 5], dtype=xp.float64)
+    v = 3.0
+    result = xp.searchsorted(a, v)
+    assert hasattr(result, "__array_namespace__")
+    assert result == numpy.searchsorted(a, v)
+
+    result = xp.searchsorted(a, v, side="right")
+    assert hasattr(result, "__array_namespace__")
+    assert result == numpy.searchsorted(a, v, side="right")
+
+    v = xp.asarray([-10, 10, 2, 3], dtype=xp.float64)
+    result = xp.searchsorted(a, v)
+    assert hasattr(result, "__array_namespace__")
+    assert_array_equal(result, numpy.searchsorted(a, v))
 
 
 @pytest.mark.parametrize("array_api", ["numpy", "numpy.array_api"])
@@ -371,3 +396,34 @@ def test_get_namespace_array_api_isdtype(wrapper):
 
     with pytest.raises(ValueError, match="Unrecognized data type"):
         assert xp.isdtype(xp.int16, "unknown")
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("invert", [True, False])
+@pytest.mark.parametrize("assume_unique", [True, False])
+@pytest.mark.parametrize("element_size", [6, 10, 14])
+def test_isin(array_namespace, device, dtype, invert, assume_unique, element_size):
+    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
+    r = element_size // 2
+    element = 2 * numpy.arange(element_size).reshape((r, 2)).astype(dtype)
+    test_elements = numpy.array(np.arange(14), dtype=dtype)
+    element_xp = xp.asarray(element, device=device)
+    test_elements_xp = xp.asarray(test_elements, device=device)
+    expected = numpy.isin(
+        element=element,
+        test_elements=test_elements,
+        assume_unique=assume_unique,
+        invert=invert,
+    )
+    with config_context(array_api_dispatch=True):
+        result = _isin(
+            element=element_xp,
+            test_elements=test_elements_xp,
+            xp=xp,
+            assume_unique=assume_unique,
+            invert=invert,
+        )
+
+    assert_array_equal(result, expected)

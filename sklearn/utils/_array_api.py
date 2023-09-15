@@ -608,13 +608,82 @@ def _atol_for_type(dtype):
     return numpy.finfo(dtype).eps * 100
 
 
-def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
+def _setdiff1d(ar1, ar2, xp, assume_unique=False):
+    """Find the set difference of two arrays.
+
+    Return the unique values in `ar1` that are not in `ar2`.
+    """
+    if _is_numpy_namespace(xp):
+        return xp.asarray(
+            numpy.setdiff1d(
+                ar1=ar1,
+                ar2=ar2,
+                assume_unique=assume_unique,
+            )
+        )
+
+    if assume_unique:
+        ar1 = xp.reshape(xp.asarray(ar1), (-1,))
+    else:
+        ar1 = xp.unique_values(ar1)
+        ar2 = xp.unique_values(ar2)
+    return ar1[__in1d(ar1=ar1, ar2=ar2, xp=xp, assume_unique=True, invert=True)]
+
+
+def _isin(element, test_elements, xp, assume_unique=False, invert=False):
+    """Calculates ``element in test_elements``, broadcasting over `element`
+    only.
+
+    Returns a boolean array of the same shape as `element` that is True
+    where an element of `element` is in `test_elements` and False otherwise.
+    """
+    if _is_numpy_namespace(xp):
+        return xp.asarray(
+            numpy.isin(
+                element=element,
+                test_elements=test_elements,
+                assume_unique=assume_unique,
+                invert=invert,
+            )
+        )
+
+    original_element_shape = element.shape
+    element = xp.reshape(xp.asarray(element), (-1,))
+    test_elements = xp.reshape(xp.asarray(test_elements), (-1,))
+    return xp.reshape(
+        __in1d(
+            ar1=element,
+            ar2=test_elements,
+            xp=xp,
+            assume_unique=assume_unique,
+            invert=invert,
+        ),
+        original_element_shape,
+    )
+
+
+# Note: This is a helper for the functions `_isin` and
+# `_setdiff1d`. It is not meant to be called directly.
+def __in1d(ar1, ar2, xp, assume_unique=False, invert=False):
     """Checks whether each element of an array is also present in a
     second array.
 
     Returns a boolean array the same length as `ar1` that is True
     where an element of `ar1` is in `ar2` and False otherwise
     """
+
+    # This code is run to make the code significantly faster
+    if ar2.shape[0] < 10 * ar1.shape[0] ** 0.145:
+        if invert:
+            mask = xp.ones(ar1.shape[0], dtype=xp.bool)
+            for a in ar2:
+                mask &= ar1 != a
+        else:
+            mask = xp.zeros(ar1.shape[0], dtype=xp.bool)
+            for a in ar2:
+                mask |= ar1 == a
+        return mask
+
     if not assume_unique:
         ar1, rev_idx = xp.unique_inverse(ar1)
         ar2 = xp.unique_values(ar2)
@@ -635,55 +704,3 @@ def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
         return ret[: len(ar1)]
     else:
         return ret[rev_idx]
-
-
-def _setdiff1d(ar1, ar2, xp, assume_unique=False):
-    """Find the set difference of two arrays.
-
-    Return the unique values in `ar1` that are not in `ar2`.
-    """
-    if _is_numpy_namespace(xp):
-        return xp.asarray(
-            numpy.setdiff1d(
-                ar1=ar1,
-                ar2=ar2,
-                assume_unique=assume_unique,
-            )
-        )
-
-    if assume_unique:
-        ar1 = xp.reshape(xp.asarray(ar1), (-1,))
-    else:
-        ar1 = xp.unique_values(ar1)
-        ar2 = xp.unique_values(ar2)
-    return ar1[_in1d(ar1=ar1, ar2=ar2, xp=xp, assume_unique=True, invert=True)]
-
-
-def _isin(element, test_elements, xp, assume_unique=False, invert=False):
-    """Calculates ``element in test_elements``, broadcasting over `element`
-    only.
-
-    Returns a boolean array of the same shape as `element` that is True
-    where an element of `element` is in `test_elements` and False otherwise.
-    """
-    if _is_numpy_namespace(xp):
-        return xp.asarray(
-            numpy.isin(
-                element=element,
-                test_elements=test_elements,
-                assume_unique=assume_unique,
-                invert=invert,
-            )
-        )
-
-    element = xp.asarray(element)
-    return xp.reshape(
-        _in1d(
-            ar1=element,
-            ar2=test_elements,
-            xp=xp,
-            assume_unique=assume_unique,
-            invert=invert,
-        ),
-        element.shape,
-    )
