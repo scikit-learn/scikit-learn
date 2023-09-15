@@ -2310,6 +2310,9 @@ function::
     for an example of mean squared error usage to
     evaluate gradient boosting regression.
 
+The square root of the Mean Squared Error is also an useful metric, which can be computed
+with :func:`root_mean_squared_error`
+
 .. _mean_squared_log_error:
 
 Mean squared logarithmic error
@@ -2346,6 +2349,9 @@ function::
   >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
   >>> mean_squared_log_error(y_true, y_pred)
   0.044...
+
+Likewise, the square root of the Mean Squared Logarithmic Error is an useful metric, which can be computed
+with :func:`root_mean_squared_log_error`
 
 .. _mean_absolute_percentage_error:
 
