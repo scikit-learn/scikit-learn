@@ -177,6 +177,14 @@ Changelog
 - |Fix| :func:`feature_selection.mutual_info_regression` now correctly computes the
   result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Enhancement| In :class:`impute.SimpleImputer`, :class:`impute.IterativeImputer`, and
+  :class:`impute.KNNImputer` with ``add_indicator=True``, using sparse arrays now
+  behaves in consistent with using sparse matrices in the `transform` and
+  `fit_transform` methods. :pr:`27277` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.kernel_approximation`
 ...................................
 
