@@ -164,6 +164,14 @@ def _raise_for_params(params, owner, method):
         )
 
 
+class _RoutingNotSupported:
+    def get_metadata_routing(self):
+        """This estimator does not support metadata routing yet."""
+        raise NotImplementedError(
+            "This estimator does not implement metadata routing yet."
+        )
+
+
 # Request values
 # ==============
 # Each request value needs to be one of the following values, or an alias.

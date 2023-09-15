@@ -24,6 +24,7 @@ from ..utils._param_validation import (
     RealNotInt,
     StrOptions,
 )
+from ..utils.metadata_routing import _RoutingNotSupported
 from ..utils.random import sample_without_replacement
 from ..utils.validation import _check_sample_weight, check_is_fitted, has_fit_parameter
 from ._base import LinearRegression
@@ -66,7 +67,11 @@ def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
 
 
 class RANSACRegressor(
-    MetaEstimatorMixin, RegressorMixin, MultiOutputMixin, BaseEstimator
+    _RoutingNotSupported,
+    MetaEstimatorMixin,
+    RegressorMixin,
+    MultiOutputMixin,
+    BaseEstimator,
 ):
     """RANSAC (RANdom SAmple Consensus) algorithm.
 

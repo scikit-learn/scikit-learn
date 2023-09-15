@@ -19,6 +19,7 @@ from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, column_or_1d, indices_to_mask
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils._tags import _safe_tags
+from ..utils.metadata_routing import _RoutingNotSupported
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
 from ..utils.parallel import Parallel, delayed
@@ -542,7 +543,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         return [sample_indices for _, sample_indices in self._get_estimators_indices()]
 
 
-class BaggingClassifier(ClassifierMixin, BaseBagging):
+class BaggingClassifier(_RoutingNotSupported, ClassifierMixin, BaseBagging):
     """A Bagging classifier.
 
     A Bagging classifier is an ensemble meta-estimator that fits base
@@ -990,7 +991,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         return {"allow_nan": _safe_tags(estimator, "allow_nan")}
 
 
-class BaggingRegressor(RegressorMixin, BaseBagging):
+class BaggingRegressor(_RoutingNotSupported, RegressorMixin, BaseBagging):
     """A Bagging regressor.
 
     A Bagging regressor is an ensemble meta-estimator that fits base

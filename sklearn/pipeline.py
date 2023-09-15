@@ -29,6 +29,7 @@ from .utils.metadata_routing import (
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
+    _RoutingNotSupported,
     process_routing,
 )
 from .utils.metaestimators import _BaseComposition, available_if
@@ -1306,7 +1307,7 @@ def _fit_one(transformer, X, y, weight, message_clsname="", message=None, params
         return transformer.fit(X, y, **params["fit"])
 
 
-class FeatureUnion(TransformerMixin, _BaseComposition):
+class FeatureUnion(_RoutingNotSupported, TransformerMixin, _BaseComposition):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
