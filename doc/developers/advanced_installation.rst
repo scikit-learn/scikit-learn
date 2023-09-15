@@ -443,6 +443,8 @@ activating the newly created conda environment.
     conda activate sklearn-dev
     pip install -v --no-use-pep517 --no-build-isolation -e .
 
+.. _compiler_freebsd:
+
 FreeBSD
 -------
 
