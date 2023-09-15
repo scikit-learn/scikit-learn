@@ -16,6 +16,7 @@ significant speedups.
 import warnings
 
 import numpy as np
+import scipy
 
 from ..exceptions import ConvergenceWarning
 from .fixes import line_search_wolfe1, line_search_wolfe2
@@ -38,6 +39,32 @@ def _line_search_wolfe12(f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwarg
 
     """
     ret = line_search_wolfe1(f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs)
+
+    if ret[0] is None:
+        # Have a look at the line_search method of our NewtonSolver class. We borrow
+        # the logic from there
+        # Deal with relative loss differences around machine precision.
+        args = kwargs.get("args", tuple())
+        fval = f(xk + pk, *args)
+        eps = 16 * np.finfo(np.asarray(old_fval).dtype).eps
+        tiny_loss = np.abs(old_fval * eps)
+        loss_improvement = fval - old_fval
+        check = np.abs(loss_improvement) <= tiny_loss
+        if check:
+            # 2.1 Check sum of absolute gradients as alternative condition.
+            sum_abs_grad_old = scipy.linalg.norm(gfk, ord=1)
+            grad = fprime(xk + pk, *args)
+            sum_abs_grad = scipy.linalg.norm(grad, ord=1)
+            check = sum_abs_grad < sum_abs_grad_old
+            if check:
+                ret = (
+                    1.0,  # step size
+                    ret[1] + 1,  # number of function evaluations
+                    ret[2] + 1,  # number of gradient evaluations
+                    fval,
+                    old_fval,
+                    grad,
+                )
 
     if ret[0] is None:
         # line search failed: try different one.
