@@ -807,19 +807,14 @@ def test_extract_dbscan(global_dtype):
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_precomputed_dists(is_sparse, global_dtype, csr_container):
     redX = X[::2].astype(global_dtype, copy=False)
-    print("redX", redX)
     dists = pairwise_distances(redX, metric="euclidean")
     dists = csr_container(dists) if is_sparse else dists
-    try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", EfficiencyWarning)
-            clust1 = OPTICS(
-                min_samples=10, algorithm="brute", metric="precomputed"
-            ).fit(dists)
-        clust2 = OPTICS(min_samples=10, algorithm="brute", metric="euclidean").fit(redX)
-    except NotImplementedError:
-        # 1D sparse slices are not implemented yet
-        return
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", EfficiencyWarning)
+        clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(
+            dists
+        )
+    clust2 = OPTICS(min_samples=10, algorithm="brute", metric="euclidean").fit(redX)
 
     assert_allclose(clust1.reachability_, clust2.reachability_)
     assert_array_equal(clust1.labels_, clust2.labels_)
