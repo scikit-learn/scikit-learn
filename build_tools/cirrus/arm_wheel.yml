@@ -16,22 +16,17 @@ macos_arm64_wheel_task:
     # See `maint_tools/update_tracking_issue.py` for details on the permissions the token requires.
     BOT_GITHUB_TOKEN: ENCRYPTED[9b50205e2693f9e4ce9a3f0fcb897a259289062fda2f5a3b8aaa6c56d839e0854a15872f894a70fca337dd4787274e0f]
   matrix:
-    - env:
-        CIBW_BUILD: cp38-macosx_arm64
-    - env:
-        CIBW_BUILD: cp39-macosx_arm64
-    - env:
-        CIBW_BUILD: cp310-macosx_arm64
+    # Only the latest Python version is built and tested on CirrusCI, the other
+    # macos arm64 builds are on GitHub Actions
     - env:
         CIBW_BUILD: cp311-macosx_arm64
 
   conda_script:
-    - curl -L -o ~/mambaforge.sh https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh
+    - curl -L --retry 10 -o ~/mambaforge.sh https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh
     - bash ~/mambaforge.sh -b -p ~/mambaforge
 
   cibuildwheel_script:
     - bash build_tools/wheels/build_wheels.sh
-    - bash build_tools/cirrus/update_tracking_issue.sh true
 
   on_failure:
     update_tracker_script:
@@ -61,19 +56,22 @@ linux_arm64_wheel_task:
     # See `maint_tools/update_tracking_issue.py` for details on the permissions the token requires.
     BOT_GITHUB_TOKEN: ENCRYPTED[9b50205e2693f9e4ce9a3f0fcb897a259289062fda2f5a3b8aaa6c56d839e0854a15872f894a70fca337dd4787274e0f]
   matrix:
+    # Only the latest Python version is tested
     - env:
         CIBW_BUILD: cp38-manylinux_aarch64
+        CIBW_TEST_SKIP: "*_aarch64"
     - env:
         CIBW_BUILD: cp39-manylinux_aarch64
+        CIBW_TEST_SKIP: "*_aarch64"
     - env:
         CIBW_BUILD: cp310-manylinux_aarch64
+        CIBW_TEST_SKIP: "*_aarch64"
     - env:
         CIBW_BUILD: cp311-manylinux_aarch64
 
   cibuildwheel_script:
     - apt install -y python3 python-is-python3
     - bash build_tools/wheels/build_wheels.sh
-    - bash build_tools/cirrus/update_tracking_issue.sh true
 
   on_failure:
     update_tracker_script:
@@ -82,6 +80,17 @@ linux_arm64_wheel_task:
   wheels_artifacts:
     path: "wheelhouse/*"
 
+# Update tracker when all jobs are successful
+update_tracker_success:
+  depends_on:
+    - macos_arm64_wheel
+    - linux_arm64_wheel
+  container:
+    image: python:3.11
+  # Only update tracker for nightly builds
+  only_if: $CIRRUS_CRON == "nightly"
+  update_script:
+    - bash build_tools/cirrus/update_tracking_issue.sh true
 
 wheels_upload_task:
   depends_on:

@@ -256,6 +256,9 @@ class SimpleImputer(_BaseImputer):
     [[ 7.   2.   3. ]
      [ 4.   3.5  6. ]
      [10.   3.5  9. ]]
+
+    For a more detailed example see
+    :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
     """
 
     _parameter_constraints: dict = {
@@ -695,8 +698,10 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
     """Binary indicators for missing values.
 
     Note that this component typically should not be used in a vanilla
-    :class:`Pipeline` consisting of transformers and a classifier, but rather
-    could be added using a :class:`FeatureUnion` or :class:`ColumnTransformer`.
+    :class:`~sklearn.pipeline.Pipeline` consisting of transformers and a
+    classifier, but rather could be added using a
+    :class:`~sklearn.pipeline.FeatureUnion` or
+    :class:`~sklearn.compose.ColumnTransformer`.
 
     Read more in the :ref:`User Guide <impute>`.
 

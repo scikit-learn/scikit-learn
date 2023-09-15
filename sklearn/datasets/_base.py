@@ -55,13 +55,13 @@ def get_data_home(data_home=None) -> str:
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
         is `~/sklearn_learn_data`.
 
     Returns
     -------
-    data_home: str or path-like, default=None
+    data_home: str
         The path to scikit-learn data directory.
     """
     if data_home is None:
@@ -667,6 +667,9 @@ def load_iris(*, return_X_y=False, as_frame=False):
     array([0, 0, 1])
     >>> list(data.target_names)
     ['setosa', 'versicolor', 'virginica']
+
+    See :ref:`sphx_glr_auto_examples_datasets_plot_iris_dataset.py` for a more
+    detailed example of how to work with the iris dataset.
     """
     data_file_name = "iris.csv"
     data, target, target_names, fdescr = load_csv_data(
@@ -756,9 +759,9 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         target : {ndarray, Series} of shape (569,)
             The classification target. If `as_frame=True`, `target` will be
             a pandas Series.
-        feature_names : list
+        feature_names : ndarray of shape (30,)
             The names of the dataset columns.
-        target_names : list
+        target_names : ndarray of shape (2,)
             The names of target classes.
         frame : DataFrame of shape (569, 31)
             Only present when `as_frame=True`. DataFrame with `data` and

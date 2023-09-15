@@ -101,10 +101,11 @@ class RANSACRegressor(
         relative number `ceil(min_samples * X.shape[0])` for
         `min_samples < 1`. This is typically chosen as the minimal number of
         samples necessary to estimate the given `estimator`. By default a
-        ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
+        :class:`~sklearn.linear_model.LinearRegression` estimator is assumed and
         `min_samples` is chosen as ``X.shape[1] + 1``. This parameter is highly
         dependent upon the model, so if a `estimator` other than
-        :class:`linear_model.LinearRegression` is used, the user must provide a value.
+        :class:`~sklearn.linear_model.LinearRegression` is used, the user must
+        provide a value.
 
     residual_threshold : float, default=None
         Maximum residual for a data sample to be classified as an inlier.

@@ -209,7 +209,7 @@ def fetch_20newsgroups(
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, default=42
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -319,7 +319,7 @@ def fetch_20newsgroups(
         # Sort the categories to have the ordering of the labels
         labels.sort()
         labels, categories = zip(*labels)
-        mask = np.in1d(data.target, labels)
+        mask = np.isin(data.target, labels)
         data.filenames = data.filenames[mask]
         data.target = data.target[mask]
         # searchsorted to have continuous labels
