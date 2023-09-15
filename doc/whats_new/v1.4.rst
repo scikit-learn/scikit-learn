@@ -41,6 +41,46 @@ Changes impacting all modules
   to work with our estimators and functions.
   :pr:`26464` by `Thomas Fan`_.
 
+Metadata Routing
+----------------
+
+The following models now support metadata routing in one or more or their
+methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
+more details.
+
+- |Enhancement| :class:`~compose.ColumnTransformer` now supports metadata routing
+  according to :ref:`metadata routing user guide <metadata_routing>`. :pr:`27005`
+  by `Adrin Jalali`_.
+
+- |Enhancement| :class:`linear_model.LogisticRegressionCV` now supports
+  metadata routing. :meth:`linear_model.LogisticRegressionCV.fit` now
+  accepts ``**params`` which are passed to the underlying splitter and
+  scorer. :meth:`linear_model.LogisticRegressionCV.score` now accepts
+  ``**score_params`` which are passed to the underlying scorer.
+  :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
+
+- |Feature| :class:`pipeline.Pipeline` now supports metadata routing according
+  to :ref:`metadata routing user guide <metadata_routing>`. :pr:`26789` by
+  `Adrin Jalali`_.
+
+- |Feature| :func:`~model_selection.cross_validate`,
+  :func:`~model_selection.cross_val_score`, and
+  :func:`~model_selection.cross_val_predict` now support metadata routing. The
+  metadata are routed to the estimator's `fit`, the scorer, and the CV
+  splitter's `split`. The metadata is accepted via the new `params` parameter.
+  `fit_params` is deprecated and will be removed in version 1.6. `groups`
+  parameter is also not accepted as a separate argument when metadata routing
+  is enabled and should be passed via the `params` parameter. :pr:`26896` by
+  `Adrin Jalali`_.
+
+- |Feature| :class:`~model_selection.GridSearchCV`,
+  :class:`~model_selection.RandomizedSearchCV`,
+  :class:`~model_selection.HalvingGridSearchCV`, and
+  :class:`~model_selection.HalvingRandomSearchCV` now support metadata routing
+  in their ``fit`` and ``score``, and route metadata to the underlying
+  estimator's ``fit``, the CV splitter, and the scorer. :pr:`27058` by `Adrin
+  Jalali`_.
+
 Changelog
 ---------
 
@@ -97,13 +137,6 @@ Changelog
   :class:`cluster.HDBSCAN` ensuring consistency in naming convention.
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
-
-:mod:`sklearn.compose`
-......................
-
-- |Enhancement| :class:`~compose.ColumnTransformer` now supports metadata routing
-  according to :ref:`metadata routing user guide <metadata_routing>`. :pr:`27005`
-  by `Adrin Jalali`_.
 
 :mod:`sklearn.cross_decomposition`
 ..................................
@@ -192,29 +225,12 @@ Changelog
   :class:`scipy.sparse.sparray` subclasses.
   :pr:`27301` by :user:`Lohit SundaramahaLingam <lohitslohit>`.
 
-:mod:`sklearn.linear_model`
-...........................
-
-- |Enhancement| :class:`linear_model.LogisticRegressionCV` now supports
-  metadata routing. :meth:`linear_model.LogisticRegressionCV.fit` now
-  accepts ``**params`` which are passed to the underlying splitter and
-  scorer. :meth:`linear_model.LogisticRegressionCV.score` now accepts
-  ``**score_params`` which are passed to the underlying scorer.
-  :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
-
 :mod:`sklearn.metrics`
 ......................
 
 - |Enhancement| :func:`metrics.f_regression` and :func:`metrics.r_regression` now
   support SciPy sparse arrays.
   :pr:`27239` by :user:`Yaroslav Korobko <Tialo>`.
-
-:mod:`sklearn.pipeline`
-.......................
-
-- |Feature| :class:`pipeline.Pipeline` now supports metadata routing according
-  to :ref:`metadata routing user guide <metadata_routing>`. :pr:`26789` by
-  `Adrin Jalali`_.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -229,24 +245,6 @@ Changelog
   :class:`model_selection.RandomizedSearchCV`, and
   :class:`model_selection.HalvingGridSearchCV` now don't change the given
   object in the parameter grid if it's an estimator. :pr:`26786` by `Adrin
-  Jalali`_.
-
-- |Feature| :func:`~model_selection.cross_validate`,
-  :func:`~model_selection.cross_val_score`, and
-  :func:`~model_selection.cross_val_predict` now support metadata routing. The
-  metadata are routed to the estimator's `fit`, the scorer, and the CV
-  splitter's `split`. The metadata is accepted via the new `params` parameter.
-  `fit_params` is deprecated and will be removed in version 1.6. `groups`
-  parameter is also not accepted as a separate argument when metadata routing
-  is enabled and should be passed via the `params` parameter. :pr:`26896` by
-  `Adrin Jalali`_.
-
-- |Feature| :class:`~model_selection.GridSearchCV`,
-  :class:`~model_selection.RandomizedSearchCV`,
-  :class:`~model_selection.HalvingGridSearchCV`, and
-  :class:`~model_selection.HalvingRandomSearchCV` now support metadata routing
-  in their ``fit`` and ``score``, and route metadata to the underlying
-  estimator's ``fit``, the CV splitter, and the scorer. :pr:`27058` by `Adrin
   Jalali`_.
 
 - |Enhancement| :func:`sklearn.model_selection.train_test_split` now supports
