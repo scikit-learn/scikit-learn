@@ -27,7 +27,7 @@ from sklearn.exceptions import DataConversionWarning, EfficiencyWarning, NotFitt
 from sklearn.metrics._dist_metrics import (
     DistanceMetric,
 )
-from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS, pairwise_distances
 from sklearn.metrics.tests.test_dist_metrics import BOOL_METRICS
 from sklearn.metrics.tests.test_pairwise_distances_reduction import (
     assert_compatible_argkmin_results,
@@ -1713,6 +1713,10 @@ def test_kneighbors_brute_backend(
         feature_sl = slice(None, 2)
         X_train = np.ascontiguousarray(X_train[:, feature_sl])
         X_test = np.ascontiguousarray(X_test[:, feature_sl])
+
+    if metric in metric in PAIRWISE_BOOLEAN_FUNCTIONS:
+        X_train = X_train > 0.5
+        X_test = X_test > 0.5
 
     metric_params_list = _generate_test_params_for(metric, n_features)
 
