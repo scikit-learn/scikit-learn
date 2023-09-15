@@ -1,10 +1,9 @@
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
-from .metaestimators import available_if
-from .validation import _check_sample_weight, _num_samples, check_array
-from .validation import check_is_fitted
 from ..utils._metadata_requests import RequestMethod
+from .metaestimators import available_if
+from .validation import _check_sample_weight, _num_samples, check_array, check_is_fitted
 
 
 class ArraySlicingWrapper:
@@ -71,10 +70,12 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     ----------
     check_y, check_X : callable, default=None
         The callable used to validate `X` and `y`. These callable should return
-        a bool where `False` will trigger an `AssertionError`.
+        a bool where `False` will trigger an `AssertionError`. If `None`, the
+        data is not validated. Default is `None`.
 
     check_y_params, check_X_params : dict, default=None
-        The optional parameters to pass to `check_X` and `check_y`.
+        The optional parameters to pass to `check_X` and `check_y`. If `None`,
+        then no parameters are passed in.
 
     methods_to_check : "all" or list of str, default="all"
         The methods in which the checks should be applied. By default,
@@ -149,8 +150,10 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features)
             The data set.
+            `X` is checked only if `check_X` is not `None` (default is None).
         y : array-like of shape (n_samples), default=None
-            The corresponding target, by default None.
+            The corresponding target, by default `None`.
+            `y` is checked only if `check_y` is not `None` (default is None).
         should_be_fitted : bool, default=True
             Whether or not the classifier should be already fitted.
             By default True.

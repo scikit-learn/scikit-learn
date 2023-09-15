@@ -2,19 +2,17 @@
 # License: BSD 3 clause
 
 from copy import deepcopy
-
-import numpy as np
 from numbers import Integral, Real
 
-from ._base import SelectorMixin
-from ._base import _get_feature_importances
-from ..base import BaseEstimator, clone, MetaEstimatorMixin
-from ..utils._tags import _safe_tags
-from ..utils.validation import check_is_fitted, check_scalar, _num_features
-from ..utils._param_validation import HasMethods, Interval, Options
+import numpy as np
 
+from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
 from ..exceptions import NotFittedError
+from ..utils._param_validation import HasMethods, Interval, Options
+from ..utils._tags import _safe_tags
 from ..utils.metaestimators import available_if
+from ..utils.validation import _num_features, check_is_fitted, check_scalar
+from ._base import SelectorMixin, _get_feature_importances
 
 
 def _calculate_threshold(estimator, importances, threshold):
@@ -320,6 +318,10 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             )
             self.max_features_ = max_features
 
+    @_fit_context(
+        # SelectFromModel.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer.
 
@@ -340,7 +342,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
         self._check_max_features(X)
 
         if self.prefit:
@@ -375,6 +376,10 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         return _calculate_threshold(self.estimator, scores, self.threshold)
 
     @available_if(_estimator_has("partial_fit"))
+    @_fit_context(
+        # SelectFromModel.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def partial_fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer only once.
 
@@ -398,7 +403,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         first_call = not hasattr(self, "estimator_")
 
         if first_call:
-            self._validate_params()
             self._check_max_features(X)
 
         if self.prefit:

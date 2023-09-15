@@ -1,20 +1,17 @@
-from abc import ABC
-from abc import abstractmethod
-from collections.abc import Iterable
 import functools
 import math
-from inspect import signature
-from numbers import Integral
-from numbers import Real
 import operator
 import re
 import warnings
+from abc import ABC, abstractmethod
+from collections.abc import Iterable
+from inspect import signature
+from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import issparse
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 
-from .._config import get_config, config_context
+from .._config import config_context, get_config
 from .validation import _is_arraylike_not_scalar
 
 
@@ -143,7 +140,7 @@ def make_constraint(constraint):
     raise ValueError(f"Unknown constraint type: {constraint}")
 
 
-def validate_params(parameter_constraints, *, prefer_skip_nested_validation=False):
+def validate_params(parameter_constraints, *, prefer_skip_nested_validation):
     """Decorator to validate types and values of functions and methods.
 
     Parameters
@@ -155,7 +152,7 @@ def validate_params(parameter_constraints, *, prefer_skip_nested_validation=Fals
         Note that the *args and **kwargs parameters are not validated and must not be
         present in the parameter_constraints dictionary.
 
-    prefer_skip_nested_validation : bool, default=False
+    prefer_skip_nested_validation : bool
         If True, the validation of parameters of inner estimators or functions
         called by the decorated function will be skipped.
 
@@ -690,7 +687,10 @@ class HasMethods(_Constraint):
         The method(s) that the object is expected to expose.
     """
 
-    @validate_params({"methods": [str, list]})
+    @validate_params(
+        {"methods": [str, list]},
+        prefer_skip_nested_validation=True,
+    )
     def __init__(self, methods):
         super().__init__()
         if isinstance(methods, str):

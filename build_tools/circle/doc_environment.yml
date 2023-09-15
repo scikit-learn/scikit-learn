@@ -8,7 +8,7 @@ dependencies:
   - numpy
   - blas
   - scipy
-  - cython
+  - cython<3.0.0
   - joblib
   - threadpoolctl
   - matplotlib
@@ -24,6 +24,7 @@ dependencies:
   - compilers
   - sphinx=6.0.0
   - sphinx-gallery
+  - sphinx-copybutton
   - numpydoc
   - sphinx-prompt
   - plotly

@@ -7,26 +7,23 @@ Base IO code for all datasets
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 import csv
-import hashlib
 import gzip
+import hashlib
+import os
 import shutil
 from collections import namedtuple
-import os
+from numbers import Integral
 from os import environ, listdir, makedirs
 from os.path import expanduser, isdir, join, splitext
 from pathlib import Path
-from numbers import Integral
-
-from ..preprocessing import scale
-from ..utils import Bunch
-from ..utils import check_random_state
-from ..utils import check_pandas_support
-from ..utils.fixes import _open_binary, _open_text, _read_text, _contents
-from ..utils._param_validation import validate_params, Interval, StrOptions
+from urllib.request import urlretrieve
 
 import numpy as np
 
-from urllib.request import urlretrieve
+from ..preprocessing import scale
+from ..utils import Bunch, check_pandas_support, check_random_state
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.fixes import _contents, _open_binary, _open_text, _read_text
 
 DATA_MODULE = "sklearn.datasets.data"
 DESCR_MODULE = "sklearn.datasets.descr"
@@ -38,7 +35,8 @@ RemoteFileMetadata = namedtuple("RemoteFileMetadata", ["filename", "url", "check
 @validate_params(
     {
         "data_home": [str, os.PathLike, None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def get_data_home(data_home=None) -> str:
     """Return the path of the scikit-learn data directory.
@@ -57,13 +55,13 @@ def get_data_home(data_home=None) -> str:
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
         is `~/sklearn_learn_data`.
 
     Returns
     -------
-    data_home: str or path-like, default=None
+    data_home: str
         The path to scikit-learn data directory.
     """
     if data_home is None:
@@ -76,7 +74,8 @@ def get_data_home(data_home=None) -> str:
 @validate_params(
     {
         "data_home": [str, os.PathLike, None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def clear_data_home(data_home=None):
     """Delete all the content of the data home cache.
@@ -120,7 +119,8 @@ def _convert_data_dataframe(
         "decode_error": [StrOptions({"strict", "ignore", "replace"})],
         "random_state": ["random_state"],
         "allowed_extensions": [list, None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def load_files(
     container_path,
@@ -454,7 +454,8 @@ def load_descr(descr_file_name, *, descr_module=DESCR_MODULE):
     {
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def load_wine(*, return_X_y=False, as_frame=False):
     """Load and return the wine dataset (classification).
@@ -576,7 +577,10 @@ def load_wine(*, return_X_y=False, as_frame=False):
     )
 
 
-@validate_params({"return_X_y": ["boolean"], "as_frame": ["boolean"]})
+@validate_params(
+    {"return_X_y": ["boolean"], "as_frame": ["boolean"]},
+    prefer_skip_nested_validation=True,
+)
 def load_iris(*, return_X_y=False, as_frame=False):
     """Load and return the iris dataset (classification).
 
@@ -663,6 +667,9 @@ def load_iris(*, return_X_y=False, as_frame=False):
     array([0, 0, 1])
     >>> list(data.target_names)
     ['setosa', 'versicolor', 'virginica']
+
+    See :ref:`sphx_glr_auto_examples_datasets_plot_iris_dataset.py` for a more
+    detailed example of how to work with the iris dataset.
     """
     data_file_name = "iris.csv"
     data, target, target_names, fdescr = load_csv_data(
@@ -700,7 +707,10 @@ def load_iris(*, return_X_y=False, as_frame=False):
     )
 
 
-@validate_params({"return_X_y": ["boolean"], "as_frame": ["boolean"]})
+@validate_params(
+    {"return_X_y": ["boolean"], "as_frame": ["boolean"]},
+    prefer_skip_nested_validation=True,
+)
 def load_breast_cancer(*, return_X_y=False, as_frame=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
@@ -717,7 +727,7 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
 
     The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
     downloaded from:
-    https://goo.gl/U2Uwz2
+    https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic
 
     Read more in the :ref:`User Guide <breast_cancer_dataset>`.
 
@@ -749,9 +759,9 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         target : {ndarray, Series} of shape (569,)
             The classification target. If `as_frame=True`, `target` will be
             a pandas Series.
-        feature_names : list
+        feature_names : ndarray of shape (30,)
             The names of the dataset columns.
-        target_names : list
+        target_names : ndarray of shape (2,)
             The names of target classes.
         frame : DataFrame of shape (569, 31)
             Only present when `as_frame=True`. DataFrame with `data` and
@@ -855,7 +865,8 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         "n_class": [Interval(Integral, 1, 10, closed="both")],
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     """Load and return the digits dataset (classification).
@@ -991,7 +1002,8 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
 
 
 @validate_params(
-    {"return_X_y": ["boolean"], "as_frame": ["boolean"], "scaled": ["boolean"]}
+    {"return_X_y": ["boolean"], "as_frame": ["boolean"], "scaled": ["boolean"]},
+    prefer_skip_nested_validation=True,
 )
 def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     """Load and return the diabetes dataset (regression).
@@ -1108,7 +1120,8 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
     {
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def load_linnerud(*, return_X_y=False, as_frame=False):
     """Load and return the physical exercise Linnerud dataset.
@@ -1278,7 +1291,8 @@ def load_sample_images():
 @validate_params(
     {
         "image_name": [StrOptions({"china.jpg", "flower.jpg"})],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def load_sample_image(image_name):
     """Load the numpy array of a single sample image.

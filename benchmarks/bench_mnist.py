@@ -30,26 +30,24 @@ Example of output :
 #         Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: BSD 3 clause
 
+import argparse
 import os
 from time import time
-import argparse
+
 import numpy as np
 from joblib import Memory
 
-from sklearn.datasets import fetch_openml
-from sklearn.datasets import get_data_home
-from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import fetch_openml, get_data_home
 from sklearn.dummy import DummyClassifier
-from sklearn.kernel_approximation import Nystroem
-from sklearn.kernel_approximation import RBFSampler
+from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
+from sklearn.kernel_approximation import Nystroem, RBFSampler
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import zero_one_loss
+from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_array
-from sklearn.linear_model import LogisticRegression
-from sklearn.neural_network import MLPClassifier
 
 # Memoize the data extraction and memory map the resulting
 # train / test splits in readonly mode

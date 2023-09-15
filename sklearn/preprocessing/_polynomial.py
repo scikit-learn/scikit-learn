@@ -2,29 +2,31 @@
 This file contains preprocessing tools based on polynomials.
 """
 import collections
-from numbers import Integral
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
+from numbers import Integral
 
 import numpy as np
 from scipy import sparse
 from scipy.interpolate import BSpline
 from scipy.special import comb
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import check_array
-from ..utils.fixes import sp_version, parse_version
-from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
-from ..utils.validation import _check_feature_names_in
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.fixes import parse_version, sp_version
 from ..utils.stats import _weighted_percentile
-
+from ..utils.validation import (
+    FLOAT_DTYPES,
+    _check_feature_names_in,
+    _check_sample_weight,
+    check_is_fitted,
+)
 from ._csr_polynomial_expansion import (
-    _csr_polynomial_expansion,
     _calc_expanded_nnz,
     _calc_total_nnz,
+    _csr_polynomial_expansion,
 )
-
 
 __all__ = [
     "PolynomialFeatures",
@@ -299,6 +301,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             feature_names.append(name)
         return np.asarray(feature_names, dtype=object)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """
         Compute number of output features.
@@ -316,7 +319,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        self._validate_params()
         _, n_features = self._validate_data(X, accept_sparse=True).shape
 
         if isinstance(self.degree, Integral):
@@ -433,7 +435,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         n_samples, n_features = X.shape
         max_int32 = np.iinfo(np.int32).max
-        if sparse.isspmatrix_csr(X):
+        if sparse.issparse(X) and X.format == "csr":
             if self._max_degree > 3:
                 return self.transform(X.tocsc()).tocsr()
             to_stack = []
@@ -478,9 +480,9 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                         " transformer to produce fewer than 2^31 output features"
                     )
                 XP = sparse.hstack(to_stack, dtype=X.dtype, format="csr")
-        elif sparse.isspmatrix_csc(X) and self._max_degree < 4:
+        elif sparse.issparse(X) and X.format == "csc" and self._max_degree < 4:
             return self.transform(X.tocsr()).tocsc()
-        elif sparse.isspmatrix(X):
+        elif sparse.issparse(X):
             combinations = self._combinations(
                 n_features=n_features,
                 min_degree=self._min_degree,
@@ -802,6 +804,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 feature_names.append(f"{input_features[i]}_sp_{j}")
         return np.asarray(feature_names, dtype=object)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
         """Compute knot positions of splines.
 
@@ -823,8 +826,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        self._validate_params()
-
         X = self._validate_data(
             X,
             reset=True,
@@ -1118,8 +1119,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                             XBS[mask, i * n_splines + k] = linear_extr
 
             if use_sparse:
-                if not sparse.isspmatrix_csr(XBS_sparse):
-                    XBS_sparse = XBS_sparse.tocsr()
+                XBS_sparse = XBS_sparse.tocsr()
                 output_list.append(XBS_sparse)
 
         if use_sparse:

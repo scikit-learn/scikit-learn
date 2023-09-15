@@ -4,29 +4,31 @@
 # Modified by: Pete Green <p.l.green@liverpool.ac.uk>
 # License: BSD 3 clause
 
-import warnings
-import sys
 import re
-import numpy as np
+import sys
+import warnings
 
+import numpy as np
+import pytest
 from scipy.optimize import approx_fprime
 
-import pytest
-
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import (
     RBF,
-    ConstantKernel as C,
+    DotProduct,
+    ExpSineSquared,
     WhiteKernel,
 )
-from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
+from sklearn.gaussian_process.kernels import (
+    ConstantKernel as C,
+)
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import (
-    assert_array_less,
+    assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
-    assert_allclose,
+    assert_array_less,
 )
 
 

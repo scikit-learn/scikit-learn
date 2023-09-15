@@ -1,27 +1,24 @@
 import numpy as np
-
 import pytest
-
 from scipy import linalg
 
-from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import _convert_container
-
-from sklearn.datasets import make_blobs
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-from sklearn.discriminant_analysis import _cov
-from sklearn.covariance import ledoit_wolf
 from sklearn.cluster import KMeans
-
-from sklearn.covariance import ShrunkCovariance
-from sklearn.covariance import LedoitWolf
-
+from sklearn.covariance import LedoitWolf, ShrunkCovariance, ledoit_wolf
+from sklearn.datasets import make_blobs
+from sklearn.discriminant_analysis import (
+    LinearDiscriminantAnalysis,
+    QuadraticDiscriminantAnalysis,
+    _cov,
+)
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]], dtype="f")
@@ -222,7 +219,7 @@ def test_lda_predict_proba(solver, n_classes):
 
     assert prob_ref == pytest.approx(prob_ref_2)
     # check that the probability of LDA are close to the theoretical
-    # probabilties
+    # probabilities
     assert_allclose(
         lda.predict_proba(sample), np.hstack([prob, prob_ref])[np.newaxis], atol=1e-2
     )

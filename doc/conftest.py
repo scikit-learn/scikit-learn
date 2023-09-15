@@ -1,16 +1,17 @@
 import os
-from os.path import exists
-from os.path import join
-from os import environ
 import warnings
+from os import environ
+from os.path import exists, join
 
-from sklearn.utils import IS_PYPY
-from sklearn.utils._testing import SkipTest
-from sklearn.utils._testing import check_skip_network
-from sklearn.utils.fixes import parse_version
+import pytest
+from _pytest.doctest import DoctestItem
+
 from sklearn.datasets import get_data_home
 from sklearn.datasets._base import _pkl_filepath
 from sklearn.datasets._twenty_newsgroups import CACHE_NAME
+from sklearn.utils import IS_PYPY
+from sklearn.utils._testing import SkipTest, check_skip_network
+from sklearn.utils.fixes import np_base_version, parse_version
 
 
 def setup_labeled_faces():
@@ -174,3 +175,34 @@ def pytest_configure(config):
         matplotlib.use("agg")
     except ImportError:
         pass
+
+
+def pytest_collection_modifyitems(config, items):
+    """Called after collect is completed.
+
+    Parameters
+    ----------
+    config : pytest config
+    items : list of collected items
+    """
+    skip_doctests = False
+    if np_base_version >= parse_version("2"):
+        # Skip doctests when using numpy 2 for now. See the following discussion
+        # to decide what to do in the longer term:
+        # https://github.com/scikit-learn/scikit-learn/issues/27339
+        reason = "Due to NEP 51 numpy scalar repr has changed in numpy 2"
+        skip_doctests = True
+
+    # Normally doctest has the entire module's scope. Here we set globs to an empty dict
+    # to remove the module's scope:
+    # https://docs.python.org/3/library/doctest.html#what-s-the-execution-context
+    for item in items:
+        if isinstance(item, DoctestItem):
+            item.dtest.globs = {}
+
+    if skip_doctests:
+        skip_marker = pytest.mark.skip(reason=reason)
+
+        for item in items:
+            if isinstance(item, DoctestItem):
+                item.add_marker(skip_marker)

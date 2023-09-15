@@ -19,13 +19,14 @@ show that we obtain similar results on a toy dataset.
 
 """  # noqa: E501
 
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib
-from sklearn.svm import OneClassSVM
-from sklearn.linear_model import SGDOneClassSVM
+import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.kernel_approximation import Nystroem
+from sklearn.linear_model import SGDOneClassSVM
 from sklearn.pipeline import make_pipeline
+from sklearn.svm import OneClassSVM
 
 font = {"weight": "normal", "size": 15}
 
