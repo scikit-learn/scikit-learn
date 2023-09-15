@@ -69,11 +69,11 @@ from sklearn.utils.validation import (
     _check_y,
     _deprecate_positional_args,
     _get_feature_names,
-    _get_sparse_index_dtype,
     _is_fitted,
     _is_pandas_df,
     _num_features,
     _num_samples,
+    _smallest_admissible_index_dtype,
     assert_all_finite,
     check_consistent_length,
     check_is_fitted,
@@ -1988,49 +1988,60 @@ def test_check_array_downcast_indices_dtype(sparse_container, output_format):
         assert X_checked.indptr.dtype == np.int32
 
 
-def test_get_sparse_index_dtype():
+def test_smallest_admissible_index_dtype():
     imax = np.int64(np.iinfo(np.int32).max)
     too_big = imax + 1
 
+    # Check an empty array
+    a1 = np.ones(0, dtype="uint32")
+    assert np.dtype(
+        _smallest_admissible_index_dtype(a1, check_contents=True)
+    ) == np.dtype("int32")
+
+    # Check with a single array
+    a1 = np.ones(90, dtype="uint32")
+    assert np.dtype(
+        _smallest_admissible_index_dtype(a1, check_contents=True)
+    ) == np.dtype("int32")
+
     # Check that uint32's with no values too large doesn't return
     # int64
-    a1 = np.ones(90, dtype="uint32")
     a2 = np.ones(90, dtype="uint32")
-    assert np.dtype(_get_sparse_index_dtype((a1, a2), check_contents=True)) == np.dtype(
-        "int32"
-    )
+    assert np.dtype(
+        _smallest_admissible_index_dtype((a1, a2), check_contents=True)
+    ) == np.dtype("int32")
 
     # Check that if we can not convert but all values are less than or
     # equal to max that we can just convert to int32
     a1[-1] = imax
-    assert np.dtype(_get_sparse_index_dtype((a1, a2), check_contents=True)) == np.dtype(
-        "int32"
-    )
+    assert np.dtype(
+        _smallest_admissible_index_dtype((a1, a2), check_contents=True)
+    ) == np.dtype("int32")
 
     # Check that if it can not convert directly and the contents are
     # too large that we return int64
     a1[-1] = too_big
-    assert np.dtype(_get_sparse_index_dtype((a1, a2), check_contents=True)) == np.dtype(
-        "int64"
-    )
+    assert np.dtype(
+        _smallest_admissible_index_dtype((a1, a2), check_contents=True)
+    ) == np.dtype("int64")
 
     # test that if can not convert and didn't specify to check_contents
     # we return int64
     a1 = np.ones(89, dtype="uint32")
     a2 = np.ones(89, dtype="uint32")
-    assert np.dtype(_get_sparse_index_dtype((a1, a2))) == np.dtype("int64")
+    assert np.dtype(_smallest_admissible_index_dtype((a1, a2))) == np.dtype("int64")
 
     # Check that even if we have arrays that can be converted directly
     # that if we specify a maxval directly it takes precedence
     a1 = np.ones(12, dtype="uint32")
     a2 = np.ones(12, dtype="uint32")
     assert np.dtype(
-        _get_sparse_index_dtype((a1, a2), maxval=too_big, check_contents=True)
+        _smallest_admissible_index_dtype((a1, a2), maxval=too_big, check_contents=True)
     ) == np.dtype("int64")
 
     # Check that an array with a too max size and maxval set
     # still returns int64
     a1[-1] = too_big
-    assert np.dtype(_get_sparse_index_dtype((a1, a2), maxval=too_big)) == np.dtype(
-        "int64"
-    )
+    assert np.dtype(
+        _smallest_admissible_index_dtype((a1, a2), maxval=too_big)
+    ) == np.dtype("int64")

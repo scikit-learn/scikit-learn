@@ -589,7 +589,7 @@ def _ensure_sparse_format(
         and accept_sparse[0] in ("csr", "coo", "bsr")
     ):
         if accept_sparse[0] == "csr":
-            index_dtype = _get_sparse_index_dtype(
+            index_dtype = _smallest_admissible_index_dtype(
                 arrays=(spmatrix.indptr, spmatrix.indices),
                 maxval=max(spmatrix.nnz, spmatrix.shape[1]),
                 check_contents=True,
@@ -598,7 +598,7 @@ def _ensure_sparse_format(
                 spmatrix.indices = spmatrix.indices.astype(index_dtype)
                 spmatrix.indptr = spmatrix.indptr.astype(index_dtype)
         else:  # accept_sparse[0] == "coo"
-            index_dtype = _get_sparse_index_dtype(maxval=max(spmatrix.shape))
+            index_dtype = _smallest_admissible_index_dtype(maxval=max(spmatrix.shape))
             if index_dtype != spmatrix.row.dtype:
                 spmatrix.row = spmatrix.row.astype(index_dtype)
                 spmatrix.col = spmatrix.col.astype(index_dtype)
@@ -606,7 +606,7 @@ def _ensure_sparse_format(
     return spmatrix
 
 
-def _get_sparse_index_dtype(arrays=(), maxval=None, check_contents=False):
+def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=False):
     """
     Based on input (integer) arrays `a`, determine a suitable index data
     type that can hold the data in the arrays.
