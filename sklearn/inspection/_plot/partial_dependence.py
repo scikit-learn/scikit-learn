@@ -17,7 +17,11 @@ from ...utils import (
 from ...utils._encode import _unique
 from ...utils.parallel import Parallel, delayed
 from .. import partial_dependence
-from .._pd_utils import _check_feature_names, _get_feature_index, _robust_predict_for_scatter
+from .._pd_utils import (
+    _check_feature_names,
+    _get_feature_index,
+    _robust_predict_for_scatter,
+)
 
 
 class PartialDependenceDisplay:
@@ -813,17 +817,13 @@ class PartialDependenceDisplay:
                 if fx not in deciles:
                     X_col = _safe_indexing(X, fx, axis=1)
                     if not cat:
-                        deciles[fx] = mquantiles(
-                            X_col, prob=np.arange(0.1, 1.0, 0.1)
-                        )
+                        deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
                     if extra_plots:
                         extra_plots_data[fx] = X_col
 
         if y is None and extra_plots is not None and "scatter" in extra_plots:
             # Only compute predictions for extra_plots scatter
-            predictions = _robust_predict_for_scatter(
-                X, estimator, response_method
-            )
+            predictions = _robust_predict_for_scatter(X, estimator, response_method)
             # y = {"predictions": predictions[:, target_idx]}
             y = {"predictions": predictions}
 
@@ -1043,12 +1043,14 @@ class PartialDependenceDisplay:
         """
         from matplotlib import transforms  # noqa
 
-        extra_plot_kw = {} if extra_plots_kw is None \
-            else extra_plots_kw.get(extra_plot, {})
+        extra_plot_kw = (
+            {} if extra_plots_kw is None else extra_plots_kw.get(extra_plot, {})
+        )
 
         if extra_plot in {"boxplot", "hist"}:
             import matplotlib.pyplot as plt
             from matplotlib.gridspec import GridSpecFromSubplotSpec
+
             extra_plot_gs = GridSpecFromSubplotSpec(
                 2, 1, height_ratios=[0.2, 1], subplot_spec=ax.get_subplotspec()
             )
@@ -1062,8 +1064,9 @@ class PartialDependenceDisplay:
                     if "widths" not in extra_plot_kw:
                         extra_plot_kw["widths"] = 0.5
                     extrax_ax.boxplot(
-                        self.extra_plots_data[feature_idx[0]], vert=False,
-                        **extra_plot_kw
+                        self.extra_plots_data[feature_idx[0]],
+                        vert=False,
+                        **extra_plot_kw,
                     )
                     extrax_ax.tick_params(
                         labelleft=False, bottom=False, labelbottom=False
@@ -1074,16 +1077,14 @@ class PartialDependenceDisplay:
             elif extra_plot == "hist":
                 if categorical:
                     categories, counts = np.unique(
-                        self.extra_plots_data[feature_idx[0]],
-                        return_counts=True
+                        self.extra_plots_data[feature_idx[0]], return_counts=True
                     )
                     extrax_ax.bar(categories, counts)
                 else:
                     if "bins" not in extra_plot_kw:
                         extra_plot_kw["bins"] = 10
                     extrax_ax.hist(
-                        self.extra_plots_data[feature_idx[0]],
-                        **extra_plot_kw
+                        self.extra_plots_data[feature_idx[0]], **extra_plot_kw
                     )
                 extrax_ax.tick_params(labelbottom=False, bottom=True)
 
@@ -1094,8 +1095,10 @@ class PartialDependenceDisplay:
             extrax_ax.spines["right"].set_visible(False)
 
         elif extra_plot is not None and extra_plot != "scatter":
-            raise ValueError(f"Unknown extra_plot option <{extra_plot}>,"
-                             "valid options are: 'boxplot', 'hist', 'scatter'")
+            raise ValueError(
+                f"Unknown extra_plot option <{extra_plot}>,"
+                "valid options are: 'boxplot', 'hist', 'scatter'"
+            )
 
         if kind in ("individual", "both"):
             self._plot_ice_lines(
@@ -1147,15 +1150,8 @@ class PartialDependenceDisplay:
                 if isinstance(y, dict):
                     y = y["predictions"]
                     is_predicted = True
-                if not (
-                    hasattr(y, "__array__") or 
-                    sparse.issparse(y)
-                ):
-                    y = check_array(
-                        y,
-                        force_all_finite="allow-nan",
-                        dtype=object
-                    )
+                if not (hasattr(y, "__array__") or sparse.issparse(y)):
+                    y = check_array(y, force_all_finite="allow-nan", dtype=object)
 
                 if "facecolors" not in extra_plot_kw:
                     extra_plot_kw["facecolors"] = "none"
@@ -1188,7 +1184,12 @@ class PartialDependenceDisplay:
         else:
             ax.set_yticklabels([])
 
-        if pd_line_kw.get("label", None) and kind != "individual" and not categorical and extra_plot != "scatter":
+        if (
+            pd_line_kw.get("label", None)
+            and kind != "individual"
+            and not categorical
+            and extra_plot != "scatter"
+        ):
             ax.legend()
 
     def _plot_two_way_partial_dependence(
@@ -1252,14 +1253,19 @@ class PartialDependenceDisplay:
         """
         import matplotlib.pyplot as plt
 
-        extra_plot_kw = {} if extra_plots_kw is None \
-            else extra_plots_kw.get(extra_plot, {})
+        extra_plot_kw = (
+            {} if extra_plots_kw is None else extra_plots_kw.get(extra_plot, {})
+        )
 
         if extra_plot in {"boxplot", "hist"}:
             from matplotlib.gridspec import GridSpecFromSubplotSpec
+
             extra_plot_gs = GridSpecFromSubplotSpec(
-                2, 2, width_ratios=[1, 0.2], height_ratios=[0.2, 1],
-                subplot_spec=ax.get_subplotspec()
+                2,
+                2,
+                width_ratios=[1, 0.2],
+                height_ratios=[0.2, 1],
+                subplot_spec=ax.get_subplotspec(),
             )
 
             ax = plt.subplot(extra_plot_gs[1, 0], sharex=ax, sharey=ax)
@@ -1277,13 +1283,18 @@ class PartialDependenceDisplay:
                         vert=False,
                         **extra_plot_kw,
                     )
-                    extrax_ax.tick_params(labelleft=False, bottom=False, labelbottom=False)
+                    extrax_ax.tick_params(
+                        labelleft=False, bottom=False, labelbottom=False
+                    )
                     extrax_ax.spines["bottom"].set_visible(False)
                     extrax_ax.spines["left"].set_visible(False)
                     extray_ax.boxplot(
-                        self.extra_plots_data[feature_idx[1]], **extra_plot_kw,
+                        self.extra_plots_data[feature_idx[1]],
+                        **extra_plot_kw,
                     )
-                    extray_ax.tick_params(labelbottom=False, left=False, labelleft=False)
+                    extray_ax.tick_params(
+                        labelbottom=False, left=False, labelleft=False
+                    )
                     extray_ax.spines["bottom"].set_visible(False)
                     extray_ax.spines["left"].set_visible(False)
 
@@ -1299,8 +1310,12 @@ class PartialDependenceDisplay:
                     )
                     extrax_ax.bar(categories_y, counts_y)
                     extray_ax.barh(categories_x, counts_x)
-                    extrax_ax.tick_params(labelleft=False, bottom=False, labelbottom=False)
-                    extray_ax.tick_params(labelbottom=False, left=False, labelleft=False)
+                    extrax_ax.tick_params(
+                        labelleft=False, bottom=False, labelbottom=False
+                    )
+                    extray_ax.tick_params(
+                        labelbottom=False, left=False, labelleft=False
+                    )
                 else:
                     if "bins" not in extra_plot_kw:
                         extra_plot_kw["bins"] = 10
@@ -1311,7 +1326,7 @@ class PartialDependenceDisplay:
                     )
                     extray_ax.hist(
                         self.extra_plots_data[feature_idx[1]],
-                        orientation='horizontal',
+                        orientation="horizontal",
                         **extra_plot_kw,
                     )
                     extrax_ax.tick_params(labelbottom=False, bottom=True)
@@ -1319,12 +1334,8 @@ class PartialDependenceDisplay:
 
             # Clip the axes of the extra_plot to the contour min and max
             if not categorical:
-                extrax_ax.set_xlim(
-                    [feature_values[0].min(), feature_values[0].max()]
-                )
-                extray_ax.set_ylim(
-                    [feature_values[1].min(), feature_values[1].max()]
-                )
+                extrax_ax.set_xlim([feature_values[0].min(), feature_values[0].max()])
+                extray_ax.set_ylim([feature_values[1].min(), feature_values[1].max()])
 
             extrax_ax.spines["top"].set_visible(False)
             extrax_ax.spines["right"].set_visible(False)
@@ -1333,11 +1344,12 @@ class PartialDependenceDisplay:
             extray_ax.spines["top"].set_visible(False)
 
         elif extra_plot is not None and extra_plot != "scatter":
-            raise ValueError(f"Unknown extra_plot option <{extra_plot}>, valid"
-                             "options are: 'boxplot', 'hist', 'scatter'")
+            raise ValueError(
+                f"Unknown extra_plot option <{extra_plot}>, valid"
+                "options are: 'boxplot', 'hist', 'scatter'"
+            )
 
         if categorical:
-
             default_im_kw = dict(interpolation="nearest", cmap="viridis")
             im_kw = {**default_im_kw, **heatmap_kw}
 
@@ -1781,17 +1793,21 @@ class PartialDependenceDisplay:
                 "valid argument types are: str, list of str, None"
             )
         for pd_plot_idx, (
-            axi, feature_idx, cat, pd_result, kind_plot, extra_plot
-        ) in \
-            enumerate(
-                zip(
-                    self.axes_.ravel(),
-                    self.features,
-                    is_categorical,
-                    pd_results_,
-                    kind,
-                    extra_plots
-                )
+            axi,
+            feature_idx,
+            cat,
+            pd_result,
+            kind_plot,
+            extra_plot,
+        ) in enumerate(
+            zip(
+                self.axes_.ravel(),
+                self.features,
+                is_categorical,
+                pd_results_,
+                kind,
+                extra_plots,
+            )
         ):
             avg_preds = None
             preds = None

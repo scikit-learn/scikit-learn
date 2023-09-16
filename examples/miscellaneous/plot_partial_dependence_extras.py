@@ -33,18 +33,19 @@ see the :ref:`User guide <partial_dependence>`.
 # predict disease progression based on 10 features. The following cell loads
 # the dataset, splits it into training and test sets, and one-hot encodes "sex"
 # as a categorical variable.
+import matplotlib.pyplot as plt
+import pandas as pd
+
 from sklearn.datasets import load_diabetes
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.inspection import PartialDependenceDisplay
 from sklearn.model_selection import train_test_split
 
-import matplotlib.pyplot as plt
-import pandas as pd
-
-
 X, y = load_diabetes(as_frame=True, return_X_y=True)
 X["sex"] = pd.get_dummies(X["sex"], drop_first=True)
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, train_size=0.6)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, random_state=0, train_size=0.6
+)
 
 # %%
 # Modeling
@@ -52,9 +53,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0, train_
 # Now fit a random forest model to the training data. We're not going to
 # tune the model in this tutorial so we can focus on visualizing the features
 # alongside the partial dependence plots.
-rf = RandomForestRegressor(
-    max_depth=5, random_state=0
-)
+rf = RandomForestRegressor(max_depth=5, random_state=0)
 rf.fit(X_train, y_train)
 
 # %%
@@ -145,7 +144,7 @@ display = PartialDependenceDisplay.from_estimator(
     ["s5", ("bmi", "bp")],
     extra_plots="scatter",
     extra_plots_kw={"scatter": {"alpha": 0.25}},
-    ax=ax
+    ax=ax,
 )
 
 # %%

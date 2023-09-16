@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..base import is_regressor, is_classifier
+from ..base import is_classifier, is_regressor
 from ..exceptions import NotFittedError
 
 
