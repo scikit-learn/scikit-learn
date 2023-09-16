@@ -1076,7 +1076,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             reset=False,
             accept_sparse="csr",
             copy=copy,
-            dtype=supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -1119,7 +1119,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             accept_sparse="csr",
             copy=copy,
-            dtype=supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
