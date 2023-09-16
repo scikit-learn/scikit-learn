@@ -33,6 +33,7 @@ from ..utils import (
 )
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
+from ..utils.fixes import _sparse_linalg_cg
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _check_sample_weight, check_is_fitted
 from ._base import LinearClassifierMixin, LinearModel, _preprocess_data, _rescale_data
@@ -105,7 +106,7 @@ def _solve_sparse_cg(
             C = sp_linalg.LinearOperator(
                 (n_samples, n_samples), matvec=mv, dtype=X.dtype
             )
-            coef, info = sp_linalg.cg(C, y_column, tol=tol, atol="legacy")
+            coef, info = _sparse_linalg_cg(C, y_column, rtol=tol)
             coefs[i] = X1.rmatvec(coef)
         else:
             # linear ridge
@@ -114,9 +115,7 @@ def _solve_sparse_cg(
             C = sp_linalg.LinearOperator(
                 (n_features, n_features), matvec=mv, dtype=X.dtype
             )
-            coefs[i], info = sp_linalg.cg(
-                C, y_column, maxiter=max_iter, tol=tol, atol="legacy"
-            )
+            coefs[i], info = _sparse_linalg_cg(C, y_column, maxiter=max_iter, rtol=tol)
 
         if info < 0:
             raise ValueError("Failed with error code %d" % info)
@@ -1787,10 +1786,10 @@ class _RidgeGCV(LinearModel):
                 (X[batch].shape[0], X.shape[1] + self.fit_intercept), dtype=X.dtype
             )
             if self.fit_intercept:
-                X_batch[:, :-1] = X[batch].A - X_mean * scale[batch][:, None]
+                X_batch[:, :-1] = X[batch].toarray() - X_mean * scale[batch][:, None]
                 X_batch[:, -1] = intercept_col[batch]
             else:
-                X_batch = X[batch].A
+                X_batch = X[batch].toarray()
             diag[batch] = (X_batch.dot(A) * X_batch).sum(axis=1)
         return diag
 

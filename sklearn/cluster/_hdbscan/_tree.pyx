@@ -133,7 +133,7 @@ cpdef cnp.ndarray[CONDENSED_t, ndim=1, mode='c'] _condense_tree(
         A single linkage hierarchy in scipy.cluster.hierarchy format.
 
     min_cluster_size : int, optional (default 10)
-        The minimum size of clusters to consider. Clusters smaler than this
+        The minimum size of clusters to consider. Clusters smaller than this
         are pruned from the tree.
 
     Returns

@@ -38,6 +38,7 @@ from ..utils.extmath import row_norms, softmax
 from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _raise_for_params,
     _routing_enabled,
     process_routing,
 )
@@ -855,8 +856,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            in 1.4. Use `None` instead.
 
     dual : bool, default=False
-        Dual or primal formulation. Dual formulation is only implemented for
-        l2 penalty with liblinear solver. Prefer dual=False when
+        Dual (constrained) or primal (regularized, see also
+        :ref:`this equation <regularized-logistic-loss>`) formulation. Dual formulation
+        is only implemented for l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
     tol : float, default=1e-4
@@ -1473,8 +1475,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     dual : bool, default=False
-        Dual or primal formulation. Dual formulation is only implemented for
-        l2 penalty with liblinear solver. Prefer dual=False when
+        Dual (constrained) or primal (regularized, see also
+        :ref:`this equation <regularized-logistic-loss>`) formulation. Dual formulation
+        is only implemented for l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
     penalty : {'l1', 'l2', 'elasticnet'}, default='l2'
@@ -1791,11 +1794,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self : object
             Fitted LogisticRegressionCV estimator.
         """
-        if params and not _routing_enabled():
-            raise ValueError(
-                "params is only supported if enable_metadata_routing=True."
-                " See the User Guide for more information."
-            )
+        _raise_for_params(params, self, "fit")
 
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
@@ -1860,10 +1859,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         if _routing_enabled():
             routed_params = process_routing(
-                obj=self,
-                method="fit",
+                self,
+                "fit",
                 sample_weight=sample_weight,
-                other_params=params,
+                **params,
             )
         else:
             routed_params = Bunch()
@@ -2146,20 +2145,15 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         score : float
             Score of self.predict(X) w.r.t. y.
         """
-        if score_params and not _routing_enabled():
-            raise ValueError(
-                "score_params is only supported if enable_metadata_routing=True."
-                " See the User Guide for more information."
-                " https://scikit-learn.org/stable/metadata_routing.html"
-            )
+        _raise_for_params(score_params, self, "score")
 
         scoring = self._get_scorer()
         if _routing_enabled():
             routed_params = process_routing(
-                obj=self,
-                method="score",
+                self,
+                "score",
                 sample_weight=sample_weight,
-                other_params=score_params,
+                **score_params,
             )
         else:
             routed_params = Bunch()

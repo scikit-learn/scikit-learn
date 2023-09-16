@@ -254,7 +254,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                     cv=deepcopy(cv),
                     method=meth,
                     n_jobs=self.n_jobs,
-                    fit_params=fit_params,
+                    params=fit_params,
                     verbose=self.verbose,
                 )
                 for est, meth in zip(all_estimators, self.stack_method_)

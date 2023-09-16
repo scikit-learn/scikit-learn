@@ -392,7 +392,7 @@ Changelog
 
 - |Efficiency| :class:`decomposition.NMF` with `solver="mu"` fitted on sparse input
   matrices now uses batching to avoid briefly allocating an array with size
-  (#non-zero elements, n_components). :pr:`15257` by `Mart Willocx <Maocx>`_.
+  (#non-zero elements, n_components). :pr:`15257` by :user:`Mart Willocx <Maocx>`.
 
 - |Enhancement| :func:`decomposition.dict_learning` and
   :func:`decomposition.dict_learning_online` now accept `method_max_iter` and
