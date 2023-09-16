@@ -1041,7 +1041,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             # TODO ugly hack, torch.sqrt does not support torch.float16!
             var = xp.empty(self.var_.shape, dtype=xp.float64)
             var[:] = self.var_
-            std = xp.empty(var.shape, dtype=X.dtype)
+            std = xp.empty(var.shape, dtype=xp.float64)
             std[:] = xp.sqrt(var)
             self.scale_ = _handle_zeros_in_scale(
                 std, copy=False, constant_mask=constant_mask
