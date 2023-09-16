@@ -1029,7 +1029,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # for backward-compatibility, reduce n_samples_seen_ to an integer
         # if the number of samples is the same for each feature (i.e. no
         # missing values)
-        if np.ptp(self.n_samples_seen_) == 0:  # TODO add ptp to array api utils
+        if xp.max(self.n_samples_seen_) == xp.min(self.n_samples_seen_):
             self.n_samples_seen_ = self.n_samples_seen_[0]
 
         if self.with_std:
