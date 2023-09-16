@@ -10,7 +10,10 @@ from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
 from ..exceptions import NotFittedError
 from ..utils._param_validation import HasMethods, Interval, Options
 from ..utils._tags import _safe_tags
-from ..utils.metadata_routing import _RoutingNotSupported
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupported,
+)
 from ..utils.metaestimators import available_if
 from ..utils.validation import _num_features, check_is_fitted, check_scalar
 from ._base import SelectorMixin, _get_feature_importances
@@ -345,6 +348,7 @@ class SelectFromModel(
         self : object
             Fitted estimator.
         """
+        _raise_for_unsupported_routing(self, "fit", **fit_params)
         self._check_max_features(X)
 
         if self.prefit:

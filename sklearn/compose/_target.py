@@ -12,7 +12,10 @@ from ..preprocessing import FunctionTransformer
 from ..utils import _safe_indexing, check_array
 from ..utils._param_validation import HasMethods
 from ..utils._tags import _safe_tags
-from ..utils.metadata_routing import _RoutingNotSupported
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupported,
+)
 from ..utils.validation import check_is_fitted
 
 __all__ = ["TransformedTargetRegressor"]
@@ -223,6 +226,7 @@ class TransformedTargetRegressor(_RoutingNotSupported, RegressorMixin, BaseEstim
         self : object
             Fitted estimator.
         """
+        _raise_for_unsupported_routing(self, "fit", **fit_params)
         if y is None:
             raise ValueError(
                 f"This {self.__class__.__name__} estimator "

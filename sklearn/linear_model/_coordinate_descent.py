@@ -21,7 +21,10 @@ from ..model_selection import check_cv
 from ..utils import check_array, check_scalar
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import safe_sparse_dot
-from ..utils.metadata_routing import _RoutingNotSupported
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupported,
+)
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_sample_weight,
@@ -1538,6 +1541,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self : object
             Returns an instance of fitted model.
         """
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
         # Multiple functions touch X and subsamples of X and can induce a

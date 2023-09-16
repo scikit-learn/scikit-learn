@@ -34,7 +34,10 @@ from ..utils import (
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.fixes import _sparse_linalg_cg
-from ..utils.metadata_routing import _RoutingNotSupported
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupported,
+)
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _check_sample_weight, check_is_fitted
 from ._base import LinearClassifierMixin, LinearModel, _preprocess_data, _rescale_data
@@ -2393,6 +2396,7 @@ class RidgeCV(_RoutingNotSupported, MultiOutputMixin, RegressorMixin, _BaseRidge
         cross-validation takes the sample weights into account when computing
         the validation score.
         """
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         super().fit(X, y, sample_weight=sample_weight)
         return self
 
@@ -2564,6 +2568,7 @@ class RidgeClassifierCV(_RoutingNotSupported, _RidgeClassifierMixin, _BaseRidgeC
         self : object
             Fitted estimator.
         """
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         # `RidgeClassifier` does not accept "sag" or "saga" solver and thus support
         # csr, csc, and coo sparse matrices. By using solver="eigen" we force to accept
         # all sparse format.

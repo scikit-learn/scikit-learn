@@ -42,7 +42,10 @@ from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import _safe_indexing, check_random_state
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils.extmath import softmax, stable_cumsum
-from ..utils.metadata_routing import _RoutingNotSupported
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupported,
+)
 from ..utils.validation import (
     _check_sample_weight,
     _num_samples,
@@ -133,6 +136,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         X, y = self._validate_data(
             X,
             y,

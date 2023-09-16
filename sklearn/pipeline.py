@@ -28,6 +28,7 @@ from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
+    _raise_for_unsupported_routing,
     _routing_enabled,
     _RoutingNotSupported,
     process_routing,
@@ -1573,6 +1574,7 @@ class FeatureUnion(_RoutingNotSupported, TransformerMixin, _BaseComposition):
         self : object
             FeatureUnion class instance.
         """
+        _raise_for_unsupported_routing(self, "fit", **fit_params)
         transformers = self._parallel_func(X, y, fit_params, _fit_one)
         if not transformers:
             # All transformers are None

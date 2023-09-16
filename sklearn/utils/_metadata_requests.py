@@ -164,11 +164,46 @@ def _raise_for_params(params, owner, method):
         )
 
 
+def _raise_for_unsupported_routing(obj, method, **kwargs):
+    """Raise when metadata routing is enabled and metadata is passed.
+
+    This is used in meta-estimators which have not implemented metadata routing
+    to prevent silent bugs.
+
+    Parameters
+    ----------
+    obj : estimator
+        The estimator for which we're raising the error.
+
+    method : str
+        The method where the error is raised.
+
+    **kwargs : dict
+        The metadata passed to the method.
+    """
+    kwargs = {key: value for key, value in kwargs.items() if value is not None}
+    if _routing_enabled() and kwargs:
+        cls_name = obj.__class__.__name__
+        raise NotImplementedError(
+            f"{cls_name}.{method} cannot accept given metadata ({set(kwargs.keys())})"
+            f" since metadata routing is not yet implemented for {cls_name}."
+        )
+
+
 class _RoutingNotSupported:
+    """A mixin to be used to remove the default `get_metadata_routing`.
+
+    This is used in meta-estimators where metadata routing is not yet
+    implemented.
+
+    This also makes it clear in our rendered documentation that this method
+    cannot be used.
+    """
+
     def get_metadata_routing(self):
         """This estimator does not support metadata routing yet."""
         raise NotImplementedError(
-            "This estimator does not implement metadata routing yet."
+            f"{self.__class__.__name__} has not implemented metadata routing yet."
         )
 
 

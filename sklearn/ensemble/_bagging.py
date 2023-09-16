@@ -19,7 +19,10 @@ from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, column_or_1d, indices_to_mask
 from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from ..utils._tags import _safe_tags
-from ..utils.metadata_routing import _RoutingNotSupported
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupported,
+)
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
 from ..utils.parallel import Parallel, delayed
@@ -327,6 +330,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         # Convert data (X is required to be 2d and indexable)
         X, y = self._validate_data(
             X,

@@ -314,9 +314,25 @@ def get_init_args(metaestimator_info):
 
 
 @pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
-def test_unsupported_estimators(estimator):
+def test_unsupported_estimators_get_metadata_routing(estimator):
+    """Test that get_metadata_routing is not implemented on meta-estimators for
+    which we haven't implemented routing yet."""
     with pytest.raises(NotImplementedError):
         estimator.get_metadata_routing()
+
+
+@pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
+def test_unsupported_estimators_fit_with_metadata(estimator):
+    """Test that fit raises NotImplementedError when metadata routing is
+    enabled and a metadata is passed on meta-estimators for which we haven't
+    implemented routing yet."""
+    with pytest.raises(NotImplementedError):
+        try:
+            estimator.fit([[1]], [1], sample_weight=[1])
+        except TypeError:
+            # not all meta-estimators in the list support sample_weight,
+            # and for those we skip this test.
+            raise NotImplementedError
 
 
 def test_registry_copy():

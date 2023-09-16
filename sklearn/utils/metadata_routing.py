@@ -18,3 +18,4 @@ from ._metadata_requests import _MetadataRequester  # noqa
 from ._metadata_requests import _routing_enabled  # noqa
 from ._metadata_requests import _raise_for_params  # noqa
 from ._metadata_requests import _RoutingNotSupported  # noqa
+from ._metadata_requests import _raise_for_unsupported_routing  # noqa

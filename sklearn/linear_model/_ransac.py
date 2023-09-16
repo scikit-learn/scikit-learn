@@ -24,7 +24,10 @@ from ..utils._param_validation import (
     RealNotInt,
     StrOptions,
 )
-from ..utils.metadata_routing import _RoutingNotSupported
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupported,
+)
 from ..utils.random import sample_without_replacement
 from ..utils.validation import _check_sample_weight, check_is_fitted, has_fit_parameter
 from ._base import LinearRegression
@@ -333,6 +336,7 @@ class RANSACRegressor(
             `is_data_valid` and `is_model_valid` return False for all
             `max_trials` randomly chosen sub-samples.
         """
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         # Need to validate separately here. We can't pass multi_output=True
         # because that would allow y to be csr. Delay expensive finiteness
         # check to the estimator's own input validation.
