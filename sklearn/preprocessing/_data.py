@@ -990,8 +990,8 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                     )
                 # We force the mean and variance to float64 for large arrays
                 # See https://github.com/scikit-learn/scikit-learn/pull/12338
-                self.mean_ = self.mean_.astype(xp.float64, copy=False)
-                self.var_ = self.var_.astype(xp.float64, copy=False)
+                self.mean_ = xp.astype(self.mean_, xp.float64, copy=False)
+                self.var_ = xp.astype(self.var_, xp.float64, copy=False)
             else:
                 self.mean_ = None  # as with_mean must be False for sparse
                 self.var_ = None
