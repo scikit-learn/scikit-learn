@@ -96,6 +96,7 @@ Scoring                                Function                                 
 'neg_mean_squared_error'               :func:`metrics.mean_squared_error`
 'neg_root_mean_squared_error'          :func:`metrics.root_mean_squared_error`
 'neg_mean_squared_log_error'           :func:`metrics.mean_squared_log_error`
+'neg_root_mean_squared_log_error'      :func:`metrics.root_mean_squared_log_error`
 'neg_median_absolute_error'            :func:`metrics.median_absolute_error`
 'r2'                                   :func:`metrics.r2_score`
 'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
@@ -2310,8 +2311,9 @@ function::
     for an example of mean squared error usage to
     evaluate gradient boosting regression.
 
-The square root of the Mean Squared Error is also an useful metric, which can be computed
-with :func:`root_mean_squared_error`
+Taking the square root of the MSE, called the root mean squared error (RMSE), is another
+common metric that provides a measure in the same units as the target variable. RSME is
+available through the :func:`root_mean_squared_error` function.
 
 .. _mean_squared_log_error:
 
@@ -2350,8 +2352,8 @@ function::
   >>> mean_squared_log_error(y_true, y_pred)
   0.044...
 
-Likewise, the square root of the Mean Squared Logarithmic Error is an useful metric, which can be computed
-with :func:`root_mean_squared_log_error`
+The root mean squared logarithmic error (RMSLE) is available through the
+:func:`root_mean_squared_log_error` function.
 
 .. _mean_absolute_percentage_error:
 
