@@ -580,7 +580,7 @@ def _ensure_sparse_format(
     # With SciPy sparse arrays, conversion from DIA format to COO, CSR, or BSR triggers
     # the use of `np.int64` indices even if the data is such that it could be more
     # efficiently represented with `np.int32` indices.
-    # https://github.com/scipy/scipy/issues/19246
+    # https://github.com/scipy/scipy/issues/19245
     # Since not all scikit-learn algorithms support large indices, the following code
     # downcasts to `np.int32` indices when it's safe to do so.
     if (
