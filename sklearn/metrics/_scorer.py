@@ -64,6 +64,8 @@ from . import (
     r2_score,
     recall_score,
     roc_auc_score,
+    root_mean_squared_error,
+    root_mean_squared_log_error,
     top_k_accuracy_score,
 )
 from .cluster import (
@@ -762,7 +764,10 @@ neg_median_absolute_error_scorer = make_scorer(
     median_absolute_error, greater_is_better=False
 )
 neg_root_mean_squared_error_scorer = make_scorer(
-    mean_squared_error, greater_is_better=False, squared=False
+    root_mean_squared_error, greater_is_better=False
+)
+neg_root_mean_squared_log_error_scorer = make_scorer(
+    root_mean_squared_log_error, greater_is_better=False
 )
 neg_mean_poisson_deviance_scorer = make_scorer(
     mean_poisson_deviance, greater_is_better=False
@@ -837,10 +842,11 @@ _SCORERS = dict(
     matthews_corrcoef=matthews_corrcoef_scorer,
     neg_median_absolute_error=neg_median_absolute_error_scorer,
     neg_mean_absolute_error=neg_mean_absolute_error_scorer,
-    neg_mean_absolute_percentage_error=neg_mean_absolute_percentage_error_scorer,  # noqa
+    neg_mean_absolute_percentage_error=neg_mean_absolute_percentage_error_scorer,
     neg_mean_squared_error=neg_mean_squared_error_scorer,
     neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
     neg_root_mean_squared_error=neg_root_mean_squared_error_scorer,
+    neg_root_mean_squared_log_error=neg_root_mean_squared_log_error_scorer,
     neg_mean_poisson_deviance=neg_mean_poisson_deviance_scorer,
     neg_mean_gamma_deviance=neg_mean_gamma_deviance_scorer,
     accuracy=accuracy_scorer,
