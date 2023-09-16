@@ -157,11 +157,10 @@ def test_cluster_hierarchy_(global_dtype):
 
 
 @pytest.mark.parametrize(
-    "metric, is_sparse",
-    [["minkowski", False], ["euclidean", True]],
+    "csr_container, metric",
+    [(None, "minkowski")] + [(container, "euclidean") for container in CSR_CONTAINERS],
 )
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_correct_number_of_clusters(metric, is_sparse, csr_container):
+def test_correct_number_of_clusters(metric, csr_container):
     # in 'auto' mode
 
     n_clusters = 3
@@ -169,7 +168,7 @@ def test_correct_number_of_clusters(metric, is_sparse, csr_container):
     # Parameters chosen specifically for this task.
     # Compute OPTICS
     clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4, xi=0.1, metric=metric)
-    clust.fit(csr_container(X) if is_sparse else X)
+    clust.fit(csr_container(X) if csr_container is not None else X)
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(clust.labels_)) - int(-1 in clust.labels_)
     assert n_clusters_1 == n_clusters
@@ -290,20 +289,18 @@ def test_close_extract():
 @pytest.mark.parametrize("eps", [0.1, 0.3, 0.5])
 @pytest.mark.parametrize("min_samples", [3, 10, 20])
 @pytest.mark.parametrize(
-    "metric, is_sparse",
-    [["minkowski", False], ["euclidean", False], ["euclidean", True]],
+    "csr_container, metric",
+    [(None, "minkowski"), (None, "euclidean")]
+    + [(container, "euclidean") for container in CSR_CONTAINERS],
 )
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_dbscan_optics_parity(
-    eps, min_samples, metric, is_sparse, global_dtype, csr_container
-):
+def test_dbscan_optics_parity(eps, min_samples, metric, global_dtype, csr_container):
     # Test that OPTICS clustering labels are <= 5% difference of DBSCAN
 
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(
         n_samples=150, centers=centers, cluster_std=0.4, random_state=0
     )
-    X = csr_container(X) if is_sparse else X
+    X = csr_container(X) if csr_container is not None else X
 
     X = X.astype(global_dtype, copy=False)
 
@@ -803,12 +800,11 @@ def test_extract_dbscan(global_dtype):
     assert_array_equal(np.sort(np.unique(clust.labels_)), [0, 1, 2, 3])
 
 
-@pytest.mark.parametrize("is_sparse", [False, True])
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_precomputed_dists(is_sparse, global_dtype, csr_container):
+@pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
+def test_precomputed_dists(global_dtype, csr_container):
     redX = X[::2].astype(global_dtype, copy=False)
     dists = pairwise_distances(redX, metric="euclidean")
-    dists = csr_container(dists) if is_sparse else dists
+    dists = csr_container(dists) if csr_container is not None else dists
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", EfficiencyWarning)
         clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(
