@@ -1117,3 +1117,88 @@ def test_partial_dependence_display_with_constant_sample_weight(
     assert np.array_equal(
         disp.pd_results[0]["average"], disp_sw.pd_results[0]["average"]
     )
+
+
+@pytest.mark.parametrize(
+    "extra_plots, features, categorical, use_y, expected_n_data_cols, extra_plots_kw",
+    [
+        (None, [2], False, False, 1, {}),
+        (None, [2], False, True, 1, {}),
+        ("scatter", [2], False, False, 1, {}),
+        ("scatter", [2], False, True, 1, {}),
+        ("hist", [2], False, False, 1, {"hist": {"fill": False}}),
+        ("hist", [2], False, True, 1, {"hist": {"fill": True}}),
+        (["scatter", "hist"], [2, (0, 1)], False, True, 3, {}),
+        (["scatter", "hist"], [2, (0, 1)], False, False, 3, {}),
+        (["boxplot", "hist", "scatter"], [2, (0, 1), 3], False, True, 4, {}),
+        (["boxplot", "hist"], [2], False, False, 2, {}),
+        (["boxplot", None], [0, 2], False, False, 2, {}),
+        ("hist", ["x1"], True, True, 1, {}),
+        ("hist", [("x1", "x1")], True, True, 1, {}),
+        ("invalid", [2], False, False, 1, {}),
+        ("invalid", [2], False, True, 1, {}),
+    ],
+)
+def test_partial_dependence_display_extra_plots(
+    pyplot,
+    extra_plots,
+    features,
+    categorical,
+    use_y,
+    expected_n_data_cols,
+    extra_plots_kw,
+    clf_diabetes,
+    diabetes,
+):
+    if extra_plots is None:
+        disp = PartialDependenceDisplay.from_estimator(
+            clf_diabetes,
+            diabetes.data,
+            features,
+            extra_plots=extra_plots,
+            y=diabetes.target if use_y else None,
+        )
+        assert disp.extra_plots_data is None
+
+    elif extra_plots == "invalid":
+        with pytest.raises(ValueError, match=r"Unknown extra_plot option.*"):
+            disp = PartialDependenceDisplay.from_estimator(
+                clf_diabetes,
+                diabetes.data,
+                features,
+                extra_plots=extra_plots,
+                y=diabetes.target if use_y else None,
+                extra_plots_kw=extra_plots_kw,
+            )
+    elif len(features) == 1 and len(extra_plots) > 1 and isinstance(extra_plots, list):
+        with pytest.raises(
+            ValueError,
+            match=r"When `extra_plots` is provided as a list of strings, it should.*"
+        ):
+            disp = PartialDependenceDisplay.from_estimator(
+                clf_diabetes,
+                diabetes.data,
+                features,
+                extra_plots=extra_plots,
+                y=diabetes.target if use_y else None,
+                extra_plots_kw=extra_plots_kw,
+            )
+    else:
+        categorical_features = None
+        if categorical:
+            categorical_features = ["x1"]
+        disp = PartialDependenceDisplay.from_estimator(
+            clf_diabetes,
+            diabetes.data,
+            features,
+            categorical_features=categorical_features,
+            extra_plots=extra_plots,
+            y=diabetes.target if use_y else None,
+            extra_plots_kw=extra_plots_kw,
+        )
+        assert len(disp.extra_plots_data) == expected_n_data_cols
+        if "hist" in extra_plots_kw:
+            assert disp.figure_.get_axes()[1].get_children()[0].fill is extra_plots_kw["hist"]["fill"]
+        
+        elif not use_y and "scatter" in extra_plots and len(features) == 1:
+            assert disp.figure_.get_axes()[1].get_ylim()[1] != np.max(diabetes.target)

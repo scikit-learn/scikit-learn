@@ -17,7 +17,7 @@ from ...utils import (
 from ...utils._encode import _unique
 from ...utils.parallel import Parallel, delayed
 from .. import partial_dependence
-from .._pd_utils import _check_feature_names, _get_feature_index
+from .._pd_utils import _check_feature_names, _get_feature_index, _robust_predict_for_scatter
 
 
 class PartialDependenceDisplay:
@@ -33,7 +33,8 @@ class PartialDependenceDisplay:
 
     Read more in
     :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
-    and the :ref:`User Guide <partial_dependence>`.
+    , :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_extras.py`
+    , and the :ref:`User Guide <partial_dependence>`.
 
         .. versionadded:: 0.22
 
@@ -63,6 +64,18 @@ class PartialDependenceDisplay:
 
     deciles : dict
         Deciles for feature indices in ``features``.
+
+    extra_plots_data : dict, default=None
+        A dictionary containing the original feature values for the extra plots.
+        The keys are the feature names (or indices) and the values are the
+        original feature values for each feature. This is used to plot the extra
+        plots in the partial dependence plot. ``extra_plots_data`` is created
+        and passed automatically when using ``.from_estimator()``.
+
+        When ``extra_plots_data`` is ``None``, no extra plots are plotted.
+
+        When ``extra_plots_data`` is not ``None`` it should be in the form:
+            {"feature_name_1" : feature_values_1}
 
     kind : {'average', 'individual', 'both'} or list of such str, \
             default='average'
@@ -211,7 +224,7 @@ class PartialDependenceDisplay:
     ...     clf, X, features=0, kind="average", grid_resolution=5)
     >>> display = PartialDependenceDisplay(
     ...     [pd_results], features=features, feature_names=feature_names,
-    ...     target_idx=0, deciles=deciles
+    ...     target_idx=0, deciles=deciles, extra_plots_data=None,
     ... )
     >>> display.plot(pdp_lim={1: (-1.38, 0.66)})
     <...>
@@ -226,6 +239,7 @@ class PartialDependenceDisplay:
         feature_names,
         target_idx,
         deciles,
+        extra_plots_data,
         kind="average",
         subsample=1000,
         random_state=None,
@@ -236,6 +250,7 @@ class PartialDependenceDisplay:
         self.feature_names = feature_names
         self.target_idx = target_idx
         self.deciles = deciles
+        self.extra_plots_data = extra_plots_data
         self.kind = kind
         self.subsample = subsample
         self.random_state = random_state
@@ -267,6 +282,9 @@ class PartialDependenceDisplay:
         kind="average",
         centered=False,
         subsample=1000,
+        extra_plots=None,
+        extra_plots_kw=None,
+        y=None,
         random_state=None,
     ):
         """Partial dependence (PD) and individual conditional expectation (ICE) plots.
@@ -494,6 +512,57 @@ class PartialDependenceDisplay:
 
             Note that the full dataset is still used to calculate averaged partial
             dependence when `kind='both'`.
+
+        extra_plots : {'hist', 'boxplot', 'scatter', None} or list of such, \
+                        default=None
+            Extra plots to be added to the partial dependence plots. Currently
+            supported options are:
+
+            - ``'hist'``: A histogram of the feature distributions will be
+                plotted above (one-way) or above and to the right (two-way) of
+                the PD display. If the feature is categorical, a bar plot will
+                be used instead.
+            - ``'boxplot'`` : A boxplot of the feature distributions will be
+                plotted above (one-way) or above and to the right (two-way) of
+                the PD display.
+            - ``'scatter'`` : A scatter plot of the feature(s) overlayed on the
+                PD display. In a one-way PD plot, the predictions (regression)
+                or predicted probabilities of the ``target`` (classification)
+                are plotted on the y-axis. In a two-way PD plot, the feature
+                values are plotted directly on the contour plot.
+            - ``None`` : No extra plots will be added.
+
+            .. note::
+                The ``'hist'`` and ``'boxplot'`` plots will be truncated if the
+                ``percentiles`` parameter has it's min > 0 and max < 1.
+                Similarly, the ``'scatter'`` plot will be limited to the space
+                of the partial dependence values. In this situation, the
+                ``extra_plots`` visuals can be misleading.
+
+            .. versionadded:: 1.4
+
+        extra_plots_kw : dict of of dicts, default=None
+
+            Dictionary with keywords passed to the ``matplotlib.pyplot.hist``,
+            ``matplotlib.pyplot.boxplot``, and ``matplotlib.pyplot.scatter``
+            calls. The key value pairs defined in `extra_plots_kw` takes
+            priority over the default values. If None, the default values are
+            used.
+
+            Should be in the format:
+                ``{'hist' : {'fill' : False}, 'scatter' : {'alpha' : 0.5}}``
+
+            .. versionadded:: 1.4
+
+        y : {None, array-like} of shape (n_samples,), default=None
+            The target ``y`` values used during `estimator.fit(X, y)`. The
+            ``y`` argument is only used in a one-way PD plot when
+            ``extra_plots='scatter'``. If ``y`` is ``None`` and
+            ``extra_plots='scatter'``, the predictions (regression) or
+            predicted probabilities of the ``target`` (classification)
+            are plotted on the y-axis.
+
+            .. versionadded:: 1.4
 
         random_state : int, RandomState instance or None, default=None
             Controls the randomness of the selected samples when subsamples is not
@@ -738,11 +807,25 @@ class PartialDependenceDisplay:
             target_idx = target
 
         deciles = {}
+        extra_plots_data = {}
         for fxs, cats in zip(features, is_categorical):
             for fx, cat in zip(fxs, cats):
-                if not cat and fx not in deciles:
+                if fx not in deciles:
                     X_col = _safe_indexing(X, fx, axis=1)
-                    deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
+                    if not cat:
+                        deciles[fx] = mquantiles(
+                            X_col, prob=np.arange(0.1, 1.0, 0.1)
+                        )
+                    if extra_plots:
+                        extra_plots_data[fx] = X_col
+
+        if y is None and extra_plots is not None and "scatter" in extra_plots:
+            # Only compute predictions for extra_plots scatter
+            predictions = _robust_predict_for_scatter(
+                X, estimator, response_method
+            )
+            # y = {"predictions": predictions[:, target_idx]}
+            y = {"predictions": predictions}
 
         display = PartialDependenceDisplay(
             pd_results=pd_results,
@@ -750,6 +833,7 @@ class PartialDependenceDisplay:
             feature_names=feature_names,
             target_idx=target_idx,
             deciles=deciles,
+            extra_plots_data=extra_plots_data if extra_plots else None,
             kind=kind,
             subsample=subsample,
             random_state=random_state,
@@ -763,6 +847,9 @@ class PartialDependenceDisplay:
             pd_line_kw=pd_line_kw,
             contour_kw=contour_kw,
             centered=centered,
+            extra_plots=extra_plots,
+            extra_plots_kw=extra_plots_kw,
+            y=y,
         )
 
     def _get_sample_count(self, n_samples):
@@ -884,6 +971,9 @@ class PartialDependenceDisplay:
         categorical,
         bar_kw,
         pdp_lim,
+        extra_plot,
+        extra_plots_kw,
+        y,
     ):
         """Plot 1-way partial dependence: ICE and PDP.
 
@@ -900,8 +990,8 @@ class PartialDependenceDisplay:
             given feature for all samples in `X`.
         feature_values : ndarray of shape (n_grid_points,)
             The feature values for which the predictions have been computed.
-        feature_idx : int
-            The index corresponding to the target feature.
+        feature_idx : tuple of int
+            A length 1 tuple containing the index of the target feature.
         n_ice_lines : int
             The number of ICE lines to plot.
         ax : Matplotlib axes
@@ -925,8 +1015,87 @@ class PartialDependenceDisplay:
             Global min and max average predictions, such that all plots will
             have the same scale and y limits. `pdp_lim[1]` is the global min
             and max for single partial dependence curves.
+        extra_plot : str
+            Extra plot to be added to the partial dependence plot.
+            Must be one of {``None``, ``'boxplot'``, ``'hist'``, ``'scatter``'}.
+        extra_plots_kw : dict of of dicts, default=None
+
+            Dictionary with keywords passed to the ``matplotlib.pyplot.hist``,
+            ``matplotlib.pyplot.boxplot``, and ``matplotlib.pyplot.scatter``
+            calls. The key value pairs defined in `extra_plots_kw` takes
+            priority over the default values. If None, the default values are
+            used.
+
+            Should be in the format:
+                ``{'hist' : {'fill' : False}, 'scatter' : {'alpha' : 0.5}}``
+
+            .. versionadded:: 1.4
+        y : {None, dict, or array-like}, default=None
+            If y is array-like, it should have the shape (n_samples,) and ``y``
+             is the target ``y`` values used during `estimator.fit(X, y)`. If
+             ``y`` is a dict, then the only key  is ``'predictions'`` and the
+             value is the same array-like ``y`` used during fit. ``y`` is only
+             used when ``'scatter' is in ``extra_plots`` and for one-way
+             partial dependence plots. In the multi-class setting, this should
+            correspond to the ``y`` values from the ``target`` argument.
+
+            ..versionadded:: 1.4
         """
         from matplotlib import transforms  # noqa
+
+        extra_plot_kw = {} if extra_plots_kw is None \
+            else extra_plots_kw.get(extra_plot, {})
+
+        if extra_plot in {"boxplot", "hist"}:
+            import matplotlib.pyplot as plt
+            from matplotlib.gridspec import GridSpecFromSubplotSpec
+            extra_plot_gs = GridSpecFromSubplotSpec(
+                2, 1, height_ratios=[0.2, 1], subplot_spec=ax.get_subplotspec()
+            )
+
+            ax = plt.subplot(extra_plot_gs[1, 0], sharex=ax, sharey=ax)
+
+            extrax_ax = plt.subplot(extra_plot_gs[0, 0], sharex=ax)
+
+            if extra_plot == "boxplot":
+                if not categorical:
+                    if "widths" not in extra_plot_kw:
+                        extra_plot_kw["widths"] = 0.5
+                    extrax_ax.boxplot(
+                        self.extra_plots_data[feature_idx[0]], vert=False,
+                        **extra_plot_kw
+                    )
+                    extrax_ax.tick_params(
+                        labelleft=False, bottom=False, labelbottom=False
+                    )
+                    extrax_ax.spines["bottom"].set_visible(False)
+                    extrax_ax.spines["left"].set_visible(False)
+
+            elif extra_plot == "hist":
+                if categorical:
+                    categories, counts = np.unique(
+                        self.extra_plots_data[feature_idx[0]],
+                        return_counts=True
+                    )
+                    extrax_ax.bar(categories, counts)
+                else:
+                    if "bins" not in extra_plot_kw:
+                        extra_plot_kw["bins"] = 10
+                    extrax_ax.hist(
+                        self.extra_plots_data[feature_idx[0]],
+                        **extra_plot_kw
+                    )
+                extrax_ax.tick_params(labelbottom=False, bottom=True)
+
+            if not categorical:
+                extrax_ax.set_xlim([feature_values.min(), feature_values.max()])
+
+            extrax_ax.spines["top"].set_visible(False)
+            extrax_ax.spines["right"].set_visible(False)
+
+        elif extra_plot is not None and extra_plot != "scatter":
+            raise ValueError(f"Unknown extra_plot option <{extra_plot}>,"
+                             "valid options are: 'boxplot', 'hist', 'scatter'")
 
         if kind in ("individual", "both"):
             self._plot_ice_lines(
@@ -971,6 +1140,44 @@ class PartialDependenceDisplay:
         max_val = max(val[1] for val in pdp_lim.values())
         ax.set_ylim([min_val, max_val])
 
+        if extra_plot == "scatter":
+            if not categorical:
+                # If y is a dict, then we know the values are predicions
+                is_predicted = False
+                if isinstance(y, dict):
+                    y = y["predictions"]
+                    is_predicted = True
+                if not (
+                    hasattr(y, "__array__") or 
+                    sparse.issparse(y)
+                ):
+                    y = check_array(
+                        y,
+                        force_all_finite="allow-nan",
+                        dtype=object
+                    )
+
+                if "facecolors" not in extra_plot_kw:
+                    extra_plot_kw["facecolors"] = "none"
+                if "edgecolors" not in extra_plot_kw:
+                    extra_plot_kw["edgecolors"] = "k"
+
+                scat = ax.scatter(
+                    self.extra_plots_data[feature_idx[0]],
+                    y,
+                    **extra_plot_kw,
+                )
+                # Override the y limits to show the entire distribution
+                ax.set_ylim([y.min(), y.max()])
+
+                # Let the user know if the scatter is y_true or predicitons
+                if is_predicted:
+                    labels = "Predictions"
+                else:
+                    labels = "True Values"
+
+                ax.legend(handles=[scat], labels=[labels])
+
         # Set xlabel if it is not already set
         if not ax.get_xlabel():
             ax.set_xlabel(self.feature_names[feature_idx[0]])
@@ -981,7 +1188,7 @@ class PartialDependenceDisplay:
         else:
             ax.set_yticklabels([])
 
-        if pd_line_kw.get("label", None) and kind != "individual" and not categorical:
+        if pd_line_kw.get("label", None) and kind != "individual" and not categorical and extra_plot != "scatter":
             ax.legend()
 
     def _plot_two_way_partial_dependence(
@@ -995,6 +1202,8 @@ class PartialDependenceDisplay:
         contour_kw,
         categorical,
         heatmap_kw,
+        extra_plot,
+        extra_plots_kw,
     ):
         """Plot 2-way partial dependence.
 
@@ -1023,9 +1232,111 @@ class PartialDependenceDisplay:
         heatmap_kw: dict
             Dict with keywords passed when plotting the PD heatmap
             (categorical).
+        extra_plot : str
+            Extra plot to be added to the partial dependence plot.
+            Must be one of {``None``, ``'boxplot'``, ``'hist'``, ``'scatter``'}.
+
+            If ``'hist``' and ``categorical`` is ``True``, a barplot is drawn.
+        extra_plots_kw : dict of of dicts, default=None
+
+            Dictionary with keywords passed to the ``matplotlib.pyplot.hist``,
+            ``matplotlib.pyplot.boxplot``, and ``matplotlib.pyplot.scatter``
+            calls. The key value pairs defined in `extra_plots_kw` takes
+            priority over the default values. If None, the default values are
+            used.
+
+            Should be in the format:
+                ``{'hist' : {'fill' : False}, 'scatter' : {'alpha' : 0.5}}``
+
+            .. versionadded:: 1.4
         """
+        import matplotlib.pyplot as plt
+
+        extra_plot_kw = {} if extra_plots_kw is None \
+            else extra_plots_kw.get(extra_plot, {})
+
+        if extra_plot in {"boxplot", "hist"}:
+            from matplotlib.gridspec import GridSpecFromSubplotSpec
+            extra_plot_gs = GridSpecFromSubplotSpec(
+                2, 2, width_ratios=[1, 0.2], height_ratios=[0.2, 1],
+                subplot_spec=ax.get_subplotspec()
+            )
+
+            ax = plt.subplot(extra_plot_gs[1, 0], sharex=ax, sharey=ax)
+
+            extrax_ax = plt.subplot(extra_plot_gs[0, 0], sharex=ax)
+            extray_ax = plt.subplot(extra_plot_gs[1, 1], sharey=ax)
+
+            if extra_plot == "boxplot":
+                if not categorical:
+                    if "widths" not in extra_plot_kw:
+                        extra_plot_kw["widths"] = 0.5
+
+                    extrax_ax.boxplot(
+                        self.extra_plots_data[feature_idx[0]],
+                        vert=False,
+                        **extra_plot_kw,
+                    )
+                    extrax_ax.tick_params(labelleft=False, bottom=False, labelbottom=False)
+                    extrax_ax.spines["bottom"].set_visible(False)
+                    extrax_ax.spines["left"].set_visible(False)
+                    extray_ax.boxplot(
+                        self.extra_plots_data[feature_idx[1]], **extra_plot_kw,
+                    )
+                    extray_ax.tick_params(labelbottom=False, left=False, labelleft=False)
+                    extray_ax.spines["bottom"].set_visible(False)
+                    extray_ax.spines["left"].set_visible(False)
+
+            elif extra_plot == "hist":
+                if categorical:
+                    categories_x, counts_x = np.unique(
+                        self.extra_plots_data[feature_idx[0]],
+                        return_counts=True,
+                    )
+                    categories_y, counts_y = np.unique(
+                        self.extra_plots_data[feature_idx[1]],
+                        return_counts=True,
+                    )
+                    extrax_ax.bar(categories_y, counts_y)
+                    extray_ax.barh(categories_x, counts_x)
+                    extrax_ax.tick_params(labelleft=False, bottom=False, labelbottom=False)
+                    extray_ax.tick_params(labelbottom=False, left=False, labelleft=False)
+                else:
+                    if "bins" not in extra_plot_kw:
+                        extra_plot_kw["bins"] = 10
+
+                    extrax_ax.hist(
+                        self.extra_plots_data[feature_idx[0]],
+                        **extra_plot_kw,
+                    )
+                    extray_ax.hist(
+                        self.extra_plots_data[feature_idx[1]],
+                        orientation='horizontal',
+                        **extra_plot_kw,
+                    )
+                    extrax_ax.tick_params(labelbottom=False, bottom=True)
+                    extray_ax.tick_params(labelleft=False, left=True)
+
+            # Clip the axes of the extra_plot to the contour min and max
+            if not categorical:
+                extrax_ax.set_xlim(
+                    [feature_values[0].min(), feature_values[0].max()]
+                )
+                extray_ax.set_ylim(
+                    [feature_values[1].min(), feature_values[1].max()]
+                )
+
+            extrax_ax.spines["top"].set_visible(False)
+            extrax_ax.spines["right"].set_visible(False)
+
+            extray_ax.spines["right"].set_visible(False)
+            extray_ax.spines["top"].set_visible(False)
+
+        elif extra_plot is not None and extra_plot != "scatter":
+            raise ValueError(f"Unknown extra_plot option <{extra_plot}>, valid"
+                             "options are: 'boxplot', 'hist', 'scatter'")
+
         if categorical:
-            import matplotlib.pyplot as plt
 
             default_im_kw = dict(interpolation="nearest", cmap="viridis")
             im_kw = {**default_im_kw, **heatmap_kw}
@@ -1050,7 +1361,8 @@ class PartialDependenceDisplay:
                 text[row, col] = ax.text(col, row, text_data, **text_kwargs)
 
             fig = ax.figure
-            fig.colorbar(im, ax=ax)
+            if extra_plot != "hist":
+                fig.colorbar(im, ax=ax)
             ax.set(
                 xticks=np.arange(len(feature_values[1])),
                 yticks=np.arange(len(feature_values[0])),
@@ -1112,6 +1424,21 @@ class PartialDependenceDisplay:
                 ax.set_xlabel(self.feature_names[feature_idx[0]])
             ax.set_ylabel(self.feature_names[feature_idx[1]])
 
+        # draw the scatter on top of the contour
+        if extra_plot == "scatter":
+            if not categorical:
+                if "facecolors" not in extra_plot_kw:
+                    extra_plot_kw["facecolors"] = "none"
+                if "edgecolors" not in extra_plot_kw:
+                    extra_plot_kw["edgecolors"] = "k"
+                if "alpha" not in extra_plot_kw:
+                    extra_plot_kw["alpha"] = 0.5
+                ax.scatter(
+                    self.extra_plots_data[feature_idx[0]],
+                    self.extra_plots_data[feature_idx[1]],
+                    **extra_plot_kw,
+                )
+
     def plot(
         self,
         *,
@@ -1125,6 +1452,9 @@ class PartialDependenceDisplay:
         heatmap_kw=None,
         pdp_lim=None,
         centered=False,
+        extra_plots=None,
+        extra_plots_kw=None,
+        y=None,
     ):
         """Plot partial dependence plots.
 
@@ -1194,6 +1524,64 @@ class PartialDependenceDisplay:
             y-axis. By default, no centering is done.
 
             .. versionadded:: 1.1
+
+        extra_plots : {'hist', 'boxplot', 'scatter', None} or list of such, \
+                        default=None
+
+            Extra plots to be added to the partial dependence plots. Currently
+            supported options are:
+
+            - ``'hist'`` : A histogram of the feature distributions will be
+                plotted above (one-way) or above and to the right (two-way) of
+                the PD display. If the feature is categorical, a bar plot will
+                be used instead.
+
+            - ``'boxplot'`` : A boxplot of the feature distributions will be
+                plotted above (one-way) or above and to the right (two-way) of
+                the PD display.
+
+            - ``'scatter'`` : A scatter plot of the feature(s) overlayed on the
+                PD display. In a one-way PD plot, the predictions (regression)
+                or predicted probabilities of the ``target`` (classification)
+                are plotted on the y-axis. In a two-way PD plot, the feature
+                values are plotted directly on the contour plot.
+
+            - ``None`` : No extra plots will be added.
+
+            .. note::
+                The ``'hist'`` and ``'boxplot'`` plots will be truncated if the
+                ``percentiles`` parameter has it's min > 0 and max < 1.
+                Similarly, the ``'scatter'`` plot will be limited to the space
+                of the partial dependence values. In this situation, the
+                ``extra_plots`` visuals can be misleading.
+
+            .. versionadded:: 1.4
+
+        extra_plots_kw : dict, default=None (see below)
+
+            Dictionary with keywords passed to the ``matplotlib.pyplot.hist``,
+            ``matplotlib.pyplot.boxplot``, and ``matplotlib.pyplot.scatter``
+            calls.
+
+            The key value pairs defined in `extra_plots_kw` takes
+            priority over the default values. If None, the default values are
+            used.
+
+            Should be in the format:
+                ``{'hist' : {'fill' : False}, 'scatter' : {'alpha' : 0.5}}``
+
+            .. versionadded:: 1.4
+
+        y : {None, dict, or array-like}, default=None
+            If y is array-like, it should have the shape (n_samples,) and ``y``
+             is the target ``y`` values used during `estimator.fit(X, y)`. If
+             ``y`` is a dict, then the only key  is ``'predictions'`` and the
+             value is the same array-like ``y`` used during fit. ``y`` is only
+             used when ``'scatter' is in ``extra_plots`` and for one-way
+             partial dependence plots. In the multi-class setting, this should
+            correspond to the ``y`` values from the ``target`` argument.
+
+            .. versionadded:: 1.4
 
         Returns
         -------
@@ -1374,14 +1762,36 @@ class PartialDependenceDisplay:
         self.deciles_vlines_ = np.empty_like(self.axes_, dtype=object)
         self.deciles_hlines_ = np.empty_like(self.axes_, dtype=object)
 
-        for pd_plot_idx, (axi, feature_idx, cat, pd_result, kind_plot) in enumerate(
-            zip(
-                self.axes_.ravel(),
-                self.features,
-                is_categorical,
-                pd_results_,
-                kind,
+        # process extra_plots argument
+        if extra_plots is None:
+            extra_plots = [None] * len(self.features)
+        elif isinstance(extra_plots, str):
+            extra_plots = [extra_plots] * len(self.features)
+        elif isinstance(extra_plots, list):
+            if len(extra_plots) != len(self.features):
+                raise ValueError(
+                    "When `extra_plots` is provided as a list of strings, "
+                    "it should contain as many elements as `features`. "
+                    f"`extra_plots` contains {len(extra_plots)} element(s) and"
+                    f"`features` contains {len(self.features)} element(s)."
+                )
+        else:
+            raise ValueError(
+                f"Unknown extra_plots argument <{extra_plots}>,"
+                "valid argument types are: str, list of str, None"
             )
+        for pd_plot_idx, (
+            axi, feature_idx, cat, pd_result, kind_plot, extra_plot
+        ) in \
+            enumerate(
+                zip(
+                    self.axes_.ravel(),
+                    self.features,
+                    is_categorical,
+                    pd_results_,
+                    kind,
+                    extra_plots
+                )
         ):
             avg_preds = None
             preds = None
@@ -1456,6 +1866,9 @@ class PartialDependenceDisplay:
                     cat[0],
                     bar_kw,
                     pdp_lim,
+                    extra_plot,
+                    extra_plots_kw,
+                    y,
                 )
             else:
                 self._plot_two_way_partial_dependence(
@@ -1468,6 +1881,8 @@ class PartialDependenceDisplay:
                     contour_kw,
                     cat[0] and cat[1],
                     heatmap_kw,
+                    extra_plot,
+                    extra_plots_kw,
                 )
 
         return self
