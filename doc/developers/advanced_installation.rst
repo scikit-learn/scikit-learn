@@ -292,7 +292,7 @@ scikit-learn from source:
 .. prompt:: bash $
 
     conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
-        joblib threadpoolctl pytest compilers
+        joblib threadpoolctl pytest compilers llvm-openmp
 
 It is not always necessary but it is safer to open a new prompt before
 activating the newly created conda environment.
