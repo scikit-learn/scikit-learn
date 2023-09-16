@@ -1006,9 +1006,9 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         else:
             # First pass
             if not hasattr(self, "scale_"):
-                self.mean_ = xp.zeros(1)[0]  # TODO is there a better way?
+                self.mean_ = 0.0
                 if self.with_std:
-                    self.var_ = xp.zeros(1)[0]  # TODO is there a better way?
+                    self.var_ = 0.0
                 else:
                     self.var_ = None
 
