@@ -55,6 +55,7 @@ from sklearn.utils._testing import (
     skip_if_32bit,
 )
 from sklearn.utils.estimator_checks import (
+    _get_check_estimator_ids,
     check_array_api_input_and_values,
 )
 from sklearn.utils.fixes import (
@@ -709,6 +710,7 @@ def test_standard_check_array_of_inverse_transform():
         Normalizer(norm="l1"),
         Normalizer(norm="l2"),
         Normalizer(norm="max"),
+        StandardScaler(),
     ],
     ids=_get_check_estimator_ids,
 )
