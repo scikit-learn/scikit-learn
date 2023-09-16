@@ -1234,11 +1234,24 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     .. math::
        D(x, y) = \sum_i |x_i - y_i|
     """
-    cdef func{{name_suffix}}_t dispatched_dist_f{{name_suffix}}
+    cdef func{{name_suffix}}_t dispatched_func
+
+    def __getstate__(self):
+        """
+        get state for pickling
+        """
+        return (*super.__getstate__(), <void*> self.dispatched_func)
+
+    def __setstate__(self, state):
+        """
+        set state for pickling
+        """
+        super.__setstate__(state)
+        self.dispatched_func = <func{{name_suffix}}_t> state[3]
 
     def __init__(self):
         self.p = 1
-        self.dispatched_dist_f{{name_suffix}} = get_simd_manhattan_f{{name_suffix}}()
+        self.dispatched_func = get_simd_manhattan_f{{name_suffix}}()
 
     cdef inline {{INPUT_DTYPE_t}} dist(
         self,
@@ -1249,7 +1262,7 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         if WITH_SIMD:
             # The SIMD build offers scalar implementations as well,
             # hence we do not need any runtime check.
-            return self.dispatched_dist_f{{name_suffix}}(x1, x2, size)
+            return self.dispatched_func(x1, x2, size)
         # This ensures we do not need to go through a hwy inclusive build if we
         # know we only want scalar operations.
         cdef float64_t d = 0
