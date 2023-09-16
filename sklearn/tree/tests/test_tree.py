@@ -802,10 +802,10 @@ def test_min_weight_fraction_leaf_with_min_samples_leaf_on_sparse_input(name):
     check_min_weight_fraction_leaf_with_min_samples_leaf(name, "multilabel", True)
 
 
-def test_min_impurity_decrease():
+def test_min_impurity_decrease(global_random_seed):
     # test if min_impurity_decrease ensure that a split is made only if
     # if the impurity decrease is at least that value
-    X, y = datasets.make_classification(n_samples=10000, random_state=42)
+    X, y = datasets.make_classification(n_samples=100, random_state=global_random_seed)
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes
