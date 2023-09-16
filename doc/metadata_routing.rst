@@ -239,13 +239,13 @@ The issue can be fixed by explicitly setting the request value::
 Metadata Routing Support Status
 *******************************
 All consumers (i.e. simple estimators which only consume metadata and don't
-route them) all support metadata routing, meaning they can be used inside
+route them) support metadata routing, meaning they can be used inside
 meta-estimators which support metadata routing. However, development of support
-for metadata routing is in progress, and here is a list of estimators and tools
-which support and don't yet support metadata routing.
+for metadata routing for meta-estimators is in progress, and here is a list of
+meta-estimators and tools which support and don't yet support metadata routing.
 
 
-Estimators and functions supporting metadata routing:
+Meta-estimators and functions supporting metadata routing:
 
 - :class:`~sklearn.calibration.CalibratedClassifierCV`
 - :class:`~sklearn.multioutput.ClassifierChain`
@@ -263,7 +263,7 @@ Estimators and functions supporting metadata routing:
 - :func:`~sklearn.model_selection.cross_val_score`
 - :func:`~sklearn.model_selection.cross_val_predict`
 
-Estimators and tools not supporting metadata routing yet:
+Meta-estimators and tools not supporting metadata routing yet:
 
 - :class:`~sklearn.ensemble.AdaBoostClassifier`
 - :class:`~sklearn.ensemble.AdaBoostRegressor`
