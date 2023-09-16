@@ -80,10 +80,15 @@ def test_classification_toy(loss, global_random_seed):
 def test_classification_synthetic(loss, global_random_seed):
     # Test GradientBoostingClassifier on synthetic dataset used by
     # Hastie et al. in ESLII - Figure 10.9
-    X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=global_random_seed)
+    # Note that Figure 10.9 reuses the dataset generated for figure 10.2
+    # and should have 2_000 train data points and 10_000 test data points.
+    # Here we intentionally use a smaller variant to make the test run faster,
+    # but the conclusions are still the same, despite the smaller datasets.
+    X, y = datasets.make_hastie_10_2(n_samples=2000, random_state=global_random_seed)
 
-    X_train, X_test = X[:2000], X[2000:]
-    y_train, y_test = y[:2000], y[2000:]
+    split_idx = 500
+    X_train, X_test = X[:split_idx], X[split_idx:]
+    y_train, y_test = y[:split_idx], y[split_idx:]
 
     # Increasing the number of trees should decrease the test error
     common_params = {
@@ -92,13 +97,13 @@ def test_classification_synthetic(loss, global_random_seed):
         "loss": loss,
         "random_state": global_random_seed,
     }
-    gbrt_100_stumps = GradientBoostingClassifier(n_estimators=100, **common_params)
-    gbrt_100_stumps.fit(X_train, y_train)
+    gbrt_10_stumps = GradientBoostingClassifier(n_estimators=10, **common_params)
+    gbrt_10_stumps.fit(X_train, y_train)
 
-    gbrt_200_stumps = GradientBoostingClassifier(n_estimators=200, **common_params)
-    gbrt_200_stumps.fit(X_train, y_train)
+    gbrt_50_stumps = GradientBoostingClassifier(n_estimators=50, **common_params)
+    gbrt_50_stumps.fit(X_train, y_train)
 
-    assert gbrt_100_stumps.score(X_test, y_test) < gbrt_200_stumps.score(X_test, y_test)
+    assert gbrt_10_stumps.score(X_test, y_test) < gbrt_50_stumps.score(X_test, y_test)
 
     # Decision stumps are better suited for this dataset with a large number of
     # estimators.
