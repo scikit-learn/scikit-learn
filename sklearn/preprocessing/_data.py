@@ -935,8 +935,9 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             self,
             X,
             accept_sparse=("csr", "csc"),
-            dtype=supported_float_dtypes(xp),
+            dtype=_array_api.supported_float_dtypes(xp),
             ensure_all_finite="allow-nan",
+            force_all_finite="allow-nan",
             reset=first_call,
         )
         n_features = X.shape[1]
@@ -951,7 +952,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # if n_samples_seen_ is an integer (i.e. no missing values), we need to
         # transform it to an array of shape (n_features,) required by
         # incr_mean_variance_axis and _incremental_variance_axis
-        dtype = counter_dtype(xp, X.dtype) if sample_weight is None else X.dtype
+        dtype = xp.int64 if sample_weight is None else X.dtype
         if not hasattr(self, "n_samples_seen_"):
             self.n_samples_seen_ = xp.zeros(n_features, dtype=dtype)
         elif size(self.n_samples_seen_) == 1:
