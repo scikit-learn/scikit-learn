@@ -957,7 +957,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             self.n_samples_seen_ = xp.zeros(n_features, dtype=dtype)
         elif size(self.n_samples_seen_) == 1:
             self.n_samples_seen_ = xp.repeat(self.n_samples_seen_, X.shape[1])
-            self.n_samples_seen_ = self.n_samples_seen_.astype(dtype, copy=False)
+            self.n_samples_seen_ = xp.astype(self.n_samples_seen_, dtype, copy=False)
 
         if sparse.issparse(X):
             if self.with_mean:
