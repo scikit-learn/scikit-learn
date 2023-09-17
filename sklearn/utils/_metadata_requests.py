@@ -201,7 +201,9 @@ class _RoutingNotSupported:
     """
 
     def get_metadata_routing(self):
-        """This estimator does not support metadata routing yet."""
+        """Raise `NotImplementedError`.
+
+        This estimator does not support metadata routing yet."""
         raise NotImplementedError(
             f"{self.__class__.__name__} has not implemented metadata routing yet."
         )
