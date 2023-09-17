@@ -73,6 +73,7 @@ REGRESSION_SCORERS = [
     "neg_mean_squared_log_error",
     "neg_median_absolute_error",
     "neg_root_mean_squared_error",
+    "neg_root_mean_squared_log_error",
     "mean_absolute_error",
     "mean_absolute_percentage_error",
     "mean_squared_error",
