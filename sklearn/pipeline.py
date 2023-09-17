@@ -750,12 +750,15 @@ class Pipeline(_BaseComposition):
             Result of calling `decision_function` on the final estimator.
         """
         _raise_for_params(params, self, "decision_function")
+        Xt = X
 
-        # not branching here since params is only available if
-        # enable_metadata_routing=True
+        if not _routing_enabled():
+            for _, name, transform in self._iter(with_final=False):
+                Xt = transform.transform(Xt)
+            return self.steps[-1][1].decision_function(Xt)
+
         routed_params = process_routing(self, "decision_function", **params)
 
-        Xt = X
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(
                 Xt, **routed_params.get(name, {}).get("transform", {})
@@ -886,10 +889,13 @@ class Pipeline(_BaseComposition):
         """
         _raise_for_params(params, self, "transform")
 
-        # not branching here since params is only available if
-        # enable_metadata_routing=True
-        routed_params = process_routing(self, "transform", **params)
         Xt = X
+        if not _routing_enabled():
+            for _, name, transform in self._iter():
+                Xt = transform.transform(Xt)
+            return Xt
+
+        routed_params = process_routing(self, "transform", **params)
         for _, name, transform in self._iter():
             Xt = transform.transform(Xt, **routed_params[name].transform)
         return Xt
@@ -928,11 +934,14 @@ class Pipeline(_BaseComposition):
             space.
         """
         _raise_for_params(params, self, "inverse_transform")
-
-        # we don't have to branch here, since params is only non-empty if
-        # enable_metadata_routing=True.
-        routed_params = process_routing(self, "inverse_transform", **params)
         reverse_iter = reversed(list(self._iter()))
+
+        if not _routing_enabled():
+            for _, name, transform in reverse_iter:
+                Xt = transform.inverse_transform(Xt)
+            return Xt
+
+        routed_params = process_routing(self, "inverse_transform", **params)
         for _, name, transform in reverse_iter:
             Xt = transform.inverse_transform(
                 Xt, **routed_params[name].inverse_transform
