@@ -2,7 +2,6 @@ import warnings
 
 import numpy as np
 import pytest
-from scipy import sparse
 
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
@@ -11,6 +10,7 @@ from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_array_equal,
 )
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 
 def _make_func(args_store, kwargs_store, func=lambda X, *a, **k: X):
@@ -121,59 +121,59 @@ def test_inverse_transform():
     )
 
 
-def test_check_inverse():
-    X_dense = np.array([1, 4, 9, 16], dtype=np.float64).reshape((2, 2))
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS + CSR_CONTAINERS)
+def test_check_inverse(sparse_container):
+    X = np.array([1, 4, 9, 16], dtype=np.float64).reshape((2, 2))
+    if sparse_container is not None:
+        X = sparse_container(X)
 
-    X_list = [X_dense, sparse.csr_matrix(X_dense), sparse.csc_matrix(X_dense)]
+    trans = FunctionTransformer(
+        func=np.sqrt,
+        inverse_func=np.around,
+        accept_sparse=sparse_container is not None,
+        check_inverse=True,
+        validate=True,
+    )
+    warning_message = (
+        "The provided functions are not strictly"
+        " inverse of each other. If you are sure you"
+        " want to proceed regardless, set"
+        " 'check_inverse=False'."
+    )
+    with pytest.warns(UserWarning, match=warning_message):
+        trans.fit(X)
 
-    for X in X_list:
-        if sparse.issparse(X):
-            accept_sparse = True
-        else:
-            accept_sparse = False
-        trans = FunctionTransformer(
-            func=np.sqrt,
-            inverse_func=np.around,
-            accept_sparse=accept_sparse,
-            check_inverse=True,
-            validate=True,
-        )
-        warning_message = (
-            "The provided functions are not strictly"
-            " inverse of each other. If you are sure you"
-            " want to proceed regardless, set"
-            " 'check_inverse=False'."
-        )
-        with pytest.warns(UserWarning, match=warning_message):
-            trans.fit(X)
+    trans = FunctionTransformer(
+        func=np.expm1,
+        inverse_func=np.log1p,
+        accept_sparse=sparse_container is not None,
+        check_inverse=True,
+        validate=True,
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        Xt = trans.fit_transform(X)
 
-        trans = FunctionTransformer(
-            func=np.expm1,
-            inverse_func=np.log1p,
-            accept_sparse=accept_sparse,
-            check_inverse=True,
-            validate=True,
-        )
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", UserWarning)
-            Xt = trans.fit_transform(X)
+    assert_allclose_dense_sparse(X, trans.inverse_transform(Xt))
 
-        assert_allclose_dense_sparse(X, trans.inverse_transform(Xt))
 
+def test_check_inverse_func_or_inverse_not_provided():
     # check that we don't check inverse when one of the func or inverse is not
     # provided.
+    X = np.array([1, 4, 9, 16], dtype=np.float64).reshape((2, 2))
+
     trans = FunctionTransformer(
         func=np.expm1, inverse_func=None, check_inverse=True, validate=True
     )
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
-        trans.fit(X_dense)
+        trans.fit(X)
     trans = FunctionTransformer(
         func=None, inverse_func=np.expm1, check_inverse=True, validate=True
     )
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
-        trans.fit(X_dense)
+        trans.fit(X)
 
 
 def test_function_transformer_frame():
