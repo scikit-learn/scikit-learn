@@ -1451,12 +1451,13 @@ def _prf_divide(
     # labels with no predicted samples. Use ``zero_division`` parameter to
     # control this behavior."
 
-    if metric in warn_for and "f-score" in warn_for:
+    if metric in warn_for and "f-score" in warn_for and metric != "f-score":
         msg_start = "{0} and F-score are".format(metric.title())
-    elif metric in warn_for:
-        msg_start = "{0} is".format(metric.title())
     elif "f-score" in warn_for:
         msg_start = "F-score is"
+    elif metric in warn_for:
+        msg_start = "{0} is".format(metric.title())
+
     else:
         return result
 
@@ -1757,7 +1758,7 @@ def precision_recall_fscore_support(
         f_score = _prf_divide(
             (1 + beta2) * tp_sum,
             denom,
-            "fscore",
+            "f-score",
             "true nor predicted",
             average,
             warn_for,

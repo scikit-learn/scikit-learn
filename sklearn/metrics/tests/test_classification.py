@@ -2078,6 +2078,12 @@ def test_prf_warnings():
         warnings.simplefilter("always")
         precision_recall_fscore_support([0, 0], [0, 0], average="binary")
         msg = (
+            "F-score is ill-defined and being set to 0.0 due to no true nor "
+            "predicted samples. Use `zero_division` parameter to control this"
+            " behavior."
+        )
+        assert str(record.pop().message) == msg
+        msg = (
             "Recall and F-score are ill-defined and "
             "being set to 0.0 due to no true samples."
             " Use `zero_division` parameter to control"
