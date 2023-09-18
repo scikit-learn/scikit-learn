@@ -225,7 +225,7 @@ it is advisable to use a power of two as the ``n_features`` parameter;
 otherwise the features will not be mapped evenly to the columns.
 
 .. topic:: References:
-    
+
   * `MurmurHash3 <https://github.com/aappleby/smhasher>`_.
 
 |details-end|
@@ -396,9 +396,9 @@ last document::
   >>> X_2[:, feature_index]
   array([0, 0, 0, 1]...)
 
+|details-start|
 .. _stop_words:
 
-|details-start|
 **Using stop words**
 |details-split|
 
