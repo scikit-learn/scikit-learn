@@ -1744,12 +1744,6 @@ def precision_recall_fscore_support(
         tp_sum, true_sum, "recall", "true", average, warn_for, zero_division
     )
 
-    # warn for f-score only if zero_division is warn, it is in warn_for
-    # and BOTH prec and rec are ill-defined
-    if zero_division == "warn" and ("f-score",) == warn_for:
-        if (pred_sum[true_sum == 0] == 0).any():
-            _warn_prf(average, "true nor predicted", "F-score is", len(true_sum))
-
     if np.isposinf(beta):
         f_score = recall
     elif beta == 0:
