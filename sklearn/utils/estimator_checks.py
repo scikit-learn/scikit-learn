@@ -4508,6 +4508,8 @@ def _check_generated_dataframe(
     create_dataframe,
     assert_frame_equal,
 ):
+    # See _check_set_output_transform_dataframe for parameer documentation.
+
     X_trans, feature_names_default = outputs_default
     df_trans, feature_names_pandas = outputs_pandas
 
@@ -4541,6 +4543,35 @@ def _check_set_output_transform_dataframe(
     assert_frame_equal,
     context,
 ):
+    """Check `set_output` transform API with dataframes.
+
+    Parameter
+    ---------
+    name : str
+        Transformer's name.
+
+    transformer_orig : Transformer
+        Transformer object.
+
+    dataframe_lib : str
+        Name of module accepted by `set_output`.
+
+    is_supported_dataframe : callable
+        Callable that returns True if dataframe is the supported dataframe type.
+
+    create_dataframe : callable
+        Callable with signature `func(data, columns, index)` that creates the dataframe
+
+    assert_frame_equal : callable
+        Callable that asserts that two dataframes are equal.
+
+    context: {"local", "global"}
+        Configures context to check `set_output` API.
+         - "local": check the API for local configuration, i.e.
+           `transformer.set_output`
+        - "global": check the API for global configuration, i.e.
+          `sklearn.config_context`
+    """
     # Check transformer.set_output configures the output of transform="pandas".
     tags = transformer_orig._get_tags()
     if "2darray" not in tags["X_types"] or tags["no_validation"]:
@@ -4595,7 +4626,7 @@ def _check_set_output_transform_pandas_context(name, transformer_orig, context):
     try:
         import pandas as pd
     except ImportError:  # pragma: no cover
-        raise SkipTest("pandas is not installed: not checking set output")
+        raise SkipTest("pandas is not installed: not checking set_output")
 
     _check_set_output_transform_dataframe(
         name,
