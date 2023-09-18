@@ -232,6 +232,12 @@ Changelog
   support SciPy sparse arrays.
   :pr:`27239` by :user:`Yaroslav Korobko <Tialo>`.
 
+- |Fix| :func:`f1_score` now provides correct values when handling various
+  cases in which zero division occurs by using a formulation that does not
+  depend on the precision and recall values.
+  :pr:`27165` by :user:`Omar Salman <OmarManzoor>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
