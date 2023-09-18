@@ -15,9 +15,9 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
-from joblib import effective_n_jobs
 from scipy import optimize
 
+from joblib import effective_n_jobs
 from sklearn.metrics import get_scorer_names
 
 from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
@@ -481,7 +481,14 @@ def _logistic_regression_path(
             l2_reg_strength = 1.0 / (C * sw_sum)
             args = (X, target, sample_weight, l2_reg_strength, n_threads)
             w0, n_iter_i = _newton_cg(
-                hess, func, grad, w0, args=args, maxiter=max_iter, tol=tol
+                grad_hess=hess,
+                func=func,
+                grad=grad,
+                x0=w0,
+                args=args,
+                maxiter=max_iter,
+                tol=tol,
+                verbose=verbose,
             )
         elif solver == "newton-cholesky":
             l2_reg_strength = 1.0 / (C * sw_sum)
