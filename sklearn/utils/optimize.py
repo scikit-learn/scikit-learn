@@ -108,6 +108,8 @@ def _cg(fhess_p, fgrad, maxiter, tol):
     psupi = -ri
     i = 0
     dri0 = np.dot(ri, ri)
+    # We also track of |p_i|^2.
+    psupi_norm2 = dri0
 
     while i <= maxiter:
         if np.sum(np.abs(ri)) <= tol:
@@ -116,7 +118,8 @@ def _cg(fhess_p, fgrad, maxiter, tol):
         Ap = fhess_p(psupi)
         # check curvature
         curv = np.dot(psupi, Ap)
-        if 0 <= curv <= 3 * np.finfo(np.float64).eps:
+        if 0 <= curv <= 16 * np.finfo(np.float64).eps * psupi_norm2:
+            # See https://arxiv.org/abs/1803.02924, Algo 1 Capped Conjugate Gradient.
             break
         elif curv < 0:
             if i > 0:
@@ -131,6 +134,8 @@ def _cg(fhess_p, fgrad, maxiter, tol):
         dri1 = np.dot(ri, ri)
         betai = dri1 / dri0
         psupi = -ri + betai * psupi
+        # We use  |p_i|^2 = |r_i|^2 + beta_i^2 |p_{i-1}|^2
+        psupi_norm2 = dri1 + betai**2 * psupi_norm2
         i = i + 1
         dri0 = dri1  # update np.dot(ri,ri) for next time.
 
