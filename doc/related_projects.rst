@@ -230,7 +230,11 @@ Note scikit-learn own modern gradient boosting estimators
 
 **Privacy Preserving Machine Learning**
 
-- `Concrete ML <https://github.com/zama-ai/concrete-ml/>`_ A privacy preserving ML framework built on top of `Concrete <https://github.com/zama-ai/concrete>`_, with bindings to traditional ML frameworks, thanks to fully homomorphic encryption. APIs of so-called Concrete ML built-in models are very close to scikit-learn APIs.
+- `Concrete ML <https://github.com/zama-ai/concrete-ml/>`_ A privacy preserving
+  ML framework built on top of `Concrete
+  <https://github.com/zama-ai/concrete>`_, with bindings to traditional ML
+  frameworks, thanks to fully homomorphic encryption. APIs of so-called
+  Concrete ML built-in models are very close to scikit-learn APIs.
 
 **Broad scope**
 
