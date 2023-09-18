@@ -9,6 +9,20 @@ Version 1.3.1
 
 **In development**
 
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- |Fix| Ridge models with `solver='sparse_cg'` may have slightly different
+  results with scipy>=1.12, because of an underlying change in the scipy solver
+  (see `scipy#18488 <https://github.com/scipy/scipy/pull/18488>`_ for more
+  details)
+  :pr:`26814` by :user:`Loïc Estève <lesteve>`
+
 Changes impacting all modules
 -----------------------------
 
@@ -18,6 +32,13 @@ Changes impacting all modules
 Changelog
 ---------
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| :class:`calibration.CalibratedClassifierCV` can now handle models that
+  produce large prediction scores. Before it was numerically unstable.
+  :pr:`26913` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -26,7 +47,14 @@ Changelog
   :pr:`27167` by `Olivier Grisel`_.
 
 - |Fix| :class:`cluster.BisectingKMeans` now works with data that has a single feature.
-  :pr:`27243` by `Jérémie du Boisberranger <jeremiedbb>`.
+  :pr:`27243` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| :class:`cross_decomposition.PLSRegression` now automatically ravels the output
+  of `predict` if fitted with one dimensional `y`.
+  :pr:`26602` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -36,6 +64,12 @@ Changelog
   the sum of the scores should sum to zero for a sample).
   :pr:`26521` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| :func:`feature_selection.mutual_info_regression` now correctly computes the
+  result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -44,11 +78,19 @@ Changelog
   during ``fit``. :pr:`26600` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
 :mod:`sklearn.metrics`
-.......................
+......................
 
 - |Fix| Scorers used with :func:`metrics.get_scorer` handle properly
   multilabel-indicator matrix.
   :pr:`27002` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.mixture`
+......................
+
+- |Fix| The initialization of :class:`mixture.GaussianMixture` from user-provided
+  `precisions_init` for `covariance_type` of `full` or `tied` was not correct,
+  and has been fixed.
+  :pr:`26416` by :user:`Yang Tao <mchikyt3>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -65,11 +107,19 @@ Changelog
   when the input to the `param_distributions` parameter is a list of dicts.
   :pr:`26893` by :user:`Stefanie Senger <StefanieSenger>`.
 
+- |Fix| Neighbors based estimators now correctly work when `metric="minkowski"` and the
+  metric parameter `p` is in the range `0 < p < 1`, regardless of the `dtype` of `X`.
+  :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
 - |Fix| :class:`preprocessing.LabelEncoder` correctly accepts `y` as a keyword
   argument. :pr:`26940` by `Thomas Fan`_.
+
+- |Fix| :class:`preprocessing.OneHotEncoder` shows a more informative error message
+  when `sparse_output=True` and the output is configured to be pandas.
+  :pr:`26931` by `Thomas Fan`_.
 
 :mod:`sklearn.tree`
 ...................
