@@ -19,18 +19,6 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- |Fix| The initialization of :class:`mixture.GaussianMixture` from user-provided
-  `precisions_init` for `covariance_type` of `full` or `tied` was not correct,
-  and has been fixed.
-  :pr:`26416` by :user:`Yang Tao <mchikyt3>`.
-
-- |Fix| Ridge models with `solver='sparse_cg'` may have slightly different
-  results with scipy>=1.12, because of an underlying change in the scipy solver
-  (see `scipy#18488 <https://github.com/scipy/scipy/pull/18488>`_ for more
-  details)
-  :pr:`26814` by :user:`Loïc Estève <lesteve>`
-
-
 Changes impacting all modules
 -----------------------------
 
@@ -121,10 +109,6 @@ Changelog
 :mod:`sklearn.calibration`
 ..........................
 
-- |Fix| :class:`calibration.CalibratedClassifierCV` can now handle models that
-  produce large prediction scores. Before it was numerically unstable.
-  :pr:`26913` by :user:`Omar Salman <OmarManzoor>`.
-
 - |Enhancement| The internal objective and gradient of the `sigmoid` method
   of :class:`calibration.CalibratedClassifierCV` have been replaced by the
   private loss module. :pr:`27185` by :user:`Omar Salman <OmarManzoor>`.
@@ -137,13 +121,6 @@ Changelog
   :class:`cluster.HDBSCAN` ensuring consistency in naming convention.
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
-
-:mod:`sklearn.cross_decomposition`
-..................................
-
-- |Fix| :class:`cross_decomposition.PLSRegression` now automatically ravels the output
-  of `predict` if fitted with one dimensional `y`.
-  :pr:`26602` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -203,12 +180,6 @@ Changelog
 - |Enhancement| :class:`feature_extraction.text.TfidfTransformer` now supports
   SciPy sparse arrays.
   :pr:`27219` by :user:`Yao Xiao <Charlie-XIAO>`.
-
-:mod:`sklearn.feature_selection`
-................................
-
-- |Fix| :func:`feature_selection.mutual_info_regression` now correctly computes the
-  result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.impute`
 .....................
@@ -270,20 +241,12 @@ Changelog
   pairs of dense and sparse datasets.
   :pr:`27018` by :user:`Julien Jerphanion <jjerphan>`.
 
-- |Fix| Neighbors based estimators now correctly work when `metric="minkowski"` and the
-  metric parameter `p` is in the range `0 < p < 1`, regardless of the `dtype` of `X`.
-  :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
-
 :mod:`sklearn.preprocessing`
 ............................
 
 - |Efficiency| :class:`preprocessing.OrdinalEncoder` avoids calculating
   missing indices twice to improve efficiency.
   :pr:`27017` by :user:`Xuefeng Xu <xuefeng-xu>`.
-
-- |Fix| :class:`preprocessing.OneHotEncoder` shows a more informative error message
-  when `sparse_output=True` and the output is configured to be pandas.
-  :pr:`26931` by `Thomas Fan`_.
 
 - |MajorFeature| :class:`preprocessing.MinMaxScaler` and :class:`preprocessing.MaxAbsScaler` now
   support the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
