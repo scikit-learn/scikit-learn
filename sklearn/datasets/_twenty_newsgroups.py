@@ -319,7 +319,7 @@ def fetch_20newsgroups(
         # Sort the categories to have the ordering of the labels
         labels.sort()
         labels, categories = zip(*labels)
-        mask = np.in1d(data.target, labels)
+        mask = np.isin(data.target, labels)
         data.filenames = data.filenames[mask]
         data.target = data.target[mask]
         # searchsorted to have continuous labels
