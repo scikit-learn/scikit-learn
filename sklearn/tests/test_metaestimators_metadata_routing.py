@@ -167,7 +167,7 @@ METAESTIMATORS: list = [
         "estimator": ConsumingClassifier,
         "X": X,
         "y": y,
-        "routing_methods": ["fit"],
+        "estimator_routing_methods": ["fit"],
     },
     {
         "metaestimator": OneVsOneClassifier,
@@ -175,7 +175,7 @@ METAESTIMATORS: list = [
         "estimator": ConsumingClassifier,
         "X": X,
         "y": y,
-        "routing_methods": ["fit"],
+        "estimator_routing_methods": ["fit"],
     },
     {
         "metaestimator": OutputCodeClassifier,
@@ -183,7 +183,7 @@ METAESTIMATORS: list = [
         "estimator": ConsumingClassifier,
         "X": X,
         "y": y,
-        "routing_methods": ["fit"],
+        "estimator_routing_methods": ["fit"],
     },
 ]
 """List containing all metaestimators to be tested and their settings
