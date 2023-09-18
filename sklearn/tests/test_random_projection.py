@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import scipy.sparse as sp
 
-from sklearn.exceptions import DataDimensionalityWarning
+from sklearn.exceptions import DataDimensionalityWarning, NotFittedError
 from sklearn.metrics import euclidean_distances
 from sklearn.random_projection import (
     GaussianRandomProjection,
@@ -227,7 +227,7 @@ def test_random_projection_transformer_invalid_input():
 def test_try_to_transform_before_fit():
     data, _ = make_sparse_random_data(sp.coo_matrix, n_samples, n_features, n_nonzeros)
     for RandomProjection in all_RandomProjection:
-        with pytest.raises(ValueError):
+        with pytest.raises(NotFittedError):
             RandomProjection(n_components="auto").transform(data)
 
 
