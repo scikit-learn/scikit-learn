@@ -5,7 +5,6 @@ from scipy.sparse import issparse
 from .._config import get_config
 from . import check_pandas_support
 from ._available_if import available_if
-from .validation import _is_pandas_df
 
 
 def _wrap_in_pandas_container(
@@ -124,6 +123,22 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
 
     if output_config["dense"] == "default" or not _auto_wrap_is_configured(estimator):
         return data_to_wrap
+
+    def _is_pandas_df(X):
+        """Return True if the X is a pandas dataframe.
+
+        This is is backport from 1.4 in 1.3.1 for compatibility.
+        """
+        import sys
+
+        if hasattr(X, "columns") and hasattr(X, "iloc"):
+            # Likely a pandas DataFrame, we explicitly check the type to confirm.
+            try:
+                pd = sys.modules["pandas"]
+            except KeyError:
+                return False
+            return isinstance(X, pd.DataFrame)
+        return False
 
     # dense_config == "pandas"
     index = original_input.index if _is_pandas_df(original_input) else None
