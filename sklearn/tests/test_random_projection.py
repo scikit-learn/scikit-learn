@@ -225,7 +225,7 @@ def test_random_projection_transformer_invalid_input():
 
 
 def test_try_to_transform_before_fit():
-    data, _ = make_sparse_random_data(sp.coo_array, n_samples, n_features, n_nonzeros)
+    data, _ = make_sparse_random_data(sp.coo_matrix, n_samples, n_features, n_nonzeros)
     for RandomProjection in all_RandomProjection:
         with pytest.raises(ValueError):
             RandomProjection(n_components="auto").transform(data)
