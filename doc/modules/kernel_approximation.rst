@@ -36,8 +36,20 @@ is advisable to compare results against exact kernel methods when possible.
 Nystroem Method for Kernel Approximation
 ----------------------------------------
 The Nystroem method, as implemented in :class:`Nystroem` is a general method
-for low-rank approximations of kernels. It achieves this by essentially subsampling
-the data on which the kernel is evaluated.
+for reduced rank approximations of kernels. It achieves this by subsampling without replacement
+rows/columns of the data on which the kernel is evaluated.
+Time complexity for this method is :math:`\mathcal{O}(n^2_{\text{samples}}(n_{\text{features}}))` [WS2001]_
+For subset of the data of size ``n_components`` we can construct eigendecomposition of matrix `K`
+
+.. math::
+
+        K = U \Lambda U^T
+
+where:
+
+    * ``U`` is orthonormal
+    * ``Ʌ`` is diagonal matrix of eigenvalues
+
 By default :class:`Nystroem` uses the ``rbf`` kernel, but it can use any
 kernel function or a precomputed kernel matrix.
 The number of samples used - which is also the dimensionality of the features computed -
@@ -233,6 +245,9 @@ or store training examples.
 
 .. topic:: References:
 
+    .. [WS2001] `"Using the Nyström method to speed up kernel machines"
+      <https://papers.nips.cc/paper_files/paper/2000/hash/19de10adbaa1b2ee13f77f679fa1483a-Abstract.html>
+      Williams, C.K.I.; Seeger, M. - 2001
     .. [RR2007] `"Random features for large-scale kernel machines"
       <https://papers.nips.cc/paper/2007/hash/013a006f03dbc5392effeb8f18fda755-Abstract.html>`_
       Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
