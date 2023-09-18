@@ -30,7 +30,9 @@ def test_dictvectorizer(sparse, dtype, sort, iterable):
 
     if sparse:
         # CSR matrices can't be compared for equality
-        assert_array_equal(X.A, v.transform(iter(D) if iterable else D).A)
+        assert_array_equal(
+            X.toarray(), v.transform(iter(D) if iterable else D).toarray()
+        )
     else:
         assert_array_equal(X, v.transform(iter(D) if iterable else D))
 

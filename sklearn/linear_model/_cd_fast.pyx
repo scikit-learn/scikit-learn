@@ -14,15 +14,13 @@ from cython cimport floating
 import warnings
 from ..exceptions import ConvergenceWarning
 
-from ..utils._cython_blas cimport (_axpy, _dot, _asum, _gemv, _nrm2,
-                                   _copy, _scal)
+from ..utils._cython_blas cimport (
+    _axpy, _dot, _asum, _gemv, _nrm2, _copy, _scal
+)
 from ..utils._cython_blas cimport ColMajor, Trans, NoTrans
-
-
+from ..utils._typedefs cimport uint32_t
 from ..utils._random cimport our_rand_r
 
-ctypedef cnp.float64_t DOUBLE
-ctypedef cnp.uint32_t UINT32_t
 
 cnp.import_array()
 
@@ -37,7 +35,7 @@ cdef enum:
     RAND_R_MAX = 2147483647
 
 
-cdef inline UINT32_t rand_int(UINT32_t end, UINT32_t* random_state) noexcept nogil:
+cdef inline uint32_t rand_int(uint32_t end, uint32_t* random_state) noexcept nogil:
     """Generate a random integer in [0; end)."""
     return our_rand_r(random_state) % end
 
@@ -156,8 +154,8 @@ def enet_coordinate_descent(
     cdef unsigned int ii
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
-    cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
-    cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
+    cdef uint32_t* rand_r_state = &rand_r_state_seed
 
     if alpha == 0 and beta == 0:
         warnings.warn("Coordinate descent with no regularization may lead to "
@@ -370,8 +368,8 @@ def sparse_enet_coordinate_descent(
     cdef unsigned int jj
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
-    cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
-    cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
+    cdef uint32_t* rand_r_state = &rand_r_state_seed
     cdef bint center = False
     cdef bint no_sample_weights = sample_weight is None
     cdef int kk
@@ -628,8 +626,8 @@ def enet_coordinate_descent_gram(
     cdef unsigned int ii
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
-    cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
-    cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
+    cdef uint32_t* rand_r_state = &rand_r_state_seed
 
     cdef floating y_norm2 = np.dot(y, y)
     cdef floating* w_ptr = &w[0]
@@ -808,8 +806,8 @@ def enet_coordinate_descent_multi_task(
     cdef unsigned int jj
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
-    cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
-    cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
+    cdef uint32_t* rand_r_state = &rand_r_state_seed
 
     cdef const floating* X_ptr = &X[0, 0]
     cdef const floating* Y_ptr = &Y[0, 0]

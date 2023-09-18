@@ -13,6 +13,7 @@
 import atexit
 import contextlib
 import functools
+import importlib
 import inspect
 import os
 import os.path as op
@@ -48,7 +49,7 @@ from sklearn.utils import (
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils._array_api import _check_array_api_dispatch
-from sklearn.utils.fixes import threadpool_info
+from sklearn.utils.fixes import parse_version, sp_version, threadpool_info
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -835,8 +836,20 @@ def _convert_container(
         return slice(container[0], container[1])
     elif constructor_name == "sparse_csr":
         return sp.sparse.csr_matrix(container, dtype=dtype)
+    elif constructor_name == "sparse_csr_array":
+        if sp_version >= parse_version("1.8"):
+            return sp.sparse.csr_array(container, dtype=dtype)
+        raise ValueError(
+            f"sparse_csr_array is only available with scipy>=1.8.0, got {sp_version}"
+        )
     elif constructor_name == "sparse_csc":
         return sp.sparse.csc_matrix(container, dtype=dtype)
+    elif constructor_name == "sparse_csc_array":
+        if sp_version >= parse_version("1.8"):
+            return sp.sparse.csc_array(container, dtype=dtype)
+        raise ValueError(
+            f"sparse_csc_array is only available with scipy>=1.8.0, got {sp_version}"
+        )
 
 
 def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
@@ -1047,3 +1060,58 @@ class MinimalTransformer:
 
     def fit_transform(self, X, y=None):
         return self.fit(X, y).transform(X, y)
+
+
+def _array_api_for_tests(array_namespace, device, dtype):
+    try:
+        if array_namespace == "numpy.array_api":
+            # FIXME: once it is not experimental anymore
+            with ignore_warnings(category=UserWarning):
+                # UserWarning: numpy.array_api submodule is still experimental.
+                array_mod = importlib.import_module(array_namespace)
+        else:
+            array_mod = importlib.import_module(array_namespace)
+    except ModuleNotFoundError:
+        raise SkipTest(
+            f"{array_namespace} is not installed: not checking array_api input"
+        )
+    try:
+        import array_api_compat  # noqa
+    except ImportError:
+        raise SkipTest(
+            "array_api_compat is not installed: not checking array_api input"
+        )
+
+    # First create an array using the chosen array module and then get the
+    # corresponding (compatibility wrapped) array namespace based on it.
+    # This is because `cupy` is not the same as the compatibility wrapped
+    # namespace of a CuPy array.
+    xp = array_api_compat.get_namespace(array_mod.asarray(1))
+    if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
+        raise SkipTest("PyTorch test requires cuda, which is not available")
+    elif array_namespace == "torch" and device == "mps":
+        if os.getenv("PYTORCH_ENABLE_MPS_FALLBACK") != "1":
+            # For now we need PYTORCH_ENABLE_MPS_FALLBACK=1 for all estimators to work
+            # when using the MPS device.
+            raise SkipTest(
+                "Skipping MPS device test because PYTORCH_ENABLE_MPS_FALLBACK is not "
+                "set."
+            )
+        if not xp.has_mps:
+            if not xp.backends.mps.is_built():
+                raise SkipTest(
+                    "MPS is not available because the current PyTorch install was not "
+                    "built with MPS enabled."
+                )
+            else:
+                raise SkipTest(
+                    "MPS is not available because the current MacOS version is not"
+                    " 12.3+ and/or you do not have an MPS-enabled device on this"
+                    " machine."
+                )
+    elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
+        import cupy
+
+        if cupy.cuda.runtime.getDeviceCount() == 0:
+            raise SkipTest("CuPy test requires cuda, which is not available")
+    return xp, device, dtype
