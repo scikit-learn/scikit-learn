@@ -7,7 +7,6 @@ import warnings
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
-from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 
 from sklearn import datasets
 from sklearn.base import clone
@@ -31,6 +30,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     skip_if_32bit,
 )
+from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 
 GRADIENT_BOOSTING_ESTIMATORS = [GradientBoostingClassifier, GradientBoostingRegressor]
 
@@ -99,10 +99,15 @@ def test_classification_toy(loss, global_random_seed):
 def test_classification_synthetic(loss, global_random_seed):
     # Test GradientBoostingClassifier on synthetic dataset used by
     # Hastie et al. in ESLII - Figure 10.9
-    X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=global_random_seed)
+    # Note that Figure 10.9 reuses the dataset generated for figure 10.2
+    # and should have 2_000 train data points and 10_000 test data points.
+    # Here we intentionally use a smaller variant to make the test run faster,
+    # but the conclusions are still the same, despite the smaller datasets.
+    X, y = datasets.make_hastie_10_2(n_samples=2000, random_state=global_random_seed)
 
-    X_train, X_test = X[:2000], X[2000:]
-    y_train, y_test = y[:2000], y[2000:]
+    split_idx = 500
+    X_train, X_test = X[:split_idx], X[split_idx:]
+    y_train, y_test = y[:split_idx], y[split_idx:]
 
     # Increasing the number of trees should decrease the test error
     common_params = {
@@ -111,13 +116,13 @@ def test_classification_synthetic(loss, global_random_seed):
         "loss": loss,
         "random_state": global_random_seed,
     }
-    gbrt_100_stumps = GradientBoostingClassifier(n_estimators=100, **common_params)
-    gbrt_100_stumps.fit(X_train, y_train)
+    gbrt_10_stumps = GradientBoostingClassifier(n_estimators=10, **common_params)
+    gbrt_10_stumps.fit(X_train, y_train)
 
-    gbrt_200_stumps = GradientBoostingClassifier(n_estimators=200, **common_params)
-    gbrt_200_stumps.fit(X_train, y_train)
+    gbrt_50_stumps = GradientBoostingClassifier(n_estimators=50, **common_params)
+    gbrt_50_stumps.fit(X_train, y_train)
 
-    assert gbrt_100_stumps.score(X_test, y_test) < gbrt_200_stumps.score(X_test, y_test)
+    assert gbrt_10_stumps.score(X_test, y_test) < gbrt_50_stumps.score(X_test, y_test)
 
     # Decision stumps are better suited for this dataset with a large number of
     # estimators.
@@ -288,11 +293,12 @@ def test_single_class_with_sample_weight():
         clf.fit(X, y, sample_weight=sample_weight)
 
 
-def test_check_inputs_predict_stages():
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_check_inputs_predict_stages(csc_container):
     # check that predict_stages through an error if the type of X is not
     # supported
     x, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    x_sparse_csc = csc_matrix(x)
+    x_sparse_csc = csc_container(x)
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     clf.fit(x, y)
     score = np.zeros((y.shape)).reshape(-1, 1)
@@ -913,10 +919,12 @@ def test_warm_start_oob(Cls):
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
-def test_warm_start_sparse(Cls):
+@pytest.mark.parametrize(
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
+)
+def test_warm_start_sparse(Cls, sparse_container):
     # Test that all sparse matrix types are supported
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    sparse_matrix_type = [csr_matrix, csc_matrix, coo_matrix]
     est_dense = Cls(
         n_estimators=100, max_depth=1, subsample=0.5, random_state=1, warm_start=True
     )
@@ -926,31 +934,28 @@ def test_warm_start_sparse(Cls):
     est_dense.fit(X, y)
     y_pred_dense = est_dense.predict(X)
 
-    for sparse_constructor in sparse_matrix_type:
-        X_sparse = sparse_constructor(X)
+    X_sparse = sparse_container(X)
 
-        est_sparse = Cls(
-            n_estimators=100,
-            max_depth=1,
-            subsample=0.5,
-            random_state=1,
-            warm_start=True,
-        )
-        est_sparse.fit(X_sparse, y)
-        est_sparse.predict(X)
-        est_sparse.set_params(n_estimators=200)
-        est_sparse.fit(X_sparse, y)
-        y_pred_sparse = est_sparse.predict(X)
+    est_sparse = Cls(
+        n_estimators=100,
+        max_depth=1,
+        subsample=0.5,
+        random_state=1,
+        warm_start=True,
+    )
+    est_sparse.fit(X_sparse, y)
+    est_sparse.predict(X)
+    est_sparse.set_params(n_estimators=200)
+    est_sparse.fit(X_sparse, y)
+    y_pred_sparse = est_sparse.predict(X)
 
-        assert_array_almost_equal(
-            est_dense.oob_improvement_[:100], est_sparse.oob_improvement_[:100]
-        )
-        assert est_dense.oob_scores_[-1] == pytest.approx(est_dense.oob_score_)
-        assert_array_almost_equal(
-            est_dense.oob_scores_[:100], est_sparse.oob_scores_[:100]
-        )
-        assert est_sparse.oob_scores_[-1] == pytest.approx(est_sparse.oob_score_)
-        assert_array_almost_equal(y_pred_dense, y_pred_sparse)
+    assert_array_almost_equal(
+        est_dense.oob_improvement_[:100], est_sparse.oob_improvement_[:100]
+    )
+    assert est_dense.oob_scores_[-1] == pytest.approx(est_dense.oob_score_)
+    assert_array_almost_equal(est_dense.oob_scores_[:100], est_sparse.oob_scores_[:100])
+    assert est_sparse.oob_scores_[-1] == pytest.approx(est_sparse.oob_score_)
+    assert_array_almost_equal(y_pred_dense, y_pred_sparse)
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
@@ -1173,13 +1178,15 @@ def test_non_uniform_weights_toy_edge_case_clf():
 @pytest.mark.parametrize(
     "EstimatorClass", (GradientBoostingClassifier, GradientBoostingRegressor)
 )
-@pytest.mark.parametrize("sparse_matrix", (csr_matrix, csc_matrix, coo_matrix))
-def test_sparse_input(EstimatorClass, sparse_matrix):
+@pytest.mark.parametrize(
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
+)
+def test_sparse_input(EstimatorClass, sparse_container):
     y, X = datasets.make_multilabel_classification(
         random_state=0, n_samples=50, n_features=1, n_classes=20
     )
     y = y[:, 0]
-    X_sparse = sparse_matrix(X)
+    X_sparse = sparse_container(X)
 
     dense = EstimatorClass(
         n_estimators=10, random_state=0, max_depth=2, min_impurity_decrease=1e-7
