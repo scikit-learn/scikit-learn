@@ -362,8 +362,11 @@ def test_roc_curve_toydata():
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         tpr, fpr, _ = roc_curve(y_true, y_score)
-
-    with pytest.raises(ValueError):
+    # should raise a warning since only one class is present
+    expected_message = (
+        "Only one class present in y_true. ROC AUC score is not defined in that case."
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
         roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [0.0, 0.5, 1.0])
     assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
@@ -376,8 +379,11 @@ def test_roc_curve_toydata():
     )
     with pytest.warns(UndefinedMetricWarning, match=expected_message):
         tpr, fpr, _ = roc_curve(y_true, y_score)
-
-    with pytest.raises(ValueError):
+    # should raise a warning since only one class is present
+    expected_message = (
+        "Only one class present in y_true. ROC AUC score is not defined in that case."
+    )
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
         roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
     assert_array_almost_equal(fpr, [0.0, 0.5, 1.0])
@@ -813,29 +819,17 @@ def test_auc_score_non_binary_class():
     y_pred = rng.rand(10)
     # y_true contains only one class value
     y_true = np.zeros(10, dtype="int")
-    err_msg = "ROC AUC score is not defined"
-    with pytest.raises(ValueError, match=err_msg):
+    warn_message = (
+        "Only one class present in y_true. ROC AUC score is not defined in that case."
+    )
+    with pytest.warns(UndefinedMetricWarning, match=warn_message):
         roc_auc_score(y_true, y_pred)
     y_true = np.ones(10, dtype="int")
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.warns(UndefinedMetricWarning, match=warn_message):
         roc_auc_score(y_true, y_pred)
     y_true = np.full(10, -1, dtype="int")
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.warns(UndefinedMetricWarning, match=warn_message):
         roc_auc_score(y_true, y_pred)
-
-    with warnings.catch_warnings(record=True):
-        rng = check_random_state(404)
-        y_pred = rng.rand(10)
-        # y_true contains only one class value
-        y_true = np.zeros(10, dtype="int")
-        with pytest.raises(ValueError, match=err_msg):
-            roc_auc_score(y_true, y_pred)
-        y_true = np.ones(10, dtype="int")
-        with pytest.raises(ValueError, match=err_msg):
-            roc_auc_score(y_true, y_pred)
-        y_true = np.full(10, -1, dtype="int")
-        with pytest.raises(ValueError, match=err_msg):
-            roc_auc_score(y_true, y_pred)
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
