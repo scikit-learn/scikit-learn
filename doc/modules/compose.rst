@@ -9,7 +9,7 @@ To build a composite estimator, transformers are usually combined with other
 transformers or with :term:`predictors` (such as classifiers or regressors).
 The most common tool used for this is a :ref:`Pipeline <pipeline>`. Pipelines
 require all steps except the last to be a :ref:`transformer`. The last step can
-be anything, a transformer, a :term:`predictor`, or a classifier which might
+be anything, a transformer, a :term:`predictor`, or a clustering estimator which might
 have or not have a `.predict(...)` method. The pipeline would then expose all
 methods provided by the last estimator, meaning if the last step provides a
 `transform` method, then the pipeline would have a `transform` method and
