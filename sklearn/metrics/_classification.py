@@ -1399,7 +1399,7 @@ def fbeta_score(
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> fbeta_score(y_true, y_pred_empty,
     ...             average="macro", zero_division=np.nan, beta=0.5)
-    0.38...
+    0.12...
     """
 
     _, _, f, _ = precision_recall_fscore_support(
