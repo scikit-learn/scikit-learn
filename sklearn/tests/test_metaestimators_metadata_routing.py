@@ -9,15 +9,16 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.linear_model import LogisticRegressionCV
-from sklearn.multiclass import (
-    OneVsOneClassifier,
-    OneVsRestClassifier,
-    OutputCodeClassifier,
 from sklearn.model_selection import (
     GridSearchCV,
     HalvingGridSearchCV,
     HalvingRandomSearchCV,
     RandomizedSearchCV,
+)
+from sklearn.multiclass import (
+    OneVsOneClassifier,
+    OneVsRestClassifier,
+    OutputCodeClassifier,
 )
 from sklearn.multioutput import (
     ClassifierChain,
