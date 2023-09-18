@@ -63,6 +63,9 @@ from sklearn.utils._testing import (
     ignore_warnings,
 )
 from sklearn.utils.fixes import (
+    BSR_CONTAINERS,
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
     CSR_CONTAINERS,
     DOK_CONTAINERS,
     parse_version,
@@ -71,8 +74,7 @@ from sklearn.utils.fixes import (
 from sklearn.utils.parallel import Parallel, delayed
 
 
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_pairwise_distances(csr_container, global_dtype):
+def test_pairwise_distances_for_dense_data(global_dtype):
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
 
@@ -150,6 +152,19 @@ def test_pairwise_distances(csr_container, global_dtype):
     assert S.shape[1] == Y.shape[0]
     assert_allclose(S, S2)
 
+
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+@pytest.mark.parametrize("bsr_container", BSR_CONTAINERS)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_pairwise_distances_for_sparse_data(
+    coo_container, csc_container, bsr_container, csr_container, global_dtype
+):
+    # Test the pairwise_distance helper function.
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4)).astype(global_dtype, copy=False)
+    Y = rng.random_sample((2, 4)).astype(global_dtype, copy=False)
+
     # Test with sparse X and Y,
     # currently only supported for Euclidean, L1 and cosine.
     X_sparse = csr_container(X)
@@ -165,8 +180,8 @@ def test_pairwise_distances(csr_container, global_dtype):
     assert_allclose(S, S2)
     assert S.dtype == S2.dtype == global_dtype
 
-    S = pairwise_distances(X_sparse, Y_sparse.tocsc(), metric="manhattan")
-    S2 = manhattan_distances(X_sparse.tobsr(), Y_sparse.tocoo())
+    S = pairwise_distances(X_sparse, csc_container(Y), metric="manhattan")
+    S2 = manhattan_distances(bsr_container(X), coo_container(Y))
     assert_allclose(S, S2)
     if global_dtype == np.float64:
         assert S.dtype == S2.dtype == global_dtype
