@@ -46,6 +46,7 @@ from sklearn.utils._testing import (
     ignore_warnings,
 )
 from sklearn.utils.extmath import _nanaverage
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.validation import check_random_state
 
 ###############################################################################
@@ -159,10 +160,10 @@ def test_classification_report_dictionary_output():
             for metric in expected_report[key]:
                 assert_almost_equal(expected_report[key][metric], report[key][metric])
 
-    assert type(expected_report["setosa"]["precision"]) == float
-    assert type(expected_report["macro avg"]["precision"]) == float
-    assert type(expected_report["setosa"]["support"]) == int
-    assert type(expected_report["macro avg"]["support"]) == int
+    assert isinstance(expected_report["setosa"]["precision"], float)
+    assert isinstance(expected_report["macro avg"]["precision"], float)
+    assert isinstance(expected_report["setosa"]["support"], int)
+    assert isinstance(expected_report["macro avg"]["support"], int)
 
 
 def test_classification_report_output_dict_empty_input():
@@ -521,16 +522,17 @@ def test_multilabel_confusion_matrix_multiclass():
     test([str(y) for y in y_true], [str(y) for y in y_pred], string_type=True)
 
 
-def test_multilabel_confusion_matrix_multilabel():
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_multilabel_confusion_matrix_multilabel(csc_container, csr_container):
     # Test multilabel confusion matrix - multilabel-indicator case
-    from scipy.sparse import csc_matrix, csr_matrix
 
     y_true = np.array([[1, 0, 1], [0, 1, 0], [1, 1, 0]])
     y_pred = np.array([[1, 0, 0], [0, 1, 1], [0, 0, 1]])
-    y_true_csr = csr_matrix(y_true)
-    y_pred_csr = csr_matrix(y_pred)
-    y_true_csc = csc_matrix(y_true)
-    y_pred_csc = csc_matrix(y_pred)
+    y_true_csr = csr_container(y_true)
+    y_pred_csr = csr_container(y_pred)
+    y_true_csc = csc_container(y_true)
+    y_pred_csc = csc_container(y_pred)
 
     # cross test different types
     sample_weight = np.array([2, 1, 3])

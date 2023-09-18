@@ -80,7 +80,7 @@ need to override, but it works for simple consumers as is.
 import inspect
 from collections import namedtuple
 from copy import deepcopy
-from typing import Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 from warnings import warn
 
 from .. import get_config
@@ -89,6 +89,9 @@ from ._bunch import Bunch
 
 # Only the following methods are supported in the routing mechanism. Adding new
 # methods at the moment involves monkeypatching this list.
+# Note that if this list is changed or monkeypatched, the corresponding method
+# needs to be added under a TYPE_CHECKING condition like the one done here in
+# _MetadataRequester
 SIMPLE_METHODS = [
     "fit",
     "partial_fit",
@@ -157,7 +160,7 @@ def _raise_for_params(params, owner, method):
             " enable_metadata_routing=True, which you can set using"
             " `sklearn.set_config`. See the User Guide"
             " <https://scikit-learn.org/stable/metadata_routing.html> for more"
-            " details."
+            f" details. Extra parameters passed are: {set(params)}"
         )
 
 
@@ -982,7 +985,7 @@ class MetadataRouter:
     def validate_metadata(self, *, method, params):
         """Validate given metadata for a method.
 
-        This raises a ``ValueError`` if some of the passed metadata are not
+        This raises a ``TypeError`` if some of the passed metadata are not
         understood by child objects.
 
         Parameters
@@ -1007,8 +1010,8 @@ class MetadataRouter:
         extra_keys = set(params.keys()) - param_names - self_params
         if extra_keys:
             raise TypeError(
-                f"{method} got unexpected argument(s) {extra_keys}, which are "
-                "not requested metadata in any object."
+                f"{self.owner}.{method} got unexpected argument(s) {extra_keys}, which"
+                " are not requested metadata in any object."
             )
 
     def _serialize(self):
@@ -1251,6 +1254,27 @@ class _MetadataRequester:
     .. versionadded:: 1.3
     """
 
+    if TYPE_CHECKING:  # pragma: no cover
+        # This code is never run in runtime, but it's here for type checking.
+        # Type checkers fail to understand that the `set_{method}_request`
+        # methods are dynamically generated, and they complain that they are
+        # not defined. We define them here to make type checkers happy.
+        # During type checking analyzers assume this to be True.
+        # The following list of defined methods mirrors the list of methods
+        # in SIMPLE_METHODS.
+        # fmt: off
+        def set_fit_request(self, **kwargs): pass
+        def set_partial_fit_request(self, **kwargs): pass
+        def set_predict_request(self, **kwargs): pass
+        def set_predict_proba_request(self, **kwargs): pass
+        def set_predict_log_proba_request(self, **kwargs): pass
+        def set_decision_function_request(self, **kwargs): pass
+        def set_score_request(self, **kwargs): pass
+        def set_split_request(self, **kwargs): pass
+        def set_transform_request(self, **kwargs): pass
+        def set_inverse_transform_request(self, **kwargs): pass
+        # fmt: on
+
     def __init_subclass__(cls, **kwargs):
         """Set the ``set_{method}_request`` methods.
 
@@ -1448,10 +1472,11 @@ def process_routing(_obj, _method, /, **kwargs):
         corresponding methods or corresponding child objects. The object names
         are those defined in `obj.get_metadata_routing()`.
     """
-    if not hasattr(_obj, "get_metadata_routing"):
+    if not (hasattr(_obj, "get_metadata_routing") or isinstance(_obj, MetadataRouter)):
         raise AttributeError(
-            f"This {repr(_obj.__class__.__name__)} has not implemented the routing"
-            " method `get_metadata_routing`."
+            f"The given object ({repr(_obj.__class__.__name__)}) needs to either"
+            " implement the routing method `get_metadata_routing` or be a"
+            " `MetadataRouter` instance."
         )
     if _method not in METHODS:
         raise TypeError(

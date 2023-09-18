@@ -38,6 +38,7 @@ from ..utils import (
 from ..utils._encode import _encode, _unique
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import stable_cumsum
+from ..utils.fixes import trapezoid
 from ..utils.multiclass import type_of_target
 from ..utils.sparsefuncs import count_nonzero
 from ..utils.validation import _check_pos_label_consistency, _check_sample_weight
@@ -104,9 +105,9 @@ def auc(x, y):
         else:
             raise ValueError("x is neither increasing nor decreasing : {}.".format(x))
 
-    area = direction * np.trapz(y, x)
+    area = direction * trapezoid(y, x)
     if isinstance(area, np.memmap):
-        # Reductions such as .sum used internally in np.trapz do not return a
+        # Reductions such as .sum used internally in trapezoid do not return a
         # scalar by default for numpy.memmap instances contrary to
         # regular numpy.ndarray instances.
         area = area.dtype.type(area)
