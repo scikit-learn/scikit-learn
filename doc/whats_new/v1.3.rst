@@ -43,6 +43,13 @@ Changelog
   ``transform`` when ``add_indicator`` is set to ``True`` and missing values are observed
   during ``fit``. :pr:`26600` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
+:mod:`sklearn.metrics`
+.......................
+
+- |Fix| Scorers used with :func:`metrics.get_scorer` handle properly
+  multilabel-indicator matrix.
+  :pr:`27002` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
