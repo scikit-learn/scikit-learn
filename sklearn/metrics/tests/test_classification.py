@@ -1797,7 +1797,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
 
     assert_array_almost_equal(p, [zero_division_expected, 1.0, 1.0, 0.0], 2)
     assert_array_almost_equal(r, [0.0, 0.5, 1.0, zero_division_expected], 2)
-    expected_f = 0 if not np.isnan(zero_division_expected) else np.nan
+    expected_f = 0
     assert_array_almost_equal(f, [expected_f, 1 / 1.5, 1, expected_f], 2)
     assert_array_almost_equal(s, [1, 2, 1, 0], 2)
 
@@ -1814,7 +1814,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
 
     assert_almost_equal(p, (2 + value_to_sum) / values_to_average)
     assert_almost_equal(r, (1.5 + value_to_sum) / values_to_average)
-    expected_f = (2 / 3 + 1) / (4 if not np.isnan(zero_division_expected) else 2)
+    expected_f = (2 / 3 + 1) / 4
     assert_almost_equal(f, expected_f)
     assert s is None
     assert_almost_equal(
@@ -1847,7 +1847,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
     )
     assert_almost_equal(p, 3 / 4 if zero_division_expected == 0 else 1.0)
     assert_almost_equal(r, 0.5)
-    values_to_average = 4 if not np.isnan(zero_division_expected) else 3
+    values_to_average = 4
     assert_almost_equal(f, (2 * 2 / 3 + 1) / values_to_average)
     assert s is None
     assert_almost_equal(
@@ -1865,12 +1865,12 @@ def test_precision_recall_f1_score_with_an_empty_prediction(
     assert_almost_equal(r, 1 / 3)
     assert_almost_equal(f, 1 / 3)
     assert s is None
-    expected_result = {1: 0.333, np.nan: 0.5}
+    expected_result = 0.333
     assert_almost_equal(
         fbeta_score(
             y_true, y_pred, beta=2, average="samples", zero_division=zero_division
         ),
-        expected_result.get(zero_division, 0.333),
+        expected_result,
         2,
     )
 

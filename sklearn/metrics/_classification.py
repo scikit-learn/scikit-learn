@@ -1711,7 +1711,7 @@ def precision_recall_fscore_support(
      array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
     """
-    zero_division_value = _check_zero_division(zero_division)
+    _check_zero_division(zero_division)
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
     # Calculate tp_sum, pred_sum, true_sum ###
@@ -1757,17 +1757,18 @@ def precision_recall_fscore_support(
     else:
         # The score is defined as:
         # score = (1 + beta**2) * precision * recall / (beta**2 * precision + recall)
-        # We set to `zero_division_value` if the denominator is 0 **or** if **both**
-        # precision and recall are ill-defined.
-        numer = (1 + beta2) * precision * recall
-        denom = beta2 * precision + recall
-        denom_mask = np.isclose(denom, 0)
-        mask = (np.not_equal(numer, 0) & np.isclose(denom, 0)) | np.isclose(
-            pred_sum + true_sum, 0
+        # Therefore, we can express the score in terms of confusion matrix entries as:
+        # score = (1 + beta**2) * tp / ((1 + beta**2) * tp + beta**2 * fn + fp)
+        denom = beta2 * true_sum + pred_sum
+        f_score = _prf_divide(
+            (1 + beta2) * tp_sum,
+            denom,
+            "fscore",
+            "true nor predicted",
+            average,
+            warn_for,
+            zero_division,
         )
-        denom[denom_mask] = 1  # avoid division by 0
-        f_score = numer / denom
-        f_score[mask] = zero_division_value
 
     # Average the results
     if average == "weighted":
