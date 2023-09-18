@@ -217,6 +217,9 @@ def test_import_all_consistency():
     for modname in submods + ["sklearn"]:
         if ".tests." in modname:
             continue
+        # Avoid test suite depending on setuptools
+        if modname == "sklearn._build_utils.pre_build_helpers":
+            continue
         if IS_PYPY and (
             "_svmlight_format_io" in modname
             or "feature_extraction._hashing_fast" in modname
