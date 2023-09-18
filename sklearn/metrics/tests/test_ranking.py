@@ -390,18 +390,18 @@ def test_roc_curve_toydata():
     # Multi-label classification task
     y_true = np.array([[0, 1], [0, 1]])
     y_score = np.array([[0, 1], [0, 1]])
-    with with pytest.warns(UndefinedMetricWarning, match=expected_message):
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
         roc_auc_score(y_true, y_score, average="macro")
-    with with pytest.warns(UndefinedMetricWarning, match=expected_message):
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
         roc_auc_score(y_true, y_score, average="weighted")
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), 1.0)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), 1.0)
 
     y_true = np.array([[0, 1], [0, 1]])
     y_score = np.array([[0, 1], [1, 0]])
-    with pytest.raises(ValueError):
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
         roc_auc_score(y_true, y_score, average="macro")
-    with pytest.raises(ValueError):
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
         roc_auc_score(y_true, y_score, average="weighted")
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), 0.5)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), 0.5)
