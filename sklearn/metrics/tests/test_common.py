@@ -789,8 +789,14 @@ def test_format_invariance_with_1d_vectors(name):
         if name not in (
             MULTIOUTPUT_METRICS | THRESHOLDED_MULTILABEL_METRICS | MULTILABELS_METRICS
         ):
-            with pytest.raises(ValueError):
-                metric(y1_row, y2_row)
+            # ugly
+            if name in ("ovo_roc_auc", "ovr_roc_auc"):
+                # binary roc auc will return 0 and UndefinedMetricWarning
+                with pytest.warns():
+                    metric(y1_row, y2_row)
+            else:
+                with pytest.raises(ValueError):
+                    metric(y1_row, y2_row)
 
 
 @pytest.mark.parametrize(
