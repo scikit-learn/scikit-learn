@@ -379,10 +379,11 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
 def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
     """Binary roc auc score."""
     if len(np.unique(y_true)) != 2:
-        raise ValueError(
+        warnings.warn(
             "Only one class present in y_true. ROC AUC score "
             "is not defined in that case."
         )
+        return 0.0
 
     fpr, tpr, _ = roc_curve(y_true, y_score, sample_weight=sample_weight)
     if max_fpr is None or max_fpr == 1:
