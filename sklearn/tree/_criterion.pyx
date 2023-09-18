@@ -211,36 +211,6 @@ cdef class Criterion:
                                  - (self.weighted_n_left /
                                     self.weighted_n_node_samples * impurity_left)))
 
-    cdef bint check_monotonicity(
-        self,
-        cnp.int8_t monotonic_cst,
-        double lower_bound,
-        double upper_bound,
-    ) noexcept nogil:
-        pass
-
-    cdef inline bint _check_monotonicity(
-        self,
-        cnp.int8_t monotonic_cst,
-        double lower_bound,
-        double upper_bound,
-        double value_left,
-        double value_right,
-    ) noexcept nogil:
-        cdef:
-            bint check_lower_bound = (
-                (value_left >= lower_bound) &
-                (value_right >= lower_bound)
-            )
-            bint check_upper_bound = (
-                (value_left <= upper_bound) &
-                (value_right <= upper_bound)
-            )
-            bint check_monotonic_cst = (
-                (value_left - value_right) * monotonic_cst <= 0
-            )
-        return check_lower_bound & check_upper_bound & check_monotonic_cst
-
     cdef void init_sum_missing(self):
         """Init sum_missing to hold sums for missing values."""
 
