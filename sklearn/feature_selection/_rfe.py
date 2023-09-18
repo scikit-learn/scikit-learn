@@ -456,6 +456,12 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 class RFECV(RFE):
     """Recursive feature elimination with cross-validation to select features.
 
+    The number of features selected is tuned automatically by fitting an :class:`RFE`
+    selector on the different cross-validation splits (provided by the `cv` parameter).
+    The performance of the :class:`RFE` selector are evaluated using `scorer` for
+    different number of selected features and aggregated together. Finally, the scores
+    are averaged across folds and the number of features selected is set to the number
+    of features that maximize the cross-validation score.
     See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <rfe>`.
