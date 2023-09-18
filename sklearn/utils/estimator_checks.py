@@ -4508,8 +4508,10 @@ def _check_generated_dataframe(
     create_dataframe,
     assert_frame_equal,
 ):
-    # See _check_set_output_transform_dataframe for parameer documentation.
+    """Check the type and values of the dataframe.
 
+    # See _check_set_output_transform_dataframe for parameer documentation.
+    """
     X_trans, feature_names_default = outputs_default
     df_trans, feature_names_pandas = outputs_pandas
 
