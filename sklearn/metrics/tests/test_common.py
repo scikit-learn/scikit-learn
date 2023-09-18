@@ -790,7 +790,12 @@ def test_format_invariance_with_1d_vectors(name):
             MULTIOUTPUT_METRICS | THRESHOLDED_MULTILABEL_METRICS | MULTILABELS_METRICS
         ):
             # ugly
-            if name in ("ovo_roc_auc", "ovr_roc_auc", "weighted_ovo_roc_auc", "weighted_ovr_roc_auc"):
+            if name in (
+                "ovo_roc_auc",
+                "ovr_roc_auc",
+                "weighted_ovo_roc_auc",
+                "weighted_ovr_roc_auc",
+            ):
                 # binary roc auc will return 0 and UndefinedMetricWarning
                 with pytest.warns():
                     metric(y1_row, y2_row)
