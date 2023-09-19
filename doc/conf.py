@@ -316,7 +316,7 @@ rst_prolog = """
 .. |details-start| raw:: html
 
     <details>
-    <summary class="btn btn-light">
+    <summary class="btn btn-light" id="summary-anchor">
 
 .. |details-split| raw:: html
 

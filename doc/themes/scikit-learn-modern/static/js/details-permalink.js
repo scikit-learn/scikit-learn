@@ -1,7 +1,7 @@
 // Function to create permalink into <details> elements to be able to link them
 // The assumption is that such a block will be defined as follows:
 //     <details>
-//     <summary class="btn btn-light">
+//     <summary class="btn btn-light" id="summary-anchor">
 //     Some title
 //     <span class="tooltiptext">Click for more details</span>
 //     <a class="headerlink" href="#summary-anchor" title="Permalink to this heading">¶</a>
@@ -19,11 +19,13 @@ function updateHrefBasedOnSummaryText() {
     allSummaryElements.forEach(function (summaryElement) {
         // The ID uses the first line, lower the case and replace spaces with
         // dashes
-        var newHrefID = '#' + summaryElement.textContent.trim().split("\n")[0].replace(/\s+/g, '-').toLowerCase();
+        var anchorID = summaryElement.textContent.trim().split("\n")[0].replace(/\s+/g, '-').toLowerCase();
+        summaryElement.setAttribute('id', anchorID);
 
+        var hrefID = '#' + anchorID;
         var anchorElement = summaryElement.querySelector('a.headerlink');
         if (anchorElement) {
-            anchorElement.setAttribute('href', newHrefID);
+            anchorElement.setAttribute('href', hrefID);
         }
     });
 }
