@@ -11,6 +11,7 @@ ARG CIBW_PRERELEASE_PYTHONS
 COPY $WHEEL_NAME $WHEEL_NAME
 COPY $CONFTEST_NAME $CONFTEST_NAME
 
-pip install $env:WHEEL_NAME
+RUN pip install $env:WHEEL_NAME
 
-pip install $env:CIBW_TEST_REQUIRES.split(" ")
+# Install the testing dependencies
+RUN pip install $env:CIBW_TEST_REQUIRES.split(" ")
