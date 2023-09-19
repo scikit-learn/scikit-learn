@@ -397,8 +397,6 @@ last document::
   array([0, 0, 0, 1]...)
 
 |details-start|
-.. _stop_words:
-
 **Using stop words**
 |details-split|
 
