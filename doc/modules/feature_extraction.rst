@@ -396,6 +396,8 @@ last document::
   >>> X_2[:, feature_index]
   array([0, 0, 0, 1]...)
 
+.. _stop_words:
+
 |details-start|
 **Using stop words**
 |details-split|
