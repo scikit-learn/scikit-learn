@@ -19,7 +19,7 @@ function updateHrefBasedOnSummaryText() {
     allSummaryElements.forEach(function (summaryElement) {
         // The ID uses the first line, lower the case and replace spaces with
         // dashes
-        var newHrefID = '#' + summaryElement.textContent.trim().split("\n")[0].toLowerCase().replace(" ", "-");
+        var newHrefID = '#' + summaryElement.textContent.trim().split("\n")[0].replace(/\s+/g, '-').toLowerCase();
 
         var anchorElement = summaryElement.querySelector('a.headerlink');
         if (anchorElement) {
