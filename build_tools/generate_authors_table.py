@@ -103,6 +103,9 @@ def get_contributors():
     }
     emeritus_comm_team = {"reshamas"}
 
+    # Up-to-now, we can subtract the team emeritus from the original emeritus
+    emeritus -= emeritus_contributor_experience_team | emeritus_comm_team
+
     comm_team -= {"reshamas"}  # in the comm team but not on the web page
 
     # get profiles from GitHub
