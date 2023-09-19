@@ -89,7 +89,7 @@ Changelog
 
 - |Enhancement| :meth:`base.ClusterMixin.fit_predict` and
   :meth:`base.OutlierMixin.fit_predict` now accept ``**kwargs`` which are
-  passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
+  passed to the ``fit`` method of the estimator. :pr:`26506` by `Adrin
   Jalali`_.
 
 - |Enhancement| :meth:`base.TransformerMixin.fit_transform` and

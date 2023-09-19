@@ -1409,7 +1409,7 @@ in these settings.
 
   * :ref:`HuberRegressor <huber_regression>` should be faster than
     :ref:`RANSAC <ransac_regression>` and :ref:`Theil Sen <theil_sen_regression>`
-    unless the number of samples are very large, i.e ``n_samples`` >> ``n_features``.
+    unless the number of samples are very large, i.e. ``n_samples`` >> ``n_features``.
     This is because :ref:`RANSAC <ransac_regression>` and :ref:`Theil Sen <theil_sen_regression>`
     fit on smaller subsets of the data. However, both :ref:`Theil Sen <theil_sen_regression>`
     and :ref:`RANSAC <ransac_regression>` are unlikely to be as robust as

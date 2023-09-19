@@ -1497,7 +1497,7 @@ In applications where a high false positive rate is not tolerable the parameter
 to the given limit.
 
 The following figure shows the micro-averaged ROC curve and its corresponding
-ROC-AUC score for a classifier aimed to distinguish the the different species in
+ROC-AUC score for a classifier aimed to distinguish the different species in
 the :ref:`iris_dataset`:
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
