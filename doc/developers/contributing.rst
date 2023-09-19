@@ -807,6 +807,18 @@ details, and give intuition to the reader on what the algorithm does.
 
   |details-end|
 
+  Sometimes the section to be collapse was used for internal linking. You can identify
+  it because it uses the internal link from Sphinx, e.g. ``:ref:`sphinx_anchor```.
+
+  With the dropdown syntax, the internal link will not work anymore and the continuous
+  integration will fail due to warning related to broken references. To solve this
+  issue, one needs to modify the documentation as follows:
+
+  * remove the custom Sphinx anchor, e.g. ``.. _sphinx_anchor:``;
+  * at the location of reference, replace ``:ref:`sphinx_anchor```
+    by ``Dropdown title <./relative_path.html#sphinx_anchor>``. `relative_path` can be
+    found by navigating the documentation and looking at the URL in the browser.
+
 * Information that can be hidden by default using dropdowns is:
 
     * low hierarchy sections such as `References`, `Properties`, etc. (see for
