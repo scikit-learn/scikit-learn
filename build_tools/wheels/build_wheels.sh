@@ -45,13 +45,6 @@ if [[ $(uname) == "Darwin" ]]; then
     fi
 fi
 
-if [[ "$CIBW_PRERELEASE_PYTHONS" == "True" ]]; then
-    ADDITIONAL_CIBW_ENVIRONMENT="\
-        PIP_EXTRA_INDEX_URL=https://pypi.anaconda.org/scientific-python-nightly-wheels/simple \
-        PIP_PRE=1"
-    export CIBW_ENVIRONMENT="${CIBW_ENVIRONMENT} ${ADDITIONAL_CIBW_ENVIRONMENT}"
-fi
-
 # The version of the built dependencies are specified
 # in the pyproject.toml file, while the tests are run
 # against the most recent version of the dependencies
