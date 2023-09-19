@@ -27,7 +27,7 @@ from sklearn._loss.loss import (
     HuberLoss,
     PinballLoss,
 )
-from sklearn.utils import assert_all_finite
+from sklearn.utils import _IS_WASM, assert_all_finite
 from sklearn.utils._testing import create_memmap_backed_data, skip_if_32bit
 
 ALL_LOSSES = list(_LOSSES.values())
@@ -268,6 +268,7 @@ def test_loss_on_specific_values(loss, y_true, raw_prediction, loss_true):
     ) == approx(loss_true, rel=1e-11, abs=1e-12)
 
 
+@pytest.mark.xfail(_IS_WASM, reason="memmap not fully supported")
 @pytest.mark.parametrize("loss", ALL_LOSSES)
 @pytest.mark.parametrize("readonly_memmap", [False, True])
 @pytest.mark.parametrize("dtype_in", [np.float32, np.float64])

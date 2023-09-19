@@ -21,7 +21,7 @@ from sklearn.experimental import (
 )
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.utils import IS_PYPY, all_estimators
+from sklearn.utils import _IS_WASM, IS_PYPY, all_estimators
 from sklearn.utils._testing import (
     _get_func_name,
     check_docstring_parameters,
@@ -154,6 +154,7 @@ def test_docstring_parameters():
         raise AssertionError("Docstring Error:\n" + msg)
 
 
+@pytest.mark.xfail(_IS_WASM, reason="importlib not supported for Pyodide packages")
 @ignore_warnings(category=FutureWarning)
 def test_tabs():
     # Test that there are no tabs in our source files

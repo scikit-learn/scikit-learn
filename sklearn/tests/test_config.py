@@ -6,6 +6,7 @@ import pytest
 
 import sklearn
 from sklearn import config_context, get_config, set_config
+from sklearn.utils import _IS_WASM
 from sklearn.utils.parallel import Parallel, delayed
 
 
@@ -119,6 +120,7 @@ def set_assume_finite(assume_finite, sleep_duration):
         return get_config()["assume_finite"]
 
 
+@pytest.mark.xfail(_IS_WASM, reason="cannot start threads")
 @pytest.mark.parametrize("backend", ["loky", "multiprocessing", "threading"])
 def test_config_threadsafe_joblib(backend):
     """Test that the global config is threadsafe with all joblib backends.
