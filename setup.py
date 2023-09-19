@@ -279,6 +279,11 @@ def setup_package():
         **extra_setuptools_args,
     )
 
+    # Overwrite the dependencies to not allow for NumPy >= 2.0
+    metadata["install_requires"] = [
+        f"{dep},<2.0" for dep in metadata["install_requires"] if dep.startswith("numpy")
+    ]
+
     commands = [arg for arg in sys.argv[1:] if not arg.startswith("-")]
     if all(
         command in ("egg_info", "dist_info", "clean", "check") for command in commands
