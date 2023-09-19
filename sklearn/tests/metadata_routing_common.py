@@ -197,7 +197,9 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         self.alpha = alpha
         self.registry = registry
 
-    def partial_fit(self, X, y, sample_weight="default", metadata="default"):
+    def partial_fit(
+        self, X, y, classes=None, sample_weight="default", metadata="default"
+    ):
         if self.registry is not None:
             self.registry.append(self)
 

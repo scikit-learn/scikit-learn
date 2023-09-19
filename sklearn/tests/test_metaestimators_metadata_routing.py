@@ -167,7 +167,7 @@ METAESTIMATORS: list = [
         "estimator": ConsumingClassifier,
         "X": X,
         "y": y,
-        "estimator_routing_methods": ["fit"],
+        "estimator_routing_methods": ["fit", "partial_fit"],
     },
     {
         "metaestimator": OneVsOneClassifier,
@@ -175,7 +175,7 @@ METAESTIMATORS: list = [
         "estimator": ConsumingClassifier,
         "X": X,
         "y": y,
-        "estimator_routing_methods": ["fit"],
+        "estimator_routing_methods": ["fit", "partial_fit"],
     },
     {
         "metaestimator": OutputCodeClassifier,
@@ -360,7 +360,10 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             set_request(estimator, method_name)
             instance = cls(**kwargs)
             method = getattr(instance, method_name)
-            method(X, y, **method_kwargs)
+            try:
+                method(X, y, **method_kwargs)
+            except ValueError:
+                method(X, y, classes=np.unique(y), **method_kwargs)
 
             # sanity check that registry is not empty, or else the test passes
             # trivially

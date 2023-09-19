@@ -971,44 +971,6 @@ def test_fitted_coefs_differ_when_sample_weight_differs():
                 assert not np.allclose(est.coef_, est_with_different_weight.coef_)
 
 
-@pytest.mark.usefixtures("enable_slep006")
-def test_partial_fitted_coefs_differ_when_sample_weight_differs():
-    """Assert if coefficients differ when estimators are partial_fitted with different
-    `sample_weights`."""
-    sample_weight = np.ones_like(iris.target, dtype=np.float64)
-    multiclass_classifiers = [OneVsRestClassifier, OneVsOneClassifier]
-    for classifier in multiclass_classifiers:
-        clf = classifier(
-            estimator=SGDClassifier(random_state=42).set_partial_fit_request(
-                sample_weight=True
-            )
-        )
-        # partial_fitting with sample_weight=sample_weight
-        clf.partial_fit(
-            iris.data,
-            iris.target,
-            classes=np.unique(iris.target),
-            sample_weight=sample_weight,
-        )
-
-        # partial_fitting with sample_weight=sample_weight_new
-        clf_with_different_weight = clone(clf)
-        sample_weight_new = sample_weight.copy()
-        sample_weight_new[::2] /= 2
-        clf_with_different_weight.partial_fit(
-            iris.data,
-            iris.target,
-            classes=np.unique(iris.target),
-            sample_weight=sample_weight_new,
-        )
-
-        # test if coefficients are different
-        for est, est_with_different_weight in zip(
-            clf.estimators_, clf_with_different_weight.estimators_
-        ):
-            assert not np.allclose(est.coef_, est_with_different_weight.coef_)
-
-
 def test_passing_params_without_enabling_metadata_routing():
     """Test that the right error message is raised when metadata params
     are passed while `enable_metadata_routing=False`."""
