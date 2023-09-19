@@ -117,15 +117,18 @@ permitted). This is convenient for performing only some of the transformations
 
 .. _pipeline_nested_parameters:
 
-|details-start|
-**Nested parameters**
-|details-split|
+Nested parameters
+.................
 
 Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
 
     >>> pipe.set_params(clf__C=10)
     Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC(C=10))])
+
+|details-start|
+**More info on nested parameters**
+|details-split|
 
 This is particularly important for doing grid searches::
 
@@ -174,6 +177,13 @@ You can also provide custom feature names for the input data using
     >>> pipe[:-1].get_feature_names_out(iris.feature_names)
     array(['petal length (cm)', 'petal width (cm)'], ...)
 
+.. topic:: See Also:
+
+ * :ref:`composite_grid_search`
+
+|details-end|
+
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
@@ -184,11 +194,6 @@ You can also provide custom feature names for the input data using
  * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_pipeline_display.py`
 
-.. topic:: See Also:
-
- * :ref:`composite_grid_search`
-
-|details-end|
 
 .. _pipeline_cache:
 
