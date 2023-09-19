@@ -896,9 +896,9 @@ following cost function:
 
 .. math::
     :name: regularized-logistic-loss
-   
+
     \min_{w} C \sum_{i=1}^n \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right) + r(w).
-   
+
 
 We currently provide four choices for the regularization term  :math:`r(w)`  via
 the `penalty` argument:
@@ -1151,7 +1151,7 @@ Normal            :math:`y \in (-\infty, \infty)`   :math:`(y-\hat{y})^2`
 Bernoulli         :math:`y \in \{0, 1\}`            :math:`2({y}\log\frac{y}{\hat{y}}+({1}-{y})\log\frac{{1}-{y}}{{1}-\hat{y}})`
 Categorical       :math:`y \in \{0, 1, ..., k\}`    :math:`2\sum_{i \in \{0, 1, ..., k\}} I(y = i) y_\text{i}\log\frac{I(y = i)}{\hat{I(y = i)}}`
 Poisson           :math:`y \in [0, \infty)`         :math:`2(y\log\frac{y}{\hat{y}}-y+\hat{y})`
-Gamma             :math:`y \in (0, \infty)`         :math:`2(\log\frac{y}{\hat{y}}+\frac{y}{\hat{y}}-1)`
+Gamma             :math:`y \in (0, \infty)`         :math:`2(\log\frac{\hat{y}}{y}+\frac{y}{\hat{y}}-1)`
 Inverse Gaussian  :math:`y \in (0, \infty)`         :math:`\frac{(y-\hat{y})^2}{y\hat{y}^2}`
 ================= ================================  ============================================
 
@@ -1200,7 +1200,7 @@ Examples of use cases include:
 * Risk modeling / insurance policy pricing:  number of claim events /
   policyholder per year (Poisson), cost per event (Gamma), total cost per
   policyholder per year (Tweedie / Compound Poisson Gamma).
-* Credit Default: probability that a loan can't be paid back (Bernouli).
+* Credit Default: probability that a loan can't be paid back (Bernoulli).
 * Fraud Detection: probability that a financial transaction like a cash transfer
   is a fraudulent transaction (Bernoulli).
 * Predictive maintenance: number of production interruption events per year
