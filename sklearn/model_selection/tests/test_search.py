@@ -11,7 +11,6 @@ from types import GeneratorType
 
 import numpy as np
 import pytest
-import scipy.sparse as sp
 from scipy.stats import bernoulli, expon, uniform
 
 from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
@@ -77,6 +76,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
 
@@ -489,7 +489,8 @@ def test_grid_search_bad_param_grid():
         search.fit(X, y)
 
 
-def test_grid_search_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_grid_search_sparse(csr_container):
     # Test that grid search works with both dense and sparse matrices
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
@@ -499,7 +500,7 @@ def test_grid_search_sparse():
     y_pred = cv.predict(X_[180:])
     C = cv.best_estimator_.C
 
-    X_ = sp.csr_matrix(X_)
+    X_ = csr_container(X_)
     clf = LinearSVC(dual="auto")
     cv = GridSearchCV(clf, {"C": [0.1, 1.0]})
     cv.fit(X_[:180].tocoo(), y_[:180])
@@ -510,7 +511,8 @@ def test_grid_search_sparse():
     assert C == C2
 
 
-def test_grid_search_sparse_scoring():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_grid_search_sparse_scoring(csr_container):
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
     clf = LinearSVC(dual="auto")
@@ -519,7 +521,7 @@ def test_grid_search_sparse_scoring():
     y_pred = cv.predict(X_[180:])
     C = cv.best_estimator_.C
 
-    X_ = sp.csr_matrix(X_)
+    X_ = csr_container(X_)
     clf = LinearSVC(dual="auto")
     cv = GridSearchCV(clf, {"C": [0.1, 1.0]}, scoring="f1")
     cv.fit(X_[:180], y_[:180])
