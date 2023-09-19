@@ -321,6 +321,7 @@ rst_prolog = """
 .. |details-split| raw:: html
 
     <span class="tooltiptext">Click for more details</span>
+    <a class="headerlink" href="#summary-anchor" title="Permalink to this heading">¶</a>
     </summary>
     <div class="card">
 

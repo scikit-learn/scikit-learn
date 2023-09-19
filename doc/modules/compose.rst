@@ -116,8 +116,6 @@ permitted). This is convenient for performing only some of the transformations
 |details-end|
 
 |details-start|
-.. _pipeline_nested_parameters:
-
 **Nested parameters**
 |details-split|
 
