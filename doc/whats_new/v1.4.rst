@@ -98,6 +98,10 @@ Changelog
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
+- |Enhancement| :func:`cluster.compute_optics_graph` and :class:`cluster.OPTICS`
+  now support the :class:`scipy.sparse.csr_array` class.
+  :pr:`27104` by :user:`Maren Westermann <marenwestermann>`.
+
 :mod:`sklearn.compose`
 ......................
 
