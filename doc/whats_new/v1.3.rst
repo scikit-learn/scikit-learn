@@ -7,7 +7,7 @@
 Version 1.3.1
 =============
 
-**In development**
+**September 2023**
 
 Changed models
 --------------
