@@ -53,6 +53,13 @@ def test_min_dependencies_readme():
                 assert version == min_version, f"{package} has a mismatched version"
 
 
+@pytest.mark.skip(
+    reason=(
+        "For the release purpose, the upper limit of Cython is set to 3.0 since it "
+        "leads to performance regression. Scikit-learn can still be built with "
+        "Cython 3."
+    )
+)
 def test_min_dependencies_pyproject_toml():
     """Check versions in pyproject.toml is consistent with _min_dependencies."""
     # tomllib is available in Python 3.11
