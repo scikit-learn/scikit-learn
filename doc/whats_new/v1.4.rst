@@ -221,6 +221,13 @@ Changelog
 - |Enhancement| Added `neg_root_mean_squared_log_error_scorer` as scorer
   :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| Improves warnings in :class:`preprocessing.FunctionTransfomer` when
+  `func` returns a pandas dataframe and the output is configured to be pandas.
+  :pr:`26944` by `Thomas Fan`_.
+
 :mod:`sklearn.model_selection`
 ..............................
 
