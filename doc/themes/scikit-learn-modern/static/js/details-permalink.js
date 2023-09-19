@@ -22,10 +22,9 @@ function updateHrefBasedOnSummaryText() {
         var anchorID = summaryElement.textContent.trim().split("\n")[0].replace(/\s+/g, '-').toLowerCase();
         summaryElement.setAttribute('id', anchorID);
 
-        var hrefID = '#' + anchorID;
         var anchorElement = summaryElement.querySelector('a.headerlink');
         if (anchorElement) {
-            anchorElement.setAttribute('href', hrefID);
+            anchorElement.setAttribute('href', '#' + anchorID);
         }
     });
 }
