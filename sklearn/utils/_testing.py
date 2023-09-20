@@ -1064,7 +1064,13 @@ class MinimalTransformer:
 
 def _array_api_for_tests(array_namespace, device, dtype):
     try:
-        array_mod = importlib.import_module(array_namespace)
+        if array_namespace == "numpy.array_api":
+            # FIXME: once it is not experimental anymore
+            with ignore_warnings(category=UserWarning):
+                # UserWarning: numpy.array_api submodule is still experimental.
+                array_mod = importlib.import_module(array_namespace)
+        else:
+            array_mod = importlib.import_module(array_namespace)
     except ModuleNotFoundError:
         raise SkipTest(
             f"{array_namespace} is not installed: not checking array_api input"
