@@ -2083,7 +2083,7 @@ def test_different_endianness_pickle():
     score = clf.score(X, y)
 
     def reduce_ndarray(arr):
-        return arr.byteswap().newbyteorder().__reduce__()
+        return arr.byteswap().view(arr.dtype.newbyteorder()).__reduce__()
 
     def get_pickle_non_native_endianness():
         f = io.BytesIO()
@@ -2110,7 +2110,7 @@ def test_different_endianness_joblib_pickle():
     class NonNativeEndiannessNumpyPickler(NumpyPickler):
         def save(self, obj):
             if isinstance(obj, np.ndarray):
-                obj = obj.byteswap().newbyteorder()
+                obj = obj.byteswap().view(obj.dtype.newbyteorder())
             super().save(obj)
 
     def get_joblib_pickle_non_native_endianness():

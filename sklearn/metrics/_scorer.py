@@ -547,11 +547,12 @@ class _PassthroughScorer:
             routing information.
         """
         # This scorer doesn't do any validation or routing, it only exposes the
-        # score requests to the parent object. This object behaves as a
-        # consumer rather than a router.
-        res = MetadataRequest(owner=self._estimator.__class__.__name__)
-        res.score = get_routing_for_object(self._estimator).score
-        return res
+        # requests of the given estimator. This object behaves as a consumer
+        # rather than a router. Ideally it only exposes the score requests to
+        # the parent object; however, that requires computing the routing for
+        # meta-estimators, which would be more time consuming than simply
+        # returning the child object's requests.
+        return get_routing_for_object(self._estimator)
 
 
 def _check_multimetric_scoring(estimator, scoring):

@@ -93,6 +93,9 @@ def make_classification(
     Thus, without shuffling, all useful features are contained in the columns
     ``X[:, :n_informative + n_redundant + n_repeated]``.
 
+    For an example of usage, see
+    :ref:`sphx_glr_auto_examples_datasets_plot_random_dataset.py`.
+
     Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
@@ -886,6 +889,9 @@ def make_blobs(
     return_centers=False,
 ):
     """Generate isotropic Gaussian blobs for clustering.
+
+    For an example of usage, see
+    :ref:`sphx_glr_auto_examples_datasets_plot_random_dataset.py`.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -1801,6 +1807,9 @@ def make_gaussian_quantiles(
     standard normal distribution and defining classes separated by nested
     concentric multi-dimensional spheres such that roughly equal numbers of
     samples are in each class (quantiles of the :math:`\chi^2` distribution).
+
+    For an example of usage, see
+    :ref:`sphx_glr_auto_examples_datasets_plot_random_dataset.py`.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
