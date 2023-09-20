@@ -603,7 +603,8 @@ def setup_package():
 
     # Overwrite the dependencies to not allow for NumPy >= 2.0
     metadata["install_requires"] = [
-        f"{dep},<2.0" for dep in metadata["install_requires"] if dep.startswith("numpy")
+        f"{dep},<2.0" if dep.startswith("numpy") else dep
+        for dep in metadata["install_requires"]
     ]
 
     commands = [arg for arg in sys.argv[1:] if not arg.startswith("-")]
