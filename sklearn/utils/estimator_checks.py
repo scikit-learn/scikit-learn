@@ -40,6 +40,7 @@ from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
 from ..model_selection import ShuffleSplit, train_test_split
 from ..model_selection._validation import _safe_split
+from ..naive_bayes import ColumnwiseNB, GaussianNB, _select_half
 from ..pipeline import make_pipeline
 from ..preprocessing import StandardScaler, scale
 from ..random_projection import BaseRandomProjection
@@ -60,10 +61,7 @@ from ..utils.fixes import parse_version, sp_version
 from ..utils.validation import check_is_fitted
 from . import IS_PYPY, is_scalar_nan, shuffle
 from ._param_validation import Interval
-from ._tags import (
-    _DEFAULT_TAGS,
-    _safe_tags,
-)
+from ._tags import _DEFAULT_TAGS, _safe_tags
 from ._testing import (
     SkipTest,
     _array_api_for_tests,
@@ -427,8 +425,20 @@ def _construct_instance(Estimator):
             else:
                 estimator = Estimator(LogisticRegression(C=1))
         elif required_parameters in (["estimators"],):
+            if issubclass(Estimator, ColumnwiseNB):
+                # ColumnwiseNB (naive Bayes meta-classifier)
+                estimator = Estimator(
+                    estimators=[
+                        (
+                            "gnb1",
+                            GaussianNB(var_smoothing=1e-13),
+                            _select_half("first"),
+                        ),
+                        ("gnb2", GaussianNB(), _select_half("second")),
+                    ]
+                )
             # Heterogeneous ensemble classes (i.e. stacking, voting)
-            if issubclass(Estimator, RegressorMixin):
+            elif issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(
                     estimators=[("est1", Ridge(alpha=0.1)), ("est2", Ridge(alpha=1))]
                 )

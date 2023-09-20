@@ -259,6 +259,41 @@ that all categories for each feature :math:`i` are represented with numbers
 :math:`0, ..., n_i - 1` where :math:`n_i` is the number of available categories
 of feature :math:`i`.
 
+.. _columnwise_naive_bayes:
+
+Mix and match naive Bayes models
+--------------------------------
+
+A naive Bayes model that assumes different distribution families for different
+features (or subsets of features) can be constructed using :class:`ColumnwiseNB`.
+It is a meta-estimator, whose operation relies on naive Bayes
+sub-estimators, which can be chosen in any number or combination from
+:class:`GaussianNB`, :class:`MultinomialNB`, :class:`ComplementNB`,
+:class:`BernoulliNB`, :class:`CategoricalNB`, and user-defined models
+(provided they implement necessary methods).
+
+When creating a :class:`ColumnwiseNB` estimator, one specifies sub-estimators
+and their respective column subsets as a list of tuples.
+Each sub-estimator is fitted and evaluated independently of the
+others and "sees" only the features assigned to it. The predictions of sub-estimators are
+combined via
+
+.. math::
+
+   \log P(x,y)=\log P(x_{1},y) + \dots + \log P(x_{M},y) - (M - 1)\log P(y),
+
+where :math:`\log P(x,y)` is the joint log-probability predicted by the meta-estimator,
+:math:`\log P(x_{m},y)` is that by the :math:`m` th sub-estimator,
+:math:`\log P(y)` is the class prior used by the meta-estimator, and
+:math:`M\geq1` is the total number of sub-estimators.
+
+See :ref:`sphx_glr_auto_examples_miscellaneous_plot_combining_naive_bayes.py`
+for an example of a mixed naive Bayes model implementation.
+
+See also :ref:`voting_classifier` for a way of combining general classifiers.
+An introduction to processing datasets with heterogeneous features is available at
+:ref:`column_transformer`.
+
 Out-of-core naive Bayes model fitting
 -------------------------------------
 
