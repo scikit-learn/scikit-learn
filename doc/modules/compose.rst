@@ -70,7 +70,7 @@ is an estimator object::
     Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
 
 |details-start|
-**Shortand version using :func:`make_pipeline`**
+**Shorthand version using :func:`make_pipeline`**
 |details-split|
 
 The utility function :func:`make_pipeline` is a shorthand
