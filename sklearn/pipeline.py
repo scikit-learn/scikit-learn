@@ -889,13 +889,9 @@ class Pipeline(_BaseComposition):
         """
         _raise_for_params(params, self, "transform")
 
-        Xt = X
-        if not _routing_enabled():
-            for _, name, transform in self._iter():
-                Xt = transform.transform(Xt)
-            return Xt
-
         routed_params = process_routing(self, "transform", **params)
+
+        Xt = X
         for _, name, transform in self._iter():
             Xt = transform.transform(Xt, **routed_params[name].transform)
         return Xt
@@ -935,11 +931,6 @@ class Pipeline(_BaseComposition):
         """
         _raise_for_params(params, self, "inverse_transform")
         reverse_iter = reversed(list(self._iter()))
-
-        if not _routing_enabled():
-            for _, name, transform in reverse_iter:
-                Xt = transform.inverse_transform(Xt)
-            return Xt
 
         routed_params = process_routing(self, "inverse_transform", **params)
         for _, name, transform in reverse_iter:

@@ -1495,6 +1495,10 @@ def process_routing(_obj, _method, /, **kwargs):
     a call to this function would be:
     ``process_routing(self, sample_weight=sample_weight, **fit_params)``.
 
+    Note that if routing is not enabled and ``kwargs`` is empty, then it
+    returns an empty routing where ``process_routing(...).ANYTHING.ANY_METHOD``
+    is always an empty dictionary.
+
     .. versionadded:: 1.3
 
     Parameters
@@ -1517,6 +1521,19 @@ def process_routing(_obj, _method, /, **kwargs):
         corresponding methods or corresponding child objects. The object names
         are those defined in `obj.get_metadata_routing()`.
     """
+    if not _routing_enabled() and not kwargs:
+        # If routing is not enabled and kwargs are empty, then we don't have to
+        # try doing any routing, we can simply return a structure which returns
+        # an empty dict on routed_params.ANYTHING.ANY_METHOD.
+        class EmptyRequest:
+            def __getitem__(self, name):
+                return Bunch(**{method: dict() for method in METHODS})
+
+            def __getattr__(self, name):
+                return Bunch(**{method: dict() for method in METHODS})
+
+        return EmptyRequest()
+
     if not (hasattr(_obj, "get_metadata_routing") or isinstance(_obj, MetadataRouter)):
         raise AttributeError(
             f"The given object ({repr(_obj.__class__.__name__)}) needs to either"
