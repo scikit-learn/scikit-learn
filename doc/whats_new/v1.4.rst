@@ -77,6 +77,7 @@ and classes are impacted:
 
 **Functions:**
 
+- :func:`cluster.compute_optics_graph` in :pr:`27104` by :user:`Maren Westermann <marenwestermann>`;
 - :func:`decomposition.non_negative_factorization` in :pr:`27100` by
   :user:`Isaac Virshup <ivirshup>`;
 - :func:`metrics.f_regression` in :pr:`27239` by :user:`Yaroslav Korobko <Tialo>`;
@@ -86,6 +87,7 @@ and classes are impacted:
 
 **Classes:**
 
+- :class:`cluster.OPTICS` in :pr:`27104` by :user:`Maren Westermann <marenwestermann>`;
 - :class:`decomposition.NMF` in :pr:`27100` by :user:`Isaac Virshup <ivirshup>`;
 - :class:`decomposition.MiniBatchNMF` in :pr:`27100` by
   :user:`Isaac Virshup <ivirshup>`;
@@ -150,24 +152,6 @@ Changelog
   :class:`cluster.HDBSCAN` ensuring consistency in naming convention.
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
-
-- |Enhancement| :func:`cluster.compute_optics_graph` and :class:`cluster.OPTICS`
-  now support the :class:`scipy.sparse.csr_array` class.
-  :pr:`27104` by :user:`Maren Westermann <marenwestermann>`.
-
-:mod:`sklearn.compose`
-......................
-
-- |Enhancement| :class:`~compose.ColumnTransformer` now supports metadata routing
-  according to :ref:`metadata routing user guide <metadata_routing>`. :pr:`27005`
-  by `Adrin Jalali`_.
-
-:mod:`sklearn.cross_decomposition`
-..................................
-
-- |Fix| :class:`cross_decomposition.PLSRegression` now automatically ravels the output
-  of `predict` if fitted with one dimensional `y`.
-  :pr:`26602` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.decomposition`
 ............................
