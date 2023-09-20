@@ -196,6 +196,14 @@ Changelog
   :class:`scipy.sparse.sparray` subclasses.
   :pr:`27301` by :user:`Lohit SundaramahaLingam <lohitslohit>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Enhancement| Solver `"newton-cg"` in :class:`LogisticRegression` and
+  :class:`LogisticRegressionCV` uses a little less memory. The effect is proportional
+  to the number of coefficients (`n_features * n_classes`).
+  :pr:`27417` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.metrics`
 ......................
 
