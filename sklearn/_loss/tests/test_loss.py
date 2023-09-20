@@ -268,7 +268,6 @@ def test_loss_on_specific_values(loss, y_true, raw_prediction, loss_true):
     ) == approx(loss_true, rel=1e-11, abs=1e-12)
 
 
-@pytest.mark.xfail(_IS_WASM, reason="memmap not fully supported")
 @pytest.mark.parametrize("loss", ALL_LOSSES)
 @pytest.mark.parametrize("readonly_memmap", [False, True])
 @pytest.mark.parametrize("dtype_in", [np.float32, np.float64])
@@ -287,6 +286,9 @@ def test_loss_dtype(
 
     Also check that input arrays can be readonly, e.g. memory mapped.
     """
+    if _IS_WASM and readonly_memmap:
+        pytest.xfail(reason="memmap not fully supported")
+
     loss = loss()
     # generate a y_true and raw_prediction in valid range
     n_samples = 5
