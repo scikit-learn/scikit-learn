@@ -14,7 +14,7 @@ Metadata Routing
   models <metadata_routing_models>` for more information. It may change without
   the usual deprecation cycle. By default this feature is not enabled. You can
   enable this feature  by setting the ``enable_metadata_routing`` flag to
-  ``True``:
+  ``True``::
 
     >>> import sklearn
     >>> sklearn.set_config(enable_metadata_routing=True)
@@ -233,6 +233,9 @@ The issue can be fixed by explicitly setting the request value::
     ...     sample_weight=True
     ... ).set_score_request(sample_weight=False)
 
+At the end we disable the configuration flag for metadata routing::
+
+    >>> sklearn.set_config(enable_metadata_routing=False)
 
 .. _metadata_routing_models:
 
