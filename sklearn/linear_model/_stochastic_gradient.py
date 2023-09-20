@@ -1063,7 +1063,7 @@ class SGDClassifier(BaseSGDClassifier):
         improving by at least `tol` for `n_iter_no_change` consecutive
         epochs.
         See
-        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`.
 
         .. versionadded:: 0.20
             Added 'early_stopping' option
