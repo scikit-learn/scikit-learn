@@ -36,11 +36,6 @@ The following models now support metadata routing in one or more or their
 methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
 more details.
 
-- |API|:func:`~utils.metadata_routing.process_routing` now has a different
-  signature. The first two (the object and the method) are positional only,
-  and all metadata are passed as keyword arguments. :pr:`26909` by `Adrin
-  Jalali`_.
-
 - |Enhancement| :class:`~compose.ColumnTransformer` now supports metadata routing
   according to :ref:`metadata routing user guide <metadata_routing>`. :pr:`27005`
   by `Adrin Jalali`_.
@@ -51,11 +46,6 @@ more details.
   scorer. :meth:`linear_model.LogisticRegressionCV.score` now accepts
   ``**score_params`` which are passed to the underlying scorer.
   :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
-
-- |Enhancement| :class:`~utils.metadata_routing.MetadataRequest` and
-  :class:`~utils.metadata_routing.MetadataRouter` now have a ``consumes`` method
-  which can be used to check whether a given set of parameters would be consumed.
-  :pr:`26831` by `Adrin Jalali`_.
 
 - |Feature| :class:`pipeline.Pipeline` now supports metadata routing according
   to :ref:`metadata routing user guide <metadata_routing>`. :pr:`26789` by
@@ -125,6 +115,11 @@ Changelog
 
 :mod:`sklearn.base`
 ...................
+
+- |API|:func:`~utils.metadata_routing.process_routing` now has a different
+  signature. The first two (the object and the method) are positional only,
+  and all metadata are passed as keyword arguments. :pr:`26909` by `Adrin
+  Jalali`_.
 
 - |Enhancement| :meth:`base.ClusterMixin.fit_predict` and
   :meth:`base.OutlierMixin.fit_predict` now accept ``**kwargs`` which are
@@ -301,6 +296,11 @@ Changelog
   improved adaptability to dark mode environments.
   :pr:`26862` by :user:`Andrew Goh Yisheng <9y5>`, `Thomas Fan`_, `Adrin
   Jalali`_.
+
+- |Enhancement| :class:`~utils.metadata_routing.MetadataRequest` and
+  :class:`~utils.metadata_routing.MetadataRouter` now have a ``consumes`` method
+  which can be used to check whether a given set of parameters would be consumed.
+  :pr:`26831` by `Adrin Jalali`_.
 
 - |Fix| :func:`sklearn.utils.check_array` should accept both matrix and array from
   the sparse SciPy module. The previous implementation would fail if `copy=True` by
