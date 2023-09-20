@@ -1374,7 +1374,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         For a multi_class problem, if multi_class is set to be "multinomial"
         the softmax function is used to find the predicted probability of
         each class.
-        Else use a one-vs-rest approach, i.e calculate the probability
+        Else use a one-vs-rest approach, i.e. calculate the probability
         of each class assuming it to be positive using the logistic function.
         and normalize these values across all the classes.
 
