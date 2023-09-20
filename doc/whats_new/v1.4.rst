@@ -89,7 +89,7 @@ Changelog
 
 - |Enhancement| :meth:`base.ClusterMixin.fit_predict` and
   :meth:`base.OutlierMixin.fit_predict` now accept ``**kwargs`` which are
-  passed to the ``fit`` method of the the estimator. :pr:`26506` by `Adrin
+  passed to the ``fit`` method of the estimator. :pr:`26506` by `Adrin
   Jalali`_.
 
 - |Enhancement| :meth:`base.TransformerMixin.fit_transform` and
@@ -202,6 +202,14 @@ Changelog
   :class:`scipy.sparse.sparray` subclasses.
   :pr:`27301` by :user:`Lohit SundaramahaLingam <lohitslohit>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Enhancement| Solver `"newton-cg"` in :class:`LogisticRegression` and
+  :class:`LogisticRegressionCV` uses a little less memory. The effect is proportional
+  to the number of coefficients (`n_features * n_classes`).
+  :pr:`27417` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -226,6 +234,13 @@ Changelog
 
 - |Enhancement| Added `neg_root_mean_squared_log_error_scorer` as scorer
   :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| Improves warnings in :class:`preprocessing.FunctionTransfomer` when
+  `func` returns a pandas dataframe and the output is configured to be pandas.
+  :pr:`26944` by `Thomas Fan`_.
 
 :mod:`sklearn.model_selection`
 ..............................
