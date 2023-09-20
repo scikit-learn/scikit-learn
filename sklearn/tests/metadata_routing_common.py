@@ -46,6 +46,10 @@ def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
 
     Parameters
     ----------
+    obj : estimator object
+        sub-estimator to check routed params for
+    method : str
+        sub-estimator's method where metadata is routed to
     split_params : tuple, default=empty
         specifies any parameters which are to be checked as being a subset
         of the original values.
@@ -59,7 +63,7 @@ def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
         if key in split_params and recorded_value is not None:
             assert np.isin(recorded_value, value).all()
         else:
-            assert np.allclose(recorded_value, value)
+            assert recorded_value is value
 
 
 record_metadata_not_default = partial(record_metadata, record_default=False)

@@ -176,6 +176,7 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y,
         "estimator_routing_methods": ["fit", "partial_fit"],
+        "preserves_metadata": "subset",
     },
     {
         "metaestimator": OutputCodeClassifier,
