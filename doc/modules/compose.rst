@@ -128,6 +128,7 @@ To enable model inspection, :class:`~sklearn.pipeline.Pipeline` has a
 pipeline slicing to get the feature names going into each step::
 
     >>> from sklearn.datasets import load_iris
+    >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.feature_selection import SelectKBest
     >>> iris = load_iris()
     >>> pipe = Pipeline(steps=[
@@ -160,6 +161,7 @@ is therefore nested because it belongs to a particular sub-step. Parameters of t
 estimators in the pipeline are accessible using the ``<estimator>__<parameter>``
 syntax::
 
+    >>> pipe = Pipeline(steps=[("reduce_dim", PCA()), ("clf", SVC())])
     >>> pipe.set_params(clf__C=10)
     Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC(C=10))])
 
@@ -177,7 +179,6 @@ This is particularly important for doing grid searches::
 Individual steps may also be replaced as parameters, and non-final steps may be
 ignored by setting them to ``'passthrough'``::
 
-    >>> from sklearn.linear_model import LogisticRegression
     >>> param_grid = dict(reduce_dim=['passthrough', PCA(5), PCA(10)],
     ...                   clf=[SVC(), LogisticRegression()],
     ...                   clf__C=[0.1, 10, 100])
