@@ -120,7 +120,6 @@ def set_assume_finite(assume_finite, sleep_duration):
         return get_config()["assume_finite"]
 
 
-@pytest.mark.xfail(_IS_WASM, reason="cannot start threads")
 @pytest.mark.parametrize("backend", ["loky", "multiprocessing", "threading"])
 def test_config_threadsafe_joblib(backend):
     """Test that the global config is threadsafe with all joblib backends.
@@ -140,6 +139,7 @@ def test_config_threadsafe_joblib(backend):
     assert items == [False, True, False, True]
 
 
+@pytest.mark.xfail(_IS_WASM, reason="cannot start threads")
 def test_config_threadsafe():
     """Uses threads directly to test that the global config does not change
     between threads. Same test as `test_config_threadsafe_joblib` but with
