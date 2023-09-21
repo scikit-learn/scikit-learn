@@ -75,7 +75,7 @@ class Pipeline(_BaseComposition):
     example :ref:`sphx_glr_auto_examples_compose_plot_digits_pipe.py` shows how
     to grid search on a pipeline using `'__'` as a separator in the parameter names.
 
-    Read more in the :ref:`User Guide <pipeline>`.
+    Read more in the :ref:`User Guide <pipeline_user_guide>`.
 
     .. versionadded:: 0.5
 
@@ -1106,7 +1106,7 @@ class Pipeline(_BaseComposition):
         Returns
         -------
         routing : MetadataRouter
-            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
         router = MetadataRouter(owner=self.__class__.__name__)
@@ -1319,7 +1319,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     setting to 'drop' or disabled by setting to 'passthrough' (features are
     passed without transformation).
 
-    Read more in the :ref:`User Guide <feature_union>`.
+    Read more in the :ref:`User Guide <feature_union_user_guide>`.
 
     .. versionadded:: 0.13
 

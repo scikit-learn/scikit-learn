@@ -1,9 +1,9 @@
 """
-Metadata Routing Utility Public API.
-
-metadata_routing is not a separate sub-folder since that would result in a
-circular import issue.
+The :mod:`sklearn.utils.metadata_routing` module includes utilities to route
+metadata within scikit-learn estimators.
 """
+# This module is not a separate sub-folder since that would result in a circular
+# import issue.
 
 # Author: Adrin Jalali <adrin.jalali@gmail.com>
 # License: BSD 3 clause
@@ -17,3 +17,17 @@ from ._metadata_requests import process_routing  # noqa
 from ._metadata_requests import _MetadataRequester  # noqa
 from ._metadata_requests import _routing_enabled  # noqa
 from ._metadata_requests import _raise_for_params  # noqa
+
+__all__ = [
+    "WARN",
+    "UNUSED",
+    "UNCHANGED",
+    "get_routing_for_object",
+    "MetadataRouter",
+    "MetadataRequest",
+    "MethodMapping",
+    "process_routing",
+    "_MetadataRequester",
+    "_routing_enabled",
+    "_raise_for_params",
+]

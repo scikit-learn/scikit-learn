@@ -1,3 +1,7 @@
+"""
+The :mod:`sklearn.utils.class_weight` module includes utilities for handling
+weights based on class labels.
+"""
 # Authors: Andreas Mueller
 #          Manoj Kumar
 # License: BSD 3 clause

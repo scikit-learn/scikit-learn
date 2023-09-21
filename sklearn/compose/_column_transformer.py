@@ -56,7 +56,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     This is useful for heterogeneous or columnar data, to combine several
     feature extraction mechanisms or transformations into a single transformer.
 
-    Read more in the :ref:`User Guide <column_transformer>`.
+    Read more in the :ref:`User Guide <column_transformer_user_guide>`.
 
     .. versionadded:: 0.20
 

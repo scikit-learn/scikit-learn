@@ -7,14 +7,14 @@ Pipelines and composite estimators
 
 Transformers are usually combined with classifiers, regressors or other
 estimators to build a composite estimator.  The most common tool is a
-:ref:`Pipeline <pipeline>`. Pipeline is often used in combination with
-:ref:`FeatureUnion <feature_union>` which concatenates the output of
+:ref:`Pipeline <pipeline_user_guide>`. Pipeline is often used in combination with
+:ref:`FeatureUnion <feature_union_user_guide>` which concatenates the output of
 transformers into a composite feature space.  :ref:`TransformedTargetRegressor
 <transformed_target_regressor>` deals with transforming the :term:`target`
 (i.e. log-transform :term:`y`). In contrast, Pipelines only transform the
 observed data (:term:`X`).
 
-.. _pipeline:
+.. _pipeline_user_guide:
 
 Pipeline: chaining estimators
 =============================
@@ -359,7 +359,7 @@ each other. However, it is possible to bypass this checking by setting
  * :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`
 
 
-.. _feature_union:
+.. _feature_union_user_guide:
 
 FeatureUnion: composite feature spaces
 ======================================
@@ -375,7 +375,7 @@ larger matrix.
 
 When you want to apply different transformations to each field of the data,
 see the related class :class:`~sklearn.compose.ColumnTransformer`
-(see :ref:`user guide <column_transformer>`).
+(see :ref:`user guide <column_transformer_user_guide>`).
 
 :class:`FeatureUnion` serves the same purposes as :class:`Pipeline` -
 convenience and joint parameter estimation and validation.
@@ -423,7 +423,7 @@ and ignored by setting to ``'drop'``::
  * :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`
 
 
-.. _column_transformer:
+.. _column_transformer_user_guide:
 
 ColumnTransformer for heterogeneous data
 ========================================

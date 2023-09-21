@@ -75,7 +75,7 @@ newly transformed sample matrix ``X``::
          [ 1., -1.]])
 
 Sometimes, you want to apply different transformations to different features:
-the :ref:`ColumnTransformer<column_transformer>` is designed for these
+the :ref:`ColumnTransformer<column_transformer_user_guide>` is designed for these
 use-cases.
 
 Pipelines: chaining pre-processors and estimators

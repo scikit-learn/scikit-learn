@@ -1,5 +1,7 @@
-"""Utilities for input validation"""
-
+"""
+The :mod:`sklearn.utils.validation` module includes functions to validate
+input and parameter within scikit-learn estimators.
+"""
 # Authors: Olivier Grisel
 #          Gael Varoquaux
 #          Andreas Mueller

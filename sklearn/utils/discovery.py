@@ -1,8 +1,19 @@
+"""
+The :mod:`sklearn.utils.discovery` module includes utilities to discover
+objects (i.e. estimators, displays, functions) from the `sklearn` package.
+"""
+
 import inspect
 import pkgutil
 from importlib import import_module
 from operator import itemgetter
 from pathlib import Path
+
+__all__ = [
+    "all_estimators",
+    "all_displays",
+    "all_functions",
+]
 
 _MODULE_TO_IGNORE = {
     "tests",

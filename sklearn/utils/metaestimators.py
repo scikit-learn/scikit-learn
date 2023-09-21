@@ -1,4 +1,6 @@
-"""Utilities for meta-estimators"""
+"""
+The :mod:`sklearn.utils.metaestimators` module includes utilities for meta-estimators.
+"""
 # Author: Joel Nothman
 #         Andreas Mueller
 # License: BSD
