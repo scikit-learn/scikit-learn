@@ -362,9 +362,11 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             instance = cls(**kwargs)
             method = getattr(instance, method_name)
             try:
-                method(X, y, **method_kwargs)
-            except ValueError:
                 method(X, y, classes=np.unique(y), **method_kwargs)
+            except TypeError:
+                method(X, y, **method_kwargs)
+            except IndexError:
+                method(X, y, **method_kwargs)
 
             # sanity check that registry is not empty, or else the test passes
             # trivially

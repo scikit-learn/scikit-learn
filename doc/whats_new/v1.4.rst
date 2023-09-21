@@ -201,12 +201,6 @@ Changelog
   behaves in consistent with using sparse matrices in the `transform` and
   `fit_transform` methods. :pr:`27277` by :user:`Yao Xiao <Charlie-XIAO>`.
 
-:mod:`sklearn.multiclass`
-...........................
-
-:mod:`sklearn.pipeline`
-.......................
-
 :mod:`sklearn.kernel_approximation`
 ...................................
 
