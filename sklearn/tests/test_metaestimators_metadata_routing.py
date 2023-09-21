@@ -299,8 +299,8 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
     # Test that a UnsetMetadataPassedError is raised when the sub-estimator's
     # requests are not set
     if "estimator" not in metaestimator:
-        # This test only makes sense for metaestimators which have a
-        # sub-estimator
+        # If dictionary in METAESTIMATORS doesn't provide a key "estimator":
+        # skip test
         return
 
     cls = metaestimator["metaestimator"]
@@ -331,8 +331,8 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
     # When the metadata is explicitly requested on the sub-estimator, there
     # should be no errors.
     if "estimator" not in metaestimator:
-        # This test only makes sense for metaestimators which have a
-        # sub-estimator
+        # If dictionary in METAESTIMATORS doesn't provide a key "estimator":
+        # skip test
         return
 
     def set_request(estimator, method_name):
