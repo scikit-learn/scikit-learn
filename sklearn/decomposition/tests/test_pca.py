@@ -769,7 +769,7 @@ def test_pca_array_api_compliance(estimator, check, array_namepsace, device, dty
 @pytest.mark.parametrize(
     "estimator",
     [
-        # PCA with mle cannot use check_array_api_input_and_values becayse of
+        # PCA with mle cannot use check_array_api_input_and_values because of
         # rounding errors in the noisy (low variance) components.
         PCA(n_components="mle", svd_solver="full"),
     ],
