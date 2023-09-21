@@ -116,7 +116,7 @@ def _infer_dimension(spectrum, n_samples):
     ll[0] = -xp.inf  # we don't want to return n_components = 0
     for rank in range(1, spectrum.shape[0]):
         ll[rank] = _assess_dimension(spectrum, rank, n_samples)
-    return ll.argmax()
+    return xp.argmax(ll)
 
 
 class PCA(_BasePCA):
