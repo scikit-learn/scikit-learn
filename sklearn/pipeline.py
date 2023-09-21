@@ -85,11 +85,10 @@ class Pipeline(_BaseComposition):
     Parameters
     ----------
     steps : list of tuples
-        List of (name of step, transformer implementing `transform`) tuples
-        that are to be chained in sequential order. To be compatible with the
-        scikit-learn API, all steps must define `fit`. All non-last steps must
-        also define `transform`. See :ref:`Combining Estimators
-        <combining_estimators>` for more details.
+        List of (name of step, estimator) tuples that are to be chained in
+        sequential order. To be compatible with the scikit-learn API, all steps
+        must define `fit`. All non-last steps must also define `transform`. See
+        :ref:`Combining Estimators <combining_estimators>` for more details.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. The last step
