@@ -99,8 +99,8 @@ Changelog
   exception for `pandas.DataFrames` input.
   :pr:`26772` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Fix| Reintroduce :attr:`sklearn.neighbors.BallTree.valid_metrics` and
-  :attr:`sklearn.neighbors.KDTree.valid_metrics` as public class attributes.
+- |Fix| Reintroduce `sklearn.neighbors.BallTree.valid_metrics` and
+  `sklearn.neighbors.KDTree.valid_metrics` as public class attributes.
   :pr:`26754` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |Fix| :class:`sklearn.model_selection.HalvingRandomSearchCV` no longer raises
@@ -272,8 +272,8 @@ Changes impacting all modules
   CSR matrix to the `predict` or `transform` method of estimators that rely on
   a dense NumPy representation to store their fitted parameters (or the reverse).
 
-  For instance, :meth:`sklearn.NearestNeighbors.kneighbors` is now up to 2 times faster
-  for this case on commonly available laptops.
+  For instance, :meth:`sklearn.neighbors.NearestNeighbors.kneighbors` is now up
+  to 2 times faster for this case on commonly available laptops.
 
   :pr:`25044` by :user:`Julien Jerphanion <jjerphan>`.
 
@@ -710,8 +710,9 @@ Changelog
 :mod:`sklearn.mixture`
 ......................
 
-- |Efficiency| :class:`GaussianMixture` is more efficient now and will bypass unnecessary
-  initialization if the weights, means, and precisions are given by users.
+- |Efficiency| :class:`mixture.GaussianMixture` is more efficient now and will bypass
+  unnecessary initialization if the weights, means, and precisions are
+  given by users.
   :pr:`26021` by :user:`Jiawei Zhang <jiawei-zhang-a>`.
 
 :mod:`sklearn.model_selection`
