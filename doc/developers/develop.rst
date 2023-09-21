@@ -508,7 +508,7 @@ independent term is stored in ``intercept_``.  ``sklearn.linear_model._base``
 contains a few base classes and mixins that implement common linear model
 patterns.
 
-The `sklearn.utils.multiclass` module contains useful functions
+The :mod:`~sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
 
 .. _estimator_tags:

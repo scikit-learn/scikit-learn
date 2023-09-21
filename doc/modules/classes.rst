@@ -885,9 +885,14 @@ Miscellaneous
 
 .. autosummary::
    :toctree: generated/
-   :template: function.rst
+   :template: classes.rst
 
    linear_model.PassiveAggressiveRegressor
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
    linear_model.enet_path
    linear_model.lars_path
    linear_model.lars_path_gram
