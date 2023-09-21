@@ -1185,11 +1185,11 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             raise ValueError(
                 "OutputCodeClassifier can not be fit when no class is present."
             )
-        n_estimators_ = int(n_classes * self.code_size)
+        n_estimators = int(n_classes * self.code_size)
 
         # FIXME: there are more elaborate methods than generating the codebook
         # randomly.
-        self.code_book_ = random_state.uniform(size=(n_classes, n_estimators_))
+        self.code_book_ = random_state.uniform(size=(n_classes, n_estimators))
         self.code_book_[self.code_book_ > 0.5] = 1.0
 
         if hasattr(self.estimator, "decision_function"):
