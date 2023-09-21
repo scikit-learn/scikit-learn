@@ -1526,6 +1526,9 @@ def process_routing(_obj, _method, /, **kwargs):
         # try doing any routing, we can simply return a structure which returns
         # an empty dict on routed_params.ANYTHING.ANY_METHOD.
         class EmptyRequest:
+            def get(self, name, default=None):
+                return default if default else {}
+
             def __getitem__(self, name):
                 return Bunch(**{method: dict() for method in METHODS})
 
