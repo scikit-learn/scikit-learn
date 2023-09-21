@@ -33,7 +33,6 @@ all_DenseRandomProjection: List[Any] = [GaussianRandomProjection]
 all_RandomProjection = all_SparseRandomProjection + all_DenseRandomProjection
 
 
-@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 def make_sparse_random_data(
     coo_container, n_samples, n_features, n_nonzeros, random_state=0
 ):
@@ -277,9 +276,10 @@ def test_random_projection_embedding_quality(coo_container):
         assert 1 - eps < distances_ratio.min()
 
 
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_SparseRandomProj_output_representation(csr_container):
-    data, _ = make_sparse_random_data(csr_container, n_samples, n_features, n_nonzeros)
+def test_SparseRandomProj_output_representation(coo_container, csr_container):
+    data, _ = make_sparse_random_data(coo_container, n_samples, n_features, n_nonzeros)
     for SparseRandomProj in all_SparseRandomProjection:
         # when using sparse input, the projected data can be forced to be a
         # dense numpy array
@@ -378,9 +378,10 @@ def test_johnson_lindenstrauss_min_dim():
     assert johnson_lindenstrauss_min_dim(100, eps=1e-5) == 368416070986
 
 
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
-def test_random_projection_feature_names_out(random_projection_cls):
-    data, _ = make_sparse_random_data(sp.coo_array, n_samples, n_features, n_nonzeros)
+def test_random_projection_feature_names_out(coo_container, random_projection_cls):
+    data, _ = make_sparse_random_data(coo_container, n_samples, n_features, n_nonzeros)
     random_projection = random_projection_cls(n_components=2)
     random_projection.fit(data)
     names_out = random_projection.get_feature_names_out()
