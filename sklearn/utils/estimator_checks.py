@@ -4560,8 +4560,7 @@ def check_set_output_transform_pandas(name, transformer_orig):
         error_message = str(e)
         assert (
             "Pandas output does not support sparse data." in error_message
-            or "The transformer outputs a scipy sparse matrix."
-            in error_message
+            or "The transformer outputs a scipy sparse matrix." in error_message
         ), e
         return
 
@@ -4611,8 +4610,7 @@ def check_global_output_transform_pandas(name, transformer_orig):
         error_message = str(e)
         assert (
             "Pandas output does not support sparse data." in error_message
-            or "The transformer outputs a scipy sparse matrix."
-            in error_message
+            or "The transformer outputs a scipy sparse matrix." in error_message
         ), e
         return
 
