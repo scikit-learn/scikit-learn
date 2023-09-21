@@ -125,6 +125,8 @@ def _threshold_for_binary_predict(estimator):
 
 
 class _ConstantPredictor(BaseEstimator):
+    """Helper predictor to be used when only one class is present."""
+
     def fit(self, X, y):
         check_params = dict(
             force_all_finite=False, dtype=None, ensure_2d=False, accept_sparse=True
@@ -1066,7 +1068,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     classes_ : ndarray of shape (n_classes,)
         Array containing labels.
 
-    code_book_ : ndarray of shape (n_classes, code_size)
+    code_book_ : ndarray of shape (n_classes, len(estimators_))
         Binary array containing the code of each class.
 
     n_features_in_ : int
@@ -1183,11 +1185,11 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             raise ValueError(
                 "OutputCodeClassifier can not be fit when no class is present."
             )
-        code_size_ = int(n_classes * self.code_size)
+        n_estimators_ = int(n_classes * self.code_size)
 
         # FIXME: there are more elaborate methods than generating the codebook
         # randomly.
-        self.code_book_ = random_state.uniform(size=(n_classes, code_size_))
+        self.code_book_ = random_state.uniform(size=(n_classes, n_estimators_))
         self.code_book_[self.code_book_ > 0.5] = 1.0
 
         if hasattr(self.estimator, "decision_function"):

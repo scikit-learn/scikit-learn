@@ -40,7 +40,7 @@ from sklearn.utils.metadata_routing import MetadataRouter
 rng = np.random.RandomState(42)
 N, M = 100, 4
 X = rng.rand(N, M)
-y = rng.randint(0, 2, size=N)
+y = rng.randint(0, 3, size=N)
 y_multi = rng.randint(0, 2, size=(N, 3))
 metadata = rng.randint(0, 10, size=N)
 sample_weight = rng.rand(N)
@@ -300,7 +300,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
     # requests are not set
     if "estimator" not in metaestimator:
         # If dictionary in METAESTIMATORS doesn't provide a key "estimator":
-        # skip test
+        # skip rest of the test
         return
 
     cls = metaestimator["metaestimator"]
@@ -332,7 +332,7 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
     # should be no errors.
     if "estimator" not in metaestimator:
         # If dictionary in METAESTIMATORS doesn't provide a key "estimator":
-        # skip test
+        # skip rest of the test
         return
 
     def set_request(estimator, method_name):
