@@ -1210,11 +1210,19 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     """
     xp, _ = get_namespace(arr)
 
-    out = xp.cumsum(arr, axis=axis, dtype=np.float64)
-    expected = xp.sum(arr, axis=axis, dtype=np.float64)
+    if axis is None:
+        arr = xp.reshape(arr, (-1,))
+        axis = 0
+
+    out = xp.cumsum(arr, axis=axis, dtype=xp.float64)
+    expected = xp.sum(arr, axis=axis, dtype=xp.float64)
     if not xp.all(
         xp.isclose(
-            out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
+            xp.take(out, xp.asarray([out.shape[0] - 1]), axis=axis),
+            expected,
+            rtol=rtol,
+            atol=atol,
+            equal_nan=True,
         )
     ):
         warnings.warn(

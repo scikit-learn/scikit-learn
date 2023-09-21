@@ -742,7 +742,7 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
     "estimator",
     [
         PCA(n_components=2, svd_solver="full"),
-        PCA(n_components=2, svd_solver="full", whiten=True),
+        PCA(n_components=0.1, svd_solver="full", whiten=True),
         PCA(
             n_components=2,
             svd_solver="randomized",

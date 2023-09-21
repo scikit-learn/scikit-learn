@@ -59,6 +59,7 @@ def _assess_dimension(spectrum, rank, n_samples):
     Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
     <https://proceedings.neurips.cc/paper/2000/file/7503cfacd12053d309b6bed5c89de212-Paper.pdf>`_
     """
+    xp, _ = get_namespace(spectrum)
 
     n_features = spectrum.shape[0]
     if not 1 <= rank < n_features:
@@ -72,29 +73,29 @@ def _assess_dimension(spectrum, rank, n_samples):
         # small and won't be the max anyway. Also, it can lead to numerical
         # issues below when computing pa, in particular in log((spectrum[i] -
         # spectrum[j]) because this will take the log of something very small.
-        return -np.inf
+        return -xp.inf
 
     pu = -rank * log(2.0)
     for i in range(1, rank + 1):
         pu += (
             gammaln((n_features - i + 1) / 2.0)
-            - log(np.pi) * (n_features - i + 1) / 2.0
+            - log(xp.pi) * (n_features - i + 1) / 2.0
         )
 
-    pl = np.sum(np.log(spectrum[:rank]))
+    pl = xp.sum(xp.log(spectrum[:rank]))
     pl = -pl * n_samples / 2.0
 
-    v = max(eps, np.sum(spectrum[rank:]) / (n_features - rank))
-    pv = -np.log(v) * n_samples * (n_features - rank) / 2.0
+    v = max(eps, xp.sum(spectrum[rank:]) / (n_features - rank))
+    pv = -log(v) * n_samples * (n_features - rank) / 2.0
 
     m = n_features * rank - rank * (rank + 1.0) / 2.0
-    pp = log(2.0 * np.pi) * (m + rank) / 2.0
+    pp = log(2.0 * xp.pi) * (m + rank) / 2.0
 
     pa = 0.0
-    spectrum_ = spectrum.copy()
+    spectrum_ = xp.asarray(spectrum, copy=True)
     spectrum_[rank:n_features] = v
     for i in range(rank):
-        for j in range(i + 1, len(spectrum)):
+        for j in range(i + 1, spectrum.shape[0]):
             pa += log(
                 (spectrum[i] - spectrum[j]) * (1.0 / spectrum_[j] - 1.0 / spectrum_[i])
             ) + log(n_samples)
