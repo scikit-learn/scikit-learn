@@ -700,7 +700,8 @@ warnings.filterwarnings(
         " non-GUI backend, so cannot show the figure."
     ),
 )
-
+warnings.filterwarnings("error", category=FutureWarning)
+warnings.filterwarnings("error", category=DeprecationWarning)
 
 # maps functions with a class name that is indistinguishable when case is
 # ignore to another filename
