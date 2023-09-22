@@ -158,10 +158,7 @@ def plot_result(estimator, X, y, ax):
     plot_ellipse(estimator.means_[1], covariance[1], "tab:blue", ax)
 
     ax.set_box_aspect(1)
-    ax.spines.right.set_visible(False)
-    ax.spines.top.set_visible(False)
-    ax.spines.left.set_visible(False)
-    ax.spines.bottom.set_visible(False)
+    ax.spines[["top", "bottom", "left", "right"]].set_visible(False)
     ax.set(xticks=[], yticks=[])
 
 
