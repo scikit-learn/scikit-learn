@@ -1650,7 +1650,7 @@ def make_spd_matrix(n_dim, *, random_state=None, n_samples=1):
     n_samples : int, default=1
         The number of samples.
 
-        .. versionadded:: 1.3
+        .. versionadded:: 1.4
 
     Returns
     -------
@@ -1673,7 +1673,8 @@ def make_spd_matrix(n_dim, *, random_state=None, n_samples=1):
 
     A = generator.uniform(size=(n_samples, n_dim, n_dim))
     U, _, Vt = np.linalg.svd(A.transpose((0, 2, 1)) @ A)
-    X = U @ ((1.0 + generator.uniform(size=(n_samples, n_dim)))[..., None] * Vt)
+    D = generator.uniform(size=(n_samples, n_dim))
+    X = U @ (1.0 + np.eye(n_dim) * D[:, None, :]) @ Vt
 
     if n_samples == 1:
         X = X[0]
