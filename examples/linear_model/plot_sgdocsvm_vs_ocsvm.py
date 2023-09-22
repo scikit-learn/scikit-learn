@@ -20,6 +20,7 @@ show that we obtain similar results on a toy dataset.
 """  # noqa: E501
 
 import matplotlib
+import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -96,7 +97,7 @@ plt.axis("tight")
 plt.xlim((-4.5, 4.5))
 plt.ylim((-4.5, 4.5))
 plt.legend(
-    [a.collections[0], b1, b2, c],
+    [mlines.Line2D([], [], color="darkred", label="learned frontier"), b1, b2, c],
     [
         "learned frontier",
         "training observations",
@@ -132,7 +133,7 @@ plt.axis("tight")
 plt.xlim((-4.5, 4.5))
 plt.ylim((-4.5, 4.5))
 plt.legend(
-    [a.collections[0], b1, b2, c],
+    [mlines.Line2D([], [], color="darkred", label="learned frontier"), b1, b2, c],
     [
         "learned frontier",
         "training observations",
