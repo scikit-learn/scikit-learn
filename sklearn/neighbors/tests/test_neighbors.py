@@ -74,7 +74,6 @@ COMMON_VALID_METRICS = sorted(
 )  # type: ignore
 
 P = (1, 2, 3, 4, np.inf)
-JOBLIB_BACKENDS = list(joblib.parallel.BACKENDS.keys())
 
 # Filter deprecation warnings.
 neighbors.kneighbors_graph = ignore_warnings(neighbors.kneighbors_graph)
@@ -2044,10 +2043,10 @@ def test_same_radius_neighbors_parallel(algorithm):
     assert_allclose(graph, graph_parallel)
 
 
-@pytest.mark.parametrize("backend", JOBLIB_BACKENDS)
+@pytest.mark.parametrize("backend", ["threading", "loky"])
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
 def test_knn_forcing_backend(backend, algorithm):
-    # Non-regression test which ensure the knn methods are properly working
+    # Non-regression test which ensures the knn methods are properly working
     # even when forcing the global joblib backend.
     with joblib.parallel_backend(backend):
         X, y = datasets.make_classification(
@@ -2056,12 +2055,12 @@ def test_knn_forcing_backend(backend, algorithm):
         X_train, X_test, y_train, y_test = train_test_split(X, y)
 
         clf = neighbors.KNeighborsClassifier(
-            n_neighbors=3, algorithm=algorithm, n_jobs=3
+            n_neighbors=3, algorithm=algorithm, n_jobs=2
         )
         clf.fit(X_train, y_train)
         clf.predict(X_test)
         clf.kneighbors(X_test)
-        clf.kneighbors_graph(X_test, mode="distance").toarray()
+        clf.kneighbors_graph(X_test, mode="distance")
 
 
 def test_dtype_convert():

@@ -76,7 +76,7 @@ metadata called ``sample_weight``::
   ...     lr,
   ...     X,
   ...     y,
-  ...     props={"sample_weight": my_weights, "groups": my_groups},
+  ...     params={"sample_weight": my_weights, "groups": my_groups},
   ...     cv=GroupKFold(),
   ...     scoring=weighted_acc,
   ... )
@@ -84,7 +84,7 @@ metadata called ``sample_weight``::
 Note that in this example, ``my_weights`` is passed to both the scorer and
 :class:`~linear_model.LogisticRegressionCV`.
 
-Error handling: if ``props={"sample_weigh": my_weights, ...}`` were passed
+Error handling: if ``params={"sample_weigh": my_weights, ...}`` were passed
 (note the typo), :func:`~model_selection.cross_validate` would raise an error,
 since ``sample_weigh`` was not requested by any of its underlying objects.
 
@@ -110,7 +110,7 @@ that :func:`~model_selection.cross_validate` does not pass the weights along::
   ...     X,
   ...     y,
   ...     cv=GroupKFold(),
-  ...     props={"sample_weight": my_weights, "groups": my_groups},
+  ...     params={"sample_weight": my_weights, "groups": my_groups},
   ...     scoring=weighted_acc,
   ... )
 
@@ -142,7 +142,7 @@ instance is set and ``sample_weight`` is not routed to it::
   ...     X,
   ...     y,
   ...     cv=GroupKFold(),
-  ...     props={"sample_weight": my_weights, "groups": my_groups},
+  ...     params={"sample_weight": my_weights, "groups": my_groups},
   ...     scoring=weighted_acc,
   ... )
 
@@ -166,7 +166,7 @@ consumers. In this example, we pass ``scoring_weight`` to the scorer, and
   ...     X,
   ...     y,
   ...     cv=GroupKFold(),
-  ...     props={
+  ...     params={
   ...         "scoring_weight": my_weights,
   ...         "fitting_weight": my_other_weights,
   ...         "groups": my_groups,
