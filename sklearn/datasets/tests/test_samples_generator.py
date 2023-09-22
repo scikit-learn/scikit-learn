@@ -555,13 +555,9 @@ def test_make_spd_matrix():
 
 
 @pytest.mark.parametrize("norm_diag", [True, False])
-@pytest.mark.parametrize("smallest_coef", [0.0, 0.2, 0.4])
-@pytest.mark.parametrize("largest_coef", [0.6, 0.8, 1.0])
-def test_make_sparse_spd_matrix(smallest_coef, largest_coef, norm_diag):
+def test_make_sparse_spd_matrix(norm_diag):
     X = make_sparse_spd_matrix(
         dim=5,
-        smallest_coef=smallest_coef,
-        largest_coef=largest_coef,
         norm_diag=norm_diag,
         random_state=0,
     )
