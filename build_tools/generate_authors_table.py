@@ -89,10 +89,22 @@ def get_contributors():
         core_devs  # remove ogrisel from contributor_experience_team
     )
 
-    emeritus = members - core_devs - contributor_experience_team - comm_team
+    emeritus = (
+        members
+        - core_devs
+        - contributor_experience_team
+        - comm_team
+        - documentation_team
+    )
 
     # hard coded
+    emeritus_contributor_experience_team = {
+        "cmarmo",
+    }
     emeritus_comm_team = {"reshamas"}
+
+    # Up-to-now, we can subtract the team emeritus from the original emeritus
+    emeritus -= emeritus_contributor_experience_team | emeritus_comm_team
 
     comm_team -= {"reshamas"}  # in the comm team but not on the web page
 
@@ -102,6 +114,9 @@ def get_contributors():
     contributor_experience_team = [
         get_profile(login) for login in contributor_experience_team
     ]
+    emeritus_contributor_experience_team = [
+        get_profile(login) for login in emeritus_contributor_experience_team
+    ]
     comm_team = [get_profile(login) for login in comm_team]
     emeritus_comm_team = [get_profile(login) for login in emeritus_comm_team]
     documentation_team = [get_profile(login) for login in documentation_team]
@@ -110,6 +125,9 @@ def get_contributors():
     core_devs = sorted(core_devs, key=key)
     emeritus = sorted(emeritus, key=key)
     contributor_experience_team = sorted(contributor_experience_team, key=key)
+    emeritus_contributor_experience_team = sorted(
+        emeritus_contributor_experience_team, key=key
+    )
     documentation_team = sorted(documentation_team, key=key)
     comm_team = sorted(comm_team, key=key)
     emeritus_comm_team = sorted(emeritus_comm_team, key=key)
@@ -118,6 +136,7 @@ def get_contributors():
         core_devs,
         emeritus,
         contributor_experience_team,
+        emeritus_contributor_experience_team,
         comm_team,
         emeritus_comm_team,
         documentation_team,
@@ -188,6 +207,7 @@ if __name__ == "__main__":
         core_devs,
         emeritus,
         contributor_experience_team,
+        emeritus_contributor_experience_team,
         comm_team,
         emeritus_comm_team,
         documentation_team,
@@ -205,6 +225,13 @@ if __name__ == "__main__":
         REPO_FOLDER / "doc" / "contributor_experience_team.rst", "w+", encoding="utf-8"
     ) as rst_file:
         rst_file.write(generate_table(contributor_experience_team))
+
+    with open(
+        REPO_FOLDER / "doc" / "contributor_experience_team_emeritus.rst",
+        "w+",
+        encoding="utf-8",
+    ) as rst_file:
+        rst_file.write(generate_list(emeritus_contributor_experience_team))
 
     with open(
         REPO_FOLDER / "doc" / "communication_team.rst", "w+", encoding="utf-8"
