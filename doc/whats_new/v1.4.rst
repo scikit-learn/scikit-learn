@@ -77,20 +77,32 @@ and classes are impacted:
 
 **Functions:**
 
+- :func:`cluster.compute_optics_graph` in :pr:`27250` by
+  :user:`Yao Xiao <Charlie-XIAO>`;
 - :func:`decomposition.non_negative_factorization` in :pr:`27100` by
   :user:`Isaac Virshup <ivirshup>`;
+- :func:`manifold.trustworthiness` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :func:`metrics.f_regression` in :pr:`27239` by :user:`Yaroslav Korobko <Tialo>`;
+- :func:`metrics.pairwise_distances` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
+- :func:`metrics.pairwise_distances_chunked` in :pr:`27250` by
+  :user:`Yao Xiao <Charlie-XIAO>`;
+- :func:`metrics.pairwise.pairwise_kernels` in :pr:`27250` by
+  :user:`Yao Xiao <Charlie-XIAO>`;
 - :func:`metrics.r_regression` in :pr:`27239` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.utils.multiclass.type_of_target` in :pr:`27274` by
   :user:`Yao Xiao <Charlie-XIAO>`.
 
 **Classes:**
 
+- :class:`cluster.HDBSCAN` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
+- :class:`cluster.OPTICS` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`decomposition.NMF` in :pr:`27100` by :user:`Isaac Virshup <ivirshup>`;
 - :class:`decomposition.MiniBatchNMF` in :pr:`27100` by
   :user:`Isaac Virshup <ivirshup>`;
 - :class:`feature_extraction.text.TfidfTransformer` in :pr:`27219` by
   :user:`Yao Xiao <Charlie-XIAO>`;
+- :class:`cluster.Isomap` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
+- :class:`manifold.TSNE` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`impute.SimpleImputer` in :pr:`27277` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`impute.IterativeImputer` in :pr:`27277` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`impute.KNNImputer` in :pr:`27277` by :user:`Yao Xiao <Charlie-XIAO>`;
