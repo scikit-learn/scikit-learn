@@ -22,12 +22,14 @@ from sklearn.datasets import (
     make_regression,
     make_s_curve,
     make_sparse_coded_signal,
+    make_sparse_spd_matrix,
     make_sparse_uncorrelated,
     make_spd_matrix,
     make_swiss_roll,
 )
 from sklearn.utils._testing import (
     assert_allclose,
+    assert_allclose_dense_sparse,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
@@ -549,9 +551,35 @@ def test_make_spd_matrix():
     from numpy.linalg import eig
 
     eigenvalues, _ = eig(X)
-    assert_array_equal(
-        eigenvalues > 0, np.array([True] * 5), "X is not positive-definite"
+    assert np.all(eigenvalues > 0), "X is not positive-definite"
+
+
+@pytest.mark.parametrize("norm_diag", [True, False])
+@pytest.mark.parametrize("smallest_coef", [0.0, 0.2, 0.4])
+@pytest.mark.parametrize("largest_coef", [0.6, 0.8, 1.0])
+def test_make_sparse_spd_matrix(smallest_coef, largest_coef, norm_diag):
+    X = make_sparse_spd_matrix(
+        dim=5,
+        smallest_coef=smallest_coef,
+        largest_coef=largest_coef,
+        norm_diag=norm_diag,
+        random_state=0,
     )
+    Xarr = X.toarray()
+
+    assert sp.issparse(X), "X not sparse"
+    assert X.shape == (5, 5), "X shape mismatch"
+    assert_allclose_dense_sparse(X, X.T)
+
+    from numpy.linalg import eig
+
+    # Do not use scipy.sparse.linalg.eigs because it cannot find all eigenvalues
+    eigenvalues, _ = eig(Xarr)
+    assert np.all(eigenvalues > 0), "X is not positive-definite"
+
+    if norm_diag:
+        # Check that leading diagonal elements are 1
+        assert_array_almost_equal(X.diagonal(), np.ones(5))
 
 
 @pytest.mark.parametrize("hole", [False, True])

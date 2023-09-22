@@ -1631,28 +1631,30 @@ def make_sparse_spd_matrix(
     """
     random_state = check_random_state(random_state)
 
-    chol = -np.eye(dim)
-    aux = random_state.uniform(size=(dim, dim))
-    aux[aux < alpha] = 0
-    aux[aux > alpha] = smallest_coef + (
-        largest_coef - smallest_coef
-    ) * random_state.uniform(size=np.sum(aux > alpha))
-    aux = np.tril(aux, k=-1)
+    chol = -sp.eye(dim)
+    aux = sp.random(
+        m=dim,
+        n=dim,
+        density=alpha,
+        format="csr",
+        data_rvs=lambda x: random_state.uniform(
+            size=x, low=smallest_coef, high=largest_coef
+        ),
+        random_state=random_state,
+    )
+    aux = sp.tril(aux, k=-1, format="csc")
 
     # Permute the lines: we don't want to have asymmetries in the final
     # SPD matrix
     permutation = random_state.permutation(dim)
     aux = aux[permutation].T[permutation]
     chol += aux
-    prec = np.dot(chol.T, chol)
+    prec = chol.T.dot(chol)
 
     if norm_diag:
         # Form the diagonal vector into a row matrix
-        d = np.diag(prec).reshape(1, prec.shape[0])
-        d = 1.0 / np.sqrt(d)
-
-        prec *= d
-        prec *= d.T
+        d = sp.diags(1.0 / np.sqrt(prec.diagonal()))
+        prec = d.dot(prec).dot(d)
 
     return prec
 
