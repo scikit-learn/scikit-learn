@@ -568,6 +568,10 @@ Changelog
   in favor of ``n_dim``. ``dim`` will be removed in version 1.6.
   :pr:`27718` by :user:`Adam Li <adam2392>`.
 
+- |Enhancement| Allow :func:`datasets.make_spd_matrix` to generate several
+  matrices at once adding parameter n_samples.
+  :pr:`26437` by :user:`Quentin Barthélemy <qbarthelemy>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
