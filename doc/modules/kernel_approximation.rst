@@ -273,8 +273,8 @@ or store training examples.
 .. topic:: References:
 
     .. [WS2001] `"Using the Nyström method to speed up kernel machines"
-      <https://papers.nips.cc/paper_files/paper/2000/hash/19de10adbaa1b2ee13f77f679fa1483a-Abstract.html>
-      Williams, C.K.I.; Seeger, M. - 2001
+      <https://papers.nips.cc/paper_files/paper/2000/hash/19de10adbaa1b2ee13f77f679fa1483a-Abstract.html>`_
+      Williams, C.K.I.; Seeger, M. - 2001.
     .. [RR2007] `"Random features for large-scale kernel machines"
       <https://papers.nips.cc/paper/2007/hash/013a006f03dbc5392effeb8f18fda755-Abstract.html>`_
       Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
