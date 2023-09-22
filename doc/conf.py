@@ -692,6 +692,8 @@ linkcode_resolve = make_linkcode_resolve(
     ),
 )
 
+from sklearn.utils.fixes import VisibleDeprecationWarning
+
 warnings.filterwarnings(
     "ignore",
     category=UserWarning,
@@ -700,6 +702,11 @@ warnings.filterwarnings(
         " non-GUI backend, so cannot show the figure."
     ),
 )
+# Raise warning as error in example to catch warnings when building the documentation
+# Since we are using lock files to build the documentation, we should not have any
+# warnings or fix them before to update the lock files.
+for warning_type in (FutureWarning, DeprecationWarning, VisibleDeprecationWarning):
+    warnings.filterwarnings("error", category=warning_type)
 
 
 # maps functions with a class name that is indistinguishable when case is
