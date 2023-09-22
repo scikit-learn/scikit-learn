@@ -151,20 +151,6 @@ Changelog
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
-:mod:`sklearn.compose`
-......................
-
-- |Enhancement| :class:`~compose.ColumnTransformer` now supports metadata routing
-  according to :ref:`metadata routing user guide <metadata_routing>`. :pr:`27005`
-  by `Adrin Jalali`_.
-
-:mod:`sklearn.cross_decomposition`
-..................................
-
-- |Fix| :class:`cross_decomposition.PLSRegression` now automatically ravels the output
-  of `predict` if fitted with one dimensional `y`.
-  :pr:`26602` by :user:`Yao Xiao <Charlie-XIAO>`.
-
 :mod:`sklearn.covariance`
 .........................
 
