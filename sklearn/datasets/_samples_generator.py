@@ -1618,6 +1618,8 @@ def make_sparse_spd_matrix(
         String[s] representing the output sparse format, such as 'csc', 'csr', etc.
         If ``None``, return a dense numpy ndarray.
 
+        .. versionadded:: 1.4
+
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.

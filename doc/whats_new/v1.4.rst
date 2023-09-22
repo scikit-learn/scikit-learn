@@ -155,8 +155,11 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
-- |Fix| :func:`datasets.make_sparse_spd_matrix` now returns sparse matrix instead of
-  dense array. :pr:`27438` by :user:`Yao Xiao <Charlie-XIAO>`
+- |Enhancement| :func:`datasets.make_sparse_spd_matrix` now uses a more memory-
+  efficient sparse layout. It also accepts a new keyword `sparse_format` that allows
+  specifying the output format of the sparse matrix. By default `sparse_format=None`,
+  which returns a dense numpy ndarray as before.
+  :pr:`27438` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.decomposition`
 ............................
