@@ -39,6 +39,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler, scale
 from sklearn.svm import l1_min_c
 from sklearn.utils import _IS_32BIT, compute_class_weight, shuffle
 from sklearn.utils._testing import ignore_warnings, skip_if_no_parallel
+from sklearn.utils.fixes import COO_CONTAINERS, CSR_CONTAINERS
 
 pytestmark = pytest.mark.filterwarnings(
     "error::sklearn.exceptions.ConvergenceWarning:sklearn.*"
@@ -50,7 +51,6 @@ LogisticRegressionCV = partial(LogisticRegressionCVDefault, random_state=0)
 
 SOLVERS = ("lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga")
 X = [[-1, 0], [0, 1], [1, 1]]
-X_sp = sparse.csr_matrix(X)
 Y1 = [0, 1, 1]
 Y2 = [2, 1, 0]
 iris = load_iris()
@@ -74,17 +74,20 @@ def check_predictions(clf, X, y):
     assert_array_equal(probabilities.argmax(axis=1), y)
 
 
-def test_predict_2_classes():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_predict_2_classes(csr_container):
     # Simple sanity check on a 2 classes dataset
     # Make sure it predicts the correct result on simple datasets.
     check_predictions(LogisticRegression(random_state=0), X, Y1)
-    check_predictions(LogisticRegression(random_state=0), X_sp, Y1)
+    check_predictions(LogisticRegression(random_state=0), csr_container(X), Y1)
 
     check_predictions(LogisticRegression(C=100, random_state=0), X, Y1)
-    check_predictions(LogisticRegression(C=100, random_state=0), X_sp, Y1)
+    check_predictions(LogisticRegression(C=100, random_state=0), csr_container(X), Y1)
 
     check_predictions(LogisticRegression(fit_intercept=False, random_state=0), X, Y1)
-    check_predictions(LogisticRegression(fit_intercept=False, random_state=0), X_sp, Y1)
+    check_predictions(
+        LogisticRegression(fit_intercept=False, random_state=0), csr_container(X), Y1
+    )
 
 
 def test_logistic_cv_mock_scorer():
@@ -135,9 +138,10 @@ def test_lr_liblinear_warning():
         lr.fit(iris.data, target)
 
 
-def test_predict_3_classes():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_predict_3_classes(csr_container):
     check_predictions(LogisticRegression(C=10), X, Y2)
-    check_predictions(LogisticRegression(C=10), X_sp, Y2)
+    check_predictions(LogisticRegression(C=10), csr_container(X), Y2)
 
 
 @pytest.mark.parametrize(
@@ -287,7 +291,8 @@ def test_multinomial_binary_probabilities(global_random_seed):
     assert_almost_equal(proba, expected_proba)
 
 
-def test_sparsify():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_sparsify(coo_container):
     # Test sparsify and densify members.
     n_samples, n_features = iris.data.shape
     target = iris.target_names[iris.target]
@@ -300,7 +305,7 @@ def test_sparsify():
     assert sparse.issparse(clf.coef_)
     pred_s_d = clf.decision_function(X)
 
-    sp_data = sparse.coo_matrix(X)
+    sp_data = coo_container(X)
     pred_s_s = clf.decision_function(sp_data)
 
     clf.densify()
@@ -595,10 +600,11 @@ def test_multinomial_logistic_regression_string_inputs():
     assert sorted(np.unique(lr_cv_str.predict(X_ref))) == ["bar", "baz"]
 
 
-def test_logistic_cv_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_logistic_cv_sparse(csr_container):
     X, y = make_classification(n_samples=50, n_features=5, random_state=0)
     X[X < 1.0] = 0.0
-    csr = sparse.csr_matrix(X)
+    csr = csr_container(X)
 
     clf = LogisticRegressionCV()
     clf.fit(X, y)
@@ -961,20 +967,22 @@ def test_liblinear_decision_function_zero():
     assert_array_equal(clf.predict(X), np.zeros(5))
 
 
-def test_liblinear_logregcv_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_liblinear_logregcv_sparse(csr_container):
     # Test LogRegCV with solver='liblinear' works for sparse matrices
 
     X, y = make_classification(n_samples=10, n_features=5, random_state=0)
     clf = LogisticRegressionCV(solver="liblinear", multi_class="ovr")
-    clf.fit(sparse.csr_matrix(X), y)
+    clf.fit(csr_container(X), y)
 
 
-def test_saga_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_saga_sparse(csr_container):
     # Test LogRegCV with solver='liblinear' works for sparse matrices
 
     X, y = make_classification(n_samples=10, n_features=5, random_state=0)
     clf = LogisticRegressionCV(solver="saga", tol=1e-2)
-    clf.fit(sparse.csr_matrix(X), y)
+    clf.fit(csr_container(X), y)
 
 
 def test_logreg_intercept_scaling_zero():
@@ -1023,7 +1031,8 @@ def test_logreg_l1():
     assert_array_almost_equal(lr_saga.coef_[0, -5:], np.zeros(5))
 
 
-def test_logreg_l1_sparse_data():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_logreg_l1_sparse_data(csr_container):
     # Because liblinear penalizes the intercept and saga does not, we do not
     # fit the intercept to make it possible to compare the coefficients of
     # the two models at convergence.
@@ -1034,7 +1043,7 @@ def test_logreg_l1_sparse_data():
     X_constant = np.zeros(shape=(n_samples, 2))
     X = np.concatenate((X, X_noise, X_constant), axis=1)
     X[X < 1] = 0
-    X = sparse.csr_matrix(X)
+    X = csr_container(X)
 
     lr_liblinear = LogisticRegression(
         penalty="l1",
@@ -1256,7 +1265,8 @@ def test_warm_start(solver, warm_start, fit_intercept, multi_class):
         assert cum_diff > 2.0, msg
 
 
-def test_saga_vs_liblinear():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_saga_vs_liblinear(csr_container):
     iris = load_iris()
     X, y = iris.data, iris.target
     X = np.concatenate([X] * 3)
@@ -1268,7 +1278,7 @@ def test_saga_vs_liblinear():
     X_sparse, y_sparse = make_classification(
         n_samples=50, n_features=20, random_state=0
     )
-    X_sparse = sparse.csr_matrix(X_sparse)
+    X_sparse = csr_container(X_sparse)
 
     for X, y in ((X_bin, y_bin), (X_sparse, y_sparse)):
         for penalty in ["l1", "l2"]:
@@ -1308,7 +1318,8 @@ def test_saga_vs_liblinear():
     "solver", ["liblinear", "newton-cg", "newton-cholesky", "saga"]
 )
 @pytest.mark.parametrize("fit_intercept", [False, True])
-def test_dtype_match(solver, multi_class, fit_intercept):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_dtype_match(solver, multi_class, fit_intercept, csr_container):
     # Test that np.float32 input data is not cast to np.float64 when possible
     # and that the output is approximately the same no matter the input format.
 
@@ -1321,8 +1332,8 @@ def test_dtype_match(solver, multi_class, fit_intercept):
     y_32 = np.array(Y1).astype(np.float32)
     X_64 = np.array(X).astype(np.float64)
     y_64 = np.array(Y1).astype(np.float64)
-    X_sparse_32 = sparse.csr_matrix(X, dtype=np.float32)
-    X_sparse_64 = sparse.csr_matrix(X, dtype=np.float64)
+    X_sparse_32 = csr_container(X, dtype=np.float32)
+    X_sparse_64 = csr_container(X, dtype=np.float64)
     solver_tol = 5e-4
 
     lr_templ = LogisticRegression(
@@ -2009,12 +2020,13 @@ def test_sample_weight_not_modified(multi_class, class_weight):
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
-def test_large_sparse_matrix(solver, global_random_seed):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_large_sparse_matrix(solver, global_random_seed, csr_container):
     # Solvers either accept large sparse matrices, or raise helpful error.
     # Non-regression test for pull-request #21093.
 
     # generate sparse matrix with int64 indices
-    X = sparse.rand(20, 10, format="csr", random_state=global_random_seed)
+    X = csr_container(sparse.rand(20, 10, random_state=global_random_seed))
     for attr in ["indices", "indptr"]:
         setattr(X, attr, getattr(X, attr).astype("int64"))
     rng = np.random.RandomState(global_random_seed)

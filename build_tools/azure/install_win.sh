@@ -7,6 +7,10 @@ set -x
 source build_tools/shared.sh
 
 if [[ "$DISTRIB" == "conda" ]]; then
+    # Install/update conda with the libmamba solver because the legacy solver
+    # can be slow at installing a specific version of conda-lock.
+    conda install -n base conda conda-libmamba-solver -y
+    conda config --set solver libmamba
     conda install -c conda-forge "$(get_dep conda-lock min)" -y
     conda-lock install --name $VIRTUALENV $LOCK_FILE
     source activate $VIRTUALENV

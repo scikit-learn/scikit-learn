@@ -1786,10 +1786,10 @@ class _RidgeGCV(LinearModel):
                 (X[batch].shape[0], X.shape[1] + self.fit_intercept), dtype=X.dtype
             )
             if self.fit_intercept:
-                X_batch[:, :-1] = X[batch].A - X_mean * scale[batch][:, None]
+                X_batch[:, :-1] = X[batch].toarray() - X_mean * scale[batch][:, None]
                 X_batch[:, -1] = intercept_col[batch]
             else:
-                X_batch = X[batch].A
+                X_batch = X[batch].toarray()
             diag[batch] = (X_batch.dot(A) * X_batch).sum(axis=1)
         return diag
 

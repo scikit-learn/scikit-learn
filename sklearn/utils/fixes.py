@@ -25,6 +25,7 @@ from ..externals._packaging.version import parse as parse_version
 from .deprecation import deprecated
 
 np_version = parse_version(np.__version__)
+np_base_version = parse_version(np_version.base_version)
 sp_version = parse_version(scipy.__version__)
 sp_base_version = parse_version(sp_version.base_version)
 

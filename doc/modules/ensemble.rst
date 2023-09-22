@@ -347,6 +347,10 @@ Note that features not listed in ``interaction_cst`` are automatically
 assigned an interaction group for themselves. With again 3 features, this
 means that ``[{0}]`` is equivalent to ``[{0}, {1, 2}]``.
 
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+
 .. topic:: References
 
   .. [Mayer2022] M. Mayer, S.C. Bourassa, M. Hoesli, and D.F. Scognamiglio.

@@ -120,12 +120,12 @@ def test_initialization():
 def test_mini_batch_correct_shapes():
     rng = np.random.RandomState(0)
     X = rng.randn(12, 10)
-    pca = MiniBatchSparsePCA(n_components=8, random_state=rng)
+    pca = MiniBatchSparsePCA(n_components=8, max_iter=1, random_state=rng)
     U = pca.fit_transform(X)
     assert pca.components_.shape == (8, 10)
     assert U.shape == (12, 8)
     # test overcomplete decomposition
-    pca = MiniBatchSparsePCA(n_components=13, random_state=rng)
+    pca = MiniBatchSparsePCA(n_components=13, max_iter=1, random_state=rng)
     U = pca.fit_transform(X)
     assert pca.components_.shape == (13, 10)
     assert U.shape == (12, 13)
