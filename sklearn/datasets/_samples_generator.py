@@ -1632,12 +1632,6 @@ def make_sparse_spd_matrix(
     random_state = check_random_state(random_state)
 
     chol = -sp.eye(dim)
-    # aux = random_state.uniform(size=(dim, dim))
-    # aux[aux < alpha] = 0
-    # aux[aux > alpha] = smallest_coef + (
-    #     largest_coef - smallest_coef
-    # ) * random_state.uniform(size=np.sum(aux > alpha))
-    # print(aux)
     aux = sp.random(
         m=dim,
         n=dim,
@@ -1647,7 +1641,6 @@ def make_sparse_spd_matrix(
         ),
         random_state=random_state,
     )
-    # print(aux.toarray())
     aux = sp.tril(aux, k=-1, format="csc")
 
     # Permute the lines: we don't want to have asymmetries in the final
