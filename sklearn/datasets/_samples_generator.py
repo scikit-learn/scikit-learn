@@ -1573,6 +1573,10 @@ def make_spd_matrix(n_dim, *, random_state=None):
         "norm_diag": ["boolean"],
         "smallest_coef": [Interval(Real, 0, 1, closed="both")],
         "largest_coef": [Interval(Real, 0, 1, closed="both")],
+        "sparse_format": [
+            StrOptions({"bsr", "coo", "csc", "csr", "dia", "dok", "lil"}),
+            None,
+        ],
         "random_state": ["random_state"],
     },
     prefer_skip_nested_validation=True,
@@ -1584,6 +1588,7 @@ def make_sparse_spd_matrix(
     norm_diag=False,
     smallest_coef=0.1,
     largest_coef=0.9,
+    sparse_format=None,
     random_state=None,
 ):
     """Generate a sparse symmetric definite positive matrix.
@@ -1608,6 +1613,10 @@ def make_sparse_spd_matrix(
 
     largest_coef : float, default=0.9
         The value of the largest coefficient between 0 and 1.
+
+    sparse_format : str, default=None
+        String[s] representing the output sparse format, such as 'csc', 'csr', etc.
+        If ``None``, return a dense numpy ndarray.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
@@ -1648,14 +1657,17 @@ def make_sparse_spd_matrix(
     permutation = random_state.permutation(dim)
     aux = aux[permutation].T[permutation]
     chol += aux
-    prec = chol.T.dot(chol)
+    prec = chol.T @ chol
 
     if norm_diag:
         # Form the diagonal vector into a row matrix
         d = sp.diags(1.0 / np.sqrt(prec.diagonal()))
-        prec = d.dot(prec).dot(d)
+        prec = d @ prec @ d
 
-    return prec
+    if sparse_format is None:
+        return prec.toarray()
+    else:
+        return prec.asformat(sparse_format)
 
 
 @validate_params(

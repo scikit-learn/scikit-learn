@@ -30,7 +30,7 @@ def test_graphical_lasso(random_state=0):
     n_samples = 100
     random_state = check_random_state(random_state)
     prec = make_sparse_spd_matrix(dim, alpha=0.95, random_state=random_state)
-    cov = linalg.inv(prec.toarray())
+    cov = linalg.inv(prec)
     X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
     emp_cov = empirical_covariance(X)
 
@@ -169,7 +169,7 @@ def test_graphical_lasso_cv(random_state=1):
     n_samples = 6
     random_state = check_random_state(random_state)
     prec = make_sparse_spd_matrix(dim, alpha=0.96, random_state=random_state)
-    cov = linalg.inv(prec.toarray())
+    cov = linalg.inv(prec)
     X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
     # Capture stdout, to smoke test the verbose mode
     orig_stdout = sys.stdout
@@ -272,7 +272,7 @@ def test_graphical_lasso_cov_init_deprecation():
     `graphical_lasso`."""
     rng, dim, n_samples = np.random.RandomState(0), 20, 100
     prec = make_sparse_spd_matrix(dim, alpha=0.95, random_state=0)
-    cov = linalg.inv(prec.toarray())
+    cov = linalg.inv(prec)
     X = rng.multivariate_normal(np.zeros(dim), cov, size=n_samples)
 
     emp_cov = empirical_covariance(X)
