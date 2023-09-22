@@ -182,6 +182,7 @@ METAESTIMATORS: list = [
         "metaestimator": OutputCodeClassifier,
         "estimator_name": "estimator",
         "estimator": ConsumingClassifier,
+        "init_args": {"random_state": 42},
         "X": X,
         "y": y,
         "estimator_routing_methods": ["fit"],
