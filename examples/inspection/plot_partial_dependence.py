@@ -112,7 +112,7 @@ xtick_start, xtick_period = 6, 12
 fig, axs = plt.subplots(nrows=2, figsize=(8, 6), sharey=True, sharex=True)
 average_bike_rentals = bikes.frame.groupby(
     ["year", "season", "weekday", "hour"], observed=True
-).mean(numeric_only=True,)["count"]
+).mean(numeric_only=True)["count"]
 for ax, (idx, df) in zip(axs, average_bike_rentals.groupby("year")):
     df.groupby("season").plot(ax=ax, legend=True)
 
