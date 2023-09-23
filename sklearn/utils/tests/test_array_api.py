@@ -21,6 +21,7 @@ from sklearn.utils._array_api import (
     get_namespace,
     supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
+    yield_namespace_device_int_dtype_combinations,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -156,15 +157,18 @@ def test_array_api_wrapper_searchsorted():
     v = 3.0
     result = xp.searchsorted(a, v)
     assert hasattr(result, "__array_namespace__")
+    assert result.__array_namespace__().__name__ == "numpy.array_api"
     assert result == numpy.searchsorted(a, v)
 
     result = xp.searchsorted(a, v, side="right")
     assert hasattr(result, "__array_namespace__")
+    assert result.__array_namespace__().__name__ == "numpy.array_api"
     assert result == numpy.searchsorted(a, v, side="right")
 
     v = xp.asarray([-10, 10, 2, 3], dtype=xp.float64)
     result = xp.searchsorted(a, v)
     assert hasattr(result, "__array_namespace__")
+    assert result.__array_namespace__().__name__ == "numpy.array_api"
     assert_array_equal(result, numpy.searchsorted(a, v))
 
 
@@ -399,13 +403,16 @@ def test_get_namespace_array_api_isdtype(wrapper):
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, _", yield_namespace_device_int_dtype_combinations()
 )
 @pytest.mark.parametrize("invert", [True, False])
 @pytest.mark.parametrize("assume_unique", [True, False])
 @pytest.mark.parametrize("element_size", [6, 10, 14])
-def test_isin(array_namespace, device, dtype, invert, assume_unique, element_size):
-    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
+@pytest.mark.parametrize("int_dtype", ["int32", "int64", "uint8"])
+def test_isin(
+    array_namespace, device, _, invert, assume_unique, element_size, int_dtype
+):
+    xp, device, dtype = _array_api_for_tests(array_namespace, device, int_dtype)
     r = element_size // 2
     element = 2 * numpy.arange(element_size).reshape((r, 2)).astype(dtype)
     test_elements = numpy.array(np.arange(14), dtype=dtype)

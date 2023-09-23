@@ -878,7 +878,8 @@ def check_array_api_input(
     X_xp = xp.asarray(X, device=device)
     y_xp = xp.asarray(y, device=device)
 
-    if "Label" in est.__class__.__name__:
+    X_types = est._get_tags().get("X_types", [""])
+    if "labels" in X_types[0]:
         fit_args = (y,)
         xp_fit_args = (y_xp,)
         method_arg = (y,)

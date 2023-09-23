@@ -5,7 +5,7 @@ from typing import NamedTuple
 import numpy as np
 
 from . import is_scalar_nan
-from ._array_api import _convert_to_numpy, _isin, _setdiff1d, get_namespace
+from ._array_api import _convert_to_numpy, _isin, _setdiff1d, device, get_namespace
 
 
 def _unique(values, *, return_inverse=False, return_counts=False):
@@ -162,7 +162,7 @@ def _map_to_integer(values, uniques):
     """Map values based on its position in uniques."""
     xp, _ = get_namespace(values, uniques)
     table = _nandict({val: i for i, val in enumerate(uniques)})
-    return xp.asarray([table[v] for v in values])
+    return xp.asarray([table[v] for v in values], device=device(values))
 
 
 def _unique_python(values, *, return_inverse, return_counts):

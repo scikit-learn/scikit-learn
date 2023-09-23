@@ -9,6 +9,19 @@ import scipy.special as special
 from .._config import get_config
 from .fixes import parse_version
 
+ARRAY_NAMESPACES = [
+    # The following is used to test the array_api_compat wrapper when
+    # array_api_dispatch is enabled: in particular, the arrays used in the
+    # tests are regular numpy arrays without any "device" attribute.
+    "numpy",
+    # Stricter NumPy-based Array API implementation. The
+    # numpy.array_api.Array instances always a dummy "device" attribute.
+    "numpy.array_api",
+    "cupy",
+    "cupy.array_api",
+    "torch",
+]
+
 
 def yield_namespace_device_dtype_combinations():
     """Yield supported namespace, device, dtype tuples for testing.
@@ -28,18 +41,7 @@ def yield_namespace_device_dtype_combinations():
         The name of the data type to use for arrays. Can be None to indicate
         that the default value should be used.
     """
-    for array_namespace in [
-        # The following is used to test the array_api_compat wrapper when
-        # array_api_dispatch is enabled: in particular, the arrays used in the
-        # tests are regular numpy arrays without any "device" attribute.
-        "numpy",
-        # Stricter NumPy-based Array API implementation. The
-        # numpy.array_api.Array instances always a dummy "device" attribute.
-        "numpy.array_api",
-        "cupy",
-        "cupy.array_api",
-        "torch",
-    ]:
+    for array_namespace in ARRAY_NAMESPACES:
         if array_namespace == "torch":
             for device, dtype in itertools.product(
                 ("cpu", "cuda"), ("float64", "float32")
@@ -48,6 +50,43 @@ def yield_namespace_device_dtype_combinations():
             yield array_namespace, "mps", "float32"
         else:
             yield array_namespace, None, None
+
+
+def yield_namespace_device_int_dtype_combinations():
+    """Yield supported namespace, device, int dtype tuples for testing.
+
+    Use this to test that an estimator works with all combinations.
+
+    Returns
+    -------
+    array_namespace : str
+        The name of the Array API namespace.
+
+    device : str
+        The name of the device on which to allocate the arrays. Can be None to
+        indicate that the default value should be used.
+
+    dtype : str
+        The name of the int data type to use for arrays. Can be None to
+        indicate that the default value should be used.
+    """
+    for array_namespace in ARRAY_NAMESPACES:
+        if array_namespace == "torch":
+            for device, dtype in itertools.product(
+                ("cpu", "cuda", "mps"), ("int16", "int32", "int64", "uint8")
+            ):
+                yield array_namespace, device, dtype
+        else:
+            for dtype in (
+                "int16",
+                "int32",
+                "int64",
+                "uint8",
+                "uint16",
+                "uint32",
+                "uint64",
+            ):
+                yield array_namespace, None, dtype
 
 
 def _check_array_api_dispatch(array_api_dispatch):
@@ -233,10 +272,16 @@ class _ArrayAPIWrapper:
         return isdtype(dtype, kind, xp=self._namespace)
 
     def searchsorted(self, a, v, *, side="left", sorter=None):
+        # Temporary workaround needed as long as searchsorted is not part
+        # of the Array API spec:
+        # https://github.com/data-apis/array-api/issues/688
+        if hasattr(self._namespace, "searchsorted"):
+            return self._namespace.searchsorted(a, v, side=side, sorter=sorter)
+
         a = _convert_to_numpy(a, xp=self._namespace)
         v = _convert_to_numpy(v, xp=self._namespace)
         indices = numpy.searchsorted(a, v, side=side, sorter=sorter)
-        return self._namespace.asarray(indices)
+        return self._namespace.asarray(indices, device=device(a))
 
 
 def _check_device_cpu(device):  # noqa
@@ -623,11 +668,11 @@ def _setdiff1d(ar1, ar2, xp, assume_unique=False):
         )
 
     if assume_unique:
-        ar1 = xp.reshape(xp.asarray(ar1), (-1,))
+        ar1 = xp.reshape(ar1, (-1,))
     else:
         ar1 = xp.unique_values(ar1)
         ar2 = xp.unique_values(ar2)
-    return ar1[__in1d(ar1=ar1, ar2=ar2, xp=xp, assume_unique=True, invert=True)]
+    return ar1[_in1d(ar1=ar1, ar2=ar2, xp=xp, assume_unique=True, invert=True)]
 
 
 def _isin(element, test_elements, xp, assume_unique=False, invert=False):
@@ -648,10 +693,10 @@ def _isin(element, test_elements, xp, assume_unique=False, invert=False):
         )
 
     original_element_shape = element.shape
-    element = xp.reshape(xp.asarray(element), (-1,))
-    test_elements = xp.reshape(xp.asarray(test_elements), (-1,))
+    element = xp.reshape(element, (-1,))
+    test_elements = xp.reshape(test_elements, (-1,))
     return xp.reshape(
-        __in1d(
+        _in1d(
             ar1=element,
             ar2=test_elements,
             xp=xp,
@@ -664,7 +709,7 @@ def _isin(element, test_elements, xp, assume_unique=False, invert=False):
 
 # Note: This is a helper for the functions `_isin` and
 # `_setdiff1d`. It is not meant to be called directly.
-def __in1d(ar1, ar2, xp, assume_unique=False, invert=False):
+def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
     """Checks whether each element of an array is also present in a
     second array.
 
