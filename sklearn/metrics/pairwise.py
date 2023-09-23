@@ -77,6 +77,7 @@ def check_pairwise_arrays(
     dtype=None,
     accept_sparse="csr",
     force_all_finite=True,
+    check_length_only=False,
     copy=False,
 ):
     """Set X and Y appropriately and checks inputs.
@@ -103,8 +104,9 @@ def check_pairwise_arrays(
         Y.
 
     dtype : str, type, list of type, default=None
-        Data type required for X and Y. If None, the dtype will be an
-        appropriate float type selected by _return_float_dtype.
+        Data type required for `X` and `Y`. If `None` and `check_only_length=False`,
+        the `dtype` will be set to an appropriate floating type, preserving the bitness.
+        If `check_only_length=True`, `dtype` will be ignored.
 
         .. versionadded:: 0.18
 
@@ -130,6 +132,14 @@ def check_pairwise_arrays(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`.
 
+    check_length_only : bool, default=False
+        Whether to only check the length of the array.
+        When `True`, `dtype` is ignored and the check for 2D array is not performed.
+        This is particularly useful when passing non-numerical inputs and a custom
+        metric.
+
+         .. versionadded:: 1.2.1
+
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
@@ -145,11 +155,13 @@ def check_pairwise_arrays(
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
     """
-    X, Y, dtype_float = _return_float_dtype(X, Y)
 
+    X, Y, dtype_float = _return_float_dtype(X, Y)
     estimator = "check_pairwise_arrays"
-    if dtype is None:
+    if dtype is None and not check_length_only:
         dtype = dtype_float
+    elif check_length_only:
+        dtype = None
 
     if Y is X or Y is None:
         X = Y = check_array(
@@ -159,6 +171,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
+            ensure_2d=not check_length_only,
         )
     else:
         X = check_array(
@@ -168,6 +181,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
+            ensure_2d=not check_length_only,
         )
         Y = check_array(
             Y,
@@ -176,6 +190,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
+            ensure_2d=not check_length_only,
         )
 
     if precomputed:
@@ -185,12 +200,16 @@ def check_pairwise_arrays(
                 "(n_queries, n_indexed). Got (%d, %d) "
                 "for %d indexed." % (X.shape[0], X.shape[1], Y.shape[0])
             )
-    elif X.shape[1] != Y.shape[1]:
+    elif not check_length_only and X.shape[1] != Y.shape[1]:
         raise ValueError(
             "Incompatible dimension for X and Y matrices: "
             "X.shape[1] == %d while Y.shape[1] == %d" % (X.shape[1], Y.shape[1])
         )
-
+    elif check_length_only and len(X) != len(Y):
+        raise ValueError(
+            f"Incompatible length for X and Y matrices: len(X) == {len(X)} while len(Y)"
+            f" == {len(Y)}"
+        )
     return X, Y
 
 
@@ -1817,9 +1836,13 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     return ret
 
 
-def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
+def _pairwise_callable(
+    X, Y, metric, force_all_finite=True, check_length_only=False, **kwds
+):
     """Handle the callable case for pairwise_{distances,kernels}."""
-    X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
+    X, Y = check_pairwise_arrays(
+        X, Y, force_all_finite=force_all_finite, check_length_only=check_length_only
+    )
 
     if X is Y:
         # Only calculate metric for upper triangle
@@ -2087,13 +2110,23 @@ def pairwise_distances_chunked(
     prefer_skip_nested_validation=True,
 )
 def pairwise_distances(
-    X, Y=None, metric="euclidean", *, n_jobs=None, force_all_finite=True, **kwds
+    X,
+    Y=None,
+    metric="euclidean",
+    *,
+    n_jobs=None,
+    force_all_finite=True,
+    check_length_only=False,
+    **kwds,
 ):
     """Compute the distance matrix from a vector array X and optional Y.
 
     This method takes either a vector array or a distance matrix, and returns
-    a distance matrix. If the input is a vector array, the distances are
-    computed. If the input is a distances matrix, it is returned instead.
+    a distance matrix.
+    If the input is a vector array, the distances are computed.
+    If the input is a distances matrix, it is returned instead.
+    If the input is list of strings, a custom metric must be passed and
+    `check_length_only` should be set to `True` for distances to be computed.
 
     This method provides a safe way to take a distance matrix as input, while
     preserving compatibility with many other algorithms that take a vector
@@ -2179,6 +2212,14 @@ def pairwise_distances(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`.
 
+    check_length_only : bool, default=False
+        Whether to only check the length of the array.
+        When `True`, check for 2D array is not performed.
+        This is particularly useful when passing non-numerical inputs and a custom
+        metric.
+
+         .. versionadded:: 1.2.1
+
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
@@ -2216,7 +2257,11 @@ def pairwise_distances(
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):
         func = partial(
-            _pairwise_callable, metric=metric, force_all_finite=force_all_finite, **kwds
+            _pairwise_callable,
+            metric=metric,
+            force_all_finite=force_all_finite,
+            check_length_only=check_length_only,
+            **kwds,
         )
     else:
         if issparse(X) or issparse(Y):
