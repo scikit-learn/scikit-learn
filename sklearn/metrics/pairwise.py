@@ -104,11 +104,13 @@ def check_pairwise_arrays(
         Y.
 
     dtype : str, type, list of type, default=None
-        Data type required for `X` and `Y`. If `None` and `check_only_length=False`,
+        Data type required for `X` and `Y`. If `None` and `check_length_only=False`,
         the `dtype` will be set to an appropriate floating type, preserving the bitness.
-        If `check_only_length=True`, `dtype` will be ignored.
+        If `check_length_only=True`, `dtype` will be ignored.
 
         .. versionadded:: 0.18
+        .. versionchanged:: 1.4
+           The parameter is ignored when `check_length_only` is `True`.
 
     accept_sparse : str, bool or list/tuple of str, default='csr'
         String[s] representing allowed sparse matrix formats, such as 'csc',
@@ -138,7 +140,7 @@ def check_pairwise_arrays(
         This is particularly useful when passing non-numerical inputs and a custom
         metric.
 
-         .. versionadded:: 1.2.1
+         .. versionadded:: 1.4
 
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
@@ -2218,7 +2220,7 @@ def pairwise_distances(
         This is particularly useful when passing non-numerical inputs and a custom
         metric.
 
-         .. versionadded:: 1.2.1
+         .. versionadded:: 1.4
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.

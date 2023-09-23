@@ -1568,9 +1568,10 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
 def test_pairwise_dist_custom_scoring_for_string(X, Y, expected_distance):
     """
     Checks the pairwise distance between any two matrices containing strings.
-    This is done by passing a metric to calculate the similarity and
-    also setting `check_length_only` to True to avoid
-    checks expecting float/int objects in input array
+
+    This is done by passing a metric to calculate the similarity and also setting
+    `check_length_only` to True to avoid checks expecting float/int objects in input
+    array
     """
 
     def dummy_string_similarity(x, y):
@@ -1583,6 +1584,8 @@ def test_pairwise_dist_custom_scoring_for_string(X, Y, expected_distance):
 
 
 def test_pairwise_distances_raises_error_for_incompatible_length():
+    """Check that we raise an error if `X` and `Y` do not have compatible length."""
+
     def dummy_string_similarity(x, y):
         return np.abs(len(x) - len(y))
 
