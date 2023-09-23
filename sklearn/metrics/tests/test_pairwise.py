@@ -1570,8 +1570,8 @@ def test_pairwise_dist_custom_scoring_for_string(X, Y, expected_distance):
     Checks the pairwise distance between any two matrices containing strings.
 
     This is done by passing a metric to calculate the similarity and also setting
-    `only_check_num_samples` to True to avoid checks expecting float/int objects in input
-    array
+    `only_check_num_samples` to True to avoid checks expecting float/int objects in
+    input array
     """
 
     def dummy_string_similarity(x, y):
@@ -1593,7 +1593,9 @@ def test_pairwise_distances_raises_error_for_incompatible_length():
     Y = ["a", "a"]
     msg = "Incompatible length for X and Y matrices"
     with pytest.raises(ValueError, match=msg):
-        pairwise_distances(X, Y, metric=dummy_string_similarity, only_check_num_samples=True)
+        pairwise_distances(
+            X, Y, metric=dummy_string_similarity, only_check_num_samples=True
+        )
 
 
 def test_sparse_manhattan_readonly_dataset():

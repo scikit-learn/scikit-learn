@@ -104,9 +104,10 @@ def check_pairwise_arrays(
         Y.
 
     dtype : str, type, list of type, default=None
-        Data type required for `X` and `Y`. If `None` and `only_check_num_samples=False`,
-        the `dtype` will be set to an appropriate floating type, preserving the bitness.
-        If `only_check_num_samples=True`, `dtype` will be ignored.
+        Data type required for `X` and `Y`. If `None` and
+        `only_check_num_samples=False`, the `dtype` will be set to an appropriate
+        floating type, preserving the bitness. If `only_check_num_samples=True`, `dtype`
+        will be ignored.
 
         .. versionadded:: 0.18
         .. versionchanged:: 1.4
@@ -1843,7 +1844,10 @@ def _pairwise_callable(
 ):
     """Handle the callable case for pairwise_{distances,kernels}."""
     X, Y = check_pairwise_arrays(
-        X, Y, force_all_finite=force_all_finite, only_check_num_samples=only_check_num_samples
+        X,
+        Y,
+        force_all_finite=force_all_finite,
+        only_check_num_samples=only_check_num_samples,
     )
 
     if X is Y:
