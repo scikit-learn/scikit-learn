@@ -77,7 +77,7 @@ def check_pairwise_arrays(
     dtype=None,
     accept_sparse="csr",
     force_all_finite=True,
-    check_length_only=False,
+    only_check_num_samples=False,
     copy=False,
 ):
     """Set X and Y appropriately and checks inputs.
@@ -104,13 +104,13 @@ def check_pairwise_arrays(
         Y.
 
     dtype : str, type, list of type, default=None
-        Data type required for `X` and `Y`. If `None` and `check_length_only=False`,
+        Data type required for `X` and `Y`. If `None` and `only_check_num_samples=False`,
         the `dtype` will be set to an appropriate floating type, preserving the bitness.
-        If `check_length_only=True`, `dtype` will be ignored.
+        If `only_check_num_samples=True`, `dtype` will be ignored.
 
         .. versionadded:: 0.18
         .. versionchanged:: 1.4
-           The parameter is ignored when `check_length_only` is `True`.
+           The parameter is ignored when `only_check_num_samples` is `True`.
 
     accept_sparse : str, bool or list/tuple of str, default='csr'
         String[s] representing allowed sparse matrix formats, such as 'csc',
@@ -134,7 +134,7 @@ def check_pairwise_arrays(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`.
 
-    check_length_only : bool, default=False
+    only_check_num_samples : bool, default=False
         Whether to only check the length of the array.
         When `True`, `dtype` is ignored and the check for 2D array is not performed.
         This is particularly useful when passing non-numerical inputs and a custom
@@ -160,9 +160,9 @@ def check_pairwise_arrays(
 
     X, Y, dtype_float = _return_float_dtype(X, Y)
     estimator = "check_pairwise_arrays"
-    if dtype is None and not check_length_only:
+    if dtype is None and not only_check_num_samples:
         dtype = dtype_float
-    elif check_length_only:
+    elif only_check_num_samples:
         dtype = None
 
     if Y is X or Y is None:
@@ -173,7 +173,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
-            ensure_2d=not check_length_only,
+            ensure_2d=not only_check_num_samples,
         )
     else:
         X = check_array(
@@ -183,7 +183,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
-            ensure_2d=not check_length_only,
+            ensure_2d=not only_check_num_samples,
         )
         Y = check_array(
             Y,
@@ -192,7 +192,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
-            ensure_2d=not check_length_only,
+            ensure_2d=not only_check_num_samples,
         )
 
     if precomputed:
@@ -202,12 +202,12 @@ def check_pairwise_arrays(
                 "(n_queries, n_indexed). Got (%d, %d) "
                 "for %d indexed." % (X.shape[0], X.shape[1], Y.shape[0])
             )
-    elif not check_length_only and X.shape[1] != Y.shape[1]:
+    elif not only_check_num_samples and X.shape[1] != Y.shape[1]:
         raise ValueError(
             "Incompatible dimension for X and Y matrices: "
             "X.shape[1] == %d while Y.shape[1] == %d" % (X.shape[1], Y.shape[1])
         )
-    elif check_length_only and len(X) != len(Y):
+    elif only_check_num_samples and len(X) != len(Y):
         raise ValueError(
             f"Incompatible length for X and Y matrices: len(X) == {len(X)} while len(Y)"
             f" == {len(Y)}"
@@ -1839,11 +1839,11 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
 
 def _pairwise_callable(
-    X, Y, metric, force_all_finite=True, check_length_only=False, **kwds
+    X, Y, metric, force_all_finite=True, only_check_num_samples=False, **kwds
 ):
     """Handle the callable case for pairwise_{distances,kernels}."""
     X, Y = check_pairwise_arrays(
-        X, Y, force_all_finite=force_all_finite, check_length_only=check_length_only
+        X, Y, force_all_finite=force_all_finite, only_check_num_samples=only_check_num_samples
     )
 
     if X is Y:
@@ -2118,7 +2118,7 @@ def pairwise_distances(
     *,
     n_jobs=None,
     force_all_finite=True,
-    check_length_only=False,
+    only_check_num_samples=False,
     **kwds,
 ):
     """Compute the distance matrix from a vector array X and optional Y.
@@ -2128,7 +2128,7 @@ def pairwise_distances(
     If the input is a vector array, the distances are computed.
     If the input is a distances matrix, it is returned instead.
     If the input is list of strings, a custom metric must be passed and
-    `check_length_only` should be set to `True` for distances to be computed.
+    `only_check_num_samples` should be set to `True` for distances to be computed.
 
     This method provides a safe way to take a distance matrix as input, while
     preserving compatibility with many other algorithms that take a vector
@@ -2214,7 +2214,7 @@ def pairwise_distances(
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`.
 
-    check_length_only : bool, default=False
+    only_check_num_samples : bool, default=False
         Whether to only check the length of the array.
         When `True`, check for 2D array is not performed.
         This is particularly useful when passing non-numerical inputs and a custom
@@ -2262,7 +2262,7 @@ def pairwise_distances(
             _pairwise_callable,
             metric=metric,
             force_all_finite=force_all_finite,
-            check_length_only=check_length_only,
+            only_check_num_samples=only_check_num_samples,
             **kwds,
         )
     else:

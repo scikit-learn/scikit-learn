@@ -211,7 +211,7 @@ Changelog
 
 - |Feature| :func:`metrics.pairwise_distances` accepts calculating pairwise distances
   for non-numeric arrays as well. This is supported only with custom functions
-  and the user is expected to pass `check_length_only=True` to be lenient
+  and the user is expected to pass `only_check_num_samples=True` to be lenient
   regarding the input validation.
   :pr:`XYZ` by :user: `Venkatachalam N <venkyyuvy>`, :user:`Kshitij Mathur <Kshitij68>`
   and :user:`Julian Libiseller-Egger <julibeg>`.
