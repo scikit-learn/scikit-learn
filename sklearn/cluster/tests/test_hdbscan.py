@@ -37,7 +37,7 @@ ALGORITHMS = [
     "auto",
 ]
 
-OUTLIER_SET = {-1} | {out["label"] for _, out in _OUTLIER_ENCODING.items()}
+OUTLIER_SET = {-1} | {out["label"] for out in _OUTLIER_ENCODING.values()}
 
 
 @pytest.mark.parametrize("outlier_type", _OUTLIER_ENCODING)
