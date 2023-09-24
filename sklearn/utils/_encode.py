@@ -224,12 +224,12 @@ def _encode(values, *, uniques, check_unknown=True):
         try:
             return _map_to_integer(values, uniques)
         except KeyError as e:
-            raise ValueError(f"y contains previously unseen labels: {str(e)}")
+            raise ValueError(f"y contains previously unseen labels: {e}")
     else:
         if check_unknown:
             diff = _check_unknown(values, uniques)
             if diff:
-                raise ValueError(f"y contains previously unseen labels: {str(diff)}")
+                raise ValueError(f"y contains previously unseen labels: {diff}")
         return np.searchsorted(uniques, values)
 
 

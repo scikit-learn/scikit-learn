@@ -115,10 +115,8 @@ def all_estimators(type_filter=None):
         estimators = filtered_estimators
         if type_filter:
             raise ValueError(
-                "Parameter type_filter must be 'classifier', "
-                "'regressor', 'transformer', 'cluster' or "
-                "None, got"
-                f" {repr(type_filter)}."
+                "Parameter type_filter must be 'classifier', 'regressor', "
+                f"'transformer', 'cluster' or None, got {type_filter!r}."
             )
 
     # drop duplicates, sort for reproducibility
