@@ -132,9 +132,9 @@ def plot_test_scores(clfs):
 
 def plot_dloss(clfs):
     plt.figure()
-    pobj_final = []
-    for name, _, _, train_losses, _, _, durations in clfs:
-        pobj_final.append(train_losses[-1])
+    pobj_final = [
+        train_losses[-1] for name, _, _, train_losses, _, _, durations in clfs
+    ]
 
     indices = np.argsort(pobj_final)
     pobj_best = pobj_final[indices[0]]
