@@ -389,7 +389,7 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
     def _check_voting(self):
         if self.voting == "hard":
             raise AttributeError(
-                f"predict_proba is not available when voting={repr(self.voting)}"
+                f"predict_proba is not available when voting={self.voting!r}"
             )
         return True
 

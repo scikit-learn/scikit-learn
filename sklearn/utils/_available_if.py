@@ -23,7 +23,7 @@ class _AvailableIfDescriptor:
 
     def __get__(self, obj, owner=None):
         attr_err = AttributeError(
-            f"This {repr(owner.__name__)} has no attribute {repr(self.attribute_name)}"
+            f"This {owner.__name__!r} has no attribute {self.attribute_name!r}"
         )
         if obj is not None:
             # delegate only on instances, not the classes.

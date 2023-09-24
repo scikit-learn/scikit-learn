@@ -636,7 +636,7 @@ def test_classification_scorer_sample_weight():
         except TypeError as e:
             assert "sample_weight" in str(e), (
                 f"scorer {name} raises unhelpful exception when called "
-                f"with sample weights: {str(e)}"
+                f"with sample weights: {e}"
             )
 
 
@@ -683,7 +683,7 @@ def test_regression_scorer_sample_weight():
         except TypeError as e:
             assert "sample_weight" in str(e), (
                 f"scorer {name} raises unhelpful exception when called "
-                f"with sample weights: {str(e)}"
+                f"with sample weights: {e}"
             )
 
 
