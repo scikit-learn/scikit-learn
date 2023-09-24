@@ -196,9 +196,7 @@ def generate_table(contributors):
 
 
 def generate_list(contributors):
-    lines = []
-    for contributor in contributors:
-        lines.append("- %s" % (contributor["name"],))
+    lines = ("- %s" % contributor["name"] for contributor in contributors)
     return "\n".join(lines) + "\n"
 
 
