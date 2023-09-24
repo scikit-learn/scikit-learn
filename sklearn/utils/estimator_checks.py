@@ -1360,10 +1360,10 @@ def check_dict_unchanged(name, estimator_orig):
     # ValueError: Found array with 0 feature(s) (shape=(23, 0))
     # while a minimum of 1 is required.
     # error
-    if name in ["SpectralCoclustering"]:
+    if name == "SpectralCoclustering":
         return
     rnd = np.random.RandomState(0)
-    if name in ["RANSACRegressor"]:
+    if name == "RANSACRegressor":
         X = 3 * rnd.uniform(size=(20, 3))
     else:
         X = 2 * rnd.uniform(size=(20, 3))

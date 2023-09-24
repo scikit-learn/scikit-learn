@@ -2384,7 +2384,7 @@ class PairwiseKernel(Kernel):
 
     def is_stationary(self):
         """Returns whether the kernel is stationary."""
-        return self.metric in ["rbf"]
+        return self.metric == "rbf"
 
     def __repr__(self):
         return "{0}(gamma={1}, metric={2})".format(
