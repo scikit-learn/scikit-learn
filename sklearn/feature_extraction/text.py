@@ -1494,7 +1494,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
 def _make_int_array():
     """Construct an array.array of a type suitable for scipy.sparse indices."""
-    return array.array(str("i"))
+    return array.array("i")
 
 
 class TfidfTransformer(
