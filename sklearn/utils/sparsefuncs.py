@@ -461,7 +461,7 @@ def _sparse_min_or_max(X, axis, min_or_max):
         return m
     if axis < 0:
         axis += 2
-    if (axis == 0) or (axis == 1):
+    if axis in (0, 1):
         return _min_or_max_axis(X, axis, min_or_max)
     else:
         raise ValueError("invalid axis, use 0 for rows, or 1 for columns")

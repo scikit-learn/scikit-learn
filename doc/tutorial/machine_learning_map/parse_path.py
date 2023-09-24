@@ -151,13 +151,13 @@ def get_points(d):
     points = []
     currentset = None
     for command in commands:
-        if command[0] == 'M' or command[0] == 'm':
+        if command[0] in ('M', 'm'):
             currentset = []
             points.append(currentset)
             currentset.append(command[1][-1])
-        elif command[0] == 'L' or command[0] == 'l':
+        elif command[0] in ('L', 'l'):
             currentset.extend(command[1])
-        elif command[0] == 'C' or command[0] == 'c':
+        elif command[0] in ('C', 'c'):
             currentset.extend(command[1])
     return points
 
