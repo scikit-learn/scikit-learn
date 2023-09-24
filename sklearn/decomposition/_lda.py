@@ -545,7 +545,6 @@ class LatentDirichletAllocation(
             _dirichlet_expectation_2d(self.components_)
         )
         self.n_batch_iter_ += 1
-        return
 
     def _more_tags(self):
         return {
