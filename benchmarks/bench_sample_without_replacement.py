@@ -83,7 +83,7 @@ if __name__ == "__main__":
     #               help="Seed used by the random number generators.")
 
     (opts, args) = op.parse_args()
-    if len(args) > 0:
+    if args:
         op.error("this script takes no arguments.")
         sys.exit(1)
 

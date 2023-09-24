@@ -621,7 +621,7 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
     max_n_samples = n_samples
     random_state = check_random_state(random_state)
 
-    if len(arrays) == 0:
+    if not arrays:
         return None
 
     first = arrays[0]

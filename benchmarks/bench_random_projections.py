@@ -183,7 +183,7 @@ if __name__ == "__main__":
     )
 
     (opts, args) = op.parse_args()
-    if len(args) > 0:
+    if args:
         op.error("this script takes no arguments.")
         sys.exit(1)
     opts.n_components = type_auto_or_int(opts.n_components)

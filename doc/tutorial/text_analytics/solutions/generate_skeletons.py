@@ -27,7 +27,7 @@ for f in solutions:
 
     for line in input_file:
         linestrip = line.strip()
-        if len(linestrip) == 0:
+        if not linestrip:
             in_exercise_region = False
         elif linestrip.startswith('# TASK:'):
             in_exercise_region = True

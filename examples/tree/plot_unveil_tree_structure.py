@@ -84,7 +84,7 @@ values = clf.tree_.value
 node_depth = np.zeros(shape=n_nodes, dtype=np.int64)
 is_leaves = np.zeros(shape=n_nodes, dtype=bool)
 stack = [(0, 0)]  # start with the root node id (0) and its depth (0)
-while len(stack) > 0:
+while stack:
     # `pop` ensures each node is only visited once
     node_id, depth = stack.pop()
     node_depth[node_id] = depth

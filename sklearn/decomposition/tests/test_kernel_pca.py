@@ -34,7 +34,7 @@ def test_kernel_pca():
 
     def histogram(x, y, **kwargs):
         # Histogram kernel implemented as a callable.
-        assert kwargs == {}  # no kernel_params that we didn't ask for
+        assert not kwargs  # no kernel_params that we didn't ask for
         return np.minimum(x, y).sum()
 
     for eigen_solver in ("auto", "dense", "arpack", "randomized"):
