@@ -36,7 +36,7 @@ ALGORITHMS = [
     "auto",
 ]
 
-OUTLIER_SET = {-1} | {out["label"] for _, out in _OUTLIER_ENCODING.items()}
+OUTLIER_SET = {-1} | {out["label"] for out in _OUTLIER_ENCODING.values()}
 
 
 def check_label_quality(labels, threshold=0.99):
