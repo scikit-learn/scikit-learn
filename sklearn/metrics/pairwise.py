@@ -2112,6 +2112,7 @@ def pairwise_distances_chunked(
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
         "n_jobs": [Integral, None],
         "force_all_finite": ["boolean", StrOptions({"allow-nan"})],
+        "only_check_num_samples": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
