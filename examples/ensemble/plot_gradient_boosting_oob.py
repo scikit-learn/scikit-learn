@@ -131,7 +131,7 @@ xticks = plt.xticks()
 xticks_pos = np.array(
     xticks[0].tolist() + [oob_best_iter, cv_best_iter, test_best_iter]
 )
-xticks_label = np.array(list(map(lambda t: int(t), xticks[0])) + ["OOB", "CV", "Test"])
+xticks_label = np.array(list(map(int, xticks[0])) + ["OOB", "CV", "Test"])
 ind = np.argsort(xticks_pos)
 xticks_pos = xticks_pos[ind]
 xticks_label = xticks_label[ind]
