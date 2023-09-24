@@ -423,7 +423,7 @@ def test_is_satisfied_by(constraint_declaration, value):
     ],
 )
 def test_make_constraint(constraint_declaration, expected_constraint_class):
-    """Check that make_constraint dispaches to the appropriate constraint class"""
+    """Check that make_constraint dispatches to the appropriate constraint class"""
     constraint = make_constraint(constraint_declaration)
     assert constraint.__class__ is expected_constraint_class
 
