@@ -2,6 +2,8 @@
 Tests for HDBSCAN clustering algorithm
 Based on the DBSCAN test code
 """
+import operator
+
 import numpy as np
 import pytest
 from scipy import stats
@@ -48,7 +50,7 @@ def test_outlier_data(outlier_type):
         "missing": np.nan,
     }[outlier_type]
     prob_check = {
-        "infinite": lambda x, y: x == y,
+        "infinite": operator.eq,
         "missing": lambda x, y: np.isnan(x),
     }[outlier_type]
     label = _OUTLIER_ENCODING[outlier_type]["label"]
