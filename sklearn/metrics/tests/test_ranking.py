@@ -1536,8 +1536,8 @@ def _my_lrap(y_true, y_score):
         rank = corr_rank[rank]
 
         relevant = y_true[i].nonzero()[0]
-        if relevant.size == 0 or relevant.size == n_labels:
-            score[i] = 1
+        if relevant.size in (0, n_labels):
+            score[i] = 1.0
             continue
 
         score[i] = 0.0

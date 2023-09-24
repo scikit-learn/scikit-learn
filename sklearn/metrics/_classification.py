@@ -2600,7 +2600,7 @@ def classification_report(
         labels_given = True
 
     # labelled micro average
-    micro_is_accuracy = (y_type == "multiclass" or y_type == "binary") and (
+    micro_is_accuracy = y_type in ("multiclass", "binary") and (
         not labels_given or (set(labels) == set(unique_labels(y_true, y_pred)))
     )
 
