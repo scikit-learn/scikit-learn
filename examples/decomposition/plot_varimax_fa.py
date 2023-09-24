@@ -70,7 +70,7 @@ for ax, (method, fa) in zip(axes, methods):
     ax.imshow(components, cmap="RdBu_r", vmax=vmax, vmin=-vmax)
     ax.set_yticks(np.arange(len(feature_names)))
     ax.set_yticklabels(feature_names)
-    ax.set_title(str(method))
+    ax.set_title(method)
     ax.set_xticks([0, 1])
     ax.set_xticklabels(["Comp. 1", "Comp. 2"])
 fig.suptitle("Factors")
