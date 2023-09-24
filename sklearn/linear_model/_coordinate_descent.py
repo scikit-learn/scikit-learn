@@ -522,7 +522,7 @@ def enet_path(
     random_state = params.pop("random_state", None)
     selection = params.pop("selection", "cyclic")
 
-    if len(params) > 0:
+    if params:
         raise ValueError("Unexpected parameters in params", params.keys())
 
     # We expect X and y to be already Fortran ordered when bypassing
