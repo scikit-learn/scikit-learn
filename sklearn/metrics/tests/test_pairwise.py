@@ -1570,8 +1570,8 @@ def test_pairwise_dist_custom_scoring_for_string(X, Y, expected_distance):
     Checks the pairwise distance between any two matrices containing strings.
 
     This is done by passing a metric to calculate the similarity and also setting
-    `only_check_num_samples` to True to avoid checks expecting float/int objects in
-    input array
+    `only_check_num_samples` to `True` to avoid checks expecting float/int objects in
+    input array.
     """
 
     def dummy_string_similarity(x, y):
@@ -1579,6 +1579,40 @@ def test_pairwise_dist_custom_scoring_for_string(X, Y, expected_distance):
 
     actual_distance = pairwise_distances(
         X=X, Y=Y, metric=dummy_string_similarity, only_check_num_samples=True
+    )
+    assert_array_equal(actual_distance, expected_distance)
+
+
+def test_pairwise_dist_custom_scoring_for_bool():
+    """
+    Checks the pairwise distances between boolean arrays.
+
+    This is done by passing a dummy metric to calculate the distances and also setting
+    `only_check_num_samples` to `True` to avoid the input beig cast to foat.
+    """
+
+    def dummy_bool_dist(v1, v2):
+        # dummy distance func using `&` and thus relying on the input data being boolean
+        return 1 - (v1 & v2).sum() / (v1 | v2).sum()
+
+    X = np.array(
+        [
+            [1, 0, 0, 0],
+            [1, 0, 1, 0],
+            [1, 1, 1, 1],
+        ]
+    ).astype(bool)
+
+    expected_distance = np.array(
+        [
+            [0.0, 0.5, 0.75],
+            [0.5, 0.0, 0.5],
+            [0.75, 0.5, 0.0],
+        ]
+    )
+
+    actual_distance = pairwise_distances(
+        X=X, metric=dummy_bool_dist, only_check_num_samples=True
     )
     assert_array_equal(actual_distance, expected_distance)
 
