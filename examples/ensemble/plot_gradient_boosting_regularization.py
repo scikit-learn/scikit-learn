@@ -64,7 +64,7 @@ for label, color, setting in [
         {"learning_rate": 0.2, "max_features": 2},
     ),
 ]:
-    params = dict(original_params)
+    params = original_params.copy()
     params.update(setting)
 
     clf = ensemble.GradientBoostingClassifier(**params)
