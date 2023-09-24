@@ -270,7 +270,7 @@ def test_unique_labels_mixed_types():
 
 def test_is_multilabel():
     for group, group_examples in EXAMPLES.items():
-        dense_exp = group in ["multilabel-indicator"]
+        dense_exp = group == "multilabel-indicator"
 
         for example in group_examples:
             # Only mark explicitly defined sparse examples as valid sparse

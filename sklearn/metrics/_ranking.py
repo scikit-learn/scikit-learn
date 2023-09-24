@@ -1362,7 +1362,7 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     check_consistent_length(y_true, y_score, sample_weight)
 
     y_type = type_of_target(y_true, input_name="y_true")
-    if y_type not in ("multilabel-indicator",):
+    if y_type != "multilabel-indicator":
         raise ValueError("{0} format is not supported".format(y_type))
 
     if y_true.shape != y_score.shape:
