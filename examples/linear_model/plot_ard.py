@@ -117,7 +117,7 @@ _ = plt.title("Models log-likelihood")
 
 # %%
 # Indeed, both models minimize the log-likelihood up to an arbitrary cutoff
-# defined by the `n_iter` parameter.
+# defined by the `max_iter` parameter.
 #
 # Bayesian regressions with polynomial feature expansion
 # ======================================================
