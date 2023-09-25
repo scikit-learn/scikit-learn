@@ -36,7 +36,7 @@ X, y = make_classification(
 )
 
 
-def load_iris_scaled():
+def load_iris_2d_scaled():
     X, y = load_iris(return_X_y=True)
     X = scale(X)[:, :2]
     return X, y
@@ -85,16 +85,16 @@ def test_check_boundary_response_method_error():
     [
         (DecisionTreeRegressor(), "predict", None, "predict"),
         (DecisionTreeRegressor(), "auto", None, "predict"),
-        (LogisticRegression().fit(*load_iris_scaled()), "predict", None, "predict"),
-        (LogisticRegression().fit(*load_iris_scaled()), "auto", None, "predict"),
+        (LogisticRegression().fit(*load_iris_2d_scaled()), "predict", None, "predict"),
+        (LogisticRegression().fit(*load_iris_2d_scaled()), "auto", None, "predict"),
         (
-            LogisticRegression().fit(*load_iris_scaled()),
+            LogisticRegression().fit(*load_iris_2d_scaled()),
             "predict_proba",
             0,
             "predict_proba",
         ),
         (
-            LogisticRegression().fit(*load_iris_scaled()),
+            LogisticRegression().fit(*load_iris_2d_scaled()),
             "decision_function",
             0,
             "decision_function",
@@ -314,7 +314,7 @@ def test_error_bad_response(pyplot, response_method, msg):
 
     clf = MyClassifier().fit(X, y)
 
-    with pytest.raises(AttributeError, match=msg):
+    with pytest.raises(ValueError, match=msg):
         DecisionBoundaryDisplay.from_estimator(clf, X, response_method=response_method)
 
 
