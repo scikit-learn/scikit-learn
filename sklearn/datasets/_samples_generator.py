@@ -1615,7 +1615,7 @@ def make_sparse_spd_matrix(
         The value of the largest coefficient between 0 and 1.
 
     sparse_format : str, default=None
-        String[s] representing the output sparse format, such as 'csc', 'csr', etc.
+        String representing the output sparse format, such as 'csc', 'csr', etc.
         If ``None``, return a dense numpy ndarray.
 
         .. versionadded:: 1.4
