@@ -45,7 +45,7 @@ from sklearn.inspection import DecisionBoundaryDisplay
 _, ax = plt.subplots()
 
 # generate grid for the boundary display
-xx, yy = np.meshgrid(np.linspace(-5, 5, 500), np.linspace(-5, 5, 500))
+xx, yy = np.meshgrid(np.linspace(-5, 5, 10), np.linspace(-5, 5, 10))
 X = np.concatenate([xx.reshape(-1, 1), yy.reshape(-1, 1)], axis=1)
 DecisionBoundaryDisplay.from_estimator(
     clf,
