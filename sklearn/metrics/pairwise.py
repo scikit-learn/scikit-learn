@@ -1826,8 +1826,8 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
         out = np.zeros((X.shape[0], Y.shape[0]), dtype="float")
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
-            # scipy not yet implemented 1D sparse slices; can be removed and use simply
-            # `arr[ind]` once implemented
+            # scipy has not yet implemented 1D sparse slices; once implemented this can
+            # be removed and `arr[ind]` can be simply used.
             x = X[[i], :] if issparse(X) else X[i]
             y = Y[[j], :] if issparse(Y) else Y[j]
             out[i, j] = metric(x, y, **kwds)
