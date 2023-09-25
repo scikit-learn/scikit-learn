@@ -346,9 +346,11 @@ Changelog
   sparse arrays.
   :pr:`27274` by `Yao Xiao <Charlie-XIAO>`
 
-- |Enhancement| Downcast `dtype` indices of CSR and COO arrays converted from
-  DIA arrays. It ensure that we have the same behaviour between sparse matrices and
-  arrays.
+- |Enhancement| Make :func:`sklearn.utils.check_array` attempt to output
+  `int32`-indexed CSR and COO arrays when converting from DIA arrays if the number of
+  non-zero entries is small enough. This ensures that estimators implemented in Cython
+  and that do not accept `int64`-indexed sparse datastucture, now consistently
+  accept the same sparse input formats for SciPy sparse matrices and arrays.
   :pr:`27372` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Code and Documentation Contributors
