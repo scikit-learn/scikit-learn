@@ -1839,8 +1839,8 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
         # Calculate diagonal
         # NB: nonzero diagonals are allowed for both metrics and kernels
         for i in range(X.shape[0]):
-            # scipy not yet implemented 1D sparse slices; can be removed and use simply
-            # `arr[ind]` once implemented
+            # scipy has not yet implemented 1D sparse slices; once implemented this can
+            # be removed and `arr[ind]` can be simply used.
             x = X[[i], :] if issparse(X) else X[i]
             out[i, i] = metric(x, x, **kwds)
 
