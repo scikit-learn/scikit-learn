@@ -56,7 +56,7 @@ from .preprocessing import LabelBinarizer
 from .utils import check_random_state
 from .utils._param_validation import HasMethods, Interval
 from .utils._tags import _safe_tags
-from .utils.metadata_routing import _RoutingNotSupported
+from .utils.metadata_routing import _RoutingNotSupportedMixin
 from .utils.metaestimators import _safe_split, available_if
 from .utils.multiclass import (
     _check_partial_fit_first_call,
@@ -183,7 +183,7 @@ def _estimators_has(attr):
 
 
 class OneVsRestClassifier(
-    _RoutingNotSupported,
+    _RoutingNotSupportedMixin,
     MultiOutputMixin,
     ClassifierMixin,
     MetaEstimatorMixin,
@@ -585,7 +585,7 @@ def _partial_fit_ovo_binary(estimator, X, y, i, j):
 
 
 class OneVsOneClassifier(
-    _RoutingNotSupported, MetaEstimatorMixin, ClassifierMixin, BaseEstimator
+    _RoutingNotSupportedMixin, MetaEstimatorMixin, ClassifierMixin, BaseEstimator
 ):
     """One-vs-one multiclass strategy.
 
@@ -876,7 +876,7 @@ class OneVsOneClassifier(
 
 
 class OutputCodeClassifier(
-    _RoutingNotSupported, MetaEstimatorMixin, ClassifierMixin, BaseEstimator
+    _RoutingNotSupportedMixin, MetaEstimatorMixin, ClassifierMixin, BaseEstimator
 ):
     """(Error-Correcting) Output-Code multiclass strategy.
 

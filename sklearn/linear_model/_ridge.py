@@ -36,7 +36,7 @@ from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.fixes import _sparse_linalg_cg
 from ..utils.metadata_routing import (
     _raise_for_unsupported_routing,
-    _RoutingNotSupported,
+    _RoutingNotSupportedMixin,
 )
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _check_sample_weight, check_is_fitted
@@ -2235,7 +2235,9 @@ class _BaseRidgeCV(LinearModel):
         return self
 
 
-class RidgeCV(_RoutingNotSupported, MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
+class RidgeCV(
+    _RoutingNotSupportedMixin, MultiOutputMixin, RegressorMixin, _BaseRidgeCV
+):
     """Ridge regression with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2401,7 +2403,7 @@ class RidgeCV(_RoutingNotSupported, MultiOutputMixin, RegressorMixin, _BaseRidge
         return self
 
 
-class RidgeClassifierCV(_RoutingNotSupported, _RidgeClassifierMixin, _BaseRidgeCV):
+class RidgeClassifierCV(_RoutingNotSupportedMixin, _RidgeClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.

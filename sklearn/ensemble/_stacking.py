@@ -28,7 +28,7 @@ from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import HasMethods, StrOptions
 from ..utils.metadata_routing import (
     _raise_for_unsupported_routing,
-    _RoutingNotSupported,
+    _RoutingNotSupportedMixin,
 )
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets, type_of_target
@@ -384,7 +384,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         return _VisualBlock("serial", (parallel, final_block), dash_wrapped=False)
 
 
-class StackingClassifier(_RoutingNotSupported, ClassifierMixin, _BaseStacking):
+class StackingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseStacking):
     """Stack of estimators with a final classifier.
 
     Stacked generalization consists in stacking the output of individual
@@ -766,7 +766,7 @@ class StackingClassifier(_RoutingNotSupported, ClassifierMixin, _BaseStacking):
         return super()._sk_visual_block_with_final_estimator(final_estimator)
 
 
-class StackingRegressor(_RoutingNotSupported, RegressorMixin, _BaseStacking):
+class StackingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseStacking):
     """Stack of estimators with a final regressor.
 
     Stacked generalization consists in stacking the output of individual

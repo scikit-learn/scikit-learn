@@ -168,7 +168,10 @@ def _raise_for_unsupported_routing(obj, method, **kwargs):
     """Raise when metadata routing is enabled and metadata is passed.
 
     This is used in meta-estimators which have not implemented metadata routing
-    to prevent silent bugs.
+    to prevent silent bugs. There is no need to use this function if the
+    meta-estimator is not accepting any metadata, especially in `fit`, since
+    if a meta-estimator accepts any metadata, they would do that in `fit` as
+    well.
 
     Parameters
     ----------
@@ -190,7 +193,7 @@ def _raise_for_unsupported_routing(obj, method, **kwargs):
         )
 
 
-class _RoutingNotSupported:
+class _RoutingNotSupportedMixin:
     """A mixin to be used to remove the default `get_metadata_routing`.
 
     This is used in meta-estimators where metadata routing is not yet

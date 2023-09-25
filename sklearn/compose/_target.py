@@ -14,14 +14,16 @@ from ..utils._param_validation import HasMethods
 from ..utils._tags import _safe_tags
 from ..utils.metadata_routing import (
     _raise_for_unsupported_routing,
-    _RoutingNotSupported,
+    _RoutingNotSupportedMixin,
 )
 from ..utils.validation import check_is_fitted
 
 __all__ = ["TransformedTargetRegressor"]
 
 
-class TransformedTargetRegressor(_RoutingNotSupported, RegressorMixin, BaseEstimator):
+class TransformedTargetRegressor(
+    _RoutingNotSupportedMixin, RegressorMixin, BaseEstimator
+):
     """Meta-estimator to regress on a transformed target.
 
     Useful for applying a non-linear transformation to the target `y` in

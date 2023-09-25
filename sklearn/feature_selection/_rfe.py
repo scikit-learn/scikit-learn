@@ -19,7 +19,7 @@ from ..utils._param_validation import HasMethods, Interval, RealNotInt
 from ..utils._tags import _safe_tags
 from ..utils.metadata_routing import (
     _raise_for_unsupported_routing,
-    _RoutingNotSupported,
+    _RoutingNotSupportedMixin,
 )
 from ..utils.metaestimators import _safe_split, available_if
 from ..utils.parallel import Parallel, delayed
@@ -60,7 +60,7 @@ def _estimator_has(attr):
     )
 
 
-class RFE(_RoutingNotSupported, SelectorMixin, MetaEstimatorMixin, BaseEstimator):
+class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     """Feature ranking with recursive feature elimination.
 
     Given an external estimator that assigns weights to features (e.g., the

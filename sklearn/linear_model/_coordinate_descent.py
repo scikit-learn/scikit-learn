@@ -23,7 +23,7 @@ from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import safe_sparse_dot
 from ..utils.metadata_routing import (
     _raise_for_unsupported_routing,
-    _RoutingNotSupported,
+    _RoutingNotSupportedMixin,
 )
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
@@ -1768,7 +1768,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         }
 
 
-class LassoCV(_RoutingNotSupported, RegressorMixin, LinearModelCV):
+class LassoCV(_RoutingNotSupportedMixin, RegressorMixin, LinearModelCV):
     """Lasso linear model with iterative fitting along a regularization path.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -1984,7 +1984,7 @@ class LassoCV(_RoutingNotSupported, RegressorMixin, LinearModelCV):
         return {"multioutput": False}
 
 
-class ElasticNetCV(_RoutingNotSupported, RegressorMixin, LinearModelCV):
+class ElasticNetCV(_RoutingNotSupportedMixin, RegressorMixin, LinearModelCV):
     """Elastic Net model with iterative fitting along a regularization path.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2616,7 +2616,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         self.selection = selection
 
 
-class MultiTaskElasticNetCV(_RoutingNotSupported, RegressorMixin, LinearModelCV):
+class MultiTaskElasticNetCV(_RoutingNotSupportedMixin, RegressorMixin, LinearModelCV):
     """Multi-task L1/L2 ElasticNet with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2861,7 +2861,7 @@ class MultiTaskElasticNetCV(_RoutingNotSupported, RegressorMixin, LinearModelCV)
         return super().fit(X, y)
 
 
-class MultiTaskLassoCV(_RoutingNotSupported, RegressorMixin, LinearModelCV):
+class MultiTaskLassoCV(_RoutingNotSupportedMixin, RegressorMixin, LinearModelCV):
     """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
 
     See glossary entry for :term:`cross-validation estimator`.

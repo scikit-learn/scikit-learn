@@ -32,7 +32,7 @@ from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import StrOptions
 from ..utils.metadata_routing import (
     _raise_for_unsupported_routing,
-    _RoutingNotSupported,
+    _RoutingNotSupportedMixin,
 )
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
@@ -156,7 +156,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         return {"preserves_dtype": []}
 
 
-class VotingClassifier(_RoutingNotSupported, ClassifierMixin, _BaseVoting):
+class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
     Read more in the :ref:`User Guide <voting_classifier>`.
@@ -483,7 +483,7 @@ class VotingClassifier(_RoutingNotSupported, ClassifierMixin, _BaseVoting):
         return np.asarray(names_out, dtype=object)
 
 
-class VotingRegressor(_RoutingNotSupported, RegressorMixin, _BaseVoting):
+class VotingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseVoting):
     """Prediction voting regressor for unfitted estimators.
 
     A voting regressor is an ensemble meta-estimator that fits several base

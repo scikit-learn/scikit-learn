@@ -26,7 +26,7 @@ from ..utils._param_validation import (
 )
 from ..utils.metadata_routing import (
     _raise_for_unsupported_routing,
-    _RoutingNotSupported,
+    _RoutingNotSupportedMixin,
 )
 from ..utils.random import sample_without_replacement
 from ..utils.validation import _check_sample_weight, check_is_fitted, has_fit_parameter
@@ -70,7 +70,7 @@ def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
 
 
 class RANSACRegressor(
-    _RoutingNotSupported,
+    _RoutingNotSupportedMixin,
     MetaEstimatorMixin,
     RegressorMixin,
     MultiOutputMixin,

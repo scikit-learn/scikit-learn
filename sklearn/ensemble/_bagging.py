@@ -21,7 +21,7 @@ from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptio
 from ..utils._tags import _safe_tags
 from ..utils.metadata_routing import (
     _raise_for_unsupported_routing,
-    _RoutingNotSupported,
+    _RoutingNotSupportedMixin,
 )
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
@@ -547,7 +547,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         return [sample_indices for _, sample_indices in self._get_estimators_indices()]
 
 
-class BaggingClassifier(_RoutingNotSupported, ClassifierMixin, BaseBagging):
+class BaggingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, BaseBagging):
     """A Bagging classifier.
 
     A Bagging classifier is an ensemble meta-estimator that fits base
@@ -995,7 +995,7 @@ class BaggingClassifier(_RoutingNotSupported, ClassifierMixin, BaseBagging):
         return {"allow_nan": _safe_tags(estimator, "allow_nan")}
 
 
-class BaggingRegressor(_RoutingNotSupported, RegressorMixin, BaseBagging):
+class BaggingRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseBagging):
     """A Bagging regressor.
 
     A Bagging regressor is an ensemble meta-estimator that fits base

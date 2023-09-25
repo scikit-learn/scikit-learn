@@ -12,7 +12,7 @@ from ..utils._param_validation import HasMethods, Interval, Options
 from ..utils._tags import _safe_tags
 from ..utils.metadata_routing import (
     _raise_for_unsupported_routing,
-    _RoutingNotSupported,
+    _RoutingNotSupportedMixin,
 )
 from ..utils.metaestimators import available_if
 from ..utils.validation import _num_features, check_is_fitted, check_scalar
@@ -83,7 +83,7 @@ def _estimator_has(attr):
 
 
 class SelectFromModel(
-    _RoutingNotSupported, MetaEstimatorMixin, SelectorMixin, BaseEstimator
+    _RoutingNotSupportedMixin, MetaEstimatorMixin, SelectorMixin, BaseEstimator
 ):
     """Meta-transformer for selecting features based on importance weights.
 

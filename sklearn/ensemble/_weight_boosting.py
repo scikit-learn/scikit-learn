@@ -44,7 +44,7 @@ from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils.extmath import softmax, stable_cumsum
 from ..utils.metadata_routing import (
     _raise_for_unsupported_routing,
-    _RoutingNotSupported,
+    _RoutingNotSupportedMixin,
 )
 from ..utils.validation import (
     _check_sample_weight,
@@ -343,7 +343,9 @@ def _samme_proba(estimator, n_classes, X):
     )
 
 
-class AdaBoostClassifier(_RoutingNotSupported, ClassifierMixin, BaseWeightBoosting):
+class AdaBoostClassifier(
+    _RoutingNotSupportedMixin, ClassifierMixin, BaseWeightBoosting
+):
     """An AdaBoost classifier.
 
     An AdaBoost [1]_ classifier is a meta-estimator that begins by fitting a
@@ -985,7 +987,7 @@ class AdaBoostClassifier(_RoutingNotSupported, ClassifierMixin, BaseWeightBoosti
         return np.log(self.predict_proba(X))
 
 
-class AdaBoostRegressor(_RoutingNotSupported, RegressorMixin, BaseWeightBoosting):
+class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoosting):
     """An AdaBoost regressor.
 
     An AdaBoost [1] regressor is a meta-estimator that begins by fitting a
