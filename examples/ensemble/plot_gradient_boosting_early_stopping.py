@@ -3,167 +3,150 @@
 Early stopping of Gradient Boosting
 ===================================
 
-Gradient boosting is an ensembling technique where several weak learners
-(regression trees) are combined to yield a powerful single model, in an
-iterative fashion.
+Gradient Boosting is an ensemble technique that combines multiple weak
+learners, typically regression trees, to create a robust and powerful
+predictive model. It does so in an iterative fashion, where each new stage
+(tree) corrects the errors of the previous ones.
 
-Early stopping support in Gradient Boosting enables us to find the least number
-of iterations which is sufficient to build a model that generalizes well to
-unseen data.
+Early stopping is a feature in Gradient Boosting that allows us to find
+the optimal number of iterations required to build a model that generalizes
+well to unseen data. The concept is simple: we set aside a portion of our
+dataset as a validation set (specified using `validation_fraction`) to assess
+the model's performance during training. As the model is iteratively built
+with additional stages (trees), its performance on the validation set is
+continuously monitored.
 
-The concept of early stopping is simple. We specify a ``validation_fraction``
-which denotes the fraction of the whole dataset that will be kept aside from
-training to assess the validation loss of the model. The gradient boosting
-model is trained using the training set and evaluated using the validation set.
-When each additional stage of regression tree is added, the validation set is
-used to score the model.  This is continued until the scores of the model in
-the last ``n_iter_no_change`` stages do not improve by at least `tol`. After
-that the model is considered to have converged and further addition of stages
-is "stopped early".
+Early stopping becomes effective when the model's performance on the
+validation set plateaus or worsens over a certain number of consecutive stages
+(specified by `n_iter_no_change`) without a significant improvement. This
+signals that the model has reached a point where further iterations may lead
+to overfitting, and it's time to stop training.
 
-The number of stages of the final model is available at the attribute
-``n_estimators_``.
+In our example with the `GradientBoostingRegressor` model on the California
+Housing Prices dataset, we have demonstrated the practical benefits of early
+stopping:
 
-This example illustrates how the early stopping can used in the
-:class:`~sklearn.ensemble.GradientBoostingClassifier` model to achieve
-almost the same accuracy as compared to a model built without early stopping
-using many fewer estimators. This can significantly reduce training time,
-memory usage and prediction latency.
+- **Preventing Overfitting:** We showed how the validation error stabilizes
+or starts to increase after a certain point, indicating that the model
+generalizes better to unseen data. This is achieved by stopping the training
+process before overfitting occurs.
+
+- **Improving Training Efficiency:** We compared training times between models
+with and without early stopping. The model with early stopping achieved
+comparable accuracy while requiring significantly fewer estimators, resulting
+in faster training.
+
+The number of estimators (trees) in the final model, when early stopping is
+applied, can be accessed using the `n_estimators_` attribute. Overall, early
+stopping is a valuable tool to strike a balance between model performance and
+efficiency in gradient boosting.
 
 """
 
 # Authors: Vighnesh Birodkar <vighneshbirodkar@nyu.edu>
 #          Raghav RV <rvraghav93@gmail.com>
+#          Kushan Sharma <kushansharma1@gmail.com>
 # License: BSD 3 clause
 
+import matplotlib.pyplot as plt
+from sklearn.datasets import fetch_california_housing
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
 import time
 
-import matplotlib.pyplot as plt
-import numpy as np
+# Load the California Housing Prices dataset
+data = fetch_california_housing()
+X, y = data.data[:600], data.target[:600]
 
-from sklearn import datasets, ensemble
-from sklearn.model_selection import train_test_split
+# Split data into training and validation sets
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
 
-data_list = [
-    datasets.load_iris(return_X_y=True),
-    datasets.make_classification(n_samples=800, random_state=0),
-    datasets.make_hastie_10_2(n_samples=2000, random_state=0),
-]
-names = ["Iris Data", "Classification Data", "Hastie Data"]
+# Initialize GradientBoostingRegressor without early stopping
+start_time = time.time()
+gbm_no_early_stopping = GradientBoostingRegressor(
+    n_estimators=1000, max_depth=5, learning_rate=0.1, random_state=42
+)
+gbm_no_early_stopping.fit(X_train, y_train)
+training_time_without = time.time() - start_time
+estimators_without = gbm_no_early_stopping.n_estimators_
 
-n_gb = []
-score_gb = []
-time_gb = []
-n_gbes = []
-score_gbes = []
-time_gbes = []
+# Initialize GradientBoostingRegressor with early stopping
+start_time = time.time()
+gbm_with_early_stopping = GradientBoostingRegressor(
+    n_estimators=1000,
+    max_depth=5,
+    learning_rate=0.1,
+    validation_fraction=0.1,
+    n_iter_no_change=10,
+    random_state=42,
+)
+gbm_with_early_stopping.fit(X_train, y_train)
+training_time_with = time.time() - start_time
+estimators_with = gbm_with_early_stopping.n_estimators_
 
-n_estimators = 200
+# Create arrays to store training and validation errors
+train_errors_without = []
+val_errors_without = []
 
-for X, y in data_list:
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=0
+train_errors_with = []
+val_errors_with = []
+
+# Evaluate errors for each iteration
+for i, (train_pred, val_pred) in enumerate(
+    zip(
+        gbm_no_early_stopping.staged_predict(X_train),
+        gbm_no_early_stopping.staged_predict(X_val),
+    )
+):
+    train_errors_without.append(mean_squared_error(y_train, train_pred))
+    val_errors_without.append(mean_squared_error(y_val, val_pred))
+
+for i, (train_pred, val_pred) in enumerate(
+    zip(
+        gbm_with_early_stopping.staged_predict(X_train),
+        gbm_with_early_stopping.staged_predict(X_val),
+    )
+):
+    train_errors_with.append(mean_squared_error(y_train, train_pred))
+    val_errors_with.append(mean_squared_error(y_val, val_pred))
+
+# Create plots
+plt.figure(figsize=(15, 6))
+
+# Plot training error vs. iterations
+plt.subplot(1, 3, 1)
+plt.plot(train_errors_without, label="Training Error (No Early Stopping)")
+plt.plot(train_errors_with, label="Training Error (With Early Stopping)")
+plt.xlabel("Boosting Iterations")
+plt.ylabel("MSE (Training)")
+plt.legend()
+
+# Plot validation error vs. iterations
+plt.subplot(1, 3, 2)
+plt.plot(val_errors_without, label="Validation Error (No Early Stopping)")
+plt.plot(val_errors_with, label="Validation Error (With Early Stopping)")
+plt.xlabel("Boosting Iterations")
+plt.ylabel("MSE (Validation)")
+plt.legend()
+
+# Plot training time comparison
+plt.subplot(1, 3, 3)
+training_times = [training_time_without, training_time_with]
+labels = ["No Early Stopping", "With Early Stopping"]
+bars = plt.bar(labels, training_times)
+plt.ylabel("Training Time (s)")
+
+# Add number of estimators on top of the bars
+for bar, n_estimators in zip(bars, [estimators_without, estimators_with]):
+    height = bar.get_height()
+    plt.text(
+        bar.get_x() + bar.get_width() / 2,
+        height + 0.01,
+        f"Estimators: {n_estimators}",
+        ha="center",
+        va="bottom",
     )
 
-    # We specify that if the scores don't improve by at least 0.01 for the last
-    # 10 stages, stop fitting additional stages
-    gbes = ensemble.GradientBoostingClassifier(
-        n_estimators=n_estimators,
-        validation_fraction=0.2,
-        n_iter_no_change=5,
-        tol=0.01,
-        random_state=0,
-    )
-    gb = ensemble.GradientBoostingClassifier(n_estimators=n_estimators, random_state=0)
-    start = time.time()
-    gb.fit(X_train, y_train)
-    time_gb.append(time.time() - start)
-
-    start = time.time()
-    gbes.fit(X_train, y_train)
-    time_gbes.append(time.time() - start)
-
-    score_gb.append(gb.score(X_test, y_test))
-    score_gbes.append(gbes.score(X_test, y_test))
-
-    n_gb.append(gb.n_estimators_)
-    n_gbes.append(gbes.n_estimators_)
-
-bar_width = 0.2
-n = len(data_list)
-index = np.arange(0, n * bar_width, bar_width) * 2.5
-index = index[0:n]
-
-# %%
-# Compare scores with and without early stopping
-# ----------------------------------------------
-
-plt.figure(figsize=(9, 5))
-
-bar1 = plt.bar(
-    index, score_gb, bar_width, label="Without early stopping", color="crimson"
-)
-bar2 = plt.bar(
-    index + bar_width, score_gbes, bar_width, label="With early stopping", color="coral"
-)
-
-plt.xticks(index + bar_width, names)
-plt.yticks(np.arange(0, 1.3, 0.1))
-
-
-def autolabel(rects, n_estimators):
-    """
-    Attach a text label above each bar displaying n_estimators of each model
-    """
-    for i, rect in enumerate(rects):
-        plt.text(
-            rect.get_x() + rect.get_width() / 2.0,
-            1.05 * rect.get_height(),
-            "n_est=%d" % n_estimators[i],
-            ha="center",
-            va="bottom",
-        )
-
-
-autolabel(bar1, n_gb)
-autolabel(bar2, n_gbes)
-
-plt.ylim([0, 1.3])
-plt.legend(loc="best")
-plt.grid(True)
-
-plt.xlabel("Datasets")
-plt.ylabel("Test score")
-
-plt.show()
-
-
-# %%
-# Compare fit times with and without early stopping
-# -------------------------------------------------
-
-plt.figure(figsize=(9, 5))
-
-bar1 = plt.bar(
-    index, time_gb, bar_width, label="Without early stopping", color="crimson"
-)
-bar2 = plt.bar(
-    index + bar_width, time_gbes, bar_width, label="With early stopping", color="coral"
-)
-
-max_y = np.amax(np.maximum(time_gb, time_gbes))
-
-plt.xticks(index + bar_width, names)
-plt.yticks(np.linspace(0, 1.3 * max_y, 13))
-
-autolabel(bar1, n_gb)
-autolabel(bar2, n_gbes)
-
-plt.ylim([0, 1.3 * max_y])
-plt.legend(loc="best")
-plt.grid(True)
-
-plt.xlabel("Datasets")
-plt.ylabel("Fit Time")
-
+plt.tight_layout()
 plt.show()
