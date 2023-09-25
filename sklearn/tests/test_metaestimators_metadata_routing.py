@@ -41,6 +41,7 @@ rng = np.random.RandomState(42)
 N, M = 100, 4
 X = rng.rand(N, M)
 y = rng.randint(0, 3, size=N)
+classes = np.unique(y)
 y_multi = rng.randint(0, 2, size=(N, 3))
 metadata = rng.randint(0, 10, size=N)
 sample_weight = rng.rand(N)
@@ -168,6 +169,7 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y,
         "estimator_routing_methods": ["fit", "partial_fit"],
+        "method_args": {"partial_fit": {"classes": classes}},
     },
     {
         "metaestimator": OneVsOneClassifier,
@@ -177,6 +179,7 @@ METAESTIMATORS: list = [
         "y": y,
         "estimator_routing_methods": ["fit", "partial_fit"],
         "preserves_metadata": "subset",
+        "method_args": {"partial_fit": {"classes": classes}},
     },
     {
         "metaestimator": OutputCodeClassifier,
@@ -215,6 +218,8 @@ The keys are as follows:
 - cv_name: The name of the argument for the CV splitter
 - cv_routing_methods: list of all methods to check for routing metadata
   to the splitter
+- method_args: a dict of dicts, defining extra arguments needed to be passed to
+  methods, such as passing `classes` to `partial_fit`.
 """
 
 # IDs used by pytest to get meaningful verbose messages when running the tests
@@ -362,13 +367,10 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             set_request(estimator, method_name)
             instance = cls(**kwargs)
             method = getattr(instance, method_name)
-            try:
-                method(X, y, classes=np.unique(y), **method_kwargs)
-            except TypeError:
-                method(X, y, **method_kwargs)
-            except IndexError:
-                method(X, y, **method_kwargs)
-
+            extra_method_args = metaestimator.get("method_args", {}).get(
+                method_name, {}
+            )
+            method(X, y, **method_kwargs, **extra_method_args)
             # sanity check that registry is not empty, or else the test passes
             # trivially
             assert registry

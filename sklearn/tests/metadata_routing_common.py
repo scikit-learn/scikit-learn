@@ -174,7 +174,7 @@ class NonConsumingClassifier(ClassifierMixin, BaseEstimator):
         if self.registry is not None:
             self.registry.append(self)
 
-        self.classes_ = [0, 1]
+        self.classes_ = np.unique(y)
         return self
 
     def predict(self, X):
@@ -210,7 +210,10 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         record_metadata_not_default(
             self, "partial_fit", sample_weight=sample_weight, metadata=metadata
         )
-        self.classes_ = [0, 1]
+        if classes is not None:
+            self.classes_ = classes
+        else:
+            self.classes_ = np.unique(y)
         return self
 
     def fit(self, X, y, sample_weight="default", metadata="default"):
@@ -220,7 +223,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         record_metadata_not_default(
             self, "fit", sample_weight=sample_weight, metadata=metadata
         )
-        self.classes_ = [0, 1]
+        self.classes_ = np.unique(y)
         return self
 
     def predict(self, X, sample_weight="default", metadata="default"):
