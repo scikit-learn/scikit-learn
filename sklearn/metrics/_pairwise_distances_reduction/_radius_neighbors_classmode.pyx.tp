@@ -20,14 +20,14 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
     {{name_suffix}}bit implementation of RadiusNeighborsClassMode.
     """
     cdef:
-        const intp_t[:] Y_labels
-        const intp_t[:] unique_Y_labels
+        const intp_t[::1] Y_labels
+        const intp_t[::1] unique_Y_labels
         intp_t outlier_label_index
         bint outlier_label_exists
         bint outliers_exist
         unsigned char[::1] outliers
         object outlier_label
-        float64_t[:, :] class_scores
+        float64_t[:, ::1] class_scores
         WeightingStrategy weight_type
 
     @classmethod
@@ -71,8 +71,8 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
     def __init__(
         self,
         DatasetsPair{{name_suffix}} datasets_pair,
-        const intp_t[:] Y_labels,
-        const intp_t[:] unique_Y_labels,
+        const intp_t[::1] Y_labels,
+        const intp_t[::1] unique_Y_labels,
         float64_t radius,
         chunk_size=None,
         strategy=None,
@@ -98,11 +98,10 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
         self.outlier_label_index = -1
         self.outliers_exist = False
         self.outlier_label = outlier_label
-        self.outlier_label_exists = outlier_label is not None
         self.outliers = np.zeros(self.n_samples_X, dtype=np.bool_)
 
         cdef intp_t idx
-        if self.outlier_label_exists:
+        if self.outlier_label is not None:
             for idx in range(self.unique_Y_labels.shape[0]):
                 if self.unique_Y_labels[idx] == outlier_label:
                     self.outlier_label_index = idx
@@ -192,7 +191,7 @@ cdef class RadiusNeighborsClassMode{{name_suffix}}(RadiusNeighbors{{name_suffix}
         return
 
     def _finalize_results(self):
-        if self.outliers_exist and not self.outlier_label_exists:
+        if self.outliers_exist and self.outlier_label is None:
             raise ValueError(
                 "No neighbors found for test samples %r, "
                 "you can try using larger radius, "
