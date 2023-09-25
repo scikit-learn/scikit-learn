@@ -55,7 +55,10 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
-from sklearn.tests.metadata_routing_common import assert_request_is_empty
+from sklearn.tests.metadata_routing_common import (
+    assert_request_equal,
+    assert_request_is_empty,
+)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
     assert_almost_equal,
@@ -1305,11 +1308,11 @@ def test_PassthroughScorer_metadata_request():
         .set_score_request(sample_weight="alias")
         .set_fit_request(sample_weight=True)
     )
-    # test that _PassthroughScorer leaves everything other than `score` empty
-    assert_request_is_empty(scorer.get_metadata_routing(), exclude="score")
-    # test that _PassthroughScorer doesn't behave like a router and leaves
-    # the request as is.
-    assert scorer.get_metadata_routing().score.requests["sample_weight"] == "alias"
+    # Test that _PassthroughScorer doesn't change estimator's routing.
+    assert_request_equal(
+        scorer.get_metadata_routing(),
+        {"fit": {"sample_weight": True}, "score": {"sample_weight": "alias"}},
+    )
 
 
 @pytest.mark.usefixtures("enable_slep006")

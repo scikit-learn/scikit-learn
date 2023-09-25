@@ -114,7 +114,7 @@ using environment variables, namely:
 Note that BLAS & LAPACK implementations can also be impacted by
 `OMP_NUM_THREADS`. To check whether this is the case in your environment,
 you can inspect how the number of threads effectively used by those libraries
-is affected when running the the following command in a bash or zsh terminal
+is affected when running the following command in a bash or zsh terminal
 for different values of `OMP_NUM_THREADS`::
 
 .. prompt:: bash $

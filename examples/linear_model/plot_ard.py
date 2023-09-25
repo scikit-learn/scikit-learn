@@ -58,8 +58,8 @@ import pandas as pd
 from sklearn.linear_model import ARDRegression, BayesianRidge, LinearRegression
 
 olr = LinearRegression().fit(X, y)
-brr = BayesianRidge(compute_score=True, n_iter=30).fit(X, y)
-ard = ARDRegression(compute_score=True, n_iter=30).fit(X, y)
+brr = BayesianRidge(compute_score=True, max_iter=30).fit(X, y)
+ard = ARDRegression(compute_score=True, max_iter=30).fit(X, y)
 df = pd.DataFrame(
     {
         "Weights of true generative process": true_weights,
@@ -117,7 +117,7 @@ _ = plt.title("Models log-likelihood")
 
 # %%
 # Indeed, both models minimize the log-likelihood up to an arbitrary cutoff
-# defined by the `n_iter` parameter.
+# defined by the `max_iter` parameter.
 #
 # Bayesian regressions with polynomial feature expansion
 # ======================================================
