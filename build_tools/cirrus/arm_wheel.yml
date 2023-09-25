@@ -70,6 +70,7 @@ linux_arm64_wheel_task:
         CIBW_TEST_SKIP: "*_aarch64"
     - env:
         CIBW_BUILD: cp311-manylinux_aarch64
+        CIBW_TEST_SKIP: "*_aarch64"
     - env:
         CIBW_BUILD: cp312-manylinux_aarch64
         # TODO: remove when Python 3.12 is released
