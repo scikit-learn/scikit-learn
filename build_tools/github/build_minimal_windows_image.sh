@@ -22,6 +22,5 @@ docker build --build-arg PYTHON_VERSION=$PYTHON_VERSION \
              --build-arg WHEEL_NAME=$WHEEL_NAME \
              --build-arg CONFTEST_NAME=$CONFTEST_NAME \
              --build-arg CIBW_TEST_REQUIRES="$CIBW_TEST_REQUIRES" \
-             --build-arg CIBW_PRERELEASE_PYTHONS="$CIBW_PRERELEASE_PYTHONS" \
              -f build_tools/github/Windows \
              -t scikit-learn/minimal-windows .

@@ -20,8 +20,7 @@ macos_arm64_wheel_task:
     # macos arm64 builds are on GitHub Actions
     - env:
         CIBW_BUILD: cp312-macosx_arm64
-        # TODO: remove when Python 3.12 is released and there are numpy and
-        # scipy releases that supports Python 3.12
+        # TODO: remove when Python 3.12 is released
         CIBW_PRERELEASE_PYTHONS: True
 
   conda_script:
@@ -73,8 +72,7 @@ linux_arm64_wheel_task:
         CIBW_BUILD: cp311-manylinux_aarch64
     - env:
         CIBW_BUILD: cp312-manylinux_aarch64
-        # TODO: remove when Python 3.12 is released and there are numpy and
-        # scipy releases that supports Python 3.12
+        # TODO: remove when Python 3.12 is released
         CIBW_PRERELEASE_PYTHONS: True
 
   cibuildwheel_script:

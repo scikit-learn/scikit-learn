@@ -70,6 +70,7 @@ jobs:
           - os: windows-latest
             python: 312
             platform_id: win_amd64
+            # TODO: remove when Python 3.12 is released
             prerelease: "True"
 
           # Linux 64 bit manylinux2014
@@ -96,8 +97,7 @@ jobs:
             python: 312
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
-            # TODO: remove when Python 3.12 is released and there are numpy and
-            # scipy releases that supports Python 3.12
+            # TODO: remove when Python 3.12 is released
             prerelease: "True"
 
           # MacOS x86_64
