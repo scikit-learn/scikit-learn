@@ -93,7 +93,10 @@ def _fit_binary(estimator, X, y, classes=None):
 
 def _partial_fit_binary(estimator, X, y):
     """Partially fit a single binary estimator."""
-    estimator.partial_fit(X, y, np.array((0, 1)))
+    try:
+        estimator.partial_fit(X, y, classes=[0, 1])
+    except TypeError:
+        estimator.partial_fit(X, y)
     return estimator
 
 

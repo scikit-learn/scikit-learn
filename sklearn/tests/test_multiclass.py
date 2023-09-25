@@ -6,6 +6,7 @@ import scipy.sparse as sp
 from numpy.testing import assert_allclose
 
 from sklearn import datasets, svm
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.datasets import load_breast_cancer
 from sklearn.exceptions import NotFittedError
 from sklearn.impute import SimpleImputer
@@ -24,6 +25,7 @@ from sklearn.multiclass import (
     OneVsOneClassifier,
     OneVsRestClassifier,
     OutputCodeClassifier,
+    _partial_fit_binary,
 )
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
@@ -926,3 +928,34 @@ def test_ovo_consistent_binary_classification():
     ovo.fit(X, y)
 
     assert_array_equal(clf.predict(X), ovo.predict(X))
+
+
+def test_partial_fit_binary_passes_classes_correctly():
+    """Check if classes are only passed to estimators that expect classes."""
+    X, y = iris.data, iris.target
+
+    class ClassifierNotUsingClasses(ClassifierMixin, BaseEstimator):
+        def partial_fit(self, X, y):
+            """only uses X and y"""
+            self.classes_ = np.unique(y)
+            return self
+
+    class ClassifierUsingClasses(ClassifierMixin, BaseEstimator):
+        def partial_fit(self, X, y, classes=None):
+            """uses X, y and classes"""
+            self.classes_ = np.unique(y)
+            return self
+
+    class ClassifierUsingThirdPosArg(ClassifierMixin, BaseEstimator):
+        def partial_fit(self, X, y, sample_weight=np.ones(X.shape[0])):
+            """uses X, y and sample_weight"""
+            self.classes_ = np.unique(y)
+            return self
+
+    for estimator in [
+        ClassifierNotUsingClasses,
+        ClassifierUsingClasses,
+        ClassifierUsingThirdPosArg,
+    ]:
+        est = estimator()
+        _partial_fit_binary(est, X, y)
