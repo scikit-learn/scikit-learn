@@ -70,7 +70,7 @@ more details.
   :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
 
 - |Fix| All meta-estimators for which metadata routing is not yet implemented
-  now raise a `NotImplementedError`  on `get_metadata_routing` and on `fit` if
+  now raise a `NotImplementedError` on `get_metadata_routing` and on `fit` if
   metadata routing is enabled and any metadata is passed to them. :pr:`27389`
   by `Adrin Jalali`_.
 
