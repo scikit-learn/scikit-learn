@@ -887,15 +887,12 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
-        validation score is not improving by at least `tol` for
-        `n_iter_no_change` consecutive epochs. The split is stratified,
+        validation score is not improving by at least ``tol`` for
+        ``n_iter_no_change`` consecutive epochs. The split is stratified,
         except in a multilabel setting.
         If early stopping is False, then the training stops when the training
         loss does not improve by more than tol for n_iter_no_change consecutive
         passes over the training set.
-        Only effective when solver='sgd' or 'adam'.
-        See
-        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for

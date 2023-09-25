@@ -743,7 +743,7 @@ recommend to set the learning rate to a small constant
 (e.g. ``learning_rate <= 0.1``) and choose ``n_estimators`` large enough
 that early stopping applies,
 see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`
-. For a more detailed discussion of the interaction between
+for a more detailed discussion of the interaction between
 ``learning_rate`` and ``n_estimators`` see [R2007]_.
 
 Subsampling

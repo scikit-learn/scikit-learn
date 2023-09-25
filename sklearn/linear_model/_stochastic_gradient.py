@@ -711,9 +711,11 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             and self.n_iter_ == self.max_iter
         ):
             warnings.warn(
-                "Maximum number of iteration reached before "
-                "convergence. Consider increasing max_iter to "
-                "improve the fit.",
+                (
+                    "Maximum number of iteration reached before "
+                    "convergence. Consider increasing max_iter to "
+                    "improve the fit."
+                ),
                 ConvergenceWarning,
             )
         return self
@@ -1057,13 +1059,10 @@ class SGDClassifier(BaseSGDClassifier):
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
-        score is not improving. If set to True, it will automatically set aside
+        score is not improving. If set to `True`, it will automatically set aside
         a stratified fraction of training data as validation and terminate
         training when validation score returned by the `score` method is not
-        improving by at least `tol` for `n_iter_no_change` consecutive
-        epochs.
-        See
-        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`.
+        improving by at least tol for n_iter_no_change consecutive epochs.
 
         .. versionadded:: 0.20
             Added 'early_stopping' option
@@ -1560,9 +1559,11 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             and self.n_iter_ == self.max_iter
         ):
             warnings.warn(
-                "Maximum number of iteration reached before "
-                "convergence. Consider increasing max_iter to "
-                "improve the fit.",
+                (
+                    "Maximum number of iteration reached before "
+                    "convergence. Consider increasing max_iter to "
+                    "improve the fit."
+                ),
                 ConvergenceWarning,
             )
 
@@ -1847,12 +1848,10 @@ class SGDRegressor(BaseSGDRegressor):
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
-        a stratified fraction of training data as validation and terminate
+        a fraction of training data as validation and terminate
         training when validation score returned by the `score` method is not
         improving by at least `tol` for `n_iter_no_change` consecutive
         epochs.
-        See
-        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`.
 
         .. versionadded:: 0.20
             Added 'early_stopping' option
@@ -2448,9 +2447,11 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
             and self.n_iter_ == self.max_iter
         ):
             warnings.warn(
-                "Maximum number of iteration reached before "
-                "convergence. Consider increasing max_iter to "
-                "improve the fit.",
+                (
+                    "Maximum number of iteration reached before "
+                    "convergence. Consider increasing max_iter to "
+                    "improve the fit."
+                ),
                 ConvergenceWarning,
             )
 
