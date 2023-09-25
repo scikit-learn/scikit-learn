@@ -114,7 +114,7 @@ average_bike_rentals = bikes.frame.groupby(
     ["year", "season", "weekday", "hour"], observed=True
 ).mean(numeric_only=True)["count"]
 for ax, (idx, df) in zip(axs, average_bike_rentals.groupby("year")):
-    df.groupby("season").plot(ax=ax, legend=True)
+    df.groupby("season", observed=True).plot(ax=ax, legend=True)
 
     # decorate the plot
     ax.set_xticks(
