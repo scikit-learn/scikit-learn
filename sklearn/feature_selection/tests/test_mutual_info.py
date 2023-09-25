@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from scipy.sparse import csr_matrix
 
 from sklearn.feature_selection import mutual_info_classif, mutual_info_regression
 from sklearn.feature_selection._mutual_info import _compute_mi
@@ -9,6 +8,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 def test_compute_mi_dd():
@@ -176,12 +176,13 @@ def test_mutual_info_classif_mixed(global_dtype):
         assert mi_nn[2] == mi[2]
 
 
-def test_mutual_info_options(global_dtype):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_mutual_info_options(global_dtype, csr_container):
     X = np.array(
         [[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]], dtype=global_dtype
     )
     y = np.array([0, 1, 2, 2, 1], dtype=global_dtype)
-    X_csr = csr_matrix(X)
+    X_csr = csr_container(X)
 
     for mutual_info in (mutual_info_regression, mutual_info_classif):
         with pytest.raises(ValueError):
