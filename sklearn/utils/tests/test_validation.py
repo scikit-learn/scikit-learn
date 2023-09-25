@@ -49,7 +49,13 @@ from sklearn.utils._testing import (
     skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.estimator_checks import _NotAnArray
-from sklearn.utils.fixes import parse_version
+from sklearn.utils.fixes import (
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    DOK_CONTAINERS,
+    parse_version,
+)
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _allclose_dense_sparse,
@@ -356,13 +362,20 @@ def test_check_array():
                 assert X is X_checked
 
     # allowed sparse != None
-    X_csc = sp.csc_matrix(X_C)
-    X_coo = X_csc.tocoo()
-    X_dok = X_csc.todok()
-    X_int = X_csc.astype(int)
-    X_float = X_csc.astype(float)
 
-    Xs = [X_csc, X_coo, X_dok, X_int, X_float]
+    # try different type of sparse format
+    Xs = []
+    Xs.extend(
+        [
+            sparse_container(X_C)
+            for sparse_container in CSR_CONTAINERS
+            + CSC_CONTAINERS
+            + COO_CONTAINERS
+            + DOK_CONTAINERS
+        ]
+    )
+    Xs.extend([Xs[0].astype(np.int64), Xs[0].astype(np.float64)])
+
     accept_sparses = [["csr", "coo"], ["coo", "dok"]]
     # scipy sparse matrices do not support the object dtype so
     # this dtype is skipped in this loop
@@ -1586,7 +1599,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
 @pytest.mark.parametrize(
     "ntype1, ntype2, expected_subtype",
     [
-        ("longfloat", "longdouble", np.floating),
+        ("double", "longdouble", np.floating),
         ("float16", "half", np.floating),
         ("single", "float32", np.floating),
         ("double", "float64", np.floating),
