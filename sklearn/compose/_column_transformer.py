@@ -387,15 +387,23 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             the user (``self.transformers``).
 
         column_as_labels : bool
-            If True, columns are returned as strings. If False, columns are
-            returned as they were given by the user. This can only be True if
-            the ``ColumnTransformer`` is already fitted.
+            If True, columns are returned as string labels. If False, columns
+            are returned as they were given by the user. This can only be True
+            if the ``ColumnTransformer`` is already fitted.
 
         skip_drop : bool
             If True, 'drop' transformers are filtered out.
 
         skip_empty_columns : bool
             If True, transformers with empty selected columns are filtered out.
+
+        Yields
+        ------
+        A generator of tuples containing:
+            - name : the name of the transformer
+            - transformer : the transformer object
+            - columns : the columns for that transformer
+            - weight : the weight of the transformer
         """
         if fitted:
             transformers = self.transformers_
