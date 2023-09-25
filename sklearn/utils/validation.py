@@ -586,7 +586,7 @@ def _ensure_sparse_format(
     if (
         spmatrix_type == "dia_array"
         and changed_format
-        and accept_sparse[0] in ("csr", "coo", "bsr")
+        and accept_sparse[0] in ("csr", "coo")
     ):
         if accept_sparse[0] == "csr":
             index_dtype = _smallest_admissible_index_dtype(
