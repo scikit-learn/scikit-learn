@@ -1,6 +1,6 @@
 """
 ===================================
-Early stopping of Gradient Boosting
+Early stopping in Gradient Boosting
 ===================================
 
 Gradient Boosting is an ensemble technique that combines multiple weak
@@ -48,12 +48,14 @@ efficiency in gradient boosting.
 #          Kushan Sharma <kushansharma1@gmail.com>
 # License: BSD 3 clause
 
+import time
+
 import matplotlib.pyplot as plt
+
 from sklearn.datasets import fetch_california_housing
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
-import time
+from sklearn.model_selection import train_test_split
 
 # Load the California Housing Prices dataset
 data = fetch_california_housing()
