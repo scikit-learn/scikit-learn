@@ -58,16 +58,21 @@ more details.
   estimator's ``fit``, the CV splitter, and the scorer. :pr:`27058` by `Adrin
   Jalali`_.
 
-- |Enhancement| :class:`~compose.ColumnTransformer` now supports metadata routing
+- |Feature| :class:`~compose.ColumnTransformer` now supports metadata routing
   according to :ref:`metadata routing user guide <metadata_routing>`. :pr:`27005`
   by `Adrin Jalali`_.
 
-- |Enhancement| :class:`linear_model.LogisticRegressionCV` now supports
+- |Feature| :class:`linear_model.LogisticRegressionCV` now supports
   metadata routing. :meth:`linear_model.LogisticRegressionCV.fit` now
   accepts ``**params`` which are passed to the underlying splitter and
   scorer. :meth:`linear_model.LogisticRegressionCV.score` now accepts
   ``**score_params`` which are passed to the underlying scorer.
   :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
+
+- |Fix| All meta-estimators for which metadata routing is not yet implemented
+  now raise a `NotImplementedError` on `get_metadata_routing` and on `fit` if
+  metadata routing is enabled and any metadata is passed to them. :pr:`27389`
+  by `Adrin Jalali`_.
 
 Support for SciPy sparse arrays
 -------------------------------

@@ -24,6 +24,7 @@ from ..model_selection import check_cv
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
 from ..utils import arrayfuncs, as_float_array, check_random_state  # type: ignore
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils.metadata_routing import _RoutingNotSupportedMixin
 from ..utils.parallel import Parallel, delayed
 from ._base import LinearModel, LinearRegression, _deprecate_normalize, _preprocess_data
 
@@ -1523,7 +1524,7 @@ def _lars_path_residues(
     return alphas, active, coefs, residues.T
 
 
-class LarsCV(Lars):
+class LarsCV(_RoutingNotSupportedMixin, Lars):
     """Cross-validated Least Angle Regression model.
 
     See glossary entry for :term:`cross-validation estimator`.
