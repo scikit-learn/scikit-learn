@@ -280,6 +280,11 @@ Changelog
   :class:`metric.DistanceMetric` objects.
   :pr:`26267` by :user:`Meekail Zain <micky774>`
 
+- |Efficiency| The performance of :meth:`neighbors.RadiusNeighborsClassifier.predict`
+  and of :meth:`neighbors.RadiusNeighborsClassifier.predict_proba` has been improved
+  when `radius` is large and `algorithm="brute"` with non-Euclidean metrics.
+  :pr:`26828` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
