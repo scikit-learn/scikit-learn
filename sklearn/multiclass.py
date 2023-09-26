@@ -60,7 +60,6 @@ from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
-    _RoutingNotSupportedMixin,
     process_routing,
 )
 from .utils.metaestimators import _safe_split, available_if
@@ -191,7 +190,6 @@ def _estimators_has(attr):
 
 
 class OneVsRestClassifier(
-    _RoutingNotSupportedMixin,
     MultiOutputMixin,
     ClassifierMixin,
     MetaEstimatorMixin,
@@ -666,9 +664,7 @@ def _partial_fit_ovo_binary(estimator, X, y, i, j, partial_fit_params):
     return estimator
 
 
-class OneVsOneClassifier(
-    _RoutingNotSupportedMixin, MetaEstimatorMixin, ClassifierMixin, BaseEstimator
-):
+class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """One-vs-one multiclass strategy.
 
     This strategy consists in fitting one classifier per class pair.
@@ -1028,9 +1024,7 @@ class OneVsOneClassifier(
         return router
 
 
-class OutputCodeClassifier(
-    _RoutingNotSupportedMixin, MetaEstimatorMixin, ClassifierMixin, BaseEstimator
-):
+class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """(Error-Correcting) Output-Code multiclass strategy.
 
     Output-code based strategies consist in representing each class with a
