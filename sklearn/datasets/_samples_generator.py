@@ -1627,8 +1627,9 @@ def make_sparse_spd_matrix(
 
     Returns
     -------
-    prec : sparse matrix of shape (dim, dim)
-        The generated matrix.
+    prec : ndarray or sparse matrix of shape (dim, dim)
+        The generated matrix. If ``sparse_format=None``, this would be an ndarray.
+        Otherwise, this will be a sparse matrix of the specified format.
 
     See Also
     --------
