@@ -995,6 +995,8 @@ details.
    metrics.median_absolute_error
    metrics.mean_absolute_percentage_error
    metrics.r2_score
+   metrics.root_mean_squared_log_error
+   metrics.root_mean_squared_error
    metrics.mean_poisson_deviance
    metrics.mean_gamma_deviance
    metrics.mean_tweedie_deviance
