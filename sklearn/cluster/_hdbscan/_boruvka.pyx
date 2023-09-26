@@ -58,7 +58,7 @@ from libc.math cimport fabs, pow
 
 from sklearn.neighbors import BallTree, KDTree
 
-from ...metrics._dist_metrics cimport DistanceMetric
+from ...metrics._dist_metrics cimport DistanceMetric, DistanceMetric64
 from ...utils._typedefs cimport intp_t, float64_t, int64_t, uint8_t, int8_t
 
 from joblib import Parallel, delayed
@@ -93,7 +93,7 @@ cdef inline float64_t balltree_min_dist_dual(
 # Define a function giving the minimum distance between two
 # nodes of a kd-tree
 cdef inline float64_t kdtree_min_dist_dual(
-    DistanceMetric metric,
+    DistanceMetric64 metric,
     intp_t node1,
     intp_t node2,
     float64_t[:, :, ::1] node_bounds,
@@ -127,7 +127,7 @@ cdef inline float64_t kdtree_min_dist_dual(
 # implementation. This allows us to release the GIL over
 # larger sections of code
 cdef inline float64_t kdtree_min_rdist_dual(
-    DistanceMetric metric,
+    DistanceMetric64 metric,
     intp_t node1,
     intp_t node2,
     float64_t[:, :, ::1] node_bounds,
@@ -270,7 +270,7 @@ cdef class BoruvkaAlgorithm:
 
     cdef object tree
     cdef object core_dist_tree
-    cdef DistanceMetric dist
+    cdef DistanceMetric64 dist
     cdef cnp.ndarray _data
     cdef readonly const float64_t[:, ::1] raw_data
     cdef float64_t[:, :, ::1] node_bounds
@@ -558,7 +558,8 @@ cdef class BoruvkaAlgorithm:
         cdef float64_t new_bound, new_upper_bound, new_lower_bound
         cdef float64_t bound_max, bound_min
 
-        cdef intp_t left, right, left_dist, right_dist
+        cdef intp_t left, right
+        cdef float64_t left_dist, right_dist
 
         # Compute the distance between the query and reference nodes
         if self.is_KDTree:
@@ -579,11 +580,11 @@ cdef class BoruvkaAlgorithm:
         # If the distance between the nodes is less than the current bound for
         # the query and the nodes are not in the same component continue;
         # otherwise we get to prune this branch and return early.
-        if node_dist < self.bounds_ptr[node1]:
+        if node_dist < self.bounds[node1]:
             if (
-                self.component_of_node_ptr[node1] ==
-                self.component_of_node_ptr[node2] and
-                self.component_of_node_ptr[node1] >= 0
+                self.component_of_node[node1] ==
+                self.component_of_node[node2] and
+                self.component_of_node[node1] >= 0
             ):
                 return 0
         else:
@@ -630,19 +631,19 @@ cdef class BoruvkaAlgorithm:
             for i in range(point_indices1.shape[0]):
 
                 p = point_indices1[i]
-                component1 = self.component_of_point_ptr[p]
+                component1 = self.component_of_point[p]
 
-                if (self.core_distance_ptr[p] >
-                        self.candidate_distance_ptr[component1]):
+                if (self.core_distance[p] >
+                        self.candidate_distance[component1]):
                     continue
 
                 for j in range(point_indices2.shape[0]):
 
                     q = point_indices2[j]
-                    component2 = self.component_of_point_ptr[q]
+                    component2 = self.component_of_point[q]
 
-                    if (self.core_distance_ptr[q] >
-                            self.candidate_distance_ptr[component1]):
+                    if (self.core_distance[q] >
+                            self.candidate_distance[component1]):
                         continue
 
                     if component1 != component2:
@@ -661,26 +662,26 @@ cdef class BoruvkaAlgorithm:
                         if self.alpha != 1.0:
                             mr_dist = max(
                                 d / self.alpha,
-                                self.core_distance_ptr[p],
-                                self.core_distance_ptr[q]
+                                self.core_distance[p],
+                                self.core_distance[q]
                             )
                         else:
                             mr_dist = max(
-                                d, self.core_distance_ptr[p],
-                                self.core_distance_ptr[q]
+                                d, self.core_distance[p],
+                                self.core_distance[q]
                             )
-                        if mr_dist < self.candidate_distance_ptr[component1]:
-                            self.candidate_distance_ptr[component1] = mr_dist
-                            self.candidate_neighbor_ptr[component1] = q
-                            self.candidate_point_ptr[component1] = p
+                        if mr_dist < self.candidate_distance[component1]:
+                            self.candidate_distance[component1] = mr_dist
+                            self.candidate_neighbor[component1] = q
+                            self.candidate_point[component1] = p
 
                 new_upper_bound = max(
                     new_upper_bound,
-                    self.candidate_distance_ptr[component1]
+                    self.candidate_distance[component1]
                 )
                 new_lower_bound = min(
                     new_lower_bound,
-                    self.candidate_distance_ptr[component1]
+                    self.candidate_distance[component1]
                 )
 
             # Compute new bounds for the query node, and
@@ -691,8 +692,8 @@ cdef class BoruvkaAlgorithm:
                 new_upper_bound,
                 new_lower_bound + 2 * _radius
             )
-            if new_bound < self.bounds_ptr[node1]:
-                self.bounds_ptr[node1] = new_bound
+            if new_bound < self.bounds[node1]:
+                self.bounds[node1] = new_bound
 
                 # Propagate bounds up the tree
                 while node1 > 0:
@@ -705,24 +706,24 @@ cdef class BoruvkaAlgorithm:
                     right_info = self.node_data[right]
 
                     bound_max = max(
-                        self.bounds_ptr[left],
-                        self.bounds_ptr[right]
+                        self.bounds[left],
+                        self.bounds[right]
                     )
 
                     if self.is_KDTree:
                         new_bound = bound_max
                     else:
                         bound_min = min(
-                            self.bounds_ptr[left] + 2 * (parent_info.radius - left_info.radius),
-                            self.bounds_ptr[right] + 2 * (parent_info.radius - right_info.radius)
+                            self.bounds[left] + 2 * (parent_info.radius - left_info.radius),
+                            self.bounds[right] + 2 * (parent_info.radius - right_info.radius)
                         )
 
                         if bound_min > 0:
                             new_bound = min(bound_max, bound_min)
                         else:
                             new_bound = bound_max
-                    if new_bound < self.bounds_ptr[parent]:
-                        self.bounds_ptr[parent] = new_bound
+                    if new_bound < self.bounds[parent]:
+                        self.bounds[parent] = new_bound
                         node1 = parent
                     else:
                         break
