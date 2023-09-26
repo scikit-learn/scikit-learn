@@ -1345,8 +1345,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         If 'auto', early stopping is enabled if the sample size is larger than
         10000. If True, early stopping is enabled, otherwise early stopping is
         disabled.
-        See also
-        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`.
 
         .. versionadded:: 0.23
 
@@ -1707,8 +1705,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         If 'auto', early stopping is enabled if the sample size is larger than
         10000. If True, early stopping is enabled, otherwise early stopping is
         disabled.
-        See also
-        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`.
 
         .. versionadded:: 0.23
 

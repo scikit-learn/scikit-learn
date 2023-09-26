@@ -1282,6 +1282,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         improving in all of the previous ``n_iter_no_change`` numbers of
         iterations. The split is stratified.
         Values must be in the range `[1, inf)`.
+        See
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`.
 
         .. versionadded:: 0.20
 
@@ -1891,6 +1893,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         improving in all of the previous ``n_iter_no_change`` numbers of
         iterations.
         Values must be in the range `[1, inf)`.
+        See
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`.
 
         .. versionadded:: 0.20
 
