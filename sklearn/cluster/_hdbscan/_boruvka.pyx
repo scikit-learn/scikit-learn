@@ -84,7 +84,7 @@ cdef inline float64_t balltree_min_dist_dual(
     intp_t node1,
     intp_t node2,
     float64_t[:, ::1] centroid_dist
-) nogil except -1:
+) except -1 nogil:
 
     cdef float64_t dist_pt = centroid_dist[node1, node2]
     return max(0, (dist_pt - radius1 - radius2))
@@ -132,7 +132,7 @@ cdef inline float64_t kdtree_min_rdist_dual(
     intp_t node2,
     float64_t[:, :, ::1] node_bounds,
     intp_t num_features
-) nogil except -1:
+) except -1 nogil:
 
     cdef float64_t d, d1, d2, rdist = 0.0
     cdef float64_t zero = 0.0
@@ -311,6 +311,7 @@ cdef class BoruvkaAlgorithm:
         self.alpha = alpha
         self.approx_min_span_tree = approx_min_span_tree
         self.n_jobs = n_jobs
+        self.min_samples = min_samples
 
         self.num_points = self.tree.data.shape[0]
         self.num_features = self.tree.data.shape[1]
@@ -377,6 +378,7 @@ cdef class BoruvkaAlgorithm:
                 dualtree=True,
                 breadth_first=True)
 
+        print(f"DEBUG *** self.min_samples={self.min_samples}")
         self.core_distance = knn_dist[:, self.min_samples - 1].copy()
 
 
@@ -535,8 +537,11 @@ cdef class BoruvkaAlgorithm:
 
         return self.components.shape[0]
 
-    cdef int dual_tree_traversal(self, intp_t node1,
-                                 intp_t node2) nogil except -1:
+    cdef int dual_tree_traversal(
+        self,
+        intp_t node1,
+        intp_t node2
+    ) except -1 nogil:
         """Perform a dual tree traversal, pruning wherever possible, to find
         the nearest neighbor not in the same component for each component.
         This is akin to a standard dual tree NN search, but we also prune

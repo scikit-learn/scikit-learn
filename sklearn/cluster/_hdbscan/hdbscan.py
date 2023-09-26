@@ -354,6 +354,7 @@ def _hdbscan_boruvka(
     X,
     algo,
     min_samples=5,
+    alpha=1.0,
     metric="euclidean",
     leaf_size=40,
     n_jobs=None,
@@ -369,6 +370,7 @@ def _hdbscan_boruvka(
         min_samples=min_samples,
         metric=metric,
         leaf_size=leaf_size // 3,
+        alpha=alpha,
         approx_min_span_tree=True,
         n_jobs=n_jobs,
         **metric_params,
@@ -504,7 +506,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         If the `X` passed during `fit` is sparse or `metric` is invalid for
         both :class:`~sklearn.neighbors.KDTree` and
         :class:`~sklearn.neighbors.BallTree`, then it resolves to use the
-        `"brute"` algorithm.
+        `"brute"` minimum-spanning tree algorithm.
 
         .. deprecated:: 1.4
            The `'kdtree'` option was deprecated in version 1.4,
@@ -513,6 +515,13 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         .. deprecated:: 1.4
            The `'balltree'` option was deprecated in version 1.4,
            and will be renamed to `'ball_tree'` in 1.6.
+
+    mst_algorithm : {"auto", "brute", "prims", "boruvka"}, default="auto"
+        Exactly which algorithm to use for building the minimum spanning tree;
+        by default this is set to `"auto"` which switches between `"prims"` and
+        `"boruvka"` based on a heuristic.
+
+        .. versionadded:: 1.4
 
     leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest neighbour queries when
@@ -671,6 +680,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 deprecated={"kdtree", "balltree"},
             ),
         ],
+        "mst_algorithm": [StrOptions({"auto", "brute", "prims", "boruvka"})],
         "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
         "n_jobs": [Integral, None],
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
@@ -689,6 +699,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         metric_params=None,
         alpha=1.0,
         algorithm="auto",
+        mst_algorithm="auto",
         leaf_size=40,
         n_jobs=None,
         cluster_selection_method="eom",
@@ -704,6 +715,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self.metric = metric
         self.metric_params = metric_params
         self.algorithm = algorithm
+        self.mst_algorithm = mst_algorithm
         self.leaf_size = leaf_size
         self.n_jobs = n_jobs
         self.cluster_selection_method = cluster_selection_method
@@ -796,6 +808,17 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 f" samples in X ({X.shape[0]})"
             )
 
+        algos = {self.algorithm, self.mst_algorithm}
+        if (
+            "brute" in algos
+            and len({"kd_tree", "ball_tree", "prims", "boruvka"}.intersection(algos))
+            > 0
+        ):
+            raise ValueError(
+                "When setting either `algorithm='brute'` or `mst_algorithm='brute'`,"
+                " both keyword arguments must only be set to either 'brute' or 'auto'."
+            )
+
         # TODO(1.6): Remove
         if self.algorithm == "kdtree":
             warn(
@@ -853,13 +876,12 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             if self.algorithm == "brute":
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = self.copy
-            elif self.algorithm == "kd_tree":
-                mst_func = _hdbscan_prims
-                kwargs["algo"] = "kd_tree"
-                kwargs["leaf_size"] = self.leaf_size
             else:
-                mst_func = _hdbscan_prims
-                kwargs["algo"] = "ball_tree"
+                if self.mst_algorithm == "prims":
+                    mst_func = _hdbscan_prims
+                else:
+                    mst_func = _hdbscan_boruvka
+                kwargs["algo"] = self.algorithm
                 kwargs["leaf_size"] = self.leaf_size
         else:
             if issparse(X) or self.metric not in FAST_METRICS:

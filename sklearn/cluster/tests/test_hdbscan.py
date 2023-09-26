@@ -50,6 +50,19 @@ def test_hdbscan_boruvka_matches(tree):
     assert similarity > 0.85
 
 
+def test_hdbscan_mst_algorithm_errors():
+    msg = "When setting either"
+    for tree in ["kd_tree", "ball_tree"]:
+        hdb = HDBSCAN(algorithm=tree, mst_algorithm="brute")
+        with pytest.raises(ValueError, match=msg):
+            hdb.fit(X, y)
+
+    for mst_algo in ["prims", "boruvka"]:
+        hdb = HDBSCAN(algorithm="brute", mst_algorithm=mst_algo)
+        with pytest.raises(ValueError, match=msg):
+            hdb.fit(X, y)
+
+
 @pytest.mark.parametrize("outlier_type", _OUTLIER_ENCODING)
 def test_outlier_data(outlier_type):
     """
