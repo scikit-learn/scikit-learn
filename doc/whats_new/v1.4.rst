@@ -113,7 +113,8 @@ and classes are impacted:
 - :class:`impute.KNNImputer` in :pr:`27277` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`kernel_approximation.PolynomialCountSketch` in  :pr:`27301` by
   :user:`Lohit SundaramahaLingam <lohitslohit>`;
-- :class:`neural_network.BernoulliRBM` in :pr:`27252` by `Yao Xiao <Charlie-XIAO>`.
+- :class:`neural_network.BernoulliRBM` in :pr:`27252` by
+  :user:`Yao Xiao <Charlie-XIAO>`.
 
 Changelog
 ---------
@@ -167,6 +168,15 @@ Changelog
   :class:`cluster.HDBSCAN` ensuring consistency in naming convention.
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| :func:`datasets.make_sparse_spd_matrix` now uses a more memory-
+  efficient sparse layout. It also accepts a new keyword `sparse_format` that allows
+  specifying the output format of the sparse matrix. By default `sparse_format=None`,
+  which returns a dense numpy ndarray as before.
+  :pr:`27438` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.decomposition`
 ............................
