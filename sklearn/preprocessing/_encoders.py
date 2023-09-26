@@ -450,7 +450,7 @@ class OneHotEncoder(_BaseEncoder):
     The features are encoded using a one-hot (aka 'one-of-K' or 'dummy')
     encoding scheme. This creates a binary column for each category and
     returns a sparse matrix or dense array (depending on the ``sparse_output``
-    parameter)
+    parameter).
 
     By default, the encoder derives the categories based on the unique values
     in each feature. Alternatively, you can also specify the `categories`
@@ -522,7 +522,8 @@ class OneHotEncoder(_BaseEncoder):
            `sparse_output` instead.
 
     sparse_output : bool, default=True
-        Will return sparse matrix if set True else will return an array.
+        When ``True``, it returns a :class:`scipy.sparse.csr_matrix`,
+        i.e. a sparse matrix in "Compressed Sparse Row" (CSR) format.
 
         .. versionadded:: 1.2
            `sparse` was renamed to `sparse_output`
@@ -995,8 +996,12 @@ class OneHotEncoder(_BaseEncoder):
         """
         Transform X using one-hot encoding.
 
-        If there are infrequent categories for a feature, the infrequent
-        categories will be grouped into a single category.
+        If `sparse_output=True` (default), it returns an instance of
+        :class:`scipy.sparse._csr.csr_matrix` (CSR format).
+
+        If there are infrequent categories for a feature, set by specifying
+        `max_categories` or `min_frequency`, the infrequent categories are
+        grouped into a single category.
 
         Parameters
         ----------
