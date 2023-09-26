@@ -81,8 +81,8 @@ def assert_same_distances_for_common_neighbors(
     # Compute a mapping from indices to distances for each result set and
     # check that the computed neighbors with matching indices are withing
     # the expected distance tolerance.
-    indices_to_dist_a = {idx: dist for idx, dist in zip(indices_row_a, dist_row_a)}
-    indices_to_dist_b = {idx: dist for idx, dist in zip(indices_row_b, dist_row_b)}
+    indices_to_dist_a = dict(zip(indices_row_a, dist_row_a))
+    indices_to_dist_b = dict(zip(indices_row_b, dist_row_b))
 
     common_indices = set(indices_row_a).intersection(set(indices_row_b))
     for idx in common_indices:
@@ -224,7 +224,7 @@ def assert_compatible_radius_results(
         == len(neighbors_dists_b)
         == len(neighbors_indices_a)
         == len(neighbors_indices_b)
-    ), "Arrays of results have various lengths."
+    )
 
     n_queries = len(neighbors_dists_a)
 
@@ -336,22 +336,20 @@ def test_assert_compatible_argkmin_results():
         np.array([[1.2, 2.5, _6_1m, 6.1, _6_1p]]),
         np.array([[1, 2, 3, 4, 5]]),
         np.array([[1, 2, 5, 4, 3]]),
-        atol=atol,
-        rtol=rtol,
+        **tols,
     )
 
     # The last few indices do not necessarily have to match because of the rounding
-    # errors on the distances: their could be tied results at the boundary.
+    # errors on the distances: there could be tied results at the boundary.
     assert_compatible_argkmin_results(
         np.array([[1.2, 2.5, 3.0, 6.1, _6_1p]]),
         np.array([[1.2, 2.5, 3.0, _6_1m, 6.1]]),
         np.array([[1, 2, 3, 4, 5]]),
         np.array([[1, 2, 3, 6, 7]]),
-        atol=atol,
-        rtol=rtol,
+        **tols,
     )
 
-    # All points are have close distances so any ranking permutation
+    # All points have close distances so any ranking permutation
     # is valid for this query result.
     assert_compatible_argkmin_results(
         np.array([[_1m, 1, _1p, _1p, _1p]]),
