@@ -2639,8 +2639,7 @@ def train_test_split(
     >>> train_test_split(y, shuffle=False)
     [[0, 1, 2], [3, 4]]
     """
-    n_arrays = len(arrays)
-    if n_arrays == 0:
+    if len(n_arrays) == 0:
         raise ValueError("At least one array required as input")
 
     arrays = indexable(*arrays)
@@ -2650,7 +2649,7 @@ def train_test_split(
         n_samples, test_size, train_size, default_test_size=0.25
     )
 
-    if shuffle is False:
+    if not shuffle:
         if stratify is not None:
             raise ValueError(
                 "Stratified train/test split is not implemented for shuffle=False"
@@ -2660,7 +2659,7 @@ def train_test_split(
         test = np.arange(n_train, n_train + n_test)
 
     else:
-        if stratify is not None:
+        if stratify != None:
             CVClass = StratifiedShuffleSplit
         else:
             CVClass = ShuffleSplit
