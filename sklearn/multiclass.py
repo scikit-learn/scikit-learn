@@ -99,7 +99,7 @@ def _fit_binary(estimator, X, y, fit_params, classes=None):
 
 def _partial_fit_binary(estimator, X, y, partial_fit_params):
     """Partially fit a single binary estimator."""
-    estimator.partial_fit(X, y, np.array((0, 1)), **partial_fit_params)
+    estimator.partial_fit(X, y, classes=np.array((0, 1)), **partial_fit_params)
     return estimator
 
 
@@ -1068,7 +1068,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     classes_ : ndarray of shape (n_classes,)
         Array containing labels.
 
-    code_book_ : ndarray of shape (n_classes, len(estimators_))
+    code_book_ : ndarray of shape (n_classes, `len(estimators_)`)
         Binary array containing the code of each class.
 
     n_features_in_ : int
@@ -1254,7 +1254,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         routing : MetadataRouter
-            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
 
