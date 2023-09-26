@@ -20,11 +20,8 @@ from sklearn.datasets import (
     fetch_california_housing,
     fetch_covtype,
     fetch_kddcup99,
-    fetch_lfw_pairs,
-    fetch_lfw_people,
     fetch_olivetti_faces,
     fetch_rcv1,
-    fetch_species_distributions,
 )
 from sklearn.tests import random_seed
 from sklearn.utils import _IS_32BIT
@@ -71,11 +68,8 @@ dataset_fetchers = {
     "fetch_california_housing_fxt": fetch_california_housing,
     "fetch_covtype_fxt": fetch_covtype,
     "fetch_kddcup99_fxt": fetch_kddcup99,
-    "fetch_lfw_pairs": fetch_lfw_pairs,
-    "fetch_lfw_people": fetch_lfw_people,
     "fetch_olivetti_faces_fxt": fetch_olivetti_faces,
     "fetch_rcv1_fxt": fetch_rcv1,
-    "fetch_species_distributions": fetch_species_distributions,
 }
 
 if scipy_datasets_require_network:
@@ -116,11 +110,8 @@ fetch_20newsgroups_vectorized_fxt = _fetch_fixture(fetch_20newsgroups_vectorized
 fetch_california_housing_fxt = _fetch_fixture(fetch_california_housing)
 fetch_covtype_fxt = _fetch_fixture(fetch_covtype)
 fetch_kddcup99_fxt = _fetch_fixture(fetch_kddcup99)
-fetch_lfw_pairs_fxt = _fetch_fixture(fetch_lfw_pairs)
-fetch_lfw_poeple_fxt = _fetch_fixture(fetch_lfw_people)
 fetch_olivetti_faces_fxt = _fetch_fixture(fetch_olivetti_faces)
 fetch_rcv1_fxt = _fetch_fixture(fetch_rcv1)
-fetch_species_distributions_fxt = _fetch_fixture(fetch_species_distributions)
 raccoon_face_fxt = pytest.fixture(raccoon_face_or_skip)
 
 

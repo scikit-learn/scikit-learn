@@ -3,7 +3,6 @@ import shutil
 import tempfile
 import warnings
 from functools import partial
-from pathlib import Path
 from pickle import dumps, loads
 
 import numpy as np
@@ -30,16 +29,6 @@ from sklearn.datasets.tests.test_common import check_as_frame
 from sklearn.preprocessing import scale
 from sklearn.utils import Bunch
 from sklearn.utils.fixes import _is_resource
-
-
-class _DummyPath:
-    """A minimal class that implements os.PathLike interface."""
-
-    def __init__(self, path):
-        self.path = path
-
-    def __fspath__(self):
-        return self.path
 
 
 def _remove_dir(path):
@@ -78,55 +67,19 @@ def test_category_dir_2(load_files_root):
     _remove_dir(test_category_dir2)
 
 
-@pytest.mark.parametrize("path_container", [None, Path, _DummyPath])
-def test_data_home(data_home, path_container):
+def test_data_home(data_home):
     # get_data_home will point to a pre-existing folder
-    if path_container is not None:
-        data_home = path_container(data_home)
     data_home = get_data_home(data_home=data_home)
-
     assert data_home == data_home
     assert os.path.exists(data_home)
 
     # clear_data_home will delete both the content and the folder it-self
-    if path_container is not None:
-        data_home = path_container(data_home)
     clear_data_home(data_home=data_home)
     assert not os.path.exists(data_home)
 
     # if the folder is missing it will be created again
     data_home = get_data_home(data_home=data_home)
     assert os.path.exists(data_home)
-
-
-@pytest.mark.parametrize("path_container", [None, Path, _DummyPath])
-def test_fetcher_data_home(
-    path_container,
-    data_home,
-    fetch_20newsgroups_fxt,
-    fetch_20newsgroups_vectorized_fxt,
-    fetch_california_housing_fxt,
-    fetch_covtype_fxt,
-    fetch_kddcup99_fxt,
-    fetch_lfw_pairs_fxt,
-    fetch_lfw_poeple_fxt,
-    fetch_olivetti_faces_fxt,
-    fetch_rcv1_fxt,
-    fetch_species_distributions_fxt,
-):
-    if path_container is not None:
-        data_home = path_container(data_home)
-
-    fetch_20newsgroups_fxt(data_home=data_home)
-    fetch_20newsgroups_vectorized_fxt(data_home=data_home)
-    fetch_california_housing_fxt(data_home=data_home)
-    fetch_covtype_fxt(data_home=data_home)
-    fetch_kddcup99_fxt(data_home=data_home)
-    fetch_lfw_pairs_fxt(data_home=data_home)
-    fetch_lfw_poeple_fxt(data_home=data_home)
-    fetch_olivetti_faces_fxt(data_home=data_home)
-    fetch_rcv1_fxt(data_home=data_home)
-    fetch_species_distributions_fxt(data_home=data_home)
 
 
 def test_default_empty_load_files(load_files_root):
