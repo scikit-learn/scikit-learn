@@ -40,8 +40,8 @@ OUTLIER_SET = {-1} | {out["label"] for _, out in _OUTLIER_ENCODING.items()}
 
 @pytest.mark.parametrize("tree", ["kd_tree", "ball_tree"])
 def test_hdbscan_boruvka_matches(tree):
-    hdb_prims = HDBSCAN(tree_algorithm=tree, mst_algorithm="prims").fit(X, y)
-    hdb_boruvka = HDBSCAN(tree_algorithm=tree, mst_algorithm="boruvka").fit(X, y)
+    hdb_prims = HDBSCAN(algorithm=tree, mst_algorithm="prims").fit(X, y)
+    hdb_boruvka = HDBSCAN(algorithm=tree, mst_algorithm="boruvka").fit(X, y)
     labels_prims = hdb_prims.labels_
     labels_boruvka = hdb_boruvka.labels_
 
