@@ -201,6 +201,7 @@ def check_pairwise_arrays(
      prefer_skip_nested_validation=True,
  )
 
+
 def check_paired_arrays(X, Y):
     """Set X and Y appropriately and checks inputs for paired distances.
 
