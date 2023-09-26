@@ -5,14 +5,23 @@
 Pipelines and composite estimators
 ==================================
 
-Transformers are usually combined with classifiers, regressors or other
-estimators to build a composite estimator.  The most common tool is a
-:ref:`Pipeline <pipeline>`. Pipeline is often used in combination with
-:ref:`FeatureUnion <feature_union>` which concatenates the output of
-transformers into a composite feature space.  :ref:`TransformedTargetRegressor
-<transformed_target_regressor>` deals with transforming the :term:`target`
-(i.e. log-transform :term:`y`). In contrast, Pipelines only transform the
-observed data (:term:`X`).
+To build a composite estimator, transformers are usually combined with other
+transformers or with :term:`predictors` (such as classifiers or regressors).
+The most common tool used for composing estimators is a :ref:`Pipeline
+<pipeline>`. Pipelines require all steps except the last to be a
+:term:`transformer`. The last step can be anything, a transformer, a
+:term:`predictor`, or a clustering estimator which might have or not have a
+`.predict(...)` method. A pipeline exposes all methods provided by the last
+estimator: if the last step provides a `transform` method, then the pipeline
+would have a `transform` method and behave like a transformer. If the last step
+provides a `predict` method, then the pipeline would expose that method, and
+given a data :term:`X`, use all steps except the last to transform the data,
+and then give that transformed data to the `predict` method of the last step of
+the pipeline. `Pipeline` is often used in combination with :ref:`Column
+Transformer <column_transformer>` or :ref:`FeatureUnion <feature_union>` which
+concatenate the output of transformers into a composite feature space.
+:ref:`TransformedTargetRegressor <transformed_target_regressor>` deals with
+transforming the :term:`target` (i.e. log-transform :term:`y`).
 
 .. _pipeline:
 
@@ -54,9 +63,8 @@ The last estimator may be any type (transformer, classifier, etc.).
 Usage
 -----
 
-|details-start|
-**Construction**
-|details-split|
+Build a pipeline
+................
 
 The :class:`Pipeline` is built using a list of ``(key, value)`` pairs, where
 the ``key`` is a string containing the name you want to give this step and ``value``
@@ -70,6 +78,10 @@ is an estimator object::
     >>> pipe
     Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
 
+|details-start|
+**Shorthand version using :func:`make_pipeline`**
+|details-split|
+
 The utility function :func:`make_pipeline` is a shorthand
 for constructing pipelines;
 it takes a variable number of estimators and returns a pipeline,
@@ -81,29 +93,11 @@ filling in the names automatically::
 
 |details-end|
 
-|details-start|
-**Accessing steps**
-|details-split|
+Access pipeline steps
+.....................
 
-
-The estimators of a pipeline are stored as a list in the ``steps`` attribute,
-but can be accessed by index or name by indexing (with ``[idx]``) the
-Pipeline::
-
-    >>> pipe.steps[0]
-    ('reduce_dim', PCA())
-    >>> pipe[0]
-    PCA()
-    >>> pipe['reduce_dim']
-    PCA()
-
-Pipeline's `named_steps` attribute allows accessing steps by name with tab
-completion in interactive environments::
-
-    >>> pipe.named_steps.reduce_dim is pipe['reduce_dim']
-    True
-
-A sub-pipeline can also be extracted using the slicing notation commonly used
+The estimators of a pipeline are stored as a list in the ``steps`` attribute.
+A sub-pipeline can be extracted using the slicing notation commonly used
 for Python Sequences such as lists or strings (although only a step of 1 is
 permitted). This is convenient for performing only some of the transformations
 (or their inverse):
@@ -113,19 +107,76 @@ permitted). This is convenient for performing only some of the transformations
     >>> pipe[-1:]
     Pipeline(steps=[('clf', SVC())])
 
+|details-start|
+**Accessing a step by name or position**
+|details-split|
+
+A specific step can also be accessed by index or name by indexing (with ``[idx]``) the
+pipeline::
+
+    >>> pipe.steps[0]
+    ('reduce_dim', PCA())
+    >>> pipe[0]
+    PCA()
+    >>> pipe['reduce_dim']
+    PCA()
+
+`Pipeline`'s `named_steps` attribute allows accessing steps by name with tab
+completion in interactive environments::
+
+    >>> pipe.named_steps.reduce_dim is pipe['reduce_dim']
+    True
+
+|details-end|
+
+Tracking feature names in a pipeline
+....................................
+
+To enable model inspection, :class:`~sklearn.pipeline.Pipeline` has a
+``get_feature_names_out()`` method, just like all transformers. You can use
+pipeline slicing to get the feature names going into each step::
+
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.feature_selection import SelectKBest
+    >>> iris = load_iris()
+    >>> pipe = Pipeline(steps=[
+    ...    ('select', SelectKBest(k=2)),
+    ...    ('clf', LogisticRegression())])
+    >>> pipe.fit(iris.data, iris.target)
+    Pipeline(steps=[('select', SelectKBest(...)), ('clf', LogisticRegression(...))])
+    >>> pipe[:-1].get_feature_names_out()
+    array(['x2', 'x3'], ...)
+
+|details-start|
+**Customize feature names**
+|details-split|
+
+You can also provide custom feature names for the input data using
+``get_feature_names_out``::
+
+    >>> pipe[:-1].get_feature_names_out(iris.feature_names)
+    array(['petal length (cm)', 'petal width (cm)'], ...)
+
 |details-end|
 
 .. _pipeline_nested_parameters:
 
-|details-start|
-**Nested parameters**
-|details-split|
+Access to nested parameters
+...........................
 
-Parameters of the estimators in the pipeline can be accessed using the
-``<estimator>__<parameter>`` syntax::
+It is common to adjust the parameters of an estimator within a pipeline. This parameter
+is therefore nested because it belongs to a particular sub-step. Parameters of the
+estimators in the pipeline are accessible using the ``<estimator>__<parameter>``
+syntax::
 
+    >>> pipe = Pipeline(steps=[("reduce_dim", PCA()), ("clf", SVC())])
     >>> pipe.set_params(clf__C=10)
     Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC(C=10))])
+
+|details-start|
+**When does it matter?**
+|details-split|
 
 This is particularly important for doing grid searches::
 
@@ -137,42 +188,16 @@ This is particularly important for doing grid searches::
 Individual steps may also be replaced as parameters, and non-final steps may be
 ignored by setting them to ``'passthrough'``::
 
-    >>> from sklearn.linear_model import LogisticRegression
     >>> param_grid = dict(reduce_dim=['passthrough', PCA(5), PCA(10)],
     ...                   clf=[SVC(), LogisticRegression()],
     ...                   clf__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
 
-The estimators of the pipeline can be retrieved by index:
+.. topic:: See Also:
 
-    >>> pipe[0]
-    PCA()
+ * :ref:`composite_grid_search`
 
-or by name::
-
-    >>> pipe['reduce_dim']
-    PCA()
-
-To enable model inspection, :class:`~sklearn.pipeline.Pipeline` has a
-``get_feature_names_out()`` method, just like all transformers. You can use
-pipeline slicing to get the feature names going into each step::
-
-    >>> from sklearn.datasets import load_iris
-    >>> from sklearn.feature_selection import SelectKBest
-    >>> iris = load_iris()
-    >>> pipe = Pipeline(steps=[
-    ...    ('select', SelectKBest(k=2)),
-    ...    ('clf', LogisticRegression())])
-    >>> pipe.fit(iris.data, iris.target)
-    Pipeline(steps=[('select', SelectKBest(...)), ('clf', LogisticRegression(...))])
-    >>> pipe[:-1].get_feature_names_out()
-    array(['x2', 'x3'], ...)
-
-You can also provide custom feature names for the input data using
-``get_feature_names_out``::
-
-    >>> pipe[:-1].get_feature_names_out(iris.feature_names)
-    array(['petal length (cm)', 'petal width (cm)'], ...)
+|details-end|
 
 .. topic:: Examples:
 
@@ -184,11 +209,6 @@ You can also provide custom feature names for the input data using
  * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_pipeline_display.py`
 
-.. topic:: See Also:
-
- * :ref:`composite_grid_search`
-
-|details-end|
 
 .. _pipeline_cache:
 

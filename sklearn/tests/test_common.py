@@ -218,7 +218,7 @@ def test_import_all_consistency():
         if ".tests." in modname:
             continue
         # Avoid test suite depending on setuptools
-        if modname == "sklearn._build_utils.pre_build_helpers":
+        if "sklearn._build_utils" in modname:
             continue
         if IS_PYPY and (
             "_svmlight_format_io" in modname
