@@ -223,8 +223,9 @@ def test_random_projection_transformer_invalid_input():
             RandomProjection(n_components=n_components).fit(fit_data)
 
 
-def test_try_to_transform_before_fit():
-    data, _ = make_sparse_random_data(sp.coo_matrix, n_samples, n_features, n_nonzeros)
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_try_to_transform_before_fit(coo_container):
+    data, _ = make_sparse_random_data(coo_container, n_samples, n_features, n_nonzeros)
     for RandomProjection in all_RandomProjection:
         with pytest.raises(NotFittedError):
             RandomProjection(n_components="auto").transform(data)
