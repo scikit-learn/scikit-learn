@@ -17,6 +17,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
 from sklearn.utils._mocking import NoSampleWeightWrapper
 from sklearn.utils._testing import (
+    assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
@@ -86,10 +87,14 @@ def test_oneclass_adaboost_proba():
     # In response to issue #7501
     # https://github.com/scikit-learn/scikit-learn/issues/7501
     y_t = np.ones(len(X))
-    clf = AdaBoostClassifier().fit(X, y_t)
+    clf = AdaBoostClassifier(algorithm="SAMME").fit(X, y_t)
     assert_array_almost_equal(clf.predict_proba(X), np.ones((len(X), 1)))
 
 
+# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
+# and substituted with the SAMME algorithm as a default; also re-write test to
+# only consider "SAMME"
+@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
 def test_classification_toy(algorithm):
     # Check classification on a toy dataset.
@@ -108,6 +113,10 @@ def test_regression_toy():
     assert_array_equal(clf.predict(T), y_t_regr)
 
 
+# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
+# and substituted with the SAMME algorithm as a default; also re-write test to
+# only consider "SAMME"
+@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
 def test_iris():
     # Check consistency on dataset iris.
     classes = np.unique(iris.target)
@@ -156,6 +165,10 @@ def test_diabetes(loss):
     assert len(set(est.random_state for est in reg.estimators_)) == len(reg.estimators_)
 
 
+# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
+# and substituted with the SAMME algorithm as a default; also re-write test to
+# only consider "SAMME"
+@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
 def test_staged_predict(algorithm):
     # Check staged predictions.
@@ -221,6 +234,10 @@ def test_gridsearch():
     clf.fit(diabetes.data, diabetes.target)
 
 
+# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
+# and substituted with the SAMME algorithm as a default; also re-write test to
+# only consider "SAMME"
+@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
 def test_pickle():
     # Check pickability.
     import pickle
@@ -249,6 +266,10 @@ def test_pickle():
     assert score == score2
 
 
+# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
+# and substituted with the SAMME algorithm as a default; also re-write test to
+# only consider "SAMME"
+@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
 def test_importances():
     # Check variable importances.
     X, y = datasets.make_classification(
@@ -285,7 +306,7 @@ def test_estimator():
 
     # XXX doesn't work with y_class because RF doesn't support classes_
     # Shouldn't AdaBoost run a LabelBinarizer?
-    clf = AdaBoostClassifier(RandomForestClassifier())
+    clf = AdaBoostClassifier(RandomForestClassifier(), algorithm="SAMME")
     clf.fit(X, y_regr)
 
     clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
@@ -509,7 +530,9 @@ def test_multidimensional_X():
     yc = rng.choice([0, 1], 51)
     yr = rng.randn(51)
 
-    boost = AdaBoostClassifier(DummyClassifier(strategy="most_frequent"))
+    boost = AdaBoostClassifier(
+        DummyClassifier(strategy="most_frequent"), algorithm="SAMME"
+    )
     boost.fit(X, yc)
     boost.predict(X)
     boost.predict_proba(X)
@@ -519,6 +542,10 @@ def test_multidimensional_X():
     boost.predict(X)
 
 
+# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
+# and substituted with the SAMME algorithm as a default; also re-write test to
+# only consider "SAMME"
+@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
 def test_adaboostclassifier_without_sample_weight(algorithm):
     X, y = iris.data, iris.target
@@ -567,6 +594,10 @@ def test_adaboostregressor_sample_weight():
     assert score_no_outlier == pytest.approx(score_with_weight)
 
 
+# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
+# and substituted with the SAMME algorithm as a default; also re-write test to
+# only consider "SAMME"
+@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
 def test_adaboost_consistent_predict(algorithm):
     # check that predict_proba and predict give consistent results
@@ -611,7 +642,9 @@ def test_adaboost_numerically_stable_feature_importance_with_small_weights():
     y = rng.choice([0, 1], size=1000)
     sample_weight = np.ones_like(y) * 1e-263
     tree = DecisionTreeClassifier(max_depth=10, random_state=12)
-    ada_model = AdaBoostClassifier(estimator=tree, n_estimators=20, random_state=12)
+    ada_model = AdaBoostClassifier(
+        estimator=tree, n_estimators=20, algorithm="SAMME", random_state=12
+    )
     ada_model.fit(X, y, sample_weight=sample_weight)
     assert np.isnan(ada_model.feature_importances_).sum() == 0
 
@@ -658,6 +691,10 @@ def test_base_estimator_argument_deprecated_none(AdaBoost):
         model.fit(X, y)
 
 
+# TODO(1.6): remove "@pytest.mark.filterwarnings" (or when the test is
+# removed), as SAMME.R will be removed and substituted with the SAMME algrithm
+# as a default)
+@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
 # TODO(1.4): remove in 1.4
 @pytest.mark.parametrize(
     "AdaBoost",
@@ -693,3 +730,59 @@ def test_deprecated_base_estimator_parameters_can_be_set():
 
     with pytest.warns(FutureWarning, match="Parameter 'base_estimator' of"):
         clf.set_params(base_estimator__max_depth=2)
+
+
+# TODO(1.6): remove "@pytest.mark.filterwarnings" as SAMME.R will be removed
+# and substituted with the SAMME algorithm as a default; also re-write test to
+# only consider "SAMME"
+@pytest.mark.filterwarnings("ignore:The SAMME.R algorithm")
+@pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
+def test_adaboost_decision_function(algorithm, global_random_seed):
+    """Check that the decision function respects the symmetric constraint for weak
+    learners.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/26520
+    """
+    n_classes = 3
+    X, y = datasets.make_classification(
+        n_classes=n_classes, n_clusters_per_class=1, random_state=global_random_seed
+    )
+    clf = AdaBoostClassifier(
+        n_estimators=1, random_state=global_random_seed, algorithm=algorithm
+    ).fit(X, y)
+
+    y_score = clf.decision_function(X)
+    assert_allclose(y_score.sum(axis=1), 0, atol=1e-8)
+
+    if algorithm == "SAMME":
+        # With a single learner, we expect to have a decision function in
+        # {1, - 1 / (n_classes - 1)}.
+        assert set(np.unique(y_score)) == {1, -1 / (n_classes - 1)}
+
+    # We can assert the same for staged_decision_function since we have a single learner
+    for y_score in clf.staged_decision_function(X):
+        assert_allclose(y_score.sum(axis=1), 0, atol=1e-8)
+
+        if algorithm == "SAMME":
+            # With a single learner, we expect to have a decision function in
+            # {1, - 1 / (n_classes - 1)}.
+            assert set(np.unique(y_score)) == {1, -1 / (n_classes - 1)}
+
+    clf.set_params(n_estimators=5).fit(X, y)
+
+    y_score = clf.decision_function(X)
+    assert_allclose(y_score.sum(axis=1), 0, atol=1e-8)
+
+    for y_score in clf.staged_decision_function(X):
+        assert_allclose(y_score.sum(axis=1), 0, atol=1e-8)
+
+
+# TODO(1.6): remove
+def test_deprecated_samme_r_algorithm():
+    adaboost_clf = AdaBoostClassifier(n_estimators=1)
+    with pytest.warns(
+        FutureWarning,
+        match=re.escape("The SAMME.R algorithm (the default) is deprecated"),
+    ):
+        adaboost_clf.fit(X, y_class)

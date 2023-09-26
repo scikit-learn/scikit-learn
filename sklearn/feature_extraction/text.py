@@ -602,7 +602,7 @@ class HashingVectorizer(
 
     The hash function employed is the signed 32-bit version of Murmurhash3.
 
-    For an efficiency comparision of the different feature extractors, see
+    For an efficiency comparison of the different feature extractors, see
     :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
@@ -936,7 +936,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     that does some kind of feature selection then the number of features will
     be equal to the vocabulary size found by analyzing the data.
 
-    For an efficiency comparision of the different feature extractors, see
+    For an efficiency comparison of the different feature extractors, see
     :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
@@ -1647,7 +1647,7 @@ class TfidfTransformer(
 
         Parameters
         ----------
-        X : sparse matrix of shape n_samples, n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             A matrix of term/token counts.
 
         y : None
@@ -1723,8 +1723,7 @@ class TfidfTransformer(
             # name:
             check_is_fitted(self, attributes=["idf_"], msg="idf vector is not fitted")
 
-            # *= doesn't work
-            X = X * self._idf_diag
+            X = X @ self._idf_diag
 
         if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
@@ -1764,7 +1763,7 @@ class TfidfVectorizer(CountVectorizer):
     For an example of usage, see
     :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`.
 
-    For an efficiency comparision of the different feature extractors, see
+    For an efficiency comparison of the different feature extractors, see
     :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.

@@ -28,7 +28,9 @@ from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
+    _raise_for_unsupported_routing,
     _routing_enabled,
+    _RoutingNotSupportedMixin,
     process_routing,
 )
 from .utils.metaestimators import _BaseComposition, available_if
@@ -53,12 +55,15 @@ def _final_estimator_has(attr):
 
 class Pipeline(_BaseComposition):
     """
-    Pipeline of transforms with a final estimator.
+    A sequence of data transformers with an optional final predictor.
 
-    Sequentially apply a list of transforms and a final estimator.
+    `Pipeline` allows you to sequentially apply a list of transformers to
+    preprocess the data and, if desired, conclude the sequence with a final
+    :term:`predictor` for predictive modeling.
+
     Intermediate steps of the pipeline must be 'transforms', that is, they
     must implement `fit` and `transform` methods.
-    The final estimator only needs to implement `fit`.
+    The final :term:`estimator` only needs to implement `fit`.
     The transformers in the pipeline can be cached using ``memory`` argument.
 
     The purpose of the pipeline is to assemble several steps that can be
@@ -81,10 +86,11 @@ class Pipeline(_BaseComposition):
 
     Parameters
     ----------
-    steps : list of tuple
-        List of (name, transform) tuples (implementing `fit`/`transform`) that
-        are chained in sequential order. The last transform must be an
-        estimator.
+    steps : list of tuples
+        List of (name of step, estimator) tuples that are to be chained in
+        sequential order. To be compatible with the scikit-learn API, all steps
+        must define `fit`. All non-last steps must also define `transform`. See
+        :ref:`Combining Estimators <combining_estimators>` for more details.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. The last step
@@ -414,7 +420,7 @@ class Pipeline(_BaseComposition):
     def fit(self, X, y=None, **params):
         """Fit the model.
 
-        Fit all the transformers one after the other and transform the
+        Fit all the transformers one after the other and sequentially transform the
         data. Finally, fit the transformed data using the final estimator.
 
         Parameters
@@ -478,9 +484,9 @@ class Pipeline(_BaseComposition):
     def fit_transform(self, X, y=None, **params):
         """Fit the model and transform with the final estimator.
 
-        Fits all the transformers one after the other and transform the
-        data. Then uses `fit_transform` on transformed data with the final
-        estimator.
+        Fit all the transformers one after the other and sequentially transform
+        the data. Only valid if the final estimator either implements
+        `fit_transform` or `fit` and `transform`.
 
         Parameters
         ----------
@@ -1306,7 +1312,7 @@ def _fit_one(transformer, X, y, weight, message_clsname="", message=None, params
         return transformer.fit(X, y, **params["fit"])
 
 
-class FeatureUnion(TransformerMixin, _BaseComposition):
+class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
@@ -1572,6 +1578,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self : object
             FeatureUnion class instance.
         """
+        _raise_for_unsupported_routing(self, "fit", **fit_params)
         transformers = self._parallel_func(X, y, fit_params, _fit_one)
         if not transformers:
             # All transformers are None
