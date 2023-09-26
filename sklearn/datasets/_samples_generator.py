@@ -1652,6 +1652,7 @@ def make_sparse_spd_matrix(
         ),
         random_state=random_state,
     )
+    # We need to avoid "coo" format because it does not support slicing
     aux = sp.tril(aux, k=-1, format="csc")
 
     # Permute the lines: we don't want to have asymmetries in the final
