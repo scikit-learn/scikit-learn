@@ -106,11 +106,11 @@ The :class:`GaussianProcessClassifier` implements Gaussian processes (GP) for
 classification purposes, more specifically for probabilistic classification,
 where test predictions take the form of class probabilities.
 GaussianProcessClassifier places a GP prior on a latent function :math:`f`,
-which is then squashed through a link function to obtain the probabilistic
+which is then squashed through a link function :math:`\pi` to obtain the probabilistic
 classification. The latent function :math:`f` is a so-called nuisance function,
 whose values are not observed and are not relevant by themselves.
 Its purpose is to allow a convenient formulation of the model, and :math:`f`
-is removed (integrated out) during prediction. GaussianProcessClassifier
+is removed (integrated out) during prediction. :class:`GaussianProcessClassifier`
 implements the logistic link function, for which the integral cannot be
 computed analytically but is easily approximated in the binary case.
 
