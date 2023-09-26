@@ -209,6 +209,7 @@ extension_config = {
         {"sources": ["_k_means_minibatch.pyx"], "include_np": True},
     ],
     "cluster._hdbscan": [
+        {"sources": ["_boruvka.pyx"], "include_np": True},
         {"sources": ["_linkage.pyx"], "include_np": True},
         {"sources": ["_reachability.pyx"], "include_np": True},
         {"sources": ["_tree.pyx"], "include_np": True},
