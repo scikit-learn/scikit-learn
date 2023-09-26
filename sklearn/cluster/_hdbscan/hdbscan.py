@@ -877,7 +877,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = self.copy
             else:
-                if self.mst_algorithm == "prims":
+                # TODO: Finalize dispatching, currently placeholder
+                if self.mst_algorithm in ("prims", "auto"):
                     mst_func = _hdbscan_prims
                 else:
                     mst_func = _hdbscan_boruvka
