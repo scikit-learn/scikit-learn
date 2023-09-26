@@ -606,26 +606,27 @@ def _ensure_sparse_format(
 
 
 def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=False):
-    """
-    Based on input (integer) arrays `a`, determine a suitable index data
+    """Based on input (integer) arrays `a`, determine a suitable index data
     type that can hold the data in the arrays.
+
+    `max_values` prevails on arrays dtype and there contents.
 
     Parameters
     ----------
-    arrays : tuple of array_like
-        Input arrays whose types/contents to check
+    arrays : ndarray or tuple of ndarrays, default=()
+        Input arrays whose types/contents to check.
 
-    maxval : float, optional
-        Maximum value needed
+    maxval : float, default=None
+        Maximum value needed.
 
-    check_contents : bool, optional
+    check_contents : bool, default=False
         Whether to check the values in the arrays and not just their types.
-        Default: False (check only the types)
+        By default, check only the types.
 
     Returns
     -------
-    dtype : dtype
-        Suitable index data type (int32 or int64)
+    dtype : {np.int32, np.int64}
+        Suitable index data type (int32 or int64).
     """
 
     int32min = np.int32(np.iinfo(np.int32).min)
