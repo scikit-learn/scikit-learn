@@ -1382,8 +1382,6 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         terminate training when validation score is not improving by at
         least ``tol`` for ``n_iter_no_change`` consecutive epochs.
         Only effective when solver='sgd' or 'adam'.
-        See
-        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`.
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
