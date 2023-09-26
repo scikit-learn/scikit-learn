@@ -193,14 +193,10 @@ def check_pairwise_arrays(
 
     return X, Y
 
-@validate_params( 
-     { 
-         "X": ["array-like", "sparse matrix"], 
-         "Y": ["array-like", "sparse matrix"]
-     },
-     prefer_skip_nested_validation=True,
- )
-
+@validate_params(
+    {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
+    prefer_skip_nested_validation=True,
+)
 
 def check_paired_arrays(X, Y):
     """Set X and Y appropriately and checks inputs for paired distances.
