@@ -819,25 +819,25 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             Standard deviation of the latent function f at the test vectors X.
         """
         check_is_fitted(self)
-        if self.n_classes_ > 2 and return_std_of_f:
-            if not isinstance(
-                self.base_estimator_, _BinaryGaussianProcessClassifierLaplace
-            ):
-                raise ValueError(
-                    "Returning the standard deviation of "
-                    "the latent function f is not supported for "
-                    "more than 2 classes."
-                )
 
         if self.kernel is None or self.kernel.requires_vector_input:
             X = validate_data(self, X, ensure_2d=True, dtype="numeric", reset=False)
         else:
             X = validate_data(self, X, ensure_2d=False, dtype=None, reset=False)
 
-        if isinstance(self.base_estimator_, _BinaryGaussianProcessClassifierLaplace):
-            return self.base_estimator_.predict(X, return_std_of_f=return_std_of_f)
+        if self.n_classes_ > 2:
+            if return_std_of_f:
+                raise ValueError(
+                    "Returning the standard deviation of "
+                    "the latent function f is not supported for "
+                    "more than 2 classes."
+                )
+            else:
+                return self.base_estimator_.predict(X)
         else:
-            return self.base_estimator_.predict(X)
+            # WARNING: this assumes that the self.base_estimator_ is a
+            # _BinaryGaussianProcessClassifierLaplace instance.
+            return self.base_estimator_.predict(X, return_std_of_f=return_std_of_f)
 
     def predict_proba(self, X, return_std_of_f=False):
         """Return probability estimates for the test vector X.
@@ -874,28 +874,26 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
                 "one_vs_rest mode instead."
             )
 
-        can_return_f_std = isinstance(
-            self.base_estimator_, _BinaryGaussianProcessClassifierLaplace
-        )
-        if not can_return_f_std and return_std_of_f:
-            error_msg = (
-                "Returning the standard deviation of the "
-                "latent function f is only supported for GPCs "
-                "that use the Laplace Approximation."
-            )
-            raise ValueError(error_msg)
-
         if self.kernel is None or self.kernel.requires_vector_input:
             X = validate_data(self, X, ensure_2d=True, dtype="numeric", reset=False)
         else:
             X = validate_data(self, X, ensure_2d=False, dtype=None, reset=False)
 
-        if can_return_f_std:
+        if self.n_classes_ > 2:
+            if return_std_of_f:
+                raise ValueError(
+                    "Returning the standard deviation of "
+                    "the latent function f is not supported for GPCs "
+                    "with more than two classes."
+                )
+            else:
+                return self.base_estimator_.predict_proba(X)
+        else:
+            # WARNING: this assumes that the self.base_estimator_ is a
+            # _BinaryGaussianProcessClassifierLaplace instance.
             return self.base_estimator_.predict_proba(
                 X, return_std_of_f=return_std_of_f
             )
-        else:
-            return self.base_estimator_.predict_proba(X)
 
     @property
     def kernel_(self):
