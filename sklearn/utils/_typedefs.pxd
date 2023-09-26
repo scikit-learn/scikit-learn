@@ -14,6 +14,7 @@
 # TODO: Stop defining custom types locally or globally like DTYPE_t and friends and
 # use these consistently throughout the codebase.
 # NOTE: Extend this list as needed when converting more cython extensions.
+ctypedef char int8_t
 ctypedef unsigned char uint8_t
 ctypedef unsigned int uint32_t
 ctypedef unsigned long long uint64_t
