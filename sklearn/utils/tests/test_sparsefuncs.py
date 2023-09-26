@@ -797,7 +797,13 @@ def test_min_max(
     X_sparse = sparse_format(X)
 
     if _IS_WASM and large_indices and isinstance(X_sparse, sp.sparray):
-        pytest.xfail(reason="temporary xfailing test until it is fixed in main")
+        pytest.xfail(
+            reason=(
+                "temporary xfailing test until it is fixed in main, see"
+                " https://github.com/scikit-learn/scikit-learn/issues/27470 for more"
+                " details."
+            )
+        )
 
     if large_indices:
         X_sparse.indices = X_sparse.indices.astype("int64")
