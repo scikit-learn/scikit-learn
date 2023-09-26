@@ -2745,7 +2745,10 @@ def test_brier_score_loss():
 
 
 def test_balanced_accuracy_score_unseen():
-    msg = "Balanced Accuracy is ill-defined and being set to 0.0 in labels with no true samples. Use `zero_division` parameter to control this behavior."
+    msg = (
+        "Balanced Accuracy is ill-defined and being set to 0.0 in labels with no true"
+        " samples. Use `zero_division` parameter to control this behavior."
+    )
     with pytest.warns(UserWarning, match=msg):
         balanced_accuracy_score([0, 0, 0], [0, 0, 1])
 

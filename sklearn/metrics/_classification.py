@@ -2316,7 +2316,9 @@ def recall_score(
     },
     prefer_skip_nested_validation=True,
 )
-def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=False, zero_division="warn"):
+def balanced_accuracy_score(
+    y_true, y_pred, *, sample_weight=None, adjusted=False, zero_division="warn"
+):
     """Compute the balanced accuracy.
 
     The balanced accuracy in binary and multiclass classification problems to
@@ -2344,7 +2346,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
         When true, the result is adjusted for chance, so that random
         performance would score 0, while keeping perfect performance at a score
         of 1.
-   
+
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division.
 
@@ -2396,14 +2398,15 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
         per_class = np.diag(C) / C.sum(axis=1)
     if np.any(np.isnan(per_class)):
         if zero_division == "warn":
-           msg = (
-                  "Balanced Accuracy is ill-defined and being set to 0.0 in labels with no true samples."
-                  "Use `zero_division` parameter to control this behavior."
-           )
-           warnings.warn(msg, UndefinedMetricWarning)
-           per_class=np.nan_to_num(per_class, nan=0.0)
+            msg = (
+                "Balanced Accuracy is ill-defined and being set to 0.0 in labels with"
+                " no true samples.Use `zero_division` parameter to control this"
+                " behavior."
+            )
+            warnings.warn(msg, UndefinedMetricWarning)
+            per_class = np.nan_to_num(per_class, nan=0.0)
         else:
-           per_class = np.nan_to_num(per_class, nan=zero_division)
+            per_class = np.nan_to_num(per_class, nan=zero_division)
     score = np.mean(per_class)
     if adjusted:
         n_classes = len(per_class)
@@ -2854,11 +2857,9 @@ def log_loss(
     else:
         # TODO: Remove user defined eps in 1.5
         warnings.warn(
-            (
-                "Setting the eps parameter is deprecated and will "
-                "be removed in 1.5. Instead eps will always have"
-                "a default value of `np.finfo(y_pred.dtype).eps`."
-            ),
+            "Setting the eps parameter is deprecated and will "
+            "be removed in 1.5. Instead eps will always have"
+            "a default value of `np.finfo(y_pred.dtype).eps`.",
             FutureWarning,
         )
 
@@ -2925,10 +2926,8 @@ def log_loss(
     y_pred_sum = y_pred.sum(axis=1)
     if not np.isclose(y_pred_sum, 1, rtol=1e-15, atol=5 * eps).all():
         warnings.warn(
-            (
-                "The y_pred values do not sum to one. Starting from 1.5 this"
-                "will result in an error."
-            ),
+            "The y_pred values do not sum to one. Starting from 1.5 this"
+            "will result in an error.",
             UserWarning,
         )
     y_pred = y_pred / y_pred_sum[:, np.newaxis]
@@ -3198,4 +3197,3 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
             raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
-
