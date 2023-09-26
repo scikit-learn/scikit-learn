@@ -456,7 +456,7 @@ def indexable(*iterables):
 
 
 def _ensure_sparse_format(
-    spmatrix,
+    sparse_container,
     accept_sparse,
     dtype,
     copy,
@@ -465,13 +465,13 @@ def _ensure_sparse_format(
     estimator_name=None,
     input_name="",
 ):
-    """Convert a sparse matrix to a given format.
+    """Convert a sparse container to a given format.
 
-    Checks the sparse format of spmatrix and converts if necessary.
+    Checks the sparse format of `sparse_container` and converts if necessary.
 
     Parameters
     ----------
-    spmatrix : sparse matrix
+    sparse_container : sparse matrix or array
         Input to validate and convert.
 
     accept_sparse : str, bool or list/tuple of str
@@ -515,63 +515,60 @@ def _ensure_sparse_format(
 
     Returns
     -------
-    spmatrix_converted : sparse matrix.
-        Matrix that is ensured to have an allowed type.
+    sparse_container_converted : sparse matrix or array
+        Sparse container (matrix/array) that is ensured to have an allowed type.
     """
     if dtype is None:
-        dtype = spmatrix.dtype
+        dtype = sparse_container.dtype
 
     changed_format = False
-    spmatrix_type = type(spmatrix).__name__
+    sparse_container_type_name = type(sparse_container).__name__
 
     if isinstance(accept_sparse, str):
         accept_sparse = [accept_sparse]
 
     # Indices dtype validation
-    _check_large_sparse(spmatrix, accept_large_sparse)
+    _check_large_sparse(sparse_container, accept_large_sparse)
 
     if accept_sparse is False:
         raise TypeError(
-            "A sparse matrix was passed, but dense "
-            "data is required. Use X.toarray() to "
-            "convert to a dense numpy array."
+            "A sparse matrix was passed, but dense data is required. Use X.toarray() "
+            "to convert to a dense numpy array."
         )
     elif isinstance(accept_sparse, (list, tuple)):
         if len(accept_sparse) == 0:
             raise ValueError(
-                "When providing 'accept_sparse' "
-                "as a tuple or list, it must contain at "
+                "When providing 'accept_sparse' as a tuple or list, it must contain at "
                 "least one string value."
             )
         # ensure correct sparse format
-        if spmatrix.format not in accept_sparse:
+        if sparse_container.format not in accept_sparse:
             # create new with correct sparse
-            spmatrix = spmatrix.asformat(accept_sparse[0])
+            sparse_container = sparse_container.asformat(accept_sparse[0])
             changed_format = True
     elif accept_sparse is not True:
         # any other type
         raise ValueError(
-            "Parameter 'accept_sparse' should be a string, "
-            "boolean or list of strings. You provided "
-            "'accept_sparse={}'.".format(accept_sparse)
+            "Parameter 'accept_sparse' should be a string, boolean or list of strings."
+            f" You provided 'accept_sparse={accept_sparse}'."
         )
 
-    if dtype != spmatrix.dtype:
+    if dtype != sparse_container.dtype:
         # convert dtype
-        spmatrix = spmatrix.astype(dtype)
+        sparse_container = sparse_container.astype(dtype)
     elif copy and not changed_format:
         # force copy
-        spmatrix = spmatrix.copy()
+        sparse_container = sparse_container.copy()
 
     if force_all_finite:
-        if not hasattr(spmatrix, "data"):
+        if not hasattr(sparse_container, "data"):
             warnings.warn(
-                "Can't check %s sparse matrix for nan or inf." % spmatrix.format,
+                f"Can't check {sparse_container.format} sparse matrix for nan or inf.",
                 stacklevel=2,
             )
         else:
             _assert_all_finite(
-                spmatrix.data,
+                sparse_container.data,
                 allow_nan=force_all_finite == "allow-nan",
                 estimator_name=estimator_name,
                 input_name=input_name,
@@ -584,26 +581,28 @@ def _ensure_sparse_format(
     # Since not all scikit-learn algorithms support large indices, the following code
     # downcasts to `np.int32` indices when it's safe to do so.
     if (
-        spmatrix_type == "dia_array"
+        sparse_container_type_name == "dia_array"
         and changed_format
         and accept_sparse[0] in ("csr", "coo")
     ):
         if accept_sparse[0] == "csr":
             index_dtype = _smallest_admissible_index_dtype(
-                arrays=(spmatrix.indptr, spmatrix.indices),
-                maxval=max(spmatrix.nnz, spmatrix.shape[1]),
+                arrays=(sparse_container.indptr, sparse_container.indices),
+                maxval=max(sparse_container.nnz, sparse_container.shape[1]),
                 check_contents=True,
             )
-            if index_dtype != spmatrix.indices.dtype:
-                spmatrix.indices = spmatrix.indices.astype(index_dtype)
-                spmatrix.indptr = spmatrix.indptr.astype(index_dtype)
+            if index_dtype != sparse_container.indices.dtype:
+                sparse_container.indices = sparse_container.indices.astype(index_dtype)
+                sparse_container.indptr = sparse_container.indptr.astype(index_dtype)
         else:  # accept_sparse[0] == "coo"
-            index_dtype = _smallest_admissible_index_dtype(maxval=max(spmatrix.shape))
-            if index_dtype != spmatrix.row.dtype:
-                spmatrix.row = spmatrix.row.astype(index_dtype)
-                spmatrix.col = spmatrix.col.astype(index_dtype)
+            index_dtype = _smallest_admissible_index_dtype(
+                maxval=max(sparse_container.shape)
+            )
+            if index_dtype != sparse_container.row.dtype:
+                sparse_container.row = sparse_container.row.astype(index_dtype)
+                sparse_container.col = sparse_container.col.astype(index_dtype)
 
-    return spmatrix
+    return sparse_container
 
 
 def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=False):

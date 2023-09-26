@@ -1988,60 +1988,104 @@ def test_check_array_dia_to_int32_indexed_csr_csc_coo(sparse_container, output_f
         assert X_checked.indptr.dtype == np.int32
 
 
-def test_smallest_admissible_index_dtype():
-    imax = np.int64(np.iinfo(np.int32).max)
-    too_big = imax + 1
+@pytest.mark.parametrize(
+    "params, expected_dtype",
+    [
+        ({}, np.dtype("int32")),  # default behaviour
+        ({"maxval": np.iinfo(np.int32).max}, np.dtype("int32")),
+        ({"maxval": np.iinfo(np.int32).max + 1}, np.dtype("int64")),
+    ],
+)
+def test_smallest_admissible_index_dtype_max_val(params, expected_dtype):
+    """Check the behaviour of `smallest_admissible_index_dtype` depending only on the
+    `max_val` parameter.
+    """
+    assert np.dtype(_smallest_admissible_index_dtype(**params)) == expected_dtype
 
-    # Check an empty array
-    a1 = np.ones(0, dtype="uint32")
-    assert np.dtype(
-        _smallest_admissible_index_dtype(a1, check_contents=True)
-    ) == np.dtype("int32")
 
-    # Check with a single array
-    a1 = np.ones(90, dtype="uint32")
-    assert np.dtype(
-        _smallest_admissible_index_dtype(a1, check_contents=True)
-    ) == np.dtype("int32")
+@pytest.mark.parametrize(
+    "params, expected_dtype",
+    [
+        # arrays are list and will be converted to int64 arrays
+        ({"arrays": ([1, 2], [1, 2])}, np.dtype("int64")),
+        # arrays dtype is 64 bits and cannot be casted down
+        ({"arrays": np.array([1, 2], dtype=np.int64)}, np.dtype("int64")),
+        # one of the array is 64 bits and cannot be casted down
+        (
+            {
+                "arrays": (
+                    np.array([1, 2], dtype=np.int32),
+                    np.array([1, 2], dtype=np.int64),
+                )
+            },
+            np.dtype("int64"),
+        ),
+        # Both arrays are 32 bits and we can keep this dtype
+        (
+            {
+                "arrays": (
+                    np.array([1, 2], dtype=np.int32),
+                    np.array([1, 2], dtype=np.int32),
+                )
+            },
+            np.dtype("int32"),
+        ),
+        # Arrays should be casted to at least 32 bits
+        ({"arrays": np.array([1, 2], dtype=np.int8)}, np.dtype("int32")),
+        # Check that `maxval` takes precedence over the arrays and thus upcast to 64
+        # bits
+        (
+            {
+                "arrays": np.array([1, 2], dtype=np.int32),
+                "maxval": np.iinfo(np.int32).max + 1,
+            },
+            np.dtype("int64"),
+        ),
+    ],
+)
+def test_smalled_admissible_index_dtype_without_checking_contents(
+    params, expected_dtype
+):
+    """Check the behaviour of `smallest_admissible_index_dtype` using the passed
+    arrays but without checking the contents of the arrays.
+    """
+    assert np.dtype(_smallest_admissible_index_dtype(**params)) == expected_dtype
 
-    # Check that uint32's with no values too large doesn't return
-    # int64
-    a2 = np.ones(90, dtype="uint32")
-    assert np.dtype(
-        _smallest_admissible_index_dtype((a1, a2), check_contents=True)
-    ) == np.dtype("int32")
 
-    # Check that if we can not convert but all values are less than or
-    # equal to max that we can just convert to int32
-    a1[-1] = imax
-    assert np.dtype(
-        _smallest_admissible_index_dtype((a1, a2), check_contents=True)
-    ) == np.dtype("int32")
-
-    # Check that if it can not convert directly and the contents are
-    # too large that we return int64
-    a1[-1] = too_big
-    assert np.dtype(
-        _smallest_admissible_index_dtype((a1, a2), check_contents=True)
-    ) == np.dtype("int64")
-
-    # test that if can not convert and didn't specify to check_contents
-    # we return int64
-    a1 = np.ones(89, dtype="uint32")
-    a2 = np.ones(89, dtype="uint32")
-    assert np.dtype(_smallest_admissible_index_dtype((a1, a2))) == np.dtype("int64")
-
-    # Check that even if we have arrays that can be converted directly
-    # that if we specify a maxval directly it takes precedence
-    a1 = np.ones(12, dtype="uint32")
-    a2 = np.ones(12, dtype="uint32")
-    assert np.dtype(
-        _smallest_admissible_index_dtype((a1, a2), maxval=too_big, check_contents=True)
-    ) == np.dtype("int64")
-
-    # Check that an array with a too max size and maxval set
-    # still returns int64
-    a1[-1] = too_big
-    assert np.dtype(
-        _smallest_admissible_index_dtype((a1, a2), maxval=too_big)
-    ) == np.dtype("int64")
+@pytest.mark.parametrize(
+    "params, expected_dtype",
+    [
+        # empty arrays should always be converted to 32-bits
+        ({"arrays": ([], []), "check_contents": True}, np.dtype("int32")),
+        # arrays respecting np.iinfo(np.int32).min < x < np.iinfo(np.int32).max should
+        # be converted to 32-bits
+        (
+            {"arrays": np.array([1], dtype=np.int64), "check_contents": True},
+            np.dtype("int32"),
+        ),
+        # otherwise, it should be converted to 64 bits. We need to create a uint32
+        # arrays to accomodate a value > np.iinfo(np.int32).max
+        (
+            {
+                "arrays": np.array([np.iinfo(np.int32).max + 1], dtype=np.uint32),
+                "check_contents": True,
+            },
+            np.dtype("int64"),
+        ),
+        # maxval should take precedence over the arrays contents and thus upcast to
+        # 64 bits
+        (
+            {
+                "arrays": np.array([1], dtype=np.int32),
+                "check_contents": True,
+                "maxval": np.iinfo(np.int32).max + 1,
+            },
+            np.dtype("int64"),
+        ),
+    ],
+)
+def test_smalled_admissible_index_dtype_by_checking_contents(params, expected_dtype):
+    """Check the behaviour of `smallest_admissible_index_dtype` using the dtype of the
+    arrays but as well the contents.
+    """
+    assert np.dtype(_smallest_admissible_index_dtype(**params)) == expected_dtype
