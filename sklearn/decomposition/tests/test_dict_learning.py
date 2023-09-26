@@ -43,7 +43,7 @@ def test_sparse_encode_shapes_omp():
     for n_components, n_samples in itertools.product([1, 5], [1, 9]):
         X_ = rng.randn(n_samples, n_features)
         dictionary = rng.randn(n_components, n_features)
-        for algorithm, n_jobs in itertools.product(algorithms, [1, 3]):
+        for algorithm, n_jobs in itertools.product(algorithms, [1, 2]):
             code = sparse_encode(X_, dictionary, algorithm=algorithm, n_jobs=n_jobs)
             assert code.shape == (n_samples, n_components)
 

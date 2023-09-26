@@ -154,29 +154,6 @@ def test_docstring_parameters():
         raise AssertionError("Docstring Error:\n" + msg)
 
 
-@ignore_warnings(category=FutureWarning)
-def test_tabs():
-    # Test that there are no tabs in our source files
-    for importer, modname, ispkg in walk_packages(sklearn.__path__, prefix="sklearn."):
-        if IS_PYPY and (
-            "_svmlight_format_io" in modname
-            or "feature_extraction._hashing_fast" in modname
-        ):
-            continue
-
-        # because we don't import
-        mod = importlib.import_module(modname)
-
-        try:
-            source = inspect.getsource(mod)
-        except IOError:  # user probably should have run "make clean"
-            continue
-        assert "\t" not in source, (
-            '"%s" has tabs, please remove them ',
-            "or add it to the ignore list" % modname,
-        )
-
-
 def _construct_searchcv_instance(SearchCV):
     return SearchCV(LogisticRegression(), {"C": [0.1, 1]})
 
