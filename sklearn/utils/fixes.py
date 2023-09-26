@@ -25,6 +25,7 @@ from ..externals._packaging.version import parse as parse_version
 from .deprecation import deprecated
 
 np_version = parse_version(np.__version__)
+np_base_version = parse_version(np_version.base_version)
 sp_version = parse_version(scipy.__version__)
 sp_base_version = parse_version(sp_version.base_version)
 
@@ -36,6 +37,7 @@ COO_CONTAINERS = [scipy.sparse.coo_matrix]
 LIL_CONTAINERS = [scipy.sparse.lil_matrix]
 DOK_CONTAINERS = [scipy.sparse.dok_matrix]
 BSR_CONTAINERS = [scipy.sparse.bsr_matrix]
+DIA_CONTAINERS = [scipy.sparse.dia_matrix]
 
 if parse_version(scipy.__version__) >= parse_version("1.8"):
     # Sparse Arrays have been added in SciPy 1.8
@@ -48,6 +50,7 @@ if parse_version(scipy.__version__) >= parse_version("1.8"):
     LIL_CONTAINERS.append(scipy.sparse.lil_array)
     DOK_CONTAINERS.append(scipy.sparse.dok_array)
     BSR_CONTAINERS.append(scipy.sparse.bsr_array)
+    DIA_CONTAINERS.append(scipy.sparse.dia_array)
 
 try:
     from scipy.optimize._linesearch import line_search_wolfe1, line_search_wolfe2

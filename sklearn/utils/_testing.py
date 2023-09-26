@@ -49,7 +49,7 @@ from sklearn.utils import (
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils._array_api import _check_array_api_dispatch
-from sklearn.utils.fixes import threadpool_info
+from sklearn.utils.fixes import parse_version, sp_version, threadpool_info
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -836,8 +836,20 @@ def _convert_container(
         return slice(container[0], container[1])
     elif constructor_name == "sparse_csr":
         return sp.sparse.csr_matrix(container, dtype=dtype)
+    elif constructor_name == "sparse_csr_array":
+        if sp_version >= parse_version("1.8"):
+            return sp.sparse.csr_array(container, dtype=dtype)
+        raise ValueError(
+            f"sparse_csr_array is only available with scipy>=1.8.0, got {sp_version}"
+        )
     elif constructor_name == "sparse_csc":
         return sp.sparse.csc_matrix(container, dtype=dtype)
+    elif constructor_name == "sparse_csc_array":
+        if sp_version >= parse_version("1.8"):
+            return sp.sparse.csc_array(container, dtype=dtype)
+        raise ValueError(
+            f"sparse_csc_array is only available with scipy>=1.8.0, got {sp_version}"
+        )
 
 
 def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
@@ -1052,7 +1064,13 @@ class MinimalTransformer:
 
 def _array_api_for_tests(array_namespace, device, dtype):
     try:
-        array_mod = importlib.import_module(array_namespace)
+        if array_namespace == "numpy.array_api":
+            # FIXME: once it is not experimental anymore
+            with ignore_warnings(category=UserWarning):
+                # UserWarning: numpy.array_api submodule is still experimental.
+                array_mod = importlib.import_module(array_namespace)
+        else:
+            array_mod = importlib.import_module(array_namespace)
     except ModuleNotFoundError:
         raise SkipTest(
             f"{array_namespace} is not installed: not checking array_api input"

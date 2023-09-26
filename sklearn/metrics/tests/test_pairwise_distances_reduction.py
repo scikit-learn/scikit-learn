@@ -7,7 +7,6 @@ from math import floor, log10
 import numpy as np
 import pytest
 import threadpoolctl
-from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
 from sklearn.metrics import euclidean_distances
@@ -16,6 +15,7 @@ from sklearn.metrics._pairwise_distances_reduction import (
     ArgKminClassMode,
     BaseDistancesReductionDispatcher,
     RadiusNeighbors,
+    RadiusNeighborsClassMode,
     sqeuclidean_row_norms,
 )
 from sklearn.utils._testing import (
@@ -23,6 +23,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     create_memmap_backed_data,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 # Common supported metric between scipy.spatial.distance.cdist
 # and BaseDistanceReductionDispatcher.
@@ -499,12 +500,13 @@ def test_assert_radius_neighbors_results_quasi_equality():
         )
 
 
-def test_pairwise_distances_reduction_is_usable_for():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_pairwise_distances_reduction_is_usable_for(csr_container):
     rng = np.random.RandomState(0)
     X = rng.rand(100, 10)
     Y = rng.rand(100, 10)
-    X_csr = csr_matrix(X)
-    Y_csr = csr_matrix(Y)
+    X_csr = csr_container(X)
+    Y_csr = csr_container(Y)
     metric = "manhattan"
 
     # Must be usable for all possible pair of {dense, sparse} datasets
@@ -552,14 +554,14 @@ def test_pairwise_distances_reduction_is_usable_for():
 
     # CSR matrices without non-zeros elements aren't currently supported
     # TODO: support CSR matrices without non-zeros elements
-    X_csr_0_nnz = csr_matrix(X * 0)
+    X_csr_0_nnz = csr_container(X * 0)
     assert not BaseDistancesReductionDispatcher.is_usable_for(X_csr_0_nnz, Y, metric)
 
     # CSR matrices with int64 indices and indptr (e.g. large nnz, or large n_features)
     # aren't supported as of now.
     # See: https://github.com/scikit-learn/scikit-learn/issues/23653
     # TODO: support CSR matrices with int64 indices and indptr
-    X_csr_int64 = csr_matrix(X)
+    X_csr_int64 = csr_container(X)
     X_csr_int64.indices = X_csr_int64.indices.astype(np.int64)
     assert not BaseDistancesReductionDispatcher.is_usable_for(X_csr_int64, Y, metric)
 
@@ -851,6 +853,116 @@ def test_radius_neighbors_factory_method_wrong_usages():
         )
 
 
+def test_radius_neighbors_classmode_factory_method_wrong_usages():
+    rng = np.random.RandomState(1)
+    X = rng.rand(100, 10)
+    Y = rng.rand(100, 10)
+    radius = 5
+    metric = "manhattan"
+    weights = "uniform"
+    Y_labels = rng.randint(low=0, high=10, size=100)
+    unique_Y_labels = np.unique(Y_labels)
+
+    msg = (
+        "Only float64 or float32 datasets pairs are supported at this time, "
+        "got: X.dtype=float32 and Y.dtype=float64"
+    )
+    with pytest.raises(ValueError, match=msg):
+        RadiusNeighborsClassMode.compute(
+            X=X.astype(np.float32),
+            Y=Y,
+            radius=radius,
+            metric=metric,
+            weights=weights,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
+            outlier_label=None,
+        )
+
+    msg = (
+        "Only float64 or float32 datasets pairs are supported at this time, "
+        "got: X.dtype=float64 and Y.dtype=int32"
+    )
+    with pytest.raises(ValueError, match=msg):
+        RadiusNeighborsClassMode.compute(
+            X=X,
+            Y=Y.astype(np.int32),
+            radius=radius,
+            metric=metric,
+            weights=weights,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
+            outlier_label=None,
+        )
+
+    with pytest.raises(ValueError, match="radius == -1.0, must be >= 0."):
+        RadiusNeighborsClassMode.compute(
+            X=X,
+            Y=Y,
+            radius=-1,
+            metric=metric,
+            weights=weights,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
+            outlier_label=None,
+        )
+
+    with pytest.raises(ValueError, match="Unrecognized metric"):
+        RadiusNeighborsClassMode.compute(
+            X=X,
+            Y=Y,
+            radius=-1,
+            metric="wrong_metric",
+            weights=weights,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
+            outlier_label=None,
+        )
+
+    with pytest.raises(
+        ValueError, match=r"Buffer has wrong number of dimensions \(expected 2, got 1\)"
+    ):
+        RadiusNeighborsClassMode.compute(
+            X=np.array([1.0, 2.0]),
+            Y=Y,
+            radius=radius,
+            metric=metric,
+            weights=weights,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
+            outlier_label=None,
+        )
+
+    with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
+        RadiusNeighborsClassMode.compute(
+            X=np.asfortranarray(X),
+            Y=Y,
+            radius=radius,
+            metric=metric,
+            weights=weights,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
+            outlier_label=None,
+        )
+
+    non_existent_weights_strategy = "non_existent_weights_strategy"
+    msg = (
+        "Only the 'uniform' or 'distance' weights options are supported at this time. "
+        f"Got: weights='{non_existent_weights_strategy}'."
+    )
+    with pytest.raises(ValueError, match=msg):
+        RadiusNeighborsClassMode.compute(
+            X=X,
+            Y=Y,
+            radius=radius,
+            metric="wrong_metric",
+            weights=non_existent_weights_strategy,
+            Y_labels=Y_labels,
+            unique_Y_labels=unique_Y_labels,
+            outlier_label=None,
+        )
+
+
 @pytest.mark.parametrize(
     "n_samples_X, n_samples_Y", [(100, 100), (500, 100), (100, 500)]
 )
@@ -969,10 +1081,12 @@ def test_n_threads_agnosticism(
         (RadiusNeighbors, np.float64),
     ],
 )
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_format_agnosticism(
     global_random_seed,
     Dispatcher,
     dtype,
+    csr_container,
 ):
     """Check that results do not depend on the format (dense, sparse) of the input."""
     rng = np.random.RandomState(global_random_seed)
@@ -982,8 +1096,8 @@ def test_format_agnosticism(
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
 
-    X_csr = csr_matrix(X)
-    Y_csr = csr_matrix(Y)
+    X_csr = csr_container(X)
+    Y_csr = csr_container(Y)
 
     if Dispatcher is ArgKmin:
         parameter = 10
@@ -1110,6 +1224,7 @@ def test_strategies_consistency(
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
 @pytest.mark.parametrize("strategy", ("parallel_on_X", "parallel_on_Y"))
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_pairwise_distances_argkmin(
     global_random_seed,
     n_features,
@@ -1117,6 +1232,7 @@ def test_pairwise_distances_argkmin(
     metric,
     strategy,
     dtype,
+    csr_container,
     n_samples=100,
     k=10,
 ):
@@ -1133,8 +1249,8 @@ def test_pairwise_distances_argkmin(
     X = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
 
-    X_csr = csr_matrix(X)
-    Y_csr = csr_matrix(Y)
+    X_csr = csr_container(X)
+    Y_csr = csr_container(Y)
 
     # Haversine distance only accepts 2D data
     if metric == "haversine":
@@ -1298,18 +1414,20 @@ def test_memmap_backed_data(
 @pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("num_threads", [1, 2, 8])
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_sqeuclidean_row_norms(
     global_random_seed,
     n_samples,
     n_features,
     num_threads,
     dtype,
+    csr_container,
 ):
     rng = np.random.RandomState(global_random_seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
 
-    X_csr = csr_matrix(X)
+    X_csr = csr_container(X)
 
     sq_row_norm_reference = np.linalg.norm(X, axis=1) ** 2
     sq_row_norm = sqeuclidean_row_norms(X, num_threads=num_threads)
@@ -1355,3 +1473,39 @@ def test_argkmin_classmode_strategy_consistent():
         strategy="parallel_on_Y",
     )
     assert_array_equal(results_X, results_Y)
+
+
+@pytest.mark.parametrize("outlier_label", [None, 0, 3, 6, 9])
+def test_radius_neighbors_classmode_strategy_consistent(outlier_label):
+    rng = np.random.RandomState(1)
+    X = rng.rand(100, 10)
+    Y = rng.rand(100, 10)
+    radius = 5
+    metric = "manhattan"
+
+    weights = "uniform"
+    Y_labels = rng.randint(low=0, high=10, size=100)
+    unique_Y_labels = np.unique(Y_labels)
+    results_X = RadiusNeighborsClassMode.compute(
+        X=X,
+        Y=Y,
+        radius=radius,
+        metric=metric,
+        weights=weights,
+        Y_labels=Y_labels,
+        unique_Y_labels=unique_Y_labels,
+        outlier_label=outlier_label,
+        strategy="parallel_on_X",
+    )
+    results_Y = RadiusNeighborsClassMode.compute(
+        X=X,
+        Y=Y,
+        radius=radius,
+        metric=metric,
+        weights=weights,
+        Y_labels=Y_labels,
+        unique_Y_labels=unique_Y_labels,
+        outlier_label=outlier_label,
+        strategy="parallel_on_Y",
+    )
+    assert_allclose(results_X, results_Y)
