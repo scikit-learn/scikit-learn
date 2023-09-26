@@ -295,6 +295,12 @@ extension_config = {
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
         },
+        {
+            "sources": ["_radius_neighbors_classmode.pyx.tp"],
+            "language": "c++",
+            "include_np": True,
+            "extra_compile_args": ["-std=c++11"],
+        },
     ],
     "preprocessing": [
         {"sources": ["_csr_polynomial_expansion.pyx"]},
