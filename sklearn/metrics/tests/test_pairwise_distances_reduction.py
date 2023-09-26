@@ -193,6 +193,33 @@ def assert_compatible_argkmin_results(
         )
 
 
+def _non_trivial_radius(
+    *,
+    X=None,
+    Y=None,
+    metric=None,
+    precomputed_dists=None,
+    expected_n_neighbors=10,
+    n_subsampled_queries=10,
+    **metric_kwargs,
+):
+    # Find a non-trivial radius using a small subsample of the pairwise
+    # distances between X and Y: we want to return around expected_n_neighbors
+    # on average. Yielding too many results would make the test slow (because
+    # checking the results is expensive for large result sets), yielding 0 most
+    # of the time would make the test useless.
+    if precomputed_dists is None and metric is None:
+        raise ValueError("Either metric or dists must be provided")
+    if precomputed_dists is None:
+        assert X is not None
+        assert Y is not None
+        sampled_dists = pairwise_distances(X, Y, metric=metric, **metric_kwargs)
+    else:
+        sampled_dists = precomputed_dists[:n_subsampled_queries].copy()
+    sampled_dists.sort(axis=1)
+    return sampled_dists[:, expected_n_neighbors].mean()
+
+
 def assert_compatible_radius_results(
     neighbors_dists_a,
     neighbors_dists_b,
@@ -974,11 +1001,7 @@ def test_chunk_size_agnosticism(
         check_parameters = {}
         compute_parameters = {}
     else:
-        # Scaling the radius slightly with the numbers of dimensions
-        expected_n_neighbors = 10
-        dist_sample = euclidean_distances(X[:10], Y)
-        dist_sample.sort(axis=1)
-        radius = dist_sample[:, expected_n_neighbors].mean()
+        radius = _non_trivial_radius(X=X, Y=Y, metric="euclidean")
         parameter = radius
         check_parameters = {"radius": radius}
         compute_parameters = {"sort_results": True}
@@ -1028,11 +1051,7 @@ def test_n_threads_agnosticism(
         check_parameters = {}
         compute_parameters = {}
     else:
-        # Scaling the radius slightly with the numbers of dimensions
-        expected_n_neighbors = 10
-        dist_sample = euclidean_distances(X[:10], Y)
-        dist_sample.sort(axis=1)
-        radius = dist_sample[:, expected_n_neighbors].mean()
+        radius = _non_trivial_radius(X=X, Y=Y, metric="euclidean")
         parameter = radius
         check_parameters = {"radius": radius}
         compute_parameters = {"sort_results": True}
@@ -1093,11 +1112,9 @@ def test_format_agnosticism(
         check_parameters = {}
         compute_parameters = {}
     else:
-        # Scaling the radius slightly with the numbers of dimensions
-        expected_n_neighbors = 10
-        dist_sample = euclidean_distances(X[:10], Y)
-        dist_sample.sort(axis=1)
-        radius = dist_sample[:, expected_n_neighbors].mean()
+        # Adjusting the radius to ensure that the expected results is neither
+        # trivially empty nor too large.
+        radius = _non_trivial_radius(X=X, Y=Y, metric="euclidean")
         parameter = radius
         check_parameters = {"radius": radius}
         compute_parameters = {"sort_results": True}
@@ -1166,15 +1183,7 @@ def test_strategies_consistency(
         check_parameters = {}
         compute_parameters = {}
     else:
-        # Find a non-trivial radius using a small subsample of X and Y: we want
-        # to return around expected_n_neighbors on average. Yielding too many
-        # results would make the test slow (because checking the results is
-        # expensive for large result sets), yielding 0 most of the time would
-        # make the test useless.
-        expected_n_neighbors = 10
-        sample_dists = pairwise_distances(X[:10], Y, metric=metric)
-        sample_dists.sort(axis=1)
-        radius = sample_dists[:, expected_n_neighbors].mean()
+        radius = _non_trivial_radius(X=X, Y=Y, metric=metric)
         parameter = radius
         check_parameters = {"radius": radius}
         compute_parameters = {"sort_results": True}
@@ -1315,15 +1324,7 @@ def test_pairwise_distances_radius_neighbors(
     else:
         dist_matrix = cdist(X, Y, metric=metric, **metric_kwargs)
 
-    # Find a non-trivial radius using a small subsample of the dist_matrix:
-    # we want to return around expected_n_neighbors on average. Yielding too
-    # many results would make the test slow (because checking the results is
-    # expensive for large result sets), yielding 0 most of the time would make
-    # the test useless.
-    expected_n_neighbors = 10
-    sample_dists = dist_matrix[:10].copy()
-    sample_dists.sort(axis=1)
-    radius = sample_dists[:, expected_n_neighbors].mean()
+    radius = _non_trivial_radius(precomputed_dists=dist_matrix)
 
     # Getting the neighbors for a given radius
     neigh_indices_ref = []
