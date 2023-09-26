@@ -228,6 +228,7 @@ cdef class BoruvkaUnionFind(object):
 def _core_dist_query(tree, data, min_samples):
     return tree.query(data, k=min_samples, dualtree=True, breadth_first=True)
 
+
 cdef class BoruvkaAlgorithm:
     """A Dual Tree Boruvka Algorithm implemented for the sklearn
     KDTree space tree implementation.
@@ -474,20 +475,12 @@ cdef class BoruvkaAlgorithm:
         edges to the min spanning tree and recomputing components via
         union find."""
 
-        cdef intp_t source
-        cdef intp_t sink
-        cdef intp_t c
-        cdef intp_t component
-        cdef intp_t n
-        cdef intp_t i
-        cdef intp_t p
-        cdef intp_t current_component
-        cdef intp_t current_source_component
-        cdef intp_t current_sink_component
-        cdef intp_t child1
-        cdef intp_t child2
-
-        cdef NodeData_t node_info
+        cdef:
+            intp_t sink, source, c, component, n, i, p
+            intp_t current_component, current_source_component
+            intp_t current_sink_component
+            intp_t child1, child2
+            NodeData_t node_info
 
         # For each component there should be a:
         #   - candidate point (a point in the component)
@@ -597,62 +590,46 @@ cdef class BoruvkaAlgorithm:
 
         cdef intp_t[::1] point_indices1, point_indices2
 
-        cdef intp_t i
-        cdef intp_t j
-
-        cdef intp_t p
-        cdef intp_t q
-
-        cdef intp_t parent
-        cdef intp_t child1
-        cdef intp_t child2
-
-        cdef double node_dist
+        cdef intp_t i, j, p, q
+        cdef intp_t parent, child1, child2
+        cdef intp_t component1, component2
 
         cdef NodeData_t node1_info = self.node_data[node1]
         cdef NodeData_t node2_info = self.node_data[node2]
-        cdef NodeData_t parent_info
-        cdef NodeData_t left_info
-        cdef NodeData_t right_info
+        cdef NodeData_t parent_info, left_info, right_info
 
-        cdef intp_t component1
-        cdef intp_t component2
 
-        cdef float64_t d
+        cdef float64_t d, mr_dist, _radius, node_dist
+        cdef float64_t new_bound, new_upper_bound, new_lower_bound
+        cdef float64_t bound_max, bound_min
 
-        cdef float64_t mr_dist
-        cdef float64_t _radius
-
-        cdef float64_t new_bound
-        cdef float64_t new_upper_bound
-        cdef float64_t new_lower_bound
-        cdef float64_t bound_max
-        cdef float64_t bound_min
-
-        cdef intp_t left
-        cdef intp_t right
-        cdef float64_t left_dist
-        cdef float64_t right_dist
+        cdef intp_t left, right, left_dist, right_dist
 
         # Compute the distance between the query and reference nodes
         if self.is_KDTree:
-            node_dist = kdtree_min_rdist_dual(self.dist,
-                                            node1, node2, self.node_bounds,
-                                            self.num_features)
+            node_dist = kdtree_min_rdist_dual(
+                self.dist,
+                node1, node2, self.node_bounds,
+                self.num_features
+            )
         else: #BallTree
-            node_dist = balltree_min_dist_dual(node1_info.radius,
-                                            node2_info.radius,
-                                            node1, node2,
-                                            self.centroid_distances)
+            node_dist = balltree_min_dist_dual(
+                node1_info.radius,
+                node2_info.radius,
+                node1, node2,
+                self.centroid_distances
+            )
 
 
         # If the distance between the nodes is less than the current bound for
         # the query and the nodes are not in the same component continue;
         # otherwise we get to prune this branch and return early.
         if node_dist < self.bounds_ptr[node1]:
-            if (self.component_of_node_ptr[node1] ==
+            if (
+                self.component_of_node_ptr[node1] ==
                 self.component_of_node_ptr[node2] and
-                    self.component_of_node_ptr[node1] >= 0):
+                self.component_of_node_ptr[node1] >= 0
+            ):
                 return 0
         else:
             return 0
@@ -688,10 +665,12 @@ cdef class BoruvkaAlgorithm:
             new_upper_bound = 0.0
             new_lower_bound = DBL_MAX
 
-            point_indices1 = self.idx_array[node1_info.idx_start:
-                                            node1_info.idx_end]
-            point_indices2 = self.idx_array[node2_info.idx_start:
-                                            node2_info.idx_end]
+            point_indices1 = self.idx_array[
+                node1_info.idx_start:node1_info.idx_end
+            ]
+            point_indices2 = self.idx_array[
+                node2_info.idx_start:node2_info.idx_end
+            ]
 
             for i in range(point_indices1.shape[0]):
 
@@ -770,8 +749,10 @@ cdef class BoruvkaAlgorithm:
                     left_info = self.node_data[left]
                     right_info = self.node_data[right]
 
-                    bound_max = max(self.bounds_ptr[left],
-                                    self.bounds_ptr[right])
+                    bound_max = max(
+                        self.bounds_ptr[left],
+                        self.bounds_ptr[right]
+                    )
 
                     if self.is_KDTree:
                         new_bound = bound_max
@@ -805,25 +786,33 @@ cdef class BoruvkaAlgorithm:
             right = 2 * node2 + 2
 
             if self.is_KDTree:
-                left_dist = kdtree_min_rdist_dual(self.dist,
-                                                node1, left,
-                                                self.node_bounds,
-                                                self.num_features)
-                right_dist = kdtree_min_rdist_dual(self.dist,
-                                                node1, right,
-                                                self.node_bounds,
-                                                self.num_features)
+                left_dist = kdtree_min_rdist_dual(
+                    self.dist,
+                    node1, left,
+                    self.node_bounds,
+                    self.num_features
+                )
+                right_dist = kdtree_min_rdist_dual(
+                    self.dist,
+                    node1, right,
+                    self.node_bounds,
+                    self.num_features
+                )
             else:
                 node2_info = self.node_data[left]
-                left_dist = balltree_min_dist_dual(node1_info.radius,
-                                                node2_info.radius,
-                                                node1, left,
-                                                self.centroid_distances)
+                left_dist = balltree_min_dist_dual(
+                    node1_info.radius,
+                    node2_info.radius,
+                    node1, left,
+                    self.centroid_distances
+                )
                 node2_info = self.node_data[right]
-                right_dist = balltree_min_dist_dual(node1_info.radius,
-                                                    node2_info.radius,
-                                                    node1, right,
-                                                    self.centroid_distances)
+                right_dist = balltree_min_dist_dual(
+                    node1_info.radius,
+                    node2_info.radius,
+                    node1, right,
+                    self.centroid_distances
+                )
 
             if left_dist < right_dist:
                 self.dual_tree_traversal(node1, left)
@@ -843,25 +832,33 @@ cdef class BoruvkaAlgorithm:
             left = 2 * node1 + 1
             right = 2 * node1 + 2
             if self.is_KDTree:
-                left_dist = kdtree_min_rdist_dual(self.dist,
-                                                left, node2,
-                                                self.node_bounds,
-                                                self.num_features)
-                right_dist = kdtree_min_rdist_dual(self.dist,
-                                                right, node2,
-                                                self.node_bounds,
-                                                self.num_features)
+                left_dist = kdtree_min_rdist_dual(
+                    self.dist,
+                    left, node2,
+                    self.node_bounds,
+                    self.num_features
+                )
+                right_dist = kdtree_min_rdist_dual(
+                    self.dist,
+                    right, node2,
+                    self.node_bounds,
+                    self.num_features
+                )
             else:
                 node1_info = self.node_data[left]
-                left_dist = balltree_min_dist_dual(node1_info.radius,
-                                                node2_info.radius,
-                                                left, node2,
-                                                self.centroid_distances)
+                left_dist = balltree_min_dist_dual(
+                    node1_info.radius,
+                    node2_info.radius,
+                    left, node2,
+                    self.centroid_distances
+                )
                 node1_info = self.node_data[right]
-                right_dist = balltree_min_dist_dual(node1_info.radius,
-                                                    node2_info.radius,
-                                                    right, node2,
-                                                    self.centroid_distances)
+                right_dist = balltree_min_dist_dual(
+                    node1_info.radius,
+                        node2_info.radius,
+                        right, node2,
+                        self.centroid_distances
+                    )
 
 
             if left_dist < right_dist:
