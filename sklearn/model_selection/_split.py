@@ -410,6 +410,10 @@ class KFold(_BaseKFold):
 
     Read more in the :ref:`User Guide <k_fold>`.
 
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
+
     Parameters
     ----------
     n_splits : int, default=5
@@ -501,6 +505,10 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     distinct groups is approximately the same in each fold.
 
     Read more in the :ref:`User Guide <group_k_fold>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     Parameters
     ----------
@@ -625,6 +633,10 @@ class StratifiedKFold(_BaseKFold):
     samples for each class.
 
     Read more in the :ref:`User Guide <stratified_k_fold>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     Parameters
     ----------
@@ -816,6 +828,10 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     constraint of non-overlapping groups between splits.
 
     Read more in the :ref:`User Guide <cross_validation>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     Parameters
     ----------
@@ -1015,6 +1031,10 @@ class TimeSeriesSplit(_BaseKFold):
     training sets are supersets of those that come before them.
 
     Read more in the :ref:`User Guide <time_series_split>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     .. versionadded:: 0.18
 
@@ -1766,6 +1786,10 @@ class ShuffleSplit(BaseShuffleSplit):
 
     Read more in the :ref:`User Guide <ShuffleSplit>`.
 
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
+
     Parameters
     ----------
     n_splits : int, default=10
@@ -1896,6 +1920,10 @@ class GroupShuffleSplit(GroupsConsumerMixin, ShuffleSplit):
 
     Read more in the :ref:`User Guide <group_shuffle_split>`.
 
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
+
     Parameters
     ----------
     n_splits : int, default=5
@@ -1973,8 +2001,8 @@ class GroupShuffleSplit(GroupsConsumerMixin, ShuffleSplit):
             # these are the indices of classes in the partition
             # invert them into data indices
 
-            train = np.flatnonzero(np.in1d(group_indices, group_train))
-            test = np.flatnonzero(np.in1d(group_indices, group_test))
+            train = np.flatnonzero(np.isin(group_indices, group_train))
+            test = np.flatnonzero(np.isin(group_indices, group_test))
 
             yield train, test
 
@@ -2025,6 +2053,10 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     still very likely for sizeable datasets.
 
     Read more in the :ref:`User Guide <stratified_shuffle_split>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     Parameters
     ----------
@@ -2673,7 +2705,7 @@ def _pprint(params, offset=0, printer=repr):
     this_line_length = offset
     line_sep = ",\n" + (1 + offset // 2) * " "
     for i, (k, v) in enumerate(sorted(params.items())):
-        if type(v) is float:
+        if isinstance(v, float):
             # use str for representing floating point numbers
             # this way we get consistent representation across
             # architectures and versions.

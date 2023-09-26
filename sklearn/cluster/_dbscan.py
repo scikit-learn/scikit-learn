@@ -17,13 +17,18 @@ from scipy import sparse
 from ..base import BaseEstimator, ClusterMixin, _fit_context
 from ..metrics.pairwise import _VALID_METRICS
 from ..neighbors import NearestNeighbors
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.validation import _check_sample_weight
 from ._dbscan_inner import dbscan_inner
 
 
-# This function is not validated using validate_params because
-# it's just a factory for DBSCAN.
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "sample_weight": ["array-like", None],
+    },
+    prefer_skip_nested_validation=False,
+)
 def dbscan(
     X,
     eps=0.5,

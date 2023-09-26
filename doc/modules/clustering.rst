@@ -1800,7 +1800,7 @@ Where ``TP`` is the number of **True Positive** (i.e. the number of pair
 of points that belong to the same clusters in both the true labels and the
 predicted labels), ``FP`` is the number of **False Positive** (i.e. the number
 of pair of points that belong to the same clusters in the true labels and not
-in the predicted labels) and ``FN`` is the number of **False Negative** (i.e the
+in the predicted labels) and ``FN`` is the number of **False Negative** (i.e. the
 number of pair of points that belongs in the same clusters in the predicted
 labels and not in the true labels).
 

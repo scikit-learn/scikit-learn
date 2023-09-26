@@ -53,6 +53,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
+from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 
 
 @pytest.mark.parametrize("order", ["C", "F"])
@@ -76,10 +77,11 @@ def test_set_order_dense(order, input_order):
 
 @pytest.mark.parametrize("order", ["C", "F"])
 @pytest.mark.parametrize("input_order", ["C", "F"])
-def test_set_order_sparse(order, input_order):
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_set_order_sparse(order, input_order, coo_container):
     """Check that _set_order returns sparse matrices in promised format."""
-    X = sparse.coo_matrix(np.array([[0], [0], [0]]))
-    y = sparse.coo_matrix(np.array([0, 0, 0]))
+    X = coo_container(np.array([[0], [0], [0]]))
+    y = coo_container(np.array([0, 0, 0]))
     sparse_format = "csc" if input_order == "F" else "csr"
     X = X.asformat(sparse_format)
     y = X.asformat(sparse_format)
@@ -431,7 +433,8 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
         (RidgeClassifierCV, {}),
     ],
 )
-def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_model_pipeline_same_dense_and_sparse(LinearModel, params, csr_container):
     # Test that linear model preceded by StandardScaler in the pipeline and
     # with normalize set to False gives the same y_pred and the same .coef_
     # given X sparse or dense
@@ -447,7 +450,7 @@ def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
     X = rng.randn(n_samples, n_features)
     X[X < 0.1] = 0.0
 
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
     y = rng.rand(n_samples)
 
     if is_classifier(model_dense):
@@ -786,19 +789,20 @@ def test_1d_multioutput_lasso_and_multitask_lasso_cv():
     assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
-def test_sparse_input_dtype_enet_and_lassocv():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_input_dtype_enet_and_lassocv(csr_container):
     X, y, _, _ = build_dataset(n_features=10)
     clf = ElasticNetCV(n_alphas=5)
-    clf.fit(sparse.csr_matrix(X), y)
+    clf.fit(csr_container(X), y)
     clf1 = ElasticNetCV(n_alphas=5)
-    clf1.fit(sparse.csr_matrix(X, dtype=np.float32), y)
+    clf1.fit(csr_container(X, dtype=np.float32), y)
     assert_almost_equal(clf.alpha_, clf1.alpha_, decimal=6)
     assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)
 
     clf = LassoCV(n_alphas=5)
-    clf.fit(sparse.csr_matrix(X), y)
+    clf.fit(csr_container(X), y)
     clf1 = LassoCV(n_alphas=5)
-    clf1.fit(sparse.csr_matrix(X, dtype=np.float32), y)
+    clf1.fit(csr_container(X, dtype=np.float32), y)
     assert_almost_equal(clf.alpha_, clf1.alpha_, decimal=6)
     assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)
 
@@ -910,7 +914,8 @@ def test_warm_start_convergence_with_regularizer_decrement():
     assert low_reg_model.n_iter_ > warm_low_reg_model.n_iter_
 
 
-def test_random_descent():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_random_descent(csr_container):
     # Test that both random and cyclic selection give the same results.
     # Ensure that the test models fully converge and check a wide
     # range of conditions.
@@ -934,9 +939,9 @@ def test_random_descent():
 
     # Sparse Case
     clf_cyclic = ElasticNet(selection="cyclic", tol=1e-8)
-    clf_cyclic.fit(sparse.csr_matrix(X), y)
+    clf_cyclic.fit(csr_container(X), y)
     clf_random = ElasticNet(selection="random", tol=1e-8, random_state=42)
-    clf_random.fit(sparse.csr_matrix(X), y)
+    clf_random.fit(csr_container(X), y)
     assert_array_almost_equal(clf_cyclic.coef_, clf_random.coef_)
     assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
 
@@ -968,10 +973,11 @@ def test_enet_path_positive():
             path(X, Y, positive=True)
 
 
-def test_sparse_dense_descent_paths():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_dense_descent_paths(csr_container):
     # Test that dense and sparse input give the same input for descent paths.
     X, y, _, _ = build_dataset(n_samples=50, n_features=20)
-    csr = sparse.csr_matrix(X)
+    csr = csr_container(X)
     for path in [enet_path, lasso_path]:
         _, coefs, _ = path(X, y)
         _, sparse_coefs, _ = path(csr, y)
@@ -1216,16 +1222,17 @@ def test_convergence_warnings():
         MultiTaskElasticNet().fit(X, y)
 
 
-def test_sparse_input_convergence_warning():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_input_convergence_warning(csr_container):
     X, y, _, _ = build_dataset(n_samples=1000, n_features=500)
 
     with pytest.warns(ConvergenceWarning):
-        ElasticNet(max_iter=1, tol=0).fit(sparse.csr_matrix(X, dtype=np.float32), y)
+        ElasticNet(max_iter=1, tol=0).fit(csr_container(X, dtype=np.float32), y)
 
     # check that the model converges w/o convergence warnings
     with warnings.catch_warnings():
         warnings.simplefilter("error", ConvergenceWarning)
-        Lasso().fit(sparse.csr_matrix(X, dtype=np.float32), y)
+        Lasso().fit(csr_container(X, dtype=np.float32), y)
 
 
 @pytest.mark.parametrize(
@@ -1266,9 +1273,9 @@ def test_multi_task_lasso_cv_dtype():
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("alpha", [0.01])
 @pytest.mark.parametrize("precompute", [False, True])
-@pytest.mark.parametrize("sparseX", [False, True])
+@pytest.mark.parametrize("sparse_container", [None] + CSR_CONTAINERS)
 def test_enet_sample_weight_consistency(
-    fit_intercept, alpha, precompute, sparseX, global_random_seed
+    fit_intercept, alpha, precompute, sparse_container, global_random_seed
 ):
     """Test that the impact of sample_weight is consistent.
 
@@ -1280,8 +1287,8 @@ def test_enet_sample_weight_consistency(
 
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
-    if sparseX:
-        X = sparse.csc_matrix(X)
+    if sparse_container is not None:
+        X = sparse_container(X)
     params = dict(
         alpha=alpha,
         fit_intercept=fit_intercept,
@@ -1336,7 +1343,7 @@ def test_enet_sample_weight_consistency(
 
     # 5) check that multiplying sample_weight by 2 is equivalent to repeating
     # corresponding samples twice
-    if sparseX:
+    if sparse_container is not None:
         X2 = sparse.vstack([X, X[: n_samples // 2]], format="csc")
     else:
         X2 = np.concatenate([X, X[: n_samples // 2]], axis=0)
@@ -1353,8 +1360,8 @@ def test_enet_sample_weight_consistency(
 
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize("sparseX", [False, True])
-def test_enet_cv_sample_weight_correctness(fit_intercept, sparseX):
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
+def test_enet_cv_sample_weight_correctness(fit_intercept, sparse_container):
     """Test that ElasticNetCV with sample weights gives correct results."""
     rng = np.random.RandomState(42)
     n_splits, n_samples, n_features = 3, 10, 5
@@ -1363,8 +1370,8 @@ def test_enet_cv_sample_weight_correctness(fit_intercept, sparseX):
     beta[0:2] = 0
     y = X @ beta + rng.rand(n_splits * n_samples)
     sw = np.ones_like(y)
-    if sparseX:
-        X = sparse.csc_matrix(X)
+    if sparse_container is not None:
+        X = sparse_container(X)
     params = dict(tol=1e-6)
 
     # Set alphas, otherwise the two cv models might use different ones.
@@ -1385,11 +1392,11 @@ def test_enet_cv_sample_weight_correctness(fit_intercept, sparseX):
     reg_sw.fit(X, y, sample_weight=sw)
 
     # We repeat the first fold 2 times and provide splits ourselves
-    if sparseX:
+    if sparse_container is not None:
         X = X.toarray()
     X = np.r_[X[:n_samples], X]
-    if sparseX:
-        X = sparse.csc_matrix(X)
+    if sparse_container is not None:
+        X = sparse_container(X)
     y = np.r_[y[:n_samples], y]
     groups = np.r_[
         np.full(2 * n_samples, 0), np.full(n_samples, 1), np.full(n_samples, 2)
@@ -1443,9 +1450,9 @@ def test_enet_cv_grid_search(sample_weight):
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("l1_ratio", [0, 0.5, 1])
 @pytest.mark.parametrize("precompute", [False, True])
-@pytest.mark.parametrize("sparseX", [False, True])
+@pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
 def test_enet_cv_sample_weight_consistency(
-    fit_intercept, l1_ratio, precompute, sparseX
+    fit_intercept, l1_ratio, precompute, sparse_container
 ):
     """Test that the impact of sample_weight is consistent."""
     rng = np.random.RandomState(0)
@@ -1460,8 +1467,8 @@ def test_enet_cv_sample_weight_consistency(
         tol=1e-6,
         cv=3,
     )
-    if sparseX:
-        X = sparse.csc_matrix(X)
+    if sparse_container is not None:
+        X = sparse_container(X)
 
     if l1_ratio == 0:
         params.pop("l1_ratio", None)

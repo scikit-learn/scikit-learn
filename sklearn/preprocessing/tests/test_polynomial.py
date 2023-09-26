@@ -725,7 +725,7 @@ def test_polynomial_features_csc_X(deg, include_bias, interaction_only, dtype):
 
     assert sparse.issparse(Xt_csc) and Xt_csc.format == "csc"
     assert Xt_csc.dtype == Xt_dense.dtype
-    assert_array_almost_equal(Xt_csc.A, Xt_dense)
+    assert_array_almost_equal(Xt_csc.toarray(), Xt_dense)
 
 
 @pytest.mark.parametrize(
@@ -752,7 +752,7 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
 
     assert sparse.issparse(Xt_csr) and Xt_csr.format == "csr"
     assert Xt_csr.dtype == Xt_dense.dtype
-    assert_array_almost_equal(Xt_csr.A, Xt_dense)
+    assert_array_almost_equal(Xt_csr.toarray(), Xt_dense)
 
 
 @pytest.mark.parametrize("n_features", [1, 4, 5])
@@ -811,7 +811,7 @@ def test_polynomial_features_csr_X_floats(deg, include_bias, interaction_only, d
 
     assert sparse.issparse(Xt_csr) and Xt_csr.format == "csr"
     assert Xt_csr.dtype == Xt_dense.dtype
-    assert_array_almost_equal(Xt_csr.A, Xt_dense)
+    assert_array_almost_equal(Xt_csr.toarray(), Xt_dense)
 
 
 @pytest.mark.parametrize(
@@ -842,7 +842,7 @@ def test_polynomial_features_csr_X_zero_row(zero_row_index, deg, interaction_onl
 
     assert sparse.issparse(Xt_csr) and Xt_csr.format == "csr"
     assert Xt_csr.dtype == Xt_dense.dtype
-    assert_array_almost_equal(Xt_csr.A, Xt_dense)
+    assert_array_almost_equal(Xt_csr.toarray(), Xt_dense)
 
 
 # This degree should always be one more than the highest degree supported by
@@ -863,7 +863,7 @@ def test_polynomial_features_csr_X_degree_4(include_bias, interaction_only):
 
     assert sparse.issparse(Xt_csr) and Xt_csr.format == "csr"
     assert Xt_csr.dtype == Xt_dense.dtype
-    assert_array_almost_equal(Xt_csr.A, Xt_dense)
+    assert_array_almost_equal(Xt_csr.toarray(), Xt_dense)
 
 
 @pytest.mark.parametrize(
@@ -891,7 +891,7 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
 
     assert sparse.issparse(Xt_csr) and Xt_csr.format == "csr"
     assert Xt_csr.dtype == Xt_dense.dtype
-    assert_array_almost_equal(Xt_csr.A, Xt_dense)
+    assert_array_almost_equal(Xt_csr.toarray(), Xt_dense)
 
 
 @pytest.mark.parametrize("interaction_only", [True, False])
