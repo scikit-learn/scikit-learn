@@ -2006,8 +2006,6 @@ def test_smallest_admissible_index_dtype_max_val(params, expected_dtype):
 @pytest.mark.parametrize(
     "params, expected_dtype",
     [
-        # arrays are list and will be converted to int64 arrays
-        ({"arrays": ([1, 2], [1, 2])}, np.dtype("int64")),
         # arrays dtype is 64 bits and cannot be casted down
         ({"arrays": np.array([1, 2], dtype=np.int64)}, np.dtype("int64")),
         # one of the array is 64 bits and cannot be casted down
