@@ -14,3 +14,7 @@ pip install pyodide-build==$PYODIDE_VERSION pyodide-cli
 pyodide build
 
 ls -ltrh dist
+
+# The Pyodide js library is needed by build_tools/azure/test_script_pyodide.sh
+# to run tests inside Pyodide
+npm install pyodide@$PYODIDE_VERSION
