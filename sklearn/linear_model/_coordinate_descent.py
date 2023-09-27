@@ -18,12 +18,13 @@ from scipy import sparse
 
 from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
-from ..utils import check_array, check_scalar
+from ..utils import Bunch, check_array, check_scalar
+from ..utils._metadata_requests import MetadataRouter, MethodMapping, _raise_for_params
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import safe_sparse_dot
 from ..utils.metadata_routing import (
-    _raise_for_unsupported_routing,
-    _RoutingNotSupportedMixin,
+    _routing_enabled,
+    process_routing,
 )
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
@@ -32,6 +33,7 @@ from ..utils.validation import (
     check_is_fitted,
     check_random_state,
     column_or_1d,
+    has_fit_parameter,
 )
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -1499,6 +1501,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self._fit_params = {}
 
     @abstractmethod
     def _get_estimator(self):
@@ -1514,7 +1517,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         """Compute path with coordinate descent."""
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **params):
         """Fit linear model with coordinate descent.
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
@@ -1536,12 +1539,17 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             MSE that is finally used to find the best model is the unweighted
             mean over the (weighted) MSEs of each test fold.
 
+        params : dict, default=None
+            Parameters to pass to the underlying estimator's ``fit`` and
+            the CV splitter.
+
+            .. versionadded:: 1.4
+
         Returns
         -------
         self : object
             Returns an instance of fitted model.
         """
-        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
         # Multiple functions touch X and subsamples of X and can induce a
@@ -1615,7 +1623,20 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        model = self._get_estimator()
+        if _routing_enabled():
+            self._set_fit_params(**params)
+            routed_params = process_routing(
+                self, "fit", sample_weight=sample_weight, **params
+            )
+        else:
+            routed_params = Bunch()
+            routed_params.splitter = Bunch(split=Bunch())
+            if sample_weight is not None:
+                routed_params.estimator = Bunch(fit=Bunch(sample_weight=sample_weight))
+            else:
+                routed_params.estimator = Bunch(fit=Bunch())
+
+        model = self.get_estimator()
 
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
@@ -1678,7 +1699,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         cv = check_cv(self.cv)
 
         # Compute path for all folds and compute MSE to get the best alpha
-        folds = list(cv.split(X, y))
+        folds = list(cv.split(X, y, **routed_params.splitter.split))
         best_mse = np.inf
 
         # We do a double for loop folded in one, in order to be able to
@@ -1742,12 +1763,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         if isinstance(precompute, str) and precompute == "auto":
             model.precompute = False
 
-        if sample_weight is None:
-            # MultiTaskElasticNetCV does not (yet) support sample_weight, even
-            # not sample_weight=None.
-            model.fit(X, y)
-        else:
-            model.fit(X, y, sample_weight=sample_weight)
+        # MultiTaskElasticNetCV does not (yet) support sample_weight, even
+        # not sample_weight=None.
+        model.fit(X, y, **routed_params.estimator.fit)
         if not hasattr(self, "l1_ratio"):
             del self.l1_ratio_
         self.coef_ = model.coef_
@@ -1767,8 +1785,48 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             }
         }
 
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
 
-class LassoCV(_RoutingNotSupportedMixin, RegressorMixin, LinearModelCV):
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.4
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add(
+                estimator=self.get_estimator(),
+                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            )
+            .add(
+                splitter=self.cv,
+                method_mapping=MethodMapping().add(callee="split", caller="fit"),
+            )
+        )
+        return router
+
+    def get_estimator(self, **params):
+        estimator = self._get_estimator()
+        if _routing_enabled():
+            estimator.set_fit_request(**self._fit_params)
+        return estimator
+
+    def _set_fit_params(self, **params):
+        if has_fit_parameter(self, "sample_weight"):
+            self._fit_params["sample_weight"] = True
+
+        for param in params.keys():
+            self._fit_params[param] = True
+
+
+class LassoCV(RegressorMixin, LinearModelCV):
     """Lasso linear model with iterative fitting along a regularization path.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -1984,7 +2042,7 @@ class LassoCV(_RoutingNotSupportedMixin, RegressorMixin, LinearModelCV):
         return {"multioutput": False}
 
 
-class ElasticNetCV(_RoutingNotSupportedMixin, RegressorMixin, LinearModelCV):
+class ElasticNetCV(RegressorMixin, LinearModelCV):
     """Elastic Net model with iterative fitting along a regularization path.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2616,7 +2674,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         self.selection = selection
 
 
-class MultiTaskElasticNetCV(_RoutingNotSupportedMixin, RegressorMixin, LinearModelCV):
+class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     """Multi-task L1/L2 ElasticNet with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2841,7 +2899,7 @@ class MultiTaskElasticNetCV(_RoutingNotSupportedMixin, RegressorMixin, LinearMod
 
     # This is necessary as LinearModelCV now supports sample_weight while
     # MultiTaskElasticNet does not (yet).
-    def fit(self, X, y):
+    def fit(self, X, y, **params):
         """Fit MultiTaskElasticNet model with coordinate descent.
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
@@ -2853,15 +2911,22 @@ class MultiTaskElasticNetCV(_RoutingNotSupportedMixin, RegressorMixin, LinearMod
         y : ndarray of shape (n_samples, n_targets)
             Training target variable. Will be cast to X's dtype if necessary.
 
+        params : dict, default=None
+            Parameters to pass to the underlying estimator's ``fit`` and
+            the CV splitter.
+
+            .. versionadded:: 1.4
+
         Returns
         -------
         self : object
             Returns MultiTaskElasticNet instance.
         """
+        _raise_for_params(params, self, "fit")
         return super().fit(X, y)
 
 
-class MultiTaskLassoCV(_RoutingNotSupportedMixin, RegressorMixin, LinearModelCV):
+class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -3069,7 +3134,7 @@ class MultiTaskLassoCV(_RoutingNotSupportedMixin, RegressorMixin, LinearModelCV)
 
     # This is necessary as LinearModelCV now supports sample_weight while
     # MultiTaskElasticNet does not (yet).
-    def fit(self, X, y):
+    def fit(self, X, y, **params):
         """Fit MultiTaskLasso model with coordinate descent.
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
@@ -3081,9 +3146,16 @@ class MultiTaskLassoCV(_RoutingNotSupportedMixin, RegressorMixin, LinearModelCV)
         y : ndarray of shape (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary.
 
+        params : dict, default=None
+            Parameters to pass to the underlying estimator's ``fit`` and
+            theCV splitter.
+
+            .. versionadded:: 1.4
+
         Returns
         -------
         self : object
             Returns an instance of fitted model.
         """
+        _raise_for_params(params, self, "fit")
         return super().fit(X, y)

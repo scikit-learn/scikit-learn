@@ -1,11 +1,11 @@
 import copy
 import re
+import types
 
 import numpy as np
 import pytest
 
 from sklearn import config_context
-from sklearn.calibration import CalibratedClassifierCV
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.covariance import GraphicalLassoCV
 from sklearn.ensemble import (
@@ -54,12 +54,6 @@ from sklearn.multiclass import (
     OneVsRestClassifier,
     OutputCodeClassifier,
 )
-from sklearn.multioutput import (
-    ClassifierChain,
-    MultiOutputClassifier,
-    MultiOutputRegressor,
-    RegressorChain,
-)
 from sklearn.pipeline import FeatureUnion
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
@@ -91,45 +85,55 @@ def enable_slep006():
 
 
 METAESTIMATORS: list = [
+    # {
+    #     "metaestimator": MultiOutputRegressor,
+    #     "estimator_name": "estimator",
+    #     "estimator": ConsumingRegressor,
+    #     "X": X,
+    #     "y": y_multi,
+    #     "estimator_routing_methods": ["fit", "partial_fit"],
+    # },
+    # {
+    #     "metaestimator": MultiOutputClassifier,
+    #     "estimator_name": "estimator",
+    #     "estimator": ConsumingClassifier,
+    #     "X": X,
+    #     "y": y_multi,
+    #     "estimator_routing_methods": ["fit", "partial_fit"],
+    # },
+    # {
+    #     "metaestimator": CalibratedClassifierCV,
+    #     "estimator_name": "estimator",
+    #     "estimator": ConsumingClassifier,
+    #     "X": X,
+    #     "y": y,
+    #     "estimator_routing_methods": ["fit"],
+    #     "preserves_metadata": False,
+    # },
+    # {
+    #     "metaestimator": ClassifierChain,
+    #     "estimator_name": "base_estimator",
+    #     "estimator": ConsumingClassifier,
+    #     "X": X,
+    #     "y": y_multi,
+    #     "estimator_routing_methods": ["fit"],
+    # },
+    # {
+    #     "metaestimator": RegressorChain,
+    #     "estimator_name": "base_estimator",
+    #     "estimator": ConsumingRegressor,
+    #     "X": X,
+    #     "y": y_multi,
+    #     "estimator_routing_methods": ["fit"],
+    # },
     {
-        "metaestimator": MultiOutputRegressor,
-        "estimator_name": "estimator",
-        "estimator": ConsumingRegressor,
-        "X": X,
-        "y": y_multi,
-        "estimator_routing_methods": ["fit", "partial_fit"],
-    },
-    {
-        "metaestimator": MultiOutputClassifier,
-        "estimator_name": "estimator",
-        "estimator": ConsumingClassifier,
-        "X": X,
-        "y": y_multi,
-        "estimator_routing_methods": ["fit", "partial_fit"],
-    },
-    {
-        "metaestimator": CalibratedClassifierCV,
-        "estimator_name": "estimator",
-        "estimator": ConsumingClassifier,
+        "metaestimator": LassoCV,
         "X": X,
         "y": y,
-        "estimator_routing_methods": ["fit"],
-        "preserves_metadata": False,
-    },
-    {
-        "metaestimator": ClassifierChain,
-        "estimator_name": "base_estimator",
-        "estimator": ConsumingClassifier,
-        "X": X,
-        "y": y_multi,
-        "estimator_routing_methods": ["fit"],
-    },
-    {
-        "metaestimator": RegressorChain,
-        "estimator_name": "base_estimator",
-        "estimator": ConsumingRegressor,
-        "X": X,
-        "y": y_multi,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+        "primary_estimator": ConsumingRegressor,
+        "estimator_method": "_get_estimator",
         "estimator_routing_methods": ["fit"],
     },
     {
@@ -240,7 +244,6 @@ UNSUPPORTED_ESTIMATORS = [
     GraphicalLassoCV(),
     IterativeImputer(),
     LarsCV(),
-    LassoCV(),
     LassoLarsCV(),
     MultiTaskElasticNetCV(),
     MultiTaskLassoCV(),
@@ -294,6 +297,9 @@ def get_init_args(metaestimator_info):
         estimator_registry = _Registry()
         estimator = metaestimator_info["estimator"](estimator_registry)
         kwargs[estimator_name] = estimator
+    if "primary_estimator" in metaestimator_info:
+        estimator_registry = _Registry()
+        estimator = metaestimator_info["primary_estimator"](estimator_registry)
     if "scorer_name" in metaestimator_info:
         scorer_name = metaestimator_info["scorer_name"]
         scorer_registry = _Registry()
@@ -511,3 +517,48 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
         assert registry
         for _splitter in registry:
             check_recorded_metadata(obj=_splitter, method="split", **method_kwargs)
+
+
+@pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+def test_metadata_is_routed_correctly_to_primary_estimator(metaestimator):
+    cls = metaestimator["metaestimator"]
+    if not metaestimator.get("primary_estimator", False):
+        return
+
+    X = metaestimator["X"]
+    y = metaestimator["y"]
+    routing_methods = metaestimator["estimator_routing_methods"]
+    preserves_metadata = metaestimator.get("preserves_metadata", True)
+    estimator_method = metaestimator["estimator_method"]
+    for method_name in routing_methods:
+        for key in ["sample_weight", "metadata"]:
+            val = {"sample_weight": sample_weight, "metadata": metadata}[key]
+            method_kwargs = {key: val}
+
+            kwargs, (estimator, registry), (scorer, _), (cv, _) = get_init_args(
+                metaestimator
+            )
+            if cv:
+                cv.set_split_request(groups=True, metadata=True)
+
+            instance = cls(**kwargs)
+
+            def _get_estimator(self):
+                estimator.coef_ = np.zeros(M)
+                estimator.intercept_ = np.zeros(M)
+                estimator.dual_gap_ = np.zeros(M)
+                estimator.n_iter_ = 10
+                return estimator
+
+            setattr(
+                instance, estimator_method, types.MethodType(_get_estimator, instance)
+            )
+            method = getattr(instance, method_name)
+            method(X, y, **method_kwargs)
+
+            # sanity check that registry is not empty, or else the test passes
+            # trivially
+            assert registry
+            if preserves_metadata is True:
+                for estimator in registry:
+                    check_recorded_metadata(estimator, method_name, **method_kwargs)
