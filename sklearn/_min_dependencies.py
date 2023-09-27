@@ -11,7 +11,7 @@ from collections import defaultdict
 if platform.python_implementation() == "PyPy":
     NUMPY_MIN_VERSION = "1.19.2"
 else:
-    NUMPY_MIN_VERSION = "1.17.3"
+    NUMPY_MIN_VERSION = "1.17.3,<2"
 
 SCIPY_MIN_VERSION = "1.5.0"
 JOBLIB_MIN_VERSION = "1.1.1"
