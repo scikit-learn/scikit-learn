@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from sklearn import config_context
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.covariance import GraphicalLassoCV
 from sklearn.ensemble import (
@@ -54,6 +55,12 @@ from sklearn.multiclass import (
     OneVsRestClassifier,
     OutputCodeClassifier,
 )
+from sklearn.multioutput import (
+    ClassifierChain,
+    MultiOutputClassifier,
+    MultiOutputRegressor,
+    RegressorChain,
+)
 from sklearn.pipeline import FeatureUnion
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
@@ -85,47 +92,47 @@ def enable_slep006():
 
 
 METAESTIMATORS: list = [
-    # {
-    #     "metaestimator": MultiOutputRegressor,
-    #     "estimator_name": "estimator",
-    #     "estimator": ConsumingRegressor,
-    #     "X": X,
-    #     "y": y_multi,
-    #     "estimator_routing_methods": ["fit", "partial_fit"],
-    # },
-    # {
-    #     "metaestimator": MultiOutputClassifier,
-    #     "estimator_name": "estimator",
-    #     "estimator": ConsumingClassifier,
-    #     "X": X,
-    #     "y": y_multi,
-    #     "estimator_routing_methods": ["fit", "partial_fit"],
-    # },
-    # {
-    #     "metaestimator": CalibratedClassifierCV,
-    #     "estimator_name": "estimator",
-    #     "estimator": ConsumingClassifier,
-    #     "X": X,
-    #     "y": y,
-    #     "estimator_routing_methods": ["fit"],
-    #     "preserves_metadata": False,
-    # },
-    # {
-    #     "metaestimator": ClassifierChain,
-    #     "estimator_name": "base_estimator",
-    #     "estimator": ConsumingClassifier,
-    #     "X": X,
-    #     "y": y_multi,
-    #     "estimator_routing_methods": ["fit"],
-    # },
-    # {
-    #     "metaestimator": RegressorChain,
-    #     "estimator_name": "base_estimator",
-    #     "estimator": ConsumingRegressor,
-    #     "X": X,
-    #     "y": y_multi,
-    #     "estimator_routing_methods": ["fit"],
-    # },
+    {
+        "metaestimator": MultiOutputRegressor,
+        "estimator_name": "estimator",
+        "estimator": ConsumingRegressor,
+        "X": X,
+        "y": y_multi,
+        "estimator_routing_methods": ["fit", "partial_fit"],
+    },
+    {
+        "metaestimator": MultiOutputClassifier,
+        "estimator_name": "estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y_multi,
+        "estimator_routing_methods": ["fit", "partial_fit"],
+    },
+    {
+        "metaestimator": CalibratedClassifierCV,
+        "estimator_name": "estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit"],
+        "preserves_metadata": False,
+    },
+    {
+        "metaestimator": ClassifierChain,
+        "estimator_name": "base_estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y_multi,
+        "estimator_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": RegressorChain,
+        "estimator_name": "base_estimator",
+        "estimator": ConsumingRegressor,
+        "X": X,
+        "y": y_multi,
+        "estimator_routing_methods": ["fit"],
+    },
     {
         "metaestimator": LassoCV,
         "X": X,
