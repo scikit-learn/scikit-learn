@@ -2006,7 +2006,8 @@ def test_smallest_admissible_index_dtype_max_val(params, expected_dtype):
 @pytest.mark.parametrize(
     "params, expected_dtype",
     [
-        # arrays dtype is 64 bits and cannot be casted down
+        # arrays dtype is 64 bits and cannot be casted down without
+        # checking the content of providing maxval.
         ({"arrays": np.array([1, 2], dtype=np.int64)}, np.dtype("int64")),
         # one of the array is 64 bits and cannot be casted down
         (
@@ -2053,15 +2054,15 @@ def test_smalled_admissible_index_dtype_without_checking_contents(
 @pytest.mark.parametrize(
     "params, expected_dtype",
     [
-        # empty arrays should always be converted to 32-bits
+        # empty arrays should always be converted to int32 indices
         ({"arrays": ([], []), "check_contents": True}, np.dtype("int32")),
         # arrays respecting np.iinfo(np.int32).min < x < np.iinfo(np.int32).max should
-        # be converted to 32-bits
+        # be converted to int32,
         (
             {"arrays": np.array([1], dtype=np.int64), "check_contents": True},
             np.dtype("int32"),
         ),
-        # otherwise, it should be converted to 64 bits. We need to create a uint32
+        # otherwise, it should be converted to int64. We need to create a uint32
         # arrays to accomodate a value > np.iinfo(np.int32).max
         (
             {
@@ -2071,12 +2072,22 @@ def test_smalled_admissible_index_dtype_without_checking_contents(
             np.dtype("int64"),
         ),
         # maxval should take precedence over the arrays contents and thus upcast to
-        # 64 bits
+        # int64.
         (
             {
                 "arrays": np.array([1], dtype=np.int32),
                 "check_contents": True,
                 "maxval": np.iinfo(np.int32).max + 1,
+            },
+            np.dtype("int64"),
+        ),
+        # when maxval is small, but check_contents is True and the contents
+        # require np.int64, we still require np.int64 indexing in the end.
+        (
+            {
+                "arrays": np.array([np.iinfo(np.int32).max + 1], dtype=np.uint32),
+                "check_contents": True,
+                "maxval": 1,
             },
             np.dtype("int64"),
         ),

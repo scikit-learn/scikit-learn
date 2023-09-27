@@ -591,16 +591,14 @@ def _ensure_sparse_format(
                 maxval=max(sparse_container.nnz, sparse_container.shape[1]),
                 check_contents=True,
             )
-            if index_dtype != sparse_container.indices.dtype:
-                sparse_container.indices = sparse_container.indices.astype(index_dtype)
-                sparse_container.indptr = sparse_container.indptr.astype(index_dtype)
+            sparse_container.indices = sparse_container.indices.astype(index_dtype, copy=False)
+            sparse_container.indptr = sparse_container.indptr.astype(index_dtype, copy=False)
         else:  # accept_sparse[0] == "coo"
             index_dtype = _smallest_admissible_index_dtype(
                 maxval=max(sparse_container.shape)
             )
-            if index_dtype != sparse_container.row.dtype:
-                sparse_container.row = sparse_container.row.astype(index_dtype)
-                sparse_container.col = sparse_container.col.astype(index_dtype)
+            sparse_container.row = sparse_container.row.astype(index_dtype, copy=False)
+            sparse_container.col = sparse_container.col.astype(index_dtype, copy=False)
 
     return sparse_container
 
@@ -636,7 +634,7 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
     if maxval is not None:
         maxval = np.int64(maxval)
         if maxval > int32max:
-            dtype = np.int64
+            return np.int64
 
     if isinstance(arrays, np.ndarray):
         arrays = (arrays,)
