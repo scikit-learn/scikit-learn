@@ -14,23 +14,18 @@ are supervised learning methods based on applying Bayes' theorem with strong
 #
 # License: BSD 3 clause
 import warnings
-
 from abc import ABCMeta, abstractmethod
-from numbers import Real, Integral
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.special import logsumexp
 
-from .base import BaseEstimator, ClassifierMixin
-from .base import _fit_context
-from .preprocessing import binarize
-from .preprocessing import LabelBinarizer
-from .preprocessing import label_binarize
+from .base import BaseEstimator, ClassifierMixin, _fit_context
+from .preprocessing import LabelBinarizer, binarize, label_binarize
+from .utils._param_validation import Hidden, Interval, StrOptions
 from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.validation import check_is_fitted, check_non_negative
-from .utils.validation import _check_sample_weight
-from .utils._param_validation import Interval, Hidden, StrOptions
+from .utils.validation import _check_sample_weight, check_is_fitted, check_non_negative
 
 __all__ = [
     "BernoulliNB",
@@ -472,7 +467,7 @@ class GaussianNB(_BaseNB):
         classes = self.classes_
 
         unique_y = np.unique(y)
-        unique_y_in_classes = np.in1d(unique_y, classes)
+        unique_y_in_classes = np.isin(unique_y, classes)
 
         if not np.all(unique_y_in_classes):
             raise ValueError(

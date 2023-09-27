@@ -1,16 +1,15 @@
-from numbers import Integral, Real
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 
-from ._base import _fit_liblinear, _get_liblinear_solver_type, BaseSVC, BaseLibSVM
-from ..base import BaseEstimator, RegressorMixin, OutlierMixin
-from ..base import _fit_context
-from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, LinearModel
+from ..base import BaseEstimator, OutlierMixin, RegressorMixin, _fit_context
+from ..linear_model._base import LinearClassifierMixin, LinearModel, SparseCoefMixin
 from ..utils import deprecated
-from ..utils.validation import _num_samples
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
-from ..utils._param_validation import Interval, StrOptions, Hidden
+from ..utils.validation import _num_samples
+from ._base import BaseLibSVM, BaseSVC, _fit_liblinear, _get_liblinear_solver_type
 
 
 def _validate_dual_parameter(dual, loss, penalty, multi_class, X):
@@ -50,6 +49,10 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     penalties and loss functions and should scale better to large numbers of
     samples.
 
+    The main differences between :class:`~sklearn.svm.LinearSVC` and
+    :class:`~sklearn.svm.SVC` lie in the loss function used by default, and in
+    the handling of intercept regularization between those two implementations.
+
     This class supports both dense and sparse input and the multiclass support
     is handled according to a one-vs-the-rest scheme.
 
@@ -73,12 +76,13 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         optimization problem. Prefer dual=False when n_samples > n_features.
         `dual="auto"` will choose the value of the parameter automatically,
         based on the values of `n_samples`, `n_features`, `loss`, `multi_class`
-        and `penalty`. If `n_samples` < `n_features` and optmizer supports
+        and `penalty`. If `n_samples` < `n_features` and optimizer supports
         chosen `loss`, `multi_class` and `penalty`, then dual will be set to True,
         otherwise it will be set to False.
 
         .. versionchanged:: 1.3
-           The default value will change from `True` to `"auto"` in 1.5.
+           The `"auto"` option is added in version 1.3 and will be the default
+           in version 1.5.
 
     tol : float, default=1e-4
         Tolerance for stopping criteria.
@@ -99,20 +103,26 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         will be ignored.
 
     fit_intercept : bool, default=True
-        Whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
-        (i.e. data is expected to be already centered).
+        Whether or not to fit an intercept. If set to True, the feature vector
+        is extended to include an intercept term: `[x_1, ..., x_n, 1]`, where
+        1 corresponds to the intercept. If set to False, no intercept will be
+        used in calculations (i.e. data is expected to be already centered).
 
     intercept_scaling : float, default=1.0
-        When self.fit_intercept is True, instance vector x becomes
-        ``[x, self.intercept_scaling]``,
-        i.e. a "synthetic" feature with constant value equals to
-        intercept_scaling is appended to the instance vector.
-        The intercept becomes intercept_scaling * synthetic feature weight
-        Note! the synthetic feature weight is subject to l1/l2 regularization
-        as all other features.
-        To lessen the effect of regularization on synthetic feature weight
-        (and therefore on the intercept) intercept_scaling has to be increased.
+        When `fit_intercept` is True, the instance vector x becomes ``[x_1,
+        ..., x_n, intercept_scaling]``, i.e. a "synthetic" feature with a
+        constant value equal to `intercept_scaling` is appended to the instance
+        vector. The intercept becomes intercept_scaling * synthetic feature
+        weight. Note that liblinear internally penalizes the intercept,
+        treating it like any other term in the feature vector. To reduce the
+        impact of the regularization on the intercept, the `intercept_scaling`
+        parameter can be set to a value greater than 1; the higher the value of
+        `intercept_scaling`, the lower the impact of regularization on it.
+        Then, the weights become `[w_x_1, ..., w_x_n,
+        w_intercept*intercept_scaling]`, where `w_x_1, ..., w_x_n` represent
+        the feature weights and the intercept weight is scaled by
+        `intercept_scaling`. This scaling allows the intercept term to have a
+        different regularization behavior compared to the other features.
 
     class_weight : dict or 'balanced', default=None
         Set the parameter C of class i to ``class_weight[i]*C`` for
@@ -362,6 +372,10 @@ class LinearSVR(RegressorMixin, LinearModel):
     penalties and loss functions and should scale better to large numbers of
     samples.
 
+    The main differences between :class:`~sklearn.svm.LinearSVR` and
+    :class:`~sklearn.svm.SVR` lie in the loss function used by default, and in
+    the handling of intercept regularization between those two implementations.
+
     This class supports both dense and sparse input.
 
     Read more in the :ref:`User Guide <svm_regression>`.
@@ -389,31 +403,38 @@ class LinearSVR(RegressorMixin, LinearModel):
         loss ('squared_epsilon_insensitive') is the L2 loss.
 
     fit_intercept : bool, default=True
-        Whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
-        (i.e. data is expected to be already centered).
+        Whether or not to fit an intercept. If set to True, the feature vector
+        is extended to include an intercept term: `[x_1, ..., x_n, 1]`, where
+        1 corresponds to the intercept. If set to False, no intercept will be
+        used in calculations (i.e. data is expected to be already centered).
 
     intercept_scaling : float, default=1.0
-        When self.fit_intercept is True, instance vector x becomes
-        [x, self.intercept_scaling],
-        i.e. a "synthetic" feature with constant value equals to
-        intercept_scaling is appended to the instance vector.
-        The intercept becomes intercept_scaling * synthetic feature weight
-        Note! the synthetic feature weight is subject to l1/l2 regularization
-        as all other features.
-        To lessen the effect of regularization on synthetic feature weight
-        (and therefore on the intercept) intercept_scaling has to be increased.
+        When `fit_intercept` is True, the instance vector x becomes `[x_1, ...,
+        x_n, intercept_scaling]`, i.e. a "synthetic" feature with a constant
+        value equal to `intercept_scaling` is appended to the instance vector.
+        The intercept becomes intercept_scaling * synthetic feature weight.
+        Note that liblinear internally penalizes the intercept, treating it
+        like any other term in the feature vector. To reduce the impact of the
+        regularization on the intercept, the `intercept_scaling` parameter can
+        be set to a value greater than 1; the higher the value of
+        `intercept_scaling`, the lower the impact of regularization on it.
+        Then, the weights become `[w_x_1, ..., w_x_n,
+        w_intercept*intercept_scaling]`, where `w_x_1, ..., w_x_n` represent
+        the feature weights and the intercept weight is scaled by
+        `intercept_scaling`. This scaling allows the intercept term to have a
+        different regularization behavior compared to the other features.
 
     dual : "auto" or bool, default=True
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
         `dual="auto"` will choose the value of the parameter automatically,
         based on the values of `n_samples`, `n_features` and `loss`. If
-        `n_samples` < `n_features` and optmizer supports chosen `loss`,
+        `n_samples` < `n_features` and optimizer supports chosen `loss`,
         then dual will be set to True, otherwise it will be set to False.
 
         .. versionchanged:: 1.3
-           The default value will change from `True` to `"auto"` in 1.5.
+           The `"auto"` option is added in version 1.3 and will be the default
+           in version 1.5.
 
     verbose : int, default=0
         Enable verbose output. Note that this setting takes advantage of a
@@ -461,8 +482,8 @@ class LinearSVR(RegressorMixin, LinearModel):
         same library as this class (liblinear).
 
     SVR : Implementation of Support Vector Machine regression using libsvm:
-        the kernel can be non-linear but its SMO algorithm does not
-        scale to large number of samples as LinearSVC does.
+        the kernel can be non-linear but its SMO algorithm does not scale to
+        large number of samples as :class:`~sklearn.svm.LinearSVR` does.
 
     sklearn.linear_model.SGDRegressor : SGDRegressor can optimize the same cost
         function as LinearSVR
@@ -631,10 +652,12 @@ class SVC(BaseSVC):
 
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
-        Specifies the kernel type to be used in the algorithm.
-        If none is given, 'rbf' will be used. If a callable is given it is
-        used to pre-compute the kernel matrix from data matrices; that matrix
-        should be an array of shape ``(n_samples, n_samples)``.
+        Specifies the kernel type to be used in the algorithm. If
+        none is given, 'rbf' will be used. If a callable is given it is used to
+        pre-compute the kernel matrix from data matrices; that matrix should be
+        an array of shape ``(n_samples, n_samples)``. For an intuitive
+        visualization of different kernel types see
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_kernels.py`.
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
@@ -773,7 +796,7 @@ class SVC(BaseSVC):
         Indices of support vectors.
 
     support_vectors_ : ndarray of shape (n_SV, n_features)
-        Support vectors.
+        Support vectors. An empty array if kernel is precomputed.
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
@@ -895,9 +918,11 @@ class NuSVC(BaseSVC):
 
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
         default='rbf'
-         Specifies the kernel type to be used in the algorithm.
-         If none is given, 'rbf' will be used. If a callable is given it is
-         used to precompute the kernel matrix.
+        Specifies the kernel type to be used in the algorithm.
+        If none is given, 'rbf' will be used. If a callable is given it is
+        used to precompute the kernel matrix. For an intuitive
+        visualization of different kernel types see
+        :ref:`sphx_glr_auto_examples_svm_plot_svm_kernels.py`.
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
@@ -1043,6 +1068,7 @@ class NuSVC(BaseSVC):
         0 if correctly fitted, 1 if the algorithm did not converge.
 
     probA_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
+
     probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         If `probability=True`, it corresponds to the parameters learned in
         Platt scaling to produce probability estimates from decision values.

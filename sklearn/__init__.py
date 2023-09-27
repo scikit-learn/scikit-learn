@@ -12,13 +12,12 @@ machine-learning as a versatile tool for science and engineering.
 
 See http://scikit-learn.org for complete documentation.
 """
-import sys
 import logging
 import os
 import random
+import sys
 
-
-from ._config import get_config, set_config, config_context
+from ._config import config_context, get_config, set_config
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +76,10 @@ else:
     # It is necessary to do this prior to importing show_versions as the
     # later is linked to the OpenMP runtime to make it possible to introspect
     # it and importing it first would fail if the OpenMP dll cannot be found.
-    from . import _distributor_init  # noqa: F401
-    from . import __check_build  # noqa: F401
+    from . import (
+        __check_build,  # noqa: F401
+        _distributor_init,  # noqa: F401
+    )
     from .base import clone
     from .utils._show_versions import show_versions
 

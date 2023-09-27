@@ -1,9 +1,9 @@
 import numpy as np
 
 from . import check_consistent_length, check_matplotlib_support
+from ._response import _get_response_values_binary
 from .multiclass import type_of_target
 from .validation import _check_pos_label_consistency
-from ._response import _get_response_values_binary
 
 
 class _BinaryClassifierCurveDisplayMixin:

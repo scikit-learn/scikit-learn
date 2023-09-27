@@ -2,31 +2,33 @@ import os
 import shutil
 import tempfile
 import warnings
-from pickle import loads
-from pickle import dumps
 from functools import partial
+from pickle import dumps, loads
 
-import pytest
 import numpy as np
-from sklearn.datasets import get_data_home
-from sklearn.datasets import clear_data_home
-from sklearn.datasets import load_files
-from sklearn.datasets import load_sample_images
-from sklearn.datasets import load_sample_image
-from sklearn.datasets import load_digits
-from sklearn.datasets import load_diabetes
-from sklearn.datasets import load_linnerud
-from sklearn.datasets import load_iris
-from sklearn.datasets import load_breast_cancer
-from sklearn.datasets import load_wine
+import pytest
+
+from sklearn.datasets import (
+    clear_data_home,
+    get_data_home,
+    load_breast_cancer,
+    load_diabetes,
+    load_digits,
+    load_files,
+    load_iris,
+    load_linnerud,
+    load_sample_image,
+    load_sample_images,
+    load_wine,
+)
 from sklearn.datasets._base import (
     load_csv_data,
     load_gzip_compressed_csv_data,
 )
+from sklearn.datasets.tests.test_common import check_as_frame
 from sklearn.preprocessing import scale
 from sklearn.utils import Bunch
 from sklearn.utils.fixes import _is_resource
-from sklearn.datasets.tests.test_common import check_as_frame
 
 
 def _remove_dir(path):

@@ -1,18 +1,22 @@
 import numpy as np
 import pytest
 
-from sklearn.datasets import load_iris, make_classification, make_regression
+from sklearn.datasets import (
+    load_iris,
+    make_classification,
+    make_multilabel_classification,
+    make_regression,
+)
 from sklearn.linear_model import (
     LinearRegression,
     LogisticRegression,
 )
+from sklearn.multioutput import ClassifierChain
 from sklearn.preprocessing import scale
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._mocking import _MockEstimatorOnOffPrediction
-from sklearn.utils._testing import assert_allclose, assert_array_equal
-
 from sklearn.utils._response import _get_response_values, _get_response_values_binary
-
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 X, y = load_iris(return_X_y=True)
 # scale the data to avoid ConvergenceWarning with LogisticRegression
@@ -232,3 +236,26 @@ def test_get_response_values_multiclass(estimator, response_method):
     assert predictions.shape == (X.shape[0], len(estimator.classes_))
     if response_method == "predict_proba":
         assert np.logical_and(predictions >= 0, predictions <= 1).all()
+
+
+@pytest.mark.parametrize(
+    "response_method", ["predict_proba", "decision_function", "predict"]
+)
+def test_get_response_values_multilabel_indicator(response_method):
+    X, Y = make_multilabel_classification(random_state=0)
+    estimator = ClassifierChain(LogisticRegression()).fit(X, Y)
+
+    y_pred, pos_label = _get_response_values(
+        estimator, X, response_method=response_method
+    )
+    assert pos_label is None
+    assert y_pred.shape == Y.shape
+
+    if response_method == "predict_proba":
+        assert np.logical_and(y_pred >= 0, y_pred <= 1).all()
+    elif response_method == "decision_function":
+        # values returned by `decision_function` are not bounded in [0, 1]
+        assert (y_pred < 0).sum() > 0
+        assert (y_pred > 1).sum() > 0
+    else:  # response_method == "predict"
+        assert np.logical_or(y_pred == 0, y_pred == 1).all()

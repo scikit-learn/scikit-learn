@@ -9,24 +9,24 @@ https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.da
 """
 
 import errno
-from gzip import GzipFile
 import logging
 import os
+from gzip import GzipFile
 from os.path import exists, join
 
-import numpy as np
 import joblib
+import numpy as np
 
-from ._base import _fetch_remote
-from ._base import _convert_data_dataframe
-from . import get_data_home
-from ._base import RemoteFileMetadata
-from ._base import load_descr
-from ..utils._param_validation import StrOptions, validate_params
-from ..utils import Bunch
-from ..utils import check_random_state
+from ..utils import Bunch, check_random_state
 from ..utils import shuffle as shuffle_method
-
+from ..utils._param_validation import StrOptions, validate_params
+from . import get_data_home
+from ._base import (
+    RemoteFileMetadata,
+    _convert_data_dataframe,
+    _fetch_remote,
+    load_descr,
+)
 
 # The original data can be found at:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data.gz
@@ -57,7 +57,8 @@ logger = logging.getLogger(__name__)
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_kddcup99(
     *,

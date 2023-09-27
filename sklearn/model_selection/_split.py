@@ -11,27 +11,29 @@ functions to split the data based on a preset strategy.
 #         Rodion Martynov <marrodion@gmail.com>
 # License: BSD 3 clause
 
-from collections.abc import Iterable
-from collections import defaultdict
+import numbers
 import warnings
+from abc import ABCMeta, abstractmethod
+from collections import defaultdict
+from collections.abc import Iterable
+from inspect import signature
 from itertools import chain, combinations
 from math import ceil, floor
-import numbers
-from abc import ABCMeta, abstractmethod
-from inspect import signature
 
 import numpy as np
 from scipy.special import comb
 
-from ..utils import indexable, check_random_state, _safe_indexing
-from ..utils import _approximate_mode
-from ..utils.validation import _num_samples, column_or_1d
-from ..utils.validation import check_array
-from ..utils.multiclass import type_of_target
-from ..utils import metadata_routing
+from ..utils import (
+    _approximate_mode,
+    _safe_indexing,
+    check_random_state,
+    indexable,
+    metadata_routing,
+)
+from ..utils._param_validation import Interval, RealNotInt, validate_params
 from ..utils.metadata_routing import _MetadataRequester
-from ..utils._param_validation import validate_params, Interval
-from ..utils._param_validation import RealNotInt
+from ..utils.multiclass import type_of_target
+from ..utils.validation import _num_samples, check_array, column_or_1d
 
 __all__ = [
     "BaseCrossValidator",
@@ -408,6 +410,10 @@ class KFold(_BaseKFold):
 
     Read more in the :ref:`User Guide <k_fold>`.
 
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
+
     Parameters
     ----------
     n_splits : int, default=5
@@ -499,6 +505,10 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     distinct groups is approximately the same in each fold.
 
     Read more in the :ref:`User Guide <group_k_fold>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     Parameters
     ----------
@@ -623,6 +633,10 @@ class StratifiedKFold(_BaseKFold):
     samples for each class.
 
     Read more in the :ref:`User Guide <stratified_k_fold>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     Parameters
     ----------
@@ -814,6 +828,10 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     constraint of non-overlapping groups between splits.
 
     Read more in the :ref:`User Guide <cross_validation>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     Parameters
     ----------
@@ -1013,6 +1031,10 @@ class TimeSeriesSplit(_BaseKFold):
     training sets are supersets of those that come before them.
 
     Read more in the :ref:`User Guide <time_series_split>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     .. versionadded:: 0.18
 
@@ -1764,6 +1786,10 @@ class ShuffleSplit(BaseShuffleSplit):
 
     Read more in the :ref:`User Guide <ShuffleSplit>`.
 
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
+
     Parameters
     ----------
     n_splits : int, default=10
@@ -1894,6 +1920,10 @@ class GroupShuffleSplit(GroupsConsumerMixin, ShuffleSplit):
 
     Read more in the :ref:`User Guide <group_shuffle_split>`.
 
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
+
     Parameters
     ----------
     n_splits : int, default=5
@@ -1971,8 +2001,8 @@ class GroupShuffleSplit(GroupsConsumerMixin, ShuffleSplit):
             # these are the indices of classes in the partition
             # invert them into data indices
 
-            train = np.flatnonzero(np.in1d(group_indices, group_train))
-            test = np.flatnonzero(np.in1d(group_indices, group_test))
+            train = np.flatnonzero(np.isin(group_indices, group_train))
+            test = np.flatnonzero(np.isin(group_indices, group_test))
 
             yield train, test
 
@@ -2023,6 +2053,10 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     still very likely for sizeable datasets.
 
     Read more in the :ref:`User Guide <stratified_shuffle_split>`.
+
+    For visualisation of cross-validation behaviour and
+    comparison between common scikit-learn split methods
+    refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
     Parameters
     ----------
@@ -2510,7 +2544,8 @@ def check_cv(cv=5, y=None, *, classifier=False):
         "random_state": ["random_state"],
         "shuffle": ["boolean"],
         "stratify": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def train_test_split(
     *arrays,
@@ -2670,7 +2705,7 @@ def _pprint(params, offset=0, printer=repr):
     this_line_length = offset
     line_sep = ",\n" + (1 + offset // 2) * " "
     for i, (k, v) in enumerate(sorted(params.items())):
-        if type(v) is float:
+        if isinstance(v, float):
             # use str for representing floating point numbers
             # this way we get consistent representation across
             # architectures and versions.

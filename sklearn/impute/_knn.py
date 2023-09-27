@@ -3,19 +3,18 @@
 # License: BSD 3 clause
 
 from numbers import Integral
+
 import numpy as np
 
-from ._base import _BaseImputer
 from ..base import _fit_context
-from ..utils.validation import FLOAT_DTYPES
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
 from ..neighbors._base import _get_weights
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_feature_names_in
 from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
+from ._base import _BaseImputer
 
 
 class KNNImputer(_BaseImputer):
@@ -122,6 +121,9 @@ class KNNImputer(_BaseImputer):
            [3. , 4. , 3. ],
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
+
+    For a more detailed example see
+    :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
     """
 
     _parameter_constraints: dict = {
@@ -283,7 +285,12 @@ class KNNImputer(_BaseImputer):
                 Xc[:, ~valid_mask] = 0
             else:
                 Xc = X[:, valid_mask]
-            return Xc
+
+            # Even if there are no missing values in X, we still concatenate Xc
+            # with the missing value indicator matrix, X_indicator.
+            # This is to ensure that the output maintains consistency in terms
+            # of columns, regardless of whether missing values exist in X or not.
+            return super()._concatenate_indicator(Xc, X_indicator)
 
         row_missing_idx = np.flatnonzero(mask.any(axis=1))
 

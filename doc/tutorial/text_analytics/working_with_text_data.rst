@@ -520,7 +520,7 @@ Exercise 1: Language identification
 -----------------------------------
 
 - Write a text classification pipeline using a custom preprocessor and
-  ``CharNGramAnalyzer`` using data from Wikipedia articles as training set.
+  ``TfidfVectorizer`` set up to use character based n-grams, using data from Wikipedia articles as the training set.
 
 - Evaluate the performance on some held out test set.
 
@@ -571,7 +571,7 @@ upon the completion of this tutorial:
   :ref:`Clustering <sphx_glr_auto_examples_text_plot_document_clustering.py>`
   on your problem.
 
-* If you have multiple labels per document, e.g categories, have a look
+* If you have multiple labels per document, e.g. categories, have a look
   at the :ref:`Multiclass and multilabel section <multiclass>`.
 
 * Try using :ref:`Truncated SVD <LSA>` for

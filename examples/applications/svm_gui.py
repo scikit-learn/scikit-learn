@@ -30,12 +30,12 @@ except ImportError:
     from matplotlib.backends.backend_tkagg import (
         NavigationToolbar2TkAgg as NavigationToolbar2Tk,
     )
-from matplotlib.figure import Figure
-from matplotlib.contour import ContourSet
-
 import sys
-import numpy as np
 import tkinter as Tk
+
+import numpy as np
+from matplotlib.contour import ContourSet
+from matplotlib.figure import Figure
 
 from sklearn import svm
 from sklearn.datasets import dump_svmlight_file

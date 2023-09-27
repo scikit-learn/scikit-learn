@@ -1,16 +1,14 @@
-import pytest
-
 import numpy as np
+import pytest
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
-from sklearn import datasets, svm, linear_model, base
-from sklearn.datasets import make_classification, load_digits, make_blobs
-from sklearn.svm.tests import test_svm
+from sklearn import base, datasets, linear_model, svm
+from sklearn.datasets import load_digits, make_blobs, make_classification
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.svm.tests import test_svm
 from sklearn.utils._testing import ignore_warnings, skip_if_32bit
-
+from sklearn.utils.extmath import safe_sparse_dot
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -47,7 +45,7 @@ iris.data = sparse.csr_matrix(iris.data)
 
 def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
     dense_svm.fit(X_train.toarray(), y_train)
-    if sparse.isspmatrix(X_test):
+    if sparse.issparse(X_test):
         X_test_dense = X_test.toarray()
     else:
         X_test_dense = X_test
@@ -79,7 +77,7 @@ def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
             dense_svm.predict_proba(X_test_dense), sparse_svm.predict_proba(X_test), 4
         )
         msg = "cannot use sparse input in 'SVC' trained on dense data"
-    if sparse.isspmatrix(X_test):
+    if sparse.issparse(X_test):
         with pytest.raises(ValueError, match=msg):
             dense_svm.predict(X_test)
 

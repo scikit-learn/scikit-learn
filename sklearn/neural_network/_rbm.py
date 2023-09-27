@@ -14,16 +14,16 @@ import numpy as np
 import scipy.sparse as sp
 from scipy.special import expit  # logistic function
 
-from ..base import BaseEstimator
-from ..base import TransformerMixin
-from ..base import ClassNamePrefixFeaturesOutMixin
-from ..base import _fit_context
-from ..utils import check_random_state
-from ..utils import gen_even_slices
-from ..utils.extmath import safe_sparse_dot
-from ..utils.extmath import log_logistic
-from ..utils.validation import check_is_fitted
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from ..utils import check_random_state, gen_even_slices
 from ..utils._param_validation import Interval
+from ..utils.extmath import log_logistic, safe_sparse_dot
+from ..utils.validation import check_is_fitted
 
 
 class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -370,7 +370,10 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
         ind = (np.arange(v.shape[0]), rng.randint(0, v.shape[1], v.shape[0]))
         if sp.issparse(v):
             data = -2 * v[ind] + 1
-            v_ = v + sp.csr_matrix((data.A.ravel(), ind), shape=v.shape)
+            if isinstance(data, np.matrix):  # v is a sparse matrix
+                v_ = v + sp.csr_matrix((data.A.ravel(), ind), shape=v.shape)
+            else:  # v is a sparse array
+                v_ = v + sp.csr_array((data.ravel(), ind), shape=v.shape)
         else:
             v_ = v.copy()
             v_[ind] = 1 - v_[ind]

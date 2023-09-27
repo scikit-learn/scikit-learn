@@ -5,29 +5,27 @@
 # License: BSD 3 clause
 
 
-from numbers import Integral, Real
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 from scipy import sparse
 from scipy.linalg import eigh
-from scipy.sparse.linalg import eigsh
-from scipy.sparse.linalg import lobpcg
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse.csgraph import laplacian as csgraph_laplacian
+from scipy.sparse.linalg import eigsh, lobpcg
 
-from ..base import BaseEstimator
-from ..base import _fit_context
+from ..base import BaseEstimator, _fit_context
+from ..metrics.pairwise import rbf_kernel
+from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils import (
     check_array,
     check_random_state,
     check_symmetric,
 )
 from ..utils._arpack import _init_arpack_v0
-from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils._param_validation import Interval, StrOptions
-from ..metrics.pairwise import rbf_kernel
-from ..neighbors import kneighbors_graph, NearestNeighbors
+from ..utils.extmath import _deterministic_vector_sign_flip
 
 
 def _graph_connected_component(graph, node_id):
@@ -87,7 +85,7 @@ def _graph_is_connected(graph):
     is_connected : bool
         True means the graph is fully connected and False means not.
     """
-    if sparse.isspmatrix(graph):
+    if sparse.issparse(graph):
         # sparse graph, find all the connected components
         n_connected_components, _ = connected_components(graph)
         return n_connected_components == 1
@@ -120,7 +118,7 @@ def _set_diag(laplacian, value, norm_laplacian):
     """
     n_nodes = laplacian.shape[0]
     # We need all entries in the diagonal to values
-    if not sparse.isspmatrix(laplacian):
+    if not sparse.issparse(laplacian):
         if norm_laplacian:
             laplacian.flat[:: n_nodes + 1] = value
     else:
@@ -282,7 +280,7 @@ def spectral_embedding(
     if (
         eigen_solver == "arpack"
         or eigen_solver != "lobpcg"
-        and (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)
+        and (not sparse.issparse(laplacian) or n_nodes < 5 * n_components)
     ):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
         # for details see the source code in scipy:
@@ -373,7 +371,7 @@ def spectral_embedding(
             # see note above under arpack why lobpcg has problems with small
             # number of nodes
             # lobpcg will fallback to eigh, so we short circuit it
-            if sparse.isspmatrix(laplacian):
+            if sparse.issparse(laplacian):
                 laplacian = laplacian.toarray()
             _, diffusion_map = eigh(laplacian, check_finite=False)
             embedding = diffusion_map.T[:n_components]

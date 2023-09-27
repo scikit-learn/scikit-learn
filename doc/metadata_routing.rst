@@ -10,9 +10,11 @@ Metadata Routing
 
 .. note::
   The Metadata Routing API is experimental, and is not implemented yet for many
-  estimators. It may change without the usual deprecation cycle. By default
-  this feature is not enabled. You can enable this feature  by setting the
-  ``enable_metadata_routing`` flag to ``True``:
+  estimators. Please refer to the :ref:`list of supported and unsupported
+  models <metadata_routing_models>` for more information. It may change without
+  the usual deprecation cycle. By default this feature is not enabled. You can
+  enable this feature  by setting the ``enable_metadata_routing`` flag to
+  ``True``::
 
     >>> import sklearn
     >>> sklearn.set_config(enable_metadata_routing=True)
@@ -34,9 +36,9 @@ you can check our related developer guide:
 
 .. note::
   Note that the methods and requirements introduced in this document are only
-  relevant if you want to pass metadata (e.g. ``sample_weight``) to a method.
+  relevant if you want to pass :term:`metadata` (e.g. ``sample_weight``) to a method.
   If you're only passing ``X`` and ``y`` and no other parameter / metadata to
-  methods such as ``fit``, ``transform``, etc, then you don't need to set
+  methods such as :term:`fit`, :term:`transform`, etc, then you don't need to set
   anything.
 
 Usage Examples
@@ -76,7 +78,7 @@ metadata called ``sample_weight``::
   ...     lr,
   ...     X,
   ...     y,
-  ...     props={"sample_weight": my_weights, "groups": my_groups},
+  ...     params={"sample_weight": my_weights, "groups": my_groups},
   ...     cv=GroupKFold(),
   ...     scoring=weighted_acc,
   ... )
@@ -84,20 +86,20 @@ metadata called ``sample_weight``::
 Note that in this example, ``my_weights`` is passed to both the scorer and
 :class:`~linear_model.LogisticRegressionCV`.
 
-Error handling: if ``props={"sample_weigh": my_weights, ...}`` were passed
+Error handling: if ``params={"sample_weigh": my_weights, ...}`` were passed
 (note the typo), :func:`~model_selection.cross_validate` would raise an error,
 since ``sample_weigh`` was not requested by any of its underlying objects.
 
 Weighted scoring and unweighted fitting
 ---------------------------------------
 
-When passing metadata such as ``sample_weight`` around, all scikit-learn
-estimators require weights to be either explicitly requested or not requested
-(i.e. ``True`` or ``False``) when used in another router such as a
-:class:`~pipeline.Pipeline` or a ``*GridSearchCV``. To perform an unweighted
-fit, we need to configure :class:`~linear_model.LogisticRegressionCV` to not
-request sample weights, so that :func:`~model_selection.cross_validate` does
-not pass the weights along::
+When passing metadata such as ``sample_weight`` around, all ``sample_weight``
+:term:`consumers <consumer>` require weights to be either explicitly requested
+or not requested (i.e. ``True`` or ``False``) when used in another
+:term:`router` such as a :class:`~pipeline.Pipeline` or a ``*GridSearchCV``. To
+perform an unweighted fit, we need to configure
+:class:`~linear_model.LogisticRegressionCV` to not request sample weights, so
+that :func:`~model_selection.cross_validate` does not pass the weights along::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...     sample_weight=True
@@ -110,7 +112,7 @@ not pass the weights along::
   ...     X,
   ...     y,
   ...     cv=GroupKFold(),
-  ...     props={"sample_weight": my_weights, "groups": my_groups},
+  ...     params={"sample_weight": my_weights, "groups": my_groups},
   ...     scoring=weighted_acc,
   ... )
 
@@ -142,7 +144,7 @@ instance is set and ``sample_weight`` is not routed to it::
   ...     X,
   ...     y,
   ...     cv=GroupKFold(),
-  ...     props={"sample_weight": my_weights, "groups": my_groups},
+  ...     params={"sample_weight": my_weights, "groups": my_groups},
   ...     scoring=weighted_acc,
   ... )
 
@@ -166,7 +168,7 @@ consumers. In this example, we pass ``scoring_weight`` to the scorer, and
   ...     X,
   ...     y,
   ...     cv=GroupKFold(),
-  ...     props={
+  ...     params={
   ...         "scoring_weight": my_weights,
   ...         "fitting_weight": my_other_weights,
   ...         "groups": my_groups,
@@ -177,16 +179,17 @@ consumers. In this example, we pass ``scoring_weight`` to the scorer, and
 API Interface
 *************
 
-A *consumer* is an object (estimator, meta-estimator, scorer, splitter) which
-accepts and uses some metadata in at least one of its methods (``fit``,
-``predict``, ``inverse_transform``, ``transform``, ``score``, ``split``).
-Meta-estimators which only forward the metadata to other objects (the child
-estimator, scorers, or splitters) and don't use the metadata themselves are not
-consumers. (Meta-)Estimators which route metadata to other objects are
-*routers*. A(n) (meta-)estimator can be a consumer and a router at the same time.
-(Meta-)Estimators and splitters expose a ``set_*_request`` method for each
-method which accepts at least one metadata. For instance, if an estimator
-supports ``sample_weight`` in ``fit`` and ``score``, it exposes
+A :term:`consumer` is an object (estimator, meta-estimator, scorer, splitter)
+which accepts and uses some :term:`metadata` in at least one of its methods
+(``fit``, ``predict``, ``inverse_transform``, ``transform``, ``score``,
+``split``). Meta-estimators which only forward the metadata to other objects
+(the child estimator, scorers, or splitters) and don't use the metadata
+themselves are not consumers. (Meta-)Estimators which route metadata to other
+objects are :term:`routers <router>`. A(n) (meta-)estimator can be a
+:term:`consumer` and a :term:`router` at the same time. (Meta-)Estimators and
+splitters expose a ``set_*_request`` method for each method which accepts at
+least one metadata. For instance, if an estimator supports ``sample_weight`` in
+``fit`` and ``score``, it exposes
 ``estimator.set_fit_request(sample_weight=value)`` and
 ``estimator.set_score_request(sample_weight=value)``. Here ``value`` can be:
 
@@ -229,3 +232,72 @@ The issue can be fixed by explicitly setting the request value::
     >>> lr = LogisticRegression().set_fit_request(
     ...     sample_weight=True
     ... ).set_score_request(sample_weight=False)
+
+At the end we disable the configuration flag for metadata routing::
+
+    >>> sklearn.set_config(enable_metadata_routing=False)
+
+.. _metadata_routing_models:
+
+Metadata Routing Support Status
+*******************************
+All consumers (i.e. simple estimators which only consume metadata and don't
+route them) support metadata routing, meaning they can be used inside
+meta-estimators which support metadata routing. However, development of support
+for metadata routing for meta-estimators is in progress, and here is a list of
+meta-estimators and tools which support and don't yet support metadata routing.
+
+
+Meta-estimators and functions supporting metadata routing:
+
+- :class:`sklearn.calibration.CalibratedClassifierCV`
+- :class:`sklearn.compose.ColumnTransformer`
+- :class:`sklearn.linear_model.LogisticRegressionCV`
+- :class:`sklearn.model_selection.GridSearchCV`
+- :class:`sklearn.model_selection.HalvingGridSearchCV`
+- :class:`sklearn.model_selection.HalvingRandomSearchCV`
+- :class:`sklearn.model_selection.RandomizedSearchCV`
+- :func:`sklearn.model_selection.cross_validate`
+- :func:`sklearn.model_selection.cross_val_score`
+- :func:`sklearn.model_selection.cross_val_predict`
+- :class:`sklearn.multioutput.ClassifierChain`
+- :class:`sklearn.multioutput.MultiOutputClassifier`
+- :class:`sklearn.multioutput.MultiOutputRegressor`
+- :class:`sklearn.multioutput.RegressorChain`
+- :class:`sklearn.pipeline.Pipeline`
+
+Meta-estimators and tools not supporting metadata routing yet:
+
+- :class:`sklearn.compose.TransformedTargetRegressor`
+- :class:`sklearn.covariance.GraphicalLassoCV`
+- :class:`sklearn.ensemble.AdaBoostClassifier`
+- :class:`sklearn.ensemble.AdaBoostRegressor`
+- :class:`sklearn.ensemble.BaggingClassifier`
+- :class:`sklearn.ensemble.BaggingRegressor`
+- :class:`sklearn.ensemble.StackingClassifier`
+- :class:`sklearn.ensemble.StackingRegressor`
+- :class:`sklearn.ensemble.VotingClassifier`
+- :class:`sklearn.ensemble.VotingRegressor`
+- :class:`sklearn.feature_selection.RFE`
+- :class:`sklearn.feature_selection.RFECV`
+- :class:`sklearn.feature_selection.SelectFromModel`
+- :class:`sklearn.feature_selection.SequentialFeatureSelector`
+- :class:`sklearn.impute.IterativeImputer`
+- :class:`sklearn.linear_model.ElasticNetCV`
+- :class:`sklearn.linear_model.LarsCV`
+- :class:`sklearn.linear_model.LassoCV`
+- :class:`sklearn.linear_model.LassoLarsCV`
+- :class:`sklearn.linear_model.MultiTaskElasticNetCV`
+- :class:`sklearn.linear_model.MultiTaskLassoCV`
+- :class:`sklearn.linear_model.OrthogonalMatchingPursuitCV`
+- :class:`sklearn.linear_model.RANSACRegressor`
+- :class:`sklearn.linear_model.RidgeClassifierCV`
+- :class:`sklearn.linear_model.RidgeCV`
+- :class:`sklearn.model_selection.learning_curve`
+- :class:`sklearn.model_selection.permutation_test_score`
+- :class:`sklearn.model_selection.validation_curve`
+- :class:`sklearn.multiclass.OneVsOneClassifier`
+- :class:`sklearn.multiclass.OneVsRestClassifier`
+- :class:`sklearn.multiclass.OutputCodeClassifier`
+- :class:`sklearn.pipeline.FeatureUnion`
+- :class:`sklearn.semi_supervised.SelfTrainingClassifier`
