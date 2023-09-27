@@ -1624,9 +1624,11 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         if _routing_enabled():
-            self._set_fit_params(**params)
+            sample_weight_param = {}
+            if sample_weight is not None or has_fit_parameter(self, "sample_weight"):
+                sample_weight_param["sample_weight"] = sample_weight
             routed_params = process_routing(
-                self, "fit", sample_weight=sample_weight, **params
+                self, "fit", **sample_weight_param, **params
             )
         else:
             routed_params = Bunch()
@@ -1818,12 +1820,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             estimator.set_fit_request(**self._fit_params)
         return estimator
 
-    def _set_fit_params(self, **params):
-        if has_fit_parameter(self, "sample_weight"):
-            self._fit_params["sample_weight"] = True
-
-        for param in params.keys():
-            self._fit_params[param] = True
+    def set_estimator_fit_params(self, **params):
+        self._fit_params = params
 
 
 class LassoCV(RegressorMixin, LinearModelCV):
@@ -2270,6 +2268,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self._fit_params = {}
 
     def _get_estimator(self):
         return ElasticNet()
@@ -2887,6 +2886,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.selection = selection
+        self._fit_params = {}
 
     def _get_estimator(self):
         return MultiTaskElasticNet()
@@ -2923,7 +2923,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
             Returns MultiTaskElasticNet instance.
         """
         _raise_for_params(params, self, "fit")
-        return super().fit(X, y)
+        return super().fit(X, y, **params)
 
 
 class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
@@ -3158,4 +3158,4 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
             Returns an instance of fitted model.
         """
         _raise_for_params(params, self, "fit")
-        return super().fit(X, y)
+        return super().fit(X, y, **params)

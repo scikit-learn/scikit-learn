@@ -134,16 +134,6 @@ METAESTIMATORS: list = [
         "estimator_routing_methods": ["fit"],
     },
     {
-        "metaestimator": LassoCV,
-        "X": X,
-        "y": y,
-        "cv_name": "cv",
-        "cv_routing_methods": ["fit"],
-        "primary_estimator": ConsumingRegressor,
-        "estimator_method": "_get_estimator",
-        "estimator_routing_methods": ["fit"],
-    },
-    {
         "metaestimator": LogisticRegressionCV,
         "X": X,
         "y": y_multi,
@@ -208,6 +198,46 @@ METAESTIMATORS: list = [
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": ElasticNetCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+        "primary_estimator": ConsumingRegressor,
+        "estimator_method": "_get_estimator",
+        "estimator_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": LassoCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+        "primary_estimator": ConsumingRegressor,
+        "estimator_method": "_get_estimator",
+        "estimator_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": MultiTaskElasticNetCV,
+        "X": X,
+        "y": y_multi,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+        "primary_estimator": ConsumingRegressor,
+        "estimator_method": "_get_estimator",
+        "estimator_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": MultiTaskLassoCV,
+        "X": X,
+        "y": y_multi,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+        "primary_estimator": ConsumingRegressor,
+        "estimator_method": "_get_estimator",
+        "estimator_routing_methods": ["fit"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -246,14 +276,11 @@ UNSUPPORTED_ESTIMATORS = [
     AdaBoostRegressor(),
     BaggingClassifier(),
     BaggingRegressor(),
-    ElasticNetCV(),
     FeatureUnion([]),
     GraphicalLassoCV(),
     IterativeImputer(),
     LarsCV(),
     LassoLarsCV(),
-    MultiTaskElasticNetCV(),
-    MultiTaskLassoCV(),
     OneVsOneClassifier(ConsumingClassifier()),
     OneVsRestClassifier(ConsumingClassifier()),
     OrthogonalMatchingPursuitCV(),
@@ -507,7 +534,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
 
     cls = metaestimator["metaestimator"]
     routing_methods = metaestimator["cv_routing_methods"]
-
+    y_ = y_multi if cls.__name__.startswith("MultiTask") else y
     for method_name in routing_methods:
         kwargs, (estimator, _), (scorer, _), (cv, registry) = get_init_args(
             metaestimator
@@ -520,7 +547,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
         instance = cls(**kwargs)
         method_kwargs = {"groups": groups, "metadata": metadata}
         method = getattr(instance, method_name)
-        method(X, y, **method_kwargs)
+        method(X, y_, **method_kwargs)
         assert registry
         for _splitter in registry:
             check_recorded_metadata(obj=_splitter, method="split", **method_kwargs)
@@ -528,10 +555,10 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 def test_metadata_is_routed_correctly_to_primary_estimator(metaestimator):
-    cls = metaestimator["metaestimator"]
     if not metaestimator.get("primary_estimator", False):
         return
 
+    cls = metaestimator["metaestimator"]
     X = metaestimator["X"]
     y = metaestimator["y"]
     routing_methods = metaestimator["estimator_routing_methods"]
@@ -549,6 +576,8 @@ def test_metadata_is_routed_correctly_to_primary_estimator(metaestimator):
                 cv.set_split_request(groups=True, metadata=True)
 
             instance = cls(**kwargs)
+            if estimator:
+                instance.set_estimator_fit_params(sample_weight=True, metadata=True)
 
             def _get_estimator(self):
                 estimator.coef_ = np.zeros(M)
@@ -562,9 +591,6 @@ def test_metadata_is_routed_correctly_to_primary_estimator(metaestimator):
             )
             method = getattr(instance, method_name)
             method(X, y, **method_kwargs)
-
-            # sanity check that registry is not empty, or else the test passes
-            # trivially
             assert registry
             if preserves_metadata is True:
                 for estimator in registry:
