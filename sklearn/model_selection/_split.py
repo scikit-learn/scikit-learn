@@ -1058,7 +1058,7 @@ class MultilabelStratifiedKFold(_BaseKFold):
     >>> import numpy as np
     >>> from sklearn.model_selection import MultilabelStratifiedKFold
     >>> X = np.ones((8, 2))
-    >>> y = y = np.hstack(([[0]] * 4 + [[1]] * 4, [[1]] * 4 + [[0]] * 4))
+    >>> y = np.hstack(([[0]] * 4 + [[1]] * 4, [[1]] * 4 + [[0]] * 4))
     >>> mskf = MultilabelStratifiedKFold(n_splits=2)
     >>> mskf.get_n_splits(X, y)
     2
