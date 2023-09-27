@@ -2042,7 +2042,7 @@ def test_smallest_admissible_index_dtype_max_val(params, expected_dtype):
         ),
     ],
 )
-def test_smalled_admissible_index_dtype_without_checking_contents(
+def test_smallest_admissible_index_dtype_without_checking_contents(
     params, expected_dtype
 ):
     """Check the behaviour of `smallest_admissible_index_dtype` using the passed
@@ -2093,8 +2093,16 @@ def test_smalled_admissible_index_dtype_without_checking_contents(
         ),
     ],
 )
-def test_smalled_admissible_index_dtype_by_checking_contents(params, expected_dtype):
+def test_smallest_admissible_index_dtype_by_checking_contents(params, expected_dtype):
     """Check the behaviour of `smallest_admissible_index_dtype` using the dtype of the
     arrays but as well the contents.
     """
     assert np.dtype(_smallest_admissible_index_dtype(**params)) == expected_dtype
+
+
+def test_smallest_admissible_index_dtype_error():
+    """Check that we raise the proper error message."""
+    maxval = np.iinfo(np.int64).max + 1
+    err_msg = f"maxval={maxval} is to large to be represented as np.int64"
+    with pytest.raises(ValueError, match=err_msg):
+        _smallest_admissible_index_dtype(maxval=maxval)

@@ -591,8 +591,12 @@ def _ensure_sparse_format(
                 maxval=max(sparse_container.nnz, sparse_container.shape[1]),
                 check_contents=True,
             )
-            sparse_container.indices = sparse_container.indices.astype(index_dtype, copy=False)
-            sparse_container.indptr = sparse_container.indptr.astype(index_dtype, copy=False)
+            sparse_container.indices = sparse_container.indices.astype(
+                index_dtype, copy=False
+            )
+            sparse_container.indptr = sparse_container.indptr.astype(
+                index_dtype, copy=False
+            )
         else:  # accept_sparse[0] == "coo"
             index_dtype = _smallest_admissible_index_dtype(
                 maxval=max(sparse_container.shape)
@@ -630,9 +634,12 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
     int32min = np.int32(np.iinfo(np.int32).min)
     int32max = np.int32(np.iinfo(np.int32).max)
 
-    dtype = np.intc
+    dtype = np.int32
     if maxval is not None:
-        maxval = np.int64(maxval)
+        if maxval > np.iinfo(np.int64).max:
+            raise ValueError(
+                f"maxval={maxval} is to large to be represented as np.int64."
+            )
         if maxval > int32max:
             return np.int64
 
