@@ -286,7 +286,7 @@ def test_loss_dtype(
 
     Also check that input arrays can be readonly, e.g. memory mapped.
     """
-    if _IS_WASM and readonly_memmap:
+    if _IS_WASM and readonly_memmap:  # pragma: nocover
         pytest.xfail(reason="memmap not fully supported")
 
     loss = loss()
