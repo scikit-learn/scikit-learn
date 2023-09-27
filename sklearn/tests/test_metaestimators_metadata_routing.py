@@ -535,6 +535,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
     cls = metaestimator["metaestimator"]
     routing_methods = metaestimator["cv_routing_methods"]
     y_ = y_multi if cls.__name__.startswith("MultiTask") else y
+
     for method_name in routing_methods:
         kwargs, (estimator, _), (scorer, _), (cv, registry) = get_init_args(
             metaestimator
