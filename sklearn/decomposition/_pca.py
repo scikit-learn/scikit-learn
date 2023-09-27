@@ -574,7 +574,14 @@ class PCA(_BasePCA):
             # side='right' ensures that number of features selected
             # their variance is always greater than n_components float
             # passed. More discussion in issue: #15669
-            ratio_cumsum = stable_cumsum(explained_variance_ratio_)
+            if is_array_api_compliant:
+                ratio_cumsum = xp.cumsum(explained_variance_ratio_, axis=0)
+            else:
+                # Backward compat type for traditional numpy. Note that this
+                # stable_cumsum function is probably not necessary. A direct
+                # call to np.cumsum should be stable enough, without even
+                # casting to float64.
+                ratio_cumsum = stable_cumsum(explained_variance_ratio_)
             n_components = xp.searchsorted(ratio_cumsum, n_components, side="right") + 1
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
