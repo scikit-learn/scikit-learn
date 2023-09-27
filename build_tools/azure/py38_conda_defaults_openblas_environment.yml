@@ -5,7 +5,7 @@ channels:
   - defaults
 dependencies:
   - python=3.8
-  - numpy=1.17.3  # min
+  - numpy=1.17.3,<2  # min
   - blas[build=openblas]
   - scipy=1.5.0  # min
   - cython<3.0.0
