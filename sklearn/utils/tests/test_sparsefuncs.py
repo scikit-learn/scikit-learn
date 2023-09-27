@@ -796,7 +796,9 @@ def test_min_max(
     )
     X_sparse = sparse_format(X)
 
-    if _IS_WASM and large_indices and isinstance(X_sparse, sp.sparray):  # pragma: nocover
+    if (
+        _IS_WASM and large_indices and isinstance(X_sparse, sp.sparray)
+    ):  # pragma: nocover
         pytest.xfail(
             reason=(
                 "temporary xfailing test until it is fixed in main, see"
