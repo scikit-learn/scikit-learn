@@ -80,7 +80,7 @@ def assert_same_distances_for_common_neighbors(
     Missingness is handled by assert_no_missing_neighbors.
     """
     # Compute a mapping from indices to distances for each result set and
-    # check that the computed neighbors with matching indices are withing
+    # check that the computed neighbors with matching indices are within
     # the expected distance tolerance.
     indices_to_dist_a = dict(zip(indices_row_a, dist_row_a))
     indices_to_dist_b = dict(zip(indices_row_b, dist_row_b))
@@ -135,7 +135,7 @@ def assert_compatible_argkmin_results(
     rtol=1e-5,
     atol=1e-6,
 ):
-    """Assert that argkmin results are valid up to rounding errors
+    """Assert that argkmin results are valid up to rounding errors.
 
     This function asserts that the results of argkmin queries are valid up to:
     - rounding error tolerance on distance values;
