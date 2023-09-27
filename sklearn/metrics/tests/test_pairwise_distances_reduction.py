@@ -111,6 +111,18 @@ def assert_no_missing_neighbors(
     indices_row_b,
     threshold,
 ):
+    """Compare the indices of neighbors in two results sets.
+
+    Any neighbor index with a distance below the precision threshold should
+    match one in the other result set. We ignore the last few neighbors beyond
+    the threshold as those can typically be missing due to rounding errors.
+
+    For radius queries, the threshold is just the radius minus the expected
+    precision level.
+
+    For k-NN queries, it is the maxium distance to the k-th neighbor minus the
+    expected precision level.
+    """
     mask_a = dist_row_a < threshold
     mask_b = dist_row_b < threshold
     missing_from_b = np.setdiff1d(indices_row_a[mask_a], indices_row_b)
@@ -179,8 +191,15 @@ def assert_compatible_argkmin_results(
             atol,
         )
 
-        # Check that any neighbor with distances below the rounding error threshold have
-        # matching indices.
+        # Check that any neighbor with distances below the rounding error
+        # threshold have matching indices. The threshold is the distance to the
+        # k-th neighbors minus the expected precision level:
+        #
+        # (1 - rtol) * dist_k - atol
+        #
+        # Where dist_k is defined as the maxium distance to the kth-neighbor
+        # among the two result sets. This way of defining the threshold is
+        # stricter than taking the minimum of the two.
         threshold = (1 - rtol) * np.maximum(
             np.max(dist_row_a), np.max(dist_row_b)
         ) - atol
