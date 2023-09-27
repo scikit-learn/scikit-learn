@@ -1094,7 +1094,11 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-    return isinstance(x, numbers.Real) and math.isnan(x)
+    return (
+        not isinstance(x, numbers.Integral)
+        and isinstance(x, numbers.Real)
+        and math.isnan(x)
+    )
 
 
 def _approximate_mode(class_counts, n_draws, rng):
