@@ -55,10 +55,10 @@ def make_sparse_random_data(
         ),
         shape=(n_samples, n_features),
     )
-    if sparse_format is False:
-        return data_coo.toarray()
-    else:
+    if sparse_format:
         return data_coo.tocsr()
+    else:
+        return data_coo.toarray()
 
 
 def densify(matrix):
