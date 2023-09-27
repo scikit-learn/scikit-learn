@@ -34,7 +34,7 @@ all_RandomProjection = all_SparseRandomProjection + all_DenseRandomProjection
 
 
 def make_sparse_random_data(
-    coo_containers,
+    coo_container,
     n_samples,
     n_features,
     n_nonzeros,
@@ -45,7 +45,7 @@ def make_sparse_random_data(
     # Gaussian distributed values; `sparse_format` can be True or False (in which
     # case a dense array is returned)
     rng = np.random.RandomState(random_state)
-    data_coo = coo_containers(
+    data_coo = coo_container(
         (
             rng.randn(n_nonzeros),
             (
