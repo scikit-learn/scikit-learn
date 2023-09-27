@@ -193,11 +193,11 @@ def check_pairwise_arrays(
 
     return X, Y
 
+
 @validate_params(
     {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
     prefer_skip_nested_validation=True,
 )
-
 def check_paired_arrays(X, Y):
     """Set X and Y appropriately and checks inputs for paired distances.
 
@@ -1060,10 +1060,8 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
     # TODO(1.4): remove sum_over_features
     if sum_over_features != "deprecated":
         warnings.warn(
-            (
-                "`sum_over_features` is deprecated in version 1.2 and will be"
-                " removed in version 1.4."
-            ),
+            "`sum_over_features` is deprecated in version 1.2 and will be"
+            " removed in version 1.4.",
             FutureWarning,
         )
     else:

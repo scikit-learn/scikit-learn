@@ -251,11 +251,9 @@ class BaseEstimator(_MetadataRequester):
                 and self.__module__.startswith("sklearn.")
             ):
                 warnings.warn(
-                    (
-                        f"Parameter 'base_estimator' of {self.__class__.__name__} is"
-                        " deprecated in favor of 'estimator'. See"
-                        f" {self.__class__.__name__}'s docstring for more details."
-                    ),
+                    f"Parameter 'base_estimator' of {self.__class__.__name__} is"
+                    " deprecated in favor of 'estimator'. See"
+                    f" {self.__class__.__name__}'s docstring for more details.",
                     FutureWarning,
                     stacklevel=2,
                 )
@@ -931,15 +929,13 @@ class TransformerMixin(_SetOutputMixin):
             )
             if transform_params:
                 warnings.warn(
-                    (
-                        f"This object ({self.__class__.__name__}) has a `transform`"
-                        " method which consumes metadata, but `fit_transform` does not"
-                        " forward metadata to `transform`. Please implement a custom"
-                        " `fit_transform` method to forward metadata to `transform` as"
-                        " well. Alternatively, you can explicitly do"
-                        " `set_transform_request`and set all values to `False` to"
-                        " disable metadata routed to `transform`, if that's an option."
-                    ),
+                    f"This object ({self.__class__.__name__}) has a `transform`"
+                    " method which consumes metadata, but `fit_transform` does not"
+                    " forward metadata to `transform`. Please implement a custom"
+                    " `fit_transform` method to forward metadata to `transform` as"
+                    " well. Alternatively, you can explicitly do"
+                    " `set_transform_request`and set all values to `False` to"
+                    " disable metadata routed to `transform`, if that's an option.",
                     UserWarning,
                 )
 
@@ -1083,15 +1079,13 @@ class OutlierMixin:
             )
             if transform_params:
                 warnings.warn(
-                    (
-                        f"This object ({self.__class__.__name__}) has a `predict` "
-                        "method which consumes metadata, but `fit_predict` does not "
-                        "forward metadata to `predict`. Please implement a custom "
-                        "`fit_predict` method to forward metadata to `predict` as well."
-                        "Alternatively, you can explicitly do `set_predict_request`"
-                        "and set all values to `False` to disable metadata routed to "
-                        "`predict`, if that's an option."
-                    ),
+                    f"This object ({self.__class__.__name__}) has a `predict` "
+                    "method which consumes metadata, but `fit_predict` does not "
+                    "forward metadata to `predict`. Please implement a custom "
+                    "`fit_predict` method to forward metadata to `predict` as well."
+                    "Alternatively, you can explicitly do `set_predict_request`"
+                    "and set all values to `False` to disable metadata routed to "
+                    "`predict`, if that's an option.",
                     UserWarning,
                 )
 

@@ -539,12 +539,10 @@ class RANSACRegressor(
                 + self.n_skips_invalid_model_
             ) > self.max_skips:
                 warnings.warn(
-                    (
-                        "RANSAC found a valid consensus set but exited"
-                        " early due to skipping more iterations than"
-                        " `max_skips`. See estimator attributes for"
-                        " diagnostics (n_skips*)."
-                    ),
+                    "RANSAC found a valid consensus set but exited"
+                    " early due to skipping more iterations than"
+                    " `max_skips`. See estimator attributes for"
+                    " diagnostics (n_skips*).",
                     ConvergenceWarning,
                 )
 
