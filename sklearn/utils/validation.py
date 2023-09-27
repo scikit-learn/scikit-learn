@@ -611,7 +611,10 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
     """Based on input (integer) arrays `a`, determine a suitable index data
     type that can hold the data in the arrays.
 
-    `max_values` prevails on arrays dtype and there contents.
+    This function returns `np.int64` if it either required by `maxval` or based on the
+    largest precision of the dtype of the arrays passed as argument, or by the their
+    contents (when `check_contents is True`). If none of the condition requires
+    `np.int64` then this function returns `np.int32`.
 
     Parameters
     ----------
@@ -647,13 +650,21 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
         arrays = (arrays,)
 
     for arr in arrays:
-        arr = np.asarray(arr)
+        if not isinstance(arr, np.ndarray):
+            raise ValueError(
+                f"Arrays should be of type np.ndarray, got {type(arr)} instead."
+            )
+        if not np.issubdtype(arr.dtype, np.integer):
+            raise ValueError(
+                f"Array dtype {arr.dtype} is not supported for index dtype. We expect "
+                "integral values."
+            )
         if not np.can_cast(arr.dtype, np.int32):
             if check_contents:
                 if arr.size == 0:
                     # a bigger type not needed
                     continue
-                elif np.issubdtype(arr.dtype, np.integer):
+                else:
                     maxval = arr.max()
                     minval = arr.min()
                     if minval >= int32min and maxval <= int32max:

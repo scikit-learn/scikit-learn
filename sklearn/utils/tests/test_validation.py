@@ -2055,7 +2055,13 @@ def test_smallest_admissible_index_dtype_without_checking_contents(
     "params, expected_dtype",
     [
         # empty arrays should always be converted to int32 indices
-        ({"arrays": ([], []), "check_contents": True}, np.dtype("int32")),
+        (
+            {
+                "arrays": (np.array([], dtype=np.int64), np.array([], dtype=np.int64)),
+                "check_contents": True,
+            },
+            np.dtype("int32"),
+        ),
         # arrays respecting np.iinfo(np.int32).min < x < np.iinfo(np.int32).max should
         # be converted to int32,
         (
@@ -2100,9 +2106,23 @@ def test_smallest_admissible_index_dtype_by_checking_contents(params, expected_d
     assert np.dtype(_smallest_admissible_index_dtype(**params)) == expected_dtype
 
 
-def test_smallest_admissible_index_dtype_error():
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        (
+            {"maxval": np.iinfo(np.int64).max + 1},
+            ValueError,
+            "is to large to be represented as np.int64",
+        ),
+        (
+            {"arrays": np.array([1, 2], dtype=np.float64)},
+            ValueError,
+            "Array dtype float64 is not supported",
+        ),
+        ({"arrays": [1, 2]}, ValueError, "Arrays should be of type np.ndarray"),
+    ],
+)
+def test_smallest_admissible_index_dtype_error(params, err_type, err_msg):
     """Check that we raise the proper error message."""
-    maxval = np.iinfo(np.int64).max + 1
-    err_msg = f"maxval={maxval} is to large to be represented as np.int64"
-    with pytest.raises(ValueError, match=err_msg):
-        _smallest_admissible_index_dtype(maxval=maxval)
+    with pytest.raises(err_type, match=err_msg):
+        _smallest_admissible_index_dtype(**params)
