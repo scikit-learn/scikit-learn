@@ -251,7 +251,9 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
                 n_oversamples=self.n_oversamples,
                 power_iteration_normalizer=self.power_iteration_normalizer,
                 random_state=random_state,
+                flip_sign=False,
             )
+            U, VT = svd_flip(U, VT, u_based_decision=False)
 
         self.components_ = VT
 
