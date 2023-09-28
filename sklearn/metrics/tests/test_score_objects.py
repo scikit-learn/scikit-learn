@@ -48,7 +48,7 @@ from sklearn.metrics._scorer import (
     _check_multimetric_scoring,
     _MultimetricScorer,
     _PassthroughScorer,
-    _PredictScorer,
+    _Scorer,
 )
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.multiclass import OneVsRestClassifier
@@ -253,7 +253,7 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
 
     estimator = EstimatorWithFit()
     scorer = scoring_validator(estimator, scoring="accuracy")
-    assert isinstance(scorer, _PredictScorer)
+    assert isinstance(scorer, _Scorer)
 
     # Test the allow_none parameter for check_scoring alone
     if scoring_validator is check_scoring:
@@ -295,9 +295,7 @@ def test_check_scoring_and_check_multimetric_scoring(scoring):
     scorers = _check_multimetric_scoring(estimator, scoring)
     assert isinstance(scorers, dict)
     assert sorted(scorers.keys()) == sorted(list(scoring))
-    assert all(
-        [isinstance(scorer, _PredictScorer) for scorer in list(scorers.values())]
-    )
+    assert all([isinstance(scorer, _Scorer) for scorer in list(scorers.values())])
 
     if "acc" in scoring:
         assert_almost_equal(
@@ -353,11 +351,11 @@ def test_check_scoring_gridsearchcv():
 
     grid = GridSearchCV(LinearSVC(dual="auto"), param_grid={"C": [0.1, 1]}, cv=3)
     scorer = check_scoring(grid, scoring="f1")
-    assert isinstance(scorer, _PredictScorer)
+    assert isinstance(scorer, _Scorer)
 
     pipe = make_pipeline(LinearSVC(dual="auto"))
     scorer = check_scoring(pipe, scoring="f1")
-    assert isinstance(scorer, _PredictScorer)
+    assert isinstance(scorer, _Scorer)
 
     # check that cross_val_score definitely calls the scorer
     # and doesn't make any assumptions about the estimator apart from having a
@@ -504,15 +502,15 @@ def test_thresholded_scorers():
     # test with a regressor (no decision_function)
     reg = DecisionTreeRegressor()
     reg.fit(X_train, y_train)
-    score1 = get_scorer("roc_auc")(reg, X_test, y_test)
-    score2 = roc_auc_score(y_test, reg.predict(X_test))
-    assert_almost_equal(score1, score2)
+    err_msg = "DecisionTreeRegressor should either be a classifier"
+    with pytest.raises(ValueError, match=err_msg):
+        get_scorer("roc_auc")(reg, X_test, y_test)
 
     # Test that an exception is raised on more than two classes
     X, y = make_blobs(random_state=0, centers=3)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf.fit(X_train, y_train)
-    with pytest.raises(ValueError, match="multiclass format is not supported"):
+    with pytest.raises(ValueError, match="multi_class must be in \\('ovo', 'ovr'\\)"):
         get_scorer("roc_auc")(clf, X_test, y_test)
 
     # test error is raised with a single class present in model
@@ -798,10 +796,9 @@ def test_multimetric_scorer_calls_method_once(
             {
                 "roc_auc": make_scorer(
                     roc_auc_score,
-                    needs_threshold=True,
                     response_method=["predict_proba", "decision_function"],
                 ),
-                "neg_log_loss": make_scorer(log_loss, needs_proba=True),
+                "neg_log_loss": make_scorer(log_loss, response_method="predict_proba"),
             }
         ),
     ],
@@ -1073,7 +1070,7 @@ def test_average_precision_pos_label(string_labeled_classification_problem):
     # check that it fails if `pos_label` is not provided
     average_precision_scorer = make_scorer(
         average_precision_score,
-        needs_threshold=True,
+        response_method=("decision_function", "predict_proba"),
     )
     err_msg = "pos_label=1 is not a valid label. It should be one of "
     with pytest.raises(ValueError, match=err_msg):
@@ -1082,7 +1079,9 @@ def test_average_precision_pos_label(string_labeled_classification_problem):
     # otherwise, the scorer should give the same results than calling the
     # scoring function
     average_precision_scorer = make_scorer(
-        average_precision_score, needs_threshold=True, pos_label=pos_label
+        average_precision_score,
+        response_method=("decision_function", "predict_proba"),
+        pos_label=pos_label,
     )
     ap_scorer = average_precision_scorer(clf, X_test, y_test)
 
@@ -1136,7 +1135,7 @@ def test_brier_score_loss_pos_label(string_labeled_classification_problem):
 def test_non_symmetric_metric_pos_label(
     score_func, string_labeled_classification_problem
 ):
-    # check that _PredictScorer leads to the right score when `pos_label` is
+    # check that _Scorer leads to the right score when `pos_label` is
     # provided. We check for all possible metric supported.
     # Note: At some point we may end up having "scorer tags".
     clf, X_test, y_test, y_pred, _, _ = string_labeled_classification_problem
@@ -1156,8 +1155,12 @@ def test_non_symmetric_metric_pos_label(
 @pytest.mark.parametrize(
     "scorer",
     [
-        make_scorer(average_precision_score, needs_threshold=True, pos_label="xxx"),
-        make_scorer(brier_score_loss, needs_proba=True, pos_label="xxx"),
+        make_scorer(
+            average_precision_score,
+            response_method=("decision_function", "predict_proba"),
+            pos_label="xxx",
+        ),
+        make_scorer(brier_score_loss, response_method="predict_proba", pos_label="xxx"),
         make_scorer(f1_score, pos_label="xxx"),
     ],
     ids=["ThresholdScorer", "ProbaScorer", "PredictScorer"],
@@ -1379,11 +1382,4 @@ def test_get_scorer_multilabel_indicator():
     assert score > 0.8
 
 
-def test_make_scorer_param_validation():
-    """Check that we validate the parameters in `make_scorer` and raise errors
-    when necessary.
-    """
-    # passing `response_method` without `needs_threshold` should raise an error
-    err_msg = "response_method can only be set when needs_threshold=True"
-    with pytest.raises(ValueError, match=err_msg):
-        make_scorer(roc_auc_score, response_method="predict_proba")
+# TODO: add tests for the deprecation and passing several conflicting parameters.
