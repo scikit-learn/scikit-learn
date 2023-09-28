@@ -207,12 +207,12 @@ def _liac_arff_parser(
         # liac-arff parser does not depend on NumPy and uses None to represent
         # missing values. To be consistent with the pandas parser, we replace
         # None with np.nan.
-        frame = pd.concat(dfs, ignore_index=True).fillna(value=np.nan, downcast=False)
-        # The parameter `copy` only exists in pandas >= 2
+        frame = pd.concat(dfs, ignore_index=True)
         if parse_version(pd.__version__) < parse_version("2.0"):
-            frame = frame.infer_objects()
+            frame = frame.fillna(value=np.nan, downcast=False)
         else:
-            frame = frame.infer_objects(copy=False)
+            pd.set_option("future.no_silent_downcasting", True)
+            frame = frame.fillna(value=np.nan).infer_objects(copy=False)
         del dfs, first_df
 
         # cast the columns frame
