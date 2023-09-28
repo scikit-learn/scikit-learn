@@ -174,16 +174,8 @@ rfe.fit(X_train, y_train)
 ranking = rfe.ranking_
 
 # Store accuracies
-num_features_list = [
-    1,
-    5,
-    10,
-    20,
-    30,
-    40,
-    50,
-    64,
-]  # Adjust the step for finer granularity
+# Adjust the step for finer granularity
+num_features_list = [1, 5, 10, 20, 30, 40, 50, 64]
 accuracies = []
 
 for num_features in num_features_list:
