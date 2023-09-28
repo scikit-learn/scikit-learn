@@ -188,7 +188,7 @@ def _array_indexing(array, key, key_dtype, axis):
         key = np.asarray(key)
     if isinstance(key, tuple):
         key = list(key)
-    return array[key] if axis == 0 else array[:, key]
+    return array[key, ...] if axis == 0 else array[:, key]
 
 
 def _pandas_indexing(X, key, key_dtype, axis):
@@ -1094,7 +1094,11 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-    return isinstance(x, numbers.Real) and math.isnan(x)
+    return (
+        not isinstance(x, numbers.Integral)
+        and isinstance(x, numbers.Real)
+        and math.isnan(x)
+    )
 
 
 def _approximate_mode(class_counts, n_draws, rng):

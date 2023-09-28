@@ -10,6 +10,7 @@ from sklearn.utils._mocking import (
     _MockEstimatorOnOffPrediction,
 )
 from sklearn.utils._testing import _convert_container
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 @pytest.fixture
@@ -116,9 +117,10 @@ def test_checking_classifier(iris, input_type):
     assert y_decision.shape == (100,)
 
 
-def test_checking_classifier_with_params(iris):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_checking_classifier_with_params(iris, csr_container):
     X, y = iris
-    X_sparse = sparse.csr_matrix(X)
+    X_sparse = csr_container(X)
 
     clf = CheckingClassifier(check_X=sparse.issparse)
     with pytest.raises(AssertionError):

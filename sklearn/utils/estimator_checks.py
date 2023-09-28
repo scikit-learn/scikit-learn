@@ -1,4 +1,3 @@
-import importlib
 import pickle
 import re
 import warnings
@@ -67,6 +66,7 @@ from ._tags import (
 )
 from ._testing import (
     SkipTest,
+    _array_api_for_tests,
     _get_args,
     assert_allclose,
     assert_allclose_dense_sparse,
@@ -849,36 +849,6 @@ def _generate_sparse_matrix(X_csr):
         yield sparse_format + "_64", X
 
 
-def _array_api_for_tests(array_namespace, device, dtype):
-    try:
-        array_mod = importlib.import_module(array_namespace)
-    except ModuleNotFoundError:
-        raise SkipTest(
-            f"{array_namespace} is not installed: not checking array_api input"
-        )
-    try:
-        import array_api_compat  # noqa
-    except ImportError:
-        raise SkipTest(
-            "array_api_compat is not installed: not checking array_api input"
-        )
-
-    # First create an array using the chosen array module and then get the
-    # corresponding (compatibility wrapped) array namespace based on it.
-    # This is because `cupy` is not the same as the compatibility wrapped
-    # namespace of a CuPy array.
-    xp = array_api_compat.get_namespace(array_mod.asarray(1))
-
-    if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
-        raise SkipTest("PyTorch test requires cuda, which is not available")
-    elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
-        import cupy
-
-        if cupy.cuda.runtime.getDeviceCount() == 0:
-            raise SkipTest("CuPy test requires cuda, which is not available")
-    return xp, device, dtype
-
-
 def check_array_api_input(
     name,
     estimator_orig,
@@ -1519,7 +1489,7 @@ def _apply_on_subsets(func, X):
 
     if sparse.issparse(result_full):
         result_full = result_full.A
-        result_by_batch = [x.A for x in result_by_batch]
+        result_by_batch = [x.toarray() for x in result_by_batch]
 
     return np.ravel(result_full), np.ravel(result_by_batch)
 
@@ -4587,7 +4557,11 @@ def check_set_output_transform_pandas(name, transformer_orig):
         outputs_pandas = _output_from_fit_transform(transformer_pandas, name, X, df, y)
     except ValueError as e:
         # transformer does not support sparse data
-        assert "Pandas output does not support sparse data." in str(e), e
+        error_message = str(e)
+        assert (
+            "Pandas output does not support sparse data." in error_message
+            or "The transformer outputs a scipy sparse matrix." in error_message
+        ), e
         return
 
     for case in outputs_default:
@@ -4633,7 +4607,11 @@ def check_global_output_transform_pandas(name, transformer_orig):
             )
     except ValueError as e:
         # transformer does not support sparse data
-        assert "Pandas output does not support sparse data." in str(e), e
+        error_message = str(e)
+        assert (
+            "Pandas output does not support sparse data." in error_message
+            or "The transformer outputs a scipy sparse matrix." in error_message
+        ), e
         return
 
     for case in outputs_default:
