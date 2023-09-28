@@ -116,8 +116,10 @@ def test_whitening(solver, copy):
 
 
 @pytest.mark.parametrize("data_shape", ["tall", "wide"])
-@pytest.mark.parametrize("other_svd_solver", set(PCA_SOLVERS) - {"full", "auto"})
-def test_pca_solver_equivalence(data_shape, other_svd_solver, global_random_seed):
+@pytest.mark.parametrize(
+    "other_svd_solver", sorted(list(set(PCA_SOLVERS) - {"full", "auto"}))
+)
+def test_pca_solver_equivalence(other_svd_solver, global_random_seed, data_shape):
     if data_shape == "tall":
         n_samples, n_features = 100, 80
     else:
