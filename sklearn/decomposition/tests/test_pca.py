@@ -115,17 +115,14 @@ def test_whitening(solver, copy):
     # we always center, so no test for non-centering.
 
 
-@pytest.mark.parametrize(
-    "n_samples, n_features",
-    [
-        (100, 80),
-        (80, 100),
-    ],
-)
+@pytest.mark.parametrize("data_shape", ["tall", "wide"])
 @pytest.mark.parametrize("other_svd_solver", set(PCA_SOLVERS) - {"full", "auto"})
-def test_pca_solver_equivalence(
-    n_samples, n_features, other_svd_solver, global_random_seed
-):
+def test_pca_solver_equivalence(data_shape, other_svd_solver, global_random_seed):
+    if data_shape == "tall":
+        n_samples, n_features = 100, 80
+    else:
+        n_samples, n_features = 80, 100
+
     X = make_low_rank_matrix(
         n_samples=n_samples, n_features=n_features, random_state=global_random_seed
     )
