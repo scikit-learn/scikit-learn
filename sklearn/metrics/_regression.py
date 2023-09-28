@@ -994,7 +994,7 @@ def r2_score(
     >>> r2_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    xp, _ = get_namespace(y_true, y_pred)
+    xp, is_array_api_compliant = get_namespace(y_true, y_pred)
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
     )
@@ -1021,6 +1021,7 @@ def r2_score(
     # This works for all protocols, except for CuPy which does not support
     # moving data to the CPU using xp.asarray(..., device="cpu").
     # For CuPy, keep data on GPU.
+    # if is_array_api_compliant:
     if "cupy" not in xp.__name__:
         weighted = xp.asarray(weighted, device="cpu")
         weighted_difference = xp.asarray(weighted_difference, device="cpu")

@@ -6,7 +6,7 @@ from numpy.testing import assert_allclose
 from scipy import optimize
 from scipy.special import factorial, xlogy
 
-from sklearn import config_context, datasets
+from sklearn import datasets
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import (
@@ -26,18 +26,14 @@ from sklearn.metrics import (
     r2_score,
 )
 from sklearn.metrics._regression import _check_reg_targets
+from sklearn.metrics.tests.test_common import check_array_api_compute_metric
 from sklearn.model_selection import GridSearchCV
-from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    device,
-    yield_namespace_device_dtype_combinations,
-)
+from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
 from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.estimator_checks import _array_api_for_tests
 
 iris = datasets.load_iris()
 
@@ -620,28 +616,6 @@ def test_pinball_loss_relation_with_mae():
         mean_absolute_error(y_true, y_pred)
         == mean_pinball_loss(y_true, y_pred, alpha=0.5) * 2
     )
-
-
-def check_array_api_compute_metric(name, metric, array_namepsace, _device, dtype):
-    xp, _device, dtype = _array_api_for_tests(array_namepsace, _device, dtype)
-    y_true_np = np.array([[1, 3], [1, 2]], dtype=float)
-    y_pred_np = np.array([[1, 4], [1, 1]], dtype=float)
-    y_true_xp = xp.asarray(y_true_np, device=_device)
-    y_pred_xp = xp.asarray(y_pred_np, device=_device)
-    metric_np = metric(y_true_np, y_pred_np)
-
-    with config_context(array_api_dispatch=True):
-        metric_xp = metric(y_true_xp, y_pred_xp)
-        assert metric_xp.shape == ()
-        assert metric_xp.dtype == y_true_xp.dtype
-        target_device = "<CUDA Device 0>" if "cupy" in xp.__name__ else "cpu"
-        assert str(device(metric_xp)) == target_device  # R2_score gets moved to CPU
-
-        assert_allclose(
-            _convert_to_numpy(metric_xp, xp=xp),
-            metric_np,
-            atol=np.finfo(dtype).eps * 100,
-        )
 
 
 @pytest.mark.parametrize(

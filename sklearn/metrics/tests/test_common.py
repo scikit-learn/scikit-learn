@@ -56,6 +56,9 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
+    _convert_to_numpy,
+    device,
+    get_namespace,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -1776,6 +1779,39 @@ def check_array_api_multiclass_classification_metric(
     )
 
 
+def check_array_api_compute_metric(name, metric, array_namepsace, _device, dtype):
+    xp, _device, dtype = _array_api_for_tests(array_namepsace, _device, dtype)
+    y_true_np = np.array([[1, 3], [1, 2]], dtype=float)
+    y_pred_np = np.array([[1, 4], [1, 1]], dtype=float)
+    y_true_xp = xp.asarray(y_true_np, device=_device)
+    y_pred_xp = xp.asarray(y_pred_np, device=_device)
+    metric_np = metric(y_true_np, y_pred_np)
+
+    with config_context(array_api_dispatch=True):
+        metric_xp = metric(y_true_xp, y_pred_xp)
+        assert metric_xp.shape == ()
+        assert metric_xp.dtype == y_true_xp.dtype
+
+        _, is_array_api_compliant = get_namespace(y_true_xp, y_pred_xp)
+        if is_array_api_compliant:
+            # r2_score is always moved to CPU for accuracy reasons.
+            # This works for all libraries except CuPy, which don't
+            # support the xp.asarray(..., device="cpu") assingment.
+            target_device = device(
+                xp.asarray(y_true_np, device="cpu")
+            )  # Get a reference CPU device
+            assert device(metric_xp) == target_device
+        else:
+            # If non-API Array compliant (=CuPy), check that the score is
+            # still on the original device.
+            assert device(metric_xp) == _device
+        assert_allclose(
+            _convert_to_numpy(metric_xp, xp=xp),
+            metric_np,
+            atol=np.finfo(dtype).eps * 100,
+        )
+
+
 metric_checkers = {
     accuracy_score: [
         check_array_api_binary_classification_metric,
@@ -1785,6 +1821,7 @@ metric_checkers = {
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
     ],
+    r2_score: [check_array_api_compute_metric],
 }
 
 
