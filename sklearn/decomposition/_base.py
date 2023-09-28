@@ -143,7 +143,14 @@ class _BasePCA(
         X = self._validate_data(X, dtype=[xp.float64, xp.float32], reset=False)
         if self.mean_ is not None:
             X = X - self.mean_
-        X_transformed = X @ self.components_.T
+        return self._transform(X, xp)
+
+    def _transform(self, X_centered, xp=None):
+        if xp is None:
+            xp, _ = get_namespace(
+                X_centered, self.components_, self.explained_variance_
+            )
+        X_transformed = X_centered @ self.components_.T
         if self.whiten:
             X_transformed /= xp.sqrt(self.explained_variance_)
         return X_transformed

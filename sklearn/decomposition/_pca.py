@@ -175,7 +175,8 @@ class PCA(_BasePCA):
         improve the predictive accuracy of the downstream estimators by
         making their data respect some hard-wired assumptions.
 
-    svd_solver : {'auto', 'full', 'arpack', 'randomized'}, default='auto'
+    svd_solver : {'auto', 'full', 'covariance_eigh', 'arpack', 'randomized'},
+            default='auto'
         If auto :
             The solver is selected by a default policy based on `X.shape` and
             `n_components`: if the input data is larger than 500x500 and the
@@ -186,6 +187,13 @@ class PCA(_BasePCA):
         If full :
             run exact full SVD calling the standard LAPACK solver via
             `scipy.linalg.svd` and select the components by postprocessing
+        If covariance_eigh :
+            precompute the covariance matrix (on centered data) and run a
+            classical eigenvalue decomposition on the covariance matrix
+            typically using LAPACK and select the components by postprocessing.
+            This solver is very efficient when the number of features is small
+            and not tractable otherwise (large memory footprint required to
+            materialize the covariance matrix).
         If arpack :
             run SVD truncated to n_components calling ARPACK solver via
             `scipy.sparse.linalg.svds`. It requires strictly
@@ -194,6 +202,9 @@ class PCA(_BasePCA):
             run randomized SVD by the method of Halko et al.
 
         .. versionadded:: 0.18.0
+
+        .. versionchanged:: 1.4
+            Added the 'covariance_eigh' solver.
 
     tol : float, default=0.0
         Tolerance for singular values computed by svd_solver == 'arpack'.
@@ -372,7 +383,9 @@ class PCA(_BasePCA):
         ],
         "copy": ["boolean"],
         "whiten": ["boolean"],
-        "svd_solver": [StrOptions({"auto", "full", "arpack", "randomized"})],
+        "svd_solver": [
+            StrOptions({"auto", "full", "covariance_eigh", "arpack", "randomized"})
+        ],
         "tol": [Interval(Real, 0, None, closed="left")],
         "iterated_power": [
             StrOptions({"auto"}),
@@ -460,17 +473,20 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        U, S, Vt = self._fit(X)
-        U = U[:, : self.n_components_]
+        U, S, Vt, X_centered = self._fit(X)
+        if U is not None:
+            U = U[:, : self.n_components_]
 
-        if self.whiten:
-            # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
-            U *= sqrt(X.shape[0] - 1)
+            if self.whiten:
+                # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
+                U *= sqrt(X.shape[0] - 1)
+            else:
+                # X_new = X * V = U * S * Vt * V = U * S
+                U *= S[: self.n_components_]
+
+            return U
         else:
-            # X_new = X * V = U * S * Vt * V = U * S
-            U *= S[: self.n_components_]
-
-        return U
+            return self._transform(X_centered)
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
@@ -515,7 +531,7 @@ class PCA(_BasePCA):
                 self._fit_svd_solver = "full"
 
         # Call different fits for either full or truncated SVD
-        if self._fit_svd_solver == "full":
+        if self._fit_svd_solver in ("full", "covariance_eigh"):
             return self._fit_full(X, n_components)
         elif self._fit_svd_solver in ["arpack", "randomized"]:
             return self._fit_truncated(X, n_components, self._fit_svd_solver)
@@ -533,28 +549,38 @@ class PCA(_BasePCA):
                 )
         elif not 0 <= n_components <= min(n_samples, n_features):
             raise ValueError(
-                "n_components=%r must be between 0 and "
-                "min(n_samples, n_features)=%r with "
-                "svd_solver='full'" % (n_components, min(n_samples, n_features))
+                f"n_components={n_components} must be between 0 and "
+                f"min(n_samples, n_features)={min(n_samples, n_features)} with "
+                f"svd_solver={self._fit_svd_solver!r}"
             )
 
         # Center data
         self.mean_ = xp.mean(X, axis=0)
         X -= self.mean_
 
-        if not is_array_api_compliant:
-            # Use scipy.linalg with NumPy/SciPy inputs for the sake of not
-            # introducing unanticipated behavior changes. In the long run we
-            # could instead decide to always use xp.linalg.svd for all inputs,
-            # but that would make this code rely on numpy's SVD instead of
-            # scipy's. It's not 100% clear whether they use the same LAPACK
-            # solver by default though (assuming both are built against the
-            # same BLAS).
-            U, S, Vt = linalg.svd(X, full_matrices=False)
+        if self._fit_svd_solver == "full":
+            if not is_array_api_compliant:
+                # Use scipy.linalg with NumPy/SciPy inputs for the sake of not
+                # introducing unanticipated behavior changes. In the long run we
+                # could instead decide to always use xp.linalg.svd for all inputs,
+                # but that would make this code rely on numpy's SVD instead of
+                # scipy's. It's not 100% clear whether they use the same LAPACK
+                # solver by default though (assuming both are built against the
+                # same BLAS).
+                U, S, Vt = linalg.svd(X, full_matrices=False)
+            else:
+                U, S, Vt = xp.linalg.svd(X, full_matrices=False)
         else:
-            U, S, Vt = xp.linalg.svd(X, full_matrices=False)
+            assert self._fit_svd_solver == "covariance_eigh"
+            C = X.T @ X
+            evals, Evecs = xp.linalg.eigh(C)
+            evals[evals < 0] = 0.0
+            S = xp.sqrt(xp.flip(evals, axis=0))
+            Vt = xp.flip(Evecs, axis=1).T
+            U = None
+
         # flip eigenvectors' sign to enforce deterministic output
-        U, Vt = svd_flip(U, Vt)
+        U, Vt = svd_flip(U, Vt, u_based_decision=False)
 
         components_ = Vt
 
@@ -589,7 +615,7 @@ class PCA(_BasePCA):
         self.explained_variance_ratio_ = explained_variance_ratio_[:n_components]
         self.singular_values_ = singular_values_[:n_components]
 
-        return U, S, Vt
+        return U, S, Vt, X
 
     def _fit_truncated(self, X, n_components, svd_solver):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
@@ -632,7 +658,7 @@ class PCA(_BasePCA):
             # conventions, so reverse its outputs.
             S = S[::-1]
             # flip eigenvectors' sign to enforce deterministic output
-            U, Vt = svd_flip(U[:, ::-1], Vt[::-1])
+            U, Vt = svd_flip(U[:, ::-1], Vt[::-1], u_based_decision=False)
 
         elif svd_solver == "randomized":
             # sign flipping is done inside
@@ -642,9 +668,10 @@ class PCA(_BasePCA):
                 n_oversamples=self.n_oversamples,
                 n_iter=self.iterated_power,
                 power_iteration_normalizer=self.power_iteration_normalizer,
-                flip_sign=True,
+                flip_sign=False,
                 random_state=random_state,
             )
+            U, Vt = svd_flip(U, Vt, u_based_decision=False)
 
         self.n_samples_ = n_samples
         self.components_ = Vt
@@ -668,7 +695,7 @@ class PCA(_BasePCA):
         else:
             self.noise_variance_ = 0.0
 
-        return U, S, Vt
+        return U, S, Vt, X
 
     def score_samples(self, X):
         """Return the log-likelihood of each sample.

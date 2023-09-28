@@ -8,7 +8,7 @@ from numpy.testing import assert_array_equal
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, make_low_rank_matrix
 from sklearn.decomposition import PCA
 from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
 from sklearn.utils._array_api import (
@@ -24,7 +24,7 @@ from sklearn.utils.estimator_checks import (
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 iris = datasets.load_iris()
-PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
+PCA_SOLVERS = ["full", "covariance_eigh", "arpack", "randomized", "auto"]
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
@@ -115,26 +115,60 @@ def test_whitening(solver, copy):
     # we always center, so no test for non-centering.
 
 
-@pytest.mark.parametrize("svd_solver", ["arpack", "randomized"])
-def test_pca_explained_variance_equivalence_solver(svd_solver):
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 100, 80
-    X = rng.randn(n_samples, n_features)
+@pytest.mark.parametrize(
+    "n_samples, n_features",
+    [
+        (100, 80),
+        (80, 100),
+    ],
+)
+@pytest.mark.parametrize("other_svd_solver", set(PCA_SOLVERS) - {"full", "auto"})
+def test_pca_solver_equivalence(
+    n_samples, n_features, other_svd_solver, global_random_seed
+):
+    X = make_low_rank_matrix(
+        n_samples=n_samples, n_features=n_features, random_state=global_random_seed
+    )
+    tols = dict(atol=1e-10, rtol=1e-12)
 
-    pca_full = PCA(n_components=2, svd_solver="full")
-    pca_other = PCA(n_components=2, svd_solver=svd_solver, random_state=0)
+    extra_other_kwargs = {}
+    if other_svd_solver == "randomized":
+        # Only check for a truncated result with a large number of iterations
+        # to make sure that we can recover precise results.
+        n_components = 10
+        extra_other_kwargs = {"iterated_power": 50}
+    elif other_svd_solver == "arpack":
+        # Test all components except the last one which cannot be estimated by
+        # arpack.
+        n_components = np.minimum(n_samples, n_features) - 1
+    else:
+        # Test all components to high precision.
+        n_components = None
 
+    pca_full = PCA(n_components=n_components, svd_solver="full")
+    pca_other = PCA(
+        n_components=n_components,
+        svd_solver=other_svd_solver,
+        random_state=global_random_seed,
+        **extra_other_kwargs,
+    )
     pca_full.fit(X)
     pca_other.fit(X)
 
-    assert_allclose(
-        pca_full.explained_variance_, pca_other.explained_variance_, rtol=5e-2
-    )
+    assert_allclose(pca_full.explained_variance_, pca_other.explained_variance_, **tols)
     assert_allclose(
         pca_full.explained_variance_ratio_,
         pca_other.explained_variance_ratio_,
-        rtol=5e-2,
+        **tols,
     )
+    reference_components = pca_full.components_
+    other_components = pca_other.components_
+    if n_components is None and n_features > n_samples:
+        # The last component can be arbitrary because of the centering of the
+        # data. Let's ignore it:
+        reference_components = reference_components[:-1]
+        other_components = other_components[:-1]
+    assert_allclose(reference_components, other_components, **tols)
 
 
 @pytest.mark.parametrize(
@@ -142,8 +176,9 @@ def test_pca_explained_variance_equivalence_solver(svd_solver):
     [
         np.random.RandomState(0).randn(100, 80),
         datasets.make_classification(100, 80, n_informative=78, random_state=0)[0],
+        np.random.RandomState(0).randn(10, 100),
     ],
-    ids=["random-data", "correlated-data"],
+    ids=["random-tall", "correlated-tall", "random-wide"],
 )
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
 def test_pca_explained_variance_empirical(X, svd_solver):
@@ -743,6 +778,8 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
     [
         PCA(n_components=2, svd_solver="full"),
         PCA(n_components=2, svd_solver="full", whiten=True),
+        PCA(n_components=2, svd_solver="covariance_eigh"),
+        PCA(n_components=2, svd_solver="covariance_eigh", whiten=True),
         PCA(
             n_components=2,
             svd_solver="randomized",
