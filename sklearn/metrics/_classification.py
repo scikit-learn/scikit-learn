@@ -2400,7 +2400,7 @@ def balanced_accuracy_score(
         if zero_division == "warn":
             msg = (
                 "Balanced Accuracy is ill-defined and being set to 0.0 in labels with"
-                " no true samples.Use `zero_division` parameter to control this"
+                " no true samples. Use `zero_division` parameter to control this"
                 " behavior."
             )
             warnings.warn(msg, UndefinedMetricWarning)
