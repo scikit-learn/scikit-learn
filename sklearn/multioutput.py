@@ -350,7 +350,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             trees consisting of only the root node, in which case it will be an
             array of zeros.
         """
-        if not hasattr(self.estimators_[0], 'feature_importances_'):
+        if not hasattr(self.estimators_[0], "feature_importances_"):
             raise AttributeError(
                 "Unable to compute feature importances "
                 "since estimator does not have a "
