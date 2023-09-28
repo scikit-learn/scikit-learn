@@ -33,6 +33,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 ##############################################################################
 # Test the score functions
@@ -63,7 +64,8 @@ def test_f_oneway_ints():
     assert_array_almost_equal(p, pint, decimal=4)
 
 
-def test_f_classif():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_f_classif(csr_container):
     # Test whether the F test yields meaningful results
     # on a simple simulated classification problem
     X, y = make_classification(
@@ -81,7 +83,7 @@ def test_f_classif():
     )
 
     F, pv = f_classif(X, y)
-    F_sparse, pv_sparse = f_classif(sparse.csr_matrix(X), y)
+    F_sparse, pv_sparse = f_classif(csr_container(X), y)
     assert (F > 0).all()
     assert (pv > 0).all()
     assert (pv < 1).all()
@@ -113,7 +115,8 @@ def test_r_regression(center):
     assert_array_almost_equal(np_corr_coeffs, corr_coeffs, decimal=3)
 
 
-def test_f_regression():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_f_regression(csr_container):
     # Test whether the F test yields meaningful results
     # on a simple simulated regression problem
     X, y = make_regression(
@@ -129,13 +132,13 @@ def test_f_regression():
 
     # with centering, compare with sparse
     F, pv = f_regression(X, y, center=True)
-    F_sparse, pv_sparse = f_regression(sparse.csr_matrix(X), y, center=True)
+    F_sparse, pv_sparse = f_regression(csr_container(X), y, center=True)
     assert_allclose(F_sparse, F)
     assert_allclose(pv_sparse, pv)
 
     # again without centering, compare with sparse
     F, pv = f_regression(X, y, center=False)
-    F_sparse, pv_sparse = f_regression(sparse.csr_matrix(X), y, center=False)
+    F_sparse, pv_sparse = f_regression(csr_container(X), y, center=False)
     assert_allclose(F_sparse, F)
     assert_allclose(pv_sparse, pv)
 
@@ -356,7 +359,8 @@ def test_select_percentile_classif():
     assert_array_equal(support, gtruth)
 
 
-def test_select_percentile_classif_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_select_percentile_classif_sparse(csr_container):
     # Test whether the relative univariate feature selection
     # gets the correct items in a simple classification problem
     # with the percentile heuristic
@@ -373,7 +377,7 @@ def test_select_percentile_classif_sparse():
         shuffle=False,
         random_state=0,
     )
-    X = sparse.csr_matrix(X)
+    X = csr_container(X)
     univariate_filter = SelectPercentile(f_classif, percentile=25)
     X_r = univariate_filter.fit(X, y).transform(X)
     X_r2 = (
@@ -393,7 +397,7 @@ def test_select_percentile_classif_sparse():
     assert X_r2inv.shape == X.shape
     assert_array_equal(X_r2inv[:, support_mask].toarray(), X_r.toarray())
     # Check other columns are empty
-    assert X_r2inv.getnnz() == X_r.getnnz()
+    assert X_r2inv.nnz == X_r.nnz
 
 
 ##############################################################################
