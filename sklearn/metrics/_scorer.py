@@ -745,7 +745,7 @@ def make_scorer(
         - if `None`, the default order of methods is
           `["predict_proba", "decision_function"]`.
 
-        Only used when `needs_threshold=True`.
+        Only used when `needs_threshold=True`, otherwise an error is raised.
 
         .. versionadded:: 1.4
 
@@ -780,6 +780,12 @@ def make_scorer(
     ...                     scoring=ftwo_scorer)
     """
     sign = 1 if greater_is_better else -1
+    if response_method is not None and not needs_threshold:
+        raise ValueError(
+            "response_method can only be set when needs_threshold=True, got "
+            f"response_method={response_method!r} and "
+            f"needs_threshold={needs_threshold!r}"
+        )
     if needs_proba and needs_threshold:
         raise ValueError(
             "Set either needs_proba or needs_threshold to True, but not both."

@@ -1377,3 +1377,13 @@ def test_get_scorer_multilabel_indicator():
 
     score = get_scorer("average_precision")(estimator, X_test, Y_test)
     assert score > 0.8
+
+
+def test_make_scorer_param_validation():
+    """Check that we validate the parameters in `make_scorer` and raise errors
+    when necessary.
+    """
+    # passing `response_method` without `needs_threshold` should raise an error
+    err_msg = "response_method can only be set when needs_threshold=True"
+    with pytest.raises(ValueError, match=err_msg):
+        make_scorer(roc_auc_score, response_method="predict_proba")
