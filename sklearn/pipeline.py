@@ -1401,8 +1401,8 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
            [-1.5       ,  5.7..., -0.4...]])
     >>> # An estimator's parameter can be set using '__' syntax
     >>> union.set_params(pca__n_components=1).fit_transform(X)
-    array([[ 1.5       ,  3.0...],
-           [-1.5       ,  5.7...]])
+    array([[-1.5       ,  3.0...],
+           [ 1.5       ,  5.7...]])
 
     For a more detailed example of usage, see
     :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`.

@@ -235,7 +235,8 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             Sigma = Sigma[::-1]
-            U, VT = svd_flip(U[:, ::-1], VT[::-1])
+            # u_based_decision=False is needed to be consistent with PCA.
+            U, VT = svd_flip(U[:, ::-1], VT[::-1], u_based_decision=False)
 
         elif self.algorithm == "randomized":
             if self.n_components > X.shape[1]:
