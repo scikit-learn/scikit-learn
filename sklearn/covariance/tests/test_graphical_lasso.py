@@ -22,7 +22,6 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_less,
 )
-
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 
@@ -34,7 +33,7 @@ def test_graphical_lasso(random_state=0, csr_container=None):
     random_state = check_random_state(random_state)
     prec = make_sparse_spd_matrix(dim, alpha=0.95, random_state=random_state)
     cov = linalg.inv(prec)
-    
+
     # Create the data X using the csr_container if provided
     if csr_container is None:
         X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
@@ -42,7 +41,7 @@ def test_graphical_lasso(random_state=0, csr_container=None):
         X = random_state.multivariate_normal(
             np.zeros(dim), csr_container(cov), size=n_samples
         )
-    
+
     emp_cov = empirical_covariance(X)
 
     for alpha in (0.0, 0.1, 0.25):
@@ -82,14 +81,14 @@ def test_graphical_lasso(random_state=0, csr_container=None):
 def test_graphical_lasso_when_alpha_equals_0(csr_container=None):
     """Test graphical_lasso's early return condition when alpha=0."""
     X = np.random.randn(100, 10)
-    
+
     # Use csr_container for empirical_covariance if provided
     if csr_container is None:
         emp_cov = empirical_covariance(X, assume_centered=True)
     else:
         emp_cov = empirical_covariance(X, assume_centered=True, store_precision=True)
         emp_cov = csr_container(emp_cov)
-    
+
     model = GraphicalLasso(alpha=0, covariance="precomputed").fit(emp_cov)
     assert_allclose(model.precision_, np.linalg.inv(emp_cov))
 
@@ -148,7 +147,6 @@ def test_graphical_lasso_iris(csr_container=None):
         cov, icov = graphical_lasso(emp_cov, alpha=1.0, return_costs=False, mode=method)
         assert_array_almost_equal(cov, cov_R)
         assert_array_almost_equal(icov, icov_R)
-
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -210,8 +208,7 @@ def test_graphical_lasso_iris_singular(csr_container=None):
             emp_cov, alpha=0.01, return_costs=False, mode=method
         )
         assert_array_almost_equal(cov, cov_R, decimal=5)
-        assert_array_almost_equal(icov, icov_R, decimal=5)      
-
+        assert_array_almost_equal(icov, icov_R, decimal=5)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -233,7 +230,9 @@ def test_graphical_lasso_cv(csr_container=None, random_state=1):
         sys.stdout = orig_stdout
 
 
-@pytest.mark.parametrize("alphas_container_type", CSR_CONTAINERS + ["list", "tuple", "array"])
+@pytest.mark.parametrize(
+    "alphas_container_type", CSR_CONTAINERS + ["list", "tuple", "array"]
+)
 def test_graphical_lasso_cv_alphas_iterable(alphas_container_type):
     """Check that we can pass an array-like to `alphas`.
 
@@ -291,7 +290,6 @@ def test_graphical_lasso_cv_alphas_invalid_array(
         GraphicalLassoCV(alphas=alphas, tol=1e-1, n_jobs=1).fit(X)
 
 
-
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_graphical_lasso_cv_scores(csr_container):
     splits = 4
@@ -307,7 +305,7 @@ def test_graphical_lasso_cv_scores(csr_container):
     )
     rng = np.random.RandomState(0)
     X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
-    
+
     # Convert X to the specified CSR container
     X_csr = csr_container(X)
 
