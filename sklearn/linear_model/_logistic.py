@@ -856,8 +856,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            in 1.4. Use `None` instead.
 
     dual : bool, default=False
-        Dual or primal formulation. Dual formulation is only implemented for
-        l2 penalty with liblinear solver. Prefer dual=False when
+        Dual (constrained) or primal (regularized, see also
+        :ref:`this equation <regularized-logistic-loss>`) formulation. Dual formulation
+        is only implemented for l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
     tol : float, default=1e-4
@@ -1373,7 +1374,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         For a multi_class problem, if multi_class is set to be "multinomial"
         the softmax function is used to find the predicted probability of
         each class.
-        Else use a one-vs-rest approach, i.e calculate the probability
+        Else use a one-vs-rest approach, i.e. calculate the probability
         of each class assuming it to be positive using the logistic function.
         and normalize these values across all the classes.
 
@@ -1474,8 +1475,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     dual : bool, default=False
-        Dual or primal formulation. Dual formulation is only implemented for
-        l2 penalty with liblinear solver. Prefer dual=False when
+        Dual (constrained) or primal (regularized, see also
+        :ref:`this equation <regularized-logistic-loss>`) formulation. Dual formulation
+        is only implemented for l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
     penalty : {'l1', 'l2', 'elasticnet'}, default='l2'
@@ -1857,10 +1859,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         if _routing_enabled():
             routed_params = process_routing(
-                obj=self,
-                method="fit",
+                self,
+                "fit",
                 sample_weight=sample_weight,
-                other_params=params,
+                **params,
             )
         else:
             routed_params = Bunch()
@@ -2148,10 +2150,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         scoring = self._get_scorer()
         if _routing_enabled():
             routed_params = process_routing(
-                obj=self,
-                method="score",
+                self,
+                "score",
                 sample_weight=sample_weight,
-                other_params=score_params,
+                **score_params,
             )
         else:
             routed_params = Bunch()

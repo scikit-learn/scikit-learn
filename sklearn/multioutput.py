@@ -163,10 +163,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         if _routing_enabled():
             routed_params = process_routing(
-                obj=self,
-                method="partial_fit",
-                other_params=partial_fit_params,
+                self,
+                "partial_fit",
                 sample_weight=sample_weight,
+                **partial_fit_params,
             )
         else:
             if sample_weight is not None and not has_fit_parameter(
@@ -249,10 +249,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         if _routing_enabled():
             routed_params = process_routing(
-                obj=self,
-                method="fit",
-                other_params=fit_params,
+                self,
+                "fit",
                 sample_weight=sample_weight,
+                **fit_params,
             )
         else:
             if sample_weight is not None and not has_fit_parameter(
@@ -706,9 +706,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         del Y_pred_chain
 
         if _routing_enabled():
-            routed_params = process_routing(
-                obj=self, method="fit", other_params=fit_params
-            )
+            routed_params = process_routing(self, "fit", **fit_params)
         else:
             routed_params = Bunch(estimator=Bunch(fit=fit_params))
 
@@ -778,6 +776,11 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     Each model makes a prediction in the order specified by the chain using
     all of the available features provided to the model plus the predictions
     of models that are earlier in the chain.
+
+    For an example of how to use ``ClassifierChain`` and benefit from its
+    ensemble, see
+    :ref:`ClassifierChain on a yeast dataset
+    <sphx_glr_auto_examples_multioutput_plot_classifier_chain_yeast.py>` example.
 
     Read more in the :ref:`User Guide <classifierchain>`.
 

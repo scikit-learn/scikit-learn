@@ -63,7 +63,7 @@ Tips to ease development
          # You might want to add this alias to your shell script config.
          alias cythonX="cython -X language_level=3 -X boundscheck=False -X wraparound=False -X initializedcheck=False -X nonecheck=False -X cdivision=True"
 
-         # This generates `source.c` as as if you had recompiled scikit-learn entirely.
+         # This generates `source.c` as if you had recompiled scikit-learn entirely.
          cythonX --annotate source.pyx
 
 * Using the ``--annotate`` option with this flag allows generating a HTML report of code annotation.

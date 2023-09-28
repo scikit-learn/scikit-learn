@@ -63,6 +63,8 @@ from . import (
     r2_score,
     recall_score,
     roc_auc_score,
+    root_mean_squared_error,
+    root_mean_squared_log_error,
     top_k_accuracy_score,
 )
 from .cluster import (
@@ -123,7 +125,7 @@ class _MultimetricScorer:
         cached_call = partial(_cached_call, cache)
 
         if _routing_enabled():
-            routed_params = process_routing(self, "score", kwargs)
+            routed_params = process_routing(self, "score", **kwargs)
         else:
             # they all get the same args, and they all get them all
             routed_params = Bunch(
@@ -313,6 +315,13 @@ class _BaseScorer(_MetadataRequester):
             Arguments should be of the form ``param_name=alias``, and `alias`
             can be one of ``{True, False, None, str}``.
         """
+        if not _routing_enabled():
+            raise RuntimeError(
+                "This method is only available when metadata routing is enabled."
+                " You can enable it using"
+                " sklearn.set_config(enable_metadata_routing=True)."
+            )
+
         self._warn_overlap(
             message=(
                 "You are setting metadata request for parameters which are "
@@ -560,11 +569,12 @@ class _PassthroughScorer:
             routing information.
         """
         # This scorer doesn't do any validation or routing, it only exposes the
-        # score requests to the parent object. This object behaves as a
-        # consumer rather than a router.
-        res = MetadataRequest(owner=self._estimator.__class__.__name__)
-        res.score = get_routing_for_object(self._estimator).score
-        return res
+        # requests of the given estimator. This object behaves as a consumer
+        # rather than a router. Ideally it only exposes the score requests to
+        # the parent object; however, that requires computing the routing for
+        # meta-estimators, which would be more time consuming than simply
+        # returning the child object's requests.
+        return get_routing_for_object(self._estimator)
 
 
 def _check_multimetric_scoring(estimator, scoring):
@@ -802,7 +812,10 @@ neg_median_absolute_error_scorer = make_scorer(
     median_absolute_error, greater_is_better=False
 )
 neg_root_mean_squared_error_scorer = make_scorer(
-    mean_squared_error, greater_is_better=False, squared=False
+    root_mean_squared_error, greater_is_better=False
+)
+neg_root_mean_squared_log_error_scorer = make_scorer(
+    root_mean_squared_log_error, greater_is_better=False
 )
 neg_mean_poisson_deviance_scorer = make_scorer(
     mean_poisson_deviance, greater_is_better=False
@@ -877,10 +890,11 @@ _SCORERS = dict(
     matthews_corrcoef=matthews_corrcoef_scorer,
     neg_median_absolute_error=neg_median_absolute_error_scorer,
     neg_mean_absolute_error=neg_mean_absolute_error_scorer,
-    neg_mean_absolute_percentage_error=neg_mean_absolute_percentage_error_scorer,  # noqa
+    neg_mean_absolute_percentage_error=neg_mean_absolute_percentage_error_scorer,
     neg_mean_squared_error=neg_mean_squared_error_scorer,
     neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
     neg_root_mean_squared_error=neg_root_mean_squared_error_scorer,
+    neg_root_mean_squared_log_error=neg_root_mean_squared_log_error_scorer,
     neg_mean_poisson_deviance=neg_mean_poisson_deviance_scorer,
     neg_mean_gamma_deviance=neg_mean_gamma_deviance_scorer,
     accuracy=accuracy_scorer,
