@@ -893,6 +893,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         If early stopping is False, then the training stops when the training
         loss does not improve by more than tol for n_iter_no_change consecutive
         passes over the training set.
+        Only effective when solver='sgd' or 'adam'.
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
