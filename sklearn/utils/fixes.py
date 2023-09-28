@@ -144,8 +144,8 @@ else:
         return scipy.sparse.linalg.cg(A, b, **kwargs)
 
 
-# TODO: Remove when Scipy 1.12 is the minimum supported version
-if sp_base_version >= parse_version("1.12.0"):
+# TODO: Remove when Scipy 1.11 is the minimum supported version
+if sp_base_version >= parse_version("1.11.0"):
 
     def _sparse_min_max(X, axis):
         return X.min(axis).toarray().ravel(), X.max(axis).toarray().ravel()
