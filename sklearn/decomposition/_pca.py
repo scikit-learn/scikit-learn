@@ -589,14 +589,9 @@ class PCA(_BasePCA):
                 )
             else:
                 explained_variance_ratio_np = explained_variance_ratio_
-            n_components = (
-                np.searchsorted(
-                    stable_cumsum(explained_variance_ratio_np),
-                    n_components,
-                    side="right",
-                )
-                + 1
-            )
+            ratio_cumsum = stable_cumsum(explained_variance_ratio_np)
+            n_components = np.searchsorted(ratio_cumsum, n_components, side="right") + 1
+
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
