@@ -170,8 +170,12 @@ class _MultimetricScorer:
             estimator, scorer._response_method
         ).__name__
 
-        new_scorer = copy.copy(scorer)
-        new_scorer._response_method = new_response_method
+        new_scorer = scorer.__class__(
+            scorer._score_func,
+            scorer._sign,
+            scorer._kwargs,
+            response_method=new_response_method,
+        )
         return new_scorer
 
     @staticmethod

@@ -181,9 +181,9 @@ take several parameters:
   of the python function is negated by the scorer object, conforming to
   the cross validation convention that scorers return higher values for better models.
 
-* for classification metrics only: whether the python function you provided requires continuous decision
-  certainties (``needs_threshold=True``).  The default value is
-  False.
+* for classification metrics only: whether the python function you provided requires
+  continuous decision certainties
+  (``response_method=("decision_function", "predict_proba")``).
 
 * any additional parameters, such as ``beta`` or ``labels`` in :func:`f1_score`.
 

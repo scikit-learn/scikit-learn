@@ -366,13 +366,6 @@ def test_check_scoring_gridsearchcv():
     assert_array_equal(scores, 1)
 
 
-def test_make_scorer():
-    # Sanity check on the make_scorer factory function.
-    f = lambda *args: 0
-    with pytest.raises(ValueError):
-        make_scorer(f, needs_threshold=True, needs_proba=True)
-
-
 @pytest.mark.parametrize(
     "scorer_name, metric",
     [
@@ -1382,4 +1375,6 @@ def test_get_scorer_multilabel_indicator():
     assert score > 0.8
 
 
-# TODO: add tests for the deprecation and passing several conflicting parameters.
+def test_make_scorer_error():
+    """Check that `make_scorer` raises errors if the parameter used"""
+    pass

@@ -262,8 +262,12 @@ Changelog
   :func:`sklearn.metrics.zero_one_loss` now support Array API compatible inputs.
   :pr:`27137` by :user:`Edoardo Abati <EdAbati>`.
 
-- |Enhancement| add a parameter `response_method` to define a list of priority
-  of response methods to use with metrics requiring the option `needs_threshold=True`.
+- |API| Deprecated `needs_threshold` and `needs_proba` from :func:`metrics.make_scorer`.
+  These parameter will be removed in version 1.6. Instead, use `response_method` that
+  accept `"predict"`, `"predict_proba"` or `"decision_function"` or a list of such
+  values. `needs_proba=True` is equivalent to `response_method="predict_proba"` and
+  `needs_threshold=True` is equivalent to
+  `response_method=("decision_function", "predict_proba")`.
   :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |API| The `squared` parameter of :func:`metrics.mean_squared_error` and
