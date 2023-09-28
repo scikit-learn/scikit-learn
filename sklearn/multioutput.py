@@ -356,11 +356,11 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
                 "since estimator does not have a "
                 "feature_importances_ attribute"
             )
-        
+
         all_feature_importances = [
             estimator.feature_importances_ for estimator in self.estimators_
         ]
-        
+
         return np.mean(all_feature_importances, axis=0)
 
 
