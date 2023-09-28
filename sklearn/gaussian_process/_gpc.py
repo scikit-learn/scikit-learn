@@ -266,30 +266,18 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         return self
 
-    def predict(self, X, return_std_of_f=False):
+    def predict(self, X):
         """Perform classification on an array of test vectors X.
-
-        In addition to the predicted classes, this method can also
-        return the standard deviation of the test values of the
-        latent variable f (`return_std_of_f=True`).
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
 
-        return_std_of_f : bool, default=False
-            If True, returns predictions and the standard deviation of the
-            latent function f.
-
         Returns
         -------
         C : ndarray of shape (n_samples,)
             Predicted target values for X, values are from ``classes_``
-
-        f_std : ndarray of shape (n_samples,), optional
-            Standard deviation of the latent variable f after conditioning
-            on data and test vectors.
         """
         check_is_fitted(self)
 
@@ -298,17 +286,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         # pass it through the link function
         K_star = self.kernel_(self.X_train_, X)  # K_star =k(x_star)
         f_star = K_star.T.dot(self.y_train_ - self.pi_)  # Algorithm 3.2,Line 4
-        predictions = np.where(f_star > 0, self.classes_[1], self.classes_[0])
 
-        if return_std_of_f:
-            # Computes and returns the std of the latent function f
-            # Lines 5 and 6 of Algorithm 3.2. in GPML.
-            v = solve(self.L_, self.W_sr_[:, np.newaxis] * K_star)
-            var_f_star = self.kernel_.diag(X) - np.einsum("ij,ij->j", v, v)
-
-            return predictions, np.sqrt(var_f_star)
-
-        return predictions
+        return np.where(f_star > 0, self.classes_[1], self.classes_[0])
 
     def predict_proba(self, X, return_std_of_f=False):
         """Return probability estimates for the test vector X.
@@ -793,30 +772,18 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         return self
 
-    def predict(self, X, return_std_of_f=False):
+    def predict(self, X):
         """Perform classification on an array of test vectors X.
-
-        In addition to the predicted classes, this method can also
-        return the standard deviation of the test values of the
-        latent variable f (`return_std_of_f=True`) for binary
-        classification.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
 
-        return_std_of_f : bool, optional (default=False)
-            Returns the standard deviation of the latent variable f.
-            Only works for binary classification.
-
         Returns
         -------
         C : ndarray of shape (n_samples,)
             Predicted target values for X, values are from ``classes_``.
-
-        f_std : ndarray of shape (n_samples,), optional
-            Standard deviation of the latent function f at the test vectors X.
         """
         check_is_fitted(self)
 
@@ -825,19 +792,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         else:
             X = validate_data(self, X, ensure_2d=False, dtype=None, reset=False)
 
-        if self.n_classes_ > 2:
-            if return_std_of_f:
-                raise ValueError(
-                    "Returning the standard deviation of "
-                    "the latent function f is not supported for "
-                    "more than 2 classes."
-                )
-            else:
-                return self.base_estimator_.predict(X)
-        else:
-            # WARNING: this assumes that the self.base_estimator_ is a
-            # _BinaryGaussianProcessClassifierLaplace instance.
-            return self.base_estimator_.predict(X, return_std_of_f=return_std_of_f)
+        return self.base_estimator_.predict(X)
 
     def predict_proba(self, X, return_std_of_f=False):
         """Return probability estimates for the test vector X.
