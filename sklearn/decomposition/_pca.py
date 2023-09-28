@@ -22,7 +22,7 @@ from scipy.special import gammaln
 from ..base import _fit_context
 from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
-from ..utils._array_api import get_namespace
+from ..utils._array_api import _convert_to_numpy, get_namespace
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.deprecation import deprecated
 from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
@@ -575,14 +575,28 @@ class PCA(_BasePCA):
             # their variance is always greater than n_components float
             # passed. More discussion in issue: #15669
             if is_array_api_compliant:
-                ratio_cumsum = xp.cumsum(explained_variance_ratio_, axis=0)
+                # Convert to numpy as xp.cumsum and xp.searchsorted are not
+                # part of the Array API standard yet:
+                #
+                # https://github.com/data-apis/array-api/issues/597
+                # https://github.com/data-apis/array-api/issues/688
+                #
+                # Furthermore, it's not always safe to call them for namespaces
+                # that already implement them: for instance as
+                # cupy.searchsorted does not accept a float as second argument.
+                explained_variance_ratio_np = _convert_to_numpy(
+                    explained_variance_ratio_, xp=xp
+                )
             else:
-                # Backward compat type for traditional numpy. Note that this
-                # stable_cumsum function is probably not necessary. A direct
-                # call to np.cumsum should be stable enough, without even
-                # casting to float64.
-                ratio_cumsum = stable_cumsum(explained_variance_ratio_)
-            n_components = xp.searchsorted(ratio_cumsum, n_components, side="right") + 1
+                explained_variance_ratio_np = explained_variance_ratio_
+            n_components = (
+                np.searchsorted(
+                    stable_cumsum(explained_variance_ratio_np),
+                    n_components,
+                    side="right",
+                )
+                + 1
+            )
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):

@@ -755,21 +755,6 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
 )
 def test_pca_array_api_compliance(estimator, check, array_namespace, device, dtype):
     name = estimator.__class__.__name__
-    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
-    if not isinstance(estimator.n_components, int) and not hasattr(xp, "cumsum"):
-        # Our code anticipates the implementation of xp.cumsum that should be
-        # standardized at some point, see:
-        # https://github.com/data-apis/array-api/issues/597
-        pytest.xfail(
-            f"Array API namespace {array_namespace} does not support cumsum yet."
-        )
-    if not isinstance(estimator.n_components, int) and not hasattr(xp, "searchsorted"):
-        # Our code anticipates the implementation of xp.searchsorted that
-        # should be standardized at some point, see:
-        # https://github.com/data-apis/array-api/issues/688
-        pytest.xfail(
-            f"Array API namespace {array_namespace} does not support searchsorted yet."
-        )
     check(name, estimator, array_namespace, device=device, dtype=dtype)
 
 
