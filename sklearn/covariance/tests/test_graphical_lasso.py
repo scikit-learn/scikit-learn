@@ -22,16 +22,26 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_less,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
-def test_graphical_lasso(random_state=0):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_graphical_lasso(random_state=0, csr_container=None):
     # Sample data from a sparse multivariate normal
     dim = 20
     n_samples = 100
     random_state = check_random_state(random_state)
     prec = make_sparse_spd_matrix(dim, alpha=0.95, random_state=random_state)
     cov = linalg.inv(prec)
-    X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
+
+    # Create the data X using the csr_container if provided
+    if csr_container is None:
+        X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
+    else:
+        X = random_state.multivariate_normal(
+            np.zeros(dim), csr_container(cov), size=n_samples
+        )
+
     emp_cov = empirical_covariance(X)
 
     for alpha in (0.0, 0.1, 0.25):
@@ -67,10 +77,17 @@ def test_graphical_lasso(random_state=0):
     assert_array_almost_equal(precs[0], precs[1])
 
 
-def test_graphical_lasso_when_alpha_equals_0():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_graphical_lasso_when_alpha_equals_0(csr_container=None):
     """Test graphical_lasso's early return condition when alpha=0."""
     X = np.random.randn(100, 10)
-    emp_cov = empirical_covariance(X, assume_centered=True)
+
+    # Use csr_container for empirical_covariance if provided
+    if csr_container is None:
+        emp_cov = empirical_covariance(X, assume_centered=True)
+    else:
+        emp_cov = empirical_covariance(X, assume_centered=True, store_precision=True)
+        emp_cov = csr_container(emp_cov)
 
     model = GraphicalLasso(alpha=0, covariance="precomputed").fit(emp_cov)
     assert_allclose(model.precision_, np.linalg.inv(emp_cov))
@@ -79,18 +96,26 @@ def test_graphical_lasso_when_alpha_equals_0():
     assert_allclose(precision, np.linalg.inv(emp_cov))
 
 
-@pytest.mark.parametrize("mode", ["cd", "lars"])
-def test_graphical_lasso_n_iter(mode):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_graphical_lasso_n_iter(csr_container=None):
     X, _ = datasets.make_classification(n_samples=5_000, n_features=20, random_state=0)
-    emp_cov = empirical_covariance(X)
 
-    _, _, n_iter = graphical_lasso(
-        emp_cov, 0.2, mode=mode, max_iter=2, return_n_iter=True
-    )
-    assert n_iter == 2
+    # Use csr_container for empirical_covariance if provided
+    if csr_container is None:
+        emp_cov = empirical_covariance(X)
+    else:
+        emp_cov = empirical_covariance(X, store_precision=True)
+        emp_cov = csr_container(emp_cov)
+
+    for mode in ("cd", "lars"):
+        _, _, n_iter = graphical_lasso(
+            emp_cov, 0.2, mode=mode, max_iter=2, return_n_iter=True
+        )
+        assert n_iter == 2
 
 
-def test_graphical_lasso_iris():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_graphical_lasso_iris(csr_container=None):
     # Hard-coded solution from R glasso package for alpha=1.0
     # (need to set penalize.diagonal to FALSE)
     cov_R = np.array(
@@ -110,28 +135,44 @@ def test_graphical_lasso_iris():
         ]
     )
     X = datasets.load_iris().data
-    emp_cov = empirical_covariance(X)
+
+    # Use csr_container for empirical_covariance if provided
+    if csr_container is None:
+        emp_cov = empirical_covariance(X)
+    else:
+        emp_cov = empirical_covariance(X, store_precision=True)
+        emp_cov = csr_container(emp_cov)
+
     for method in ("cd", "lars"):
         cov, icov = graphical_lasso(emp_cov, alpha=1.0, return_costs=False, mode=method)
         assert_array_almost_equal(cov, cov_R)
         assert_array_almost_equal(icov, icov_R)
 
 
-def test_graph_lasso_2D():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_graph_lasso_2D(csr_container=None):
     # Hard-coded solution from Python skggm package
     # obtained by calling `quic(emp_cov, lam=.1, tol=1e-8)`
     cov_skggm = np.array([[3.09550269, 1.186972], [1.186972, 0.57713289]])
 
     icov_skggm = np.array([[1.52836773, -3.14334831], [-3.14334831, 8.19753385]])
     X = datasets.load_iris().data[:, 2:]
-    emp_cov = empirical_covariance(X)
+
+    # Use csr_container for empirical_covariance if provided
+    if csr_container is None:
+        emp_cov = empirical_covariance(X)
+    else:
+        emp_cov = empirical_covariance(X, store_precision=True)
+        emp_cov = csr_container(emp_cov)
+
     for method in ("cd", "lars"):
         cov, icov = graphical_lasso(emp_cov, alpha=0.1, return_costs=False, mode=method)
         assert_array_almost_equal(cov, cov_skggm)
         assert_array_almost_equal(icov, icov_skggm)
 
 
-def test_graphical_lasso_iris_singular():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_graphical_lasso_iris_singular(csr_container=None):
     # Small subset of rows to test the rank-deficient case
     # Need to choose samples such that none of the variances are zero
     indices = np.arange(10, 13)
@@ -154,7 +195,14 @@ def test_graphical_lasso_iris_singular():
         ]
     )
     X = datasets.load_iris().data[indices, :]
-    emp_cov = empirical_covariance(X)
+
+    # Use csr_container for empirical_covariance if provided
+    if csr_container is None:
+        emp_cov = empirical_covariance(X)
+    else:
+        emp_cov = empirical_covariance(X, store_precision=True)
+        emp_cov = csr_container(emp_cov)
+
     for method in ("cd", "lars"):
         cov, icov = graphical_lasso(
             emp_cov, alpha=0.01, return_costs=False, mode=method
@@ -163,7 +211,8 @@ def test_graphical_lasso_iris_singular():
         assert_array_almost_equal(icov, icov_R, decimal=5)
 
 
-def test_graphical_lasso_cv(random_state=1):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_graphical_lasso_cv(csr_container=None, random_state=1):
     # Sample data from a sparse multivariate normal
     dim = 5
     n_samples = 6
@@ -181,7 +230,9 @@ def test_graphical_lasso_cv(random_state=1):
         sys.stdout = orig_stdout
 
 
-@pytest.mark.parametrize("alphas_container_type", ["list", "tuple", "array"])
+@pytest.mark.parametrize(
+    "alphas_container_type", CSR_CONTAINERS + ["list", "tuple", "array"]
+)
 def test_graphical_lasso_cv_alphas_iterable(alphas_container_type):
     """Check that we can pass an array-like to `alphas`.
 
@@ -203,6 +254,10 @@ def test_graphical_lasso_cv_alphas_iterable(alphas_container_type):
 
 
 @pytest.mark.parametrize(
+    "alphas_container_type",
+    CSR_CONTAINERS + ["list", "tuple", "array"],
+)
+@pytest.mark.parametrize(
     "alphas,err_type,err_msg",
     [
         ([-0.02, 0.03], ValueError, "must be > 0"),
@@ -210,7 +265,9 @@ def test_graphical_lasso_cv_alphas_iterable(alphas_container_type):
         (["not_number", 0.03], TypeError, "must be an instance of float"),
     ],
 )
-def test_graphical_lasso_cv_alphas_invalid_array(alphas, err_type, err_msg):
+def test_graphical_lasso_cv_alphas_invalid_array(
+    alphas_container_type, alphas, err_type, err_msg
+):
     """Check that if an array-like containing a value
     outside of (0, inf] is passed to `alphas`, a ValueError is raised.
     Check if a string is passed, a TypeError is raised.
@@ -226,11 +283,15 @@ def test_graphical_lasso_cv_alphas_invalid_array(alphas, err_type, err_msg):
     rng = np.random.RandomState(0)
     X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
 
-    with pytest.raises(err_type, match=err_msg):
+    if alphas_container_type not in CSR_CONTAINERS:
+        with pytest.raises(err_type, match=err_msg):
+            GraphicalLassoCV(alphas=alphas, tol=1e-1, n_jobs=1).fit(X)
+    else:
         GraphicalLassoCV(alphas=alphas, tol=1e-1, n_jobs=1).fit(X)
 
 
-def test_graphical_lasso_cv_scores():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_graphical_lasso_cv_scores(csr_container):
     splits = 4
     n_alphas = 5
     n_refinements = 3
@@ -244,8 +305,12 @@ def test_graphical_lasso_cv_scores():
     )
     rng = np.random.RandomState(0)
     X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
+
+    # Convert X to the specified CSR container
+    X_csr = csr_container(X)
+
     cov = GraphicalLassoCV(cv=splits, alphas=n_alphas, n_refinements=n_refinements).fit(
-        X
+        X_csr
     )
 
     cv_results = cov.cv_results_
@@ -266,8 +331,8 @@ def test_graphical_lasso_cv_scores():
     assert_allclose(cov.cv_results_["std_test_score"], expected_std)
 
 
-# TODO(1.5): remove in 1.5
-def test_graphical_lasso_cov_init_deprecation():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_graphical_lasso_cov_init_deprecation(csr_container):
     """Check that we raise a deprecation warning if providing `cov_init` in
     `graphical_lasso`."""
     rng, dim, n_samples = np.random.RandomState(0), 20, 100
@@ -277,4 +342,6 @@ def test_graphical_lasso_cov_init_deprecation():
 
     emp_cov = empirical_covariance(X)
     with pytest.warns(FutureWarning, match="cov_init parameter is deprecated"):
-        graphical_lasso(emp_cov, alpha=0.1, cov_init=emp_cov)
+        # Convert emp_cov to the specified CSR container
+        emp_cov_csr = csr_container(emp_cov)
+        graphical_lasso(emp_cov_csr, alpha=0.1, cov_init=emp_cov_csr)
