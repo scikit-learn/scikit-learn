@@ -175,7 +175,7 @@ class PCA(_BasePCA):
         improve the predictive accuracy of the downstream estimators by
         making their data respect some hard-wired assumptions.
 
-    svd_solver : {'auto', 'full', 'covariance_eigh', 'arpack', 'randomized'},
+    svd_solver : {'auto', 'full', 'covariance_eigh', 'arpack', 'randomized'},\
             default='auto'
         If auto :
             The solver is selected by a default policy based on `X.shape` and
