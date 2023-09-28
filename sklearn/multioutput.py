@@ -330,6 +330,39 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         )
         return router
 
+    @property
+    def feature_importances_(self):
+        """The impurity-based feature importances.
+
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature.  It is also
+        known as the Gini importance.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
+        Returns
+        -------
+        feature_importances_ : ndarray of shape (n_features,)
+            The values of this array sum to 1, unless all trees are single node
+            trees consisting of only the root node, in which case it will be an
+            array of zeros.
+        """
+        if not hasattr(self.estimators_[0], 'feature_importances_'):
+            raise AttributeError(
+                "Unable to compute feature importances "
+                "since estimator does not have a "
+                "feature_importances_ attribute"
+            )
+        
+        all_feature_importances = [
+            estimator.feature_importances_ for estimator in self.estimators_
+        ]
+        
+        return np.mean(all_feature_importances, axis=0)
+
 
 class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     """Multi target regression.
