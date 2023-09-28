@@ -272,7 +272,6 @@ Changelog
   :func:`root_mean_squared_log_error` instead.
   :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.
 
-
 :mod:`sklearn.model_selection`
 ..............................
 
