@@ -749,7 +749,7 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
         assert_allclose(
             _convert_to_numpy(precision_xp, xp=xp),
             precision_np,
-            atol=_atol_for_type(dtype),
+            atol=_atol_for_type(iris_np.dtype),
         )
         covariance_xp = estimator_xp.get_covariance()
         assert covariance_xp.shape == (4, 4)
@@ -758,7 +758,7 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
         assert_allclose(
             _convert_to_numpy(covariance_xp, xp=xp),
             covariance_np,
-            atol=_atol_for_type(dtype),
+            atol=_atol_for_type(iris_np.dtype),
         )
 
 
