@@ -208,7 +208,7 @@ def _liac_arff_parser(
         # missing values. To be consistent with the pandas parser, we replace
         # None with np.nan.
         frame = pd.concat(dfs, ignore_index=True)
-        if parse_version(pd.__version__) < parse_version("2.0"):
+        if parse_version(pd.__version__).base_version < parse_version("2.2"):
             frame = frame.fillna(value=np.nan, downcast=False)
         else:
             pd.set_option("future.no_silent_downcasting", True)
