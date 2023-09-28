@@ -148,10 +148,24 @@ else:
 if sp_base_version >= parse_version("1.11.0"):
 
     def _sparse_min_max(X, axis):
-        return X.min(axis).toarray().ravel(), X.max(axis).toarray().ravel()
+        the_min = X.min(axis=axis)
+        the_max = X.max(axis=axis)
+
+        if axis is not None:
+            the_min = the_min.toarray().ravel()
+            the_max = the_max.toarray().ravel()
+
+        return the_min, the_max
 
     def _sparse_nan_min_max(X, axis):
-        return X.nanmin(axis).toarray().ravel(), X.nanmax(axis).toarray().ravel()
+        the_min = X.nanmin(axis=axis)
+        the_max = X.nanmax(axis=axis)
+
+        if axis is not None:
+            the_min = the_min.toarray().ravel()
+            the_max = the_max.toarray().ravel()
+
+        return the_min, the_max
 
 else:
     # This code is mostly taken from scipy 0.14 and extended to handle nans, see
