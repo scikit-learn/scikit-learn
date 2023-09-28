@@ -197,6 +197,14 @@ METAESTIMATORS: list = [
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": SelectFromModel,
+        "estimator_name": "estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit", "partial_fit"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -253,7 +261,6 @@ UNSUPPORTED_ESTIMATORS = [
     RFECV(ConsumingClassifier()),
     RidgeCV(),
     RidgeClassifierCV(),
-    SelectFromModel(ConsumingClassifier()),
     SelfTrainingClassifier(ConsumingClassifier()),
     SequentialFeatureSelector(ConsumingClassifier()),
     StackingClassifier(ConsumingClassifier()),
