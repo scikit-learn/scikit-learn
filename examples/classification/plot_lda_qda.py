@@ -205,20 +205,21 @@ fig.suptitle(
 plt.show()
 
 # %%
-# The first important thing to notice is that both LDA and QDA are equivalent for the
-# first and second datasets. Indeed, the major difference between LDA and QDA is that
-# LDA assumes that the covariance matrix of each class is equal, while QDA will estimate
-# a covariance matrix for each class. Since the data generative process used the same
-# covariance matrix for both classes, QDA estimated two covariance matrices that are
-# equal and therefore equivalent to the covariance matrix estimated by LDA.
+# The first important thing to notice is that LDA and QDA are equivalent for the
+# first and second datasets. Indeed, the major difference is that LDA assumes
+# that the covariance matrix of each class is equal, while QDA estimates a
+# covariance matrix per class. Since in these cases the data generative process
+# has the same covariance matrix for both classes, QDA estimates two covariance
+# matrices that are (almost) equal and therefore equivalent to the covariance
+# matrix estimated by LDA.
 #
-# In the first dataset, we see that the discriminant boundary corresponds to the
-# perpendicular bisector between the two means. This is the case because the covariance
-# matrix used to generate the dataset is spherical. Therefore, we observe that the
-# discriminant boundary in the second dataset is no longer a perpendicular bisector.
-# It only passes through the middle of the two means.
+# In the first dataset the covariance matrix used to generate the dataset is
+# spherical, which results in a discriminant boundary that aligns with the
+# perpendicular bisector between the two means. This is no longer the case for
+# the second dataset. The discriminant boundary only passes through the middle
+# of the two means.
 #
-# Finally, in the third dataset, we observe the real difference between the modeling of
-# LDA and QDA. QDA is fitting two covariance matrices and provides a non-linear
-# discriminant boundary, while LDA is underfitting since it assumes that a single
-# covariance matrix is shared by both classes.
+# Finally, in the third dataset, we observe the real difference between LDA and
+# QDA. QDA fits two covariance matrices and provides a non-linear discriminant
+# boundary, whereas LDA underfits since it assumes that both classes share a
+# single covariance matrix.
