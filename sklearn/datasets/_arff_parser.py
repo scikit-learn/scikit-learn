@@ -210,7 +210,7 @@ def _liac_arff_parser(
         frame = pd.concat(dfs, ignore_index=True)
         pd_version = parse_version(pd.__version__).base_version
         if parse_version(pd_version) < parse_version("2.2"):
-            frame = frame.fillna(value=np.nan, downcast=False)
+            frame = frame.fillna(value=np.nan)
         else:
             pd.set_option("future.no_silent_downcasting", True)
             frame = frame.fillna(value=np.nan).infer_objects(copy=False)
