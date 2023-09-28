@@ -137,7 +137,7 @@ optimizer.
 In some scenarios, information about the uncertainty of the latent function
 :math:`f` is desired (i.e. the variance :math:`\text{Var}[f_*]` described in
 Eq. (3.24) of [RW2006]_). The :class:`GaussianProcessClassifier` provides
-access to this uncertainty on both the `predict_proba` method:
+access to this uncertainty on the `predict_proba` method:
 setting the keyword argument `return_std_of_f` to `True` will also return the
 standard deviation of the latent function :math:`f` at the query points. It
 must be emphasized that this uncertainty is **not** an uncertainty over the
