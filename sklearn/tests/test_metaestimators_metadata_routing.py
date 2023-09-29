@@ -197,6 +197,13 @@ METAESTIMATORS: list = [
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": OrthogonalMatchingPursuitCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -246,7 +253,6 @@ UNSUPPORTED_ESTIMATORS = [
     MultiTaskLassoCV(),
     OneVsOneClassifier(ConsumingClassifier()),
     OneVsRestClassifier(ConsumingClassifier()),
-    OrthogonalMatchingPursuitCV(),
     OutputCodeClassifier(ConsumingClassifier()),
     RANSACRegressor(),
     RFE(ConsumingClassifier()),
