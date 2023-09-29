@@ -9,6 +9,7 @@ from scipy import sparse
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils import _IS_WASM
 from sklearn.utils._testing import (
     TempMemmap,
     _convert_container,
@@ -607,6 +608,7 @@ def test_tempmemmap(monkeypatch):
     assert registration_counter.nb_calls == 2
 
 
+@pytest.mark.xfail(_IS_WASM, reason="memmap not fully supported")
 @pytest.mark.parametrize("aligned", [False, True])
 def test_create_memmap_backed_data(monkeypatch, aligned):
     registration_counter = RegistrationCounter()
