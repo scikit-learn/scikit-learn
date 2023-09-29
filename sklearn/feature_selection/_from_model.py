@@ -347,9 +347,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
             - If `enable_metadata_routing=True`:
 
-                Parameters passed to the ``estimator.fit`` method of each
-                sub-estimator. They are ignored if prefit=True or if estimator
-                is already fitted.
+                Parameters passed to the ``estimator.fit`` method of the
+                sub-estimator. They are ignored if `prefit=True`.
 
                 .. versionchanged:: 1.4
                 **fit_params are routed via the common metadata routing
