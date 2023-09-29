@@ -75,9 +75,9 @@ more details.
   by `Adrin Jalali`_.
 
 - |Feature| :class:`ElasticNetCV`, :class:`LassoCV`,
-  :class:`MultiTaskElasticNetCV` and :class:`MultiTaskLassoCV` now support
-  metadata routing and route metadata to the underlying estimator's ``fit``,
-  and the CV splitter. :pr:`27478` by :user:`Omar Salman <OmarManzoor>`.
+  :class:`MultiTaskElasticNetCV` and :class:`MultiTaskLassoCV`
+  now support metadata routing and route metadata to the CV splitter.
+  :pr:`27478` by :user:`Omar Salman <OmarManzoor>`.
 
 Support for SciPy sparse arrays
 -------------------------------

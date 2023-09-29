@@ -2897,7 +2897,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
             Training target variable. Will be cast to X's dtype if necessary.
 
         **params : dict, default=None
-            Parameters to be passed to the  CV splitter.
+            Parameters to be passed to the CV splitter.
             These are only available if `enable_metadata_routing=True`. See
             :ref:`Metadata Routing User Guide <metadata_routing>` for more
             details.
