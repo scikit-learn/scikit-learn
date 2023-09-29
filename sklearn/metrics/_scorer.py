@@ -661,10 +661,8 @@ def make_scorer(
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer)
     """
-    if (
-        response_method is not None
-        and (needs_proba != "deprecated")
-        and (needs_threshold != "deprecated")
+    if response_method is not None and (
+        needs_proba != "deprecated" or needs_threshold != "deprecated"
     ):
         raise ValueError(
             "You cannot set both `response_method` and `needs_proba` or "

@@ -944,7 +944,10 @@ def test_multiclass_roc_proba_scorer(scorer_name, metric):
 
 def test_multiclass_roc_proba_scorer_label():
     scorer = make_scorer(
-        roc_auc_score, multi_class="ovo", labels=[0, 1, 2], needs_proba=True
+        roc_auc_score,
+        multi_class="ovo",
+        labels=[0, 1, 2],
+        response_method="predict_proba",
     )
     X, y = make_classification(
         n_classes=3, n_informative=3, n_samples=20, random_state=0
@@ -1033,7 +1036,7 @@ def string_labeled_classification_problem():
 
 
 def test_average_precision_pos_label(string_labeled_classification_problem):
-    # check that _ThresholdScorer will lead to the right score when passing
+    # check that _Scorer will lead to the right score when passing
     # `pos_label`. Currently, only `average_precision_score` is defined to
     # be such a scorer.
     (
@@ -1099,7 +1102,7 @@ def test_average_precision_pos_label(string_labeled_classification_problem):
 
 
 def test_brier_score_loss_pos_label(string_labeled_classification_problem):
-    # check that _ProbaScorer leads to the right score when `pos_label` is
+    # check that _Scorer leads to the right score when `pos_label` is
     # provided. Currently only the `brier_score_loss` is defined to be such
     # a scorer.
     clf, X_test, y_test, _, y_pred_proba, _ = string_labeled_classification_problem
@@ -1116,7 +1119,7 @@ def test_brier_score_loss_pos_label(string_labeled_classification_problem):
 
     brier_scorer = make_scorer(
         brier_score_loss,
-        needs_proba=True,
+        response_method="predict_proba",
         pos_label=pos_label,
     )
     assert brier_scorer(clf, X_test, y_test) == pytest.approx(brier_pos_cancer)
@@ -1156,7 +1159,7 @@ def test_non_symmetric_metric_pos_label(
         make_scorer(brier_score_loss, response_method="predict_proba", pos_label="xxx"),
         make_scorer(f1_score, pos_label="xxx"),
     ],
-    ids=["ThresholdScorer", "ProbaScorer", "PredictScorer"],
+    ids=["non-thresholded scorer", "probability scorer", "thresholded scorer"],
 )
 def test_scorer_select_proba_error(scorer):
     # check that we raise the proper error when passing an unknown
@@ -1178,7 +1181,7 @@ def test_get_scorer_return_copy():
 
 
 def test_scorer_no_op_multiclass_select_proba():
-    # check that calling a ProbaScorer on a multiclass problem do not raise
+    # check that calling a _Scorer on a multiclass problem do not raise
     # even if `y_true` would be binary during the scoring.
     # `_select_proba_binary` should not be called in this case.
     X, y = make_classification(
@@ -1192,7 +1195,7 @@ def test_scorer_no_op_multiclass_select_proba():
 
     scorer = make_scorer(
         roc_auc_score,
-        needs_proba=True,
+        response_method="predict_proba",
         multi_class="ovo",
         labels=lr.classes_,
     )
@@ -1269,7 +1272,7 @@ def test_metadata_kwarg_conflict():
 
     scorer = make_scorer(
         roc_auc_score,
-        needs_proba=True,
+        response_method="predict_proba",
         multi_class="ovo",
         labels=lr.classes_,
     )
@@ -1375,6 +1378,63 @@ def test_get_scorer_multilabel_indicator():
     assert score > 0.8
 
 
-def test_make_scorer_error():
-    """Check that `make_scorer` raises errors if the parameter used"""
-    pass
+# TODO(1.6): rework this test after the deprecation of `needs_proba` and
+# `needs_threshold`
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        # response_method should not be set if needs_* are set
+        (
+            {"response_method": "predict_proba", "needs_proba": True},
+            ValueError,
+            "You cannot set both `response_method`",
+        ),
+        (
+            {"response_method": "predict_proba", "needs_threshold": True},
+            ValueError,
+            "You cannot set both `response_method`",
+        ),
+        # cannot set both needs_proba and needs_threshold
+        (
+            {"needs_proba": True, "needs_threshold": True},
+            ValueError,
+            "You cannot set both `needs_proba` and `needs_threshold`",
+        ),
+    ],
+)
+def test_make_scorer_error(params, err_type, err_msg):
+    """Check that `make_scorer` raises errors if the parameter used."""
+    with pytest.raises(err_type, match=err_msg):
+        make_scorer(lambda y_true, y_pred: 1, **params)
+
+
+# TODO(1.6): remove the following test
+@pytest.mark.parametrize(
+    "deprecated_params, new_params, warn_msg",
+    [
+        (
+            {"needs_proba": True},
+            {"response_method": "predict_proba"},
+            "`needs_proba` parameter is deprecated",
+        ),
+        (
+            {"needs_threshold": True},
+            {"response_method": ("decision_function", "predict_proba")},
+            "`needs_threshold` parameter is deprecated",
+        ),
+    ],
+)
+def test_make_scorer_deprecation(deprecated_params, new_params, warn_msg):
+    """Check that we raise a deprecation warning when using `needs_proba` or
+    `needs_threshold`."""
+    X, y = make_classification(n_samples=150, n_features=10, random_state=0)
+    classifier = LogisticRegression().fit(X, y)
+
+    # check deprecation of needs_proba
+    with pytest.warns(FutureWarning, match=warn_msg):
+        deprecated_roc_auc_scorer = make_scorer(roc_auc_score, **deprecated_params)
+    roc_auc_scorer = make_scorer(roc_auc_score, **new_params)
+
+    assert deprecated_roc_auc_scorer(classifier, X, y) == pytest.approx(
+        roc_auc_scorer(classifier, X, y)
+    )
