@@ -254,6 +254,7 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     estimator = EstimatorWithFit()
     scorer = scoring_validator(estimator, scoring="accuracy")
     assert isinstance(scorer, _Scorer)
+    assert scorer._response_method == "predict"
 
     # Test the allow_none parameter for check_scoring alone
     if scoring_validator is check_scoring:
@@ -296,6 +297,7 @@ def test_check_scoring_and_check_multimetric_scoring(scoring):
     assert isinstance(scorers, dict)
     assert sorted(scorers.keys()) == sorted(list(scoring))
     assert all([isinstance(scorer, _Scorer) for scorer in list(scorers.values())])
+    assert all(scorer._response_method == "predict" for scorer in scorers.values())
 
     if "acc" in scoring:
         assert_almost_equal(
@@ -352,10 +354,12 @@ def test_check_scoring_gridsearchcv():
     grid = GridSearchCV(LinearSVC(dual="auto"), param_grid={"C": [0.1, 1]}, cv=3)
     scorer = check_scoring(grid, scoring="f1")
     assert isinstance(scorer, _Scorer)
+    assert scorer._response_method == "predict"
 
     pipe = make_pipeline(LinearSVC(dual="auto"))
     scorer = check_scoring(pipe, scoring="f1")
     assert isinstance(scorer, _Scorer)
+    assert scorer._response_method == "predict"
 
     # check that cross_val_score definitely calls the scorer
     # and doesn't make any assumptions about the estimator apart from having a
