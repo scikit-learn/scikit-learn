@@ -521,8 +521,12 @@ class PCA(_BasePCA):
         # Handle svd_solver
         self._fit_svd_solver = self.svd_solver
         if self._fit_svd_solver == "auto":
+            # Tall and skinny problems are best handled by precomputing the
+            # covariance matrix.
+            if X.shape[1] <= 500 and X.shape[0] >= 10 * X.shape[1]:
+                self._fit_svd_solver = "covariance_eigh"
             # Small problem or n_components == 'mle', just call full PCA
-            if max(X.shape) <= 500 or n_components == "mle":
+            elif max(X.shape) <= 500 or n_components == "mle":
                 self._fit_svd_solver = "full"
             elif 1 <= n_components < 0.8 * min(X.shape):
                 self._fit_svd_solver = "randomized"

@@ -533,23 +533,28 @@ def test_pca_zero_noise_variance_edge_cases(svd_solver):
 
 
 @pytest.mark.parametrize(
-    "data, n_components, expected_solver",
-    [  # case: n_components in (0,1) => 'full'
-        (np.random.RandomState(0).uniform(size=(1000, 50)), 0.5, "full"),
-        # case: max(X.shape) <= 500 => 'full'
-        (np.random.RandomState(0).uniform(size=(10, 50)), 5, "full"),
+    "n_samples, n_features, n_components, expected_solver",
+    [
+        # case: n_samples < 10 * n_features and max(X.shape) <= 500 => 'full'
+        (10, 50, 5, "full"),
+        # case: n_samples > 10 * n_features and n_features < 500 => 'covariance_eigh'
+        (1000, 50, 50, "covariance_eigh"),
         # case: n_components >= .8 * min(X.shape) => 'full'
-        (np.random.RandomState(0).uniform(size=(1000, 50)), 50, "full"),
+        (1000, 500, 400, "full"),
         # n_components >= 1 and n_components < .8*min(X.shape) => 'randomized'
-        (np.random.RandomState(0).uniform(size=(1000, 50)), 10, "randomized"),
+        (1000, 500, 10, "randomized"),
+        # case: n_components in (0,1) => 'full'
+        (1000, 500, 0.5, "full"),
     ],
 )
-def test_pca_svd_solver_auto(data, n_components, expected_solver):
+def test_pca_svd_solver_auto(n_samples, n_features, n_components, expected_solver):
+    data = np.random.RandomState(0).uniform(size=(n_samples, n_features))
     pca_auto = PCA(n_components=n_components, random_state=0)
     pca_test = PCA(
         n_components=n_components, svd_solver=expected_solver, random_state=0
     )
     pca_auto.fit(data)
+    assert pca_auto._fit_svd_solver == expected_solver
     pca_test.fit(data)
     assert_allclose(pca_auto.components_, pca_test.components_)
 
