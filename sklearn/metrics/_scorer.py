@@ -176,6 +176,9 @@ class _MultimetricScorer:
             scorer._kwargs,
             response_method=new_response_method,
         )
+        if hasattr(scorer, "_metadata_request"):
+            # attach metadata request to the new scorer
+            new_scorer._metadata_request = scorer._metadata_request
         return new_scorer
 
     @staticmethod
