@@ -573,17 +573,14 @@ def make_scorer(
 ):
     """Make a scorer from a performance metric or loss function.
 
-    This factory function wraps scoring functions for use in
-    :class:`~sklearn.model_selection.GridSearchCV` and
-    :func:`~sklearn.model_selection.cross_val_score`.
-    It takes a score function, such as :func:`~sklearn.metrics.accuracy_score`,
-    :func:`~sklearn.metrics.mean_squared_error`,
-    :func:`~sklearn.metrics.adjusted_rand_score` or
-    :func:`~sklearn.metrics.average_precision_score`
-    and returns a callable that scores an estimator's output.
-    The signature of the call is `(estimator, X, y)` where `estimator`
-    is the model to be evaluated, `X` is the data and `y` is the
-    ground truth labeling (or `None` in the case of unsupervised models).
+    A scorer is a wrapper around an arbitrary metric or loss function that is called
+    with the signature `scorer(estimator, X, y_true, **kwargs)`.
+
+    It is accepted in all scikit-learn estimators or functions allowing a `scoring`
+    parameter.
+
+    The parameter `response_method` allows to specify which method of the estimator
+    should be used and fed to the scoring/loss function.
 
     Read more in the :ref:`User Guide <scoring>`.
 
@@ -594,14 +591,14 @@ def make_scorer(
         ``score_func(y, y_pred, **kwargs)``.
 
     response_method : {"predict_proba", "decision_function", "predict"} or \
-            list of such str, default=None
+            list/tuple of such str, default=None
 
         Specifies the response method to use get prediction from an estimator
         (i.e. :term:`predict_proba`, :term:`decision_function` or
         :term:`predict`). Possible choices are:
 
         - if `str`, it corresponds to the name to the method to return;
-        - if a list of `str`, it provides the method names in order of
+        - if a list or tuple of `str`, it provides the method names in order of
           preference. The method returned corresponds to the first method in
           the list and which is implemented by `estimator`.
         - if `None`, it is equivalent to `"predict"`.

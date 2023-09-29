@@ -182,8 +182,13 @@ take several parameters:
   the cross validation convention that scorers return higher values for better models.
 
 * for classification metrics only: whether the python function you provided requires
-  continuous decision certainties
-  (``response_method=("decision_function", "predict_proba")``).
+  continuous decision certainties. If the scoring function only accepts probability
+  estimates (e.g. :func:`metrics.log_loss`) then one needs to set the parameter
+  `response_method`, thus in this case `response_method="predict_proba"`. Some scoring
+  function do not necessarily require probability estimates but rather non-thresholded
+  decision values (e.g. :func:`metrics.roc_auc_score`). In this case, one provides a
+  list such as `response_method=["decision_function", "predict_proba"]`. In this case,
+  the scorer will use these methods, in the provided order, to compute the scores.
 
 * any additional parameters, such as ``beta`` or ``labels`` in :func:`f1_score`.
 
