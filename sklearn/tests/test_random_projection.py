@@ -41,9 +41,10 @@ def make_sparse_random_data(
     random_state=0,
     sparse_format=True,
 ):
-    # Make some random data with uniformly located non zero entries with
-    # Gaussian distributed values; `sparse_format` can be True or False (in which
-    # case a dense array is returned)
+    """Make some random data with uniformly located non zero entries with
+    Gaussian distributed values; `sparse_format` can be True or False (in which
+    case a dense array is returned).
+    """
     rng = np.random.RandomState(random_state)
     data_coo = coo_container(
         (
