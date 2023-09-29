@@ -212,8 +212,8 @@ def _liac_arff_parser(
         if parse_version(pd_version) < parse_version("2.2"):
             frame = frame.fillna(value=np.nan)
         else:
-            pd.set_option("future.no_silent_downcasting", True)
-            frame = frame.fillna(value=np.nan).infer_objects(copy=False)
+            with pd.option_context("future.no_silent_downcasting", True):
+                frame = frame.fillna(value=np.nan).infer_objects(copy=False)
         del dfs, first_df
 
         # cast the columns frame
