@@ -69,6 +69,12 @@ feature, code or documentation improvement).
    .. prompt:: bash $
 
      conda create -n sklearn-env -c conda-forge python=3.9 numpy scipy cython
+
+   It is not always necessary but it is safer to open a new prompt before
+   activating the newly created conda environment.
+
+   .. prompt:: bash $
+
      conda activate sklearn-env
 
 #. **Alternative to conda:** If you run Linux or similar, you can instead use
@@ -287,6 +293,12 @@ scikit-learn from source:
 
     conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
         joblib threadpoolctl pytest compilers llvm-openmp
+
+It is not always necessary but it is safer to open a new prompt before
+activating the newly created conda environment.
+
+.. prompt:: bash $
+
     conda activate sklearn-dev
     make clean
     pip install -v --no-use-pep517 --no-build-isolation -e .
@@ -306,12 +318,6 @@ forge using the following command:
     conda list
 
 which should include ``compilers`` and ``llvm-openmp``.
-
-.. note::
-
-   If you installed these packages after creating and activating a new conda
-   environment, you will need to first deactivate and then reactivate the
-   environment for these changes to take effect.
 
 The compilers meta-package will automatically set custom environment
 variables:
@@ -428,6 +434,12 @@ in the user folder using conda:
 
     conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
         joblib threadpoolctl pytest compilers
+
+It is not always necessary but it is safer to open a new prompt before
+activating the newly created conda environment.
+
+.. prompt:: bash $
+
     conda activate sklearn-dev
     pip install -v --no-use-pep517 --no-build-isolation -e .
 
