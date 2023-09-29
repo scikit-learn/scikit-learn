@@ -119,18 +119,8 @@ class _MultimetricScorer:
 
     def __call__(self, estimator, *args, **kwargs):
         """Evaluate predicted target values."""
-
-        scorers = {
-            name: (
-                self._reduce_response_method_scorer(scorer, estimator)
-                if hasattr(scorer, "_response_method")
-                else scorer
-            )
-            for name, scorer in self._scorers.items()
-        }
-        cache = {} if self._use_cache(scorers) else None
-
         scores = {}
+        cache = {} if self._use_cache() else None
         cached_call = partial(_cached_call, cache)
 
         if _routing_enabled():
@@ -141,7 +131,7 @@ class _MultimetricScorer:
                 **{name: Bunch(score=kwargs) for name in self._scorers}
             )
 
-        for name, scorer in scorers.items():
+        for name, scorer in self._scorers.items():
             try:
                 if isinstance(scorer, _BaseScorer):
                     score = scorer._score(
@@ -157,43 +147,18 @@ class _MultimetricScorer:
                     scores[name] = format_exc()
         return scores
 
-    @staticmethod
-    def _reduce_response_method_scorer(scorer, estimator):
-        """To be cache friendly, we reduce the number of response methods to try for
-        a given estimator when `response_method` is a list or a tuple.
-
-        We return a new scorer where the response method has been changed.
-        """
-        if isinstance(scorer._response_method, str):
-            return scorer
-        new_response_method = _check_response_method(
-            estimator, scorer._response_method
-        ).__name__
-
-        new_scorer = scorer.__class__(
-            scorer._score_func,
-            scorer._sign,
-            scorer._kwargs,
-            response_method=new_response_method,
-        )
-        if hasattr(scorer, "_metadata_request"):
-            # attach metadata request to the new scorer
-            new_scorer._metadata_request = scorer._metadata_request
-        return new_scorer
-
-    @staticmethod
-    def _use_cache(scorers):
+    def _use_cache(self):
         """Return True if using a cache is beneficial, thus when a response method will
         be called several time.
         """
-        if len(scorers) == 1:  # Only one scorer
+        if len(self._scorers) == 1:  # Only one scorer
             return False
 
         counter = Counter(
             [
                 scorer._response_method
-                for scorer in scorers.values()
-                if hasattr(scorer, "_response_method")
+                for scorer in self._scorers.values()
+                if isinstance(scorer, _BaseScorer)
             ]
         )
         if any(val > 1 for val in counter.values()):
@@ -460,6 +425,10 @@ class _PassthroughScorer:
 def _check_multimetric_scoring(estimator, scoring):
     """Check the scoring parameter in cases when multiple metrics are allowed.
 
+    In addition, multimetric scoring leverage a caching mechanism to not call the same
+    estimator response method multiple times. Hence, the scorer is modified to only use
+    a single response method given a list of response methods and the estimator.
+
     Parameters
     ----------
     estimator : sklearn estimator instance
@@ -538,7 +507,31 @@ def _check_multimetric_scoring(estimator, scoring):
         }
     else:
         raise ValueError(err_msg_generic)
-    return scorers
+
+    # To be cache friendly, we reduce the number of response methods to a single one
+    # based on what the estimator supports.
+    final_scorers = {}
+    for name, scorer in scorers.items():
+        if not isinstance(scorer, _BaseScorer):
+            # We cannot assume it follows the scikit-learn internal API
+            final_scorers[name] = scorer
+        else:
+            if isinstance(scorer._response_method, str):
+                # We already have a single response method
+                final_scorers[name] = scorer
+            final_response_method = _check_response_method(
+                estimator, scorer._response_method
+            )
+            new_scorer = scorer.__class__(
+                scorer._score_func,
+                scorer._sign,
+                scorer._kwargs,
+                response_method=final_response_method.__name__,
+            )
+            if hasattr(scorer, "_metadata_request"):
+                new_scorer._metadata_request = scorer._metadata_request
+            final_scorers[name] = new_scorer
+    return final_scorers
 
 
 @validate_params(
