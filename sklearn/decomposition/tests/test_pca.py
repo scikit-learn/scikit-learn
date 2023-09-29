@@ -115,22 +115,33 @@ def test_whitening(solver, copy):
     # we always center, so no test for non-centering.
 
 
-@pytest.mark.parametrize("data_shape", ["tall", "wide"])
 @pytest.mark.parametrize(
     "other_svd_solver", sorted(list(set(PCA_SOLVERS) - {"full", "auto"}))
 )
-def test_pca_solver_equivalence(other_svd_solver, global_random_seed, data_shape):
+@pytest.mark.parametrize("data_shape", ["tall", "wide"])
+@pytest.mark.parametrize("rank_deficient", [False, True])
+@pytest.mark.parametrize("whiten", [False, True])
+def test_pca_solver_equivalence(
+    other_svd_solver, data_shape, rank_deficient, whiten, global_random_seed
+):
     if data_shape == "tall":
         n_samples, n_features = 100, 30
     else:
         n_samples, n_features = 30, 100
     n_samples_test = 10
 
-    X = make_low_rank_matrix(
-        n_samples=n_samples + n_samples_test,
-        n_features=n_features,
-        random_state=global_random_seed,
-    )
+    if rank_deficient:
+        rng = np.random.default_rng(global_random_seed)
+        rank = min(n_samples, n_features) // 2
+        X = rng.standard_normal(
+            size=(n_samples + n_samples_test, rank)
+        ) @ rng.standard_normal(size=(rank, n_features))
+    else:
+        X = make_low_rank_matrix(
+            n_samples=n_samples + n_samples_test,
+            n_features=n_features,
+            random_state=global_random_seed,
+        )
     X_train, X_test = X[:n_samples], X[n_samples:]
 
     tols = dict(atol=1e-10, rtol=1e-12)
@@ -167,25 +178,23 @@ def test_pca_solver_equivalence(other_svd_solver, global_random_seed, data_shape
     )
     reference_components = pca_full.components_
     other_components = pca_other.components_
-    if n_components is None and n_features > n_samples:
-        # The last component can be arbitrary because of the centering of the
-        # data. Let's ignore it:
-        reference_components = reference_components[:-1]
-        other_components = other_components[:-1]
-    assert_allclose(reference_components, other_components, **tols)
+
+    # For some choice of n_components and data distribution, some components
+    # might be pure noise, let's ignore them in the comparison:
+    stable = pca_full.explained_variance_ > 1e-12
+    assert stable.sum() > 1
+    assert_allclose(reference_components[stable], other_components[stable], **tols)
 
     # As a result the output of fit_transform should be the same:
-    assert_allclose(X_trans_other_train, X_trans_full_train, **tols)
+    assert_allclose(
+        X_trans_other_train[:, stable], X_trans_full_train[:, stable], **tols
+    )
 
     # And similarly for the output of transform on new data (except for the
     # last component that can be underdetermined):
     X_trans_full_test = pca_full.transform(X_test)
     X_trans_other_test = pca_other.transform(X_test)
-    if n_components is None and n_features > n_samples:
-        X_trans_full_test = X_trans_full_test[:, :-1]
-        X_trans_other_test = X_trans_other_test[:, :-1]
-
-    assert_allclose(X_trans_other_test, X_trans_full_test, **tols)
+    assert_allclose(X_trans_other_test[:, stable], X_trans_full_test[:, stable], **tols)
 
 
 @pytest.mark.parametrize(
