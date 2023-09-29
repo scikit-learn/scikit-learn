@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 from scipy import interpolate, sparse
 
+from sklearn import config_context
 from sklearn.base import clone, is_classifier
 from sklearn.datasets import load_diabetes, make_regression
 from sklearn.exceptions import ConvergenceWarning
@@ -1632,3 +1633,33 @@ def test_read_only_buffer():
 
     y = rng.rand(100)
     clf.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "cv_estimator",
+    [ElasticNetCV, LassoCV, MultiTaskElasticNetCV, MultiTaskLassoCV],
+)
+def test_cv_estimators_reject_params_with_no_routing_enabled(cv_estimator):
+    X, y = make_regression(random_state=42)
+    groups = np.array([0, 1] * (len(y) // 2))
+    estimator = cv_estimator()
+    msg = "is only supported if enable_metadata_routing=True"
+    with pytest.raises(ValueError, match=msg):
+        estimator.fit(X, y, groups=groups)
+
+
+@pytest.mark.parametrize(
+    "multitask_cv_estimator",
+    [MultiTaskElasticNetCV, MultiTaskLassoCV],
+)
+def test_multitask_cv_estimators_reject_sample_weight(multitask_cv_estimator):
+    X, y = make_regression(random_state=42)
+    sample_weight = np.ones_like(y)
+    estimator = multitask_cv_estimator()
+    msg = "estimator does not support sample weights"
+    with pytest.raises(ValueError, match=msg):
+        estimator.fit(X, y, sample_weight=sample_weight)
+
+    with config_context(enable_metadata_routing=True):
+        with pytest.raises(ValueError, match=msg):
+            estimator.fit(X, y, sample_weight=sample_weight)

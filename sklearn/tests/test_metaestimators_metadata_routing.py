@@ -135,7 +135,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": LogisticRegressionCV,
         "X": X,
-        "y": y_multi,
+        "y": y,
         "scorer_name": "scoring",
         "scorer_routing_methods": ["fit", "score"],
         "cv_name": "cv",
@@ -518,7 +518,8 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
 
     cls = metaestimator["metaestimator"]
     routing_methods = metaestimator["cv_routing_methods"]
-    y_ = y_multi if cls.__name__.startswith("MultiTask") else y
+    X_ = metaestimator["X"]
+    y_ = metaestimator["y"]
 
     for method_name in routing_methods:
         kwargs, (estimator, _), (scorer, _), (cv, registry) = get_init_args(
@@ -532,7 +533,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
         instance = cls(**kwargs)
         method_kwargs = {"groups": groups, "metadata": metadata}
         method = getattr(instance, method_name)
-        method(X, y_, **method_kwargs)
+        method(X_, y_, **method_kwargs)
         assert registry
         for _splitter in registry:
             check_recorded_metadata(obj=_splitter, method="split", **method_kwargs)

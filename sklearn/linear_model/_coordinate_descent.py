@@ -1540,11 +1540,11 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         **params : dict, default=None
             Parameters to be passed to the CV splitter.
-            These are only available if `enable_metadata_routing=True`. See
-            :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
 
             .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
@@ -1804,7 +1804,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             MetadataRouter(owner=self.__class__.__name__)
             .add_self_request(self)
             .add(
-                splitter=self.cv,
+                splitter=check_cv(self.cv),
                 method_mapping=MethodMapping().add(callee="split", caller="fit"),
             )
         )
@@ -2898,11 +2898,11 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
         **params : dict, default=None
             Parameters to be passed to the CV splitter.
-            These are only available if `enable_metadata_routing=True`. See
-            :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
 
             .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
@@ -3134,11 +3134,11 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
         **params : dict, default=None
             Parameters to be passed to the CV splitter.
-            These are only available if `enable_metadata_routing=True`. See
-            :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
 
             .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
