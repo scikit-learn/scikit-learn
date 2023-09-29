@@ -474,7 +474,7 @@ def test_inverse_transform(
         n_features,
         n_samples * n_features // 100 + 1,
         random_state=global_random_seed,
-        sparse_format=False,
+        sparse_format=None,
     )
     X_csr = make_sparse_random_data(
         coo_container,
