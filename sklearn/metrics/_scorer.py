@@ -27,7 +27,7 @@ from traceback import format_exc
 
 from ..base import is_regressor
 from ..utils import Bunch
-from ..utils._param_validation import HasMethods, StrOptions, validate_params
+from ..utils._param_validation import HasMethods, Hidden, StrOptions, validate_params
 from ..utils._response import _get_response_values
 from ..utils.metadata_routing import (
     MetadataRequest,
@@ -544,8 +544,8 @@ def _check_multimetric_scoring(estimator, scoring):
             StrOptions({"predict", "predict_proba", "decision_function"}),
         ],
         "greater_is_better": ["boolean"],
-        "needs_proba": ["boolean", StrOptions({"deprecated"})],
-        "needs_threshold": ["boolean", StrOptions({"deprecated"})],
+        "needs_proba": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "needs_threshold": ["boolean", Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )

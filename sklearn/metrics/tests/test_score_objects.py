@@ -1479,3 +1479,58 @@ def test_make_scorer_deprecation(deprecated_params, new_params, warn_msg):
     assert deprecated_roc_auc_scorer(classifier, X, y) == pytest.approx(
         roc_auc_scorer(classifier, X, y)
     )
+
+
+@pytest.mark.parametrize(
+    "classifier, expected_response_method",
+    [
+        (LogisticRegression(), "decision_function"),
+        (DecisionTreeClassifier(), "predict_proba"),
+    ],
+)
+@pytest.mark.usefixtures("enable_slep006")
+def test_check_multimetric_scoring_response_method_reducer(
+    classifier, expected_response_method
+):
+    """`_check_multimetric_scoring` is in charge of reducing the number of response
+    methods of scorers to 1 to be cache friendly. Here, we check that the newly created
+    scorers have all the expected attributes.
+    """
+    roc_auc_response_method = ("decision_function", "predict_proba")
+    scorers = {
+        "roc_auc": make_scorer(roc_auc_score, response_method=roc_auc_response_method),
+        "roc_auc_with_weights": make_scorer(
+            roc_auc_score, response_method=roc_auc_response_method
+        ).set_score_request(
+            sample_weight=True
+        ),  # add some metadata routing
+        "accuracy": make_scorer(accuracy_score),
+        "dummy_score": DummyScorer(),
+    }
+    scorers_dict = _check_multimetric_scoring(classifier, scorers)
+
+    # check that the internal attributes are the same when they should be. It is
+    # particularly important to be sure that we don't modify metadata attached to a
+    # scorer.
+
+    for name in ("accuracy", "dummy_score"):
+        # these scorers are not modified by _check_multimetric_scoring:
+        # - accuracy scorer as already a single response method
+        # - dummy scorer does not inherit from _BaseScorer and we cannot make any
+        #   inference
+        assert scorers_dict[name].__dict__ == scorers[name].__dict__
+
+    for name in ("roc_auc", "roc_auc_with_weights"):
+        # these scorers are modified by _check_multimetric_scoring:
+        # - decision tree does not have a `decision_function` and fallback to
+        #   `predict_proba`
+        # - logistic regression chooses directly `predict_proba`
+        scorers_attr = scorers[name].__dict__
+        scorers_dict_attr = scorers_dict[name].__dict__
+        scorers_response_method = scorers_attr.pop("_response_method")
+        scorers_dict_response_method = scorers_dict_attr.pop("_response_method")
+        assert scorers_attr == scorers_dict_attr
+        # we check that we did not modify the user scorers
+        assert scorers_response_method == roc_auc_response_method
+        # we check that we picked the right response method
+        assert scorers_dict_response_method == expected_response_method
