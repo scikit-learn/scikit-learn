@@ -1501,7 +1501,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
-        self._fit_params = {}
 
     @abstractmethod
     def _get_estimator(self):
@@ -1539,9 +1538,11 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             MSE that is finally used to find the best model is the unweighted
             mean over the (weighted) MSEs of each test fold.
 
-        params : dict, default=None
-            Parameters to pass to the underlying estimator's ``fit`` and
-            the CV splitter.
+        **params : dict, default=None
+            Parameters to be passed to the CV splitter.
+            These are only available if `enable_metadata_routing=True`. See
+            :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
 
             .. versionadded:: 1.4
 
@@ -1550,6 +1551,10 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         self : object
             Returns an instance of fitted model.
         """
+        _raise_for_params(params, self, "fit")
+        if sample_weight is not None and not has_fit_parameter(self, "sample_weight"):
+            raise ValueError("Underlying estimator does not support sample weights.")
+
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
         # Multiple functions touch X and subsamples of X and can induce a
@@ -1623,22 +1628,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        if _routing_enabled():
-            sample_weight_param = {}
-            if sample_weight is not None or has_fit_parameter(self, "sample_weight"):
-                sample_weight_param["sample_weight"] = sample_weight
-            routed_params = process_routing(
-                self, "fit", **sample_weight_param, **params
-            )
-        else:
-            routed_params = Bunch()
-            routed_params.splitter = Bunch(split=Bunch())
-            if sample_weight is not None:
-                routed_params.estimator = Bunch(fit=Bunch(sample_weight=sample_weight))
-            else:
-                routed_params.estimator = Bunch(fit=Bunch())
-
-        model = self.get_estimator()
+        model = self._get_estimator()
 
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
@@ -1696,6 +1686,12 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         # inplace in the folds
         if effective_n_jobs(self.n_jobs) > 1:
             path_params["copy_X"] = False
+
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **params)
+        else:
+            routed_params = Bunch()
+            routed_params.splitter = Bunch(split=Bunch())
 
         # init cross-validation generator
         cv = check_cv(self.cv)
@@ -1765,9 +1761,12 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         if isinstance(precompute, str) and precompute == "auto":
             model.precompute = False
 
-        # MultiTaskElasticNetCV does not (yet) support sample_weight, even
-        # not sample_weight=None.
-        model.fit(X, y, **routed_params.estimator.fit)
+        if sample_weight is None:
+            # MultiTaskElasticNetCV does not (yet) support sample_weight, even
+            # not sample_weight=None.
+            model.fit(X, y)
+        else:
+            model.fit(X, y, sample_weight=sample_weight)
         if not hasattr(self, "l1_ratio"):
             del self.l1_ratio_
         self.coef_ = model.coef_
@@ -1803,25 +1802,13 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         """
         router = (
             MetadataRouter(owner=self.__class__.__name__)
-            .add(
-                estimator=self.get_estimator(),
-                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
-            )
+            .add_self_request(self)
             .add(
                 splitter=self.cv,
                 method_mapping=MethodMapping().add(callee="split", caller="fit"),
             )
         )
         return router
-
-    def get_estimator(self, **params):
-        estimator = self._get_estimator()
-        if _routing_enabled():
-            estimator.set_fit_request(**self._fit_params)
-        return estimator
-
-    def set_estimator_fit_params(self, **params):
-        self._fit_params = params
 
 
 class LassoCV(RegressorMixin, LinearModelCV):
@@ -2268,7 +2255,6 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
-        self._fit_params = {}
 
     def _get_estimator(self):
         return ElasticNet()
@@ -2886,7 +2872,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.selection = selection
-        self._fit_params = {}
 
     def _get_estimator(self):
         return MultiTaskElasticNet()
@@ -2911,9 +2896,11 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         y : ndarray of shape (n_samples, n_targets)
             Training target variable. Will be cast to X's dtype if necessary.
 
-        params : dict, default=None
-            Parameters to pass to the underlying estimator's ``fit`` and
-            the CV splitter.
+        **params : dict, default=None
+            Parameters to be passed to the  CV splitter.
+            These are only available if `enable_metadata_routing=True`. See
+            :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
 
             .. versionadded:: 1.4
 
@@ -2922,7 +2909,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         self : object
             Returns MultiTaskElasticNet instance.
         """
-        _raise_for_params(params, self, "fit")
         return super().fit(X, y, **params)
 
 
@@ -3146,9 +3132,11 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         y : ndarray of shape (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary.
 
-        params : dict, default=None
-            Parameters to pass to the underlying estimator's ``fit`` and
-            theCV splitter.
+        **params : dict, default=None
+            Parameters to be passed to the CV splitter.
+            These are only available if `enable_metadata_routing=True`. See
+            :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
 
             .. versionadded:: 1.4
 
@@ -3157,5 +3145,4 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         self : object
             Returns an instance of fitted model.
         """
-        _raise_for_params(params, self, "fit")
         return super().fit(X, y, **params)
