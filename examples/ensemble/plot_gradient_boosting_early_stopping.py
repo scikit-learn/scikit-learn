@@ -42,6 +42,11 @@ stopping is a valuable tool to strike a balance between model performance and
 efficiency in gradient boosting.
 
 """
+# %%
+# Data Preparation
+# ----------------
+# Loads and prepares the California Housing Prices dataset for training and evaluation.
+# It subsets the dataset, splits it into training and validation sets.
 
 # Authors: Vighnesh Birodkar <vighneshbirodkar@nyu.edu>
 #          Raghav RV <rvraghav93@gmail.com>
@@ -57,14 +62,19 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 
-# Load the California Housing Prices dataset
 data = fetch_california_housing()
 X, y = data.data[:600], data.target[:600]
 
-# Split data into training and validation sets
 X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Initialize GradientBoostingRegressor without early stopping
+# %%
+# Model Training and Comparison
+# -----------------------------
+# Two :class:`~sklearn.ensemble.GradientBoostingRegressor` models are trained:
+# one without early stopping and another with early stopping. The purpose is to
+# compare their performance. It also calculates the training time and the
+# `n_estimators_` used by both models.
+
 start_time = time.time()
 gbm_no_early_stopping = GradientBoostingRegressor(
     n_estimators=1000, max_depth=5, learning_rate=0.1, random_state=42
@@ -73,7 +83,6 @@ gbm_no_early_stopping.fit(X_train, y_train)
 training_time_without = time.time() - start_time
 estimators_without = gbm_no_early_stopping.n_estimators_
 
-# Initialize GradientBoostingRegressor with early stopping
 start_time = time.time()
 gbm_with_early_stopping = GradientBoostingRegressor(
     n_estimators=1000,
@@ -87,14 +96,20 @@ gbm_with_early_stopping.fit(X_train, y_train)
 training_time_with = time.time() - start_time
 estimators_with = gbm_with_early_stopping.n_estimators_
 
-# Create arrays to store training and validation errors
+# %%
+# Error Calculation
+# -----------------
+# The code calculates the :func:`~sklearn.metrics.mean_squared_error` for both
+# training and validation datasets for the models trained in the previous section.
+# It computes the errors for each boosting iteration. The purpose is to assess the
+# performance and convergence of the models.
+
 train_errors_without = []
 val_errors_without = []
 
 train_errors_with = []
 val_errors_with = []
 
-# Evaluate errors for each iteration
 for i, (train_pred, val_pred) in enumerate(
     zip(
         gbm_no_early_stopping.staged_predict(X_train),
@@ -113,10 +128,17 @@ for i, (train_pred, val_pred) in enumerate(
     train_errors_with.append(mean_squared_error(y_train, train_pred))
     val_errors_with.append(mean_squared_error(y_val, val_pred))
 
-# Create plots
+# %%
+# Visualize Comparision
+# ---------------------
+# It includes three subplots:
+# 1. Plotting training errors of both models over boosting iterations.
+# 2. Plotting validation errors of both models over boosting iterations.
+# 3. Creating a bar chart to compare the training times and the estimator used
+# of the models with and without early stopping.
+
 plt.figure(figsize=(15, 6))
 
-# Plot training error vs. iterations
 plt.subplot(1, 3, 1)
 plt.plot(train_errors_without, label="Training Error (No Early Stopping)")
 plt.plot(train_errors_with, label="Training Error (With Early Stopping)")
@@ -124,7 +146,6 @@ plt.xlabel("Boosting Iterations")
 plt.ylabel("MSE (Training)")
 plt.legend()
 
-# Plot validation error vs. iterations
 plt.subplot(1, 3, 2)
 plt.plot(val_errors_without, label="Validation Error (No Early Stopping)")
 plt.plot(val_errors_with, label="Validation Error (With Early Stopping)")
@@ -132,14 +153,12 @@ plt.xlabel("Boosting Iterations")
 plt.ylabel("MSE (Validation)")
 plt.legend()
 
-# Plot training time comparison
 plt.subplot(1, 3, 3)
 training_times = [training_time_without, training_time_with]
 labels = ["No Early Stopping", "With Early Stopping"]
 bars = plt.bar(labels, training_times)
 plt.ylabel("Training Time (s)")
 
-# Add number of estimators on top of the bars
 for bar, n_estimators in zip(bars, [estimators_without, estimators_with]):
     height = bar.get_height()
     plt.text(
