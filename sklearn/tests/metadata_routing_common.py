@@ -298,19 +298,9 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
 
 
 class ConsumingScorer(_Scorer):
-    def __init__(
-        self,
-        score_func=mean_squared_error,
-        sign=1,
-        kwargs={},
-        response_method="predict",
-        registry=None,
-    ):
+    def __init__(self, registry=None):
         super().__init__(
-            score_func=score_func,
-            sign=sign,
-            kwargs=kwargs,
-            response_method=response_method,
+            score_func=mean_squared_error, sign=1, kwargs={}, response_method="predict"
         )
         self.registry = registry
 
