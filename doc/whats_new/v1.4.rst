@@ -119,6 +119,8 @@ and classes are impacted:
   :user:`Lohit SundaramahaLingam <lohitslohit>`;
 - :class:`neural_network.BernoulliRBM` in :pr:`27252` by
   :user:`Yao Xiao <Charlie-XIAO>`.
+- :class:`preprocessing.PolynomialFeatures` in :pr:`27166` by
+  :user:`Mohit Joshi <work-mohit>`.
 
 Changelog
 ---------
