@@ -1458,6 +1458,11 @@ def test_make_scorer_error(params, err_type, err_msg):
             {"response_method": ("decision_function", "predict_proba")},
             "`needs_threshold` parameter is deprecated",
         ),
+        (
+            {"needs_threshold": False, "needs_proba": False},
+            {"response_method": "predict"},
+            "`needs_threshold` and `needs_proba` parameter are deprecated",
+        ),
     ],
 )
 def test_make_scorer_deprecation(deprecated_params, new_params, warn_msg):

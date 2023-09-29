@@ -611,7 +611,7 @@ def make_scorer(
 
         .. deprecated:: 1.4
            `needs_proba` is deprecated in version 1.4 and will be removed in
-              1.6. Use `response_method="predict_proba"` instead.
+           1.6. Use `response_method="predict_proba"` instead.
 
     needs_threshold : bool, default=False
         Whether `score_func` takes a continuous decision certainty.
@@ -657,14 +657,25 @@ def make_scorer(
             "`needs_threshold` at the same time. Only use `response_method` since "
             "the other two are deprecated in version 1.4 and will be removed in 1.6."
         )
-    if (needs_proba != "deprecated") and (needs_threshold != "deprecated"):
+    if needs_proba is True and needs_threshold is True:
         raise ValueError(
             "You cannot set both `needs_proba` and `needs_threshold` at the same "
             "time. Use `response_method` instead since the other two are deprecated "
             "in version 1.4 and will be removed in 1.6."
         )
 
-    if needs_proba != "deprecated":
+    if needs_proba is False and needs_threshold is False:
+        warnings.warn(
+            (
+                "The `needs_threshold` and `needs_proba` parameter are deprecated in "
+                "version 1.4 and will be removed in 1.6. You can either let "
+                "`response_method` be `None` or set it to `predict` to preserve the "
+                "same behaviour."
+            ),
+            FutureWarning,
+        )
+        response_method = "predict"
+    elif needs_proba != "deprecated":
         warnings.warn(
             (
                 "The `needs_proba` parameter is deprecated in version 1.4 and will be "
@@ -673,7 +684,7 @@ def make_scorer(
             FutureWarning,
         )
         response_method = "predict_proba"
-    if needs_threshold != "deprecated":
+    elif needs_threshold != "deprecated":
         warnings.warn(
             (
                 "The `needs_threshold` parameter is deprecated in version 1.4 and will"
