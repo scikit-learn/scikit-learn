@@ -29,6 +29,10 @@ Changes impacting all modules
   to work with our estimators and functions.
   :pr:`26464` by `Thomas Fan`_.
 
+- |Fix| Fixed a bug in most estimators and functions where setting a parameter to
+  a large integer would cause a `TypeError`.
+  :pr:`26648` by :user:`Naoise Holohan <naoise-h>`.
+
 Metadata Routing
 ----------------
 
@@ -177,6 +181,10 @@ Changelog
   specifying the output format of the sparse matrix. By default `sparse_format=None`,
   which returns a dense numpy ndarray as before.
   :pr:`27438` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+- |Fix| All dataset fetchers now accept `data_home` as any object that implements
+  the :class:`os.PathLike` interface, for instance, :class:`pathlib.Path`.
+  :pr:`27468` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.decomposition`
 ............................

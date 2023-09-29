@@ -27,7 +27,7 @@ from sklearn._loss.loss import (
     HuberLoss,
     PinballLoss,
 )
-from sklearn.utils import assert_all_finite
+from sklearn.utils import _IS_WASM, assert_all_finite
 from sklearn.utils._testing import create_memmap_backed_data, skip_if_32bit
 
 ALL_LOSSES = list(_LOSSES.values())
@@ -286,6 +286,9 @@ def test_loss_dtype(
 
     Also check that input arrays can be readonly, e.g. memory mapped.
     """
+    if _IS_WASM and readonly_memmap:  # pragma: nocover
+        pytest.xfail(reason="memmap not fully supported")
+
     loss = loss()
     # generate a y_true and raw_prediction in valid range
     n_samples = 5
