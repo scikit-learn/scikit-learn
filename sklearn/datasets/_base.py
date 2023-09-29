@@ -57,7 +57,7 @@ def get_data_home(data_home=None) -> str:
     ----------
     data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
-        is `~/sklearn_learn_data`.
+        is `~/scikit_learn_data`.
 
     Returns
     -------
@@ -84,7 +84,7 @@ def clear_data_home(data_home=None):
     ----------
     data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
-        is `~/sklearn_learn_data`.
+        is `~/scikit_learn_data`.
     """
     data_home = get_data_home(data_home)
     shutil.rmtree(data_home)
