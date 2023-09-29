@@ -887,7 +887,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
-        validation score is not improving by at least tol for
+        validation score is not improving by at least ``tol`` for
         ``n_iter_no_change`` consecutive epochs. The split is stratified,
         except in a multilabel setting.
         If early stopping is False, then the training stops when the training

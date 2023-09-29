@@ -74,7 +74,7 @@ classifiers = [
     (
         make_pipeline(
             StandardScaler(),
-            KBinsDiscretizer(encode="onehot"),
+            KBinsDiscretizer(encode="onehot", random_state=0),
             LogisticRegression(random_state=0),
         ),
         {
@@ -85,7 +85,7 @@ classifiers = [
     (
         make_pipeline(
             StandardScaler(),
-            KBinsDiscretizer(encode="onehot"),
+            KBinsDiscretizer(encode="onehot", random_state=0),
             LinearSVC(random_state=0, dual="auto"),
         ),
         {
