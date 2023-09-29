@@ -378,10 +378,6 @@ class _Scorer(_BaseScorer):
         scoring_kwargs = {**self._kwargs, **kwargs}
         return self._sign * self._score_func(y_true, y_pred, **scoring_kwargs)
 
-    def _factory_args(self):
-        # TODO: for compatibility
-        return super()._factory_args()
-
 
 @validate_params(
     {
