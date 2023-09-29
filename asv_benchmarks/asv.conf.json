@@ -72,7 +72,7 @@
     // followed by the pip installed packages).
     //
     // The versions of the dependencies should be bumped in a dedicated commit
-    // to easily identify regressions/imrovements due to code changes from
+    // to easily identify regressions/improvements due to code changes from
     // those due to dependency changes.
     //
     "matrix": {

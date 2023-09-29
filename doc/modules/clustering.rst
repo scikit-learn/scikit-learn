@@ -1780,7 +1780,7 @@ mean of homogeneity and completeness**:
    measure <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
 
- .. [B2011] `Identication and Characterization of Events in Social Media
+ .. [B2011] `Identification and Characterization of Events in Social Media
    <http://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
    Becker, PhD Thesis.
 

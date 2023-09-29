@@ -10,6 +10,10 @@ from ..base import BaseEstimator, MetaEstimatorMixin, _fit_context, clone
 from ..exceptions import NotFittedError
 from ..utils._param_validation import HasMethods, Interval, Options
 from ..utils._tags import _safe_tags
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupportedMixin,
+)
 from ..utils.metaestimators import available_if
 from ..utils.validation import _num_features, check_is_fitted, check_scalar
 from ._base import SelectorMixin, _get_feature_importances
@@ -78,7 +82,9 @@ def _estimator_has(attr):
     )
 
 
-class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
+class SelectFromModel(
+    _RoutingNotSupportedMixin, MetaEstimatorMixin, SelectorMixin, BaseEstimator
+):
     """Meta-transformer for selecting features based on importance weights.
 
     .. versionadded:: 0.17
@@ -342,6 +348,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        _raise_for_unsupported_routing(self, "fit", **fit_params)
         self._check_max_features(X)
 
         if self.prefit:
