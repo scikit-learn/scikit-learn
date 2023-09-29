@@ -451,13 +451,26 @@ def test_set_output_func():
     assert isinstance(X_trans, pd.DataFrame)
     assert_array_equal(X_trans.columns, ["a", "b"])
 
-    # If feature_names_out is not defined, then a warning is raised in
-    # `set_output`
     ft = FunctionTransformer(lambda x: 2 * x)
-    msg = "should return a DataFrame to follow the set_output API"
-    with pytest.warns(UserWarning, match=msg):
-        ft.set_output(transform="pandas")
+    ft.set_output(transform="pandas")
 
-    X_trans = ft.fit_transform(X)
+    # no warning is raised when func returns a panda dataframe
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        X_trans = ft.fit_transform(X)
     assert isinstance(X_trans, pd.DataFrame)
     assert_array_equal(X_trans.columns, ["a", "b"])
+
+    # Warning is raised when func returns a ndarray
+    ft_np = FunctionTransformer(lambda x: np.asarray(x))
+    ft_np.set_output(transform="pandas")
+
+    msg = "When `set_output` is configured to be 'pandas'"
+    with pytest.warns(UserWarning, match=msg):
+        ft_np.fit_transform(X)
+
+    # default transform does not warn
+    ft_np.set_output(transform="default")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        ft_np.fit_transform(X)

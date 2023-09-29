@@ -17,6 +17,7 @@ from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
 from ..utils import as_float_array, check_array
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils.metadata_routing import _RoutingNotSupportedMixin
 from ..utils.parallel import Parallel, delayed
 from ._base import LinearModel, _deprecate_normalize, _pre_fit
 
@@ -903,7 +904,9 @@ def _omp_path_residues(
     return np.dot(coefs.T, X_test.T) - y_test
 
 
-class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
+class OrthogonalMatchingPursuitCV(
+    _RoutingNotSupportedMixin, RegressorMixin, LinearModel
+):
     """Cross-validated Orthogonal Matching Pursuit model (OMP).
 
     See glossary entry for :term:`cross-validation estimator`.
