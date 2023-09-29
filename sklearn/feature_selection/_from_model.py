@@ -343,20 +343,21 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         **fit_params : dict
             - If `enable_metadata_routing=False` (default):
 
-                These arguments will be directly passed to the sub-estimator.
+                Parameters directly passed to the ``fit`` method of the
+                sub-estimator.
 
             - If `enable_metadata_routing=True`:
 
-                Parameters passed to the ``estimator.fit`` method of the
-                sub-estimator. They are ignored if `prefit=True`.
+                Parameters passed to the ``fit`` method of the sub-estimator.
+                They are ignored if `prefit=True`.
 
                 .. versionchanged:: 1.4
-                **fit_params are routed via the common metadata routing
-                utilities, if `enable_metadata_routing=True` is set via
-                :func:`~sklearn.set_config`.
+                    **fit_params are routed to the sub-estimator used , if
+                    `enable_metadata_routing=True` is set via
+                    :func:`~sklearn.set_config`, which allows for aliasing.
 
-            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
@@ -422,21 +423,21 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         **params : dict
             - If `enable_metadata_routing=False` (default):
 
-                Other estimator specific parameters.
+                Parameters directly passed to the ``partial_fit`` method of the
+                sub-estimator.
 
             - If `enable_metadata_routing=True`:
 
-                Parameters passed to the ``estimator.fit`` method of each
-                sub-estimator. They are ignored if prefit=True or if estimator
-                is already fitted.
+                Parameters passed to the ``partial_fit`` method of the
+                sub-estimator. They are ignored if prefit=True.
 
                 .. versionchanged:: 1.4
-                **params are routed via the common metadata routing
-                utilities, if `enable_metadata_routing=True` is set via
-                :func:`~sklearn.set_config`.
+                    **params are routed to the sub-estimator, if
+                    `enable_metadata_routing=True` is set via
+                    :func:`~sklearn.set_config`, which allows for aliasing.
 
-            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
-            details.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
@@ -499,7 +500,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
 
-        .. versionadded:: 1.3
+        .. versionadded:: 1.4
 
         Returns
         -------
