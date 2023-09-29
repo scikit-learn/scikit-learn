@@ -393,7 +393,7 @@ def test_warning_n_components_greater_than_n_features(coo_container):
         5,
         n_features,
         int(n_features / 4),
-        sparse_format=False,
+        sparse_format=None,
     )
 
     for RandomProjection in all_RandomProjection:
