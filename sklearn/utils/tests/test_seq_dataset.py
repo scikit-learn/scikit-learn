@@ -29,7 +29,7 @@ X32 = iris.data.astype(np.float32)
 y32 = iris.target.astype(np.float32)
 sample_weight32 = np.arange(y32.size, dtype=np.float32)
 
-float_precisions = [np.float32, np.float64]
+floating = [np.float32, np.float64]
 
 
 def assert_csr_equal_values(current, expected):
@@ -43,14 +43,14 @@ def assert_csr_equal_values(current, expected):
     assert_array_equal(current.indptr, expected.indptr)
 
 
-def _make_dense_dataset(float_precision):
-    if float_precision == np.float32:
+def _make_dense_dataset(float_dtype):
+    if float_dtype == np.float32:
         return ArrayDataset32(X32, y32, sample_weight32, seed=42)
     return ArrayDataset64(X64, y64, sample_weight64, seed=42)
 
 
-def _make_sparse_dataset(csr_container, float_precision):
-    if float_precision == np.float32:
+def _make_sparse_dataset(csr_container, float_dtype):
+    if float_dtype == np.float32:
         X, y, sample_weight, csr_dataset = X32, y32, sample_weight32, CSRDataset32
     else:
         X, y, sample_weight, csr_dataset = X64, y64, sample_weight64, CSRDataset64
@@ -59,29 +59,27 @@ def _make_sparse_dataset(csr_container, float_precision):
 
 
 def _make_dense_datasets():
-    return [
-        _make_dense_dataset(float_precision) for float_precision in float_precisions
-    ]
+    return [_make_dense_dataset(float_dtype) for float_dtype in floating]
 
 
 def _make_sparse_datasets():
     return [
-        _make_sparse_dataset(csr_container, float_precision)
-        for csr_container, float_precision in product(CSR_CONTAINERS, float_precisions)
+        _make_sparse_dataset(csr_container, float_dtype)
+        for csr_container, float_dtype in product(CSR_CONTAINERS, floating)
     ]
 
 
 def _make_fused_types_datasets():
     dense_datasets = [
         (
-            _make_dense_dataset(float_precisions[0]),
-            _make_dense_dataset(float_precisions[1]),
+            _make_dense_dataset(floating[0]),
+            _make_dense_dataset(floating[1]),
         )
     ]
     sparse_datasets = [
         (
-            _make_sparse_dataset(csr_container, float_precisions[0]),
-            _make_sparse_dataset(csr_container, float_precisions[1]),
+            _make_sparse_dataset(csr_container, floating[0]),
+            _make_sparse_dataset(csr_container, floating[1]),
         )
         for csr_container in CSR_CONTAINERS
     ]
@@ -117,10 +115,10 @@ def test_seq_dataset_basic_iteration(dataset, csr_container):
     "dense_dataset,sparse_dataset",
     [
         (
-            _make_dense_dataset(float_precision),
-            _make_sparse_dataset(csr_container, float_precision),
+            _make_dense_dataset(float_dtype),
+            _make_sparse_dataset(csr_container, float_dtype),
         )
-        for float_precision, csr_container in product(float_precisions, CSR_CONTAINERS)
+        for float_dtype, csr_container in product(floating, CSR_CONTAINERS)
     ],
 )
 def test_seq_dataset_shuffle(dense_dataset, sparse_dataset):
