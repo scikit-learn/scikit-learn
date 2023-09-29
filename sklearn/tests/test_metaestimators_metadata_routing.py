@@ -6,14 +6,53 @@ import pytest
 
 from sklearn import config_context
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.compose import TransformedTargetRegressor
+from sklearn.covariance import GraphicalLassoCV
+from sklearn.ensemble import (
+    AdaBoostClassifier,
+    AdaBoostRegressor,
+    BaggingClassifier,
+    BaggingRegressor,
+    StackingClassifier,
+    StackingRegressor,
+    VotingClassifier,
+    VotingRegressor,
+)
 from sklearn.exceptions import UnsetMetadataPassedError
-from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.linear_model import LogisticRegressionCV
+from sklearn.experimental import (
+    enable_halving_search_cv,  # noqa
+    enable_iterative_imputer,  # noqa
+)
+from sklearn.feature_selection import (
+    RFE,
+    RFECV,
+    SelectFromModel,
+    SequentialFeatureSelector,
+)
+from sklearn.impute import IterativeImputer
+from sklearn.linear_model import (
+    ElasticNetCV,
+    LarsCV,
+    LassoCV,
+    LassoLarsCV,
+    LogisticRegressionCV,
+    MultiTaskElasticNetCV,
+    MultiTaskLassoCV,
+    OrthogonalMatchingPursuitCV,
+    RANSACRegressor,
+    RidgeClassifierCV,
+    RidgeCV,
+)
 from sklearn.model_selection import (
     GridSearchCV,
     HalvingGridSearchCV,
     HalvingRandomSearchCV,
     RandomizedSearchCV,
+)
+from sklearn.multiclass import (
+    OneVsOneClassifier,
+    OneVsRestClassifier,
+    OutputCodeClassifier,
 )
 from sklearn.multioutput import (
     ClassifierChain,
@@ -21,6 +60,8 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
+from sklearn.pipeline import FeatureUnion
+from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
     ConsumingRegressor,
@@ -189,6 +230,39 @@ The keys are as follows:
 # IDs used by pytest to get meaningful verbose messages when running the tests
 METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATORS]
 
+UNSUPPORTED_ESTIMATORS = [
+    AdaBoostClassifier(),
+    AdaBoostRegressor(),
+    BaggingClassifier(),
+    BaggingRegressor(),
+    ElasticNetCV(),
+    FeatureUnion([]),
+    GraphicalLassoCV(),
+    IterativeImputer(),
+    LarsCV(),
+    LassoCV(),
+    LassoLarsCV(),
+    MultiTaskElasticNetCV(),
+    MultiTaskLassoCV(),
+    OneVsOneClassifier(ConsumingClassifier()),
+    OneVsRestClassifier(ConsumingClassifier()),
+    OrthogonalMatchingPursuitCV(),
+    OutputCodeClassifier(ConsumingClassifier()),
+    RANSACRegressor(),
+    RFE(ConsumingClassifier()),
+    RFECV(ConsumingClassifier()),
+    RidgeCV(),
+    RidgeClassifierCV(),
+    SelectFromModel(ConsumingClassifier()),
+    SelfTrainingClassifier(ConsumingClassifier()),
+    SequentialFeatureSelector(ConsumingClassifier()),
+    StackingClassifier(ConsumingClassifier()),
+    StackingRegressor(ConsumingRegressor()),
+    TransformedTargetRegressor(),
+    VotingClassifier(ConsumingClassifier()),
+    VotingRegressor(ConsumingRegressor()),
+]
+
 
 def get_init_args(metaestimator_info):
     """Get the init args for a metaestimator
@@ -237,6 +311,28 @@ def get_init_args(metaestimator_info):
         (scorer, scorer_registry),
         (cv, cv_registry),
     )
+
+
+@pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
+def test_unsupported_estimators_get_metadata_routing(estimator):
+    """Test that get_metadata_routing is not implemented on meta-estimators for
+    which we haven't implemented routing yet."""
+    with pytest.raises(NotImplementedError):
+        estimator.get_metadata_routing()
+
+
+@pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
+def test_unsupported_estimators_fit_with_metadata(estimator):
+    """Test that fit raises NotImplementedError when metadata routing is
+    enabled and a metadata is passed on meta-estimators for which we haven't
+    implemented routing yet."""
+    with pytest.raises(NotImplementedError):
+        try:
+            estimator.fit([[1]], [1], sample_weight=[1])
+        except TypeError:
+            # not all meta-estimators in the list support sample_weight,
+            # and for those we skip this test.
+            raise NotImplementedError
 
 
 def test_registry_copy():

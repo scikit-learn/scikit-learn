@@ -145,7 +145,7 @@ embeddings = {
     "Spectral embedding": SpectralEmbedding(
         n_components=2, random_state=0, eigen_solver="arpack"
     ),
-    "t-SNE embeedding": TSNE(
+    "t-SNE embedding": TSNE(
         n_components=2,
         n_iter=500,
         n_iter_without_progress=150,
@@ -158,7 +158,7 @@ embeddings = {
 }
 
 # %%
-# Once we declared all the methodes of interest, we can run and perform the projection
+# Once we declared all the methods of interest, we can run and perform the projection
 # of the original data. We will store the projected data as well as the computational
 # time needed to perform each projection.
 from time import time
