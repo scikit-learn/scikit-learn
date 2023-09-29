@@ -1496,6 +1496,14 @@ def test_check_multimetric_scoring_response_method_reducer(
     methods of scorers to 1 to be cache friendly. Here, we check that the newly created
     scorers have all the expected attributes.
     """
+
+    class ScorerOverwriteInit(_Scorer):
+        def __init__(
+            self, score_func, sign=1, kwargs={}, response_method="predict", foo=0
+        ):
+            super().__init__(score_func, sign, kwargs, response_method=response_method)
+            self.foo = foo
+
     roc_auc_response_method = ("decision_function", "predict_proba")
     scorers = {
         "roc_auc": make_scorer(roc_auc_score, response_method=roc_auc_response_method),
@@ -1506,6 +1514,9 @@ def test_check_multimetric_scoring_response_method_reducer(
         ),  # add some metadata routing
         "accuracy": make_scorer(accuracy_score),
         "dummy_score": DummyScorer(),
+        "scorer_overwrite_init": ScorerOverwriteInit(
+            roc_auc_score, response_method=roc_auc_response_method, foo=10
+        ),
     }
     scorers_dict = _check_multimetric_scoring(classifier, scorers)
 
@@ -1513,11 +1524,13 @@ def test_check_multimetric_scoring_response_method_reducer(
     # particularly important to be sure that we don't modify metadata attached to a
     # scorer.
 
-    for name in ("accuracy", "dummy_score"):
+    for name in ("accuracy", "dummy_score", "scorer_overwrite_init"):
         # these scorers are not modified by _check_multimetric_scoring:
         # - accuracy scorer as already a single response method
         # - dummy scorer does not inherit from _BaseScorer and we cannot make any
         #   inference
+        # - scorer_overwrite_init is custom and add additional attributes that we don't
+        #   know how to propagate.
         assert scorers_dict[name].__dict__ == scorers[name].__dict__
 
     for name in ("roc_auc", "roc_auc_with_weights"):

@@ -517,18 +517,25 @@ def _check_multimetric_scoring(estimator, scoring):
         ):
             final_scorers[name] = scorer
         else:
-            final_response_method = _check_response_method(
-                estimator, scorer._response_method
-            )
-            new_scorer = scorer.__class__(
-                scorer._score_func,
-                scorer._sign,
-                scorer._kwargs,
-                response_method=final_response_method.__name__,
-            )
-            if hasattr(scorer, "_metadata_request"):
-                new_scorer._metadata_request = scorer._metadata_request
-            final_scorers[name] = new_scorer
+            # Sanity check that the scorer has the same init arguments as `_BaseScorer`.
+            # Otherwise, we are going to miss some arguments when creating the object.
+            base_scorer_params = set(signature(_BaseScorer).parameters.keys())
+            scorer_params = set(signature(scorer.__class__).parameters.keys())
+            if not (base_scorer_params == scorer_params):
+                final_scorers[name] = scorer
+            else:
+                final_response_method = _check_response_method(
+                    estimator, scorer._response_method
+                )
+                new_scorer = scorer.__class__(
+                    scorer._score_func,
+                    scorer._sign,
+                    scorer._kwargs,
+                    response_method=final_response_method.__name__,
+                )
+                if hasattr(scorer, "_metadata_request"):
+                    new_scorer._metadata_request = scorer._metadata_request
+                final_scorers[name] = new_scorer
     return final_scorers
 
 
