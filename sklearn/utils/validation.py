@@ -1415,7 +1415,6 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
     for an example on how to use the API.
 
-
     Parameters
     ----------
     estimator : estimator instance
