@@ -103,10 +103,8 @@ def empirical_covariance(X, *, assume_centered=False):
             "Only one sample available. You may want to reshape your data array"
         )
 
-    if assume_centered:
-        covariance = np.dot(X.T, X) / X.shape[0]
-    else:
-        covariance = np.cov(X.T, bias=1)
+    ddof = 0 if assume_centered else 1
+    covariance=(X.T @ X) / (X.shape[0] - ddof)
 
     if covariance.ndim == 0:
         covariance = np.array([[covariance]])
