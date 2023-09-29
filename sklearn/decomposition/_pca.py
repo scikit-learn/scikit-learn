@@ -177,29 +177,31 @@ class PCA(_BasePCA):
 
     svd_solver : {'auto', 'full', 'covariance_eigh', 'arpack', 'randomized'},\
             default='auto'
-        If auto :
+        "auto" :
             The solver is selected by a default policy based on `X.shape` and
-            `n_components`: if the input data is larger than 500x500 and the
-            number of components to extract is lower than 80% of the smallest
-            dimension of the data, then the more efficient 'randomized'
-            method is enabled. Otherwise the exact full SVD is computed and
-            optionally truncated afterwards.
-        If full :
-            run exact full SVD calling the standard LAPACK solver via
+            `n_components`: if the input data has fewer than 500 features and
+            more than 10 times as many samples, then the more "covariance_eigh"
+            solver is used. Otherwise, if the input data is larger than 500x500
+            and the number of components to extract is lower than 80% of the
+            smallest dimension of the data, then the more efficient
+            'randomized' method is enabled. Otherwise the exact "full" SVD is
+            computed and optionally truncated afterwards.
+        "full" :
+            Run exact full SVD calling the standard LAPACK solver via
             `scipy.linalg.svd` and select the components by postprocessing
-        If covariance_eigh :
-            precompute the covariance matrix (on centered data) and run a
+        "covariance_eigh" :
+            Precompute the covariance matrix (on centered data) and run a
             classical eigenvalue decomposition on the covariance matrix
             typically using LAPACK and select the components by postprocessing.
             This solver is very efficient when the number of features is small
             and not tractable otherwise (large memory footprint required to
             materialize the covariance matrix).
-        If arpack :
-            run SVD truncated to n_components calling ARPACK solver via
+        "arpack" :
+            Run SVD truncated to `n_components` calling ARPACK solver via
             `scipy.sparse.linalg.svds`. It requires strictly
-            0 < n_components < min(X.shape)
-        If randomized :
-            run randomized SVD by the method of Halko et al.
+            `0 < n_components < min(X.shape)`
+        "randomized" :
+            Run randomized SVD by the method of Halko et al.
 
         .. versionadded:: 0.18.0
 
