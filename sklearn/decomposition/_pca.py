@@ -190,12 +190,15 @@ class PCA(_BasePCA):
             Run exact full SVD calling the standard LAPACK solver via
             `scipy.linalg.svd` and select the components by postprocessing
         "covariance_eigh" :
-            Precompute the covariance matrix (on centered data) and run a
+            Precompute the covariance matrix (on centered data), run a
             classical eigenvalue decomposition on the covariance matrix
             typically using LAPACK and select the components by postprocessing.
             This solver is very efficient when the number of features is small
             and not tractable otherwise (large memory footprint required to
-            materialize the covariance matrix).
+            materialize the covariance matrix). Also not that compared to the
+            "full" solver, this solver effectively doubles the condition number
+            and is therefore less numerical stable (e.g. on input data with a
+            large range of singular values).
         "arpack" :
             Run SVD truncated to `n_components` calling ARPACK solver via
             `scipy.sparse.linalg.svds`. It requires strictly
