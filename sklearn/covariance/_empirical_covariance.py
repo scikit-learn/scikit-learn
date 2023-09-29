@@ -104,7 +104,7 @@ def empirical_covariance(X, *, assume_centered=False):
         )
 
     ddof = 0 if assume_centered else 1
-    covariance=(X.T @ X) / (X.shape[0] - ddof)
+    covariance = (X.T @ X) / (X.shape[0] - ddof)
 
     if covariance.ndim == 0:
         covariance = np.array([[covariance]])
