@@ -78,7 +78,8 @@ N, M = 100, 4
 X = rng.rand(N, M)
 y = rng.randint(0, 3, size=N)
 classes = np.unique(y)
-y_multi = rng.randint(0, 2, size=(N, 3))
+y_multi = rng.randint(0, 3, size=(N, 3))
+classes_multi = [np.unique(y_multi[:, i]) for i in range(y_multi.shape[1])]
 metadata = rng.randint(0, 10, size=N)
 sample_weight = rng.rand(N)
 groups = np.array([0, 1] * (len(y) // 2))
@@ -107,6 +108,7 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y_multi,
         "estimator_routing_methods": ["fit", "partial_fit"],
+        "method_args": {"partial_fit": {"classes": classes_multi}},
     },
     {
         "metaestimator": CalibratedClassifierCV,

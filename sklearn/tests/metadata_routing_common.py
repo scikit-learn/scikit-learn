@@ -20,6 +20,7 @@ from sklearn.utils.metadata_routing import (
     MetadataRouter,
     process_routing,
 )
+from sklearn.utils.multiclass import _check_partial_fit_first_call
 
 
 def record_metadata(obj, method, record_default=True, **kwargs):
@@ -210,10 +211,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         record_metadata_not_default(
             self, "partial_fit", sample_weight=sample_weight, metadata=metadata
         )
-        if classes is not None:
-            self.classes_ = classes
-        else:
-            self.classes_ = np.unique(y)
+        _check_partial_fit_first_call(self, classes)
         return self
 
     def fit(self, X, y, sample_weight="default", metadata="default"):
