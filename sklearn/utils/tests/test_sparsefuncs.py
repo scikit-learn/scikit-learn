@@ -6,6 +6,7 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import linalg
 
 from sklearn.datasets import make_classification
+from sklearn.utils import _IS_WASM
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS, LIL_CONTAINERS
 from sklearn.utils.sparsefuncs import (
@@ -468,9 +469,9 @@ def test_incr_mean_variance_axis_equivalence_mean_variance(X1, X2, csr_container
         X2, axis=axis, last_mean=updated_mean, last_var=updated_var, last_n=updated_n
     )
     X = sp.vstack([X1, X2])
-    assert_allclose(updated_mean, np.nanmean(X.A, axis=axis))
-    assert_allclose(updated_var, np.nanvar(X.A, axis=axis))
-    assert_allclose(updated_n, np.count_nonzero(~np.isnan(X.A), axis=0))
+    assert_allclose(updated_mean, np.nanmean(X.toarray(), axis=axis))
+    assert_allclose(updated_var, np.nanvar(X.toarray(), axis=axis))
+    assert_allclose(updated_n, np.count_nonzero(~np.isnan(X.toarray()), axis=0))
 
 
 def test_incr_mean_variance_no_new_n():
@@ -794,6 +795,18 @@ def test_min_max(
         dtype=dtype,
     )
     X_sparse = sparse_format(X)
+
+    if (
+        _IS_WASM and large_indices and isinstance(X_sparse, sp.sparray)
+    ):  # pragma: nocover
+        pytest.xfail(
+            reason=(
+                "temporary xfailing test until it is fixed in main, see"
+                " https://github.com/scikit-learn/scikit-learn/issues/27470 for more"
+                " details."
+            )
+        )
+
     if large_indices:
         X_sparse.indices = X_sparse.indices.astype("int64")
         X_sparse.indptr = X_sparse.indptr.astype("int64")
