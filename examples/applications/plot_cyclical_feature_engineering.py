@@ -171,7 +171,7 @@ X.iloc[train_4]
 # numerical features as long as the number of samples is large enough.
 #
 # Here, we use the modern
-# class:`~sklearn.ensemble.HistGradientBoostingRegressor` with native support
+# :class:`~sklearn.ensemble.HistGradientBoostingRegressor` with native support
 # for categorical features. Therefore, we only do minimal ordinal encoding for
 # the categorical variables and then
 # let the model know that it should treat those as categorical variables by
@@ -283,7 +283,7 @@ evaluate(
 #
 # As usual for linear models, categorical variables need to be one-hot encoded.
 # For consistency, we scale the numerical features to the same 0-1 range using
-# class:`~sklearn.preprocessing.MinMaxScaler`, although in this case it does not
+# :class:`~sklearn.preprocessing.MinMaxScaler`, although in this case it does not
 # impact the results much because they are already on comparable scales:
 from sklearn.linear_model import RidgeCV
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
