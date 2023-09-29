@@ -57,7 +57,7 @@ def make_sparse_random_data(
         shape=(n_samples, n_features),
     )
     if sparse_format is not None:
-        return data_coo.tocsr()
+        return data_coo.asformat(sparse_format)
     else:
         return data_coo.toarray()
 
