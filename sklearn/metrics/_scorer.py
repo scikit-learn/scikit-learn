@@ -512,13 +512,11 @@ def _check_multimetric_scoring(estimator, scoring):
     # based on what the estimator supports.
     final_scorers = {}
     for name, scorer in scorers.items():
-        if not isinstance(scorer, _BaseScorer):
-            # We cannot assume it follows the scikit-learn internal API
+        if not isinstance(scorer, _BaseScorer) or isinstance(
+            scorer._response_method, str
+        ):
             final_scorers[name] = scorer
         else:
-            if isinstance(scorer._response_method, str):
-                # We already have a single response method
-                final_scorers[name] = scorer
             final_response_method = _check_response_method(
                 estimator, scorer._response_method
             )
