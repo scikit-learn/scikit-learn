@@ -60,7 +60,7 @@ from sklearn.preprocessing import (
     StandardScaler,
 )
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
-from sklearn.utils import IS_PYPY, all_estimators
+from sklearn.utils import _IS_WASM, IS_PYPY, all_estimators
 from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
 from sklearn.utils._testing import (
     SkipTest,
@@ -206,6 +206,7 @@ def test_class_weight_balanced_linear_classifiers(name, Classifier):
     check_class_weight_balanced_linear_classifier(name, Classifier)
 
 
+@pytest.mark.xfail(_IS_WASM, reason="importlib not supported for Pyodide packages")
 @ignore_warnings
 def test_import_all_consistency():
     # Smoke test to check that any name in a __all__ list is actually defined
@@ -216,6 +217,9 @@ def test_import_all_consistency():
     submods = [modname for _, modname, _ in pkgs]
     for modname in submods + ["sklearn"]:
         if ".tests." in modname:
+            continue
+        # Avoid test suite depending on setuptools
+        if "sklearn._build_utils" in modname:
             continue
         if IS_PYPY and (
             "_svmlight_format_io" in modname

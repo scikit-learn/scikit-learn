@@ -12,12 +12,12 @@ from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA
 from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
 from sklearn.utils._array_api import (
+    _atol_for_type,
     _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 from sklearn.utils.estimator_checks import (
-    _array_api_for_tests,
     _get_check_estimator_ids,
     check_array_api_input_and_values,
 )
@@ -717,7 +717,7 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
         assert_allclose(
             _convert_to_numpy(precision_xp, xp=xp),
             precision_np,
-            atol=np.finfo(dtype).eps * 100,
+            atol=_atol_for_type(dtype),
         )
         covariance_xp = estimator_xp.get_covariance()
         assert covariance_xp.shape == (4, 4)
@@ -726,7 +726,7 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
         assert_allclose(
             _convert_to_numpy(covariance_xp, xp=xp),
             covariance_np,
-            atol=np.finfo(dtype).eps * 100,
+            atol=_atol_for_type(dtype),
         )
 
 

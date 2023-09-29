@@ -131,13 +131,13 @@ def test_missing_value_handling(
                 warnings.simplefilter("error", RuntimeWarning)
                 Xt_sp = est_sparse.fit(X_train_sp).transform(X_test_sp)
 
-            assert_allclose(Xt_sp.A, Xt_dense)
+            assert_allclose(Xt_sp.toarray(), Xt_dense)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", PendingDeprecationWarning)
                 warnings.simplefilter("error", RuntimeWarning)
                 Xt_inv_sp = est_sparse.inverse_transform(Xt_sp)
 
-            assert_allclose(Xt_inv_sp.A, Xt_inv_dense)
+            assert_allclose(Xt_inv_sp.toarray(), Xt_inv_dense)
 
 
 @pytest.mark.parametrize(
