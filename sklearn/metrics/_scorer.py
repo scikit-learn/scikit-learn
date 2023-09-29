@@ -572,7 +572,7 @@ def make_scorer(
     parameter.
 
     The parameter `response_method` allows to specify which method of the estimator
-    should be used and fed to the scoring/loss function.
+    should be used to fed the scoring/loss function.
 
     Read more in the :ref:`User Guide <scoring>`.
 
