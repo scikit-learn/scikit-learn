@@ -240,7 +240,7 @@ def test_try_to_transform_before_fit(coo_container):
         n_samples,
         n_features,
         n_nonzeros,
-        sparse_format=False,
+        sparse_format=None,
     )
     for RandomProjection in all_RandomProjection:
         with pytest.raises(NotFittedError):
