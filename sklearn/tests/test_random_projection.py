@@ -39,7 +39,7 @@ def make_sparse_random_data(
     n_features,
     n_nonzeros,
     random_state=0,
-    sparse_format=True,
+    sparse_format="csr",
 ):
     """Make some random data with uniformly located non zero entries with
     Gaussian distributed values; `sparse_format` can be True or False (in which
