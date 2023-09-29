@@ -110,11 +110,11 @@ xticklabels = [f"{day}\n{hour}:00" for day, hour in product(days, hours)]
 xtick_start, xtick_period = 6, 12
 
 fig, axs = plt.subplots(nrows=2, figsize=(8, 6), sharey=True, sharex=True)
-average_bike_rentals = bikes.frame.groupby(["year", "season", "weekday", "hour"]).mean(
-    numeric_only=True
-)["count"]
+average_bike_rentals = bikes.frame.groupby(
+    ["year", "season", "weekday", "hour"], observed=True
+).mean(numeric_only=True)["count"]
 for ax, (idx, df) in zip(axs, average_bike_rentals.groupby("year")):
-    df.groupby("season").plot(ax=ax, legend=True)
+    df.groupby("season", observed=True).plot(ax=ax, legend=True)
 
     # decorate the plot
     ax.set_xticks(

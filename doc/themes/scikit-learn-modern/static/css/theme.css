@@ -1204,8 +1204,11 @@ div.install > input:checked + label {
 .sk-expandable {
   display: none;
 }
+.sk-expandable + .copybtn {
+  display: none;
+}
 
-div.highlight span.sk-expandable:before {
+pre.sk-expandable > span:before {
   content: "$ ";
 }
 
@@ -1214,13 +1217,22 @@ div.highlight span.sk-expandable:before {
 #quickstart-conda:checked  ~* [data-packager="conda"] {
   display: block;
 }
+#quickstart-conda:checked  ~* [data-packager="conda"] + .copybtn {
+  display: block;
+}
 
 #quickstart-conda:checked ~ #quickstart-venv ~ label[for="quickstart-venv"] {
+  display: none;
+}
+#quickstart-conda:checked ~ #quickstart-venv ~ label[for="quickstart-venv"] + .copybtn {
   display: none;
 }
 
 /* for pip */
 #quickstart-pip:checked ~* [data-packager="pip"] {
+  display: block;
+}
+#quickstart-pip:checked ~* [data-packager="pip"] + .copybtn {
   display: block;
 }
 
@@ -1231,18 +1243,35 @@ div.highlight span.sk-expandable:before {
 #quickstart-win:not(:checked) ~* [data-os="windows"] {
   display: none;
 }
+#quickstart-win:not(:checked) ~* [data-os="windows"] + .copybtn {
+  display: none;
+}
+
 #quickstart-lin:not(:checked) ~* [data-os="linux"] {
   display: none;
 }
+#quickstart-lin:not(:checked) ~* [data-os="linux"] + .copybtn {
+  display: none;
+}
+
 #quickstart-mac:not(:checked) ~* [data-os="mac"] {
+  display: none;
+}
+#quickstart-mac:not(:checked) ~* [data-os="mac"] + .copybtn {
   display: none;
 }
 
 #quickstart-venv:not(:checked) ~* [data-venv=""] {
   display: none;
 }
+#quickstart-venv:not(:checked) ~* [data-venv=""] + .copybtn {
+  display: none;
+}
 
 #quickstart-venv:checked ~* [data-venv="no"] {
+  display: none;
+}
+#quickstart-venv:checked ~* [data-venv="no"] + .copybtn {
   display: none;
 }
 
