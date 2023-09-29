@@ -124,15 +124,15 @@ def test_pca_solver_equivalence(other_svd_solver, global_random_seed, data_shape
         n_samples, n_features = 100, 30
     else:
         n_samples, n_features = 30, 100
+    n_samples_test = 10
 
-    X_train = make_low_rank_matrix(
-        n_samples=n_samples, n_features=n_features, random_state=global_random_seed
-    )
-    X_test = make_low_rank_matrix(
-        10,
+    X = make_low_rank_matrix(
+        n_samples=n_samples + n_samples_test,
         n_features=n_features,
-        random_state=global_random_seed + 1,
+        random_state=global_random_seed,
     )
+    X_train, X_test = X[:n_samples], X[n_samples:]
+
     tols = dict(atol=1e-10, rtol=1e-12)
 
     extra_other_kwargs = {}
