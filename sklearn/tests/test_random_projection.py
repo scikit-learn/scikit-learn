@@ -275,7 +275,7 @@ def test_random_projection_embedding_quality(coo_container):
         8,
         5000,
         15000,
-        sparse_format=False,
+        sparse_format=None,
     )
     eps = 0.2
 
