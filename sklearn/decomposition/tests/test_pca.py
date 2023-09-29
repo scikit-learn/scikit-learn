@@ -121,12 +121,17 @@ def test_whitening(solver, copy):
 )
 def test_pca_solver_equivalence(other_svd_solver, global_random_seed, data_shape):
     if data_shape == "tall":
-        n_samples, n_features = 100, 80
+        n_samples, n_features = 100, 30
     else:
-        n_samples, n_features = 80, 100
+        n_samples, n_features = 30, 100
 
-    X = make_low_rank_matrix(
+    X_train = make_low_rank_matrix(
         n_samples=n_samples, n_features=n_features, random_state=global_random_seed
+    )
+    X_test = make_low_rank_matrix(
+        10,
+        n_features=n_features,
+        random_state=global_random_seed + 1,
     )
     tols = dict(atol=1e-10, rtol=1e-12)
 
@@ -151,8 +156,8 @@ def test_pca_solver_equivalence(other_svd_solver, global_random_seed, data_shape
         random_state=global_random_seed,
         **extra_other_kwargs,
     )
-    pca_full.fit(X)
-    pca_other.fit(X)
+    X_trans_full_train = pca_full.fit_transform(X_train)
+    X_trans_other_train = pca_other.fit_transform(X_train)
 
     assert_allclose(pca_full.explained_variance_, pca_other.explained_variance_, **tols)
     assert_allclose(
@@ -168,6 +173,19 @@ def test_pca_solver_equivalence(other_svd_solver, global_random_seed, data_shape
         reference_components = reference_components[:-1]
         other_components = other_components[:-1]
     assert_allclose(reference_components, other_components, **tols)
+
+    # As a result the output of fit_transform should be the same:
+    assert_allclose(X_trans_other_train, X_trans_full_train, **tols)
+
+    # And similarly for the output of transform on new data (except for the
+    # last component that can be underdetermined):
+    X_trans_full_test = pca_full.transform(X_test)
+    X_trans_other_test = pca_other.transform(X_test)
+    if n_components is None and n_features > n_samples:
+        X_trans_full_test = X_trans_full_test[:, :-1]
+        X_trans_other_test = X_trans_other_test[:, :-1]
+
+    assert_allclose(X_trans_other_test, X_trans_full_test, **tols)
 
 
 @pytest.mark.parametrize(
