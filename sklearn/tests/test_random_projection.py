@@ -342,7 +342,7 @@ def test_correct_RandomProjection_dimensions_embedding(coo_container):
         n_samples,
         n_features,
         n_nonzeros,
-        sparse_format=False,
+        sparse_format=None,
     )
     for RandomProjection in all_RandomProjection:
         rp = RandomProjection(n_components="auto", random_state=0, eps=0.5).fit(data)
