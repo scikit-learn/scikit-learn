@@ -313,7 +313,7 @@ def test_SparseRandomProj_output_representation(coo_container, csr_container):
         n_samples,
         n_features,
         n_nonzeros,
-        sparse_format=False,
+        sparse_format=None,
     )
     for SparseRandomProj in all_SparseRandomProjection:
         # when using sparse input, the projected data can be forced to be a
