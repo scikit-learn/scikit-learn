@@ -280,6 +280,11 @@ Changelog
   :func:`root_mean_squared_log_error` instead.
   :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.
 
+- |Fix| :func:`metrics.make_scorer` now raises an error when using a regressor on a
+  scorer requesting a non-thresholded decision function (from `decision_function` or
+  `predict_proba`). Such scorer are specific to classification.
+  :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
