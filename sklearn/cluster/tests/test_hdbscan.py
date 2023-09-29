@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from scipy import stats
 from scipy.spatial import distance
+from scipy.stats import mode
 
 from sklearn.cluster import HDBSCAN
 from sklearn.cluster._hdbscan._tree import (
@@ -38,6 +39,21 @@ ALGORITHMS = [
 OUTLIER_SET = {-1} | {out["label"] for _, out in _OUTLIER_ENCODING.items()}
 
 
+def homogeneity(labels1, labels2):
+    num_missed = 0.0
+    for label in set(labels1):
+        matches = labels2[labels1 == label]
+        match_mode, _ = mode(matches, keepdims=True)
+        num_missed += np.sum(matches != match_mode[0])
+
+    for label in set(labels2):
+        matches = labels1[labels2 == label]
+        match_mode, _ = mode(matches, keepdims=True)
+        num_missed += np.sum(matches != match_mode[0])
+
+    return num_missed / 2.0
+
+
 @pytest.mark.parametrize("tree", ["kd_tree", "ball_tree"])
 def test_hdbscan_boruvka_matches(tree):
     hdb_prims = HDBSCAN(algorithm=tree, mst_algorithm="prims").fit(X, y)
@@ -46,7 +62,9 @@ def test_hdbscan_boruvka_matches(tree):
     labels_boruvka = hdb_boruvka.labels_
 
     similarity = fowlkes_mallows_score(labels_prims, labels_boruvka)
+    error_rate = homogeneity(labels_prims, labels_boruvka) / X.shape[0]
 
+    print(f"DEBUG *** {error_rate=}")
     assert similarity > 0.85
 
 

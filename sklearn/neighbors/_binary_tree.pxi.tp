@@ -188,6 +188,7 @@ from ..utils import check_array
 from ..utils._typedefs cimport float32_t, float64_t, intp_t
 from ..utils._heap cimport heap_push
 from ..utils._sorting cimport simultaneous_sort as _simultaneous_sort
+from ._binary_tree cimport NodeData_t
 
 cnp.import_array()
 
@@ -215,12 +216,6 @@ cdef struct NodeHeapData_t:
 # build the corresponding numpy dtype for NodeHeapData
 cdef NodeHeapData_t nhd_tmp
 NodeHeapData = np.asarray(<NodeHeapData_t[:1]>(&nhd_tmp)).dtype
-
-cdef struct NodeData_t:
-    intp_t idx_start
-    intp_t idx_end
-    intp_t is_leaf
-    float64_t radius
 
 # build the corresponding numpy dtype for NodeData
 cdef NodeData_t nd_tmp

@@ -60,23 +60,14 @@ from sklearn.neighbors import KDTree
 
 from ...metrics._dist_metrics cimport DistanceMetric, DistanceMetric64
 from ...utils._typedefs cimport intp_t, float64_t, uint8_t, int8_t
+from ...neighbors._binary_tree cimport NodeData_t
 from ._linkage cimport MST_edge_t
 from ._linkage import MST_edge_dtype
 
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, effective_n_jobs
 
 
 cdef float64_t INF = np.inf
-
-
-# Define the NodeData struct used in sklearn trees for faster
-# access to the node data internals in Cython.
-cdef struct NodeData_t:
-    intp_t idx_start
-    intp_t idx_end
-    intp_t is_leaf
-    float64_t radius
-
 
 # Define a function giving the minimum distance between two
 # nodes of a ball tree
@@ -226,7 +217,12 @@ cdef class BoruvkaUnionFind(object):
 
 
 def _core_dist_query(tree, data, min_samples):
-    return tree.query(data, k=min_samples, dualtree=True, breadth_first=True)
+    return tree.query(
+        data,
+        k=min_samples,
+        dualtree=True,
+        breadth_first=True
+    )
 
 
 cdef class BoruvkaAlgorithm:
@@ -271,16 +267,12 @@ cdef class BoruvkaAlgorithm:
     cdef object tree
     cdef object core_dist_tree
     cdef DistanceMetric64 dist
-    cdef cnp.ndarray _data
     cdef readonly const float64_t[:, ::1] raw_data
     cdef float64_t[:, :, ::1] node_bounds
     cdef float64_t alpha
     cdef int8_t approx_min_span_tree
-    cdef intp_t n_jobs
-    cdef intp_t min_samples
-    cdef intp_t num_points
-    cdef intp_t num_nodes
-    cdef intp_t num_features
+    cdef intp_t n_jobs, min_samples
+    cdef intp_t num_points, num_nodes, num_features
     cdef bint is_KDTree
 
     cdef public float64_t[::1] core_distance
@@ -299,18 +291,26 @@ cdef class BoruvkaAlgorithm:
 
     cdef cnp.ndarray components
 
-    def __init__(self, tree, min_samples=5, metric='euclidean', leaf_size=20,
-                 alpha=1.0, approx_min_span_tree=False, n_jobs=4, **kwargs):
+    def __init__(
+        self,
+        tree,
+        min_samples=5,
+        metric='euclidean',
+        leaf_size=20,
+        alpha=1.0,
+        approx_min_span_tree=False,
+        n_jobs=None,
+        **kwargs
+    ):
 
         self.core_dist_tree = tree
         self.tree = tree
         self.is_KDTree = isinstance(tree, KDTree)
-        self._data = np.array(self.tree.data)
         self.raw_data = self.tree.data
         self.node_bounds = self.tree.node_bounds
         self.alpha = alpha
         self.approx_min_span_tree = approx_min_span_tree
-        self.n_jobs = n_jobs
+        self.n_jobs = effective_n_jobs(n_jobs)
         self.min_samples = min_samples
 
         self.num_points = self.tree.data.shape[0]
@@ -344,9 +344,7 @@ cdef class BoruvkaAlgorithm:
     cdef _compute_bounds(self):
         """Initialize core distances"""
 
-        cdef intp_t n
-        cdef intp_t i
-        cdef intp_t m
+        cdef intp_t i, n, m
 
         cdef cnp.ndarray[float64_t, ndim=2] knn_dist
         cdef cnp.ndarray[intp_t, ndim=2] knn_indices
@@ -377,7 +375,6 @@ cdef class BoruvkaAlgorithm:
                 dualtree=True,
                 breadth_first=True)
 
-        print(f"DEBUG *** self.min_samples={self.min_samples}")
         self.core_distance = knn_dist[:, self.min_samples - 1].copy()
 
         if self.is_KDTree:
@@ -386,7 +383,8 @@ cdef class BoruvkaAlgorithm:
             # to make comparison feasible.
             for n in range(self.num_points):
                 self.core_distance[n] = self.dist._dist_to_rdist(
-                    self.core_distance[n])
+                    self.core_distance[n]
+                )
 
         # Since we already computed NN distances for the min_samples closest
         # points we can use this to do the first round of boruvka -- we won't
