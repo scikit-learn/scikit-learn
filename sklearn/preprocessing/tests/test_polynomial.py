@@ -527,27 +527,24 @@ def single_feature_degree3():
         ((2, 3), False, True, []),
     ],
 )
-@pytest.mark.parametrize(
-    "sparse_X",
-    [False, sparse.csr_matrix, sparse.csc_matrix],
-)
+@pytest.mark.parametrize("X_container", [None] + CSR_CONTAINERS + CSC_CONTAINERS)
 def test_polynomial_features_one_feature(
     single_feature_degree3,
     degree,
     include_bias,
     interaction_only,
     indices,
-    sparse_X,
+    X_container,
 ):
     """Test PolynomialFeatures on single feature up to degree 3."""
     X, P = single_feature_degree3
-    if sparse_X:
-        X = sparse_X(X)
+    if X_container is not None:
+        X = X_container(X)
     tf = PolynomialFeatures(
         degree=degree, include_bias=include_bias, interaction_only=interaction_only
     ).fit(X)
     out = tf.transform(X)
-    if sparse_X:
+    if X_container is not None:
         out = out.toarray()
     assert_allclose(out, P[:, indices])
     if tf.n_output_features_ > 0:

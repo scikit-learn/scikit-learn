@@ -119,6 +119,8 @@ and classes are impacted:
   :user:`Lohit SundaramahaLingam <lohitslohit>`;
 - :class:`neural_network.BernoulliRBM` in :pr:`27252` by
   :user:`Yao Xiao <Charlie-XIAO>`.
+- :class:`preprocessing.PolynomialFeatures` in :pr:`27166` by
+  :user:`Mohit Joshi <work-mohit>`.
 
 Changelog
 ---------
@@ -324,10 +326,6 @@ Changelog
 
 - |Enhancement| :class:`preprocessing.TargetEncoder` now supports `target_type`
   'multiclass'. :pr:`26674` by :user:`Lucy Liu <lucyleeow>`.
-
-- |Fix| :class:`preprocessing.PolynomialFeatures` now supports the new scipy sparse arrays.
-  :pr:`27166` by :user:`Mohit Joshi <work-mohit>`.
-
 
 :mod:`sklearn.tree`
 ...................
