@@ -100,7 +100,7 @@ for method_name in all_method_names:
         sharey=True,
         constrained_layout=True,
     )
-    fig.suptitle(f"Benchmarks for PCA.{method_name}", fontsize=16)
+    fig.suptitle(f"Benchmarks for PCA.{method_name}, varying n_samples", fontsize=16)
 
     for row_idx, ref_dim in enumerate(REF_DIMS):
         for n_components, ax in zip(all_n_components, axes[row_idx]):
@@ -133,7 +133,7 @@ for method_name in all_method_names:
         ncols=len(all_n_components),
         sharey=True,
     )
-    fig.suptitle(f"Benchmarks for PCA.{method_name}", fontsize=16)
+    fig.suptitle(f"Benchmarks for PCA.{method_name}, varying n_features", fontsize=16)
 
     for row_idx, ref_dim in enumerate(REF_DIMS):
         for n_components, ax in zip(all_n_components, axes[row_idx]):
