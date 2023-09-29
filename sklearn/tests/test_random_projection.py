@@ -254,7 +254,7 @@ def test_too_many_samples_to_find_a_safe_embedding(coo_container):
         1000,
         100,
         1000,
-        sparse_format=False,
+        sparse_format=None,
     )
 
     for RandomProjection in all_RandomProjection:
