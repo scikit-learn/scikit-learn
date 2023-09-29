@@ -83,7 +83,7 @@ exclude=[
 # + E501 (line too long) because keeping it < 88 in cython
 # often makes code less readable.
 ignore = [
-    # check ignored by default in flake8. Meaning unclear.
+    # multiple spaces/tab after comma
     'E24',
     # space before : (needed for how black formats slicing)
     'E203',

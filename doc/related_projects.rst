@@ -136,6 +136,14 @@ enhance the functionality of scikit-learn's estimators.
   Compiles tree-based ensemble models into C code for minimizing prediction
   latency.
 
+- `micromlgen <https://github.com/eloquentarduino/micromlgen>`_
+  MicroML brings Machine Learning algorithms to microcontrollers.
+  Supports several scikit-learn classifiers by transpiling them to C code.
+
+- `emlearn <https://emlearn.org>`_
+  Implements scikit-learn estimators in C99 for embedded devices and microcontrollers.
+  Supports several classifier, regression and outlier detection models.
+
 **Model throughput**
 
 - `Intel(R) Extension for scikit-learn <https://github.com/intel/scikit-learn-intelex>`_
@@ -219,6 +227,14 @@ Note scikit-learn own modern gradient boosting estimators
 
 - `Flower <https://flower.dev/>`_ A friendly federated learning framework with a
   unified approach that can federate any workload, any ML framework, and any programming language.
+
+**Privacy Preserving Machine Learning**
+
+- `Concrete ML <https://github.com/zama-ai/concrete-ml/>`_ A privacy preserving
+  ML framework built on top of `Concrete
+  <https://github.com/zama-ai/concrete>`_, with bindings to traditional ML
+  frameworks, thanks to fully homomorphic encryption. APIs of so-called
+  Concrete ML built-in models are very close to scikit-learn APIs.
 
 **Broad scope**
 

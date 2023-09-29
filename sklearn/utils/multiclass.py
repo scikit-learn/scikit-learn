@@ -14,6 +14,7 @@ import numpy as np
 from scipy.sparse import issparse
 
 from ..utils._array_api import get_namespace
+from ..utils.fixes import VisibleDeprecationWarning
 from .validation import _assert_all_finite, check_array
 
 
@@ -161,10 +162,10 @@ def is_multilabel(y):
             ensure_min_features=0,
         )
         with warnings.catch_warnings():
-            warnings.simplefilter("error", np.VisibleDeprecationWarning)
+            warnings.simplefilter("error", VisibleDeprecationWarning)
             try:
                 y = check_array(y, dtype=None, **check_y_kwargs)
-            except (np.VisibleDeprecationWarning, ValueError) as e:
+            except (VisibleDeprecationWarning, ValueError) as e:
                 if str(e).startswith("Complex data not supported"):
                     raise
 
@@ -324,11 +325,11 @@ def type_of_target(y, input_name=""):
     )
 
     with warnings.catch_warnings():
-        warnings.simplefilter("error", np.VisibleDeprecationWarning)
+        warnings.simplefilter("error", VisibleDeprecationWarning)
         if not issparse(y):
             try:
                 y = check_array(y, dtype=None, **check_y_kwargs)
-            except (np.VisibleDeprecationWarning, ValueError) as e:
+            except (VisibleDeprecationWarning, ValueError) as e:
                 if str(e).startswith("Complex data not supported"):
                     raise
 
@@ -338,10 +339,11 @@ def type_of_target(y, input_name=""):
 
     # The old sequence of sequences format
     try:
+        first_row = y[[0], :] if issparse(y) else y[0]
         if (
-            not hasattr(y[0], "__array__")
-            and isinstance(y[0], Sequence)
-            and not isinstance(y[0], str)
+            not hasattr(first_row, "__array__")
+            and isinstance(first_row, Sequence)
+            and not isinstance(first_row, str)
         ):
             raise ValueError(
                 "You appear to be using a legacy multi-label data"
@@ -383,7 +385,8 @@ def type_of_target(y, input_name=""):
             return "continuous" + suffix
 
     # Check multiclass
-    first_row = y[0] if not issparse(y) else y.getrow(0).data
+    if issparse(first_row):
+        first_row = first_row.data
     if xp.unique_values(y).shape[0] > 2 or (y.ndim == 2 and len(first_row) > 1):
         # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
         return "multiclass" + suffix
