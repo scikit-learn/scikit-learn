@@ -343,7 +343,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         **fit_params : dict
             - If `enable_metadata_routing=False` (default):
 
-                Other estimator specific parameters.
+                These arguments will be directly passed to the sub-estimator.
 
             - If `enable_metadata_routing=True`:
 
