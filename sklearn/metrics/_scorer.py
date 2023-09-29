@@ -425,7 +425,7 @@ class _PassthroughScorer:
 def _check_multimetric_scoring(estimator, scoring):
     """Check the scoring parameter in cases when multiple metrics are allowed.
 
-    In addition, multimetric scoring leverage a caching mechanism to not call the same
+    In addition, multimetric scoring leverages a caching mechanism to not call the same
     estimator response method multiple times. Hence, the scorer is modified to only use
     a single response method given a list of response methods and the estimator.
 
