@@ -1378,6 +1378,38 @@ def test_get_scorer_multilabel_indicator():
     assert score > 0.8
 
 
+@pytest.mark.parametrize(
+    "scorer, expected_repr",
+    [
+        (
+            get_scorer("accuracy"),
+            "make_scorer(accuracy_score, response_method='predict')",
+        ),
+        (
+            get_scorer("neg_log_loss"),
+            (
+                "make_scorer(log_loss, greater_is_better=False,"
+                " response_method='predict_proba')"
+            ),
+        ),
+        (
+            get_scorer("roc_auc"),
+            (
+                "make_scorer(roc_auc_score, response_method="
+                "('decision_function', 'predict_proba'))"
+            ),
+        ),
+        (
+            make_scorer(fbeta_score, beta=2),
+            "make_scorer(fbeta_score, response_method='predict', beta=2)",
+        ),
+    ],
+)
+def test_make_scorer_repr(scorer, expected_repr):
+    """Check the representation of the scorer."""
+    assert repr(scorer) == expected_repr
+
+
 # TODO(1.6): rework this test after the deprecation of `needs_proba` and
 # `needs_threshold`
 @pytest.mark.parametrize(

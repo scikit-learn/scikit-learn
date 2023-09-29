@@ -221,9 +221,9 @@ class _MultimetricScorer:
 
 class _BaseScorer(_MetadataRequester):
     def __init__(self, score_func, sign, kwargs, response_method="predict"):
-        self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
+        self._kwargs = kwargs
         self._response_method = response_method
 
     def _get_pos_label(self):
@@ -235,14 +235,13 @@ class _BaseScorer(_MetadataRequester):
         return None
 
     def __repr__(self):
-        kwargs_string = "".join(
-            [", %s=%s" % (str(k), str(v)) for k, v in self._kwargs.items()]
-        )
-        return "make_scorer(%s%s%s%s)" % (
-            self._score_func.__name__,
-            "" if self._sign > 0 else ", greater_is_better=False",
-            self._factory_args(),
-            kwargs_string,
+        sign_string = "" if self._sign > 0 else ", greater_is_better=False"
+        response_method_string = f", response_method={self._response_method!r}"
+        kwargs_string = "".join([f", {k}={v}" for k, v in self._kwargs.items()])
+
+        return (
+            f"make_scorer({self._score_func.__name__}{sign_string}"
+            f"{response_method_string}{kwargs_string})"
         )
 
     def __call__(self, estimator, X, y_true, sample_weight=None, **kwargs):
@@ -284,10 +283,6 @@ class _BaseScorer(_MetadataRequester):
             _kwargs["sample_weight"] = sample_weight
 
         return self._score(partial(_cached_call, None), estimator, X, y_true, **_kwargs)
-
-    def _factory_args(self):
-        """Return non-default make_scorer arguments for repr."""
-        return ""
 
     def _warn_overlap(self, message, kwargs):
         """Warn if there is any overlap between ``self._kwargs`` and ``kwargs``.
