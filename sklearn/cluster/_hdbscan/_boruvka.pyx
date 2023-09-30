@@ -650,14 +650,14 @@ cdef class BoruvkaAlgorithm:
                     if component1 != component2:
                         if self.is_KDTree:
                             d = self.dist.rdist(
-                                &self.raw_data[self.num_features * p][0],
-                                &self.raw_data[self.num_features * q][0],
+                                &self.raw_data[p][0],
+                                &self.raw_data[q][0],
                                 self.num_features
                             )
                         else:
                             d = self.dist.dist(
-                                &self.raw_data[self.num_features * p][0],
-                                &self.raw_data[self.num_features * q][0],
+                                &self.raw_data[p][0],
+                                &self.raw_data[q][0],
                                 self.num_features
                             ) * self.alpha
                         if self.alpha != 1.0:
