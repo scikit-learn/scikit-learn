@@ -209,7 +209,7 @@ score_estimator(dummy, df_test)
 # ---------------------------
 #
 # We start by modeling the target variable with the (l2 penalized) least
-# squares linear regression model, more comonly known as Ridge regression. We
+# squares linear regression model, more commonly known as Ridge regression. We
 # use a low penalization `alpha`, as we expect such a linear model to under-fit
 # on such a large dataset.
 

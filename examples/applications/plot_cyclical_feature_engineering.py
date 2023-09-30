@@ -631,7 +631,7 @@ hour_workday_interaction = make_pipeline(
 
 # %%
 # Those features are then combined with the ones already computed in the
-# previous spline-base pipeline. We can observe a nice performance improvemnt
+# previous spline-base pipeline. We can observe a nice performance improvement
 # by modeling this pairwise interaction explicitly:
 
 cyclic_spline_interactions_pipeline = make_pipeline(
