@@ -1146,9 +1146,12 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
+
         Please check :ref:`User Guide <metadata_routing>` on how the routing
         mechanism works.
+
         .. versionadded:: 1.4
+
         Returns
         -------
         routing : MetadataRouter
