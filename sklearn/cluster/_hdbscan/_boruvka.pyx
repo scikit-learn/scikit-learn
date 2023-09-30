@@ -66,6 +66,8 @@ from ._linkage import MST_edge_dtype
 
 from joblib import Parallel, delayed, effective_n_jobs
 
+cdef extern from "numpy/arrayobject.h":
+    intp_t * PyArray_SHAPE(cnp.PyArrayObject *)
 
 cdef float64_t INF = np.inf
 
@@ -91,7 +93,7 @@ cdef inline float64_t kdtree_min_dist_dual(
     intp_t node2,
     float64_t[:, :, ::1] node_bounds,
     intp_t num_features
-) except -1:
+) except -1 nogil:
 
     cdef float64_t d, d1, d2, rdist = 0.0
     cdef intp_t j
@@ -405,7 +407,7 @@ cdef class BoruvkaAlgorithm:
         self.update_components()
 
         for n in range(self.num_nodes):
-            self.bounds[n] = <float64_t> DBL_MAX
+            self.bounds[n] = DBL_MAX
 
     cdef _initialize_components(self):
         """Initialize components of the min spanning tree (eventually there
@@ -444,7 +446,7 @@ cdef class BoruvkaAlgorithm:
         # for each of these, and the union the two points
         # together in the union find structure
 
-        for c in range(self.components.shape[0]):
+        for c in range(PyArray_SHAPE(<cnp.PyArrayObject*> self.components)[0]):
             component = self.components[c]
             source = self.candidate_point[component]
             sink = self.candidate_neighbor[component]
@@ -475,7 +477,7 @@ cdef class BoruvkaAlgorithm:
             self.candidate_distance[component] = DBL_MAX
             if self.num_edges == self.num_points - 1:
                 self.components = self.component_union_find.components()
-                return self.components.shape[0]
+                return PyArray_SHAPE(<cnp.PyArrayObject*> self.components)[0]
 
         # After having joined everything in the union find data
         # structure we need to go through and determine the components
@@ -494,7 +496,8 @@ cdef class BoruvkaAlgorithm:
             #    in the node is of the same component
             if node_info.is_leaf:
                 current_component = self.component_of_point[
-                    self.idx_array[node_info.idx_start]]
+                    self.idx_array[node_info.idx_start]
+                ]
                 for i in range(node_info.idx_start + 1, node_info.idx_end):
                     p = self.idx_array[i]
                     if self.component_of_point[p] != current_component:
@@ -507,8 +510,7 @@ cdef class BoruvkaAlgorithm:
             else:
                 child1 = 2 * n + 1
                 child2 = 2 * n + 2
-                if (self.component_of_node[child1] ==
-                        self.component_of_node[child2]):
+                if self.component_of_node[child1] == self.component_of_node[child2]:
                     self.component_of_node[n] = self.component_of_node[child1]
 
         # Since we're working with mutual reachability distance we often have
@@ -519,20 +521,20 @@ cdef class BoruvkaAlgorithm:
         # produce a true min spanning tree, but only and approximation
         # Thus only do this if the caller is willing to accept such
         if self.approx_min_span_tree:
-            last_num_components = self.components.shape[0]
+            last_num_components = PyArray_SHAPE(<cnp.PyArrayObject*> self.components)[0]
             self.components = self.component_union_find.components()
 
-            if self.components.shape[0] == last_num_components:
+            if PyArray_SHAPE(<cnp.PyArrayObject*> self.components)[0] == last_num_components:
                 # Reset bounds
                 for n in range(self.num_nodes):
-                    self.bounds[n] = <float64_t> DBL_MAX
+                    self.bounds[n] = DBL_MAX
         else:
             self.components = self.component_union_find.components()
 
             for n in range(self.num_nodes):
-                self.bounds[n] = <float64_t> DBL_MAX
+                self.bounds[n] = DBL_MAX
 
-        return self.components.shape[0]
+        return PyArray_SHAPE(<cnp.PyArrayObject*> self.components)[0]
 
     cdef int dual_tree_traversal(
         self,

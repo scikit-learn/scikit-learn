@@ -264,7 +264,7 @@ def _hdbscan_brute(
             ),
             UserWarning,
         )
-    return _process_mst(min_spanning_tree)
+    return min_spanning_tree, _process_mst(min_spanning_tree)
 
 
 def _hdbscan_prims(
@@ -347,7 +347,7 @@ def _hdbscan_prims(
     # Mutual reachability distance is implicit in mst_from_data_matrix
     min_spanning_tree = mst_from_data_matrix(X, core_distances, dist_metric, alpha)
 
-    return _process_mst(min_spanning_tree)
+    return min_spanning_tree, _process_mst(min_spanning_tree)
 
 
 def _hdbscan_boruvka(
@@ -371,13 +371,12 @@ def _hdbscan_boruvka(
         metric=metric,
         leaf_size=leaf_size // 3,
         alpha=alpha,
-        approx_min_span_tree=True,
+        approx_min_span_tree=False,
         n_jobs=n_jobs,
         **metric_params,
     )
     min_spanning_tree = out.spanning_tree()
-
-    return _process_mst(min_spanning_tree)
+    return min_spanning_tree, _process_mst(min_spanning_tree)
 
 
 def remap_single_linkage_tree(tree, internal_to_raw, non_finite):
@@ -900,7 +899,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 kwargs["algo"] = "ball_tree"
                 kwargs["leaf_size"] = self.leaf_size
 
-        self._single_linkage_tree_ = mst_func(**kwargs)
+        self.mst, self._single_linkage_tree_ = mst_func(**kwargs)
 
         self.labels_, self.probabilities_ = tree_to_labels(
             self._single_linkage_tree_,
