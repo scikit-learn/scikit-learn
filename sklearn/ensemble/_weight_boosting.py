@@ -42,6 +42,10 @@ from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import _safe_indexing, check_random_state
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils.extmath import softmax, stable_cumsum
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupportedMixin,
+)
 from ..utils.validation import (
     _check_sample_weight,
     _num_samples,
@@ -132,6 +136,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         X, y = self._validate_data(
             X,
             y,
@@ -338,7 +343,9 @@ def _samme_proba(estimator, n_classes, X):
     )
 
 
-class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
+class AdaBoostClassifier(
+    _RoutingNotSupportedMixin, ClassifierMixin, BaseWeightBoosting
+):
     """An AdaBoost classifier.
 
     An AdaBoost [1]_ classifier is a meta-estimator that begins by fitting a
@@ -980,7 +987,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         return np.log(self.predict_proba(X))
 
 
-class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
+class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoosting):
     """An AdaBoost regressor.
 
     An AdaBoost [1] regressor is a meta-estimator that begins by fitting a
