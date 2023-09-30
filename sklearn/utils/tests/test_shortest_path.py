@@ -9,21 +9,13 @@ from sklearn.utils.graph import single_source_shortest_path_length
 def floyd_warshall_slow(graph, directed=False):
     N = graph.shape[0]
 
-    # set nonzero entries to infinity
-    graph[np.where(graph == 0)] = np.inf
-
-    # set diagonal to zero
-    graph.flat[:: N + 1] = 0
-
     if not directed:
         graph = np.minimum(graph, graph.T)
 
     for k in range(N):
-        for i in range(N):
-            for j in range(N):
-                graph[i, j] = min(graph[i, j], graph[i, k] + graph[k, j])
-
-    graph[np.where(np.isinf(graph))] = 0
+        # Compute the sum of the intermediate distances efficiently
+        graph += np.outer(graph[:, k], graph[k, :])
+        graph = np.minimum(graph, 1)  # Convert distances to 1 for non-zero entries
 
     return graph
 
