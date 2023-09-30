@@ -309,13 +309,13 @@ def test_random_projection_embedding_quality(coo_container):
 
 
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
-def test_SparseRandomProj_output_representation(coo_container, global_random_seed):
+def test_SparseRandomProj_output_representation(coo_container):
     dense_data = make_sparse_random_data(
         coo_container,
         n_samples,
         n_features,
         n_nonzeros,
-        random_state=global_random_seed,
+        random_state=0,
         sparse_format=None,
     )
     sparse_data = make_sparse_random_data(
@@ -323,7 +323,7 @@ def test_SparseRandomProj_output_representation(coo_container, global_random_see
         n_samples,
         n_features,
         n_nonzeros,
-        random_state=global_random_seed,
+        random_state=0,
         sparse_format="csr",
     )
     for SparseRandomProj in all_SparseRandomProjection:
