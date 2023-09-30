@@ -784,7 +784,7 @@ Miscellaneous
 .............
 
 - |MajorFeature| Adds a HTML representation of estimators to be shown in
-  a jupyter notebook or lab. This visualization is acitivated by setting the
+  a jupyter notebook or lab. This visualization is activated by setting the
   `display` option in :func:`sklearn.set_config`. :pr:`14180` by
   `Thomas Fan`_.
 
