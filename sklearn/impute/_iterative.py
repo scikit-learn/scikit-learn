@@ -18,6 +18,7 @@ from ..utils import (
 )
 from ..utils._mask import _get_mask
 from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils.metadata_routing import _RoutingNotSupportedMixin
 from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
 from ._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
 
@@ -46,7 +47,7 @@ def _assign_where(X1, X2, cond):
         X1[cond] = X2[cond]
 
 
-class IterativeImputer(_BaseImputer):
+class IterativeImputer(_RoutingNotSupportedMixin, _BaseImputer):
     """Multivariate imputer that estimates each feature from all the others.
 
     A strategy for imputing missing values by modeling each feature with
