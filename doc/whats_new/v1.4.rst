@@ -19,6 +19,23 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- |Efficiency| :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now have much better convergence for
+  solvers `"lbfgs"` and `"newton-cg"`. Both solvers can now reach much higher precision
+  for the coefficients depending on the specified `tol`. Additionally, lbfgs can
+  make better use of `tol`, i.e., stop sooner or reach higher precision, and newton-cg
+  is now faster than before.
+  :pr:`26721` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+  .. note::
+
+      The lbfgs is the default solver, so this change might effect many models.
+
+      This change also means that with this new version of scikit-learn, the resulting
+      coefficients `coef_` and `intercept_` of your models will change for these two
+      solvers (when fit on the same data again). The amount of change depends on the
+      specified `tol`, for small values you will get more precise results.
+
 Changes impacting all modules
 -----------------------------
 
@@ -205,11 +222,14 @@ Changelog
   for the coefficients depending on the specified `tol`. Additionally, lbfgs can
   make better use of `tol`, i.e., stop sooner or reach higher precision, and newton-cg
   is now faster than before.
-  This change also means that with this new version of scikit-learn, the resulting
-  coefficients `coef_` and `intercept_` of your models will change for these two
-  solvers (when fit on the same data again). The amount of change depends on the
-  specified `tol`, for small values you will get more precise results.
   :pr:`26721` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+  .. note::
+
+      This change also means that with this new version of scikit-learn, the resulting
+      coefficients `coef_` and `intercept_` of your models will change for these two
+      solvers (when fit on the same data again). The amount of change depends on the
+      specified `tol`, for small values you will get more precise results.
 
 :mod:`sklearn.metrics`
 ......................
