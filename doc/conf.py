@@ -701,7 +701,6 @@ warnings.filterwarnings(
     ),
 )
 
-
 # maps functions with a class name that is indistinguishable when case is
 # ignore to another filename
 autosummary_filename_map = {

@@ -17,3 +17,5 @@ from ._metadata_requests import process_routing  # noqa
 from ._metadata_requests import _MetadataRequester  # noqa
 from ._metadata_requests import _routing_enabled  # noqa
 from ._metadata_requests import _raise_for_params  # noqa
+from ._metadata_requests import _RoutingNotSupportedMixin  # noqa
+from ._metadata_requests import _raise_for_unsupported_routing  # noqa

@@ -109,7 +109,7 @@ def _cg(fhess_p, fgrad, maxiter, tol, verbose=0):
         Estimated solution.
     """
     xsupi = np.zeros(len(fgrad), dtype=fgrad.dtype)
-    ri = fgrad
+    ri = np.copy(fgrad)
     psupi = -ri
     i = 0
     dri0 = np.dot(ri, ri)
@@ -141,7 +141,7 @@ def _cg(fhess_p, fgrad, maxiter, tol, verbose=0):
                 break
         alphai = dri0 / curv
         xsupi += alphai * psupi
-        ri = ri + alphai * Ap
+        ri += alphai * Ap
         dri1 = np.dot(ri, ri)
         betai = dri1 / dri0
         psupi = -ri + betai * psupi
@@ -216,7 +216,7 @@ def _newton_cg(
         Estimated minimum.
     """
     x0 = np.asarray(x0).flatten()
-    xk = x0
+    xk = np.copy(x0)
     k = 0
 
     if line_search:
@@ -265,7 +265,7 @@ def _newton_cg(
                 warnings.warn("Line Search failed")
                 break
 
-        xk = xk + alphak * xsupi  # upcast if necessary
+        xk += alphak * xsupi  # upcast if necessary
         k += 1
 
     if warn and k >= maxiter:
