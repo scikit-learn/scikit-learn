@@ -647,7 +647,7 @@ def _implicit_column_offset(X, offset):
     centered : LinearOperator
     """
     offset = offset[None, :]
-    XT = X.T.conj(copy=False)
+    XT = X.T
     return LinearOperator(
         matvec=lambda x: X @ x - offset @ x,
         matmat=lambda x: X @ x - offset @ x,
