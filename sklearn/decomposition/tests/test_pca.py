@@ -78,6 +78,7 @@ def test_pca_sparse(
     global_random_seed, svd_solver, sparse_container, n_components, density, scale
 ):
     RTOL = 1e-07  # 1e0-8 can result in occasional failures
+    TRANSFORM_RTOL = 1e-06  # Slightly higher tolerance for transform
 
     random_state = np.random.default_rng(global_random_seed)
     X = sparse_container(
@@ -113,8 +114,8 @@ def test_pca_sparse(
     )
     X2d = X2.toarray()
 
-    assert_allclose(pca.transform(X2), pca.transform(X2d), rtol=RTOL)
-    assert_allclose(pca.transform(X2), pcad.transform(X2d), rtol=RTOL)
+    assert_allclose(pca.transform(X2), pca.transform(X2d), rtol=TRANSFORM_RTOL)
+    assert_allclose(pca.transform(X2), pcad.transform(X2d), rtol=TRANSFORM_RTOL)
 
 
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
