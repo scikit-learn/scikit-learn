@@ -70,7 +70,7 @@ def test_pca(svd_solver, n_components):
 
 
 @pytest.mark.parametrize("density", [0.01, 0.1, 0.30])
-@pytest.mark.parametrize("n_components", [1, 2, 10, SPARSE_MAX_COMPONENTS])
+@pytest.mark.parametrize("n_components", [1, 2, 10])
 @pytest.mark.parametrize("matrix_class", CSR_CONTAINERS + CSC_CONTAINERS)
 @pytest.mark.parametrize("svd_solver", ["arpack"])
 @pytest.mark.parametrize("scale", [1, 10, 100])
@@ -78,9 +78,6 @@ def test_pca_sparse(
     global_random_seed, svd_solver, matrix_class, n_components, density, scale
 ):
     RTOL = 1e-07  # 1e0-8 can result in occasional failures
-
-    if svd_solver in ["lobpcg", "arpack"] and n_components == SPARSE_MAX_COMPONENTS:
-        pytest.skip("lobpcg and arpack don't support full solves")
 
     random_state = np.random.default_rng(global_random_seed)
     X = matrix_class(
