@@ -636,7 +636,7 @@ def _implicit_column_offset(
 ) -> LinearOperator:
     """Create an implicitly offset linear operator.
 
-    Allows us to perform a PCA on  sparse data without ever densifying the whole data
+    This is used by PCA on sparse data to avoid densifying the whole data
     matrix.
     """
     offset = offset[None, :]
