@@ -196,6 +196,21 @@ Changelog
   :class:`scipy.sparse.sparray` subclasses.
   :pr:`27301` by :user:`Lohit SundaramahaLingam <lohitslohit>`.
 
+:mod:`sklearn.linear_model`
+...................................
+
+- |Efficiency| :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now have much better convergence for
+  solvers `"lbfgs"` and `"newton-cg"`. Both solvers can now reach much higher precision
+  for the coefficients depending on the specified `tol`. Additionally, lbfgs can
+  make better use of `tol`, i.e., stop sooner or reach higher precision, and newton-cg
+  is now faster than before.
+  This change also means that with this new version of scikit-learn, the resulting
+  coefficients `coef_` and `intercept_` of your models will change for these two
+  solvers (when fit on the same data again). The amount of change depends on the
+  specified `tol`, for small values you will get more precise results.
+  :pr:`26721` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.metrics`
 ......................
 
