@@ -71,16 +71,16 @@ def test_pca(svd_solver, n_components):
 
 @pytest.mark.parametrize("density", [0.01, 0.1, 0.30])
 @pytest.mark.parametrize("n_components", [1, 2, 10])
-@pytest.mark.parametrize("matrix_class", CSR_CONTAINERS + CSC_CONTAINERS)
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
 @pytest.mark.parametrize("svd_solver", ["arpack"])
 @pytest.mark.parametrize("scale", [1, 10, 100])
 def test_pca_sparse(
-    global_random_seed, svd_solver, matrix_class, n_components, density, scale
+    global_random_seed, svd_solver, sparse_container, n_components, density, scale
 ):
     RTOL = 1e-07  # 1e0-8 can result in occasional failures
 
     random_state = np.random.default_rng(global_random_seed)
-    X = matrix_class(
+    X = sparse_container(
         sp.sparse.random(
             SPARSE_M,
             SPARSE_N,
@@ -103,7 +103,7 @@ def test_pca_sparse(
     _check_fitted_pca_close(pca, pcad, rtol=RTOL)
 
     # Test transform
-    X2 = matrix_class(
+    X2 = sparse_container(
         sp.sparse.random(
             SPARSE_M,
             SPARSE_N,
@@ -117,10 +117,10 @@ def test_pca_sparse(
     assert_allclose(pca.transform(X2), pcad.transform(X2d), rtol=RTOL)
 
 
-@pytest.mark.parametrize("matrix_class", CSR_CONTAINERS + CSC_CONTAINERS)
-def test_pca_sparse_fit_transform(global_random_seed, matrix_class):
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+def test_pca_sparse_fit_transform(global_random_seed, sparse_container):
     random_state = np.random.default_rng(global_random_seed)
-    X = matrix_class(
+    X = sparse_container(
         sp.sparse.random(
             SPARSE_M,
             SPARSE_N,
@@ -128,7 +128,7 @@ def test_pca_sparse_fit_transform(global_random_seed, matrix_class):
             density=0.01,
         )
     )
-    X2 = matrix_class(
+    X2 = sparse_container(
         sp.sparse.random(
             SPARSE_M,
             SPARSE_N,
@@ -152,10 +152,10 @@ def test_pca_sparse_fit_transform(global_random_seed, matrix_class):
 
 
 @pytest.mark.parametrize("svd_solver", ["randomized", "full", "auto"])
-@pytest.mark.parametrize("matrix_class", CSR_CONTAINERS + CSC_CONTAINERS)
-def test_sparse_pca_solver_error(global_random_seed, svd_solver, matrix_class):
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+def test_sparse_pca_solver_error(global_random_seed, svd_solver, sparse_container):
     random_state = np.random.RandomState(global_random_seed)
-    X = matrix_class(
+    X = sparse_container(
         sp.sparse.random(
             SPARSE_M,
             SPARSE_N,

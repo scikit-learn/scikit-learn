@@ -949,12 +949,12 @@ def test_csr_row_norms(dtype):
 
 @pytest.fixture(scope="module", params=CSR_CONTAINERS + CSC_CONTAINERS)
 def centered_matrices(request) -> tuple[sp.linalg.LinearOperator, np.ndarray]:
-    matrix_class = request.param
+    sparse_container = request.param
     from sklearn.utils.sparsefuncs import _implicit_column_offset
 
     random_state = np.random.default_rng(42)
 
-    X_sparse = matrix_class(
+    X_sparse = sparse_container(
         sp.random(500, 100, density=0.1, format="csr", random_state=random_state)
     )
     X_dense = X_sparse.toarray()
