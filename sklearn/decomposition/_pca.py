@@ -480,8 +480,9 @@ class PCA(_BasePCA):
         # Raise an error for sparse input and unsupported svd_solver
         if issparse(X) and self.svd_solver != "arpack":
             raise TypeError(
-                'PCA only support sparse inputs with the "arpack" solver. See '
-                "TruncatedSVD for a possible alternative."
+                'PCA only support sparse inputs with the "arpack" solver, while '
+                f'"{self.svd_solver}" was passed. See TruncatedSVD for a possible'
+                " alternative."
             )
         # Raise an error for non-Numpy input and arpack solver.
         if self.svd_solver == "arpack" and is_array_api_compliant:

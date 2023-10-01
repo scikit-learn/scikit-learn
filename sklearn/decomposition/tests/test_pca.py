@@ -154,7 +154,7 @@ def test_pca_sparse_fit_transform(global_random_seed, matrix_class):
     assert_allclose(pca_fit.transform(X2), pca_fit_transform.transform(X2), rtol=1e-10)
 
 
-@pytest.mark.parametrize("svd_solver", ["randomized", "logpcg", "full", "auto"])
+@pytest.mark.parametrize("svd_solver", ["randomized", "full", "auto"])
 @pytest.mark.parametrize("matrix_class", CSR_CONTAINERS + CSC_CONTAINERS)
 def test_sparse_pca_solver_error(global_random_seed, svd_solver, matrix_class):
     random_state = np.random.RandomState(global_random_seed)
@@ -166,7 +166,11 @@ def test_sparse_pca_solver_error(global_random_seed, svd_solver, matrix_class):
         )
     )
     pca = PCA(n_components=30, svd_solver=svd_solver)
-    with pytest.raises(TypeError):
+    error_msg_pattern = (
+        f'PCA only support sparse inputs with the "arpack" solver, while "{svd_solver}"'
+        " was passed"
+    )
+    with pytest.raises(TypeError, match=error_msg_pattern):
         pca.fit(X)
 
 
