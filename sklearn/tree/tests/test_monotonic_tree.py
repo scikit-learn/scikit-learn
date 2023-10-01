@@ -5,6 +5,8 @@ from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import (
     ExtraTreesClassifier,
     ExtraTreesRegressor,
+    GradientBoostingClassifier,
+    GradientBoostingRegressor,
     RandomForestClassifier,
     RandomForestRegressor,
 )
@@ -21,10 +23,12 @@ TREE_REGRESSOR_CLASSES = [DecisionTreeRegressor, ExtraTreeRegressor]
 TREE_BASED_CLASSIFIER_CLASSES = TREE_CLASSIFIER_CLASSES + [
     RandomForestClassifier,
     ExtraTreesClassifier,
+    GradientBoostingClassifier,
 ]
 TREE_BASED_REGRESSOR_CLASSES = TREE_REGRESSOR_CLASSES + [
     RandomForestRegressor,
     ExtraTreesRegressor,
+    GradientBoostingRegressor,
 ]
 
 
@@ -91,7 +95,9 @@ def test_monotonic_constraints_classifications(
 @pytest.mark.parametrize("TreeRegressor", TREE_BASED_REGRESSOR_CLASSES)
 @pytest.mark.parametrize("depth_first_builder", (True, False))
 @pytest.mark.parametrize("sparse_splitter", (True, False))
-@pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
+@pytest.mark.parametrize(
+    "criterion", ("friedman_mse", "squared_error", "absolute_error")
+)
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_monotonic_constraints_regressions(
     TreeRegressor,
@@ -101,6 +107,12 @@ def test_monotonic_constraints_regressions(
     global_random_seed,
     csc_container,
 ):
+    if (
+        criterion in ("absolute_error", "poisson")
+        and TreeRegressor is GradientBoostingRegressor
+    ):
+        pytest.skip(f"{TreeRegressor.__name__} does not support criterion={criterion}")
+
     n_samples = 1000
     n_samples_train = 900
     # Build a regression task using 5 informative features
@@ -133,8 +145,8 @@ def test_monotonic_constraints_regressions(
         est = TreeRegressor(
             max_depth=8,
             monotonic_cst=monotonic_cst,
-            criterion=criterion,
             max_leaf_nodes=n_samples_train,
+            criterion=criterion,
         )
     if hasattr(est, "random_state"):
         est.set_params(random_state=global_random_seed)
@@ -179,7 +191,7 @@ def test_multiple_output_raises(TreeClassifier):
     est = TreeClassifier(
         max_depth=None, monotonic_cst=np.array([-1, 1]), random_state=0
     )
-    msg = "Monotonicity constraints are not supported with multiple output"
+    msg = "Monotonicity constraints are not supported with multiple outputs"
     with pytest.raises(ValueError, match=msg):
         est.fit(X, y)
 
