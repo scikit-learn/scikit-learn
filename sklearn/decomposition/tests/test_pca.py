@@ -90,8 +90,16 @@ def test_pca_sparse(
     pcad = PCA(n_components=n_components, svd_solver=svd_solver)
     pcad.fit(Xd)
 
+    # Fitted attributes equality
     assert_allclose(pca.components_, pcad.components_, rtol=RTOL)
+    assert_allclose(pca.explained_variance_, pcad.explained_variance_, rtol=RTOL)
     assert_allclose(pca.singular_values_, pcad.singular_values_, rtol=RTOL)
+    assert_allclose(pca.mean_, pcad.mean_, rtol=RTOL)
+    assert_allclose(pca.n_components_, pcad.n_components_, rtol=RTOL)
+    assert_allclose(pca.n_features_, pcad.n_features_, rtol=RTOL)
+    assert_allclose(pca.n_samples_, pcad.n_samples_, rtol=RTOL)
+    assert_allclose(pca.noise_variance_, pcad.noise_variance_, rtol=RTOL)
+    assert_allclose(pca.n_features_in_, pcad.n_features_in_, rtol=RTOL)
 
 
 @pytest.mark.parametrize("svd_solver", ["randomized", "logpcg", "full", "auto"])
