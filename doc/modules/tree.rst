@@ -27,7 +27,7 @@ Some advantages of decision trees are:
 
     - Requires little data preparation. Other techniques often require data
       normalization, dummy variables need to be created and blank values to
-      be removed. Some tree and algorithm combinations support 
+      be removed. Some tree and algorithm combinations support
       :ref:`missing values <tree_missing_value_support>`.
 
     - The cost of using the tree (i.e., predicting data) is logarithmic in the
@@ -618,7 +618,7 @@ Decisions are made as follows:
         >>> tree.predict(X)
         array([0, 0, 1, 1])
 
-    - If the the criterion evaluation is the same for both nodes,
+    - If the criterion evaluation is the same for both nodes,
       then the tie for missing value at predict time is broken by going to the
       right node. The splitter also checks the split where all the missing
       values go to one child and non-missing values go to the other::

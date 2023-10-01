@@ -65,7 +65,7 @@ TARGET_NAMES = ["Cover_Type"]
 
 @validate_params(
     {
-        "data_home": [str, None],
+        "data_home": [str, os.PathLike, None],
         "download_if_missing": ["boolean"],
         "random_state": ["random_state"],
         "shuffle": ["boolean"],
@@ -98,7 +98,7 @@ def fetch_covtype(
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
