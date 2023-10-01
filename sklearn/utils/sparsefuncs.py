@@ -631,13 +631,20 @@ def csc_median_axis_0(X):
     return median
 
 
-def _implicit_column_offset(
-    X: "sp.spmatrix | sp.sparray", offset: np.ndarray
-) -> LinearOperator:
+def _implicit_column_offset(X, offset):
     """Create an implicitly offset linear operator.
 
     This is used by PCA on sparse data to avoid densifying the whole data
     matrix.
+
+    Params
+    ------
+        X : sparse matrix of shape (n_samples, n_features)
+        offset : ndarray of shape (n_features,)
+
+    Returns
+    -------
+    centered : LinearOperator
     """
     offset = offset[None, :]
     XT = X.T.conj(copy=False)
