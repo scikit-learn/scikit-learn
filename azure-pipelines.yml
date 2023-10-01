@@ -127,11 +127,11 @@ jobs:
     vmImage: ubuntu-22.04
   variables:
     # Need to match Python version and Emscripten version for the correct
-    # Pyodide version. For example, for Pyodide version 0.23.4, see
-    # https://github.com/pyodide/pyodide/blob/0.23.4/Makefile.envs
-    PYODIDE_VERSION: '0.23.4'
-    EMSCRIPTEN_VERSION: '3.1.32'
-    PYTHON_VERSION: '3.11.2'
+    # Pyodide version. For example, for Pyodide version 0.24.1, see
+    # https://github.com/pyodide/pyodide/blob/0.24.1/Makefile.envs
+    PYODIDE_VERSION: '0.24.1'
+    EMSCRIPTEN_VERSION: '3.1.45'
+    PYTHON_VERSION: '3.11.3'
 
   dependsOn: [git_commit, linting]
   condition: |
@@ -150,7 +150,7 @@ jobs:
         addToPath: true
 
     - bash: bash build_tools/azure/install_pyodide.sh
-      displayName: Build Pyodide wheel and install it in a Pyodide venv
+      displayName: Build Pyodide wheel
 
     - bash: bash build_tools/azure/test_script_pyodide.sh
       displayName: Test Pyodide wheel
