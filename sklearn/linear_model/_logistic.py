@@ -26,18 +26,30 @@ from ..metrics import get_scorer
 from ..model_selection import check_cv
 from ..preprocessing import LabelBinarizer, LabelEncoder
 from ..svm._base import _fit_liblinear
-from ..utils import (Bunch, check_array, check_consistent_length,
-                     check_random_state, compute_class_weight)
+from ..utils import (
+    Bunch,
+    check_array,
+    check_consistent_length,
+    check_random_state,
+    compute_class_weight,
+)
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import row_norms, softmax
-from ..utils.metadata_routing import (MetadataRouter, MethodMapping,
-                                      _raise_for_params, _routing_enabled,
-                                      process_routing)
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
 from ..utils.multiclass import check_classification_targets
 from ..utils.optimize import _check_optimize_result, _newton_cg
 from ..utils.parallel import Parallel, delayed
-from ..utils.validation import (_check_method_params, _check_sample_weight,
-                                check_is_fitted)
+from ..utils.validation import (
+    _check_method_params,
+    _check_sample_weight,
+    check_is_fitted,
+)
 from ._base import BaseEstimator, LinearClassifierMixin, SparseCoefMixin
 from ._glm.glm import NewtonCholeskySolver
 from ._linear_loss import LinearModelLoss
