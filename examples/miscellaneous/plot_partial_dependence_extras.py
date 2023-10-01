@@ -73,7 +73,7 @@ display = PartialDependenceDisplay.from_estimator(
 # Now we will add a boxplot to the one-way blood pressure plot as well as
 # histograms to the blood pressure and bmi two-way plot.
 # To achieve this, pass a list containing 'boxplot', 'hist', or 'scatter' to
-#  ``extra_plots``. You can also pass ``None```, for the default behavior of no
+# ``extra_plots``. You can also pass ``None``, for the default behavior of no
 # extra plots.
 _, ax = plt.subplots(figsize=(6, 4), constrained_layout=True)
 display = PartialDependenceDisplay.from_estimator(

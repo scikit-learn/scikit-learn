@@ -1537,30 +1537,31 @@ class PartialDependenceDisplay:
 
             .. versionadded:: 1.1
 
-        extra_plots : {'hist', 'boxplot', 'scatter', None} or list of such, \
-                        default=None
-
+        extra_plots : {'hist', 'boxplot', 'scatter', None} or list of such, default=None
             Extra plots to be added to the partial dependence plots. Currently
             supported options are:
 
-            - ``'hist'`` : A histogram of the feature distributions will be
-                plotted above (one-way) or above and to the right (two-way) of
-                the PD display. If the feature is categorical, a bar plot will
-                be used instead.
+            ``'hist'``
+                A histogram of the feature distributions will be plotted above
+                (one-way) or above and to the right (two-way) of the PD display.
+                If the feature is categorical, a bar plot will be used instead.
 
-            - ``'boxplot'`` : A boxplot of the feature distributions will be
-                plotted above (one-way) or above and to the right (two-way) of
-                the PD display.
+            ``'boxplot'``
+                A boxplot of the feature distributions will be plotted above
+                (one-way) or above and to the right (two-way) of the PD display.
 
-            - ``'scatter'`` : A scatter plot of the feature(s) overlayed on the
-                PD display. In a one-way PD plot, the predictions (regression)
-                or predicted probabilities of the ``target`` (classification)
-                are plotted on the y-axis. In a two-way PD plot, the feature
-                values are plotted directly on the contour plot.
+            ``'scatter'``
+                A scatter plot of the feature(s) overlayed on the PD display.
+                In a one-way PD plot, the predictions (regression) or predicted
+                probabilities of the ``target`` (classification) are plotted on
+                the y-axis. In a two-way PD plot, the feature values are plotted
+                directly on the contour plot.
 
-            - ``None`` : No extra plots will be added.
+            ``None``
+                No extra plots will be added.
 
             .. note::
+
                 The ``'hist'`` and ``'boxplot'`` plots will be truncated if the
                 ``percentiles`` parameter has it's min > 0 and max < 1.
                 Similarly, the ``'scatter'`` plot will be limited to the space
@@ -1569,8 +1570,7 @@ class PartialDependenceDisplay:
 
             .. versionadded:: 1.4
 
-        extra_plots_kw : dict, default=None (see below)
-
+        extra_plots_kw : dict, default=None
             Dictionary with keywords passed to the ``matplotlib.pyplot.hist``,
             ``matplotlib.pyplot.boxplot``, and ``matplotlib.pyplot.scatter``
             calls.
@@ -1580,17 +1580,17 @@ class PartialDependenceDisplay:
             used.
 
             Should be in the format:
-                ``{'hist' : {'fill' : False}, 'scatter' : {'alpha' : 0.5}}``
+            ``{'hist' : {'fill' : False}, 'scatter' : {'alpha' : 0.5}}``
 
             .. versionadded:: 1.4
 
         y : {None, dict, or array-like}, default=None
             If y is array-like, it should have the shape (n_samples,) and ``y``
-             is the target ``y`` values used during `estimator.fit(X, y)`. If
-             ``y`` is a dict, then the only key  is ``'predictions'`` and the
-             value is the same array-like ``y`` used during fit. ``y`` is only
-             used when ``'scatter' is in ``extra_plots`` and for one-way
-             partial dependence plots. In the multi-class setting, this should
+            is the target ``y`` values used during `estimator.fit(X, y)`. If
+            ``y`` is a dict, then the only key  is ``'predictions'`` and the
+            value is the same array-like ``y`` used during fit. ``y`` is only
+            used when ``'scatter' is in ``extra_plots`` and for one-way
+            partial dependence plots. In the multi-class setting, this should
             correspond to the ``y`` values from the ``target`` argument.
 
             .. versionadded:: 1.4
