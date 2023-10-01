@@ -86,7 +86,7 @@ def test_pca_sparse(
     pca = PCA(n_components=n_components, svd_solver=svd_solver)
     pca.fit(X)
 
-    Xd = np.asarray(X.todense())
+    Xd = X.toarray()
     pcad = PCA(n_components=n_components, svd_solver=svd_solver)
     pcad.fit(Xd)
 
