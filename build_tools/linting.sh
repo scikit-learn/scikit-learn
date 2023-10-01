@@ -23,7 +23,7 @@ else
 fi
 
 echo -e "### Running ruff ###\n"
-ruff check --show-source .
+ruff check --show-source --config pyproject.toml .
 status=$?
 if [[ $status -eq 0 ]]
 then
