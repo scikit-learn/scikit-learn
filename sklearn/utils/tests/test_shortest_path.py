@@ -15,7 +15,8 @@ def floyd_warshall_slow(graph, directed=False):
     for k in range(N):
         # Compute the sum of the intermediate distances efficiently
         graph += np.outer(graph[:, k], graph[k, :])
-        graph = np.minimum(graph, 1)  # Convert distances to 1 for non-zero entries
+        # Convert distances to 1 for non-zero entries
+        np.minimum(x1=graph, x2=1, out=graph)
 
     return graph
 
