@@ -115,7 +115,10 @@ jobs:
             platform_id: macosx_x86_64
 
           # MacOS arm64
-          # The latest Python version is built and tested on CirrusCI
+          # The wheel for the latest Python version is built and tested on
+          # Cirrus CI but due to limited build time for free accounts on Cirrus
+          # CI, we build the macOS arm64 wheels for the other Python versions on
+          # Github Actions via cross-compilation (without running the tests).
           - os: macos-latest
             python: 38
             platform_id: macosx_arm64
