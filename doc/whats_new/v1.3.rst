@@ -432,7 +432,7 @@ Changelog
   the pandas parser. The parameter `read_csv_kwargs` allows to overwrite this behaviour.
   :pr:`26551` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| :func:`datasets.fetch_openml` will consistenly use `np.nan` as missing marker
+- |Fix| :func:`datasets.fetch_openml` will consistently use `np.nan` as missing marker
   with both parsers `"pandas"` and `"liac-arff"`.
   :pr:`26579` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -724,7 +724,7 @@ Changelog
 
 - |API| The parameter `log_scale` in the class
   :class:`model_selection.LearningCurveDisplay` has been deprecated in 1.3 and
-  will be removed in 1.5. The default scale can be overriden by setting it
+  will be removed in 1.5. The default scale can be overridden by setting it
   directly on the `ax` object and will be set automatically from the spacing
   of the data points otherwise.
   :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
@@ -837,7 +837,7 @@ Changelog
 - |Fix| :class:`preprocessing.PowerTransformer` now correctly preserves the Pandas
   Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
 
-- |Fix| :class:`preprocessing.PowerTransformer` now correcly raises error when
+- |Fix| :class:`preprocessing.PowerTransformer` now correctly raises error when
   using `method="box-cox"` on data with a constant `np.nan` column.
   :pr:`26400` by :user:`Yao Xiao <Charlie-XIAO>`.
 
