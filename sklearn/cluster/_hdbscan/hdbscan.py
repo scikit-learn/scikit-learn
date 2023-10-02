@@ -363,6 +363,7 @@ def _hdbscan_boruvka(
     leaf_size = max(leaf_size, 3)
     Tree = KDTree if algo == "kd_tree" else BallTree
     tree = Tree(X, metric=metric, leaf_size=leaf_size, **metric_params)
+    print(np.array(tree.idx_array))
 
     n_jobs = effective_n_jobs(n_jobs)
     out = BoruvkaAlgorithm(
