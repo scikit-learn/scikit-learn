@@ -17,6 +17,10 @@ from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..utils._param_validation import HasMethods, Interval, RealNotInt
 from ..utils._tags import _safe_tags
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupportedMixin,
+)
 from ..utils.metaestimators import _safe_split, available_if
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import check_is_fitted
@@ -56,7 +60,7 @@ def _estimator_has(attr):
     )
 
 
-class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
+class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     """Feature ranking with recursive feature elimination.
 
     Given an external estimator that assigns weights to features (e.g., the
@@ -251,6 +255,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        _raise_for_unsupported_routing(self, "fit", **fit_params)
         return self._fit(X, y, **fit_params)
 
     def _fit(self, X, y, step_score=None, **fit_params):
@@ -680,6 +685,7 @@ class RFECV(RFE):
         self : object
             Fitted estimator.
         """
+        _raise_for_unsupported_routing(self, "fit", groups=groups)
         tags = self._get_tags()
         X, y = self._validate_data(
             X,
