@@ -176,6 +176,7 @@ class SequentialFeatureSelector(
         n_jobs=None,
         verbose=0,
     ):
+        self.verbose = verbose
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.tol = tol
@@ -253,7 +254,7 @@ class SequentialFeatureSelector(
                 cloned_estimator, X, y, cv, current_mask
             )
             if is_auto_select and ((new_score - old_score) < self.tol):
-                if verbose >= 1:
+                if self.verbose >= 1:
                     if self.direction == "backward":
                         print(
                             f"Score: {new_score:.4f} - {old_score:.4f}"
@@ -269,7 +270,7 @@ class SequentialFeatureSelector(
                 break
 
             current_mask[new_feature_idx] = True
-            if verbose >= 1:
+            if self.verbose >= 1:
                 if self.direction == "backward":
                     print(
                         f"Score: {new_score:.4f} - {old_score:.4f}"
