@@ -174,6 +174,7 @@ class SequentialFeatureSelector(
         scoring=None,
         cv=5,
         n_jobs=None,
+        verbose=0,
     ):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
@@ -252,10 +253,41 @@ class SequentialFeatureSelector(
                 cloned_estimator, X, y, cv, current_mask
             )
             if is_auto_select and ((new_score - old_score) < self.tol):
+                if verboe >= 1:
+                    if self.direction == "backward":
+                        print(
+                            f"Score: "
+                            f"{new_score:.4f} - {old_score:.4f}"
+                            f" = {new_score - old_score:.4f} "
+                            f"features dropped: {sum(current_mask)}"
+                        )
+                    else:
+                        print(
+                            f"Score: "
+                            f"{new_score:.4f} - {old_score:.4f}"
+                            f" = {new_score - old_score:.4f} "
+                            f"features added: {sum(current_mask)}"
+                        )
                 break
 
-            old_score = new_score
             current_mask[new_feature_idx] = True
+            if verbose >= 1:
+                if self.direction == "backward":
+                    print(
+                        f"Score: "
+                        f"{new_score:.4f} - {old_score:.4f}"
+                        f" = {new_score - old_score:.4f} "
+                        f"features dropped: {sum(current_mask)}"
+                    )
+                else:
+                    print(
+                        f"Score: "
+                        f"{new_score:.4f} - {old_score:.4f}"
+                        f" = {new_score - old_score:.4f}"
+                        f"features added: {sum(current_mask)}"
+                    )
+
+            old_score = new_score
 
         if self.direction == "backward":
             current_mask = ~current_mask
