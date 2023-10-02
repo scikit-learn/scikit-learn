@@ -202,7 +202,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         set to the training set.
         In general, we recommend using
         :class:`~sklearn.preprocessing.StandardScaler` within a
-        :ref:`Pipeline <pipeline_user_guide>` in order to prevent most risks of data
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking: `pipe = make_pipeline(StandardScaler(), LogisticRegression())`.
     """  # noqa
     X = check_array(
@@ -630,7 +630,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
         set to the training set.
         In general, we recommend using
         :class:`~sklearn.preprocessing.MinMaxScaler` within a
-        :ref:`Pipeline <pipeline_user_guide>` in order to prevent most risks of data
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking: `pipe = make_pipeline(MinMaxScaler(), LogisticRegression())`.
 
     See Also
@@ -1353,7 +1353,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
         set to the training set.
         In general, we recommend using
         :class:`~sklearn.preprocessing.MaxAbsScaler` within a
-        :ref:`Pipeline <pipeline_user_guide>` in order to prevent most risks of data
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking: `pipe = make_pipeline(MaxAbsScaler(), LogisticRegression())`.
 
     See Also
@@ -1761,7 +1761,7 @@ def robust_scale(
         set to the training set.
         In general, we recommend using
         :class:`~sklearn.preprocessing.RobustScaler` within a
-        :ref:`Pipeline <pipeline_user_guide>` in order to prevent most risks of data
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking: `pipe = make_pipeline(RobustScaler(), LogisticRegression())`.
     """
     X = check_array(
@@ -2978,7 +2978,7 @@ def quantile_transform(
         training set.
         In general, we recommend using
         :class:`~sklearn.preprocessing.QuantileTransformer` within a
-        :ref:`Pipeline <pipeline_user_guide>` in order to prevent most risks of data
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking:`pipe = make_pipeline(QuantileTransformer(),
         LogisticRegression())`.
 
@@ -3527,7 +3527,7 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
         set to the training set.
         In general, we recommend using
         :class:`~sklearn.preprocessing.PowerTransformer` within a
-        :ref:`Pipeline <pipeline_user_guide>` in order to prevent most risks of data
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking, e.g.: `pipe = make_pipeline(PowerTransformer(),
         LogisticRegression())`.
     """

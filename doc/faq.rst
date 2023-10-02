@@ -133,7 +133,7 @@ dataframe columns selected by name or dtype to dedicated scikit-learn transforme
 
 Therefore :class:`~sklearn.compose.ColumnTransformer` are often used in the first
 step of scikit-learn pipelines when dealing
-with heterogeneous dataframes (see :ref:`pipeline_user_guide` for more details).
+with heterogeneous dataframes (see :ref:`pipeline` for more details).
 
 See also :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`
 for an example of working with heterogeneous (e.g. categorical and numeric) data.

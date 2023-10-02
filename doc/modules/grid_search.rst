@@ -625,7 +625,7 @@ levels of nesting::
   ...    'model__estimator__max_depth': [2, 4, 6, 8]}
   >>> search = GridSearchCV(pipe, param_grid, cv=5).fit(X, y)
 
-Please refer to :ref:`pipeline_user_guide` for performing parameter searches over
+Please refer to :ref:`pipeline` for performing parameter searches over
 pipelines.
 
 Model selection: development and evaluation

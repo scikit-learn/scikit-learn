@@ -78,7 +78,7 @@ class Pipeline(_BaseComposition):
     example :ref:`sphx_glr_auto_examples_compose_plot_digits_pipe.py` shows how
     to grid search on a pipeline using `'__'` as a separator in the parameter names.
 
-    Read more in the :ref:`User Guide <pipeline_user_guide>`.
+    Read more in the :ref:`User Guide <pipeline>`.
 
     .. versionadded:: 0.5
 
@@ -1323,7 +1323,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     setting to 'drop' or disabled by setting to 'passthrough' (features are
     passed without transformation).
 
-    Read more in the :ref:`User Guide <feature_union_user_guide>`.
+    Read more in the :ref:`User Guide <feature_union>`.
 
     .. versionadded:: 0.13
 

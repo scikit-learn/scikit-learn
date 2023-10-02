@@ -8,7 +8,7 @@ Pipelines and composite estimators
 To build a composite estimator, transformers are usually combined with other
 transformers or with :term:`predictors` (such as classifiers or regressors).
 The most common tool used for composing estimators is a :ref:`Pipeline
-<pipeline_user_guide>`. Pipelines require all steps except the last to be a
+<pipeline>`. Pipelines require all steps except the last to be a
 :term:`transformer`. The last step can be anything, a transformer, a
 :term:`predictor`, or a clustering estimator which might have or not have a
 `.predict(...)` method. A pipeline exposes all methods provided by the last
@@ -18,13 +18,13 @@ provides a `predict` method, then the pipeline would expose that method, and
 given a data :term:`X`, use all steps except the last to transform the data,
 and then give that transformed data to the `predict` method of the last step of
 the pipeline. `Pipeline` is often used in combination with :ref:`Column
-Transformer <column_transformer_user_guide>` or :ref:`FeatureUnion
-<feature_union_user_guide>` which concatenate the output of transformers into a
+Transformer <column_transformer>` or :ref:`FeatureUnion
+<feature_union>` which concatenate the output of transformers into a
 composite feature space. :ref:`TransformedTargetRegressor
 <transformed_target_regressor>` deals with transforming the :term:`target`
 (i.e. log-transform :term:`y`).
 
-.. _pipeline_user_guide:
+.. _pipeline:
 
 Pipeline: chaining estimators
 =============================
@@ -369,7 +369,7 @@ each other. However, it is possible to bypass this checking by setting
  * :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`
 
 
-.. _feature_union_user_guide:
+.. _feature_union:
 
 FeatureUnion: composite feature spaces
 ======================================
@@ -385,7 +385,7 @@ larger matrix.
 
 When you want to apply different transformations to each field of the data,
 see the related class :class:`~sklearn.compose.ColumnTransformer`
-(see :ref:`user guide <column_transformer_user_guide>`).
+(see :ref:`user guide <column_transformer>`).
 
 :class:`FeatureUnion` serves the same purposes as :class:`Pipeline` -
 convenience and joint parameter estimation and validation.
@@ -433,7 +433,7 @@ and ignored by setting to ``'drop'``::
  * :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`
 
 
-.. _column_transformer_user_guide:
+.. _column_transformer:
 
 ColumnTransformer for heterogeneous data
 ========================================

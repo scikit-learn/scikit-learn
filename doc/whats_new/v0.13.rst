@@ -77,7 +77,7 @@ New Estimator Classes
 
 - :class:`pipeline.FeatureUnion`, a transformer that concatenates
   results of several other transformers by `Andreas Müller`_. See
-  :ref:`feature_union_user_guide` in the user guide.
+  :ref:`feature_union` in the user guide.
 
 - :class:`random_projection.GaussianRandomProjection`,
   :class:`random_projection.SparseRandomProjection` and the function

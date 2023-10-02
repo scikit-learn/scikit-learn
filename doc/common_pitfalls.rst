@@ -228,7 +228,7 @@ Below are some tips on avoiding data leakage:
   subsets as the same preprocessing should be applied to all the data.
   This can be achieved by using `fit_transform` on the train subset and
   `transform` on the test subset.
-* The scikit-learn :ref:`pipeline <pipeline_user_guide>` is a great way to prevent data
+* The scikit-learn :ref:`pipeline <pipeline>` is a great way to prevent data
   leakage as it ensures that the appropriate method is performed on the
   correct data subset. The pipeline is ideal for use in cross-validation
   and hyper-parameter tuning functions.

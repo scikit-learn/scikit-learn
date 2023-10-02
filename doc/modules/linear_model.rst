@@ -1766,7 +1766,7 @@ The features of ``X`` have been transformed from :math:`[x_1, x_2]` to
 any linear model.
 
 This sort of preprocessing can be streamlined with the
-:ref:`Pipeline <pipeline_user_guide>` tools. A single object representing a simple
+:ref:`Pipeline <pipeline>` tools. A single object representing a simple
 polynomial regression can be created and used as follows::
 
     >>> from sklearn.preprocessing import PolynomialFeatures
