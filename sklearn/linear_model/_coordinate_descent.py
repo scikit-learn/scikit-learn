@@ -34,6 +34,7 @@ from ..utils.validation import (
     check_random_state,
     column_or_1d,
     has_fit_parameter,
+    has_split_parameter,
 )
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -1552,8 +1553,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             Returns an instance of fitted model.
         """
         _raise_for_params(params, self, "fit")
-        if sample_weight is not None and not has_fit_parameter(self, "sample_weight"):
-            raise ValueError("Underlying estimator does not support sample weights.")
 
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
@@ -1687,14 +1686,33 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         if effective_n_jobs(self.n_jobs) > 1:
             path_params["copy_X"] = False
 
+        # init cross-validation generator
+        cv = check_cv(self.cv)
+
         if _routing_enabled():
+            if (
+                sample_weight is not None
+                and not has_split_parameter(cv, "sample_weight")
+                and not has_fit_parameter(self, "sample_weight")
+            ):
+                raise ValueError(
+                    "The CV splitter and underlying estimator do not support"
+                    " sample weights."
+                )
+
+            if has_split_parameter(cv, "sample_weight"):
+                params["sample_weight"] = sample_weight
+
             routed_params = process_routing(self, "fit", **params)
+
+            if sample_weight is not None and not has_fit_parameter(
+                self, "sample_weight"
+            ):
+                # MultiTaskElasticNetCV does not (yet) support sample_weight
+                sample_weight = None
         else:
             routed_params = Bunch()
             routed_params.splitter = Bunch(split=Bunch())
-
-        # init cross-validation generator
-        cv = check_cv(self.cv)
 
         # Compute path for all folds and compute MSE to get the best alpha
         folds = list(cv.split(X, y, **routed_params.splitter.split))
