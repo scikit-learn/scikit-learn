@@ -260,6 +260,9 @@ Meta-estimators and functions supporting metadata routing:
 - :func:`sklearn.model_selection.cross_validate`
 - :func:`sklearn.model_selection.cross_val_score`
 - :func:`sklearn.model_selection.cross_val_predict`
+- :class:`sklearn.multiclass.OneVsOneClassifier`
+- :class:`sklearn.multiclass.OneVsRestClassifier`
+- :class:`sklearn.multiclass.OutputCodeClassifier`
 - :class:`sklearn.multioutput.ClassifierChain`
 - :class:`sklearn.multioutput.MultiOutputClassifier`
 - :class:`sklearn.multioutput.MultiOutputRegressor`
@@ -296,8 +299,5 @@ Meta-estimators and tools not supporting metadata routing yet:
 - :class:`sklearn.model_selection.learning_curve`
 - :class:`sklearn.model_selection.permutation_test_score`
 - :class:`sklearn.model_selection.validation_curve`
-- :class:`sklearn.multiclass.OneVsOneClassifier`
-- :class:`sklearn.multiclass.OneVsRestClassifier`
-- :class:`sklearn.multiclass.OutputCodeClassifier`
 - :class:`sklearn.pipeline.FeatureUnion`
 - :class:`sklearn.semi_supervised.SelfTrainingClassifier`
