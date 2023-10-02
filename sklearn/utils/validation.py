@@ -1302,8 +1302,7 @@ def has_fit_parameter(estimator, parameter):
 
 
 def has_split_parameter(cv_splitter, parameter):
-    """Check whether the cv splitter's split method supports the
-    given parameter.
+    """Check whether the splitter's split method supports the given parameter.
 
     Parameters
     ----------
