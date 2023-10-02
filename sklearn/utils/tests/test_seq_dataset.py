@@ -70,20 +70,9 @@ def _make_sparse_datasets():
 
 
 def _make_fused_types_datasets():
-    dense_datasets = [
-        (
-            _make_dense_dataset(floating[0]),
-            _make_dense_dataset(floating[1]),
-        )
-    ]
-    sparse_datasets = [
-        (
-            _make_sparse_dataset(csr_container, floating[0]),
-            _make_sparse_dataset(csr_container, floating[1]),
-        )
-        for csr_container in CSR_CONTAINERS
-    ]
-    return dense_datasets + sparse_datasets
+    all_datasets = _make_dense_datasets() + _make_sparse_datasets()
+    # group dataset by array types to get a tuple (float32, float64)
+    return (all_datasets[idx : idx + 2] for idx in range(0, len(all_datasets), 2))
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
