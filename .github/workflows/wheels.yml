@@ -113,6 +113,9 @@ jobs:
           - os: macos-latest
             python: 311
             platform_id: macosx_x86_64
+          - os: macos-latest
+            python: 312
+            platform_id: macosx_x86_64
 
           # MacOS arm64
           # The wheel for the latest Python version is built and tested on
