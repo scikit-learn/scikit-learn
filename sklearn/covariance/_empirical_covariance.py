@@ -102,6 +102,7 @@ def empirical_covariance(X, *, assume_centered=False):
         warnings.warn(
             "Only one sample available. You may want to reshape your data array"
         )
+        return np.zeros((X.shape[1], X.shape[1]), dtype=X.dtype)
 
     ddof = 0 if assume_centered else 1
     covariance = (X.T @ X) / (X.shape[0] - ddof)
