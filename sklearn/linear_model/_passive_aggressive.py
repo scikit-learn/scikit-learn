@@ -35,11 +35,11 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         .. versionadded:: 0.19
 
     early_stopping : bool, default=False
-        Whether to use early stopping to terminate training when validation.
+        Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
         a stratified fraction of training data as validation and terminate
-        training when validation score is not improving by at least tol for
-        n_iter_no_change consecutive epochs.
+        training when validation score is not improving by at least `tol` for
+        `n_iter_no_change` consecutive epochs.
 
         .. versionadded:: 0.20
 

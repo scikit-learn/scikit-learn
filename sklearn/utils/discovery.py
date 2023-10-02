@@ -9,12 +9,6 @@ from importlib import import_module
 from operator import itemgetter
 from pathlib import Path
 
-__all__ = [
-    "all_estimators",
-    "all_displays",
-    "all_functions",
-]
-
 _MODULE_TO_IGNORE = {
     "tests",
     "externals",
