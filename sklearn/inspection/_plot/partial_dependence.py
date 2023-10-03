@@ -1054,7 +1054,7 @@ class PartialDependenceDisplay:
                 2, 1, height_ratios=[0.2, 1], subplot_spec=ax.get_subplotspec()
             )
 
-            axs = extra_plot_gs.subplots(sharex=ax)
+            axs = extra_plot_gs.subplots()
             ax.remove()
             extrax_ax = axs[0]
             ax = axs[1]
