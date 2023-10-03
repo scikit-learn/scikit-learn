@@ -98,14 +98,16 @@ and classes are impacted:
 - :func:`cluster.kmeans_plusplus` in :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`;
 - :func:`decomposition.non_negative_factorization` in :pr:`27100` by
   :user:`Isaac Virshup <ivirshup>`;
+- :func:`feature_selection.f_regression` in :pr:`27239` by
+  :user:`Yaroslav Korobko <Tialo>`;
+- :func:`feature_selection.r_regression` in :pr:`27239` by
+  :user:`Yaroslav Korobko <Tialo>`;
 - :func:`manifold.trustworthiness` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
-- :func:`metrics.f_regression` in :pr:`27239` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`metrics.pairwise_distances` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :func:`metrics.pairwise_distances_chunked` in :pr:`27250` by
   :user:`Yao Xiao <Charlie-XIAO>`;
 - :func:`metrics.pairwise.pairwise_kernels` in :pr:`27250` by
   :user:`Yao Xiao <Charlie-XIAO>`;
-- :func:`metrics.r_regression` in :pr:`27239` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.utils.multiclass.type_of_target` in :pr:`27274` by
   :user:`Yao Xiao <Charlie-XIAO>`.
 
@@ -128,7 +130,7 @@ and classes are impacted:
 - :class:`kernel_approximation.PolynomialCountSketch` in  :pr:`27301` by
   :user:`Lohit SundaramahaLingam <lohitslohit>`;
 - :class:`neural_network.BernoulliRBM` in :pr:`27252` by
-  :user:`Yao Xiao <Charlie-XIAO>`.
+  :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`preprocessing.PolynomialFeatures` in :pr:`27166` by
   :user:`Mohit Joshi <work-mohit>`.
 
@@ -241,16 +243,16 @@ Changelog
   :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
   :pr:`26957` by `Thomas Fan`_.
 
-- |API| In :class:`AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
+- |API| In :class:`ensemble.AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
   <StefanieSenger>`.
 
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Enhancement| Solver `"newton-cg"` in :class:`LogisticRegression` and
-  :class:`LogisticRegressionCV` uses a little less memory. The effect is proportional
-  to the number of coefficients (`n_features * n_classes`).
+- |Enhancement| Solver `"newton-cg"` in :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` uses a little less memory. The effect is
+  proportional to the number of coefficients (`n_features * n_classes`).
   :pr:`27417` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.metrics`
@@ -281,7 +283,7 @@ Changelog
 - |API| The `squared` parameter of :func:`metrics.mean_squared_error` and
   :func:`metrics.mean_squared_log_error` is deprecated and will be removed in 1.6.
   Use the new functions :func:`metrics.root_mean_squared_error` and
-  :func:`root_mean_squared_log_error` instead.
+  :func:`metrics.root_mean_squared_log_error` instead.
   :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.
 
 :mod:`sklearn.model_selection`
@@ -300,15 +302,15 @@ Changelog
 ........................
 
 - |Efficiency| :meth:`sklearn.neighbors.KNeighborsRegressor.predict` and
-  :meth:`sklearn.neighbors.KNeighborsRegressor.predict_proba` now efficiently support
+  :meth:`sklearn.neighbors.KNeighborsClassifier.predict_proba` now efficiently support
   pairs of dense and sparse datasets.
   :pr:`27018` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |API| :class:`neighbors.KNeighborsRegressor` now accepts
-  :class:`metric.DistanceMetric` objects directly via the `metric` keyword
+  :class:`metrics.DistanceMetric` objects directly via the `metric` keyword
   argument allowing for the use of accelerated third-party
-  :class:`metric.DistanceMetric` objects.
-  :pr:`26267` by :user:`Meekail Zain <micky774>`
+  :class:`metrics.DistanceMetric` objects.
+  :pr:`26267` by :user:`Meekail Zain <micky774>`.
 
 - |Efficiency| The performance of :meth:`neighbors.RadiusNeighborsClassifier.predict`
   and of :meth:`neighbors.RadiusNeighborsClassifier.predict_proba` has been improved
@@ -330,7 +332,7 @@ Changelog
   missing indices twice to improve efficiency.
   :pr:`27017` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
-- |Enhancement| Improves warnings in :class:`preprocessing.FunctionTransfomer` when
+- |Enhancement| Improves warnings in :class:`preprocessing.FunctionTransformer` when
   `func` returns a pandas dataframe and the output is configured to be pandas.
   :pr:`26944` by `Thomas Fan`_.
 
