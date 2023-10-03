@@ -464,9 +464,10 @@ def _logistic_regression_path(
                 jac=True,
                 args=(X, target, sample_weight, l2_reg_strength, n_threads),
                 options={
+                    "maxiter": max_iter,
+                    "maxls": 50,  # default is 20
                     "iprint": iprint,
                     "gtol": tol,
-                    "maxiter": max_iter,
                     "ftol": 64 * np.finfo(float).eps,
                 },
             )
