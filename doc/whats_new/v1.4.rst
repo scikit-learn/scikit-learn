@@ -29,12 +29,23 @@ Changes impacting all modules
   to work with our estimators and functions.
   :pr:`26464` by `Thomas Fan`_.
 
+- |Fix| Fixed a bug in most estimators and functions where setting a parameter to
+  a large integer would cause a `TypeError`.
+  :pr:`26648` by :user:`Naoise Holohan <naoise-h>`.
+
 Metadata Routing
 ----------------
 
 The following models now support metadata routing in one or more or their
 methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
 more details.
+
+- |Feature| :class:`multiclass.OneVsRestClassifier`,
+  :class:`multiclass.OneVsOneClassifier` and
+  :class:`multiclass.OutputCodeClassifier` now support metadata routing in
+  their ``fit`` and ``partial_fit``, and route metadata to the underlying
+  estimator's ``fit`` and ``partial_fit``. :pr:`27308` by :user:`Stefanie
+  Senger <StefanieSenger>`.
 
 - |Feature| :class:`pipeline.Pipeline` now supports metadata routing according
   to :ref:`metadata routing user guide <metadata_routing>`. :pr:`26789` by
@@ -89,6 +100,7 @@ and classes are impacted:
 
 - :func:`cluster.compute_optics_graph` in :pr:`27250` by
   :user:`Yao Xiao <Charlie-XIAO>`;
+- :func:`cluster.kmeans_plusplus` in :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`;
 - :func:`decomposition.non_negative_factorization` in :pr:`27100` by
   :user:`Isaac Virshup <ivirshup>`;
 - :func:`manifold.trustworthiness` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
@@ -105,6 +117,8 @@ and classes are impacted:
 **Classes:**
 
 - :class:`cluster.HDBSCAN` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
+- :class:`cluster.KMeans` in :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`;
+- :class:`cluster.MiniBatchKMeans` in :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`;
 - :class:`cluster.OPTICS` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`decomposition.NMF` in :pr:`27100` by :user:`Isaac Virshup <ivirshup>`;
 - :class:`decomposition.MiniBatchNMF` in :pr:`27100` by
@@ -118,7 +132,10 @@ and classes are impacted:
 - :class:`impute.KNNImputer` in :pr:`27277` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`kernel_approximation.PolynomialCountSketch` in  :pr:`27301` by
   :user:`Lohit SundaramahaLingam <lohitslohit>`;
-- :class:`neural_network.BernoulliRBM` in :pr:`27252` by `Yao Xiao <Charlie-XIAO>`.
+- :class:`neural_network.BernoulliRBM` in :pr:`27252` by
+  :user:`Yao Xiao <Charlie-XIAO>`.
+- :class:`preprocessing.PolynomialFeatures` in :pr:`27166` by
+  :user:`Mohit Joshi <work-mohit>`.
 
 Changelog
 ---------
@@ -172,6 +189,19 @@ Changelog
   :class:`cluster.HDBSCAN` ensuring consistency in naming convention.
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| :func:`datasets.make_sparse_spd_matrix` now uses a more memory-
+  efficient sparse layout. It also accepts a new keyword `sparse_format` that allows
+  specifying the output format of the sparse matrix. By default `sparse_format=None`,
+  which returns a dense numpy ndarray as before.
+  :pr:`27438` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+- |Fix| All dataset fetchers now accept `data_home` as any object that implements
+  the :class:`os.PathLike` interface, for instance, :class:`pathlib.Path`.
+  :pr:`27468` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.decomposition`
 ............................
