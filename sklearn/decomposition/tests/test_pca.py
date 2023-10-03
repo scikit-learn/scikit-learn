@@ -21,7 +21,7 @@ from sklearn.utils.estimator_checks import (
     _get_check_estimator_ids,
     check_array_api_input_and_values,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.fixes import CSR_CONTAINERS, parse_version, sp_version
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "covariance_eigh", "arpack", "randomized", "auto"]
@@ -124,6 +124,12 @@ def test_whitening(solver, copy):
 def test_pca_solver_equivalence(
     other_svd_solver, data_shape, rank_deficient, whiten, global_random_seed
 ):
+    if sp_version < parse_version("1.7") and other_svd_solver == "arpack":
+        pytest.xfail(
+            "Older scipy versions have a numerical stability problem that makes"
+            " `transform` output non-finite results."
+        )
+
     if data_shape == "tall":
         n_samples, n_features = 100, 30
     else:
