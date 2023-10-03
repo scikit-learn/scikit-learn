@@ -40,6 +40,13 @@ The following models now support metadata routing in one or more or their
 methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
 more details.
 
+- |Feature| :class:`multiclass.OneVsRestClassifier`,
+  :class:`multiclass.OneVsOneClassifier` and
+  :class:`multiclass.OutputCodeClassifier` now support metadata routing in
+  their ``fit`` and ``partial_fit``, and route metadata to the underlying
+  estimator's ``fit`` and ``partial_fit``. :pr:`27308` by :user:`Stefanie
+  Senger <StefanieSenger>`.
+
 - |Feature| :class:`pipeline.Pipeline` now supports metadata routing according
   to :ref:`metadata routing user guide <metadata_routing>`. :pr:`26789` by
   `Adrin Jalali`_.
