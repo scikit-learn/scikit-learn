@@ -229,7 +229,7 @@ def _kmeans_plusplus(
     center_id = random_state.choice(n_samples, p=sample_weight / sample_weight.sum())
     indices = np.full(n_clusters, -1, dtype=int)
     if sp.issparse(X):
-        centers[0] = X[center_id].toarray()
+        centers[0] = X[[center_id]].toarray()
     else:
         centers[0] = X[center_id]
     indices[0] = center_id
@@ -268,7 +268,7 @@ def _kmeans_plusplus(
 
         # Permanently add best center candidate found in local tries
         if sp.issparse(X):
-            centers[c] = X[best_candidate].toarray()
+            centers[c] = X[[best_candidate]].toarray()
         else:
             centers[c] = X[best_candidate]
         indices[c] = best_candidate
