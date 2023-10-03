@@ -1048,16 +1048,16 @@ class PartialDependenceDisplay:
         )
 
         if extra_plot in {"boxplot", "hist"}:
-            import matplotlib.pyplot as plt
             from matplotlib.gridspec import GridSpecFromSubplotSpec
 
             extra_plot_gs = GridSpecFromSubplotSpec(
                 2, 1, height_ratios=[0.2, 1], subplot_spec=ax.get_subplotspec()
             )
 
-            ax = plt.subplot(extra_plot_gs[1, 0], sharex=ax, sharey=ax)
-
-            extrax_ax = plt.subplot(extra_plot_gs[0, 0], sharex=ax)
+            axs = extra_plot_gs.subplots(sharex=ax)
+            ax.remove()
+            extrax_ax = axs[0]
+            ax = axs[1]
 
             if extra_plot == "boxplot":
                 if not categorical:
@@ -1141,7 +1141,11 @@ class PartialDependenceDisplay:
         # reset ylim which was overwritten by vlines
         min_val = min(val[0] for val in pdp_lim.values())
         max_val = max(val[1] for val in pdp_lim.values())
-        ax.set_ylim([min_val, max_val])
+        # Avoid Matplotlib UserWarning
+        if min_val != max_val:
+            ax.set_ylim([min_val, max_val])
+        else:
+            ax.set_ylim([min_val - 1, max_val + 1])
 
         if extra_plot == "scatter":
             if not categorical:
@@ -1268,10 +1272,14 @@ class PartialDependenceDisplay:
                 subplot_spec=ax.get_subplotspec(),
             )
 
-            ax = plt.subplot(extra_plot_gs[1, 0], sharex=ax, sharey=ax)
-
-            extrax_ax = plt.subplot(extra_plot_gs[0, 0], sharex=ax)
-            extray_ax = plt.subplot(extra_plot_gs[1, 1], sharey=ax)
+            axs = extra_plot_gs.subplots()
+            extrax_ax = axs[0, 0]
+            extrax_ax.sharex(ax)
+            extray_ax = axs[1, 1]
+            extray_ax.sharey(ax)
+            ax.remove()
+            axs[0, 1].remove()
+            ax = axs[1, 0]
 
             if extra_plot == "boxplot":
                 if not categorical:
@@ -1575,12 +1583,12 @@ class PartialDependenceDisplay:
             ``matplotlib.pyplot.boxplot``, and ``matplotlib.pyplot.scatter``
             calls.
 
-            The key value pairs defined in `extra_plots_kw` takes
-            priority over the default values. If None, the default values are
-            used.
-
             Should be in the format:
             ``{'hist' : {'fill' : False}, 'scatter' : {'alpha' : 0.5}}``
+
+            The key value pairs defined in `extra_plots_kw` take
+            priority over the default values. If None, the default values are
+            used.
 
             .. versionadded:: 1.4
 
