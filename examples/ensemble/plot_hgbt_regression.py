@@ -21,8 +21,6 @@ The top usability features of HGBT models are:
 - :ref:`_interaction_cst_hgbt`.
 - early stopping
 
-Note that random forests have none of those capabilities.
-
 This example aims at showcasing points 2-4 in a real life setting.
 """
 
