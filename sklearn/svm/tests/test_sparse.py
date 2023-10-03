@@ -39,6 +39,8 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
+X_blobs, y_blobs = make_blobs(n_samples=100, centers=10, random_state=0)
+
 
 def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
     dense_svm.fit(X_train.toarray(), y_train)
@@ -80,38 +82,29 @@ def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
 
 
 @skip_if_32bit
-def test_svc():
-    """Check that sparse SVC gives the same result as SVC"""
-    # many class dataset:
-    X_blobs, y_blobs = make_blobs(n_samples=100, centers=10, random_state=0)
-    X_blobs = sparse.csr_matrix(X_blobs)  # <-
-    X_sp = X  # <-
-    X2_sp = X2  # <-
-    iris.data = iris.data
-    datasets = [
-        [X_sp, Y, T],
-        [X2_sp, Y2, T2],
+@pytest.mark.parametrize(
+    "X_train, y_train, X_test",
+    [
+        [X, Y, T],
+        [X2, Y2, T2],
         [X_blobs[:80], y_blobs[:80], X_blobs[80:]],
         [iris.data, iris.target, iris.data],
-    ]
-    kernels = ["linear", "poly", "rbf", "sigmoid"]
-    for dataset in datasets:
-        for kernel in kernels:
-            clf = svm.SVC(
-                gamma=1,
-                kernel=kernel,
-                probability=True,
-                random_state=0,
-                decision_function_shape="ovo",
-            )
-            sp_clf = svm.SVC(
-                gamma=1,
-                kernel=kernel,
-                probability=True,
-                random_state=0,
-                decision_function_shape="ovo",
-            )
-            check_svm_model_equal(clf, sp_clf, *dataset)
+    ],
+)
+@pytest.mark.parametrize("kernel", ["linear", "poly", "rbf", "sigmoid"])
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + LIL_CONTAINERS)
+def test_svc(X_train, y_train, X_test, kernel, sparse_container):
+    """Check that sparse SVC gives the same result as SVC."""
+    X_train = sparse_container(X_train)
+
+    clf = svm.SVC(
+        gamma=1,
+        kernel=kernel,
+        probability=True,
+        random_state=0,
+        decision_function_shape="ovo",
+    )
+    check_svm_model_equal(clf, X_train, y_train, X_test)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -321,29 +314,24 @@ def test_sparse_liblinear_intercept_handling():
     test_svm.test_dense_liblinear_intercept_handling(svm.LinearSVC)
 
 
-@pytest.mark.parametrize("datasets_index", range(4))
-@pytest.mark.parametrize("kernel", ["linear", "poly", "rbf", "sigmoid"])
-@skip_if_32bit
-def test_sparse_oneclasssvm(datasets_index, kernel):
-    # Check that sparse OneClassSVM gives the same result as dense OneClassSVM
-    # many class dataset:
-    X_blobs, _ = make_blobs(n_samples=100, centers=10, random_state=0)
-    X_blobs = sparse.csr_matrix(X_blobs)
-
-    X_sp = X
-    X2_sp = X2
-    iris.data = iris.data
-
-    datasets = [
-        [X_sp, None, T],
-        [X2_sp, None, T2],
+@pytest.mark.parametrize(
+    "X_train, y_train, X_test",
+    [
+        [X, None, T],
+        [X2, None, T2],
         [X_blobs[:80], None, X_blobs[80:]],
         [iris.data, None, iris.data],
-    ]
-    dataset = datasets[datasets_index]
+    ],
+)
+@pytest.mark.parametrize("kernel", ["linear", "poly", "rbf", "sigmoid"])
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + LIL_CONTAINERS)
+@skip_if_32bit
+def test_sparse_oneclasssvm(X_train, y_train, X_test, kernel, sparse_container):
+    # Check that sparse OneClassSVM gives the same result as dense OneClassSVM
+    X_train = sparse_container(X_train)
+
     clf = svm.OneClassSVM(gamma=1, kernel=kernel)
-    sp_clf = svm.OneClassSVM(gamma=1, kernel=kernel)
-    check_svm_model_equal(clf, sp_clf, *dataset)
+    check_svm_model_equal(clf, X_train, y_train, X_test)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
