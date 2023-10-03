@@ -195,7 +195,7 @@ class PCA(_BasePCA):
             typically using LAPACK and select the components by postprocessing.
             This solver is very efficient when the number of features is small
             and not tractable otherwise (large memory footprint required to
-            materialize the covariance matrix). Also not that compared to the
+            materialize the covariance matrix). Also note that compared to the
             "full" solver, this solver effectively doubles the condition number
             and is therefore less numerical stable (e.g. on input data with a
             large range of singular values).
