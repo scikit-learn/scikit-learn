@@ -21,7 +21,7 @@ from sklearn.utils.estimator_checks import (
     _get_check_estimator_ids,
     check_array_api_input_and_values,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS, parse_version, sp_version
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "covariance_eigh", "arpack", "randomized", "auto"]
@@ -124,12 +124,6 @@ def test_whitening(solver, copy):
 def test_pca_solver_equivalence(
     other_svd_solver, data_shape, rank_deficient, whiten, global_random_seed
 ):
-    if sp_version < parse_version("1.7") and other_svd_solver == "arpack":
-        pytest.xfail(
-            "Older scipy versions have a numerical stability problem that makes"
-            " `transform` output non-finite results."
-        )
-
     if data_shape == "tall":
         n_samples, n_features = 100, 30
     else:
@@ -226,6 +220,16 @@ def test_pca_solver_equivalence(
         # In the absence of noisy components, both models should be able to
         # reconstruct the same low-rank approximation of the original data.
         assert_allclose(X_recons_full_test, X_recons_other_test, **tols)
+    else:
+        # When n_features > n_samples and n_components is larger than the rank
+        # of the training set, the output of the `inverse_transform` function
+        # is ill-defined. We can only check that we reach the same fixed point
+        # after another round of transform:
+        assert_allclose(
+            pca_full.transform(X_recons_full_test)[:, stable],
+            pca_other.transform(X_recons_other_test)[:, stable],
+            **tols,
+        )
 
 
 @pytest.mark.parametrize(

@@ -206,7 +206,9 @@ Changelog
 - |Enhancement| :class:`decomposition.PCA` now supports a new solver option
   named `svd_solver="covariance_eigh"` which offers an order of magnitude
   speed-up and reduced memory usage for datasets with a large number of data
-  points and a small number of features (say, less than 1000).
+  points and a small number of features (say, less than 500). The
+  `svd_solver="auto"` option has been updated to use the new solver
+  automatically for such datasets.
   :pr:`27491` by :user:`Olivier Grisel <ogrisel>`.
 
 - |Enhancement| :class:`decomposition.PCA` now supports the Array API for the
@@ -214,6 +216,12 @@ Changelog
   iterations). See :ref:`array_api` for more details.
   :pr:`26315` and :pr:`27098` by :user:`Mateusz Sokół <mtsokol>`,
   :user:`Olivier Grisel <ogrisel>` and :user:`Edoardo Abati <EdAbati>`.
+
+- |Fix| :class:`decomposition.PCA` fit with `svd_solver="arpack"`,
+  `whiten=True` and a value for `n_components` that is larger than the rank of
+  the training set, no longer returns infinite values when transforming
+  held-out data.
+  :pr:`27491` by :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.ensemble`
 .......................

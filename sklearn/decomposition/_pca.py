@@ -587,12 +587,9 @@ class PCA(_BasePCA):
             Evecs = xp.flip(Evecs, axis=1)
 
             # Avoid numerical problems for zero or near-zero eigenvalues caused
-            # by rounding errors as they would lead to non-finite transformed
-            # values: the square root is undefined for near-zero negative
-            # values and furthermore, whitening divides the transformed data by
-            # the explained variance.
-            threshold = float(xp.finfo(evals.dtype).eps)
-            evals[evals < threshold] = threshold
+            # by rounding errors: the square root is undefined for near-zero
+            # negative values.
+            evals[evals < 0.0] = 0.0
             S = xp.sqrt(evals)
             Vt = Evecs.T
             U = None

@@ -152,7 +152,18 @@ class _BasePCA(
             )
         X_transformed = X_centered @ self.components_.T
         if self.whiten:
-            X_transformed /= xp.sqrt(self.explained_variance_)
+            # For some solvers (such as "arpack" and "covariance_eigh"), on
+            # rank deficient data, some components can have a variance
+            # arbitrarily to zero, leading to non-finite results when
+            # whitening. To avoid this problem we clip the variance below.
+            scale = xp.sqrt(self.explained_variance_)
+            min_scale = xp.asarray(
+                [xp.finfo(scale.dtype).eps],
+                dtype=scale.dtype,
+                device=device(scale),
+            )
+            scale = xp.where(scale > min_scale, scale, min_scale)
+            X_transformed /= scale
         return X_transformed
 
     def inverse_transform(self, X):
