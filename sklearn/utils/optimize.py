@@ -26,9 +26,7 @@ class _LineSearchError(RuntimeError):
     pass
 
 
-def _line_search_wolfe12(
-    f, fprime, xk, pk, gfk, old_fval, old_old_fval, verbose=0, **kwargs
-):
+def _line_search_wolfe12(f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs):
     """
     Same as line_search_wolfe1, but fall back to line_search_wolfe2 if
     suitable step length is not found, and raise an exception if a
@@ -59,9 +57,6 @@ def _line_search_wolfe12(
             sum_abs_grad = scipy.linalg.norm(grad, ord=1)
             check = sum_abs_grad < sum_abs_grad_old
             if check:
-                if verbose >= 2:
-                    print("  newton_cg line search detected tiny loss improvement.")
-                    print(f"  {loss_improvement=} {sum_abs_grad=}")
                 ret = (
                     1.0,  # step size
                     ret[1] + 1,  # number of function evaluations
@@ -83,7 +78,7 @@ def _line_search_wolfe12(
     return ret
 
 
-def _cg(fhess_p, fgrad, maxiter, tol, verbose=0):
+def _cg(fhess_p, fgrad, maxiter, tol):
     """
     Solve iteratively the linear system 'fhess_p . xsupi = fgrad'
     with a conjugate gradient descent.
@@ -118,10 +113,6 @@ def _cg(fhess_p, fgrad, maxiter, tol, verbose=0):
 
     while i <= maxiter:
         if np.sum(np.abs(ri)) <= tol:
-            if verbose >= 2:
-                print(
-                    f"  inner solver iteration {i} stopped with {np.sum(np.abs(ri))=}"
-                )
             break
 
         Ap = fhess_p(psupi)
@@ -129,8 +120,6 @@ def _cg(fhess_p, fgrad, maxiter, tol, verbose=0):
         curv = np.dot(psupi, Ap)
         if 0 <= curv <= 16 * np.finfo(np.float64).eps * psupi_norm2:
             # See https://arxiv.org/abs/1803.02924, Algo 1 Capped Conjugate Gradient.
-            if verbose >= 2:
-                print(f"  inner solver iteration {i} stopped with {curv=}")
             break
         elif curv < 0:
             if i > 0:
@@ -149,11 +138,7 @@ def _cg(fhess_p, fgrad, maxiter, tol, verbose=0):
         psupi_norm2 = dri1 + betai**2 * psupi_norm2
         i = i + 1
         dri0 = dri1  # update np.dot(ri,ri) for next time.
-    if i > maxiter and verbose >= 2:
-        print(
-            f"  newton_cg iterative solver stopped with maxiter={i - 1} and "
-            f"{np.sum(np.abs(ri))=}"
-        )
+
     return xsupi
 
 
@@ -168,7 +153,6 @@ def _newton_cg(
     maxinner=200,
     line_search=True,
     warn=True,
-    verbose=0,
 ):
     """
     Minimization of scalar function of one or more variables using the
@@ -222,8 +206,6 @@ def _newton_cg(
     if line_search:
         old_fval = func(x0, *args)
         old_old_fval = None
-    else:
-        old_fval = 0
 
     # Outer loop: our Newton iteration
     while k < maxiter:
@@ -232,10 +214,7 @@ def _newton_cg(
         fgrad, fhess_p = grad_hess(xk, *args)
 
         absgrad = np.abs(fgrad)
-        max_absgrad = np.max(absgrad)
-        if verbose > 0:
-            print(f"newton_cg iter = {k} loss = {old_fval} max|grad| = {max_absgrad}")
-        if max_absgrad <= tol:
+        if np.max(absgrad) <= tol:
             break
 
         maggrad = np.sum(absgrad)
@@ -244,22 +223,14 @@ def _newton_cg(
 
         # Inner loop: solve the Newton update by conjugate gradient, to
         # avoid inverting the Hessian
-        xsupi = _cg(fhess_p, fgrad, maxiter=maxinner, tol=termcond, verbose=verbose)
+        xsupi = _cg(fhess_p, fgrad, maxiter=maxinner, tol=termcond)
 
         alphak = 1.0
 
         if line_search:
             try:
                 alphak, fc, gc, old_fval, old_old_fval, gfkp1 = _line_search_wolfe12(
-                    func,
-                    grad,
-                    xk,
-                    xsupi,
-                    fgrad,
-                    old_fval,
-                    old_old_fval,
-                    verbose=verbose,
-                    args=args,
+                    func, grad, xk, xsupi, fgrad, old_fval, old_old_fval, args=args
                 )
             except _LineSearchError:
                 warnings.warn("Line Search failed")
