@@ -7,7 +7,21 @@
 Version 1.3.1
 =============
 
-**In development**
+**September 2023**
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- |Fix| Ridge models with `solver='sparse_cg'` may have slightly different
+  results with scipy>=1.12, because of an underlying change in the scipy solver
+  (see `scipy#18488 <https://github.com/scipy/scipy/pull/18488>`_ for more
+  details)
+  :pr:`26814` by :user:`Loïc Estève <lesteve>`
 
 Changes impacting all modules
 -----------------------------
@@ -18,6 +32,13 @@ Changes impacting all modules
 Changelog
 ---------
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Fix| :class:`calibration.CalibratedClassifierCV` can now handle models that
+  produce large prediction scores. Before it was numerically unstable.
+  :pr:`26913` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -26,7 +47,14 @@ Changelog
   :pr:`27167` by `Olivier Grisel`_.
 
 - |Fix| :class:`cluster.BisectingKMeans` now works with data that has a single feature.
-  :pr:`27243` by `Jérémie du Boisberranger <jeremiedbb>`.
+  :pr:`27243` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| :class:`cross_decomposition.PLSRegression` now automatically ravels the output
+  of `predict` if fitted with one dimensional `y`.
+  :pr:`26602` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -36,12 +64,33 @@ Changelog
   the sum of the scores should sum to zero for a sample).
   :pr:`26521` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| :func:`feature_selection.mutual_info_regression` now correctly computes the
+  result when `X` is of integer dtype. :pr:`26748` by :user:`Yao Xiao <Charlie-XIAO>`.
+
 :mod:`sklearn.impute`
 .....................
 
 - |Fix| :class:`impute.KNNImputer` now correctly adds a missing indicator column in
   ``transform`` when ``add_indicator`` is set to ``True`` and missing values are observed
   during ``fit``. :pr:`26600` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Scorers used with :func:`metrics.get_scorer` handle properly
+  multilabel-indicator matrix.
+  :pr:`27002` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.mixture`
+......................
+
+- |Fix| The initialization of :class:`mixture.GaussianMixture` from user-provided
+  `precisions_init` for `covariance_type` of `full` or `tied` was not correct,
+  and has been fixed.
+  :pr:`26416` by :user:`Yang Tao <mchikyt3>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -58,11 +107,19 @@ Changelog
   when the input to the `param_distributions` parameter is a list of dicts.
   :pr:`26893` by :user:`Stefanie Senger <StefanieSenger>`.
 
+- |Fix| Neighbors based estimators now correctly work when `metric="minkowski"` and the
+  metric parameter `p` is in the range `0 < p < 1`, regardless of the `dtype` of `X`.
+  :pr:`26760` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
 - |Fix| :class:`preprocessing.LabelEncoder` correctly accepts `y` as a keyword
   argument. :pr:`26940` by `Thomas Fan`_.
+
+- |Fix| :class:`preprocessing.OneHotEncoder` shows a more informative error message
+  when `sparse_output=True` and the output is configured to be pandas.
+  :pr:`26931` by `Thomas Fan`_.
 
 :mod:`sklearn.tree`
 ...................
@@ -132,6 +189,10 @@ Changed displays
   train and test curves by default. You can set `score_type="test"` to keep the
   past behaviour.
   :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :class:`model_selection.ValidationCurveDisplay` now accepts passing a
+  list to the `param_range` parameter.
+  :pr:`27311` by :user:`Arturo Amor <ArturoAmorQ>`.
 
 Changes impacting all modules
 -----------------------------
@@ -371,7 +432,7 @@ Changelog
   the pandas parser. The parameter `read_csv_kwargs` allows to overwrite this behaviour.
   :pr:`26551` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| :func:`datasets.fetch_openml` will consistenly use `np.nan` as missing marker
+- |Fix| :func:`datasets.fetch_openml` will consistently use `np.nan` as missing marker
   with both parsers `"pandas"` and `"liac-arff"`.
   :pr:`26579` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -663,7 +724,7 @@ Changelog
 
 - |API| The parameter `log_scale` in the class
   :class:`model_selection.LearningCurveDisplay` has been deprecated in 1.3 and
-  will be removed in 1.5. The default scale can be overriden by setting it
+  will be removed in 1.5. The default scale can be overridden by setting it
   directly on the `ax` object and will be set automatically from the spacing
   of the data points otherwise.
   :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
@@ -776,7 +837,7 @@ Changelog
 - |Fix| :class:`preprocessing.PowerTransformer` now correctly preserves the Pandas
   Index when the `set_config(transform_output="pandas")`. :pr:`26454` by `Thomas Fan`_.
 
-- |Fix| :class:`preprocessing.PowerTransformer` now correcly raises error when
+- |Fix| :class:`preprocessing.PowerTransformer` now correctly raises error when
   using `method="box-cox"` on data with a constant `np.nan` column.
   :pr:`26400` by :user:`Yao Xiao <Charlie-XIAO>`.
 

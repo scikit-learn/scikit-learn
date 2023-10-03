@@ -295,6 +295,12 @@ extension_config = {
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
         },
+        {
+            "sources": ["_radius_neighbors_classmode.pyx.tp"],
+            "language": "c++",
+            "include_np": True,
+            "extra_compile_args": ["-std=c++11"],
+        },
     ],
     "preprocessing": [
         {"sources": ["_csr_polynomial_expansion.pyx"]},
@@ -593,6 +599,7 @@ def setup_package():
             "Programming Language :: Python :: 3.9",
             "Programming Language :: Python :: 3.10",
             "Programming Language :: Python :: 3.11",
+            "Programming Language :: Python :: 3.12",
             "Programming Language :: Python :: Implementation :: CPython",
             "Programming Language :: Python :: Implementation :: PyPy",
         ],
