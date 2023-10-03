@@ -233,7 +233,7 @@ def test_pca_solver_equivalence(
         # even in the presence of noisy components.
         assert_allclose(X_recons_full_test, X_test, **tols)
         assert_allclose(X_recons_other_test, X_test, **tols)
-    elif pca_full.explained_variance_.min() > 1e-12:
+    elif pca_full.explained_variance_.min() > variance_threshold:
         # In the absence of noisy components, both models should be able to
         # reconstruct the same low-rank approximation of the original data.
         assert_allclose(X_recons_full_test, X_recons_other_test, **tols)
