@@ -346,7 +346,8 @@ ax.set(
 _ = ax.legend()
 
 # %%
-# Keep in mind that one can still improve the calibration of our model by:
+# Keep in mind that the predicted percentiles are just estimations that depend
+# on the model. One can still improve the quality of such estimations by:
 #
 # - collecting more data-points (in case the model is overfitting);
 # - better tuning of the model hyperparameters (see
