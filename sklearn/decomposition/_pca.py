@@ -583,9 +583,18 @@ class PCA(_BasePCA):
             assert self._fit_svd_solver == "covariance_eigh"
             C = X.T @ X
             evals, Evecs = xp.linalg.eigh(C)
-            evals[evals < 0] = 0.0
-            S = xp.sqrt(xp.flip(evals, axis=0))
-            Vt = xp.flip(Evecs, axis=1).T
+            evals = xp.flip(evals, axis=0)
+            Evecs = xp.flip(Evecs, axis=1)
+
+            # Avoid numerical problems for zero or near-zero eigenvalues caused
+            # by rounding errors as they would lead to non-finite transformed
+            # values: the square root is undefined for near-zero negative
+            # values and furthermore, whitening divides the transformed data by
+            # the explained variance.
+            threshold = float(xp.finfo(evals.dtype).eps)
+            evals[evals < threshold] = threshold
+            S = xp.sqrt(evals)
+            Vt = Evecs.T
             U = None
 
         # flip eigenvectors' sign to enforce deterministic output

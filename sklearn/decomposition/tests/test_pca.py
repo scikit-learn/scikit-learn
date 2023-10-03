@@ -160,16 +160,20 @@ def test_pca_solver_equivalence(
         # Test all components to high precision.
         n_components = None
 
-    pca_full = PCA(n_components=n_components, svd_solver="full")
+    pca_full = PCA(n_components=n_components, svd_solver="full", whiten=whiten)
     pca_other = PCA(
         n_components=n_components,
         svd_solver=other_svd_solver,
+        whiten=whiten,
         random_state=global_random_seed,
         **extra_other_kwargs,
     )
     X_trans_full_train = pca_full.fit_transform(X_train)
+    assert np.isfinite(X_trans_full_train).all()
     X_trans_other_train = pca_other.fit_transform(X_train)
+    assert np.isfinite(X_trans_other_train).all()
 
+    assert (pca_full.explained_variance_ >= 0).all()
     assert_allclose(pca_full.explained_variance_, pca_other.explained_variance_, **tols)
     assert_allclose(
         pca_full.explained_variance_ratio_,
@@ -177,7 +181,9 @@ def test_pca_solver_equivalence(
         **tols,
     )
     reference_components = pca_full.components_
+    assert np.isfinite(reference_components).all()
     other_components = pca_other.components_
+    assert np.isfinite(other_components).all()
 
     # For some choice of n_components and data distribution, some components
     # might be pure noise, let's ignore them in the comparison:
@@ -193,8 +199,27 @@ def test_pca_solver_equivalence(
     # And similarly for the output of transform on new data (except for the
     # last component that can be underdetermined):
     X_trans_full_test = pca_full.transform(X_test)
+    assert np.isfinite(X_trans_full_test).all()
     X_trans_other_test = pca_other.transform(X_test)
+    assert np.isfinite(X_trans_other_test).all()
     assert_allclose(X_trans_other_test[:, stable], X_trans_full_test[:, stable], **tols)
+
+    # Check that inverse transform reconstructions for both solvers are
+    # compatible.
+    X_recons_full_test = pca_full.inverse_transform(X_trans_full_test)
+    assert np.isfinite(X_recons_full_test).all()
+    X_recons_other_test = pca_other.inverse_transform(X_trans_other_test)
+    assert np.isfinite(X_recons_other_test).all()
+
+    if n_components is None and X_train.shape[0] > X_train.shape[1]:
+        # In this case, both models should be able to reconstruct the data,
+        # even in the presence of noisy components.
+        assert_allclose(X_recons_full_test, X_test, **tols)
+        assert_allclose(X_recons_other_test, X_test, **tols)
+    elif pca_full.explained_variance_.min() > 1e-12:
+        # In the absence of noisy components, both models should be able to
+        # reconstruct the same low-rank approximation of the original data.
+        assert_allclose(X_recons_full_test, X_recons_other_test, **tols)
 
 
 @pytest.mark.parametrize(
