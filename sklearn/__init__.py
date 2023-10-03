@@ -1,7 +1,8 @@
 """
-The :mod:`sklearn` module include functions to set some global settings and
+The :mod:`sklearn` module includes functions to configure global settings and
 get information about the working environment.
 """
+
 # Machine learning module for Python
 # ==================================
 #

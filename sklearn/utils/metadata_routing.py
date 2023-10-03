@@ -2,9 +2,10 @@
 The :mod:`sklearn.utils.metadata_routing` module includes utilities to route
 metadata within scikit-learn estimators.
 """
+
 # This module is not a separate sub-folder since that would result in a circular
 # import issue.
-
+#
 # Author: Adrin Jalali <adrin.jalali@gmail.com>
 # License: BSD 3 clause
 
