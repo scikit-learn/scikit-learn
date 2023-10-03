@@ -150,7 +150,7 @@ jobs:
         addToPath: true
 
     - bash: bash build_tools/azure/install_pyodide.sh
-      displayName: Build Pyodide wheel and install it in a Pyodide venv
+      displayName: Build Pyodide wheel
 
     - bash: bash build_tools/azure/test_script_pyodide.sh
       displayName: Test Pyodide wheel
