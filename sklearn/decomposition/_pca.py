@@ -586,9 +586,10 @@ class PCA(_BasePCA):
             evals = xp.flip(evals, axis=0)
             Evecs = xp.flip(Evecs, axis=1)
 
-            # Avoid numerical problems for zero or near-zero eigenvalues caused
-            # by rounding errors: the square root is undefined for near-zero
-            # negative values.
+            # The covariance matrix C is positive semi-definite by
+            # construction. However, the eigenvalues returned by xp.linalg.eigh
+            # can be slightly negative due to numerical errors. This would be
+            # an issue for the subsequent sqrt, hence the manual clipping.
             evals[evals < 0.0] = 0.0
             S = xp.sqrt(evals)
             Vt = Evecs.T
