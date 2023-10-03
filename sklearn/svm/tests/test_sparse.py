@@ -42,8 +42,12 @@ iris.target = iris.target[perm]
 X_blobs, y_blobs = make_blobs(n_samples=100, centers=10, random_state=0)
 
 
-def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
-    dense_svm.fit(X_train.toarray(), y_train)
+def check_svm_model_equal(svm_model, X_train, y_train, X_test):
+    # Use the original svm model for dense fit and clone an exactly same
+    # svm model for sparse fit
+    sparse_svm = base.clone(svm_model)
+
+    svm_model.fit(X_train.toarray(), y_train)
     if sparse.issparse(X_test):
         X_test_dense = X_test.toarray()
     else:
@@ -52,33 +56,33 @@ def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
     assert sparse.issparse(sparse_svm.support_vectors_)
     assert sparse.issparse(sparse_svm.dual_coef_)
     assert_array_almost_equal(
-        dense_svm.support_vectors_, sparse_svm.support_vectors_.toarray()
+        svm_model.support_vectors_, sparse_svm.support_vectors_.toarray()
     )
-    assert_array_almost_equal(dense_svm.dual_coef_, sparse_svm.dual_coef_.toarray())
-    if dense_svm.kernel == "linear":
+    assert_array_almost_equal(svm_model.dual_coef_, sparse_svm.dual_coef_.toarray())
+    if svm_model.kernel == "linear":
         assert sparse.issparse(sparse_svm.coef_)
-        assert_array_almost_equal(dense_svm.coef_, sparse_svm.coef_.toarray())
-    assert_array_almost_equal(dense_svm.support_, sparse_svm.support_)
+        assert_array_almost_equal(svm_model.coef_, sparse_svm.coef_.toarray())
+    assert_array_almost_equal(svm_model.support_, sparse_svm.support_)
     assert_array_almost_equal(
-        dense_svm.predict(X_test_dense), sparse_svm.predict(X_test)
+        svm_model.predict(X_test_dense), sparse_svm.predict(X_test)
     )
     assert_array_almost_equal(
-        dense_svm.decision_function(X_test_dense), sparse_svm.decision_function(X_test)
+        svm_model.decision_function(X_test_dense), sparse_svm.decision_function(X_test)
     )
     assert_array_almost_equal(
-        dense_svm.decision_function(X_test_dense),
+        svm_model.decision_function(X_test_dense),
         sparse_svm.decision_function(X_test_dense),
     )
-    if isinstance(dense_svm, svm.OneClassSVM):
+    if isinstance(svm_model, svm.OneClassSVM):
         msg = "cannot use sparse input in 'OneClassSVM' trained on dense data"
     else:
         assert_array_almost_equal(
-            dense_svm.predict_proba(X_test_dense), sparse_svm.predict_proba(X_test), 4
+            svm_model.predict_proba(X_test_dense), sparse_svm.predict_proba(X_test), 4
         )
         msg = "cannot use sparse input in 'SVC' trained on dense data"
     if sparse.issparse(X_test):
         with pytest.raises(ValueError, match=msg):
-            dense_svm.predict(X_test)
+            svm_model.predict(X_test)
 
 
 @skip_if_32bit
