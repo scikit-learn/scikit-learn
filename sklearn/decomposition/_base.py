@@ -157,12 +157,8 @@ class _BasePCA(
             # arbitrarily to zero, leading to non-finite results when
             # whitening. To avoid this problem we clip the variance below.
             scale = xp.sqrt(self.explained_variance_)
-            min_scale = xp.asarray(
-                [xp.finfo(scale.dtype).eps],
-                dtype=scale.dtype,
-                device=device(scale),
-            )
-            scale = xp.where(scale > min_scale, scale, min_scale)
+            min_scale = xp.finfo(scale.dtype).eps
+            scale[scale < min_scale] = min_scale
             X_transformed /= scale
         return X_transformed
 
