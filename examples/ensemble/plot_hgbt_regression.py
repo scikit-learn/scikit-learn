@@ -361,8 +361,9 @@ _ = ax.legend()
 # Given specific domain knowledge that requires the relationship between a
 # feature and the target to be monotonically increasing or decreasing, one can
 # enforce such behaviour in the predictions of a HGBT model using monotonic
-# constraints. This makes the model more interpretable and prevents overfitting.
-# Monotonic constraints can also be used to enforce specific regulatory
+# constraints. This makes the model more interpretable and can reduce its
+# variance (and potentially mitigate overfitting) at the risk of increasing
+# bias. Monotonic constraints can also be used to enforce specific regulatory
 # requirements, ensure compliance and align with ethical considerations.
 #
 # In the present example, the policy of transfering energy from Victoria to New
