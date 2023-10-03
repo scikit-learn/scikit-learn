@@ -15,9 +15,9 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
+from joblib import effective_n_jobs
 from scipy import optimize
 
-from joblib import effective_n_jobs
 from sklearn.metrics import get_scorer_names
 
 from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
