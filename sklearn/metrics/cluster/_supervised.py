@@ -207,9 +207,9 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     See Also
     --------
-    rand_score : Rand Score.
-    adjusted_rand_score : Adjusted Rand Score.
-    adjusted_mutual_info_score : Adjusted Mutual Information.
+    sklearn.metrics.rand_score : Rand Score.
+    sklearn.metrics.adjusted_rand_score : Adjusted Rand Score.
+    sklearn.metrics.adjusted_mutual_info_score : Adjusted Mutual Information.
 
     References
     ----------
