@@ -76,7 +76,7 @@ exclude=[
 # folder.
 "examples/*"=["E402"]
 "doc/conf.py"=["E402"]
-
+"sklearn/metrics/_pairwise_distances_reduction/__init__.py"=["E501"]
 
 [tool.cython-lint]
 # Ignore the same error codes as ruff
