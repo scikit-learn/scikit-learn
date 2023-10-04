@@ -897,7 +897,7 @@ following cost function:
 .. math::
     :name: regularized-logistic-loss
 
-    \min_{w} C \sum_{i=1}^n s_i \left(-y_i \log(\hat{p}(X_i w)) - (1 - y_i) \log(1 - \hat{p}(X_i w))\right) + r(w).
+    \min_{w} C \sum_{i=1}^n s_i \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right) + r(w).
 
 where :math:`{s_i}` corresponds to the weights assigned by the user to a
 specific training sample (the vector :math:`{s}` is formed by element-wise
