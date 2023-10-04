@@ -528,7 +528,7 @@ def test_sparse_realdata(csr_container):
 def test_sparse_svc_clone_with_callable_kernel(lil_container):
     # Test that the "dense_fit" is called even though we use sparse input
     # meaning that everything works fine.
-    a = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True, random_state=0)
+    a = svm.SVC(C=1, kernel=lambda x, y: x @ y.T, probability=True, random_state=0)
     b = base.clone(a)
 
     X_sp = lil_container(X)
@@ -548,7 +548,7 @@ def test_sparse_svc_clone_with_callable_kernel(lil_container):
 @pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
 def test_timeout(lil_container):
     sp = svm.SVC(
-        C=1, kernel=lambda x, y: x * y.T, probability=True, random_state=0, max_iter=1
+        C=1, kernel=lambda x, y: x @ y.T, probability=True, random_state=0, max_iter=1
     )
     X_sp = lil_container(X)
     warning_msg = (
