@@ -4510,7 +4510,7 @@ def _check_generated_dataframe(
 ):
     """Check the type and values of the dataframe.
 
-    # See _check_set_output_transform_dataframe for parameer documentation.
+    # See _check_set_output_transform_dataframe for parameter documentation.
     """
     X_trans, feature_names_default = outputs_default
     df_trans, feature_names_pandas = outputs_pandas
