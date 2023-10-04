@@ -538,7 +538,7 @@ def test_sparse_svc_clone_with_callable_kernel(lil_container):
     b.predict_proba(X_sp)
 
     dense_svm = svm.SVC(
-        C=1, kernel=lambda x, y: np.dot(x, y.T), probability=True, random_state=0
+        C=1, kernel=lambda x, y: x @ y.T, probability=True, random_state=0
     )
     pred_dense = dense_svm.fit(X, Y).predict(X)
     assert_array_equal(pred_dense, pred)
