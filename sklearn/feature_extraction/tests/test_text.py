@@ -26,7 +26,7 @@ from sklearn.feature_extraction.text import (
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
-from sklearn.utils import IS_PYPY
+from sklearn.utils import _IS_WASM, IS_PYPY
 from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_almost_equal,
@@ -475,6 +475,13 @@ def test_tf_idf_smoothing():
     assert (tfidf >= 0).all()
 
 
+@pytest.mark.xfail(
+    _IS_WASM,
+    reason=(
+        "no floating point exceptions, see"
+        " https://github.com/numpy/numpy/pull/21895#issuecomment-1311525881"
+    ),
+)
 def test_tfidf_no_smoothing():
     X = [[1, 1, 1], [1, 1, 0], [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm="l2")
