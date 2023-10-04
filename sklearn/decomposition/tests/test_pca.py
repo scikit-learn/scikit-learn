@@ -228,12 +228,14 @@ def test_pca_solver_equivalence(
     assert np.isfinite(X_recons_other_test).all()
     assert X_recons_other_test.dtype == global_dtype
 
-    if n_components is None and X_train.shape[0] > X_train.shape[1]:
+    effective_rank = np.linalg.matrix_rank(X_train)
+    effective_n_components = pca_full.n_components_
+    if effective_n_components > effective_rank and X_train.shape[0] > effective_rank:
         # In this case, both models should be able to reconstruct the data,
         # even in the presence of noisy components.
         assert_allclose(X_recons_full_test, X_test, **tols)
         assert_allclose(X_recons_other_test, X_test, **tols)
-    elif pca_full.explained_variance_.min() > variance_threshold:
+    elif effective_n_components < effective_rank:
         # In the absence of noisy components, both models should be able to
         # reconstruct the same low-rank approximation of the original data.
         assert_allclose(X_recons_full_test, X_recons_other_test, **tols)
