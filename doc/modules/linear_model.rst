@@ -897,8 +897,15 @@ following cost function:
 .. math::
     :name: regularized-logistic-loss
 
-    \min_{w} C \sum_{i=1}^n \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right) + r(w).
+    \min_{w} C \sum_{i=1}^n s_i \left(-y_i \log(\hat{p}(X_i w)) - (1 - y_i) \log(1 - \hat{p}(X_i w))\right) + r(w).
 
+where :math:`{s_i}` corresponds to the weights assigned by the user to a
+specific training sample (the vector :math:`{s}` is formed by element-wise
+multiplication of the class weights and sample weights), :math:`{y_i}` is the
+real class of that sample (0 or 1), :math:`{\hat{p}(X_i w)}` is the predicted
+probability that :math:`{X_i}` belongs to the same class as :math:`{y_i}`, and
+:math:`{r(w)}` represents the regularization term, that is scaled by the
+regularization strength :math:`{C}`.
 
 We currently provide four choices for the regularization term  :math:`r(w)`  via
 the `penalty` argument:
@@ -919,6 +926,14 @@ For ElasticNet, :math:`\rho` (which corresponds to the `l1_ratio` parameter)
 controls the strength of :math:`\ell_1` regularization vs. :math:`\ell_2`
 regularization. Elastic-Net is equivalent to :math:`\ell_1` when
 :math:`\rho = 1` and equivalent to :math:`\ell_2` when :math:`\rho=0`.
+
+Note that the scale of the class weights and the sample weights will influence
+the optimization process. This is because large user defined sample weights
+will lead to large coefficients and regularization penalizes large coefficients
+by adding a cost to the loss (even if all coefficients were enlarged
+proportionally to each other). The trained coefficients might thus slighly
+differ depending on the scale of class weights and sample weights defined by
+the user.
 
 Multinomial Case
 ----------------
