@@ -18,7 +18,7 @@ The top usability features of HGBT models are:
 - :ref:`nan_support_hgbt`, which avoids the need for an imputer.
 - Support for several losses such as the :ref:`Quantile loss <quantile_support_hgbdt>`.
 - :ref:`monotonic_cst_gbdt`.
-- :ref:`_interaction_cst_hgbt`.
+- :ref:`interaction_cst_hgbt`.
 - early stopping
 
 This example aims at showcasing points 2-4 in a real life setting.
