@@ -28,11 +28,11 @@ cdef int safe_realloc(realloc_ptr* p, size_t nelems) except -1 nogil:
     cdef size_t nbytes = nelems * sizeof(p[0][0])
     if nbytes / sizeof(p[0][0]) != nelems:
         # Overflow in the multiplication
-        raise MemoryError("could not allocate (%d * %d) bytes"
-                            % (nelems, sizeof(p[0][0])))
+        raise MemoryError(f"could not allocate ({nelems} * {sizeof(p[0][0])}) bytes")
+
     cdef realloc_ptr tmp = <realloc_ptr>realloc(p[0], nbytes)
     if tmp == NULL:
-        raise MemoryError("could not allocate %d bytes" % nbytes)
+        raise MemoryError(f"could not allocate {nbytes} bytes")
 
     p[0] = tmp
     return 0
