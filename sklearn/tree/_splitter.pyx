@@ -29,6 +29,8 @@ from ._utils cimport rand_int
 from ._utils cimport rand_uniform
 from ._utils cimport RAND_R_MAX
 
+cnp.import_array()
+
 cdef double INFINITY = np.inf
 
 # Mitigate precision differences between 32 bit and 64 bit
