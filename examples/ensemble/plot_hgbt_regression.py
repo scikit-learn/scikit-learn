@@ -16,7 +16,7 @@ The top usability features of HGBT models are:
 - :ref:`categorical_support_gbdt` (see
   :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`).
 - :ref:`nan_support_hgbt`, which avoids the need for an imputer.
-- :ref:`Quantile loss support <quantile_support_hgbdt>`.
+- Support for several losses such as the :ref:`Quantile loss <quantile_support_hgbdt>`.
 - :ref:`monotonic_cst_gbdt`.
 - :ref:`_interaction_cst_hgbt`.
 - early stopping
@@ -346,10 +346,10 @@ ax.set(
 _ = ax.legend()
 
 # %%
-# Keep in mind that the predicted percentiles are just estimations that depend
-# on the model. One can still improve the quality of such estimations by:
+# Keep in mind that those predicted percentiles are just estimations from a
+# model. One can still improve the quality of such estimations by:
 #
-# - collecting more data-points (in case the model is overfitting);
+# - collecting more data-points;
 # - better tuning of the model hyperparameters (see
 #   :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`);
 # - engineering more predictive features from the same data (see
