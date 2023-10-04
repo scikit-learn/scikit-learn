@@ -1795,11 +1795,7 @@ class PartialDependenceDisplay:
                     f"`extra_plots` contains {len(extra_plots)} element(s) and"
                     f"`features` contains {len(self.features)} element(s)."
                 )
-        else:
-            raise ValueError(
-                f"Unknown extra_plots argument <{extra_plots}>,"
-                "valid argument types are: str, list of str, None"
-            )
+
         for pd_plot_idx, (
             axi,
             feature_idx,

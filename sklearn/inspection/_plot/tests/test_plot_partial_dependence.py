@@ -1126,17 +1126,47 @@ def test_partial_dependence_display_with_constant_sample_weight(
         (None, [2], False, True, 1, {}),
         ("scatter", [2], False, False, 1, {}),
         ("scatter", [2], False, True, 1, {}),
-        ("hist", [2], False, False, 1, {"hist": {"fill": False}}),
+        ("scatter", ["x1"], True, False, 1, {}),
+        ("scatter", [(1, 2)], False, False, 2, {}),
+        ("hist", [2], False, False, 1, {"hist": {"fill": False, "bins": 5}}),
         ("hist", [2], False, True, 1, {"hist": {"fill": True}}),
-        (["scatter", "hist"], [2, (0, 1)], False, True, 3, {}),
-        (["scatter", "hist"], [2, (0, 1)], False, False, 3, {}),
+        (
+            ["scatter", "hist"],
+            [2, (0, 1)],
+            False,
+            True,
+            3,
+            {"scatter": {"facecolors": "r"}},
+        ),
+        (
+            ["scatter", "hist"],
+            [2, (0, 1)],
+            False,
+            False,
+            3,
+            {"scatter": {"edgecolors": "r"}},
+        ),
         (["boxplot", "hist", "scatter"], [2, (0, 1), 3], False, True, 4, {}),
+        (
+            ["boxplot", "boxplot"],
+            [(0, 1), (1, 2)],
+            False,
+            False,
+            3,
+            {"boxplot": {"widths": 0.75}},
+        ),
+        ("boxplot", [("x1", "x1")], True, False, 1, {}),
+        ("boxplot", [(1, 2)], False, False, 2, {}),
         (["boxplot", "hist"], [2], False, False, 2, {}),
         (["boxplot", None], [0, 2], False, False, 2, {}),
         ("hist", ["x1"], True, True, 1, {}),
+        ("boxplot", ["x1"], True, False, 1, {}),
+        ("boxplot", ["x1"], False, False, 1, {"boxplot": {"widths": 0.75}}),
         ("hist", [("x1", "x1")], True, True, 1, {}),
+        ("hist", [(1, 2)], False, False, 2, {"hist": {"fill": False, "bins": 5}}),
         ("invalid", [2], False, False, 1, {}),
         ("invalid", [2], False, True, 1, {}),
+        (["scatter", "invalid"], [1, (1, 2)], False, False, 1, {}),
     ],
 )
 def test_partial_dependence_display_extra_plots(
@@ -1160,7 +1190,7 @@ def test_partial_dependence_display_extra_plots(
         )
         assert disp.extra_plots_data is None
 
-    elif extra_plots == "invalid":
+    elif extra_plots == "invalid" or "invalid" in extra_plots:
         with pytest.raises(ValueError, match=r"Unknown extra_plot option.*"):
             disp = PartialDependenceDisplay.from_estimator(
                 clf_diabetes,
@@ -1202,6 +1232,20 @@ def test_partial_dependence_display_extra_plots(
                 disp.figure_.get_axes()[1].get_children()[0].fill
                 is extra_plots_kw["hist"]["fill"]
             )
-
         elif not use_y and "scatter" in extra_plots and len(features) == 1:
             assert disp.figure_.get_axes()[1].get_ylim()[1] != np.max(diabetes.target)
+
+
+def test_non_array_one_way(
+    pyplot,
+    clf_diabetes,
+    diabetes,
+):
+    with pytest.raises(ValueError, match=r"Expected 2D array, got 1D array instead"):
+        PartialDependenceDisplay.from_estimator(
+            clf_diabetes,
+            diabetes.data,
+            [2],
+            extra_plots="scatter",
+            y=diabetes.target.tolist(),
+        )
