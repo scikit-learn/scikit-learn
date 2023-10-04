@@ -140,17 +140,16 @@ class _BasePCA(
 
         check_is_fitted(self)
 
-        X = self._validate_data(X, dtype=[xp.float64, xp.float32], reset=False)
-        if self.mean_ is not None:
-            X = X - self.mean_
+        X = self._validate_data(
+            X, dtype=[xp.float64, xp.float32], copy=False, reset=False
+        )
         return self._transform(X, xp)
 
-    def _transform(self, X_centered, xp=None):
+    def _transform(self, X, xp=None):
         if xp is None:
-            xp, _ = get_namespace(
-                X_centered, self.components_, self.explained_variance_
-            )
-        X_transformed = X_centered @ self.components_.T
+            xp, _ = get_namespace(X, self.components_, self.explained_variance_)
+        X_transformed = X @ self.components_.T
+        X_transformed -= xp.reshape(self.mean_, (1, -1)) @ self.components_.T
         if self.whiten:
             # For some solvers (such as "arpack" and "covariance_eigh"), on
             # rank deficient data, some components can have a variance

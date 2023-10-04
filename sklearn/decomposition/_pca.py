@@ -478,7 +478,7 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        U, S, Vt, X_centered = self._fit(X)
+        U, S, Vt, X_validated = self._fit(X)
         if U is not None:
             U = U[:, : self.n_components_]
 
@@ -491,7 +491,7 @@ class PCA(_BasePCA):
 
             return U
         else:
-            return self._transform(X_centered)
+            return self._transform(X)
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
@@ -510,8 +510,11 @@ class PCA(_BasePCA):
                 "PCA with svd_solver='arpack' is not supported for Array API inputs."
             )
 
+        # Validate the data, without forcing a copy as it's not required for
+        # the `covariance_eigh` dataset and would be wasteful for large
+        # datasets.
         X = self._validate_data(
-            X, dtype=[xp.float64, xp.float32], ensure_2d=True, copy=self.copy
+            X, dtype=[xp.float64, xp.float32], ensure_2d=True, copy=False
         )
 
         # Handle n_components==None
@@ -563,11 +566,11 @@ class PCA(_BasePCA):
                 f"svd_solver={self._fit_svd_solver!r}"
             )
 
-        # Center data
         self.mean_ = xp.mean(X, axis=0)
-        X -= self.mean_
-
         if self._fit_svd_solver == "full":
+            X_centered = xp.asarray(X, copy=True) if self.copy else X
+            X_centered -= self.mean_
+
             if not is_array_api_compliant:
                 # Use scipy.linalg with NumPy/SciPy inputs for the sake of not
                 # introducing unanticipated behavior changes. In the long run we
@@ -576,12 +579,20 @@ class PCA(_BasePCA):
                 # scipy's. It's not 100% clear whether they use the same LAPACK
                 # solver by default though (assuming both are built against the
                 # same BLAS).
-                U, S, Vt = linalg.svd(X, full_matrices=False)
+                U, S, Vt = linalg.svd(X_centered, full_matrices=False)
             else:
-                U, S, Vt = xp.linalg.svd(X, full_matrices=False)
+                U, S, Vt = xp.linalg.svd(X_centered, full_matrices=False)
         else:
             assert self._fit_svd_solver == "covariance_eigh"
+            # In the following, we center the covariance matrix C without
+            # centering the data X to avoid an unecessary copy of X. Note that
+            # the mean_ attribute is also needed by the transform method.
             C = X.T @ X
+            C -= (
+                X.shape[0]
+                * xp.reshape(self.mean_, (-1, 1))
+                * xp.reshape(self.mean_, (1, -1))
+            )
             evals, Evecs = xp.linalg.eigh(C)
             evals = xp.flip(evals, axis=0)
             Evecs = xp.flip(Evecs, axis=1)
@@ -663,13 +674,13 @@ class PCA(_BasePCA):
 
         random_state = check_random_state(self.random_state)
 
-        # Center data
         self.mean_ = xp.mean(X, axis=0)
-        X -= self.mean_
+        X_centered = xp.asarray(X, copy=True) if self.copy else X
+        X_centered -= self.mean_
 
         if svd_solver == "arpack":
             v0 = _init_arpack_v0(min(X.shape), random_state)
-            U, S, Vt = svds(X, k=n_components, tol=self.tol, v0=v0)
+            U, S, Vt = svds(X_centered, k=n_components, tol=self.tol, v0=v0)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             S = S[::-1]
@@ -679,7 +690,7 @@ class PCA(_BasePCA):
         elif svd_solver == "randomized":
             # sign flipping is done inside
             U, S, Vt = randomized_svd(
-                X,
+                X_centered,
                 n_components=n_components,
                 n_oversamples=self.n_oversamples,
                 n_iter=self.iterated_power,
@@ -699,8 +710,8 @@ class PCA(_BasePCA):
         # Workaround in-place variance calculation since at the time numpy
         # did not have a way to calculate variance in-place.
         N = X.shape[0] - 1
-        X **= 2
-        total_var = xp.sum(xp.sum(X, axis=0) / N)
+        X_centered **= 2
+        total_var = xp.sum(xp.sum(X_centered, axis=0) / N)
 
         self.explained_variance_ratio_ = self.explained_variance_ / total_var
         self.singular_values_ = xp.asarray(S, copy=True)  # Store the singular values.

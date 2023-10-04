@@ -647,28 +647,33 @@ def test_pca_deterministic_output(svd_solver):
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_dtype_preservation(svd_solver):
-    check_pca_float_dtype_preservation(svd_solver)
+def test_pca_dtype_preservation(svd_solver, global_random_seed):
+    check_pca_float_dtype_preservation(svd_solver, global_random_seed)
     check_pca_int_dtype_upcast_to_double(svd_solver)
 
 
-def check_pca_float_dtype_preservation(svd_solver):
+def check_pca_float_dtype_preservation(svd_solver, seed):
     # Ensure that PCA does not upscale the dtype when input is float32
-    X_64 = np.random.RandomState(0).rand(1000, 4).astype(np.float64, copy=False)
-    X_32 = X_64.astype(np.float32)
+    X = np.random.RandomState(seed).rand(1000, 4)
+    X_float64 = X.astype(np.float64, copy=False)
+    X_float32 = X.astype(np.float32)
 
-    pca_64 = PCA(n_components=3, svd_solver=svd_solver, random_state=0).fit(X_64)
-    pca_32 = PCA(n_components=3, svd_solver=svd_solver, random_state=0).fit(X_32)
+    pca_64 = PCA(n_components=3, svd_solver=svd_solver, random_state=seed).fit(
+        X_float64
+    )
+    pca_32 = PCA(n_components=3, svd_solver=svd_solver, random_state=seed).fit(
+        X_float32
+    )
 
     assert pca_64.components_.dtype == np.float64
     assert pca_32.components_.dtype == np.float32
-    assert pca_64.transform(X_64).dtype == np.float64
-    assert pca_32.transform(X_32).dtype == np.float32
+    assert pca_64.transform(X_float64).dtype == np.float64
+    assert pca_32.transform(X_float32).dtype == np.float32
 
-    # the rtol is set such that the test passes on all platforms tested on
-    # conda-forge: PR#15775
-    # see: https://github.com/conda-forge/scikit-learn-feedstock/pull/113
-    assert_allclose(pca_64.components_, pca_32.components_, rtol=2e-4)
+    # The atol and rtol are set such that the test passes for all random seeds
+    # on all supported platforms on our CI and conda-forge with the default
+    # random seed.
+    assert_allclose(pca_64.components_, pca_32.components_, rtol=1e-3, atol=1e-3)
 
 
 def check_pca_int_dtype_upcast_to_double(svd_solver):
