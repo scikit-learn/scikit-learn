@@ -21,23 +21,26 @@ import numpy as np
 import pandas as pd
 
 from sklearn import config_context
-from sklearn.datasets import make_low_rank_matrix
 from sklearn.decomposition import PCA
 
 REF_DIMS = [100, 1000, 10_000]
 data_shapes = []
 for ref_dim in REF_DIMS:
-    data_shapes.extend([(ref_dim, 10**i) for i in range(1, 9 - int(log10(ref_dim)))])
-    data_shapes.extend([(10**i, ref_dim) for i in range(1, 9 - int(log10(ref_dim)))])
+    data_shapes.extend([(ref_dim, 10**i) for i in range(1, 8 - int(log10(ref_dim)))])
+    data_shapes.extend(
+        [(ref_dim, 3 * 10**i) for i in range(1, 8 - int(log10(ref_dim)))]
+    )
+    data_shapes.extend([(10**i, ref_dim) for i in range(1, 8 - int(log10(ref_dim)))])
+    data_shapes.extend(
+        [(3 * 10**i, ref_dim) for i in range(1, 8 - int(log10(ref_dim)))]
+    )
 
 # Remove duplicates:
 data_shapes = sorted(set(data_shapes))
 
 print("Generating test datasets...")
-datasets = [
-    make_low_rank_matrix(n_samples, n_features, random_state=0)
-    for n_samples, n_features in data_shapes
-]
+rng = np.random.default_rng(0)
+datasets = [rng.normal(size=shape) for shape in data_shapes]
 
 
 # %%
@@ -68,7 +71,7 @@ for data, n_components, method_name in itertools.product(
     if n_components >= min(data.shape):
         continue
     for solver in SOLVERS:
-        if solver == "covariance_eigh" and data.shape[1] > 1000:
+        if solver == "covariance_eigh" and data.shape[1] > 5000:
             # Too much memory and too slow.
             continue
         if solver in ["arpack", "full"] and log10(data.size) > 7:

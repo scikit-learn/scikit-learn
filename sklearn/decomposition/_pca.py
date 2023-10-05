@@ -179,7 +179,7 @@ class PCA(_BasePCA):
             default='auto'
         "auto" :
             The solver is selected by a default policy based on `X.shape` and
-            `n_components`: if the input data has fewer than 500 features and
+            `n_components`: if the input data has fewer than 1000 features and
             more than 10 times as many samples, then the more "covariance_eigh"
             solver is used. Otherwise, if the input data is larger than 500x500
             and the number of components to extract is lower than 80% of the
@@ -531,7 +531,7 @@ class PCA(_BasePCA):
         if self._fit_svd_solver == "auto":
             # Tall and skinny problems are best handled by precomputing the
             # covariance matrix.
-            if X.shape[1] <= 500 and X.shape[0] >= 10 * X.shape[1]:
+            if X.shape[1] <= 1000 and X.shape[0] >= 10 * X.shape[1]:
                 self._fit_svd_solver = "covariance_eigh"
             # Small problem or n_components == 'mle', just call full PCA
             elif max(X.shape) <= 500 or n_components == "mle":
