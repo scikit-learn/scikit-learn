@@ -34,7 +34,6 @@ from ..utils.validation import (
     check_random_state,
     column_or_1d,
     has_fit_parameter,
-    has_split_parameter,
 )
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -1690,9 +1689,12 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         cv = check_cv(self.cv)
 
         if _routing_enabled():
+            splitter_supports_sample_weight = cv.get_metadata_routing().consumes(
+                method="split", params=["sample_weight"]
+            )
             if (
                 sample_weight is not None
-                and not has_split_parameter(cv, "sample_weight")
+                and not splitter_supports_sample_weight
                 and not has_fit_parameter(self, "sample_weight")
             ):
                 raise ValueError(
@@ -1700,7 +1702,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                     " sample weights."
                 )
 
-            if has_split_parameter(cv, "sample_weight"):
+            if splitter_supports_sample_weight:
                 params["sample_weight"] = sample_weight
 
             routed_params = process_routing(self, "fit", **params)

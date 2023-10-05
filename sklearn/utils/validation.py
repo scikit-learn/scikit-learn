@@ -1301,33 +1301,6 @@ def has_fit_parameter(estimator, parameter):
     return parameter in signature(estimator.fit).parameters
 
 
-def has_split_parameter(cv_splitter, parameter):
-    """Check whether the splitter's split method supports the given parameter.
-
-    Parameters
-    ----------
-    cv_splitter : object
-        A cv splitter to inspect.
-
-    parameter : str
-        The searched parameter.
-
-    Returns
-    -------
-    is_parameter : bool
-        Whether the parameter was found to be a named parameter of the
-        cv splitter's split method.
-
-    Examples
-    --------
-    >>> from sklearn.model_selection import KFold
-    >>> from sklearn.utils.validation import has_split_parameter
-    >>> has_split_parameter(KFold(), "groups")
-    True
-    """
-    return parameter in signature(cv_splitter.split).parameters
-
-
 def check_symmetric(array, *, tol=1e-10, raise_warning=True, raise_exception=False):
     """Make sure that array is 2D, square and symmetric.
 
