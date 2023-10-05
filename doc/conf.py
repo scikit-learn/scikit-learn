@@ -300,6 +300,9 @@ redirects = {
     "auto_examples/decomposition/plot_beta_divergence": (
         "auto_examples/applications/plot_topics_extraction_with_nmf_lda"
     ),
+    "auto_examples/ensemble/plot_adaboost_hastie_10_2": (
+        "auto_examples/ensemble/plot_adaboost_multiclass"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
@@ -697,7 +700,6 @@ warnings.filterwarnings(
         " non-GUI backend, so cannot show the figure."
     ),
 )
-
 
 # maps functions with a class name that is indistinguishable when case is
 # ignore to another filename

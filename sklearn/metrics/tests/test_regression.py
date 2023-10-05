@@ -24,6 +24,8 @@ from sklearn.metrics import (
     mean_tweedie_deviance,
     median_absolute_error,
     r2_score,
+    root_mean_squared_error,
+    root_mean_squared_log_error,
 )
 from sklearn.metrics._regression import _check_reg_targets
 from sklearn.metrics.tests.test_common import check_array_api_compute_metric
@@ -128,12 +130,12 @@ def test_regression_metrics(n_samples=50):
     )
 
 
-def test_mean_squared_error_multioutput_raw_value_squared():
+def test_root_mean_squared_error_multioutput_raw_value():
     # non-regression test for
     # https://github.com/scikit-learn/scikit-learn/pull/16323
-    mse1 = mean_squared_error([[1]], [[10]], multioutput="raw_values", squared=True)
-    mse2 = mean_squared_error([[1]], [[10]], multioutput="raw_values", squared=False)
-    assert np.sqrt(mse1) == pytest.approx(mse2)
+    mse = mean_squared_error([[1]], [[10]], multioutput="raw_values")
+    rmse = root_mean_squared_error([[1]], [[10]], multioutput="raw_values")
+    assert np.sqrt(mse) == pytest.approx(rmse)
 
 
 def test_multioutput_regression():
@@ -143,11 +145,14 @@ def test_multioutput_regression():
     error = mean_squared_error(y_true, y_pred)
     assert_almost_equal(error, (1.0 / 3 + 2.0 / 3 + 2.0 / 3) / 4.0)
 
-    error = mean_squared_error(y_true, y_pred, squared=False)
+    error = root_mean_squared_error(y_true, y_pred)
     assert_almost_equal(error, 0.454, decimal=2)
 
     error = mean_squared_log_error(y_true, y_pred)
     assert_almost_equal(error, 0.200, decimal=2)
+
+    error = root_mean_squared_log_error(y_true, y_pred)
+    assert_almost_equal(error, 0.315, decimal=2)
 
     # mean_absolute_error and mean_squared_error are equal because
     # it is a binary problem.
@@ -224,7 +229,7 @@ def test_regression_metrics_at_limits():
     # Single-sample case
     # Note: for r2 and d2_tweedie see also test_regression_single_sample
     assert_almost_equal(mean_squared_error([0.0], [0.0]), 0.0)
-    assert_almost_equal(mean_squared_error([0.0], [0.0], squared=False), 0.0)
+    assert_almost_equal(root_mean_squared_error([0.0], [0.0]), 0.0)
     assert_almost_equal(mean_squared_log_error([0.0], [0.0]), 0.0)
     assert_almost_equal(mean_absolute_error([0.0], [0.0]), 0.0)
     assert_almost_equal(mean_pinball_loss([0.0], [0.0]), 0.0)
@@ -262,6 +267,12 @@ def test_regression_metrics_at_limits():
     )
     with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([1.0, -2.0, 3.0], [1.0, 2.0, 3.0])
+    msg = (
+        "Root Mean Squared Logarithmic Error cannot be used when targets "
+        "contain negative values."
+    )
+    with pytest.raises(ValueError, match=msg):
+        root_mean_squared_log_error([1.0, -2.0, 3.0], [1.0, 2.0, 3.0])
 
     # Tweedie deviance error
     power = -1.2
@@ -443,7 +454,7 @@ def test_regression_custom_weights():
     y_pred = [[1, 1], [2, -1], [5, 4], [5, 6.5]]
 
     msew = mean_squared_error(y_true, y_pred, multioutput=[0.4, 0.6])
-    rmsew = mean_squared_error(y_true, y_pred, multioutput=[0.4, 0.6], squared=False)
+    rmsew = root_mean_squared_error(y_true, y_pred, multioutput=[0.4, 0.6])
     maew = mean_absolute_error(y_true, y_pred, multioutput=[0.4, 0.6])
     mapew = mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.4, 0.6])
     rw = r2_score(y_true, y_pred, multioutput=[0.4, 0.6])
@@ -616,6 +627,53 @@ def test_pinball_loss_relation_with_mae():
         mean_absolute_error(y_true, y_pred)
         == mean_pinball_loss(y_true, y_pred, alpha=0.5) * 2
     )
+
+
+# TODO(1.6): remove this test
+@pytest.mark.parametrize("metric", [mean_squared_error, mean_squared_log_error])
+def test_mean_squared_deprecation_squared(metric):
+    """Check the deprecation warning of the squared parameter"""
+    depr_msg = "'squared' is deprecated in version 1.4 and will be removed in 1.6."
+    y_true, y_pred = np.arange(10), np.arange(1, 11)
+    with pytest.warns(FutureWarning, match=depr_msg):
+        metric(y_true, y_pred, squared=False)
+
+
+# TODO(1.6): remove this test
+@pytest.mark.filterwarnings("ignore:'squared' is deprecated")
+@pytest.mark.parametrize(
+    "old_func, new_func",
+    [
+        (mean_squared_error, root_mean_squared_error),
+        (mean_squared_log_error, root_mean_squared_log_error),
+    ],
+)
+def test_rmse_rmsle_parameter(old_func, new_func):
+    # Check that the new rmse/rmsle function is equivalent to
+    # the old mse/msle + squared=False function.
+    y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
+    y_pred = np.array([[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]])
+    y_true = np.array([[0.5, 1], [1, 2], [7, 6]])
+    y_pred = np.array([[0.5, 2], [1, 2.5], [8, 8]])
+    sw = np.arange(len(y_true))
+
+    expected = old_func(y_true, y_pred, squared=False)
+    actual = new_func(y_true, y_pred)
+    assert_allclose(expected, actual)
+
+    expected = old_func(y_true, y_pred, sample_weight=sw, squared=False)
+    actual = new_func(y_true, y_pred, sample_weight=sw)
+    assert_allclose(expected, actual)
+
+    expected = old_func(y_true, y_pred, multioutput="raw_values", squared=False)
+    actual = new_func(y_true, y_pred, multioutput="raw_values")
+    assert_allclose(expected, actual)
+
+    expected = old_func(
+        y_true, y_pred, sample_weight=sw, multioutput="raw_values", squared=False
+    )
+    actual = new_func(y_true, y_pred, sample_weight=sw, multioutput="raw_values")
+    assert_allclose(expected, actual)
 
 
 @pytest.mark.parametrize(

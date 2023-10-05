@@ -57,7 +57,7 @@ def get_data_home(data_home=None) -> str:
     ----------
     data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
-        is `~/sklearn_learn_data`.
+        is `~/scikit_learn_data`.
 
     Returns
     -------
@@ -84,7 +84,7 @@ def clear_data_home(data_home=None):
     ----------
     data_home : str or path-like, default=None
         The path to scikit-learn data directory. If `None`, the default path
-        is `~/sklearn_learn_data`.
+        is `~/scikit_learn_data`.
     """
     data_home = get_data_home(data_home)
     shutil.rmtree(data_home)
@@ -667,6 +667,9 @@ def load_iris(*, return_X_y=False, as_frame=False):
     array([0, 0, 1])
     >>> list(data.target_names)
     ['setosa', 'versicolor', 'virginica']
+
+    See :ref:`sphx_glr_auto_examples_datasets_plot_iris_dataset.py` for a more
+    detailed example of how to work with the iris dataset.
     """
     data_file_name = "iris.csv"
     data, target, target_names, fdescr = load_csv_data(

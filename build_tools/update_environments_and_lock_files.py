@@ -323,6 +323,9 @@ conda_build_metadata_list = [
             # Regression have been observed with Cython>=3.0.0.
             # See: https://github.com/scikit-learn/scikit-learn/issues/27086
             "cython": "<3.0.0",
+            # seaborn 0.12.2 raises deprecation warnings appearing in the documentation
+            # We should remove this constraint when seaborn 0.13 is released
+            "pandas": "<2.1",
         },
     },
     {
