@@ -1079,8 +1079,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
             Parameters to pass to the underlying splitter.
 
             .. versionadded:: 1.4
-                Only available if `enable_metadata_routing=True`. See
-                :ref:`Metadata Routing User Guide <metadata_routing>` for
+                Only available if `enable_metadata_routing=True` is set via
+                    :func:`~sklearn.set_config` or via
+                    :func:`~sklearn.config_context`.
+
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
                 more details.
 
         Returns
