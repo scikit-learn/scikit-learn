@@ -91,8 +91,9 @@ explicitly request weights for our scorer and the internal cross validation of
 these :term:`consumers <consumer>` know how to use metadata called ``sample_weight``::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
-  >>> lr = LogisticRegressionCV(cv=GroupKFold(), scoring=weighted_acc,)
-  >>> lr.set_fit_request(sample_weight=True)
+  >>> lr = LogisticRegressionCV(
+  ...     cv=GroupKFold(), scoring=weighted_acc
+  ... ).set_fit_request(sample_weight=True)
   >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
@@ -119,8 +120,9 @@ configure :class:`~linear_model.LogisticRegressionCV` to not request sample weig
 that :func:`~model_selection.cross_validate` does not pass the weights along::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
-  >>> lr = LogisticRegressionCV(cv=GroupKFold(), scoring=weighted_acc,)
-  >>> lr.set_fit_request(sample_weight=False)
+  >>> lr = LogisticRegressionCV(
+  ...     cv=GroupKFold(), scoring=weighted_acc
+  ... ).set_fit_request(sample_weight=False)
   >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
@@ -145,8 +147,9 @@ can't consume weights and therefore no request value for ``sample_weight`` on it
 instance is set and ``sample_weight`` is not routed to it::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
-  >>> lr = LogisticRegressionCV(cv=GroupKFold(), scoring=weighted_acc,)
-  >>> lr.set_fit_request(sample_weight=True)
+  >>> lr = LogisticRegressionCV(
+  ...     cv=GroupKFold(), scoring=weighted_acc
+  ... ).set_fit_request(sample_weight=True)
   >>> sel = SelectKBest(k=2)
   >>> pipe = make_pipeline(sel, lr)
   >>> cv_results = cross_validate(
@@ -170,8 +173,9 @@ consumers. In this example, we pass ``scoring_weight`` to the scorer, and
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(
   ...    sample_weight="scoring_weight"
   ... )
-  >>> lr = LogisticRegressionCV(cv=GroupKFold(), scoring=weighted_acc,)
-  >>> lr.set_fit_request(sample_weight="fitting_weight")
+  >>> lr = LogisticRegressionCV(
+  ...     cv=GroupKFold(), scoring=weighted_acc
+  ... ).set_fit_request(sample_weight="fitting_weight")
   >>> cv_results = cross_validate(
   ...     lr,
   ...     X,
