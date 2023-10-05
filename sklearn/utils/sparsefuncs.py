@@ -1,3 +1,8 @@
+"""
+The :mod:`sklearn.utils.sparsefuncs` module includes a collection of utilities to
+work with sparse matrices and arrays.
+"""
+
 # Authors: Manoj Kumar
 #          Thomas Unterthiner
 #          Giorgio Patrini
