@@ -928,13 +928,9 @@ regularization. Elastic-Net is equivalent to :math:`\ell_1` when
 :math:`\rho = 1` and equivalent to :math:`\ell_2` when :math:`\rho=0`.
 
 Note that the scale of the class weights and the sample weights will influence
-the optimization process. This is because large user defined sample weights
-will lead to large coefficients and regularization penalizes large coefficients
-by adding a cost to the loss (even if all coefficients were enlarged
-proportionally to each other). The trained coefficients might thus slighly
-differ depending on the scale of class weights and sample weights defined by
-the user.
-
+the optimization process. For instance, multiplying the sample weights by a
+constant :math:`b>0` is equivalent to multiplying the (inverse) regularization
+strength `C` by :math:`b`.
 Multinomial Case
 ----------------
 
