@@ -1637,16 +1637,16 @@ def test_read_only_buffer():
 
 
 @pytest.mark.parametrize(
-    "cv_estimator",
+    "EstimatorCV",
     [ElasticNetCV, LassoCV, MultiTaskElasticNetCV, MultiTaskLassoCV],
 )
-def test_cv_estimators_reject_params_with_no_routing_enabled(cv_estimator):
+def test_cv_estimators_reject_params_with_no_routing_enabled(EstimatorCV):
     """Check that the models inheriting from class:`LinearModelCV` raise an
     error when any `params` are passed when routing is not enabled.
     """
     X, y = make_regression(random_state=42)
     groups = np.array([0, 1] * (len(y) // 2))
-    estimator = cv_estimator()
+    estimator = EstimatorCV()
     msg = "is only supported if enable_metadata_routing=True"
     with pytest.raises(ValueError, match=msg):
         estimator.fit(X, y, groups=groups)
@@ -1654,10 +1654,10 @@ def test_cv_estimators_reject_params_with_no_routing_enabled(cv_estimator):
 
 @pytest.mark.usefixtures("enable_slep006")
 @pytest.mark.parametrize(
-    "multitask_cv_estimator",
+    "MultiTaskEstimatorCV",
     [MultiTaskElasticNetCV, MultiTaskLassoCV],
 )
-def test_multitask_cv_estimators_with_sample_weight(multitask_cv_estimator):
+def test_multitask_cv_estimators_with_sample_weight(MultiTaskEstimatorCV):
     """Check that for :class:`MultiTaskElasticNetCV` and
     class:`MultiTaskLassoCV` if `sample_weight` is passed and the
     CV splitter does not support `sample_weight` an error is raised.
@@ -1683,7 +1683,7 @@ def test_multitask_cv_estimators_with_sample_weight(multitask_cv_estimator):
 
     # If CV splitter does not support sample_weight an error is raised
     splitter = CVSplitter().set_split_request(groups=True)
-    estimator = multitask_cv_estimator(cv=splitter)
+    estimator = MultiTaskEstimatorCV(cv=splitter)
     msg = "do not support sample weights"
     with pytest.raises(ValueError, match=msg):
         estimator.fit(X, y, sample_weight=sample_weight)
@@ -1692,5 +1692,5 @@ def test_multitask_cv_estimators_with_sample_weight(multitask_cv_estimator):
     splitter = CVSplitterSampleWeight().set_split_request(
         groups=True, sample_weight=True
     )
-    estimator = multitask_cv_estimator(cv=splitter)
+    estimator = MultiTaskEstimatorCV(cv=splitter)
     estimator.fit(X, y, sample_weight=sample_weight)

@@ -1547,9 +1547,13 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             Parameters to be passed to the CV splitter.
 
             .. versionadded:: 1.4
-                Only available if `enable_metadata_routing=True`. See
-                :ref:`Metadata Routing User Guide <metadata_routing>` for more
-                details.
+                Only available if `enable_metadata_routing=True`.
+                You can enable it by using
+                    ``sklearn.set_config(enable_metadata_routing=True)``
+                or by using the context manager
+                    ``with config_context(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
@@ -2925,9 +2929,13 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
             Parameters to be passed to the CV splitter.
 
             .. versionadded:: 1.4
-                Only available if `enable_metadata_routing=True`. See
-                :ref:`Metadata Routing User Guide <metadata_routing>` for more
-                details.
+                Only available if `enable_metadata_routing=True`.
+                You can enable it by using
+                    ``sklearn.set_config(enable_metadata_routing=True)``
+                or by using the context manager
+                    ``with config_context(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
@@ -3161,9 +3169,13 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
             Parameters to be passed to the CV splitter.
 
             .. versionadded:: 1.4
-                Only available if `enable_metadata_routing=True`. See
-                :ref:`Metadata Routing User Guide <metadata_routing>` for more
-                details.
+                Only available if `enable_metadata_routing=True`.
+                You can enable it by using
+                    ``sklearn.set_config(enable_metadata_routing=True)``
+                or by using the context manager
+                    ``with config_context(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
