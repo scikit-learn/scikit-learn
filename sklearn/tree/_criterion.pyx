@@ -42,12 +42,12 @@ cdef class Criterion:
 
     cdef int init(
         self,
-        const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
         double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end,
+        const intp_t[:] sample_indices,
+        intp_t start,
+        intp_t end,
     ) except -1 nogil:
         """Placeholder for a method which will initialize the criterion.
 
@@ -56,25 +56,25 @@ cdef class Criterion:
 
         Parameters
         ----------
-        y : ndarray, dtype=DOUBLE_t
+        y : ndarray, dtype=float64_t
             y is a buffer that can store values for n_outputs target variables
             stored as a Cython memoryview.
-        sample_weight : ndarray, dtype=DOUBLE_t
+        sample_weight : ndarray, dtype=float64_t
             The weight of each sample stored as a Cython memoryview.
         weighted_n_samples : double
             The total weight of the samples being considered
-        sample_indices : ndarray, dtype=SIZE_t
+        sample_indices : ndarray, dtype=intp_t
             A mask on the samples. Indices of the samples in X and y we want to use,
             where sample_indices[start:end] correspond to the samples in this node.
-        start : SIZE_t
+        start : intp_t
             The first sample to be used on this node
-        end : SIZE_t
+        end : intp_t
             The last sample used on this node
 
         """
         pass
 
-    cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
+    cdef void init_missing(self, intp_t n_missing) noexcept nogil:
         """Initialize sum_missing if there are missing values.
 
         This method assumes that caller placed the missing samples in
@@ -82,7 +82,7 @@ cdef class Criterion:
 
         Parameters
         ----------
-        n_missing: SIZE_t
+        n_missing: intp_t
             Number of missing values for specific feature.
         """
         pass
@@ -101,7 +101,7 @@ cdef class Criterion:
         """
         pass
 
-    cdef int update(self, SIZE_t new_pos) except -1 nogil:
+    cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left child.
 
         This updates the collected statistics by moving sample_indices[pos:new_pos]
@@ -110,7 +110,7 @@ cdef class Criterion:
 
         Parameters
         ----------
-        new_pos : SIZE_t
+        new_pos : intp_t
             New starting index position of the sample_indices in the right child
         """
         pass
@@ -273,7 +273,7 @@ cdef inline void _move_sums_classification(
         sum_1 = 0
         sum_2 = sum_total
     """
-    cdef SIZE_t k, c, n_bytes
+    cdef intp_t k, c, n_bytes
     if criterion.n_missing != 0 and put_missing_in_1:
         for k in range(criterion.n_outputs):
             n_bytes = criterion.n_classes[k] * sizeof(double)
@@ -299,15 +299,15 @@ cdef inline void _move_sums_classification(
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
 
-    def __cinit__(self, SIZE_t n_outputs,
-                  cnp.ndarray[SIZE_t, ndim=1] n_classes):
+    def __cinit__(self, intp_t n_outputs,
+                  cnp.ndarray[intp_t, ndim=1] n_classes):
         """Initialize attributes for this criterion.
 
         Parameters
         ----------
-        n_outputs : SIZE_t
+        n_outputs : intp_t
             The number of targets, the dimensionality of the prediction
-        n_classes : numpy.ndarray, dtype=SIZE_t
+        n_classes : numpy.ndarray, dtype=intp_t
             The number of unique classes in each target
         """
         self.start = 0
@@ -325,8 +325,8 @@ cdef class ClassificationCriterion(Criterion):
 
         self.n_classes = np.empty(n_outputs, dtype=np.intp)
 
-        cdef SIZE_t k = 0
-        cdef SIZE_t max_n_classes = 0
+        cdef intp_t k = 0
+        cdef intp_t max_n_classes = 0
 
         # For each target, set the number of unique classes in that target,
         # and also compute the maximal stride of all targets
@@ -349,12 +349,12 @@ cdef class ClassificationCriterion(Criterion):
 
     cdef int init(
         self,
-        const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
         double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end
+        const intp_t[:] sample_indices,
+        intp_t start,
+        intp_t end
     ) except -1 nogil:
         """Initialize the criterion.
 
@@ -366,18 +366,18 @@ cdef class ClassificationCriterion(Criterion):
 
         Parameters
         ----------
-        y : ndarray, dtype=DOUBLE_t
+        y : ndarray, dtype=float64_t
             The target stored as a buffer for memory efficiency.
-        sample_weight : ndarray, dtype=DOUBLE_t
+        sample_weight : ndarray, dtype=float64_t
             The weight of each sample stored as a Cython memoryview.
         weighted_n_samples : double
             The total weight of all samples
-        sample_indices : ndarray, dtype=SIZE_t
+        sample_indices : ndarray, dtype=intp_t
             A mask on the samples. Indices of the samples in X and y we want to use,
             where sample_indices[start:end] correspond to the samples in this node.
-        start : SIZE_t
+        start : intp_t
             The first sample to use in the mask
-        end : SIZE_t
+        end : intp_t
             The last sample to use in the mask
         """
         self.y = y
@@ -389,11 +389,11 @@ cdef class ClassificationCriterion(Criterion):
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.0
 
-        cdef SIZE_t i
-        cdef SIZE_t p
-        cdef SIZE_t k
-        cdef SIZE_t c
-        cdef DOUBLE_t w = 1.0
+        cdef intp_t i
+        cdef intp_t p
+        cdef intp_t k
+        cdef intp_t c
+        cdef float64_t w = 1.0
 
         for k in range(self.n_outputs):
             memset(&self.sum_total[k, 0], 0, self.n_classes[k] * sizeof(double))
@@ -408,7 +408,7 @@ cdef class ClassificationCriterion(Criterion):
 
             # Count weighted class frequency for each target
             for k in range(self.n_outputs):
-                c = <SIZE_t> self.y[i, k]
+                c = <intp_t> self.y[i, k]
                 self.sum_total[k, c] += w
 
             self.weighted_n_node_samples += w
@@ -421,14 +421,14 @@ cdef class ClassificationCriterion(Criterion):
         """Init sum_missing to hold sums for missing values."""
         self.sum_missing = np.zeros((self.n_outputs, self.max_n_classes), dtype=np.float64)
 
-    cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
+    cdef void init_missing(self, intp_t n_missing) noexcept nogil:
         """Initialize sum_missing if there are missing values.
 
         This method assumes that caller placed the missing samples in
         self.sample_indices[-n_missing:]
         """
-        cdef SIZE_t i, p, k, c
-        cdef DOUBLE_t w = 1.0
+        cdef intp_t i, p, k, c
+        cdef float64_t w = 1.0
 
         self.n_missing = n_missing
         if n_missing == 0:
@@ -445,7 +445,7 @@ cdef class ClassificationCriterion(Criterion):
                 w = self.sample_weight[i]
 
             for k in range(self.n_outputs):
-                c = <SIZE_t> self.y[i, k]
+                c = <intp_t> self.y[i, k]
                 self.sum_missing[k, c] += w
 
             self.weighted_n_missing += w
@@ -484,7 +484,7 @@ cdef class ClassificationCriterion(Criterion):
         )
         return 0
 
-    cdef int update(self, SIZE_t new_pos) except -1 nogil:
+    cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left child.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -492,24 +492,24 @@ cdef class ClassificationCriterion(Criterion):
 
         Parameters
         ----------
-        new_pos : SIZE_t
+        new_pos : intp_t
             The new ending position for which to move sample_indices from the right
             child to the left child.
         """
-        cdef SIZE_t pos = self.pos
+        cdef intp_t pos = self.pos
         # The missing samples are assumed to be in
         # self.sample_indices[-self.n_missing:] that is
         # self.sample_indices[end_non_missing:self.end].
-        cdef SIZE_t end_non_missing = self.end - self.n_missing
+        cdef intp_t end_non_missing = self.end - self.n_missing
 
-        cdef const SIZE_t[:] sample_indices = self.sample_indices
-        cdef const DOUBLE_t[:] sample_weight = self.sample_weight
+        cdef const intp_t[:] sample_indices = self.sample_indices
+        cdef const float64_t[:] sample_weight = self.sample_weight
 
-        cdef SIZE_t i
-        cdef SIZE_t p
-        cdef SIZE_t k
-        cdef SIZE_t c
-        cdef DOUBLE_t w = 1.0
+        cdef intp_t i
+        cdef intp_t p
+        cdef intp_t k
+        cdef intp_t c
+        cdef float64_t w = 1.0
 
         # Update statistics up to new_pos
         #
@@ -526,7 +526,7 @@ cdef class ClassificationCriterion(Criterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    self.sum_left[k, <SIZE_t> self.y[i, k]] += w
+                    self.sum_left[k, <intp_t> self.y[i, k]] += w
 
                 self.weighted_n_left += w
 
@@ -540,7 +540,7 @@ cdef class ClassificationCriterion(Criterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    self.sum_left[k, <SIZE_t> self.y[i, k]] -= w
+                    self.sum_left[k, <intp_t> self.y[i, k]] -= w
 
                 self.weighted_n_left -= w
 
@@ -568,7 +568,7 @@ cdef class ClassificationCriterion(Criterion):
         dest : double pointer
             The memory address which we will save the node value into.
         """
-        cdef SIZE_t k
+        cdef intp_t k
 
         for k in range(self.n_outputs):
             memcpy(dest, &self.sum_total[k, 0], self.n_classes[k] * sizeof(double))
@@ -641,8 +641,8 @@ cdef class Entropy(ClassificationCriterion):
         """
         cdef double entropy = 0.0
         cdef double count_k
-        cdef SIZE_t k
-        cdef SIZE_t c
+        cdef intp_t k
+        cdef intp_t c
 
         for k in range(self.n_outputs):
             for c in range(self.n_classes[k]):
@@ -670,8 +670,8 @@ cdef class Entropy(ClassificationCriterion):
         cdef double entropy_left = 0.0
         cdef double entropy_right = 0.0
         cdef double count_k
-        cdef SIZE_t k
-        cdef SIZE_t c
+        cdef intp_t k
+        cdef intp_t c
 
         for k in range(self.n_outputs):
             for c in range(self.n_classes[k]):
@@ -716,8 +716,8 @@ cdef class Gini(ClassificationCriterion):
         cdef double gini = 0.0
         cdef double sq_count
         cdef double count_k
-        cdef SIZE_t k
-        cdef SIZE_t c
+        cdef intp_t k
+        cdef intp_t c
 
         for k in range(self.n_outputs):
             sq_count = 0.0
@@ -750,8 +750,8 @@ cdef class Gini(ClassificationCriterion):
         cdef double sq_count_left
         cdef double sq_count_right
         cdef double count_k
-        cdef SIZE_t k
-        cdef SIZE_t c
+        cdef intp_t k
+        cdef intp_t c
 
         for k in range(self.n_outputs):
             sq_count_left = 0.0
@@ -794,8 +794,8 @@ cdef inline void _move_sums_regression(
         sum_2 = sum_total
     """
     cdef:
-        SIZE_t i
-        SIZE_t n_bytes = criterion.n_outputs * sizeof(double)
+        intp_t i
+        intp_t n_bytes = criterion.n_outputs * sizeof(double)
         bint has_missing = criterion.n_missing != 0
 
     if has_missing and put_missing_in_1:
@@ -824,15 +824,15 @@ cdef class RegressionCriterion(Criterion):
             = (\sum_i^n y_i ** 2) - n_samples * y_bar ** 2
     """
 
-    def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples):
+    def __cinit__(self, intp_t n_outputs, intp_t n_samples):
         """Initialize parameters for this criterion.
 
         Parameters
         ----------
-        n_outputs : SIZE_t
+        n_outputs : intp_t
             The number of targets to be predicted
 
-        n_samples : SIZE_t
+        n_samples : intp_t
             The total number of samples to fit on
         """
         # Default values
@@ -859,12 +859,12 @@ cdef class RegressionCriterion(Criterion):
 
     cdef int init(
         self,
-        const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
         double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end,
+        const intp_t[:] sample_indices,
+        intp_t start,
+        intp_t end,
     ) except -1 nogil:
         """Initialize the criterion.
 
@@ -881,12 +881,12 @@ cdef class RegressionCriterion(Criterion):
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.
 
-        cdef SIZE_t i
-        cdef SIZE_t p
-        cdef SIZE_t k
-        cdef DOUBLE_t y_ik
-        cdef DOUBLE_t w_y_ik
-        cdef DOUBLE_t w = 1.0
+        cdef intp_t i
+        cdef intp_t p
+        cdef intp_t k
+        cdef float64_t y_ik
+        cdef float64_t w_y_ik
+        cdef float64_t w = 1.0
         self.sq_sum_total = 0.0
         memset(&self.sum_total[0], 0, self.n_outputs * sizeof(double))
 
@@ -912,16 +912,16 @@ cdef class RegressionCriterion(Criterion):
         """Init sum_missing to hold sums for missing values."""
         self.sum_missing = np.zeros(self.n_outputs, dtype=np.float64)
 
-    cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
+    cdef void init_missing(self, intp_t n_missing) noexcept nogil:
         """Initialize sum_missing if there are missing values.
 
         This method assumes that caller placed the missing samples in
         self.sample_indices[-n_missing:]
         """
-        cdef SIZE_t i, p, k
-        cdef DOUBLE_t y_ik
-        cdef DOUBLE_t w_y_ik
-        cdef DOUBLE_t w = 1.0
+        cdef intp_t i, p, k
+        cdef float64_t y_ik
+        cdef float64_t w_y_ik
+        cdef float64_t w = 1.0
 
         self.n_missing = n_missing
         if n_missing == 0:
@@ -970,21 +970,21 @@ cdef class RegressionCriterion(Criterion):
         )
         return 0
 
-    cdef int update(self, SIZE_t new_pos) except -1 nogil:
+    cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left."""
-        cdef const DOUBLE_t[:] sample_weight = self.sample_weight
-        cdef const SIZE_t[:] sample_indices = self.sample_indices
+        cdef const float64_t[:] sample_weight = self.sample_weight
+        cdef const intp_t[:] sample_indices = self.sample_indices
 
-        cdef SIZE_t pos = self.pos
+        cdef intp_t pos = self.pos
 
         # The missing samples are assumed to be in
         # self.sample_indices[-self.n_missing:] that is
         # self.sample_indices[end_non_missing:self.end].
-        cdef SIZE_t end_non_missing = self.end - self.n_missing
-        cdef SIZE_t i
-        cdef SIZE_t p
-        cdef SIZE_t k
-        cdef DOUBLE_t w = 1.0
+        cdef intp_t end_non_missing = self.end - self.n_missing
+        cdef intp_t i
+        cdef intp_t p
+        cdef intp_t k
+        cdef float64_t w = 1.0
 
         # Update statistics up to new_pos
         #
@@ -1035,7 +1035,7 @@ cdef class RegressionCriterion(Criterion):
 
     cdef void node_value(self, double* dest) noexcept nogil:
         """Compute the node value of sample_indices[start:end] into dest."""
-        cdef SIZE_t k
+        cdef intp_t k
 
         for k in range(self.n_outputs):
             dest[k] = self.sum_total[k] / self.weighted_n_node_samples
@@ -1086,7 +1086,7 @@ cdef class MSE(RegressionCriterion):
         better.
         """
         cdef double impurity
-        cdef SIZE_t k
+        cdef intp_t k
 
         impurity = self.sq_sum_total / self.weighted_n_node_samples
         for k in range(self.n_outputs):
@@ -1114,7 +1114,7 @@ cdef class MSE(RegressionCriterion):
 
             - 1/n_L * sum_{i left}(y_i)^2 - 1/n_R * sum_{i right}(y_i)^2
         """
-        cdef SIZE_t k
+        cdef intp_t k
         cdef double proxy_impurity_left = 0.0
         cdef double proxy_impurity_right = 0.0
 
@@ -1132,20 +1132,20 @@ cdef class MSE(RegressionCriterion):
         i.e. the impurity of the left child (sample_indices[start:pos]) and the
         impurity the right child (sample_indices[pos:end]).
         """
-        cdef const DOUBLE_t[:] sample_weight = self.sample_weight
-        cdef const SIZE_t[:] sample_indices = self.sample_indices
-        cdef SIZE_t pos = self.pos
-        cdef SIZE_t start = self.start
+        cdef const float64_t[:] sample_weight = self.sample_weight
+        cdef const intp_t[:] sample_indices = self.sample_indices
+        cdef intp_t pos = self.pos
+        cdef intp_t start = self.start
 
-        cdef DOUBLE_t y_ik
+        cdef float64_t y_ik
 
         cdef double sq_sum_left = 0.0
         cdef double sq_sum_right
 
-        cdef SIZE_t i
-        cdef SIZE_t p
-        cdef SIZE_t k
-        cdef DOUBLE_t w = 1.0
+        cdef intp_t i
+        cdef intp_t p
+        cdef intp_t k
+        cdef float64_t w = 1.0
 
         for p in range(start, pos):
             i = sample_indices[p]
@@ -1180,17 +1180,17 @@ cdef class MAE(RegressionCriterion):
     cdef cnp.ndarray right_child
     cdef void** left_child_ptr
     cdef void** right_child_ptr
-    cdef DOUBLE_t[::1] node_medians
+    cdef float64_t[::1] node_medians
 
-    def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples):
+    def __cinit__(self, intp_t n_outputs, intp_t n_samples):
         """Initialize parameters for this criterion.
 
         Parameters
         ----------
-        n_outputs : SIZE_t
+        n_outputs : intp_t
             The number of targets to be predicted
 
-        n_samples : SIZE_t
+        n_samples : intp_t
             The total number of samples to fit on
         """
         # Default values
@@ -1219,20 +1219,20 @@ cdef class MAE(RegressionCriterion):
 
     cdef int init(
         self,
-        const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
         double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end,
+        const intp_t[:] sample_indices,
+        intp_t start,
+        intp_t end,
     ) except -1 nogil:
         """Initialize the criterion.
 
         This initializes the criterion at node sample_indices[start:end] and children
         sample_indices[start:start] and sample_indices[start:end].
         """
-        cdef SIZE_t i, p, k
-        cdef DOUBLE_t w = 1.0
+        cdef intp_t i, p, k
+        cdef float64_t w = 1.0
 
         # Initialize fields
         self.y = y
@@ -1272,7 +1272,7 @@ cdef class MAE(RegressionCriterion):
         self.reset()
         return 0
 
-    cdef void init_missing(self, SIZE_t n_missing) noexcept nogil:
+    cdef void init_missing(self, intp_t n_missing) noexcept nogil:
         """Raise error if n_missing != 0."""
         if n_missing == 0:
             return
@@ -1285,9 +1285,9 @@ cdef class MAE(RegressionCriterion):
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
-        cdef SIZE_t i, k
-        cdef DOUBLE_t value
-        cdef DOUBLE_t weight
+        cdef intp_t i, k
+        cdef float64_t value
+        cdef float64_t weight
 
         cdef void** left_child = self.left_child_ptr
         cdef void** right_child = self.right_child_ptr
@@ -1320,8 +1320,8 @@ cdef class MAE(RegressionCriterion):
         self.weighted_n_left = self.weighted_n_node_samples
         self.pos = self.end
 
-        cdef DOUBLE_t value
-        cdef DOUBLE_t weight
+        cdef float64_t value
+        cdef float64_t weight
         cdef void** left_child = self.left_child_ptr
         cdef void** right_child = self.right_child_ptr
 
@@ -1338,22 +1338,22 @@ cdef class MAE(RegressionCriterion):
                                                                 weight)
         return 0
 
-    cdef int update(self, SIZE_t new_pos) except -1 nogil:
+    cdef int update(self, intp_t new_pos) except -1 nogil:
         """Updated statistics by moving sample_indices[pos:new_pos] to the left.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
-        cdef const DOUBLE_t[:] sample_weight = self.sample_weight
-        cdef const SIZE_t[:] sample_indices = self.sample_indices
+        cdef const float64_t[:] sample_weight = self.sample_weight
+        cdef const intp_t[:] sample_indices = self.sample_indices
 
         cdef void** left_child = self.left_child_ptr
         cdef void** right_child = self.right_child_ptr
 
-        cdef SIZE_t pos = self.pos
-        cdef SIZE_t end = self.end
-        cdef SIZE_t i, p, k
-        cdef DOUBLE_t w = 1.0
+        cdef intp_t pos = self.pos
+        cdef intp_t end = self.end
+        cdef intp_t i, p, k
+        cdef float64_t w = 1.0
 
         # Update statistics up to new_pos
         #
@@ -1397,7 +1397,7 @@ cdef class MAE(RegressionCriterion):
 
     cdef void node_value(self, double* dest) noexcept nogil:
         """Computes the node value of sample_indices[start:end] into dest."""
-        cdef SIZE_t k
+        cdef intp_t k
         for k in range(self.n_outputs):
             dest[k] = <double> self.node_medians[k]
 
@@ -1433,11 +1433,11 @@ cdef class MAE(RegressionCriterion):
         i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
         """
-        cdef const DOUBLE_t[:] sample_weight = self.sample_weight
-        cdef const SIZE_t[:] sample_indices = self.sample_indices
-        cdef SIZE_t i, p, k
-        cdef DOUBLE_t w = 1.0
-        cdef DOUBLE_t impurity = 0.0
+        cdef const float64_t[:] sample_weight = self.sample_weight
+        cdef const intp_t[:] sample_indices = self.sample_indices
+        cdef intp_t i, p, k
+        cdef float64_t w = 1.0
+        cdef float64_t impurity = 0.0
 
         for k in range(self.n_outputs):
             for p in range(self.start, self.end):
@@ -1457,18 +1457,18 @@ cdef class MAE(RegressionCriterion):
         i.e. the impurity of the left child (sample_indices[start:pos]) and the
         impurity the right child (sample_indices[pos:end]).
         """
-        cdef const DOUBLE_t[:] sample_weight = self.sample_weight
-        cdef const SIZE_t[:] sample_indices = self.sample_indices
+        cdef const float64_t[:] sample_weight = self.sample_weight
+        cdef const intp_t[:] sample_indices = self.sample_indices
 
-        cdef SIZE_t start = self.start
-        cdef SIZE_t pos = self.pos
-        cdef SIZE_t end = self.end
+        cdef intp_t start = self.start
+        cdef intp_t pos = self.pos
+        cdef intp_t end = self.end
 
-        cdef SIZE_t i, p, k
-        cdef DOUBLE_t median
-        cdef DOUBLE_t w = 1.0
-        cdef DOUBLE_t impurity_left = 0.0
-        cdef DOUBLE_t impurity_right = 0.0
+        cdef intp_t i, p, k
+        cdef float64_t median
+        cdef float64_t w = 1.0
+        cdef float64_t impurity_left = 0.0
+        cdef float64_t impurity_right = 0.0
 
         cdef void** left_child = self.left_child_ptr
         cdef void** right_child = self.right_child_ptr
@@ -1521,7 +1521,7 @@ cdef class FriedmanMSE(MSE):
         cdef double total_sum_left = 0.0
         cdef double total_sum_right = 0.0
 
-        cdef SIZE_t k
+        cdef intp_t k
         cdef double diff = 0.0
 
         for k in range(self.n_outputs):
@@ -1539,7 +1539,7 @@ cdef class FriedmanMSE(MSE):
         cdef double total_sum_left = 0.0
         cdef double total_sum_right = 0.0
 
-        cdef SIZE_t k
+        cdef intp_t k
         cdef double diff = 0.0
 
         for k in range(self.n_outputs):
@@ -1607,7 +1607,7 @@ cdef class Poisson(RegressionCriterion):
             - sum{i left }(y_i) * log(mean{i left}(y_i))
             - sum{i right}(y_i) * log(mean{i right}(y_i))
         """
-        cdef SIZE_t k
+        cdef intp_t k
         cdef double proxy_impurity_left = 0.0
         cdef double proxy_impurity_right = 0.0
         cdef double y_mean_left = 0.
@@ -1637,9 +1637,9 @@ cdef class Poisson(RegressionCriterion):
         i.e. the impurity of the left child (sample_indices[start:pos]) and the
         impurity of the right child (sample_indices[pos:end]) for Poisson.
         """
-        cdef SIZE_t start = self.start
-        cdef SIZE_t pos = self.pos
-        cdef SIZE_t end = self.end
+        cdef intp_t start = self.start
+        cdef intp_t pos = self.pos
+        cdef intp_t end = self.end
 
         impurity_left[0] = self.poisson_loss(start, pos, self.sum_left,
                                              self.weighted_n_left)
@@ -1647,22 +1647,24 @@ cdef class Poisson(RegressionCriterion):
         impurity_right[0] = self.poisson_loss(pos, end, self.sum_right,
                                               self.weighted_n_right)
 
-    cdef inline DOUBLE_t poisson_loss(self,
-                                      SIZE_t start,
-                                      SIZE_t end,
-                                      const double[::1] y_sum,
-                                      DOUBLE_t weight_sum) noexcept nogil:
+    cdef inline float64_t poisson_loss(
+        self,
+        intp_t start,
+        intp_t end,
+        const double[::1] y_sum,
+        float64_t weight_sum
+    ) noexcept nogil:
         """Helper function to compute Poisson loss (~deviance) of a given node.
         """
-        cdef const DOUBLE_t[:, ::1] y = self.y
-        cdef const DOUBLE_t[:] sample_weight = self.sample_weight
-        cdef const SIZE_t[:] sample_indices = self.sample_indices
+        cdef const float64_t[:, ::1] y = self.y
+        cdef const float64_t[:] sample_weight = self.sample_weight
+        cdef const intp_t[:] sample_indices = self.sample_indices
 
-        cdef DOUBLE_t y_mean = 0.
-        cdef DOUBLE_t poisson_loss = 0.
-        cdef DOUBLE_t w = 1.0
-        cdef SIZE_t i, k, p
-        cdef SIZE_t n_outputs = self.n_outputs
+        cdef float64_t y_mean = 0.
+        cdef float64_t poisson_loss = 0.
+        cdef float64_t w = 1.0
+        cdef intp_t i, k, p
+        cdef intp_t n_outputs = self.n_outputs
 
         for k in range(n_outputs):
             if y_sum[k] <= EPSILON:
