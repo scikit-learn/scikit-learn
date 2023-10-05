@@ -120,7 +120,7 @@ class _MultimetricScorer:
     def __call__(self, estimator, *args, **kwargs):
         """Evaluate predicted target values."""
         scores = {}
-        cache = {} if self._use_cache() else None
+        cache = {} if self._use_cache(estimator) else None
         cached_call = partial(_cached_call, cache)
 
         if _routing_enabled():
@@ -147,7 +147,7 @@ class _MultimetricScorer:
                     scores[name] = format_exc()
         return scores
 
-    def _use_cache(self):
+    def _use_cache(self, estimator):
         """Return True if using a cache is beneficial, thus when a response method will
         be called several time.
         """
@@ -156,7 +156,7 @@ class _MultimetricScorer:
 
         counter = Counter(
             [
-                scorer._response_method
+                _check_response_method(estimator, scorer._response_method).__name__
                 for scorer in self._scorers.values()
                 if isinstance(scorer, _BaseScorer)
             ]
@@ -341,7 +341,10 @@ class _Scorer(_BaseScorer):
         )
 
         pos_label = None if is_regressor(estimator) else self._get_pos_label()
-        y_pred = method_caller(estimator, self._response_method, X, pos_label=pos_label)
+        response_method = _check_response_method(estimator, self._response_method)
+        y_pred = method_caller(
+            estimator, response_method.__name__, X, pos_label=pos_label
+        )
 
         scoring_kwargs = {**self._kwargs, **kwargs}
         return self._sign * self._score_func(y_true, y_pred, **scoring_kwargs)
@@ -508,35 +511,7 @@ def _check_multimetric_scoring(estimator, scoring):
     else:
         raise ValueError(err_msg_generic)
 
-    # To be cache friendly, we reduce the number of response methods to a single one
-    # based on what the estimator supports.
-    final_scorers = {}
-    for name, scorer in scorers.items():
-        if not isinstance(scorer, _BaseScorer) or isinstance(
-            scorer._response_method, str
-        ):
-            final_scorers[name] = scorer
-        else:
-            # Sanity check that the scorer has the same init arguments as `_BaseScorer`.
-            # Otherwise, we are going to miss some arguments when creating the object.
-            base_scorer_params = set(signature(_BaseScorer).parameters.keys())
-            scorer_params = set(signature(scorer.__class__).parameters.keys())
-            if not (base_scorer_params == scorer_params):
-                final_scorers[name] = scorer
-            else:
-                final_response_method = _check_response_method(
-                    estimator, scorer._response_method
-                )
-                new_scorer = scorer.__class__(
-                    scorer._score_func,
-                    scorer._sign,
-                    scorer._kwargs,
-                    response_method=final_response_method.__name__,
-                )
-                if hasattr(scorer, "_metadata_request"):
-                    new_scorer._metadata_request = scorer._metadata_request
-                final_scorers[name] = new_scorer
-    return final_scorers
+    return scorers
 
 
 @validate_params(

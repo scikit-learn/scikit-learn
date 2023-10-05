@@ -188,7 +188,8 @@ take several parameters:
   function do not necessarily require probability estimates but rather non-thresholded
   decision values (e.g. :func:`metrics.roc_auc_score`). In this case, one provides a
   list such as `response_method=["decision_function", "predict_proba"]`. In this case,
-  the scorer will use these methods, in the provided order, to compute the scores.
+  the scorer will use the first available method, in the order given in the list,
+  to compute the scores.
 
 * any additional parameters, such as ``beta`` or ``labels`` in :func:`f1_score`.
 
