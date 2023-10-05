@@ -171,9 +171,9 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
-- |API| :class:`~compose.ColumnTransformer` now replaces `"passthrough"` with a
-  corresponding :class:`~preprocessing.FunctionTransformer` in the fitted
-  ``transformers_`` attribute. :pr:`27204` by `Adrin Jalali`_.
+- |API| |FIX| :class:`~compose.ColumnTransformer` now replaces `"passthrough"`
+  with a corresponding :class:`~preprocessing.FunctionTransformer` in the
+  fitted ``transformers_`` attribute. :pr:`27204` by `Adrin Jalali`_.
 
 :mod:`sklearn.decomposition`
 ............................
