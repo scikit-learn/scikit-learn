@@ -580,28 +580,36 @@ class PCA(_BasePCA):
                 U, S, Vt = linalg.svd(X_centered, full_matrices=False)
             else:
                 U, S, Vt = xp.linalg.svd(X_centered, full_matrices=False)
+            explained_variance_ = (S**2) / (n_samples - 1)
+
         else:
             assert self._fit_svd_solver == "covariance_eigh"
-            # In the following, we center the covariance matrix C without
-            # centering the data X to avoid an unecessary copy of X. Note that
-            # the mean_ attribute is also needed by the transform method.
+            # In the following, we center the covariance matrix C a-posteriori
+            # (without centering the data X first) to avoid an unecessary copy
+            # of X. Note that the mean_ attribute is still needed to center
+            # test data in the transform method.
             C = X.T @ X
             C -= (
-                X.shape[0]
+                n_samples
                 * xp.reshape(self.mean_, (-1, 1))
                 * xp.reshape(self.mean_, (1, -1))
             )
-            evals, Evecs = xp.linalg.eigh(C)
-            evals = xp.flip(evals, axis=0)
-            Evecs = xp.flip(Evecs, axis=1)
+            C /= n_samples - 1
+            eigenvals, Eigenvecs = xp.linalg.eigh(C)
+            eigenvals = xp.flip(eigenvals, axis=0)
+            Eigenvecs = xp.flip(Eigenvecs, axis=1)
 
             # The covariance matrix C is positive semi-definite by
             # construction. However, the eigenvalues returned by xp.linalg.eigh
             # can be slightly negative due to numerical errors. This would be
             # an issue for the subsequent sqrt, hence the manual clipping.
-            evals[evals < 0.0] = 0.0
-            S = xp.sqrt(evals)
-            Vt = Evecs.T
+            eigenvals[eigenvals < 0.0] = 0.0
+            explained_variance_ = eigenvals
+
+            # Re-construct synthetic SVD components to be consistent with the
+            # other solvers.
+            S = xp.sqrt(eigenvals * (n_samples - 1))
+            Vt = Eigenvecs.T
             U = None
 
         # flip eigenvectors' sign to enforce deterministic output
@@ -610,7 +618,6 @@ class PCA(_BasePCA):
         components_ = Vt
 
         # Get variance explained by singular values
-        explained_variance_ = (S**2) / (n_samples - 1)
         total_var = xp.sum(explained_variance_)
         explained_variance_ratio_ = explained_variance_ / total_var
         singular_values_ = xp.asarray(S, copy=True)  # Store the singular values.
