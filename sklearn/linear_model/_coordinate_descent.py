@@ -1548,10 +1548,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
             .. versionadded:: 1.4
                 Only available if `enable_metadata_routing=True`.
-                You can enable it by using
-                    ``sklearn.set_config(enable_metadata_routing=True)``
-                or by using the context manager
-                    ``with config_context(enable_metadata_routing=True)``.
+                This can be enabled by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
                 See :ref:`Metadata Routing User Guide <metadata_routing>` for
                 more details.
 
@@ -2930,10 +2928,8 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
             .. versionadded:: 1.4
                 Only available if `enable_metadata_routing=True`.
-                You can enable it by using
-                    ``sklearn.set_config(enable_metadata_routing=True)``
-                or by using the context manager
-                    ``with config_context(enable_metadata_routing=True)``.
+                This can be enabled by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
                 See :ref:`Metadata Routing User Guide <metadata_routing>` for
                 more details.
 
@@ -3170,10 +3166,8 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
             .. versionadded:: 1.4
                 Only available if `enable_metadata_routing=True`.
-                You can enable it by using
-                    ``sklearn.set_config(enable_metadata_routing=True)``
-                or by using the context manager
-                    ``with config_context(enable_metadata_routing=True)``.
+                This can be enabled by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
                 See :ref:`Metadata Routing User Guide <metadata_routing>` for
                 more details.
 
