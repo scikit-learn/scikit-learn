@@ -40,6 +40,10 @@ The following models now support metadata routing in one or more or their
 methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
 more details.
 
+- |Feature| :class:`LarsCV` and :class:`LassoLarsCV` now support metadata
+  routing in their `fit` method and route metadata to the CV splitter.
+  :pr:`27478` by :user:`Omar Salman <OmarManzoor>`.
+
 - |Feature| :class:`multiclass.OneVsRestClassifier`,
   :class:`multiclass.OneVsOneClassifier` and
   :class:`multiclass.OutputCodeClassifier` now support metadata routing in
@@ -84,6 +88,7 @@ more details.
   now raise a `NotImplementedError` on `get_metadata_routing` and on `fit` if
   metadata routing is enabled and any metadata is passed to them. :pr:`27389`
   by `Adrin Jalali`_.
+
 
 Support for SciPy sparse arrays
 -------------------------------

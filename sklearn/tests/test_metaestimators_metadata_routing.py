@@ -228,6 +228,20 @@ METAESTIMATORS: list = [
         "y": y,
         "estimator_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": LarsCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": LassoLarsCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -272,9 +286,7 @@ UNSUPPORTED_ESTIMATORS = [
     FeatureUnion([]),
     GraphicalLassoCV(),
     IterativeImputer(),
-    LarsCV(),
     LassoCV(),
-    LassoLarsCV(),
     MultiTaskElasticNetCV(),
     MultiTaskLassoCV(),
     OrthogonalMatchingPursuitCV(),
