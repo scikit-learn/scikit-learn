@@ -19,7 +19,12 @@ from scipy import sparse
 from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
 from ..utils import Bunch, check_array, check_scalar
-from ..utils._metadata_requests import MetadataRouter, MethodMapping, _raise_for_params
+from ..utils._metadata_requests import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    get_routing_for_object,
+)
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import safe_sparse_dot
 from ..utils.metadata_routing import (
@@ -1689,7 +1694,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         cv = check_cv(self.cv)
 
         if _routing_enabled():
-            splitter_supports_sample_weight = cv.get_metadata_routing().consumes(
+            splitter_supports_sample_weight = get_routing_for_object(cv).consumes(
                 method="split", params=["sample_weight"]
             )
             if (
