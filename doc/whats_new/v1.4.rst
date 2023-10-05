@@ -187,6 +187,13 @@ Changelog
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
+:mod:`sklearn.compose`
+......................
+
+- |API| |FIX| :class:`~compose.ColumnTransformer` now replaces `"passthrough"`
+  with a corresponding :class:`~preprocessing.FunctionTransformer` in the
+  fitted ``transformers_`` attribute. :pr:`27204` by `Adrin Jalali`_.
+
 :mod:`sklearn.datasets`
 .......................
 
