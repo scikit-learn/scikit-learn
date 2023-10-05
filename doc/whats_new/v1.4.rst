@@ -89,7 +89,6 @@ more details.
   metadata routing is enabled and any metadata is passed to them. :pr:`27389`
   by `Adrin Jalali`_.
 
-
 Support for SciPy sparse arrays
 -------------------------------
 
