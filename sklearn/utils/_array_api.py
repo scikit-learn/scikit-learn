@@ -512,6 +512,8 @@ def _average(array, axis=None, weights=None, xp=None):
 
     if weights is None:
         return xp.mean(a, axis=axis)
+    # Cast weights to floats
+    weights = xp.asarray(weights, dtype=max_precision_float_dtype(xp, device(weights)))
 
     # Sanity checks
     if a.shape != weights.shape:
@@ -521,13 +523,18 @@ def _average(array, axis=None, weights=None, xp=None):
             )
         if weights.ndim != 1:
             raise TypeError("1D weights expected when shapes of a and weights differ.")
-        if weights.shape[0] != a.shape[axis]:
+        else:
+            # If weights are 1D, add singleton dimensions for broadcasting
+            shape = [1] * a.ndim
+            shape[axis] = a.shape[axis]
+            weights = xp.reshape(weights, shape)
+        if weights.shape[axis] != a.shape[axis]:
             raise ValueError("Length of weights not compatible with specified axis.")
 
     scale = xp.sum(weights, axis=axis)
     if xp.any(scale == 0.0):
         raise ZeroDivisionError("Weights sum to zero, can't be normalized")
-    return xp.multiply(a, weights) / scale
+    return xp.sum(xp.multiply(a, weights), axis=axis) / scale
 
 
 def _nanmin(X, axis=None):
