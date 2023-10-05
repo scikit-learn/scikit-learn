@@ -1155,7 +1155,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         Returns
         -------
         routing : MetadataRouter
-            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
 
