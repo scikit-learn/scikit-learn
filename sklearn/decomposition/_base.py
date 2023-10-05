@@ -136,7 +136,7 @@ class _BasePCA(
             Projection of X in the first principal components, where `n_samples`
             is the number of samples and `n_components` is the number of the components.
         """
-        xp, _ = get_namespace(X)
+        xp, _ = get_namespace(X, self.components_, self.explained_variance_)
 
         check_is_fitted(self)
 
@@ -145,9 +145,7 @@ class _BasePCA(
         )
         return self._transform(X, xp)
 
-    def _transform(self, X, xp=None):
-        if xp is None:
-            xp, _ = get_namespace(X, self.components_, self.explained_variance_)
+    def _transform(self, X, xp):
         X_transformed = X @ self.components_.T
         X_transformed -= xp.reshape(self.mean_, (1, -1)) @ self.components_.T
         if self.whiten:

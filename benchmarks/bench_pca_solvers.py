@@ -11,7 +11,7 @@
 #
 # We generate synthetic data with dimensions that are useful to plot:
 # - time vs n_samples for a fixed n_features and,
-# -  time vs n_features for a fixed n_samples for a fixed n_features.
+# - time vs n_features for a fixed n_samples for a fixed n_features.
 import itertools
 from math import log10
 from time import perf_counter

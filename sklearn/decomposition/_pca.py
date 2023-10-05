@@ -478,7 +478,7 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        U, S, Vt, X_validated = self._fit(X)
+        U, S, Vt, X_validated, xp = self._fit(X)
         if U is not None:
             U = U[:, : self.n_components_]
 
@@ -491,7 +491,7 @@ class PCA(_BasePCA):
 
             return U
         else:
-            return self._transform(X)
+            return self._transform(X, xp)
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
@@ -544,14 +544,12 @@ class PCA(_BasePCA):
 
         # Call different fits for either full or truncated SVD
         if self._fit_svd_solver in ("full", "covariance_eigh"):
-            return self._fit_full(X, n_components)
+            return self._fit_full(X, n_components, xp, is_array_api_compliant)
         elif self._fit_svd_solver in ["arpack", "randomized"]:
-            return self._fit_truncated(X, n_components, self._fit_svd_solver)
+            return self._fit_truncated(X, n_components, xp)
 
-    def _fit_full(self, X, n_components):
+    def _fit_full(self, X, n_components, xp, is_array_api_compliant):
         """Fit the model by computing full SVD on X."""
-        xp, is_array_api_compliant = get_namespace(X)
-
         n_samples, n_features = X.shape
 
         if n_components == "mle":
@@ -642,16 +640,15 @@ class PCA(_BasePCA):
         self.explained_variance_ratio_ = explained_variance_ratio_[:n_components]
         self.singular_values_ = singular_values_[:n_components]
 
-        return U, S, Vt, X
+        return U, S, Vt, X, xp
 
-    def _fit_truncated(self, X, n_components, svd_solver):
+    def _fit_truncated(self, X, n_components, xp):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
         on X.
         """
-        xp, _ = get_namespace(X)
-
         n_samples, n_features = X.shape
 
+        svd_solver = self._fit_svd_solver
         if isinstance(n_components, str):
             raise ValueError(
                 "n_components=%r cannot be a string with svd_solver='%s'"
@@ -722,7 +719,7 @@ class PCA(_BasePCA):
         else:
             self.noise_variance_ = 0.0
 
-        return U, S, Vt, X
+        return U, S, Vt, X, xp
 
     def score_samples(self, X):
         """Return the log-likelihood of each sample.
