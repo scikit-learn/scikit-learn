@@ -1547,8 +1547,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             Parameters to be passed to the CV splitter.
 
             .. versionadded:: 1.4
-                Only available if `enable_metadata_routing=True`.
-                This can be enabled by using
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
                 See :ref:`Metadata Routing User Guide <metadata_routing>` for
                 more details.
@@ -2927,8 +2927,8 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
             Parameters to be passed to the CV splitter.
 
             .. versionadded:: 1.4
-                Only available if `enable_metadata_routing=True`.
-                This can be enabled by using
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
                 See :ref:`Metadata Routing User Guide <metadata_routing>` for
                 more details.
@@ -3165,8 +3165,8 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
             Parameters to be passed to the CV splitter.
 
             .. versionadded:: 1.4
-                Only available if `enable_metadata_routing=True`.
-                This can be enabled by using
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
                 See :ref:`Metadata Routing User Guide <metadata_routing>` for
                 more details.
