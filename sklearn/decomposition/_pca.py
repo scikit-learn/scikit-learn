@@ -478,7 +478,7 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        U, S, Vt, X_validated, xp = self._fit(X)
+        U, S, Vt, X, x_is_centered, xp = self._fit(X)
         if U is not None:
             U = U[:, : self.n_components_]
 
@@ -491,7 +491,7 @@ class PCA(_BasePCA):
 
             return U
         else:
-            return self._transform(X, xp)
+            return self._transform(X, xp, x_is_centered=x_is_centered)
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
@@ -568,6 +568,7 @@ class PCA(_BasePCA):
         if self._fit_svd_solver == "full":
             X_centered = xp.asarray(X, copy=True) if self.copy else X
             X_centered -= self.mean_
+            x_is_centered = not self.copy
 
             if not is_array_api_compliant:
                 # Use scipy.linalg with NumPy/SciPy inputs for the sake of not
@@ -588,6 +589,7 @@ class PCA(_BasePCA):
             # (without centering the data X first) to avoid an unecessary copy
             # of X. Note that the mean_ attribute is still needed to center
             # test data in the transform method.
+            x_is_centered = False
             C = X.T @ X
             C -= (
                 n_samples
@@ -647,7 +649,7 @@ class PCA(_BasePCA):
         self.explained_variance_ratio_ = explained_variance_ratio_[:n_components]
         self.singular_values_ = singular_values_[:n_components]
 
-        return U, S, Vt, X, xp
+        return U, S, Vt, X, x_is_centered, xp
 
     def _fit_truncated(self, X, n_components, xp):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
@@ -681,6 +683,7 @@ class PCA(_BasePCA):
         self.mean_ = xp.mean(X, axis=0)
         X_centered = xp.asarray(X, copy=True) if self.copy else X
         X_centered -= self.mean_
+        x_is_centered = not self.copy
 
         if svd_solver == "arpack":
             v0 = _init_arpack_v0(min(X.shape), random_state)
@@ -726,7 +729,7 @@ class PCA(_BasePCA):
         else:
             self.noise_variance_ = 0.0
 
-        return U, S, Vt, X, xp
+        return U, S, Vt, X, x_is_centered, xp
 
     def score_samples(self, X):
         """Return the log-likelihood of each sample.

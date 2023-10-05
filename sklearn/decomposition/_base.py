@@ -143,11 +143,16 @@ class _BasePCA(
         X = self._validate_data(
             X, dtype=[xp.float64, xp.float32], copy=False, reset=False
         )
-        return self._transform(X, xp)
+        return self._transform(
+            X,
+            xp=xp,
+            x_is_centered=False,
+        )
 
-    def _transform(self, X, xp):
+    def _transform(self, X, xp, x_is_centered=False):
         X_transformed = X @ self.components_.T
-        X_transformed -= xp.reshape(self.mean_, (1, -1)) @ self.components_.T
+        if not x_is_centered:
+            X_transformed -= xp.reshape(self.mean_, (1, -1)) @ self.components_.T
         if self.whiten:
             # For some solvers (such as "arpack" and "covariance_eigh"), on
             # rank deficient data, some components can have a variance
