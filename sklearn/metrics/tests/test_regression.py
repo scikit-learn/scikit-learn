@@ -497,7 +497,7 @@ def test_tweedie_deviance_continuity():
 
     # Ws we get closer to the limit, with 1e-12 difference the absolute
     # tolerance to pass the below check increases. There are likely
-    # numerical estimator issues on the edges of different definition
+    # numerical precision issues on the edges of different definition
     # regions.
     assert_allclose(
         mean_tweedie_deviance(y_true, y_pred, power=1 + 1e-10),
