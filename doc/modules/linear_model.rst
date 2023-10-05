@@ -901,7 +901,7 @@ following cost function:
 
 where :math:`{s_i}` corresponds to the weights assigned by the user to a
 specific training sample (the vector :math:`s` is formed by element-wise
-multiplication of the class weights and sample weights), :math:`{y_i}` is the
+multiplication of the class weights and sample weights). :math:`{y_i}` is the
 real class of that sample (0 or 1), :math:`{\hat{p}(X_i w)}` is the predicted
 probability that :math:`{X_i}` belongs to the same class as :math:`{y_i}`, and
 :math:`{r(w)}` represents the regularization term, that is scaled by the
@@ -930,7 +930,10 @@ regularization. Elastic-Net is equivalent to :math:`\ell_1` when
 Note that the scale of the class weights and the sample weights will influence
 the optimization process. For instance, multiplying the sample weights by a
 constant :math:`b>0` is equivalent to multiplying the (inverse) regularization
-strength `C` by :math:`b`.
+strength `C` by :math:`b`. This is because user defined sample and class
+weights are multiplied to the coefficients and regularization penalizes large
+coefficients by adding a cost to the loss.
+
 Multinomial Case
 ----------------
 
