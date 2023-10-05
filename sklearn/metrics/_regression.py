@@ -33,7 +33,13 @@ import numpy as np
 from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
-from ..utils._array_api import _average, device, get_namespace
+from ..utils._array_api import (
+    _average,
+    _is_numpy_namespace,
+    device,
+    get_namespace,
+    max_precision_float_dtype,
+)
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
@@ -994,7 +1000,7 @@ def r2_score(
     >>> r2_score(y_true, y_pred, force_finite=False)
     -inf
     """
-    xp, is_array_api_compliant = get_namespace(y_true, y_pred)
+    xp, _ = get_namespace(y_true, y_pred)
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
     )
@@ -1015,19 +1021,16 @@ def r2_score(
     weighted_difference = weight * (
         y_true - _average(y_true, axis=0, weights=sample_weight, xp=xp)
     )
+    if _is_numpy_namespace(xp):
+        # weighted_difference has to be typecast to xp.array in case of NumPy array
+        weighted_difference = xp.asarray(weighted_difference)
 
-    # We move to cpu device ahead of time since certain devices may not support
-    # float64, but we want the same precision for all devices and namespaces.
-    # This works for all protocols, except for CuPy which does not support
-    # moving data to the CPU using xp.asarray(..., device="cpu").
-    # For CuPy, keep data on GPU.
-    # if is_array_api_compliant:
-    if "cupy" not in xp.__name__:
-        weighted = xp.asarray(weighted, device="cpu")
-        weighted_difference = xp.asarray(weighted_difference, device="cpu")
+    max_precision_dtype = max_precision_float_dtype(xp, device(weighted))
+    weighted = xp.astype(weighted, max_precision_dtype)
+    weighted_difference = xp.astype(weighted_difference, max_precision_dtype)
 
-    numerator = xp.sum(weighted, axis=0, dtype=xp.float64)
-    denominator = xp.sum(weighted_difference**2, axis=0, dtype=xp.float64)
+    numerator = xp.sum(weighted, axis=0, dtype=max_precision_dtype)
+    denominator = xp.sum(weighted_difference**2, axis=0, dtype=max_precision_dtype)
 
     return _assemble_r2_explained_variance(
         numerator=numerator,

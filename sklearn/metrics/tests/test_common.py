@@ -58,7 +58,7 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     device,
-    get_namespace,
+    max_precision_float_dtype,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
@@ -1791,20 +1791,8 @@ def check_array_api_compute_metric(name, metric, array_namepsace, _device, dtype
         metric_xp = metric(y_true_xp, y_pred_xp)
         assert metric_xp.shape == ()
         assert metric_xp.dtype == y_true_xp.dtype
-
-        _, is_array_api_compliant = get_namespace(y_true_xp, y_pred_xp)
-        if is_array_api_compliant:
-            # r2_score is always moved to CPU for accuracy reasons.
-            # This works for all libraries except CuPy, which don't
-            # support the xp.asarray(..., device="cpu") assingment.
-            target_device = device(
-                xp.asarray(y_true_np, device="cpu")
-            )  # Get a reference CPU device
-            assert device(metric_xp) == target_device
-        else:
-            # If non-API Array compliant (=CuPy), check that the score is
-            # still on the original device.
-            assert device(metric_xp) == _device
+        assert device(metric_xp) == device(y_true_xp)
+        assert metric_xp.dtype == max_precision_float_dtype(xp, device(y_true_xp))
         assert_allclose(
             _convert_to_numpy(metric_xp, xp=xp),
             metric_np,
