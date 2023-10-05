@@ -643,11 +643,22 @@ class PCA(_BasePCA):
             self.noise_variance_ = 0.0
 
         self.n_samples_ = n_samples
-        self.components_ = components_[:n_components, :]
         self.n_components_ = n_components
-        self.explained_variance_ = explained_variance_[:n_components]
-        self.explained_variance_ratio_ = explained_variance_ratio_[:n_components]
-        self.singular_values_ = singular_values_[:n_components]
+        # Assign a copy of the result of the truncation of the components in
+        # order to:
+        # - release the memory used by the discarded components,
+        # - ensure that the kept components are allocated contiguously in memory
+        #   to make the transform method faster by leveraging cache locality.
+        self.components_ = xp.asarray(components_[:n_components, :], copy=True)
+
+        # We do the same for the other arrays for the sake of consistency.
+        self.explained_variance_ = xp.asarray(
+            explained_variance_[:n_components], copy=True
+        )
+        self.explained_variance_ratio_ = xp.asarray(
+            explained_variance_ratio_[:n_components], copy=True
+        )
+        self.singular_values_ = xp.asarray(singular_values_[:n_components], copy=True)
 
         return U, S, Vt, X, x_is_centered, xp
 

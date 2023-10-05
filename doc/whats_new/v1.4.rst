@@ -217,6 +217,14 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
+- |Efficiency| :class:`decomposition.PCA` with `svd_solver="full"` now assigns
+  a contiguous `components_` attribute instead of an non-contiguous slice of
+  the singular vectors. When `n_components << n_features`, this can save some
+  memory and more importantly help speed-up subsequent calls to the `transform`
+  method by more than an order of magnitude by leveraging cache locality of
+  BLAS GEMM on contiguous arrays.
+  :pr:`27491` by :user:`Olivier Grisel <ogrisel>`.
+
 - |Enhancement| An "auto" option was added to the `n_components` parameter of
   :func:`decomposition.non_negative_factorization`, :class:`decomposition.NMF` and
   :class:`decomposition.MiniBatchNMF` to automatically infer the number of components from W or H shapes
