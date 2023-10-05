@@ -409,7 +409,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         # SelectFromModel.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def partial_fit(self, X, y=None, **params):
+    def partial_fit(self, X, y=None, **partial_fit_params):
         """Fit the SelectFromModel meta-transformer only once.
 
         Parameters
@@ -421,7 +421,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
-        **params : dict
+        **partial_fit_params : dict
             - If `enable_metadata_routing=False` (default):
 
                 Parameters directly passed to the `partial_fit` method of the
@@ -433,7 +433,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 sub-estimator. They are ignored if `prefit=True`.
 
                 .. versionchanged:: 1.4
-                    `**params` are routed to the sub-estimator, if
+                    `**partial_fit_params` are routed to the sub-estimator, if
                     `enable_metadata_routing=True` is set via
                     :func:`~sklearn.set_config` or via
                     :func:`~sklearn.config_context`, which allows for aliasing.
@@ -466,12 +466,12 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         if first_call:
             self.estimator_ = clone(self.estimator)
         if _routing_enabled():
-            routed_params = process_routing(self, "partial_fit", **params)
+            routed_params = process_routing(self, "partial_fit", **partial_fit_params)
             self.estimator_ = clone(self.estimator)
             self.estimator_.partial_fit(X, y, **routed_params.estimator.partial_fit)
         else:
             # TODO(SLEP6): remove when metadata routing cannot be disabled.
-            self.estimator_.partial_fit(X, y, **params)
+            self.estimator_.partial_fit(X, y, **partial_fit_params)
 
         if hasattr(self.estimator_, "feature_names_in_"):
             self.feature_names_in_ = self.estimator_.feature_names_in_
