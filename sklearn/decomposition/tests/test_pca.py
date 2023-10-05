@@ -145,8 +145,12 @@ def test_pca_solver_equivalence(
         X = make_low_rank_matrix(
             n_samples=n_samples + n_samples_test,
             n_features=n_features,
+            tail_strength=0.5,
             random_state=global_random_seed,
         )
+        # With a non-zero tail strength, the data is actually full-rank.
+        rank = min(n_samples, n_features)
+
     X = X.astype(global_dtype, copy=False)
     X_train, X_test = X[:n_samples], X[n_samples:]
 
@@ -228,16 +232,16 @@ def test_pca_solver_equivalence(
     assert np.isfinite(X_recons_other_test).all()
     assert X_recons_other_test.dtype == global_dtype
 
-    effective_rank = np.linalg.matrix_rank(X_train)
-    effective_n_components = pca_full.n_components_
-    if effective_n_components > effective_rank and X_train.shape[0] > effective_rank:
-        # In this case, both models should be able to reconstruct the data,
-        # even in the presence of noisy components.
+    if pca_full.components_.shape[0] == pca_full.components_.shape[1]:
+        # In this case, the models should have learned the same invertible
+        # transform. They should therefore both be able to reconstruct the test
+        # data.
         assert_allclose(X_recons_full_test, X_test, **tols)
         assert_allclose(X_recons_other_test, X_test, **tols)
-    elif effective_n_components < effective_rank:
+    elif pca_full.components_.shape[0] < rank:
         # In the absence of noisy components, both models should be able to
         # reconstruct the same low-rank approximation of the original data.
+        assert pca_full.explained_variance_.min() > variance_threshold
         assert_allclose(X_recons_full_test, X_recons_other_test, **tols)
     else:
         # When n_features > n_samples and n_components is larger than the rank
