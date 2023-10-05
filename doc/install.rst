@@ -287,7 +287,7 @@ C++ library and are optimized for the x86_64 architecture, and are
 optimized for multi-core Intel CPUs.
 
 Note that those solvers are not enabled by default, please refer to the
-`scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/what-is-patching.html>`_
+`scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/latest/what-is-patching.html>`_
 documentation for more details on usage scenarios. Direct export example:
 
 .. prompt:: python >>>

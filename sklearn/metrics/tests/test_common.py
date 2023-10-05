@@ -4,7 +4,6 @@ from itertools import chain, permutations, product
 
 import numpy as np
 import pytest
-import scipy.sparse as sp
 
 from sklearn._config import config_context
 from sklearn.datasets import make_multilabel_classification
@@ -66,6 +65,7 @@ from sklearn.utils._testing import (
     assert_array_less,
     ignore_warnings,
 )
+from sklearn.utils.fixes import COO_CONTAINERS
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import _num_samples, check_random_state
 
@@ -1033,7 +1033,8 @@ def test_multioutput_regression_invariance_to_dimension_shuffling(name):
 
 
 @ignore_warnings
-def test_multilabel_representation_invariance():
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+def test_multilabel_representation_invariance(coo_container):
     # Generate some data
     n_classes = 4
     n_samples = 50
@@ -1057,8 +1058,8 @@ def test_multilabel_representation_invariance():
     y1 = np.vstack([y1, [[0] * n_classes]])
     y2 = np.vstack([y2, [[0] * n_classes]])
 
-    y1_sparse_indicator = sp.coo_matrix(y1)
-    y2_sparse_indicator = sp.coo_matrix(y2)
+    y1_sparse_indicator = coo_container(y1)
+    y2_sparse_indicator = coo_container(y2)
 
     y1_list_array_indicator = list(y1)
     y2_list_array_indicator = list(y2)
