@@ -1686,9 +1686,13 @@ def test_round_samples_to_one_when_samples_too_low(class_weight):
     forest.fit(X, y)
 
 
+@pytest.mark.parametrize("seed", [None, 1])
 @pytest.mark.parametrize("bootstrap", [True, False])
 @pytest.mark.parametrize("ForestClass", FOREST_CLASSIFIERS_REGRESSORS.values())
-def test_estimators_samples(ForestClass, bootstrap):
+def test_estimators_samples(ForestClass, bootstrap, seed):
+    """Estimators_samples_ property should be consistent.
+
+    Tests consistency across fits and whether or not seed is set."""
     # Check that format of estimators_samples_ is correct and that results
     # generated at fit time can be identically reproduced at a later time
     # using data saved in object attributes.
@@ -1703,13 +1707,16 @@ def test_estimators_samples(ForestClass, bootstrap):
         n_estimators=10,
         max_samples=max_samples,
         max_features=0.5,
-        random_state=1,
+        random_state=seed,
         bootstrap=bootstrap,
     )
     est.fit(X, y)
 
     # Get relevant attributes
-    estimators_samples = est.estimators_samples_
+    estimators_samples = est.estimators_samples_.copy()
+
+    # Test repeated calls result in same set of indices
+    assert_array_equal(estimators_samples, est.estimators_samples_)
     estimators = est.estimators_
 
     # Test for correct formatting
