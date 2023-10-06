@@ -19,6 +19,22 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- |Efficiency| :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now have much better convergence for
+  solvers `"lbfgs"` and `"newton-cg"`. Both solvers can now reach much higher precision
+  for the coefficients depending on the specified `tol`. Additionally, lbfgs can
+  make better use of `tol`, i.e., stop sooner or reach higher precision.
+  :pr:`26721` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+  .. note::
+
+      The lbfgs is the default solver, so this change might effect many models.
+
+      This change also means that with this new version of scikit-learn, the resulting
+      coefficients `coef_` and `intercept_` of your models will change for these two
+      solvers (when fit on the same data again). The amount of change depends on the
+      specified `tol`, for small values you will get more precise results.
+
 Changes impacting all modules
 -----------------------------
 
@@ -257,7 +273,30 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Enhancement| Solver `"newton-cg"` in :class:`linear_model.LogisticRegression` and
+- |Efficiency| :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now have much better convergence for
+  solvers `"lbfgs"` and `"newton-cg"`. Both solvers can now reach much higher precision
+  for the coefficients depending on the specified `tol`. Additionally, lbfgs can
+  make better use of `tol`, i.e., stop sooner or reach higher precision. This is
+  accomplished by better scaling of the objective function, i.e., using average per
+  sample losses instead of sum of per sample losses.
+  :pr:`26721` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+  .. note::
+
+      This change also means that with this new version of scikit-learn, the resulting
+      coefficients `coef_` and `intercept_` of your models will change for these two
+      solvers (when fit on the same data again). The amount of change depends on the
+      specified `tol`, for small values you will get more precise results.
+
+- |Efficiency| :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` with solver `"newton-cg"` can now be
+  considerably faster for some data and parameter settings. This is accomplished by a
+  better line search convergence check for negligible loss improvements that takes into
+  account gradient information.
+  :pr:`26721` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Efficiency| Solver `"newton-cg"` in :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` uses a little less memory. The effect is
   proportional to the number of coefficients (`n_features * n_classes`).
   :pr:`27417` by :user:`Christian Lorentzen <lorentzenchr>`.
