@@ -59,8 +59,8 @@ cdef extern from "<stack>" namespace "std" nogil:
 from numpy import float32 as DTYPE
 from numpy import float64 as DOUBLE
 
-cdef double INFINITY = np.inf
-cdef double EPSILON = np.finfo('double').eps
+cdef float64_t INFINITY = np.inf
+cdef float64_t EPSILON = np.finfo('double').eps
 
 # Some handy constants (BestFirstTreeBuilder)
 cdef int IS_FIRST = 1
@@ -145,17 +145,17 @@ cdef struct StackRecord:
     intp_t depth
     intp_t parent
     bint is_left
-    double impurity
+    float64_t impurity
     intp_t n_constant_features
-    double lower_bound
-    double upper_bound
+    float64_t lower_bound
+    float64_t upper_bound
 
 cdef class DepthFirstTreeBuilder(TreeBuilder):
     """Build a decision tree in depth-first fashion."""
 
     def __cinit__(self, Splitter splitter, intp_t min_samples_split,
-                  intp_t min_samples_leaf, double min_weight_leaf,
-                  intp_t max_depth, double min_impurity_decrease):
+                  intp_t min_samples_leaf, float64_t min_weight_leaf,
+                  intp_t max_depth, float64_t min_impurity_decrease):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -190,9 +190,9 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef Splitter splitter = self.splitter
         cdef intp_t max_depth = self.max_depth
         cdef intp_t min_samples_leaf = self.min_samples_leaf
-        cdef double min_weight_leaf = self.min_weight_leaf
+        cdef float64_t min_weight_leaf = self.min_weight_leaf
         cdef intp_t min_samples_split = self.min_samples_split
-        cdef double min_impurity_decrease = self.min_impurity_decrease
+        cdef float64_t min_impurity_decrease = self.min_impurity_decrease
 
         # Recursive partition (without actual recursion)
         splitter.init(X, y, sample_weight, missing_values_in_feature_mask)
@@ -203,7 +203,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef intp_t parent
         cdef bint is_left
         cdef intp_t n_node_samples = splitter.n_samples
-        cdef double weighted_n_node_samples
+        cdef float64_t weighted_n_node_samples
         cdef SplitRecord split
         cdef intp_t node_id
 
@@ -1338,7 +1338,7 @@ cdef class Tree:
 
     def compute_partial_dependence(self, float32_t[:, ::1] X,
                                    int[::1] target_features,
-                                   double[::1] out):
+                                   float64_t[::1] out):
         """Partial dependence of the response on the ``target_feature`` set.
 
         For each sample in ``X`` a tree traversal is performed.
@@ -1367,16 +1367,16 @@ cdef class Tree:
             point.
         """
         cdef:
-            double[::1] weight_stack = np.zeros(self.node_count,
+            float64_t[::1] weight_stack = np.zeros(self.node_count,
                                                 dtype=np.float64)
             intp_t[::1] node_idx_stack = np.zeros(self.node_count,
                                                   dtype=np.intp)
             intp_t sample_idx
             intp_t feature_idx
             int stack_size
-            double left_sample_frac
-            double current_weight
-            double total_weight  # used for sanity check only
+            float64_t left_sample_frac
+            float64_t current_weight
+            float64_t total_weight  # used for sanity check only
             Node *current_node  # use a pointer to avoid copying attributes
             intp_t current_node_idx
             bint is_target_feature
@@ -1814,7 +1814,7 @@ def _build_pruned_tree_ccp(
         Location to place the pruned tree
     orig_tree : Tree
         Original tree
-    ccp_alpha : positive double
+    ccp_alpha : positive float64_t
         Complexity parameter. The subtree with the largest cost complexity
         that is smaller than ``ccp_alpha`` will be chosen. By default,
         no pruning is performed.
@@ -1921,8 +1921,8 @@ cdef _build_pruned_tree(
         intp_t max_depth_seen = -1
         int rc = 0
         Node* node
-        double* orig_value_ptr
-        double* new_value_ptr
+        float64_t* orig_value_ptr
+        float64_t* new_value_ptr
 
         stack[BuildPrunedRecord] prune_stack
         BuildPrunedRecord stack_record
