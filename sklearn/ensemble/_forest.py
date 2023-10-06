@@ -537,6 +537,52 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             self.classes_ = self.classes_[0]
 
         return self
+    
+    def set_best_estimator(self,X,y,start=10,end=200,step=10) -> int:
+        """
+        Sets the number of estimators for a RandomForestClassifier and trains the classifier with the best number of estimators
+        based on the highest accuracy on the provided dataset.
+
+        Parameters:
+        X (array-like): Training data.
+        y (array-like): Target values.
+        start (int, optional): Starting number of estimators. Default is 10.
+        end (int, optional): Ending number of estimators. Default is 200.
+        step (int, optional): Step size for number of estimators. Default is 10.
+
+        Returns:
+        int: The best number of estimators found.
+
+        Raises:
+        ValueError: If X and y have incompatible shapes.
+        Exception: Any other exceptions that might occur during training and scoring.
+        """
+        np.random.seed(42)
+        right_est = 0
+        best_accuracy = 0
+        
+        for i in range(start,end+1,step):
+            try:
+                print(f'[*] Epoch {i}/{end}' ,end='\n')
+                self.n_estimators=i
+                self.fit(X,y)
+                score = self.score(X,y)*100
+                if best_accuracy<score:
+                    best_accuracy = score
+                    right_est = i
+
+            except ValueError as ve:
+                print(f"ValueError for n_estimators={i}: {str(ve)}")
+                
+            except Exception as e:
+                print(f"An error occurred for n_estimators={i}: {str(e)}")
+            
+        print(f'using n_estimator -> {right_est}')
+        self = RandomForestClassifier(n_estimators=right_est)
+        self.fit(X,y)
+
+        return right_est 
+
 
     @abstractmethod
     def _set_oob_score_and_attributes(self, X, y, scoring_function=None):
