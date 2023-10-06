@@ -68,6 +68,9 @@ def _line_search_wolfe12(f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwarg
 
     if ret[0] is None:
         # line search failed: try different one.
+        # TODO: It seems that the new check for the sum of absolute gradients above
+        # catches all cases that, earlier, ended up here. In fact, our tests never
+        # trigger this "if branch" here and we can consider to remove it.
         ret = line_search_wolfe2(
             f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs
         )
