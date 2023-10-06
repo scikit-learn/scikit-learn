@@ -15,13 +15,13 @@ The top usability features of HGBT models are:
 
 - :ref:`categorical_support_gbdt` (see
   :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`).
+- Early stopping.
 - :ref:`nan_support_hgbt`, which avoids the need for an imputer.
 - Support for several losses such as the :ref:`Quantile loss <quantile_support_hgbdt>`.
 - :ref:`monotonic_cst_gbdt`.
 - :ref:`interaction_cst_hgbt`.
-- early stopping
 
-This example aims at showcasing points 2-4 in a real life setting.
+This example aims at showcasing points 2-5 in a real life setting.
 """
 
 # %%
@@ -78,8 +78,8 @@ _ = ax.legend(handles, ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"])
 # %%
 # Notice energy transfer increases systematically during weekends.
 #
-# Effect of number of trees in HistGradientBoostingRegressor
-# ==========================================================
+# Effect of number of trees and early stopping
+# ============================================
 # For the sake of illustrating the effect of the (maximum) number of trees, we
 # train a :class:`~sklearn.ensemble.HistGradientBoostingRegressor` over the
 # daily electricity transfer using the whole dataset. Then we visualize its
@@ -118,6 +118,52 @@ _ = ax.legend()
 # With just a few iterations, HGBT models can achieve convergence (see
 # :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`).
 #
+# Instead of relying solely on `max_iter` to determine when to stop, the HGBT
+# implementations in scikit-learn support early stopping. With it, the model
+# uses a fraction of the training data as a validation set
+# (`validation_fraction`) and stops training if the validation score does not
+# improve (or degrades) after `n_iter_no_change` iterations up to a certain
+# `tol`.
+#
+# Notice that there is a trade-off between `learning_rate` and `max_iter`:
+# Generally, smaller learning rates require more iterations to converge to the
+# minimum loss, while larger learning rates might converge faster but are at
+# risk of overfitting.
+#
+# Indeed, a good practice is to tune the learning rate along with any other
+# hyperparameters, fit the HBGT on the training set with a large enough value
+# for `max_iter` and determine the best `max_iter` via early stopping and some
+# explicit `validation_fraction`.
+
+common_params = {
+    "max_iter": 1_000,
+    "learning_rate": 0.3,
+    "validation_fraction": 0.2,
+    "random_state": 42,
+    "scoring": "neg_root_mean_squared_error",
+}
+
+hgbt = HistGradientBoostingRegressor(early_stopping=True, **common_params)
+hgbt.fit(X, y)
+plt.plot(-hgbt.validation_score_)
+plt.xlabel("number of iterations")
+plt.ylabel("root mean squared error")
+_ = plt.title(f"Loss of hgbt with early stopping (n_iter={hgbt.n_iter_})")
+
+# %%
+# We can then overwrite the value for `max_iter` to a razonable value and avoid
+# the extra computational cost of the inner validation. In this case, rounding
+# up the number of iterations to 600 may account for variability of the training
+# set:
+
+common_params["max_iter"] = 600
+common_params["early_stopping"] = False
+hgbt = HistGradientBoostingRegressor(**common_params)
+
+# %%
+# .. note:: The inner validation done during early stopping is not optimal for
+#    time series with the implementation as of scikit-learn v1.3.
+#
 # Support for missing values
 # ==========================
 # HGBT models have native support of missing values. During training, the tree
@@ -148,7 +194,6 @@ missing_fraction_list = [0, 0.01, 0.03]
 
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.plot(y.iloc[test_0].values[last_days], label="Actual transfer")
-hgbt = HistGradientBoostingRegressor()
 
 for missing_fraction in missing_fraction_list:
     num_missing_cells = int(total_cells * missing_fraction)
@@ -203,7 +248,6 @@ for missing_fraction in missing_fraction_list:
     X["vicprice"] = X["vicprice"].mask(mask, np.nan)
     X["vicdemand"] = X["vicdemand"].mask(mask, np.nan)
 
-    hgbt = HistGradientBoostingRegressor()
     hgbt.fit(X.iloc[train_0], y.iloc[train_0])
     hgbt_predictions = hgbt.predict(X.iloc[test_0])
     cv_results = cross_validate(
@@ -262,7 +306,6 @@ for missing_fraction in missing_fraction_list:
     X["vicprice"] = X["vicprice"].mask(mask, np.nan)
     X["vicdemand"] = X["vicdemand"].mask(mask, np.nan)
 
-    hgbt = HistGradientBoostingRegressor()
     hgbt.fit(X.iloc[train_0], y.iloc[train_0])
     hgbt_predictions = hgbt.predict(X.iloc[test_0])
     cv_results = cross_validate(
@@ -309,13 +352,15 @@ fig, ax = plt.subplots(figsize=(12, 6))
 ax.plot(y.iloc[test_0].values[last_days], label="Actual transfer")
 
 for quantile in quantiles:
-    hgbt = HistGradientBoostingRegressor(loss="quantile", quantile=quantile)
-    hgbt.fit(X.iloc[train_0], y.iloc[train_0])
-    hgbt_predictions = hgbt.predict(X.iloc[test_0])
+    hgbt_quantile = HistGradientBoostingRegressor(
+        loss="quantile", quantile=quantile, **common_params
+    )
+    hgbt_quantile.fit(X.iloc[train_0], y.iloc[train_0])
+    hgbt_predictions = hgbt_quantile.predict(X.iloc[test_0])
 
     predictions.append(hgbt_predictions)
     cv_results = cross_validate(
-        hgbt,
+        hgbt_quantile,
         X,
         y,
         cv=ts_cv,
