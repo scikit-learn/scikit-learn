@@ -173,12 +173,10 @@ hgbt = HistGradientBoostingRegressor(**common_params)
 # values during training, samples with missing values for that feature are sent
 # to the child with the most samples.
 #
-# Missing Completely At Random (MCAR)
-# -----------------------------------
-#
-# The missingness does not depend on the observed data or the unobserved data.
-# It's completely random. We can simulate such scenario by randomly replacing
-# values from randomly selected features with `Nan` values.
+# The present example shows how HGBT regressions deal with values missing
+# completely at random (MCAR), i.e. the missingness does not depend on the
+# observed data or the unobserved data. We can simulate such scenario by
+# randomly replacing values from randomly selected features with `Nan` values.
 
 import numpy as np
 
@@ -222,110 +220,6 @@ for missing_fraction in missing_fraction_list:
     )
 ax.set(
     title="Daily energy transfer predictions on data with MCAR values",
-    xticks=[(i + 0.25) * 48 for i in range(4)],
-    xticklabels=["Tue", "Wed", "Thu", "Fri"],
-    xlabel="Time of the week",
-    ylabel="Normalized energy transfer",
-)
-_ = ax.legend()
-
-# %%
-# Missing At Random (MAR)
-# -----------------------
-#
-# The missingness depends on the observed data but never on unobserved data.
-# Here, the missingness in "vicdemand" is set to depend on the value of the
-# observed feature "nswprice".
-
-missing_fraction_list = [0, 0.5, 1.0]
-
-fig, ax = plt.subplots(figsize=(12, 6))
-ax.plot(y.iloc[test_0].values[last_days], label="Actual transfer")
-
-for missing_fraction in missing_fraction_list:
-    X = df.drop(columns=["transfer", "class"])
-    mask = X["nswprice"] < X["nswprice"].quantile(missing_fraction)
-    X["vicprice"] = X["vicprice"].mask(mask, np.nan)
-    X["vicdemand"] = X["vicdemand"].mask(mask, np.nan)
-
-    hgbt.fit(X.iloc[train_0], y.iloc[train_0])
-    hgbt_predictions = hgbt.predict(X.iloc[test_0])
-    cv_results = cross_validate(
-        hgbt,
-        X,
-        y,
-        cv=ts_cv,
-        scoring="neg_root_mean_squared_error",
-    )
-    rmse = -cv_results["test_score"]
-    ax.plot(
-        hgbt_predictions[last_days],
-        label=(
-            f"missing_fraction={missing_fraction}, RMSE={rmse.mean():.2f} +/-"
-            f" {rmse.std():.2f}"
-        ),
-        alpha=0.5,
-    )
-ax.set(
-    title="Daily energy transfer predictions on data with MAR values",
-    xticks=[(i + 0.25) * 48 for i in range(4)],
-    xticklabels=["Tue", "Wed", "Thu", "Fri"],
-    xlabel="Time of the week",
-    ylabel="Normalized energy transfer",
-)
-_ = ax.legend()
-
-# %%
-# In this case the features are highly correlated and therefore MAR values
-# do not degrade the predictivity of the model even when completely removing
-# the feature "vicprice".
-#
-# Missing Not At Random (MNAR)
-# ----------------------------
-#
-# The missingness depends on the unobserved data. In particular, if the
-# probability of a value being missing in a variable is dependent on the values
-# of that variable itself. Here, we set the missingness to depend on the
-# unobserved feature "class".
-
-import pandas as pd
-
-fig, ax = plt.subplots(figsize=(12, 6))
-ax.plot(y.iloc[test_0].values[last_days], label="Actual transfer")
-
-for missing_fraction in missing_fraction_list:
-    X = df.drop(columns=["transfer", "class"])  # reset X
-    mask = df["class"] == "DOWN"
-    true_indices = mask[mask].index
-    n_keep = int(len(true_indices) * missing_fraction)
-    keep_indices = np.random.choice(true_indices, size=n_keep, replace=False)
-    mask = pd.Series(False, index=mask.index)
-
-    # Set the randomly selected true indices to True in the new mask
-    mask.loc[keep_indices] = True
-    X["vicprice"] = X["vicprice"].mask(mask, np.nan)
-    X["vicdemand"] = X["vicdemand"].mask(mask, np.nan)
-
-    hgbt.fit(X.iloc[train_0], y.iloc[train_0])
-    hgbt_predictions = hgbt.predict(X.iloc[test_0])
-    cv_results = cross_validate(
-        hgbt,
-        X,
-        y,
-        cv=ts_cv,
-        scoring="neg_root_mean_squared_error",
-    )
-    rmse = -cv_results["test_score"]
-    ax.plot(
-        hgbt_predictions[last_days],
-        label=(
-            f"missing_fraction={missing_fraction}, RMSE={rmse.mean():.2f} +/-"
-            f" {rmse.std():.2f}"
-        ),
-        alpha=0.5,
-    )
-ax.set(
-    title="Daily energy transfer predictions on data with MNAR values",
     xticks=[(i + 0.25) * 48 for i in range(4)],
     xticklabels=["Tue", "Wed", "Thu", "Fri"],
     xlabel="Time of the week",
