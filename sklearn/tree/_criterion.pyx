@@ -26,7 +26,7 @@ from ._utils cimport log
 from ._utils cimport WeightedMedianCalculator
 
 # EPSILON is used in the Poisson criterion
-cdef float64_t EPSILON = 10 * np.finfo('float64_t').eps
+cdef float64_t EPSILON = 10 * np.finfo('double').eps
 
 cdef class Criterion:
     """Interface for impurity criteria.
