@@ -425,6 +425,8 @@ _ = ax.legend()
 # - 1: monotonic increase
 # - 0: no constraint
 # - -1: monotonic decrease
+#
+# Else, one can pass an array-like encoding the above convention by position.
 
 from sklearn.inspection import PartialDependenceDisplay
 
@@ -472,8 +474,8 @@ PartialDependenceDisplay.from_estimator(
 _ = plt.legend()
 
 # %%
-# Indeed, we can verify that the predictive quality of the model is not degraded
-# by introducing the monotonic constraints:
+# Indeed, we can verify that the predictive quality of the model is not
+# significantly degraded by introducing the monotonic constraints:
 
 cv_results = cross_validate(
     gbdt_no_cst,
@@ -494,3 +496,8 @@ cv_results = cross_validate(
 )
 rmse = -cv_results["test_score"]
 print(f"RMSE with constraints    = {rmse.mean():.2f} +/- {rmse.std():.2f}")
+
+# %%
+# That being said, notice the comparison is between to different models that may
+# be optimized by a different combination of hyperparameters. That is the reason
+# why we do no use the `common_params` in this section as done before.
