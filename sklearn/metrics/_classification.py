@@ -2309,10 +2309,16 @@ def recall_score(
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
         "adjusted": ["boolean"],
+        "zero_division": [
+            Options(Real, {0.0, 1.0, np.nan}),
+            StrOptions({"warn"}),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
-def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=False):
+def balanced_accuracy_score(
+    y_true, y_pred, *, sample_weight=None, adjusted=False, zero_division="warn"
+):
     """Compute the balanced accuracy.
 
     The balanced accuracy in binary and multiclass classification problems to
@@ -2341,6 +2347,12 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
         performance would score 0, while keeping perfect performance at a score
         of 1.
 
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
+        Sets the value to return when there is a zero division.
+
+        Notes:
+        - If set to "warn", this acts like 0, but a warning is also raised.
+        - If set to `np.nan`, such values will be excluded from the average.
     Returns
     -------
     balanced_accuracy : float
@@ -2385,8 +2397,16 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     with np.errstate(divide="ignore", invalid="ignore"):
         per_class = np.diag(C) / C.sum(axis=1)
     if np.any(np.isnan(per_class)):
-        warnings.warn("y_pred contains classes not in y_true")
-        per_class = per_class[~np.isnan(per_class)]
+        if zero_division == "warn":
+            msg = (
+                "Balanced Accuracy is ill-defined and being set to 0.0 in labels with"
+                " no true samples. Use `zero_division` parameter to control this"
+                " behavior."
+            )
+            warnings.warn(msg, UndefinedMetricWarning)
+            per_class = np.nan_to_num(per_class, nan=0.0)
+        else:
+            per_class = np.nan_to_num(per_class, nan=zero_division)
     score = np.mean(per_class)
     if adjusted:
         n_classes = len(per_class)
@@ -2837,11 +2857,9 @@ def log_loss(
     else:
         # TODO: Remove user defined eps in 1.5
         warnings.warn(
-            (
-                "Setting the eps parameter is deprecated and will "
-                "be removed in 1.5. Instead eps will always have"
-                "a default value of `np.finfo(y_pred.dtype).eps`."
-            ),
+            "Setting the eps parameter is deprecated and will "
+            "be removed in 1.5. Instead eps will always have"
+            "a default value of `np.finfo(y_pred.dtype).eps`.",
             FutureWarning,
         )
 
@@ -2908,10 +2926,8 @@ def log_loss(
     y_pred_sum = y_pred.sum(axis=1)
     if not np.isclose(y_pred_sum, 1, rtol=1e-15, atol=5 * eps).all():
         warnings.warn(
-            (
-                "The y_pred values do not sum to one. Starting from 1.5 this"
-                "will result in an error."
-            ),
+            "The y_pred values do not sum to one. Starting from 1.5 this"
+            "will result in an error.",
             UserWarning,
         )
     y_pred = y_pred / y_pred_sum[:, np.newaxis]
