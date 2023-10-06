@@ -439,33 +439,33 @@ monotonic_cst = {
     "vicdemand": -1,
     "vicprice": -1,
 }
-gbdt_no_cst = HistGradientBoostingRegressor().fit(X, y)
-gbdt_cst = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst).fit(X, y)
+hgbt_no_cst = HistGradientBoostingRegressor().fit(X, y)
+hgbt_cst = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst).fit(X, y)
 
 fig, ax = plt.subplots(nrows=2, figsize=(15, 10))
 disp = PartialDependenceDisplay.from_estimator(
-    gbdt_no_cst,
+    hgbt_no_cst,
     X,
     features=["nswdemand", "nswprice"],
     line_kw={"linewidth": 2, "label": "unconstrained", "color": "tab:blue"},
     ax=ax[0],
 )
 PartialDependenceDisplay.from_estimator(
-    gbdt_cst,
+    hgbt_cst,
     X,
     features=["nswdemand", "nswprice"],
     line_kw={"linewidth": 2, "label": "constrained", "color": "tab:orange"},
     ax=disp.axes_,
 )
 disp = PartialDependenceDisplay.from_estimator(
-    gbdt_no_cst,
+    hgbt_no_cst,
     X,
     features=["vicdemand", "vicprice"],
     line_kw={"linewidth": 2, "label": "unconstrained", "color": "tab:blue"},
     ax=ax[1],
 )
 PartialDependenceDisplay.from_estimator(
-    gbdt_cst,
+    hgbt_cst,
     X,
     features=["vicdemand", "vicprice"],
     line_kw={"linewidth": 2, "label": "constrained", "color": "tab:orange"},
@@ -478,7 +478,7 @@ _ = plt.legend()
 # significantly degraded by introducing the monotonic constraints:
 
 cv_results = cross_validate(
-    gbdt_no_cst,
+    hgbt_no_cst,
     X,
     y,
     cv=ts_cv,
@@ -488,7 +488,7 @@ rmse = -cv_results["test_score"]
 print(f"RMSE without constraints = {rmse.mean():.2f} +/- {rmse.std():.2f}")
 
 cv_results = cross_validate(
-    gbdt_cst,
+    hgbt_cst,
     X,
     y,
     cv=ts_cv,
