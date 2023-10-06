@@ -926,9 +926,7 @@ regularization. Elastic-Net is equivalent to :math:`\ell_1` when
 Note that the scale of the class weights and the sample weights will influence
 the optimization problem. For instance, multiplying the sample weights by a
 constant :math:`b>0` is equivalent to multiplying the (inverse) regularization
-strength `C` by :math:`b`. This is because user defined sample and class
-weights are multiplied to the coefficients and regularization penalizes large
-coefficients by adding a cost to the loss.
+strength `C` by :math:`b`.
 
 Multinomial Case
 ----------------
