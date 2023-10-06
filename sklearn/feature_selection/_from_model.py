@@ -354,8 +354,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 .. versionchanged:: 1.4
                     `**fit_params` are routed to the sub-estimator, if
                     `enable_metadata_routing=True` is set via
-                    :func:`~sklearn.set_config` or via
-                    :func:`~sklearn.config_context`, which allows for aliasing.
+                    :func:`~sklearn.set_config`, which allows for aliasing.
 
                 See :ref:`Metadata Routing User Guide <metadata_routing>` for
                 more details.
@@ -435,8 +434,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 .. versionchanged:: 1.4
                     `**partial_fit_params` are routed to the sub-estimator, if
                     `enable_metadata_routing=True` is set via
-                    :func:`~sklearn.set_config` or via
-                    :func:`~sklearn.config_context`, which allows for aliasing.
+                    :func:`~sklearn.set_config`, which allows for aliasing.
 
                 See :ref:`Metadata Routing User Guide <metadata_routing>` for
                 more details.
