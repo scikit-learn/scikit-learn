@@ -8,7 +8,6 @@ import pytest
 from scipy import linalg, sparse
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
-from scipy.special import expit
 
 from sklearn.datasets import make_low_rank_matrix, make_sparse_spd_matrix
 from sklearn.utils import gen_batches
@@ -28,7 +27,6 @@ from sklearn.utils.extmath import (
     _safe_accumulator_op,
     cartesian,
     density,
-    log_logistic,
     randomized_svd,
     row_norms,
     safe_sparse_dot,
@@ -685,18 +683,6 @@ def test_cartesian_mix_types(arrays, output_dtype):
     output = cartesian(arrays)
 
     assert output.dtype == output_dtype
-
-
-def test_logistic_sigmoid():
-    # Check correctness and robustness of logistic sigmoid implementation
-    def naive_log_logistic(x):
-        return np.log(expit(x))
-
-    x = np.linspace(-2, 2, 50)
-    assert_array_almost_equal(log_logistic(x), naive_log_logistic(x))
-
-    extreme_x = np.array([-100.0, 100.0])
-    assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
 
 
 @pytest.fixture()

@@ -22,9 +22,7 @@ from scipy import linalg, sparse
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from . import check_random_state
 from ._array_api import _is_numpy_namespace, device, get_namespace
-from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
-from .validation import check_array
 
 
 def squared_norm(x):
@@ -883,51 +881,6 @@ def svd_flip(u, v, u_based_decision=True):
         u *= signs[np.newaxis, :]
         v *= signs[:, np.newaxis]
     return u, v
-
-
-def log_logistic(X, out=None):
-    """Compute the log of the logistic function, ``log(1 / (1 + e ** -x))``.
-
-    This implementation is numerically stable because it splits positive and
-    negative values::
-
-        -log(1 + exp(-x_i))     if x_i > 0
-        x_i - log(1 + exp(x_i)) if x_i <= 0
-
-    For the ordinary logistic function, use ``scipy.special.expit``.
-
-    Parameters
-    ----------
-    X : array-like of shape (M, N) or (M,)
-        Argument to the logistic function.
-
-    out : array-like of shape (M, N) or (M,), default=None
-        Preallocated output array.
-
-    Returns
-    -------
-    out : ndarray of shape (M, N) or (M,)
-        Log of the logistic function evaluated at every point in x.
-
-    Notes
-    -----
-    See the blog post describing this implementation:
-    http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
-    """
-    is_1d = X.ndim == 1
-    X = np.atleast_2d(X)
-    X = check_array(X, dtype=np.float64)
-
-    n_samples, n_features = X.shape
-
-    if out is None:
-        out = np.empty_like(X)
-
-    _log_logistic_sigmoid(n_samples, n_features, X, out)
-
-    if is_1d:
-        return np.squeeze(out)
-    return out
 
 
 def softmax(X, copy=True):
