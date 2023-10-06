@@ -708,7 +708,6 @@ warnings.filterwarnings(
 for warning_type in (FutureWarning, DeprecationWarning, VisibleDeprecationWarning):
     warnings.filterwarnings("error", category=warning_type)
 
-
 # maps functions with a class name that is indistinguishable when case is
 # ignore to another filename
 autosummary_filename_map = {

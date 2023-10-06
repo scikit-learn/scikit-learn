@@ -6,14 +6,53 @@ import pytest
 
 from sklearn import config_context
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.compose import TransformedTargetRegressor
+from sklearn.covariance import GraphicalLassoCV
+from sklearn.ensemble import (
+    AdaBoostClassifier,
+    AdaBoostRegressor,
+    BaggingClassifier,
+    BaggingRegressor,
+    StackingClassifier,
+    StackingRegressor,
+    VotingClassifier,
+    VotingRegressor,
+)
 from sklearn.exceptions import UnsetMetadataPassedError
-from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.linear_model import LogisticRegressionCV
+from sklearn.experimental import (
+    enable_halving_search_cv,  # noqa
+    enable_iterative_imputer,  # noqa
+)
+from sklearn.feature_selection import (
+    RFE,
+    RFECV,
+    SelectFromModel,
+    SequentialFeatureSelector,
+)
+from sklearn.impute import IterativeImputer
+from sklearn.linear_model import (
+    ElasticNetCV,
+    LarsCV,
+    LassoCV,
+    LassoLarsCV,
+    LogisticRegressionCV,
+    MultiTaskElasticNetCV,
+    MultiTaskLassoCV,
+    OrthogonalMatchingPursuitCV,
+    RANSACRegressor,
+    RidgeClassifierCV,
+    RidgeCV,
+)
 from sklearn.model_selection import (
     GridSearchCV,
     HalvingGridSearchCV,
     HalvingRandomSearchCV,
     RandomizedSearchCV,
+)
+from sklearn.multiclass import (
+    OneVsOneClassifier,
+    OneVsRestClassifier,
+    OutputCodeClassifier,
 )
 from sklearn.multioutput import (
     ClassifierChain,
@@ -21,6 +60,8 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
+from sklearn.pipeline import FeatureUnion
+from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.tests.metadata_routing_common import (
     ConsumingClassifier,
     ConsumingRegressor,
@@ -35,8 +76,10 @@ from sklearn.utils.metadata_routing import MetadataRouter
 rng = np.random.RandomState(42)
 N, M = 100, 4
 X = rng.rand(N, M)
-y = rng.randint(0, 2, size=N)
-y_multi = rng.randint(0, 2, size=(N, 3))
+y = rng.randint(0, 3, size=N)
+classes = np.unique(y)
+y_multi = rng.randint(0, 3, size=(N, 3))
+classes_multi = [np.unique(y_multi[:, i]) for i in range(y_multi.shape[1])]
 metadata = rng.randint(0, 10, size=N)
 sample_weight = rng.rand(N)
 groups = np.array([0, 1] * (len(y) // 2))
@@ -65,6 +108,7 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y_multi,
         "estimator_routing_methods": ["fit", "partial_fit"],
+        "method_args": {"partial_fit": {"classes": classes_multi}},
     },
     {
         "metaestimator": CalibratedClassifierCV,
@@ -156,6 +200,34 @@ METAESTIMATORS: list = [
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": OneVsRestClassifier,
+        "estimator_name": "estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit", "partial_fit"],
+        "method_args": {"partial_fit": {"classes": classes}},
+    },
+    {
+        "metaestimator": OneVsOneClassifier,
+        "estimator_name": "estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit", "partial_fit"],
+        "preserves_metadata": "subset",
+        "method_args": {"partial_fit": {"classes": classes}},
+    },
+    {
+        "metaestimator": OutputCodeClassifier,
+        "estimator_name": "estimator",
+        "estimator": ConsumingClassifier,
+        "init_args": {"random_state": 42},
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -184,10 +256,42 @@ The keys are as follows:
 - cv_name: The name of the argument for the CV splitter
 - cv_routing_methods: list of all methods to check for routing metadata
   to the splitter
+- method_args: a dict of dicts, defining extra arguments needed to be passed to
+  methods, such as passing `classes` to `partial_fit`.
 """
 
 # IDs used by pytest to get meaningful verbose messages when running the tests
 METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATORS]
+
+UNSUPPORTED_ESTIMATORS = [
+    AdaBoostClassifier(),
+    AdaBoostRegressor(),
+    BaggingClassifier(),
+    BaggingRegressor(),
+    ElasticNetCV(),
+    FeatureUnion([]),
+    GraphicalLassoCV(),
+    IterativeImputer(),
+    LarsCV(),
+    LassoCV(),
+    LassoLarsCV(),
+    MultiTaskElasticNetCV(),
+    MultiTaskLassoCV(),
+    OrthogonalMatchingPursuitCV(),
+    RANSACRegressor(),
+    RFE(ConsumingClassifier()),
+    RFECV(ConsumingClassifier()),
+    RidgeCV(),
+    RidgeClassifierCV(),
+    SelectFromModel(ConsumingClassifier()),
+    SelfTrainingClassifier(ConsumingClassifier()),
+    SequentialFeatureSelector(ConsumingClassifier()),
+    StackingClassifier(ConsumingClassifier()),
+    StackingRegressor(ConsumingRegressor()),
+    TransformedTargetRegressor(),
+    VotingClassifier(ConsumingClassifier()),
+    VotingRegressor(ConsumingRegressor()),
+]
 
 
 def get_init_args(metaestimator_info):
@@ -239,6 +343,28 @@ def get_init_args(metaestimator_info):
     )
 
 
+@pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
+def test_unsupported_estimators_get_metadata_routing(estimator):
+    """Test that get_metadata_routing is not implemented on meta-estimators for
+    which we haven't implemented routing yet."""
+    with pytest.raises(NotImplementedError):
+        estimator.get_metadata_routing()
+
+
+@pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
+def test_unsupported_estimators_fit_with_metadata(estimator):
+    """Test that fit raises NotImplementedError when metadata routing is
+    enabled and a metadata is passed on meta-estimators for which we haven't
+    implemented routing yet."""
+    with pytest.raises(NotImplementedError):
+        try:
+            estimator.fit([[1]], [1], sample_weight=[1])
+        except TypeError:
+            # not all meta-estimators in the list support sample_weight,
+            # and for those we skip this test.
+            raise NotImplementedError
+
+
 def test_registry_copy():
     # test that _Registry is not copied into a new instance.
     a = _Registry()
@@ -270,7 +396,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
     # requests are not set
     if "estimator" not in metaestimator:
         # This test only makes sense for metaestimators which have a
-        # sub-estimator
+        # sub-estimator, e.g. MyMetaEstimator(estimator=MySubEstimator())
         return
 
     cls = metaestimator["metaestimator"]
@@ -302,7 +428,7 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
     # should be no errors.
     if "estimator" not in metaestimator:
         # This test only makes sense for metaestimators which have a
-        # sub-estimator
+        # sub-estimator, e.g. MyMetaEstimator(estimator=MySubEstimator())
         return
 
     def set_request(estimator, method_name):
@@ -331,8 +457,10 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             set_request(estimator, method_name)
             instance = cls(**kwargs)
             method = getattr(instance, method_name)
-            method(X, y, **method_kwargs)
-
+            extra_method_args = metaestimator.get("method_args", {}).get(
+                method_name, {}
+            )
+            method(X, y, **method_kwargs, **extra_method_args)
             # sanity check that registry is not empty, or else the test passes
             # trivially
             assert registry
