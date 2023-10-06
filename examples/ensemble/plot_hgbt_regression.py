@@ -90,7 +90,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 max_iter_list = [10, 50]
 
 fig, ax = plt.subplots(figsize=(10, 5))
-average_week_demand = df.groupby(["day", "period"])["transfer"].mean()
+average_week_demand = df.groupby(["day", "period"], observed=False)["transfer"].mean()
 average_week_demand.plot(color=colors[0], label="training data", linewidth=2, ax=ax)
 
 for idx, max_iter in enumerate(max_iter_list):
@@ -99,7 +99,9 @@ for idx, max_iter in enumerate(max_iter_list):
     y_pred = hgbt.predict(X)
     prediction_df = df.copy()
     prediction_df["y_pred"] = y_pred
-    average_pred = prediction_df.groupby(["day", "period"])["y_pred"].mean()
+    average_pred = prediction_df.groupby(["day", "period"], observed=False)[
+        "y_pred"
+    ].mean()
     average_pred.plot(
         color=colors[idx + 1], label=f"max_iter={max_iter}", linewidth=2, ax=ax
     )
