@@ -207,10 +207,14 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SplitRecord split
         cdef intp_t node_id
 
-        cdef double impurity = INFINITY
-        cdef double lower_bound
-        cdef double upper_bound
-        cdef double middle_value
+        cdef float64_t impurity = INFINITY
+        cdef float64_t lower_bound
+        cdef float64_t upper_bound
+        cdef float64_t middle_value
+        cdef float64_t left_child_min
+        cdef float64_t left_child_max
+        cdef float64_t right_child_min
+        cdef float64_t right_child_max
         cdef intp_t n_constant_features
         cdef bint is_leaf
         cdef bint first = 1
@@ -375,13 +379,13 @@ cdef struct FrontierRecord:
     intp_t pos
     intp_t depth
     bint is_leaf
-    double impurity
-    double impurity_left
-    double impurity_right
-    double improvement
-    double lower_bound
-    double upper_bound
-    double middle_value
+    float64_t impurity
+    float64_t impurity_left
+    float64_t impurity_right
+    float64_t improvement
+    float64_t lower_bound
+    float64_t upper_bound
+    float64_t middle_value
 
 cdef inline bool _compare_records(
     const FrontierRecord& left,
@@ -409,7 +413,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     def __cinit__(self, Splitter splitter, intp_t min_samples_split,
                   intp_t min_samples_leaf,  min_weight_leaf,
                   intp_t max_depth, intp_t max_leaf_nodes,
-                  double min_impurity_decrease):
+                  float64_t min_impurity_decrease):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -442,10 +446,10 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef FrontierRecord record
         cdef FrontierRecord split_node_left
         cdef FrontierRecord split_node_right
-        cdef double left_child_min
-        cdef double left_child_max
-        cdef double right_child_min
-        cdef double right_child_max
+        cdef float64_t left_child_min
+        cdef float64_t left_child_max
+        cdef float64_t right_child_min
+        cdef float64_t right_child_max
 
         cdef intp_t n_node_samples = splitter.n_samples
         cdef intp_t max_split_nodes = max_leaf_nodes - 1
@@ -589,13 +593,13 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         Tree tree,
         intp_t start,
         intp_t end,
-        double impurity,
+        float64_t impurity,
         bint is_first,
         bint is_left,
         Node* parent,
         intp_t depth,
-        double lower_bound,
-        double upper_bound,
+        float64_t lower_bound,
+        float64_t upper_bound,
         FrontierRecord* res
     ) except -1 nogil:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
@@ -603,8 +607,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef intp_t node_id
         cdef intp_t n_node_samples
         cdef intp_t n_constant_features = 0
-        cdef double min_impurity_decrease = self.min_impurity_decrease
-        cdef double weighted_n_node_samples
+        cdef float64_t min_impurity_decrease = self.min_impurity_decrease
+        cdef float64_t weighted_n_node_samples
         cdef bint is_leaf
 
         splitter.node_reset(start, end, &weighted_n_node_samples)
@@ -720,20 +724,20 @@ cdef class Tree:
     feature : array of int, shape [node_count]
         feature[i] holds the feature to split on, for the internal node i.
 
-    threshold : array of double, shape [node_count]
+    threshold : array of float64_t, shape [node_count]
         threshold[i] holds the threshold for the internal node i.
 
-    value : array of double, shape [node_count, n_outputs, max_n_classes]
+    value : array of float64_t, shape [node_count, n_outputs, max_n_classes]
         Contains the constant prediction value of each node.
 
-    impurity : array of double, shape [node_count]
+    impurity : array of float64_t, shape [node_count]
         impurity[i] holds the impurity (i.e., the value of the splitting
         criterion) at node i.
 
     n_node_samples : array of int, shape [node_count]
         n_node_samples[i] holds the number of training samples reaching node i.
 
-    weighted_n_node_samples : array of double, shape [node_count]
+    weighted_n_node_samples : array of float64_t, shape [node_count]
         weighted_n_node_samples[i] holds the weighted number of training samples
         reaching node i.
 
@@ -918,9 +922,9 @@ cdef class Tree:
         return 0
 
     cdef intp_t _add_node(self, intp_t parent, bint is_left, bint is_leaf,
-                          intp_t feature, double threshold, double impurity,
+                          intp_t feature, float64_t threshold, float64_t impurity,
                           intp_t n_node_samples,
-                          double weighted_n_node_samples,
+                          float64_t weighted_n_node_samples,
                           unsigned char missing_go_to_left) except -1 nogil:
         """Add a node to the tree.
 
@@ -1267,7 +1271,7 @@ cdef class Tree:
         cdef Node* node = nodes
         cdef Node* end_node = node + self.node_count
 
-        cdef double normalizer = 0.
+        cdef float64_t normalizer = 0.
 
         cdef cnp.float64_t[:] importances = np.zeros(self.n_features)
 
