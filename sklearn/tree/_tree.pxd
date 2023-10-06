@@ -48,14 +48,14 @@ cdef class Tree:
     cdef public intp_t node_count        # Counter for node IDs
     cdef public intp_t capacity          # Capacity of tree, in terms of nodes
     cdef Node* nodes                     # Array of nodes
-    cdef double* value                   # (capacity, n_outputs, max_n_classes) array of values
+    cdef float64_t* value                   # (capacity, n_outputs, max_n_classes) array of values
     cdef intp_t value_stride             # = n_outputs * max_n_classes
 
     # Methods
     cdef intp_t _add_node(self, intp_t parent, bint is_left, bint is_leaf,
-                          intp_t feature, double threshold, double impurity,
+                          intp_t feature, float64_t threshold, float64_t impurity,
                           intp_t n_node_samples,
-                          double weighted_n_node_samples,
+                          float64_t weighted_n_node_samples,
                           unsigned char missing_go_to_left) except -1 nogil
     cdef int _resize(self, intp_t capacity) except -1 nogil
     cdef int _resize_c(self, intp_t capacity=*) except -1 nogil
@@ -93,9 +93,9 @@ cdef class TreeBuilder:
 
     cdef intp_t min_samples_split       # Minimum number of samples in an internal node
     cdef intp_t min_samples_leaf        # Minimum number of samples in a leaf
-    cdef double min_weight_leaf         # Minimum weight in a leaf
+    cdef float64_t min_weight_leaf         # Minimum weight in a leaf
     cdef intp_t max_depth               # Maximal tree depth
-    cdef double min_impurity_decrease   # Impurity threshold for early stopping
+    cdef float64_t min_impurity_decrease   # Impurity threshold for early stopping
 
     cpdef build(
         self,

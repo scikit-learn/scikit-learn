@@ -63,14 +63,14 @@ cdef inline intp_t rand_int(intp_t low, intp_t high,
     return low + our_rand_r(random_state) % (high - low)
 
 
-cdef inline double rand_uniform(double low, double high,
-                                uint32_t* random_state) noexcept nogil:
-    """Generate a random double in [low; high)."""
-    return ((high - low) * <double> our_rand_r(random_state) /
-            <double> RAND_R_MAX) + low
+cdef inline float64_t rand_uniform(float64_t low, float64_t high,
+                                   uint32_t* random_state) noexcept nogil:
+    """Generate a random float64_t in [low; high)."""
+    return ((high - low) * <float64_t> our_rand_r(random_state) /
+            <float64_t> RAND_R_MAX) + low
 
 
-cdef inline double log(double x) noexcept nogil:
+cdef inline float64_t log(float64_t x) noexcept nogil:
     return ln(x) / ln(2.0)
 
 # =============================================================================
@@ -372,7 +372,7 @@ cdef class WeightedMedianCalculator:
         left and moving to the right.
         """
         cdef int return_value
-        cdef double original_median = 0.0
+        cdef float64_t original_median = 0.0
 
         if self.size() != 0:
             original_median = self.get_median()
@@ -389,7 +389,7 @@ cdef class WeightedMedianCalculator:
 
     cdef int update_median_parameters_post_remove(
             self, float64_t data, float64_t weight,
-            double original_median) noexcept nogil:
+            float64_t original_median) noexcept nogil:
         """Update the parameters used in the median calculation,
         namely `k` and `sum_w_0_k` after a removal"""
         # reset parameters because it there are no elements

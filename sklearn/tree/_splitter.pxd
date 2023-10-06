@@ -21,12 +21,12 @@ cdef struct SplitRecord:
     intp_t pos             # Split samples array at the given position,
     #                      # i.e. count of samples below threshold for feature.
     #                      # pos is >= end if the node is a leaf.
-    double threshold       # Threshold to split at.
-    double improvement     # Impurity improvement given parent node.
-    double impurity_left   # Impurity of the left split.
-    double impurity_right  # Impurity of the right split.
-    double lower_bound     # Lower bound on value of both children for monotonicity
-    double upper_bound     # Upper bound on value of both children for monotonicity
+    float64_t threshold       # Threshold to split at.
+    float64_t improvement     # Impurity improvement given parent node.
+    float64_t impurity_left   # Impurity of the left split.
+    float64_t impurity_right  # Impurity of the right split.
+    float64_t lower_bound     # Lower bound on value of both children for monotonicity
+    float64_t upper_bound     # Upper bound on value of both children for monotonicity
     unsigned char missing_go_to_left  # Controls if missing values go to the left node.
     intp_t n_missing       # Number of missing values for the feature being split on
 
@@ -40,14 +40,14 @@ cdef class Splitter:
     cdef public Criterion criterion      # Impurity criterion
     cdef public intp_t max_features      # Number of features to test
     cdef public intp_t min_samples_leaf  # Min samples in a leaf
-    cdef public double min_weight_leaf   # Minimum weight in a leaf
+    cdef public float64_t min_weight_leaf   # Minimum weight in a leaf
 
     cdef object random_state             # Random state
     cdef uint32_t rand_r_state           # sklearn_rand_r random number state
 
     cdef intp_t[::1] samples             # Sample indices in X, y
     cdef intp_t n_samples                # X.shape[0]
-    cdef double weighted_n_samples       # Weighted number of samples
+    cdef float64_t weighted_n_samples       # Weighted number of samples
     cdef intp_t[::1] features            # Feature indices in X
     cdef intp_t[::1] constant_features   # Constant features indices
     cdef intp_t n_features               # X.shape[1]
@@ -95,20 +95,20 @@ cdef class Splitter:
         self,
         intp_t start,
         intp_t end,
-        double* weighted_n_node_samples
+        float64_t* weighted_n_node_samples
     ) except -1 nogil
 
     cdef int node_split(
         self,
-        double impurity,   # Impurity of the node
+        float64_t impurity,   # Impurity of the node
         SplitRecord* split,
         intp_t* n_constant_features,
-        double lower_bound,
-        double upper_bound,
+        float64_t lower_bound,
+        float64_t upper_bound,
     ) except -1 nogil
 
-    cdef void node_value(self, double* dest) noexcept nogil
+    cdef void node_value(self, float64_t* dest) noexcept nogil
 
-    cdef void clip_node_value(self, double* dest, double lower_bound, double upper_bound) noexcept nogil
+    cdef void clip_node_value(self, float64_t* dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil
 
-    cdef double node_impurity(self) noexcept nogil
+    cdef float64_t node_impurity(self) noexcept nogil
