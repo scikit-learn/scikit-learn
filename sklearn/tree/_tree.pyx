@@ -1372,7 +1372,7 @@ cdef class Tree:
         """
         cdef:
             float64_t[::1] weight_stack = np.zeros(self.node_count,
-                                                dtype=np.float64)
+                                                   dtype=np.float64)
             intp_t[::1] node_idx_stack = np.zeros(self.node_count,
                                                   dtype=np.intp)
             intp_t sample_idx

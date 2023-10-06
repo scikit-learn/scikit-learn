@@ -50,7 +50,7 @@ cdef intp_t rand_int(intp_t low, intp_t high,
 
 
 cdef float64_t rand_uniform(float64_t low, float64_t high,
-                         uint32_t* random_state) noexcept nogil
+                            uint32_t* random_state) noexcept nogil
 
 
 cdef float64_t log(float64_t x) noexcept nogil

@@ -186,8 +186,8 @@ cdef class Criterion:
                 - self.weighted_n_left * impurity_left)
 
     cdef float64_t impurity_improvement(self, float64_t impurity_parent,
-                                     float64_t impurity_left,
-                                     float64_t impurity_right) noexcept nogil:
+                                        float64_t impurity_left,
+                                        float64_t impurity_right) noexcept nogil:
         """Compute the improvement in impurity.
 
         This method computes the improvement in impurity when a split occurs.
@@ -1534,7 +1534,7 @@ cdef class FriedmanMSE(MSE):
         return diff * diff / (self.weighted_n_left * self.weighted_n_right)
 
     cdef float64_t impurity_improvement(self, float64_t impurity_parent, float64_t
-                                     impurity_left, float64_t impurity_right) noexcept nogil:
+                                        impurity_left, float64_t impurity_right) noexcept nogil:
         # Note: none of the arguments are used here
         cdef float64_t total_sum_left = 0.0
         cdef float64_t total_sum_right = 0.0
