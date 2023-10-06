@@ -49,11 +49,11 @@ cdef intp_t rand_int(intp_t low, intp_t high,
                      uint32_t* random_state) noexcept nogil
 
 
-cdef double rand_uniform(double low, double high,
-                         uint32_t* random_state) noexcept nogil
+cdef float64_t rand_uniform(float64_t low, float64_t high,
+                            uint32_t* random_state) noexcept nogil
 
 
-cdef double log(double x) noexcept nogil
+cdef float64_t log(float64_t x) noexcept nogil
 
 # =============================================================================
 # WeightedPQueue data structure
