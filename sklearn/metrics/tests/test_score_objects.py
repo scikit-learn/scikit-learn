@@ -1416,6 +1416,7 @@ def test_make_scorer_repr(scorer, expected_repr):
 
 # TODO(1.6): rework this test after the deprecation of `needs_proba` and
 # `needs_threshold`
+@pytest.mark.filterwarnings("ignore:.*needs_proba.*:FutureWarning")
 @pytest.mark.parametrize(
     "params, err_type, err_msg",
     [
