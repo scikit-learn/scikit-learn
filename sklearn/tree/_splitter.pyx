@@ -559,7 +559,7 @@ cdef inline intp_t node_split_best(
 cdef inline void sort(float32_t* feature_values, intp_t* samples, intp_t n) noexcept nogil:
     if n == 0:
         return
-    cdef int maxd = 2 * <int>log(n)
+    cdef intp_t maxd = 2 * <intp_t>log(n)
     introsort(feature_values, samples, n, maxd)
 
 
@@ -593,7 +593,7 @@ cdef inline float32_t median3(float32_t* feature_values, intp_t n) noexcept nogi
 # Introsort with median of 3 pivot selection and 3-way partition function
 # (robust to repeated elements, e.g. lots of zero features).
 cdef void introsort(float32_t* feature_values, intp_t *samples,
-                    intp_t n, int maxd) noexcept nogil:
+                    intp_t n, intp_t maxd) noexcept nogil:
     cdef float32_t pivot
     cdef intp_t i, l, r
 
