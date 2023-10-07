@@ -32,11 +32,11 @@ cdef class Criterion:
     cdef intp_t n_outputs                  # Number of outputs
     cdef intp_t n_samples                  # Number of samples
     cdef intp_t n_node_samples             # Number of samples in the node (end-start)
-    cdef double weighted_n_samples         # Weighted number of samples (in total)
-    cdef double weighted_n_node_samples    # Weighted number of samples in the node
-    cdef double weighted_n_left            # Weighted number of samples in the left node
-    cdef double weighted_n_right           # Weighted number of samples in the right node
-    cdef double weighted_n_missing         # Weighted number of samples that are missing
+    cdef float64_t weighted_n_samples         # Weighted number of samples (in total)
+    cdef float64_t weighted_n_node_samples    # Weighted number of samples in the node
+    cdef float64_t weighted_n_left            # Weighted number of samples in the left node
+    cdef float64_t weighted_n_right           # Weighted number of samples in the right node
+    cdef float64_t weighted_n_missing         # Weighted number of samples that are missing
 
     # The criterion object is maintained such that left and right collected
     # statistics correspond to samples[start:pos] and samples[pos:end].
@@ -46,7 +46,7 @@ cdef class Criterion:
         self,
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
-        double weighted_n_samples,
+        float64_t weighted_n_samples,
         const intp_t[:] sample_indices,
         intp_t start,
         intp_t end
@@ -56,43 +56,43 @@ cdef class Criterion:
     cdef int reset(self) except -1 nogil
     cdef int reverse_reset(self) except -1 nogil
     cdef int update(self, intp_t new_pos) except -1 nogil
-    cdef double node_impurity(self) noexcept nogil
+    cdef float64_t node_impurity(self) noexcept nogil
     cdef void children_impurity(
         self,
-        double* impurity_left,
-        double* impurity_right
+        float64_t* impurity_left,
+        float64_t* impurity_right
     ) noexcept nogil
     cdef void node_value(
         self,
-        double* dest
+        float64_t* dest
     ) noexcept nogil
     cdef void clip_node_value(
         self,
-        double* dest,
-        double lower_bound,
-        double upper_bound
+        float64_t* dest,
+        float64_t lower_bound,
+        float64_t upper_bound
     ) noexcept nogil
-    cdef double middle_value(self) noexcept nogil
-    cdef double impurity_improvement(
+    cdef float64_t middle_value(self) noexcept nogil
+    cdef float64_t impurity_improvement(
         self,
-        double impurity_parent,
-        double impurity_left,
-        double impurity_right
+        float64_t impurity_parent,
+        float64_t impurity_left,
+        float64_t impurity_right
     ) noexcept nogil
-    cdef double proxy_impurity_improvement(self) noexcept nogil
+    cdef float64_t proxy_impurity_improvement(self) noexcept nogil
     cdef bint check_monotonicity(
             self,
             cnp.int8_t monotonic_cst,
-            double lower_bound,
-            double upper_bound,
+            float64_t lower_bound,
+            float64_t upper_bound,
     ) noexcept nogil
     cdef inline bint _check_monotonicity(
             self,
             cnp.int8_t monotonic_cst,
-            double lower_bound,
-            double upper_bound,
-            double sum_left,
-            double sum_right,
+            float64_t lower_bound,
+            float64_t upper_bound,
+            float64_t sum_left,
+            float64_t sum_right,
     ) noexcept nogil
 
 cdef class ClassificationCriterion(Criterion):
@@ -101,17 +101,17 @@ cdef class ClassificationCriterion(Criterion):
     cdef intp_t[::1] n_classes
     cdef intp_t max_n_classes
 
-    cdef double[:, ::1] sum_total    # The sum of the weighted count of each label.
-    cdef double[:, ::1] sum_left     # Same as above, but for the left side of the split
-    cdef double[:, ::1] sum_right    # Same as above, but for the right side of the split
-    cdef double[:, ::1] sum_missing  # Same as above, but for missing values in X
+    cdef float64_t[:, ::1] sum_total    # The sum of the weighted count of each label.
+    cdef float64_t[:, ::1] sum_left     # Same as above, but for the left side of the split
+    cdef float64_t[:, ::1] sum_right    # Same as above, but for the right side of the split
+    cdef float64_t[:, ::1] sum_missing  # Same as above, but for missing values in X
 
 cdef class RegressionCriterion(Criterion):
     """Abstract regression criterion."""
 
-    cdef double sq_sum_total
+    cdef float64_t sq_sum_total
 
-    cdef double[::1] sum_total    # The sum of w*y.
-    cdef double[::1] sum_left     # Same as above, but for the left side of the split
-    cdef double[::1] sum_right    # Same as above, but for the right side of the split
-    cdef double[::1] sum_missing  # Same as above, but for missing values in X
+    cdef float64_t[::1] sum_total    # The sum of w*y.
+    cdef float64_t[::1] sum_left     # Same as above, but for the left side of the split
+    cdef float64_t[::1] sum_right    # Same as above, but for the right side of the split
+    cdef float64_t[::1] sum_missing  # Same as above, but for missing values in X
