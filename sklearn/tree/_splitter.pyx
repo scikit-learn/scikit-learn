@@ -119,7 +119,7 @@ cdef class Splitter:
                              self.random_state,
                              self.monotonic_cst), self.__getstate__())
 
-    cdef int init(
+    cdef intp_t init(
         self,
         object X,
         const float64_t[:, ::1] y,
@@ -193,7 +193,7 @@ cdef class Splitter:
             self.criterion.init_sum_missing()
         return 0
 
-    cdef int node_reset(self, intp_t start, intp_t end,
+    cdef intp_t node_reset(self, intp_t start, intp_t end,
                         float64_t* weighted_n_node_samples) except -1 nogil:
         """Reset splitter on node samples[start:end].
 
@@ -225,7 +225,7 @@ cdef class Splitter:
         weighted_n_node_samples[0] = self.criterion.weighted_n_node_samples
         return 0
 
-    cdef int node_split(
+    cdef intp_t node_split(
         self,
         float64_t impurity,
         SplitRecord* split,
@@ -286,7 +286,7 @@ ctypedef fused Partitioner:
     DensePartitioner
     SparsePartitioner
 
-cdef inline int node_split_best(
+cdef inline intp_t node_split_best(
     Splitter splitter,
     Partitioner partitioner,
     Criterion criterion,
@@ -667,7 +667,7 @@ cdef void heapsort(float32_t* feature_values, intp_t* samples, intp_t n) noexcep
         sift_down(feature_values, samples, 0, end)
         end = end - 1
 
-cdef inline int node_split_random(
+cdef inline intp_t node_split_random(
     Splitter splitter,
     Partitioner partitioner,
     Criterion criterion,
@@ -1490,7 +1490,7 @@ cdef inline void sparse_swap(intp_t[::1] index_to_samples, intp_t[::1] samples,
 cdef class BestSplitter(Splitter):
     """Splitter for finding the best split on dense data."""
     cdef DensePartitioner partitioner
-    cdef int init(
+    cdef intp_t init(
         self,
         object X,
         const float64_t[:, ::1] y,
@@ -1502,7 +1502,7 @@ cdef class BestSplitter(Splitter):
             X, self.samples, self.feature_values, missing_values_in_feature_mask
         )
 
-    cdef int node_split(
+    cdef intp_t node_split(
             self,
             float64_t impurity,
             SplitRecord* split,
@@ -1526,7 +1526,7 @@ cdef class BestSplitter(Splitter):
 cdef class BestSparseSplitter(Splitter):
     """Splitter for finding the best split, using the sparse data."""
     cdef SparsePartitioner partitioner
-    cdef int init(
+    cdef intp_t init(
         self,
         object X,
         const float64_t[:, ::1] y,
@@ -1538,7 +1538,7 @@ cdef class BestSparseSplitter(Splitter):
             X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask
         )
 
-    cdef int node_split(
+    cdef intp_t node_split(
             self,
             float64_t impurity,
             SplitRecord* split,
@@ -1562,7 +1562,7 @@ cdef class BestSparseSplitter(Splitter):
 cdef class RandomSplitter(Splitter):
     """Splitter for finding the best random split on dense data."""
     cdef DensePartitioner partitioner
-    cdef int init(
+    cdef intp_t init(
         self,
         object X,
         const float64_t[:, ::1] y,
@@ -1574,7 +1574,7 @@ cdef class RandomSplitter(Splitter):
             X, self.samples, self.feature_values, missing_values_in_feature_mask
         )
 
-    cdef int node_split(
+    cdef intp_t node_split(
             self,
             float64_t impurity,
             SplitRecord* split,
@@ -1598,7 +1598,7 @@ cdef class RandomSplitter(Splitter):
 cdef class RandomSparseSplitter(Splitter):
     """Splitter for finding the best random split, using the sparse data."""
     cdef SparsePartitioner partitioner
-    cdef int init(
+    cdef intp_t init(
         self,
         object X,
         const float64_t[:, ::1] y,
@@ -1609,7 +1609,7 @@ cdef class RandomSparseSplitter(Splitter):
         self.partitioner = SparsePartitioner(
             X, self.samples, self.n_samples, self.feature_values, missing_values_in_feature_mask
         )
-    cdef int node_split(
+    cdef intp_t node_split(
             self,
             float64_t impurity,
             SplitRecord* split,
