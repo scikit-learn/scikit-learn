@@ -193,8 +193,12 @@ cdef class Splitter:
             self.criterion.init_sum_missing()
         return 0
 
-    cdef intp_t node_reset(self, intp_t start, intp_t end,
-                        float64_t* weighted_n_node_samples) except -1 nogil:
+    cdef intp_t node_reset(
+        self,
+        intp_t start,
+        intp_t end,
+        float64_t* weighted_n_node_samples
+    ) except -1 nogil:
         """Reset splitter on node samples[start:end].
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)

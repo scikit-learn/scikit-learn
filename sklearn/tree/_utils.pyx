@@ -299,7 +299,7 @@ cdef class WeightedMedianCalculator:
         Return -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
-        cdef int return_value
+        cdef intp_t return_value
         cdef float64_t original_median = 0.0
 
         if self.size() != 0:
@@ -356,7 +356,7 @@ cdef class WeightedMedianCalculator:
         """Remove a value from the MedianHeap, removing it
         from consideration in the median calculation
         """
-        cdef int return_value
+        cdef intp_t return_value
         cdef float64_t original_median = 0.0
 
         if self.size() != 0:
@@ -371,7 +371,7 @@ cdef class WeightedMedianCalculator:
         """Pop a value from the MedianHeap, starting from the
         left and moving to the right.
         """
-        cdef int return_value
+        cdef intp_t return_value
         cdef float64_t original_median = 0.0
 
         if self.size() != 0:

@@ -38,10 +38,10 @@ from ._utils cimport sizet_ptr_to_ndarray
 
 cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFromDescr(PyTypeObject* subtype, cnp.dtype descr,
-                                int nd, cnp.npy_intp* dims,
+                                intp_t nd, cnp.npy_intp* dims,
                                 cnp.npy_intp* strides,
-                                void* data, int flags, object obj)
-    int PyArray_SetBaseObject(cnp.ndarray arr, PyObject* obj)
+                                void* data, intp_t flags, object obj)
+    intp_t PyArray_SetBaseObject(cnp.ndarray arr, PyObject* obj)
 
 cdef extern from "<stack>" namespace "std" nogil:
     cdef cppclass stack[T]:
