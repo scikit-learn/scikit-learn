@@ -14,6 +14,7 @@ from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS, LIL_CONTAINERS
 from sklearn.utils.sparsefuncs import (
     count_nonzero,
     csc_median_axis_0,
+    _implicit_column_offset,
     incr_mean_variance_axis,
     inplace_column_scale,
     inplace_row_scale,
@@ -963,7 +964,6 @@ def test_csr_row_norms(dtype):
 @pytest.fixture(scope="module", params=CSR_CONTAINERS + CSC_CONTAINERS)
 def centered_matrices(request) -> tuple[sp.linalg.LinearOperator, np.ndarray]:
     sparse_container = request.param
-    from sklearn.utils.sparsefuncs import _implicit_column_offset
 
     random_state = np.random.default_rng(42)
 
