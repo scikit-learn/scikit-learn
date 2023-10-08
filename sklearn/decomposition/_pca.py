@@ -669,7 +669,7 @@ class PCA(_BasePCA):
         if total_var is None:
             N = X.shape[0] - 1
             X **= 2
-            total_var = xp.sum(xp.sum(X, axis=0) / N)
+            total_var = xp.sum(X) / N
 
         self.explained_variance_ratio_ = self.explained_variance_ / total_var
         self.singular_values_ = xp.asarray(S, copy=True)  # Store the singular values.
