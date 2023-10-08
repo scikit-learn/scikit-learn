@@ -146,7 +146,9 @@ else:
         return scipy.sparse.linalg.cg(A, b, **kwargs)
 
 
-# TODO: Remove when Scipy 1.11 is the minimum supported version
+# TODO: Fuse the modern implementations of _sparse_min_max and _sparse_nan_min_max
+# into the public min_max_axis function when Scipy 1.11 is the minimum supported
+# version and delete the backport in the else branch below.
 if sp_base_version >= parse_version("1.11.0"):
 
     def _sparse_min_max(X, axis):
