@@ -141,7 +141,7 @@ pipeline = Pipeline(
                         Pipeline(
                             [
                                 ("tfidf", TfidfVectorizer()),
-                                ("best", PCA(n_components=50, solver="arpack")),
+                                ("best", PCA(n_components=50, svd_solver="arpack")),
                             ]
                         ),
                         1,
