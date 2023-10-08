@@ -960,7 +960,8 @@ def test_csr_row_norms(dtype):
 
 
 @pytest.fixture(scope="module", params=CSR_CONTAINERS + CSC_CONTAINERS)
-def centered_matrices(request) -> tuple[sp.linalg.LinearOperator, np.ndarray]:
+def centered_matrices(request):
+    """Returns equivalent tuple[sp.linalg.LinearOperator, np.ndarray]."""
     sparse_container = request.param
 
     random_state = np.random.default_rng(42)
