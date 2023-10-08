@@ -40,7 +40,18 @@ def _line_search_wolfe12(
         If no suitable step size is found.
 
     """
+    is_verbose = verbose >= 2
+    eps = 16 * np.finfo(np.asarray(old_fval).dtype).eps
+    if is_verbose:
+        print("  Line Search")
+        print(f"    eps=10 * finfo.eps={eps}")
+        print("    try line search wolfe1")
+
     ret = line_search_wolfe1(f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs)
+
+    if is_verbose:
+        _not_ = "not " if ret[0] is None else ""
+        print("    wolfe1 line search was " + _not_ + "successful")
 
     if ret[0] is None:
         # Have a look at the line_search method of our NewtonSolver class. We borrow
@@ -48,20 +59,26 @@ def _line_search_wolfe12(
         # Deal with relative loss differences around machine precision.
         args = kwargs.get("args", tuple())
         fval = f(xk + pk, *args)
-        eps = 16 * np.finfo(np.asarray(old_fval).dtype).eps
         tiny_loss = np.abs(old_fval * eps)
         loss_improvement = fval - old_fval
         check = np.abs(loss_improvement) <= tiny_loss
+        if is_verbose:
+            print(
+                "    check loss |improvement| <= eps * |loss_old|:"
+                f" {np.abs(loss_improvement)} <= {tiny_loss} {check}"
+            )
         if check:
             # 2.1 Check sum of absolute gradients as alternative condition.
             sum_abs_grad_old = scipy.linalg.norm(gfk, ord=1)
             grad = fprime(xk + pk, *args)
             sum_abs_grad = scipy.linalg.norm(grad, ord=1)
             check = sum_abs_grad < sum_abs_grad_old
+            if is_verbose:
+                print(
+                    "    check sum(|gradient|) < sum(|gradient_old|): "
+                    f"{sum_abs_grad} < {sum_abs_grad_old} {check}"
+                )
             if check:
-                if verbose >= 2:
-                    print("  newton_cg line search detected tiny loss improvement.")
-                    print(f"  {loss_improvement=} {sum_abs_grad=}")
                 ret = (
                     1.0,  # step size
                     ret[1] + 1,  # number of function evaluations
@@ -76,6 +93,8 @@ def _line_search_wolfe12(
         # TODO: It seems that the new check for the sum of absolute gradients above
         # catches all cases that, earlier, ended up here. In fact, our tests never
         # trigger this "if branch" here and we can consider to remove it.
+        if is_verbose:
+            print("    last resort: try line search wolfe2")
         ret = line_search_wolfe2(
             f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs
         )
@@ -111,36 +130,51 @@ def _cg(fhess_p, fgrad, maxiter, tol, verbose=0):
     xsupi : ndarray of shape (n_features,) or (n_features + 1,)
         Estimated solution.
     """
+    eps = 16 * np.finfo(np.float64).eps
     xsupi = np.zeros(len(fgrad), dtype=fgrad.dtype)
-    ri = np.copy(fgrad)
+    ri = np.copy(fgrad)  # residual = fgrad - fhess_p @ xsupi
     psupi = -ri
     i = 0
     dri0 = np.dot(ri, ri)
-    # We also track of |p_i|^2.
+    # We also keep track of |p_i|^2.
     psupi_norm2 = dri0
+    is_verbose = verbose >= 2
 
     while i <= maxiter:
         if np.sum(np.abs(ri)) <= tol:
-            if verbose >= 2:
+            if is_verbose:
                 print(
-                    f"  inner solver iteration {i} stopped with {np.sum(np.abs(ri))=}"
+                    f"  Inner CG solver iteration {i} stopped with\n"
+                    f"    sum(|residuals|) <= tol: {np.sum(np.abs(ri))} <= {tol}"
                 )
             break
 
         Ap = fhess_p(psupi)
         # check curvature
         curv = np.dot(psupi, Ap)
-        if 0 <= curv <= 16 * np.finfo(np.float64).eps * psupi_norm2:
+        if 0 <= curv <= eps * psupi_norm2:
             # See https://arxiv.org/abs/1803.02924, Algo 1 Capped Conjugate Gradient.
-            if verbose >= 2:
-                print(f"  inner solver iteration {i} stopped with {curv=}")
+            if is_verbose:
+                print(
+                    "  Inner CG solver iteration {i} stopped with\n"
+                    f"    tiny_|p| = eps * ||p||^2, eps = {eps}, "
+                    f"squred L2 norm ||p||^2 = {psupi_norm2}\n"
+                    f"    curvature <= tiny_|p|: {curv} <= {eps * psupi_norm2}"
+                )
             break
         elif curv < 0:
             if i > 0:
+                if is_verbose:
+                    print(
+                        "  Inner CG solver iteration {i} stopped with negative "
+                        f"curvature, curvature = {curv}"
+                    )
                 break
             else:
                 # fall back to steepest descent direction
                 xsupi += dri0 / curv * psupi
+                if is_verbose:
+                    print("  Inner CG solver iteration 0 fell back to steepest descent")
                 break
         alphai = dri0 / curv
         xsupi += alphai * psupi
@@ -152,10 +186,10 @@ def _cg(fhess_p, fgrad, maxiter, tol, verbose=0):
         psupi_norm2 = dri1 + betai**2 * psupi_norm2
         i = i + 1
         dri0 = dri1  # update np.dot(ri,ri) for next time.
-    if i > maxiter and verbose >= 2:
+    if is_verbose and i > maxiter:
         print(
-            f"  newton_cg iterative solver stopped with maxiter={i - 1} and "
-            f"{np.sum(np.abs(ri))=}"
+            f"  Inner CG solver stopped reaching maxiter={i - 1} with "
+            f"sum(|residuals|) = {np.sum(np.abs(ri))}"
         )
     return xsupi
 
@@ -228,6 +262,8 @@ def _newton_cg(
     else:
         old_fval = 0
 
+    is_verbose = verbose > 0
+
     # Outer loop: our Newton iteration
     while k < maxiter:
         # Compute a search direction pk by applying the CG method to
@@ -236,8 +272,10 @@ def _newton_cg(
 
         absgrad = np.abs(fgrad)
         max_absgrad = np.max(absgrad)
-        if verbose > 0:
-            print(f"newton_cg iter = {k} loss = {old_fval} max|grad| = {max_absgrad}")
+        if is_verbose:
+            print(f"Newton-CG iter = {k}")
+            print("  Check Convergence")
+            print(f"    1. max |gradient| {max_absgrad} <= {tol}")
         if max_absgrad <= tol:
             break
 
@@ -276,6 +314,8 @@ def _newton_cg(
             "newton-cg failed to converge. Increase the number of iterations.",
             ConvergenceWarning,
         )
+    if is_verbose:
+        print(f"  Solver did converge at loss = {old_fval}.")
     return xk, k
 
 
