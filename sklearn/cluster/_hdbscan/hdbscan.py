@@ -358,12 +358,12 @@ def _hdbscan_boruvka(
     metric="euclidean",
     leaf_size=40,
     n_jobs=None,
+    approx_min_span_tree=False,
     **metric_params,
 ):
     leaf_size = max(leaf_size, 3)
     Tree = KDTree if algo == "kd_tree" else BallTree
     tree = Tree(X, metric=metric, leaf_size=leaf_size, **metric_params)
-    print(np.array(tree.idx_array))
 
     n_jobs = effective_n_jobs(n_jobs)
     out = BoruvkaAlgorithm(
@@ -372,7 +372,7 @@ def _hdbscan_boruvka(
         metric=metric,
         leaf_size=leaf_size // 3,
         alpha=alpha,
-        approx_min_span_tree=False,
+        approx_min_span_tree=approx_min_span_tree,
         n_jobs=n_jobs,
         **metric_params,
     )
@@ -680,7 +680,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 deprecated={"kdtree", "balltree"},
             ),
         ],
-        "mst_algorithm": [StrOptions({"auto", "brute", "prims", "boruvka"})],
+        "mst_algorithm": [
+            StrOptions({"auto", "brute", "prims", "boruvka_exact", "boruvka_approx"})
+        ],
         "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
         "n_jobs": [Integral, None],
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
@@ -808,12 +810,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 f" samples in X ({X.shape[0]})"
             )
 
-        algos = {self.algorithm, self.mst_algorithm}
-        if (
-            "brute" in algos
-            and len({"kd_tree", "ball_tree", "prims", "boruvka"}.intersection(algos))
-            > 0
-        ):
+        algorithms = {self.algorithm, self.mst_algorithm}
+        acceptable_algorithms = {"auto", "brute"}
+
+        if "brute" in algorithms and not algorithms.issubset(acceptable_algorithms):
             raise ValueError(
                 "When setting either `algorithm='brute'` or `mst_algorithm='brute'`,"
                 " both keyword arguments must only be set to either 'brute' or 'auto'."
@@ -882,6 +882,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                     mst_func = _hdbscan_prims
                 else:
                     mst_func = _hdbscan_boruvka
+                    kwargs["approx_min_span_tree"] = (
+                        self.mst_algorithm == "boruvka_approx"
+                    )
                 kwargs["algo"] = self.algorithm
                 kwargs["leaf_size"] = self.leaf_size
         else:

@@ -274,7 +274,6 @@ cdef class BoruvkaAlgorithm:
         self.core_dist_tree = tree
         self.tree = KDTree(tree.data, metric=metric, leaf_size=leaf_size,
                            **kwargs)
-        print(np.array(self.tree.idx_array))
         self.is_KDTree = isinstance(tree, KDTree)
         self.raw_data = self.tree.data
         self.node_bounds = self.tree.node_bounds
@@ -521,8 +520,6 @@ cdef class BoruvkaAlgorithm:
         cdef intp_t left, right
         cdef float64_t left_dist, right_dist
 
-        cdef intp_t dist_cnt = 0
-
         # Compute the distance between the query and reference nodes
         if self.is_KDTree:
             node_dist = kd_tree_min_dist_dual(
@@ -538,9 +535,6 @@ cdef class BoruvkaAlgorithm:
                 self.centroid_distances
             )
 
-        with gil:
-            print(f"DEBUG *** node_dist({node1}, {node2})={node_dist}")
-            print(f"DEBUG *** bounds ({self.bounds[node1]}, {self.bounds[node2]})")
         # If the distance between the nodes is less than the current bound for
         # the query and the nodes are not in the same component continue;
         # otherwise we get to prune this branch and return early.
@@ -591,10 +585,6 @@ cdef class BoruvkaAlgorithm:
             point_indices2 = self.idx_array[
                 node2_info.idx_start:node2_info.idx_end
             ]
-            # with gil:
-            #     print(f"DEBUG *** idx_array[{node1_info.idx_start}:{node1_info.idx_end}] = {np.array(point_indices1)}")
-            #     print(f"DEBUG *** idx_array[{node2_info.idx_start}:{node2_info.idx_end}] = {np.array(point_indices2)}")
-            #     print(f"DEBUG *** component_of_point = {np.array(self.component_of_point)}")
 
             for i in range(point_indices1.shape[0]):
 
@@ -619,7 +609,6 @@ cdef class BoruvkaAlgorithm:
                             &self.raw_data[q][0],
                             self.num_features
                         ) * self.alpha
-                        dist_cnt += 1
                         if self.alpha != 1.0:
                             mr_dist = max(
                                 d / self.alpha,
@@ -732,15 +721,11 @@ cdef class BoruvkaAlgorithm:
                 )
 
             if left_dist < right_dist:
-                with gil:
-                    print(f"DEBUG *** descending into ({node1}, {left}) | ({node1}, {right})")
-                dist_cnt += self.dual_tree_traversal(node1, left)
-                dist_cnt += self.dual_tree_traversal(node1, right)
+                self.dual_tree_traversal(node1, left)
+                self.dual_tree_traversal(node1, right)
             else:
-                with gil:
-                    print(f"DEBUG *** descending into ({node1}, {right}) | ({node1}, {left})")
-                dist_cnt += self.dual_tree_traversal(node1, right)
-                dist_cnt += self.dual_tree_traversal(node1, left)
+                self.dual_tree_traversal(node1, right)
+                self.dual_tree_traversal(node1, left)
 
         # Case 2b: The reference node is a leaf, or is smaller than
         #          the query node.
@@ -782,27 +767,21 @@ cdef class BoruvkaAlgorithm:
                     )
 
             if left_dist < right_dist:
-                with gil:
-                    print(f"DEBUG *** descending into ({left}, {node2}) | ({right}, {node2})")
-                dist_cnt += self.dual_tree_traversal(left, node2)
-                dist_cnt += self.dual_tree_traversal(right, node2)
+                self.dual_tree_traversal(left, node2)
+                self.dual_tree_traversal(right, node2)
             else:
-                with gil:
-                    print(f"DEBUG *** descending into ({right}, {node2}) | ({left}, {node2})")
-                dist_cnt += self.dual_tree_traversal(right, node2)
-                dist_cnt += self.dual_tree_traversal(left, node2)
+                self.dual_tree_traversal(right, node2)
+                self.dual_tree_traversal(left, node2)
 
-        return dist_cnt
+        return 0
 
     cpdef spanning_tree(self):
         """Compute the minimum spanning tree of the data held by
         the tree passed in at construction"""
 
         cdef intp_t num_components = self.num_points
-        cdef intp_t dist_cnt
         while num_components > 1:
-            dist_cnt = self.dual_tree_traversal(0, 0)
-            print(f"DEBUG *** finished {num_components} with {dist_cnt} calcs")
+            self.dual_tree_traversal(0, 0)
             num_components = self.update_components()
 
         return np.array(self.edges, dtype=MST_edge_dtype)

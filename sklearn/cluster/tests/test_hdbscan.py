@@ -41,7 +41,8 @@ OUTLIER_SET = {-1} | {out["label"] for _, out in _OUTLIER_ENCODING.items()}
 @pytest.mark.parametrize("tree", ["kd_tree", "ball_tree"])
 @pytest.mark.parametrize("n_samples", [200, 16385])
 @pytest.mark.parametrize("n_jobs", [1, 4])
-def test_hdbscan_boruvka_matches(tree, n_samples, n_jobs):
+@pytest.mark.parametrize("mst_algo", ["boruvka_exact", "boruvka_approx"])
+def test_hdbscan_boruvka_matches(tree, n_samples, n_jobs, mst_algo):
     if n_samples > 16384:
         data, _ = make_blobs(n_samples=n_samples, random_state=10)
         data = shuffle(X, random_state=7)
@@ -50,7 +51,7 @@ def test_hdbscan_boruvka_matches(tree, n_samples, n_jobs):
         data = X
 
     hdb_prims = HDBSCAN(algorithm=tree, mst_algorithm="prims", n_jobs=n_jobs).fit(data)
-    hdb_boruvka = HDBSCAN(algorithm=tree, mst_algorithm="boruvka", n_jobs=n_jobs).fit(
+    hdb_boruvka = HDBSCAN(algorithm=tree, mst_algorithm=mst_algo, n_jobs=n_jobs).fit(
         data
     )
     labels_prims = hdb_prims.labels_
@@ -58,9 +59,10 @@ def test_hdbscan_boruvka_matches(tree, n_samples, n_jobs):
 
     similarity = fowlkes_mallows_score(labels_prims, labels_boruvka)
 
-    # Although we can have tight guarantees, there can be cases where the
-    # labels differ slightly, hence we leave a small margin of error.
-    assert similarity > 0.98
+    # We should expect that the exact boruvka algorithm produces a correct mst,
+    # but the approximation will almost surely produce an incorrect tree, and
+    # hence differ from the exact labels.
+    assert similarity >= 0.91 if "approx" in mst_algo else 1
 
 
 def test_hdbscan_mst_algorithm_errors():
@@ -70,7 +72,7 @@ def test_hdbscan_mst_algorithm_errors():
         with pytest.raises(ValueError, match=msg):
             hdb.fit(X, y)
 
-    for mst_algo in ["prims", "boruvka"]:
+    for mst_algo in ["prims", "boruvka_exact", "boruvka_approx"]:
         hdb = HDBSCAN(algorithm="brute", mst_algorithm=mst_algo)
         with pytest.raises(ValueError, match=msg):
             hdb.fit(X, y)
