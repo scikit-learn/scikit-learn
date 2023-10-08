@@ -319,6 +319,10 @@ is eigendecomposed in the Kernel PCA fitting process has an effective rank that
 is much smaller than its size. This is a situation where approximate
 eigensolvers can provide speedup with very low precision loss.
 
+
+|details-start|
+**Eigensolvers**
+|details-split|
 The optional parameter ``eigen_solver='randomized'`` can be used to
 *significantly* reduce the computation time when the number of requested
 ``n_components`` is small compared with the number of samples. It relies on
@@ -342,6 +346,8 @@ only provides reasonable execution times when the number of components to find
 is extremely small. It is enabled by default when the desired number of
 components is less than 10 (strict) and the number of samples is more than 200
 (strict). See :class:`KernelPCA` for details.
+
+|details-end|
 
 .. topic:: References:
 
@@ -374,6 +380,10 @@ Truncated singular value decomposition and latent semantic analysis
 :class:`TruncatedSVD` implements a variant of singular value decomposition
 (SVD) that only computes the :math:`k` largest singular values,
 where :math:`k` is a user-specified parameter.
+
+|details-start|
+**About truncated SVD and latent semantic analysis(LSA)**
+|details-split|
 
 When truncated SVD is applied to term-document matrices
 (as returned by :class:`~sklearn.feature_extraction.text.CountVectorizer` or
@@ -414,6 +424,8 @@ To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
     ``n_features`` × ``n_samples``.
     We present LSA in a different way that matches the scikit-learn API better,
     but the singular values found are the same.
+
+|details-end|
 
 :class:`TruncatedSVD` is very similar to :class:`PCA`, but differs
 in that the matrix :math:`X` does not need to be centered.
@@ -887,6 +899,10 @@ Note that this definition is not valid if :math:`\beta \in (0; 1)`, yet it can
 be continuously extended to the definitions of :math:`d_{KL}` and :math:`d_{IS}`
 respectively.
 
+|details-start|
+**More about implementation and usage of NMF**
+|details-split|
+
 :class:`NMF` implements two solvers, using Coordinate Descent ('cd') [5]_, and
 Multiplicative Update ('mu') [6]_. The 'mu' solver can optimize every
 beta-divergence, including of course the Frobenius norm (:math:`\beta=2`), the
@@ -913,6 +929,8 @@ stored components::
     >>> H = model.components_
     >>> X_new = np.array([[1, 0], [1, 6.1], [1, 0], [1, 4], [3.2, 1], [0, 4]])
     >>> W_new = model.transform(X_new)
+
+|details-end|
 
 .. topic:: Examples:
 
@@ -1000,6 +1018,10 @@ of topics in the corpus and the distribution of words in the documents.
 The goal of LDA is to use the observed words to infer the hidden topic
 structure.
 
+|details-start|
+**Details on modeling text corpora**
+|details-split|
+
 When modeling text corpora, the model assumes the following generative process
 for a corpus with :math:`D` documents and :math:`K` topics, with :math:`K`
 corresponding to `n_components` in the API:
@@ -1039,6 +1061,8 @@ Lower Bound (ELBO):
 Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
 between :math:`q(z,\theta,\beta)` and the true posterior
 :math:`p(z, \theta, \beta |w, \alpha, \eta)`.
+
+|details-end|
 
 :class:`LatentDirichletAllocation` implements the online variational Bayes
 algorithm and supports both online and batch update methods.
