@@ -41,7 +41,6 @@ def _check_fitted_pca_close(pca1: PCA, pca2: PCA, rtol: float):
     assert_allclose(pca1.singular_values_, pca2.singular_values_, rtol=rtol)
     assert_allclose(pca1.mean_, pca2.mean_, rtol=rtol)
     assert_allclose(pca1.n_components_, pca2.n_components_, rtol=rtol)
-    assert_allclose(pca1.n_features_, pca2.n_features_, rtol=rtol)
     assert_allclose(pca1.n_samples_, pca2.n_samples_, rtol=rtol)
     assert_allclose(pca1.noise_variance_, pca2.noise_variance_, rtol=rtol)
     assert_allclose(pca1.n_features_in_, pca2.n_features_in_, rtol=rtol)
