@@ -10,9 +10,9 @@ from sklearn.utils import _IS_WASM
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS, LIL_CONTAINERS
 from sklearn.utils.sparsefuncs import (
+    _implicit_column_offset,
     count_nonzero,
     csc_median_axis_0,
-    _implicit_column_offset,
     incr_mean_variance_axis,
     inplace_column_scale,
     inplace_row_scale,
