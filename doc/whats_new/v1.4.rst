@@ -19,6 +19,22 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- |Efficiency| :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now have much better convergence for
+  solvers `"lbfgs"` and `"newton-cg"`. Both solvers can now reach much higher precision
+  for the coefficients depending on the specified `tol`. Additionally, lbfgs can
+  make better use of `tol`, i.e., stop sooner or reach higher precision.
+  :pr:`26721` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+  .. note::
+
+      The lbfgs is the default solver, so this change might effect many models.
+
+      This change also means that with this new version of scikit-learn, the resulting
+      coefficients `coef_` and `intercept_` of your models will change for these two
+      solvers (when fit on the same data again). The amount of change depends on the
+      specified `tol`, for small values you will get more precise results.
+
 Changes impacting all modules
 -----------------------------
 
@@ -39,6 +55,13 @@ Metadata Routing
 The following models now support metadata routing in one or more or their
 methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
 more details.
+
+- |Feature| :class:`multiclass.OneVsRestClassifier`,
+  :class:`multiclass.OneVsOneClassifier` and
+  :class:`multiclass.OutputCodeClassifier` now support metadata routing in
+  their ``fit`` and ``partial_fit``, and route metadata to the underlying
+  estimator's ``fit`` and ``partial_fit``. :pr:`27308` by :user:`Stefanie
+  Senger <StefanieSenger>`.
 
 - |Feature| :class:`pipeline.Pipeline` now supports metadata routing according
   to :ref:`metadata routing user guide <metadata_routing>`. :pr:`26789` by
@@ -88,22 +111,27 @@ and classes are impacted:
 
 - :func:`cluster.compute_optics_graph` in :pr:`27250` by
   :user:`Yao Xiao <Charlie-XIAO>`;
+- :func:`cluster.kmeans_plusplus` in :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`;
 - :func:`decomposition.non_negative_factorization` in :pr:`27100` by
   :user:`Isaac Virshup <ivirshup>`;
+- :func:`feature_selection.f_regression` in :pr:`27239` by
+  :user:`Yaroslav Korobko <Tialo>`;
+- :func:`feature_selection.r_regression` in :pr:`27239` by
+  :user:`Yaroslav Korobko <Tialo>`;
 - :func:`manifold.trustworthiness` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
-- :func:`metrics.f_regression` in :pr:`27239` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`metrics.pairwise_distances` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :func:`metrics.pairwise_distances_chunked` in :pr:`27250` by
   :user:`Yao Xiao <Charlie-XIAO>`;
 - :func:`metrics.pairwise.pairwise_kernels` in :pr:`27250` by
   :user:`Yao Xiao <Charlie-XIAO>`;
-- :func:`metrics.r_regression` in :pr:`27239` by :user:`Yaroslav Korobko <Tialo>`;
 - :func:`sklearn.utils.multiclass.type_of_target` in :pr:`27274` by
   :user:`Yao Xiao <Charlie-XIAO>`.
 
 **Classes:**
 
 - :class:`cluster.HDBSCAN` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
+- :class:`cluster.KMeans` in :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`;
+- :class:`cluster.MiniBatchKMeans` in :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`;
 - :class:`cluster.OPTICS` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`decomposition.NMF` in :pr:`27100` by :user:`Isaac Virshup <ivirshup>`;
 - :class:`decomposition.MiniBatchNMF` in :pr:`27100` by
@@ -118,7 +146,7 @@ and classes are impacted:
 - :class:`kernel_approximation.PolynomialCountSketch` in  :pr:`27301` by
   :user:`Lohit SundaramahaLingam <lohitslohit>`;
 - :class:`neural_network.BernoulliRBM` in :pr:`27252` by
-  :user:`Yao Xiao <Charlie-XIAO>`.
+  :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`preprocessing.PolynomialFeatures` in :pr:`27166` by
   :user:`Mohit Joshi <work-mohit>`.
 
@@ -174,6 +202,13 @@ Changelog
   :class:`cluster.HDBSCAN` ensuring consistency in naming convention.
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
+
+:mod:`sklearn.compose`
+......................
+
+- |API| |FIX| :class:`~compose.ColumnTransformer` now replaces `"passthrough"`
+  with a corresponding :class:`~preprocessing.FunctionTransformer` in the
+  fitted ``transformers_`` attribute. :pr:`27204` by `Adrin Jalali`_.
 
 :mod:`sklearn.datasets`
 .......................
@@ -238,16 +273,39 @@ Changelog
   :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
   :pr:`26957` by `Thomas Fan`_.
 
-- |API| In :class:`AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
+- |API| In :class:`ensemble.AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
   <StefanieSenger>`.
 
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Enhancement| Solver `"newton-cg"` in :class:`LogisticRegression` and
-  :class:`LogisticRegressionCV` uses a little less memory. The effect is proportional
-  to the number of coefficients (`n_features * n_classes`).
+- |Efficiency| :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now have much better convergence for
+  solvers `"lbfgs"` and `"newton-cg"`. Both solvers can now reach much higher precision
+  for the coefficients depending on the specified `tol`. Additionally, lbfgs can
+  make better use of `tol`, i.e., stop sooner or reach higher precision. This is
+  accomplished by better scaling of the objective function, i.e., using average per
+  sample losses instead of sum of per sample losses.
+  :pr:`26721` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+  .. note::
+
+      This change also means that with this new version of scikit-learn, the resulting
+      coefficients `coef_` and `intercept_` of your models will change for these two
+      solvers (when fit on the same data again). The amount of change depends on the
+      specified `tol`, for small values you will get more precise results.
+
+- |Efficiency| :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` with solver `"newton-cg"` can now be
+  considerably faster for some data and parameter settings. This is accomplished by a
+  better line search convergence check for negligible loss improvements that takes into
+  account gradient information.
+  :pr:`26721` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Efficiency| Solver `"newton-cg"` in :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` uses a little less memory. The effect is
+  proportional to the number of coefficients (`n_features * n_classes`).
   :pr:`27417` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.metrics`
@@ -278,7 +336,7 @@ Changelog
 - |API| The `squared` parameter of :func:`metrics.mean_squared_error` and
   :func:`metrics.mean_squared_log_error` is deprecated and will be removed in 1.6.
   Use the new functions :func:`metrics.root_mean_squared_error` and
-  :func:`root_mean_squared_log_error` instead.
+  :func:`metrics.root_mean_squared_log_error` instead.
   :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.
 
 :mod:`sklearn.model_selection`
@@ -297,15 +355,15 @@ Changelog
 ........................
 
 - |Efficiency| :meth:`sklearn.neighbors.KNeighborsRegressor.predict` and
-  :meth:`sklearn.neighbors.KNeighborsRegressor.predict_proba` now efficiently support
+  :meth:`sklearn.neighbors.KNeighborsClassifier.predict_proba` now efficiently support
   pairs of dense and sparse datasets.
   :pr:`27018` by :user:`Julien Jerphanion <jjerphan>`.
 
 - |API| :class:`neighbors.KNeighborsRegressor` now accepts
-  :class:`metric.DistanceMetric` objects directly via the `metric` keyword
+  :class:`metrics.DistanceMetric` objects directly via the `metric` keyword
   argument allowing for the use of accelerated third-party
-  :class:`metric.DistanceMetric` objects.
-  :pr:`26267` by :user:`Meekail Zain <micky774>`
+  :class:`metrics.DistanceMetric` objects.
+  :pr:`26267` by :user:`Meekail Zain <micky774>`.
 
 - |Efficiency| The performance of :meth:`neighbors.RadiusNeighborsClassifier.predict`
   and of :meth:`neighbors.RadiusNeighborsClassifier.predict_proba` has been improved
@@ -327,7 +385,7 @@ Changelog
   missing indices twice to improve efficiency.
   :pr:`27017` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
-- |Enhancement| Improves warnings in :class:`preprocessing.FunctionTransfomer` when
+- |Enhancement| Improves warnings in :class:`preprocessing.FunctionTransformer` when
   `func` returns a pandas dataframe and the output is configured to be pandas.
   :pr:`26944` by `Thomas Fan`_.
 
