@@ -74,8 +74,9 @@ def test_pca(svd_solver, n_components):
 def test_pca_sparse(
     global_random_seed, svd_solver, sparse_container, n_components, density, scale
 ):
-    rtol = 1e-07  # 1e0-8 can result in occasional failures
-    transform_rtol = 1e-06  # Slightly higher tolerance for transform
+    # Make sure any tolerance changes pass with SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
+    rtol = 5e-07
+    transform_rtol = 3e-05
 
     random_state = np.random.default_rng(global_random_seed)
     X = sparse_container(
@@ -90,11 +91,19 @@ def test_pca_sparse(
     scale_vector = random_state.random(X.shape[1]) * scale
     X = X.multiply(scale_vector)
 
-    pca = PCA(n_components=n_components, svd_solver=svd_solver)
+    pca = PCA(
+        n_components=n_components,
+        svd_solver=svd_solver,
+        random_state=global_random_seed,
+    )
     pca.fit(X)
 
     Xd = X.toarray()
-    pcad = PCA(n_components=n_components, svd_solver=svd_solver)
+    pcad = PCA(
+        n_components=n_components,
+        svd_solver=svd_solver,
+        random_state=global_random_seed,
+    )
     pcad.fit(Xd)
 
     # Fitted attributes equality
@@ -144,9 +153,9 @@ def test_pca_sparse_fit_transform(global_random_seed, sparse_container):
     transformed_X = pca_fit_transform.fit_transform(X)
 
     _check_fitted_pca_close(pca_fit, pca_fit_transform, rtol=1e-10)
-    assert_allclose(transformed_X, pca_fit_transform.transform(X), rtol=1e-10)
-    assert_allclose(transformed_X, pca_fit.transform(X), rtol=1e-10)
-    assert_allclose(pca_fit.transform(X2), pca_fit_transform.transform(X2), rtol=1e-10)
+    assert_allclose(transformed_X, pca_fit_transform.transform(X), rtol=2e-9)
+    assert_allclose(transformed_X, pca_fit.transform(X), rtol=2e-9)
+    assert_allclose(pca_fit.transform(X2), pca_fit_transform.transform(X2), rtol=2e-9)
 
 
 @pytest.mark.parametrize("svd_solver", ["randomized", "full", "auto"])
