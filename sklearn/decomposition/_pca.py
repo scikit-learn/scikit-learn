@@ -666,6 +666,11 @@ class PCA(_BasePCA):
 
         # Workaround in-place variance calculation since at the time numpy
         # did not have a way to calculate variance in-place.
+        #
+        # TODO: update this code to either:
+        # * Use the array-api variance calculation, unless memory usage suffers
+        # * Update sklearn.utils.extmath._incremental_mean_and_var to support array-api
+        # See: https://github.com/scikit-learn/scikit-learn/pull/18689#discussion_r1335540991
         if total_var is None:
             N = X.shape[0] - 1
             X **= 2
