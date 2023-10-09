@@ -98,10 +98,10 @@ class DecisionBoundaryDisplay:
         :class:`QuadMesh <matplotlib.collections.QuadMesh>`.
 
     ax_ : matplotlib Axes
-        Axes with confusion matrix.
+        Axes with decision boundary.
 
     figure_ : matplotlib Figure
-        Figure containing the confusion matrix.
+        Figure containing the decision boundary.
 
     See Also
     --------
