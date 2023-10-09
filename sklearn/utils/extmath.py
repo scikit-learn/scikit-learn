@@ -75,14 +75,16 @@ def row_norms(X, squared=False):
     array-like
         The row-wise (squared) Euclidean norm of X.
     """
+    xp, _ = get_namespace(X)
+
     if sparse.issparse(X):
         X = X.tocsr()
         norms = csr_row_norms(X)
     else:
-        norms = np.einsum("ij,ij->i", X, X)
+        norms = xp.sum(X * X, axis=1)
 
     if not squared:
-        np.sqrt(norms, norms)
+        norms = xp.sqrt(norms)
     return norms
 
 
