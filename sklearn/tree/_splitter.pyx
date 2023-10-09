@@ -31,7 +31,7 @@ from ._utils cimport RAND_R_MAX
 
 cnp.import_array()
 
-cdef double INFINITY = np.inf
+cdef float64_t INFINITY = np.inf
 
 # Mitigate precision differences between 32 bit and 64 bit
 cdef float32_t FEATURE_THRESHOLD = 1e-7
@@ -62,7 +62,7 @@ cdef class Splitter:
         Criterion criterion,
         intp_t max_features,
         intp_t min_samples_leaf,
-        double min_weight_leaf,
+        float64_t min_weight_leaf,
         object random_state,
         const cnp.int8_t[:] monotonic_cst,
     ):
@@ -81,7 +81,7 @@ cdef class Splitter:
             which would result in having less samples in a leaf are not
             considered.
 
-        min_weight_leaf : double
+        min_weight_leaf : float64_t
             The minimal weight each leaf can have, where the weight is the sum
             of the weights of each sample in it.
 
@@ -161,7 +161,7 @@ cdef class Splitter:
         cdef intp_t[::1] samples = self.samples
 
         cdef intp_t i, j
-        cdef double weighted_n_samples = 0.0
+        cdef float64_t weighted_n_samples = 0.0
         j = 0
 
         for i in range(n_samples):
@@ -194,7 +194,7 @@ cdef class Splitter:
         return 0
 
     cdef int node_reset(self, intp_t start, intp_t end,
-                        double* weighted_n_node_samples) except -1 nogil:
+                        float64_t* weighted_n_node_samples) except -1 nogil:
         """Reset splitter on node samples[start:end].
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -206,7 +206,7 @@ cdef class Splitter:
             The index of the first sample to consider
         end : intp_t
             The index of the last sample to consider
-        weighted_n_node_samples : ndarray, dtype=double pointer
+        weighted_n_node_samples : ndarray, dtype=float64_t pointer
             The total weight of those samples
         """
 
@@ -227,11 +227,11 @@ cdef class Splitter:
 
     cdef int node_split(
         self,
-        double impurity,
+        float64_t impurity,
         SplitRecord* split,
         intp_t* n_constant_features,
-        double lower_bound,
-        double upper_bound,
+        float64_t lower_bound,
+        float64_t upper_bound,
     ) except -1 nogil:
 
         """Find the best split on node samples[start:end].
@@ -244,17 +244,17 @@ cdef class Splitter:
 
         pass
 
-    cdef void node_value(self, double* dest) noexcept nogil:
+    cdef void node_value(self, float64_t* dest) noexcept nogil:
         """Copy the value of node samples[start:end] into dest."""
 
         self.criterion.node_value(dest)
 
-    cdef inline void clip_node_value(self, double* dest, double lower_bound, double upper_bound) noexcept nogil:
+    cdef inline void clip_node_value(self, float64_t* dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil:
         """Clip the value in dest between lower_bound and upper_bound for monotonic constraints."""
 
         self.criterion.clip_node_value(dest, lower_bound, upper_bound)
 
-    cdef double node_impurity(self) noexcept nogil:
+    cdef float64_t node_impurity(self) noexcept nogil:
         """Return the impurity of the current node."""
 
         return self.criterion.node_impurity()
@@ -290,13 +290,13 @@ cdef inline int node_split_best(
     Splitter splitter,
     Partitioner partitioner,
     Criterion criterion,
-    double impurity,
+    float64_t impurity,
     SplitRecord* split,
     intp_t* n_constant_features,
     bint with_monotonic_cst,
     const cnp.int8_t[:] monotonic_cst,
-    double lower_bound,
-    double upper_bound,
+    float64_t lower_bound,
+    float64_t upper_bound,
 ) except -1 nogil:
     """Find the best split on node samples[start:end]
 
@@ -321,12 +321,12 @@ cdef inline int node_split_best(
     cdef float32_t[::1] feature_values = splitter.feature_values
     cdef intp_t max_features = splitter.max_features
     cdef intp_t min_samples_leaf = splitter.min_samples_leaf
-    cdef double min_weight_leaf = splitter.min_weight_leaf
+    cdef float64_t min_weight_leaf = splitter.min_weight_leaf
     cdef uint32_t* random_state = &splitter.rand_r_state
 
     cdef SplitRecord best_split, current_split
-    cdef double current_proxy_improvement = -INFINITY
-    cdef double best_proxy_improvement = -INFINITY
+    cdef float64_t current_proxy_improvement = -INFINITY
+    cdef float64_t best_proxy_improvement = -INFINITY
 
     cdef intp_t f_i = n_features
     cdef intp_t f_j
@@ -671,13 +671,13 @@ cdef inline int node_split_random(
     Splitter splitter,
     Partitioner partitioner,
     Criterion criterion,
-    double impurity,
+    float64_t impurity,
     SplitRecord* split,
     intp_t* n_constant_features,
     bint with_monotonic_cst,
     const cnp.int8_t[:] monotonic_cst,
-    double lower_bound,
-    double upper_bound,
+    float64_t lower_bound,
+    float64_t upper_bound,
 ) except -1 nogil:
     """Find the best random split on node samples[start:end]
 
@@ -694,12 +694,12 @@ cdef inline int node_split_random(
 
     cdef intp_t max_features = splitter.max_features
     cdef intp_t min_samples_leaf = splitter.min_samples_leaf
-    cdef double min_weight_leaf = splitter.min_weight_leaf
+    cdef float64_t min_weight_leaf = splitter.min_weight_leaf
     cdef uint32_t* random_state = &splitter.rand_r_state
 
     cdef SplitRecord best_split, current_split
-    cdef double current_proxy_improvement = - INFINITY
-    cdef double best_proxy_improvement = - INFINITY
+    cdef float64_t current_proxy_improvement = - INFINITY
+    cdef float64_t best_proxy_improvement = - INFINITY
 
     cdef intp_t f_i = n_features
     cdef intp_t f_j
@@ -989,7 +989,7 @@ cdef class DensePartitioner:
         # (feature_values[p] >= end) or (feature_values[p] > feature_values[p - 1])
         p[0] += 1
 
-    cdef inline intp_t partition_samples(self, double current_threshold) noexcept nogil:
+    cdef inline intp_t partition_samples(self, float64_t current_threshold) noexcept nogil:
         """Partition samples for feature_values at the current_threshold."""
         cdef:
             intp_t p = self.start
@@ -1013,7 +1013,7 @@ cdef class DensePartitioner:
     cdef inline void partition_samples_final(
         self,
         intp_t best_pos,
-        double best_threshold,
+        float64_t best_threshold,
         intp_t best_feature,
         intp_t best_n_missing,
     ) noexcept nogil:
@@ -1236,14 +1236,14 @@ cdef class SparsePartitioner:
         p_prev[0] = p[0]
         p[0] = p_next
 
-    cdef inline intp_t partition_samples(self, double current_threshold) noexcept nogil:
+    cdef inline intp_t partition_samples(self, float64_t current_threshold) noexcept nogil:
         """Partition samples for feature_values at the current_threshold."""
         return self._partition(current_threshold, self.start_positive)
 
     cdef inline void partition_samples_final(
         self,
         intp_t best_pos,
-        double best_threshold,
+        float64_t best_threshold,
         intp_t best_feature,
         intp_t n_missing,
     ) noexcept nogil:
@@ -1251,7 +1251,7 @@ cdef class SparsePartitioner:
         self.extract_nnz(best_feature)
         self._partition(best_threshold, best_pos)
 
-    cdef inline intp_t _partition(self, double threshold, intp_t zero_pos) noexcept nogil:
+    cdef inline intp_t _partition(self, float64_t threshold, intp_t zero_pos) noexcept nogil:
         """Partition samples[start:end] based on threshold."""
         cdef:
             intp_t p, partition_end
@@ -1504,11 +1504,11 @@ cdef class BestSplitter(Splitter):
 
     cdef int node_split(
             self,
-            double impurity,
+            float64_t impurity,
             SplitRecord* split,
             intp_t* n_constant_features,
-            double lower_bound,
-            double upper_bound
+            float64_t lower_bound,
+            float64_t upper_bound
     ) except -1 nogil:
         return node_split_best(
             self,
@@ -1540,11 +1540,11 @@ cdef class BestSparseSplitter(Splitter):
 
     cdef int node_split(
             self,
-            double impurity,
+            float64_t impurity,
             SplitRecord* split,
             intp_t* n_constant_features,
-            double lower_bound,
-            double upper_bound
+            float64_t lower_bound,
+            float64_t upper_bound
     ) except -1 nogil:
         return node_split_best(
             self,
@@ -1576,11 +1576,11 @@ cdef class RandomSplitter(Splitter):
 
     cdef int node_split(
             self,
-            double impurity,
+            float64_t impurity,
             SplitRecord* split,
             intp_t* n_constant_features,
-            double lower_bound,
-            double upper_bound
+            float64_t lower_bound,
+            float64_t upper_bound
     ) except -1 nogil:
         return node_split_random(
             self,
@@ -1611,11 +1611,11 @@ cdef class RandomSparseSplitter(Splitter):
         )
     cdef int node_split(
             self,
-            double impurity,
+            float64_t impurity,
             SplitRecord* split,
             intp_t* n_constant_features,
-            double lower_bound,
-            double upper_bound
+            float64_t lower_bound,
+            float64_t upper_bound
     ) except -1 nogil:
         return node_split_random(
             self,
