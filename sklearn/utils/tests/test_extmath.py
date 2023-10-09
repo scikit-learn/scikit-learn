@@ -693,10 +693,12 @@ def test_logistic_sigmoid():
         return np.log(expit(x))
 
     x = np.linspace(-2, 2, 50)
-    assert_array_almost_equal(log_logistic(x), naive_log_logistic(x))
+    with pytest.warns(FutureWarning):
+        assert_array_almost_equal(log_logistic(x), naive_log_logistic(x))
 
     extreme_x = np.array([-100.0, 100.0])
-    assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
+    with pytest.warns(FutureWarning):
+        assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
 
 
 @pytest.fixture()
