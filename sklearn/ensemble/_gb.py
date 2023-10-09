@@ -1061,6 +1061,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         averaged_predictions = np.zeros(
             (n_trees_per_stage, grid.shape[0]), dtype=np.float64, order="C"
         )
+        target_features = np.asarray(target_features, dtype=np.intp, order="C")
+
         for stage in range(n_estimators):
             for k in range(n_trees_per_stage):
                 tree = self.estimators_[stage, k].tree_

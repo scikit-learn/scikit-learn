@@ -660,7 +660,7 @@ def partial_dependence(
             raise ValueError("all features must be in [0, {}]".format(X.shape[1] - 1))
 
     features_indices = np.asarray(
-        _get_column_indices(X, features), dtype=np.int32, order="C"
+        _get_column_indices(X, features), dtype=np.intp, order="C"
     ).ravel()
 
     feature_names = _check_feature_names(X, feature_names)

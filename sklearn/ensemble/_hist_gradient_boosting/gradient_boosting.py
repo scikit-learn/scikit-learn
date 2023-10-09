@@ -1167,6 +1167,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         averaged_predictions = np.zeros(
             (self.n_trees_per_iteration_, grid.shape[0]), dtype=Y_DTYPE
         )
+        target_features = np.asarray(target_features, dtype=np.intp, order="C")
 
         for predictors_of_ith_iteration in self._predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):

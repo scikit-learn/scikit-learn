@@ -1120,6 +1120,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         averaged_predictions = np.zeros(
             shape=grid.shape[0], dtype=np.float64, order="C"
         )
+        target_features = np.asarray(target_features, dtype=np.intp, order="C")
 
         for tree in self.estimators_:
             # Note: we don't sum in parallel because the GIL isn't released in

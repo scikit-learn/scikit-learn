@@ -1436,6 +1436,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         averaged_predictions = np.zeros(
             shape=grid.shape[0], dtype=np.float64, order="C"
         )
+        target_features = np.asarray(target_features, dtype=np.intp, order="C")
 
         self.tree_.compute_partial_dependence(
             grid, target_features, averaged_predictions
