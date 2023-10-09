@@ -1344,7 +1344,11 @@ cdef class SparsePartitioner:
 
 
 cdef int compare_SIZE_t(const void* a, const void* b) noexcept nogil:
-    """Comparison function for sort."""
+    """Comparison function for sort.
+
+    This must return an `int` as it is used by stdlib's qsort, which expects
+    an `int` return value.
+    """
     return <int>((<intp_t*>a)[0] - (<intp_t*>b)[0])
 
 
