@@ -1083,7 +1083,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
                 which can be set by using
                 ``sklearn.set_config(enable_metadata_routing=True)``.
                 See :ref:`Metadata Routing User Guide <metadata_routing>` for
-                more details.```
+                more details.
 
         Returns
         -------
