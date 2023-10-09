@@ -884,6 +884,11 @@ def svd_flip(u, v, u_based_decision=True):
     return u, v
 
 
+# TODO(1.6): remove
+@deprecated(  # type: ignore
+    "The function `log_logistic` is deprecated and will be removed in 1.6. "
+    "Use `-np.logaddexp(0, -x)` instead."
+)
 def log_logistic(X, out=None):
     """Compute the log of the logistic function, ``log(1 / (1 + e ** -x))``.
 
