@@ -1,3 +1,8 @@
+"""
+The :mod:`sklearn.utils.estimator_checks` module includes various utilities to
+check the compatibility of estimators with the scikit-learn API.
+"""
+
 import pickle
 import re
 import warnings
@@ -4557,7 +4562,11 @@ def check_set_output_transform_pandas(name, transformer_orig):
         outputs_pandas = _output_from_fit_transform(transformer_pandas, name, X, df, y)
     except ValueError as e:
         # transformer does not support sparse data
-        assert "Pandas output does not support sparse data." in str(e), e
+        error_message = str(e)
+        assert (
+            "Pandas output does not support sparse data." in error_message
+            or "The transformer outputs a scipy sparse matrix." in error_message
+        ), e
         return
 
     for case in outputs_default:
@@ -4603,7 +4612,11 @@ def check_global_output_transform_pandas(name, transformer_orig):
             )
     except ValueError as e:
         # transformer does not support sparse data
-        assert "Pandas output does not support sparse data." in str(e), e
+        error_message = str(e)
+        assert (
+            "Pandas output does not support sparse data." in error_message
+            or "The transformer outputs a scipy sparse matrix." in error_message
+        ), e
         return
 
     for case in outputs_default:
