@@ -96,6 +96,11 @@ more details.
   ``**score_params`` which are passed to the underlying scorer.
   :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Feature| :class:`linear_model.OrthogonalMatchingPursuitCV` now supports
+  metadata routing. Its `fit` now accepts ``**fit_params``, which are passed to
+  the underlying splitter. :pr:`27500` by :user:`Stefanie Senger
+  <StefanieSenger>`.
+
 - |Fix| All meta-estimators for which metadata routing is not yet implemented
   now raise a `NotImplementedError` on `get_metadata_routing` and on `fit` if
   metadata routing is enabled and any metadata is passed to them. :pr:`27389`
