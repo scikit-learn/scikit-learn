@@ -56,6 +56,10 @@ The following models now support metadata routing in one or more or their
 methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
 more details.
 
+- |Feature| :class:`LarsCV` and :class:`LassoLarsCV` now support metadata
+  routing in their `fit` method and route metadata to the CV splitter.
+  :pr:`27538` by :user:`Omar Salman <OmarManzoor>`.
+
 - |Feature| :class:`multiclass.OneVsRestClassifier`,
   :class:`multiclass.OneVsOneClassifier` and
   :class:`multiclass.OutputCodeClassifier` now support metadata routing in
