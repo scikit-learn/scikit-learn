@@ -65,10 +65,6 @@ from ._linkage cimport MST_edge_t
 from ._linkage import MST_edge_dtype
 from joblib import Parallel, delayed, effective_n_jobs
 
-cdef extern from "numpy/arrayobject.h":
-    intp_t * PyArray_SHAPE(cnp.PyArrayObject *)
-
-
 cdef float64_t INF = np.inf
 
 # Define a function giving the minimum distance between two
@@ -79,7 +75,7 @@ cdef inline float64_t ball_tree_min_dist_dual(
     intp_t node1,
     intp_t node2,
     float64_t[:, ::1] centroid_dist
-) except -1 nogil:
+) noexcept nogil:
 
     cdef float64_t dist_pt = centroid_dist[node1, node2]
     return max(0, (dist_pt - radius1 - radius2))
@@ -93,7 +89,7 @@ cdef inline float64_t kd_tree_min_dist_dual(
     intp_t node2,
     float64_t[:, :, ::1] node_bounds,
     intp_t num_features
-) except -1 nogil:
+) noexcept nogil:
 
     cdef float64_t d, d1, d2, rdist = 0.0
     cdef intp_t j
@@ -139,13 +135,15 @@ cdef class BoruvkaUnionFind(object):
     cdef intp_t[::1] _parent
     cdef uint8_t[::1] _rank
     cdef uint8_t[::1] is_component
+    cdef intp_t num_components
 
     def __init__(self, size):
         self._parent = np.arange(size, dtype=np.intp)
         self._rank = np.zeros(size, dtype=np.uint8)
         self.is_component = np.ones(size, dtype=np.uint8)
+        self.num_components = size
 
-    cdef int union_(self, intp_t x, intp_t y) except -1 nogil:
+    cdef int union_(self, intp_t x, intp_t y) noexcept nogil:
         """Union together elements x and y"""
         cdef intp_t x_root = self.find(x)
         cdef intp_t y_root = self.find(y)
@@ -166,7 +164,7 @@ cdef class BoruvkaUnionFind(object):
 
         return 0
 
-    cdef intp_t find(self, intp_t x) except -1 nogil:
+    cdef intp_t find(self, intp_t x) noexcept nogil:
         """Find the root or identifier for the component that x is in"""
         cdef intp_t x_parent
         cdef intp_t x_grandparent
@@ -316,6 +314,8 @@ cdef class BoruvkaAlgorithm:
         cdef cnp.ndarray[float64_t, ndim=2] knn_dist
         cdef cnp.ndarray[intp_t, ndim=2] knn_indices
 
+        # TODO: Revisit n_jobs semantics in a follow-up PR. Specifically, consider
+        # replacing with OpenMP prange
         # A shortcut: if we have a lot of points then we can split the points
         # into multiple piles and query them in parallel. On multicore systems
         # (most systems) this amounts to a 2x-3x wall clock improvement.
@@ -381,7 +381,7 @@ cdef class BoruvkaAlgorithm:
         for n in range(self.num_nodes):
             self.component_of_node[n] = -(n+1)
 
-    cdef int update_components(self) except -1 nogil:
+    cdef int update_components(self) noexcept nogil:
         """Having found the nearest neighbor not in the same component for
         each current component (via tree traversal), run through adding
         edges to the min spanning tree and recomputing components via
@@ -495,7 +495,7 @@ cdef class BoruvkaAlgorithm:
         self,
         intp_t node1,
         intp_t node2
-    ) except -1 nogil:
+    ) noexcept nogil:
         """Perform a dual tree traversal, pruning wherever possible, to find
         the nearest neighbor not in the same component for each component.
         This is akin to a standard dual tree NN search, but we also prune
@@ -778,8 +778,9 @@ cdef class BoruvkaAlgorithm:
         the tree passed in at construction"""
 
         cdef intp_t num_components = self.num_points
-        while num_components > 1:
-            self.dual_tree_traversal(0, 0)
-            num_components = self.update_components()
+        with nogil:
+            while num_components > 1:
+                self.dual_tree_traversal(0, 0)
+                num_components = self.update_components()
 
         return np.array(self.edges, dtype=MST_edge_dtype)
