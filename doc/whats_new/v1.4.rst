@@ -208,6 +208,10 @@ Changelog
   both binary and multiclass classifiers.
   :pr:`27291` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |API| :class:`inspection.DecisionBoundaryDisplay` raise an `AttributeError` instead
+  of a `ValueError` when an estimator does not implement the requested response method.
+  :pr:`27291` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 

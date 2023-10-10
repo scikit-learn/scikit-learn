@@ -314,7 +314,7 @@ def test_error_bad_response(pyplot, response_method, msg):
 
     clf = MyClassifier().fit(X, y)
 
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(AttributeError, match=msg):
         DecisionBoundaryDisplay.from_estimator(clf, X, response_method=response_method)
 
 

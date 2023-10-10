@@ -373,9 +373,6 @@ class DecisionBoundaryDisplay:
                     f"should be one of {estimator.classes_}"
                 ) from exc
             raise
-        except AttributeError as exc:
-            # re-raise the AttributeError as a ValueError for backward compatibility
-            raise ValueError(str(exc)) from exc
 
         # convert classes predictions into integers
         if response_method_used == "predict" and hasattr(estimator, "classes_"):
