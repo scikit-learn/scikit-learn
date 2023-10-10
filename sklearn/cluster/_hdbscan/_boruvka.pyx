@@ -242,17 +242,17 @@ cdef class BoruvkaAlgorithm:
         intp_t num_points, num_nodes, num_features
         bint is_KDTree
 
-        public float64_t[::1] core_distance
-        public float64_t[::1] bounds
-        public intp_t[::1] components
-        public intp_t[::1] component_of_point
-        public intp_t[::1] component_of_node
-        public intp_t[::1] candidate_neighbor
-        public intp_t[::1] candidate_point
-        public float64_t[::1] candidate_distance
-        public float64_t[:, ::1] centroid_distances
-        public intp_t[::1] idx_array
-        public NodeData_t[::1] node_data
+        float64_t[::1] core_distance
+        float64_t[::1] bounds
+        intp_t[::1] components
+        intp_t[::1] component_of_point
+        intp_t[::1] component_of_node
+        intp_t[::1] candidate_neighbor
+        intp_t[::1] candidate_point
+        float64_t[::1] candidate_distance
+        float64_t[:, ::1] centroid_distances
+        intp_t[::1] idx_array
+        NodeData_t[::1] node_data
         BoruvkaUnionFind component_union_find
         MST_edge_t[::1] edges
         intp_t num_edges
