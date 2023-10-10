@@ -426,6 +426,10 @@ Changelog
   array and does not return the correct result for SciPy sparse matrix.
   :pr:`27336` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |API| :func:`sklearn.extmath.log_logistic` is deprecated and will be removed in 1.6.
+  Use `-np.logaddexp(0, -x)` instead.
+  :pr:`27544` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
