@@ -98,6 +98,7 @@ Estimators
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`preprocessing.MaxAbsScaler`
 - :class:`preprocessing.MinMaxScaler`
+- :class:`preprocessing.Normalizer`
 
 Metrics
 -------
