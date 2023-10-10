@@ -81,7 +81,7 @@ def row_norms(X, squared=False):
         X = X.tocsr()
         norms = csr_row_norms(X)
     else:
-        norms = xp.sum(X * X, axis=1)
+        norms = xp.sum(xp.multiply(X, X), axis=1)
 
     if not squared:
         norms = xp.sqrt(norms)
