@@ -405,7 +405,6 @@ extension_config = {
             "include_np": True,
         },
         {"sources": ["_random.pyx"], "include_np": True},
-        {"sources": ["_logistic_sigmoid.pyx"], "include_np": True},
         {"sources": ["_typedefs.pyx"]},
         {"sources": ["_heap.pyx"]},
         {"sources": ["_sorting.pyx"]},
