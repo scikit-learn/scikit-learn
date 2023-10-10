@@ -1960,7 +1960,7 @@ class _RidgeGCV(LinearModel):
             G_inverse_diag = G_inverse_diag[:, np.newaxis]
         return G_inverse_diag, c
 
-    def fit(self, X, y, **params):
+    def fit(self, X, y, sample_weight=None, params=None):
         """Fit Ridge regression model with gcv.
 
         Parameters
@@ -1971,7 +1971,11 @@ class _RidgeGCV(LinearModel):
         y : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Target values. Will be cast to float64 if necessary.
 
-        **params : dict, default=None
+        sample_weight : float or ndarray of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
+
+        params : dict, default=None
             Parameters to be passed to the underlying scorer.
 
             .. versionadded:: 1.4
@@ -1999,7 +2003,6 @@ class _RidgeGCV(LinearModel):
         # default value: False, so the condition below should never happen.
         assert not (self.is_clf and self.alpha_per_target)
 
-        sample_weight = params.get("sample_weight")
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
@@ -2061,10 +2064,14 @@ class _RidgeGCV(LinearModel):
                 if self.store_cv_values:
                     self.cv_values_[:, i] = predictions.ravel()
 
+                score_params = params or {}
                 if self.is_clf:
                     identity_estimator = _IdentityClassifier(classes=np.arange(n_y))
                     alpha_score = scorer(
-                        identity_estimator, predictions, y.argmax(axis=1), **params
+                        identity_estimator,
+                        predictions,
+                        y.argmax(axis=1),
+                        **score_params,
                     )
                 else:
                     identity_estimator = _IdentityRegressor()
@@ -2075,14 +2082,17 @@ class _RidgeGCV(LinearModel):
                                     identity_estimator,
                                     predictions[:, j],
                                     y[:, j],
-                                    **params,
+                                    **score_params,
                                 )
                                 for j in range(n_y)
                             ]
                         )
                     else:
                         alpha_score = scorer(
-                            identity_estimator, predictions.ravel(), y.ravel(), **params
+                            identity_estimator,
+                            predictions.ravel(),
+                            y.ravel(),
+                            **score_params,
                         )
 
             # Keep track of the best model
@@ -2225,8 +2235,6 @@ class _BaseRidgeCV(LinearModel):
                 )
             else:
                 routed_params = Bunch(scorer=Bunch(score={}))
-                if "sample_weight" != None:
-                    routed_params.scorer.score["sample_weight"] = sample_weight
 
             estimator = _RidgeGCV(
                 alphas,
@@ -2237,7 +2245,9 @@ class _BaseRidgeCV(LinearModel):
                 is_clf=is_classifier(self),
                 alpha_per_target=self.alpha_per_target,
             )
-            estimator.fit(X, y, **routed_params.scorer.score)
+            estimator.fit(
+                X, y, sample_weight=sample_weight, params=routed_params.scorer.score
+            )
             self.alpha_ = estimator.alpha_
             self.best_score_ = estimator.best_score_
             if self.store_cv_values:
@@ -2290,7 +2300,6 @@ class _BaseRidgeCV(LinearModel):
         routing : MetadataRouter
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
-
         """
         router = MetadataRouter(owner=self.__class__.__name__).add(
             scorer=check_scoring(self, scoring=self.scoring, allow_none=True),
