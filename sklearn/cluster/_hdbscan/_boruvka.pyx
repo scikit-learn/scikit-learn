@@ -233,31 +233,31 @@ cdef class BoruvkaAlgorithm:
         Keyword args passed to the metric.
     """
 
-    cdef object tree
-    cdef object core_dist_tree
-    cdef DistanceMetric64 dist
-    cdef readonly const float64_t[:, ::1] raw_data
-    cdef float64_t[:, :, ::1] node_bounds
-    cdef float64_t alpha
-    cdef int8_t approx_min_span_tree
-    cdef intp_t n_jobs, min_samples
-    cdef intp_t num_points, num_nodes, num_features
-    cdef bint is_KDTree
+    cdef:
+        object tree
+        DistanceMetric64 dist
+        readonly const float64_t[:, ::1] raw_data
+        float64_t[:, :, ::1] node_bounds
+        float64_t alpha
+        int8_t approx_min_span_tree
+        intp_t n_jobs, min_samples
+        intp_t num_points, num_nodes, num_features
+        bint is_KDTree
 
-    cdef public float64_t[::1] core_distance
-    cdef public float64_t[::1] bounds
-    cdef public intp_t[::1] components
-    cdef public intp_t[::1] component_of_point
-    cdef public intp_t[::1] component_of_node
-    cdef public intp_t[::1] candidate_neighbor
-    cdef public intp_t[::1] candidate_point
-    cdef public float64_t[::1] candidate_distance
-    cdef public float64_t[:, ::1] centroid_distances
-    cdef public intp_t[::1] idx_array
-    cdef public NodeData_t[::1] node_data
-    cdef BoruvkaUnionFind component_union_find
-    cdef MST_edge_t[::1] edges
-    cdef intp_t num_edges
+        public float64_t[::1] core_distance
+        public float64_t[::1] bounds
+        public intp_t[::1] components
+        public intp_t[::1] component_of_point
+        public intp_t[::1] component_of_node
+        public intp_t[::1] candidate_neighbor
+        public intp_t[::1] candidate_point
+        public float64_t[::1] candidate_distance
+        public float64_t[:, ::1] centroid_distances
+        public intp_t[::1] idx_array
+        public NodeData_t[::1] node_data
+        BoruvkaUnionFind component_union_find
+        MST_edge_t[::1] edges
+        intp_t num_edges
 
     def __init__(
         self,
@@ -271,9 +271,7 @@ cdef class BoruvkaAlgorithm:
         **kwargs
     ):
 
-        self.core_dist_tree = tree
-        self.tree = KDTree(tree.data, metric=metric, leaf_size=leaf_size,
-                           **kwargs)
+        self.tree =tree
         self.is_KDTree = isinstance(tree, KDTree)
         self.raw_data = self.tree.data
         self.node_bounds = self.tree.node_bounds
@@ -319,7 +317,7 @@ cdef class BoruvkaAlgorithm:
         cdef cnp.ndarray[intp_t, ndim=2] knn_indices
 
         # A shortcut: if we have a lot of points then we can split the points
-        # into four piles and query them in parallel. On multicore systems
+        # into multiple piles and query them in parallel. On multicore systems
         # (most systems) this amounts to a 2x-3x wall clock improvement.
         if self.num_points > 16384 and self.n_jobs > 1:
             split_cnt = self.num_points // self.n_jobs
@@ -332,13 +330,13 @@ cdef class BoruvkaAlgorithm:
 
             knn_data = Parallel(n_jobs=self.n_jobs, max_nbytes=None)(
                 delayed(_core_dist_query)
-                (self.core_dist_tree, points,
+                (self.tree, points,
                  self.min_samples)
                 for points in datasets)
             knn_dist = np.vstack([x[0] for x in knn_data])
             knn_indices = np.vstack([x[1] for x in knn_data])
         else:
-            knn_dist, knn_indices = self.core_dist_tree.query(
+            knn_dist, knn_indices = self.tree.query(
                 self.tree.data,
                 k=self.min_samples,
                 dualtree=True,

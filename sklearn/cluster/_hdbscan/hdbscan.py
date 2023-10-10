@@ -865,43 +865,55 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 " Please select a different metric."
             )
 
-        if self.algorithm != "auto":
+        if algorithms != {"auto"}:
             if (
                 self.metric != "precomputed"
                 and issparse(X)
-                and self.algorithm != "brute"
+                and "brute" not in algorithms
             ):
                 raise ValueError("Sparse data matrices only support algorithm `brute`.")
-
-            if self.algorithm == "brute":
+            if "brute" in algorithms:
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = self.copy
             else:
-                # TODO: Finalize dispatching, currently placeholder
-                if self.mst_algorithm in ("prims", "auto"):
-                    mst_func = _hdbscan_prims
-                else:
-                    mst_func = _hdbscan_boruvka
-                    kwargs["approx_min_span_tree"] = (
-                        self.mst_algorithm == "boruvka_approx"
-                    )
-                kwargs["algo"] = self.algorithm
                 kwargs["leaf_size"] = self.leaf_size
+                # We prefer KDTree unless otherwise specified
+                if self.algorithm != "auto":
+                    tree_algorithm = self.algorithm
+                else:
+                    tree_algorithm = (
+                        "kd_tree"
+                        if self.metric in KDTree.valid_metrics
+                        else "ball_tree"
+                    )
+                kwargs["algo"] = tree_algorithm
+
+                if self.mst_algorithm != "auto":
+                    if self.mst_algorithm == "prims":
+                        mst_func = _hdbscan_prims
+                    else:
+                        mst_func = _hdbscan_boruvka
+                        kwargs["approx_min_span_tree"] = (
+                            self.mst_algorithm == "boruvka_approx"
+                        )
+                else:
+                    # Approximate boruvka is always preferable
+                    mst_func = _hdbscan_boruvka
+                    kwargs["approx_min_span_tree"] = True
+
         else:
             if issparse(X) or self.metric not in FAST_METRICS:
                 # We can't do much with sparse matrices ...
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = self.copy
-            elif self.metric in KDTree.valid_metrics:
-                # TODO: Benchmark KD vs Ball Tree efficiency
-                mst_func = _hdbscan_prims
-                kwargs["algo"] = "kd_tree"
-                kwargs["leaf_size"] = self.leaf_size
             else:
-                # Metric is a valid BallTree metric
-                mst_func = _hdbscan_prims
-                kwargs["algo"] = "ball_tree"
+                # Approximate boruvka is always preferable
+                mst_func = _hdbscan_boruvka
+                kwargs["approx_min_span_tree"] = True
                 kwargs["leaf_size"] = self.leaf_size
+                kwargs["algo"] = (
+                    "kd_tree" if self.metric in KDTree.valid_metrics else "ball_tree"
+                )
 
         self.mst, self._single_linkage_tree_ = mst_func(**kwargs)
 
