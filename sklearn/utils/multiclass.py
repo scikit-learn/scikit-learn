@@ -1,11 +1,11 @@
+"""
+The :mod:`sklearn.utils.multiclass` module includes utilities to handle
+multiclass/multioutput target in classifiers.
+"""
+
 # Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
 #
 # License: BSD 3 clause
-"""
-Multi-class / multi-label utility function
-==========================================
-
-"""
 import warnings
 from collections.abc import Sequence
 from itertools import chain
