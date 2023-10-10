@@ -371,8 +371,8 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |MajorFeature| :class:`preprocessing.KernelCenterer`, :class:`preprocessing.MinMaxScaler`
-  and :class:`preprocessing.MaxAbsScaler` now
+- |MajorFeature| :class:`preprocessing.MinMaxScaler`, :class:`preprocessing.MaxAbsScaler`
+  and :class:`preprocessing.KernelCenterer` now
   support the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
   support is considered experimental and might evolve without being subject to
   our usual rolling deprecation cycle policy. See
