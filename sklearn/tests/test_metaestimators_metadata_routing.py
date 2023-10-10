@@ -229,6 +229,13 @@ METAESTIMATORS: list = [
         "estimator_routing_methods": ["fit"],
     },
     {
+        "metaestimator": OrthogonalMatchingPursuitCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
         "metaestimator": ElasticNetCV,
         "X": X,
         "y": y,
@@ -301,7 +308,6 @@ UNSUPPORTED_ESTIMATORS = [
     IterativeImputer(),
     LarsCV(),
     LassoLarsCV(),
-    OrthogonalMatchingPursuitCV(),
     RANSACRegressor(),
     RFE(ConsumingClassifier()),
     RFECV(ConsumingClassifier()),

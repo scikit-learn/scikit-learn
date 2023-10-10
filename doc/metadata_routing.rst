@@ -270,6 +270,7 @@ Meta-estimators and functions supporting metadata routing:
 - :class:`sklearn.multioutput.ClassifierChain`
 - :class:`sklearn.multioutput.MultiOutputClassifier`
 - :class:`sklearn.multioutput.MultiOutputRegressor`
+- :class:`sklearn.linear_model.OrthogonalMatchingPursuitCV`
 - :class:`sklearn.multioutput.RegressorChain`
 - :class:`sklearn.pipeline.Pipeline`
 
@@ -292,7 +293,6 @@ Meta-estimators and tools not supporting metadata routing yet:
 - :class:`sklearn.impute.IterativeImputer`
 - :class:`sklearn.linear_model.LarsCV`
 - :class:`sklearn.linear_model.LassoLarsCV`
-- :class:`sklearn.linear_model.OrthogonalMatchingPursuitCV`
 - :class:`sklearn.linear_model.RANSACRegressor`
 - :class:`sklearn.linear_model.RidgeClassifierCV`
 - :class:`sklearn.linear_model.RidgeCV`
