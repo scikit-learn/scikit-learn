@@ -27,14 +27,14 @@ def _check_boundary_response_method(estimator, response_method, class_of_interes
 
     class_of_interest : int, float, bool, str or None
         The class considered when plotting the decision. If the label is specified, it
-        then possible to plot the decision boundary in multiclass settings.
+        is then possible to plot the decision boundary in multiclass settings.
 
         .. versionadded:: 1.4
 
     Returns
     -------
     prediction_method : list of str or str
-        The name of the response methods to use or a list of such names.
+        The name or list of names of the response methods to use.
     """
     has_classes = hasattr(estimator, "classes_")
     if has_classes and _is_arraylike_not_scalar(estimator.classes_[0]):
@@ -251,10 +251,10 @@ class DecisionBoundaryDisplay:
             `response_method="auto"`.
 
         class_of_interest : int, float, bool or str, default=None
-            The class considered when plotting the decision. By default,
-            `estimators.classes_[1]` is considered as the positive class
-            for binary classifiers. For multiclass classifier, passing
-            and explicit value for `class_of_interest` is mandatory.
+            The class considered when plotting the decision. If None,
+            `estimator.classes_[1]` is considered as the positive class
+            for binary classifiers. For multiclass classifiers, passing
+            an explicit value for `class_of_interest` is mandatory.
 
             .. versionadded:: 1.4
 

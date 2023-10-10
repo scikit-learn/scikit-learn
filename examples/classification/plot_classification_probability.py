@@ -79,7 +79,7 @@ for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
             vmax=1,
         )
         axes[classifier_idx, label].set_title(f"Class {label}")
-        # plot the data that are predict to belong to the class
+        # plot data predicted to belong to given class
         mask_y_pred = y_pred == label
         axes[classifier_idx, label].scatter(
             X[mask_y_pred, 0], X[mask_y_pred, 1], marker="o", c="w", edgecolor="k"
