@@ -15,7 +15,7 @@ from ..utils import (
     check_pandas_support,
     get_chunk_n_rows,
 )
-from ..utils.fixes import parse_version
+from ..utils.fixes import pd_fillna
 
 
 def _split_sparse_columns(
@@ -208,12 +208,7 @@ def _liac_arff_parser(
         # missing values. To be consistent with the pandas parser, we replace
         # None with np.nan.
         frame = pd.concat(dfs, ignore_index=True)
-        pd_version = parse_version(pd.__version__).base_version
-        if parse_version(pd_version) < parse_version("2.2"):
-            frame = frame.fillna(value=np.nan)
-        else:
-            with pd.option_context("future.no_silent_downcasting", True):
-                frame = frame.fillna(value=np.nan).infer_objects(copy=False)
+        frame = pd_fillna(pd, frame)
         del dfs, first_df
 
         # cast the columns frame
