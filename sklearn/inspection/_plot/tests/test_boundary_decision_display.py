@@ -72,7 +72,7 @@ def test_check_boundary_response_method_error():
     class MulticlassClassifier:
         classes_ = [0, 1, 2]
 
-    err_msg = "Multiclass classifiers are only supported when response_method is"
+    err_msg = "Multiclass classifiers are only supported when `response_method` is"
     for response_method in ("predict_proba", "decision_function"):
         with pytest.raises(ValueError, match=err_msg):
             _check_boundary_response_method(
@@ -134,8 +134,8 @@ def test_multiclass_error(pyplot, response_method):
     lr = LogisticRegression().fit(X, y)
 
     msg = (
-        "Multiclass classifiers are only supported when response_method is 'predict' or"
-        " 'auto'"
+        "Multiclass classifiers are only supported when `response_method` is 'predict'"
+        " or 'auto'"
     )
     with pytest.raises(ValueError, match=msg):
         DecisionBoundaryDisplay.from_estimator(lr, X, response_method=response_method)

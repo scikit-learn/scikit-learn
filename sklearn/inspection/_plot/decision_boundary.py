@@ -44,9 +44,9 @@ def _check_boundary_response_method(estimator, response_method, class_of_interes
     if has_classes and len(estimator.classes_) > 2:
         if response_method not in {"auto", "predict"} and class_of_interest is None:
             msg = (
-                "Multiclass classifiers are only supported when response_method is"
-                " 'predict' or 'auto', or you must provide `class_of_interest` to "
-                " select a specific class to plot the decision boundary."
+                "Multiclass classifiers are only supported when `response_method` is "
+                "'predict' or 'auto'. Else you must provide `class_of_interest` to "
+                "plot the decision boundary of a specific class."
             )
             raise ValueError(msg)
         prediction_method = "predict" if response_method == "auto" else response_method
