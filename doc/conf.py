@@ -704,7 +704,7 @@ warnings.filterwarnings(
 )
 # Raise warning as error in example to catch warnings when building the documentation
 # Since we are using lock files to build the documentation, we should not have any
-# warnings or fix them before to update the lock files.
+# warnings. Before updating the lock files, we need to fix them.
 for warning_type in (FutureWarning, DeprecationWarning, VisibleDeprecationWarning):
     warnings.filterwarnings("error", category=warning_type)
 
