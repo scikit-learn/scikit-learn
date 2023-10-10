@@ -304,33 +304,16 @@ def _logistic_regression_path(
         # np.unique(y) gives labels in sorted order.
         pos_class = classes[1]
 
-    # If sample weights exist, convert them to array (support for lists)
-    # and check length
-    # Otherwise set them to 1 for all examples
-    sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype, copy=True)
-
-    if solver == "newton-cholesky":
-        # IMPORTANT NOTE: Rescaling of sample_weight:
-        # Same as in _GeneralizedLinearRegressor.fit().
-        # We want to minimize
-        #     obj = 1/(2*sum(sample_weight)) * sum(sample_weight * deviance)
-        #         + 1/2 * alpha * L2,
-        # with
-        #     deviance = 2 * log_loss.
-        # The objective is invariant to multiplying sample_weight by a constant. We
-        # choose this constant such that sum(sample_weight) = 1. Thus, we end up with
-        #     obj = sum(sample_weight * loss) + 1/2 * alpha * L2.
-        # Note that LinearModelLoss.loss() computes sum(sample_weight * loss).
-        #
-        # This rescaling has to be done before multiplying by class_weights.
-        sw_sum = sample_weight.sum()  # needed to rescale penalty, nasty matter!
-        sample_weight = sample_weight / sw_sum
+    if sample_weight is not None or class_weight is not None:
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype, copy=True)
 
     # If class_weights is a dict (provided by the user), the weights
     # are assigned to the original labels. If it is "balanced", then
     # the class_weights are assigned after masking the labels with a OvR.
     le = LabelEncoder()
-    if isinstance(class_weight, dict) or multi_class == "multinomial":
+    if isinstance(class_weight, dict) or (
+        multi_class == "multinomial" and class_weight is not None
+    ):
         class_weight_ = compute_class_weight(class_weight, classes=classes, y=y)
         sample_weight *= class_weight_[le.fit_transform(y)]
 
@@ -374,6 +357,19 @@ def _logistic_regression_path(
         w0 = np.zeros(
             (classes.size, n_features + int(fit_intercept)), order="F", dtype=X.dtype
         )
+
+    # IMPORTANT NOTE:
+    # All solvers relying on LinearModelLoss need to scale the penalty with n_samples
+    # or the sum of sample weights because the implemented logistic regression
+    # objective here is (unfortunately)
+    #     C * sum(pointwise_loss) + penalty
+    # instead of (as LinearModelLoss does)
+    #     mean(pointwise_loss) + 1/C * penalty
+    if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
+        # This needs to be calculated after sample_weight is multiplied by
+        # class_weight. It is even tested that passing class_weight is equivalent to
+        # passing sample_weights according to class_weight.
+        sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
 
     if coef is not None:
         # it must work both giving the bias term and not
@@ -457,7 +453,7 @@ def _logistic_regression_path(
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     for i, C in enumerate(Cs):
         if solver == "lbfgs":
-            l2_reg_strength = 1.0 / C
+            l2_reg_strength = 1.0 / (C * sw_sum)
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)
             ]
@@ -467,7 +463,13 @@ def _logistic_regression_path(
                 method="L-BFGS-B",
                 jac=True,
                 args=(X, target, sample_weight, l2_reg_strength, n_threads),
-                options={"iprint": iprint, "gtol": tol, "maxiter": max_iter},
+                options={
+                    "maxiter": max_iter,
+                    "maxls": 50,  # default is 20
+                    "iprint": iprint,
+                    "gtol": tol,
+                    "ftol": 64 * np.finfo(float).eps,
+                },
             )
             n_iter_i = _check_optimize_result(
                 solver,
@@ -477,15 +479,13 @@ def _logistic_regression_path(
             )
             w0, loss = opt_res.x, opt_res.fun
         elif solver == "newton-cg":
-            l2_reg_strength = 1.0 / C
+            l2_reg_strength = 1.0 / (C * sw_sum)
             args = (X, target, sample_weight, l2_reg_strength, n_threads)
             w0, n_iter_i = _newton_cg(
                 hess, func, grad, w0, args=args, maxiter=max_iter, tol=tol
             )
         elif solver == "newton-cholesky":
-            # The division by sw_sum is a consequence of the rescaling of
-            # sample_weight, see comment above.
-            l2_reg_strength = 1.0 / C / sw_sum
+            l2_reg_strength = 1.0 / (C * sw_sum)
             sol = NewtonCholeskySolver(
                 coef=w0,
                 linear_loss=loss,
