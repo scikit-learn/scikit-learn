@@ -266,7 +266,7 @@ evaluate(
 )
 
 # %%
-# We see that we set `max_iter` larger enough that early stopping took place.
+# We see that we set `max_iter` large enough such that early stopping took place.
 #
 # This model has an average error around 4 to 5% of the maximum demand. This is
 # quite good for a first trial without any hyper-parameter tuning! We just had
