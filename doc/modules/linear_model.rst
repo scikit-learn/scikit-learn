@@ -364,7 +364,7 @@ scikit-learn.
 **Mathematical details**
 |details-split|
 
-scikit-learn. The AIC criterion is defined as:
+The AIC criterion is defined as:
 
 .. math::
     AIC = -2 \log(\hat{L}) + 2 d
