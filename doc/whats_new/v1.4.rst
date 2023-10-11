@@ -57,8 +57,8 @@ methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
 more details.
 
 - |Feature| :class:`RidgeCV` and :class:`RidgeClassifierCV` now support
-  metadata routing in their `fit` method and route metadata to underlying
-  GridSearchCV object or the scorer object in RidgeGCV.
+  metadata routing in their `fit` method and route metadata to the underlying
+  GridSearchCV object or the underlying scorer.
   :pr:`27560` by :user:`Omar Salman <OmarManzoor>`.
 
 - |Feature| :class:`LarsCV` and :class:`LassoLarsCV` now support metadata

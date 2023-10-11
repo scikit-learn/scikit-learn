@@ -32,16 +32,16 @@ from ..utils import (
     column_or_1d,
     compute_sample_weight,
 )
-from ..utils._metadata_requests import (
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.extmath import row_norms, safe_sparse_dot
+from ..utils.fixes import _sparse_linalg_cg
+from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.fixes import _sparse_linalg_cg
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _check_sample_weight, check_is_fitted
 from ._base import LinearClassifierMixin, LinearModel, _preprocess_data, _rescale_data
@@ -2184,7 +2184,7 @@ class _BaseRidgeCV(LinearModel):
             will have the same weight.
 
         **params : dict, default=None
-            Parameters to be passed to GridSearchCV or RidgeGCV.
+            Parameters to be passed to GridSearchCV or the underlying scorer.
 
             .. versionadded:: 1.4
                 Only available if `enable_metadata_routing=True`,
@@ -2457,7 +2457,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
             will have the same weight.
 
         **params : dict, default=None
-            Parameters to be passed to GridSearchCV or RidgeGCV.
+            Parameters to be passed to GridSearchCV or the underlying scorer.
 
             .. versionadded:: 1.4
                 Only available if `enable_metadata_routing=True`,
@@ -2646,7 +2646,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
             will have the same weight.
 
         **params : dict, default=None
-            Parameters to be passed to GridSearchCV or RidgeGCV.
+            Parameters to be passed to GridSearchCV or the underlying scorer.
 
             .. versionadded:: 1.4
                 Only available if `enable_metadata_routing=True`,
