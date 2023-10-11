@@ -121,11 +121,12 @@ def auc(x, y):
         "average": [StrOptions({"micro", "samples", "weighted", "macro"}), None],
         "pos_label": [Real, str, "boolean"],
         "sample_weight": ["array-like", None],
+        "calibrated": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
 def average_precision_score(
-    y_true, y_score, *, average="macro", pos_label=1, sample_weight=None
+    y_true, y_score, *, average="macro", pos_label=1, sample_weight=None, calibrated=False
 ):
     """Compute average precision (AP) from prediction scores.
 
@@ -179,6 +180,9 @@ def average_precision_score(
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+    
+    calibrated : bool, default=False
+        Calculate the calibrated precision, which outputs the calibrated average precision.
 
     Returns
     -------
@@ -202,6 +206,9 @@ def average_precision_score(
     .. [1] `Wikipedia entry for the Average precision
            <https://en.wikipedia.org/w/index.php?title=Information_retrieval&
            oldid=793358396#Average_precision>`_
+    
+    .. [2] `Online Action Detection
+           <https://arxiv.org/pdf/1604.06506.pdf>`_
 
     Examples
     --------
@@ -225,10 +232,10 @@ def average_precision_score(
     """
 
     def _binary_uninterpolated_average_precision(
-        y_true, y_score, pos_label=1, sample_weight=None
+        y_true, y_score, pos_label=1, sample_weight=None, calibrated=False
     ):
         precision, recall, _ = precision_recall_curve(
-            y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
+            y_true, y_score, pos_label=pos_label, sample_weight=sample_weight, calibrated=calibrated
         )
         # Return the step function integral
         # The following works because the last entry of precision is
@@ -263,7 +270,7 @@ def average_precision_score(
         y_true = label_binarize(y_true, classes=present_labels)
 
     average_precision = partial(
-        _binary_uninterpolated_average_precision, pos_label=pos_label
+        _binary_uninterpolated_average_precision, pos_label=pos_label, calibrated=calibrated
     )
     return _average_binary_score(
         average_precision, y_true, y_score, average, sample_weight=sample_weight
@@ -856,11 +863,12 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
         "drop_intermediate": ["boolean"],
+        "calibrated": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
 def precision_recall_curve(
-    y_true, probas_pred, *, pos_label=None, sample_weight=None, drop_intermediate=False
+    y_true, probas_pred, *, pos_label=None, sample_weight=None, drop_intermediate=False, calibrated=False
 ):
     """Compute precision-recall pairs for different probability thresholds.
 
@@ -907,6 +915,11 @@ def precision_recall_curve(
         Whether to drop some suboptimal thresholds which would not appear
         on a plotted precision-recall curve. This is useful in order to create
         lighter precision-recall curves.
+    
+    calibrated : bool, default=False
+        This is useful when there are a lots of negative labels and few positive labels. 
+        The precision will be weighted by the ratio between the number of negative labels 
+        and the number of positive labels.
 
         .. versionadded:: 1.3
 
@@ -968,11 +981,21 @@ def precision_recall_curve(
         tps = tps[optimal_idxs]
         thresholds = thresholds[optimal_idxs]
 
-    ps = tps + fps
     # Initialize the result array with zeros to make sure that precision[ps == 0]
     # does not contain uninitialized values.
     precision = np.zeros_like(tps)
-    np.divide(tps, ps, out=precision, where=(ps != 0))
+    
+    # If 'calibrated' is True and there are both positive and negative labels,
+    # calculate the weight 'w' as the ratio between the number of negative labels
+    # and the number of positive labels. The negatives becomes equal to the total 
+    # weight of the positives.
+    if calibrated and (len(y_true) - sum(y_true)) > 0 and sum(y_true) > 0:
+        w = (len(y_true) - sum(y_true)) / sum(y_true)
+        ps = w * tps + fps
+        np.divide(w * tps, ps, out=precision, where=(ps != 0))
+    else:
+        ps = tps + fps
+        np.divide(tps, ps, out=precision, where=(ps != 0))
 
     # When no positive label in y_true, recall is set to 1 for all thresholds
     # tps[-1] == 0 <=> y_true == all negative labels
