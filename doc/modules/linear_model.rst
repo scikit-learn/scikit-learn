@@ -1679,8 +1679,6 @@ statistical efficiency.
 
 |details-end|
 
-Notes
------
 The :class:`HuberRegressor` differs from using :class:`SGDRegressor` with loss set to `huber`
 in the following ways.
 
