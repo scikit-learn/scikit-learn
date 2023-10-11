@@ -211,9 +211,9 @@ class SelectFromModel(
     >>> y = [0, 1, 0, 1]
     >>> selector = SelectFromModel(estimator=LogisticRegression()).fit(X, y)
     >>> selector.estimator_.coef_
-    array([[-0.3252302 ,  0.83462377,  0.49750423]])
+    array([[-0.3252...,  0.8345...,  0.4976...]])
     >>> selector.threshold_
-    0.55245...
+    0.55249...
     >>> selector.get_support()
     array([False,  True, False])
     >>> selector.transform(X)

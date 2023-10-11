@@ -153,7 +153,7 @@ def strip_newsgroup_footer(text):
 
 @validate_params(
     {
-        "data_home": [str, None],
+        "data_home": [str, os.PathLike, None],
         "subset": [StrOptions({"train", "test", "all"})],
         "categories": ["array-like", None],
         "shuffle": ["boolean"],
@@ -191,7 +191,7 @@ def fetch_20newsgroups(
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify a download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
@@ -351,7 +351,7 @@ def fetch_20newsgroups(
     {
         "subset": [StrOptions({"train", "test", "all"})],
         "remove": [tuple],
-        "data_home": [str, None],
+        "data_home": [str, os.PathLike, None],
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
         "normalize": ["boolean"],
@@ -411,7 +411,7 @@ def fetch_20newsgroups_vectorized(
         ends of posts that look like signatures, and 'quotes' removes lines
         that appear to be quoting another post.
 
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify an download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
