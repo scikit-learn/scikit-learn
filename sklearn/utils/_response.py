@@ -114,6 +114,7 @@ def _get_response_values(
     X,
     response_method,
     pos_label=None,
+    return_response_method_used=False,
 ):
     """Compute the response values of a classifier or a regressor.
 
@@ -156,6 +157,12 @@ def _get_response_values(
         the metrics. By default, `estimators.classes_[1]` is
         considered as the positive class.
 
+    return_response_method_used : bool, default=False
+        Whether to return the response method used to compute the response
+        values.
+
+        .. versionadded:: 1.4
+
     Returns
     -------
     y_pred : ndarray of shape (n_samples,), (n_samples, n_classes) or \
@@ -166,6 +173,12 @@ def _get_response_values(
     pos_label : int, float, bool, str or None
         The class considered as the positive class when computing
         the metrics. Returns `None` if `estimator` is a regressor.
+
+    response_method_used : str
+        The response method used to compute the response values. Only returned
+        if `return_response_method_used` is `True`.
+
+        .. versionadded:: 1.4
 
     Raises
     ------
@@ -215,8 +228,11 @@ def _get_response_values(
                 "should be 'predict'. Got a regressor with response_method="
                 f"{response_method} instead."
             )
-        y_pred, pos_label = estimator.predict(X), None
+        prediction_method = estimator.predict
+        y_pred, pos_label = prediction_method(X), None
 
+    if return_response_method_used:
+        return y_pred, pos_label, prediction_method.__name__
     return y_pred, pos_label
 
 
