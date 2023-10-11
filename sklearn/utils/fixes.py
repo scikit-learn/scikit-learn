@@ -37,6 +37,7 @@ COO_CONTAINERS = [scipy.sparse.coo_matrix]
 LIL_CONTAINERS = [scipy.sparse.lil_matrix]
 DOK_CONTAINERS = [scipy.sparse.dok_matrix]
 BSR_CONTAINERS = [scipy.sparse.bsr_matrix]
+DIA_CONTAINERS = [scipy.sparse.dia_matrix]
 
 if parse_version(scipy.__version__) >= parse_version("1.8"):
     # Sparse Arrays have been added in SciPy 1.8
@@ -49,6 +50,7 @@ if parse_version(scipy.__version__) >= parse_version("1.8"):
     LIL_CONTAINERS.append(scipy.sparse.lil_array)
     DOK_CONTAINERS.append(scipy.sparse.dok_array)
     BSR_CONTAINERS.append(scipy.sparse.bsr_array)
+    DIA_CONTAINERS.append(scipy.sparse.dia_array)
 
 try:
     from scipy.optimize._linesearch import line_search_wolfe1, line_search_wolfe2
@@ -144,6 +146,103 @@ else:
         return scipy.sparse.linalg.cg(A, b, **kwargs)
 
 
+# TODO: Fuse the modern implementations of _sparse_min_max and _sparse_nan_min_max
+# into the public min_max_axis function when Scipy 1.11 is the minimum supported
+# version and delete the backport in the else branch below.
+if sp_base_version >= parse_version("1.11.0"):
+
+    def _sparse_min_max(X, axis):
+        the_min = X.min(axis=axis)
+        the_max = X.max(axis=axis)
+
+        if axis is not None:
+            the_min = the_min.toarray().ravel()
+            the_max = the_max.toarray().ravel()
+
+        return the_min, the_max
+
+    def _sparse_nan_min_max(X, axis):
+        the_min = X.nanmin(axis=axis)
+        the_max = X.nanmax(axis=axis)
+
+        if axis is not None:
+            the_min = the_min.toarray().ravel()
+            the_max = the_max.toarray().ravel()
+
+        return the_min, the_max
+
+else:
+    # This code is mostly taken from scipy 0.14 and extended to handle nans, see
+    # https://github.com/scikit-learn/scikit-learn/pull/11196
+    def _minor_reduce(X, ufunc):
+        major_index = np.flatnonzero(np.diff(X.indptr))
+
+        # reduceat tries casts X.indptr to intp, which errors
+        # if it is int64 on a 32 bit system.
+        # Reinitializing prevents this where possible, see #13737
+        X = type(X)((X.data, X.indices, X.indptr), shape=X.shape)
+        value = ufunc.reduceat(X.data, X.indptr[major_index])
+        return major_index, value
+
+    def _min_or_max_axis(X, axis, min_or_max):
+        N = X.shape[axis]
+        if N == 0:
+            raise ValueError("zero-size array to reduction operation")
+        M = X.shape[1 - axis]
+        mat = X.tocsc() if axis == 0 else X.tocsr()
+        mat.sum_duplicates()
+        major_index, value = _minor_reduce(mat, min_or_max)
+        not_full = np.diff(mat.indptr)[major_index] < N
+        value[not_full] = min_or_max(value[not_full], 0)
+        mask = value != 0
+        major_index = np.compress(mask, major_index)
+        value = np.compress(mask, value)
+
+        if axis == 0:
+            res = scipy.sparse.coo_matrix(
+                (value, (np.zeros(len(value)), major_index)),
+                dtype=X.dtype,
+                shape=(1, M),
+            )
+        else:
+            res = scipy.sparse.coo_matrix(
+                (value, (major_index, np.zeros(len(value)))),
+                dtype=X.dtype,
+                shape=(M, 1),
+            )
+        return res.A.ravel()
+
+    def _sparse_min_or_max(X, axis, min_or_max):
+        if axis is None:
+            if 0 in X.shape:
+                raise ValueError("zero-size array to reduction operation")
+            zero = X.dtype.type(0)
+            if X.nnz == 0:
+                return zero
+            m = min_or_max.reduce(X.data.ravel())
+            if X.nnz != np.prod(X.shape):
+                m = min_or_max(zero, m)
+            return m
+        if axis < 0:
+            axis += 2
+        if (axis == 0) or (axis == 1):
+            return _min_or_max_axis(X, axis, min_or_max)
+        else:
+            raise ValueError("invalid axis, use 0 for rows, or 1 for columns")
+
+    def _sparse_min_max(X, axis):
+        return (
+            _sparse_min_or_max(X, axis, np.minimum),
+            _sparse_min_or_max(X, axis, np.maximum),
+        )
+
+    def _sparse_nan_min_max(X, axis):
+        return (
+            _sparse_min_or_max(X, axis, np.fmin),
+            _sparse_min_or_max(X, axis, np.fmax),
+        )
+
+
 ###############################################################################
 # Backport of Python 3.9's importlib.resources
 # TODO: Remove when Python 3.9 is the minimum supported version
@@ -208,3 +307,14 @@ try:
     from scipy.integrate import trapezoid  # type: ignore  # noqa
 except ImportError:
     from scipy.integrate import trapz as trapezoid  # type: ignore  # noqa
+
+
+# TODO: Remove when Pandas > 2.2 is the minimum supported version
+def pd_fillna(pd, frame):
+    pd_version = parse_version(pd.__version__).base_version
+    if parse_version(pd_version) < parse_version("2.2"):
+        frame = frame.fillna(value=np.nan)
+    else:
+        with pd.option_context("future.no_silent_downcasting", True):
+            frame = frame.fillna(value=np.nan).infer_objects(copy=False)
+    return frame

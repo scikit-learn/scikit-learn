@@ -35,17 +35,21 @@ def test_get_response_values_regressor_error(response_method):
         _get_response_values(my_estimator, X, response_method=response_method)
 
 
-def test_get_response_values_regressor():
+@pytest.mark.parametrize("return_response_method_used", [True, False])
+def test_get_response_values_regressor(return_response_method_used):
     """Check the behaviour of `_get_response_values` with regressor."""
     X, y = make_regression(n_samples=10, random_state=0)
     regressor = LinearRegression().fit(X, y)
-    y_pred, pos_label = _get_response_values(
+    results = _get_response_values(
         regressor,
         X,
         response_method="predict",
+        return_response_method_used=return_response_method_used,
     )
-    assert_array_equal(y_pred, regressor.predict(X))
-    assert pos_label is None
+    assert_array_equal(results[0], regressor.predict(X))
+    assert results[1] is None
+    if return_response_method_used:
+        assert results[2] == "predict"
 
 
 @pytest.mark.parametrize(
@@ -84,7 +88,10 @@ def test_get_response_values_classifier_inconsistent_y_pred_for_binary_proba():
         _get_response_values(classifier, X, response_method="predict_proba")
 
 
-def test_get_response_values_binary_classifier_decision_function():
+@pytest.mark.parametrize("return_response_method_used", [True, False])
+def test_get_response_values_binary_classifier_decision_function(
+    return_response_method_used,
+):
     """Check the behaviour of `_get_response_values` with `decision_function`
     and binary classifier."""
     X, y = make_classification(
@@ -97,27 +104,36 @@ def test_get_response_values_binary_classifier_decision_function():
     response_method = "decision_function"
 
     # default `pos_label`
-    y_pred, pos_label = _get_response_values(
+    results = _get_response_values(
         classifier,
         X,
         response_method=response_method,
         pos_label=None,
+        return_response_method_used=return_response_method_used,
     )
-    assert_allclose(y_pred, classifier.decision_function(X))
-    assert pos_label == 1
+    assert_allclose(results[0], classifier.decision_function(X))
+    assert results[1] == 1
+    if return_response_method_used:
+        assert results[2] == "decision_function"
 
     # when forcing `pos_label=classifier.classes_[0]`
-    y_pred, pos_label = _get_response_values(
+    results = _get_response_values(
         classifier,
         X,
         response_method=response_method,
         pos_label=classifier.classes_[0],
+        return_response_method_used=return_response_method_used,
     )
-    assert_allclose(y_pred, classifier.decision_function(X) * -1)
-    assert pos_label == 0
+    assert_allclose(results[0], classifier.decision_function(X) * -1)
+    assert results[1] == 0
+    if return_response_method_used:
+        assert results[2] == "decision_function"
 
 
-def test_get_response_values_binary_classifier_predict_proba():
+@pytest.mark.parametrize("return_response_method_used", [True, False])
+def test_get_response_values_binary_classifier_predict_proba(
+    return_response_method_used,
+):
     """Check that `_get_response_values` with `predict_proba` and binary
     classifier."""
     X, y = make_classification(
@@ -130,21 +146,28 @@ def test_get_response_values_binary_classifier_predict_proba():
     response_method = "predict_proba"
 
     # default `pos_label`
-    y_pred, pos_label = _get_response_values(
+    results = _get_response_values(
         classifier,
         X,
         response_method=response_method,
         pos_label=None,
+        return_response_method_used=return_response_method_used,
     )
-    assert_allclose(y_pred, classifier.predict_proba(X)[:, 1])
-    assert pos_label == 1
+    assert_allclose(results[0], classifier.predict_proba(X)[:, 1])
+    assert results[1] == 1
+    if return_response_method_used:
+        assert len(results) == 3
+        assert results[2] == "predict_proba"
+    else:
+        assert len(results) == 2
 
     # when forcing `pos_label=classifier.classes_[0]`
-    y_pred, pos_label = _get_response_values(
+    y_pred, pos_label, *_ = _get_response_values(
         classifier,
         X,
         response_method=response_method,
         pos_label=classifier.classes_[0],
+        return_response_method_used=return_response_method_used,
     )
     assert_allclose(y_pred, classifier.predict_proba(X)[:, 0])
     assert pos_label == 0
@@ -190,13 +213,13 @@ def test_get_response_predict_proba():
     y_proba, pos_label = _get_response_values_binary(
         classifier, X_binary, response_method="predict_proba"
     )
-    np.testing.assert_allclose(y_proba, classifier.predict_proba(X_binary)[:, 1])
+    assert_allclose(y_proba, classifier.predict_proba(X_binary)[:, 1])
     assert pos_label == 1
 
     y_proba, pos_label = _get_response_values_binary(
         classifier, X_binary, response_method="predict_proba", pos_label=0
     )
-    np.testing.assert_allclose(y_proba, classifier.predict_proba(X_binary)[:, 0])
+    assert_allclose(y_proba, classifier.predict_proba(X_binary)[:, 0])
     assert pos_label == 0
 
 
@@ -206,13 +229,13 @@ def test_get_response_decision_function():
     y_score, pos_label = _get_response_values_binary(
         classifier, X_binary, response_method="decision_function"
     )
-    np.testing.assert_allclose(y_score, classifier.decision_function(X_binary))
+    assert_allclose(y_score, classifier.decision_function(X_binary))
     assert pos_label == 1
 
     y_score, pos_label = _get_response_values_binary(
         classifier, X_binary, response_method="decision_function", pos_label=0
     )
-    np.testing.assert_allclose(y_score, classifier.decision_function(X_binary) * -1)
+    assert_allclose(y_score, classifier.decision_function(X_binary) * -1)
     assert pos_label == 0
 
 
@@ -236,6 +259,33 @@ def test_get_response_values_multiclass(estimator, response_method):
     assert predictions.shape == (X.shape[0], len(estimator.classes_))
     if response_method == "predict_proba":
         assert np.logical_and(predictions >= 0, predictions <= 1).all()
+
+
+def test_get_response_values_with_response_list():
+    """Check the behaviour of passing a list of responses to `_get_response_values`."""
+    classifier = LogisticRegression().fit(X_binary, y_binary)
+
+    # it should use `predict_proba`
+    y_pred, pos_label, response_method = _get_response_values(
+        classifier,
+        X_binary,
+        response_method=["predict_proba", "decision_function"],
+        return_response_method_used=True,
+    )
+    assert_allclose(y_pred, classifier.predict_proba(X_binary)[:, 1])
+    assert pos_label == 1
+    assert response_method == "predict_proba"
+
+    # it should use `decision_function`
+    y_pred, pos_label, response_method = _get_response_values(
+        classifier,
+        X_binary,
+        response_method=["decision_function", "predict_proba"],
+        return_response_method_used=True,
+    )
+    assert_allclose(y_pred, classifier.decision_function(X_binary))
+    assert pos_label == 1
+    assert response_method == "decision_function"
 
 
 @pytest.mark.parametrize(

@@ -398,9 +398,8 @@ last document::
 
 .. _stop_words:
 
-|details-start|
-**Using stop words**
-|details-split|
+Using stop words
+----------------
 
 Stop words are words like "and", "the", "him", which are presumed to be
 uninformative in representing the content of a text, and which may be
@@ -430,8 +429,6 @@ identify and warn about some kinds of inconsistencies.
                <https://aclweb.org/anthology/W18-2502>`__.
                In *Proc. Workshop for NLP Open Source Software*.
 
-
-|details-end|
 
 .. _tfidf:
 
