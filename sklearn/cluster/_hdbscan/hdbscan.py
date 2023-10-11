@@ -516,10 +516,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
            The `'balltree'` option was deprecated in version 1.4,
            and will be renamed to `'ball_tree'` in 1.6.
 
-    mst_algorithm : {"auto", "brute", "prims", "boruvka"}, default="auto"
-        Exactly which algorithm to use for building the minimum spanning tree;
-        by default this is set to `"auto"` which switches between `"prims"` and
-        `"boruvka"` based on a heuristic.
+    mst_algorithm : {"auto", "brute", "prims", "boruvka"}, default="prims"
+        Exactly which algorithm to use for building the minimum spanning tree.
+        The `"auto"` option switches between `"brute"` and `"boruvka"` based on
+        the data and use of precomputed distances.
 
         .. versionadded:: 1.4
 
@@ -701,7 +701,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         metric_params=None,
         alpha=1.0,
         algorithm="auto",
-        mst_algorithm="auto",
+        mst_algorithm="prims",
         leaf_size=40,
         n_jobs=None,
         cluster_selection_method="eom",
