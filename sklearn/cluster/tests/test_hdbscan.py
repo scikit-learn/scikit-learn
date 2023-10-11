@@ -28,32 +28,29 @@ X, y = make_blobs(n_samples=200, random_state=10)
 X, y = shuffle(X, y, random_state=7)
 X = StandardScaler().fit_transform(X)
 
-ALGORITHMS = [
+# These are necessary options for both space-tree/MST algorithm selection
+BRUTE_COMPATIBLE = {"auto", "brute"}
+
+ALGORITHMS = {
     "kd_tree",
     "ball_tree",
-    "brute",
-    "auto",
-]
+}.union(BRUTE_COMPATIBLE)
+
+EXACT_MST_ALGORITHMS = {"prims", "boruvka_exact"}
+MST_ALGORITHMS = {"boruvka_approx"}.union(EXACT_MST_ALGORITHMS).union(BRUTE_COMPATIBLE)
+
 
 OUTLIER_SET = {-1} | {out["label"] for _, out in _OUTLIER_ENCODING.items()}
 
 
 @pytest.mark.parametrize("tree", ["kd_tree", "ball_tree"])
-@pytest.mark.parametrize("n_samples", [200, 16385])
 @pytest.mark.parametrize("n_jobs", [1, 4])
-@pytest.mark.parametrize("mst_algo", ["boruvka_exact", "boruvka_approx"])
-def test_hdbscan_boruvka_matches(tree, n_samples, n_jobs, mst_algo):
-    if n_samples > 16384:
-        data, _ = make_blobs(n_samples=n_samples, random_state=10)
-        data = shuffle(X, random_state=7)
-        data = StandardScaler().fit_transform(X)
-    else:
-        data = X
-
-    hdb_prims = HDBSCAN(algorithm=tree, mst_algorithm="prims", n_jobs=n_jobs).fit(data)
-    hdb_boruvka = HDBSCAN(algorithm=tree, mst_algorithm=mst_algo, n_jobs=n_jobs).fit(
-        data
-    )
+@pytest.mark.parametrize("mst_algorithm", ["boruvka_exact", "boruvka_approx"])
+def test_hdbscan_boruvka_matches(tree, n_jobs, mst_algorithm):
+    hdb_prims = HDBSCAN(algorithm=tree, mst_algorithm="prims", n_jobs=n_jobs).fit(X)
+    hdb_boruvka = HDBSCAN(
+        algorithm=tree, mst_algorithm=mst_algorithm, n_jobs=n_jobs
+    ).fit(X)
     labels_prims = hdb_prims.labels_
     labels_boruvka = hdb_boruvka.labels_
 
@@ -62,7 +59,7 @@ def test_hdbscan_boruvka_matches(tree, n_samples, n_jobs, mst_algo):
     # We should expect that the exact boruvka algorithm produces a correct mst,
     # but the approximation will almost surely produce an incorrect tree, and
     # hence differ from the exact labels.
-    assert similarity >= 0.91 if "approx" in mst_algo else 1
+    assert similarity >= 0.91 if "approx" in mst_algorithm else 1
 
 
 def test_hdbscan_mst_algorithm_errors():
@@ -72,17 +69,23 @@ def test_hdbscan_mst_algorithm_errors():
         with pytest.raises(ValueError, match=msg):
             hdb.fit(X, y)
 
-    for mst_algo in ["prims", "boruvka_exact", "boruvka_approx"]:
-        hdb = HDBSCAN(algorithm="brute", mst_algorithm=mst_algo)
+    for mst_algorithm in MST_ALGORITHMS - BRUTE_COMPATIBLE:
+        hdb = HDBSCAN(algorithm="brute", mst_algorithm=mst_algorithm)
         with pytest.raises(ValueError, match=msg):
             hdb.fit(X, y)
 
 
 @pytest.mark.parametrize("outlier_type", _OUTLIER_ENCODING)
-def test_outlier_data(outlier_type):
+@pytest.mark.parametrize("mst_algorithm", MST_ALGORITHMS)
+@pytest.mark.parametrize("algorithm", ALGORITHMS)
+def test_outlier_data(outlier_type, mst_algorithm, algorithm):
     """
     Tests if np.inf and np.nan data are each treated as special outliers.
     """
+    algos = {algorithm, mst_algorithm}
+    if "brute" in algos and not algos.issubset(BRUTE_COMPATIBLE):
+        pytest.skip("Incompatible algorithm configuration")
+
     outlier = {
         "infinite": np.inf,
         "missing": np.nan,
@@ -97,7 +100,7 @@ def test_outlier_data(outlier_type):
     X_outlier = X.copy()
     X_outlier[0] = [outlier, 1]
     X_outlier[5] = [outlier, outlier]
-    model = HDBSCAN().fit(X_outlier)
+    model = HDBSCAN(algorithm=algorithm, mst_algorithm=mst_algorithm).fit(X_outlier)
 
     (missing_labels_idx,) = (model.labels_ == label).nonzero()
     assert_array_equal(missing_labels_idx, [0, 5])
@@ -106,7 +109,9 @@ def test_outlier_data(outlier_type):
     assert_array_equal(missing_probs_idx, [0, 5])
 
     clean_indices = list(range(1, 5)) + list(range(6, 200))
-    clean_model = HDBSCAN().fit(X_outlier[clean_indices])
+    clean_model = HDBSCAN(algorithm=algorithm, mst_algorithm=mst_algorithm).fit(
+        X_outlier[clean_indices]
+    )
     assert_array_equal(clean_model.labels_, model.labels_[clean_indices])
 
 
@@ -174,19 +179,19 @@ def test_hdbscan_feature_array():
     assert score >= 0.98
 
 
-@pytest.mark.parametrize("algo", ALGORITHMS)
+@pytest.mark.parametrize("algorithm", ALGORITHMS)
 @pytest.mark.parametrize("metric", _VALID_METRICS)
-def test_hdbscan_algorithms(algo, metric):
+def test_hdbscan_algorithms(algorithm, metric):
     """
     Tests that HDBSCAN works with the expected combinations of algorithms and
     metrics, or raises the expected errors.
     """
-    labels = HDBSCAN(algorithm=algo).fit_predict(X)
+    labels = HDBSCAN(algorithm=algorithm).fit_predict(X)
     n_clusters = len(set(labels) - OUTLIER_SET)
     assert n_clusters == n_clusters_true
 
     # Validation for brute is handled by `pairwise_distances`
-    if algo in ("brute", "auto"):
+    if algorithm in ("brute", "auto"):
         return
 
     ALGOS_TREES = {
@@ -201,12 +206,12 @@ def test_hdbscan_algorithms(algo, metric):
     }.get(metric, None)
 
     hdb = HDBSCAN(
-        algorithm=algo,
+        algorithm=algorithm,
         metric=metric,
         metric_params=metric_params,
     )
 
-    if metric not in ALGOS_TREES[algo].valid_metrics:
+    if metric not in ALGOS_TREES[algorithm].valid_metrics:
         with pytest.raises(ValueError):
             hdb.fit(X)
     elif metric == "wminkowski":
@@ -326,7 +331,7 @@ def test_hdbscan_precomputed_non_brute(tree):
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-@pytest.mark.parametrize("mst_algorithm", ["boruvka_exact", "prims"])
+@pytest.mark.parametrize("mst_algorithm", EXACT_MST_ALGORITHMS)
 def test_hdbscan_sparse(csr_container, mst_algorithm):
     """
     Tests that HDBSCAN works correctly when passing sparse feature data.
@@ -364,27 +369,25 @@ def test_hdbscan_sparse(csr_container, mst_algorithm):
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
-@pytest.mark.parametrize("mst_algorithm", ["boruvka_exact", "prims"])
+@pytest.mark.parametrize("mst_algorithm", MST_ALGORITHMS)
 def test_hdbscan_centers(algorithm, mst_algorithm):
     """
     Tests that HDBSCAN centers are calculated and stored properly, and are
     accurate to the data.
     """
-    mst_algorithm = "auto" if algorithm == "brute" else mst_algorithm
-    print(f"\nDEBUG *** {mst_algorithm=} | {algorithm=}")
-    if mst_algorithm == "auto" and algorithm == "auto":
-        pytest.xfail("We expect approximate boruvka to fail this closeness test")
+    algos = {mst_algorithm, algorithm}
+    if "brute" in algos and not algos.issubset(BRUTE_COMPATIBLE):
+        pytest.skip("Incompatible algorithm configuration")
+
     centers = [(0.0, 0.0), (3.0, 3.0)]
     H, _ = make_blobs(n_samples=1000, random_state=0, centers=centers, cluster_std=0.5)
     hdb = HDBSCAN(
         algorithm=algorithm, mst_algorithm=mst_algorithm, store_centers="both"
     ).fit(H)
 
-    # The boruvka algorithm tends to produce the centroids/medoids in opposite
-    # order, so we reverse for this test.
-    if mst_algorithm == "boruvka_exact":
-        centers = centers[::-1]
-    for center, centroid, medoid in zip(centers, hdb.centroids_, hdb.medoids_):
+    centroids = np.sort(hdb.centroids_, axis=0)
+    medoids = np.sort(hdb.medoids_, axis=0)
+    for center, centroid, medoid in zip(centers, centroids, medoids):
         assert_allclose(center, centroid, rtol=1, atol=0.05)
         assert_allclose(center, medoid, rtol=1, atol=0.05)
 
