@@ -2595,10 +2595,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             )
             X = _safe_indexing(X, subsample_idx)
 
-        self.quantiles_ = []
-        for col in X.T:
-            self.quantiles_.append(np.nanpercentile(col, references))
-        self.quantiles_ = np.transpose(self.quantiles_)
+        self.quantiles_ = np.nanpercentile(X, references, axis=0)
         # Due to floating-point precision error in `np.nanpercentile`,
         # make sure that quantiles are monotonically increasing.
         # Upstream issue in numpy:
