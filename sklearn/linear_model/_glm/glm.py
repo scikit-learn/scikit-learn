@@ -11,7 +11,6 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.optimize
 
-from ._newton_solver import NewtonCholeskySolver, NewtonSolver
 from ..._loss.loss import (
     HalfGammaLoss,
     HalfPoissonLoss,
@@ -19,14 +18,14 @@ from ..._loss.loss import (
     HalfTweedieLoss,
     HalfTweedieLossIdentity,
 )
-from ...base import BaseEstimator, RegressorMixin
-from ...base import _fit_context
+from ...base import BaseEstimator, RegressorMixin, _fit_context
 from ...utils import check_array
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._param_validation import Hidden, Interval, StrOptions
 from ...utils.optimize import _check_optimize_result
 from ...utils.validation import _check_sample_weight, check_is_fitted
 from .._linear_loss import LinearModelLoss
+from ._newton_solver import NewtonCholeskySolver, NewtonSolver
 
 
 class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
@@ -208,10 +207,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             loss_dtype = min(max(y.dtype, X.dtype), np.float64)
         y = check_array(y, dtype=loss_dtype, order="C", ensure_2d=False)
 
-        # TODO: We could support samples_weight=None as the losses support it.
-        # Note that _check_sample_weight calls check_array(order="C") required by
-        # losses.
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=loss_dtype)
+        if sample_weight is not None:
+            # Note that _check_sample_weight calls check_array(order="C") required by
+            # losses.
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=loss_dtype)
 
         n_samples, n_features = X.shape
         self._base_loss = self._get_loss()
@@ -229,17 +228,20 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         # TODO: if alpha=0 check that X is not rank deficient
 
-        # IMPORTANT NOTE: Rescaling of sample_weight:
+        # NOTE: Rescaling of sample_weight:
         # We want to minimize
-        #     obj = 1/(2*sum(sample_weight)) * sum(sample_weight * deviance)
+        #     obj = 1/(2 * sum(sample_weight)) * sum(sample_weight * deviance)
         #         + 1/2 * alpha * L2,
         # with
         #     deviance = 2 * loss.
         # The objective is invariant to multiplying sample_weight by a constant. We
-        # choose this constant such that sum(sample_weight) = 1. Thus, we end up with
+        # could choose this constant such that sum(sample_weight) = 1 in order to end
+        # up with
         #     obj = sum(sample_weight * loss) + 1/2 * alpha * L2.
-        # Note that LinearModelLoss.loss() computes sum(sample_weight * loss).
-        sample_weight = sample_weight / sample_weight.sum()
+        # But LinearModelLoss.loss() already computes
+        #     average(loss, weights=sample_weight)
+        # Thus, without rescaling, we have
+        #     obj = LinearModelLoss.loss(...)
 
         if self.warm_start and hasattr(self, "coef_"):
             if self.fit_intercept:
@@ -416,10 +418,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 f" {base_loss.__name__}."
             )
 
-        # Note that constant_to_optimal_zero is already multiplied by sample_weight.
-        constant = np.mean(base_loss.constant_to_optimal_zero(y_true=y))
-        if sample_weight is not None:
-            constant *= sample_weight.shape[0] / np.sum(sample_weight)
+        constant = np.average(
+            base_loss.constant_to_optimal_zero(y_true=y, sample_weight=None),
+            weights=sample_weight,
+        )
 
         # Missing factor of 2 in deviance cancels out.
         deviance = base_loss(

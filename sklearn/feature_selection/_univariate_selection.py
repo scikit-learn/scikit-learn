@@ -5,20 +5,19 @@
 # License: BSD 3 clause
 
 
-import numpy as np
 import warnings
-
 from numbers import Integral, Real
+
+import numpy as np
 from scipy import special, stats
 from scipy.sparse import issparse
 
-from ..base import BaseEstimator
-from ..base import _fit_context
+from ..base import BaseEstimator, _fit_context
 from ..preprocessing import LabelBinarizer
-from ..utils import as_float_array, check_array, check_X_y, safe_sqr, safe_mask
-from ..utils.extmath import safe_sparse_dot, row_norms
-from ..utils.validation import check_is_fitted
+from ..utils import as_float_array, check_array, check_X_y, safe_mask, safe_sqr
 from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.extmath import row_norms, safe_sparse_dot
+from ..utils.validation import check_is_fitted
 from ._base import SelectorMixin
 
 
@@ -122,7 +121,8 @@ def f_oneway(*args):
     {
         "X": ["array-like", "sparse matrix"],
         "y": ["array-like"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def f_classif(X, y):
     """Compute the ANOVA F-value for the provided sample.
@@ -178,7 +178,8 @@ def _chisquare(f_obs, f_exp):
     {
         "X": ["array-like", "sparse matrix"],
         "y": ["array-like"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def chi2(X, y):
     """Compute chi-squared stats between each non-negative feature and class.
@@ -258,7 +259,8 @@ def chi2(X, y):
         "y": ["array-like"],
         "center": ["boolean"],
         "force_finite": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def r_regression(X, y, *, center=True, force_finite=True):
     """Compute Pearson's r for each features and the target.
@@ -321,10 +323,13 @@ def r_regression(X, y, *, center=True, force_finite=True):
     # need not center X
     if center:
         y = y - np.mean(y)
-        if issparse(X):
-            X_means = X.mean(axis=0).getA1()
-        else:
-            X_means = X.mean(axis=0)
+        # TODO: for Scipy <= 1.10, `isspmatrix(X)` returns `True` for sparse arrays.
+        # Here, we check the output of the `.mean` operation that returns a `np.matrix`
+        # for sparse matrices while a `np.array` for dense and sparse arrays.
+        # We can reconsider using `isspmatrix` when the minimum version is
+        # SciPy >= 1.11
+        X_means = X.mean(axis=0)
+        X_means = X_means.getA1() if isinstance(X_means, np.matrix) else X_means
         # Compute the scaled standard deviations via moments
         X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means**2)
     else:
@@ -349,7 +354,8 @@ def r_regression(X, y, *, center=True, force_finite=True):
         "y": ["array-like"],
         "center": ["boolean"],
         "force_finite": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def f_regression(X, y, *, center=True, force_finite=True):
     """Univariate linear regression tests returning F-statistic and p-values.

@@ -1,8 +1,7 @@
 """All minimum dependencies for scikit-learn."""
-from collections import defaultdict
-import platform
 import argparse
-
+import platform
+from collections import defaultdict
 
 # scipy and cython should by in sync with pyproject.toml
 
@@ -30,7 +29,7 @@ dependent_packages = {
     "joblib": (JOBLIB_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
-    "matplotlib": ("3.1.3", "benchmark, docs, examples, tests"),
+    "matplotlib": ("3.3.4", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.16.2", "docs, examples, tests"),
     "pandas": ("1.0.5", "benchmark, docs, examples, tests"),
     "seaborn": ("0.9.0", "docs, examples"),
@@ -41,8 +40,11 @@ dependent_packages = {
     "black": ("23.3.0", "tests"),
     "mypy": ("1.3", "tests"),
     "pyamg": ("4.0.0", "tests"),
-    "sphinx": ("4.0.1", "docs"),
-    "sphinx-gallery": ("0.7.0", "docs"),
+    "polars": ("0.18.2", "tests"),
+    "pyarrow": ("12.0.0", "tests"),
+    "sphinx": ("6.0.0", "docs"),
+    "sphinx-copybutton": ("0.5.2", "docs"),
+    "sphinx-gallery": ("0.10.1", "docs"),
     "numpydoc": ("1.2.0", "docs, tests"),
     "Pillow": ("7.1.2", "docs"),
     "pooch": ("1.6.0", "docs, examples, tests"),
@@ -51,7 +53,7 @@ dependent_packages = {
     "plotly": ("5.14.0", "docs, examples"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
-    "conda-lock": ("2.0.0", "maintenance"),
+    "conda-lock": ("2.1.1", "maintenance"),
 }
 
 

@@ -19,24 +19,22 @@ features (words) may appear in each batch.
 # License: BSD 3 clause
 
 import itertools
-from pathlib import Path
-from hashlib import sha256
 import re
+import sys
 import tarfile
 import time
-import sys
+from hashlib import sha256
+from html.parser import HTMLParser
+from pathlib import Path
+from urllib.request import urlretrieve
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import rcParams
 
-from html.parser import HTMLParser
-from urllib.request import urlretrieve
 from sklearn.datasets import get_data_home
 from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.linear_model import SGDClassifier
-from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.linear_model import Perceptron
+from sklearn.linear_model import PassiveAggressiveClassifier, Perceptron, SGDClassifier
 from sklearn.naive_bayes import MultinomialNB
 
 

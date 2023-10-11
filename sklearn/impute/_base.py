@@ -5,22 +5,19 @@
 import numbers
 import warnings
 from collections import Counter
+from functools import partial
 
 import numpy as np
 import numpy.ma as ma
 from scipy import sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
-from ..base import _fit_context
-from ..utils._param_validation import StrOptions, MissingValues
+from ..base import BaseEstimator, TransformerMixin, _fit_context
+from ..utils import _is_pandas_na, is_scalar_nan
+from ..utils._mask import _get_mask
+from ..utils._param_validation import MissingValues, StrOptions
 from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median
-from ..utils.validation import check_is_fitted
-from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _check_feature_names_in
-from ..utils._mask import _get_mask
-from ..utils import _is_pandas_na
-from ..utils import is_scalar_nan
+from ..utils.validation import FLOAT_DTYPES, _check_feature_names_in, check_is_fitted
 
 
 def _check_inputs_dtype(X, missing_values):
@@ -119,7 +116,13 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         if not self.add_indicator:
             return X_imputed
 
-        hstack = sp.hstack if sp.issparse(X_imputed) else np.hstack
+        if sp.issparse(X_imputed):
+            # sp.hstack may result in different formats between sparse arrays and
+            # matrices; specify the format to keep consistent behavior
+            hstack = partial(sp.hstack, format=X_imputed.format)
+        else:
+            hstack = np.hstack
+
         if X_indicator is None:
             raise ValueError(
                 "Data from the missing indicator are not provided. Call "
@@ -260,6 +263,9 @@ class SimpleImputer(_BaseImputer):
     [[ 7.   2.   3. ]
      [ 4.   3.5  6. ]
      [10.   3.5  9. ]]
+
+    For a more detailed example see
+    :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
     """
 
     _parameter_constraints: dict = {
@@ -699,8 +705,10 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
     """Binary indicators for missing values.
 
     Note that this component typically should not be used in a vanilla
-    :class:`Pipeline` consisting of transformers and a classifier, but rather
-    could be added using a :class:`FeatureUnion` or :class:`ColumnTransformer`.
+    :class:`~sklearn.pipeline.Pipeline` consisting of transformers and a
+    classifier, but rather could be added using a
+    :class:`~sklearn.pipeline.FeatureUnion` or
+    :class:`~sklearn.compose.ColumnTransformer`.
 
     Read more in the :ref:`User Guide <impute>`.
 

@@ -17,12 +17,13 @@ case a warning is raised when computing the ROC curve.
 """
 
 from time import time
-import numpy as np
-import matplotlib.pyplot as plt
 
+import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.datasets import fetch_covtype, fetch_kddcup99, fetch_openml
 from sklearn.ensemble import IsolationForest
-from sklearn.metrics import roc_curve, auc
-from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_openml
+from sklearn.metrics import auc, roc_curve
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle as sh
 

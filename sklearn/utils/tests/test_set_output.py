@@ -1,15 +1,17 @@
-import pytest
 from collections import namedtuple
 
 import numpy as np
-from scipy.sparse import csr_matrix
+import pytest
 from numpy.testing import assert_array_equal
 
 from sklearn._config import config_context, get_config
-from sklearn.utils._set_output import _wrap_in_pandas_container
-from sklearn.utils._set_output import _safe_set_output
-from sklearn.utils._set_output import _SetOutputMixin
-from sklearn.utils._set_output import _get_output_config
+from sklearn.utils._set_output import (
+    _get_output_config,
+    _safe_set_output,
+    _SetOutputMixin,
+    _wrap_in_pandas_container,
+)
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 def test__wrap_in_pandas_container_dense():
@@ -39,11 +41,12 @@ def test__wrap_in_pandas_container_dense_update_columns_and_index():
     assert_array_equal(new_df.index, X_df.index)
 
 
-def test__wrap_in_pandas_container_error_validation():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test__wrap_in_pandas_container_error_validation(csr_container):
     """Check errors in _wrap_in_pandas_container."""
     X = np.asarray([[1, 0, 3], [0, 0, 1]])
-    X_csr = csr_matrix(X)
-    match = "Pandas output does not support sparse data"
+    X_csr = csr_container(X)
+    match = "The transformer outputs a scipy sparse matrix."
     with pytest.raises(ValueError, match=match):
         _wrap_in_pandas_container(X_csr, columns=["a", "b", "c"])
 
@@ -313,3 +316,32 @@ def test_set_output_named_tuple_out():
     assert isinstance(X_trans, Output)
     assert_array_equal(X_trans.X, X)
     assert_array_equal(X_trans.Y, 2 * X)
+
+
+class EstimatorWithListInput(_SetOutputMixin):
+    def fit(self, X, y=None):
+        assert isinstance(X, list)
+        self.n_features_in_ = len(X[0])
+        return self
+
+    def transform(self, X, y=None):
+        return X
+
+    def get_feature_names_out(self, input_features=None):
+        return np.asarray([f"X{i}" for i in range(self.n_features_in_)], dtype=object)
+
+
+def test_set_output_list_input():
+    """Check set_output for list input.
+
+    Non-regression test for #27037.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = [[0, 1, 2, 3], [4, 5, 6, 7]]
+    est = EstimatorWithListInput()
+    est.set_output(transform="pandas")
+
+    X_out = est.fit(X).transform(X)
+    assert isinstance(X_out, pd.DataFrame)
+    assert_array_equal(X_out.columns, ["X0", "X1", "X2", "X3"])

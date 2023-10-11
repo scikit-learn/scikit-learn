@@ -18,62 +18,67 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
+import copy
 import warnings
 from collections import Counter
-from inspect import signature
 from functools import partial
+from inspect import signature
 from traceback import format_exc
 
 import numpy as np
-import copy
 
+from ..base import is_regressor
+from ..utils import Bunch
+from ..utils._param_validation import HasMethods, StrOptions, validate_params
+from ..utils._response import _get_response_values
+from ..utils.metadata_routing import (
+    MetadataRequest,
+    MetadataRouter,
+    _MetadataRequester,
+    _raise_for_params,
+    _routing_enabled,
+    get_routing_for_object,
+    process_routing,
+)
+from ..utils.multiclass import type_of_target
 from . import (
-    r2_score,
-    median_absolute_error,
+    accuracy_score,
+    average_precision_score,
+    balanced_accuracy_score,
+    brier_score_loss,
+    class_likelihood_ratios,
+    explained_variance_score,
+    f1_score,
+    jaccard_score,
+    log_loss,
+    matthews_corrcoef,
     max_error,
     mean_absolute_error,
+    mean_absolute_percentage_error,
+    mean_gamma_deviance,
+    mean_poisson_deviance,
     mean_squared_error,
     mean_squared_log_error,
-    mean_poisson_deviance,
-    mean_gamma_deviance,
-    accuracy_score,
-    top_k_accuracy_score,
-    f1_score,
-    roc_auc_score,
-    average_precision_score,
+    median_absolute_error,
     precision_score,
+    r2_score,
     recall_score,
-    log_loss,
-    balanced_accuracy_score,
-    explained_variance_score,
-    brier_score_loss,
-    jaccard_score,
-    mean_absolute_percentage_error,
-    matthews_corrcoef,
-    class_likelihood_ratios,
+    roc_auc_score,
+    root_mean_squared_error,
+    root_mean_squared_log_error,
+    top_k_accuracy_score,
 )
-
-from .cluster import adjusted_rand_score
-from .cluster import rand_score
-from .cluster import homogeneity_score
-from .cluster import completeness_score
-from .cluster import v_measure_score
-from .cluster import mutual_info_score
-from .cluster import adjusted_mutual_info_score
-from .cluster import normalized_mutual_info_score
-from .cluster import fowlkes_mallows_score
-
-from ..utils import Bunch
-from ..utils.multiclass import type_of_target
-from ..base import is_regressor
-from ..utils.metadata_routing import _MetadataRequester
-from ..utils.metadata_routing import MetadataRequest
-from ..utils.metadata_routing import MetadataRouter
-from ..utils.metadata_routing import process_routing
-from ..utils.metadata_routing import get_routing_for_object
-from ..utils.metadata_routing import _routing_enabled
-from ..utils._response import _get_response_values
-from ..utils._param_validation import HasMethods, StrOptions, validate_params
+from .cluster import (
+    adjusted_mutual_info_score,
+    adjusted_rand_score,
+    completeness_score,
+    fowlkes_mallows_score,
+    homogeneity_score,
+    mutual_info_score,
+    normalized_mutual_info_score,
+    rand_score,
+    v_measure_score,
+)
 
 
 def _cached_call(cache, estimator, response_method, *args, **kwargs):
@@ -121,7 +126,7 @@ class _MultimetricScorer:
         cached_call = partial(_cached_call, cache)
 
         if _routing_enabled():
-            routed_params = process_routing(self, "score", kwargs)
+            routed_params = process_routing(self, "score", **kwargs)
         else:
             # they all get the same args, and they all get them all
             routed_params = Bunch(
@@ -251,11 +256,7 @@ class _BaseScorer(_MetadataRequester):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        if kwargs and not _routing_enabled():
-            raise ValueError(
-                "kwargs is only supported if enable_metadata_routing=True. See"
-                " the User Guide for more information."
-            )
+        _raise_for_params(kwargs, self, None)
 
         _kwargs = copy.deepcopy(kwargs)
         if sample_weight is not None:
@@ -294,6 +295,13 @@ class _BaseScorer(_MetadataRequester):
             Arguments should be of the form ``param_name=alias``, and `alias`
             can be one of ``{True, False, None, str}``.
         """
+        if not _routing_enabled():
+            raise RuntimeError(
+                "This method is only available when metadata routing is enabled."
+                " You can enable it using"
+                " sklearn.set_config(enable_metadata_routing=True)."
+            )
+
         self._warn_overlap(
             message=(
                 "You are setting metadata request for parameters which are "
@@ -475,7 +483,8 @@ class _ThresholdScorer(_BaseScorer):
 @validate_params(
     {
         "scoring": [str, callable, None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def get_scorer(scoring):
     """Get a scorer from string.
@@ -538,11 +547,12 @@ class _PassthroughScorer:
             routing information.
         """
         # This scorer doesn't do any validation or routing, it only exposes the
-        # score requests to the parent object. This object behaves as a
-        # consumer rather than a router.
-        res = MetadataRequest(owner=self._estimator.__class__.__name__)
-        res.score = get_routing_for_object(self._estimator).score
-        return res
+        # requests of the given estimator. This object behaves as a consumer
+        # rather than a router. Ideally it only exposes the score requests to
+        # the parent object; however, that requires computing the routing for
+        # meta-estimators, which would be more time consuming than simply
+        # returning the child object's requests.
+        return get_routing_for_object(self._estimator)
 
 
 def _check_multimetric_scoring(estimator, scoring):
@@ -635,7 +645,8 @@ def _check_multimetric_scoring(estimator, scoring):
         "greater_is_better": ["boolean"],
         "needs_proba": ["boolean"],
         "needs_threshold": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def make_scorer(
     score_func,
@@ -754,7 +765,10 @@ neg_median_absolute_error_scorer = make_scorer(
     median_absolute_error, greater_is_better=False
 )
 neg_root_mean_squared_error_scorer = make_scorer(
-    mean_squared_error, greater_is_better=False, squared=False
+    root_mean_squared_error, greater_is_better=False
+)
+neg_root_mean_squared_log_error_scorer = make_scorer(
+    root_mean_squared_log_error, greater_is_better=False
 )
 neg_mean_poisson_deviance_scorer = make_scorer(
     mean_poisson_deviance, greater_is_better=False
@@ -829,10 +843,11 @@ _SCORERS = dict(
     matthews_corrcoef=matthews_corrcoef_scorer,
     neg_median_absolute_error=neg_median_absolute_error_scorer,
     neg_mean_absolute_error=neg_mean_absolute_error_scorer,
-    neg_mean_absolute_percentage_error=neg_mean_absolute_percentage_error_scorer,  # noqa
+    neg_mean_absolute_percentage_error=neg_mean_absolute_percentage_error_scorer,
     neg_mean_squared_error=neg_mean_squared_error_scorer,
     neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
     neg_root_mean_squared_error=neg_root_mean_squared_error_scorer,
+    neg_root_mean_squared_log_error=neg_root_mean_squared_log_error_scorer,
     neg_mean_poisson_deviance=neg_mean_poisson_deviance_scorer,
     neg_mean_gamma_deviance=neg_mean_gamma_deviance_scorer,
     accuracy=accuracy_scorer,
@@ -892,7 +907,8 @@ for name, metric in [
         "estimator": [HasMethods("fit")],
         "scoring": [StrOptions(set(get_scorer_names())), callable, None],
         "allow_none": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def check_scoring(estimator, scoring=None, *, allow_none=False):
     """Determine scorer from user options.

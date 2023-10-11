@@ -4,35 +4,33 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 
 # Author: Gilles Louppe
 # License: BSD 3 clause
-from itertools import product
+from itertools import cycle, product
 
-import numpy as np
 import joblib
+import numpy as np
 import pytest
 
 from sklearn.base import BaseEstimator
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.model_selection import GridSearchCV, ParameterGrid
-from sklearn.ensemble import BaggingClassifier, BaggingRegressor
-from sklearn.linear_model import Perceptron, LogisticRegression
-from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.svm import SVC, SVR
-from sklearn.random_projection import SparseRandomProjection
-from sklearn.pipeline import make_pipeline
-from sklearn.feature_selection import SelectKBest
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
-from sklearn.utils import check_random_state
+from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.ensemble import (
+    BaggingClassifier,
+    BaggingRegressor,
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
+from sklearn.feature_selection import SelectKBest
+from sklearn.linear_model import LogisticRegression, Perceptron
+from sklearn.model_selection import GridSearchCV, ParameterGrid, train_test_split
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, scale
-from itertools import cycle
-
-from scipy.sparse import csc_matrix, csr_matrix
+from sklearn.random_projection import SparseRandomProjection
+from sklearn.svm import SVC, SVR
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 rng = check_random_state(0)
 
@@ -85,9 +83,9 @@ def test_classification():
 
 
 @pytest.mark.parametrize(
-    "sparse_format, params, method",
+    "sparse_container, params, method",
     product(
-        [csc_matrix, csr_matrix],
+        CSR_CONTAINERS + CSC_CONTAINERS,
         [
             {
                 "max_samples": 0.5,
@@ -107,7 +105,7 @@ def test_classification():
         ["predict", "predict_proba", "predict_log_proba", "decision_function"],
     ),
 )
-def test_sparse_classification(sparse_format, params, method):
+def test_sparse_classification(sparse_container, params, method):
     # Check classification for various parameter settings on sparse input.
 
     class CustomSVC(SVC):
@@ -123,8 +121,8 @@ def test_sparse_classification(sparse_format, params, method):
         scale(iris.data), iris.target, random_state=rng
     )
 
-    X_train_sparse = sparse_format(X_train)
-    X_test_sparse = sparse_format(X_test)
+    X_train_sparse = sparse_container(X_train)
+    X_test_sparse = sparse_container(X_test)
     # Trained on sparse format
     sparse_classifier = BaggingClassifier(
         estimator=CustomSVC(kernel="linear", decision_function_shape="ovr"),
@@ -176,7 +174,8 @@ def test_regression():
             ).predict(X_test)
 
 
-def test_sparse_regression():
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+def test_sparse_regression(sparse_container):
     # Check regression for various parameter settings on sparse input.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(
@@ -208,29 +207,28 @@ def test_sparse_regression():
         {"max_samples": 0.5, "bootstrap": True, "bootstrap_features": False},
     ]
 
-    for sparse_format in [csc_matrix, csr_matrix]:
-        X_train_sparse = sparse_format(X_train)
-        X_test_sparse = sparse_format(X_test)
-        for params in parameter_sets:
-            # Trained on sparse format
-            sparse_classifier = BaggingRegressor(
-                estimator=CustomSVR(), random_state=1, **params
-            ).fit(X_train_sparse, y_train)
-            sparse_results = sparse_classifier.predict(X_test_sparse)
+    X_train_sparse = sparse_container(X_train)
+    X_test_sparse = sparse_container(X_test)
+    for params in parameter_sets:
+        # Trained on sparse format
+        sparse_classifier = BaggingRegressor(
+            estimator=CustomSVR(), random_state=1, **params
+        ).fit(X_train_sparse, y_train)
+        sparse_results = sparse_classifier.predict(X_test_sparse)
 
-            # Trained on dense format
-            dense_results = (
-                BaggingRegressor(estimator=CustomSVR(), random_state=1, **params)
-                .fit(X_train, y_train)
-                .predict(X_test)
-            )
+        # Trained on dense format
+        dense_results = (
+            BaggingRegressor(estimator=CustomSVR(), random_state=1, **params)
+            .fit(X_train, y_train)
+            .predict(X_test)
+        )
 
-            sparse_type = type(X_train_sparse)
-            types = [i.data_type_ for i in sparse_classifier.estimators_]
+        sparse_type = type(X_train_sparse)
+        types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-            assert_array_almost_equal(sparse_results, dense_results)
-            assert all([t == sparse_type for t in types])
-            assert_array_almost_equal(sparse_results, dense_results)
+        assert_array_almost_equal(sparse_results, dense_results)
+        assert all([t == sparse_type for t in types])
+        assert_array_almost_equal(sparse_results, dense_results)
 
 
 class DummySizeEstimator(BaseEstimator):

@@ -17,15 +17,11 @@ from numbers import Integral
 
 import numpy as np
 
-from ..utils.validation import check_is_fitted, check_array
-from ..utils._param_validation import Interval, validate_params, StrOptions, HasMethods
-
 from ..base import is_classifier
-
-from . import _criterion
-from . import _tree
-from ._reingold_tilford import buchheim, Tree
-from . import DecisionTreeClassifier, DecisionTreeRegressor
+from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
+from ..utils.validation import check_array, check_is_fitted
+from . import DecisionTreeClassifier, DecisionTreeRegressor, _criterion, _tree
+from ._reingold_tilford import Tree, buchheim
 
 
 def _color_brew(n):
@@ -82,8 +78,8 @@ SENTINEL = Sentinel()
     {
         "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
         "max_depth": [Interval(Integral, 0, None, closed="left"), None],
-        "feature_names": [list, None],
-        "class_names": [list, None],
+        "feature_names": ["array-like", None],
+        "class_names": ["array-like", "boolean", None],
         "label": [StrOptions({"all", "root", "none"})],
         "filled": ["boolean"],
         "impurity": ["boolean"],
@@ -93,7 +89,8 @@ SENTINEL = Sentinel()
         "precision": [Interval(Integral, 0, None, closed="left"), None],
         "ax": "no_validation",  # delegate validation to matplotlib
         "fontsize": [Interval(Integral, 0, None, closed="left"), None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def plot_tree(
     decision_tree,
@@ -133,11 +130,11 @@ def plot_tree(
         The maximum depth of the representation. If None, the tree is fully
         generated.
 
-    feature_names : list of str, default=None
+    feature_names : array-like of str, default=None
         Names of each of the features.
         If None, generic names will be used ("x[0]", "x[1]", ...).
 
-    class_names : list of str or bool, default=None
+    class_names : array-like of str or True, default=None
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
         If ``True``, shows a symbolic representation of the class name.
@@ -746,7 +743,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
         "special_characters": ["boolean"],
         "precision": [Interval(Integral, 0, None, closed="left"), None],
         "fontname": [str],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def export_graphviz(
     decision_tree,
@@ -947,7 +945,8 @@ def _compute_depth(tree, node):
         "spacing": [Interval(Integral, 1, None, closed="left"), None],
         "decimals": [Interval(Integral, 0, None, closed="left"), None],
         "show_weights": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def export_text(
     decision_tree,

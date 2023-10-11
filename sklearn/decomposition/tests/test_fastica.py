@@ -2,18 +2,17 @@
 Test the fastica algorithm.
 """
 import itertools
-import pytest
-import warnings
 import os
+import warnings
 
 import numpy as np
+import pytest
 from scipy import stats
 
-from sklearn.utils._testing import assert_allclose
-
-from sklearn.decomposition import FastICA, fastica, PCA
+from sklearn.decomposition import PCA, FastICA, fastica
 from sklearn.decomposition._fastica import _gs_decorrelation
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._testing import assert_allclose
 
 
 def center_and_norm(x, axis=-1):

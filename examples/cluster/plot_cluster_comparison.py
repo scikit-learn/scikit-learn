@@ -26,26 +26,28 @@ dimensional data.
 
 import time
 import warnings
+from itertools import cycle, islice
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn import cluster, datasets, mixture
 from sklearn.neighbors import kneighbors_graph
 from sklearn.preprocessing import StandardScaler
-from itertools import cycle, islice
-
-np.random.seed(0)
 
 # ============
 # Generate datasets. We choose the size big enough to see the scalability
 # of the algorithms, but not too big to avoid too long running times
 # ============
 n_samples = 500
-noisy_circles = datasets.make_circles(n_samples=n_samples, factor=0.5, noise=0.05)
-noisy_moons = datasets.make_moons(n_samples=n_samples, noise=0.05)
-blobs = datasets.make_blobs(n_samples=n_samples, random_state=8)
-no_structure = np.random.rand(n_samples, 2), None
+seed = 30
+noisy_circles = datasets.make_circles(
+    n_samples=n_samples, factor=0.5, noise=0.05, random_state=seed
+)
+noisy_moons = datasets.make_moons(n_samples=n_samples, noise=0.05, random_state=seed)
+blobs = datasets.make_blobs(n_samples=n_samples, random_state=seed)
+rng = np.random.RandomState(seed)
+no_structure = rng.rand(n_samples, 2), None
 
 # Anisotropicly distributed data
 random_state = 170
@@ -82,6 +84,7 @@ default_base = {
     "allow_single_cluster": True,
     "hdbscan_min_cluster_size": 15,
     "hdbscan_min_samples": 3,
+    "random_state": 42,
 }
 
 datasets = [
@@ -154,7 +157,11 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
     # Create cluster objects
     # ============
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
-    two_means = cluster.MiniBatchKMeans(n_clusters=params["n_clusters"], n_init="auto")
+    two_means = cluster.MiniBatchKMeans(
+        n_clusters=params["n_clusters"],
+        n_init="auto",
+        random_state=params["random_state"],
+    )
     ward = cluster.AgglomerativeClustering(
         n_clusters=params["n_clusters"], linkage="ward", connectivity=connectivity
     )
@@ -162,6 +169,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         n_clusters=params["n_clusters"],
         eigen_solver="arpack",
         affinity="nearest_neighbors",
+        random_state=params["random_state"],
     )
     dbscan = cluster.DBSCAN(eps=params["eps"])
     hdbscan = cluster.HDBSCAN(
@@ -175,7 +183,9 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         min_cluster_size=params["min_cluster_size"],
     )
     affinity_propagation = cluster.AffinityPropagation(
-        damping=params["damping"], preference=params["preference"], random_state=0
+        damping=params["damping"],
+        preference=params["preference"],
+        random_state=params["random_state"],
     )
     average_linkage = cluster.AgglomerativeClustering(
         linkage="average",
@@ -185,7 +195,9 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
     )
     birch = cluster.Birch(n_clusters=params["n_clusters"])
     gmm = mixture.GaussianMixture(
-        n_components=params["n_clusters"], covariance_type="full"
+        n_components=params["n_clusters"],
+        covariance_type="full",
+        random_state=params["random_state"],
     )
 
     clustering_algorithms = (

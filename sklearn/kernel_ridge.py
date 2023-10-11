@@ -7,12 +7,11 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
-from .base import _fit_context
-from .utils._param_validation import Interval, StrOptions
-from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
+from .base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context
 from .linear_model._ridge import _solve_cholesky_kernel
-from .utils.validation import check_is_fitted, _check_sample_weight
+from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
+from .utils._param_validation import Interval, StrOptions
+from .utils.validation import _check_sample_weight, check_is_fitted
 
 
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -52,7 +51,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     kernel : str or callable, default="linear"
         Kernel mapping used internally. This parameter is directly passed to
-        :class:`~sklearn.metrics.pairwise.pairwise_kernel`.
+        :class:`~sklearn.metrics.pairwise.pairwise_kernels`.
         If `kernel` is a string, it must be one of the metrics
         in `pairwise.PAIRWISE_KERNEL_FUNCTIONS` or "precomputed".
         If `kernel` is "precomputed", X is assumed to be a kernel matrix.

@@ -10,8 +10,9 @@ This exercise is used in the :ref:`using_kernels_tut` part of the
 
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import datasets, svm
 
 iris = datasets.load_iris()

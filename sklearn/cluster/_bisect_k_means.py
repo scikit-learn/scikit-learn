@@ -7,18 +7,17 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import _fit_context
-from ._kmeans import _BaseKMeans
-from ._kmeans import _kmeans_single_elkan
-from ._kmeans import _kmeans_single_lloyd
-from ._kmeans import _labels_inertia_threadpool_limit
-from ._k_means_common import _inertia_dense
-from ._k_means_common import _inertia_sparse
-from ..utils.extmath import row_norms
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_sample_weight
-from ..utils.validation import check_random_state
 from ..utils._param_validation import StrOptions
+from ..utils.extmath import row_norms
+from ..utils.validation import _check_sample_weight, check_is_fitted, check_random_state
+from ._k_means_common import _inertia_dense, _inertia_sparse
+from ._kmeans import (
+    _BaseKMeans,
+    _kmeans_single_elkan,
+    _kmeans_single_lloyd,
+    _labels_inertia_threadpool_limit,
+)
 
 
 class _BisectingTree:
@@ -258,7 +257,7 @@ class BisectingKMeans(_BaseKMeans):
         X : {ndarray, csr_matrix} of shape (n_samples, n_features)
             The input samples.
 
-        centers : ndarray of shape (n_clusters, n_features)
+        centers : ndarray of shape (n_clusters=2, n_features)
             The cluster centers.
 
         labels : ndarray of shape (n_samples,)
@@ -269,13 +268,14 @@ class BisectingKMeans(_BaseKMeans):
 
         Returns
         -------
-        inertia_per_cluster : ndarray of shape (n_clusters,)
+        inertia_per_cluster : ndarray of shape (n_clusters=2,)
             Sum of squared errors (inertia) for each cluster.
         """
+        n_clusters = centers.shape[0]  # = 2 since centers comes from a bisection
         _inertia = _inertia_sparse if sp.issparse(X) else _inertia_dense
 
-        inertia_per_cluster = np.empty(centers.shape[1])
-        for label in range(centers.shape[0]):
+        inertia_per_cluster = np.empty(n_clusters)
+        for label in range(n_clusters):
             inertia_per_cluster[label] = _inertia(
                 X, sample_weight, centers, labels, self._n_threads, single_label=label
             )
