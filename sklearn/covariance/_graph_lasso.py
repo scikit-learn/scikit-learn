@@ -22,14 +22,14 @@ from ..linear_model import _cd_fast as cd_fast  # type: ignore
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
 from ..utils import Bunch
-from ..utils._metadata_requests import (
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _is_arraylike_not_scalar,

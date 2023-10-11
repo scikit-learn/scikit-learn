@@ -57,8 +57,8 @@ methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
 more details.
 
 - |Feature| :class:`GraphicalLassoCV` now supports metadata routing in it's
-  `fit` method and routes metadata to the CV splitter and the
-  `cross_val_score` function. :pr:`27566` by :user:`Omar Salman <OmarManzoor>`.
+  `fit` method and routes metadata to the CV splitter.
+  :pr:`27566` by :user:`Omar Salman <OmarManzoor>`.
 
 - |Feature| :class:`LarsCV` and :class:`LassoLarsCV` now support metadata
   routing in their `fit` method and route metadata to the CV splitter.
