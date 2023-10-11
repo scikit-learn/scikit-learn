@@ -63,7 +63,7 @@ from ...utils._typedefs cimport intp_t, float64_t, uint8_t, int8_t
 from ...neighbors._binary_tree cimport NodeData_t
 from ._linkage cimport MST_edge_t
 from ._linkage import MST_edge_dtype
-from joblib import Parallel, delayed, effective_n_jobs
+from joblib import effective_n_jobs
 
 cdef float64_t INF = np.inf
 
@@ -113,8 +113,10 @@ cdef inline float64_t kd_tree_min_dist_dual(
     return metric._rdist_to_dist(rdist)
 
 
-cdef class BoruvkaUnionFind(object):
-    """Efficient union find implementation.
+cdef class BoruvkaUnionFind:
+    """
+    A union find implementation which avoids virtual nodes in order to keep track
+    of exact correspondence between initial elements and components.
 
     Parameters
     ----------
@@ -135,13 +137,11 @@ cdef class BoruvkaUnionFind(object):
     cdef intp_t[::1] _parent
     cdef uint8_t[::1] _rank
     cdef uint8_t[::1] is_component
-    cdef intp_t num_components
 
     def __init__(self, size):
         self._parent = np.arange(size, dtype=np.intp)
         self._rank = np.zeros(size, dtype=np.uint8)
         self.is_component = np.ones(size, dtype=np.uint8)
-        self.num_components = size
 
     cdef int union_(self, intp_t x, intp_t y) noexcept nogil:
         """Union together elements x and y"""
@@ -240,7 +240,7 @@ cdef class BoruvkaAlgorithm:
         int8_t approx_min_span_tree
         intp_t n_jobs, min_samples
         intp_t num_points, num_nodes, num_features
-        bint is_KDTree
+        bint has_KDTree
 
         float64_t[::1] core_distance
         float64_t[::1] bounds
@@ -270,7 +270,7 @@ cdef class BoruvkaAlgorithm:
     ):
 
         self.tree =tree
-        self.is_KDTree = isinstance(tree, KDTree)
+        self.has_KDTree = isinstance(tree, KDTree)
         self.raw_data = self.tree.data
         self.node_bounds = self.tree.node_bounds
         self.alpha = alpha
@@ -299,7 +299,7 @@ cdef class BoruvkaAlgorithm:
         self.idx_array = self.tree.idx_array
         self.node_data = self.tree.node_data
 
-        if not self.is_KDTree:
+        if not self.has_KDTree:
             # Compute centroids for BallTree
             self.centroid_distances = self.dist.pairwise(self.tree.node_bounds[0])
 
@@ -314,34 +314,14 @@ cdef class BoruvkaAlgorithm:
         cdef cnp.ndarray[float64_t, ndim=2] knn_dist
         cdef cnp.ndarray[intp_t, ndim=2] knn_indices
 
-        # TODO: Revisit n_jobs semantics in a follow-up PR. Specifically, consider
-        # replacing with OpenMP prange
-        # A shortcut: if we have a lot of points then we can split the points
-        # into multiple piles and query them in parallel. On multicore systems
-        # (most systems) this amounts to a 2x-3x wall clock improvement.
-        if self.num_points > 16384 and self.n_jobs > 1:
-            split_cnt = self.num_points // self.n_jobs
-            datasets = []
-            for i in range(self.n_jobs):
-                if i == self.n_jobs - 1:
-                    datasets.append(np.asarray(self.tree.data[i*split_cnt:]))
-                else:
-                    datasets.append(np.asarray(self.tree.data[i*split_cnt:(i+1)*split_cnt]))
-
-            knn_data = Parallel(n_jobs=self.n_jobs, max_nbytes=None)(
-                delayed(_core_dist_query)
-                (self.tree, points,
-                 self.min_samples)
-                for points in datasets)
-            knn_dist = np.vstack([x[0] for x in knn_data])
-            knn_indices = np.vstack([x[1] for x in knn_data])
-        else:
-            knn_dist, knn_indices = self.tree.query(
-                self.tree.data,
-                k=self.min_samples,
-                dualtree=True,
-                breadth_first=True
-            )
+        # TODO: Evaluate query-parallelization featured in original HDBSCAN
+        # implementation. Removed for now for simplicity.
+        knn_dist, knn_indices = self.tree.query(
+            self.tree.data,
+            k=self.min_samples,
+            dualtree=True,
+            breadth_first=True
+        )
 
         self.core_distance = knn_dist[:, self.min_samples - 1].copy()
 
@@ -519,7 +499,7 @@ cdef class BoruvkaAlgorithm:
         cdef float64_t left_dist, right_dist
 
         # Compute the distance between the query and reference nodes
-        if self.is_KDTree:
+        if self.has_KDTree:
             node_dist = kd_tree_min_dist_dual(
                 self.dist,
                 node1, node2, self.node_bounds,
@@ -597,8 +577,7 @@ cdef class BoruvkaAlgorithm:
                     q = point_indices2[j]
                     component2 = self.component_of_point[q]
 
-                    if (self.core_distance[q] >
-                            self.candidate_distance[component1]):
+                    if self.core_distance[q] > self.candidate_distance[component1]:
                         continue
 
                     if component1 != component2:
@@ -658,7 +637,7 @@ cdef class BoruvkaAlgorithm:
                         self.bounds[right]
                     )
 
-                    if self.is_KDTree:
+                    if self.has_KDTree:
                         new_bound = bound_max
                     else:
                         bound_min = min(
@@ -683,13 +662,17 @@ cdef class BoruvkaAlgorithm:
         #       compute distances between nodes to determine
         #       whether we should prioritise the left or
         #       right branch in the reference tree.
-        elif node1_info.is_leaf or (not node2_info.is_leaf and
-                                    node2_info.radius > node1_info.radius):
-
+        elif (
+                node1_info.is_leaf or
+                (
+                    not node2_info.is_leaf and
+                    node2_info.radius > node1_info.radius
+                )
+        ):
             left = 2 * node2 + 1
             right = 2 * node2 + 2
 
-            if self.is_KDTree:
+            if self.has_KDTree:
                 left_dist = kd_tree_min_dist_dual(
                     self.dist,
                     node1, left,
@@ -735,7 +718,7 @@ cdef class BoruvkaAlgorithm:
         else:
             left = 2 * node1 + 1
             right = 2 * node1 + 2
-            if self.is_KDTree:
+            if self.has_KDTree:
                 left_dist = kd_tree_min_dist_dual(
                     self.dist,
                     left, node2,
