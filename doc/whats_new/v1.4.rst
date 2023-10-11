@@ -284,6 +284,20 @@ Changelog
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
   <StefanieSenger>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Enhancement| :class:`inspection.DecisionBoundaryDisplay` now accepts a parameter
+  `class_of_interest` to select the class of interest when plotting the response
+  provided by `response_method="predict_proba"` or
+  `response_method="decision_function"`. It allows to plot the decision boundary for
+  both binary and multiclass classifiers.
+  :pr:`27291` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| :class:`inspection.DecisionBoundaryDisplay` raise an `AttributeError` instead
+  of a `ValueError` when an estimator does not implement the requested response method.
+  :pr:`27291` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
