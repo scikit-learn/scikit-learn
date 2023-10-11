@@ -1014,6 +1014,20 @@ def test_precision_recall_curve_toydata(drop):
         assert_almost_equal(average_precision_score(y_true, y_score), 1.0)
         assert_array_almost_equal(p, [1.0, 1.0, 1.0])
         assert_array_almost_equal(r, [1, 0.5, 0.0])
+        
+        y_true = [1, 1]
+        y_score = [0.25, 0.75]
+        p, r, _ = precision_recall_curve(y_true, y_score, drop_intermediate=drop, calibrated=True)
+        assert_almost_equal(average_precision_score(y_true, y_score, calibrated=True), 1.0)
+        assert_array_almost_equal(p, [1.0, 1.0, 1.0])
+        assert_array_almost_equal(r, [1, 0.5, 0.0])
+        
+        y_true = [1, 0, 0]
+        y_score = [0.5, 0.5, 0.0]
+        p, r, _ = precision_recall_curve(y_true, y_score, drop_intermediate=drop, calibrated=True)
+        assert_almost_equal(average_precision_score(y_true, y_score, calibrated=True), 0.6666666666666666)
+        assert_array_almost_equal(p, [0.5, 0.6666666666666666 , 1.0])
+        assert_array_almost_equal(r, [1.0, 1.0, 0.0])
 
         # Multi-label classification task
         y_true = np.array([[0, 1], [0, 1]])
@@ -1104,6 +1118,22 @@ def test_precision_recall_curve_toydata(drop):
         assert_almost_equal(
             average_precision_score(y_true, y_score, average="micro"), 0.5
         )
+        
+        y_true = np.array([[1, 0], [0, 1], [0, 0]])
+        y_score = np.array([[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]])
+        assert_almost_equal(
+            average_precision_score(y_true, y_score, average="macro", calibrated=True), 0.5
+        )
+        assert_almost_equal(
+            average_precision_score(y_true, y_score, average="weighted", calibrated=True), 0.5
+        )
+        assert_almost_equal(
+            average_precision_score(y_true, y_score, average="micro", calibrated=True), 0.5
+        )
+        with pytest.warns(UserWarning, match="No positive class found in y_true"):
+            assert_almost_equal(
+                average_precision_score(y_true, y_score, average="samples", calibrated=True), 0.3333333333333333
+            )
 
     with np.errstate(all="ignore"):
         # if one class is never present weighted should not be NaN
