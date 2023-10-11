@@ -67,7 +67,7 @@ df["count"].max()
 #     Nevertheless, when reporting performance measures on the test set in
 #     the discussion, we choose to focus on the mean absolute error instead
 #     of the (root) mean squared error because it is more intuitive to
-#     interprete. Note, however, that in this study the best models for one
+#     interpret. Note, however, that in this study the best models for one
 #     metric are also the best ones in terms of the other metric.
 y = df["count"] / df["count"].max()
 
