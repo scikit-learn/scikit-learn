@@ -34,13 +34,19 @@ BRUTE_COMPATIBLE = {"auto", "brute"}
 ALGORITHMS = {
     "kd_tree",
     "ball_tree",
-}.union(BRUTE_COMPATIBLE)
+} | BRUTE_COMPATIBLE
 
 EXACT_MST_ALGORITHMS = {"prims", "boruvka_exact"}
-MST_ALGORITHMS = {"boruvka_approx"}.union(EXACT_MST_ALGORITHMS).union(BRUTE_COMPATIBLE)
+MST_ALGORITHMS = {"boruvka_approx"} | EXACT_MST_ALGORITHMS | BRUTE_COMPATIBLE
 
 
 OUTLIER_SET = {-1} | {out["label"] for _, out in _OUTLIER_ENCODING.items()}
+
+
+def _validate_algorithms(algorithm, mst_algorithm):
+    algos = {algorithm, mst_algorithm}
+    if "brute" in algos and not algos.issubset(BRUTE_COMPATIBLE):
+        pytest.xfail("Incompatible algorithm configuration")
 
 
 @pytest.mark.parametrize("tree", ["kd_tree", "ball_tree"])
@@ -82,10 +88,7 @@ def test_outlier_data(outlier_type, mst_algorithm, algorithm):
     """
     Tests if np.inf and np.nan data are each treated as special outliers.
     """
-    algos = {algorithm, mst_algorithm}
-    if "brute" in algos and not algos.issubset(BRUTE_COMPATIBLE):
-        pytest.skip("Incompatible algorithm configuration")
-
+    _validate_algorithms(algorithm, mst_algorithm)
     outlier = {
         "infinite": np.inf,
         "missing": np.nan,
@@ -319,14 +322,25 @@ def test_hdbscan_callable_metric():
     assert n_clusters == n_clusters_true
 
 
-@pytest.mark.parametrize("tree", ["kd", "ball"])
-def test_hdbscan_precomputed_non_brute(tree):
+@pytest.mark.parametrize("algorithm", sorted(ALGORITHMS))
+@pytest.mark.parametrize("mst_algorithm", sorted(MST_ALGORITHMS))
+def test_hdbscan_precomputed_non_brute(algorithm, mst_algorithm):
     """
     Tests that HDBSCAN correctly raises an error when passing precomputed data
     while requesting a tree-based algorithm.
     """
-    hdb = HDBSCAN(metric="precomputed", algorithm=f"prims_{tree}tree")
-    with pytest.raises(ValueError):
+    algos = {algorithm, mst_algorithm}
+    if algos.issubset(BRUTE_COMPATIBLE):
+        return
+    hdb = HDBSCAN(
+        metric="precomputed", algorithm=algorithm, mst_algorithm=mst_algorithm
+    )
+
+    if "brute" in algos:
+        msg = "When setting either `algorithm='brute'` or `mst_algorithm='brute'`"
+    else:
+        msg = "When setting `metric='precomputed'`, both `mst_algorithm` and"
+    with pytest.raises(ValueError, match=msg):
         hdb.fit(X)
 
 
@@ -375,9 +389,7 @@ def test_hdbscan_centers(algorithm, mst_algorithm):
     Tests that HDBSCAN centers are calculated and stored properly, and are
     accurate to the data.
     """
-    algos = {mst_algorithm, algorithm}
-    if "brute" in algos and not algos.issubset(BRUTE_COMPATIBLE):
-        pytest.skip("Incompatible algorithm configuration")
+    _validate_algorithms(algorithm, mst_algorithm)
 
     centers = [(0.0, 0.0), (3.0, 3.0)]
     H, _ = make_blobs(n_samples=1000, random_state=0, centers=centers, cluster_std=0.5)

@@ -516,10 +516,13 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
            The `'balltree'` option was deprecated in version 1.4,
            and will be renamed to `'ball_tree'` in 1.6.
 
-    mst_algorithm : {"auto", "brute", "prims", "boruvka"}, default="prims"
+    mst_algorithm : {"auto", "brute", "prims", "boruvka"}, default="auto"
         Exactly which algorithm to use for building the minimum spanning tree.
-        The `"auto"` option switches between `"brute"` and `"boruvka"` based on
-        the data and use of precomputed distances.
+        The `"auto"` option switches between `"brute"` and `"boruvka_exact"` based
+        on the data and use of precomputed distances. If you can tolerate some
+        inexactness and would prefer a speedup, consider using `"boruvka_approx"`.
+        The speedup is especially dramatic when dealing with many features
+        (n_features > ~45)
 
         .. versionadded:: 1.4
 
@@ -701,7 +704,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         metric_params=None,
         alpha=1.0,
         algorithm="auto",
-        mst_algorithm="prims",
+        mst_algorithm="auto",
         leaf_size=40,
         n_jobs=None,
         cluster_selection_method="eom",
@@ -812,11 +815,17 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
         algorithms = {self.algorithm, self.mst_algorithm}
         acceptable_algorithms = {"auto", "brute"}
+        using_brute_compat_algos = algorithms.issubset(acceptable_algorithms)
 
-        if "brute" in algorithms and not algorithms.issubset(acceptable_algorithms):
+        if "brute" in algorithms and not using_brute_compat_algos:
             raise ValueError(
                 "When setting either `algorithm='brute'` or `mst_algorithm='brute'`,"
                 " both keyword arguments must only be set to either 'brute' or 'auto'."
+            )
+        if self.metric == "precomputed" and not using_brute_compat_algos:
+            raise ValueError(
+                "When setting `metric='precomputed'`, both `mst_algorithm` and"
+                " `algorithm` must be set to either 'brute' or 'auto'."
             )
 
         # TODO(1.6): Remove
@@ -897,9 +906,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                             self.mst_algorithm == "boruvka_approx"
                         )
                 else:
-                    # Approximate boruvka is always preferable
+                    # Boruvka is always preferable
                     mst_func = _hdbscan_boruvka
-                    kwargs["approx_min_span_tree"] = True
+                    kwargs["approx_min_span_tree"] = False
 
         else:
             if issparse(X) or self.metric not in FAST_METRICS:
@@ -907,9 +916,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = self.copy
             else:
-                # Approximate boruvka is always preferable
+                # Boruvka is always preferable
                 mst_func = _hdbscan_boruvka
-                kwargs["approx_min_span_tree"] = True
+                kwargs["approx_min_span_tree"] = False
                 kwargs["leaf_size"] = self.leaf_size
                 kwargs["algo"] = (
                     "kd_tree" if self.metric in KDTree.valid_metrics else "ball_tree"
