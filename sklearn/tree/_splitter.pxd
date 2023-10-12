@@ -14,7 +14,8 @@ cimport numpy as cnp
 
 from libcpp.vector cimport vector
 
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t
+from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t
+from ._utils cimport UINT32_t
 from ._criterion cimport BaseCriterion, Criterion
 
 
@@ -47,7 +48,7 @@ cdef class BaseSplitter:
     cdef public float64_t min_weight_leaf   # Minimum weight in a leaf
 
     cdef object random_state             # Random state
-    cdef uint32_t rand_r_state           # sklearn_rand_r random number state
+    cdef UINT32_t rand_r_state           # sklearn_rand_r random number state
 
     cdef intp_t[::1] samples             # Sample indices in X, y
     cdef intp_t n_samples                # X.shape[0]

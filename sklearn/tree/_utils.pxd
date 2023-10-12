@@ -8,12 +8,16 @@
 
 # See _utils.pyx for details.
 
+import numpy as np
 cimport numpy as cnp
+cnp.import_array()
+ctypedef cnp.npy_uint32 UINT32_t
 
 from ..neighbors._quad_tree cimport Cell
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t
+from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t
 
 from ._tree cimport Node
+
 
 cdef enum:
     # Max value for our rand_r replacement (near the bottom).
@@ -48,11 +52,11 @@ cdef cnp.ndarray sizet_ptr_to_ndarray(intp_t* data, intp_t size)
 
 
 cdef intp_t rand_int(intp_t low, intp_t high,
-                     uint32_t* random_state) noexcept nogil
+                     UINT32_t* random_state) noexcept nogil
 
 
 cdef float64_t rand_uniform(float64_t low, float64_t high,
-                            uint32_t* random_state) noexcept nogil
+                            UINT32_t* random_state) noexcept nogil
 
 
 cdef float64_t log(float64_t x) noexcept nogil

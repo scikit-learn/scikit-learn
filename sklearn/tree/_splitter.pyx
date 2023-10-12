@@ -467,7 +467,7 @@ cdef inline intp_t node_split_best(
     cdef intp_t max_features = splitter.max_features
     cdef intp_t min_samples_leaf = splitter.min_samples_leaf
     cdef float64_t min_weight_leaf = splitter.min_weight_leaf
-    cdef uint32_t* random_state = &splitter.rand_r_state
+    cdef UINT32_t* random_state = &splitter.rand_r_state
 
     cdef SplitRecord best_split, current_split
     cdef float64_t current_proxy_improvement = -INFINITY
@@ -848,7 +848,7 @@ cdef inline intp_t node_split_random(
     cdef intp_t n_features = splitter.n_features
 
     cdef intp_t max_features = splitter.max_features
-    cdef uint32_t* random_state = &splitter.rand_r_state
+    cdef UINT32_t* random_state = &splitter.rand_r_state
 
     cdef SplitRecord best_split, current_split
     cdef float64_t current_proxy_improvement = - INFINITY

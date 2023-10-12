@@ -18,7 +18,7 @@ cnp.import_array()
 # from .utils import check_random_state
 from sklearn.utils import check_random_state
 
-cdef uint32_t DEFAULT_SEED = 1
+cdef UINT32_t DEFAULT_SEED = 1
 
 
 cpdef _sample_without_replacement_check_input(cnp.int_t n_population,
@@ -307,5 +307,5 @@ cpdef sample_without_replacement(cnp.int_t n_population,
 
 def _our_rand_r_py(seed):
     """Python utils to test the our_rand_r function"""
-    cdef uint32_t my_seed = seed
+    cdef UINT32_t my_seed = seed
     return our_rand_r(&my_seed)
