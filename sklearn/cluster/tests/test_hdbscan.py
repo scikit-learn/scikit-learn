@@ -398,7 +398,7 @@ def test_hdbscan_centers(algorithm, mst_algorithm):
     _validate_algorithms(algorithm, mst_algorithm)
 
     centers = [(0.0, 0.0), (3.0, 3.0)]
-    H, _ = make_blobs(n_samples=1000, random_state=0, centers=centers, cluster_std=0.5)
+    H, _ = make_blobs(n_samples=1000, random_state=0, centers=centers, cluster_std=0.25)
     hdb = HDBSCAN(
         algorithm=algorithm, mst_algorithm=mst_algorithm, store_centers="both"
     ).fit(H)
