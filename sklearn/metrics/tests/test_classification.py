@@ -2830,4 +2830,4 @@ def test_classification_metric_division_by_zero_nan_validaton(scoring):
     """
     X, y = datasets.make_classification(random_state=0)
     classifier = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X, y)
-    cross_val_score(classifier, X, y, scoring=scoring, n_jobs=2)
+    cross_val_score(classifier, X, y, scoring=scoring, n_jobs=2, error_score="raise")
