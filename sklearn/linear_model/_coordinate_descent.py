@@ -2635,7 +2635,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
     See Also
     --------
     Lasso: Linear Model trained with L1 prior as regularizer (aka the Lasso).
-    MultiTaskLasso: Multi-task L1/L2 Lasso with built-in cross-validation.
+    MultiTaskLassoCV: Multi-task L1/L2 Lasso with built-in cross-validation.
     MultiTaskElasticNet: Multi-task L1/L2 ElasticNet with built-in cross-validation.
 
     Notes
