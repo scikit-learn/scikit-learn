@@ -263,7 +263,7 @@ cdef inline void shift_missing_values_to_left_if_required(
     SplitRecord* best,
     intp_t[::1] samples,
     intp_t end,
-) nogil:
+) noexcept nogil:
     cdef intp_t i, p, current_end
     # The partitioner partitions the data such that the missing values are in
     # samples[-n_missing:] for the criterion to consume. If the missing values
