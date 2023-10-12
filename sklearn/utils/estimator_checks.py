@@ -839,7 +839,8 @@ def _generate_sparse_data(X_csr):
 
     assert X_csr.format == "csr"
     yield "csr", X_csr.copy()
-    for sparse_format in ["dok", "lil", "dia", "bsr", "csc", "coo"]:
+    # TODO re-insert "dia" when PR #27372 is merged
+    for sparse_format in ["dok", "lil", "bsr", "csc", "coo"]:
         yield sparse_format, X_csr.asformat(sparse_format)
 
     # Generate large indices matrix only if its supported by scipy
@@ -1037,7 +1038,7 @@ def check_estimator_sparse_matrix(name, estimator_orig):
             err_msg = (
                 f"Estimator {name} doesn't seem to support {matrix_format} "
                 "matrix, and is not failing gracefully, e.g. by using "
-                "check_array(X, accept_large_sparse=False)"
+                "check_array(X, accept_large_sparse=False)."
             )
         else:
             err_msg = (
@@ -1090,7 +1091,7 @@ def check_estimator_sparse_array(name, estimator_orig):
             err_msg = (
                 f"Estimator {name} doesn't seem to support {matrix_format} "
                 "matrix, and is not failing gracefully, e.g. by using "
-                "check_array(X, accept_large_sparse=False)"
+                "check_array(X, accept_large_sparse=False)."
             )
         else:
             err_msg = (

@@ -372,14 +372,10 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
             multi_output=True,
             y_numeric=True,
         )
-        # the following is only here since sp.csr_array is an instance of
-        # sp.csr_matrix, but not the other way around
         if self.raise_for_type == "sparse_array":
-            correct_type = isinstance(X, sp.csr_array) and isinstance(X, sp.csr_matrix)
+            correct_type = isinstance(X, sp.sparray)
         elif self.raise_for_type == "sparse_matrix":
-            correct_type = not isinstance(X, sp.csr_array) and isinstance(
-                X, sp.csr_matrix
-            )
+            correct_type = isinstance(X, sp.spmatrix)
         else:
             raise ValueError("Invalid value for `raise_for_type`.")
         if correct_type:
@@ -671,10 +667,6 @@ def test_check_estimator():
     with raises(AssertionError, match=msg):
         check_estimator(LargeSparseNotSupportedClassifier("sparse_matrix"))
 
-    msg = (
-        "Estimator LargeSparseNotSupportedClassifier doesn't seem to "
-        r"support \S{3}_64 array, and is not failing gracefully.*"
-    )
     with raises(AssertionError, match=msg):
         check_estimator(LargeSparseNotSupportedClassifier("sparse_array"))
 
