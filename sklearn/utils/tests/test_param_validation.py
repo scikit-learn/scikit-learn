@@ -74,16 +74,41 @@ class _Estimator(BaseEstimator):
 def test_interval_range(interval_type):
     """Check the range of values depending on closed."""
     interval = Interval(interval_type, -2, 2, closed="left")
-    assert -2 in interval and 2 not in interval
+    assert -2 in interval
+    assert 2 not in interval
 
     interval = Interval(interval_type, -2, 2, closed="right")
-    assert -2 not in interval and 2 in interval
+    assert -2 not in interval
+    assert 2 in interval
 
     interval = Interval(interval_type, -2, 2, closed="both")
-    assert -2 in interval and 2 in interval
+    assert -2 in interval
+    assert 2 in interval
 
     interval = Interval(interval_type, -2, 2, closed="neither")
-    assert -2 not in interval and 2 not in interval
+    assert -2 not in interval
+    assert 2 not in interval
+
+
+@pytest.mark.parametrize("interval_type", [Integral, Real])
+def test_interval_large_integers(interval_type):
+    """Check that Interval constraint work with large integers.
+
+    non-regression test for #26648.
+    """
+    interval = Interval(interval_type, 0, 2, closed="neither")
+    assert 2**65 not in interval
+    assert 2**128 not in interval
+    assert float(2**65) not in interval
+    assert float(2**128) not in interval
+
+    interval = Interval(interval_type, 0, 2**128, closed="neither")
+    assert 2**65 in interval
+    assert 2**128 not in interval
+    assert float(2**65) in interval
+    assert float(2**128) not in interval
+
+    assert 2**1024 not in interval
 
 
 def test_interval_inf_in_bounds():
@@ -389,6 +414,7 @@ def test_generate_valid_param(constraint):
         ("verbose", 1),
         (MissingValues(), -1),
         (MissingValues(), -1.0),
+        (MissingValues(), 2**1028),
         (MissingValues(), None),
         (MissingValues(), float("nan")),
         (MissingValues(), np.nan),
@@ -423,7 +449,7 @@ def test_is_satisfied_by(constraint_declaration, value):
     ],
 )
 def test_make_constraint(constraint_declaration, expected_constraint_class):
-    """Check that make_constraint dispaches to the appropriate constraint class"""
+    """Check that make_constraint dispatches to the appropriate constraint class"""
     constraint = make_constraint(constraint_declaration)
     assert constraint.__class__ is expected_constraint_class
 

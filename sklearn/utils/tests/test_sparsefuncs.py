@@ -794,6 +794,7 @@ def test_min_max(
         dtype=dtype,
     )
     X_sparse = sparse_format(X)
+
     if large_indices:
         X_sparse.indices = X_sparse.indices.astype("int64")
         X_sparse.indptr = X_sparse.indptr.astype("int64")
