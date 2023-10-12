@@ -336,14 +336,6 @@ Changelog
   for CSR × CSR,  Dense × CSR, and CSR × Dense datasets is now 1.5x faster.
   :pr:`26765` by :user:`Meekail Zain <micky774>`
 
-- |Fix| :func:`f1_score` now provides correct values when handling various
-  cases in which zero division occurs by using a formulation that does not
-  depend on the precision and recall values.
-  :pr:`27165` by :user:`Omar Salman <OmarManzoor>` and
-  :user:`Guillaume Lemaitre <glemaitre>`.
-
-:mod:`sklearn.preprocessing`
-............................
 - |Efficiency| Computing distances via :class:`metrics.DistanceMetric`
   for CSR × CSR, Dense × CSR, and CSR × Dense now uses ~50% less memory,
   and outputs distances in the same dtype as the provided data.
@@ -361,6 +353,12 @@ Changelog
 - |Enhancement| :func:`sklearn.metrics.accuracy_score` and
   :func:`sklearn.metrics.zero_one_loss` now support Array API compatible inputs.
   :pr:`27137` by :user:`Edoardo Abati <EdAbati>`.
+
+- |Fix| :func:`f1_score` now provides correct values when handling various
+  cases in which zero division occurs by using a formulation that does not
+  depend on the precision and recall values.
+  :pr:`27577` by :user:`Omar Salman <OmarManzoor>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |API| The `squared` parameter of :func:`metrics.mean_squared_error` and
   :func:`metrics.mean_squared_log_error` is deprecated and will be removed in 1.6.
