@@ -26,7 +26,7 @@ from sklearn.utils._random cimport our_rand_r
 # Helper functions
 # =============================================================================
 
-cdef int safe_realloc(realloc_ptr* p, size_t nelems) except -1 nogil:
+cdef intp_t safe_realloc(realloc_ptr* p, size_t nelems) except -1 nogil:
     # sizeof(realloc_ptr[0]) would be more like idiomatic C, but causes Cython
     # 0.20.1 to crash.
     cdef size_t nbytes = nelems * sizeof(p[0][0])
