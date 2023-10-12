@@ -35,6 +35,7 @@ HDBSCAN: Hierarchical Density-Based Spatial Clustering
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import warnings
 from numbers import Integral, Real
 from warnings import warn
 
@@ -656,7 +657,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     >>> from sklearn.cluster import HDBSCAN
     >>> from sklearn.datasets import load_digits
     >>> X, _ = load_digits(return_X_y=True)
-    >>> hdb = HDBSCAN(min_cluster_size=20)
+    >>> hdb = HDBSCAN(min_cluster_size=20, mst_algorithm="prims")
     >>> hdb.fit(X)
     HDBSCAN(min_cluster_size=20)
     >>> hdb.labels_
@@ -684,7 +685,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             ),
         ],
         "mst_algorithm": [
-            StrOptions({"auto", "brute", "prims", "boruvka_exact", "boruvka_approx"})
+            StrOptions(
+                {"auto", "brute", "prims", "boruvka_exact", "boruvka_approx", "warn"},
+                deprecated={"warn"},
+            ),
         ],
         "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
         "n_jobs": [Integral, None],
@@ -704,7 +708,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         metric_params=None,
         alpha=1.0,
         algorithm="auto",
-        mst_algorithm="auto",
+        # TODO(1.6): Change default to "auto"
+        mst_algorithm="warn",
         leaf_size=40,
         n_jobs=None,
         cluster_selection_method="eom",
@@ -813,9 +818,35 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 f" samples in X ({X.shape[0]})"
             )
 
-        algorithms = {self.algorithm, self.mst_algorithm}
-        acceptable_algorithms = {"auto", "brute"}
-        using_brute_compat_algos = algorithms.issubset(acceptable_algorithms)
+        # TODO(1.6): Remove and set `mst_algorithm` default to "auto"
+        if self.mst_algorithm == "warn":
+            if self.algorithm == "brute" or (
+                self.algorithm == "auto" and self.metric == "precomputed"
+            ):
+                mst_algorithm = "brute"
+            else:
+                mst_algorithm = "prims"
+            warnings.warn(
+                (
+                    "In version 1.6 the default MST algorithm dispatch behavior will"
+                    " change to include the new `boruvka_exact` and `boruvka_approx`"
+                    " algorithms, resulting in some models potentially changing. To"
+                    " suppress this warning, and to avoid unintended changes in"
+                    " behavior, please manually set `mst_algorithm`. You can opt in to"
+                    " the new behavior by manually setting `mst_algorithm='auto'`. You"
+                    " can preserve old behavior by setting `mst_algorithm` to `'brute'`"
+                    " or `'auto'` when `algorithm='brute'`, or `algorithm='auto'` and"
+                    " `metric='precomputed'`; otherwise set"
+                    " `mst_algorithm='prims'` to keep old behavior."
+                ),
+                FutureWarning,
+            )
+        else:
+            mst_algorithm = self.mst_algorithm
+
+        algorithms = {self.algorithm, mst_algorithm}
+        brute_compat_algorithms = {"auto", "brute"}
+        using_brute_compat_algos = algorithms.issubset(brute_compat_algorithms)
 
         if "brute" in algorithms and not using_brute_compat_algos:
             raise ValueError(
@@ -897,13 +928,13 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                     )
                 kwargs["algo"] = tree_algorithm
 
-                if self.mst_algorithm != "auto":
-                    if self.mst_algorithm == "prims":
+                if mst_algorithm != "auto":
+                    if mst_algorithm == "prims":
                         mst_func = _hdbscan_prims
                     else:
                         mst_func = _hdbscan_boruvka
                         kwargs["approx_min_span_tree"] = (
-                            self.mst_algorithm == "boruvka_approx"
+                            mst_algorithm == "boruvka_approx"
                         )
                 else:
                     # Boruvka is always preferable
