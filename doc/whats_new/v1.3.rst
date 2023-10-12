@@ -700,6 +700,13 @@ Changelog
 - |API| The `eps` parameter of the :func:`metrics.log_loss` has been deprecated and
   will be removed in 1.5. :pr:`25299` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Enhancement| :meth:`metrics.precision_recall_curve` and
+  :meth:`metrics.average_precision_score` now accept one new
+  parameter called `calibrated`. It is useful when there are a lots of negative
+  labels and few positive labels. The precision will be weighted by the ratio
+  between the number of negative labels and the number of positive labels.
+  :pr:`27574` by :user:`Luigi Seminara <Gigi-G>`.
+
 :mod:`sklearn.gaussian_process`
 ...............................
 
