@@ -14,7 +14,9 @@ import numpy as np
 cimport numpy as cnp
 cnp.import_array()
 
-from . import check_random_state
+# XXX: added instead of relative import to make scikit-tree easier
+# from .utils import check_random_state
+from sklearn.utils import check_random_state
 
 cdef UINT32_t DEFAULT_SEED = 1
 
