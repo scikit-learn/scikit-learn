@@ -25,7 +25,9 @@ unbalanced classes.
 
 """
 
+import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
+
 from sklearn import svm
 from sklearn.datasets import make_blobs
 from sklearn.inspection import DecisionBoundaryDisplay
@@ -80,7 +82,10 @@ wdisp = DecisionBoundaryDisplay.from_estimator(
 )
 
 plt.legend(
-    [disp.surface_.collections[0], wdisp.surface_.collections[0]],
+    [
+        mlines.Line2D([], [], color="k", label="non weighted"),
+        mlines.Line2D([], [], color="r", label="weighted"),
+    ],
     ["non weighted", "weighted"],
     loc="upper right",
 )

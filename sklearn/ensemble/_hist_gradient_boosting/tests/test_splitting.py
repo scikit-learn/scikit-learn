@@ -2,17 +2,19 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
-from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import MonotonicConstraint
+from sklearn.ensemble._hist_gradient_boosting.common import (
+    G_H_DTYPE,
+    HISTOGRAM_DTYPE,
+    X_BINNED_DTYPE,
+    MonotonicConstraint,
+)
+from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.ensemble._hist_gradient_boosting.splitting import (
     Splitter,
     compute_node_value,
 )
-from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
-from sklearn.utils._testing import skip_if_32bit
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._testing import skip_if_32bit
 
 n_threads = _openmp_effective_n_threads()
 

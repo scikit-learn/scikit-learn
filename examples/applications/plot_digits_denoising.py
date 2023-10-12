@@ -32,9 +32,10 @@ We will use USPS digits dataset to reproduce presented in Sect. 4 of [1]_.
 # :func:`~sklearn.datasets.fetch_openml` to get this dataset. In addition, we
 # normalize the dataset such that all pixel values are in the range (0, 1).
 import numpy as np
+
 from sklearn.datasets import fetch_openml
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
 
 X, y = fetch_openml(data_id=41082, as_frame=False, return_X_y=True, parser="pandas")
 X = MinMaxScaler().fit_transform(X)

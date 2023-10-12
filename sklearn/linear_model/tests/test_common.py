@@ -59,7 +59,7 @@ from sklearn.linear_model import (
             ),
             marks=pytest.mark.xfail(reason="Missing importance sampling scheme"),
         ),
-        LogisticRegressionCV(),
+        LogisticRegressionCV(tol=1e-6),
         MultiTaskElasticNet(),
         MultiTaskElasticNetCV(),
         MultiTaskLasso(),
@@ -71,7 +71,7 @@ from sklearn.linear_model import (
         RidgeCV(),
         pytest.param(
             SGDRegressor(tol=1e-15),
-            marks=pytest.mark.xfail(reason="Unsufficient precision."),
+            marks=pytest.mark.xfail(reason="Insufficient precision."),
         ),
         SGDRegressor(penalty="elasticnet", max_iter=10_000),
         TweedieRegressor(power=0),  # same as Ridge

@@ -105,7 +105,7 @@ cdef class StdVectorSentinelInt64(StdVectorSentinel):
 cdef cnp.ndarray vector_to_nd_array(vector_typed * vect_ptr):
     cdef:
         cnp.npy_intp size = deref(vect_ptr).size()
-        StdVectorSentinel sentinel =  _create_sentinel(vect_ptr)
+        StdVectorSentinel sentinel = _create_sentinel(vect_ptr)
         cnp.ndarray arr = cnp.PyArray_SimpleNewFromData(
             1, &size, sentinel.get_typenum(), sentinel.get_data())
 

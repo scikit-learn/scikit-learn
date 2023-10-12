@@ -8,24 +8,29 @@ dependencies:
   - numpy
   - blas
   - scipy
-  - cython
+  - cython<3.0.0
   - joblib
   - threadpoolctl
   - matplotlib
-  - pandas
+  - pandas<2.1
   - pyamg
   - pytest
   - pytest-xdist=2.5.0
   - pillow
+  - setuptools
   - scikit-image
   - seaborn
   - memory_profiler
   - compilers
   - sphinx=6.0.0
   - sphinx-gallery
+  - sphinx-copybutton
   - numpydoc
   - sphinx-prompt
   - plotly
   - pooch
   - sphinxext-opengraph
   - pip
+  - pip:
+    - jupyterlite-sphinx
+    - jupyterlite-pyodide-kernel

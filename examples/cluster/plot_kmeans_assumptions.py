@@ -21,6 +21,7 @@ unintuitive and possibly undesirable clusters.
 # one has to define a linear `transformation`.
 
 import numpy as np
+
 from sklearn.datasets import make_blobs
 
 n_samples = 1500

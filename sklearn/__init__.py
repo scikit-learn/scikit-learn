@@ -1,24 +1,27 @@
 """
-Machine learning module for Python
-==================================
-
-sklearn is a Python module integrating classical machine
-learning algorithms in the tightly-knit world of scientific Python
-packages (numpy, scipy, matplotlib).
-
-It aims to provide simple and efficient solutions to learning problems
-that are accessible to everybody and reusable in various contexts:
-machine-learning as a versatile tool for science and engineering.
-
-See http://scikit-learn.org for complete documentation.
+The :mod:`sklearn` module includes functions to configure global settings and
+get information about the working environment.
 """
-import sys
+
+# Machine learning module for Python
+# ==================================
+#
+# sklearn is a Python module integrating classical machine
+# learning algorithms in the tightly-knit world of scientific Python
+# packages (numpy, scipy, matplotlib).
+#
+# It aims to provide simple and efficient solutions to learning problems
+# that are accessible to everybody and reusable in various contexts:
+# machine-learning as a versatile tool for science and engineering.
+#
+# See http://scikit-learn.org for complete documentation.
+
 import logging
 import os
 import random
+import sys
 
-
-from ._config import get_config, set_config, config_context
+from ._config import config_context, get_config, set_config
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +42,7 @@ logger = logging.getLogger(__name__)
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = "1.3.dev0"
+__version__ = "1.4.dev0"
 
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
@@ -77,8 +80,10 @@ else:
     # It is necessary to do this prior to importing show_versions as the
     # later is linked to the OpenMP runtime to make it possible to introspect
     # it and importing it first would fail if the OpenMP dll cannot be found.
-    from . import _distributor_init  # noqa: F401
-    from . import __check_build  # noqa: F401
+    from . import (
+        __check_build,  # noqa: F401
+        _distributor_init,  # noqa: F401
+    )
     from .base import clone
     from .utils._show_versions import show_versions
 
