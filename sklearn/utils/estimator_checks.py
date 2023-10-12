@@ -133,7 +133,8 @@ def _yield_checks(estimator):
     if hasattr(estimator, "sparsify"):
         yield check_sparsify_coefficients
 
-    yield check_estimator_sparse_data
+    yield check_estimator_sparse_array
+    yield check_estimator_sparse_matrix
 
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
@@ -821,17 +822,17 @@ def _is_pairwise_metric(estimator):
     return bool(metric == "precomputed")
 
 
-def _generate_sparse_matrix(X_csr):
-    """Generate sparse matrices with {32,64}bit indices of diverse format.
+def _generate_sparse_data(X_csr):
+    """Generate sparse matrices or arrays with {32,64}bit indices of diverse format.
 
     Parameters
     ----------
-    X_csr: CSR Matrix
-        Input matrix in CSR format.
+    X_csr: scipy.sparse.csr_matrix or scipy.sparse.csr_array
+        Input in CSR format.
 
     Returns
     -------
-    out: iter(Matrices)
+    out: iter(Matrices) or iter(Arrays)
         In format['dok', 'lil', 'dia', 'bsr', 'csr', 'csc', 'coo',
         'coo_64', 'csc_64', 'csr_64']
     """
@@ -1014,19 +1015,71 @@ def check_array_api_input_and_values(
     )
 
 
-def check_estimator_sparse_data(name, estimator_orig):
+def check_estimator_sparse_matrix(name, estimator_orig):
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(40, 3))
     X[X < 0.8] = 0
     X = _enforce_estimator_tags_X(estimator_orig, X)
-    X_csr = sparse.csr_matrix(X)
     y = (4 * rng.uniform(size=40)).astype(int)
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
     tags = _safe_tags(estimator_orig)
-    for matrix_format, X in _generate_sparse_matrix(X_csr):
+    for matrix_format, X in _generate_sparse_data(sparse.csr_matrix(X)):
+        # catch deprecation warnings
+        with ignore_warnings(category=FutureWarning):
+            estimator = clone(estimator_orig)
+            if name in ["Scaler", "StandardScaler"]:
+                estimator.set_params(with_mean=False)
+        # fit and predict
+        if "64" in matrix_format:
+            err_msg = (
+                f"Estimator {name} doesn't seem to support {matrix_format} "
+                "matrix, and is not failing gracefully, e.g. by using "
+                "check_array(X, accept_large_sparse=False)"
+            )
+        else:
+            err_msg = (
+                f"Estimator {name} doesn't seem to fail gracefully on sparse "
+                "data: error message should state explicitly that sparse "
+                "input is not supported if this is not the case."
+            )
+        with raises(
+            (TypeError, ValueError),
+            match=["sparse", "Sparse"],
+            may_pass=True,
+            err_msg=err_msg,
+        ):
+            with ignore_warnings(category=FutureWarning):
+                estimator.fit(X, y)
+            if hasattr(estimator, "predict"):
+                pred = estimator.predict(X)
+                if tags["multioutput_only"]:
+                    assert pred.shape == (X.shape[0], 1)
+                else:
+                    assert pred.shape == (X.shape[0],)
+            if hasattr(estimator, "predict_proba"):
+                probs = estimator.predict_proba(X)
+                if tags["binary_only"]:
+                    expected_probs_shape = (X.shape[0], 2)
+                else:
+                    expected_probs_shape = (X.shape[0], 4)
+                assert probs.shape == expected_probs_shape
+
+
+def check_estimator_sparse_array(name, estimator_orig):
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(40, 3))
+    X[X < 0.8] = 0
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    y = (4 * rng.uniform(size=40)).astype(int)
+    # catch deprecation warnings
+    with ignore_warnings(category=FutureWarning):
+        estimator = clone(estimator_orig)
+    y = _enforce_estimator_tags_y(estimator, y)
+    tags = _safe_tags(estimator_orig)
+    for matrix_format, X in _generate_sparse_data(sparse.csr_array(X)):
         # catch deprecation warnings
         with ignore_warnings(category=FutureWarning):
             estimator = clone(estimator_orig)

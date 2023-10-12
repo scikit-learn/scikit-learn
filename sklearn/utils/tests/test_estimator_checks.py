@@ -356,6 +356,13 @@ class OneClassSampleErrorClassifier(BaseBadClassifier):
 
 
 class LargeSparseNotSupportedClassifier(BaseEstimator):
+    """Estimator that claims to support large sparse data
+    (accept_large_sparse=True), but doesn't"""
+
+    def __init__(self, raise_for_type=None):
+        # raise_for_type : str, expects "sparse_array" or "sparse_matrix"
+        self.raise_for_type = raise_for_type
+
     def fit(self, X, y):
         X, y = self._validate_data(
             X,
@@ -365,7 +372,15 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
             multi_output=True,
             y_numeric=True,
         )
-        if sp.issparse(X):
+        # the following is only here since sp.csr_array is an instance of
+        # sp.csr_matrix, but not the other way around
+        if self.raise_for_type == "sparse_array":
+            correct_type = isinstance(X, sp.csr_array) and isinstance(X, sp.csr_matrix)
+        elif self.raise_for_type == "sparse_matrix":
+            correct_type = not isinstance(X, sp.csr_array) and isinstance(
+                X, sp.csr_matrix
+            )
+        if correct_type:
             if X.getformat() == "coo":
                 if X.row.dtype == "int64" or X.col.dtype == "int64":
                     raise ValueError("Estimator doesn't support 64-bit indices")
@@ -652,7 +667,14 @@ def test_check_estimator():
         r"support \S{3}_64 matrix, and is not failing gracefully.*"
     )
     with raises(AssertionError, match=msg):
-        check_estimator(LargeSparseNotSupportedClassifier())
+        check_estimator(LargeSparseNotSupportedClassifier(sp.csr_matrix))
+
+    msg = (
+        "Estimator LargeSparseNotSupportedClassifier doesn't seem to "
+        r"support \S{3}_64 matrix, and is not failing gracefully.*"
+    )
+    with raises(AssertionError, match=msg):
+        check_estimator(LargeSparseNotSupportedClassifier(sp.csr_array))
 
     # does error on binary_only untagged estimator
     msg = "Only 2 classes are supported"
