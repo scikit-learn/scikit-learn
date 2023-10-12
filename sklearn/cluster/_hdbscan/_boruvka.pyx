@@ -183,15 +183,6 @@ cdef class BoruvkaUnionFind:
         return np.array(self.is_component).nonzero()[0]
 
 
-def _core_dist_query(tree, data, min_samples):
-    return tree.query(
-        data,
-        k=min_samples,
-        dualtree=True,
-        breadth_first=True
-    )
-
-
 cdef class BoruvkaAlgorithm:
     """A Dual Tree Boruvka Algorithm implemented for the sklearn
     KDTree space tree implementation.
