@@ -673,7 +673,7 @@ def test_check_estimator():
 
     msg = (
         "Estimator LargeSparseNotSupportedClassifier doesn't seem to "
-        r"support \S{3}_64 matrix, and is not failing gracefully.*"
+        r"support \S{3}_64 array, and is not failing gracefully.*"
     )
     with raises(AssertionError, match=msg):
         check_estimator(LargeSparseNotSupportedClassifier("sparse_array"))
