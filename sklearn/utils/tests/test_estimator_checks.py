@@ -380,6 +380,8 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
             correct_type = not isinstance(X, sp.csr_array) and isinstance(
                 X, sp.csr_matrix
             )
+        else:
+            raise ValueError("Invalid value for `raise_for_type`.")
         if correct_type:
             if X.getformat() == "coo":
                 if X.row.dtype == "int64" or X.col.dtype == "int64":
@@ -667,14 +669,14 @@ def test_check_estimator():
         r"support \S{3}_64 matrix, and is not failing gracefully.*"
     )
     with raises(AssertionError, match=msg):
-        check_estimator(LargeSparseNotSupportedClassifier(sp.csr_matrix))
+        check_estimator(LargeSparseNotSupportedClassifier("sparse_matrix"))
 
     msg = (
         "Estimator LargeSparseNotSupportedClassifier doesn't seem to "
         r"support \S{3}_64 matrix, and is not failing gracefully.*"
     )
     with raises(AssertionError, match=msg):
-        check_estimator(LargeSparseNotSupportedClassifier(sp.csr_array))
+        check_estimator(LargeSparseNotSupportedClassifier("sparse_array"))
 
     # does error on binary_only untagged estimator
     msg = "Only 2 classes are supported"
