@@ -82,8 +82,8 @@ def test_hdbscan_mst_algorithm_errors():
 
 
 @pytest.mark.parametrize("outlier_type", _OUTLIER_ENCODING)
-@pytest.mark.parametrize("mst_algorithm", MST_ALGORITHMS)
-@pytest.mark.parametrize("algorithm", ALGORITHMS)
+@pytest.mark.parametrize("mst_algorithm", sorted(MST_ALGORITHMS))
+@pytest.mark.parametrize("algorithm", sorted(ALGORITHMS))
 def test_outlier_data(outlier_type, mst_algorithm, algorithm):
     """
     Tests if np.inf and np.nan data are each treated as special outliers.
@@ -182,7 +182,7 @@ def test_hdbscan_feature_array():
     assert score >= 0.98
 
 
-@pytest.mark.parametrize("algorithm", ALGORITHMS)
+@pytest.mark.parametrize("algorithm", sorted(ALGORITHMS))
 @pytest.mark.parametrize("metric", _VALID_METRICS)
 def test_hdbscan_algorithms(algorithm, metric):
     """
@@ -345,7 +345,7 @@ def test_hdbscan_precomputed_non_brute(algorithm, mst_algorithm):
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-@pytest.mark.parametrize("mst_algorithm", EXACT_MST_ALGORITHMS)
+@pytest.mark.parametrize("mst_algorithm", sorted(EXACT_MST_ALGORITHMS))
 def test_hdbscan_sparse(csr_container, mst_algorithm):
     """
     Tests that HDBSCAN works correctly when passing sparse feature data.
@@ -382,8 +382,8 @@ def test_hdbscan_sparse(csr_container, mst_algorithm):
         HDBSCAN(metric="euclidean", algorithm="ball_tree").fit(X_sparse)
 
 
-@pytest.mark.parametrize("algorithm", ALGORITHMS)
-@pytest.mark.parametrize("mst_algorithm", MST_ALGORITHMS)
+@pytest.mark.parametrize("algorithm", sorted(ALGORITHMS))
+@pytest.mark.parametrize("mst_algorithm", sorted(MST_ALGORITHMS))
 def test_hdbscan_centers(algorithm, mst_algorithm):
     """
     Tests that HDBSCAN centers are calculated and stored properly, and are
