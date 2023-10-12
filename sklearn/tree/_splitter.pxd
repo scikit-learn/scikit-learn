@@ -14,7 +14,7 @@ cimport numpy as cnp
 
 from libcpp.vector cimport vector
 
-from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t
+from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t
 from ._criterion cimport BaseCriterion, Criterion
 
 

@@ -13,7 +13,7 @@
 cimport numpy as cnp
 
 from libcpp.vector cimport vector
-from sklearn.utils._typedefs cimport float64_t, intp_t
+from ..utils._typedefs cimport float64_t, intp_t
 
 
 cdef class BaseCriterion:
