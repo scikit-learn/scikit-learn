@@ -11,10 +11,9 @@
 cimport numpy as cnp
 
 from sklearn.neighbors._quad_tree cimport Cell
+from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t
 
 from ._tree cimport Node
-from ..neighbors._quad_tree cimport Cell
-from ..utils._typedefs cimport float32_t, float64_t, intp_t, int32_t, uint32_t
 
 cdef enum:
     # Max value for our rand_r replacement (near the bottom).
