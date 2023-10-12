@@ -657,9 +657,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     >>> from sklearn.cluster import HDBSCAN
     >>> from sklearn.datasets import load_digits
     >>> X, _ = load_digits(return_X_y=True)
-    >>> hdb = HDBSCAN(min_cluster_size=20, mst_algorithm="prims")
+    >>> hdb = HDBSCAN(min_cluster_size=20, mst_algorithm='prims')
     >>> hdb.fit(X)
-    HDBSCAN(min_cluster_size=20)
+    HDBSCAN(min_cluster_size=20, mst_algorithm='prims')
     >>> hdb.labels_
     array([ 2,  6, -1, ..., -1, -1, -1])
     """
