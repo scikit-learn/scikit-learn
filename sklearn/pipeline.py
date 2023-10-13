@@ -10,7 +10,6 @@ estimator, as a chain of transforms and estimators.
 # License: BSD
 
 from collections import defaultdict
-from contextlib import suppress
 from itertools import islice
 
 import numpy as np
@@ -1033,20 +1032,14 @@ class Pipeline(_BaseComposition):
             # tuples and `fit` is not called yet to validate the steps.
             pass
 
-        # Be conservative about nans and only allow nans when all steps in the pipeline
-        # can accept nans. For example, in the following pipeline:
-        # `make_pipeline(StandardScalar(), LogisticRegression())`, the scalar accepts
-        # nans and pass them through and logistic regression does not accept nans.
-        allow_nan_pipeline = True
-        with suppress(ValueError, AttributeError, TypeError):
-            # Suppress error when the `steps` is not a list of (name, estimator)
+        try:
+            tags["allow_nan"] = _safe_tags(self.steps[0][1], "allow_nan")
+        except (ValueError, AttributeError, TypeError):
+            # This happens when the `steps` is not a list of (name, estimator)
             # tuples and `fit` is not called yet to validate the steps.
-            for _, step in self.steps:
-                if not _safe_tags(step, "allow_nan"):
-                    allow_nan_pipeline = False
-                    break
+            # Be conservative here and say the pipeline does not support nans.
+            tags["allow_nan"] = False
 
-        tags["allow_nan"] = allow_nan_pipeline
         return tags
 
     def get_feature_names_out(self, input_features=None):
