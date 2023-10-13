@@ -22,6 +22,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.utils import check_random_state
+from sklearn.utils._tags import _safe_tags
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import CSR_CONTAINERS
 
@@ -558,14 +559,13 @@ def test_multioutput(ClsRFE):
 
 
 def test_estimator_without_tags():
-    """Check that estimator without tags defaults to allow_nan==True."""
+    """Check that estimator without tags defaults to allow_nan==False."""
 
     class MyEstimator:
         pass
 
     fs = RFE(MyEstimator())
-    tags = fs._get_tags()
-    assert tags["allow_nan"] is True
+    assert _safe_tags(fs, "allow_nan") is False
 
 
 def test_pipeline_with_nans():

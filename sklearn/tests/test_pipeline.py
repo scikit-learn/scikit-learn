@@ -37,6 +37,7 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.utils._metadata_requests import COMPOSITE_METHODS, METHODS
+from sklearn.utils._tags import _safe_tags
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
@@ -1870,10 +1871,7 @@ def test_pipeline_with_no_last_step(last_step):
 def test_pipeline_nan_first_step():
     """Check that pipeline defaults to allowing nan."""
     pipe = make_pipeline(LogisticRegression())
-
-    tags = pipe._get_tags()
-    assert tags["allow_nan"] is False
+    assert _safe_tags(pipe, "allow_nan") is False
 
     pipe = make_pipeline(SimpleImputer(), LogisticRegression())
-    tags = pipe._get_tags()
-    assert tags["allow_nan"] is True
+    assert _safe_tags(pipe, "allow_nan") is True
