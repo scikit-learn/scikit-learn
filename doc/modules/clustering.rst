@@ -93,6 +93,13 @@ Overview of clustering methods
        transductive
      - Distances between nearest points
 
+   * - :ref:`HDBSCAN <hdbscan>`
+     - minimum cluster membership, minimum point neighbors
+     - large ``n_samples``, medium ``n_clusters``
+     - Non-flat geometry, uneven cluster sizes, outlier removal,
+       transductive, hierarchical, variable cluster density
+     - Distances between nearest points
+
    * - :ref:`OPTICS <optics>`
      - minimum cluster membership
      - Very large ``n_samples``, large ``n_clusters``
@@ -111,6 +118,13 @@ Overview of clustering methods
      - Large ``n_clusters`` and ``n_samples``
      - Large dataset, outlier removal, data reduction, inductive
      - Euclidean distance between points
+
+   * - :ref:`Bisecting K-Means <bisect_k_means>`
+     - number of clusters
+     - Very large ``n_samples``, medium ``n_clusters``
+     - General-purpose, even cluster size, flat geometry,
+       no empty clusters, inductive, hierarchical
+     - Distances between points
 
 Non-flat geometry clustering is useful when the clusters have a specific
 shape, i.e. a non-flat manifold, and the standard euclidean distance is
@@ -134,7 +148,7 @@ K-means
 The :class:`KMeans` algorithm clusters data by trying to separate samples in n
 groups of equal variance, minimizing a criterion known as the *inertia* or
 within-cluster sum-of-squares (see below). This algorithm requires the number
-of clusters to be specified. It scales well to large number of samples and has
+of clusters to be specified. It scales well to large numbers of samples and has
 been used across a large range of application areas in many different fields.
 
 The k-means algorithm divides a set of :math:`N` samples :math:`X` into
@@ -163,7 +177,7 @@ It suffers from various drawbacks:
   k-means clustering can alleviate this problem and speed up the
   computations.
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_kmeans_assumptions_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_kmeans_assumptions_002.png
    :target: ../auto_examples/cluster/plot_kmeans_assumptions.html
    :align: center
    :scale: 50
@@ -385,22 +399,36 @@ for centroids to be the mean of the points within a given region. These
 candidates are then filtered in a post-processing stage to eliminate
 near-duplicates to form the final set of centroids.
 
-Given a candidate centroid :math:`x_i` for iteration :math:`t`, the candidate
+The position of centroid candidates is iteratively adjusted using a technique called hill
+climbing, which finds local maxima of the estimated probability density.
+Given a candidate centroid :math:`x` for iteration :math:`t`, the candidate
 is updated according to the following equation:
 
 .. math::
 
-    x_i^{t+1} = m(x_i^t)
+    x^{t+1} = x^t + m(x^t)
 
-Where :math:`N(x_i)` is the neighborhood of samples within a given distance
-around :math:`x_i` and :math:`m` is the *mean shift* vector that is computed for each
+Where :math:`m` is the *mean shift* vector that is computed for each
 centroid that points towards a region of the maximum increase in the density of points.
-This is computed using the following equation, effectively updating a centroid
-to be the mean of the samples within its neighborhood:
+To compute :math:`m` we define :math:`N(x)` as the neighborhood of samples within
+a given distance around :math:`x`. Then :math:`m` is computed using the following
+equation, effectively updating a centroid to be the mean of the samples within
+its neighborhood:
 
 .. math::
 
-    m(x_i) = \frac{\sum_{x_j \in N(x_i)}K(x_j - x_i)x_j}{\sum_{x_j \in N(x_i)}K(x_j - x_i)}
+    m(x) = \frac{1}{|N(x)|} \sum_{x_j \in N(x)}x_j - x
+
+In general, the equation for :math:`m` depends on a kernel used for density estimation.
+The generic formula is:
+
+.. math::
+
+    m(x) = \frac{\sum_{x_j \in N(x)}K(x_j - x)x_j}{\sum_{x_j \in N(x)}K(x_j - x)} - x
+
+In our implementation, :math:`K(x)` is equal to 1 if :math:`x` is small enough and is
+equal to 0 otherwise. Effectively :math:`K(y - x)` indicates whether :math:`y` is in
+the neighborhood of :math:`x`.
 
 The algorithm automatically sets the number of clusters, instead of relying on a
 parameter ``bandwidth``, which dictates the size of the region to search through.
@@ -429,8 +457,8 @@ given sample.
 
 .. topic:: References:
 
- * `"Mean shift: A robust approach toward feature space analysis."
-   <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.76.8968&rep=rep1&type=pdf>`_
+ * :doi:`"Mean shift: A robust approach toward feature space analysis"
+   <10.1109/34.1000236>`
    D. Comaniciu and P. Meer, *IEEE Transactions on Pattern Analysis and Machine Intelligence* (2002)
 
 
@@ -451,7 +479,7 @@ to be specified in advance. It works well for a small number of clusters,
 but is not advised for many clusters.
 
 For two clusters, SpectralClustering solves a convex relaxation of the
-`normalised cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_
+`normalized cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_
 problem on the similarity graph: cutting the graph in two so that the weight of
 the edges cut is small compared to the weights of the edges inside each
 cluster. This criteria is especially interesting when working on images, where
@@ -523,13 +551,15 @@ below.
 ================================  ================================  ================================
 
 .. topic:: References:
-       
+
  * `"Multiclass spectral clustering"
-   <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
+   <https://people.eecs.berkeley.edu/~jordan/courses/281B-spring04/readings/yu-shi.pdf>`_
    Stella X. Yu, Jianbo Shi, 2003
 
  * :doi:`"Simple, direct, and efficient multi-way spectral clustering"<10.1093/imaiai/iay008>`
-    Anil Damle, Victor Minden, Lexing Ying, 2019
+   Anil Damle, Victor Minden, Lexing Ying, 2019
+
+.. _spectral_clustering_graph:
 
 Spectral Clustering Graphs
 --------------------------
@@ -545,25 +575,25 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
 
 .. topic:: References:
 
- * `"A Tutorial on Spectral Clustering"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323>`_
+ * :doi:`"A Tutorial on Spectral Clustering"
+   <10.1007/s11222-007-9033-z>`
    Ulrike von Luxburg, 2007
 
- * `"Normalized cuts and image segmentation"
-   <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324>`_
+ * :doi:`"Normalized cuts and image segmentation"
+   <10.1109/34.868688>`
    Jianbo Shi, Jitendra Malik, 2000
 
  * `"A Random Walks View of Spectral Segmentation"
-   <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.33.1501>`_
+   <https://citeseerx.ist.psu.edu/doc_view/pid/84a86a69315e994cfd1e0c7debb86d62d7bd1f44>`_
    Marina Meila, Jianbo Shi, 2001
 
  * `"On Spectral Clustering: Analysis and an algorithm"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`_
+   <https://citeseerx.ist.psu.edu/doc_view/pid/796c5d6336fc52aa84db575fb821c78918b65f58>`_
    Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
 
  * :arxiv:`"Preconditioned Spectral Clustering for Stochastic
    Block Partition Streaming Graph Challenge"
-   <1309.0238>`
+   <1708.07481>`
    David Zhuzhunashvili, Andrew Knyazev
 
 .. _hierarchical_clustering:
@@ -760,6 +790,65 @@ each class.
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
 
+Bisecting K-Means
+-----------------
+
+.. _bisect_k_means:
+
+The :class:`BisectingKMeans` is an iterative variant of :class:`KMeans`, using
+divisive hierarchical clustering. Instead of creating all centroids at once, centroids
+are picked progressively based on a previous clustering: a cluster is split into two
+new clusters repeatedly until the target number of clusters is reached.
+
+:class:`BisectingKMeans` is more efficient than :class:`KMeans` when the number of
+clusters is large since it only works on a subset of the data at each bisection
+while :class:`KMeans` always works on the entire dataset.
+
+Although :class:`BisectingKMeans` can't benefit from the advantages of the `"k-means++"`
+initialization by design, it will still produce comparable results than
+`KMeans(init="k-means++")` in terms of inertia at cheaper computational costs, and will
+likely produce better results than `KMeans` with a random initialization.
+
+This variant is more efficient to agglomerative clustering if the number of clusters is
+small compared to the number of data points.
+
+This variant also does not produce empty clusters.
+
+There exist two strategies for selecting the cluster to split:
+ - ``bisecting_strategy="largest_cluster"`` selects the cluster having the most points
+ - ``bisecting_strategy="biggest_inertia"`` selects the cluster with biggest inertia
+   (cluster with biggest Sum of Squared Errors within)
+
+Picking by largest amount of data points in most cases produces result as
+accurate as picking by inertia and is faster (especially for larger amount of data
+points, where calculating error may be costly).
+
+Picking by largest amount of data points will also likely produce clusters of similar
+sizes while `KMeans` is known to produce clusters of different sizes.
+
+Difference between Bisecting K-Means and regular K-Means can be seen on example
+:ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`.
+While the regular K-Means algorithm tends to create non-related clusters,
+clusters from Bisecting K-Means are well ordered and create quite a visible hierarchy.
+
+.. topic:: References:
+
+ * `"A Comparison of Document Clustering Techniques"
+   <http://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_
+   Michael Steinbach, George Karypis and Vipin Kumar,
+   Department of Computer Science and Egineering, University of Minnesota
+   (June 2000)
+ * `"Performance Analysis of K-Means and Bisecting K-Means Algorithms in Weblog Data"
+   <https://ijeter.everscience.org/Manuscripts/Volume-4/Issue-8/Vol-4-issue-8-M-23.pdf>`_
+   K.Abirami and Dr.P.Mayilvahanan,
+   International Journal of Emerging Technologies in Engineering Research (IJETER)
+   Volume 4, Issue 8, (August 2016)
+ * `"Bisecting K-means Algorithm Based on K-valued Self-determining
+   and Clustering Center Optimization"
+   <http://www.jcomputers.us/vol13/jcp1306-01.pdf>`_
+   Jian Di, Xinyue Gou
+   School of Control and Computer Engineering,North China Electric Power University,
+   Baoding, Hebei, China (August 2017)
 
 .. _dbscan:
 
@@ -812,7 +901,7 @@ indicating core samples found by the algorithm. Smaller circles are non-core
 samples that are still part of a cluster. Moreover, the outliers are indicated
 by black points below.
 
-.. |dbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_dbscan_001.png
+.. |dbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_dbscan_002.png
         :target: ../auto_examples/cluster/plot_dbscan.html
         :scale: 50
 
@@ -842,7 +931,7 @@ by black points below.
     which avoids calculating the full distance matrix
     (as was done in scikit-learn versions before 0.14).
     The possibility to use custom metrics is retained;
-    for details, see :class:`NearestNeighbors`.
+    for details, see :class:`~sklearn.neighbors.NearestNeighbors`.
 
 .. topic:: Memory consumption for large sample sizes
 
@@ -868,15 +957,122 @@ by black points below.
 
 .. topic:: References:
 
- * "A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases
-   with Noise"
+ * `"A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases
+   with Noise" <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_
    Ester, M., H. P. Kriegel, J. Sander, and X. Xu,
    In Proceedings of the 2nd International Conference on Knowledge Discovery
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
 
- * "DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+ * :doi:`"DBSCAN revisited, revisited: why and how you should (still) use DBSCAN."
+   <10.1145/3068335>`
    Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
    In ACM Transactions on Database Systems (TODS), 42(3), 19.
+
+.. _hdbscan:
+
+HDBSCAN
+=======
+
+The :class:`HDBSCAN` algorithm can be seen as an extension of :class:`DBSCAN`
+and :class:`OPTICS`. Specifically, :class:`DBSCAN` assumes that the clustering
+criterion (i.e. density requirement) is *globally homogeneous*.
+In other words, :class:`DBSCAN` may struggle to successfully capture clusters
+with different densities.
+:class:`HDBSCAN` alleviates this assumption and explores all possible density
+scales by building an alternative representation of the clustering problem.
+
+.. note::
+
+  This implementation is adapted from the original implementation of HDBSCAN,
+  `scikit-learn-contrib/hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_ based on [LJ2017]_.
+
+Mutual Reachability Graph
+-------------------------
+
+HDBSCAN first defines :math:`d_c(x_p)`, the *core distance* of a sample :math:`x_p`, as the
+distance to its `min_samples` th-nearest neighbor, counting itself. For example,
+if `min_samples=5` and :math:`x_*` is the 5th-nearest neighbor of :math:`x_p`
+then the core distance is:
+
+.. math:: d_c(x_p)=d(x_p, x_*).
+
+Next it defines :math:`d_m(x_p, x_q)`, the *mutual reachability distance* of two points
+:math:`x_p, x_q`, as:
+
+.. math:: d_m(x_p, x_q) = \max\{d_c(x_p), d_c(x_q), d(x_p, x_q)\}
+
+These two notions allow us to construct the *mutual reachability graph*
+:math:`G_{ms}` defined for a fixed choice of `min_samples` by associating each
+sample :math:`x_p` with a vertex of the graph, and thus edges between points
+:math:`x_p, x_q` are the mutual reachability distance :math:`d_m(x_p, x_q)`
+between them. We may build subsets of this graph, denoted as
+:math:`G_{ms,\varepsilon}`, by removing any edges with value greater than :math:`\varepsilon`:
+from the original graph. Any points whose core distance is less than :math:`\varepsilon`:
+are at this staged marked as noise. The remaining points are then clustered by
+finding the connected components of this trimmed graph.
+
+.. note::
+
+  Taking the connected components of a trimmed graph :math:`G_{ms,\varepsilon}` is
+  equivalent to running DBSCAN* with `min_samples` and :math:`\varepsilon`. DBSCAN* is a
+  slightly modified version of DBSCAN mentioned in [CM2013]_.
+
+Hierarchical Clustering
+-----------------------
+HDBSCAN can be seen as an algorithm which performs DBSCAN* clustering across all
+values of :math:`\varepsilon`. As mentioned prior, this is equivalent to finding the connected
+components of the mutual reachability graphs for all values of :math:`\varepsilon`. To do this
+efficiently, HDBSCAN first extracts a minimum spanning tree (MST) from the fully
+-connected mutual reachability graph, then greedily cuts the edges with highest
+weight. An outline of the HDBSCAN algorithm is as follows:
+
+  1. Extract the MST of :math:`G_{ms}`
+  2. Extend the MST by adding a "self edge" for each vertex, with weight equal
+     to the core distance of the underlying sample.
+  3. Initialize a single cluster and label for the MST.
+  4. Remove the edge with the greatest weight from the MST (ties are
+     removed simultaneously).
+  5. Assign cluster labels to the connected components which contain the
+     end points of the now-removed edge. If the component does not have at least
+     one edge it is instead assigned a "null" label marking it as noise.
+  6. Repeat 4-5 until there are no more connected components.
+
+HDBSCAN is therefore able to obtain all possible partitions achievable by
+DBSCAN* for a fixed choice of `min_samples` in a hierarchical fashion.
+Indeed, this allows HDBSCAN to perform clustering across multiple densities
+and as such it no longer needs :math:`\varepsilon` to be given as a hyperparameter. Instead
+it relies solely on the choice of `min_samples`, which tends to be a more robust
+hyperparameter.
+
+.. |hdbscan_ground_truth| image:: ../auto_examples/cluster/images/sphx_glr_plot_hdbscan_005.png
+        :target: ../auto_examples/cluster/plot_hdbscan.html
+        :scale: 75
+.. |hdbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_hdbscan_007.png
+        :target: ../auto_examples/cluster/plot_hdbscan.html
+        :scale: 75
+
+.. centered:: |hdbscan_ground_truth|
+.. centered:: |hdbscan_results|
+
+HDBSCAN can be smoothed with an additional hyperparameter `min_cluster_size`
+which specifies that during the hierarchical clustering, components with fewer
+than `minimum_cluster_size` many samples are considered noise. In practice, one
+can set `minimum_cluster_size = min_samples` to couple the parameters and
+simplify the hyperparameter space.
+
+.. topic:: References:
+
+ .. [CM2013] Campello, R.J.G.B., Moulavi, D., Sander, J. (2013). Density-Based Clustering
+   Based on Hierarchical Density Estimates. In: Pei, J., Tseng, V.S., Cao, L.,
+   Motoda, H., Xu, G. (eds) Advances in Knowledge Discovery and Data Mining.
+   PAKDD 2013. Lecture Notes in Computer Science(), vol 7819. Springer, Berlin,
+   Heidelberg.
+   :doi:`Density-Based Clustering Based on Hierarchical Density Estimates <10.1007/978-3-642-37456-2_14>`
+
+ .. [LJ2017] L. McInnes and J. Healy, (2017). Accelerated Hierarchical Density Based
+   Clustering. In: IEEE International Conference on Data Mining Workshops (ICDMW),
+   2017, pp. 33-42.
+   :doi:`Accelerated Hierarchical Density Based Clustering <10.1109/ICDMW.2017.12>`
 
 .. _optics:
 
@@ -950,7 +1146,7 @@ represented as children of a larger parent cluster.
     Different distance metrics can be supplied via the ``metric`` keyword.
 
     For large datasets, similar (but not identical) results can be obtained via
-    `HDBSCAN <https://hdbscan.readthedocs.io>`_. The HDBSCAN implementation is
+    :class:`HDBSCAN`. The HDBSCAN implementation is
     multithreaded, and has better algorithmic runtime complexity than OPTICS,
     at the cost of worse memory scaling. For extremely large datasets that
     exhaust system memory using HDBSCAN, OPTICS will maintain :math:`n` (as opposed
@@ -1410,7 +1606,7 @@ more broadly common names.
  .. [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
    Clusterings Comparison: Variants, Properties, Normalization and
    Correction for Chance". JMLR
-   <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
+   <https://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
 
  .. [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
    community
@@ -1584,7 +1780,7 @@ mean of homogeneity and completeness**:
    measure <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
 
- .. [B2011] `Identication and Characterization of Events in Social Media
+ .. [B2011] `Identification and Characterization of Events in Social Media
    <http://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
    Becker, PhD Thesis.
 
@@ -1604,7 +1800,7 @@ Where ``TP`` is the number of **True Positive** (i.e. the number of pair
 of points that belong to the same clusters in both the true labels and the
 predicted labels), ``FP`` is the number of **False Positive** (i.e. the number
 of pair of points that belong to the same clusters in the true labels and not
-in the predicted labels) and ``FN`` is the number of **False Negative** (i.e the
+in the predicted labels) and ``FN`` is the number of **False Negative** (i.e. the
 number of pair of points that belongs in the same clusters in the predicted
 labels and not in the true labels).
 
@@ -2041,6 +2237,5 @@ diagonal entries::
 
 .. topic:: References
 
- * L. Hubert and P. Arabie, Comparing Partitions, Journal of
-   Classification 1985
-   <https://link.springer.com/article/10.1007%2FBF01908075>_
+ * :doi:`"Comparing Partitions" <10.1007/BF01908075>`
+   L. Hubert and P. Arabie, Journal of Classification 1985

@@ -45,11 +45,14 @@ _ = fig.suptitle("A selection from the 64-dimensional digits dataset", fontsize=
 # scattered across it.
 import numpy as np
 from matplotlib import offsetbox
+
 from sklearn.preprocessing import MinMaxScaler
 
 
-def plot_embedding(X, title, ax):
+def plot_embedding(X, title):
+    _, ax = plt.subplots()
     X = MinMaxScaler().fit_transform(X)
+
     for digit in digits.target_names:
         ax.scatter(
             *X[y == digit].T,
@@ -101,11 +104,11 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.manifold import (
+    MDS,
+    TSNE,
     Isomap,
     LocallyLinearEmbedding,
-    MDS,
     SpectralEmbedding,
-    TSNE,
 )
 from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from sklearn.pipeline import make_pipeline
@@ -132,7 +135,9 @@ embeddings = {
     "LTSA LLE embedding": LocallyLinearEmbedding(
         n_neighbors=n_neighbors, n_components=2, method="ltsa"
     ),
-    "MDS embedding": MDS(n_components=2, n_init=1, max_iter=120, n_jobs=2),
+    "MDS embedding": MDS(
+        n_components=2, n_init=1, max_iter=120, n_jobs=2, normalized_stress="auto"
+    ),
     "Random Trees embedding": make_pipeline(
         RandomTreesEmbedding(n_estimators=200, max_depth=5, random_state=0),
         TruncatedSVD(n_components=2),
@@ -140,10 +145,8 @@ embeddings = {
     "Spectral embedding": SpectralEmbedding(
         n_components=2, random_state=0, eigen_solver="arpack"
     ),
-    "t-SNE embeedding": TSNE(
+    "t-SNE embedding": TSNE(
         n_components=2,
-        init="pca",
-        learning_rate="auto",
         n_iter=500,
         n_iter_without_progress=150,
         n_jobs=2,
@@ -155,7 +158,7 @@ embeddings = {
 }
 
 # %%
-# Once we declared all the methodes of interest, we can run and perform the projection
+# Once we declared all the methods of interest, we can run and perform the projection
 # of the original data. We will store the projected data as well as the computational
 # time needed to perform each projection.
 from time import time
@@ -175,15 +178,8 @@ for name, transformer in embeddings.items():
 
 # %%
 # Finally, we can plot the resulting projection given by each method.
-from itertools import zip_longest
-
-fig, axs = plt.subplots(nrows=7, ncols=2, figsize=(17, 24))
-
-for name, ax in zip_longest(timing, axs.ravel()):
-    if name is None:
-        ax.axis("off")
-        continue
+for name in timing:
     title = f"{name} (time {timing[name]:.3f}s)"
-    plot_embedding(projections[name], title, ax)
+    plot_embedding(projections[name], title)
 
 plt.show()

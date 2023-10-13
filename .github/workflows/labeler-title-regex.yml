@@ -3,6 +3,9 @@ on:
   pull_request_target:
     types: [opened, edited]
 
+# Restrict the permissions granted to the use of secrets.GITHUB_TOKEN in this
+# github actions workflow:
+# https://docs.github.com/en/actions/security-guides/automatic-token-authentication
 permissions:
   contents: read
   pull-requests: write
@@ -12,8 +15,8 @@ jobs:
   labeler:
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: '3.9'
     - name: Install PyGithub

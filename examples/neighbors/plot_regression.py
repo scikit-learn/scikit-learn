@@ -15,10 +15,12 @@ target using both barycenter and constant weights.
 # License: BSD 3 clause (C) INRIA
 
 
-# #############################################################################
+# %%
 # Generate sample data
-import numpy as np
+# --------------------
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import neighbors
 
 np.random.seed(0)
@@ -29,8 +31,9 @@ y = np.sin(X).ravel()
 # Add noise to targets
 y[::5] += 1 * (0.5 - np.random.rand(8))
 
-# #############################################################################
+# %%
 # Fit regression model
+# --------------------
 n_neighbors = 5
 
 for i, weights in enumerate(["uniform", "distance"]):

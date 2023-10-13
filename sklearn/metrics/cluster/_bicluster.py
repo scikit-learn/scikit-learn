@@ -1,7 +1,8 @@
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
-from ...utils.validation import check_consistent_length, check_array
+from ...utils._param_validation import StrOptions, validate_params
+from ...utils.validation import check_array, check_consistent_length
 
 __all__ = ["consensus_score"]
 
@@ -37,17 +38,22 @@ def _pairwise_similarity(a, b, similarity):
     n_a = a_rows.shape[0]
     n_b = b_rows.shape[0]
     result = np.array(
-        list(
-            list(
-                similarity(a_rows[i], a_cols[i], b_rows[j], b_cols[j])
-                for j in range(n_b)
-            )
+        [
+            [similarity(a_rows[i], a_cols[i], b_rows[j], b_cols[j]) for j in range(n_b)]
             for i in range(n_a)
-        )
+        ]
     )
     return result
 
 
+@validate_params(
+    {
+        "a": [tuple],
+        "b": [tuple],
+        "similarity": [callable, StrOptions({"jaccard"})],
+    },
+    prefer_skip_nested_validation=True,
+)
 def consensus_score(a, b, *, similarity="jaccard"):
     """The similarity of two sets of biclusters.
 
@@ -60,10 +66,10 @@ def consensus_score(a, b, *, similarity="jaccard"):
 
     Parameters
     ----------
-    a : (rows, columns)
+    a : tuple (rows, columns)
         Tuple of row and column indicators for a set of biclusters.
 
-    b : (rows, columns)
+    b : tuple (rows, columns)
         Another set of biclusters like ``a``.
 
     similarity : 'jaccard' or callable, default='jaccard'
@@ -71,13 +77,18 @@ def consensus_score(a, b, *, similarity="jaccard"):
         any function that takes four arguments, each of which is a 1d
         indicator vector: (a_rows, a_columns, b_rows, b_columns).
 
+    Returns
+    -------
+    consensus_score : float
+       Consensus score, a non-negative value, sum of similarities
+       divided by size of larger set.
+
     References
     ----------
 
     * Hochreiter, Bodenhofer, et. al., 2010. `FABIA: factor analysis
       for bicluster acquisition
       <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2881408/>`__.
-
     """
     if similarity == "jaccard":
         similarity = _jaccard

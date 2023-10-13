@@ -31,13 +31,13 @@ verified from the labelled scatter plot on the right.
 
 """
 
-from sklearn.datasets import make_blobs
-from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_samples, silhouette_score
-
-import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import matplotlib.pyplot as plt
 import numpy as np
+
+from sklearn.cluster import KMeans
+from sklearn.datasets import make_blobs
+from sklearn.metrics import silhouette_samples, silhouette_score
 
 # Generating the sample data from make_blobs
 # This particular setting has one distinct cluster and 3 clusters placed close
@@ -69,7 +69,7 @@ for n_clusters in range_n_clusters:
 
     # Initialize the clusterer with n_clusters value and a random generator
     # seed of 10 for reproducibility.
-    clusterer = KMeans(n_clusters=n_clusters, random_state=10)
+    clusterer = KMeans(n_clusters=n_clusters, n_init="auto", random_state=10)
     cluster_labels = clusterer.fit_predict(X)
 
     # The silhouette_score gives the average value for all the samples.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Nearest Centroid Classification
 """
@@ -9,15 +8,20 @@ Nearest Centroid Classification
 # License: BSD 3 clause
 
 import warnings
+from numbers import Real
+
 import numpy as np
 from scipy import sparse as sp
 
-from ..base import BaseEstimator, ClassifierMixin
-from ..metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import _VALID_METRICS
+
+from ..base import BaseEstimator, ClassifierMixin, _fit_context
+from ..metrics.pairwise import pairwise_distances_argmin
 from ..preprocessing import LabelEncoder
-from ..utils.validation import check_is_fitted
-from ..utils.sparsefuncs import csc_median_axis_0
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
+from ..utils.sparsefuncs import csc_median_axis_0
+from ..utils.validation import check_is_fitted
 
 
 class NearestCentroid(ClassifierMixin, BaseEstimator):
@@ -30,16 +34,25 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    metric : str or callable, default="euclidian"
-        The metric to use when calculating distance between instances in a
-        feature array. If metric is a string or callable, it must be one of
-        the options allowed by
-        :func:`~sklearn.metrics.pairwise_distances` for its metric
-        parameter. The centroids for the samples corresponding to each class is
+    metric : str or callable, default="euclidean"
+        Metric to use for distance computation. See the documentation of
+        `scipy.spatial.distance
+        <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
+        the metrics listed in
+        :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
+        values. Note that "wminkowski", "seuclidean" and "mahalanobis" are not
+        supported.
+
+        The centroids for the samples corresponding to each class is
         the point from which the sum of the distances (according to the metric)
         of all samples that belong to that particular class are minimized.
         If the `"manhattan"` metric is provided, this centroid is the median
         and for all other metrics, the centroid is now set to be the mean.
+
+        .. deprecated:: 1.3
+            Support for metrics other than `euclidean` and `manhattan` and for
+            callables was deprecated in version 1.3 and will be removed in
+            version 1.5.
 
         .. versionchanged:: 0.19
             `metric='precomputed'` was deprecated and now raises an error
@@ -95,10 +108,23 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     [1]
     """
 
+    _valid_metrics = set(_VALID_METRICS) - {"mahalanobis", "seuclidean", "wminkowski"}
+
+    _parameter_constraints: dict = {
+        "metric": [
+            StrOptions(
+                _valid_metrics, deprecated=_valid_metrics - {"manhattan", "euclidean"}
+            ),
+            callable,
+        ],
+        "shrink_threshold": [Interval(Real, 0, None, closed="neither"), None],
+    }
+
     def __init__(self, metric="euclidean", *, shrink_threshold=None):
         self.metric = metric
         self.shrink_threshold = shrink_threshold
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """
         Fit the NearestCentroid model according to the given training data.
@@ -117,8 +143,19 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        if self.metric == "precomputed":
-            raise ValueError("Precomputed is not supported.")
+        if isinstance(self.metric, str) and self.metric not in (
+            "manhattan",
+            "euclidean",
+        ):
+            warnings.warn(
+                (
+                    "Support for distance metrics other than euclidean and "
+                    "manhattan and for callables was deprecated in version "
+                    "1.3 and will be removed in version 1.5."
+                ),
+                FutureWarning,
+            )
+
         # If X is sparse and the metric is "manhattan", store it in a csc
         # format is easier to calculate the median.
         if self.metric == "manhattan":
@@ -152,7 +189,6 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             if is_X_sparse:
                 center_mask = np.where(center_mask)[0]
 
-            # XXX: Update other averaging methods according to the metrics.
             if self.metric == "manhattan":
                 # NumPy does not calculate median of sparse matrices.
                 if not is_X_sparse:
@@ -160,6 +196,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
                 else:
                     self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
             else:
+                # TODO(1.5) remove warning when metric is only manhattan or euclidean
                 if self.metric != "euclidean":
                     warnings.warn(
                         "Averaging for metrics other than "
@@ -194,6 +231,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             self.centroids_ = dataset_centroid_[np.newaxis, :] + msd
         return self
 
+    # TODO(1.5) remove note about precomputed metric
     def predict(self, X):
         """Perform classification on an array of test vectors `X`.
 
@@ -219,5 +257,5 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
         X = self._validate_data(X, accept_sparse="csr", reset=False)
         return self.classes_[
-            pairwise_distances(X, self.centroids_, metric=self.metric).argmin(axis=1)
+            pairwise_distances_argmin(X, self.centroids_, metric=self.metric)
         ]

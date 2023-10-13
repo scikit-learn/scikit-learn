@@ -1,18 +1,19 @@
-from time import time
 import argparse
 import os
 from pprint import pprint
+from time import time
 
 import numpy as np
 from threadpoolctl import threadpool_limits
-import sklearn
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_regression
-from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estimator
 
+import sklearn
+from sklearn.datasets import make_classification, make_regression
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
+from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estimator
+from sklearn.model_selection import train_test_split
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--n-leaf-nodes", type=int, default=31)
@@ -118,9 +119,7 @@ loss = args.loss
 if args.problem == "classification":
     if loss == "default":
         # loss='auto' does not work with get_equivalent_estimator()
-        loss = (
-            "binary_crossentropy" if args.n_classes == 2 else "categorical_crossentropy"
-        )
+        loss = "log_loss"
 else:
     # regression
     if loss == "default":
@@ -191,7 +190,7 @@ def one_run(n_threads, n_samples):
     xgb_score_duration = None
     if args.xgboost:
         print("Fitting an XGBoost model...")
-        xgb_est = get_equivalent_estimator(est, lib="xgboost")
+        xgb_est = get_equivalent_estimator(est, lib="xgboost", n_classes=args.n_classes)
         xgb_est.set_params(nthread=n_threads)
 
         tic = time()
@@ -209,7 +208,9 @@ def one_run(n_threads, n_samples):
     cat_score_duration = None
     if args.catboost:
         print("Fitting a CatBoost model...")
-        cat_est = get_equivalent_estimator(est, lib="catboost")
+        cat_est = get_equivalent_estimator(
+            est, lib="catboost", n_classes=args.n_classes
+        )
         cat_est.set_params(thread_count=n_threads)
 
         tic = time()
@@ -239,7 +240,7 @@ def one_run(n_threads, n_samples):
 
 
 max_threads = os.cpu_count()
-n_threads_list = [2 ** i for i in range(8) if (2 ** i) < max_threads]
+n_threads_list = [2**i for i in range(8) if (2**i) < max_threads]
 n_threads_list.append(max_threads)
 
 sklearn_scores = []
@@ -290,8 +291,8 @@ for n_threads in n_threads_list:
 
 
 if args.plot or args.plot_filename:
-    import matplotlib.pyplot as plt
     import matplotlib
+    import matplotlib.pyplot as plt
 
     fig, axs = plt.subplots(2, figsize=(12, 12))
 

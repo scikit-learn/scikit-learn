@@ -7,7 +7,7 @@
 .. _supervised-learning:
 
 Supervised learning
------------------------
+-------------------
 
 .. toctree::
     :maxdepth: 2

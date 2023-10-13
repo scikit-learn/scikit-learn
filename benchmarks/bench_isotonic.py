@@ -10,13 +10,15 @@ with matplotlib.
 This allows the scaling of the algorithm with the problem size to be
 visualized and understood.
 """
-import numpy as np
+import argparse
 import gc
 from datetime import datetime
-from sklearn.isotonic import isotonic_regression
-from scipy.special import expit
+
 import matplotlib.pyplot as plt
-import argparse
+import numpy as np
+from scipy.special import expit
+
+from sklearn.isotonic import isotonic_regression
 
 
 def generate_perturbed_logarithm_dataset(size):
@@ -86,7 +88,7 @@ if __name__ == "__main__":
 
     timings = []
     for exponent in range(args.log_min_problem_size, args.log_max_problem_size):
-        n = 10 ** exponent
+        n = 10**exponent
         Y = DATASET_GENERATORS[args.dataset](n)
         time_per_iteration = [
             bench_isotonic_regression(Y) for i in range(args.iterations)

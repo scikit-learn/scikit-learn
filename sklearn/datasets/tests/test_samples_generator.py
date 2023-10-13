@@ -6,29 +6,35 @@ import numpy as np
 import pytest
 import scipy.sparse as sp
 
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
-
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_multilabel_classification
-from sklearn.datasets import make_hastie_10_2
-from sklearn.datasets import make_regression
-from sklearn.datasets import make_blobs
-from sklearn.datasets import make_friedman1
-from sklearn.datasets import make_friedman2
-from sklearn.datasets import make_friedman3
-from sklearn.datasets import make_low_rank_matrix
-from sklearn.datasets import make_moons
-from sklearn.datasets import make_circles
-from sklearn.datasets import make_sparse_coded_signal
-from sklearn.datasets import make_sparse_uncorrelated
-from sklearn.datasets import make_spd_matrix
-from sklearn.datasets import make_swiss_roll
-from sklearn.datasets import make_s_curve
-from sklearn.datasets import make_biclusters
-from sklearn.datasets import make_checkerboard
-
+from sklearn.datasets import (
+    make_biclusters,
+    make_blobs,
+    make_checkerboard,
+    make_circles,
+    make_classification,
+    make_friedman1,
+    make_friedman2,
+    make_friedman3,
+    make_hastie_10_2,
+    make_low_rank_matrix,
+    make_moons,
+    make_multilabel_classification,
+    make_regression,
+    make_s_curve,
+    make_sparse_coded_signal,
+    make_sparse_spd_matrix,
+    make_sparse_uncorrelated,
+    make_spd_matrix,
+    make_swiss_roll,
+)
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
 from sklearn.utils.validation import assert_all_finite
 
 
@@ -281,18 +287,6 @@ def test_make_multilabel_classification_return_indicator_sparse():
         assert sp.issparse(Y)
 
 
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"n_classes": 0}, "'n_classes' should be an integer"),
-        ({"length": 0}, "'length' should be an integer"),
-    ],
-)
-def test_make_multilabel_classification_valid_arguments(params, err_msg):
-    with pytest.raises(ValueError, match=err_msg):
-        make_multilabel_classification(**params)
-
-
 def test_make_hastie_10_2():
     X, y = make_hastie_10_2(n_samples=100, random_state=0)
     assert X.shape == (100, 10), "X shape mismatch"
@@ -491,15 +485,54 @@ def test_make_low_rank_matrix():
 
 def test_make_sparse_coded_signal():
     Y, D, X = make_sparse_coded_signal(
-        n_samples=5, n_components=8, n_features=10, n_nonzero_coefs=3, random_state=0
+        n_samples=5,
+        n_components=8,
+        n_features=10,
+        n_nonzero_coefs=3,
+        random_state=0,
+    )
+    assert Y.shape == (5, 10), "Y shape mismatch"
+    assert D.shape == (8, 10), "D shape mismatch"
+    assert X.shape == (5, 8), "X shape mismatch"
+    for row in X:
+        assert len(np.flatnonzero(row)) == 3, "Non-zero coefs mismatch"
+    assert_allclose(Y, X @ D)
+    assert_allclose(np.sqrt((D**2).sum(axis=1)), np.ones(D.shape[0]))
+
+
+# TODO(1.5): remove
+@ignore_warnings(category=FutureWarning)
+def test_make_sparse_coded_signal_transposed():
+    Y, D, X = make_sparse_coded_signal(
+        n_samples=5,
+        n_components=8,
+        n_features=10,
+        n_nonzero_coefs=3,
+        random_state=0,
+        data_transposed=True,
     )
     assert Y.shape == (10, 5), "Y shape mismatch"
     assert D.shape == (10, 8), "D shape mismatch"
     assert X.shape == (8, 5), "X shape mismatch"
     for col in X.T:
         assert len(np.flatnonzero(col)) == 3, "Non-zero coefs mismatch"
-    assert_array_almost_equal(np.dot(D, X), Y)
-    assert_array_almost_equal(np.sqrt((D ** 2).sum(axis=0)), np.ones(D.shape[1]))
+    assert_allclose(Y, D @ X)
+    assert_allclose(np.sqrt((D**2).sum(axis=0)), np.ones(D.shape[1]))
+
+
+# TODO(1.5): remove
+def test_make_sparse_code_signal_deprecation_warning():
+    """Check the message for future deprecation."""
+    warn_msg = "data_transposed was deprecated in version 1.3"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        make_sparse_coded_signal(
+            n_samples=1,
+            n_components=1,
+            n_features=1,
+            n_nonzero_coefs=1,
+            random_state=0,
+            data_transposed=True,
+        )
 
 
 def test_make_sparse_uncorrelated():
@@ -518,9 +551,41 @@ def test_make_spd_matrix():
     from numpy.linalg import eig
 
     eigenvalues, _ = eig(X)
-    assert_array_equal(
-        eigenvalues > 0, np.array([True] * 5), "X is not positive-definite"
+    assert np.all(eigenvalues > 0), "X is not positive-definite"
+
+
+@pytest.mark.parametrize("norm_diag", [True, False])
+@pytest.mark.parametrize(
+    "sparse_format", [None, "bsr", "coo", "csc", "csr", "dia", "dok", "lil"]
+)
+def test_make_sparse_spd_matrix(norm_diag, sparse_format, global_random_seed):
+    dim = 5
+    X = make_sparse_spd_matrix(
+        dim=dim,
+        norm_diag=norm_diag,
+        sparse_format=sparse_format,
+        random_state=global_random_seed,
     )
+
+    assert X.shape == (dim, dim), "X shape mismatch"
+    if sparse_format is None:
+        assert not sp.issparse(X)
+        assert_allclose(X, X.T)
+        Xarr = X
+    else:
+        assert sp.issparse(X) and X.format == sparse_format
+        assert_allclose_dense_sparse(X, X.T)
+        Xarr = X.toarray()
+
+    from numpy.linalg import eig
+
+    # Do not use scipy.sparse.linalg.eigs because it cannot find all eigenvalues
+    eigenvalues, _ = eig(Xarr)
+    assert np.all(eigenvalues > 0), "X is not positive-definite"
+
+    if norm_diag:
+        # Check that leading diagonal elements are 1
+        assert_array_almost_equal(Xarr.diagonal(), np.ones(dim))
 
 
 @pytest.mark.parametrize("hole", [False, True])
@@ -611,19 +676,13 @@ def test_make_moons_unbalanced():
         ValueError,
         match=r"`n_samples` can be either an int " r"or a two-element tuple.",
     ):
-        make_moons(n_samples=[1, 2, 3])
-
-    with pytest.raises(
-        ValueError,
-        match=r"`n_samples` can be either an int " r"or a two-element tuple.",
-    ):
         make_moons(n_samples=(10,))
 
 
 def test_make_circles():
     factor = 0.3
 
-    for (n_samples, n_outer, n_inner) in [(7, 3, 4), (8, 4, 4)]:
+    for n_samples, n_outer, n_inner in [(7, 3, 4), (8, 4, 4)]:
         # Testing odd and even case, because in the past make_circles always
         # created an even number of samples.
         X, y = make_circles(n_samples, shuffle=False, noise=None, factor=factor)
@@ -632,8 +691,8 @@ def test_make_circles():
         center = [0.0, 0.0]
         for x, label in zip(X, y):
             dist_sqr = ((x - center) ** 2).sum()
-            dist_exp = 1.0 if label == 0 else factor ** 2
-            dist_exp = 1.0 if label == 0 else factor ** 2
+            dist_exp = 1.0 if label == 0 else factor**2
+            dist_exp = 1.0 if label == 0 else factor**2
             assert_almost_equal(
                 dist_sqr, dist_exp, err_msg="Point is not on expected circle"
             )
@@ -647,11 +706,6 @@ def test_make_circles():
             2,
         ), "Samples not correctly distributed across circles."
 
-    with pytest.raises(ValueError):
-        make_circles(factor=-0.01)
-    with pytest.raises(ValueError):
-        make_circles(factor=1.0)
-
 
 def test_make_circles_unbalanced():
     X, y = make_circles(n_samples=(2, 8))
@@ -663,12 +717,6 @@ def test_make_circles_unbalanced():
 
     with pytest.raises(
         ValueError,
-        match=r"`n_samples` can be either an int " r"or a two-element tuple.",
-    ):
-        make_circles(n_samples=[1, 2, 3])
-
-    with pytest.raises(
-        ValueError,
-        match=r"`n_samples` can be either an int " r"or a two-element tuple.",
+        match="When a tuple, n_samples must have exactly two elements.",
     ):
         make_circles(n_samples=(10,))

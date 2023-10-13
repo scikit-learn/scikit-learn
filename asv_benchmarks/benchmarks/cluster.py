@@ -1,7 +1,7 @@
 from sklearn.cluster import KMeans, MiniBatchKMeans
 
 from .common import Benchmark, Estimator, Predictor, Transformer
-from .datasets import _blobs_dataset, _20newsgroups_highdim_dataset
+from .datasets import _20newsgroups_highdim_dataset, _blobs_dataset
 from .utils import neg_mean_inertia
 
 
@@ -37,7 +37,7 @@ class KMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
             init=init,
             n_init=1,
             max_iter=max_iter,
-            tol=-1,
+            tol=0,
             random_state=0,
         )
 

@@ -180,7 +180,7 @@ Issue/Comment: Linking to comments
 PR-NEW: Better description and title
     ::
 
-        Thanks for the pull request! Please make the title of the PR more descriptive. The title will become the commit message when this is merged. You should state what issue (or PR) it fixes/resolves in the description using the syntax described [here](http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests).
+        Thanks for the pull request! Please make the title of the PR more descriptive. The title will become the commit message when this is merged. You should state what issue (or PR) it fixes/resolves in the description using the syntax described [here](https://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests).
 
 PR-NEW: Fix #
     ::
@@ -190,7 +190,7 @@ PR-NEW: Fix #
 PR-NEW or Issue: Maintenance cost
     ::
 
-        Every feature we include has a [maintenance cost](http://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. Also, we expect PR authors to take part in the maintenance for the code they submit, at least initially. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](https://scikit-learn-contrib.github.io).
+        Every feature we include has a [maintenance cost](https://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](https://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. Also, we expect PR authors to take part in the maintenance for the code they submit, at least initially. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](https://scikit-learn-contrib.github.io).
 
 PR-WIP: What's needed before merge?
     ::
@@ -210,7 +210,7 @@ PR-WIP: PEP8
 PR-MRG: Patience
     ::
 
-        Before merging, we generally require two core developers to agree that your pull request is desirable and ready. [Please be patient](http://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-attention), as we mostly rely on volunteered time from busy core developers. (You are also welcome to help us out with [reviewing other PRs](http://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines).)
+        Before merging, we generally require two core developers to agree that your pull request is desirable and ready. [Please be patient](https://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-attention), as we mostly rely on volunteered time from busy core developers. (You are also welcome to help us out with [reviewing other PRs](https://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines).)
 
 PR-MRG: Add to what's new
     ::
@@ -258,7 +258,7 @@ code. Follow these steps:
 
   valgrind -v --suppressions=valgrind-python.supp python my_test_script.py
 
-.. _valgrind: http://valgrind.org
+.. _valgrind: https://valgrind.org
 .. _`README.valgrind`: https://github.com/python/cpython/blob/master/Misc/README.valgrind
 .. _`valgrind-python.supp`: https://github.com/python/cpython/blob/master/Misc/valgrind-python.supp
 
@@ -270,7 +270,7 @@ corresponding location in your .pyx source file. Hopefully the output will
 give you clues as to the source of your memory error.
 
 For more information on valgrind and the array of options it has, see the
-tutorials and documentation on the `valgrind web site <http://valgrind.org>`_.
+tutorials and documentation on the `valgrind web site <https://valgrind.org>`_.
 
 .. _arm64_dev_env:
 

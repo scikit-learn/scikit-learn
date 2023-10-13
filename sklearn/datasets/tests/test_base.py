@@ -2,37 +2,44 @@ import os
 import shutil
 import tempfile
 import warnings
-from pickle import loads
-from pickle import dumps
 from functools import partial
-from importlib import resources
-
-import pytest
+from pathlib import Path
+from pickle import dumps, loads
 
 import numpy as np
-from sklearn.datasets import get_data_home
-from sklearn.datasets import clear_data_home
-from sklearn.datasets import load_files
-from sklearn.datasets import load_sample_images
-from sklearn.datasets import load_sample_image
-from sklearn.datasets import load_digits
-from sklearn.datasets import load_diabetes
-from sklearn.datasets import load_linnerud
-from sklearn.datasets import load_iris
-from sklearn.datasets import load_breast_cancer
-from sklearn.datasets import load_boston
-from sklearn.datasets import load_wine
+import pytest
+
+from sklearn.datasets import (
+    clear_data_home,
+    get_data_home,
+    load_breast_cancer,
+    load_diabetes,
+    load_digits,
+    load_files,
+    load_iris,
+    load_linnerud,
+    load_sample_image,
+    load_sample_images,
+    load_wine,
+)
 from sklearn.datasets._base import (
     load_csv_data,
     load_gzip_compressed_csv_data,
 )
-from sklearn.utils import Bunch
-from sklearn.utils._testing import SkipTest
 from sklearn.datasets.tests.test_common import check_as_frame
+from sklearn.preprocessing import scale
+from sklearn.utils import Bunch
+from sklearn.utils.fixes import _is_resource
 
-from sklearn.externals._pilutil import pillow_installed
 
-from sklearn.utils import IS_PYPY
+class _DummyPath:
+    """Minimal class that implements the os.PathLike interface."""
+
+    def __init__(self, path):
+        self.path = path
+
+    def __fspath__(self):
+        return self.path
 
 
 def _remove_dir(path):
@@ -71,13 +78,18 @@ def test_category_dir_2(load_files_root):
     _remove_dir(test_category_dir2)
 
 
-def test_data_home(data_home):
+@pytest.mark.parametrize("path_container", [None, Path, _DummyPath])
+def test_data_home(path_container, data_home):
     # get_data_home will point to a pre-existing folder
+    if path_container is not None:
+        data_home = path_container(data_home)
     data_home = get_data_home(data_home=data_home)
     assert data_home == data_home
     assert os.path.exists(data_home)
 
     # clear_data_home will delete both the content and the folder it-self
+    if path_container is not None:
+        data_home = path_container(data_home)
     clear_data_home(data_home=data_home)
     assert not os.path.exists(data_home)
 
@@ -94,8 +106,6 @@ def test_default_empty_load_files(load_files_root):
 
 
 def test_default_load_files(test_category_dir_1, test_category_dir_2, load_files_root):
-    if IS_PYPY:
-        pytest.xfail("[PyPy] fails due to string containing NUL characters")
     res = load_files(load_files_root)
     assert len(res.filenames) == 1
     assert len(res.target_names) == 2
@@ -106,12 +116,11 @@ def test_default_load_files(test_category_dir_1, test_category_dir_2, load_files
 def test_load_files_w_categories_desc_and_encoding(
     test_category_dir_1, test_category_dir_2, load_files_root
 ):
-    if IS_PYPY:
-        pytest.xfail("[PyPy] fails due to string containing NUL characters")
-    category = os.path.abspath(test_category_dir_1).split("/").pop()
+    category = os.path.abspath(test_category_dir_1).split(os.sep).pop()
     res = load_files(
-        load_files_root, description="test", categories=category, encoding="utf-8"
+        load_files_root, description="test", categories=[category], encoding="utf-8"
     )
+
     assert len(res.filenames) == 1
     assert len(res.target_names) == 1
     assert res.DESCR == "test"
@@ -126,6 +135,21 @@ def test_load_files_wo_load_content(
     assert len(res.target_names) == 2
     assert res.DESCR is None
     assert res.get("data") is None
+
+
+@pytest.mark.parametrize("allowed_extensions", ([".txt"], [".txt", ".json"]))
+def test_load_files_allowed_extensions(tmp_path, allowed_extensions):
+    """Check the behaviour of `allowed_extension` in `load_files`."""
+    d = tmp_path / "sub"
+    d.mkdir()
+    files = ("file1.txt", "file2.json", "file3.json", "file4.md")
+    paths = [d / f for f in files]
+    for p in paths:
+        p.write_bytes(b"hello")
+    res = load_files(tmp_path, allowed_extensions=allowed_extensions)
+    assert set([str(p) for p in paths if p.suffix in allowed_extensions]) == set(
+        res.filenames
+    )
 
 
 @pytest.mark.parametrize(
@@ -167,7 +191,7 @@ def test_load_csv_data_with_descr():
 @pytest.mark.parametrize(
     "filename, kwargs, expected_shape",
     [
-        ("diabetes_data.csv.gz", {}, [442, 10]),
+        ("diabetes_data_raw.csv.gz", {}, [442, 10]),
         ("diabetes_target.csv.gz", {}, [442]),
         ("digits.csv.gz", {"delimiter": ","}, [1797, 65]),
     ],
@@ -216,15 +240,22 @@ def test_load_sample_image():
         warnings.warn("Could not load sample images, PIL is not available.")
 
 
-def test_load_missing_sample_image_error():
-    if pillow_installed:
-        with pytest.raises(AttributeError):
-            load_sample_image("blop.jpg")
-    else:
-        warnings.warn("Could not load sample images, PIL is not available.")
+def test_load_diabetes_raw():
+    """Test to check that we load a scaled version by default but that we can
+    get an unscaled version when setting `scaled=False`."""
+    diabetes_raw = load_diabetes(scaled=False)
+    assert diabetes_raw.data.shape == (442, 10)
+    assert diabetes_raw.target.size, 442
+    assert len(diabetes_raw.feature_names) == 10
+    assert diabetes_raw.DESCR
+
+    diabetes_default = load_diabetes()
+
+    np.testing.assert_allclose(
+        scale(diabetes_raw.data) / (442**0.5), diabetes_default.data, atol=1e-04
+    )
 
 
-@pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
 @pytest.mark.parametrize(
     "loader_func, data_shape, target_shape, n_target, has_descr, filenames",
     [
@@ -242,7 +273,6 @@ def test_load_missing_sample_image_error():
         (load_diabetes, (442, 10), (442,), None, True, []),
         (load_digits, (1797, 64), (1797,), 10, True, []),
         (partial(load_digits, n_class=9), (1617, 64), (1617,), 10, True, []),
-        (load_boston, (506, 13), (506,), None, True, ["filename"]),
     ],
 )
 def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, filenames):
@@ -261,7 +291,7 @@ def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, file
         assert "data_module" in bunch
         assert all(
             [
-                f in bunch and resources.is_resource(bunch["data_module"], bunch[f])
+                f in bunch and _is_resource(bunch["data_module"], bunch[f])
                 for f in filenames
             ]
         )
@@ -322,31 +352,13 @@ def test_bunch_dir():
     assert "data" in dir(data)
 
 
-# FIXME: to be removed in 1.2
-def test_load_boston_warning():
-    """Check that we raise the ethical warning when loading `load_boston`."""
-    warn_msg = "The Boston housing prices dataset has an ethical problem"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        load_boston()
+def test_load_boston_error():
+    """Check that we raise the ethical warning when trying to import `load_boston`."""
+    msg = "The Boston housing prices dataset has an ethical problem"
+    with pytest.raises(ImportError, match=msg):
+        from sklearn.datasets import load_boston  # noqa
 
-
-@pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
-def test_load_boston_alternative():
-    pd = pytest.importorskip("pandas")
-    if os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "1":
-        raise SkipTest(
-            "This test requires an internet connection to fetch the dataset."
-        )
-
-    boston_sklearn = load_boston()
-
-    data_url = "http://lib.stat.cmu.edu/datasets/boston"
-    try:
-        raw_df = pd.read_csv(data_url, sep=r"\s+", skiprows=22, header=None)
-    except ConnectionError as e:
-        pytest.xfail(f"The dataset can't be downloaded. Got exception: {e}")
-    data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
-    target = raw_df.values[1::2, 2]
-
-    np.testing.assert_allclose(data, boston_sklearn.data)
-    np.testing.assert_allclose(target, boston_sklearn.target)
+    # other non-existing function should raise the usual import error
+    msg = "cannot import name 'non_existing_function' from 'sklearn.datasets'"
+    with pytest.raises(ImportError, match=msg):
+        from sklearn.datasets import non_existing_function  # noqa

@@ -10,34 +10,50 @@ at which the fix is no longer needed.
 #
 # License: BSD 3 clause
 
-from functools import update_wrapper
-import functools
+import sys
+from importlib import resources
+
+import numpy as np
+import scipy
+import scipy.sparse.linalg
+import scipy.stats
+import threadpoolctl
 
 import sklearn
-import numpy as np
-import scipy.sparse as sp
-import scipy
-import scipy.stats
-from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
-import threadpoolctl
-from .._config import config_context, get_config
-from ..externals._packaging.version import parse as parse_version
 
+from ..externals._packaging.version import parse as parse_version
+from .deprecation import deprecated
 
 np_version = parse_version(np.__version__)
+np_base_version = parse_version(np_version.base_version)
 sp_version = parse_version(scipy.__version__)
+sp_base_version = parse_version(sp_version.base_version)
 
+# TODO: We can consider removing the containers and importing
+# directly from SciPy when sparse matrices will be deprecated.
+CSR_CONTAINERS = [scipy.sparse.csr_matrix]
+CSC_CONTAINERS = [scipy.sparse.csc_matrix]
+COO_CONTAINERS = [scipy.sparse.coo_matrix]
+LIL_CONTAINERS = [scipy.sparse.lil_matrix]
+DOK_CONTAINERS = [scipy.sparse.dok_matrix]
+BSR_CONTAINERS = [scipy.sparse.bsr_matrix]
+DIA_CONTAINERS = [scipy.sparse.dia_matrix]
 
-if sp_version >= parse_version("1.4"):
-    from scipy.sparse.linalg import lobpcg
-else:
-    # Backport of lobpcg functionality from scipy 1.4.0, can be removed
-    # once support for sp_version < parse_version('1.4') is dropped
-    # mypy error: Name 'lobpcg' already defined (possibly by an import)
-    from ..externals._lobpcg import lobpcg  # type: ignore  # noqa
+if parse_version(scipy.__version__) >= parse_version("1.8"):
+    # Sparse Arrays have been added in SciPy 1.8
+    # TODO: When SciPy 1.8 is the minimum supported version,
+    # those list can be created directly without this condition.
+    # See: https://github.com/scikit-learn/scikit-learn/issues/27090
+    CSR_CONTAINERS.append(scipy.sparse.csr_array)
+    CSC_CONTAINERS.append(scipy.sparse.csc_array)
+    COO_CONTAINERS.append(scipy.sparse.coo_array)
+    LIL_CONTAINERS.append(scipy.sparse.lil_array)
+    DOK_CONTAINERS.append(scipy.sparse.dok_array)
+    BSR_CONTAINERS.append(scipy.sparse.bsr_array)
+    DIA_CONTAINERS.append(scipy.sparse.dia_array)
 
 try:
-    from scipy.optimize._linesearch import line_search_wolfe2, line_search_wolfe1
+    from scipy.optimize._linesearch import line_search_wolfe1, line_search_wolfe2
 except ImportError:  # SciPy < 1.8
     from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1  # type: ignore  # noqa
 
@@ -46,238 +62,16 @@ def _object_dtype_isnan(X):
     return X != X
 
 
-# TODO: replace by copy=False, when only scipy > 1.1 is supported.
-def _astype_copy_false(X):
-    """Returns the copy=False parameter for
-    {ndarray, csr_matrix, csc_matrix}.astype when possible,
-    otherwise don't specify
-    """
-    if sp_version >= parse_version("1.1") or not sp.issparse(X):
-        return {"copy": False}
-    else:
-        return {}
+# Rename the `method` kwarg to `interpolation` for NumPy < 1.22, because
+# `interpolation` kwarg was deprecated in favor of `method` in NumPy >= 1.22.
+def _percentile(a, q, *, method="linear", **kwargs):
+    return np.percentile(a, q, interpolation=method, **kwargs)
 
 
-def _joblib_parallel_args(**kwargs):
-    """Set joblib.Parallel arguments in a compatible way for 0.11 and 0.12+
-
-    For joblib 0.11 this maps both ``prefer`` and ``require`` parameters to
-    a specific ``backend``.
-
-    Parameters
-    ----------
-
-    prefer : str in {'processes', 'threads'} or None
-        Soft hint to choose the default backend if no specific backend
-        was selected with the parallel_backend context manager.
-
-    require : 'sharedmem' or None
-        Hard condstraint to select the backend. If set to 'sharedmem',
-        the selected backend will be single-host and thread-based even
-        if the user asked for a non-thread based backend with
-        parallel_backend.
-
-    See joblib.Parallel documentation for more details
-    """
-    import joblib
-
-    if parse_version(joblib.__version__) >= parse_version("0.12"):
-        return kwargs
-
-    extra_args = set(kwargs.keys()).difference({"prefer", "require"})
-    if extra_args:
-        raise NotImplementedError(
-            "unhandled arguments %s with joblib %s"
-            % (list(extra_args), joblib.__version__)
-        )
-    args = {}
-    if "prefer" in kwargs:
-        prefer = kwargs["prefer"]
-        if prefer not in ["threads", "processes", None]:
-            raise ValueError("prefer=%s is not supported" % prefer)
-        args["backend"] = {
-            "threads": "threading",
-            "processes": "multiprocessing",
-            None: None,
-        }[prefer]
-
-    if "require" in kwargs:
-        require = kwargs["require"]
-        if require not in [None, "sharedmem"]:
-            raise ValueError("require=%s is not supported" % require)
-        if require == "sharedmem":
-            args["backend"] = "threading"
-    return args
-
-
-class loguniform(scipy.stats.reciprocal):
-    """A class supporting log-uniform random variables.
-
-    Parameters
-    ----------
-    low : float
-        The minimum value
-    high : float
-        The maximum value
-
-    Methods
-    -------
-    rvs(self, size=None, random_state=None)
-        Generate log-uniform random variables
-
-    The most useful method for Scikit-learn usage is highlighted here.
-    For a full list, see
-    `scipy.stats.reciprocal
-    <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.reciprocal.html>`_.
-    This list includes all functions of ``scipy.stats`` continuous
-    distributions such as ``pdf``.
-
-    Notes
-    -----
-    This class generates values between ``low`` and ``high`` or
-
-        low <= loguniform(low, high).rvs() <= high
-
-    The logarithmic probability density function (PDF) is uniform. When
-    ``x`` is a uniformly distributed random variable between 0 and 1, ``10**x``
-    are random variables that are equally likely to be returned.
-
-    This class is an alias to ``scipy.stats.reciprocal``, which uses the
-    reciprocal distribution:
-    https://en.wikipedia.org/wiki/Reciprocal_distribution
-
-    Examples
-    --------
-
-    >>> from sklearn.utils.fixes import loguniform
-    >>> rv = loguniform(1e-3, 1e1)
-    >>> rvs = rv.rvs(random_state=42, size=1000)
-    >>> rvs.min()  # doctest: +SKIP
-    0.0010435856341129003
-    >>> rvs.max()  # doctest: +SKIP
-    9.97403052786026
-    """
-
-
-def _take_along_axis(arr, indices, axis):
-    """Implements a simplified version of np.take_along_axis if numpy
-    version < 1.15"""
-    if np_version >= parse_version("1.15"):
-        return np.take_along_axis(arr=arr, indices=indices, axis=axis)
-    else:
-        if axis is None:
-            arr = arr.flatten()
-
-        if not np.issubdtype(indices.dtype, np.intp):
-            raise IndexError("`indices` must be an integer array")
-        if arr.ndim != indices.ndim:
-            raise ValueError(
-                "`indices` and `arr` must have the same number of dimensions"
-            )
-
-        shape_ones = (1,) * indices.ndim
-        dest_dims = list(range(axis)) + [None] + list(range(axis + 1, indices.ndim))
-
-        # build a fancy index, consisting of orthogonal aranges, with the
-        # requested index inserted at the right location
-        fancy_index = []
-        for dim, n in zip(dest_dims, arr.shape):
-            if dim is None:
-                fancy_index.append(indices)
-            else:
-                ind_shape = shape_ones[:dim] + (-1,) + shape_ones[dim + 1 :]
-                fancy_index.append(np.arange(n).reshape(ind_shape))
-
-        fancy_index = tuple(fancy_index)
-        return arr[fancy_index]
-
-
-# remove when https://github.com/joblib/joblib/issues/1071 is fixed
-def delayed(function):
-    """Decorator used to capture the arguments of a function."""
-
-    @functools.wraps(function)
-    def delayed_function(*args, **kwargs):
-        return _FuncWrapper(function), args, kwargs
-
-    return delayed_function
-
-
-class _FuncWrapper:
-    """ "Load the global configuration before calling the function."""
-
-    def __init__(self, function):
-        self.function = function
-        self.config = get_config()
-        update_wrapper(self, self.function)
-
-    def __call__(self, *args, **kwargs):
-        with config_context(**self.config):
-            return self.function(*args, **kwargs)
-
-
-def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis=0):
-    """Implements a simplified linspace function as of numpy version >= 1.16.
-
-    As of numpy 1.16, the arguments start and stop can be array-like and
-    there is an optional argument `axis`.
-    For simplicity, we only allow 1d array-like to be passed to start and stop.
-    See: https://github.com/numpy/numpy/pull/12388 and numpy 1.16 release
-    notes about start and stop arrays for linspace logspace and geomspace.
-
-    Returns
-    -------
-    out : ndarray of shape (num, n_start) or (num,)
-        The output array with `n_start=start.shape[0]` columns.
-    """
-    if np_version < parse_version("1.16"):
-        start = np.asanyarray(start) * 1.0
-        stop = np.asanyarray(stop) * 1.0
-        dt = np.result_type(start, stop, float(num))
-        if dtype is None:
-            dtype = dt
-
-        if start.ndim == 0 == stop.ndim:
-            return np.linspace(
-                start=start,
-                stop=stop,
-                num=num,
-                endpoint=endpoint,
-                retstep=retstep,
-                dtype=dtype,
-            )
-
-        if start.ndim != 1 or stop.ndim != 1 or start.shape != stop.shape:
-            raise ValueError("start and stop must be 1d array-like of same shape.")
-        n_start = start.shape[0]
-        out = np.empty((num, n_start), dtype=dtype)
-        step = np.empty(n_start, dtype=np.float)
-        for i in range(n_start):
-            out[:, i], step[i] = np.linspace(
-                start=start[i],
-                stop=stop[i],
-                num=num,
-                endpoint=endpoint,
-                retstep=True,
-                dtype=dtype,
-            )
-        if axis != 0:
-            out = np.moveaxis(out, 0, axis)
-
-        if retstep:
-            return out, step
-        else:
-            return out
-    else:
-        return np.linspace(
-            start=start,
-            stop=stop,
-            num=num,
-            endpoint=endpoint,
-            retstep=retstep,
-            dtype=dtype,
-            axis=axis,
-        )
+if np_version < parse_version("1.22"):
+    percentile = _percentile
+else:  # >= 1.22
+    from numpy import percentile  # type: ignore  # noqa
 
 
 # compatibility fix for threadpoolctl >= 3.0.0
@@ -314,3 +108,213 @@ def threadpool_info():
 
 
 threadpool_info.__doc__ = threadpoolctl.threadpool_info.__doc__
+
+
+@deprecated(
+    "The function `delayed` has been moved from `sklearn.utils.fixes` to "
+    "`sklearn.utils.parallel`. This import path will be removed in 1.5."
+)
+def delayed(function):
+    from sklearn.utils.parallel import delayed
+
+    return delayed(function)
+
+
+# TODO: Remove when SciPy 1.11 is the minimum supported version
+def _mode(a, axis=0):
+    if sp_version >= parse_version("1.9.0"):
+        mode = scipy.stats.mode(a, axis=axis, keepdims=True)
+        if sp_version >= parse_version("1.10.999"):
+            # scipy.stats.mode has changed returned array shape with axis=None
+            # and keepdims=True, see https://github.com/scipy/scipy/pull/17561
+            if axis is None:
+                mode = np.ravel(mode)
+        return mode
+    return scipy.stats.mode(a, axis=axis)
+
+
+# TODO: Remove when Scipy 1.12 is the minimum supported version
+if sp_base_version >= parse_version("1.12.0"):
+    _sparse_linalg_cg = scipy.sparse.linalg.cg
+else:
+
+    def _sparse_linalg_cg(A, b, **kwargs):
+        if "rtol" in kwargs:
+            kwargs["tol"] = kwargs.pop("rtol")
+        if "atol" not in kwargs:
+            kwargs["atol"] = "legacy"
+        return scipy.sparse.linalg.cg(A, b, **kwargs)
+
+
+# TODO: Fuse the modern implementations of _sparse_min_max and _sparse_nan_min_max
+# into the public min_max_axis function when Scipy 1.11 is the minimum supported
+# version and delete the backport in the else branch below.
+if sp_base_version >= parse_version("1.11.0"):
+
+    def _sparse_min_max(X, axis):
+        the_min = X.min(axis=axis)
+        the_max = X.max(axis=axis)
+
+        if axis is not None:
+            the_min = the_min.toarray().ravel()
+            the_max = the_max.toarray().ravel()
+
+        return the_min, the_max
+
+    def _sparse_nan_min_max(X, axis):
+        the_min = X.nanmin(axis=axis)
+        the_max = X.nanmax(axis=axis)
+
+        if axis is not None:
+            the_min = the_min.toarray().ravel()
+            the_max = the_max.toarray().ravel()
+
+        return the_min, the_max
+
+else:
+    # This code is mostly taken from scipy 0.14 and extended to handle nans, see
+    # https://github.com/scikit-learn/scikit-learn/pull/11196
+    def _minor_reduce(X, ufunc):
+        major_index = np.flatnonzero(np.diff(X.indptr))
+
+        # reduceat tries casts X.indptr to intp, which errors
+        # if it is int64 on a 32 bit system.
+        # Reinitializing prevents this where possible, see #13737
+        X = type(X)((X.data, X.indices, X.indptr), shape=X.shape)
+        value = ufunc.reduceat(X.data, X.indptr[major_index])
+        return major_index, value
+
+    def _min_or_max_axis(X, axis, min_or_max):
+        N = X.shape[axis]
+        if N == 0:
+            raise ValueError("zero-size array to reduction operation")
+        M = X.shape[1 - axis]
+        mat = X.tocsc() if axis == 0 else X.tocsr()
+        mat.sum_duplicates()
+        major_index, value = _minor_reduce(mat, min_or_max)
+        not_full = np.diff(mat.indptr)[major_index] < N
+        value[not_full] = min_or_max(value[not_full], 0)
+        mask = value != 0
+        major_index = np.compress(mask, major_index)
+        value = np.compress(mask, value)
+
+        if axis == 0:
+            res = scipy.sparse.coo_matrix(
+                (value, (np.zeros(len(value)), major_index)),
+                dtype=X.dtype,
+                shape=(1, M),
+            )
+        else:
+            res = scipy.sparse.coo_matrix(
+                (value, (major_index, np.zeros(len(value)))),
+                dtype=X.dtype,
+                shape=(M, 1),
+            )
+        return res.A.ravel()
+
+    def _sparse_min_or_max(X, axis, min_or_max):
+        if axis is None:
+            if 0 in X.shape:
+                raise ValueError("zero-size array to reduction operation")
+            zero = X.dtype.type(0)
+            if X.nnz == 0:
+                return zero
+            m = min_or_max.reduce(X.data.ravel())
+            if X.nnz != np.prod(X.shape):
+                m = min_or_max(zero, m)
+            return m
+        if axis < 0:
+            axis += 2
+        if (axis == 0) or (axis == 1):
+            return _min_or_max_axis(X, axis, min_or_max)
+        else:
+            raise ValueError("invalid axis, use 0 for rows, or 1 for columns")
+
+    def _sparse_min_max(X, axis):
+        return (
+            _sparse_min_or_max(X, axis, np.minimum),
+            _sparse_min_or_max(X, axis, np.maximum),
+        )
+
+    def _sparse_nan_min_max(X, axis):
+        return (
+            _sparse_min_or_max(X, axis, np.fmin),
+            _sparse_min_or_max(X, axis, np.fmax),
+        )
+
+
+###############################################################################
+# Backport of Python 3.9's importlib.resources
+# TODO: Remove when Python 3.9 is the minimum supported version
+
+
+def _open_text(data_module, data_file_name):
+    if sys.version_info >= (3, 9):
+        return resources.files(data_module).joinpath(data_file_name).open("r")
+    else:
+        return resources.open_text(data_module, data_file_name)
+
+
+def _open_binary(data_module, data_file_name):
+    if sys.version_info >= (3, 9):
+        return resources.files(data_module).joinpath(data_file_name).open("rb")
+    else:
+        return resources.open_binary(data_module, data_file_name)
+
+
+def _read_text(descr_module, descr_file_name):
+    if sys.version_info >= (3, 9):
+        return resources.files(descr_module).joinpath(descr_file_name).read_text()
+    else:
+        return resources.read_text(descr_module, descr_file_name)
+
+
+def _path(data_module, data_file_name):
+    if sys.version_info >= (3, 9):
+        return resources.as_file(resources.files(data_module).joinpath(data_file_name))
+    else:
+        return resources.path(data_module, data_file_name)
+
+
+def _is_resource(data_module, data_file_name):
+    if sys.version_info >= (3, 9):
+        return resources.files(data_module).joinpath(data_file_name).is_file()
+    else:
+        return resources.is_resource(data_module, data_file_name)
+
+
+def _contents(data_module):
+    if sys.version_info >= (3, 9):
+        return (
+            resource.name
+            for resource in resources.files(data_module).iterdir()
+            if resource.is_file()
+        )
+    else:
+        return resources.contents(data_module)
+
+
+# For +1.25 NumPy versions exceptions and warnings are being moved
+# to a dedicated submodule.
+if np_version >= parse_version("1.25.0"):
+    from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
+else:
+    from numpy import ComplexWarning, VisibleDeprecationWarning  # type: ignore  # noqa
+
+
+# TODO: Remove when Scipy 1.6 is the minimum supported version
+try:
+    from scipy.integrate import trapezoid  # type: ignore  # noqa
+except ImportError:
+    from scipy.integrate import trapz as trapezoid  # type: ignore  # noqa
+
+
+# TODO: Remove when Pandas > 2.2 is the minimum supported version
+def pd_fillna(pd, frame):
+    pd_version = parse_version(pd.__version__).base_version
+    if parse_version(pd_version) < parse_version("2.2"):
+        frame = frame.fillna(value=np.nan)
+    else:
+        with pd.option_context("future.no_silent_downcasting", True):
+            frame = frame.fillna(value=np.nan).infer_objects(copy=False)
+    return frame

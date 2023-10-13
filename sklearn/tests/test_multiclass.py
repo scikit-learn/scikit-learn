@@ -1,43 +1,52 @@
-import numpy as np
-import scipy.sparse as sp
-import pytest
-
 from re import escape
 
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._mocking import CheckingClassifier
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.multiclass import OneVsOneClassifier
-from sklearn.multiclass import OutputCodeClassifier
-from sklearn.utils.multiclass import check_classification_targets, type_of_target
+import numpy as np
+import pytest
+import scipy.sparse as sp
+from numpy.testing import assert_allclose
+
+from sklearn import datasets, svm
+from sklearn.datasets import load_breast_cancer
+from sklearn.exceptions import NotFittedError
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import (
+    ElasticNet,
+    Lasso,
+    LinearRegression,
+    LogisticRegression,
+    Perceptron,
+    Ridge,
+    SGDClassifier,
+)
+from sklearn.metrics import precision_score, recall_score
+from sklearn.model_selection import GridSearchCV, cross_val_score
+from sklearn.multiclass import (
+    OneVsOneClassifier,
+    OneVsRestClassifier,
+    OutputCodeClassifier,
+)
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.svm import SVC, LinearSVC
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import (
     check_array,
     shuffle,
 )
-
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
-
-from sklearn.svm import LinearSVC, SVC
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.linear_model import (
-    LinearRegression,
-    Lasso,
-    ElasticNet,
-    Ridge,
-    Perceptron,
-    LogisticRegression,
-    SGDClassifier,
+from sklearn.utils._mocking import CheckingClassifier
+from sklearn.utils._testing import assert_almost_equal, assert_array_equal
+from sklearn.utils.fixes import (
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    DOK_CONTAINERS,
+    LIL_CONTAINERS,
 )
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.model_selection import GridSearchCV, cross_val_score
-from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.impute import SimpleImputer
-from sklearn import svm
-from sklearn.exceptions import NotFittedError
-from sklearn import datasets
+from sklearn.utils.multiclass import check_classification_targets, type_of_target
+
+msg = "The default value for `force_alpha` will change"
+pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")
 
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
@@ -48,7 +57,7 @@ n_classes = 3
 
 
 def test_ovr_exceptions():
-    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
+    ovr = OneVsRestClassifier(LinearSVC(dual="auto", random_state=0))
 
     # test predicting without fitting
     with pytest.raises(NotFittedError):
@@ -77,11 +86,11 @@ def test_check_classification_targets():
 
 def test_ovr_fit_predict():
     # A classifier which implements decision_function.
-    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
+    ovr = OneVsRestClassifier(LinearSVC(dual="auto", random_state=0))
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert len(ovr.estimators_) == n_classes
 
-    clf = LinearSVC(random_state=0)
+    clf = LinearSVC(dual="auto", random_state=0)
     pred2 = clf.fit(iris.data, iris.target).predict(iris.data)
     assert np.mean(iris.target == pred) == np.mean(iris.target == pred2)
 
@@ -158,52 +167,49 @@ def test_ovr_ovo_regressor():
     assert np.mean(pred == iris.target) > 0.9
 
 
-def test_ovr_fit_predict_sparse():
-    for sparse in [
-        sp.csr_matrix,
-        sp.csc_matrix,
-        sp.coo_matrix,
-        sp.dok_matrix,
-        sp.lil_matrix,
-    ]:
-        base_clf = MultinomialNB(alpha=1)
+@pytest.mark.parametrize(
+    "sparse_container",
+    CSR_CONTAINERS + CSC_CONTAINERS + COO_CONTAINERS + DOK_CONTAINERS + LIL_CONTAINERS,
+)
+def test_ovr_fit_predict_sparse(sparse_container):
+    base_clf = MultinomialNB(alpha=1)
 
-        X, Y = datasets.make_multilabel_classification(
-            n_samples=100,
-            n_features=20,
-            n_classes=5,
-            n_labels=3,
-            length=50,
-            allow_unlabeled=True,
-            random_state=0,
-        )
+    X, Y = datasets.make_multilabel_classification(
+        n_samples=100,
+        n_features=20,
+        n_classes=5,
+        n_labels=3,
+        length=50,
+        allow_unlabeled=True,
+        random_state=0,
+    )
 
-        X_train, Y_train = X[:80], Y[:80]
-        X_test = X[80:]
+    X_train, Y_train = X[:80], Y[:80]
+    X_test = X[80:]
 
-        clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
-        Y_pred = clf.predict(X_test)
+    clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
+    Y_pred = clf.predict(X_test)
 
-        clf_sprs = OneVsRestClassifier(base_clf).fit(X_train, sparse(Y_train))
-        Y_pred_sprs = clf_sprs.predict(X_test)
+    clf_sprs = OneVsRestClassifier(base_clf).fit(X_train, sparse_container(Y_train))
+    Y_pred_sprs = clf_sprs.predict(X_test)
 
-        assert clf.multilabel_
-        assert sp.issparse(Y_pred_sprs)
-        assert_array_equal(Y_pred_sprs.toarray(), Y_pred)
+    assert clf.multilabel_
+    assert sp.issparse(Y_pred_sprs)
+    assert_array_equal(Y_pred_sprs.toarray(), Y_pred)
 
-        # Test predict_proba
-        Y_proba = clf_sprs.predict_proba(X_test)
+    # Test predict_proba
+    Y_proba = clf_sprs.predict_proba(X_test)
 
-        # predict assigns a label if the probability that the
-        # sample has the label is greater than 0.5.
-        pred = Y_proba > 0.5
-        assert_array_equal(pred, Y_pred_sprs.toarray())
+    # predict assigns a label if the probability that the
+    # sample has the label is greater than 0.5.
+    pred = Y_proba > 0.5
+    assert_array_equal(pred, Y_pred_sprs.toarray())
 
-        # Test decision_function
-        clf = svm.SVC()
-        clf_sprs = OneVsRestClassifier(clf).fit(X_train, sparse(Y_train))
-        dec_pred = (clf_sprs.decision_function(X_test) > 0).astype(int)
-        assert_array_equal(dec_pred, clf_sprs.predict(X_test).toarray())
+    # Test decision_function
+    clf = svm.SVC()
+    clf_sprs = OneVsRestClassifier(clf).fit(X_train, sparse_container(Y_train))
+    dec_pred = (clf_sprs.decision_function(X_test) > 0).astype(int)
+    assert_array_equal(dec_pred, clf_sprs.predict(X_test).toarray())
 
 
 def test_ovr_always_present():
@@ -252,7 +258,7 @@ def test_ovr_multiclass():
 
     for base_clf in (
         MultinomialNB(),
-        LinearSVC(random_state=0),
+        LinearSVC(dual="auto", random_state=0),
         LinearRegression(),
         Ridge(),
         ElasticNet(),
@@ -297,7 +303,7 @@ def test_ovr_binary():
         assert y_pred == 1
 
     for base_clf in (
-        LinearSVC(random_state=0),
+        LinearSVC(dual="auto", random_state=0),
         LinearRegression(),
         Ridge(),
         ElasticNet(),
@@ -315,7 +321,7 @@ def test_ovr_multilabel():
 
     for base_clf in (
         MultinomialNB(),
-        LinearSVC(random_state=0),
+        LinearSVC(dual="auto", random_state=0),
         LinearRegression(),
         Ridge(),
         ElasticNet(),
@@ -453,7 +459,7 @@ def test_ovr_single_label_decision_function():
 
 
 def test_ovr_gridsearch():
-    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
+    ovr = OneVsRestClassifier(LinearSVC(dual="auto", random_state=0))
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ovr, {"estimator__C": Cs})
     cv.fit(iris.data, iris.target)
@@ -473,65 +479,8 @@ def test_ovr_pipeline():
     assert_array_equal(ovr.predict(iris.data), ovr_pipe.predict(iris.data))
 
 
-# TODO: Remove this test in version 1.1
-# when the coef_ attribute is removed
-@ignore_warnings(category=FutureWarning)
-def test_ovr_coef_():
-    for base_classifier in [
-        SVC(kernel="linear", random_state=0),
-        LinearSVC(random_state=0),
-    ]:
-        # SVC has sparse coef with sparse input data
-
-        ovr = OneVsRestClassifier(base_classifier)
-        for X in [iris.data, sp.csr_matrix(iris.data)]:
-            # test with dense and sparse coef
-            ovr.fit(X, iris.target)
-            shape = ovr.coef_.shape
-            assert shape[0] == n_classes
-            assert shape[1] == iris.data.shape[1]
-            # don't densify sparse coefficients
-            assert sp.issparse(ovr.estimators_[0].coef_) == sp.issparse(ovr.coef_)
-
-
-# TODO: Remove this test in version 1.1
-# when the coef_ attribute is removed
-@ignore_warnings(category=FutureWarning)
-def test_ovr_coef_exceptions():
-    # Not fitted exception!
-    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-
-    with pytest.raises(NotFittedError):
-        ovr.coef_
-
-    # Doesn't have coef_ exception!
-    ovr = OneVsRestClassifier(DecisionTreeClassifier())
-    ovr.fit(iris.data, iris.target)
-    msg = "Base estimator doesn't have a coef_ attribute"
-    with pytest.raises(AttributeError, match=msg):
-        ovr.coef_
-
-
-# TODO: Remove this test in version 1.1 when
-# the coef_ and intercept_ attributes are removed
-def test_ovr_deprecated_coef_intercept():
-    ovr = OneVsRestClassifier(SVC(kernel="linear"))
-    ovr = ovr.fit(iris.data, iris.target)
-
-    msg = (
-        r"Attribute `{0}` was deprecated in version 0.24 "
-        r"and will be removed in 1.1 \(renaming of 0.26\). If you observe "
-        r"this warning while using RFE or SelectFromModel, "
-        r"use the importance_getter parameter instead."
-    )
-
-    for att in ["coef_", "intercept_"]:
-        with pytest.warns(FutureWarning, match=msg.format(att)):
-            getattr(ovr, att)
-
-
 def test_ovo_exceptions():
-    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
+    ovo = OneVsOneClassifier(LinearSVC(dual="auto", random_state=0))
     with pytest.raises(NotFittedError):
         ovo.predict([])
 
@@ -539,7 +488,7 @@ def test_ovo_exceptions():
 def test_ovo_fit_on_list():
     # Test that OneVsOne fitting works with a list of targets and yields the
     # same output as predict from an array
-    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
+    ovo = OneVsOneClassifier(LinearSVC(dual="auto", random_state=0))
     prediction_from_array = ovo.fit(iris.data, iris.target).predict(iris.data)
     iris_data_list = [list(a) for a in iris.data]
     prediction_from_list = ovo.fit(iris_data_list, list(iris.target)).predict(
@@ -550,7 +499,7 @@ def test_ovo_fit_on_list():
 
 def test_ovo_fit_predict():
     # A classifier which implements decision_function.
-    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
+    ovo = OneVsOneClassifier(LinearSVC(dual="auto", random_state=0))
     ovo.fit(iris.data, iris.target).predict(iris.data)
     assert len(ovo.estimators_) == n_classes * (n_classes - 1) / 2
 
@@ -616,7 +565,7 @@ def test_ovo_partial_fit_predict():
 def test_ovo_decision_function():
     n_samples = iris.data.shape[0]
 
-    ovo_clf = OneVsOneClassifier(LinearSVC(random_state=0))
+    ovo_clf = OneVsOneClassifier(LinearSVC(dual="auto", random_state=0))
     # first binary
     ovo_clf.fit(iris.data, iris.target == 0)
     decisions = ovo_clf.decision_function(iris.data)
@@ -661,7 +610,7 @@ def test_ovo_decision_function():
 
 
 def test_ovo_gridsearch():
-    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
+    ovo = OneVsOneClassifier(LinearSVC(dual="auto", random_state=0))
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ovo, {"estimator__C": Cs})
     cv.fit(iris.data, iris.target)
@@ -711,7 +660,7 @@ def test_ovo_string_y():
     X = np.eye(4)
     y = np.array(["a", "b", "c", "d"])
 
-    ovo = OneVsOneClassifier(LinearSVC())
+    ovo = OneVsOneClassifier(LinearSVC(dual="auto"))
     ovo.fit(X, y)
     assert_array_equal(y, ovo.predict(X))
 
@@ -721,7 +670,7 @@ def test_ovo_one_class():
     X = np.eye(4)
     y = np.array(["a"] * 4)
 
-    ovo = OneVsOneClassifier(LinearSVC())
+    ovo = OneVsOneClassifier(LinearSVC(dual="auto"))
     msg = "when only one class"
     with pytest.raises(ValueError, match=msg):
         ovo.fit(X, y)
@@ -732,21 +681,23 @@ def test_ovo_float_y():
     X = iris.data
     y = iris.data[:, 0]
 
-    ovo = OneVsOneClassifier(LinearSVC())
+    ovo = OneVsOneClassifier(LinearSVC(dual="auto"))
     msg = "Unknown label type"
     with pytest.raises(ValueError, match=msg):
         ovo.fit(X, y)
 
 
 def test_ecoc_exceptions():
-    ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
+    ecoc = OutputCodeClassifier(LinearSVC(dual="auto", random_state=0))
     with pytest.raises(NotFittedError):
         ecoc.predict([])
 
 
 def test_ecoc_fit_predict():
     # A classifier which implements decision_function.
-    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=2, random_state=0)
+    ecoc = OutputCodeClassifier(
+        LinearSVC(dual="auto", random_state=0), code_size=2, random_state=0
+    )
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert len(ecoc.estimators_) == n_classes * 2
 
@@ -757,7 +708,7 @@ def test_ecoc_fit_predict():
 
 
 def test_ecoc_gridsearch():
-    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), random_state=0)
+    ecoc = OutputCodeClassifier(LinearSVC(dual="auto", random_state=0), random_state=0)
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ecoc, {"estimator__C": Cs})
     cv.fit(iris.data, iris.target)
@@ -770,22 +721,18 @@ def test_ecoc_float_y():
     X = iris.data
     y = iris.data[:, 0]
 
-    ovo = OutputCodeClassifier(LinearSVC())
+    ovo = OutputCodeClassifier(LinearSVC(dual="auto"))
     msg = "Unknown label type"
     with pytest.raises(ValueError, match=msg):
         ovo.fit(X, y)
 
-    ovo = OutputCodeClassifier(LinearSVC(), code_size=-1)
-    msg = "code_size should be greater than 0, got -1"
-    with pytest.raises(ValueError, match=msg):
-        ovo.fit(X, y)
 
-
-def test_ecoc_delegate_sparse_base_estimator():
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_ecoc_delegate_sparse_base_estimator(csc_container):
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/17218
     X, y = iris.data, iris.target
-    X_sp = sp.csc_matrix(X)
+    X_sp = csc_container(X)
 
     # create an estimator that does not support sparse input
     base_estimator = CheckingClassifier(
@@ -802,7 +749,7 @@ def test_ecoc_delegate_sparse_base_estimator():
         ecoc.predict(X_sp)
 
     # smoke test to check when sparse input should be supported
-    ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
+    ecoc = OutputCodeClassifier(LinearSVC(dual="auto", random_state=0))
     ecoc.fit(X_sp, y).predict(X_sp)
     assert len(ecoc.estimators_) == 4
 
@@ -893,19 +840,6 @@ def test_pairwise_n_features_in():
     assert ovo_precomputed.estimators_[2].n_features_in_ == 100  # class 1 vs class 2
 
 
-@ignore_warnings(category=FutureWarning)
-def test_pairwise_attribute():
-    clf_precomputed = svm.SVC(kernel="precomputed")
-    clf_notprecomputed = svm.SVC()
-
-    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
-        ovr_false = MultiClassClassifier(clf_notprecomputed)
-        assert not ovr_false._pairwise
-
-        ovr_true = MultiClassClassifier(clf_precomputed)
-        assert ovr_true._pairwise
-
-
 @pytest.mark.parametrize(
     "MultiClassClassifier", [OneVsRestClassifier, OneVsOneClassifier]
 )
@@ -918,18 +852,6 @@ def test_pairwise_tag(MultiClassClassifier):
 
     ovr_true = MultiClassClassifier(clf_precomputed)
     assert ovr_true._get_tags()["pairwise"]
-
-
-# TODO: Remove in 1.1
-@pytest.mark.parametrize(
-    "MultiClassClassifier", [OneVsRestClassifier, OneVsOneClassifier]
-)
-def test_pairwise_deprecated(MultiClassClassifier):
-    clf_precomputed = svm.SVC(kernel="precomputed")
-    ov_clf = MultiClassClassifier(clf_precomputed)
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        ov_clf._pairwise
 
 
 @pytest.mark.parametrize(
@@ -971,3 +893,36 @@ def test_support_missing_values(MultiClassClassifier):
     lr = make_pipeline(SimpleImputer(), LogisticRegression(random_state=rng))
 
     MultiClassClassifier(lr).fit(X, y).score(X, y)
+
+
+@pytest.mark.parametrize("make_y", [np.ones, np.zeros])
+def test_constant_int_target(make_y):
+    """Check that constant y target does not raise.
+
+    Non-regression test for #21869
+    """
+    X = np.ones((10, 2))
+    y = make_y((10, 1), dtype=np.int32)
+    ovr = OneVsRestClassifier(LogisticRegression())
+
+    ovr.fit(X, y)
+    y_pred = ovr.predict_proba(X)
+    expected = np.zeros((X.shape[0], 2))
+    expected[:, 0] = 1
+    assert_allclose(y_pred, expected)
+
+
+def test_ovo_consistent_binary_classification():
+    """Check that ovo is consistent with binary classifier.
+
+    Non-regression test for #13617.
+    """
+    X, y = load_breast_cancer(return_X_y=True)
+
+    clf = KNeighborsClassifier(n_neighbors=8, weights="distance")
+    ovo = OneVsOneClassifier(clf)
+
+    clf.fit(X, y)
+    ovo.fit(X, y)
+
+    assert_array_equal(clf.predict(X), ovo.predict(X))

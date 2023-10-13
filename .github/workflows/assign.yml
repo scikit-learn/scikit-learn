@@ -4,13 +4,19 @@ on:
   issue_comment:
     types: created
 
+# Restrict the permissions granted to the use of secrets.GITHUB_TOKEN in this
+# github actions workflow:
+# https://docs.github.com/en/actions/security-guides/automatic-token-authentication
+permissions:
+  issues: write
+
 jobs:
   one:
     runs-on: ubuntu-latest
+    # Note that string comparisons is not case sensitive.
     if: >-
-      (github.event.comment.body == 'take' ||
-       github.event.comment.body == 'Take')
-      && !github.event.issue.assignee
+       startsWith(github.event.comment.body, '/take')
+       && !github.event.issue.assignee
     steps:
       - run: |
           echo "Assigning issue ${{ github.event.issue.number }} to ${{ github.event.comment.user.login }}"

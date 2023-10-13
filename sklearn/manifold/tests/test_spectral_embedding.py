@@ -1,23 +1,24 @@
-import pytest
+from unittest.mock import Mock
 
 import numpy as np
-
+import pytest
 from scipy import sparse
-from scipy.sparse import csgraph
 from scipy.linalg import eigh
+from scipy.sparse import csgraph
+from scipy.sparse.linalg import eigsh, lobpcg
 
-from sklearn.manifold import SpectralEmbedding
-from sklearn.manifold._spectral_embedding import _graph_is_connected
-from sklearn.manifold._spectral_embedding import _graph_connected_component
-from sklearn.manifold import spectral_embedding
-from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.metrics import normalized_mutual_info_score
-from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
+from sklearn.manifold import SpectralEmbedding, _spectral_embedding, spectral_embedding
+from sklearn.manifold._spectral_embedding import (
+    _graph_connected_component,
+    _graph_is_connected,
+)
+from sklearn.metrics import normalized_mutual_info_score, pairwise_distances
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa
@@ -47,7 +48,7 @@ S, true_labels = make_blobs(
 def _assert_equal_with_sign_flipping(A, B, tol=0.0):
     """Check array A and B are equal with possible sign flipping on
     each columns"""
-    tol_squared = tol ** 2
+    tol_squared = tol**2
     for A_col, B_col in zip(A.T, B.T):
         assert (
             np.max((A_col - B_col) ** 2) <= tol_squared
@@ -94,6 +95,10 @@ def test_sparse_graph_connected_component():
         assert_array_equal(component_1, component_2)
 
 
+# TODO: investigate why this test is seed-sensitive on 32-bit Python
+# runtimes. Is this revealing a numerical stability problem ? Or is it
+# expected from the test numerical design ? In the latter case the test
+# should be made less seed-sensitive instead.
 @pytest.mark.parametrize(
     "eigen_solver",
     [
@@ -103,7 +108,7 @@ def test_sparse_graph_connected_component():
     ],
 )
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_spectral_embedding_two_components(eigen_solver, dtype, seed=36):
+def test_spectral_embedding_two_components(eigen_solver, dtype, seed=0):
     # Test spectral embedding with two components
     random_state = np.random.RandomState(seed)
     n_sample = 100
@@ -238,6 +243,9 @@ def test_spectral_embedding_callable_affinity(X, seed=36):
 @pytest.mark.filterwarnings(
     "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
 )
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated:DeprecationWarning:pyamg.*"
+)
 @pytest.mark.skipif(
     not pyamg_available, reason="PyAMG is required for the tests in this function."
 )
@@ -295,6 +303,10 @@ def test_spectral_embedding_amg_solver(dtype, seed=36):
 @pytest.mark.skipif(
     not pyamg_available, reason="PyAMG is required for the tests in this function."
 )
+# TODO: Remove when pyamg removes the use of np.find_common_type
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated:DeprecationWarning:pyamg.*"
+)
 @pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_spectral_embedding_amg_solver_failure(dtype, seed=36):
     # Non-regression test for amg solver failure (issue #13393 on github)
@@ -329,34 +341,11 @@ def test_pipeline_spectral_clustering(seed=36):
         random_state=random_state,
     )
     for se in [se_rbf, se_knn]:
-        km = KMeans(n_clusters=n_clusters, random_state=random_state)
+        km = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10)
         km.fit(se.fit_transform(S))
         assert_array_almost_equal(
             normalized_mutual_info_score(km.labels_, true_labels), 1.0, 2
         )
-
-
-def test_spectral_embedding_unknown_eigensolver(seed=36):
-    # Test that SpectralClustering fails with an unknown eigensolver
-    se = SpectralEmbedding(
-        n_components=1,
-        affinity="precomputed",
-        random_state=np.random.RandomState(seed),
-        eigen_solver="<unknown>",
-    )
-    with pytest.raises(ValueError):
-        se.fit(S)
-
-
-def test_spectral_embedding_unknown_affinity(seed=36):
-    # Test that SpectralClustering fails with an unknown affinity type
-    se = SpectralEmbedding(
-        n_components=1,
-        affinity="<unknown>",
-        random_state=np.random.RandomState(seed),
-    )
-    with pytest.raises(ValueError):
-        se.fit(S)
 
 
 def test_connectivity(seed=36):
@@ -482,10 +471,32 @@ def test_error_pyamg_not_available():
         se_precomp.fit_transform(S)
 
 
-# TODO: Remove in 1.1
-@pytest.mark.parametrize("affinity", ["precomputed", "precomputed_nearest_neighbors"])
-def test_spectral_embedding_pairwise_deprecated(affinity):
-    se = SpectralEmbedding(affinity=affinity)
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        se._pairwise
+# TODO: Remove when pyamg removes the use of np.find_common_type
+@pytest.mark.filterwarnings(
+    "ignore:np.find_common_type is deprecated:DeprecationWarning:pyamg.*"
+)
+@pytest.mark.parametrize("solver", ["arpack", "amg", "lobpcg"])
+def test_spectral_eigen_tol_auto(monkeypatch, solver):
+    """Test that `eigen_tol="auto"` is resolved correctly"""
+    if solver == "amg" and not pyamg_available:
+        pytest.skip("PyAMG is not available.")
+    X, _ = make_blobs(
+        n_samples=200, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
+    )
+    D = pairwise_distances(X)  # Distance matrix
+    S = np.max(D) - D  # Similarity matrix
+
+    solver_func = eigsh if solver == "arpack" else lobpcg
+    default_value = 0 if solver == "arpack" else None
+    if solver == "amg":
+        S = sparse.csr_matrix(S)
+
+    mocked_solver = Mock(side_effect=solver_func)
+
+    monkeypatch.setattr(_spectral_embedding, solver_func.__qualname__, mocked_solver)
+
+    spectral_embedding(S, random_state=42, eigen_solver=solver, eigen_tol="auto")
+    mocked_solver.assert_called()
+
+    _, kwargs = mocked_solver.call_args
+    assert kwargs["tol"] == default_value

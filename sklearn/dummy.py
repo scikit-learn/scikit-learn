@@ -4,20 +4,30 @@
 # License: BSD 3 clause
 
 import warnings
+from numbers import Integral, Real
+
 import numpy as np
 import scipy.sparse as sp
 
-from .base import BaseEstimator, ClassifierMixin, RegressorMixin
-from .base import MultiOutputMixin
+from .base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+)
 from .utils import check_random_state
-from .utils import deprecated
-from .utils.validation import _num_samples
-from .utils.validation import check_array
-from .utils.validation import check_consistent_length
-from .utils.validation import check_is_fitted, _check_sample_weight
+from .utils._param_validation import Interval, StrOptions
+from .utils.multiclass import class_distribution
 from .utils.random import _random_choice_csc
 from .utils.stats import _weighted_percentile
-from .utils.multiclass import class_distribution
+from .utils.validation import (
+    _check_sample_weight,
+    _num_samples,
+    check_array,
+    check_consistent_length,
+    check_is_fitted,
+)
 
 
 class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
@@ -36,7 +46,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     Note that the "stratified" and "uniform" strategies lead to
     non-deterministic predictions that can be rendered deterministic by setting
     the `random_state` parameter if needed. The other strategies are naturally
-    deterministic and, once fit, always return a the same constant prediction
+    deterministic and, once fit, always return the same constant prediction
     for any value of `X`.
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
@@ -103,13 +113,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     n_outputs_ : int
         Number of outputs.
 
-    n_features_in_ : `None`
-        Always set to `None`.
-
-        .. versionadded:: 0.24
-        .. deprecated:: 1.0
-            Will be removed in 1.0
-
     sparse_output_ : bool
         True if the array returned from predict is to be in sparse CSC format.
         Is automatically set to True if the input `y` is passed in sparse
@@ -134,11 +137,20 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     0.75
     """
 
+    _parameter_constraints: dict = {
+        "strategy": [
+            StrOptions({"most_frequent", "prior", "stratified", "uniform", "constant"})
+        ],
+        "random_state": ["random_state"],
+        "constant": [Integral, str, "array-like", None],
+    }
+
     def __init__(self, *, strategy="prior", random_state=None, constant=None):
         self.strategy = strategy
         self.random_state = random_state
         self.constant = constant
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the baseline classifier.
 
@@ -158,29 +170,17 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        allowed_strategies = (
-            "most_frequent",
-            "stratified",
-            "uniform",
-            "constant",
-            "prior",
-        )
-
-        if self.strategy not in allowed_strategies:
-            raise ValueError(
-                "Unknown strategy type: %s, expected one of %s."
-                % (self.strategy, allowed_strategies)
-            )
-
         self._strategy = self.strategy
 
         if self._strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
             warnings.warn(
-                "A local copy of the target data has been converted "
-                "to a numpy array. Predicting on sparse target data "
-                "with the uniform strategy would not save memory "
-                "and would be slower.",
+                (
+                    "A local copy of the target data has been converted "
+                    "to a numpy array. Predicting on sparse target data "
+                    "with the uniform strategy would not save memory "
+                    "and would be slower."
+                ),
                 UserWarning,
             )
 
@@ -227,7 +227,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                         "The constant target value must be present in "
                         "the training data. You provided constant={}. "
                         "Possible values are: {}.".format(
-                            self.constant, list(self.classes_[k])
+                            self.constant, self.classes_[k].tolist()
                         )
                     )
                     raise ValueError(err_msg)
@@ -444,21 +444,11 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         score : float
-            Mean accuracy of self.predict(X) wrt. y.
+            Mean accuracy of self.predict(X) w.r.t. y.
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
-
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "`n_features_in_` is deprecated in 1.0 and will be removed in 1.2."
-    )
-    @property
-    def n_features_in_(self):
-        check_is_fitted(self)
-        return None
 
 
 class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -498,13 +488,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Mean or median or quantile of the training targets or constant value
         given by the user.
 
-    n_features_in_ : `None`
-        Always set to `None`.
-
-        .. versionadded:: 0.24
-        .. deprecated:: 1.0
-            Will be removed in 1.0
-
     n_outputs_ : int
         Number of outputs.
 
@@ -527,11 +510,22 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     0.0
     """
 
+    _parameter_constraints: dict = {
+        "strategy": [StrOptions({"mean", "median", "quantile", "constant"})],
+        "quantile": [Interval(Real, 0.0, 1.0, closed="both"), None],
+        "constant": [
+            Interval(Real, None, None, closed="neither"),
+            "array-like",
+            None,
+        ],
+    }
+
     def __init__(self, *, strategy="mean", constant=None, quantile=None):
         self.strategy = strategy
         self.constant = constant
         self.quantile = quantile
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the random regressor.
 
@@ -551,13 +545,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        allowed_strategies = ("mean", "median", "quantile", "constant")
-        if self.strategy not in allowed_strategies:
-            raise ValueError(
-                "Unknown strategy type: %s, expected one of %s."
-                % (self.strategy, allowed_strategies)
-            )
-
         y = check_array(y, ensure_2d=False, input_name="y")
         if len(y) == 0:
             raise ValueError("y must not be empty.")
@@ -584,12 +571,11 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 ]
 
         elif self.strategy == "quantile":
-            if self.quantile is None or not np.isscalar(self.quantile):
+            if self.quantile is None:
                 raise ValueError(
-                    "Quantile must be a scalar in the range [0.0, 1.0], but got %s."
-                    % self.quantile
+                    "When using `strategy='quantile', you have to specify the desired "
+                    "quantile in the range [0, 1]."
                 )
-
             percentile = self.quantile * 100.0
             if sample_weight is None:
                 self.constant_ = np.percentile(y, axis=0, q=percentile)
@@ -606,19 +592,17 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     "when the constant strategy is used."
                 )
 
-            self.constant = check_array(
+            self.constant_ = check_array(
                 self.constant,
                 accept_sparse=["csr", "csc", "coo"],
                 ensure_2d=False,
                 ensure_min_samples=0,
             )
 
-            if self.n_outputs_ != 1 and self.constant.shape[0] != y.shape[1]:
+            if self.n_outputs_ != 1 and self.constant_.shape[0] != y.shape[1]:
                 raise ValueError(
                     "Constant target value should have shape (%d, 1)." % y.shape[1]
                 )
-
-            self.constant_ = self.constant
 
         self.constant_ = np.reshape(self.constant_, (1, -1))
         return self
@@ -691,18 +675,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Returns
         -------
         score : float
-            R^2 of `self.predict(X)` wrt. y.
+            R^2 of `self.predict(X)` w.r.t. y.
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
-
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "`n_features_in_` is deprecated in 1.0 and will be removed in 1.2."
-    )
-    @property
-    def n_features_in_(self):
-        check_is_fitted(self)
-        return None

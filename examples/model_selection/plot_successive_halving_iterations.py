@@ -10,16 +10,15 @@ multiple candidates.
 
 """
 
-import pandas as pd
-from sklearn import datasets
 import matplotlib.pyplot as plt
-from scipy.stats import randint
 import numpy as np
+import pandas as pd
+from scipy.stats import randint
 
+from sklearn import datasets
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import HalvingRandomSearchCV
-from sklearn.ensemble import RandomForestClassifier
-
 
 # %%
 # We first define the parameter space and train a
@@ -27,13 +26,13 @@ from sklearn.ensemble import RandomForestClassifier
 
 rng = np.random.RandomState(0)
 
-X, y = datasets.make_classification(n_samples=700, random_state=rng)
+X, y = datasets.make_classification(n_samples=400, n_features=12, random_state=rng)
 
 clf = RandomForestClassifier(n_estimators=20, random_state=rng)
 
 param_dist = {
     "max_depth": [3, None],
-    "max_features": randint(1, 11),
+    "max_features": randint(1, 6),
     "min_samples_split": randint(2, 11),
     "bootstrap": [True, False],
     "criterion": ["gini", "entropy"],

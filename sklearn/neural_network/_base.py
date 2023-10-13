@@ -5,7 +5,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-
 from scipy.special import expit as logistic_sigmoid
 from scipy.special import xlogy
 
@@ -126,7 +125,7 @@ def inplace_tanh_derivative(Z, delta):
     delta : {array-like}, shape (n_samples, n_features)
          The backpropagated error signal to be modified inplace.
     """
-    delta *= 1 - Z ** 2
+    delta *= 1 - Z**2
 
 
 def inplace_relu_derivative(Z, delta):

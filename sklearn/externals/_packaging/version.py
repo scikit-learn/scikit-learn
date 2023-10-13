@@ -63,10 +63,18 @@ _Version = collections.namedtuple(
 
 
 def parse(version: str) -> Union["LegacyVersion", "Version"]:
-    """
-    Parse the given version string and return either a :class:`Version` object
-    or a :class:`LegacyVersion` object depending on if the given version is
-    a valid PEP 440 version or a legacy version.
+    """Parse the given version from a string to an appropriate class.
+
+    Parameters
+    ----------
+    version : str
+        Version in a string format, eg. "0.9.1" or "1.2.dev0".
+
+    Returns
+    -------
+    version : :class:`Version` object or a :class:`LegacyVersion` object
+        Returned class depends on the given version: if is a valid
+        PEP 440 version or a legacy version.
     """
     try:
         return Version(version)

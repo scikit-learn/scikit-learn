@@ -1,21 +1,22 @@
+from pathlib import Path
+
 import numpy as np
 import scipy.sparse as sp
 from joblib import Memory
-from pathlib import Path
 
-from sklearn.decomposition import TruncatedSVD
 from sklearn.datasets import (
-    make_blobs,
     fetch_20newsgroups,
+    fetch_olivetti_faces,
     fetch_openml,
     load_digits,
-    make_regression,
+    make_blobs,
     make_classification,
-    fetch_olivetti_faces,
+    make_regression,
 )
-from sklearn.preprocessing import MaxAbsScaler, StandardScaler
+from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MaxAbsScaler, StandardScaler
 
 # memory location for caching datasets
 M = Memory(location=str(Path(__file__).resolve().parent / "cache"))
@@ -59,7 +60,9 @@ def _20newsgroups_lowdim_dataset(n_components=100, ngrams=(1, 1), dtype=np.float
 
 @M.cache
 def _mnist_dataset(dtype=np.float32):
-    X, y = fetch_openml("mnist_784", version=1, return_X_y=True, as_frame=False)
+    X, y = fetch_openml(
+        "mnist_784", version=1, return_X_y=True, as_frame=False, parser="pandas"
+    )
     X = X.astype(dtype, copy=False)
     X = MaxAbsScaler().fit_transform(X)
 

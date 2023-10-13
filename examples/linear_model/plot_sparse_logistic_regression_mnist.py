@@ -21,6 +21,7 @@ multi-layer perceptron model on this dataset.
 # License: BSD 3 clause
 
 import time
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -35,7 +36,9 @@ t0 = time.time()
 train_samples = 5000
 
 # Load data from https://www.openml.org/d/554
-X, y = fetch_openml("mnist_784", version=1, return_X_y=True, as_frame=False)
+X, y = fetch_openml(
+    "mnist_784", version=1, return_X_y=True, as_frame=False, parser="pandas"
+)
 
 random_state = check_random_state(0)
 permutation = random_state.permutation(X.shape[0])
