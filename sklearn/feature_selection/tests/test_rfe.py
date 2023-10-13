@@ -559,13 +559,20 @@ def test_multioutput(ClsRFE):
 
 
 def test_estimator_without_tags():
-    """Check that estimator without tags defaults to allow_nan==False."""
+    """Check behavior with estimators with or without tags."""
 
-    class MyEstimator:
+    class MyEstimator1:
         pass
 
-    fs = RFE(MyEstimator())
+    fs = RFE(MyEstimator1())
     assert _safe_tags(fs, "allow_nan") is False
+
+    class MyEstimator2:
+        def _more_tags(self):
+            return {"allow_nan": True}
+
+    fs = RFE(MyEstimator2())
+    assert _safe_tags(fs, "allow_nan") is True
 
 
 def test_pipeline_with_nans():
