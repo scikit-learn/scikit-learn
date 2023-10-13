@@ -61,14 +61,14 @@ df["count"].max()
 # .. note::
 #
 #     The fit method of the models used in this notebook all minimize the
-#     mean squared error to estimate the conditional mean instead of the mean
-#     absolute error that would fit an estimator of the conditional median.
+#     mean squared error to estimate the conditional mean.
+#     The absolute error, however, would estimate the conditional median.
 #
-#     When reporting performance measure on the test set in the discussion, we
-#     instead choose to focus on the mean absolute error that is more
-#     intuitive than the (root) mean squared error. Note, however, that the
-#     best models for one metric are also the best for the other in this
-#     study.
+#     Nevertheless, when reporting performance measures on the test set in
+#     the discussion, we choose to focus on the mean absolute error instead
+#     of the (root) mean squared error because it is more intuitive to
+#     interpret. Note, however, that in this study the best models for one
+#     metric are also the best ones in terms of the other metric.
 y = df["count"] / df["count"].max()
 
 # %%
@@ -170,7 +170,10 @@ X.iloc[train_4]
 # efficiently handle heteorogenous tabular data with a mix of categorical and
 # numerical features as long as the number of samples is large enough.
 #
-# Here, we do minimal ordinal encoding for the categorical variables and then
+# Here, we use the modern
+# :class:`~sklearn.ensemble.HistGradientBoostingRegressor` with native support
+# for categorical features. Therefore, we only do minimal ordinal encoding for
+# the categorical variables and then
 # let the model know that it should treat those as categorical variables by
 # using a dedicated tree splitting rule. Since we use an ordinal encoder, we
 # pass the list of categorical values explicitly to use a logical order when
@@ -213,6 +216,9 @@ gbrt_pipeline = make_pipeline(
         verbose_feature_names_out=False,
     ),
     HistGradientBoostingRegressor(
+        max_iter=300,
+        early_stopping=True,
+        validation_fraction=0.1,
         categorical_features=categorical_columns,
         random_state=42,
     ),
@@ -222,16 +228,26 @@ gbrt_pipeline = make_pipeline(
 #
 # Lets evaluate our gradient boosting model with the mean absolute error of the
 # relative demand averaged across our 5 time-based cross-validation splits:
+import numpy as np
 
 
-def evaluate(model, X, y, cv):
+def evaluate(model, X, y, cv, model_prop=None, model_step=None):
     cv_results = cross_validate(
         model,
         X,
         y,
         cv=cv,
         scoring=["neg_mean_absolute_error", "neg_root_mean_squared_error"],
+        return_estimator=model_prop is not None,
     )
+    if model_prop is not None:
+        if model_step is not None:
+            values = [
+                getattr(m[model_step], model_prop) for m in cv_results["estimator"]
+            ]
+        else:
+            values = [getattr(m, model_prop) for m in cv_results["estimator"]]
+        print(f"Mean model.{model_prop} = {np.mean(values)}")
     mae = -cv_results["test_neg_mean_absolute_error"]
     rmse = -cv_results["test_neg_root_mean_squared_error"]
     print(
@@ -240,9 +256,18 @@ def evaluate(model, X, y, cv):
     )
 
 
-evaluate(gbrt_pipeline, X, y, cv=ts_cv)
+evaluate(
+    gbrt_pipeline,
+    X,
+    y,
+    cv=ts_cv,
+    model_prop="n_iter_",
+    model_step="histgradientboostingregressor",
+)
 
 # %%
+# We see that we set `max_iter` large enough such that early stopping took place.
+#
 # This model has an average error around 4 to 5% of the maximum demand. This is
 # quite good for a first trial without any hyper-parameter tuning! We just had
 # to make the categorical variables explicit. Note that the time related
@@ -258,10 +283,8 @@ evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 #
 # As usual for linear models, categorical variables need to be one-hot encoded.
 # For consistency, we scale the numerical features to the same 0-1 range using
-# class:`sklearn.preprocessing.MinMaxScaler`, although in this case it does not
+# :class:`~sklearn.preprocessing.MinMaxScaler`, although in this case it does not
 # impact the results much because they are already on comparable scales:
-import numpy as np
-
 from sklearn.linear_model import RidgeCV
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 
@@ -278,10 +301,14 @@ naive_linear_pipeline = make_pipeline(
 )
 
 
-evaluate(naive_linear_pipeline, X, y, cv=ts_cv)
+evaluate(
+    naive_linear_pipeline, X, y, cv=ts_cv, model_prop="alpha_", model_step="ridgecv"
+)
 
 
 # %%
+# It is affirmative to see that the selected `alpha_` is in our specified
+# range.
 #
 # The performance is not good: the average error is around 14% of the maximum
 # demand. This is more than three times higher than the average error of the
