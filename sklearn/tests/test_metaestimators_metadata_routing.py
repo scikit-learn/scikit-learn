@@ -139,7 +139,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": LogisticRegressionCV,
         "X": X,
-        "y": y_multi,
+        "y": y,
         "scorer_name": "scoring",
         "scorer_routing_methods": ["fit", "score"],
         "cv_name": "cv",
@@ -238,6 +238,55 @@ METAESTIMATORS: list = [
         "estimator_routing_methods": ["fit", "partial_fit"],
         "method_args": {"partial_fit": {"classes": classes}},
     },
+    {
+        "metaestimator": OrthogonalMatchingPursuitCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": ElasticNetCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": LassoCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": MultiTaskElasticNetCV,
+        "X": X,
+        "y": y_multi,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": MultiTaskLassoCV,
+        "X": X,
+        "y": y_multi,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": LarsCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": LassoLarsCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -278,16 +327,9 @@ UNSUPPORTED_ESTIMATORS = [
     AdaBoostRegressor(),
     BaggingClassifier(),
     BaggingRegressor(),
-    ElasticNetCV(),
     FeatureUnion([]),
     GraphicalLassoCV(),
     IterativeImputer(),
-    LarsCV(),
-    LassoCV(),
-    LassoLarsCV(),
-    MultiTaskElasticNetCV(),
-    MultiTaskLassoCV(),
-    OrthogonalMatchingPursuitCV(),
     RANSACRegressor(),
     RFE(ConsumingClassifier()),
     RFECV(ConsumingClassifier()),
@@ -537,6 +579,8 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
 
     cls = metaestimator["metaestimator"]
     routing_methods = metaestimator["cv_routing_methods"]
+    X_ = metaestimator["X"]
+    y_ = metaestimator["y"]
 
     for method_name in routing_methods:
         kwargs, (estimator, _), (scorer, _), (cv, registry) = get_init_args(
@@ -550,7 +594,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
         instance = cls(**kwargs)
         method_kwargs = {"groups": groups, "metadata": metadata}
         method = getattr(instance, method_name)
-        method(X, y, **method_kwargs)
+        method(X_, y_, **method_kwargs)
         assert registry
         for _splitter in registry:
             check_recorded_metadata(obj=_splitter, method="split", **method_kwargs)
