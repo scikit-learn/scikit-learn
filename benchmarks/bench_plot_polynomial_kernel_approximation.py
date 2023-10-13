@@ -35,7 +35,7 @@ international conference on Knowledge discovery and data mining (pp. 239-247)
 [2] Charikar, M., Chen, K., & Farach-Colton, M. (2002, July). Finding frequent
 items in data streams. In International Colloquium on Automata, Languages, and
 Programming (pp. 693-703). Springer, Berlin, Heidelberg.
-(https://vldb.org/pvldb/vol1/1454225.pdf)
+(https://people.cs.rutgers.edu/~farach/pubs/FrequentStream.pdf)
 
 """
 # Author: Daniel Lopez-Sanchez <lope@usal.es>
