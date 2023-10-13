@@ -2604,10 +2604,10 @@ def test_sample_weight_non_uniform(make_data, Tree):
 
 
 def test_deterministic_pickle():
-    tree1 = DecisionTreeClassifier(random_state=0).fit(iris.data, iris.target)
+    tree1 = DecisionTreeClassifier(random_state=0)
     tree1.fit(X, y)
 
-    tree2 = DecisionTreeClassifier(random_state=0).fit(X, y)
+    tree2 = DecisionTreeClassifier(random_state=0)
     tree2.fit(X, y)
 
     pickle1 = pickle.dumps(tree1)
