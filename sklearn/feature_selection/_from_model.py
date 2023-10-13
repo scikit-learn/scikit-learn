@@ -340,24 +340,20 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
-        **fit_params : dict
+         **partial_fit_params : dict
             - If `enable_metadata_routing=False` (default):
 
-                Parameters directly passed to the `fit` method of the
-                sub-estimator.
+                Parameters directly passed to the `partial_fit` method of the
+                sub-estimator. They are ignored if `prefit=True`.
 
             - If `enable_metadata_routing=True`:
 
-                Parameters passed to the `fit` method of the sub-estimator.
-                They are ignored if `prefit=True`.
+                Parameters safely routed to the `partial_fit` method of the
+                sub-estimator. They are ignored if `prefit=True`.
 
                 .. versionchanged:: 1.4
-                    `**fit_params` are routed to the sub-estimator, if
-                    `enable_metadata_routing=True` is set via
-                    :func:`~sklearn.set_config`, which allows for aliasing.
-
-                See :ref:`Metadata Routing User Guide <metadata_routing>` for
-                more details.
+                    See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                    more details.
 
         Returns
         -------
