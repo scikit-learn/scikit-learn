@@ -804,12 +804,6 @@ Changelog
   a more informative error if `CompoundKernel` is passed via `kernel`.
   :pr:`22223` by :user:`MarcoM <marcozzxx810>`.
 
-:mod:`sklearn.feature_selection`
-................................
-
-- |Fix| :class:`feature_selection.RFE` now sets `allow-nan` to `True` by default.
-  :pr:`21807` by `Thomas Fan`_.
-
 :mod:`sklearn.impute`
 .....................
 

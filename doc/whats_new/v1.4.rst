@@ -284,6 +284,12 @@ Changelog
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
   <StefanieSenger>`.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| :class:`feature_selection.RFE` now sets `allow-nan` based on inner estimatotr's
+  tag. :pr:`21807` by `Thomas Fan`_.
+
 :mod:`sklearn.inspection`
 .........................
 
