@@ -6,7 +6,6 @@
 
 """Recursive feature elimination for feature ranking"""
 
-from contextlib import suppress
 from numbers import Integral
 
 import numpy as np
@@ -452,17 +451,11 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
         return self.estimator_.predict_log_proba(self.transform(X))
 
     def _more_tags(self):
-        tags = {
+        return {
             "poor_score": True,
+            "allow_nan": _safe_tags(self.estimator, "allow_nan"),
             "requires_y": True,
         }
-
-        with suppress(ValueError, AttributeError, TypeError):
-            # Suppress error when the `steps` is not a list of (name, estimator)
-            # tuples and `fit` is not called yet to validate the steps.
-            tags["allow_nan"] = _safe_tags(self.estimator, "allow_nan")
-
-        return tags
 
 
 class RFECV(RFE):
