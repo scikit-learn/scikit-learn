@@ -749,7 +749,7 @@ def _valid_data_column_names(features_list, target_columns):
         "name": [str, None],
         "version": [Interval(Integral, 1, None, closed="left"), StrOptions({"active"})],
         "data_id": [Interval(Integral, 1, None, closed="left"), None],
-        "data_home": [str, None],
+        "data_home": [str, os.PathLike, None],
         "target_column": [str, list, None],
         "cache": [bool],
         "return_X_y": [bool],
@@ -769,7 +769,7 @@ def fetch_openml(
     *,
     version: Union[str, int] = "active",
     data_id: Optional[int] = None,
-    data_home: Optional[str] = None,
+    data_home: Optional[Union[str, os.PathLike]] = None,
     target_column: Optional[Union[str, List]] = "default-target",
     cache: bool = True,
     return_X_y: bool = False,
@@ -815,7 +815,7 @@ def fetch_openml(
         dataset. If data_id is not given, name (and potential version) are
         used to obtain a dataset.
 
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify another download and cache folder for the data sets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 

@@ -187,7 +187,7 @@ plt.show()
 # discrete outputs of the weak learners to train the boosted model.
 #
 # The convergence of :class:`~sklearn.ensemble.AdaBoostClassifier` is mainly
-# influenced by the learning rate (i.e `learning_rate`), the number of weak
+# influenced by the learning rate (i.e. `learning_rate`), the number of weak
 # learners used (`n_estimators`), and the expressivity of the weak learners
 # (e.g. `max_leaf_nodes`).
 

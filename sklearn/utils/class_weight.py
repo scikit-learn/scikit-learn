@@ -1,3 +1,8 @@
+"""
+The :mod:`sklearn.utils.class_weight` module includes utilities for handling
+weights based on class labels.
+"""
+
 # Authors: Andreas Mueller
 #          Manoj Kumar
 # License: BSD 3 clause
@@ -57,7 +62,7 @@ def compute_class_weight(class_weight, *, classes, y):
         # Find the weight of each class as present in y.
         le = LabelEncoder()
         y_ind = le.fit_transform(y)
-        if not all(np.in1d(classes, le.classes_)):
+        if not all(np.isin(classes, le.classes_)):
             raise ValueError("classes should have valid labels that are in y")
 
         recip_freq = len(y) / (len(le.classes_) * np.bincount(y_ind).astype(np.float64))
@@ -157,10 +162,11 @@ def compute_sample_weight(class_weight, y, *, indices=None):
 
     expanded_class_weight = []
     for k in range(n_outputs):
-        y_full = y[:, k]
-        if sparse.issparse(y_full):
+        if sparse.issparse(y):
             # Ok to densify a single column at a time
-            y_full = y_full.toarray().flatten()
+            y_full = y[:, [k]].toarray().flatten()
+        else:
+            y_full = y[:, k]
         classes_full = np.unique(y_full)
         classes_missing = None
 
@@ -194,7 +200,7 @@ def compute_sample_weight(class_weight, y, *, indices=None):
 
         if classes_missing:
             # Make missing classes' weight zero
-            weight_k[np.in1d(y_full, list(classes_missing))] = 0.0
+            weight_k[np.isin(y_full, list(classes_missing))] = 0.0
 
         expanded_class_weight.append(weight_k)
 
