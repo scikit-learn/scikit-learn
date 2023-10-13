@@ -1079,7 +1079,8 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         ],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Real, {0.0, 1.0, np.nan}),
+            Options(Real, {0.0, 1.0}),
+            "nan",
             StrOptions({"warn"}),
         ],
     },
@@ -1260,7 +1261,8 @@ def f1_score(
         ],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Real, {0.0, 1.0, np.nan}),
+            Options(Real, {0.0, 1.0}),
+            "nan",
             StrOptions({"warn"}),
         ],
     },
@@ -1542,7 +1544,8 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
         "warn_for": [list, tuple, set],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Real, {0.0, 1.0, np.nan}),
+            Options(Real, {0.0, 1.0}),
+            "nan",
             StrOptions({"warn"}),
         ],
     },
@@ -1979,7 +1982,8 @@ def class_likelihood_ratios(
         ],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Real, {0.0, 1.0, np.nan}),
+            Options(Real, {0.0, 1.0}),
+            "nan",
             StrOptions({"warn"}),
         ],
     },
@@ -2149,7 +2153,8 @@ def precision_score(
         ],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Real, {0.0, 1.0, np.nan}),
+            Options(Real, {0.0, 1.0}),
+            "nan",
             StrOptions({"warn"}),
         ],
     },
@@ -2412,7 +2417,8 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
         "digits": [Interval(Integral, 0, None, closed="left")],
         "output_dict": ["boolean"],
         "zero_division": [
-            Options(Real, {0.0, 1.0, np.nan}),
+            Options(Real, {0.0, 1.0}),
+            "nan",
             StrOptions({"warn"}),
         ],
     },
