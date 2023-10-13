@@ -180,11 +180,11 @@ class PCA(_BasePCA):
         "auto" :
             The solver is selected by a default policy based on `X.shape` and
             `n_components`: if the input data has fewer than 1000 features and
-            more than 10 times as many samples, then the more "covariance_eigh"
+            more than 10 times as many samples, then the "covariance_eigh"
             solver is used. Otherwise, if the input data is larger than 500x500
             and the number of components to extract is lower than 80% of the
             smallest dimension of the data, then the more efficient
-            'randomized' method is enabled. Otherwise the exact "full" SVD is
+            "randomized" method is enabled. Otherwise the exact "full" SVD is
             computed and optionally truncated afterwards.
         "full" :
             Run exact full SVD calling the standard LAPACK solver via

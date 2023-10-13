@@ -156,7 +156,7 @@ class _BasePCA(
         if self.whiten:
             # For some solvers (such as "arpack" and "covariance_eigh"), on
             # rank deficient data, some components can have a variance
-            # arbitrarily to zero, leading to non-finite results when
+            # arbitrarily close to zero, leading to non-finite results when
             # whitening. To avoid this problem we clip the variance below.
             scale = xp.sqrt(self.explained_variance_)
             min_scale = xp.finfo(scale.dtype).eps
