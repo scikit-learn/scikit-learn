@@ -914,7 +914,7 @@ cdef class Tree:
                    (capacity - self.capacity) * self.value_stride *
                    sizeof(float64_t))
             # node memory is initialised to 0 to ensure deterministic pickle (padding in Node struct)
-            # memset(<void*>(self.nodes + self.capacity), 0, (capacity - self.capacity) * sizeof(Node))
+            memset(<void*>(self.nodes + self.capacity), 0, (capacity - self.capacity) * sizeof(Node))
 
         # if capacity smaller than node_count, adjust the counter
         if capacity < self.node_count:
