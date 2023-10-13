@@ -214,6 +214,7 @@ def test_hdbscan_algorithms(algorithm, metric):
         algorithm=algorithm,
         metric=metric,
         metric_params=metric_params,
+        mst_algorithm="auto",
     )
 
     if metric not in ALGOS_TREES[algorithm].valid_metrics:
@@ -275,6 +276,7 @@ def test_hdbscan_high_dimensional():
     labels = HDBSCAN(
         algorithm="auto",
         metric="seuclidean",
+        mst_algorithm="auto",
         metric_params={"V": np.ones(H.shape[1])},
     ).fit_predict(H)
     n_clusters = len(set(labels) - OUTLIER_SET)
@@ -286,7 +288,9 @@ def test_hdbscan_best_balltree_metric():
     Tests that HDBSCAN using `BallTree` works.
     """
     labels = HDBSCAN(
-        metric="seuclidean", metric_params={"V": np.ones(X.shape[1])}
+        metric="seuclidean",
+        mst_algorithm="auto",
+        metric_params={"V": np.ones(X.shape[1])},
     ).fit_predict(X)
     n_clusters = len(set(labels) - OUTLIER_SET)
     assert n_clusters == n_clusters_true
@@ -435,6 +439,7 @@ def test_hdbscan_allow_single_cluster_with_epsilon():
         cluster_selection_epsilon=0.0,
         cluster_selection_method="eom",
         allow_single_cluster=True,
+        mst_algorithm="auto",
     ).fit_predict(no_structure)
     unique_labels, counts = np.unique(labels, return_counts=True)
     assert len(unique_labels) == 2
@@ -450,6 +455,7 @@ def test_hdbscan_allow_single_cluster_with_epsilon():
         cluster_selection_method="eom",
         allow_single_cluster=True,
         algorithm="kd_tree",
+        mst_algorithm="auto",
     ).fit_predict(no_structure)
     unique_labels, counts = np.unique(labels, return_counts=True)
     assert len(unique_labels) == 2
