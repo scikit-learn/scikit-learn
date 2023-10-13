@@ -1160,8 +1160,6 @@ Changelog
   Setting a transformer to "passthrough" will pass the features unchanged.
   :pr:`20860` by :user:`Shubhraneel Pal <shubhraneel>`.
 
-- |Fix| :class:`pipeline.Pipeline` now sets `allow-nan` to `True` by default.
-  :pr:`21807` by `Thomas Fan`_.
 - |Fix| :class:`pipeline.Pipeline` now does not validate hyper-parameters in
   `__init__` but in `.fit()`.
   :pr:`21888` by :user:`iofall <iofall>` and :user:`Arisa Y. <arisayosh>`.
