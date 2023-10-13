@@ -424,6 +424,9 @@ Changelog
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`, initiated by
   :user:`Patrick O'Reilly <pat-oreilly>`.
 
+- |Fix| Make decision tree pickles deterministic. :pr:`27580` by :user:`Loïc
+  Estève <lesteve>`.
+
 :mod:`sklearn.utils`
 ....................
 
