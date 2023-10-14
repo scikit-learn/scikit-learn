@@ -116,13 +116,14 @@ def _get_response_values(
     pos_label=None,
     return_response_method_used=False,
 ):
-    """Compute the response values of a classifier or a regressor.
+    """Compute the response values of a classifier, an outlier detector, or a regressor.
 
     The response values are predictions such that it follows the following shape:
 
     - for binary classification, it is a 1d array of shape `(n_samples,)`;
     - for multiclass classification, it is a 2d array of shape `(n_samples, n_classes)`;
     - for multilabel classification, it is a 2d array of shape `(n_samples, n_outputs)`;
+    - for outlier detection, it is a 1d array of shape `(n_samples,)`;
     - for regression, it is a 1d array of shape `(n_samples,)`.
 
     If `estimator` is a binary classifier, also return the label for the
@@ -135,8 +136,9 @@ def _get_response_values(
     Parameters
     ----------
     estimator : estimator instance
-        Fitted classifier or regressor or a fitted :class:`~sklearn.pipeline.Pipeline`
-        in which the last estimator is a classifier or a regressor.
+        Fitted classifier, outlier detector, or regressor or a
+        fitted :class:`~sklearn.pipeline.Pipeline` in which the last estimator is a
+        classifier, an outlier detector, or a regressor.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
@@ -188,7 +190,7 @@ def _get_response_values(
         If the response method can be applied to a classifier only and
         `estimator` is a regressor.
     """
-    from sklearn.base import is_classifier  # noqa
+    from sklearn.base import is_classifier, is_outlier_detector  # noqa
 
     if is_classifier(estimator):
         prediction_method = _check_response_method(estimator, response_method)
@@ -220,6 +222,9 @@ def _get_response_values(
                 classes=classes,
                 pos_label=pos_label,
             )
+    elif is_outlier_detector(estimator):
+        prediction_method = _check_response_method(estimator, response_method)
+        y_pred, pos_label = prediction_method(X), None
     else:  # estimator is a regressor
         if response_method != "predict":
             raise ValueError(

@@ -354,6 +354,12 @@ Changelog
   :func:`sklearn.metrics.zero_one_loss` now support Array API compatible inputs.
   :pr:`27137` by :user:`Edoardo Abati <EdAbati>`.
 
+- |Fix| Fixes a bug for metrics using `zero_division=np.nan`
+  (e.g. :func:`~metrics.precision_score`) within a paralell loop
+  (e.g. :func:`~model_selection.cross_val_score`) where the singleton for `np.nan`
+  will be different in the sub-processes.
+  :pr:`27573` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |API| The `squared` parameter of :func:`metrics.mean_squared_error` and
   :func:`metrics.mean_squared_log_error` is deprecated and will be removed in 1.6.
   Use the new functions :func:`metrics.root_mean_squared_error` and
