@@ -452,7 +452,7 @@ def test_sparse_precomputed_distance(sparse_container):
     D_sparse = kneighbors_graph(X, n_neighbors=100, mode="distance", include_self=True)
     D = pairwise_distances(X)
     assert sp.issparse(D_sparse)
-    assert_almost_equal(D_sparse.A, D)
+    assert_almost_equal(D_sparse.toarray(), D)
 
     tsne = TSNE(
         metric="precomputed", random_state=0, init="random", learning_rate="auto"
