@@ -16,13 +16,13 @@ from ..utils.metaestimators import _BaseComposition
 
 
 def _fit_single_estimator(
-    estimator, X, y, sample_weight=None, message_clsname=None, message=None
+    estimator, X, y, fit_params, sample_weight=None, message_clsname=None, message=None
 ):
     """Private function used to fit an estimator within a job."""
     if sample_weight is not None:
         try:
             with _print_elapsed_time(message_clsname, message):
-                estimator.fit(X, y, sample_weight=sample_weight)
+                estimator.fit(X, y, sample_weight=sample_weight, **fit_params)
         except TypeError as exc:
             if "unexpected keyword argument 'sample_weight'" in str(exc):
                 raise TypeError(
@@ -33,7 +33,7 @@ def _fit_single_estimator(
             raise
     else:
         with _print_elapsed_time(message_clsname, message):
-            estimator.fit(X, y)
+            estimator.fit(X, y, **fit_params)
     return estimator
 
 

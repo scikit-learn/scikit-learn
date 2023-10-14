@@ -252,6 +252,7 @@ Meta-estimators and functions supporting metadata routing:
 
 - :class:`sklearn.calibration.CalibratedClassifierCV`
 - :class:`sklearn.compose.ColumnTransformer`
+- :class:`sklearn.ensemble.VotingClassifier`
 - :class:`sklearn.linear_model.ElasticNetCV`
 - :class:`sklearn.linear_model.LarsCV`
 - :class:`sklearn.linear_model.LassoCV`
@@ -286,7 +287,6 @@ Meta-estimators and tools not supporting metadata routing yet:
 - :class:`sklearn.ensemble.BaggingRegressor`
 - :class:`sklearn.ensemble.StackingClassifier`
 - :class:`sklearn.ensemble.StackingRegressor`
-- :class:`sklearn.ensemble.VotingClassifier`
 - :class:`sklearn.ensemble.VotingRegressor`
 - :class:`sklearn.feature_selection.RFE`
 - :class:`sklearn.feature_selection.RFECV`

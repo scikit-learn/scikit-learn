@@ -277,6 +277,17 @@ METAESTIMATORS: list = [
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": VotingClassifier,
+        "estimator_name": "estimators",
+        "estimator": [
+            ("clf1", ConsumingClassifier),
+            ("clf2", ConsumingClassifier),
+        ],  # +NonConsumingClassifier?
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -331,7 +342,6 @@ UNSUPPORTED_ESTIMATORS = [
     StackingClassifier(ConsumingClassifier()),
     StackingRegressor(ConsumingRegressor()),
     TransformedTargetRegressor(),
-    VotingClassifier(ConsumingClassifier()),
     VotingRegressor(ConsumingRegressor()),
 ]
 
@@ -364,8 +374,19 @@ def get_init_args(metaestimator_info):
     if "estimator" in metaestimator_info:
         estimator_name = metaestimator_info["estimator_name"]
         estimator_registry = _Registry()
-        estimator = metaestimator_info["estimator"](estimator_registry)
-        kwargs[estimator_name] = estimator
+        # if meta-classifier takes a list of (name, est) tuples for its
+        # `estimators` param, then we need to re-create that
+        if isinstance(metaestimator_info["estimator"], list):
+            estimators = []
+            names = []
+            for estimator_tuple in metaestimator_info["estimator"]:
+                estimators.append(estimator_tuple[1](estimator_registry))
+                names.append(estimator_tuple[0])
+            estimators = list(zip(names, estimators))
+            kwargs[estimator_name] = estimators
+        else:
+            estimator = metaestimator_info["estimator"](estimator_registry)
+            kwargs[estimator_name] = estimator
     if "scorer_name" in metaestimator_info:
         scorer_name = metaestimator_info["scorer_name"]
         scorer_registry = _Registry()
@@ -453,6 +474,11 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                 scorer.set_score_request(**{key: True})
             val = {"sample_weight": sample_weight, "metadata": metadata}[key]
             method_kwargs = {key: val}
+            # if the meta-estimator defines `estimators` as a list of (name,
+            # est) tuples, we need to extract the estimators first:
+            if "estimators" in kwargs:
+                for est_tuple in kwargs["estimators"]:
+                    estimator = est_tuple[1]
             msg = (
                 f"[{key}] are passed but are not explicitly set as requested or not"
                 f" for {estimator.__class__.__name__}.{method_name}"
@@ -496,7 +522,11 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
                 set_request(scorer, "score")
             if cv:
                 cv.set_split_request(groups=True, metadata=True)
-            set_request(estimator, method_name)
+            if isinstance(metaestimator["estimator"], list):
+                for estimator in kwargs["estimators"]:
+                    set_request(estimator[1], method_name)
+            else:
+                set_request(estimator, method_name)
             instance = cls(**kwargs)
             method = getattr(instance, method_name)
             extra_method_args = metaestimator.get("method_args", {}).get(

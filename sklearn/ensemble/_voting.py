@@ -31,8 +31,13 @@ from ..utils import Bunch
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import StrOptions
 from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
     _raise_for_unsupported_routing,
+    _routing_enabled,
     _RoutingNotSupportedMixin,
+    process_routing,
 )
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
@@ -72,7 +77,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         return np.asarray([est.predict(X) for est in self.estimators_]).T
 
     @abstractmethod
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, fit_params):
         """Get common fit operations."""
         names, clfs = self._validate_estimators()
 
@@ -87,7 +92,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                 clone(clf),
                 X,
                 y,
-                sample_weight=sample_weight,
+                fit_params=fit_params,
                 message_clsname="Voting",
                 message=self._log_message(names[idx], idx + 1, len(clfs)),
             )
@@ -156,7 +161,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         return {"preserves_dtype": []}
 
 
-class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
+class VotingClassifier(ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
     Read more in the :ref:`User Guide <voting_classifier>`.
@@ -316,7 +321,7 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
         # estimators in VotingClassifier.estimators are not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the estimators.
 
         Parameters
@@ -335,12 +340,23 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
 
             .. versionadded:: 0.18
 
+        **fit_params : dict
+            Parameters to pass to the underlying estimators.
+
+            .. versionadded:: 1.4
+
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Returns the instance itself.
         """
-        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
+        _raise_for_params(fit_params, self, "fit")
         check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
             raise NotImplementedError(
@@ -351,7 +367,17 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
         self.classes_ = self.le_.classes_
         transformed_y = self.le_.transform(y)
 
-        return super().fit(X, transformed_y, sample_weight)
+        if _routing_enabled():
+            routed_params = process_routing(
+                self, "fit", sample_weight=sample_weight, **fit_params
+            )
+        else:
+            routed_params = Bunch()
+            routed_params.estimator = Bunch(fit={})
+            if sample_weight is not None:
+                routed_params.estimator.fit["sample_weight"] = sample_weight
+
+        return super().fit(X, transformed_y, routed_params.estimator.fit)
 
     def predict(self, X):
         """Predict class labels for X.
@@ -481,6 +507,31 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
             f"{class_name}_{name}{i}" for name in active_names for i in range(n_classes)
         ]
         return np.asarray(names_out, dtype=object)
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.4
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__)
+        router.add_self_request(self)
+
+        # `self.estimators` is a list
+        for estimator in self.estimators:
+            router.add(
+                estimator=estimator,
+                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            )
+        return router
 
 
 class VotingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseVoting):
