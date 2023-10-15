@@ -87,7 +87,7 @@ def _init_raw_predictions(X, estimator, loss, use_predict_proba):
     estimator : object
         The estimator to use to compute the predictions.
     loss : BaseLoss
-        An instace of a loss function class.
+        An instance of a loss function class.
     use_predict_proba : bool
         Whether estimator.predict_proba is used instead of estimator.predict.
 
@@ -1282,6 +1282,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         improving in all of the previous ``n_iter_no_change`` numbers of
         iterations. The split is stratified.
         Values must be in the range `[1, inf)`.
+        See
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`.
 
         .. versionadded:: 0.20
 
@@ -1891,6 +1893,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         improving in all of the previous ``n_iter_no_change`` numbers of
         iterations.
         Values must be in the range `[1, inf)`.
+        See
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`.
 
         .. versionadded:: 0.20
 
