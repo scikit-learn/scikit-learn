@@ -1,0 +1,158 @@
+Name,Age,Gender,Education Level,Monthly Earnings (USD Est),Marital Status,Children Count,Occupation
+John,25,Male,University,1200,Single,0,Engineer
+Alice,30,Female,High School,800,Married,2,Teacher
+Bob,65,Male,Primary School,200,Married,3,Retired
+Emily,22,Female,University,1000,Single,0,Student
+Sara,17,Female,High School,0,Single,0,Unemployed
+Mark,18,Male,Primary School,150,Single,0,Labourer
+Grace,50,Female,University,1600,Married,4,Doctor
+Alex,40,Male,University,3000,Married,1,Architect
+Nancy,60,Female,University,2200,Married,2,Accountant
+Luke,28,Male,University,2500,Married,0,Software Engineer
+Sophia,35,Female,High School,1200,Married,3,Nurse
+Mike,45,Male,High School,1800,Single,0,Farmer
+Lily,29,Female,High School,600,Single,0,Cashier
+Ethan,33,Male,University,3200,Married,2,Doctor
+Emma,27,Female,High School,900,Single,0,Receptionist
+Oliver,32,Male,High School,1400,Married,2,Teacher
+Ava,24,Female,University,2000,Single,0,Engineer
+William,38,Male,University,2800,Married,3,Architect
+Mia,19,Female,High School,500,Single,0,Student
+Elijah,41,Male,University,3500,Married,2,Manager
+Charlotte,23,Female,University,1800,Single,0,Analyst
+James,47,Male,University,4200,Married,3,Consultant
+Harper,26,Female,High School,800,Married,2,Cashier
+Benjamin,39,Male,University,3000,Married,1,Doctor
+Amelia,20,Female,University,1500,Single,0,Student
+Ethan,35,Male,University,2900,Married,2,Engineer
+Olivia,29,Female,University,2600,Single,0,Data Scientist
+Sophie,33,Female,High School,1000,Married,2,Nurse
+Max,31,Male,University,2800,Single,0,Engineer
+Aria,27,Female,University,2400,Married,1,Architect
+Logan,26,Male,High School,1700,Single,0,Waiter
+Ella,22,Female,High School,700,Single,0,Cashier
+Isaac,37,Male,University,3200,Married,2,Doctor
+Luna,30,Female,University,2100,Single,0,Teacher
+Levi,29,Male,University,2900,Married,1,Software Engineer
+Scarlett,25,Female,High School,900,Married,3,Nurse
+Caleb,28,Male,University,2700,Single,0,Data Analyst
+Madison,26,Female,University,2300,Single,0,Marketing Manager
+Hunter,34,Male,High School,1900,Married,2,Construction Worker
+Paisley,29,Female,High School,800,Married,2,Receptionist
+Charles,42,Male,University,3600,Married,4,Accountant
+Aubrey,24,Female,University,2200,Single,0,Software Developer
+Hudson,30,Male,University,2600,Single,0,Graphic Designer
+Evelyn,28,Female,University,2700,Married,1,Doctor
+David,33,Male,University,3000,Married,2,Engineer
+Penelope,31,Female,University,2800,Married,3,Architect
+Michael,28,Male,High School,1800,Single,0,Cashier
+Layla,25,Female,University,2200,Single,0,Data Analyst
+Leo,32,Male,University,3200,Married,2,Software Engineer
+Eleanor,29,Female,University,2400,Married,1,Teacher
+Logan,27,Male,High School,1500,Single,0,Waiter
+Nora,26,Female,High School,900,Single,0,Receptionist
+Aiden,35,Male,University,3500,Married,2,Manager
+Aaliyah,24,Female,University,2100,Single,0,Marketing Manager
+Henry,40,Male,University,4000,Married,3,Consultant
+Lucy,31,Female,University,2700,Married,1,Engineer
+Dylan,33,Male,University,2900,Married,2,Software Engineer
+Ellie,29,Female,University,2400,Single,0,Architect
+Matthew,37,Male,University,3200,Married,2,Doctor
+Alyssa,28,Female,University,2500,Single,0,Data Scientist
+Daniel,35,Male,University,2900,Married,2,Software Engineer
+Anna,33,Female,University,2600,Single,0,Analyst
+Liam,29,Male,University,2800,Single,0,Software Engineer
+Chloe,30,Female,High School,1200,Married,2,Nurse
+Jackson,31,Male,University,3000,Married,1,Engineer
+Maya,26,Female,University,2300,Single,0,Graphic Designer
+Sebastian,34,Male,University,3300,Married,2,Manager
+Samantha,29,Female,University,2600,Single,0,Data Scientist
+Benjamin,39,Male,University,3000,Married,1,Doctor
+Stella,25,Female,High School,900,Married,3,Cashier
+Ryan,28,Male,University,2600,Single,0,Data Scientist
+Lucia,30,Female,University,2400,Married,1,Architect
+Nolan,32,Male,University,3100,Married,2,Software Engineer
+Riley,27,Female,High School,800,Single,0,Cashier
+Mateo,31,Male,University,2900,Married,1,Engineer
+Gianna,29,Female,University,2300,Single,0,Graphic Designer
+Zachary,35,Male,University,3200,Married,2,Doctor
+Hannah,25,Female,University,2500,Single,0,Software Engineer
+Victoria,36,Female,University,2700,Married,1,Engineer
+Leo,33,Male,University,2800,Single,0,Analyst
+Mila,31,Female,University,2700,Married,2,Doctor
+Jack,28,Male,High School,1700,Single,0,Waiter
+Lucy,29,Female,University,2500,Single,0,Data Analyst
+Levi,31,Male,University,2800,Married,1,Architect
+Lillian,27,Female,University,2600,Single,0,Analyst
+Hunter,34,Male,University,3200,Married,2,Software Engineer
+Ella,30,Female,University,2700,Married,1,Doctor
+David,32,Male,University,3000,Married,2,Engineer
+Luna,26,Female,University,2400,Single,0,Architect
+Oliver,35,Male,University,2900,Married,2,Doctor
+Bella,27,Female,High School,900,Single,0,Cashier
+Alexander,31,Male,University,2800,Married,1,Software Engineer
+Sofia,30,Female,University,2600,Single,0,Data Scientist
+Carter,33,Male,University,3000,Married,2,Engineer
+Zoe,28,Female,University,2500,Single,0,Software Engineer
+Connor,34,Male,University,3200,Married,1,Doctor
+Hazel,26,Female,University,2400,Single,0,Architect
+Wyatt,29,Male,University,2700,Married,2,Data Analyst
+Aria,27,Female,University,2200,Married,1,Teacher
+William,36,Male,University,3400,Married,2,Manager
+Skylar,25,Female,High School,900,Single,0,Receptionist
+Daniel,32,Male,University,3000,Married,1,Engineer
+Maya,28,Female,University,2500,Single,0,Software Engineer
+Liam,34,Male,University,3200,Married,2,Data Scientist
+Gabriella,31,Female,University,2700,Married,1,Architect
+Ethan,29,Male,University,2600,Single,0,Analyst
+Savannah,35,Female,High School,1000,Married,2,Nurse
+Henry,30,Male,University,2800,Married,3,Software Engineer
+Aurora,26,Female,University,2300,Single,0,Graphic Designer
+Max,32,Male,University,3100,Married,2,Doctor
+Claire,28,Female,University,2500,Single,0,Software Engineer
+Elijah,34,Male,University,3100,Married,1,Engineer
+Avery,29,Female,University,2600,Single,0,Analyst
+Jackson,36,Male,University,3200,Married,2,Data Scientist
+Ariana,25,Female,University,2400,Single,0,Software Engineer
+Grayson,29,Male,University,2700,Married,1,Architect
+Evelyn,30,Female,University,2600,Married,2,Doctor
+Emma,27,Female,High School,800,Single,0,Waitress
+Lucas,32,Male,University,3000,Married,1,Engineer
+Stella,30,Female,University,2600,Single,0,Software Engineer
+Cameron,34,Male,University,3300,Married,2,Manager
+Aria,28,Female,University,2500,Single,0,Data Scientist
+Mason,31,Male,University,2900,Married,1,Software Engineer
+Zoe,29,Female,University,2700,Single,0,Analyst
+Caleb,33,Male,University,3100,Married,2,Data Scientist
+Nora,25,Female,University,2300,Single,0,Graphic Designer
+Lucas,34,Male,University,3200,Married,2,Software Engineer
+Hannah,29,Female,University,2600,Single,0,Analyst
+Leo,30,Male,University,2700,Married,1,Doctor
+Addison,27,Female,High School,900,Single,0,Cashier
+Ethan,35,Male,University,3100,Married,2,Data Scientist
+Lily,28,Female,University,2600,Single,0,Data Analyst
+Michael,32,Male,University,2900,Married,1,Engineer
+Ella,29,Female,University,2400,Single,0,Software Engineer
+Eli,33,Male,University,3100,Married,2,Data Scientist
+Layla,27,Female,High School,1000,Married,2,Nurse
+Gabriel,30,Male,University,2700,Married,1,Doctor
+Natalie,25,Female,University,2300,Single,0,Graphic Designer
+Alexander,34,Male,University,3300,Married,2,Manager
+Nevaeh,30,Female,University,2600,Single,0,Data Analyst
+Aiden,35,Male,University,3100,Married,1,Engineer
+Samantha,29,Female,University,2500,Single,0,Data Scientist
+Caleb,33,Male,University,2900,Married,2,Software Engineer
+Emma,25,Female,University,2400,Single,0,Software Engineer
+Sophie,30,Female,University,2600,Married,1,Doctor
+Lucas,34,Male,University,3200,Married,2,Data Scientist
+Chloe,28,Female,University,2500,Single,0,Data Analyst
+William,32,Male,University,2900,Married,1,Engineer
+Grace,26,Female,University,2400,Single,0,Software Engineer
+Henry,33,Male,University,3100,Married,2,Data Scientist
+Avery,30,Female,University,2600,Single,0,Analyst
+Mason,31,Male,University,2900,Married,1,Software Engineer
+Lily,27,Female,University,2300,Single,0,Graphic Designer
+Logan,34,Male,University,3300,Married,2,Manager
+Ella,28,Female,University,2500,Single,0,Data Analyst
+Daniel,30,Male,University,2600,Married,1,Engineer
+Evelyn,33,Female,University,0,Single,0,Unemployed
