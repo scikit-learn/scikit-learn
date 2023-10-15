@@ -2083,8 +2083,9 @@ def binarize(X, *, threshold=0.0, copy=True):
         X.data[not_cond] = 0
         X.eliminate_zeros()
     else:
+        xp, _ = get_namespace(X)
         cond = X > threshold
-        not_cond = np.logical_not(cond)
+        not_cond = xp.logical_not(cond)
         X[cond] = 1
         X[not_cond] = 0
     return X
