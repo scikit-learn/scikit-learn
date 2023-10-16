@@ -2604,6 +2604,9 @@ def test_sample_weight_non_uniform(make_data, Tree):
 
 
 def test_deterministic_pickle():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/27268
+    # Uninitialised memory would lead to the two pickle strings being different.
     tree1 = DecisionTreeClassifier(random_state=0).fit(iris.data, iris.target)
     tree2 = DecisionTreeClassifier(random_state=0).fit(iris.data, iris.target)
 
