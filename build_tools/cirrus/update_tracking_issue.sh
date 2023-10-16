@@ -13,6 +13,12 @@ python -m pip install defusedxml PyGithub
 
 LINK_TO_RUN="https://cirrus-ci.com/build/$CIRRUS_BUILD_ID"
 
+echo $BOT_GITHUB_TOKEN
+echo $CIRRUS_TASK_NAME
+echo $CIRRUS_REPO_FULL_NAME
+echo $LINK_TO_RUN
+echo $TEST_PASSED
+
 python maint_tools/update_tracking_issue.py \
     $BOT_GITHUB_TOKEN \
     $CIRRUS_TASK_NAME \
