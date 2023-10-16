@@ -1231,11 +1231,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
     @abstractmethod
     def _encode_y(self, y=None):
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def _encode_y_val(self, y=None):
-        pass
+        pass  # pragma: no cover
 
     def _del_encoder_y(self):
         pass
