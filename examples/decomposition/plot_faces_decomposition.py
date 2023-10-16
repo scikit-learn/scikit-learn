@@ -182,7 +182,7 @@ plot_gallery("Dictionary learning", batch_dict_estimator.components_[:n_componen
 #
 # :class:`sklearn.cluster.MiniBatchKMeans` is computationally efficient and
 # implements on-line learning with a
-# :meth:`~sklearn.decomposition.MiniBatchKMeans.partial_fit` method. That is
+# :meth:`~sklearn.cluster.MiniBatchKMeans.partial_fit` method. That is
 # why it could be beneficial to enhance some time-consuming algorithms with
 # :class:`~sklearn.cluster.MiniBatchKMeans`.
 
