@@ -76,8 +76,10 @@ from sklearn.utils.metadata_routing import MetadataRouter
 rng = np.random.RandomState(42)
 N, M = 100, 4
 X = rng.rand(N, M)
-y = rng.randint(0, 2, size=N)
-y_multi = rng.randint(0, 2, size=(N, 3))
+y = rng.randint(0, 3, size=N)
+classes = np.unique(y)
+y_multi = rng.randint(0, 3, size=(N, 3))
+classes_multi = [np.unique(y_multi[:, i]) for i in range(y_multi.shape[1])]
 metadata = rng.randint(0, 10, size=N)
 sample_weight = rng.rand(N)
 groups = np.array([0, 1] * (len(y) // 2))
@@ -106,6 +108,7 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y_multi,
         "estimator_routing_methods": ["fit", "partial_fit"],
+        "method_args": {"partial_fit": {"classes": classes_multi}},
     },
     {
         "metaestimator": CalibratedClassifierCV,
@@ -135,7 +138,7 @@ METAESTIMATORS: list = [
     {
         "metaestimator": LogisticRegressionCV,
         "X": X,
-        "y": y_multi,
+        "y": y,
         "scorer_name": "scoring",
         "scorer_routing_methods": ["fit", "score"],
         "cv_name": "cv",
@@ -197,6 +200,83 @@ METAESTIMATORS: list = [
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
+    {
+        "metaestimator": OneVsRestClassifier,
+        "estimator_name": "estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit", "partial_fit"],
+        "method_args": {"partial_fit": {"classes": classes}},
+    },
+    {
+        "metaestimator": OneVsOneClassifier,
+        "estimator_name": "estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit", "partial_fit"],
+        "preserves_metadata": "subset",
+        "method_args": {"partial_fit": {"classes": classes}},
+    },
+    {
+        "metaestimator": OutputCodeClassifier,
+        "estimator_name": "estimator",
+        "estimator": ConsumingClassifier,
+        "init_args": {"random_state": 42},
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": OrthogonalMatchingPursuitCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": ElasticNetCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": LassoCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": MultiTaskElasticNetCV,
+        "X": X,
+        "y": y_multi,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": MultiTaskLassoCV,
+        "X": X,
+        "y": y_multi,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": LarsCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
+    {
+        "metaestimator": LassoLarsCV,
+        "X": X,
+        "y": y,
+        "cv_name": "cv",
+        "cv_routing_methods": ["fit"],
+    },
 ]
 """List containing all metaestimators to be tested and their settings
 
@@ -225,6 +305,8 @@ The keys are as follows:
 - cv_name: The name of the argument for the CV splitter
 - cv_routing_methods: list of all methods to check for routing metadata
   to the splitter
+- method_args: a dict of dicts, defining extra arguments needed to be passed to
+  methods, such as passing `classes` to `partial_fit`.
 """
 
 # IDs used by pytest to get meaningful verbose messages when running the tests
@@ -235,19 +317,9 @@ UNSUPPORTED_ESTIMATORS = [
     AdaBoostRegressor(),
     BaggingClassifier(),
     BaggingRegressor(),
-    ElasticNetCV(),
     FeatureUnion([]),
     GraphicalLassoCV(),
     IterativeImputer(),
-    LarsCV(),
-    LassoCV(),
-    LassoLarsCV(),
-    MultiTaskElasticNetCV(),
-    MultiTaskLassoCV(),
-    OneVsOneClassifier(ConsumingClassifier()),
-    OneVsRestClassifier(ConsumingClassifier()),
-    OrthogonalMatchingPursuitCV(),
-    OutputCodeClassifier(ConsumingClassifier()),
     RANSACRegressor(),
     RFE(ConsumingClassifier()),
     RFECV(ConsumingClassifier()),
@@ -366,7 +438,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
     # requests are not set
     if "estimator" not in metaestimator:
         # This test only makes sense for metaestimators which have a
-        # sub-estimator
+        # sub-estimator, e.g. MyMetaEstimator(estimator=MySubEstimator())
         return
 
     cls = metaestimator["metaestimator"]
@@ -398,7 +470,7 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
     # should be no errors.
     if "estimator" not in metaestimator:
         # This test only makes sense for metaestimators which have a
-        # sub-estimator
+        # sub-estimator, e.g. MyMetaEstimator(estimator=MySubEstimator())
         return
 
     def set_request(estimator, method_name):
@@ -427,8 +499,10 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             set_request(estimator, method_name)
             instance = cls(**kwargs)
             method = getattr(instance, method_name)
-            method(X, y, **method_kwargs)
-
+            extra_method_args = metaestimator.get("method_args", {}).get(
+                method_name, {}
+            )
+            method(X, y, **method_kwargs, **extra_method_args)
             # sanity check that registry is not empty, or else the test passes
             # trivially
             assert registry
@@ -494,6 +568,8 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
 
     cls = metaestimator["metaestimator"]
     routing_methods = metaestimator["cv_routing_methods"]
+    X_ = metaestimator["X"]
+    y_ = metaestimator["y"]
 
     for method_name in routing_methods:
         kwargs, (estimator, _), (scorer, _), (cv, registry) = get_init_args(
@@ -507,7 +583,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
         instance = cls(**kwargs)
         method_kwargs = {"groups": groups, "metadata": metadata}
         method = getattr(instance, method_name)
-        method(X, y, **method_kwargs)
+        method(X_, y_, **method_kwargs)
         assert registry
         for _splitter in registry:
             check_recorded_metadata(obj=_splitter, method="split", **method_kwargs)
