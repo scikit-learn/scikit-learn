@@ -1389,13 +1389,21 @@ def test_unknown_category_that_are_negative():
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
 
 
+@pytest.mark.parametrize(
+    ("GradientBoosting", "make_X_y"),
+    [
+        (HistGradientBoostingClassifier, make_regression),
+        (HistGradientBoostingRegressor, make_classification),
+    ],
+)
 @pytest.mark.parametrize("sample_weight", [False, True])
-def test_X_val_in_fit(sample_weight):
+def test_X_val_in_fit(GradientBoosting, make_X_y, sample_weight):
     """Test that passing X_val, y_val in fit is same as validation fraction."""
     rng = np.random.RandomState(42)
-    X, y = make_regression(n_samples=100, random_state=rng)
+    n_samples = 100
+    X, y = make_X_y(n_samples=n_samples, random_state=rng)
     if sample_weight:
-        sample_weight = np.abs(rng.normal(size=100))
+        sample_weight = np.abs(rng.normal(size=n_samples))
         data = (X, y, sample_weight)
     else:
         sample_weight = None
@@ -1403,7 +1411,7 @@ def test_X_val_in_fit(sample_weight):
     rng_seed = 12
 
     # Fit with validation fraction and early stopping.
-    m1 = HistGradientBoostingRegressor(
+    m1 = GradientBoosting(
         early_stopping=True,
         validation_fraction=0.5,
         random_state=rng_seed,
@@ -1425,7 +1433,7 @@ def test_X_val_in_fit(sample_weight):
     else:
         sample_weight_train = None
         sample_weight_val = None
-    m2 = HistGradientBoostingRegressor(
+    m2 = GradientBoosting(
         early_stopping=True,
         random_state=rng_seed,
     )
