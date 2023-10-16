@@ -35,7 +35,7 @@ with open("README.rst") as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = "Andreas Mueller"
 MAINTAINER_EMAIL = "amueller@ais.uni-bonn.de"
-URL = "http://scikit-learn.org"
+URL = "https://scikit-learn.org"
 DOWNLOAD_URL = "https://pypi.org/project/scikit-learn/#files"
 LICENSE = "new BSD"
 PROJECT_URLS = {
@@ -174,7 +174,7 @@ def check_package_status(package, min_version):
     instructions = (
         "Installation instructions are available on the "
         "scikit-learn website: "
-        "http://scikit-learn.org/stable/install.html\n"
+        "https://scikit-learn.org/stable/install.html\n"
     )
 
     if package_status["up_to_date"] is False:
