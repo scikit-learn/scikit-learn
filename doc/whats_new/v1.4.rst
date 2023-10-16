@@ -424,9 +424,6 @@ Changelog
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`, initiated by
   :user:`Patrick O'Reilly <pat-oreilly>`.
 
-- |Fix| Do not leak data via non-initialized memory in decision tree pickle files and make
-  the generation of those files deterministic. :pr:`27580` by :user:`Loïc Estève <lesteve>`.
-
 :mod:`sklearn.utils`
 ....................
 
