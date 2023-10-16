@@ -2219,7 +2219,7 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return binarize(X, threshold=self.threshold, copy=False)
 
     def _more_tags(self):
-        return {"stateless": True}
+        return {"stateless": True, "array_api_support": True}
 
 
 class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
