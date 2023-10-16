@@ -154,6 +154,30 @@ class Pipeline(_BaseComposition):
     0.76
     """
 
+class Pipeline:
+    def __init__(self, steps):
+        self.steps = steps
+
+    def fit(self, X, y):
+        for step in self.steps:
+            step.fit(X, y)
+
+    def predict(self, X):
+        for step in self.steps:
+            X = step.predict(X)
+        return X
+
+# usage:
+
+pipeline = Pipeline([
+    ('scaler', StandardScaler()),
+    ('classifier', RandomForestClassifier())
+])
+
+pipeline.fit(X_train, y_train)
+y_pred = pipeline.predict(X_test)
+
+
     # BaseEstimator interface
     _required_parameters = ["steps"]
 
