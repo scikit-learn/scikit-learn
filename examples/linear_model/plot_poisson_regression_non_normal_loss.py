@@ -32,7 +32,7 @@ policyholders.
 
 .. [1]  A. Noll, R. Salzmann and M.V. Wuthrich, Case Study: French Motor
     Third-Party Liability Claims (November 8, 2018). `doi:10.2139/ssrn.3164764
-    <http://dx.doi.org/10.2139/ssrn.3164764>`_
+    <https://doi.org/10.2139/ssrn.3164764>`_
 
 """
 
@@ -209,7 +209,7 @@ score_estimator(dummy, df_test)
 # ---------------------------
 #
 # We start by modeling the target variable with the (l2 penalized) least
-# squares linear regression model, more comonly known as Ridge regression. We
+# squares linear regression model, more commonly known as Ridge regression. We
 # use a low penalization `alpha`, as we expect such a linear model to under-fit
 # on such a large dataset.
 
