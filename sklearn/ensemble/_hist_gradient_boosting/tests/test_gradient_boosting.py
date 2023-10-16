@@ -1392,8 +1392,8 @@ def test_unknown_category_that_are_negative():
 @pytest.mark.parametrize(
     ("GradientBoosting", "make_X_y"),
     [
-        (HistGradientBoostingClassifier, make_regression),
-        (HistGradientBoostingRegressor, make_classification),
+        (HistGradientBoostingClassifier, make_classification),
+        (HistGradientBoostingRegressor, make_regression),
     ],
 )
 @pytest.mark.parametrize("sample_weight", [False, True])
@@ -1421,10 +1421,12 @@ def test_X_val_in_fit(GradientBoosting, make_X_y, sample_weight):
     # Do train-test split ourselves.
     rng = check_random_state(rng_seed)
     # We do the same as in the fit method.
+    stratify = y if isinstance(m1, HistGradientBoostingClassifier) else None
     random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
     X_train, X_val, y_train, y_val, *sw = train_test_split(
         *data,
         test_size=0.5,
+        stratify=stratify,
         random_state=random_seed,
     )
     if sample_weight is not None:
