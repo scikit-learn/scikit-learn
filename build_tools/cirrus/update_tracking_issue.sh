@@ -1,8 +1,8 @@
 # Update tracking issue if Cirrus fails nightly job
 
-if [[ "$CIRRUS_CRON" != "nightly" ]]; then
-    exit 0
-fi
+# if [[ "$CIRRUS_CRON" != "nightly" ]]; then
+#     exit 0
+# fi
 
 # TEST_PASSED is either "true" or "false"
 TEST_PASSED="$1"
