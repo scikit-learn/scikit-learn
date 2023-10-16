@@ -12,8 +12,12 @@ estimator, as a chain of transforms and estimators.
 from collections import defaultdict
 from itertools import islice
 
+from sklearn.ensemble import RandomForestClassifier
+
 import numpy as np
 from scipy import sparse
+
+from sklearn.base import BaseEstimator, TransformerMixin, clone
 
 from .base import TransformerMixin, _fit_context, clone
 from .exceptions import NotFittedError
@@ -154,32 +158,29 @@ class Pipeline(_BaseComposition):
     0.76
     """
 
-class Pipeline:
+class Pipeline(BaseEstimator):
     def __init__(self, steps):
         self.steps = steps
 
     def fit(self, X, y):
         for step in self.steps:
             step.fit(X, y)
+        return self  # Modified to conform to scikit-learn conventions
 
     def predict(self, X):
         for step in self.steps:
             X = step.predict(X)
         return X
 
-# usage:
+    def get_params(self, deep=True):
+        # Return parameters as a dictionary
+        return {"steps": self.steps}
 
-pipeline = Pipeline([
-    ('scaler', StandardScaler()),
-    ('classifier', RandomForestClassifier())
-])
-
-pipeline.fit(X_train, y_train)
-y_pred = pipeline.predict(X_test)
-
-
-    # BaseEstimator interface
-    _required_parameters = ["steps"]
+    def set_params(self, **parameters):
+        # Set parameters from the dictionary
+        for parameter, value in parameters.items():
+            setattr(self, parameter, value)
+        return self
 
     _parameter_constraints: dict = {
         "steps": [list, Hidden(tuple)],
