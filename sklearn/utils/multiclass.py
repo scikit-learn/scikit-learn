@@ -119,7 +119,8 @@ def unique_labels(*ys):
 
 
 def _is_integral_float(y):
-    return y.dtype.kind == "f" and np.all(y.astype(int) == y)
+    xp, is_array_api_compliant = get_namespace(y)
+    return xp.isdtype(y.dtype, "real floating") and bool(xp.all(xp.astype(y, int) == y))
 
 
 def is_multilabel(y):
