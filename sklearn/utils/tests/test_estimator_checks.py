@@ -18,7 +18,7 @@ from sklearn.cluster import MiniBatchKMeans
 from sklearn.datasets import make_multilabel_classification
 from sklearn.decomposition import PCA
 from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.exceptions import SkipTestWarning
+from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
 from sklearn.linear_model import (
     LinearRegression,
     LogisticRegression,
@@ -710,22 +710,20 @@ def test_check_estimator_clones():
         ExtraTreesClassifier,
         MiniBatchKMeans,
     ]:
-        with ignore_warnings(category=FutureWarning):
-            # when 'est = SGDClassifier()'
+        # without fitting
+        with ignore_warnings(category=ConvergenceWarning):
             est = Estimator()
             _set_checking_parameters(est)
             set_random_state(est)
-            # without fitting
             old_hash = joblib.hash(est)
             check_estimator(est)
         assert old_hash == joblib.hash(est)
 
-        with ignore_warnings(category=FutureWarning):
-            # when 'est = SGDClassifier()'
+        # with fitting
+        with ignore_warnings(category=ConvergenceWarning):
             est = Estimator()
             _set_checking_parameters(est)
             set_random_state(est)
-            # with fitting
             est.fit(iris.data + 10, iris.target)
             old_hash = joblib.hash(est)
             check_estimator(est)

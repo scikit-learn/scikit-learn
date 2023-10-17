@@ -777,6 +777,11 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     all of the available features provided to the model plus the predictions
     of models that are earlier in the chain.
 
+    For an example of how to use ``ClassifierChain`` and benefit from its
+    ensemble, see
+    :ref:`ClassifierChain on a yeast dataset
+    <sphx_glr_auto_examples_multioutput_plot_classifier_chain_yeast.py>` example.
+
     Read more in the :ref:`User Guide <classifierchain>`.
 
     .. versionadded:: 0.19
@@ -883,7 +888,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     >>> chain.predict_proba(X_test)
     array([[0.8387..., 0.9431..., 0.4576...],
            [0.8878..., 0.3684..., 0.2640...],
-           [0.0321..., 0.9935..., 0.0625...]])
+           [0.0321..., 0.9935..., 0.0626...]])
     """
 
     @_fit_context(
