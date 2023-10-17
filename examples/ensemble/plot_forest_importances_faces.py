@@ -59,6 +59,7 @@ forest.fit(X, y)
 #     cardinality** features (many unique values). See
 #     :ref:`permutation_importance` as an alternative.
 import time
+
 import matplotlib.pyplot as plt
 
 start_time = time.time()

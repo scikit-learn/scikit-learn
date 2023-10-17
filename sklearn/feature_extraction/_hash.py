@@ -1,16 +1,15 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
 
-from numbers import Integral
 from itertools import chain
+from numbers import Integral
 
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
-from ..base import _fit_context
-from ._hashing_fast import transform as _hashing_transform
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils._param_validation import Interval, StrOptions
+from ._hashing_fast import transform as _hashing_transform
 
 
 def _iteritems(d):
@@ -34,6 +33,9 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     CountVectorizer, intended for large-scale (online) learning and situations
     where memory is tight, e.g. when running prediction code on embedded
     devices.
+
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
     Read more in the :ref:`User Guide <feature_hashing>`.
 

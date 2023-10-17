@@ -1,13 +1,16 @@
 # License: BSD 3 clause
 
 from pathlib import Path
+
 import pytest
 
-from sklearn.callback.tests._utils import TestingCallback
-from sklearn.callback.tests._utils import TestingAutoPropagatedCallback
-from sklearn.callback.tests._utils import NotValidCallback
-from sklearn.callback.tests._utils import Estimator
-from sklearn.callback.tests._utils import MetaEstimator
+from sklearn.callback.tests._utils import (
+    Estimator,
+    MetaEstimator,
+    NotValidCallback,
+    TestingAutoPropagatedCallback,
+    TestingCallback,
+)
 
 
 @pytest.mark.parametrize(

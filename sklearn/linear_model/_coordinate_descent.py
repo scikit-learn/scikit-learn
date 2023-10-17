@@ -5,36 +5,45 @@
 #
 # License: BSD 3 clause
 
+import numbers
 import sys
 import warnings
-import numbers
 from abc import ABC, abstractmethod
 from functools import partial
 from numbers import Integral, Real
 
 import numpy as np
-from scipy import sparse
 from joblib import effective_n_jobs
+from scipy import sparse
 
-from ._base import LinearModel, _pre_fit
-from ..base import RegressorMixin, MultiOutputMixin
-from ..base import _fit_context
-from ._base import _preprocess_data
-from ..utils import check_array, check_scalar
-from ..utils.validation import check_random_state
-from ..utils._param_validation import Interval, StrOptions
+from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
+from ..utils import Bunch, check_array, check_scalar
+from ..utils._metadata_requests import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    get_routing_for_object,
+)
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import safe_sparse_dot
+from ..utils.metadata_routing import (
+    _routing_enabled,
+    process_routing,
+)
+from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_sample_weight,
     check_consistent_length,
     check_is_fitted,
+    check_random_state,
     column_or_1d,
+    has_fit_parameter,
 )
-from ..utils.parallel import delayed, Parallel
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from . import _cd_fast as cd_fast  # type: ignore
+from ._base import LinearModel, _pre_fit, _preprocess_data
 
 
 def _set_order(X, y, order="C"):
@@ -139,7 +148,7 @@ def _alpha_grid(
 
     sparse_center = False
     if Xy is None:
-        X_sparse = sparse.isspmatrix(X)
+        X_sparse = sparse.issparse(X)
         sparse_center = X_sparse and fit_intercept
         X = check_array(
             X, accept_sparse="csc", copy=(copy_X and fit_intercept and not X_sparse)
@@ -172,6 +181,23 @@ def _alpha_grid(
     return np.geomspace(alpha_max, alpha_max * eps, num=n_alphas)
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", "sparse matrix"],
+        "eps": [Interval(Real, 0, None, closed="neither")],
+        "n_alphas": [Interval(Integral, 1, None, closed="left")],
+        "alphas": ["array-like", None],
+        "precompute": [StrOptions({"auto"}), "boolean", "array-like"],
+        "Xy": ["array-like", None],
+        "copy_X": ["boolean"],
+        "coef_init": ["array-like", None],
+        "verbose": ["verbose"],
+        "return_n_iter": ["boolean"],
+        "positive": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def lasso_path(
     X,
     y,
@@ -226,7 +252,7 @@ def lasso_path(
     n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    alphas : ndarray, default=None
+    alphas : array-like, default=None
         List of alphas where to compute the models.
         If ``None`` alphas are set automatically.
 
@@ -244,7 +270,7 @@ def lasso_path(
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    coef_init : ndarray of shape (n_features, ), default=None
+    coef_init : array-like of shape (n_features, ), default=None
         The initial values of the coefficients.
 
     verbose : bool or int, default=False
@@ -346,6 +372,25 @@ def lasso_path(
     )
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": ["array-like", "sparse matrix"],
+        "l1_ratio": [Interval(Real, 0.0, 1.0, closed="both")],
+        "eps": [Interval(Real, 0.0, None, closed="neither")],
+        "n_alphas": [Interval(Integral, 1, None, closed="left")],
+        "alphas": ["array-like", None],
+        "precompute": [StrOptions({"auto"}), "boolean", "array-like"],
+        "Xy": ["array-like", None],
+        "copy_X": ["boolean"],
+        "coef_init": ["array-like", None],
+        "verbose": ["verbose"],
+        "return_n_iter": ["boolean"],
+        "positive": ["boolean"],
+        "check_input": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def enet_path(
     X,
     y,
@@ -410,7 +455,7 @@ def enet_path(
     n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    alphas : ndarray, default=None
+    alphas : array-like, default=None
         List of alphas where to compute the models.
         If None alphas are set automatically.
 
@@ -428,7 +473,7 @@ def enet_path(
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    coef_init : ndarray of shape (n_features, ), default=None
+    coef_init : array-like of shape (n_features, ), default=None
         The initial values of the coefficients.
 
     verbose : bool or int, default=False
@@ -526,7 +571,7 @@ def enet_path(
         raise ValueError("positive=True is not allowed for multi-output (y.ndim != 1)")
 
     # MultiTaskElasticNet does not support sparse matrices
-    if not multi_output and sparse.isspmatrix(X):
+    if not multi_output and sparse.issparse(X):
         if X_offset_param is not None:
             # As sparse matrices are not actually centered we need this to be passed to
             # the CD solver.
@@ -587,7 +632,7 @@ def enet_path(
         # account for n_samples scaling in objectives between here and cd_fast
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
-        if not multi_output and sparse.isspmatrix(X):
+        if not multi_output and sparse.issparse(X):
             model = cd_fast.sparse_enet_coordinate_descent(
                 w=coef_,
                 alpha=l1_reg,
@@ -1067,7 +1112,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             The predicted decision function.
         """
         check_is_fitted(self)
-        if sparse.isspmatrix(X):
+        if sparse.issparse(X):
             return safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
         else:
             return super()._decision_function(X)
@@ -1476,7 +1521,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         """Compute path with coordinate descent."""
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **params):
         """Fit linear model with coordinate descent.
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
@@ -1498,11 +1543,23 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             MSE that is finally used to find the best model is the unweighted
             mean over the (weighted) MSEs of each test fold.
 
+        **params : dict, default=None
+            Parameters to be passed to the CV splitter.
+
+            .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Returns an instance of fitted model.
         """
+        _raise_for_params(params, self, "fit")
+
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
         # Multiple functions touch X and subsamples of X and can induce a
@@ -1512,7 +1569,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         check_y_params = dict(
             copy=False, dtype=[np.float64, np.float32], ensure_2d=False
         )
-        if isinstance(X, np.ndarray) or sparse.isspmatrix(X):
+        if isinstance(X, np.ndarray) or sparse.issparse(X):
             # Keep a reference to X
             reference_to_old_X = X
             # Let us not impose fortran ordering so far: it is
@@ -1529,7 +1586,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             X, y = self._validate_data(
                 X, y, validate_separately=(check_X_params, check_y_params)
             )
-            if sparse.isspmatrix(X):
+            if sparse.issparse(X):
                 if hasattr(reference_to_old_X, "data") and not np.may_share_memory(
                     reference_to_old_X.data, X.data
                 ):
@@ -1564,7 +1621,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 )
             y = column_or_1d(y, warn=True)
         else:
-            if sparse.isspmatrix(X):
+            if sparse.issparse(X):
                 raise TypeError("X should be dense but a sparse matrix waspassed")
             elif y.ndim == 1:
                 raise ValueError(
@@ -1638,8 +1695,36 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         # init cross-validation generator
         cv = check_cv(self.cv)
 
+        if _routing_enabled():
+            splitter_supports_sample_weight = get_routing_for_object(cv).consumes(
+                method="split", params=["sample_weight"]
+            )
+            if (
+                sample_weight is not None
+                and not splitter_supports_sample_weight
+                and not has_fit_parameter(self, "sample_weight")
+            ):
+                raise ValueError(
+                    "The CV splitter and underlying estimator do not support"
+                    " sample weights."
+                )
+
+            if splitter_supports_sample_weight:
+                params["sample_weight"] = sample_weight
+
+            routed_params = process_routing(self, "fit", **params)
+
+            if sample_weight is not None and not has_fit_parameter(
+                self, "sample_weight"
+            ):
+                # MultiTaskElasticNetCV does not (yet) support sample_weight
+                sample_weight = None
+        else:
+            routed_params = Bunch()
+            routed_params.splitter = Bunch(split=Bunch())
+
         # Compute path for all folds and compute MSE to get the best alpha
-        folds = list(cv.split(X, y))
+        folds = list(cv.split(X, y, **routed_params.splitter.split))
         best_mse = np.inf
 
         # We do a double for loop folded in one, in order to be able to
@@ -1728,6 +1813,30 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             }
         }
 
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.4
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add_self_request(self)
+            .add(
+                splitter=check_cv(self.cv),
+                method_mapping=MethodMapping().add(callee="split", caller="fit"),
+            )
+        )
+        return router
+
 
 class LassoCV(RegressorMixin, LinearModelCV):
     """Lasso linear model with iterative fitting along a regularization path.
@@ -1787,7 +1896,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For int/None inputs, :class:`KFold` is used.
+        For int/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -2006,7 +2115,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For int/None inputs, :class:`KFold` is used.
+        For int/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -2646,7 +2755,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For int/None inputs, :class:`KFold` is used.
+        For int/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -2802,7 +2911,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     # This is necessary as LinearModelCV now supports sample_weight while
     # MultiTaskElasticNet does not (yet).
-    def fit(self, X, y):
+    def fit(self, X, y, **params):
         """Fit MultiTaskElasticNet model with coordinate descent.
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
@@ -2814,12 +2923,22 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         y : ndarray of shape (n_samples, n_targets)
             Training target variable. Will be cast to X's dtype if necessary.
 
+        **params : dict, default=None
+            Parameters to be passed to the CV splitter.
+
+            .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Returns MultiTaskElasticNet instance.
         """
-        return super().fit(X, y)
+        return super().fit(X, y, **params)
 
 
 class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
@@ -2880,7 +2999,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For int/None inputs, :class:`KFold` is used.
+        For int/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -3030,7 +3149,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     # This is necessary as LinearModelCV now supports sample_weight while
     # MultiTaskElasticNet does not (yet).
-    def fit(self, X, y):
+    def fit(self, X, y, **params):
         """Fit MultiTaskLasso model with coordinate descent.
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
@@ -3042,9 +3161,19 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         y : ndarray of shape (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary.
 
+        **params : dict, default=None
+            Parameters to be passed to the CV splitter.
+
+            .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Returns an instance of fitted model.
         """
-        return super().fit(X, y)
+        return super().fit(X, y, **params)

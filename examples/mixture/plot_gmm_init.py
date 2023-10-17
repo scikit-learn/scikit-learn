@@ -37,12 +37,14 @@ time to initialize and low number of GaussianMixture iterations to converge.
 # Author: Gordon Walsh <gordon.p.walsh@gmail.com>
 # Data generation code from Jake Vanderplas <vanderplas@astro.washington.edu>
 
+from timeit import default_timer as timer
+
 import matplotlib.pyplot as plt
 import numpy as np
+
+from sklearn.datasets._samples_generator import make_blobs
 from sklearn.mixture import GaussianMixture
 from sklearn.utils.extmath import row_norms
-from sklearn.datasets._samples_generator import make_blobs
-from timeit import default_timer as timer
 
 print(__doc__)
 

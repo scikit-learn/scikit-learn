@@ -5,14 +5,15 @@
 # License: BSD 3 clause
 
 from numbers import Integral
+
 import numpy as np
 from scipy import linalg, sparse
 
-from ._base import _BasePCA
 from ..base import _fit_context
 from ..utils import gen_batches
 from ..utils._param_validation import Interval
-from ..utils.extmath import svd_flip, _incremental_mean_and_var
+from ..utils.extmath import _incremental_mean_and_var, svd_flip
+from ._base import _BasePCA
 
 
 class IncrementalPCA(_BasePCA):

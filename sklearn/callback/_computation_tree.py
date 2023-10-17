@@ -1,8 +1,8 @@
 # License: BSD 3 clause
 
 import os
-from pathlib import Path
 import pickle
+from pathlib import Path
 from tempfile import mkdtemp
 from uuid import uuid4
 

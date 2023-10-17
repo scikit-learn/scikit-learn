@@ -52,6 +52,8 @@ X_train, X_test, y_train, y_test = train_test_split(
 scaled_X_train = scaler.fit_transform(X_train)
 
 # %%
+# .. _neighbors_scaling:
+#
 # Effect of rescaling on a k-neighbors models
 # ===========================================
 #
@@ -65,9 +67,9 @@ scaled_X_train = scaler.fit_transform(X_train)
 # of features.
 
 import matplotlib.pyplot as plt
+
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.neighbors import KNeighborsClassifier
-
 
 X_plot = X[["proline", "hue"]]
 X_plot_scaled = scaler.fit_transform(X_plot)
@@ -122,6 +124,7 @@ _ = ax2.set_title("KNN with scaling")
 # We can inspect the first principal components using all the original features:
 
 import pandas as pd
+
 from sklearn.decomposition import PCA
 
 pca = PCA(n_components=2).fit(X_train)
@@ -199,8 +202,9 @@ _ = plt.tight_layout()
 # non-scaling of the data:
 
 import numpy as np
-from sklearn.pipeline import make_pipeline
+
 from sklearn.linear_model import LogisticRegressionCV
+from sklearn.pipeline import make_pipeline
 
 Cs = np.logspace(-5, 5, 20)
 
@@ -218,8 +222,7 @@ print(f"Optimal C for the standardized data with PCA: {scaled_clf[-1].C_[0]:.2f}
 # was not scaled before applying PCA. We now evaluate the effect of scaling on
 # the accuracy and the mean log-loss of the optimal models:
 
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import log_loss
+from sklearn.metrics import accuracy_score, log_loss
 
 y_pred = unscaled_clf.predict(X_test)
 y_pred_scaled = scaled_clf.predict(X_test)

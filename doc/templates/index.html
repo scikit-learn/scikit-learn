@@ -42,9 +42,10 @@
           <p class="card-text">Identifying which category an object belongs to.</p>
           <p class="card-text"><strong>Applications:</strong> Spam detection, image recognition.</br>
           <strong>Algorithms:</strong>
-          <a href="modules/svm.html#svm-classification">SVM</a>,
+          <a href="modules/ensemble.html#histogram-based-gradient-boosting">Gradient boosting</a>,
           <a href="modules/neighbors.html#classification">nearest neighbors</a>,
           <a href="modules/ensemble.html#forest">random forest</a>,
+          <a href="modules/linear_model.html#logistic-regression">logistic regression</a>,
           and <a href="supervised_learning.html#supervised-learning">more...</a></p>
         </div>
         <div class="overflow-hidden mx-2 text-center flex-fill">
@@ -62,9 +63,10 @@
           <p class="card-text">Predicting a continuous-valued attribute associated with an object.</p>
           <p class="card-text"><strong>Applications:</strong> Drug response, Stock prices.</br>
           <strong>Algorithms:</strong>
-          <a href="modules/svm.html#svm-regression">SVR</a>,
+          <a href="modules/ensemble.html#histogram-based-gradient-boosting">Gradient boosting</a>,
           <a href="modules/neighbors.html#regression">nearest neighbors</a>,
           <a href="modules/ensemble.html#forest">random forest</a>,
+          <a href="modules/linear_model.html#ridge-regression-and-classification">ridge</a>,
           and <a href="supervised_learning.html#supervised-learning">more...</a></p>
         </div>
         <div class="overflow-hidden mx-2 text-center flex-fill">
@@ -83,8 +85,9 @@
           <p class="card-text"><strong>Applications:</strong> Customer segmentation, Grouping experiment outcomes</br>
           <strong>Algorithms:</strong>
           <a href="modules/clustering.html#k-means">k-Means</a>,
-          <a href="modules/clustering.html#spectral-clustering">spectral clustering</a>,
-          <a href="modules/clustering.html#mean-shift">mean-shift</a>,
+          <a href="modules/clustering.html#hdbscan">HDBSCAN</a>,
+          <a href="modules/clustering.html#hierarchical-clustering">hierarchical
+	  clustering</a>,
           and <a href="modules/clustering.html#clustering">more...</a></p>
         </div>
         <div class="overflow-hidden mx-2 text-center flex-fill">
@@ -166,44 +169,16 @@
         <li><strong>On-going development:</strong>
         <a href="https://scikit-learn.org/dev/whats_new.html"><strong>What's new</strong> (Changelog)</a>
         </li>
+	<li><strong>September 2023.</strong> scikit-learn 1.3.1 is available for download (<a href="whats_new/v1.3.html#version-1-3-1">Changelog</a>).
+        </li>
+        <li><strong>June 2023.</strong> scikit-learn 1.3.0 is available for download (<a href="whats_new/v1.3.html#version-1-3-0">Changelog</a>).
+        </li>
         <li><strong>March 2023.</strong> scikit-learn 1.2.2 is available for download (<a href="whats_new/v1.2.html#version-1-2-2">Changelog</a>).
         </li>
         <li><strong>January 2023.</strong> scikit-learn 1.2.1 is available for download (<a href="whats_new/v1.2.html#version-1-2-1">Changelog</a>).
         </li>
         <li><strong>December 2022.</strong> scikit-learn 1.2.0 is available for download (<a href="whats_new/v1.2.html#version-1-2-0">Changelog</a>).
-        </li>
-        <li><strong>October 2022.</strong> scikit-learn 1.1.3 is available for download (<a href="whats_new/v1.1.html#version-1-1-3">Changelog</a>).
-        </li>
-        <li><strong>August 2022.</strong> scikit-learn 1.1.2 is available for download (<a href="whats_new/v1.1.html#version-1-1-2">Changelog</a>).
-        </li>
-        <li><strong>May 2022.</strong> scikit-learn 1.1.1 is available for download (<a href="whats_new/v1.1.html#version-1-1-1">Changelog</a>).
-        </li>
-        <li><strong>May 2022.</strong> scikit-learn 1.1.0 is available for download (<a href="whats_new/v1.1.html#version-1-1-0">Changelog</a>).
-        </li>
-        <li><strong>December 2021.</strong> scikit-learn 1.0.2 is available for download (<a href="whats_new/v1.0.html#version-1-0-2">Changelog</a>).
-        </li>
-        <li><strong>October 2021.</strong> scikit-learn 1.0.1 is available for download (<a href="whats_new/v1.0.html#version-1-0-1">Changelog</a>).
-        </li>
-        <li><strong>September 2021.</strong> scikit-learn 1.0 is available for download (<a href="whats_new/v1.0.html#version-1-0">Changelog</a>).
-        </li>
-        <li><strong>April 2021.</strong> scikit-learn 0.24.2 is available for download (<a href="whats_new/v0.24.html#version-0-24-2">Changelog</a>).
-        </li>
-        <li><strong>January 2021.</strong> scikit-learn 0.24.1 is available for download (<a href="whats_new/v0.24.html#version-0-24-1">Changelog</a>).
-        </li>
-        <li><strong>December 2020.</strong> scikit-learn 0.24.0 is available for download (<a href="whats_new/v0.24.html#version-0-24-0">Changelog</a>).
-        </li>
-        <li><strong>August 2020.</strong> scikit-learn 0.23.2 is available for download (<a href="whats_new/v0.23.html#version-0-23-2">Changelog</a>).
-        </li>
-        <li><strong>May 2020.</strong> scikit-learn 0.23.1 is available for download (<a href="whats_new/v0.23.html#version-0-23-1">Changelog</a>).
-        </li>
-        <li><strong>May 2020.</strong> scikit-learn 0.23.0 is available for download (<a href="whats_new/v0.23.html#version-0-23-0">Changelog</a>).
-        </li>
-        <li><strong>Scikit-learn from 0.23 requires Python 3.6 or newer.</strong>
-        </li>
-        <li><strong>March 2020.</strong> scikit-learn 0.22.2 is available for download (<a href="whats_new/v0.22.html#version-0-22-2">Changelog</a>).
-        <li><strong>January 2020.</strong> scikit-learn 0.22.1 is available for download (<a href="whats_new/v0.22.html#version-0-22-1">Changelog</a>).
-        <li><strong>December 2019.</strong> scikit-learn 0.22 is available for download (<a href="whats_new/v0.22.html#version-0-22-0">Changelog</a> and <a href="{{ pathto('auto_examples/release_highlights/plot_release_highlights_0_22_0') }}">Release Highlights</a>).
-        </li>
+	</li>
         </ul>
       </div>
       <div class="col-md-4">

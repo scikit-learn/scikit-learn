@@ -9,18 +9,25 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 
-from .base import BaseEstimator, ClassifierMixin, RegressorMixin
-from .base import MultiOutputMixin
-from .base import _fit_context
+from .base import (
+    BaseEstimator,
+    ClassifierMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    _fit_context,
+)
 from .utils import check_random_state
-from .utils._param_validation import StrOptions, Interval
-from .utils.validation import _num_samples
-from .utils.validation import check_array
-from .utils.validation import check_consistent_length
-from .utils.validation import check_is_fitted, _check_sample_weight
+from .utils._param_validation import Interval, StrOptions
+from .utils.multiclass import class_distribution
 from .utils.random import _random_choice_csc
 from .utils.stats import _weighted_percentile
-from .utils.multiclass import class_distribution
+from .utils.validation import (
+    _check_sample_weight,
+    _num_samples,
+    check_array,
+    check_consistent_length,
+    check_is_fitted,
+)
 
 
 class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
@@ -220,7 +227,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                         "The constant target value must be present in "
                         "the training data. You provided constant={}. "
                         "Possible values are: {}.".format(
-                            self.constant, list(self.classes_[k])
+                            self.constant, self.classes_[k].tolist()
                         )
                     )
                     raise ValueError(err_msg)

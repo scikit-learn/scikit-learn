@@ -1,8 +1,8 @@
 # License: BSD 3 clause
 
+import pickle
 from datetime import datetime
 from pathlib import Path
-import pickle
 
 from . import BaseCallback
 

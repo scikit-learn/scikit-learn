@@ -16,6 +16,7 @@ class EarlyStopping(BaseCallback):
         threshold=1e-2,
     ):
         from ..model_selection import KFold
+
         self.validation_split = validation_split
         if validation_split == "auto":
             self.validation_split = KFold(n_splits=5, shuffle=True, random_state=42)
@@ -42,11 +43,14 @@ class EarlyStopping(BaseCallback):
         y = data["y_val"] if self.on == "validation_set" else data["y"]
 
         if self.monitor == "objective_function":
-            new_monitored, *_ = reconstructed_estimator.objective_function(X, y, normalize=True)
+            new_monitored, *_ = reconstructed_estimator.objective_function(
+                X, y, normalize=True
+            )
         elif callable(self.monitor):
             new_monitored = self.monitor(reconstructed_estimator, X, y)
         elif self.monitor is None or isinstance(self.monitor, str):
             from ..metrics import check_scoring
+
             scorer = check_scoring(reconstructed_estimator, self.monitor)
             new_monitored = scorer(reconstructed_estimator, X, y)
 
@@ -62,7 +66,7 @@ class EarlyStopping(BaseCallback):
     def _score_improved(self, node, new_monitored):
         if node.parent not in self._last_monitored:
             return True
-        
+
         last_monitored = self._last_monitored[node.parent]
         if self.higher_is_better:
             return new_monitored > last_monitored * (1 + self.threshold)

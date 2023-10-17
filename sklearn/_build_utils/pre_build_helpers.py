@@ -1,11 +1,11 @@
 """Helpers to check build environment before actual build of scikit-learn"""
 
-import os
-import sys
 import glob
+import os
+import subprocess
+import sys
 import tempfile
 import textwrap
-import subprocess
 
 from setuptools.command.build_ext import customize_compiler, new_compiler
 

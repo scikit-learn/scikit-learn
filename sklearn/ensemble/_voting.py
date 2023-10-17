@@ -18,24 +18,27 @@ from numbers import Integral
 
 import numpy as np
 
-from ..base import ClassifierMixin
-from ..base import RegressorMixin
-from ..base import TransformerMixin
-from ..base import clone
-from ..base import _fit_context
-from ._base import _fit_single_estimator
-from ._base import _BaseHeterogeneousEnsemble
+from ..base import (
+    ClassifierMixin,
+    RegressorMixin,
+    TransformerMixin,
+    _fit_context,
+    clone,
+)
+from ..exceptions import NotFittedError
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
-from ..utils.metaestimators import available_if
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_feature_names_in
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import column_or_1d
-from ..utils._param_validation import StrOptions
-from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
-from ..utils.parallel import delayed, Parallel
+from ..utils._param_validation import StrOptions
+from ..utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupportedMixin,
+)
+from ..utils.metaestimators import available_if
+from ..utils.multiclass import check_classification_targets
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import _check_feature_names_in, check_is_fitted, column_or_1d
+from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
@@ -153,7 +156,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         return {"preserves_dtype": []}
 
 
-class VotingClassifier(ClassifierMixin, _BaseVoting):
+class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
     Read more in the :ref:`User Guide <voting_classifier>`.
@@ -337,6 +340,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self : object
             Returns the instance itself.
         """
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
             raise NotImplementedError(
@@ -479,7 +483,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         return np.asarray(names_out, dtype=object)
 
 
-class VotingRegressor(RegressorMixin, _BaseVoting):
+class VotingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseVoting):
     """Prediction voting regressor for unfitted estimators.
 
     A voting regressor is an ensemble meta-estimator that fits several base
@@ -602,6 +606,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         self : object
             Fitted estimator.
         """
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
         y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
 

@@ -1,20 +1,20 @@
 # License: BSD 3 clause
 
 import pickle
-import pytest
 import sys
 import tempfile
 
 import numpy as np
+import pytest
 
-from sklearn.callback import Monitoring
-from sklearn.callback import EarlyStopping
-from sklearn.callback import ProgressBar
-from sklearn.callback import Snapshot
-from sklearn.callback import TextVerbose
-from sklearn.callback.tests._utils import Estimator
-from sklearn.callback.tests._utils import MetaEstimator
-
+from sklearn.callback import (
+    EarlyStopping,
+    Monitoring,
+    ProgressBar,
+    Snapshot,
+    TextVerbose,
+)
+from sklearn.callback.tests._utils import Estimator, MetaEstimator
 
 X = np.zeros((100, 3))
 y = np.zeros(100, dtype=int)

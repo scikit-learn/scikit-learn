@@ -4,7 +4,6 @@ import numpy as np
 
 from sklearn.callback import ComputationTree
 
-
 levels = [
     {"descr": "level0", "max_iter": 3},
     {"descr": "level1", "max_iter": 5},

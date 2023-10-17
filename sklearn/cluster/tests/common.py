@@ -5,7 +5,6 @@ Common utilities for testing clustering.
 
 import numpy as np
 
-
 ###############################################################################
 # Generate sample data
 

@@ -14,13 +14,14 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 
 # avoid division truncation
 import warnings
-from numbers import Real, Integral
+from numbers import Integral, Real
+
 import numpy as np
 
-from . import empirical_covariance, EmpiricalCovariance
 from ..base import _fit_context
 from ..utils import check_array
 from ..utils._param_validation import Interval, validate_params
+from . import EmpiricalCovariance, empirical_covariance
 
 
 def _ledoit_wolf(X, *, assume_centered, block_size):
@@ -104,7 +105,8 @@ def _oas(X, *, assume_centered=False):
     {
         "emp_cov": ["array-like"],
         "shrinkage": [Interval(Real, 0, 1, closed="both")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def shrunk_covariance(emp_cov, shrinkage=0.1):
     """Calculate a covariance matrix shrunk on the diagonal.
@@ -278,7 +280,8 @@ class ShrunkCovariance(EmpiricalCovariance):
         "X": ["array-like"],
         "assume_centered": ["boolean"],
         "block_size": [Interval(Integral, 1, None, closed="left")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
@@ -375,7 +378,10 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     return shrinkage
 
 
-@validate_params({"X": ["array-like"]})
+@validate_params(
+    {"X": ["array-like"]},
+    prefer_skip_nested_validation=False,
+)
 def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
@@ -568,7 +574,10 @@ class LedoitWolf(EmpiricalCovariance):
 
 
 # OAS estimator
-@validate_params({"X": ["array-like"]})
+@validate_params(
+    {"X": ["array-like"]},
+    prefer_skip_nested_validation=False,
+)
 def oas(X, *, assume_centered=False):
     """Estimate covariance with the Oracle Approximating Shrinkage as proposed in [1]_.
 

@@ -2,7 +2,7 @@ from functools import partial
 
 from joblib.parallel import Parallel, delayed
 
-from sklearn.base import BaseEstimator, clone, _fit_context
+from sklearn.base import BaseEstimator, _fit_context, clone
 from sklearn.callback import BaseCallback
 from sklearn.callback._base import _eval_callbacks_on_fit_iter_end
 
@@ -94,7 +94,7 @@ class MetaEstimator(BaseEstimator):
             y=y,
         )
 
-        res = Parallel(n_jobs=self.n_jobs, prefer=self.prefer)(
+        Parallel(n_jobs=self.n_jobs, prefer=self.prefer)(
             delayed(self._func)(self.estimator, X, y, node, i)
             for i, node in enumerate(root.children)
         )

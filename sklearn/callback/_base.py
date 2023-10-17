@@ -1,8 +1,7 @@
 # License: BSD 3 clause
 
-from abc import ABC, abstractmethod
-from functools import wraps
 import weakref
+from abc import ABC, abstractmethod
 
 
 # Not a method of BaseEstimator because it might not be directly called from fit but
@@ -141,7 +140,7 @@ class BaseCallback(ABC):
     @property
     def request_from_reconstruction_attributes(self):
         return False
-    
+
     @property
     def request_validation_split(self):
         return False

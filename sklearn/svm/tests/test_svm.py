@@ -3,33 +3,44 @@ Testing for Support Vector Machine module (sklearn.svm)
 
 TODO: remove hard coded numerical results when possible
 """
-import warnings
 import re
+import warnings
 
 import numpy as np
 import pytest
+from numpy.testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_allclose
-from scipy import sparse
-from sklearn import svm, linear_model, datasets, metrics, base
-from sklearn.svm import LinearSVC, OneClassSVM, SVR, NuSVR, LinearSVR
-from sklearn.svm._classes import _validate_dual_parameter
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import make_classification, make_blobs
+from sklearn import base, datasets, linear_model, metrics, svm
+from sklearn.datasets import make_blobs, make_classification
+from sklearn.exceptions import (
+    ConvergenceWarning,
+    NotFittedError,
+    UndefinedMetricWarning,
+)
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.utils import check_random_state
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.validation import _num_samples
-from sklearn.utils import shuffle
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
+from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 
 # mypy error: Module 'sklearn.svm' has no attribute '_libsvm'
-from sklearn.svm import _libsvm  # type: ignore
+from sklearn.svm import (  # type: ignore
+    SVR,
+    LinearSVC,
+    LinearSVR,
+    NuSVR,
+    OneClassSVM,
+    _libsvm,
+)
+from sklearn.svm._classes import _validate_dual_parameter
+from sklearn.utils import check_random_state, shuffle
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.fixes import CSR_CONTAINERS, LIL_CONTAINERS
+from sklearn.utils.validation import _num_samples
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -671,7 +682,8 @@ def test_auto_weight():
         )
 
 
-def test_bad_input():
+@pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
+def test_bad_input(lil_container):
     # Test dimensions for labels
     Y2 = Y[:-1]  # wrong dimensions for labels
     with pytest.raises(ValueError):
@@ -696,7 +708,7 @@ def test_bad_input():
     # predict with sparse input when trained with dense
     clf = svm.SVC().fit(X, Y)
     with pytest.raises(ValueError):
-        clf.predict(sparse.lil_matrix(X))
+        clf.predict(lil_container(X))
 
     Xt = np.array(X).T
     clf.fit(np.dot(X, Xt), Y)
@@ -733,18 +745,18 @@ def test_unicode_kernel():
     )
 
 
-def test_sparse_precomputed():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_precomputed(csr_container):
     clf = svm.SVC(kernel="precomputed")
-    sparse_gram = sparse.csr_matrix([[1, 0], [0, 1]])
+    sparse_gram = csr_container([[1, 0], [0, 1]])
     with pytest.raises(TypeError, match="Sparse precomputed"):
         clf.fit(sparse_gram, [0, 1])
 
 
-def test_sparse_fit_support_vectors_empty():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_fit_support_vectors_empty(csr_container):
     # Regression test for #14893
-    X_train = sparse.csr_matrix(
-        [[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]]
-    )
+    X_train = csr_container([[0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]])
     y_train = np.array([0.04, 0.04, 0.10, 0.16])
     model = svm.SVR(kernel="linear")
     model.fit(X_train, y_train)

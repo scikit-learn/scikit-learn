@@ -1,10 +1,9 @@
 # License: BSD 3 clause
 
 import importlib
-from threading import Thread, Event
+from threading import Event, Thread
 
-from . import BaseCallback
-from . import load_computation_tree
+from . import BaseCallback, load_computation_tree
 
 
 def _check_backend_support(backend, caller_name):
@@ -51,11 +50,11 @@ class ProgressBar(BaseCallback):
         self.backend = backend
 
         if max_depth_show is not None and max_depth_show < 0:
-            raise ValueError(f"max_depth_show should be >= 0.")
+            raise ValueError("max_depth_show should be >= 0.")
         self.max_depth_show = max_depth_show
 
         if max_depth_keep is not None and max_depth_keep < 0:
-            raise ValueError(f"max_depth_keep should be >= 0.")
+            raise ValueError("max_depth_keep should be >= 0.")
         self.max_depth_keep = max_depth_keep
 
     def on_fit_begin(self, estimator, X=None, y=None):
@@ -144,7 +143,7 @@ class _RichProgressMonitor(Thread):
         self._computation_trees = {}
 
     def run(self):
-        from rich.progress import BarColumn, TimeRemainingColumn, TextColumn
+        from rich.progress import BarColumn, TextColumn, TimeRemainingColumn
         from rich.style import Style
 
         with _Progress(
