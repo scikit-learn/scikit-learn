@@ -2760,3 +2760,16 @@ def test_multioutput_quantiles():
         assert_array_equal(y_hat[:, 1], y_true)
         assert_array_equal(y_hat[:, 2], y_true)
         assert y_hat.shape == (4, 3, 2)
+
+
+def test_deterministic_pickle():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/27268
+    # Uninitialised memory would lead to the two pickle strings being different.
+    tree1 = DecisionTreeClassifier(random_state=0).fit(iris.data, iris.target)
+    tree2 = DecisionTreeClassifier(random_state=0).fit(iris.data, iris.target)
+
+    pickle1 = pickle.dumps(tree1)
+    pickle2 = pickle.dumps(tree2)
+
+    assert pickle1 == pickle2
