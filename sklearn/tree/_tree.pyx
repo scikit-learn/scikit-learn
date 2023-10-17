@@ -1506,7 +1506,7 @@ cdef class BaseTree:
         cdef float64_t normalizer = 0.
         cdef intp_t i = 0
 
-        cdef cnp.float64_t[:] importances = np.zeros(self.n_features)
+        cdef float64_t[:] importances = np.zeros(self.n_features)
 
         with nogil:
             while node != end_node:
@@ -1532,7 +1532,7 @@ cdef class BaseTree:
 
     cdef void _compute_feature_importances(
         self,
-        cnp.float64_t[:] importances,
+        float64_t[:] importances,
         Node* node
     ) noexcept nogil:
         """Compute feature importances from a Node in the Tree.
