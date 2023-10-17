@@ -190,7 +190,8 @@ def is_multilabel(y):
         labels = xp.unique_values(y)
 
         return len(labels) < 3 and (
-            y.dtype.kind in "biu" or _is_integral_float(labels)  # bool, int, uint
+            xp.isdtype(y.dtype, ("bool", "signed integer", "unsigned integer"))
+            or _is_integral_float(labels)
         )
 
 
