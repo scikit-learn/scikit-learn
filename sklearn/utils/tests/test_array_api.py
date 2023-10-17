@@ -256,7 +256,7 @@ def test_convert_to_numpy_gpu(library):  # pragma: nocover
     xp = pytest.importorskip(library)
 
     if library == "torch":
-        if not xp.has_cuda:
+        if not xp.backends.cuda.is_built():
             pytest.skip("test requires cuda")
         X_gpu = xp.asarray([1.0, 2.0, 3.0], device="cuda")
     else:
