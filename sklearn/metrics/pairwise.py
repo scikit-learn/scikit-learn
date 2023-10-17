@@ -1826,7 +1826,11 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
         out = np.zeros((X.shape[0], Y.shape[0]), dtype="float")
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
-            out[i, j] = metric(X[i], Y[j], **kwds)
+            # scipy has not yet implemented 1D sparse slices; once implemented this can
+            # be removed and `arr[ind]` can be simply used.
+            x = X[[i], :] if issparse(X) else X[i]
+            y = Y[[j], :] if issparse(Y) else Y[j]
+            out[i, j] = metric(x, y, **kwds)
 
         # Make symmetric
         # NB: out += out.T will produce incorrect results
@@ -1835,7 +1839,9 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
         # Calculate diagonal
         # NB: nonzero diagonals are allowed for both metrics and kernels
         for i in range(X.shape[0]):
-            x = X[i]
+            # scipy has not yet implemented 1D sparse slices; once implemented this can
+            # be removed and `arr[ind]` can be simply used.
+            x = X[[i], :] if issparse(X) else X[i]
             out[i, i] = metric(x, x, **kwds)
 
     else:
@@ -1843,7 +1849,11 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
         out = np.empty((X.shape[0], Y.shape[0]), dtype="float")
         iterator = itertools.product(range(X.shape[0]), range(Y.shape[0]))
         for i, j in iterator:
-            out[i, j] = metric(X[i], Y[j], **kwds)
+            # scipy has not yet implemented 1D sparse slices; once implemented this can
+            # be removed and `arr[ind]` can be simply used.
+            x = X[[i], :] if issparse(X) else X[i]
+            y = Y[[j], :] if issparse(Y) else Y[j]
+            out[i, j] = metric(x, y, **kwds)
 
     return out
 

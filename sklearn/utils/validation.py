@@ -1,4 +1,7 @@
-"""Utilities for input validation"""
+"""
+The :mod:`sklearn.utils.validation` module includes functions to validate
+input and parameters within scikit-learn estimators.
+"""
 
 # Authors: Olivier Grisel
 #          Gael Varoquaux
@@ -21,12 +24,10 @@ import joblib
 import numpy as np
 import scipy.sparse as sp
 
-# mypy error: Module 'numpy.core.numeric' has no attribute 'ComplexWarning'
-from numpy.core.numeric import ComplexWarning  # type: ignore
-
 from .. import get_config as _get_config
 from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
 from ..utils._array_api import _asarray_with_order, _is_numpy_namespace, get_namespace
+from ..utils.fixes import ComplexWarning
 from ._isfinite import FiniteStatus, cy_isfinite
 from .fixes import _object_dtype_isnan
 
@@ -964,6 +965,19 @@ def check_array(
                 allow_nan=force_all_finite == "allow-nan",
             )
 
+        if copy:
+            if _is_numpy_namespace(xp):
+                # only make a copy if `array` and `array_orig` may share memory`
+                if np.may_share_memory(array, array_orig):
+                    array = _asarray_with_order(
+                        array, dtype=dtype, order=order, copy=True, xp=xp
+                    )
+            else:
+                # always make a copy for non-numpy arrays
+                array = _asarray_with_order(
+                    array, dtype=dtype, order=order, copy=True, xp=xp
+                )
+
     if ensure_min_samples > 0:
         n_samples = _num_samples(array)
         if n_samples < ensure_min_samples:
@@ -980,19 +994,6 @@ def check_array(
                 "Found array with %d feature(s) (shape=%s) while"
                 " a minimum of %d is required%s."
                 % (n_features, array.shape, ensure_min_features, context)
-            )
-
-    if copy:
-        if _is_numpy_namespace(xp):
-            # only make a copy if `array` and `array_orig` may share memory`
-            if np.may_share_memory(array, array_orig):
-                array = _asarray_with_order(
-                    array, dtype=dtype, order=order, copy=True, xp=xp
-                )
-        else:
-            # always make a copy for non-numpy arrays
-            array = _asarray_with_order(
-                array, dtype=dtype, order=order, copy=True, xp=xp
             )
 
     return array
@@ -1412,8 +1413,10 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     raises a NotFittedError with the given message.
 
     If an estimator does not set any attributes with a trailing underscore, it
-    can define a ``__sklearn_is_fitted__`` method returning a boolean to specify if the
-    estimator is fitted or not.
+    can define a ``__sklearn_is_fitted__`` method returning a boolean to
+    specify if the estimator is fitted or not. See
+    :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
+    for an example on how to use the API.
 
     Parameters
     ----------
