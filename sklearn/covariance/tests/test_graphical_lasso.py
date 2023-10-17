@@ -273,6 +273,9 @@ def test_graphical_lasso_cov_init_deprecation():
 
 @pytest.mark.usefixtures("enable_slep006")
 def test_graphical_lasso_cv_scores_with_routing(global_random_seed):
+    """Check that `GraphicalLassoCV` internally dispatches metadata to
+    the splitter.
+    """
     splits = 5
     n_alphas = 5
     n_refinements = 3
