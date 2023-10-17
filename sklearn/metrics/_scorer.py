@@ -438,7 +438,6 @@ class _ContinuousScorer(_BaseScorer):
         )
 
         scoring_kwargs = {**self._kwargs, **kwargs}
-        # potential_thresholds = np.unique(y_score)
         if isinstance(self._n_thresholds, Integral):
             potential_thresholds = np.linspace(
                 np.min(y_score), np.max(y_score), self._n_thresholds
