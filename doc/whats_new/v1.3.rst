@@ -24,7 +24,7 @@ Changelog
 
 - |Fix| Fixes a bug in :class:`decomposition.KernelPCA` by forcing the output of
   the internal :class:`preprocessing.KernelCenterer` to be a default array. When the
-  arpack solver was used, it would expect an array with a `dtype` attribute.
+  arpack solver is used, it expects an array with a `dtype` attribute.
   :pr:`27583` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
