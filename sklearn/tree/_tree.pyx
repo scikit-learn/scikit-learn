@@ -771,11 +771,13 @@ cdef class Tree:
         safe_realloc(&self.nodes, capacity)
         safe_realloc(&self.value, capacity * self.value_stride)
 
-        # value memory is initialised to 0 to enable classifier argmax
         if capacity > self.capacity:
+            # value memory is initialised to 0 to enable classifier argmax
             memset(<void*>(self.value + self.capacity * self.value_stride), 0,
                    (capacity - self.capacity) * self.value_stride *
                    sizeof(double))
+            # node memory is initialised to 0 to ensure deterministic pickle (padding in Node struct)
+            memset(<void*>(self.nodes + self.capacity), 0, (capacity - self.capacity) * sizeof(Node))
 
         # if capacity smaller than node_count, adjust the counter
         if capacity < self.node_count:

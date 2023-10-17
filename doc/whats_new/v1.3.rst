@@ -2,6 +2,23 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_3_2:
+
+Version 1.3.2
+=============
+
+**October 2023**
+
+Changelog
+---------
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Do not leak data via non-initialized memory in decision tree pickle files and make
+  the generation of those files deterministic. :pr:`27580` by :user:`Loïc Estève <lesteve>`.
+
+
 .. _changes_1_3_1:
 
 Version 1.3.1
