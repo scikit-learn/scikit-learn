@@ -334,12 +334,12 @@ Changelog
   proportional to the number of coefficients (`n_features * n_classes`).
   :pr:`27417` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+:mod:`sklearn.metrics`
+......................
+
 - |Efficiency| Computing pairwise distances via :class:`metrics.DistanceMetric`
   for CSR × CSR,  Dense × CSR, and CSR × Dense datasets is now 1.5x faster.
   :pr:`26765` by :user:`Meekail Zain <micky774>`
-
-:mod:`sklearn.metrics`
-......................
 
 - |Efficiency| Computing distances via :class:`metrics.DistanceMetric`
   for CSR × CSR, Dense × CSR, and CSR × Dense now uses ~50% less memory,
