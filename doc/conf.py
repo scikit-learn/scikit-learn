@@ -312,15 +312,18 @@ for old_link in redirects:
 html_show_search_summary = False
 
 
+# The "summary-anchor" IDs will be overwritten via JavaScript to be unique.
+# See `doc/theme/scikit-learn-modern/static/js/details-permalink.js`.
 rst_prolog = """
 .. |details-start| raw:: html
 
-    <details>
+    <details id="summary-anchor">
     <summary class="btn btn-light">
 
 .. |details-split| raw:: html
 
     <span class="tooltiptext">Click for more details</span>
+    <a class="headerlink" href="#summary-anchor" title="Permalink to this heading">¶</a>
     </summary>
     <div class="card">
 
