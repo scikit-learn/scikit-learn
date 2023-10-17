@@ -47,19 +47,19 @@ from sklearn.utils._testing import (
             "balanced_accuracy",
         ),
         (
-            make_scorer(roc_curve, needs_proba=True),
+            make_scorer(roc_curve, response_method="predict_proba"),
             "max_tnr_at_tpr_constraint",
         ),
         (
-            make_scorer(roc_curve, needs_proba=True),
+            make_scorer(roc_curve, response_method="predict_proba"),
             "max_tpr_at_tnr_constraint",
         ),
         (
-            make_scorer(precision_recall_curve, needs_proba=True),
+            make_scorer(precision_recall_curve, response_method="predict_proba"),
             "max_precision_at_recall_constraint",
         ),
         (
-            make_scorer(precision_recall_curve, needs_proba=True),
+            make_scorer(precision_recall_curve, response_method="predict_proba"),
             "max_recall_at_precision_constraint",
         ),
     ],
@@ -109,22 +109,22 @@ def test_fit_and_score_scorers(scorer, score_method):
             [0.5, 1.0],
         ),
         (
-            make_scorer(roc_curve, needs_proba=True),
+            make_scorer(roc_curve, response_method="predict_proba"),
             "max_tnr_at_tpr_constraint",
             [[0.0, 1.0], [1.0, 1.0]],
         ),
         (
-            make_scorer(roc_curve, needs_proba=True),
+            make_scorer(roc_curve, response_method="predict_proba"),
             "max_tpr_at_tnr_constraint",
             [[0.0, 1.0], [1.0, 1.0]],
         ),
         (
-            make_scorer(precision_recall_curve, needs_proba=True),
+            make_scorer(precision_recall_curve, response_method="predict_proba"),
             "max_precision_at_recall_constraint",
             [[0.5, 1.0], [1.0, 1.0]],
         ),
         (
-            make_scorer(precision_recall_curve, needs_proba=True),
+            make_scorer(precision_recall_curve, response_method="predict_proba"),
             "max_recall_at_precision_constraint",
             [[0.5, 1.0], [1.0, 1.0]],
         ),
@@ -186,19 +186,19 @@ def test_fit_and_score_prefit(scorer, score_method, expected_score):
             "balanced_accuracy",
         ),
         (
-            make_scorer(roc_curve, needs_proba=True),
+            make_scorer(roc_curve, response_method="predict_proba"),
             "max_tnr_at_tpr_constraint",
         ),
         (
-            make_scorer(roc_curve, needs_proba=True),
+            make_scorer(roc_curve, response_method="predict_proba"),
             "max_tpr_at_tnr_constraint",
         ),
         (
-            make_scorer(precision_recall_curve, needs_proba=True),
+            make_scorer(precision_recall_curve, response_method="predict_proba"),
             "max_precision_at_recall_constraint",
         ),
         (
-            make_scorer(precision_recall_curve, needs_proba=True),
+            make_scorer(precision_recall_curve, response_method="predict_proba"),
             "max_recall_at_precision_constraint",
         ),
     ],
@@ -261,19 +261,19 @@ def test_fit_and_score_sample_weight(scorer, score_method):
             "balanced_accuracy",
         ),
         (
-            make_scorer(roc_curve, needs_proba=True),
+            make_scorer(roc_curve, response_method="predict_proba"),
             "max_tnr_at_tpr_constraint",
         ),
         (
-            make_scorer(roc_curve, needs_proba=True),
+            make_scorer(roc_curve, response_method="predict_proba"),
             "max_tpr_at_tnr_constraint",
         ),
         (
-            make_scorer(precision_recall_curve, needs_proba=True),
+            make_scorer(precision_recall_curve, response_method="predict_proba"),
             "max_precision_at_recall_constraint",
         ),
         (
-            make_scorer(precision_recall_curve, needs_proba=True),
+            make_scorer(precision_recall_curve, response_method="predict_proba"),
             "max_recall_at_precision_constraint",
         ),
     ],

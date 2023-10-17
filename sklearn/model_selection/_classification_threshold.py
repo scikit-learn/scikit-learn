@@ -761,7 +761,6 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
                 score_func = precision_recall_curve
             scorer = make_scorer(
                 score_func,
-                needs_threshold=True,
                 response_method=self._response_method,
                 pos_label=self.pos_label,
             )

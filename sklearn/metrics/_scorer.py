@@ -375,7 +375,7 @@ class _ContinuousScorer(_BaseScorer):
             kwargs=kwargs,
             response_method=response_method,
         )
-        self.n_thresholds = n_thresholds
+        self._n_thresholds = n_thresholds
 
     @classmethod
     def from_scorer(cls, scorer, response_method, n_thresholds, pos_label):
@@ -433,16 +433,18 @@ class _ContinuousScorer(_BaseScorer):
             Score function applied to prediction of estimator on X.
         """
         pos_label = self._get_pos_label()
-        y_score = method_caller(estimator, self.response_method, X, pos_label=pos_label)
+        y_score = method_caller(
+            estimator, self._response_method, X, pos_label=pos_label
+        )
 
         scoring_kwargs = {**self._kwargs, **kwargs}
         # potential_thresholds = np.unique(y_score)
-        if isinstance(self.n_thresholds, Integral):
+        if isinstance(self._n_thresholds, Integral):
             potential_thresholds = np.linspace(
-                np.min(y_score), np.max(y_score), self.n_thresholds
+                np.min(y_score), np.max(y_score), self._n_thresholds
             )
         else:
-            potential_thresholds = np.array(self.n_thresholds, copy=False)
+            potential_thresholds = np.array(self._n_thresholds, copy=False)
         score_thresholds = [
             self._sign
             * self._score_func(
