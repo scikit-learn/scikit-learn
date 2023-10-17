@@ -274,14 +274,15 @@ def test_hdbscan_callable_metric():
     assert n_clusters == n_clusters_true
 
 
-@pytest.mark.parametrize("tree", ["kd", "ball"])
+@pytest.mark.parametrize("tree", ["kd_tree", "ball_tree"])
 def test_hdbscan_precomputed_non_brute(tree):
     """
     Tests that HDBSCAN correctly raises an error when passing precomputed data
     while requesting a tree-based algorithm.
     """
-    hdb = HDBSCAN(metric="precomputed", algorithm=f"prims_{tree}tree")
-    with pytest.raises(ValueError):
+    hdb = HDBSCAN(metric="precomputed", algorithm=tree)
+    msg = "precomputed is not a valid metric for"
+    with pytest.raises(ValueError, match=msg):
         hdb.fit(X)
 
 
