@@ -35,10 +35,12 @@ HDBSCAN: Hierarchical Density-Based Spatial Clustering
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import warnings
 from numbers import Integral, Real
 from warnings import warn
 
 import numpy as np
+from joblib import effective_n_jobs
 from scipy.sparse import csgraph, issparse
 
 from ...base import BaseEstimator, ClusterMixin
@@ -47,6 +49,7 @@ from ...metrics._dist_metrics import DistanceMetric
 from ...neighbors import BallTree, KDTree, NearestNeighbors
 from ...utils._param_validation import Interval, StrOptions
 from ...utils.validation import _allclose_dense_sparse, _assert_all_finite
+from ._boruvka import BoruvkaAlgorithm
 from ._linkage import (
     MST_edge_dtype,
     make_single_linkage,
@@ -344,6 +347,37 @@ def _hdbscan_prims(
 
     # Mutual reachability distance is implicit in mst_from_data_matrix
     min_spanning_tree = mst_from_data_matrix(X, core_distances, dist_metric, alpha)
+
+    return _process_mst(min_spanning_tree)
+
+
+def _hdbscan_boruvka(
+    X,
+    algo,
+    min_samples=5,
+    alpha=1.0,
+    metric="euclidean",
+    leaf_size=40,
+    n_jobs=None,
+    approx_min_span_tree=False,
+    **metric_params,
+):
+    leaf_size = max(leaf_size, 3)
+    Tree = KDTree if algo == "kd_tree" else BallTree
+    tree = Tree(X, metric=metric, leaf_size=leaf_size, **metric_params)
+
+    n_jobs = effective_n_jobs(n_jobs)
+    out = BoruvkaAlgorithm(
+        tree=tree,
+        min_samples=min_samples,
+        metric=metric,
+        leaf_size=leaf_size // 3,
+        alpha=alpha,
+        approx_min_span_tree=approx_min_span_tree,
+        n_jobs=n_jobs,
+        **metric_params,
+    )
+    min_spanning_tree = out.spanning_tree()
     return _process_mst(min_spanning_tree)
 
 
@@ -473,7 +507,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         If the `X` passed during `fit` is sparse or `metric` is invalid for
         both :class:`~sklearn.neighbors.KDTree` and
         :class:`~sklearn.neighbors.BallTree`, then it resolves to use the
-        `"brute"` algorithm.
+        `"brute"` minimum-spanning tree algorithm.
 
         .. deprecated:: 1.4
            The `'kdtree'` option was deprecated in version 1.4,
@@ -482,6 +516,16 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         .. deprecated:: 1.4
            The `'balltree'` option was deprecated in version 1.4,
            and will be renamed to `'ball_tree'` in 1.6.
+
+    mst_algorithm : {"auto", "brute", "prims", "boruvka"}, default="auto"
+        Exactly which algorithm to use for building the minimum spanning tree.
+        The `"auto"` option switches between `"brute"` and `"boruvka_exact"` based
+        on the data and use of precomputed distances. If you can tolerate some
+        inexactness and would prefer a speedup, consider using `"boruvka_approx"`.
+        The speedup is especially dramatic when dealing with many features
+        (n_features > ~45)
+
+        .. versionadded:: 1.4
 
     leaf_size : int, default=40
         Leaf size for trees responsible for fast nearest neighbour queries when
@@ -613,9 +657,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     >>> from sklearn.cluster import HDBSCAN
     >>> from sklearn.datasets import load_digits
     >>> X, _ = load_digits(return_X_y=True)
-    >>> hdb = HDBSCAN(min_cluster_size=20)
+    >>> hdb = HDBSCAN(min_cluster_size=20, mst_algorithm='prims')
     >>> hdb.fit(X)
-    HDBSCAN(min_cluster_size=20)
+    HDBSCAN(min_cluster_size=20, mst_algorithm='prims')
     >>> hdb.labels_
     array([ 2,  6, -1, ..., -1, -1, -1])
     """
@@ -640,6 +684,12 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 deprecated={"kdtree", "balltree"},
             ),
         ],
+        "mst_algorithm": [
+            StrOptions(
+                {"auto", "brute", "prims", "boruvka_exact", "boruvka_approx", "warn"},
+                deprecated={"warn"},
+            ),
+        ],
         "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
         "n_jobs": [Integral, None],
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
@@ -658,6 +708,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         metric_params=None,
         alpha=1.0,
         algorithm="auto",
+        # TODO(1.6): Change default to "auto"
+        mst_algorithm="warn",
         leaf_size=40,
         n_jobs=None,
         cluster_selection_method="eom",
@@ -673,6 +725,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self.metric = metric
         self.metric_params = metric_params
         self.algorithm = algorithm
+        self.mst_algorithm = mst_algorithm
         self.leaf_size = leaf_size
         self.n_jobs = n_jobs
         self.cluster_selection_method = cluster_selection_method
@@ -765,6 +818,47 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 f" samples in X ({X.shape[0]})"
             )
 
+        # TODO(1.6): Remove and set `mst_algorithm` default to "auto"
+        if self.mst_algorithm == "warn":
+            if self.algorithm == "brute" or (
+                self.algorithm == "auto" and self.metric == "precomputed"
+            ):
+                mst_algorithm = "brute"
+            else:
+                mst_algorithm = "prims"
+            warnings.warn(
+                (
+                    "In version 1.6 the default MST algorithm dispatch behavior will"
+                    " change to include the new `boruvka_exact` and `boruvka_approx`"
+                    " algorithms, resulting in some models potentially changing. To"
+                    " suppress this warning, and to avoid unintended changes in"
+                    " behavior, please manually set `mst_algorithm`. You can opt in to"
+                    " the new behavior by manually setting `mst_algorithm='auto'`. You"
+                    " can preserve old behavior by setting `mst_algorithm` to `'brute'`"
+                    " or `'auto'` when `algorithm='brute'`, or `algorithm='auto'` and"
+                    " `metric='precomputed'`; otherwise set"
+                    " `mst_algorithm='prims'` to keep old behavior."
+                ),
+                FutureWarning,
+            )
+        else:
+            mst_algorithm = self.mst_algorithm
+
+        algorithms = {self.algorithm, mst_algorithm}
+        brute_compat_algorithms = {"auto", "brute"}
+        using_brute_compat_algos = algorithms.issubset(brute_compat_algorithms)
+
+        if "brute" in algorithms and not using_brute_compat_algos:
+            raise ValueError(
+                "When setting either `algorithm='brute'` or `mst_algorithm='brute'`,"
+                " both keyword arguments must only be set to either 'brute' or 'auto'."
+            )
+        if self.metric == "precomputed" and not using_brute_compat_algos:
+            raise ValueError(
+                "When setting `metric='precomputed'`, both `mst_algorithm` and"
+                " `algorithm` must be set to either 'brute' or 'auto'."
+            )
+
         # TODO(1.6): Remove
         if self.algorithm == "kdtree":
             warn(
@@ -811,40 +905,55 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 " Please select a different metric."
             )
 
-        if self.algorithm != "auto":
+        if algorithms != {"auto"}:
             if (
                 self.metric != "precomputed"
                 and issparse(X)
-                and self.algorithm != "brute"
+                and "brute" not in algorithms
             ):
                 raise ValueError("Sparse data matrices only support algorithm `brute`.")
-
-            if self.algorithm == "brute":
+            if "brute" in algorithms:
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = self.copy
-            elif self.algorithm == "kd_tree":
-                mst_func = _hdbscan_prims
-                kwargs["algo"] = "kd_tree"
-                kwargs["leaf_size"] = self.leaf_size
             else:
-                mst_func = _hdbscan_prims
-                kwargs["algo"] = "ball_tree"
                 kwargs["leaf_size"] = self.leaf_size
+                # We prefer KDTree unless otherwise specified
+                if self.algorithm != "auto":
+                    tree_algorithm = self.algorithm
+                else:
+                    tree_algorithm = (
+                        "kd_tree"
+                        if self.metric in KDTree.valid_metrics
+                        else "ball_tree"
+                    )
+                kwargs["algo"] = tree_algorithm
+
+                if mst_algorithm != "auto":
+                    if mst_algorithm == "prims":
+                        mst_func = _hdbscan_prims
+                    else:
+                        mst_func = _hdbscan_boruvka
+                        kwargs["approx_min_span_tree"] = (
+                            mst_algorithm == "boruvka_approx"
+                        )
+                else:
+                    # Boruvka is always preferable
+                    mst_func = _hdbscan_boruvka
+                    kwargs["approx_min_span_tree"] = False
+
         else:
             if issparse(X) or self.metric not in FAST_METRICS:
                 # We can't do much with sparse matrices ...
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = self.copy
-            elif self.metric in KDTree.valid_metrics:
-                # TODO: Benchmark KD vs Ball Tree efficiency
-                mst_func = _hdbscan_prims
-                kwargs["algo"] = "kd_tree"
-                kwargs["leaf_size"] = self.leaf_size
             else:
-                # Metric is a valid BallTree metric
-                mst_func = _hdbscan_prims
-                kwargs["algo"] = "ball_tree"
+                # Boruvka is always preferable
+                mst_func = _hdbscan_boruvka
+                kwargs["approx_min_span_tree"] = False
                 kwargs["leaf_size"] = self.leaf_size
+                kwargs["algo"] = (
+                    "kd_tree" if self.metric in KDTree.valid_metrics else "ball_tree"
+                )
 
         self._single_linkage_tree_ = mst_func(**kwargs)
 

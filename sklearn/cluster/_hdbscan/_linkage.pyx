@@ -39,7 +39,7 @@ from ...metrics._dist_metrics cimport DistanceMetric64
 from ...cluster._hierarchical_fast cimport UnionFind
 from ...cluster._hdbscan._tree cimport HIERARCHY_t
 from ...cluster._hdbscan._tree import HIERARCHY_dtype
-from ...utils._typedefs cimport intp_t, float64_t, int64_t, uint8_t
+from ...utils._typedefs cimport intp_t, uint8_t
 
 cnp.import_array()
 
@@ -52,13 +52,6 @@ MST_edge_dtype = np.dtype([
     ("next_node", np.int64),
     ("distance", np.float64),
 ])
-
-# Packed shouldn't make a difference since they're all 8-byte quantities,
-# but it's included just to be safe.
-ctypedef packed struct MST_edge_t:
-    int64_t current_node
-    int64_t next_node
-    float64_t distance
 
 cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
     cnp.ndarray[float64_t, ndim=2] mutual_reachability

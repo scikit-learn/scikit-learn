@@ -253,6 +253,10 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ == "MDS":
         est.set_params(normalized_stress="auto")
 
+    # TODO(1.6): TO BE REMOVED for 1.6 (avoid FutureWarning)
+    if Estimator.__name__ == "HDBSCAN":
+        est.set_params(mst_algorithm="auto")
+
     # Low max iter to speed up tests: we are only interested in checking the existence
     # of fitted attributes. This should be invariant to whether it has converged or not.
     if "max_iter" in est.get_params():
