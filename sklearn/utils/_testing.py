@@ -1064,7 +1064,13 @@ class MinimalTransformer:
 
 def _array_api_for_tests(array_namespace, device, dtype):
     try:
-        array_mod = importlib.import_module(array_namespace)
+        if array_namespace == "numpy.array_api":
+            # FIXME: once it is not experimental anymore
+            with ignore_warnings(category=UserWarning):
+                # UserWarning: numpy.array_api submodule is still experimental.
+                array_mod = importlib.import_module(array_namespace)
+        else:
+            array_mod = importlib.import_module(array_namespace)
     except ModuleNotFoundError:
         raise SkipTest(
             f"{array_namespace} is not installed: not checking array_api input"
@@ -1081,7 +1087,11 @@ def _array_api_for_tests(array_namespace, device, dtype):
     # This is because `cupy` is not the same as the compatibility wrapped
     # namespace of a CuPy array.
     xp = array_api_compat.get_namespace(array_mod.asarray(1))
-    if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
+    if (
+        array_namespace == "torch"
+        and device == "cuda"
+        and not xp.backends.cuda.is_built()
+    ):
         raise SkipTest("PyTorch test requires cuda, which is not available")
     elif array_namespace == "torch" and device == "mps":
         if os.getenv("PYTORCH_ENABLE_MPS_FALLBACK") != "1":
