@@ -10,6 +10,8 @@ from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
 from numbers import Integral, Real
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import joblib
 import numpy as np
@@ -2068,7 +2070,10 @@ def check_estimators_pickle(name, estimator_orig, readonly_memmap=False):
     estimator.fit(X, y)
 
     if readonly_memmap:
-        unpickled_estimator = create_memmap_backed_data(estimator)
+        with TemporaryDirectory(prefix="sklearn_test_pickle_") as tmpdir:
+            pickle_filepath = Path(tmpdir) / "estimator.pkl"
+            joblib.dump(estimator, pickle_filepath)
+            unpickled_estimator = joblib.load(pickle_filepath, mmap_mode="r")
     else:
         # pickle and unpickle!
         pickled_estimator = pickle.dumps(estimator)
