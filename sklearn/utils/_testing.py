@@ -448,17 +448,6 @@ class TempMemmap:
         _delete_folder(self.temp_folder)
 
 
-def _create_memmap_backed_array(array, filename, mmap_mode):
-    # https://numpy.org/doc/stable/reference/generated/numpy.memmap.html
-    fp = np.memmap(filename, dtype=array.dtype, mode="w+", shape=array.shape)
-    fp[:] = array[:]  # write array to memmap array
-    fp.flush()
-    memmap_backed_array = np.memmap(
-        filename, dtype=array.dtype, mode=mmap_mode, shape=array.shape
-    )
-    return memmap_backed_array
-
-
 def create_memmap_backed_data(data, mmap_mode="r", return_folder=False):
     """
     Parameters
