@@ -334,6 +334,11 @@ Changelog
   proportional to the number of coefficients (`n_features * n_classes`).
   :pr:`27417` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Fix| :class:`linear_model.ElasticNet`, :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.Lasso` and :class:`linear_model.LassoCV` now explicitly don't
+  accept large sparse data formats. :pr:`27576` by :user:`Stefanie Senger
+  <StefanieSenger>`.
+
 :mod:`sklearn.metrics`
 ......................
 
