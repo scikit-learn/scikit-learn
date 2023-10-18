@@ -103,7 +103,7 @@ try:
             table = self.make_tasks_table(getattr(self, "_ordered_tasks", []))
             yield table
 
-except:
+except ImportError:
     pass
 
 
@@ -262,7 +262,8 @@ class _RichProgressMonitor(Thread):
         description = f"{computation_tree.estimator_name} - {node.description}"
         if node.parent is None and computation_tree.parent_node is not None:
             description = (
-                f"{computation_tree.parent_node.description} {computation_tree.parent_node.idx} |"
+                f"{computation_tree.parent_node.description} "
+                f"{computation_tree.parent_node.idx} |"
                 f" {description}"
             )
         if node.parent is not None:
