@@ -206,10 +206,17 @@ class NoCheckinPredict(BaseBadClassifier):
 
 
 class NoSparseClassifier(BaseBadClassifier):
+    def __init__(self, raise_for_type=None):
+        # raise_for_type : str, expects "sparse_array" or "sparse_matrix"
+        self.raise_for_type = raise_for_type
+
     def fit(self, X, y):
         X, y = self._validate_data(X, y, accept_sparse=["csr", "csc"])
         if sp.issparse(X):
-            raise ValueError("Nonsensical Error")
+            if self.raise_for_type == "sparse_array":
+                raise ValueError("Nonsensical Error")
+            elif self.raise_for_type == "sparse_matrix":
+                raise ValueError("Nonsensical Error")
         return self
 
     def predict(self, X):
@@ -376,8 +383,6 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
             correct_type = isinstance(X, sp.sparray)
         elif self.raise_for_type == "sparse_matrix":
             correct_type = isinstance(X, sp.spmatrix)
-        else:
-            raise ValueError("Invalid value for `raise_for_type`.")
         if correct_type:
             if X.getformat() == "coo":
                 if X.row.dtype == "int64" or X.col.dtype == "int64":
@@ -643,11 +648,14 @@ def test_check_estimator():
     )
     with raises(AssertionError, match=msg):
         check_estimator(NotInvariantPredict())
-    # check for sparse matrix input handling
+    # check for sparse data input handling
     name = NoSparseClassifier.__name__
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
     with raises(AssertionError, match=msg):
-        check_estimator(NoSparseClassifier())
+        check_estimator(NoSparseClassifier("sparse_matrix"))
+
+    with raises(AssertionError, match=msg):
+        check_estimator(NoSparseClassifier("sparse_array"))
 
     # check for classifiers reducing to less than two classes via sample weights
     name = OneClassSampleErrorClassifier.__name__
