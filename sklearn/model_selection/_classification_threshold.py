@@ -585,7 +585,6 @@ class TunedThresholdClassifier(ClassifierMixin, MetaEstimatorMixin, BaseEstimato
             self.objective_scores_ = _mean_interpolated_score(
                 self.decision_thresholds_, cv_thresholds, cv_scores
             )
-            self.cv_thresholds_, self.cv_scores_ = cv_thresholds, cv_scores
             best_idx = self.objective_scores_.argmax()
             self.objective_score_ = self.objective_scores_[best_idx]
             self.decision_threshold_ = self.decision_thresholds_[best_idx]
