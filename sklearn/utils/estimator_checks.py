@@ -3,6 +3,7 @@ The :mod:`sklearn.utils.estimator_checks` module includes various utilities to
 check the compatibility of estimators with the scikit-learn API.
 """
 
+import os
 import pickle
 import re
 import warnings
@@ -10,8 +11,7 @@ from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
 from numbers import Integral, Real
-from pathlib import Path
-from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile
 
 import joblib
 import numpy as np
@@ -2069,31 +2069,41 @@ def check_estimators_pickle(name, estimator_orig, readonly_memmap=False):
     set_random_state(estimator)
     estimator.fit(X, y)
 
-    if readonly_memmap:
-        with TemporaryDirectory(prefix="sklearn_test_pickle_") as tmpdir:
-            pickle_filepath = Path(tmpdir) / "estimator.pkl"
-            joblib.dump(estimator, pickle_filepath)
-            unpickled_estimator = joblib.load(pickle_filepath, mmap_mode="r")
-    else:
-        # pickle and unpickle!
-        pickled_estimator = pickle.dumps(estimator)
-        module_name = estimator.__module__
-        if module_name.startswith("sklearn.") and not (
-            "test_" in module_name or module_name.endswith("_testing")
-        ):
-            # strict check for sklearn estimators that are not implemented in test
-            # modules.
-            assert b"_sklearn_version" in pickled_estimator
-        unpickled_estimator = pickle.loads(pickled_estimator)
+    temp_file, unpickled_estimator = None, None
+    try:
+        if readonly_memmap:
+            # Use joblib to pickle and unpickle with all array attributes being
+            # memory mapped arrays in read-only mode.
+            temp_file = NamedTemporaryFile(prefix="sklearn_test_pickle_", delete=False)
+            temp_file.close()
+            joblib.dump(estimator, temp_file.name)
+            unpickled_estimator = joblib.load(temp_file.name, mmap_mode="r")
+        else:
+            # No need to touch the file system in that case.
+            pickled_estimator = pickle.dumps(estimator)
+            module_name = estimator.__module__
+            if module_name.startswith("sklearn.") and not (
+                "test_" in module_name or module_name.endswith("_testing")
+            ):
+                # strict check for sklearn estimators that are not implemented
+                # in test modules.
+                assert b"_sklearn_version" in pickled_estimator
+            unpickled_estimator = pickle.loads(pickled_estimator)
 
-    result = dict()
-    for method in check_methods:
-        if hasattr(estimator, method):
-            result[method] = getattr(estimator, method)(X)
+        result = dict()
+        for method in check_methods:
+            if hasattr(estimator, method):
+                result[method] = getattr(estimator, method)(X)
 
-    for method in result:
-        unpickled_result = getattr(unpickled_estimator, method)(X)
-        assert_allclose_dense_sparse(result[method], unpickled_result)
+        for method in result:
+            unpickled_result = getattr(unpickled_estimator, method)(X)
+            assert_allclose_dense_sparse(result[method], unpickled_result)
+
+    finally:
+        if unpickled_estimator is not None:
+            del unpickled_estimator
+        if temp_file is not None:
+            os.unlink(temp_file.name)
 
 
 @ignore_warnings(category=FutureWarning)
