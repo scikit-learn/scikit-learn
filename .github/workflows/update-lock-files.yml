@@ -1,20 +1,8 @@
-# This workflow periodically creates new environment lock files based on the newest
-# available packages and dependencies.
-#
-# Environment specifications are given as conda environment.yml files found in
-# `requirements/py**.yml`.  These state the packages required, the conda channels
-# that the packages will be pulled from, and any versions of packages that need to be
-# pinned at specific versions.
-#
-# For environments that have changed, a pull request will be made and submitted
-# to the main branch
-
+# Workflow to update lock files
 name: Update lock files
-
 
 on:
   workflow_dispatch:
-
 
 jobs:
   update_lock_files:
@@ -36,7 +24,6 @@ jobs:
           - name: pypy
             update_script_args: "--select-build pypy"
             additional_commit_message: "[pypy]"
-
 
     steps:
       - uses: actions/checkout@v4
