@@ -213,20 +213,17 @@ class NoSparseClassifier(BaseBadClassifier):
 
     def fit(self, X, y):
         X, y = self._validate_data(X, y, accept_sparse=["csr", "csc"])
-        if sp.issparse(X):
-            if self.raise_for_type == "sparse_array":
-                raise ValueError("Nonsensical Error")
-            elif self.raise_for_type == "sparse_matrix":
-                raise ValueError("Nonsensical Error")
+        if self.raise_for_type == "sparse_array":
+            correct_type = isinstance(X, sp.sparray)
+        elif self.raise_for_type == "sparse_matrix":
+            correct_type = isinstance(X, sp.spmatrix)
+        if correct_type:
+            raise ValueError("Nonsensical Error")
         return self
 
     def predict(self, X):
         X = check_array(X)
         return np.ones(X.shape[0])
-
-
-"""from sklearn.utils.estimator_checks import check_estimator
-check_estimator(NoSparseClassifier("sparse_matrix"))"""
 
 
 class CorrectNotFittedErrorClassifier(BaseBadClassifier):
@@ -659,8 +656,9 @@ def test_check_estimator():
     with raises(AssertionError, match=msg):
         check_estimator(NoSparseClassifier("sparse_matrix"))
 
-    with raises(AssertionError, match=msg):
-        check_estimator(NoSparseClassifier("sparse_array"))
+    if SPARRAY_PRESENT:
+        with raises(AssertionError, match=msg):
+            check_estimator(NoSparseClassifier("sparse_array"))
 
     # check for classifiers reducing to less than two classes via sample weights
     name = OneClassSampleErrorClassifier.__name__
@@ -677,12 +675,12 @@ def test_check_estimator():
         "Estimator LargeSparseNotSupportedClassifier doesn't seem to "
         r"support \S{3}_64 matrix, and is not failing gracefully.*"
     )
+    with raises(AssertionError, match=msg):
+        check_estimator(LargeSparseNotSupportedClassifier("sparse_matrix"))
+
     if SPARRAY_PRESENT:
         with raises(AssertionError, match=msg):
-            check_estimator(LargeSparseNotSupportedClassifier("sparse_matrix"))
-
-    with raises(AssertionError, match=msg):
-        check_estimator(LargeSparseNotSupportedClassifier("sparse_array"))
+            check_estimator(LargeSparseNotSupportedClassifier("sparse_array"))
 
     # does error on binary_only untagged estimator
     msg = "Only 2 classes are supported"
