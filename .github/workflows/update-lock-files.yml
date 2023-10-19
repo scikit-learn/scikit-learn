@@ -13,7 +13,7 @@ name: Update lock files
 
 
 on:
-  workflow_call:
+  workflow_dispatch:
 
 
 jobs:
