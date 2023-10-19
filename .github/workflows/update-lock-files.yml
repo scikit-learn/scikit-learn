@@ -17,10 +17,26 @@ on:
 
 
 jobs:
-  gen_lockfiles:
+  update_lock_files:
     # TODO: replace lesteve by scikit-learn when things work
     if: "github.repository == 'lesteve/scikit-learn' || github.event_name == 'workflow_dispatch'"
     runs-on: ubuntu-latest
+
+    strategy:
+      # Ensure that a wheel builder finishes even if another fails
+      fail-fast: false
+      matrix:
+        include:
+          - name: main
+            select_build: "py38_conda_forge_mkl"
+            additional_commit_message: ""
+          - name: pypy
+            select_build: "pypy"
+            additional_commit_message: "[pypy]"
+          - name: scipy-dev
+            select_build: "scipy_dev"
+            additional_commit_message: "[scipy-dev]"
+
 
     steps:
       - uses: actions/checkout@v4
@@ -32,25 +48,26 @@ jobs:
           conda config --set solver libmamba
           conda install -c conda-forge "$(get_dep conda-lock min)" -y
 
-          python build_tools/update_environments_and_lock_files.py
+          python build_tools/update_environments_and_lock_files.py --select-build ${{ matrix.select_build }}
       - name: Create Pull Request
         id: cpr
         uses: peter-evans/create-pull-request@v5
         with:
           # TODO use GITHUB_BOT_TOKEN from scikit-learn
           token: ${{ secrets.BOT_TOKEN }}
-          commit-message: Updated environment lockfiles
-          committer: "Lockfile bot <noreply@github.com>"
-          author: "Lockfile bot <noreply@github.com>"
+          commit-message: Update CI lock files ${{ matrix.additional_commit_message }}
+          committer: "Lock file bot <noreply@github.com>"
+          author: "Lock file bot <noreply@github.com>"
           delete-branch: true
-          branch: auto-update-lockfiles
-          title: "CI Update lock files"
+          branch: auto-update-lock-files-${{ matrix.name }}
+          title: ":lock: :robot: CI Update lock files :lock: :robot:"
           body: |
-            Lockfiles updated to the latest resolvable environment.
-            ### If the CI tasks fail, create a new branch based on this PR and add the required fixes to that branch.
+            Update lock files.
+
+            ### Note
+            If the CI tasks fail, create a new branch based on this PR and add the required fixes to that branch.
           labels: |
-            CI
-            Bot
+            Lock files
 
       - name: Check Pull Request
         if: steps.cpr.outputs.pull-request-number != ''
