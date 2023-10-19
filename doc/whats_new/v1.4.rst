@@ -233,10 +233,6 @@ Changelog
   which returns a dense numpy ndarray as before.
   :pr:`27438` by :user:`Yao Xiao <Charlie-XIAO>`.
 
-- |Fix| All dataset fetchers now accept `data_home` as any object that implements
-  the :class:`os.PathLike` interface, for instance, :class:`pathlib.Path`.
-  :pr:`27468` by :user:`Yao Xiao <Charlie-XIAO>`.
-
 :mod:`sklearn.decomposition`
 ............................
 
@@ -252,11 +248,6 @@ Changelog
   :ref:`array_api` for more details.
   :pr:`26315` and :pr:`27098` by :user:`Mateusz Sokół <mtsokol>`,
   :user:`Olivier Grisel <ogrisel>` and :user:`Edoardo Abati <EdAbati>`.
-
-- |Fix| Fixes a bug in :class:`decomposition.KernelPCA` by forcing the output of
-  the internal :class:`preprocessing.KernelCenterer` to be a default array. When the
-  arpack solver was used, it would expect an array with a `dtype` attribute.
-  :pr:`27583` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -366,12 +357,6 @@ Changelog
   `needs_threshold=True` is equivalent to
   `response_method=("decision_function", "predict_proba")`.
   :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-- |Fix| Fixes a bug for metrics using `zero_division=np.nan`
-  (e.g. :func:`~metrics.precision_score`) within a paralell loop
-  (e.g. :func:`~model_selection.cross_val_score`) where the singleton for `np.nan`
-  will be different in the sub-processes.
-  :pr:`27573` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |API| The `squared` parameter of :func:`metrics.mean_squared_error` and
   :func:`metrics.mean_squared_log_error` is deprecated and will be removed in 1.6.
