@@ -526,7 +526,6 @@ def write_pip_requirements(build_metadata):
 
 def write_all_pip_requirements(build_metadata_list):
     for build_metadata in build_metadata_list:
-        logger.info(build_metadata["build_name"])
         write_pip_requirements(build_metadata)
 
 
@@ -568,6 +567,7 @@ def write_pip_lock_file(build_metadata):
 
 def write_all_pip_lock_files(build_metadata_list):
     for build_metadata in build_metadata_list:
+        logger.info(build_metadata["build_name"])
         write_pip_lock_file(build_metadata)
 
 
@@ -612,7 +612,7 @@ def check_conda_version():
 )
 @click.option(
     "--skip-build",
-    default="",
+    default=None,
     help="Regex to skip some builds from the builds selected by --select-build",
 )
 def main(select_build, skip_build):
@@ -623,11 +623,12 @@ def main(select_build, skip_build):
         for each in conda_build_metadata_list
         if re.search(select_build, each["build_name"])
     ]
-    filtered_conda_build_metadata_list = [
-        each
-        for each in filtered_conda_build_metadata_list
-        if not re.search(skip_build, each["build_name"])
-    ]
+    if skip_build is not None:
+        filtered_conda_build_metadata_list = [
+            each
+            for each in filtered_conda_build_metadata_list
+            if not re.search(skip_build, each["build_name"])
+        ]
     logger.info("Writing conda environments")
     write_all_conda_environments(filtered_conda_build_metadata_list)
     logger.info("Writing conda lock files")
