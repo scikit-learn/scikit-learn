@@ -282,7 +282,7 @@ def estimator_html_repr(estimator):
             fitted_str = ""
 
     is_fitted_icon = (
-        f'<span class="sk-estimator-doc-link {fitted_str}">i{status_label}</span>'
+        f'<span class="sk-estimator-fit-status {fitted_str}">i{status_label}</span>'
     )
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
