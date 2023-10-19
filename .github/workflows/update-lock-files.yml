@@ -1,0 +1,63 @@
+# This workflow periodically creates new environment lock files based on the newest
+# available packages and dependencies.
+#
+# Environment specifications are given as conda environment.yml files found in
+# `requirements/py**.yml`.  These state the packages required, the conda channels
+# that the packages will be pulled from, and any versions of packages that need to be
+# pinned at specific versions.
+#
+# For environments that have changed, a pull request will be made and submitted
+# to the main branch
+
+name: Update lock files
+
+
+on:
+  workflow_call:
+
+
+jobs:
+  gen_lockfiles:
+    # TODO: replace lesteve by scikit-learn when things work
+    if: "github.repository == 'lesteve/scikit-learn' || github.event_name == 'workflow_dispatch'"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate lock files
+        run: |
+          source $CONDA/bin/activate
+          conda install -n base conda conda-libmamba-solver -y
+          conda config --set solver libmamba
+          conda install -c conda-forge "$(get_dep conda-lock min)" -y
+
+          python build_tools/update_environments_and_lock_files.py
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          # TODO use GITHUB_BOT_TOKEN from scikit-learn
+          token: ${{ secrets.BOT_TOKEN }}
+          commit-message: Updated environment lockfiles
+          committer: "Lockfile bot <noreply@github.com>"
+          author: "Lockfile bot <noreply@github.com>"
+          delete-branch: true
+          branch: auto-update-lockfiles
+          title: "CI Update lock files"
+          body: |
+            Lockfiles updated to the latest resolvable environment.
+            ### If the CI tasks fail, create a new branch based on this PR and add the required fixes to that branch.
+          labels: |
+            CI
+            Bot
+
+      - name: Check Pull Request
+        if: steps.cpr.outputs.pull-request-number != ''
+        run: |
+          echo "### :rocket: Pull-Request Summary" >> ${GITHUB_STEP_SUMMARY}
+          echo "" >> ${GITHUB_STEP_SUMMARY}
+          echo "The following lock-files pull-request has been auto-generated:"
+          echo "- **PR** #${{ steps.cpr.outputs.pull-request-number }}" >> ${GITHUB_STEP_SUMMARY}
+          echo "- **URL** ${{ steps.cpr.outputs.pull-request-url }}" >> ${GITHUB_STEP_SUMMARY}
+          echo "- **Operation** [${{ steps.cpr.outputs.pull-request-operation }}]" >> ${GITHUB_STEP_SUMMARY}
+          echo "- **SHA** ${{ steps.cpr.outputs.pull-request-head-sha }}" >> ${GITHUB_STEP_SUMMARY}
