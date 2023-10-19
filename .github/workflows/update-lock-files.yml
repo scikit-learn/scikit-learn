@@ -6,8 +6,7 @@ on:
 
 jobs:
   update_lock_files:
-    # TODO: replace lesteve by scikit-learn when things work
-    if: "github.repository == 'lesteve/scikit-learn' || github.event_name == 'workflow_dispatch'"
+    if: "github.repository == 'scikit-learn/scikit-learn' || github.event_name == 'workflow_dispatch'"
     runs-on: ubuntu-latest
 
     strategy:
@@ -40,8 +39,7 @@ jobs:
         id: cpr
         uses: peter-evans/create-pull-request@v5
         with:
-          # TODO use GITHUB_BOT_TOKEN from scikit-learn
-          token: ${{ secrets.BOT_TOKEN }}
+          token: ${{ secrets.BOT_GITHUB_TOKEN }}
           commit-message: Update CI lock files ${{ matrix.additional_commit_message }}
           committer: "Lock file bot <noreply@github.com>"
           author: "Lock file bot <noreply@github.com>"

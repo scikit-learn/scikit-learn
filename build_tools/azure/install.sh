@@ -130,7 +130,7 @@ scikit_learn_install() {
 main() {
     pre_python_environment_install
     python_environment_install_and_activate
-    show_installed_libraries
+    scikit_learn_install
 }
 
 main
