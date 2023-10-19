@@ -905,7 +905,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         ----------
         X : {ndarray, sparse matrix, sparse array} of (n_samples, n_features)
             Data.
-            
+
             Note that large sparse matrices and arrays requiring `int64`
             indices are not accepted.
 
@@ -1535,7 +1535,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data. Pass directly as Fortran-contiguous data
             to avoid unnecessary memory duplication. If y is mono-output,
-            X can be sparse with a bit width of up to 32.
+            X can be sparse. Note that large sparse matrices and arrays
+            requiring `int64` indices are not accepted.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
