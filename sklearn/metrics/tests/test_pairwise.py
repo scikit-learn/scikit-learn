@@ -865,11 +865,6 @@ def test_euclidean_distances_float32_norms(symmetric):
     assert_allclose(D4, D1)
 
 
-
-
-
-
-
 def test_euclidean_distances_norm_shapes():
     # Check all accepted shapes for the norms or appropriate error messages.
     rng = np.random.RandomState(0)
