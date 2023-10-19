@@ -28,14 +28,14 @@ jobs:
       matrix:
         include:
           - name: main
-            select_build: "py38_conda_forge_mkl"
+            update_script_args: "--ignore-build 'scipy-dev|pypy'"
             additional_commit_message: ""
-          - name: pypy
-            select_build: "pypy"
-            additional_commit_message: "[pypy]"
           - name: scipy-dev
-            select_build: "scipy_dev"
+            update_script_args: "--select-build scipy_dev"
             additional_commit_message: "[scipy-dev]"
+          - name: pypy
+            update_script_args: "--select-build pypy"
+            additional_commit_message: "[pypy]"
 
 
     steps:
@@ -48,7 +48,7 @@ jobs:
           conda config --set solver libmamba
           conda install -c conda-forge "$(get_dep conda-lock min)" -y
 
-          python build_tools/update_environments_and_lock_files.py --select-build ${{ matrix.select_build }}
+          python build_tools/update_environments_and_lock_files.py ${{ matrix.update_script_args }}
       - name: Create Pull Request
         id: cpr
         uses: peter-evans/create-pull-request@v5

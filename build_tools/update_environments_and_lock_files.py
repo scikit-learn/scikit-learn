@@ -605,15 +605,28 @@ def check_conda_version():
 @click.option(
     "--select-build",
     default="",
-    help="Regex to restrict the builds we want to update environment and lock files",
+    help=(
+        "Regex to restrict the builds we want to update environment and lock files. By"
+        " default all the builds are selected."
+    ),
 )
-def main(select_build):
+@click.option(
+    "--skip-build",
+    default="",
+    help="Regex to skip some builds from the builds selected by --select-build",
+)
+def main(select_build, skip_build):
     check_conda_lock_version()
     check_conda_version()
     filtered_conda_build_metadata_list = [
         each
         for each in conda_build_metadata_list
         if re.search(select_build, each["build_name"])
+    ]
+    filtered_conda_build_metadata_list = [
+        each
+        for each in filtered_conda_build_metadata_list
+        if not re.search(skip_build, each["build_name"])
     ]
     logger.info("Writing conda environments")
     write_all_conda_environments(filtered_conda_build_metadata_list)
