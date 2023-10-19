@@ -373,4 +373,3 @@ or want to do additional monitoring, using ``warm_start=True`` and
     *  :arxiv:`"Adam: A method for stochastic optimization."
        <1412.6980>`
        Kingma, Diederik, and Jimmy Ba (2014)
-
