@@ -1960,7 +1960,7 @@ class _RidgeGCV(LinearModel):
             G_inverse_diag = G_inverse_diag[:, np.newaxis]
         return G_inverse_diag, c
 
-    def fit(self, X, y, sample_weight=None, params=None):
+    def fit(self, X, y, sample_weight=None, score_params=None):
         """Fit Ridge regression model with gcv.
 
         Parameters
@@ -1975,7 +1975,7 @@ class _RidgeGCV(LinearModel):
             Individual weights for each sample. If given a float, every sample
             will have the same weight.
 
-        params : dict, default=None
+        score_params : dict, default=None
             Parameters to be passed to the underlying scorer.
 
             .. versionadded:: 1.4
@@ -2064,7 +2064,7 @@ class _RidgeGCV(LinearModel):
                 if self.store_cv_values:
                     self.cv_values_[:, i] = predictions.ravel()
 
-                score_params = params or {}
+                score_params = score_params or {}
                 if self.is_clf:
                     identity_estimator = _IdentityClassifier(classes=np.arange(n_y))
                     alpha_score = scorer(
@@ -2246,7 +2246,10 @@ class _BaseRidgeCV(LinearModel):
                 alpha_per_target=self.alpha_per_target,
             )
             estimator.fit(
-                X, y, sample_weight=sample_weight, params=routed_params.scorer.score
+                X,
+                y,
+                sample_weight=sample_weight,
+                score_params=routed_params.scorer.score,
             )
             self.alpha_ = estimator.alpha_
             self.best_score_ = estimator.best_score_
