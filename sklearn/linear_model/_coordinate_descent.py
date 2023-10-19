@@ -903,9 +903,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix with a bit width of up to 32} of
-        (n_samples, n_features)
+        X : {ndarray, sparse matrix, sparse array} of (n_samples, n_features)
             Data.
+            
+            Note that large sparse matrices and arrays requiring `int64`
+            indices are not accepted.
 
         y : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary.
