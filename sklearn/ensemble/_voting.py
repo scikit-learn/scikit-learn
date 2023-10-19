@@ -92,7 +92,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                 clone(clf),
                 X,
                 y,
-                fit_params=fit_params,
+                fit_params=fit_params[list(fit_params.keys())[idx]]["fit"],
                 message_clsname="Voting",
                 message=self._log_message(names[idx], idx + 1, len(clfs)),
             )
@@ -159,6 +159,30 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
     def _more_tags(self):
         return {"preserves_dtype": []}
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.4
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__)
+
+        # `self.estimators` is a list
+        for name, estimator in self.estimators:
+            router.add(
+                **{name: estimator},
+                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            )
+        return router
 
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):
@@ -377,7 +401,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             if sample_weight is not None:
                 routed_params.estimator.fit["sample_weight"] = sample_weight
 
-        return super().fit(X, transformed_y, routed_params.estimator.fit)
+        return super().fit(X, transformed_y, routed_params)
 
     def predict(self, X):
         """Predict class labels for X.
@@ -507,31 +531,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             f"{class_name}_{name}{i}" for name in active_names for i in range(n_classes)
         ]
         return np.asarray(names_out, dtype=object)
-
-    def get_metadata_routing(self):
-        """Get metadata routing of this object.
-
-        Please check :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
-
-        .. versionadded:: 1.4
-
-        Returns
-        -------
-        routing : MetadataRouter
-            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
-            routing information.
-        """
-        router = MetadataRouter(owner=self.__class__.__name__)
-        router.add_self_request(self)
-
-        # `self.estimators` is a list
-        for estimator in self.estimators:
-            router.add(
-                estimator=estimator,
-                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
-            )
-        return router
 
 
 class VotingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseVoting):
