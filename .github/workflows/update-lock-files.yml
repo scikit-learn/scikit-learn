@@ -26,6 +26,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Generate lock files
         run: |
+          source build_tools/shared.sh
           source $CONDA/bin/activate
           conda install -n base conda conda-libmamba-solver -y
           conda config --set solver libmamba
