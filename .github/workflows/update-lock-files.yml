@@ -28,7 +28,7 @@ jobs:
       matrix:
         include:
           - name: main
-            update_script_args: "--ignore-build 'scipy-dev|pypy'"
+            update_script_args: "--skip-build 'scipy-dev|pypy'"
             additional_commit_message: ""
           - name: scipy-dev
             update_script_args: "--select-build scipy_dev"
