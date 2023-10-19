@@ -61,7 +61,7 @@ from ..utils._param_validation import (
     generate_invalid_param_val,
     make_constraint,
 )
-from ..utils.fixes import parse_version, sp_version
+from ..utils.fixes import SPARSE_ARRAY_PRESENT, parse_version, sp_version
 from ..utils.validation import check_is_fitted
 from . import IS_PYPY, is_scalar_nan, shuffle
 from ._param_validation import Interval
@@ -1045,7 +1045,8 @@ def _check_estimator_sparse_container(name, estimator_orig, sparse_type):
             err_msg = (
                 f"Estimator {name} doesn't seem to fail gracefully on sparse "
                 "data: error message should state explicitly that sparse "
-                "input is not supported if this is not the case."
+                "input is not supported if this is not the case, e.g. by using "
+                "check_array(X, accept_sparse=False)."
             )
         with raises(
             (TypeError, ValueError),
@@ -1075,7 +1076,8 @@ def check_estimator_sparse_matrix(name, estimator_orig):
 
 
 def check_estimator_sparse_array(name, estimator_orig):
-    _check_estimator_sparse_container(name, estimator_orig, sparse.csr_array)
+    if SPARSE_ARRAY_PRESENT:
+        _check_estimator_sparse_container(name, estimator_orig, sparse.csr_array)
 
 
 @ignore_warnings(category=FutureWarning)

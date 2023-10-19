@@ -64,6 +64,7 @@ from sklearn.utils.estimator_checks import (
     check_requires_y_none,
     set_random_state,
 )
+from sklearn.utils.fixes import SPARRAY_PRESENT
 from sklearn.utils.metaestimators import available_if
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
@@ -222,6 +223,10 @@ class NoSparseClassifier(BaseBadClassifier):
     def predict(self, X):
         X = check_array(X)
         return np.ones(X.shape[0])
+
+
+"""from sklearn.utils.estimator_checks import check_estimator
+check_estimator(NoSparseClassifier("sparse_matrix"))"""
 
 
 class CorrectNotFittedErrorClassifier(BaseBadClassifier):
@@ -672,8 +677,9 @@ def test_check_estimator():
         "Estimator LargeSparseNotSupportedClassifier doesn't seem to "
         r"support \S{3}_64 matrix, and is not failing gracefully.*"
     )
-    with raises(AssertionError, match=msg):
-        check_estimator(LargeSparseNotSupportedClassifier("sparse_matrix"))
+    if SPARRAY_PRESENT:
+        with raises(AssertionError, match=msg):
+            check_estimator(LargeSparseNotSupportedClassifier("sparse_matrix"))
 
     with raises(AssertionError, match=msg):
         check_estimator(LargeSparseNotSupportedClassifier("sparse_array"))
