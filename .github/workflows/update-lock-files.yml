@@ -47,7 +47,7 @@ jobs:
           author: "Lock file bot <noreply@github.com>"
           delete-branch: true
           branch: auto-update-lock-files-${{ matrix.name }}
-          title: ":lock: :robot: CI Update lock files :lock: :robot:"
+          title: ":lock: :robot: CI Update lock files for {{ matrix.name }} CI build(s) :lock: :robot:"
           body: |
             Update lock files.
 
