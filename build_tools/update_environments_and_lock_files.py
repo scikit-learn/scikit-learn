@@ -157,9 +157,7 @@ conda_build_metadata_list = [
             "scipy": "min",
             "matplotlib": "min",
             "threadpoolctl": "2.2.0",
-            # Regression have been observed with Cython>=3.0.0.
-            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
-            "cython": "<3.0.0",
+            "cython": "min",
         },
     },
     {
@@ -171,9 +169,6 @@ conda_build_metadata_list = [
         "package_constraints": {
             "python": "3.8",
             "blas": "[build=openblas]",
-            # Regression have been observed with Cython>=3.0.0.
-            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
-            "cython": "<3.0.0",
         },
     },
     {
@@ -238,9 +233,6 @@ conda_build_metadata_list = [
         "package_constraints": {
             "blas": "[build=openblas]",
             "python": "3.9",
-            # Regression have been observed with Cython>=3.0.0.
-            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
-            "cython": "<3.0.0",
         },
     },
     {
@@ -255,9 +247,6 @@ conda_build_metadata_list = [
         "package_constraints": {
             "python": "3.8",
             "blas": "[build=mkl]",
-            # Regression have been observed with Cython>=3.0.0.
-            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
-            "cython": "<3.0.0",
         },
     },
     {
@@ -320,9 +309,6 @@ conda_build_metadata_list = [
             "python": "3.9",
             # XXX: sphinx > 6.0 does not correctly generate searchindex.js
             "sphinx": "6.0.0",
-            # Regression have been observed with Cython>=3.0.0.
-            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
-            "cython": "<3.0.0",
             # seaborn 0.12.2 raises deprecation warnings appearing in the documentation
             # We should remove this constraint when seaborn 0.13 is released
             "pandas": "<2.1",
@@ -338,9 +324,6 @@ conda_build_metadata_list = [
         ) + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.9",
-            # Regression have been observed with Cython>=3.0.0.
-            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
-            "cython": "<3.0.0",
         },
     },
 ]
@@ -363,9 +346,7 @@ pip_build_metadata_list = [
             "pytest": "min",
             "pytest-cov": "min",
             # no pytest-xdist because it causes issue on 32bit
-            # Regression have been observed with Cython>=3.0.0.
-            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
-            "cython": "<3.0.0",
+            "cython": "min",
         },
         # same Python version as in debian-32 build
         "python_version": "3.9.2",
@@ -383,9 +364,7 @@ pip_build_metadata_list = [
         "package_constraints": {
             "joblib": "min",
             "threadpoolctl": "min",
-            # Regression have been observed with Cython>=3.0.0.
-            # See: https://github.com/scikit-learn/scikit-learn/issues/27086
-            "cython": "<3.0.0",
+            "cython": "min",
         },
         "python_version": "3.10.4",
     },
