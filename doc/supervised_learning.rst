@@ -29,3 +29,5 @@ Supervised learning
     modules/isotonic.rst
     modules/calibration.rst
     modules/neural_networks_supervised
+
+.. _Important Benchmarks: https://scikit-learn.org/scikit-learn-benchmarks/
