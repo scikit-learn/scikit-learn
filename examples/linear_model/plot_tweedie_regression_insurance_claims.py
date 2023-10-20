@@ -34,7 +34,7 @@ helper functions for loading the data and visualizing results.
 
 .. [1]  A. Noll, R. Salzmann and M.V. Wuthrich, Case Study: French Motor
     Third-Party Liability Claims (November 8, 2018). `doi:10.2139/ssrn.3164764
-    <http://dx.doi.org/10.2139/ssrn.3164764>`_
+    <https://doi.org/10.2139/ssrn.3164764>`_
 """
 
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
