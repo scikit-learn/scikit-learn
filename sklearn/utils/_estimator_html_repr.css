@@ -72,7 +72,7 @@
 div.sk-parallel-item, div.sk-serial, div.sk-item {
   /* draw centered vertical line to link estimators */
   background-image: linear-gradient(var(--sklearn-color-text-on-default-background), var(--sklearn-color-text-on-default-background));
-  background-size: 2px 100%;
+  background-size: 1px 100%;
   background-repeat: no-repeat;
   background-position: center center;
 }
@@ -82,7 +82,7 @@ div.sk-parallel-item, div.sk-serial, div.sk-item {
 #$id div.sk-parallel-item::after {
   content: "";
   width: 100%;
-  border-bottom: 2px solid var(--sklearn-color-text-on-default-background);
+  border-bottom: 1px solid var(--sklearn-color-text-on-default-background);
   flex-grow: 1;
 }
 
