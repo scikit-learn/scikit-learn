@@ -592,6 +592,16 @@ class PCA(_BasePCA):
             # (without centering the data X first) to avoid an unecessary copy
             # of X. Note that the mean_ attribute is still needed to center
             # test data in the transform method.
+            #
+            # Note: at the time of writing, `xp.cov` does not exist in the
+            # Array API standard:
+            # https://github.com/data-apis/array-api/issues/43
+            #
+            # Besides, using `numpy.cov`, as of numpy 1.26.0, would not be
+            # memory efficient for our use case when `n_samples >> n_features`:
+            # `numpy.cov` centers a copy of the data before computing the
+            # matrix product instead of substracting a small `(n_features,
+            # n_features)` square matrix, a posteriori, as we do below.
             x_is_centered = False
             C = X.T @ X
             C -= (
