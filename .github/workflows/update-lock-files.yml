@@ -20,7 +20,7 @@ jobs:
           - name: scipy-dev
             update_script_args: "--select-build scipy_dev"
             additional_commit_message: "[scipy-dev]"
-          - name: cirrus arm
+          - name: cirrus-arm
             update_script_args: "--select-build '^py39_conda_forge$'"
             additional_commit_message: "[cirrus arm]"
           - name: pypy
