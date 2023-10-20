@@ -18,6 +18,7 @@
   --sklearn-color-text-on-default-background: black;
   --sklearn-color-border-box: black;
   --sklearn-color-icon: #696969;
+
   @media (prefers-color-scheme: dark) {
     /* Redefinition of color scheme for dark theme */
     --sklearn-color-text-on-default-background: white;
@@ -69,7 +70,9 @@
   display: none;
 }
 
-div.sk-parallel-item, div.sk-serial, div.sk-item {
+div.sk-parallel-item,
+div.sk-serial,
+div.sk-item {
   /* draw centered vertical line to link estimators */
   background-image: linear-gradient(var(--sklearn-color-text-on-default-background), var(--sklearn-color-text-on-default-background));
   background-size: 1px 100%;
@@ -236,6 +239,7 @@ clickable and can be expanded/collapsed.
   color: var(--sklearn-color-text);
   background-color: var(--sklearn-color-unfitted-level-2);
 }
+
 /* Label box, darken color on hover, fitted */
 #$id div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
   color: var(--sklearn-color-text);
@@ -286,7 +290,9 @@ clickable and can be expanded/collapsed.
 
 /* Common style for "i" and "?" */
 
-.sk-estimator-doc-link, a:link.sk-estimator-doc-link, a:visited.sk-estimator-doc-link {
+.sk-estimator-doc-link,
+a:link.sk-estimator-doc-link,
+a:visited.sk-estimator-doc-link {
   float: right;
   font-size: smaller;
   line-height: 1em;
@@ -302,7 +308,9 @@ clickable and can be expanded/collapsed.
   color: var(--sklearn-color-unfitted-level-1);
 }
 
-.sk-estimator-doc-link.fitted, a:link.sk-estimator-doc-link.fitted, a:visited.sk-estimator-doc-link.fitted {
+.sk-estimator-doc-link.fitted,
+a:link.sk-estimator-doc-link.fitted,
+a:visited.sk-estimator-doc-link.fitted {
   /* fitted */
   border: var(--sklearn-color-fitted-level-1) 1pt solid;
   color: var(--sklearn-color-fitted-level-1);
