@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
-      # Ensure that a wheel builder finishes even if another fails
+      # Ensure that each build will continue even if one build in the matrix fails
       fail-fast: false
       matrix:
         include:
