@@ -353,6 +353,9 @@ def make_multilabel_classification(
     n is never zero or more than `n_classes`, and that the document length
     is never zero. Likewise, we reject classes which have already been chosen.
 
+    For an example of usage, see
+    :ref:`sphx_glr_auto_examples_datasets_plot_random_multilabel_dataset.py`.
+
     Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
