@@ -16,7 +16,6 @@ from ..metrics import check_scoring
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..utils._param_validation import HasMethods, Interval, RealNotInt
-from ..utils._tags import _safe_tags
 from ..utils.metadata_routing import (
     _raise_for_unsupported_routing,
     _RoutingNotSupportedMixin,
@@ -264,13 +263,12 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
         # and is used when implementing RFECV
         # self.scores_ will not be calculated when calling _fit through fit
 
-        tags = self._get_tags()
         X, y = self._validate_data(
             X,
             y,
             accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=not tags.get("allow_nan", True),
+            force_all_finite=False,
             multi_output=True,
         )
 
@@ -451,11 +449,17 @@ class RFE(_RoutingNotSupportedMixin, SelectorMixin, MetaEstimatorMixin, BaseEsti
         return self.estimator_.predict_log_proba(self.transform(X))
 
     def _more_tags(self):
-        return {
+        tags = {
             "poor_score": True,
-            "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
             "requires_y": True,
+            "allow_nan": True,
         }
+
+        # Adjust allow_nan if estimator explicitly defines `allow_nan`.
+        if hasattr(self.estimator, "_get_tags"):
+            tags["allow_nan"] = self.estimator._get_tags()["allow_nan"]
+
+        return tags
 
 
 class RFECV(RFE):
@@ -686,13 +690,12 @@ class RFECV(RFE):
             Fitted estimator.
         """
         _raise_for_unsupported_routing(self, "fit", groups=groups)
-        tags = self._get_tags()
         X, y = self._validate_data(
             X,
             y,
             accept_sparse="csr",
             ensure_min_features=2,
-            force_all_finite=not tags.get("allow_nan", True),
+            force_all_finite=False,
             multi_output=True,
         )
 
