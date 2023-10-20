@@ -51,6 +51,8 @@ logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
 logger.addHandler(handler)
 
+TRACE = logging.DEBUG - 5
+
 
 common_dependencies_without_coverage = [
     "python",
@@ -372,6 +374,7 @@ pip_build_metadata_list = [
 
 
 def execute_command(command_list):
+    logger.debug(" ".join(command_list))
     proc = subprocess.Popen(
         command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
@@ -388,6 +391,7 @@ def execute_command(command_list):
             "stdout:\n{}\n"
             "stderr:\n{}\n".format(proc.returncode, command_str, out, err)
         )
+    logger.log(TRACE, out)
     return out
 
 
@@ -447,6 +451,7 @@ def write_conda_environment(build_metadata):
     build_name = build_metadata["build_name"]
     folder_path = Path(build_metadata["folder"])
     output_path = folder_path / f"{build_name}_environment.yml"
+    logger.debug(output_path)
     output_path.write_text(content)
 
 
@@ -460,8 +465,6 @@ def conda_lock(environment_path, lock_file_path, platform):
         f"conda-lock lock --mamba --kind explicit --platform {platform} "
         f"--file {environment_path} --filename-template {lock_file_path}"
     )
-
-    logger.debug("conda-lock command: %s", command)
     execute_command(shlex.split(command))
 
 
@@ -480,7 +483,7 @@ def create_conda_lock_file(build_metadata):
 
 def write_all_conda_lock_files(build_metadata_list):
     for build_metadata in build_metadata_list:
-        logger.info(build_metadata["build_name"])
+        logger.info(f"# Locking dependencies for {build_metadata['build_name']}")
         create_conda_lock_file(build_metadata)
 
 
@@ -500,19 +503,18 @@ def write_pip_requirements(build_metadata):
     content = get_pip_requirements_content(build_metadata)
     folder_path = Path(build_metadata["folder"])
     output_path = folder_path / f"{build_name}_requirements.txt"
+    logger.debug(output_path)
     output_path.write_text(content)
 
 
 def write_all_pip_requirements(build_metadata_list):
     for build_metadata in build_metadata_list:
-        logger.info(build_metadata["build_name"])
+        logger.info(f"# Locking dependencies for {build_metadata['build_name']}")
         write_pip_requirements(build_metadata)
 
 
 def pip_compile(pip_compile_path, requirements_path, lock_file_path):
     command = f"{pip_compile_path} --upgrade {requirements_path} -o {lock_file_path}"
-
-    logger.debug("pip-compile command: %s", command)
     execute_command(shlex.split(command))
 
 
@@ -586,7 +588,24 @@ def check_conda_version():
     default="",
     help="Regex to restrict the builds we want to update environment and lock files",
 )
-def main(select_build):
+@click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Print commands executed by the script",
+)
+@click.option(
+    "-vv",
+    "--very-verbose",
+    is_flag=True,
+    help="Print output of commands executed by the script",
+)
+def main(verbose, very_verbose, select_build):
+    if verbose:
+        logger.setLevel(logging.DEBUG)
+    if very_verbose:
+        logger.setLevel(TRACE)
+        handler.setLevel(TRACE)
     check_conda_lock_version()
     check_conda_version()
     filtered_conda_build_metadata_list = [
@@ -594,20 +613,22 @@ def main(select_build):
         for each in conda_build_metadata_list
         if re.search(select_build, each["build_name"])
     ]
-    logger.info("Writing conda environments")
-    write_all_conda_environments(filtered_conda_build_metadata_list)
-    logger.info("Writing conda lock files")
-    write_all_conda_lock_files(filtered_conda_build_metadata_list)
+    if filtered_conda_build_metadata_list:
+        logger.info("# Writing conda environments")
+        write_all_conda_environments(filtered_conda_build_metadata_list)
+        logger.info("# Writing conda lock files")
+        write_all_conda_lock_files(filtered_conda_build_metadata_list)
 
     filtered_pip_build_metadata_list = [
         each
         for each in pip_build_metadata_list
         if re.search(select_build, each["build_name"])
     ]
-    logger.info("Writing pip requirements")
-    write_all_pip_requirements(filtered_pip_build_metadata_list)
-    logger.info("Writing pip lock files")
-    write_all_pip_lock_files(filtered_pip_build_metadata_list)
+    if filtered_pip_build_metadata_list:
+        logger.info("# Writing pip requirements")
+        write_all_pip_requirements(filtered_pip_build_metadata_list)
+        logger.info("# Writing pip lock files")
+        write_all_pip_lock_files(filtered_pip_build_metadata_list)
 
 
 if __name__ == "__main__":
