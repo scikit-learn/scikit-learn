@@ -47,6 +47,107 @@
   width: 1px;
 }
 
+#$id div.sk-dashed-wrapped {
+  border: 1px dashed var(--sklearn-color-line);
+  margin: 0 0.4em 0.5em 0.4em;
+  box-sizing: border-box;
+  padding-bottom: 0.4em;
+  background-color: var(--sklearn-color-background);
+}
+
+#$id div.sk-container {
+  /* jupyter's `normalize.less` sets `[hidden] { display: none; }`
+     but bootstrap.min.css set `[hidden] { display: none !important; }`
+     so we also need the `!important` here to be able to override the
+     default hidden behavior on the sphinx rendered scikit-learn.org.
+     See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
+  display: inline-block !important;
+  position: relative;
+}
+
+#$id div.sk-text-repr-fallback {
+  display: none;
+}
+
+/* Parallel-specific style estimator block */
+
+#$id div.sk-parallel-item::after {
+  content: "";
+  width: 100%;
+  border-bottom: 1px solid var(--sklearn-color-line);
+  flex-grow: 1;
+}
+
+#$id div.sk-parallel {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  background-color: var(--sklearn-color-background);
+  position: relative;
+}
+
+#$id div.sk-item::before,
+#$id div.sk-parallel-item::before {
+  content: "";
+  position: absolute;
+  border-left: 1px solid var(--sklearn-color-line);
+  box-sizing: border-box;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  z-index: -1;
+}
+
+#$id div.sk-parallel-item {
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+  position: relative;
+  background-color: var(--sklearn-color-background);
+}
+
+#$id div.sk-parallel-item:first-child::after {
+  align-self: flex-end;
+  width: 50%;
+}
+
+#$id div.sk-parallel-item:last-child::after {
+  align-self: flex-start;
+  width: 50%;
+}
+
+#$id div.sk-parallel-item:only-child::after {
+  width: 0;
+}
+
+/* Serial-specific style estimator block */
+
+#$id div.sk-serial::before {
+  content: "";
+  position: absolute;
+  border-left: 1px solid var(--sklearn-color-line);
+  box-sizing: border-box;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  z-index: 0;
+}
+
+#$id div.sk-serial {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--sklearn-color-background);
+  padding-right: 1em;
+  padding-left: 1em;
+  position: relative;
+}
+
+#$id div.sk-item {
+  position: relative;
+  z-index: 1;
+}
+
 /* Toggleable style: style used for estimator/Pipeline/ColumnTransformer box that is
 clickable and can be expanded/collapsed.
 - Pipeline and ColumnTransformer use this feature and define the default style
@@ -148,6 +249,22 @@ clickable and can be expanded/collapsed.
   background-color: var(--sklearn-color-fitted-level-2);
 }
 
+#$id div.sk-label label.sk-toggleable__label {
+  /* The background is the default theme color */
+  color: var(--sklearn-color-text-on-default-background);
+}
+
+/* On hover, darken the color of the background */
+#$id div.sk-label:hover label.sk-toggleable__label {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-unfitted-level-2);
+}
+/* Label box, darken color on hover, fitted */
+#$id div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-fitted-level-2);
+}
+
 /* Estimator label */
 
 #$id div.sk-label label {
@@ -188,267 +305,114 @@ clickable and can be expanded/collapsed.
   background-color: var(--sklearn-color-fitted-level-2);
 }
 
-#$id div.sk-parallel-item::after {
-  content: "";
-  width: 100%;
-  border-bottom: 1px solid var(--sklearn-color-line);
-  flex-grow: 1;
-}
+/* Specification for estimator info (e.g. "i" and "?") */
 
-/* Label box, darken color not hovered, unfitted */
-#$id div.sk-label label.sk-toggleable__label {
-  color: var(--sklearn-color-text-on-default-background);
-}
+/* Common style for "i" and "?" */
 
-/* Label box, darken color not hovered, fitted */
-#$id div.sk-label.fitted label.sk-toggleable__label.fitted {
-  color: var(--sklearn-color-text-on-default-background);
-}
-
-/* Label box, darken color on hover, unfitted */
-#$id div.sk-label:hover label.sk-toggleable__label {
-  color: var(--sklearn-color-text);
-  background-color: var(--sklearn-color-unfitted-level-2);
-}
-
-/* Label box, darken color on hover, fitted */
-#$id div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
-  color: var(--sklearn-color-text);
-  background-color: var(--sklearn-color-fitted-level-2);
-}
-
-#$id div.sk-serial::before {
-  content: "";
-  position: absolute;
-  border-left: 1px solid var(--sklearn-color-line);
-  box-sizing: border-box;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  z-index: 0;
-}
-
-#$id div.sk-serial {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: var(--sklearn-color-background);
-  padding-right: 1em;
-  padding-left: 1em;
-  position: relative;
-}
-
-#$id div.sk-item {
-  position: relative;
-  z-index: 1;
-}
-
-#$id div.sk-parallel {
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  background-color: var(--sklearn-color-background);
-  position: relative;
-}
-
-#$id div.sk-item::before,
-#$id div.sk-parallel-item::before {
-  content: "";
-  position: absolute;
-  border-left: 1px solid var(--sklearn-color-line);
-  box-sizing: border-box;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  z-index: -1;
-}
-
-#$id div.sk-parallel-item {
-  display: flex;
-  flex-direction: column;
-  z-index: 1;
-  position: relative;
-  background-color: var(--sklearn-color-background);
-}
-
-#$id div.sk-parallel-item:first-child::after {
-  align-self: flex-end;
-  width: 50%;
-}
-
-#$id div.sk-parallel-item:last-child::after {
-  align-self: flex-start;
-  width: 50%;
-}
-
-#$id div.sk-parallel-item:only-child::after {
-  width: 0;
-}
-
-#$id div.sk-dashed-wrapped {
-  border: 1px dashed var(--sklearn-color-line);
-  margin: 0 0.4em 0.5em 0.4em;
-  box-sizing: border-box;
-  padding-bottom: 0.4em;
-  background-color: var(--sklearn-color-background);
-}
-
-/* Estimator doc link, unfitted */
-#$id a.estimator_doc_link {
-  float: right;
-  font-size: 1rem;
-  line-height: 1em;
-  font-family: monospace;
-  background-color: white;
-  border: #f6e4d2 1pt solid;
-  /* Border of "?", dim, light Orange */
-  border-radius: 1rem;
-  height: 1rem;
-  width: 1rem;
-  color: #f6e4d2;
-  /* Text color of "?", dim, light Orange */
-  text-decoration: none;
-}
-
-/* Estimator doc link, fitted */
-#$id a.estimator_doc_link.fitted {
-  border: #afc9e0;
-  /* Border of "?", dim, light Blue */
-  color: #afc9e0;
-  /* Text color of "?", dim, light Blue */
-}
-
-/* Estimator doc link, unfitted, when hovered over */
-#$id a.estimator_doc_link:hover {
-  background-color: chocolate;
-  /* Change background color to very strong orange */
-  color: white;
-  /* Change text color to white */
-  text-decoration: none;
-}
-
-/* Estimator doc link, fitted, when hovered over */
-#$id a.estimator_doc_link.fitted:hover {
-  background-color: cornflowerblue;
-  /* Change background color to very strong blue */
-  color: white;
-  /* Change text color to white */
-  text-decoration: none;
-}
-
-#$id div.sk-container {
-  /* jupyter's `normalize.less` sets `[hidden] { display: none; }`
-     but bootstrap.min.css set `[hidden] { display: none !important; }`
-     so we also need the `!important` here to be able to override the
-     default hidden behavior on the sphinx rendered scikit-learn.org.
-     See: https://github.com/scikit-learn/scikit-learn/issues/21755 */
-  display: inline-block !important;
-  position: relative;
-}
-
-#$id div.sk-text-repr-fallback {
-  display: none;
-}
-
-/* For the docs link and "i" explaining fitted/unfitted */
-
-/* Default, unfitted text */
-.sk-estimator-doc-link {
+.sk-estimator-doc-link, a:link.sk-estimator-doc-link, a:visited.sk-estimator-doc-link {
   float: right;
   font-size: smaller;
   line-height: 1em;
   font-family: monospace;
-  background-color: white;
-  border: #f6e4d2 1pt solid;
+  background-color: var(--sklearn-color-background);
   border-radius: 1em;
   height: 1em;
   width: 1em;
-  color: #f6e4d2;
   text-decoration: none !important;
   margin-left: 1ex;
+  /* unfitted */
+  border: var(--sklearn-color-unfitted-level-1) 1pt solid;
+  color: var(--sklearn-color-unfitted-level-1);
 }
 
-/* Fitted text */
-.sk-estimator-doc-link.fitted {
-  border: #afc9e0 1pt solid;
-  color: #afc9e0;
+.sk-estimator-doc-link.fitted, a:link.sk-estimator-doc-link.fitted, a:visited.sk-estimator-doc-link.fitted {
+  /* fitted */
+  border: var(--sklearn-color-fitted-level-1) 1pt solid;
+  color: var(--sklearn-color-fitted-level-1);
 }
 
-
-/* Unfitted text, when the "?" is hovered over. */
+/* On hover */
 div.sk-estimator:hover .sk-estimator-doc-link:hover,
 .sk-estimator-doc-link:hover,
 div.sk-label-container:hover .sk-estimator-doc-link:hover,
 .sk-estimator-doc-link:hover {
-  background-color: chocolate;
-  color: white;
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-3);
+  color: var(--sklearn-color-background);
   text-decoration: none;
 }
 
-/* Fitted text, when the "?" is hovered over. */
 div.sk-estimator.fitted:hover .sk-estimator-doc-link.fitted:hover,
 .sk-estimator-doc-link.fitted:hover,
 div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 .sk-estimator-doc-link.fitted:hover {
-  background-color: cornflowerblue;
-  color: white;
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-3);
+  color: var(--sklearn-color-background);
+  text-decoration: none;
 }
 
-
-/* Box that appears when hovering over the "?", unfitted */
+/* Span, style for the box shown on hovering the info icon */
 .sk-estimator-doc-link span {
   display: none;
   z-index: 200;
   position: absolute;
-  background: #fff5e6;
-  color: black;
+  color: var(--sklearn-color-text);
   font-weight: normal;
   padding: .5ex;
   margin: .5ex;
-  border: .5pt solid chocolate;
   right: .2ex;
   box-shadow: 2pt 2pt 4pt #999;
   max-width: 50ex;
   width: min-content;
   min-width: 20ex;
+  /* unfitted */
+  background: var(--sklearn-color-unfitted-level-0);
+  border: .5pt solid var(--sklearn-color-unfitted-level-3);
 }
 
-/* Box that appears when hovering over the "?", fitted */
 .sk-estimator-doc-link.fitted span {
-  background: #f0f8ff;
-  border: cornflowerblue;
+  /* fitted */
+  background: var(--sklearn-color-fitted-level-0);
+  border: var(--sklearn-color-fitted-level-3);
 }
 
 .sk-estimator-doc-link:hover span {
   display: block;
 }
 
-/* Color of "?" when not hovered over, unfitted */
-div.sk-estimator .sk-estimator-doc-link {
-  color: #f6e4d2;
-  border: 1pt solid #f6e4d2;
-  background-color: #fff5e6;
+/* "?"-specific style due to the `<a>` HTML tag */
+
+#$id a.estimator_doc_link {
+  float: right;
+  font-size: 1rem;
+  line-height: 1em;
+  font-family: monospace;
+  background-color: var(--sklearn-color-background);
+  border-radius: 1rem;
+  height: 1rem;
+  width: 1rem;
+  text-decoration: none;
+  /* unfitted */
+  color: var(--sklearn-color-unfitted-level-1);
+  border: var(--sklearn-color-unfitted-level-1) 1pt solid;
 }
 
-/* Color of "?" when not hovered over, fitted */
-div.sk-estimator.fitted .sk-estimator-doc-link.fitted {
-  color: #afc9e0;
-  border: 1pt solid #afc9e0;
-  background-color: #f0f8ff;
+#$id a.estimator_doc_link.fitted {
+  /* fitted */
+  border: var(--sklearn-color-fitted-level-1) 1pt solid;
+  color: var(--sklearn-color-fitted-level-1);
 }
 
-/* Color of "?" when the estimator/label box is hovered over, but the "?" isn't, unfitted */
-div.sk-estimator:hover .sk-estimator-doc-link,
-div.sk-label-container:hover .sk-estimator-doc-link {
-  background-color: white;
-  border: chocolate 1pt solid;
-  color: chocolate;
+/* On hover */
+#$id a.estimator_doc_link:hover {
+  /* unfitted */
+  background-color: var(--sklearn-color-unfitted-level-3);
+  color: var(--sklearn-color-background);
+  text-decoration: none;
 }
 
-/* Color of "?" when the estimator/label box is hovered over, but the "?" isn't, fitted */
-div.sk-estimator.fitted:hover .sk-estimator-doc-link.fitted,
-div.sk-label-container:hover .sk-estimator-doc-link.fitted {
-  border: cornflowerblue 1pt solid;
-  background-color: white;
-  color: cornflowerblue;
+#$id a.estimator_doc_link.fitted:hover {
+  /* fitted */
+  background-color: var(--sklearn-color-fitted-level-3);
 }
