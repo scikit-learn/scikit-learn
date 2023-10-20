@@ -15,11 +15,14 @@ jobs:
       matrix:
         include:
           - name: main
-            update_script_args: "--skip-build 'scipy-dev|pypy'"
+            update_script_args: "--skip-build 'scipy-dev|^py39_conda_forge$|pypy'"
             additional_commit_message: ""
           - name: scipy-dev
             update_script_args: "--select-build scipy_dev"
             additional_commit_message: "[scipy-dev]"
+          - name: cirrus arm
+            update_script_args: "--select-build '^py39_conda_forge$'"
+            additional_commit_message: "[cirrus arm]"
           - name: pypy
             update_script_args: "--select-build pypy"
             additional_commit_message: "[pypy]"
