@@ -869,9 +869,8 @@ def svd_flip(u, v, u_based_decision=True):
 
     if u_based_decision:
         # columns of u, rows of v, or equivalently rows of u.T and v
-        device = getattr(u, "device", None)
         max_abs_u_cols = xp.argmax(xp.abs(u.T), axis=1)
-        shift = xp.arange(u.T.shape[0], device=device)
+        shift = xp.arange(u.T.shape[0], device=device(u))
         indices = max_abs_u_cols + shift * u.T.shape[1]
         signs = xp.sign(xp.take(xp.reshape(u.T, (-1,)), indices, axis=0))
         u *= signs[np.newaxis, :]
@@ -879,9 +878,8 @@ def svd_flip(u, v, u_based_decision=True):
             v *= signs[:, np.newaxis]
     else:
         # rows of v, columns of u
-        device = getattr(v, "device", None)
         max_abs_v_rows = xp.argmax(xp.abs(v), axis=1)
-        shift = xp.arange(v.shape[0], device=device)
+        shift = xp.arange(v.shape[0], device=device(v))
         indices = max_abs_v_rows + shift * v.shape[1]
         signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices, axis=0))
         if u is not None:
