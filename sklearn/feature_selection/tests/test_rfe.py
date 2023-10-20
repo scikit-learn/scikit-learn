@@ -557,7 +557,8 @@ def test_multioutput(ClsRFE):
     rfe_test.fit(X, y)
 
 
-def test_pipeline_with_nans():
+@pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
+def test_pipeline_with_nans(ClsRFE):
     """Check that RFE works with pipeline that accept nans.
 
     Non-regression test for gh-21743.
@@ -571,7 +572,7 @@ def test_pipeline_with_nans():
         LogisticRegression(),
     )
 
-    fs = RFE(
+    fs = ClsRFE(
         estimator=pipe,
         importance_getter="named_steps.logisticregression.coef_",
     )
