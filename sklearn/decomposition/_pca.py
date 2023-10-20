@@ -510,9 +510,12 @@ class PCA(_BasePCA):
                 "PCA with svd_solver='arpack' is not supported for Array API inputs."
             )
 
-        # Validate the data, without forcing a copy as it's not required for
-        # the `covariance_eigh` dataset and would be wasteful for large
-        # datasets.
+        # Validate the data, without ever forcing a copy as the
+        # `covariance_eigh` solver is written in a way to avoid the need for
+        # any inplace modification of the input data contrary to the other
+        # solvers. Forcing a copy here would be wasteful when using  large
+        # datasets. The copy will happen later, only if needed, once the solver
+        # negotiation below is done.
         X = self._validate_data(
             X, dtype=[xp.float64, xp.float32], ensure_2d=True, copy=False
         )
