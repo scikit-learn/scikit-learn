@@ -69,12 +69,20 @@
   display: none;
 }
 
+div.sk-parallel-item, div.sk-serial, div.sk-item {
+  /* draw centered vertical line to link estimators */
+  background-image: linear-gradient(var(--sklearn-color-text-on-default-background), var(--sklearn-color-text-on-default-background));
+  background-size: 2px 100%;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
 /* Parallel-specific style estimator block */
 
 #$id div.sk-parallel-item::after {
   content: "";
   width: 100%;
-  border-bottom: 1px solid var(--sklearn-color-line);
+  border-bottom: 2px solid var(--sklearn-color-text-on-default-background);
   flex-grow: 1;
 }
 
@@ -86,24 +94,9 @@
   position: relative;
 }
 
-#$id div.sk-item::before,
-#$id div.sk-parallel-item::before {
-  content: "";
-  position: absolute;
-  border-left: 1px solid var(--sklearn-color-line);
-  box-sizing: border-box;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  z-index: -1;
-}
-
 #$id div.sk-parallel-item {
   display: flex;
   flex-direction: column;
-  z-index: 1;
-  position: relative;
-  background-color: var(--sklearn-color-background);
 }
 
 #$id div.sk-parallel-item:first-child::after {
@@ -122,17 +115,6 @@
 
 /* Serial-specific style estimator block */
 
-#$id div.sk-serial::before {
-  content: "";
-  position: absolute;
-  border-left: 1px solid var(--sklearn-color-line);
-  box-sizing: border-box;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  z-index: 0;
-}
-
 #$id div.sk-serial {
   display: flex;
   flex-direction: column;
@@ -140,13 +122,8 @@
   background-color: var(--sklearn-color-background);
   padding-right: 1em;
   padding-left: 1em;
-  position: relative;
 }
 
-#$id div.sk-item {
-  position: relative;
-  z-index: 1;
-}
 
 /* Toggleable style: style used for estimator/Pipeline/ColumnTransformer box that is
 clickable and can be expanded/collapsed.
