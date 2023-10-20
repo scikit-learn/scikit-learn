@@ -514,7 +514,6 @@ def write_pip_requirements(build_metadata):
 
 def write_all_pip_requirements(build_metadata_list):
     for build_metadata in build_metadata_list:
-        logger.info(f"# Locking dependencies for {build_metadata['build_name']}")
         write_pip_requirements(build_metadata)
 
 
@@ -554,6 +553,7 @@ def write_pip_lock_file(build_metadata):
 
 def write_all_pip_lock_files(build_metadata_list):
     for build_metadata in build_metadata_list:
+        logger.info(f"# Locking dependencies for {build_metadata['build_name']}")
         write_pip_lock_file(build_metadata)
 
 
