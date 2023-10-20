@@ -355,17 +355,17 @@ div.sk-label-container:hover .sk-estimator-doc-link.fitted:hover,
 /* Span, style for the box shown on hovering the info icon */
 .sk-estimator-doc-link span {
   display: none;
-  z-index: 200;
-  position: absolute;
-  color: var(--sklearn-color-text);
+  z-index: 9999;
+  position: relative;
   font-weight: normal;
+  right: .2ex;
   padding: .5ex;
   margin: .5ex;
-  right: .2ex;
-  box-shadow: 2pt 2pt 4pt #999;
-  max-width: 50ex;
   width: min-content;
   min-width: 20ex;
+  max-width: 50ex;
+  color: var(--sklearn-color-text);
+  box-shadow: 2pt 2pt 4pt #999;
   /* unfitted */
   background: var(--sklearn-color-unfitted-level-0);
   border: .5pt solid var(--sklearn-color-unfitted-level-3);
