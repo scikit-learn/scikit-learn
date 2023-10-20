@@ -5,7 +5,8 @@ from io import StringIO
 from pathlib import Path
 from string import Template
 
-from .. import config_context
+from .. import __version__, config_context
+from .fixes import parse_version
 
 
 class _IDCounter:
@@ -115,11 +116,12 @@ def _write_label_html(
         else:  # no doc_link, add no link to the documentation
             doc_link = ""
 
+        # FIXME: the name is not centered because of "i" and "?"
         fmt_str = (
             '<input class="sk-toggleable__control sk-hidden--visually"'
             f' id="{est_id}" '
             f'type="checkbox" {checked_str}><label for="{est_id}" '
-            f'class="{label_class} {fitted_str}">&nbsp;&nbsp;{name}'
+            f'class="{label_class} {fitted_str}">{name}'
             f"{doc_link}{is_fitted_icon}</label><div "
             f'class="sk-toggleable__content {fitted_str}">'
             f"<pre>{name_details}</pre></div> "
@@ -184,7 +186,6 @@ def _write_estimator_html(
 ):
     """Write estimator to html in serial, parallel, or by itself (single)."""
     # Delayed to avoid circular import
-    from sklearn.base import BaseEstimator
 
     if first_call:
         est_block = _get_visual_block(estimator)
@@ -193,7 +194,7 @@ def _write_estimator_html(
         with config_context(print_changed_only=True):
             est_block = _get_visual_block(estimator)
     # `estimator` can also be an instance of `_VisualBlock`
-    if isinstance(estimator, BaseEstimator):
+    if hasattr(estimator, "_get_doc_link"):
         doc_link = estimator._get_doc_link()
     else:
         doc_link = ""
@@ -332,3 +333,75 @@ def estimator_html_repr(estimator):
 
         html_output = out.getvalue()
         return html_output
+
+
+class _HTMLDocumentationLinkMixin:
+    """Mixin class allowing to generate a link to the API documentation.
+
+    The minimum implementation would be to set `_doc_link` and
+    `_doc_link_module` for their estimator instance
+    """
+
+    @property
+    def _doc_link_module(self):
+        return getattr(self, "__doc_link_module", "sklearn")
+
+    @_doc_link_module.setter
+    def _doc_link_module(self, value):
+        self.__doc_link_module = value
+
+    @property
+    def _doc_link(self):
+        sklearn_version = parse_version(__version__)
+        if sklearn_version.dev is None:
+            version_url = f"{sklearn_version.major}.{sklearn_version.minor}"
+        else:
+            version_url = "dev"
+        return getattr(
+            self,
+            "__doc_link",
+            (
+                f"https://scikit-learn.org/{version_url}/modules/generated/"
+                "{estimator_module}.{estimator_name}.html"
+            ),
+        )
+
+    @_doc_link.setter
+    def _doc_link(self, value):
+        self.__doc_link = value
+
+    def _get_doc_link(self, url_generator_func=None):
+        """Generates a link to the API documentation for a given estimator.
+
+        This method generates the link to the estimator's documentation page
+        by using the template defined by the attribute `_doc_link`.
+
+        To override the link, redefine `_doc_link`.
+        To override the behavior, redefine this method.
+
+        Valid template arguments:
+        - `{estimator_module}` the module that contains the class
+        - `{estimator_name}` the name of the class
+
+        Returns
+        -------
+        url : str
+            The URL to the API documentation for this estimator.
+            Empty if the module is not supported (`self._doc_link_module`).
+        """
+        if self.__class__.__module__.split(".")[0] != self._doc_link_module:
+            return ""
+
+        if url_generator_func is None:
+            estimator_name = self.__class__.__name__
+            estimator_module = ".".join(
+                [
+                    _
+                    for _ in self.__class__.__module__.split(".")
+                    if not _.startswith("_")
+                ]
+            )
+            return self._doc_link.format(
+                estimator_module=estimator_module, estimator_name=estimator_name
+            )
+        return self._doc_link.format(*url_generator_func(self))

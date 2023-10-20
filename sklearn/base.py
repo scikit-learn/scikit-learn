@@ -17,14 +17,13 @@ from . import __version__
 from ._config import config_context, get_config
 from .exceptions import InconsistentVersionWarning
 from .utils import _IS_32BIT
-from .utils._estimator_html_repr import estimator_html_repr
+from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._param_validation import validate_parameter_constraints
 from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
     _DEFAULT_TAGS,
 )
-from .utils.fixes import parse_version
 from .utils.validation import (
     _check_feature_names_in,
     _check_y,
@@ -135,24 +134,7 @@ def _clone_parametrized(estimator, *, safe=True):
     return new_object
 
 
-# Code to define the template pointing to the docs
-sklearn_version = parse_version(__version__)
-if sklearn_version.dev is None:
-    # Not dev version, give full link
-    # The gymnastics below is to catter for legacy versions and make mypy happy
-    if hasattr(sklearn_version, "major") and hasattr(sklearn_version, "minor"):
-        ver_str = f"{sklearn_version.major}.{sklearn_version.minor}"
-    else:
-        ver_str = sklearn_version.base_version
-else:
-    ver_str = "dev"
-_DOC_LINK = (
-    f"https://scikit-learn.org/{ver_str}/modules/generated/"
-    "{estimator_module}.{estimator_name}.html"
-)
-
-
-class BaseEstimator(_MetadataRequester):
+class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     """Base class for all estimators in scikit-learn.
 
     Notes
@@ -161,13 +143,6 @@ class BaseEstimator(_MetadataRequester):
     at the class level in their ``__init__`` as explicit keyword
     arguments (no ``*args`` or ``**kwargs``).
     """
-
-    # The template for pointing to the online documentation of a given class.
-    # Check out `_get_doc_link`'s docstring for the template arguments.
-    _doc_link = _DOC_LINK
-    # The module that is actually documented by the above string. Useful for subclasses
-    # that live outside of sklearn
-    _doc_link_module = "sklearn"
 
     @classmethod
     def _get_param_names(cls):
@@ -199,34 +174,6 @@ class BaseEstimator(_MetadataRequester):
                 )
         # Extract and sort argument names excluding 'self'
         return sorted([p.name for p in parameters])
-
-    def _get_doc_link(self):
-        """
-        Generates a link to the API documentation for a given estimator.
-
-        This method generates the link to the estimator's documentation page
-        by using the template defined by the attribute `_doc_link`.
-
-        To override the link, redefine `_doc_link`.
-        To override the behavior, redefine this method.
-
-        Valid template arguments:
-        - `{estimator_module}` the module that contains the class
-        - `{estimator_name}` the name of the class
-
-        Returns
-        -------
-        url : str
-            The URL to the API documentation for this estimator.
-            Empty if the module is not supported (`self._doc_link_module`).
-        """
-        if self.__class__.__module__.split(".")[0] != self._doc_link_module:
-            return ""
-        estimator_name = self.__class__.__name__
-        estimator_module = ".".join(
-            [_ for _ in self.__class__.__module__.split(".") if not _.startswith("_")]
-        )
-        return self._doc_link.format(**locals())
 
     def get_params(self, deep=True):
         """
