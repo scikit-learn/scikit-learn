@@ -1,22 +1,29 @@
 #$id {
+  /* Definition of color scheme common for light and dark mode */
   --sklearn-color-text: black;
   --sklearn-color-line: gray;
+  /* Definition of color scheme for unfitted estimators */
+  --sklearn-color-unfitted-level-0: #fff5e6;
+  --sklearn-color-unfitted-level-1: #f6e4d2;
+  --sklearn-color-unfitted-level-2: #ffe0b3;
+  --sklearn-color-unfitted-level-3: chocolate;
+  /* Definition of color scheme for fitted estimators */
+  --sklearn-color-fitted-level-0: #f0f8ff;
+  --sklearn-color-fitted-level-1: #d4ebff;
+  --sklearn-color-fitted-level-2: #b3dbfd;
+  --sklearn-color-fitted-level-3: cornflowerblue;
+
+  /* Specific color for light theme */
   --sklearn-color-background: white;
-  --sklearn-color-background-box: #f0f8ff;
+  --sklearn-color-text-on-default-background: black;
   --sklearn-color-border-box: black;
   --sklearn-color-icon: #696969;
-  --sklearn-color-active: #d4ebff;
-  --sklearn-color-highlight: #d4ebff;
-
   @media (prefers-color-scheme: dark) {
-    --sklearn-color-text: white;
-    --sklearn-color-line: gray;
+    /* Redefinition of color scheme for dark theme */
+    --sklearn-color-text-on-default-background: white;
     --sklearn-color-background: #111;
-    --sklearn-color-background-box: #424242;
     --sklearn-color-border-box: white;
     --sklearn-color-icon: #878787;
-    --sklearn-color-active: #616161;
-    --sklearn-color-highlight: #616161;
   }
 }
 
@@ -37,7 +44,7 @@
   display: block;
   width: 100%;
   margin-bottom: 0;
-  padding: 0.3em;
+  padding: 0.5em;
   box-sizing: border-box;
   text-align: center;
 }
@@ -63,14 +70,12 @@
   max-width: 0;
   overflow: hidden;
   text-align: left;
-  background-color: #fff5e6;
-  /* Light Orange */
+  background-color: var(--sklearn-color-unfitted-level-0);
 }
 
 /* Drop-down, fitted case */
 #$id div.sk-toggleable__content.fitted {
-  background-color: #f0f8ff;
-  /* Light Blue */
+  background-color: var(--sklearn-color-fitted-level-0);
 }
 
 /* Content of drop-down, unfitted case */
@@ -78,13 +83,12 @@
   margin: 0.2em;
   color: var(--sklearn-color-text);
   border-radius: 0.25em;
-  background-color: var(--sklearn-color-background-box);
+  background-color: var(--sklearn-color-unfitted-level-0);
 }
 
 /* Content of drop-down, fitted case */
 #$id div.sk-toggleable__content.fitted pre {
-  background-color: #f0f8ff;
-  /* Light Blue */
+  background-color: var(--sklearn-color-fitted-level-0);
 }
 
 #$id input.sk-toggleable__control:checked~div.sk-toggleable__content {
@@ -99,13 +103,13 @@
 
 /* Label of estimator dropdown after selection, unfitted*/
 #$id div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
-  background-color: #ffe0b3;
+  background-color: var(--sklearn-color-unfitted-level-2));
   /* Dark Orange */
 }
 
 /* Label of estimator dropdown after selection, fitted*/
 #$id div.sk-estimator.fitted input.sk-toggleable__control:checked~label.sk-toggleable__label {
-  background-color: #d4ebff;
+  background-color: var(--sklearn-color-fitted-level-2);
   /* Dark Blue */
 }
 
@@ -137,8 +141,7 @@
 /* Estimator box, unfitted */
 #$id div.sk-estimator {
   font-family: monospace;
-  background-color: #fff5e6;
-  /* Light Orange */
+  background-color: var(--sklearn-color-unfitted-level-0);
   border: 1px dotted var(--sklearn-color-border-box);
   border-radius: 0.25em;
   box-sizing: border-box;
@@ -147,20 +150,17 @@
 
 /* Estimator box, fitted */
 #$id div.sk-estimator.fitted {
-  background-color: #f0f8ff;
-  /* Light Blue  */
+  background-color: var(--sklearn-color-fitted-level-0);
 }
 
 /* Estimator box, darken color on hover, unfitted */
 #$id div.sk-estimator:hover {
-  background-color: #ffe0b3;
-  /* Dark Orange */
+  background-color: var(--sklearn-color-unfitted-level-2);
 }
 
 /* Estimator box, darken color on hover, fitted */
 #$id div.sk-estimator.fitted:hover {
-  background-color: #d4ebff;
-  /* Dark Blue */
+  background-color: var(--sklearn-color-fitted-level-2);
 }
 
 
@@ -171,16 +171,26 @@
   flex-grow: 1;
 }
 
+/* Label box, darken color not hovered, unfitted */
+#$id div.sk-label label.sk-toggleable__label {
+  color: var(--sklearn-color-text-on-default-background);
+}
+
+/* Label box, darken color not hovered, fitted */
+#$id div.sk-label.fitted label.sk-toggleable__label.fitted {
+  color: var(--sklearn-color-text-on-default-background);
+}
+
 /* Label box, darken color on hover, unfitted */
 #$id div.sk-label:hover label.sk-toggleable__label {
-  background-color: #ffe0b3;
-  /* Dark Orange */
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-unfitted-level-2);
 }
 
 /* Label box, darken color on hover, fitted */
 #$id div.sk-label.fitted:hover label.sk-toggleable__label.fitted {
-  background-color: #d4ebff;
-  /* Dark Blue */
+  color: var(--sklearn-color-text);
+  background-color: var(--sklearn-color-fitted-level-2);
 }
 
 #$id div.sk-serial::before {
@@ -199,8 +209,8 @@
   flex-direction: column;
   align-items: center;
   background-color: var(--sklearn-color-background);
-  padding-right: 0.2em;
-  padding-left: 0.2em;
+  padding-right: 1em;
+  padding-left: 1em;
   position: relative;
 }
 

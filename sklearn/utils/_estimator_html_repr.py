@@ -119,7 +119,7 @@ def _write_label_html(
             '<input class="sk-toggleable__control sk-hidden--visually"'
             f' id="{est_id}" '
             f'type="checkbox" {checked_str}><label for="{est_id}" '
-            f'class="{label_class} {fitted_str}">{name}'
+            f'class="{label_class} {fitted_str}">&nbsp;&nbsp;{name}'
             f"{doc_link}{is_fitted_icon}</label><div "
             f'class="sk-toggleable__content {fitted_str}">'
             f"<pre>{name_details}</pre></div> "
@@ -282,7 +282,7 @@ def estimator_html_repr(estimator):
             fitted_str = ""
 
     is_fitted_icon = (
-        f'<span class="sk-estimator-fit-status {fitted_str}">i{status_label}</span>'
+        f'<span class="sk-estimator-doc-link {fitted_str}">i{status_label}</span>'
     )
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
