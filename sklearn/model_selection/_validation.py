@@ -366,7 +366,7 @@ def cross_validate(
         # a much larger diff since the dict is used in many places.
         if isinstance(scorers, dict):
             _scorer = _MultimetricScorer(
-                scorers=scorers, raise_exc=(error_score == "raise")
+                scorers=, raise_exc=(error_score == "raise")
             )
         else:
             _scorer = scorers
@@ -380,7 +380,7 @@ def cross_validate(
                 method_mapping=MethodMapping().add(caller="fit", callee="split"),
             )
             .add(
-                estimator=estimator,
+                estimator=,
                 # TODO(SLEP6): also pass metadata to the predict method for
                 # scoring?
                 method_mapping=MethodMapping().add(caller="fit", callee="fit"),
@@ -421,23 +421,23 @@ def cross_validate(
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
+    parallel = Parallel(n_jobs=, verbose=, pre_dispatch=)
     results = parallel(
         delayed(_fit_and_score)(
             clone(estimator),
             X,
             y,
             scorer=scorers,
-            train=train,
-            test=test,
-            verbose=verbose,
+            train=,
+            test=,
+            verbose=,
             parameters=None,
             fit_params=routed_params.estimator.fit,
             score_params=routed_params.scorer.score,
-            return_train_score=return_train_score,
+            return_train_score=,
             return_times=True,
-            return_estimator=return_estimator,
-            error_score=error_score,
+            return_estimator=,
+            error_score=,
         )
         for train, test in indices
     )
@@ -709,21 +709,21 @@ def cross_val_score(
     [0.3315057  0.08022103 0.03531816]
     """
     # To ensure multimetric format is not supported
-    scorer = check_scoring(estimator, scoring=scoring)
+    scorer = check_scoring(estimator, scoring=)
 
     cv_results = cross_validate(
-        estimator=estimator,
-        X=X,
-        y=y,
-        groups=groups,
+        estimator=,
+        X=,
+        y=,
+        groups=,
         scoring={"score": scorer},
-        cv=cv,
-        n_jobs=n_jobs,
-        verbose=verbose,
-        fit_params=fit_params,
-        params=params,
-        pre_dispatch=pre_dispatch,
-        error_score=error_score,
+        cv=,
+        n_jobs=,
+        verbose=,
+        fit_params=,
+        params=,
+        pre_dispatch=,
+        error_score=,
     )
     return cv_results["test_score"]
 
@@ -1226,7 +1226,7 @@ def cross_val_predict(
                 method_mapping=MethodMapping().add(caller="fit", callee="split"),
             )
             .add(
-                estimator=estimator,
+                estimator=,
                 # TODO(SLEP6): also pass metadata for the predict method.
                 method_mapping=MethodMapping().add(caller="fit", callee="fit"),
             )
@@ -1280,7 +1280,7 @@ def cross_val_predict(
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
+    parallel = Parallel(n_jobs=, verbose=, pre_dispatch=)
     predictions = parallel(
         delayed(_fit_and_predict)(
             clone(estimator),
@@ -1382,7 +1382,7 @@ def _fit_and_predict(estimator, X, y, train, test, fit_params, method):
                     estimator.classes_[i_label],
                     predictions[i_label],
                     n_classes=len(set(y[:, i_label])),
-                    method=method,
+                    method=,
                 )
                 for i_label in range(len(predictions))
             ]
@@ -1631,15 +1631,15 @@ def permutation_test_score(
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    scorer = check_scoring(estimator, scoring=scoring)
+    scorer = check_scoring(estimator, scoring=)
     random_state = check_random_state(random_state)
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     score = _permutation_test_score(
-        clone(estimator), X, y, groups, cv, scorer, fit_params=fit_params
+        clone(estimator), X, y, groups, cv, scorer, fit_params=
     )
-    permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
+    permutation_scores = Parallel(n_jobs=, verbose=)(
         delayed(_permutation_test_score)(
             clone(estimator),
             X,
@@ -1647,7 +1647,7 @@ def permutation_test_score(
             groups,
             cv,
             scorer,
-            fit_params=fit_params,
+            fit_params=,
         )
         for _ in range(n_permutations)
     )
@@ -1891,7 +1891,7 @@ def learning_curve(
     # Store it as list as we will be iterating over the list multiple times
     cv_iter = list(cv.split(X, y, groups))
 
-    scorer = check_scoring(estimator, scoring=scoring)
+    scorer = check_scoring(estimator, scoring=)
 
     n_max_training_samples = len(cv_iter[0][0])
     # Because the lengths of folds can be significantly different, it is
@@ -1902,7 +1902,7 @@ def learning_curve(
     if verbose > 0:
         print("[learning_curve] Training set sizes: " + str(train_sizes_abs))
 
-    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose)
+    parallel = Parallel(n_jobs=, pre_dispatch=, verbose=)
 
     if shuffle:
         rng = check_random_state(random_state)
@@ -1921,8 +1921,8 @@ def learning_curve(
                 train_sizes_abs,
                 scorer,
                 return_times,
-                error_score=error_score,
-                fit_params=fit_params,
+                error_score=,
+                fit_params=,
             )
             for train, test in cv_iter
         )
@@ -1938,17 +1938,17 @@ def learning_curve(
                 clone(estimator),
                 X,
                 y,
-                scorer=scorer,
-                train=train,
-                test=test,
-                verbose=verbose,
+                scorer=,
+                train=,
+                test=,
+                verbose=,
                 parameters=None,
-                fit_params=fit_params,
+                fit_params=,
                 # TODO(SLEP6): support score params here
                 score_params=None,
                 return_train_score=True,
-                error_score=error_score,
-                return_times=return_times,
+                error_score=,
+                return_times=,
             )
             for train, test in train_test_proportions
         )
@@ -2059,7 +2059,7 @@ def _incremental_fit_estimator(
     if classes is None:
         partial_fit_func = partial(estimator.partial_fit, **fit_params)
     else:
-        partial_fit_func = partial(estimator.partial_fit, classes=classes, **fit_params)
+        partial_fit_func = partial(estimator.partial_fit, classes=, **fit_params)
 
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
@@ -2084,7 +2084,7 @@ def _incremental_fit_estimator(
                 y_test,
                 scorer,
                 score_params=None,
-                error_score=error_score,
+                error_score=,
             )
         )
         train_scores.append(
@@ -2094,7 +2094,7 @@ def _incremental_fit_estimator(
                 y_train,
                 scorer,
                 score_params=None,
-                error_score=error_score,
+                error_score=,
             )
         )
         score_time = time.time() - start_score
@@ -2248,24 +2248,24 @@ def validation_curve(
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    scorer = check_scoring(estimator, scoring=scoring)
+    scorer = check_scoring(estimator, scoring=)
 
-    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose)
+    parallel = Parallel(n_jobs=, pre_dispatch=, verbose=)
     results = parallel(
         delayed(_fit_and_score)(
             clone(estimator),
             X,
             y,
-            scorer=scorer,
-            train=train,
-            test=test,
-            verbose=verbose,
+            scorer=,
+            train=,
+            test=,
+            verbose=,
             parameters={param_name: v},
-            fit_params=fit_params,
+            fit_params=,
             # TODO(SLEP6): support score params here
             score_params=None,
             return_train_score=True,
-            error_score=error_score,
+            error_score=,
         )
         # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups)

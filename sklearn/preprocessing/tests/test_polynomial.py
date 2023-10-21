@@ -62,9 +62,7 @@ def test_spline_transformer_integer_knots(extrapolation):
     """Test that SplineTransformer accepts integer value knot positions."""
     X = np.arange(20).reshape(10, 2)
     knots = [[0, 1], [1, 2], [5, 5], [11, 10], [12, 11]]
-    _ = SplineTransformer(
-        degree=3, knots=knots, extrapolation=extrapolation
-    ).fit_transform(X)
+    _ = SplineTransformer(degree=3, knots=, extrapolation=).fit_transform(X)
 
 
 def test_spline_transformer_feature_names():
@@ -116,7 +114,7 @@ def test_split_transform_feature_names_extrapolation_degree(extrapolation, degre
     Non-regression test for gh-25292.
     """
     X = np.arange(20).reshape(10, 2)
-    splt = SplineTransformer(degree=degree, extrapolation=extrapolation).fit(X)
+    splt = SplineTransformer(degree=, extrapolation=).fit(X)
     feature_names = splt.get_feature_names_out(["a", "b"])
     assert len(feature_names) == splt.n_features_out_
 
@@ -142,11 +140,11 @@ def test_spline_transformer_unity_decomposition(degree, n_knots, knots, extrapol
         n_knots = n_knots + degree  # periodic splines require degree < n_knots
 
     splt = SplineTransformer(
-        n_knots=n_knots,
-        degree=degree,
-        knots=knots,
+        n_knots=,
+        degree=,
+        knots=,
         include_bias=True,
-        extrapolation=extrapolation,
+        extrapolation=,
     )
     splt.fit(X_train)
     for X in [X_train, X_test]:
@@ -202,7 +200,7 @@ def test_spline_transformer_get_base_knot_positions(
     """Check the behaviour to find knot positions with and without sample_weight."""
     X = np.array([[0, 2], [0, 2], [2, 2], [3, 3], [4, 6], [5, 8], [6, 14]])
     base_knots = SplineTransformer._get_base_knot_positions(
-        X=X, knots=knots, n_knots=n_knots, sample_weight=sample_weight
+        X=, knots=, n_knots=, sample_weight=
     )
     assert_allclose(base_knots, expected_knots)
 
@@ -246,7 +244,7 @@ def test_spline_transformer_periodic_spline_backport():
 
     # Use periodic extrapolation backport in SplineTransformer
     transformer = SplineTransformer(
-        degree=degree, extrapolation="periodic", knots=[[-1.0], [0.0], [1.0]]
+        degree=, extrapolation="periodic", knots=[[-1.0], [0.0], [1.0]]
     )
     Xt = transformer.fit_transform(X)
 
@@ -285,7 +283,7 @@ def test_spline_transformer_periodic_splines_smoothness(degree):
     X = np.linspace(-2, 10, 10_000)[:, None]
 
     transformer = SplineTransformer(
-        degree=degree,
+        degree=,
         extrapolation="periodic",
         knots=[[0.0], [1.0], [3.0], [4.0], [5.0], [8.0]],
     )
@@ -333,7 +331,7 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
                 "spline",
                 SplineTransformer(
                     n_knots=4,
-                    degree=degree,
+                    degree=,
                     include_bias=bias,
                     extrapolation="constant",
                 ),
@@ -351,7 +349,7 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
                 "spline",
                 SplineTransformer(
                     n_knots=4,
-                    degree=degree,
+                    degree=,
                     include_bias=bias,
                     extrapolation="linear",
                 ),
@@ -364,7 +362,7 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
 
     # 'error'
     splt = SplineTransformer(
-        n_knots=4, degree=degree, include_bias=bias, extrapolation="error"
+        n_knots=4, degree=, include_bias=bias, extrapolation="error"
     )
     splt.fit(X)
     msg = "X contains values beyond the limits of the knots"
@@ -382,11 +380,11 @@ def test_spline_transformer_kbindiscretizer():
     n_knots = n_bins + 1
 
     splt = SplineTransformer(
-        n_knots=n_knots, degree=0, knots="quantile", include_bias=True
+        n_knots=, degree=0, knots="quantile", include_bias=True
     )
     splines = splt.fit_transform(X)
 
-    kbd = KBinsDiscretizer(n_bins=n_bins, encode="onehot-dense", strategy="quantile")
+    kbd = KBinsDiscretizer(n_bins=, encode="onehot-dense", strategy="quantile")
     kbins = kbd.fit_transform(X)
 
     # Though they should be exactly equal, we test approximately with high
@@ -411,17 +409,17 @@ def test_spline_transformer_sparse_output(
     X = rng.randn(200).reshape(40, 5)
 
     splt_dense = SplineTransformer(
-        degree=degree,
-        knots=knots,
-        extrapolation=extrapolation,
-        include_bias=include_bias,
+        degree=,
+        knots=,
+        extrapolation=,
+        include_bias=,
         sparse_output=False,
     )
     splt_sparse = SplineTransformer(
-        degree=degree,
-        knots=knots,
-        extrapolation=extrapolation,
-        include_bias=include_bias,
+        degree=,
+        knots=,
+        extrapolation=,
+        include_bias=,
         sparse_output=True,
     )
 
@@ -478,11 +476,11 @@ def test_spline_transformer_n_features_out(
         pytest.skip("The option `sparse_output` is available as of scipy 1.8.0")
 
     splt = SplineTransformer(
-        n_knots=n_knots,
-        degree=degree,
-        include_bias=include_bias,
-        extrapolation=extrapolation,
-        sparse_output=sparse_output,
+        n_knots=,
+        degree=,
+        include_bias=,
+        extrapolation=,
+        sparse_output=,
     )
     X = np.linspace(0, 1, 10)[:, None]
     splt.fit(X)
@@ -540,9 +538,7 @@ def test_polynomial_features_one_feature(
     X, P = single_feature_degree3
     if X_container is not None:
         X = X_container(X)
-    tf = PolynomialFeatures(
-        degree=degree, include_bias=include_bias, interaction_only=interaction_only
-    ).fit(X)
+    tf = PolynomialFeatures(degree=, include_bias=, interaction_only=).fit(X)
     out = tf.transform(X)
     if X_container is not None:
         out = out.toarray()
@@ -611,9 +607,7 @@ def test_polynomial_features_two_features(
     X, P = two_features_degree3
     if X_container is not None:
         X = X_container(X)
-    tf = PolynomialFeatures(
-        degree=degree, include_bias=include_bias, interaction_only=interaction_only
-    ).fit(X)
+    tf = PolynomialFeatures(degree=, include_bias=, interaction_only=).fit(X)
     out = tf.transform(X)
     if X_container is not None:
         out = out.toarray()
@@ -719,9 +713,7 @@ def test_polynomial_features_csc_X(
     X = rng.randint(0, 2, (100, 2))
     X_csc = csc_container(X)
 
-    est = PolynomialFeatures(
-        deg, include_bias=include_bias, interaction_only=interaction_only
-    )
+    est = PolynomialFeatures(deg, include_bias=, interaction_only=)
     Xt_csc = est.fit_transform(X_csc.astype(dtype))
     Xt_dense = est.fit_transform(X.astype(dtype))
 
@@ -749,9 +741,7 @@ def test_polynomial_features_csr_X(
     X = rng.randint(0, 2, (100, 2))
     X_csr = csr_container(X)
 
-    est = PolynomialFeatures(
-        deg, include_bias=include_bias, interaction_only=interaction_only
-    )
+    est = PolynomialFeatures(deg, include_bias=, interaction_only=)
     Xt_csr = est.fit_transform(X_csr.astype(dtype))
     Xt_dense = est.fit_transform(X.astype(dtype, copy=False))
 
@@ -776,18 +766,18 @@ def test_num_combinations(
     x = csr_container(([1], ([0], [n_features - 1])))
     est = PolynomialFeatures(
         degree=max_degree,
-        interaction_only=interaction_only,
-        include_bias=include_bias,
+        interaction_only=,
+        include_bias=,
     )
     est.fit(x)
     num_combos = est.n_output_features_
 
     combos = PolynomialFeatures._combinations(
-        n_features=n_features,
+        n_features=,
         min_degree=0,
-        max_degree=max_degree,
-        interaction_only=interaction_only,
-        include_bias=include_bias,
+        max_degree=,
+        interaction_only=,
+        include_bias=,
     )
     assert num_combos == sum([1 for _ in combos])
 
@@ -808,9 +798,7 @@ def test_polynomial_features_csr_X_floats(
     X_csr = csr_container(sparse_random(1000, 10, 0.5, random_state=0))
     X = X_csr.toarray()
 
-    est = PolynomialFeatures(
-        deg, include_bias=include_bias, interaction_only=interaction_only
-    )
+    est = PolynomialFeatures(deg, include_bias=, interaction_only=)
     Xt_csr = est.fit_transform(X_csr.astype(dtype))
     Xt_dense = est.fit_transform(X.astype(dtype))
 
@@ -844,7 +832,7 @@ def test_polynomial_features_csr_X_zero_row(
     X_csr[zero_row_index, :] = 0.0
     X = X_csr.toarray()
 
-    est = PolynomialFeatures(deg, include_bias=False, interaction_only=interaction_only)
+    est = PolynomialFeatures(deg, include_bias=False, interaction_only=)
     Xt_csr = est.fit_transform(X_csr)
     Xt_dense = est.fit_transform(X)
 
@@ -866,9 +854,7 @@ def test_polynomial_features_csr_X_degree_4(
     X_csr = csr_container(sparse_random(1000, 10, 0.5, random_state=0))
     X = X_csr.toarray()
 
-    est = PolynomialFeatures(
-        4, include_bias=include_bias, interaction_only=interaction_only
-    )
+    est = PolynomialFeatures(4, include_bias=, interaction_only=)
     Xt_csr = est.fit_transform(X_csr)
     Xt_dense = est.fit_transform(X)
 
@@ -897,7 +883,7 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only, csr_con
     X_csr = csr_container(sparse_random(1000, dim, 0.5, random_state=0))
     X = X_csr.toarray()
 
-    est = PolynomialFeatures(deg, interaction_only=interaction_only)
+    est = PolynomialFeatures(deg, interaction_only=)
     Xt_csr = est.fit_transform(X_csr)
     Xt_dense = est.fit_transform(X)
 
@@ -943,14 +929,12 @@ def test_csr_polynomial_expansion_index_overflow_non_regression(
         shape=(n_samples, n_features),
         dtype=data_dtype,
     )
-    pf = PolynomialFeatures(
-        interaction_only=interaction_only, include_bias=include_bias, degree=2
-    )
+    pf = PolynomialFeatures(interaction_only=, include_bias=, degree=2)
 
     # Calculate the number of combinations a-priori, and if needed check for
     # the correct ValueError and terminate the test early.
     num_combinations = pf._num_combinations(
-        n_features=n_features,
+        n_features=,
         min_degree=0,
         max_degree=2,
         interaction_only=pf.interaction_only,
@@ -1065,14 +1049,12 @@ def test_csr_polynomial_expansion_index_overflow(
     )
 
     X = csr_container((data, (row, col)))
-    pf = PolynomialFeatures(
-        interaction_only=interaction_only, include_bias=include_bias, degree=degree
-    )
+    pf = PolynomialFeatures(interaction_only=, include_bias=, degree=)
 
     # Calculate the number of combinations a-priori, and if needed check for
     # the correct ValueError and terminate the test early.
     num_combinations = pf._num_combinations(
-        n_features=n_features,
+        n_features=,
         min_degree=0,
         max_degree=degree,
         interaction_only=pf.interaction_only,
@@ -1154,9 +1136,7 @@ def test_csr_polynomial_expansion_too_large_to_index(
     row = [0]
     col = [n_features - 1]
     X = csr_container((data, (row, col)))
-    pf = PolynomialFeatures(
-        interaction_only=interaction_only, include_bias=include_bias, degree=(2, 2)
-    )
+    pf = PolynomialFeatures(interaction_only=, include_bias=, degree=(2, 2))
     msg = (
         r"The output that would result from the current configuration would have \d*"
         r" features which is too large to be indexed"

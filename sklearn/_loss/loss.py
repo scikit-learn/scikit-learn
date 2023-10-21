@@ -190,11 +190,11 @@ class BaseLoss:
             raw_prediction = raw_prediction.squeeze(1)
 
         return self.closs.loss(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            loss_out=loss_out,
-            n_threads=n_threads,
+            y_true=,
+            raw_prediction=,
+            sample_weight=,
+            loss_out=,
+            n_threads=,
         )
 
     def loss_gradient(
@@ -251,12 +251,12 @@ class BaseLoss:
             gradient_out = gradient_out.squeeze(1)
 
         return self.closs.loss_gradient(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            loss_out=loss_out,
-            gradient_out=gradient_out,
-            n_threads=n_threads,
+            y_true=,
+            raw_prediction=,
+            sample_weight=,
+            loss_out=,
+            gradient_out=,
+            n_threads=,
         )
 
     def gradient(
@@ -300,11 +300,11 @@ class BaseLoss:
             gradient_out = gradient_out.squeeze(1)
 
         return self.closs.gradient(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            gradient_out=gradient_out,
-            n_threads=n_threads,
+            y_true=,
+            raw_prediction=,
+            sample_weight=,
+            gradient_out=,
+            n_threads=,
         )
 
     def gradient_hessian(
@@ -364,12 +364,12 @@ class BaseLoss:
             hessian_out = hessian_out.squeeze(1)
 
         return self.closs.gradient_hessian(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            gradient_out=gradient_out,
-            hessian_out=hessian_out,
-            n_threads=n_threads,
+            y_true=,
+            raw_prediction=,
+            sample_weight=,
+            gradient_out=,
+            hessian_out=,
+            n_threads=,
         )
 
     def __call__(self, y_true, raw_prediction, sample_weight=None, n_threads=1):
@@ -394,11 +394,11 @@ class BaseLoss:
         """
         return np.average(
             self.loss(
-                y_true=y_true,
-                raw_prediction=raw_prediction,
+                y_true=,
+                raw_prediction=,
                 sample_weight=None,
                 loss_out=None,
-                n_threads=n_threads,
+                n_threads=,
             ),
             weights=sample_weight,
         )
@@ -490,16 +490,16 @@ class BaseLoss:
             shape = (n_samples, self.n_classes)
         else:
             shape = (n_samples,)
-        gradient = np.empty(shape=shape, dtype=dtype, order=order)
+        gradient = np.empty(shape=, dtype=, order=)
 
         if self.constant_hessian:
             # If the hessians are constant, we consider them equal to 1.
             # - This is correct for HalfSquaredError
             # - For AbsoluteError, hessians are actually 0, but they are
             #   always ignored anyway.
-            hessian = np.ones(shape=(1,), dtype=dtype)
+            hessian = np.ones(shape=(1,), dtype=)
         else:
-            hessian = np.empty(shape=shape, dtype=dtype, order=order)
+            hessian = np.empty(shape=, dtype=, order=)
 
         return gradient, hessian
 
@@ -814,15 +814,15 @@ class HalfTweedieLoss(BaseLoss):
     def constant_to_optimal_zero(self, y_true, sample_weight=None):
         if self.closs.power == 0:
             return HalfSquaredError().constant_to_optimal_zero(
-                y_true=y_true, sample_weight=sample_weight
+                y_true=, sample_weight=
             )
         elif self.closs.power == 1:
             return HalfPoissonLoss().constant_to_optimal_zero(
-                y_true=y_true, sample_weight=sample_weight
+                y_true=, sample_weight=
             )
         elif self.closs.power == 2:
             return HalfGammaLoss().constant_to_optimal_zero(
-                y_true=y_true, sample_weight=sample_weight
+                y_true=, sample_weight=
             )
         else:
             p = self.closs.power
@@ -988,7 +988,7 @@ class HalfMultinomialLoss(BaseLoss):
         super().__init__(
             closs=CyHalfMultinomialLoss(),
             link=MultinomialLogit(),
-            n_classes=n_classes,
+            n_classes=,
         )
         self.interval_y_true = Interval(0, np.inf, True, False)
         self.interval_y_pred = Interval(0, 1, False, False)
@@ -1076,12 +1076,12 @@ class HalfMultinomialLoss(BaseLoss):
             proba_out = np.empty_like(gradient_out)
 
         return self.closs.gradient_proba(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            gradient_out=gradient_out,
-            proba_out=proba_out,
-            n_threads=n_threads,
+            y_true=,
+            raw_prediction=,
+            sample_weight=,
+            gradient_out=,
+            proba_out=,
+            n_threads=,
         )
 
 

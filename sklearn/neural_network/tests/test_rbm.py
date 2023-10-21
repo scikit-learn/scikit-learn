@@ -243,7 +243,7 @@ def test_convergence_dtype_consistency():
 def test_feature_names_out(method):
     """Check `get_feature_names_out` for `BernoulliRBM`."""
     n_components = 10
-    rbm = BernoulliRBM(n_components=n_components)
+    rbm = BernoulliRBM(n_components=)
     getattr(rbm, method)(Xdigits)
 
     names = rbm.get_feature_names_out()

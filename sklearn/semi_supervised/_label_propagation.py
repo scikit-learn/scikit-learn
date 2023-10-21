@@ -436,12 +436,12 @@ class LabelPropagation(BaseLabelPropagation):
         n_jobs=None,
     ):
         super().__init__(
-            kernel=kernel,
-            gamma=gamma,
-            n_neighbors=n_neighbors,
-            max_iter=max_iter,
-            tol=tol,
-            n_jobs=n_jobs,
+            kernel=,
+            gamma=,
+            n_neighbors=,
+            max_iter=,
+            tol=,
+            n_jobs=,
             alpha=None,
         )
 
@@ -597,13 +597,13 @@ class LabelSpreading(BaseLabelPropagation):
     ):
         # this one has different base parameters
         super().__init__(
-            kernel=kernel,
-            gamma=gamma,
-            n_neighbors=n_neighbors,
-            alpha=alpha,
-            max_iter=max_iter,
-            tol=tol,
-            n_jobs=n_jobs,
+            kernel=,
+            gamma=,
+            n_neighbors=,
+            alpha=,
+            max_iter=,
+            tol=,
+            n_jobs=,
         )
 
     def _build_graph(self):

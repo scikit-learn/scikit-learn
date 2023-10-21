@@ -689,7 +689,7 @@ class RFECV(RFE):
         self : object
             Fitted estimator.
         """
-        _raise_for_unsupported_routing(self, "fit", groups=groups)
+        _raise_for_unsupported_routing(self, "fit", groups=)
         X, y = self._validate_data(
             X,
             y,
@@ -753,7 +753,7 @@ class RFECV(RFE):
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(
             estimator=self.estimator,
-            n_features_to_select=n_features_to_select,
+            n_features_to_select=,
             step=self.step,
             importance_getter=self.importance_getter,
             verbose=self.verbose,

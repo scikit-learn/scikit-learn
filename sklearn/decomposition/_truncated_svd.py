@@ -231,7 +231,7 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
 
         if self.algorithm == "arpack":
             v0 = _init_arpack_v0(min(X.shape), random_state)
-            U, Sigma, VT = svds(X, k=self.n_components, tol=self.tol, v0=v0)
+            U, Sigma, VT = svds(X, k=self.n_components, tol=self.tol, v0=)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             Sigma = Sigma[::-1]
@@ -249,7 +249,7 @@ class TruncatedSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
                 n_iter=self.n_iter,
                 n_oversamples=self.n_oversamples,
                 power_iteration_normalizer=self.power_iteration_normalizer,
-                random_state=random_state,
+                random_state=,
             )
 
         self.components_ = VT

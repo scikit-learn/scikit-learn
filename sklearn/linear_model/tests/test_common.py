@@ -111,7 +111,7 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
         (MultiTaskElasticNet, MultiTaskElasticNetCV, MultiTaskLasso, MultiTaskLassoCV),
     ):
         n_targets = 3
-    X = make_low_rank_matrix(n_samples=n_train, n_features=n_features, random_state=rng)
+    X = make_low_rank_matrix(n_samples=n_train, n_features=, random_state=rng)
     if n_targets:
         coef = (
             rng.uniform(low=-2, high=2, size=(n_features, n_targets))
@@ -139,9 +139,9 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
     # Assert balance property.
     if is_classifier(model):
         assert np.average(model.predict_proba(X)[:, 1], weights=sw) == pytest.approx(
-            np.average(y, weights=sw), rel=rel
+            np.average(y, weights=sw), rel=
         )
     else:
         assert np.average(model.predict(X), weights=sw, axis=0) == pytest.approx(
-            np.average(y, weights=sw, axis=0), rel=rel
+            np.average(y, weights=sw, axis=0), rel=
         )

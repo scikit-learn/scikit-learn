@@ -13,4 +13,4 @@ def test_init_arpack_v0(seed):
     v0 = _init_arpack_v0(size, seed)
 
     rng = check_random_state(seed)
-    assert_allclose(v0, rng.uniform(-1, 1, size=size))
+    assert_allclose(v0, rng.uniform(-1, 1, size=))

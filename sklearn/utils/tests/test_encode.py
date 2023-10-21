@@ -35,7 +35,7 @@ def test_encode_util(values, expected):
     assert_array_equal(result, expected)
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
 
-    encoded = _encode(values, uniques=uniques)
+    encoded = _encode(values, uniques=)
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
 
     result, counts = _unique(values, return_counts=True)
@@ -55,16 +55,16 @@ def test_encode_with_check_unknown():
 
     # Default is True, raise error
     with pytest.raises(ValueError, match="y contains previously unseen labels"):
-        _encode(values, uniques=uniques, check_unknown=True)
+        _encode(values, uniques=, check_unknown=True)
 
     # dont raise error if False
-    _encode(values, uniques=uniques, check_unknown=False)
+    _encode(values, uniques=, check_unknown=False)
 
     # parameter is ignored for object dtype
     uniques = np.array(["a", "b", "c"], dtype=object)
     values = np.array(["a", "b", "c", "d"], dtype=object)
     with pytest.raises(ValueError, match="y contains previously unseen labels"):
-        _encode(values, uniques=uniques, check_unknown=False)
+        _encode(values, uniques=, check_unknown=False)
 
 
 def _assert_check_unknown(values, uniques, expected_diff, expected_mask):
@@ -181,7 +181,7 @@ def test_unique_util_missing_values_objects(missing_value, pickle_uniques):
     if pickle_uniques:
         uniques = pickle.loads(pickle.dumps(uniques))
 
-    encoded = _encode(values, uniques=uniques)
+    encoded = _encode(values, uniques=)
     assert_array_equal(encoded, np.array([0, 2, 2, 3, 1]))
 
 
@@ -198,7 +198,7 @@ def test_unique_util_missing_values_numeric():
     assert_array_equal(uniques, expected_uniques)
     assert_array_equal(inverse, expected_inverse)
 
-    encoded = _encode(values, uniques=uniques)
+    encoded = _encode(values, uniques=)
     assert_array_equal(encoded, expected_inverse)
 
 

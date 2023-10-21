@@ -39,7 +39,7 @@ centers = [[0.0, 0.0], [2.0, 2.0]]
 clusters_std = [1.5, 0.5]
 X, y = make_blobs(
     n_samples=[n_samples_1, n_samples_2],
-    centers=centers,
+    centers=,
     cluster_std=clusters_std,
     random_state=0,
     shuffle=False,
@@ -66,7 +66,7 @@ disp = DecisionBoundaryDisplay.from_estimator(
     levels=[0],
     alpha=0.5,
     linestyles=["-"],
-    ax=ax,
+    ax=,
 )
 
 # plot decision boundary and margins for weighted classes
@@ -78,7 +78,7 @@ wdisp = DecisionBoundaryDisplay.from_estimator(
     levels=[0],
     alpha=0.5,
     linestyles=["-"],
-    ax=ax,
+    ax=,
 )
 
 plt.legend(

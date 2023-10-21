@@ -43,7 +43,7 @@ def test_kernel_ridge_singular_kernel():
 def test_kernel_ridge_precomputed():
     for kernel in ["linear", "rbf", "poly", "cosine"]:
         K = pairwise_kernels(X, X, metric=kernel)
-        pred = KernelRidge(kernel=kernel).fit(X, y).predict(X)
+        pred = KernelRidge(kernel=).fit(X, y).predict(X)
         pred2 = KernelRidge(kernel="precomputed").fit(K, y).predict(K)
         assert_array_almost_equal(pred, pred2)
 

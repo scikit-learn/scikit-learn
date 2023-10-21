@@ -56,7 +56,7 @@ ax.set_title("Total Impurity vs effective alpha for training set")
 # leaving the tree, ``clfs[-1]``, with one node.
 clfs = []
 for ccp_alpha in ccp_alphas:
-    clf = DecisionTreeClassifier(random_state=0, ccp_alpha=ccp_alpha)
+    clf = DecisionTreeClassifier(random_state=0, ccp_alpha=)
     clf.fit(X_train, y_train)
     clfs.append(clf)
 print(

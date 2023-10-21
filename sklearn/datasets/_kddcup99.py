@@ -155,11 +155,11 @@ def fetch_kddcup99(
 
         .. versionadded:: 0.20
     """
-    data_home = get_data_home(data_home=data_home)
+    data_home = get_data_home(data_home=)
     kddcup99 = _fetch_brute_kddcup99(
-        data_home=data_home,
-        percent10=percent10,
-        download_if_missing=download_if_missing,
+        data_home=,
+        percent10=,
+        download_if_missing=,
     )
 
     data = kddcup99.data
@@ -220,7 +220,7 @@ def fetch_kddcup99(
             ]
 
     if shuffle:
-        data, target = shuffle_method(data, target, random_state=random_state)
+        data, target = shuffle_method(data, target, random_state=)
 
     fdescr = load_descr("kddcup99.rst")
 
@@ -234,11 +234,11 @@ def fetch_kddcup99(
         return data, target
 
     return Bunch(
-        data=data,
-        target=target,
-        frame=frame,
-        target_names=target_names,
-        feature_names=feature_names,
+        data=,
+        target=,
+        frame=,
+        target_names=,
+        feature_names=,
         DESCR=fdescr,
     )
 
@@ -278,7 +278,7 @@ def _fetch_brute_kddcup99(data_home=None, download_if_missing=True, percent10=Tr
 
     """
 
-    data_home = get_data_home(data_home=data_home)
+    data_home = get_data_home(data_home=)
     dir_suffix = "-py3"
 
     if percent10:
@@ -382,12 +382,7 @@ def _fetch_brute_kddcup99(data_home=None, download_if_missing=True, percent10=Tr
     else:
         raise OSError("Data not found and `download_if_missing` is False")
 
-    return Bunch(
-        data=X,
-        target=y,
-        feature_names=feature_names,
-        target_names=[target_names],
-    )
+    return Bunch(data=X, target=y, feature_names=, target_names=[target_names])
 
 
 def _mkdirp(d):

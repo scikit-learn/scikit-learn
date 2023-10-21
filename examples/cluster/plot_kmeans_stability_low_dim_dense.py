@@ -56,12 +56,12 @@ def make_data(random_state, n_samples_per_center, grid_size, scale):
     n_clusters_true, n_features = centers.shape
 
     noise = random_state.normal(
-        scale=scale, size=(n_samples_per_center, centers.shape[1])
+        scale=, size=(n_samples_per_center, centers.shape[1])
     )
 
     X = np.concatenate([c + noise for c in centers])
     y = np.concatenate([[i] * n_samples_per_center for i in range(n_clusters_true)])
-    return shuffle(X, y, random_state=random_state)
+    return shuffle(X, y, random_state=)
 
 
 # Part 1: Quantitative evaluation of various init methods
@@ -86,10 +86,10 @@ for factory, init, params, format in cases:
         X, y = make_data(run_id, n_samples_per_center, grid_size, scale)
         for i, n_init in enumerate(n_init_range):
             km = factory(
-                n_clusters=n_clusters,
-                init=init,
+                n_clusters=,
+                init=,
                 random_state=run_id,
-                n_init=n_init,
+                n_init=,
                 **params,
             ).fit(X)
             inertia[i, run_id] = km.inertia_
@@ -108,7 +108,7 @@ plt.title("Mean inertia for various k-means init across %d runs" % n_runs)
 
 X, y = make_data(random_state, n_samples_per_center, grid_size, scale)
 km = MiniBatchKMeans(
-    n_clusters=n_clusters, init="random", n_init=1, random_state=random_state
+    n_clusters=, init="random", n_init=1, random_state=
 ).fit(X)
 
 plt.figure()

@@ -463,7 +463,7 @@ class LatentDirichletAllocation(
         # TODO: make Parallel._effective_n_jobs public instead?
         n_jobs = effective_n_jobs(self.n_jobs)
         if parallel is None:
-            parallel = Parallel(n_jobs=n_jobs, verbose=max(0, self.verbose - 1))
+            parallel = Parallel(n_jobs=, verbose=max(0, self.verbose - 1))
         results = parallel(
             delayed(_update_doc_distribution)(
                 X[idx_slice, :],
@@ -522,7 +522,7 @@ class LatentDirichletAllocation(
 
         # E-step
         _, suff_stats = self._e_step(
-            X, cal_sstats=True, random_init=True, parallel=parallel
+            X, cal_sstats=True, random_init=True, parallel=
         )
 
         # M-step
@@ -569,7 +569,7 @@ class LatentDirichletAllocation(
             X,
             reset=reset_n_features,
             accept_sparse="csr",
-            dtype=dtype,
+            dtype=,
         )
         check_non_negative(X, whom)
 
@@ -612,13 +612,13 @@ class LatentDirichletAllocation(
             )
 
         n_jobs = effective_n_jobs(self.n_jobs)
-        with Parallel(n_jobs=n_jobs, verbose=max(0, self.verbose - 1)) as parallel:
+        with Parallel(n_jobs=, verbose=max(0, self.verbose - 1)) as parallel:
             for idx_slice in gen_batches(n_samples, batch_size):
                 self._em_step(
                     X[idx_slice, :],
                     total_samples=self.total_samples,
                     batch_update=False,
-                    parallel=parallel,
+                    parallel=,
                 )
 
         return self
@@ -658,7 +658,7 @@ class LatentDirichletAllocation(
         # change to perplexity later
         last_bound = None
         n_jobs = effective_n_jobs(self.n_jobs)
-        with Parallel(n_jobs=n_jobs, verbose=max(0, self.verbose - 1)) as parallel:
+        with Parallel(n_jobs=, verbose=max(0, self.verbose - 1)) as parallel:
             for i in range(max_iter):
                 if learning_method == "online":
                     for idx_slice in gen_batches(n_samples, batch_size):
@@ -666,18 +666,18 @@ class LatentDirichletAllocation(
                             X[idx_slice, :],
                             total_samples=n_samples,
                             batch_update=False,
-                            parallel=parallel,
+                            parallel=,
                         )
                 else:
                     # batch update
                     self._em_step(
-                        X, total_samples=n_samples, batch_update=True, parallel=parallel
+                        X, total_samples=n_samples, batch_update=True, parallel=
                     )
 
                 # check perplexity
                 if evaluate_every > 0 and (i + 1) % evaluate_every == 0:
                     doc_topics_distr, _ = self._e_step(
-                        X, cal_sstats=False, random_init=False, parallel=parallel
+                        X, cal_sstats=False, random_init=False, parallel=
                     )
                     bound = self._perplexity_precomp_distr(
                         X, doc_topics_distr, sub_sampling=False
@@ -698,7 +698,7 @@ class LatentDirichletAllocation(
 
         # calculate final perplexity value on train set
         doc_topics_distr, _ = self._e_step(
-            X, cal_sstats=False, random_init=False, parallel=parallel
+            X, cal_sstats=False, random_init=False, parallel=
         )
         self.bound_ = self._perplexity_precomp_distr(
             X, doc_topics_distr, sub_sampling=False
@@ -921,7 +921,7 @@ class LatentDirichletAllocation(
         X = self._check_non_neg_array(
             X, reset_n_features=True, whom="LatentDirichletAllocation.perplexity"
         )
-        return self._perplexity_precomp_distr(X, sub_sampling=sub_sampling)
+        return self._perplexity_precomp_distr(X, sub_sampling=)
 
     @property
     def _n_features_out(self):

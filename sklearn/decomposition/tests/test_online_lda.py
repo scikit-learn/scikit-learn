@@ -40,12 +40,12 @@ def test_lda_default_prior_params(csr_container):
     n_components, X = _build_sparse_array(csr_container)
     prior = 1.0 / n_components
     lda_1 = LatentDirichletAllocation(
-        n_components=n_components,
+        n_components=,
         doc_topic_prior=prior,
         topic_word_prior=prior,
         random_state=0,
     )
-    lda_2 = LatentDirichletAllocation(n_components=n_components, random_state=0)
+    lda_2 = LatentDirichletAllocation(n_components=, random_state=0)
     topic_distr_1 = lda_1.fit_transform(X)
     topic_distr_2 = lda_2.fit_transform(X)
     assert_almost_equal(topic_distr_1, topic_distr_2)
@@ -57,7 +57,7 @@ def test_lda_fit_batch(csr_container):
     rng = np.random.RandomState(0)
     n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
-        n_components=n_components,
+        n_components=,
         evaluate_every=1,
         learning_method="batch",
         random_state=rng,
@@ -77,7 +77,7 @@ def test_lda_fit_online(csr_container):
     rng = np.random.RandomState(0)
     n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
-        n_components=n_components,
+        n_components=,
         learning_offset=10.0,
         evaluate_every=1,
         learning_method="online",
@@ -99,7 +99,7 @@ def test_lda_partial_fit(csr_container):
     rng = np.random.RandomState(0)
     n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
-        n_components=n_components,
+        n_components=,
         learning_offset=10.0,
         total_samples=100,
         random_state=rng,
@@ -119,7 +119,7 @@ def test_lda_dense_input(csr_container):
     rng = np.random.RandomState(0)
     n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
-        n_components=n_components, learning_method="batch", random_state=rng
+        n_components=, learning_method="batch", random_state=rng
     )
     lda.fit(X.toarray())
 
@@ -136,7 +136,7 @@ def test_lda_transform():
     rng = np.random.RandomState(0)
     X = rng.randint(5, size=(20, 10))
     n_components = 3
-    lda = LatentDirichletAllocation(n_components=n_components, random_state=rng)
+    lda = LatentDirichletAllocation(n_components=, random_state=rng)
     X_trans = lda.fit_transform(X)
     assert (X_trans > 0.0).any()
     assert_array_almost_equal(np.sum(X_trans, axis=1), np.ones(X_trans.shape[0]))
@@ -187,7 +187,7 @@ def test_lda_multi_jobs(method, csr_container):
     # Test LDA batch training with multi CPU
     rng = np.random.RandomState(0)
     lda = LatentDirichletAllocation(
-        n_components=n_components,
+        n_components=,
         n_jobs=2,
         learning_method=method,
         evaluate_every=1,
@@ -208,7 +208,7 @@ def test_lda_partial_fit_multi_jobs(csr_container):
     rng = np.random.RandomState(0)
     n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
-        n_components=n_components,
+        n_components=,
         n_jobs=2,
         learning_offset=5.0,
         total_samples=30,
@@ -230,7 +230,7 @@ def test_lda_preplexity_mismatch():
     n_samples = rng.randint(6, 10)
     X = np.random.randint(4, size=(n_samples, 10))
     lda = LatentDirichletAllocation(
-        n_components=n_components,
+        n_components=,
         learning_offset=5.0,
         total_samples=20,
         random_state=rng,
@@ -253,14 +253,14 @@ def test_lda_perplexity(method, csr_container):
     # perplexity should be lower after each iteration
     n_components, X = _build_sparse_array(csr_container)
     lda_1 = LatentDirichletAllocation(
-        n_components=n_components,
+        n_components=,
         max_iter=1,
         learning_method=method,
         total_samples=100,
         random_state=0,
     )
     lda_2 = LatentDirichletAllocation(
-        n_components=n_components,
+        n_components=,
         max_iter=10,
         learning_method=method,
         total_samples=100,
@@ -285,14 +285,14 @@ def test_lda_score(method, csr_container):
     # score should be higher after each iteration
     n_components, X = _build_sparse_array(csr_container)
     lda_1 = LatentDirichletAllocation(
-        n_components=n_components,
+        n_components=,
         max_iter=1,
         learning_method=method,
         total_samples=100,
         random_state=0,
     )
     lda_2 = LatentDirichletAllocation(
-        n_components=n_components,
+        n_components=,
         max_iter=10,
         learning_method=method,
         total_samples=100,
@@ -312,7 +312,7 @@ def test_perplexity_input_format(csr_container):
     # score should be the same for both dense and sparse input
     n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
-        n_components=n_components,
+        n_components=,
         max_iter=1,
         learning_method="batch",
         total_samples=100,
@@ -328,9 +328,7 @@ def test_perplexity_input_format(csr_container):
 def test_lda_score_perplexity(csr_container):
     # Test the relationship between LDA score and perplexity
     n_components, X = _build_sparse_array(csr_container)
-    lda = LatentDirichletAllocation(
-        n_components=n_components, max_iter=10, random_state=0
-    )
+    lda = LatentDirichletAllocation(n_components=, max_iter=10, random_state=0)
     lda.fit(X)
     perplexity_1 = lda.perplexity(X, sub_sampling=False)
 
@@ -345,7 +343,7 @@ def test_lda_fit_perplexity(csr_container):
     # returned by the perplexity method
     n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
-        n_components=n_components,
+        n_components=,
         max_iter=1,
         learning_method="batch",
         random_state=0,
@@ -394,11 +392,11 @@ def check_verbosity(
 ):
     n_components, X = _build_sparse_array(csr_container)
     lda = LatentDirichletAllocation(
-        n_components=n_components,
+        n_components=,
         max_iter=3,
         learning_method="batch",
-        verbose=verbose,
-        evaluate_every=evaluate_every,
+        verbose=,
+        evaluate_every=,
         random_state=0,
     )
     out = StringIO()
@@ -437,7 +435,7 @@ def test_verbosity(
 def test_lda_feature_names_out(csr_container):
     """Check feature names out for LatentDirichletAllocation."""
     n_components, X = _build_sparse_array(csr_container)
-    lda = LatentDirichletAllocation(n_components=n_components).fit(X)
+    lda = LatentDirichletAllocation(n_components=).fit(X)
 
     names = lda.get_feature_names_out()
     assert_array_equal(
@@ -452,7 +450,7 @@ def test_lda_dtype_match(learning_method, global_dtype):
     X = rng.uniform(size=(20, 10)).astype(global_dtype, copy=False)
 
     lda = LatentDirichletAllocation(
-        n_components=5, random_state=0, learning_method=learning_method
+        n_components=5, random_state=0, learning_method=
     )
     lda.fit(X)
     assert lda.components_.dtype == global_dtype
@@ -467,10 +465,10 @@ def test_lda_numerical_consistency(learning_method, global_random_seed):
     X32 = X64.astype(np.float32)
 
     lda_64 = LatentDirichletAllocation(
-        n_components=5, random_state=global_random_seed, learning_method=learning_method
+        n_components=5, random_state=global_random_seed, learning_method=
     ).fit(X64)
     lda_32 = LatentDirichletAllocation(
-        n_components=5, random_state=global_random_seed, learning_method=learning_method
+        n_components=5, random_state=global_random_seed, learning_method=
     ).fit(X32)
 
     assert_allclose(lda_32.components_, lda_64.components_)

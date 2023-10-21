@@ -268,7 +268,7 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
                 _, s, Vt = randomized_svd(
                     X,
                     n_components,
-                    random_state=random_state,
+                    random_state=,
                     n_iter=self.iterated_power,
                 )
                 return s, Vt, squared_norm(X) - squared_norm(s)
@@ -426,7 +426,7 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
     def _rotate(self, components, n_components=None, tol=1e-6):
         "Rotate the factor analysis solution."
         # note that tol is not exposed
-        return _ortho_rotation(components.T, method=self.rotation, tol=tol)[
+        return _ortho_rotation(components.T, method=self.rotation, tol=)[
             : self.n_components
         ]
 

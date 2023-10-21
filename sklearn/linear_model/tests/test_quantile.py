@@ -45,7 +45,7 @@ def test_incompatible_solver_for_sparse_input(X_y_data, solver, csc_container):
         f"Solver {solver} does not support sparse X. Use solver 'highs' for example."
     )
     with pytest.raises(ValueError, match=err_msg):
-        QuantileRegressor(solver=solver).fit(X_sparse, y)
+        QuantileRegressor(solver=).fit(X_sparse, y)
 
 
 @pytest.mark.parametrize("solver", ("highs-ds", "highs-ipm", "highs"))
@@ -57,7 +57,7 @@ def test_too_new_solver_methods_raise_error(X_y_data, solver):
     """Test that highs solver raises for scipy<1.6.0."""
     X, y = X_y_data
     with pytest.raises(ValueError, match="scipy>=1.6.0"):
-        QuantileRegressor(solver=solver).fit(X, y)
+        QuantileRegressor(solver=).fit(X, y)
 
 
 @pytest.mark.parametrize(
@@ -80,7 +80,7 @@ def test_quantile_toy_example(quantile, alpha, intercept, coef, default_solver):
     X = [[0], [1], [1]]
     y = [1, 2, 11]
     model = QuantileRegressor(
-        quantile=quantile, alpha=alpha, solver=default_solver
+        quantile=, alpha=, solver=default_solver
     ).fit(X, y)
     assert_allclose(model.intercept_, intercept, atol=1e-2)
     if coef is not None:
@@ -94,11 +94,9 @@ def test_quantile_toy_example(quantile, alpha, intercept, coef, default_solver):
 def test_quantile_equals_huber_for_low_epsilon(fit_intercept, default_solver):
     X, y = make_regression(n_samples=100, n_features=20, random_state=0, noise=1.0)
     alpha = 1e-4
-    huber = HuberRegressor(
-        epsilon=1 + 1e-4, alpha=alpha, fit_intercept=fit_intercept
-    ).fit(X, y)
+    huber = HuberRegressor(epsilon=1 + 1e-4, alpha=, fit_intercept=).fit(X, y)
     quant = QuantileRegressor(
-        alpha=alpha, fit_intercept=fit_intercept, solver=default_solver
+        alpha=, fit_intercept=, solver=default_solver
     ).fit(X, y)
     assert_allclose(huber.coef_, quant.coef_, atol=1e-1)
     if fit_intercept:
@@ -163,7 +161,7 @@ def test_asymmetric_error(quantile, default_solver):
         scale=-(X @ coef + intercept) / np.log(1 - quantile), size=n_samples
     )
     model = QuantileRegressor(
-        quantile=quantile,
+        quantile=,
         alpha=0,
         solver=default_solver,
     ).fit(X, y)
@@ -177,7 +175,7 @@ def test_asymmetric_error(quantile, default_solver):
 
     # Now compare to Nelder-Mead optimization with L1 penalty
     alpha = 0.01
-    model.set_params(alpha=alpha).fit(X, y)
+    model.set_params(alpha=).fit(X, y)
     model_coef = np.r_[model.intercept_, model.coef_]
 
     def func(coef):
@@ -208,8 +206,8 @@ def test_equivariance(quantile, default_solver):
     rng = np.random.RandomState(42)
     n_samples, n_features = 100, 5
     X, y = make_regression(
-        n_samples=n_samples,
-        n_features=n_features,
+        n_samples=,
+        n_features=,
         n_informative=n_features,
         noise=0,
         random_state=rng,
@@ -218,11 +216,11 @@ def test_equivariance(quantile, default_solver):
     # make y asymmetric
     y += rng.exponential(scale=100, size=y.shape)
     params = dict(alpha=0, solver=default_solver)
-    model1 = QuantileRegressor(quantile=quantile, **params).fit(X, y)
+    model1 = QuantileRegressor(quantile=, **params).fit(X, y)
 
     # coef(q; a*y, X) = a * coef(q; y, X)
     a = 2.5
-    model2 = QuantileRegressor(quantile=quantile, **params).fit(X, a * y)
+    model2 = QuantileRegressor(quantile=, **params).fit(X, a * y)
     assert model2.intercept_ == approx(a * model1.intercept_, rel=1e-5)
     assert_allclose(model2.coef_, a * model1.coef_, rtol=1e-5)
 
@@ -233,14 +231,14 @@ def test_equivariance(quantile, default_solver):
 
     # coef(q; y + X @ g, X) = coef(q; y, X) + g
     g_intercept, g_coef = rng.randn(), rng.randn(n_features)
-    model2 = QuantileRegressor(quantile=quantile, **params)
+    model2 = QuantileRegressor(quantile=, **params)
     model2.fit(X, y + X @ g_coef + g_intercept)
     assert model2.intercept_ == approx(model1.intercept_ + g_intercept)
     assert_allclose(model2.coef_, model1.coef_ + g_coef, rtol=1e-6)
 
     # coef(q; y, X @ A) = A^-1 @ coef(q; y, X)
     A = rng.randn(n_features, n_features)
-    model2 = QuantileRegressor(quantile=quantile, **params)
+    model2 = QuantileRegressor(quantile=, **params)
     model2.fit(X @ A, y)
     assert model2.intercept_ == approx(model1.intercept_, rel=1e-5)
     assert_allclose(model2.coef_, np.linalg.solve(A, model1.coef_), rtol=1e-5)
@@ -280,10 +278,10 @@ def test_sparse_input(sparse_container, solver, fit_intercept, default_solver):
     X_sparse = sparse_container(X)
     alpha = 1e-4
     quant_dense = QuantileRegressor(
-        alpha=alpha, fit_intercept=fit_intercept, solver=default_solver
+        alpha=, fit_intercept=, solver=default_solver
     ).fit(X, y)
     quant_sparse = QuantileRegressor(
-        alpha=alpha, fit_intercept=fit_intercept, solver=solver
+        alpha=, fit_intercept=, solver=
     ).fit(X_sparse, y)
     assert_allclose(quant_sparse.coef_, quant_dense.coef_, rtol=1e-2)
     if fit_intercept:

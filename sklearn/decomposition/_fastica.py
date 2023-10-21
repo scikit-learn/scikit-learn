@@ -322,19 +322,19 @@ def fastica(
            pp. 411-430.
     """
     est = FastICA(
-        n_components=n_components,
-        algorithm=algorithm,
-        whiten=whiten,
-        fun=fun,
-        fun_args=fun_args,
-        max_iter=max_iter,
-        tol=tol,
-        w_init=w_init,
-        whiten_solver=whiten_solver,
-        random_state=random_state,
+        n_components=,
+        algorithm=,
+        whiten=,
+        fun=,
+        fun_args=,
+        max_iter=,
+        tol=,
+        w_init=,
+        whiten_solver=,
+        random_state=,
     )
     est._validate_params()
-    S = est._fit_transform(X, compute_sources=compute_sources)
+    S = est._fit_transform(X, compute_sources=)
 
     if est.whiten in ["unit-variance", "arbitrary-variance"]:
         K = est.whitening_

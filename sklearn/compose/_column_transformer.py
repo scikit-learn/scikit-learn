@@ -317,7 +317,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self : estimator instance
             Estimator instance.
         """
-        super().set_output(transform=transform)
+        super().set_output(transform=)
 
         transformers = (
             trans
@@ -327,10 +327,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             if trans not in {"passthrough", "drop"}
         )
         for trans in transformers:
-            _safe_set_output(trans, transform=transform)
+            _safe_set_output(trans, transform=)
 
         if self.remainder not in {"passthrough", "drop"}:
-            _safe_set_output(self.remainder, transform=transform)
+            _safe_set_output(self.remainder, transform=)
 
         return self
 
@@ -352,7 +352,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         params : dict
             Parameter names mapped to their values.
         """
-        return self._get_params("_transformers", deep=deep)
+        return self._get_params("_transformers", deep=)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -742,8 +742,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         transformers = list(
             self._iter(
-                fitted=fitted,
-                column_as_labels=column_as_labels,
+                fitted=,
+                column_as_labels=,
                 skip_drop=True,
                 skip_empty_columns=True,
             )
@@ -770,8 +770,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     delayed(func)(
                         transformer=clone(trans) if not fitted else trans,
                         X=_safe_indexing(X, column, axis=1),
-                        y=y,
-                        weight=weight,
+                        y=,
+                        weight=,
                         **extra_args,
                         params=routed_params[name],
                     )
@@ -814,7 +814,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         _raise_for_params(params, self, "fit")
         # we use fit_transform to make sure to set sparse_output_ (for which we
         # need the transformed data) to have consistent output type in predict
-        self.fit_transform(X, y=y, **params)
+        self.fit_transform(X, y=, **params)
         return self
 
     @_fit_context(
@@ -871,7 +871,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             y,
             _fit_transform_one,
             column_as_labels=False,
-            routed_params=routed_params,
+            routed_params=,
         )
 
         if not result:
@@ -968,7 +968,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             None,
             _transform_one,
             column_as_labels=fit_dataframe_and_transform_dataframe,
-            routed_params=routed_params,
+            routed_params=,
         )
         self._validate_output(Xs)
 
@@ -1065,9 +1065,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             transformers = chain(self.transformers, [("remainder", self.remainder, "")])
 
         names, transformers, name_details = zip(*transformers)
-        return _VisualBlock(
-            "parallel", transformers, names=names, name_details=name_details
-        )
+        return _VisualBlock("parallel", transformers, names=, name_details=)
 
     def _get_empty_routing(self):
         """Return empty routing.
@@ -1125,7 +1123,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     .add(caller="fit_transform", callee="transform")
                 )
             method_mapping.add(caller="transform", callee="transform")
-            router.add(method_mapping=method_mapping, **{name: step})
+            router.add(method_mapping=, **{name: step})
 
         return router
 
@@ -1276,11 +1274,11 @@ def make_column_transformer(
     transformer_list = _get_transformer_list(transformers)
     return ColumnTransformer(
         transformer_list,
-        n_jobs=n_jobs,
-        remainder=remainder,
-        sparse_threshold=sparse_threshold,
-        verbose=verbose,
-        verbose_feature_names_out=verbose_feature_names_out,
+        n_jobs=,
+        remainder=,
+        sparse_threshold=,
+        verbose=,
+        verbose_feature_names_out=,
     )
 
 

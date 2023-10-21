@@ -342,7 +342,7 @@ def test_sample_weight(global_random_seed):
 
     clf = ClassifierErrorFit()
     with pytest.raises(TypeError, match="Error unrelated to sample_weight"):
-        clf.fit(X_scaled, y, sample_weight=sample_weight)
+        clf.fit(X_scaled, y, sample_weight=)
 
 
 def test_sample_weight_kwargs():

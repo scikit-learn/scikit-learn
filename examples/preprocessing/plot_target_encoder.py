@@ -108,7 +108,7 @@ for name, categorical_preprocessor in categorical_preprocessors:
         ]
     )
     pipe = make_pipeline(
-        preprocessor, HistGradientBoostingRegressor(random_state=0, max_iter=max_iter)
+        preprocessor, HistGradientBoostingRegressor(random_state=0, max_iter=)
     )
     evaluate_model_and_store(name, pipe)
 
@@ -153,7 +153,7 @@ mixed_encoded_preprocessor.set_output(transform="pandas")
 mixed_pipe = make_pipeline(
     mixed_encoded_preprocessor,
     HistGradientBoostingRegressor(
-        random_state=0, max_iter=max_iter, categorical_features=low_cardinality_features
+        random_state=0, max_iter=, categorical_features=low_cardinality_features
     ),
 )
 mixed_pipe
@@ -194,7 +194,7 @@ for subset, ax in zip(["test", "train"], [ax1, ax2]):
     ax.set(
         title=f"RMSE ({subset.title()})",
         xlabel="Encoding Scheme",
-        xticks=xticks,
+        xticks=,
         xticklabels=data.index,
     )
 

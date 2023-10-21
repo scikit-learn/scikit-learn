@@ -71,10 +71,10 @@ mem = Memory(location=cachedir, verbose=1)
 # %%
 # Ward agglomeration followed by BayesianRidge
 connectivity = grid_to_graph(n_x=size, n_y=size)
-ward = FeatureAgglomeration(n_clusters=10, connectivity=connectivity, memory=mem)
+ward = FeatureAgglomeration(n_clusters=10, connectivity=, memory=mem)
 clf = Pipeline([("ward", ward), ("ridge", ridge)])
 # Select the optimal number of parcels with grid search
-clf = GridSearchCV(clf, {"ward__n_clusters": [10, 20, 30]}, n_jobs=1, cv=cv)
+clf = GridSearchCV(clf, {"ward__n_clusters": [10, 20, 30]}, n_jobs=1, cv=)
 clf.fit(X, y)  # set the best parameters
 coef_ = clf.best_estimator_.steps[-1][1].coef_
 coef_ = clf.best_estimator_.steps[0][1].inverse_transform(coef_)
@@ -86,7 +86,7 @@ f_regression = mem.cache(feature_selection.f_regression)  # caching function
 anova = feature_selection.SelectPercentile(f_regression)
 clf = Pipeline([("anova", anova), ("ridge", ridge)])
 # Select the optimal percentage of features with grid search
-clf = GridSearchCV(clf, {"anova__percentile": [5, 10, 20]}, cv=cv)
+clf = GridSearchCV(clf, {"anova__percentile": [5, 10, 20]}, cv=)
 clf.fit(X, y)  # set the best parameters
 coef_ = clf.best_estimator_.steps[-1][1].coef_
 coef_ = clf.best_estimator_.steps[0][1].inverse_transform(coef_.reshape(1, -1))

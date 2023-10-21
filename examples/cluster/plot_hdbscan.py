@@ -69,7 +69,7 @@ def plot(X, labels, probabilities=None, parameters=None, ground_truth=False, ax=
 # and isotropic Gaussian distributions.
 centers = [[1, 1], [-1, -1], [1.5, -1.5]]
 X, labels_true = make_blobs(
-    n_samples=750, centers=centers, cluster_std=[0.4, 0.1, 0.75], random_state=0
+    n_samples=750, centers=, cluster_std=[0.4, 0.1, 0.75], random_state=0
 )
 plot(X, labels=labels_true, ground_truth=True)
 # %%
@@ -124,7 +124,7 @@ for idx, scale in enumerate([1, 0.5, 3]):
 # consider the following dataset
 centers = [[-0.85, -0.85], [-0.85, 0.85], [3, 3], [3, -3]]
 X, labels_true = make_blobs(
-    n_samples=750, centers=centers, cluster_std=[0.2, 0.35, 1.35, 1.35], random_state=0
+    n_samples=750, centers=, cluster_std=[0.2, 0.35, 1.35, 1.35], random_state=0
 )
 plot(X, labels=labels_true, ground_truth=True)
 

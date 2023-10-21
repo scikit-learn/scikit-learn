@@ -121,7 +121,7 @@ variation = close_prices - open_prices
 from sklearn import covariance
 
 alphas = np.logspace(-1.5, 1, num=10)
-edge_model = covariance.GraphicalLassoCV(alphas=alphas)
+edge_model = covariance.GraphicalLassoCV(alphas=)
 
 # standardize the time series: using correlations rather than covariance
 # former is more efficient for structure recovery
@@ -253,8 +253,8 @@ for index, (name, label, (x, y)) in enumerate(zip(names, labels, embedding.T)):
         y,
         name,
         size=10,
-        horizontalalignment=horizontalalignment,
-        verticalalignment=verticalalignment,
+        horizontalalignment=,
+        verticalalignment=,
         bbox=dict(
             facecolor="w",
             edgecolor=plt.cm.nipy_spectral(label / float(n_labels)),

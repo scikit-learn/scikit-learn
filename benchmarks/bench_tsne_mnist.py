@@ -38,7 +38,7 @@ def load_data(dtype=np.float32, order="C", shuffle=True, seed=0):
     print("Loading dataset...")
     data = fetch_openml("mnist_784", as_frame=True, parser="pandas")
 
-    X = check_array(data["data"], dtype=dtype, order=order)
+    X = check_array(data["data"], dtype=, order=)
     y = data["target"]
 
     if shuffle:
@@ -197,7 +197,7 @@ $ cd ..
                 "Fitting {} on {} samples took {:.3f}s in {:d} iterations, "
                 "nn accuracy: {:0.3f}".format(name, n, duration, n_iter, precision_5)
             )
-            results.append(dict(method=name, duration=duration, n_samples=n))
+            results.append(dict(method=name, duration=, n_samples=n))
             with open(log_filename, "w", encoding="utf-8") as f:
                 json.dump(results, f)
             method_name = sanitize(name)

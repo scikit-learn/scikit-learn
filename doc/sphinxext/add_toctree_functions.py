@@ -61,7 +61,7 @@ def add_toctree_functions(app, pagename, templatename, context, doctree):
         # "collapse=True" collapses sub-pages of non-active TOC pages.
         # maxdepth controls how many TOC levels are returned
         toctree = TocTree(app.env).get_toctree_for(
-            pagename, app.builder, collapse=collapse, maxdepth=maxdepth, **kwargs
+            pagename, app.builder, collapse=, maxdepth=, **kwargs
         )
         # If no toctree is defined (AKA a single-page site), skip this
         if toctree is None:
@@ -82,7 +82,7 @@ def add_toctree_functions(app, pagename, templatename, context, doctree):
 
         # Now convert our docutils nodes into dicts that Jinja can use
         nav = [
-            docutils_node_to_jinja(child, only_pages=True, numbered=numbered)
+            docutils_node_to_jinja(child, only_pages=True, numbered=)
             for child in toc_items
         ]
 
@@ -147,7 +147,7 @@ def docutils_node_to_jinja(list_item, only_pages=False, numbered=False):
         subpage_list = list_item.children[1].children
         for sub_page in subpage_list:
             child_nav = docutils_node_to_jinja(
-                sub_page, only_pages=only_pages, numbered=numbered
+                sub_page, only_pages=, numbered=
             )
             if child_nav is not None:
                 nav["children"].append(child_nav)

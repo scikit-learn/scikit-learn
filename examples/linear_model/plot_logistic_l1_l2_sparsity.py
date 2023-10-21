@@ -41,10 +41,10 @@ fig, axes = plt.subplots(3, 3)
 # Set regularization parameter
 for i, (C, axes_row) in enumerate(zip((1, 0.1, 0.01), axes)):
     # Increase tolerance for short training time
-    clf_l1_LR = LogisticRegression(C=C, penalty="l1", tol=0.01, solver="saga")
-    clf_l2_LR = LogisticRegression(C=C, penalty="l2", tol=0.01, solver="saga")
+    clf_l1_LR = LogisticRegression(C=, penalty="l1", tol=0.01, solver="saga")
+    clf_l2_LR = LogisticRegression(C=, penalty="l2", tol=0.01, solver="saga")
     clf_en_LR = LogisticRegression(
-        C=C, penalty="elasticnet", solver="saga", l1_ratio=l1_ratio, tol=0.01
+        C=, penalty="elasticnet", solver="saga", l1_ratio=, tol=0.01
     )
     clf_l1_LR.fit(X, y)
     clf_l2_LR.fit(X, y)

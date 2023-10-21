@@ -109,9 +109,9 @@ def _fix_connectivity(X, connectivity, affinity):
         )
         # XXX: Can we do without completing the matrix?
         connectivity = _fix_connected_components(
-            X=X,
+            X=,
             graph=connectivity,
-            n_connected_components=n_connected_components,
+            n_connected_components=,
             component_labels=labels,
             metric=affinity,
             mode="connectivity",
@@ -573,7 +573,7 @@ def linkage_tree(
         return children_, 1, n_samples, None
 
     connectivity, n_connected_components = _fix_connectivity(
-        X, connectivity, affinity=affinity
+        X, connectivity, affinity=
     )
     connectivity = connectivity.tocoo()
     # Put the diagonal to zero
@@ -1070,9 +1070,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         out = memory.cache(tree_builder)(
             X,
-            connectivity=connectivity,
-            n_clusters=n_clusters,
-            return_distance=return_distance,
+            connectivity=,
+            n_clusters=,
+            return_distance=,
             **kwargs,
         )
         (self.children_, self.n_connected_components_, self.n_leaves_, parents) = out[
@@ -1318,15 +1318,15 @@ class FeatureAgglomeration(
         compute_distances=False,
     ):
         super().__init__(
-            n_clusters=n_clusters,
-            memory=memory,
-            connectivity=connectivity,
-            compute_full_tree=compute_full_tree,
-            linkage=linkage,
-            affinity=affinity,
-            metric=metric,
-            distance_threshold=distance_threshold,
-            compute_distances=compute_distances,
+            n_clusters=,
+            memory=,
+            connectivity=,
+            compute_full_tree=,
+            linkage=,
+            affinity=,
+            metric=,
+            distance_threshold=,
+            compute_distances=,
         )
         self.pooling_func = pooling_func
 

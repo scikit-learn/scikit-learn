@@ -211,17 +211,17 @@ def _get_response_values(
 
         if prediction_method.__name__ == "predict_proba":
             y_pred = _process_predict_proba(
-                y_pred=y_pred,
-                target_type=target_type,
-                classes=classes,
-                pos_label=pos_label,
+                y_pred=,
+                target_type=,
+                classes=,
+                pos_label=,
             )
         elif prediction_method.__name__ == "decision_function":
             y_pred = _process_decision_function(
-                y_pred=y_pred,
-                target_type=target_type,
-                classes=classes,
-                pos_label=pos_label,
+                y_pred=,
+                target_type=,
+                classes=,
+                pos_label=,
             )
     elif is_outlier_detector(estimator):
         prediction_method = _check_response_method(estimator, response_method)
@@ -290,9 +290,4 @@ def _get_response_values_binary(estimator, X, response_method, pos_label=None):
     if response_method == "auto":
         response_method = ["predict_proba", "decision_function"]
 
-    return _get_response_values(
-        estimator,
-        X,
-        response_method,
-        pos_label=pos_label,
-    )
+    return _get_response_values(estimator, X, response_method, pos_label=)

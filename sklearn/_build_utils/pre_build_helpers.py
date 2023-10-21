@@ -29,7 +29,7 @@ def compile_test_program(code, extra_preargs=None, extra_postargs=None):
 
             # Compile, test program
             ccompiler.compile(
-                ["test_program.c"], output_dir="objects", extra_postargs=extra_postargs
+                ["test_program.c"], output_dir="objects", extra_postargs=
             )
 
             # Link test program
@@ -37,8 +37,8 @@ def compile_test_program(code, extra_preargs=None, extra_postargs=None):
             ccompiler.link_executable(
                 objects,
                 "test_program",
-                extra_preargs=extra_preargs,
-                extra_postargs=extra_postargs,
+                extra_preargs=,
+                extra_postargs=,
             )
 
             if "PYTHON_CROSSENV" not in os.environ:

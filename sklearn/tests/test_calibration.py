@@ -77,7 +77,7 @@ def test_calibration(data, method, csr_container, ensemble):
     clf = MultinomialNB(force_alpha=True).fit(X_train, y_train, sample_weight=sw_train)
     prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
-    cal_clf = CalibratedClassifierCV(clf, cv=y.size + 1, ensemble=ensemble)
+    cal_clf = CalibratedClassifierCV(clf, cv=y.size + 1, ensemble=)
     with pytest.raises(ValueError):
         cal_clf.fit(X, y)
 
@@ -86,7 +86,7 @@ def test_calibration(data, method, csr_container, ensemble):
         (X_train, X_test),
         (csr_container(X_train), csr_container(X_test)),
     ]:
-        cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
+        cal_clf = CalibratedClassifierCV(clf, method=, cv=5, ensemble=)
         # Note that this fit overwrites the fit on the entire training
         # set
         cal_clf.fit(this_X_train, y_train, sample_weight=sw_train)
@@ -137,7 +137,7 @@ def test_calibration_cv_splitter(data, ensemble):
 
     splits = 5
     kfold = KFold(n_splits=splits)
-    calib_clf = CalibratedClassifierCV(cv=kfold, ensemble=ensemble)
+    calib_clf = CalibratedClassifierCV(cv=kfold, ensemble=)
     assert isinstance(calib_clf.cv, KFold)
     assert calib_clf.cv.n_splits == splits
 
@@ -157,7 +157,7 @@ def test_sample_weight(data, method, ensemble):
     X_test = X[n_samples:]
 
     estimator = LinearSVC(dual="auto", random_state=42)
-    calibrated_clf = CalibratedClassifierCV(estimator, method=method, ensemble=ensemble)
+    calibrated_clf = CalibratedClassifierCV(estimator, method=, ensemble=)
     calibrated_clf.fit(X_train, y_train, sample_weight=sw_train)
     probs_with_sw = calibrated_clf.predict_proba(X_test)
 
@@ -180,13 +180,13 @@ def test_parallel_execution(data, method, ensemble):
     estimator = make_pipeline(StandardScaler(), LinearSVC(dual="auto", random_state=42))
 
     cal_clf_parallel = CalibratedClassifierCV(
-        estimator, method=method, n_jobs=2, ensemble=ensemble
+        estimator, method=, n_jobs=2, ensemble=
     )
     cal_clf_parallel.fit(X_train, y_train)
     probs_parallel = cal_clf_parallel.predict_proba(X_test)
 
     cal_clf_sequential = CalibratedClassifierCV(
-        estimator, method=method, n_jobs=1, ensemble=ensemble
+        estimator, method=, n_jobs=1, ensemble=
     )
     cal_clf_sequential.fit(X_train, y_train)
     probs_sequential = cal_clf_sequential.predict_proba(X_test)
@@ -221,7 +221,7 @@ def test_calibration_multiclass(method, ensemble, seed):
 
     clf.fit(X_train, y_train)
 
-    cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
+    cal_clf = CalibratedClassifierCV(clf, method=, cv=5, ensemble=)
     cal_clf.fit(X_train, y_train)
     probas = cal_clf.predict_proba(X_test)
     # Check probabilities sum to 1
@@ -240,9 +240,9 @@ def test_calibration_multiclass(method, ensemble, seed):
     # loss obtained by naively turning OvR decision function to
     # probabilities via a softmax
     uncalibrated_brier = multiclass_brier(
-        y_test, softmax(clf.decision_function(X_test)), n_classes=n_classes
+        y_test, softmax(clf.decision_function(X_test)), n_classes=
     )
-    calibrated_brier = multiclass_brier(y_test, probas, n_classes=n_classes)
+    calibrated_brier = multiclass_brier(y_test, probas, n_classes=)
 
     assert calibrated_brier < 1.1 * uncalibrated_brier
 
@@ -251,12 +251,12 @@ def test_calibration_multiclass(method, ensemble, seed):
     clf = RandomForestClassifier(n_estimators=30, random_state=42)
     clf.fit(X_train, y_train)
     clf_probs = clf.predict_proba(X_test)
-    uncalibrated_brier = multiclass_brier(y_test, clf_probs, n_classes=n_classes)
+    uncalibrated_brier = multiclass_brier(y_test, clf_probs, n_classes=)
 
-    cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
+    cal_clf = CalibratedClassifierCV(clf, method=, cv=5, ensemble=)
     cal_clf.fit(X_train, y_train)
     cal_clf_probs = cal_clf.predict_proba(X_test)
-    calibrated_brier = multiclass_brier(y_test, cal_clf_probs, n_classes=n_classes)
+    calibrated_brier = multiclass_brier(y_test, cal_clf_probs, n_classes=)
     assert calibrated_brier < 1.1 * uncalibrated_brier
 
 
@@ -319,7 +319,7 @@ def test_calibration_prefit(csr_container):
         (csr_container(X_calib), csr_container(X_test)),
     ]:
         for method in ["isotonic", "sigmoid"]:
-            cal_clf = CalibratedClassifierCV(clf, method=method, cv="prefit")
+            cal_clf = CalibratedClassifierCV(clf, method=, cv="prefit")
 
             for sw in [sw_calib, None]:
                 cal_clf.fit(this_X_calib, y_calib, sample_weight=sw)
@@ -340,7 +340,7 @@ def test_calibration_ensemble_false(data, method):
     X, y = data
     clf = LinearSVC(dual="auto", random_state=7)
 
-    cal_clf = CalibratedClassifierCV(clf, method=method, cv=3, ensemble=False)
+    cal_clf = CalibratedClassifierCV(clf, method=, cv=3, ensemble=False)
     cal_clf.fit(X, y)
     cal_probas = cal_clf.predict_proba(X)
 
@@ -416,7 +416,7 @@ def test_calibration_nan_imputer(ensemble):
     clf = Pipeline(
         [("imputer", SimpleImputer()), ("rf", RandomForestClassifier(n_estimators=1))]
     )
-    clf_c = CalibratedClassifierCV(clf, cv=2, method="isotonic", ensemble=ensemble)
+    clf_c = CalibratedClassifierCV(clf, cv=2, method="isotonic", ensemble=)
     clf_c.fit(X, y)
     clf_c.predict(X)
 
@@ -429,7 +429,7 @@ def test_calibration_prob_sum(ensemble):
     X, y = make_classification(n_samples=10, n_features=5, n_classes=num_classes)
     clf = LinearSVC(dual="auto", C=1.0, random_state=7)
     clf_prob = CalibratedClassifierCV(
-        clf, method="sigmoid", cv=LeaveOneOut(), ensemble=ensemble
+        clf, method="sigmoid", cv=LeaveOneOut(), ensemble=
     )
     clf_prob.fit(X, y)
 
@@ -447,7 +447,7 @@ def test_calibration_less_classes(ensemble):
     y = np.arange(10)
     clf = LinearSVC(dual="auto", C=1.0, random_state=7)
     cal_clf = CalibratedClassifierCV(
-        clf, method="sigmoid", cv=LeaveOneOut(), ensemble=ensemble
+        clf, method="sigmoid", cv=LeaveOneOut(), ensemble=
     )
     cal_clf.fit(X, y)
 
@@ -549,7 +549,7 @@ def test_calibration_attributes(clf, cv):
     X, y = make_classification(n_samples=10, n_features=5, n_classes=2, random_state=7)
     if cv == "prefit":
         clf = clf.fit(X, y)
-    calib_clf = CalibratedClassifierCV(clf, cv=cv)
+    calib_clf = CalibratedClassifierCV(clf, cv=)
     calib_clf.fit(X, y)
 
     if cv == "prefit":
@@ -611,13 +611,11 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
     lr = LogisticRegression().fit(X, y)
 
     viz = CalibrationDisplay.from_estimator(
-        lr, X, y, n_bins=n_bins, strategy=strategy, alpha=0.8
+        lr, X, y, n_bins=, strategy=, alpha=0.8
     )
 
     y_prob = lr.predict_proba(X)[:, 1]
-    prob_true, prob_pred = calibration_curve(
-        y, y_prob, n_bins=n_bins, strategy=strategy
-    )
+    prob_true, prob_pred = calibration_curve(y, y_prob, n_bins=, strategy=)
 
     assert_allclose(viz.prob_true, prob_true)
     assert_allclose(viz.prob_pred, prob_pred)
@@ -687,7 +685,7 @@ def test_calibration_display_label_class_plot(pyplot):
     viz = CalibrationDisplay(prob_true, prob_pred, y_prob, estimator_name=name)
     assert viz.estimator_name == name
     name = "name two"
-    viz.plot(name=name)
+    viz.plot(name=)
 
     expected_legend_labels = [name, "Perfectly calibrated"]
     legend_labels = viz.ax_.get_legend().get_texts()
@@ -789,10 +787,10 @@ def test_calibration_display_pos_label(
     X, y = iris_data_binary
 
     lr = LogisticRegression().fit(X, y)
-    viz = CalibrationDisplay.from_estimator(lr, X, y, pos_label=pos_label)
+    viz = CalibrationDisplay.from_estimator(lr, X, y, pos_label=)
 
     y_prob = lr.predict_proba(X)[:, expected_pos_label]
-    prob_true, prob_pred = calibration_curve(y, y_prob, pos_label=pos_label)
+    prob_true, prob_pred = calibration_curve(y, y_prob, pos_label=)
 
     assert_allclose(viz.prob_true, prob_true)
     assert_allclose(viz.prob_pred, prob_pred)
@@ -838,13 +836,13 @@ def test_calibrated_classifier_cv_double_sample_weights_equivalence(method, ense
     estimator = LogisticRegression()
     calibrated_clf_without_weights = CalibratedClassifierCV(
         estimator,
-        method=method,
-        ensemble=ensemble,
+        method=,
+        ensemble=,
         cv=2,
     )
     calibrated_clf_with_weights = clone(calibrated_clf_without_weights)
 
-    calibrated_clf_with_weights.fit(X, y, sample_weight=sample_weight)
+    calibrated_clf_with_weights.fit(X, y, sample_weight=)
     calibrated_clf_without_weights.fit(X_twice, y_twice)
 
     # Check that the underlying fitted estimators have the same coefficients
@@ -898,7 +896,7 @@ def test_calibration_with_sample_weight_base_estimator(sample_weight, data):
     clf = CheckingClassifier(expected_sample_weight=True)
     pc_clf = CalibratedClassifierCV(clf)
 
-    pc_clf.fit(X, y, sample_weight=sample_weight)
+    pc_clf.fit(X, y, sample_weight=)
 
 
 def test_calibration_without_sample_weight_base_estimator(data):
@@ -920,7 +918,7 @@ def test_calibration_without_sample_weight_base_estimator(data):
     pc_clf = CalibratedClassifierCV(clf)
 
     with pytest.warns(UserWarning):
-        pc_clf.fit(X, y, sample_weight=sample_weight)
+        pc_clf.fit(X, y, sample_weight=)
 
 
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
@@ -941,13 +939,13 @@ def test_calibrated_classifier_cv_zeros_sample_weights_equivalence(method, ensem
     estimator = LogisticRegression()
     calibrated_clf_without_weights = CalibratedClassifierCV(
         estimator,
-        method=method,
-        ensemble=ensemble,
+        method=,
+        ensemble=,
         cv=2,
     )
     calibrated_clf_with_weights = clone(calibrated_clf_without_weights)
 
-    calibrated_clf_with_weights.fit(X, y, sample_weight=sample_weight)
+    calibrated_clf_with_weights.fit(X, y, sample_weight=)
     calibrated_clf_without_weights.fit(X[::2], y[::2])
 
     # Check that the underlying fitted estimators have the same coefficients
@@ -995,7 +993,7 @@ def test_calibration_with_non_sample_aligned_fit_param(data):
     class TestClassifier(LogisticRegression):
         def fit(self, X, y, sample_weight=None, fit_param=None):
             assert fit_param is not None
-            return super().fit(X, y, sample_weight=sample_weight)
+            return super().fit(X, y, sample_weight=)
 
     CalibratedClassifierCV(estimator=TestClassifier()).fit(
         *data, fit_param=np.ones(len(data[1]) + 1)
@@ -1020,7 +1018,7 @@ def test_calibrated_classifier_cv_works_with_large_confidence_scores(
 
     # Check that the decision function of SGDClassifier produces predicted
     # values that are quite large, for the data under consideration.
-    cv = check_cv(cv=None, y=y, classifier=True)
+    cv = check_cv(cv=None, y=, classifier=True)
     indices = cv.split(X, y)
     for train, test in indices:
         X_train, y_train = X[train], y[train]
@@ -1066,7 +1064,7 @@ def test_sigmoid_calibration_max_abs_prediction_threshold(global_random_seed):
     threshold_1 = 0.1
     a1, b1 = _sigmoid_calibration(
         predictions=predictions_small,
-        y=y,
+        y=,
         max_abs_prediction_threshold=threshold_1,
     )
 
@@ -1074,20 +1072,17 @@ def test_sigmoid_calibration_max_abs_prediction_threshold(global_random_seed):
     threshold_2 = 10
     a2, b2 = _sigmoid_calibration(
         predictions=predictions_small,
-        y=y,
+        y=,
         max_abs_prediction_threshold=threshold_2,
     )
 
     # Using default threshold of 30 also disables the scaling.
-    a3, b3 = _sigmoid_calibration(
-        predictions=predictions_small,
-        y=y,
-    )
+    a3, b3 = _sigmoid_calibration(predictions=predictions_small, y=)
 
     # Depends on the tolerance of the underlying quasy-newton solver which is
     # not too strict by default.
     atol = 1e-6
-    assert_allclose(a1, a2, atol=atol)
-    assert_allclose(a2, a3, atol=atol)
-    assert_allclose(b1, b2, atol=atol)
-    assert_allclose(b2, b3, atol=atol)
+    assert_allclose(a1, a2, atol=)
+    assert_allclose(a2, a3, atol=)
+    assert_allclose(b1, b2, atol=)
+    assert_allclose(b2, b3, atol=)

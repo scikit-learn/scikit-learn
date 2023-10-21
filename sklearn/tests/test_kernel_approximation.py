@@ -40,14 +40,14 @@ def test_polynomial_count_sketch(gamma, degree, coef0, n_components):
     # kernel on random data
 
     # compute exact kernel
-    kernel = polynomial_kernel(X, Y, gamma=gamma, degree=degree, coef0=coef0)
+    kernel = polynomial_kernel(X, Y, gamma=, degree=, coef0=)
 
     # approximate kernel mapping
     ps_transform = PolynomialCountSketch(
-        n_components=n_components,
-        gamma=gamma,
-        coef0=coef0,
-        degree=degree,
+        n_components=,
+        gamma=,
+        coef0=,
+        degree=,
         random_state=42,
     )
     X_trans = ps_transform.fit_transform(X)
@@ -70,13 +70,13 @@ def test_polynomial_count_sketch_dense_sparse(gamma, degree, coef0, csr_containe
     input.
     """
     ps_dense = PolynomialCountSketch(
-        n_components=500, gamma=gamma, degree=degree, coef0=coef0, random_state=42
+        n_components=500, gamma=, degree=, coef0=, random_state=42
     )
     Xt_dense = ps_dense.fit_transform(X)
     Yt_dense = ps_dense.transform(Y)
 
     ps_sparse = PolynomialCountSketch(
-        n_components=500, gamma=gamma, degree=degree, coef0=coef0, random_state=42
+        n_components=500, gamma=, degree=, coef0=, random_state=42
     )
     Xt_sparse = ps_sparse.fit_transform(csr_container(X))
     Yt_sparse = ps_sparse.transform(csr_container(Y))
@@ -132,14 +132,11 @@ def test_additive_chi2_sampler_sample_steps(method, sample_steps):
     """Check that the input sample step doesn't raise an error
     and that sample interval doesn't change after fit.
     """
-    transformer = AdditiveChi2Sampler(sample_steps=sample_steps)
+    transformer = AdditiveChi2Sampler(sample_steps=)
     getattr(transformer, method)(X)
 
     sample_interval = 0.5
-    transformer = AdditiveChi2Sampler(
-        sample_steps=sample_steps,
-        sample_interval=sample_interval,
-    )
+    transformer = AdditiveChi2Sampler(sample_steps=, sample_interval=)
     getattr(transformer, method)(X)
     transformer.sample_interval == sample_interval
 
@@ -224,10 +221,10 @@ def test_rbf_sampler():
     # test that RBFSampler approximates kernel on random data
     # compute exact kernel
     gamma = 10.0
-    kernel = rbf_kernel(X, Y, gamma=gamma)
+    kernel = rbf_kernel(X, Y, gamma=)
 
     # approximate kernel mapping
-    rbf_transform = RBFSampler(gamma=gamma, n_components=1000, random_state=42)
+    rbf_transform = RBFSampler(gamma=, n_components=1000, random_state=42)
     X_trans = rbf_transform.fit_transform(X)
     Y_trans = rbf_transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
@@ -372,10 +369,10 @@ def test_nystroem_singular_kernel():
     X = np.vstack([X] * 2)  # duplicate samples
 
     gamma = 100
-    N = Nystroem(gamma=gamma, n_components=X.shape[0]).fit(X)
+    N = Nystroem(gamma=, n_components=X.shape[0]).fit(X)
     X_transformed = N.transform(X)
 
-    K = rbf_kernel(X, gamma=gamma)
+    K = rbf_kernel(X, gamma=)
 
     assert_array_almost_equal(K, np.dot(X_transformed, X_transformed.T))
     assert np.all(np.isfinite(Y))

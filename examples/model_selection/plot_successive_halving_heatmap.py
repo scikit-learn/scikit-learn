@@ -36,13 +36,13 @@ clf = SVC(random_state=rng)
 
 tic = time()
 gsh = HalvingGridSearchCV(
-    estimator=clf, param_grid=param_grid, factor=2, random_state=rng
+    estimator=clf, param_grid=, factor=2, random_state=rng
 )
 gsh.fit(X, y)
 gsh_time = time() - tic
 
 tic = time()
-gs = GridSearchCV(estimator=clf, param_grid=param_grid)
+gs = GridSearchCV(estimator=clf, param_grid=)
 gs.fit(X, y)
 gs_time = time() - tic
 

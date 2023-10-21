@@ -80,7 +80,7 @@ param_grid = {
     "covariance_type": ["spherical", "tied", "diag", "full"],
 }
 grid_search = GridSearchCV(
-    GaussianMixture(), param_grid=param_grid, scoring=gmm_bic_score
+    GaussianMixture(), param_grid=, scoring=gmm_bic_score
 )
 grid_search.fit(X)
 
@@ -155,12 +155,12 @@ for i, (mean, cov, color) in enumerate(
     v, w = linalg.eigh(cov)
     if not np.any(Y_ == i):
         continue
-    plt.scatter(X[Y_ == i, 0], X[Y_ == i, 1], 0.8, color=color)
+    plt.scatter(X[Y_ == i, 0], X[Y_ == i, 1], 0.8, color=)
 
     angle = np.arctan2(w[0][1], w[0][0])
     angle = 180.0 * angle / np.pi  # convert to degrees
     v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
-    ellipse = Ellipse(mean, v[0], v[1], angle=180.0 + angle, color=color)
+    ellipse = Ellipse(mean, v[0], v[1], angle=180.0 + angle, color=)
     ellipse.set_clip_box(fig.bbox)
     ellipse.set_alpha(0.5)
     ax.add_artist(ellipse)

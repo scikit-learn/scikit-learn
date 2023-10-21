@@ -83,7 +83,7 @@ class _AdjustableNameAPITestWrapper(_ArrayAPIWrapper):
     """API wrapper that has an adjustable name. Used for testing."""
 
     def __init__(self, array_namespace, name):
-        super().__init__(array_namespace=array_namespace)
+        super().__init__(array_namespace=)
         self.__name__ = name
 
 
@@ -149,7 +149,7 @@ def test_asarray_with_order(array_api):
     xp = pytest.importorskip(array_api)
 
     X = xp.asarray([1.2, 3.4, 5.1])
-    X_new = _asarray_with_order(X, order="F", xp=xp)
+    X_new = _asarray_with_order(X, order="F", xp=)
 
     X_new_np = numpy.asarray(X_new)
     assert X_new_np.flags["F_CONTIGUOUS"]
@@ -188,11 +188,11 @@ def test_weighted_sum(
     array_namespace, device, dtype, sample_weight, normalize, expected
 ):
     xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
-    sample_score = numpy.asarray([1, 2, 3, 4], dtype=dtype)
-    sample_score = xp.asarray(sample_score, device=device)
+    sample_score = numpy.asarray([1, 2, 3, 4], dtype=)
+    sample_score = xp.asarray(sample_score, device=)
     if sample_weight is not None:
-        sample_weight = numpy.asarray(sample_weight, dtype=dtype)
-        sample_weight = xp.asarray(sample_weight, device=device)
+        sample_weight = numpy.asarray(sample_weight, dtype=)
+        sample_weight = xp.asarray(sample_weight, device=)
 
     with config_context(array_api_dispatch=True):
         result = _weighted_sum(sample_score, sample_weight, normalize)
@@ -262,7 +262,7 @@ def test_convert_to_numpy_gpu(library):  # pragma: nocover
     else:
         X_gpu = xp.asarray([1.0, 2.0, 3.0])
 
-    X_cpu = _convert_to_numpy(X_gpu, xp=xp)
+    X_cpu = _convert_to_numpy(X_gpu, xp=)
     expected_output = numpy.asarray([1.0, 2.0, 3.0])
     assert_allclose(X_cpu, expected_output)
 

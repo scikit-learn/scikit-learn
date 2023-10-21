@@ -387,7 +387,7 @@ class BaseRandomProjection(
 
         if self.n_components == "auto":
             self.n_components_ = johnson_lindenstrauss_min_dim(
-                n_samples=n_samples, eps=self.eps
+                n_samples=, eps=self.eps
             )
 
             if self.n_components_ <= 0:
@@ -556,10 +556,10 @@ class GaussianRandomProjection(BaseRandomProjection):
         random_state=None,
     ):
         super().__init__(
-            n_components=n_components,
-            eps=eps,
-            compute_inverse_components=compute_inverse_components,
-            random_state=random_state,
+            n_components=,
+            eps=,
+            compute_inverse_components=,
+            random_state=,
         )
 
     def _make_random_matrix(self, n_components, n_features):
@@ -579,9 +579,7 @@ class GaussianRandomProjection(BaseRandomProjection):
             The generated random matrix.
         """
         random_state = check_random_state(self.random_state)
-        return _gaussian_random_matrix(
-            n_components, n_features, random_state=random_state
-        )
+        return _gaussian_random_matrix(n_components, n_features, random_state=)
 
     def transform(self, X):
         """Project the data by using matrix product with the random matrix.
@@ -756,10 +754,10 @@ class SparseRandomProjection(BaseRandomProjection):
         random_state=None,
     ):
         super().__init__(
-            n_components=n_components,
-            eps=eps,
-            compute_inverse_components=compute_inverse_components,
-            random_state=random_state,
+            n_components=,
+            eps=,
+            compute_inverse_components=,
+            random_state=,
         )
 
         self.dense_output = dense_output
@@ -785,7 +783,7 @@ class SparseRandomProjection(BaseRandomProjection):
         random_state = check_random_state(self.random_state)
         self.density_ = _check_density(self.density, n_features)
         return _sparse_random_matrix(
-            n_components, n_features, density=self.density_, random_state=random_state
+            n_components, n_features, density=self.density_, random_state=
         )
 
     def transform(self, X):

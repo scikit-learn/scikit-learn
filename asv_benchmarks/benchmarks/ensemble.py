@@ -40,10 +40,10 @@ class RandomForestClassifierBenchmark(Predictor, Estimator, Benchmark):
         n_estimators = 500 if Benchmark.data_size == "large" else 100
 
         estimator = RandomForestClassifier(
-            n_estimators=n_estimators,
+            n_estimators=,
             min_samples_split=10,
             max_features="log2",
-            n_jobs=n_jobs,
+            n_jobs=,
             random_state=0,
         )
 
@@ -80,7 +80,7 @@ class GradientBoostingClassifierBenchmark(Predictor, Estimator, Benchmark):
         n_estimators = 100 if Benchmark.data_size == "large" else 10
 
         estimator = GradientBoostingClassifier(
-            n_estimators=n_estimators,
+            n_estimators=,
             max_features="log2",
             subsample=0.5,
             random_state=0,

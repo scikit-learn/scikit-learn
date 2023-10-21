@@ -49,7 +49,7 @@ import mpl_toolkits.mplot3d  # noqa: F401
 def plot_figs(fig_num, elev, azim, X_train, clf):
     fig = plt.figure(fig_num, figsize=(4, 3))
     plt.clf()
-    ax = fig.add_subplot(111, projection="3d", elev=elev, azim=azim)
+    ax = fig.add_subplot(111, projection="3d", elev=, azim=)
 
     ax.scatter(X_train[:, 0], X_train[:, 1], y_train, c="k", marker="+")
     ax.plot_surface(

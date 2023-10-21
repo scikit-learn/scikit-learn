@@ -208,11 +208,11 @@ def test_distance_metrics_dtype_consistency(metric_param_grid):
         # assert_allclose introspects the dtype of the input arrays to decide
         # which rtol value to use by default but in this case we know that D32
         # is not computed with the same precision so we set rtol manually.
-        assert_allclose(D64, D32, rtol=rtol)
+        assert_allclose(D64, D32, rtol=)
 
         D64 = dm64.pairwise(X64, Y64)
         D32 = dm32.pairwise(X32, Y32)
-        assert_allclose(D64, D32, rtol=rtol)
+        assert_allclose(D64, D32, rtol=)
 
 
 @pytest.mark.parametrize("metric", BOOL_METRICS)
@@ -356,7 +356,7 @@ def test_readonly_kwargs():
 
     # Those distances metrics have to support readonly buffers.
     DistanceMetric.get_metric("seuclidean", V=weights)
-    DistanceMetric.get_metric("mahalanobis", VI=VI)
+    DistanceMetric.get_metric("mahalanobis", VI=)
 
 
 @pytest.mark.parametrize(
@@ -378,7 +378,7 @@ def test_readonly_kwargs():
 )
 def test_minkowski_metric_validate_weights_values(w, err_type, err_msg):
     with pytest.raises(err_type, match=err_msg):
-        DistanceMetric.get_metric("minkowski", p=3, w=w)
+        DistanceMetric.get_metric("minkowski", p=3, w=)
 
 
 def test_minkowski_metric_validate_weights_size():

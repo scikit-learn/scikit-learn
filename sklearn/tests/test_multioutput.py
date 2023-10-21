@@ -267,7 +267,7 @@ def test_multi_output_classification_partial_fit():
 
     # train the multi_target_linear and also get the predictions.
     half_index = X.shape[0] // 2
-    multi_target_linear.partial_fit(X[:half_index], y[:half_index], classes=classes)
+    multi_target_linear.partial_fit(X[:half_index], y[:half_index], classes=)
 
     first_predictions = multi_target_linear.predict(X)
     assert (n_samples, n_outputs) == first_predictions.shape
@@ -667,7 +667,7 @@ class DummyClassifierWithFitParams(DummyClassifier):
 def test_multioutput_estimator_with_fit_params(estimator, dataset):
     X, y = dataset
     some_param = np.zeros_like(X)
-    estimator.fit(X, y, some_param=some_param)
+    estimator.fit(X, y, some_param=)
     for dummy_estimator in estimator.estimators_:
         assert "some_param" in dummy_estimator._fit_params
 
@@ -718,7 +718,7 @@ def test_classifier_chain_tuple_order(order_type):
     y = [[3, 2], [2, 3], [3, 2]]
     order = order_type([1, 0])
 
-    chain = ClassifierChain(RandomForestClassifier(), order=order)
+    chain = ClassifierChain(RandomForestClassifier(), order=)
 
     chain.fit(X, y)
     X_test = [[1.5, 2.5, 3.5]]
@@ -731,7 +731,7 @@ def test_classifier_chain_tuple_invalid_order():
     y = [[3, 2], [2, 3], [3, 2]]
     order = tuple([1, 2])
 
-    chain = ClassifierChain(RandomForestClassifier(), order=order)
+    chain = ClassifierChain(RandomForestClassifier(), order=)
 
     with pytest.raises(ValueError, match="invalid order"):
         chain.fit(X, y)

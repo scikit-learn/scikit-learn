@@ -56,7 +56,7 @@ def _get_rescaled_operator(X, X_offset, sample_weight_sqrt):
     def rmatvec(b):
         return X.T.dot(b) - X_offset * b.dot(sample_weight_sqrt)
 
-    X1 = sparse.linalg.LinearOperator(shape=X.shape, matvec=matvec, rmatvec=rmatvec)
+    X1 = sparse.linalg.LinearOperator(shape=X.shape, matvec=, rmatvec=)
     return X1
 
 
@@ -554,18 +554,18 @@ def ridge_regression(
         X,
         y,
         alpha,
-        sample_weight=sample_weight,
-        solver=solver,
-        max_iter=max_iter,
-        tol=tol,
-        verbose=verbose,
-        positive=positive,
-        random_state=random_state,
-        return_n_iter=return_n_iter,
-        return_intercept=return_intercept,
+        sample_weight=,
+        solver=,
+        max_iter=,
+        tol=,
+        verbose=,
+        positive=,
+        random_state=,
+        return_n_iter=,
+        return_intercept=,
         X_scale=None,
         X_offset=None,
-        check_input=check_input,
+        check_input=,
     )
 
 
@@ -687,11 +687,11 @@ def _ridge_regression(
             X,
             y,
             alpha,
-            max_iter=max_iter,
-            tol=tol,
-            verbose=verbose,
-            X_offset=X_offset,
-            X_scale=X_scale,
+            max_iter=,
+            tol=,
+            verbose=,
+            X_offset=,
+            X_scale=,
             sample_weight_sqrt=sample_weight_sqrt if has_sw else None,
         )
 
@@ -699,12 +699,12 @@ def _ridge_regression(
         coef, n_iter = _solve_lsqr(
             X,
             y,
-            alpha=alpha,
-            fit_intercept=fit_intercept,
-            max_iter=max_iter,
-            tol=tol,
-            X_offset=X_offset,
-            X_scale=X_scale,
+            alpha=,
+            fit_intercept=,
+            max_iter=,
+            tol=,
+            X_offset=,
+            X_scale=,
             sample_weight_sqrt=sample_weight_sqrt if has_sw else None,
         )
 
@@ -768,11 +768,11 @@ def _ridge_regression(
             X,
             y,
             alpha,
-            positive=positive,
-            tol=tol,
-            max_iter=max_iter,
-            X_offset=X_offset,
-            X_scale=X_scale,
+            positive=,
+            tol=,
+            max_iter=,
+            X_offset=,
+            X_scale=,
             sample_weight_sqrt=sample_weight_sqrt if has_sw else None,
         )
 
@@ -881,7 +881,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             y,
             self.fit_intercept,
             copy=self.copy_X,
-            sample_weight=sample_weight,
+            sample_weight=,
         )
 
         if solver == "sag" and sparse.issparse(X) and self.fit_intercept:
@@ -889,7 +889,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 X,
                 y,
                 alpha=self.alpha,
-                sample_weight=sample_weight,
+                sample_weight=,
                 max_iter=self.max_iter,
                 tol=self.tol,
                 solver="sag",
@@ -914,10 +914,10 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 X,
                 y,
                 alpha=self.alpha,
-                sample_weight=sample_weight,
+                sample_weight=,
                 max_iter=self.max_iter,
                 tol=self.tol,
-                solver=solver,
+                solver=,
                 positive=self.positive,
                 random_state=self.random_state,
                 return_n_iter=True,
@@ -1118,14 +1118,14 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         random_state=None,
     ):
         super().__init__(
-            alpha=alpha,
-            fit_intercept=fit_intercept,
-            copy_X=copy_X,
-            max_iter=max_iter,
-            tol=tol,
-            solver=solver,
-            positive=positive,
-            random_state=random_state,
+            alpha=,
+            fit_intercept=,
+            copy_X=,
+            max_iter=,
+            tol=,
+            solver=,
+            positive=,
+            random_state=,
         )
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1158,7 +1158,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             multi_output=True,
             y_numeric=True,
         )
-        return super().fit(X, y, sample_weight=sample_weight)
+        return super().fit(X, y, sample_weight=)
 
 
 class _RidgeClassifierMixin(LinearClassifierMixin):
@@ -1198,7 +1198,7 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         X, y = self._validate_data(
             X,
             y,
-            accept_sparse=accept_sparse,
+            accept_sparse=,
             multi_output=True,
             y_numeric=False,
         )
@@ -1425,14 +1425,14 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         random_state=None,
     ):
         super().__init__(
-            alpha=alpha,
-            fit_intercept=fit_intercept,
-            copy_X=copy_X,
-            max_iter=max_iter,
-            tol=tol,
-            solver=solver,
-            positive=positive,
-            random_state=random_state,
+            alpha=,
+            fit_intercept=,
+            copy_X=,
+            max_iter=,
+            tol=,
+            solver=,
+            positive=,
+            random_state=,
         )
         self.class_weight = class_weight
 
@@ -1462,7 +1462,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         """
         X, y, sample_weight, Y = self._prepare_data(X, y, sample_weight, self.solver)
 
-        super().fit(X, Y, sample_weight=sample_weight)
+        super().fit(X, Y, sample_weight=)
         return self
 
 
@@ -1999,7 +1999,7 @@ class _RidgeGCV(LinearModel):
             y,
             self.fit_intercept,
             copy=self.copy_X,
-            sample_weight=sample_weight,
+            sample_weight=,
         )
 
         gcv_mode = _check_gcv_mode(X, self.gcv_mode)
@@ -2198,7 +2198,7 @@ class _BaseRidgeCV(LinearModel):
                 is_clf=is_classifier(self),
                 alpha_per_target=self.alpha_per_target,
             )
-            estimator.fit(X, y, sample_weight=sample_weight)
+            estimator.fit(X, y, sample_weight=)
             self.alpha_ = estimator.alpha_
             self.best_score_ = estimator.best_score_
             if self.store_cv_values:
@@ -2213,15 +2213,12 @@ class _BaseRidgeCV(LinearModel):
             solver = "sparse_cg" if sparse.issparse(X) else "auto"
             model = RidgeClassifier if is_classifier(self) else Ridge
             gs = GridSearchCV(
-                model(
-                    fit_intercept=self.fit_intercept,
-                    solver=solver,
-                ),
+                model(fit_intercept=self.fit_intercept, solver=),
                 parameters,
-                cv=cv,
+                cv=,
                 scoring=self.scoring,
             )
-            gs.fit(X, y, sample_weight=sample_weight)
+            gs.fit(X, y, sample_weight=)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
             self.best_score_ = gs.best_score_
@@ -2398,8 +2395,8 @@ class RidgeCV(
         cross-validation takes the sample weights into account when computing
         the validation score.
         """
-        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
-        super().fit(X, y, sample_weight=sample_weight)
+        _raise_for_unsupported_routing(self, "fit", sample_weight=)
+        super().fit(X, y, sample_weight=)
         return self
 
 
@@ -2539,11 +2536,11 @@ class RidgeClassifierCV(_RoutingNotSupportedMixin, _RidgeClassifierMixin, _BaseR
         store_cv_values=False,
     ):
         super().__init__(
-            alphas=alphas,
-            fit_intercept=fit_intercept,
-            scoring=scoring,
-            cv=cv,
-            store_cv_values=store_cv_values,
+            alphas=,
+            fit_intercept=,
+            scoring=,
+            cv=,
+            store_cv_values=,
         )
         self.class_weight = class_weight
 
@@ -2570,7 +2567,7 @@ class RidgeClassifierCV(_RoutingNotSupportedMixin, _RidgeClassifierMixin, _BaseR
         self : object
             Fitted estimator.
         """
-        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
+        _raise_for_unsupported_routing(self, "fit", sample_weight=)
         # `RidgeClassifier` does not accept "sag" or "saga" solver and thus support
         # csr, csc, and coo sparse matrices. By using solver="eigen" we force to accept
         # all sparse format.
@@ -2582,7 +2579,7 @@ class RidgeClassifierCV(_RoutingNotSupportedMixin, _RidgeClassifierMixin, _BaseR
         # estimators are used where y will be binarized. Thus, we pass y
         # instead of the binarized Y.
         target = Y if self.cv is None else y
-        super().fit(X, target, sample_weight=sample_weight)
+        super().fit(X, target, sample_weight=)
         return self
 
     def _more_tags(self):

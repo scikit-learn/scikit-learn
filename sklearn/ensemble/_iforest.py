@@ -241,18 +241,18 @@ class IsolationForest(OutlierMixin, BaseBagging):
     ):
         super().__init__(
             estimator=ExtraTreeRegressor(
-                max_features=1, splitter="random", random_state=random_state
+                max_features=1, splitter="random", random_state=
             ),
             # here above max_features has no links with self.max_features
             bootstrap=bootstrap,
             bootstrap_features=False,
-            n_estimators=n_estimators,
-            max_samples=max_samples,
-            max_features=max_features,
-            warm_start=warm_start,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            verbose=verbose,
+            n_estimators=,
+            max_samples=,
+            max_features=,
+            warm_start=,
+            n_jobs=,
+            random_state=,
+            verbose=,
         )
 
         self.contamination = contamination
@@ -325,8 +325,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
             X,
             y,
             max_samples,
-            max_depth=max_depth,
-            sample_weight=sample_weight,
+            max_depth=,
+            sample_weight=,
             check_input=False,
         )
 

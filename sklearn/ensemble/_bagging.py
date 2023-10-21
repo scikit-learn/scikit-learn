@@ -42,7 +42,7 @@ def _generate_indices(random_state, bootstrap, n_population, n_samples):
         indices = random_state.randint(0, n_population, n_samples)
     else:
         indices = sample_without_replacement(
-            n_population, n_samples, random_state=random_state
+            n_population, n_samples, random_state=
         )
 
     return indices
@@ -109,10 +109,10 @@ def _parallel_build_estimators(
             )
 
         random_state = seeds[i]
-        estimator = ensemble._make_estimator(append=False, random_state=random_state)
+        estimator = ensemble._make_estimator(append=False, random_state=)
 
         if has_check_input:
-            estimator_fit = partial(estimator.fit, check_input=check_input)
+            estimator_fit = partial(estimator.fit, check_input=)
         else:
             estimator_fit = estimator.fit
 
@@ -288,11 +288,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         verbose=0,
         base_estimator="deprecated",
     ):
-        super().__init__(
-            estimator=estimator,
-            n_estimators=n_estimators,
-            base_estimator=base_estimator,
-        )
+        super().__init__(estimator=, n_estimators=, base_estimator=)
         self.max_samples = max_samples
         self.max_features = max_features
         self.bootstrap = bootstrap
@@ -330,7 +326,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
+        _raise_for_unsupported_routing(self, "fit", sample_weight=)
         # Convert data (X is required to be 2d and indexable)
         X, y = self._validate_data(
             X,
@@ -340,7 +336,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             force_all_finite=False,
             multi_output=True,
         )
-        return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
+        return self._fit(X, y, self.max_samples, sample_weight=)
 
     def _parallel_args(self):
         return {}
@@ -476,7 +472,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self._seeds = seeds
 
         all_results = Parallel(
-            n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
+            n_jobs=, verbose=self.verbose, **self._parallel_args()
         )(
             delayed(_parallel_build_estimators)(
                 n_estimators[i],
@@ -487,7 +483,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 seeds[starts[i] : starts[i + 1]],
                 total_n_estimators,
                 verbose=self.verbose,
-                check_input=check_input,
+                check_input=,
             )
             for i in range(n_jobs)
         )
@@ -746,18 +742,18 @@ class BaggingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, BaseBagging)
         base_estimator="deprecated",
     ):
         super().__init__(
-            estimator=estimator,
-            n_estimators=n_estimators,
-            max_samples=max_samples,
-            max_features=max_features,
-            bootstrap=bootstrap,
-            bootstrap_features=bootstrap_features,
-            oob_score=oob_score,
-            warm_start=warm_start,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            verbose=verbose,
-            base_estimator=base_estimator,
+            estimator=,
+            n_estimators=,
+            max_samples=,
+            max_features=,
+            bootstrap=,
+            bootstrap_features=,
+            oob_score=,
+            warm_start=,
+            n_jobs=,
+            random_state=,
+            verbose=,
+            base_estimator=,
         )
 
     def _validate_estimator(self):
@@ -868,7 +864,7 @@ class BaggingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, BaseBagging)
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
         all_proba = Parallel(
-            n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
+            n_jobs=, verbose=self.verbose, **self._parallel_args()
         )(
             delayed(_parallel_predict_proba)(
                 self.estimators_[starts[i] : starts[i + 1]],
@@ -917,7 +913,7 @@ class BaggingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, BaseBagging)
             # Parallel loop
             n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
-            all_log_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+            all_log_proba = Parallel(n_jobs=, verbose=self.verbose)(
                 delayed(_parallel_predict_log_proba)(
                     self.estimators_[starts[i] : starts[i + 1]],
                     self.estimators_features_[starts[i] : starts[i + 1]],
@@ -972,7 +968,7 @@ class BaggingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, BaseBagging)
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        all_decisions = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_decisions = Parallel(n_jobs=, verbose=self.verbose)(
             delayed(_parallel_decision_function)(
                 self.estimators_[starts[i] : starts[i + 1]],
                 self.estimators_features_[starts[i] : starts[i + 1]],
@@ -1185,18 +1181,18 @@ class BaggingRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseBagging):
         base_estimator="deprecated",
     ):
         super().__init__(
-            estimator=estimator,
-            n_estimators=n_estimators,
-            max_samples=max_samples,
-            max_features=max_features,
-            bootstrap=bootstrap,
-            bootstrap_features=bootstrap_features,
-            oob_score=oob_score,
-            warm_start=warm_start,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            verbose=verbose,
-            base_estimator=base_estimator,
+            estimator=,
+            n_estimators=,
+            max_samples=,
+            max_features=,
+            bootstrap=,
+            bootstrap_features=,
+            oob_score=,
+            warm_start=,
+            n_jobs=,
+            random_state=,
+            verbose=,
+            base_estimator=,
         )
 
     def predict(self, X):
@@ -1229,7 +1225,7 @@ class BaggingRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseBagging):
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_y_hat = Parallel(n_jobs=, verbose=self.verbose)(
             delayed(_parallel_predict_regression)(
                 self.estimators_[starts[i] : starts[i + 1]],
                 self.estimators_features_[starts[i] : starts[i + 1]],

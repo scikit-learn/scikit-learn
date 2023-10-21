@@ -952,7 +952,7 @@ def test_split_interaction_constraints():
             sum_gradients,
             sum_hessians,
             value,
-            allowed_features=allowed_features,
+            allowed_features=,
         )
         split_features.append(si_root.feature_idx)
         assert si_root.feature_idx in allowed_features

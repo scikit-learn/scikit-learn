@@ -102,10 +102,8 @@ def test_kernel_density(
     dens_true = compute_kernel_slow(Y, X, kernel, h)
 
     tree = Cls(X, leaf_size=10)
-    dens = tree.kernel_density(
-        Y, h, atol=atol, rtol=rtol, kernel=kernel, breadth_first=breadth_first
-    )
-    assert_allclose(dens, dens_true, atol=atol, rtol=max(rtol, 1e-7))
+    dens = tree.kernel_density(Y, h, atol=, rtol=, kernel=, breadth_first=)
+    assert_allclose(dens, dens_true, atol=, rtol=max(rtol, 1e-7))
 
 
 @pytest.mark.parametrize("Cls", [KDTree, BallTree])
@@ -161,7 +159,7 @@ def test_neighbor_tree_two_point(Cls, dualtree, n_samples=100, n_features=3):
     D = DistanceMetric.get_metric("euclidean").pairwise(Y, X)
     counts_true = [(D <= ri).sum() for ri in r]
 
-    counts = tree.two_point_correlation(Y, r=r, dualtree=dualtree)
+    counts = tree.two_point_correlation(Y, r=, dualtree=)
     assert_array_almost_equal(counts, counts_true)
 
 
@@ -258,8 +256,8 @@ def test_nn_tree_query(Cls, metric, k, dualtree, breadth_first):
 
     kwargs = METRICS[metric]
 
-    kdt = Cls(X, leaf_size=1, metric=metric, **kwargs)
-    dist1, ind1 = kdt.query(Y, k, dualtree=dualtree, breadth_first=breadth_first)
+    kdt = Cls(X, leaf_size=1, metric=, **kwargs)
+    dist1, ind1 = kdt.query(Y, k, dualtree=, breadth_first=)
     dist2, ind2 = brute_force_neighbors(X, Y, k, metric, **kwargs)
 
     # don't check indices here: if there are any duplicate distances,
@@ -281,11 +279,11 @@ def test_pickle(Cls, metric, protocol):
     else:
         kwargs = {}
 
-    tree1 = Cls(X, leaf_size=1, metric=metric, **kwargs)
+    tree1 = Cls(X, leaf_size=1, metric=, **kwargs)
 
     ind1, dist1 = tree1.query(X)
 
-    s = pickle.dumps(tree1, protocol=protocol)
+    s = pickle.dumps(tree1, protocol=)
     tree2 = pickle.loads(s)
 
     ind2, dist2 = tree2.query(X)

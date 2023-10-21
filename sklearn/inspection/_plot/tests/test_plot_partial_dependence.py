@@ -52,8 +52,8 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes, diabetes
         clf_diabetes,
         diabetes.data,
         [0, 2, (0, 2)],
-        grid_resolution=grid_resolution,
-        feature_names=feature_names,
+        grid_resolution=,
+        feature_names=,
         contour_kw={"cmap": "jet"},
     )
     fig = pyplot.gcf()
@@ -145,9 +145,9 @@ def test_plot_partial_dependence_kind(
         clf_diabetes,
         diabetes.data,
         [0, 1, 2],
-        kind=kind,
-        centered=centered,
-        subsample=subsample,
+        kind=,
+        centered=,
+        subsample=,
     )
 
     assert disp.axes_.shape == (1, 3)
@@ -209,8 +209,8 @@ def test_plot_partial_dependence_str_features(
         clf_diabetes,
         X,
         [("age", "bmi"), "bmi"],
-        grid_resolution=grid_resolution,
-        feature_names=feature_names,
+        grid_resolution=,
+        feature_names=,
         n_cols=1,
         line_kw={"alpha": 0.8},
     )
@@ -260,7 +260,7 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_diabetes, diabetes):
         clf_diabetes,
         diabetes.data,
         ["age", ("age", "bmi")],
-        grid_resolution=grid_resolution,
+        grid_resolution=,
         feature_names=diabetes.feature_names,
         ax=[ax1, ax2],
     )
@@ -301,9 +301,9 @@ def test_plot_partial_dependence_passing_numpy_axes(
         clf_diabetes,
         diabetes.data,
         ["age", "bmi"],
-        kind=kind,
-        grid_resolution=grid_resolution,
-        feature_names=feature_names,
+        kind=,
+        grid_resolution=,
+        feature_names=,
     )
     assert disp1.axes_.shape == (1, 2)
     assert disp1.axes_[0, 0].get_ylabel() == "Partial dependence"
@@ -318,9 +318,9 @@ def test_plot_partial_dependence_passing_numpy_axes(
         lr,
         diabetes.data,
         ["age", "bmi"],
-        kind=kind,
-        grid_resolution=grid_resolution,
-        feature_names=feature_names,
+        kind=,
+        grid_resolution=,
+        feature_names=,
         ax=disp1.axes_,
     )
 
@@ -344,7 +344,7 @@ def test_plot_partial_dependence_incorrent_num_axes(
         clf_diabetes,
         diabetes.data,
         ["age", "bmi"],
-        grid_resolution=grid_resolution,
+        grid_resolution=,
         feature_names=diabetes.feature_names,
     )
 
@@ -354,7 +354,7 @@ def test_plot_partial_dependence_incorrent_num_axes(
                 clf_diabetes,
                 diabetes.data,
                 ["age", "bmi"],
-                grid_resolution=grid_resolution,
+                grid_resolution=,
                 feature_names=diabetes.feature_names,
                 ax=ax_format,
             )
@@ -383,9 +383,9 @@ def test_plot_partial_dependence_with_same_axes(pyplot, clf_diabetes, diabetes):
         clf_diabetes,
         diabetes.data,
         ["age", "bmi"],
-        grid_resolution=grid_resolution,
+        grid_resolution=,
         feature_names=diabetes.feature_names,
-        ax=ax,
+        ax=,
     )
 
     msg = (
@@ -398,9 +398,9 @@ def test_plot_partial_dependence_with_same_axes(pyplot, clf_diabetes, diabetes):
             clf_diabetes,
             diabetes.data,
             ["age", "bmi"],
-            grid_resolution=grid_resolution,
+            grid_resolution=,
             feature_names=diabetes.feature_names,
-            ax=ax,
+            ax=,
         )
 
 
@@ -415,7 +415,7 @@ def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_diabetes, diabet
         diabetes.data,
         [0, 1],
         grid_resolution=10,
-        feature_names=feature_names,
+        feature_names=,
     )
 
     PartialDependenceDisplay.from_estimator(
@@ -435,7 +435,7 @@ def test_plot_partial_dependence_multiclass(pyplot):
     # Test partial dependence plot function on multi-class input.
     clf_int.fit(iris.data, iris.target)
     disp_target_0 = PartialDependenceDisplay.from_estimator(
-        clf_int, iris.data, [0, 3], target=0, grid_resolution=grid_resolution
+        clf_int, iris.data, [0, 3], target=0, grid_resolution=
     )
     assert disp_target_0.figure_ is pyplot.gcf()
     assert disp_target_0.axes_.shape == (1, 2)
@@ -451,7 +451,7 @@ def test_plot_partial_dependence_multiclass(pyplot):
     clf_symbol = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf_symbol.fit(iris.data, target)
     disp_symbol = PartialDependenceDisplay.from_estimator(
-        clf_symbol, iris.data, [0, 3], target="setosa", grid_resolution=grid_resolution
+        clf_symbol, iris.data, [0, 3], target="setosa", grid_resolution=
     )
     assert disp_symbol.figure_ is pyplot.gcf()
     assert disp_symbol.axes_.shape == (1, 2)
@@ -470,7 +470,7 @@ def test_plot_partial_dependence_multiclass(pyplot):
 
     # check that the pd plots are different for another target
     disp_target_1 = PartialDependenceDisplay.from_estimator(
-        clf_int, iris.data, [0, 3], target=1, grid_resolution=grid_resolution
+        clf_int, iris.data, [0, 3], target=1, grid_resolution=
     )
     target_0_data_y = disp_target_0.lines_[0, 0].get_data()[1]
     target_1_data_y = disp_target_1.lines_[0, 0].get_data()[1]
@@ -489,7 +489,7 @@ def test_plot_partial_dependence_multioutput(pyplot, target):
 
     grid_resolution = 25
     disp = PartialDependenceDisplay.from_estimator(
-        clf, X, [0, 1], target=target, grid_resolution=grid_resolution
+        clf, X, [0, 1], target=, grid_resolution=
     )
     fig = pyplot.gcf()
     axs = fig.get_axes()
@@ -517,7 +517,7 @@ def test_plot_partial_dependence_dataframe(pyplot, clf_diabetes, diabetes):
         clf_diabetes,
         df,
         ["bp", "s1"],
-        grid_resolution=grid_resolution,
+        grid_resolution=,
         feature_names=df.columns.tolist(),
     )
 
@@ -681,7 +681,7 @@ def test_plot_partial_dependence_with_categorical(
         X,
         features=["col_C"],
         feature_names=column_name,
-        categorical_features=categorical_features,
+        categorical_features=,
     )
 
     assert disp.figure_ is pyplot.gcf()
@@ -703,7 +703,7 @@ def test_plot_partial_dependence_with_categorical(
         X,
         features=[("col_A", "col_C")],
         feature_names=column_name,
-        categorical_features=categorical_features,
+        categorical_features=,
     )
 
     assert disp.figure_ is pyplot.gcf()
@@ -740,7 +740,7 @@ def test_plot_partial_dependence_legend(pyplot):
         model,
         X,
         features=["col_B", "col_C"],
-        categorical_features=categorical_features,
+        categorical_features=,
         kind=["both", "average"],
     )
 
@@ -768,9 +768,9 @@ def test_plot_partial_dependence_subsampling(
         clf_diabetes,
         diabetes.data,
         ["age", "bmi"],
-        kind=kind,
-        grid_resolution=grid_resolution,
-        feature_names=feature_names,
+        kind=,
+        grid_resolution=,
+        feature_names=,
         subsample=20,
         random_state=0,
     )
@@ -807,8 +807,8 @@ def test_partial_dependence_overwrite_labels(
         [0, 2],
         grid_resolution=25,
         feature_names=diabetes.feature_names,
-        kind=kind,
-        line_kw=line_kw,
+        kind=,
+        line_kw=,
     )
 
     for ax in disp.axes_.ravel():
@@ -850,7 +850,7 @@ def test_grid_resolution_with_categorical(pyplot, categorical_features, array_ty
             X,
             features=["col_C"],
             feature_names=column_name,
-            categorical_features=categorical_features,
+            categorical_features=,
             grid_resolution=2,
         )
 
@@ -865,7 +865,7 @@ def test_partial_dependence_plot_limits_one_way(
         clf_diabetes,
         diabetes.data,
         features=(0, 1),
-        kind=kind,
+        kind=,
         grid_resolution=25,
         feature_names=diabetes.feature_names,
     )
@@ -879,7 +879,7 @@ def test_partial_dependence_plot_limits_one_way(
             pd["individual"][...] = range_pd[1]
             pd["individual"][0, 0, 0] = range_pd[0]
 
-    disp.plot(centered=centered)
+    disp.plot(centered=)
     # check that we anchor to zero x-axis when centering
     y_lim = range_pd - range_pd[0] if centered else range_pd
     padding = 0.05 * (y_lim[1] - y_lim[0])
@@ -908,7 +908,7 @@ def test_partial_dependence_plot_limits_two_way(
         pd["average"][...] = range_pd[1]
         pd["average"][0, 0] = range_pd[0]
 
-    disp.plot(centered=centered)
+    disp.plot(centered=)
     contours = disp.contours_[0, 0]
     levels = range_pd - range_pd[0] if centered else range_pd
 
@@ -976,9 +976,9 @@ def test_partial_dependence_kind_error(
         PartialDependenceDisplay.from_estimator(
             clf_diabetes,
             diabetes.data,
-            features=features,
+            features=,
             grid_resolution=20,
-            kind=kind,
+            kind=,
         )
 
 
@@ -1015,9 +1015,9 @@ def test_plot_partial_dependence_lines_kw(
         feature_names=diabetes.feature_names,
         n_cols=2,
         kind="both",
-        line_kw=line_kw,
-        pd_line_kw=pd_line_kw,
-        ice_lines_kw=ice_lines_kw,
+        line_kw=,
+        pd_line_kw=,
+        ice_lines_kw=,
     )
 
     line = disp.lines_[0, 0, -1]
@@ -1080,7 +1080,7 @@ def test_partial_dependence_display_kind_centered_interaction(
         clf_diabetes,
         diabetes.data,
         [0, 1],
-        kind=kind,
+        kind=,
         centered=True,
         subsample=5,
     )
@@ -1109,7 +1109,7 @@ def test_partial_dependence_display_with_constant_sample_weight(
         clf_diabetes,
         diabetes.data,
         [0, 1],
-        sample_weight=sample_weight,
+        sample_weight=,
         kind="average",
         method="brute",
     )

@@ -188,7 +188,7 @@ param_distributions = {
 }
 kernel_ridge_tuned = RandomizedSearchCV(
     kernel_ridge,
-    param_distributions=param_distributions,
+    param_distributions=,
     n_iter=500,
     random_state=0,
 )
@@ -254,7 +254,7 @@ from sklearn.gaussian_process.kernels import WhiteKernel
 kernel = 1.0 * ExpSineSquared(1.0, 5.0, periodicity_bounds=(1e-2, 1e1)) + WhiteKernel(
     1e-1
 )
-gaussian_process = GaussianProcessRegressor(kernel=kernel)
+gaussian_process = GaussianProcessRegressor(kernel=)
 start_time = time.time()
 gaussian_process.fit(training_data, training_noisy_target)
 print(
@@ -346,7 +346,7 @@ from sklearn.gaussian_process.kernels import RBF
 kernel = 1.0 * ExpSineSquared(1.0, 5.0, periodicity_bounds=(1e-2, 1e1)) * RBF(
     length_scale=15, length_scale_bounds="fixed"
 ) + WhiteKernel(1e-1)
-gaussian_process = GaussianProcessRegressor(kernel=kernel)
+gaussian_process = GaussianProcessRegressor(kernel=)
 gaussian_process.fit(training_data, training_noisy_target)
 mean_predictions_gpr, std_predictions_gpr = gaussian_process.predict(
     data,

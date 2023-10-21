@@ -49,10 +49,10 @@ width = 100
 n_components = resolution // subsampling
 
 # Compute a wavelet dictionary
-D_fixed = ricker_matrix(width=width, resolution=resolution, n_components=n_components)
+D_fixed = ricker_matrix(width=, resolution=, n_components=)
 D_multi = np.r_[
     tuple(
-        ricker_matrix(width=w, resolution=resolution, n_components=n_components // 5)
+        ricker_matrix(width=w, resolution=, n_components=n_components // 5)
         for w in (10, 50, 100, 500, 1000)
     )
 ]
@@ -78,7 +78,7 @@ for subplot, (D, title) in enumerate(
 ):
     plt.subplot(1, 2, subplot + 1)
     plt.title("Sparse coding against %s dictionary" % title)
-    plt.plot(y, lw=lw, linestyle="--", label="Original signal")
+    plt.plot(y, lw=, linestyle="--", label="Original signal")
     # Do a wavelet approximation
     for title, algo, alpha, n_nonzero, color in estimators:
         coder = SparseCoder(
@@ -93,8 +93,8 @@ for subplot, (D, title) in enumerate(
         squared_error = np.sum((y - x) ** 2)
         plt.plot(
             x,
-            color=color,
-            lw=lw,
+            color=,
+            lw=,
             label="%s: %s nonzero coefs,\n%.2f error" % (title, density, squared_error),
         )
 
@@ -110,7 +110,7 @@ for subplot, (D, title) in enumerate(
     plt.plot(
         x,
         color="darkorange",
-        lw=lw,
+        lw=,
         label="Thresholding w/ debiasing:\n%d nonzero coefs, %.2f error"
         % (len(idx), squared_error),
     )

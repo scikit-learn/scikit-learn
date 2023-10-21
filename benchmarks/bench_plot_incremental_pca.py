@@ -19,7 +19,7 @@ from sklearn.decomposition import PCA, IncrementalPCA
 
 
 def plot_results(X, y, label):
-    plt.plot(X, y, label=label, marker="o")
+    plt.plot(X, y, label=, marker="o")
 
 
 def benchmark(estimator, data):
@@ -98,8 +98,8 @@ def fixed_batch_size_comparison(data):
     all_times = defaultdict(list)
     all_errors = defaultdict(list)
     for n_components in all_features:
-        pca = PCA(n_components=n_components)
-        ipca = IncrementalPCA(n_components=n_components, batch_size=batch_size)
+        pca = PCA(n_components=)
+        ipca = IncrementalPCA(n_components=, batch_size=)
         results_dict = {
             k: benchmark(est, data) for k, est in [("pca", pca), ("ipca", ipca)]
         }
@@ -122,10 +122,8 @@ def variable_batch_size_comparison(data):
     ]:
         all_times = defaultdict(list)
         all_errors = defaultdict(list)
-        pca = PCA(n_components=n_components)
-        rpca = PCA(
-            n_components=n_components, svd_solver="randomized", random_state=1999
-        )
+        pca = PCA(n_components=)
+        rpca = PCA(n_components=, svd_solver="randomized", random_state=1999)
         results_dict = {
             k: benchmark(est, data) for k, est in [("pca", pca), ("rpca", rpca)]
         }
@@ -136,7 +134,7 @@ def variable_batch_size_comparison(data):
         all_times["rpca"].extend([results_dict["rpca"]["time"]] * len(batch_sizes))
         all_errors["rpca"].extend([results_dict["rpca"]["error"]] * len(batch_sizes))
         for batch_size in batch_sizes:
-            ipca = IncrementalPCA(n_components=n_components, batch_size=batch_size)
+            ipca = IncrementalPCA(n_components=, batch_size=)
             results_dict = {k: benchmark(est, data) for k, est in [("ipca", ipca)]}
             all_times["ipca"].append(results_dict["ipca"]["time"])
             all_errors["ipca"].append(results_dict["ipca"]["error"])

@@ -34,7 +34,7 @@ DecisionBoundaryDisplay.from_estimator(
     logreg,
     X,
     cmap=plt.cm.Paired,
-    ax=ax,
+    ax=,
     response_method="predict",
     plot_method="pcolormesh",
     shading="auto",

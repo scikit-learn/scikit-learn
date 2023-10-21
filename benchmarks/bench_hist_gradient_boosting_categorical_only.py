@@ -48,7 +48,7 @@ def predict(est, data_test):
     print(f"predicted in {toc - tic:.3f}s")
 
 
-X, y = make_classification(n_samples=n_samples, n_features=n_features, random_state=0)
+X, y = make_classification(n_samples=, n_features=, random_state=0)
 
 X = KBinsDiscretizer(n_bins=n_categories, encode="ordinal").fit_transform(X)
 
@@ -60,12 +60,12 @@ est = HistGradientBoostingClassifier(
     loss="log_loss",
     learning_rate=lr,
     max_iter=n_trees,
-    max_bins=max_bins,
+    max_bins=,
     max_leaf_nodes=n_leaf_nodes,
     categorical_features=is_categorical,
     early_stopping=False,
     random_state=0,
-    verbose=verbose,
+    verbose=,
 )
 
 fit(est, X, y, "sklearn")

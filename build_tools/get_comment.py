@@ -107,7 +107,7 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
             "detected by `ruff`. Note that the installed `black` version is "
             f"`black={versions['black']}`."
         ),
-        details=details,
+        details=,
     )
 
     # ruff
@@ -122,7 +122,7 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
             "Here you can see the detected issues. Note that the installed "
             f"`ruff` version is `ruff={versions['ruff']}`."
         ),
-        details=details,
+        details=,
     )
 
     # mypy
@@ -136,7 +136,7 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
             "Here you can see the detected issues. Note that the installed `mypy` "
             f"version is `mypy={versions['mypy']}`."
         ),
-        details=details,
+        details=,
     )
 
     # cython-lint
@@ -151,7 +151,7 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
             "installed `cython-lint` version is "
             f"`cython-lint={versions['cython-lint']}`."
         ),
-        details=details,
+        details=,
     )
 
     # deprecation order
@@ -164,7 +164,7 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
             "Deprecation order check detected issues. Please fix them locally and "
             "push the changes. Here you can see the detected issues."
         ),
-        details=details,
+        details=,
     )
 
     # doctest directives
@@ -177,7 +177,7 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
             "doctest directive check detected issues. Please fix them locally and "
             "push the changes. Here you can see the detected issues."
         ),
-        details=details,
+        details=,
     )
 
     # joblib imports
@@ -190,7 +190,7 @@ def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
             "`joblib` import check detected issues. Please fix them locally and "
             "push the changes. Here you can see the detected issues."
         ),
-        details=details,
+        details=,
     )
 
     if not message:
@@ -320,38 +320,26 @@ if __name__ == "__main__":
     try:
         message = get_message(
             log_file,
-            repo=repo,
-            pr_number=pr_number,
-            sha=sha,
-            run_id=run_id,
+            repo=,
+            pr_number=,
+            sha=,
+            run_id=,
             details=True,
-            versions=versions,
+            versions=,
         )
-        create_or_update_comment(
-            comment=comment,
-            message=message,
-            repo=repo,
-            pr_number=pr_number,
-            token=token,
-        )
+        create_or_update_comment(comment=, message=, repo=, pr_number=, token=)
         print(message)
     except requests.HTTPError:
         # The above fails if the message is too long. In that case, we
         # try again without the details.
         message = get_message(
             log_file,
-            repo=repo,
-            pr_number=pr_number,
-            sha=sha,
-            run_id=run_id,
+            repo=,
+            pr_number=,
+            sha=,
+            run_id=,
             details=False,
-            versions=versions,
+            versions=,
         )
-        create_or_update_comment(
-            comment=comment,
-            message=message,
-            repo=repo,
-            pr_number=pr_number,
-            token=token,
-        )
+        create_or_update_comment(comment=, message=, repo=, pr_number=, token=)
         print(message)

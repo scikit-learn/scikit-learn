@@ -391,7 +391,7 @@ def test_gridsearch_pipeline(print_changed_only_false):
             "classify__C": C_OPTIONS,
         },
     ]
-    gspipline = GridSearchCV(pipeline, cv=3, n_jobs=1, param_grid=param_grid)
+    gspipline = GridSearchCV(pipeline, cv=3, n_jobs=1, param_grid=)
     expected = """
 GridSearchCV(cv=3, error_score='raise-deprecating',
              estimator=Pipeline(memory=None,
@@ -444,12 +444,12 @@ def test_n_max_elements_to_show(print_changed_only_false):
         compact=True,
         indent=1,
         indent_at_name=True,
-        n_max_elements_to_show=n_max_elements_to_show,
+        n_max_elements_to_show=,
     )
 
     # No ellipsis
     vocabulary = {i: i for i in range(n_max_elements_to_show)}
-    vectorizer = CountVectorizer(vocabulary=vocabulary)
+    vectorizer = CountVectorizer(vocabulary=)
 
     expected = r"""
 CountVectorizer(analyzer='word', binary=False, decode_error='strict',
@@ -469,7 +469,7 @@ CountVectorizer(analyzer='word', binary=False, decode_error='strict',
 
     # Now with ellipsis
     vocabulary = {i: i for i in range(n_max_elements_to_show + 1)}
-    vectorizer = CountVectorizer(vocabulary=vocabulary)
+    vectorizer = CountVectorizer(vocabulary=)
 
     expected = r"""
 CountVectorizer(analyzer='word', binary=False, decode_error='strict',
@@ -626,7 +626,7 @@ def test_kwargs_in_init():
             self.set_params(**kwargs)
 
         def get_params(self, deep=True):
-            params = super().get_params(deep=deep)
+            params = super().get_params(deep=)
             params.update(self._other_params)
             return params
 

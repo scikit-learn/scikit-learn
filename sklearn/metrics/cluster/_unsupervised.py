@@ -127,7 +127,7 @@ def silhouette_score(
             X, labels = X[indices].T[indices].T, labels[indices]
         else:
             X, labels = X[indices], labels[indices]
-    return np.mean(silhouette_samples(X, labels, metric=metric, **kwds))
+    return np.mean(silhouette_samples(X, labels, metric=, **kwds))
 
 
 def _silhouette_reduce(D_chunk, start, labels, label_freqs):
@@ -276,10 +276,8 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     check_number_of_labels(len(le.classes_), n_samples)
 
     kwds["metric"] = metric
-    reduce_func = functools.partial(
-        _silhouette_reduce, labels=labels, label_freqs=label_freqs
-    )
-    results = zip(*pairwise_distances_chunked(X, reduce_func=reduce_func, **kwds))
+    reduce_func = functools.partial(_silhouette_reduce, labels=, label_freqs=)
+    results = zip(*pairwise_distances_chunked(X, reduce_func=, **kwds))
     intra_clust_dists, inter_clust_dists = results
     intra_clust_dists = np.concatenate(intra_clust_dists)
     inter_clust_dists = np.concatenate(inter_clust_dists)

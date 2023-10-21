@@ -107,13 +107,13 @@ class BaseSuccessiveHalving(BaseSearchCV):
     ):
         super().__init__(
             estimator,
-            scoring=scoring,
-            n_jobs=n_jobs,
-            refit=refit,
-            cv=cv,
-            verbose=verbose,
-            error_score=error_score,
-            return_train_score=return_train_score,
+            scoring=,
+            n_jobs=,
+            refit=,
+            cv=,
+            verbose=,
+            error_score=,
+            return_train_score=,
         )
 
         self.random_state = random_state
@@ -159,7 +159,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 magic_factor = 2
                 self.min_resources_ = n_splits * magic_factor
                 if is_classifier(self.estimator):
-                    y = self._validate_data(X="no_validation", y=y)
+                    y = self._validate_data(X="no_validation", y=)
                     check_classification_targets(y)
                     n_classes = np.unique(y).shape[0]
                     self.min_resources_ *= n_classes
@@ -243,12 +243,12 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         routed_params = self._get_routed_params_for_fit(params)
         self._check_input_parameters(
-            X=X, y=y, split_params=routed_params.splitter.split
+            X=, y=, split_params=routed_params.splitter.split
         )
 
         self._n_samples_orig = _num_samples(X)
 
-        super().fit(X, y=y, **params)
+        super().fit(X, y=, **params)
 
         # Set best_score_: BaseSearchCV does not set it, as refit is a callable
         self.best_score_ = self.cv_results_["mean_test_score"][self.best_index_]
@@ -352,9 +352,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 "n_resources": [n_resources] * n_candidates,
             }
 
-            results = evaluate_candidates(
-                candidate_params, cv, more_results=more_results
-            )
+            results = evaluate_candidates(candidate_params, cv, more_results=)
 
             n_candidates_to_keep = ceil(n_candidates / self.factor)
             candidate_params = _top_k(results, n_candidates_to_keep, itr)
@@ -694,19 +692,19 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     ):
         super().__init__(
             estimator,
-            scoring=scoring,
-            n_jobs=n_jobs,
-            refit=refit,
-            verbose=verbose,
-            cv=cv,
-            random_state=random_state,
-            error_score=error_score,
-            return_train_score=return_train_score,
-            max_resources=max_resources,
-            resource=resource,
-            factor=factor,
-            min_resources=min_resources,
-            aggressive_elimination=aggressive_elimination,
+            scoring=,
+            n_jobs=,
+            refit=,
+            verbose=,
+            cv=,
+            random_state=,
+            error_score=,
+            return_train_score=,
+            max_resources=,
+            resource=,
+            factor=,
+            min_resources=,
+            aggressive_elimination=,
         )
         self.param_grid = param_grid
 
@@ -1049,19 +1047,19 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     ):
         super().__init__(
             estimator,
-            scoring=scoring,
-            n_jobs=n_jobs,
-            refit=refit,
-            verbose=verbose,
-            cv=cv,
-            random_state=random_state,
-            error_score=error_score,
-            return_train_score=return_train_score,
-            max_resources=max_resources,
-            resource=resource,
-            factor=factor,
-            min_resources=min_resources,
-            aggressive_elimination=aggressive_elimination,
+            scoring=,
+            n_jobs=,
+            refit=,
+            verbose=,
+            cv=,
+            random_state=,
+            error_score=,
+            return_train_score=,
+            max_resources=,
+            resource=,
+            factor=,
+            min_resources=,
+            aggressive_elimination=,
         )
         self.param_distributions = param_distributions
         self.n_candidates = n_candidates

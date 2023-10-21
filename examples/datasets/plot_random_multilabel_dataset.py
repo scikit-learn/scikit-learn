@@ -62,9 +62,9 @@ def plot_2d(ax, n_labels=1, n_classes=3, length=50):
     X, Y, p_c, p_w_c = make_ml_clf(
         n_samples=150,
         n_features=2,
-        n_classes=n_classes,
-        n_labels=n_labels,
-        length=length,
+        n_classes=,
+        n_labels=,
+        length=,
         allow_unlabeled=False,
         return_distributions=True,
         random_state=RANDOM_SEED,

@@ -128,7 +128,7 @@ def _spatial_median(X, max_iter=300, tol=1.0e-3):
         warnings.warn(
             "Maximum number of iterations {max_iter} reached in "
             "spatial median for TheilSen regressor."
-            "".format(max_iter=max_iter),
+            "".format(max_iter=),
             ConvergenceWarning,
         )
     return n_iter, spatial_median
@@ -437,7 +437,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
         n_jobs = effective_n_jobs(self.n_jobs)
         index_list = np.array_split(indices, n_jobs)
-        weights = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        weights = Parallel(n_jobs=, verbose=self.verbose)(
             delayed(_lstsq)(X, y, index_list[job], self.fit_intercept)
             for job in range(n_jobs)
         )

@@ -122,18 +122,18 @@ embeddings = {
     "Linear Discriminant Analysis embedding": LinearDiscriminantAnalysis(
         n_components=2
     ),
-    "Isomap embedding": Isomap(n_neighbors=n_neighbors, n_components=2),
+    "Isomap embedding": Isomap(n_neighbors=, n_components=2),
     "Standard LLE embedding": LocallyLinearEmbedding(
-        n_neighbors=n_neighbors, n_components=2, method="standard"
+        n_neighbors=, n_components=2, method="standard"
     ),
     "Modified LLE embedding": LocallyLinearEmbedding(
-        n_neighbors=n_neighbors, n_components=2, method="modified"
+        n_neighbors=, n_components=2, method="modified"
     ),
     "Hessian LLE embedding": LocallyLinearEmbedding(
-        n_neighbors=n_neighbors, n_components=2, method="hessian"
+        n_neighbors=, n_components=2, method="hessian"
     ),
     "LTSA LLE embedding": LocallyLinearEmbedding(
-        n_neighbors=n_neighbors, n_components=2, method="ltsa"
+        n_neighbors=, n_components=2, method="ltsa"
     ),
     "MDS embedding": MDS(
         n_components=2, n_init=1, max_iter=120, n_jobs=2, normalized_stress="auto"

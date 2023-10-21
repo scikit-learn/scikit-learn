@@ -81,7 +81,7 @@ for assign_labels in ("kmeans", "discretize", "cluster_qr"):
         graph,
         n_clusters=(n_regions + n_regions_plus),
         eigen_tol=1e-7,
-        assign_labels=assign_labels,
+        assign_labels=,
         random_state=42,
     )
 
@@ -97,7 +97,7 @@ for assign_labels in ("kmeans", "discretize", "cluster_qr"):
     plt.title(title)
     for l in range(n_regions):
         colors = [plt.cm.nipy_spectral((l + 4) / float(n_regions + 4))]
-        plt.contour(labels == l, colors=colors)
+        plt.contour(labels == l, colors=)
         # To view individual segments as appear comment in plt.pause(0.5)
 plt.show()
 

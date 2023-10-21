@@ -58,7 +58,7 @@ for dat in datasets:
     print("--- Fetching data...")
     if dat in ["http", "smtp", "SF", "SA"]:
         dataset = fetch_kddcup99(
-            subset=dat, shuffle=True, percent10=True, random_state=random_state
+            subset=dat, shuffle=True, percent10=True, random_state=
         )
         X = dataset.data
         y = dataset.target
@@ -67,7 +67,7 @@ for dat in datasets:
         dataset = fetch_openml("shuttle", as_frame=False, parser="pandas")
         X = dataset.data
         y = dataset.target.astype(np.int64)
-        X, y = sh(X, y, random_state=random_state)
+        X, y = sh(X, y, random_state=)
         # we remove data with label 4
         # normal data are then those of class 1
         s = y != 4
@@ -77,7 +77,7 @@ for dat in datasets:
         print("----- ")
 
     if dat == "forestcover":
-        dataset = fetch_covtype(shuffle=True, random_state=random_state)
+        dataset = fetch_covtype(shuffle=True, random_state=)
         X = dataset.data
         y = dataset.target
         # normal data are those with attribute 2
@@ -120,7 +120,7 @@ for dat in datasets:
     y_test = y[n_samples_train:]
 
     print("--- Fitting the IsolationForest estimator...")
-    model = IsolationForest(n_jobs=-1, random_state=random_state)
+    model = IsolationForest(n_jobs=-1, random_state=)
     tstart = time()
     model.fit(X_train)
     fit_time = time() - tstart
@@ -151,7 +151,7 @@ for dat in datasets:
     )
     # Print AUC score and train/test time:
     print(label)
-    ax_roc.plot(fpr, tpr, lw=1, label=label)
+    ax_roc.plot(fpr, tpr, lw=1, label=)
 
 
 ax_roc.set_xlim([-0.05, 1.05])

@@ -25,7 +25,7 @@ M = Memory(location=str(Path(__file__).resolve().parent / "cache"))
 @M.cache
 def _blobs_dataset(n_samples=500000, n_features=3, n_clusters=100, dtype=np.float32):
     X, _ = make_blobs(
-        n_samples=n_samples, n_features=n_features, centers=n_clusters, random_state=0
+        n_samples=, n_features=, centers=n_clusters, random_state=0
     )
     X = X.astype(dtype, copy=False)
 
@@ -36,7 +36,7 @@ def _blobs_dataset(n_samples=500000, n_features=3, n_clusters=100, dtype=np.floa
 @M.cache
 def _20newsgroups_highdim_dataset(n_samples=None, ngrams=(1, 1), dtype=np.float32):
     newsgroups = fetch_20newsgroups(random_state=0)
-    vectorizer = TfidfVectorizer(ngram_range=ngrams, dtype=dtype)
+    vectorizer = TfidfVectorizer(ngram_range=ngrams, dtype=)
     X = vectorizer.fit_transform(newsgroups.data[:n_samples])
     y = newsgroups.target[:n_samples]
 
@@ -50,7 +50,7 @@ def _20newsgroups_lowdim_dataset(n_components=100, ngrams=(1, 1), dtype=np.float
     vectorizer = TfidfVectorizer(ngram_range=ngrams)
     X = vectorizer.fit_transform(newsgroups.data)
     X = X.astype(dtype, copy=False)
-    svd = TruncatedSVD(n_components=n_components)
+    svd = TruncatedSVD(n_components=)
     X = svd.fit_transform(X)
     y = newsgroups.target
 
@@ -85,8 +85,8 @@ def _digits_dataset(n_samples=None, dtype=np.float32):
 @M.cache
 def _synth_regression_dataset(n_samples=100000, n_features=100, dtype=np.float32):
     X, y = make_regression(
-        n_samples=n_samples,
-        n_features=n_features,
+        n_samples=,
+        n_features=,
         n_informative=n_features // 10,
         noise=50,
         random_state=0,
@@ -103,7 +103,7 @@ def _synth_regression_sparse_dataset(
     n_samples=10000, n_features=10000, density=0.01, dtype=np.float32
 ):
     X = sp.random(
-        m=n_samples, n=n_features, density=density, format="csr", random_state=0
+        m=n_samples, n=n_features, density=, format="csr", random_state=0
     )
     X.data = np.random.RandomState(0).randn(X.getnnz())
     X = X.astype(dtype, copy=False)
@@ -121,9 +121,9 @@ def _synth_classification_dataset(
     n_samples=1000, n_features=10000, n_classes=2, dtype=np.float32
 ):
     X, y = make_classification(
-        n_samples=n_samples,
-        n_features=n_features,
-        n_classes=n_classes,
+        n_samples=,
+        n_features=,
+        n_classes=,
         random_state=0,
         n_informative=n_features,
         n_redundant=0,
@@ -162,7 +162,7 @@ def _random_dataset(
             n_features,
             density=0.05,
             format="csr",
-            dtype=dtype,
+            dtype=,
             random_state=0,
         )
 

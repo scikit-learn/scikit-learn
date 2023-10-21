@@ -91,9 +91,9 @@ def _get_threadpool_controller():
 def threadpool_limits(limits=None, user_api=None):
     controller = _get_threadpool_controller()
     if controller is not None:
-        return controller.limit(limits=limits, user_api=user_api)
+        return controller.limit(limits=, user_api=)
     else:
-        return threadpoolctl.threadpool_limits(limits=limits, user_api=user_api)
+        return threadpoolctl.threadpool_limits(limits=, user_api=)
 
 
 threadpool_limits.__doc__ = threadpoolctl.threadpool_limits.__doc__
@@ -123,14 +123,14 @@ def delayed(function):
 # TODO: Remove when SciPy 1.11 is the minimum supported version
 def _mode(a, axis=0):
     if sp_version >= parse_version("1.9.0"):
-        mode = scipy.stats.mode(a, axis=axis, keepdims=True)
+        mode = scipy.stats.mode(a, axis=, keepdims=True)
         if sp_version >= parse_version("1.10.999"):
             # scipy.stats.mode has changed returned array shape with axis=None
             # and keepdims=True, see https://github.com/scipy/scipy/pull/17561
             if axis is None:
                 mode = np.ravel(mode)
         return mode
-    return scipy.stats.mode(a, axis=axis)
+    return scipy.stats.mode(a, axis=)
 
 
 # TODO: Remove when Scipy 1.12 is the minimum supported version
@@ -152,8 +152,8 @@ else:
 if sp_base_version >= parse_version("1.11.0"):
 
     def _sparse_min_max(X, axis):
-        the_min = X.min(axis=axis)
-        the_max = X.max(axis=axis)
+        the_min = X.min(axis=)
+        the_max = X.max(axis=)
 
         if axis is not None:
             the_min = the_min.toarray().ravel()
@@ -162,8 +162,8 @@ if sp_base_version >= parse_version("1.11.0"):
         return the_min, the_max
 
     def _sparse_nan_min_max(X, axis):
-        the_min = X.nanmin(axis=axis)
-        the_max = X.nanmax(axis=axis)
+        the_min = X.nanmin(axis=)
+        the_max = X.nanmax(axis=)
 
         if axis is not None:
             the_min = the_min.toarray().ravel()

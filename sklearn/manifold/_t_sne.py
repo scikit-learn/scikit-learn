@@ -290,8 +290,8 @@ def _kl_divergence_bh(
         n_components,
         verbose,
         dof=degrees_of_freedom,
-        compute_error=compute_error,
-        num_threads=num_threads,
+        compute_error=,
+        num_threads=,
     )
     c = 2.0 * (degrees_of_freedom + 1.0) / degrees_of_freedom
     grad = grad.ravel()
@@ -519,7 +519,7 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
             f"n_neighbors ({n_neighbors}) should be less than n_samples / 2"
             f" ({n_samples / 2})"
         )
-    dist_X = pairwise_distances(X, metric=metric)
+    dist_X = pairwise_distances(X, metric=)
     if metric == "precomputed":
         dist_X = dist_X.copy()
     # we set the diagonal to np.inf to exclude the points themselves from
@@ -528,7 +528,7 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
     ind_X = np.argsort(dist_X, axis=1)
     # `ind_X[i]` is the index of sorted distances between i and other samples
     ind_X_embedded = (
-        NearestNeighbors(n_neighbors=n_neighbors)
+        NearestNeighbors(n_neighbors=)
         .fit(X_embedded)
         .kneighbors(return_distance=False)
     )
@@ -943,7 +943,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             knn = NearestNeighbors(
                 algorithm="auto",
                 n_jobs=self.n_jobs,
-                n_neighbors=n_neighbors,
+                n_neighbors=,
                 metric=self.metric,
                 metric_params=self.metric_params,
             )
@@ -986,7 +986,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             pca = PCA(
                 n_components=self.n_components,
                 svd_solver="randomized",
-                random_state=random_state,
+                random_state=,
             )
             # Always output a numpy array, no matter what is configured globally
             pca.set_output(transform="default")
@@ -1011,9 +1011,9 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             P,
             degrees_of_freedom,
             n_samples,
-            X_embedded=X_embedded,
+            X_embedded=,
             neighbors=neighbors_nn,
-            skip_num_points=skip_num_points,
+            skip_num_points=,
         )
 
     def _tsne(
@@ -1039,7 +1039,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             "min_grad_norm": self.min_grad_norm,
             "learning_rate": self.learning_rate_,
             "verbose": self.verbose,
-            "kwargs": dict(skip_num_points=skip_num_points),
+            "kwargs": dict(skip_num_points=),
             "args": [P, degrees_of_freedom, n_samples, self.n_components],
             "n_iter_without_progress": self._EXPLORATION_N_ITER,
             "n_iter": self._EXPLORATION_N_ITER,

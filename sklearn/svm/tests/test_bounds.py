@@ -32,13 +32,7 @@ def test_l1_min_c(X_container, loss, Y_label, intercept_label):
 
 
 def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=1.0):
-    min_c = l1_min_c(
-        X,
-        y,
-        loss=loss,
-        fit_intercept=fit_intercept,
-        intercept_scaling=intercept_scaling,
-    )
+    min_c = l1_min_c(X, y, loss=, fit_intercept=, intercept_scaling=)
 
     clf = {
         "log": LogisticRegression(penalty="l1", solver="liblinear"),

@@ -30,13 +30,13 @@ def test_spectral_clustering():
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        KNeighborsTransformer(n_neighbors=n_neighbors, mode="connectivity"),
+        KNeighborsTransformer(n_neighbors=, mode="connectivity"),
         SpectralClustering(
-            n_neighbors=n_neighbors, affinity="precomputed", random_state=42
+            n_neighbors=, affinity="precomputed", random_state=42
         ),
     )
     est_compact = SpectralClustering(
-        n_neighbors=n_neighbors, affinity="nearest_neighbors", random_state=42
+        n_neighbors=, affinity="nearest_neighbors", random_state=42
     )
     labels_compact = est_compact.fit_predict(X)
     labels_chain = est_chain.fit_predict(X)
@@ -56,18 +56,18 @@ def test_spectral_embedding():
         ]
     )
     S, true_labels = make_blobs(
-        n_samples=n_samples, centers=centers, cluster_std=1.0, random_state=42
+        n_samples=, centers=, cluster_std=1.0, random_state=42
     )
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        KNeighborsTransformer(n_neighbors=n_neighbors, mode="connectivity"),
+        KNeighborsTransformer(n_neighbors=, mode="connectivity"),
         SpectralEmbedding(
-            n_neighbors=n_neighbors, affinity="precomputed", random_state=42
+            n_neighbors=, affinity="precomputed", random_state=42
         ),
     )
     est_compact = SpectralEmbedding(
-        n_neighbors=n_neighbors, affinity="nearest_neighbors", random_state=42
+        n_neighbors=, affinity="nearest_neighbors", random_state=42
     )
     St_compact = est_compact.fit_transform(S)
     St_chain = est_chain.fit_transform(S)
@@ -78,11 +78,11 @@ def test_dbscan():
     # Test chaining RadiusNeighborsTransformer and DBSCAN
     radius = 0.3
     n_clusters = 3
-    X = generate_clustered_data(n_clusters=n_clusters)
+    X = generate_clustered_data(n_clusters=)
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        RadiusNeighborsTransformer(radius=radius, mode="distance"),
+        RadiusNeighborsTransformer(radius=, mode="distance"),
         DBSCAN(metric="precomputed", eps=radius),
     )
     est_compact = DBSCAN(eps=radius)
@@ -103,12 +103,10 @@ def test_isomap():
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        KNeighborsTransformer(
-            n_neighbors=n_neighbors, algorithm=algorithm, mode="distance"
-        ),
-        Isomap(n_neighbors=n_neighbors, metric="precomputed"),
+        KNeighborsTransformer(n_neighbors=, algorithm=, mode="distance"),
+        Isomap(n_neighbors=, metric="precomputed"),
     )
-    est_compact = Isomap(n_neighbors=n_neighbors, neighbors_algorithm=algorithm)
+    est_compact = Isomap(n_neighbors=, neighbors_algorithm=algorithm)
 
     Xt_chain = est_chain.fit_transform(X)
     Xt_compact = est_compact.fit_transform(X)
@@ -131,23 +129,21 @@ def test_tsne():
     for metric in ["minkowski", "sqeuclidean"]:
         # compare the chained version and the compact version
         est_chain = make_pipeline(
-            KNeighborsTransformer(
-                n_neighbors=n_neighbors, mode="distance", metric=metric
-            ),
+            KNeighborsTransformer(n_neighbors=, mode="distance", metric=),
             TSNE(
                 init="random",
                 metric="precomputed",
-                perplexity=perplexity,
+                perplexity=,
                 method="barnes_hut",
                 random_state=42,
-                n_iter=n_iter,
+                n_iter=,
             ),
         )
         est_compact = TSNE(
             init="random",
-            metric=metric,
-            perplexity=perplexity,
-            n_iter=n_iter,
+            metric=,
+            perplexity=,
+            n_iter=,
             method="barnes_hut",
             random_state=42,
         )
@@ -166,16 +162,16 @@ def test_lof_novelty_false():
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        KNeighborsTransformer(n_neighbors=n_neighbors, mode="distance"),
+        KNeighborsTransformer(n_neighbors=, mode="distance"),
         LocalOutlierFactor(
             metric="precomputed",
-            n_neighbors=n_neighbors,
+            n_neighbors=,
             novelty=False,
             contamination="auto",
         ),
     )
     est_compact = LocalOutlierFactor(
-        n_neighbors=n_neighbors, novelty=False, contamination="auto"
+        n_neighbors=, novelty=False, contamination="auto"
     )
 
     pred_chain = est_chain.fit_predict(X)
@@ -193,16 +189,16 @@ def test_lof_novelty_true():
 
     # compare the chained version and the compact version
     est_chain = make_pipeline(
-        KNeighborsTransformer(n_neighbors=n_neighbors, mode="distance"),
+        KNeighborsTransformer(n_neighbors=, mode="distance"),
         LocalOutlierFactor(
             metric="precomputed",
-            n_neighbors=n_neighbors,
+            n_neighbors=,
             novelty=True,
             contamination="auto",
         ),
     )
     est_compact = LocalOutlierFactor(
-        n_neighbors=n_neighbors, novelty=True, contamination="auto"
+        n_neighbors=, novelty=True, contamination="auto"
     )
 
     pred_chain = est_chain.fit(X1).predict(X2)
@@ -223,18 +219,18 @@ def test_kneighbors_regressor():
     # k-neighbors estimator after radius-neighbors transformer, and vice-versa.
     factor = 2
 
-    k_trans = KNeighborsTransformer(n_neighbors=n_neighbors, mode="distance")
+    k_trans = KNeighborsTransformer(n_neighbors=, mode="distance")
     k_trans_factor = KNeighborsTransformer(
         n_neighbors=int(n_neighbors * factor), mode="distance"
     )
 
-    r_trans = RadiusNeighborsTransformer(radius=radius, mode="distance")
+    r_trans = RadiusNeighborsTransformer(radius=, mode="distance")
     r_trans_factor = RadiusNeighborsTransformer(
         radius=int(radius * factor), mode="distance"
     )
 
-    k_reg = KNeighborsRegressor(n_neighbors=n_neighbors)
-    r_reg = RadiusNeighborsRegressor(radius=radius)
+    k_reg = KNeighborsRegressor(n_neighbors=)
+    r_reg = RadiusNeighborsRegressor(radius=)
 
     test_list = [
         (k_trans, k_reg),

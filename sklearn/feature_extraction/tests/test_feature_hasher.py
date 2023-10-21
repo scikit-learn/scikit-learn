@@ -30,7 +30,7 @@ def test_feature_hasher_strings():
         it = (x for x in raw_X)  # iterable
 
         feature_hasher = FeatureHasher(
-            n_features=n_features, input_type="string", alternate_sign=False
+            n_features=, input_type="string", alternate_sign=False
         )
         X = feature_hasher.transform(it)
 
@@ -122,7 +122,7 @@ def test_hash_empty_input():
     n_features = 16
     raw_X = [[], (), iter(range(0))]
 
-    feature_hasher = FeatureHasher(n_features=n_features, input_type="string")
+    feature_hasher = FeatureHasher(n_features=, input_type="string")
     X = feature_hasher.transform(raw_X)
 
     assert_array_equal(X.toarray(), np.zeros((len(raw_X), n_features)))

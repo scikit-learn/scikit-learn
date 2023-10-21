@@ -192,7 +192,7 @@ def test_function_transformer_raise_error_with_mixed_dtype(X_type):
     dtype = "object"
 
     data = ["one", "two", "three", "one", "one", 5, 6]
-    data = _convert_container(data, X_type, columns_name=["value"], dtype=dtype)
+    data = _convert_container(data, X_type, columns_name=["value"], dtype=)
 
     def func(X):
         return np.array([mapping[X[i]] for i in range(X.size)], dtype=object)
@@ -202,11 +202,11 @@ def test_function_transformer_raise_error_with_mixed_dtype(X_type):
             [inverse_mapping[x] for x in X],
             X_type,
             columns_name=["value"],
-            dtype=dtype,
+            dtype=,
         )
 
     transformer = FunctionTransformer(
-        func=func, inverse_func=inverse_func, validate=False, check_inverse=True
+        func=, inverse_func=, validate=False, check_inverse=True
     )
 
     msg = "'check_inverse' is only supported when all the elements in `X` is numerical."
@@ -327,9 +327,7 @@ def test_function_transformer_get_feature_names_out(
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame(X)
 
-    transformer = FunctionTransformer(
-        feature_names_out=feature_names_out, validate=validate
-    )
+    transformer = FunctionTransformer(feature_names_out=, validate=)
     transformer.fit_transform(X)
     names = transformer.get_feature_names_out(input_features)
     assert isinstance(names, np.ndarray)
@@ -368,7 +366,7 @@ def test_function_transformer_feature_names_out_uses_estimator():
 
     transformer = FunctionTransformer(
         func=add_n_random_features,
-        feature_names_out=feature_names_out,
+        feature_names_out=,
         kw_args=dict(n=3),
         validate=True,
     )
@@ -421,7 +419,7 @@ def test_get_feature_names_out_dataframe_with_string_data(
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame({"pet": ["dog", "cat"], "color": ["red", "green"]})
 
-    transformer = FunctionTransformer(feature_names_out=feature_names_out)
+    transformer = FunctionTransformer(feature_names_out=)
     if in_pipeline:
         transformer = make_pipeline(transformer)
 

@@ -235,10 +235,10 @@ def _get_json_content_from_openml_api(
         An exception otherwise.
     """
 
-    @_retry_with_clean_cache(url, data_home=data_home)
+    @_retry_with_clean_cache(url, data_home=)
     def _load_json():
         with closing(
-            _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
+            _open_openml_url(url, data_home, n_retries=, delay=)
         ) as response:
             return json.loads(response.read().decode("utf-8"))
 
@@ -302,9 +302,9 @@ def _get_data_info_by_name(
         json_data = _get_json_content_from_openml_api(
             url,
             error_msg,
-            data_home=data_home,
-            n_retries=n_retries,
-            delay=delay,
+            data_home=,
+            n_retries=,
+            delay=,
         )
         res = json_data["data"]["dataset"]
         if len(res) > 1:
@@ -312,7 +312,7 @@ def _get_data_info_by_name(
                 "Multiple active versions of the dataset matching the name"
                 " {name} exist. Versions may be fundamentally different, "
                 "returning version"
-                " {version}.".format(name=name, version=res[0]["version"])
+                " {version}.".format(name=, version=res[0]["version"])
             )
         return res[0]
 
@@ -322,9 +322,9 @@ def _get_data_info_by_name(
         json_data = _get_json_content_from_openml_api(
             url,
             error_message=None,
-            data_home=data_home,
-            n_retries=n_retries,
-            delay=delay,
+            data_home=,
+            n_retries=,
+            delay=,
         )
     except OpenMLError:
         # we can do this in 1 function call if OpenML does not require the
@@ -336,9 +336,9 @@ def _get_data_info_by_name(
         json_data = _get_json_content_from_openml_api(
             url,
             error_msg,
-            data_home=data_home,
-            n_retries=n_retries,
-            delay=delay,
+            data_home=,
+            n_retries=,
+            delay=,
         )
 
     return json_data["data"]["dataset"][0]
@@ -356,9 +356,9 @@ def _get_data_description_by_id(
     json_data = _get_json_content_from_openml_api(
         url,
         error_message,
-        data_home=data_home,
-        n_retries=n_retries,
-        delay=delay,
+        data_home=,
+        n_retries=,
+        delay=,
     )
     return json_data["data_set_description"]
 
@@ -376,9 +376,9 @@ def _get_data_features(
     json_data = _get_json_content_from_openml_api(
         url,
         error_message,
-        data_home=data_home,
-        n_retries=n_retries,
-        delay=delay,
+        data_home=,
+        n_retries=,
+        delay=,
     )
     return json_data["data_features"]["feature"]
 
@@ -396,9 +396,9 @@ def _get_data_qualities(
     json_data = _get_json_content_from_openml_api(
         url,
         error_message,
-        data_home=data_home,
-        n_retries=n_retries,
-        delay=delay,
+        data_home=,
+        n_retries=,
+        delay=,
     )
     # the qualities might not be available, but we still try to process
     # the data
@@ -509,7 +509,7 @@ def _load_arff_response(
         The names of the features that are categorical. `None` if
         `output_array_type == "pandas"`.
     """
-    gzip_file = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
+    gzip_file = _open_openml_url(url, data_home, n_retries=, delay=)
     with closing(gzip_file):
         md5 = hashlib.md5()
         for chunk in iter(lambda: gzip_file.read(4096), b""):
@@ -525,17 +525,17 @@ def _load_arff_response(
         )
 
     def _open_url_and_load_gzip_file(url, data_home, n_retries, delay, arff_params):
-        gzip_file = _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
+        gzip_file = _open_openml_url(url, data_home, n_retries=, delay=)
         with closing(gzip_file):
             return load_arff_from_gzip_file(gzip_file, **arff_params)
 
     arff_params: Dict = dict(
-        parser=parser,
-        output_type=output_type,
-        openml_columns_info=openml_columns_info,
-        feature_names_to_select=feature_names_to_select,
-        target_names_to_select=target_names_to_select,
-        shape=shape,
+        parser=,
+        output_type=,
+        openml_columns_info=,
+        feature_names_to_select=,
+        target_names_to_select=,
+        shape=,
         read_csv_kwargs=read_csv_kwargs or {},
     )
     try:
@@ -679,23 +679,23 @@ def _download_data_to_bunch(
     )(_load_arff_response)(
         url,
         data_home,
-        parser=parser,
-        output_type=output_type,
+        parser=,
+        output_type=,
         openml_columns_info=features_dict,
         feature_names_to_select=data_columns,
         target_names_to_select=target_columns,
-        shape=shape,
-        md5_checksum=md5_checksum,
-        n_retries=n_retries,
-        delay=delay,
-        read_csv_kwargs=read_csv_kwargs,
+        shape=,
+        md5_checksum=,
+        n_retries=,
+        delay=,
+        read_csv_kwargs=,
     )
 
     return Bunch(
         data=X,
         target=y,
-        frame=frame,
-        categories=categories,
+        frame=,
+        categories=,
         feature_names=data_columns,
         target_names=target_columns,
     )
@@ -962,7 +962,7 @@ def fetch_openml(
         # no caching will be applied
         data_home = None
     else:
-        data_home = get_data_home(data_home=data_home)
+        data_home = get_data_home(data_home=)
         data_home = join(str(data_home), "openml")
 
     # check valid function arguments. data_id XOR (name, version) should be
@@ -978,7 +978,7 @@ def fetch_openml(
                 "both.".format(data_id, name)
             )
         data_info = _get_data_info_by_name(
-            name, version, data_home, n_retries=n_retries, delay=delay
+            name, version, data_home, n_retries=, delay=
         )
         data_id = data_info["did"]
     elif data_id is not None:
@@ -1131,14 +1131,14 @@ def fetch_openml(
         data_home,
         as_frame=bool(as_frame),
         openml_columns_info=features_list,
-        shape=shape,
-        target_columns=target_columns,
-        data_columns=data_columns,
+        shape=,
+        target_columns=,
+        data_columns=,
         md5_checksum=data_description["md5_checksum"],
-        n_retries=n_retries,
-        delay=delay,
+        n_retries=,
+        delay=,
         parser=parser_,
-        read_csv_kwargs=read_csv_kwargs,
+        read_csv_kwargs=,
     )
 
     if return_X_y:

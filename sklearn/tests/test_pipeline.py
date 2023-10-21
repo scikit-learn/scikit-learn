@@ -134,7 +134,7 @@ class FitParamT(BaseEstimator):
         return self.successful
 
     def fit_predict(self, X, y, should_succeed=False):
-        self.fit(X, y, should_succeed=should_succeed)
+        self.fit(X, y, should_succeed=)
         return self.predict(X)
 
     def score(self, X, y=None, sample_weight=None):
@@ -1205,7 +1205,7 @@ def test_pipeline_memory():
         clf = SVC(probability=True, random_state=0)
         transf = DummyTransf()
         pipe = Pipeline([("transf", clone(transf)), ("svc", clf)])
-        cached_pipe = Pipeline([("transf", transf), ("svc", clf)], memory=memory)
+        cached_pipe = Pipeline([("transf", transf), ("svc", clf)], memory=)
 
         # Memoize the transformer at the first fit
         cached_pipe.fit(X, y)
@@ -1238,7 +1238,7 @@ def test_pipeline_memory():
         clf_2 = SVC(probability=True, random_state=0)
         transf_2 = DummyTransf()
         cached_pipe_2 = Pipeline(
-            [("transf_2", transf_2), ("svc", clf_2)], memory=memory
+            [("transf_2", transf_2), ("svc", clf_2)], memory=
         )
         cached_pipe_2.fit(X, y)
 
@@ -1261,7 +1261,7 @@ def test_pipeline_memory():
 def test_make_pipeline_memory():
     cachedir = mkdtemp()
     memory = joblib.Memory(location=cachedir, verbose=10)
-    pipeline = make_pipeline(DummyTransf(), SVC(), memory=memory)
+    pipeline = make_pipeline(DummyTransf(), SVC(), memory=)
     assert pipeline.memory is memory
     pipeline = make_pipeline(DummyTransf(), SVC())
     assert pipeline.memory is None
@@ -1586,7 +1586,7 @@ def test_pipeline_get_feature_names_out_passes_names_through():
 
     class AddPrefixStandardScalar(StandardScaler):
         def get_feature_names_out(self, input_features=None):
-            names = super().get_feature_names_out(input_features=input_features)
+            names = super().get_feature_names_out(input_features=)
             return np.asarray([f"my_prefix_{name}" for name in names], dtype=object)
 
     pipe = make_pipeline(AddPrefixStandardScalar(), StandardScaler())
@@ -1777,27 +1777,19 @@ def test_metadata_routing_for_pipeline(method):
     pipeline = Pipeline([("trs", trs), ("estimator", est)])
 
     if "fit" not in method:
-        pipeline = pipeline.fit(
-            [[1]], [1], sample_weight=sample_weight, prop=prop, metadata=metadata
-        )
+        pipeline = pipeline.fit([[1]], [1], sample_weight=, prop=, metadata=)
 
     try:
-        getattr(pipeline, method)(
-            X, y, sample_weight=sample_weight, prop=prop, metadata=metadata
-        )
+        getattr(pipeline, method)(X, y, sample_weight=, prop=, metadata=)
     except TypeError:
         # Some methods don't accept y
-        getattr(pipeline, method)(
-            X, sample_weight=sample_weight, prop=prop, metadata=metadata
-        )
+        getattr(pipeline, method)(X, sample_weight=, prop=, metadata=)
 
     # Make sure the transformer has received the metadata
     # For the transformer, always only `fit` and `transform` are called.
+    check_recorded_metadata(obj=trs, method="fit", sample_weight=, metadata=)
     check_recorded_metadata(
-        obj=trs, method="fit", sample_weight=sample_weight, metadata=metadata
-    )
-    check_recorded_metadata(
-        obj=trs, method="transform", sample_weight=sample_weight, metadata=metadata
+        obj=trs, method="transform", sample_weight=, metadata=
     )
 
 
@@ -1820,11 +1812,11 @@ def test_metadata_routing_error_for_pipeline(method):
     with pytest.raises(ValueError, match=re.escape(error_message)):
         try:
             # passing X, y positional as the first two arguments
-            getattr(pipeline, method)(X, y, sample_weight=sample_weight, prop=prop)
+            getattr(pipeline, method)(X, y, sample_weight=, prop=)
         except TypeError:
             # not all methods accept y (like `predict`), so here we only
             # pass X as a positional arg.
-            getattr(pipeline, method)(X, sample_weight=sample_weight, prop=prop)
+            getattr(pipeline, method)(X, sample_weight=, prop=)
 
 
 @pytest.mark.parametrize(

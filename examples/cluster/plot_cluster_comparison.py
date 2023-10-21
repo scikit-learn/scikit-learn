@@ -42,23 +42,23 @@ from sklearn.preprocessing import StandardScaler
 n_samples = 500
 seed = 30
 noisy_circles = datasets.make_circles(
-    n_samples=n_samples, factor=0.5, noise=0.05, random_state=seed
+    n_samples=, factor=0.5, noise=0.05, random_state=seed
 )
-noisy_moons = datasets.make_moons(n_samples=n_samples, noise=0.05, random_state=seed)
-blobs = datasets.make_blobs(n_samples=n_samples, random_state=seed)
+noisy_moons = datasets.make_moons(n_samples=, noise=0.05, random_state=seed)
+blobs = datasets.make_blobs(n_samples=, random_state=seed)
 rng = np.random.RandomState(seed)
 no_structure = rng.rand(n_samples, 2), None
 
 # Anisotropicly distributed data
 random_state = 170
-X, y = datasets.make_blobs(n_samples=n_samples, random_state=random_state)
+X, y = datasets.make_blobs(n_samples=, random_state=)
 transformation = [[0.6, -0.6], [-0.4, 0.8]]
 X_aniso = np.dot(X, transformation)
 aniso = (X_aniso, y)
 
 # blobs with varied variances
 varied = datasets.make_blobs(
-    n_samples=n_samples, cluster_std=[1.0, 2.5, 0.5], random_state=random_state
+    n_samples=, cluster_std=[1.0, 2.5, 0.5], random_state=
 )
 
 # ============
@@ -156,14 +156,14 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
     # ============
     # Create cluster objects
     # ============
-    ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
+    ms = cluster.MeanShift(bandwidth=, bin_seeding=True)
     two_means = cluster.MiniBatchKMeans(
         n_clusters=params["n_clusters"],
         n_init="auto",
         random_state=params["random_state"],
     )
     ward = cluster.AgglomerativeClustering(
-        n_clusters=params["n_clusters"], linkage="ward", connectivity=connectivity
+        n_clusters=params["n_clusters"], linkage="ward", connectivity=
     )
     spectral = cluster.SpectralClustering(
         n_clusters=params["n_clusters"],
@@ -191,7 +191,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         linkage="average",
         metric="cityblock",
         n_clusters=params["n_clusters"],
-        connectivity=connectivity,
+        connectivity=,
     )
     birch = cluster.Birch(n_clusters=params["n_clusters"])
     gmm = mixture.GaussianMixture(

@@ -237,7 +237,7 @@ class KernelDensity(BaseEstimator):
             X,
             metric=self.metric,
             leaf_size=self.leaf_size,
-            sample_weight=sample_weight,
+            sample_weight=,
             **kwargs,
         )
         return self

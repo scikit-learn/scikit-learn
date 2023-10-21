@@ -134,7 +134,7 @@ def test_output_dataframe():
     )
 
     for step in [2, 3]:
-        sel = StepSelector(step=step).set_output(transform="pandas")
+        sel = StepSelector(step=).set_output(transform="pandas")
         sel.fit(X)
 
         output = sel.transform(X)

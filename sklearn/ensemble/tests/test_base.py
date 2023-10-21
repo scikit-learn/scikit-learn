@@ -32,8 +32,8 @@ def test_base():
 
     ensemble._make_estimator()
     random_state = np.random.RandomState(3)
-    ensemble._make_estimator(random_state=random_state)
-    ensemble._make_estimator(random_state=random_state)
+    ensemble._make_estimator(random_state=)
+    ensemble._make_estimator(random_state=)
     ensemble._make_estimator(append=False)
 
     assert 3 == len(ensemble)

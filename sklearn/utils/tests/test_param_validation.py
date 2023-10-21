@@ -169,7 +169,7 @@ def test_nan_not_in_interval(interval):
 )
 def test_interval_errors(params, error, match):
     """Check that informative errors are raised for invalid combination of parameters"""
-    with pytest.raises(error, match=match):
+    with pytest.raises(error, match=):
         Interval(**params)
 
 
@@ -741,10 +741,7 @@ def test_skip_nested_validation(prefer_skip_nested_validation):
     def f(a):
         pass
 
-    @validate_params(
-        {"b": [int]},
-        prefer_skip_nested_validation=prefer_skip_nested_validation,
-    )
+    @validate_params({"b": [int]}, prefer_skip_nested_validation=)
     def g(b):
         # calls f with a bad parameter type
         return f(a="invalid_param_value")
@@ -774,13 +771,11 @@ def test_skip_nested_validation_and_config_context(
 ):
     """Check interaction between global skip and local skip."""
 
-    @validate_params(
-        {"a": [int]}, prefer_skip_nested_validation=prefer_skip_nested_validation
-    )
+    @validate_params({"a": [int]}, prefer_skip_nested_validation=)
     def g(a):
         return get_config()["skip_parameter_validation"]
 
-    with config_context(skip_parameter_validation=skip_parameter_validation):
+    with config_context(skip_parameter_validation=):
         actual_skipped = g(1)
 
     assert actual_skipped == expected_skipped

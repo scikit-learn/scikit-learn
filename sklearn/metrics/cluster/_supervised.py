@@ -154,7 +154,7 @@ def contingency_matrix(
     contingency = sp.coo_matrix(
         (np.ones(class_idx.shape[0]), (class_idx, cluster_idx)),
         shape=(n_classes, n_clusters),
-        dtype=dtype,
+        dtype=,
     )
     if sparse:
         contingency = contingency.tocsr()
@@ -518,7 +518,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     entropy_K = entropy(labels_pred)
 
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    MI = mutual_info_score(None, None, contingency=contingency)
+    MI = mutual_info_score(None, None, contingency=)
 
     homogeneity = MI / (entropy_C) if entropy_C else 1.0
     completeness = MI / (entropy_K) if entropy_K else 1.0
@@ -789,7 +789,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 0, 0]))
       0.0...
     """
-    return homogeneity_completeness_v_measure(labels_true, labels_pred, beta=beta)[2]
+    return homogeneity_completeness_v_measure(labels_true, labels_pred, beta=)[2]
 
 
 @validate_params(
@@ -1014,7 +1014,7 @@ def adjusted_mutual_info_score(
 
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
     # Calculate the MI for the two clusterings
-    mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
+    mi = mutual_info_score(labels_true, labels_pred, contingency=)
     # Calculate the expected value for the mutual information
     emi = expected_mutual_information(contingency, n_samples)
     # Calculate entropy for each labeling
@@ -1133,7 +1133,7 @@ def normalized_mutual_info_score(
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
     contingency = contingency.astype(np.float64, copy=False)
     # Calculate the MI for the two clusterings
-    mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
+    mi = mutual_info_score(labels_true, labels_pred, contingency=)
 
     # At this point mi = 0 can't be a perfect match (the special case of a single
     # cluster has been dealt with before). Hence, if mi = 0, the nmi must be 0 whatever

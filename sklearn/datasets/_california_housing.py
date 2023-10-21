@@ -132,7 +132,7 @@ def fetch_california_housing(
 
     This dataset consists of 20,640 samples and 9 features.
     """
-    data_home = get_data_home(data_home=data_home)
+    data_home = get_data_home(data_home=)
     if not exists(data_home):
         makedirs(data_home)
 
@@ -207,8 +207,8 @@ def fetch_california_housing(
     return Bunch(
         data=X,
         target=y,
-        frame=frame,
-        target_names=target_names,
-        feature_names=feature_names,
+        frame=,
+        target_names=,
+        feature_names=,
         DESCR=descr,
     )

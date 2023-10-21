@@ -21,7 +21,7 @@ def test_incremental_pca():
     # Incremental PCA on dense arrays.
     X = iris.data
     batch_size = X.shape[0] // 3
-    ipca = IncrementalPCA(n_components=2, batch_size=batch_size)
+    ipca = IncrementalPCA(n_components=2, batch_size=)
     pca = PCA(n_components=2)
     pca.fit_transform(X)
 
@@ -35,7 +35,7 @@ def test_incremental_pca():
     )
 
     for n_components in [1, 2, X.shape[1]]:
-        ipca = IncrementalPCA(n_components, batch_size=batch_size)
+        ipca = IncrementalPCA(n_components, batch_size=)
         ipca.fit(X)
         cov = ipca.get_covariance()
         precision = ipca.get_precision()
@@ -54,7 +54,7 @@ def test_incremental_pca_sparse(sparse_container):
     pca.fit_transform(X)
     X_sparse = sparse_container(X)
     batch_size = X_sparse.shape[0] // 3
-    ipca = IncrementalPCA(n_components=2, batch_size=batch_size)
+    ipca = IncrementalPCA(n_components=2, batch_size=)
 
     X_transformed = ipca.fit_transform(X_sparse)
 
@@ -66,7 +66,7 @@ def test_incremental_pca_sparse(sparse_container):
     )
 
     for n_components in [1, 2, X.shape[1]]:
-        ipca = IncrementalPCA(n_components, batch_size=batch_size)
+        ipca = IncrementalPCA(n_components, batch_size=)
         ipca.fit(X_sparse)
         cov = ipca.get_covariance()
         precision = ipca.get_precision()
@@ -148,7 +148,7 @@ def test_incremental_pca_validation():
             " samples {}".format(n_components, n_samples)
         ),
     ):
-        IncrementalPCA(n_components=n_components).partial_fit(X)
+        IncrementalPCA(n_components=).partial_fit(X)
 
 
 def test_n_samples_equal_n_components():
@@ -225,7 +225,7 @@ def test_incremental_pca_batch_signs():
     all_components = []
     batch_sizes = np.arange(10, 20)
     for batch_size in batch_sizes:
-        ipca = IncrementalPCA(n_components=None, batch_size=batch_size).fit(X)
+        ipca = IncrementalPCA(n_components=None, batch_size=).fit(X)
         all_components.append(ipca.components_)
 
     for i, j in zip(all_components[:-1], all_components[1:]):
@@ -241,7 +241,7 @@ def test_incremental_pca_batch_values():
     all_components = []
     batch_sizes = np.arange(20, 40, 3)
     for batch_size in batch_sizes:
-        ipca = IncrementalPCA(n_components=None, batch_size=batch_size).fit(X)
+        ipca = IncrementalPCA(n_components=None, batch_size=).fit(X)
         all_components.append(ipca.components_)
 
     for i, j in zip(all_components[:-1], all_components[1:]):
@@ -257,7 +257,7 @@ def test_incremental_pca_batch_rank():
     all_components = []
     batch_sizes = np.arange(20, 90, 3)
     for batch_size in batch_sizes:
-        ipca = IncrementalPCA(n_components=20, batch_size=batch_size).fit(X)
+        ipca = IncrementalPCA(n_components=20, batch_size=).fit(X)
         all_components.append(ipca.components_)
 
     for components_i, components_j in zip(all_components[:-1], all_components[1:]):
@@ -275,8 +275,8 @@ def test_incremental_pca_partial_fit():
     # same check that we can find the original data from the transformed
     # signal (since the data is almost of rank n_components)
     batch_size = 10
-    ipca = IncrementalPCA(n_components=2, batch_size=batch_size).fit(X)
-    pipca = IncrementalPCA(n_components=2, batch_size=batch_size)
+    ipca = IncrementalPCA(n_components=2, batch_size=).fit(X)
+    pipca = IncrementalPCA(n_components=2, batch_size=)
     # Add one to make sure endpoint is included
     batch_itr = np.arange(0, n + 1, batch_size)
     for i, j in zip(batch_itr[:-1], batch_itr[1:]):

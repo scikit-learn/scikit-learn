@@ -92,9 +92,9 @@ class LinearModelLoss:
         else:
             n_dof = n_features
         if self.base_loss.is_multiclass:
-            coef = np.zeros_like(X, shape=(n_classes, n_dof), dtype=dtype, order="F")
+            coef = np.zeros_like(X, shape=(n_classes, n_dof), dtype=, order="F")
         else:
-            coef = np.zeros_like(X, shape=n_dof, dtype=dtype)
+            coef = np.zeros_like(X, shape=n_dof, dtype=)
         return coef
 
     def weight_intercept(self, coef):
@@ -219,9 +219,9 @@ class LinearModelLoss:
 
         loss = self.base_loss.loss(
             y_true=y,
-            raw_prediction=raw_prediction,
+            raw_prediction=,
             sample_weight=None,
-            n_threads=n_threads,
+            n_threads=,
         )
         loss = np.average(loss, weights=sample_weight)
 
@@ -279,9 +279,9 @@ class LinearModelLoss:
 
         loss, grad_pointwise = self.base_loss.loss_gradient(
             y_true=y,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            n_threads=n_threads,
+            raw_prediction=,
+            sample_weight=,
+            n_threads=,
         )
         sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
         loss = loss.sum() / sw_sum
@@ -354,9 +354,9 @@ class LinearModelLoss:
 
         grad_pointwise = self.base_loss.gradient(
             y_true=y,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            n_threads=n_threads,
+            raw_prediction=,
+            sample_weight=,
+            n_threads=,
         )
         sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
         grad_pointwise /= sw_sum
@@ -441,9 +441,9 @@ class LinearModelLoss:
 
         grad_pointwise, hess_pointwise = self.base_loss.gradient_hessian(
             y_true=y,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            n_threads=n_threads,
+            raw_prediction=,
+            sample_weight=,
+            n_threads=,
         )
         sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
         grad_pointwise /= sw_sum
@@ -557,9 +557,9 @@ class LinearModelLoss:
         if not self.base_loss.is_multiclass:
             grad_pointwise, hess_pointwise = self.base_loss.gradient_hessian(
                 y_true=y,
-                raw_prediction=raw_prediction,
-                sample_weight=sample_weight,
-                n_threads=n_threads,
+                raw_prediction=,
+                sample_weight=,
+                n_threads=,
             )
             grad_pointwise /= sw_sum
             hess_pointwise /= sw_sum
@@ -611,9 +611,9 @@ class LinearModelLoss:
             # full hessian. Therefore, we call gradient_proba.
             grad_pointwise, proba = self.base_loss.gradient_proba(
                 y_true=y,
-                raw_prediction=raw_prediction,
-                sample_weight=sample_weight,
-                n_threads=n_threads,
+                raw_prediction=,
+                sample_weight=,
+                n_threads=,
             )
             grad_pointwise /= sw_sum
             grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")

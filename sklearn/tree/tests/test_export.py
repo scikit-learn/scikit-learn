@@ -330,7 +330,7 @@ def test_precision():
         clf.fit(X, y)
         for precision in (4, 3):
             dot_data = export_graphviz(
-                clf, out_file=None, precision=precision, proportion=True
+                clf, out_file=None, precision=, proportion=True
             )
 
             # With the current random state, the impurity and the threshold
@@ -482,7 +482,7 @@ def test_plot_tree_entropy(pyplot):
 
     # Test export code
     feature_names = ["first feat", "sepal_width"]
-    nodes = plot_tree(clf, feature_names=feature_names)
+    nodes = plot_tree(clf, feature_names=)
     assert len(nodes) == 3
     assert (
         nodes[0].get_text()
@@ -502,7 +502,7 @@ def test_plot_tree_gini(pyplot):
 
     # Test export code
     feature_names = ["first feat", "sepal_width"]
-    nodes = plot_tree(clf, feature_names=feature_names)
+    nodes = plot_tree(clf, feature_names=)
     assert len(nodes) == 3
     assert (
         nodes[0].get_text()

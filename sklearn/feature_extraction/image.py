@@ -120,8 +120,8 @@ def _to_graph(
             n_voxels = np.sum(mask)
         else:
             n_voxels = n_x * n_y * n_z
-        weights = np.ones(edges.shape[1], dtype=dtype)
-        diag = np.ones(n_voxels, dtype=dtype)
+        weights = np.ones(edges.shape[1], dtype=)
+        diag = np.ones(n_voxels, dtype=)
 
     diag_idx = np.arange(n_voxels)
     i_idx = np.hstack((edges[0], edges[1]))
@@ -132,7 +132,7 @@ def _to_graph(
             (np.hstack((i_idx, diag_idx)), np.hstack((j_idx, diag_idx))),
         ),
         (n_voxels, n_voxels),
-        dtype=dtype,
+        dtype=,
     )
     if return_as is np.ndarray:
         return graph.toarray()
@@ -238,7 +238,7 @@ def grid_to_graph(
     For compatibility, user code relying on this method should wrap its
     calls in ``np.asarray`` to avoid type issues.
     """
-    return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as, dtype=dtype)
+    return _to_graph(n_x, n_y, n_z, mask=, return_as=, dtype=)
 
 
 ###############################################################################
@@ -337,7 +337,7 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
     shape = tuple(list(patch_indices_shape) + list(patch_shape))
     strides = tuple(list(indexing_strides) + list(patch_strides))
 
-    patches = as_strided(arr, shape=shape, strides=strides)
+    patches = as_strided(arr, shape=, strides=)
     return patches
 
 
@@ -612,7 +612,7 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
             number of patches that can be extracted.
         """
         X = self._validate_data(
-            X=X,
+            X=,
             ensure_2d=False,
             allow_nd=True,
             ensure_min_samples=1,
@@ -651,7 +651,7 @@ class PatchExtractor(TransformerMixin, BaseEstimator):
                 image,
                 patch_size,
                 max_patches=self.max_patches,
-                random_state=random_state,
+                random_state=,
             )
         return patches
 

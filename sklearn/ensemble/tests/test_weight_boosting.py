@@ -98,7 +98,7 @@ def test_oneclass_adaboost_proba():
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
 def test_classification_toy(algorithm):
     # Check classification on a toy dataset.
-    clf = AdaBoostClassifier(algorithm=algorithm, random_state=0)
+    clf = AdaBoostClassifier(algorithm=, random_state=0)
     clf.fit(X, y_class)
     assert_array_equal(clf.predict(T), y_t_class)
     assert_array_equal(np.unique(np.asarray(y_t_class)), clf.classes_)
@@ -154,7 +154,7 @@ def test_iris():
 @pytest.mark.parametrize("loss", ["linear", "square", "exponential"])
 def test_diabetes(loss):
     # Check consistency on dataset diabetes.
-    reg = AdaBoostRegressor(loss=loss, random_state=0)
+    reg = AdaBoostRegressor(loss=, random_state=0)
     reg.fit(diabetes.data, diabetes.target)
     score = reg.score(diabetes.data, diabetes.target)
     assert score > 0.55
@@ -176,7 +176,7 @@ def test_staged_predict(algorithm):
     iris_weights = rng.randint(10, size=iris.target.shape)
     diabetes_weights = rng.randint(10, size=diabetes.target.shape)
 
-    clf = AdaBoostClassifier(algorithm=algorithm, n_estimators=10)
+    clf = AdaBoostClassifier(algorithm=, n_estimators=10)
     clf.fit(iris.data, iris.target, sample_weight=iris_weights)
 
     predictions = clf.predict(iris.data)
@@ -356,7 +356,7 @@ def test_sparse_classification(sparse_container, expected_internal_type):
 
         def fit(self, X, y, sample_weight=None):
             """Modification on fit caries data type for later verification."""
-            super().fit(X, y, sample_weight=sample_weight)
+            super().fit(X, y, sample_weight=)
             self.data_type_ = type(X)
             return self
 
@@ -461,7 +461,7 @@ def test_sparse_regression(sparse_container, expected_internal_type):
 
         def fit(self, X, y, sample_weight=None):
             """Modification on fit caries data type for later verification."""
-            super().fit(X, y, sample_weight=sample_weight)
+            super().fit(X, y, sample_weight=)
             self.data_type_ = type(X)
             return self
 
@@ -550,7 +550,7 @@ def test_multidimensional_X():
 def test_adaboostclassifier_without_sample_weight(algorithm):
     X, y = iris.data, iris.target
     estimator = NoSampleWeightWrapper(DummyClassifier())
-    clf = AdaBoostClassifier(estimator=estimator, algorithm=algorithm)
+    clf = AdaBoostClassifier(estimator=, algorithm=)
     err_msg = "{} doesn't support sample_weight".format(estimator.__class__.__name__)
     with pytest.raises(ValueError, match=err_msg):
         clf.fit(X, y)
@@ -583,7 +583,7 @@ def test_adaboostregressor_sample_weight():
     regr_no_outlier.fit(X[:-1], y[:-1])
     sample_weight = np.ones_like(y)
     sample_weight[-1] = 0
-    regr_with_weight.fit(X, y, sample_weight=sample_weight)
+    regr_with_weight.fit(X, y, sample_weight=)
 
     score_with_outlier = regr_with_outlier.score(X[:-1], y[:-1])
     score_no_outlier = regr_no_outlier.score(X[:-1], y[:-1])
@@ -606,7 +606,7 @@ def test_adaboost_consistent_predict(algorithm):
     X_train, X_test, y_train, y_test = train_test_split(
         *datasets.load_digits(return_X_y=True), random_state=42
     )
-    model = AdaBoostClassifier(algorithm=algorithm, random_state=42)
+    model = AdaBoostClassifier(algorithm=, random_state=42)
     model.fit(X_train, y_train)
 
     assert_array_equal(
@@ -627,7 +627,7 @@ def test_adaboost_negative_weight_error(model, X, y):
 
     err_msg = "Negative values in data passed to `sample_weight`"
     with pytest.raises(ValueError, match=err_msg):
-        model.fit(X, y, sample_weight=sample_weight)
+        model.fit(X, y, sample_weight=)
 
 
 def test_adaboost_numerically_stable_feature_importance_with_small_weights():
@@ -645,7 +645,7 @@ def test_adaboost_numerically_stable_feature_importance_with_small_weights():
     ada_model = AdaBoostClassifier(
         estimator=tree, n_estimators=20, algorithm="SAMME", random_state=12
     )
-    ada_model.fit(X, y, sample_weight=sample_weight)
+    ada_model.fit(X, y, sample_weight=)
     assert np.isnan(ada_model.feature_importances_).sum() == 0
 
 
@@ -746,10 +746,10 @@ def test_adaboost_decision_function(algorithm, global_random_seed):
     """
     n_classes = 3
     X, y = datasets.make_classification(
-        n_classes=n_classes, n_clusters_per_class=1, random_state=global_random_seed
+        n_classes=, n_clusters_per_class=1, random_state=global_random_seed
     )
     clf = AdaBoostClassifier(
-        n_estimators=1, random_state=global_random_seed, algorithm=algorithm
+        n_estimators=1, random_state=global_random_seed, algorithm=
     ).fit(X, y)
 
     y_score = clf.decision_function(X)

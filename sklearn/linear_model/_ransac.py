@@ -336,7 +336,7 @@ class RANSACRegressor(
             `is_data_valid` and `is_model_valid` return False for all
             `max_trials` randomly chosen sub-samples.
         """
-        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
+        _raise_for_unsupported_routing(self, "fit", sample_weight=)
         # Need to validate separately here. We can't pass multi_output=True
         # because that would allow y to be csr. Delay expensive finiteness
         # check to the estimator's own input validation.
@@ -396,7 +396,7 @@ class RANSACRegressor(
         random_state = check_random_state(self.random_state)
 
         try:  # Not all estimator accept a random_state
-            estimator.set_params(random_state=random_state)
+            estimator.set_params(random_state=)
         except ValueError:
             pass
 
@@ -439,7 +439,7 @@ class RANSACRegressor(
 
             # choose random sample set
             subset_idxs = sample_without_replacement(
-                n_samples, min_samples, random_state=random_state
+                n_samples, min_samples, random_state=
             )
             X_subset = X[subset_idxs]
             y_subset = y[subset_idxs]

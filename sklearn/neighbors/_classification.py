@@ -202,13 +202,13 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         n_jobs=None,
     ):
         super().__init__(
-            n_neighbors=n_neighbors,
-            algorithm=algorithm,
-            leaf_size=leaf_size,
-            metric=metric,
-            p=p,
-            metric_params=metric_params,
-            n_jobs=n_jobs,
+            n_neighbors=,
+            algorithm=,
+            leaf_size=,
+            metric=,
+            p=,
+            metric_params=,
+            n_jobs=,
         )
         self.weights = weights
 
@@ -340,8 +340,8 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                     weights=self.weights,
                     Y_labels=self._y,
                     unique_Y_labels=self.classes_,
-                    metric=metric,
-                    metric_kwargs=metric_kwargs,
+                    metric=,
+                    metric_kwargs=,
                     # `strategy="parallel_on_X"` has in practice be shown
                     # to be more efficient than `strategy="parallel_on_Y``
                     # on many combination of datasets.
@@ -577,13 +577,13 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         n_jobs=None,
     ):
         super().__init__(
-            radius=radius,
-            algorithm=algorithm,
-            leaf_size=leaf_size,
-            metric=metric,
-            p=p,
-            metric_params=metric_params,
-            n_jobs=n_jobs,
+            radius=,
+            algorithm=,
+            leaf_size=,
+            metric=,
+            p=,
+            metric_params=,
+            n_jobs=,
         )
         self.weights = weights
         self.outlier_label = outlier_label
@@ -735,15 +735,15 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             and RadiusNeighborsClassMode.is_usable_for(X, self._fit_X, metric)
         ):
             probabilities = RadiusNeighborsClassMode.compute(
-                X=X,
+                X=,
                 Y=self._fit_X,
                 radius=self.radius,
                 weights=self.weights,
                 Y_labels=self._y,
                 unique_Y_labels=self.classes_,
                 outlier_label=self.outlier_label,
-                metric=metric,
-                metric_kwargs=metric_kwargs,
+                metric=,
+                metric_kwargs=,
                 strategy="parallel_on_X",
                 # `strategy="parallel_on_X"` has in practice be shown
                 # to be more efficient than `strategy="parallel_on_Y``

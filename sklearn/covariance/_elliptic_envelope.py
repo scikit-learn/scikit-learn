@@ -157,10 +157,10 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         random_state=None,
     ):
         super().__init__(
-            store_precision=store_precision,
-            assume_centered=assume_centered,
-            support_fraction=support_fraction,
-            random_state=random_state,
+            store_precision=,
+            assume_centered=,
+            support_fraction=,
+            random_state=,
         )
         self.contamination = contamination
 
@@ -264,4 +264,4 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         score : float
             Mean accuracy of self.predict(X) w.r.t. y.
         """
-        return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
+        return accuracy_score(y, self.predict(X), sample_weight=)

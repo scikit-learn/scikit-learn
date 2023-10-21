@@ -199,7 +199,7 @@ for transformer, label in [
     model = make_pipeline(transformer, Ridge(alpha=1e-3))
     model.fit(X_train, y_train)
     y_plot_ext = model.predict(X_plot_ext)
-    ax.plot(x_plot_ext, y_plot_ext, label=label)
+    ax.plot(x_plot_ext, y_plot_ext, label=)
 
 ax.legend()
 fig.show()

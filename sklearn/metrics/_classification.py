@@ -370,7 +370,7 @@ def confusion_matrix(
     cm = coo_matrix(
         (sample_weight, (y_true, y_pred)),
         shape=(n_labels, n_labels),
-        dtype=dtype,
+        dtype=,
     ).toarray()
 
     with np.errstate(all="ignore"):
@@ -578,11 +578,9 @@ def multilabel_confusion_matrix(
 
         # calculate weighted counts
         true_and_pred = y_true.multiply(y_pred)
-        tp_sum = count_nonzero(
-            true_and_pred, axis=sum_axis, sample_weight=sample_weight
-        )
-        pred_sum = count_nonzero(y_pred, axis=sum_axis, sample_weight=sample_weight)
-        true_sum = count_nonzero(y_true, axis=sum_axis, sample_weight=sample_weight)
+        tp_sum = count_nonzero(true_and_pred, axis=sum_axis, sample_weight=)
+        pred_sum = count_nonzero(y_pred, axis=sum_axis, sample_weight=)
+        true_sum = count_nonzero(y_true, axis=sum_axis, sample_weight=)
 
     fp = pred_sum - tp_sum
     fn = true_sum - tp_sum
@@ -670,7 +668,7 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     .. [3] `Wikipedia entry for the Cohen's kappa
             <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_.
     """
-    confusion = confusion_matrix(y1, y2, labels=labels, sample_weight=sample_weight)
+    confusion = confusion_matrix(y1, y2, labels=, sample_weight=)
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
@@ -846,9 +844,9 @@ def jaccard_score(
     MCM = multilabel_confusion_matrix(
         y_true,
         y_pred,
-        sample_weight=sample_weight,
-        labels=labels,
-        samplewise=samplewise,
+        sample_weight=,
+        labels=,
+        samplewise=,
     )
     numerator = MCM[:, 1, 1]
     denominator = MCM[:, 1, 1] + MCM[:, 0, 1] + MCM[:, 1, 0]
@@ -864,7 +862,7 @@ def jaccard_score(
         "true or predicted",
         average,
         ("jaccard",),
-        zero_division=zero_division,
+        zero_division=,
     )
     if average is None:
         return jaccard
@@ -877,7 +875,7 @@ def jaccard_score(
         weights = sample_weight
     else:
         weights = None
-    return np.average(jaccard, weights=weights)
+    return np.average(jaccard, weights=)
 
 
 @validate_params(
@@ -961,7 +959,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     y_true = lb.transform(y_true)
     y_pred = lb.transform(y_pred)
 
-    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    C = confusion_matrix(y_true, y_pred, sample_weight=)
     t_sum = C.sum(axis=1, dtype=np.float64)
     p_sum = C.sum(axis=0, dtype=np.float64)
     n_correct = np.trace(C, dtype=np.float64)
@@ -1047,9 +1045,7 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     0.5
     """
     xp, _ = get_namespace(y_true, y_pred)
-    score = accuracy_score(
-        y_true, y_pred, normalize=normalize, sample_weight=sample_weight
-    )
+    score = accuracy_score(y_true, y_pred, normalize=, sample_weight=)
 
     if normalize:
         return 1 - score
@@ -1234,11 +1230,11 @@ def f1_score(
         y_true,
         y_pred,
         beta=1,
-        labels=labels,
-        pos_label=pos_label,
-        average=average,
-        sample_weight=sample_weight,
-        zero_division=zero_division,
+        labels=,
+        pos_label=,
+        average=,
+        sample_weight=,
+        zero_division=,
     )
 
 
@@ -1407,13 +1403,13 @@ def fbeta_score(
     _, _, f, _ = precision_recall_fscore_support(
         y_true,
         y_pred,
-        beta=beta,
-        labels=labels,
-        pos_label=pos_label,
-        average=average,
+        beta=,
+        labels=,
+        pos_label=,
+        average=,
         warn_for=("f-score",),
-        sample_weight=sample_weight,
-        zero_division=zero_division,
+        sample_weight=,
+        zero_division=,
     )
     return f
 
@@ -1722,9 +1718,9 @@ def precision_recall_fscore_support(
     MCM = multilabel_confusion_matrix(
         y_true,
         y_pred,
-        sample_weight=sample_weight,
-        labels=labels,
-        samplewise=samplewise,
+        sample_weight=,
+        labels=,
+        samplewise=,
     )
     tp_sum = MCM[:, 1, 1]
     pred_sum = tp_sum + MCM[:, 0, 1]
@@ -1778,9 +1774,9 @@ def precision_recall_fscore_support(
 
     if average is not None:
         assert average != "binary" or len(precision) == 1
-        precision = _nanaverage(precision, weights=weights)
-        recall = _nanaverage(recall, weights=weights)
-        f_score = _nanaverage(f_score, weights=weights)
+        precision = _nanaverage(precision, weights=)
+        recall = _nanaverage(recall, weights=)
+        f_score = _nanaverage(f_score, weights=)
         true_sum = None  # return no support
 
     return precision, recall, f_score, true_sum
@@ -1911,12 +1907,7 @@ def class_likelihood_ratios(
             f"problems, got targets of type: {y_type}"
         )
 
-    cm = confusion_matrix(
-        y_true,
-        y_pred,
-        sample_weight=sample_weight,
-        labels=labels,
-    )
+    cm = confusion_matrix(y_true, y_pred, sample_weight=, labels=)
 
     # Case when `y_test` contains a single class and `y_test == y_pred`.
     # This may happen when cross-validating imbalanced data and should
@@ -2125,12 +2116,12 @@ def precision_score(
     p, _, _, _ = precision_recall_fscore_support(
         y_true,
         y_pred,
-        labels=labels,
-        pos_label=pos_label,
-        average=average,
+        labels=,
+        pos_label=,
+        average=,
         warn_for=("precision",),
-        sample_weight=sample_weight,
-        zero_division=zero_division,
+        sample_weight=,
+        zero_division=,
     )
     return p
 
@@ -2298,12 +2289,12 @@ def recall_score(
     _, r, _, _ = precision_recall_fscore_support(
         y_true,
         y_pred,
-        labels=labels,
-        pos_label=pos_label,
-        average=average,
+        labels=,
+        pos_label=,
+        average=,
         warn_for=("recall",),
-        sample_weight=sample_weight,
-        zero_division=zero_division,
+        sample_weight=,
+        zero_division=,
     )
     return r
 
@@ -2386,7 +2377,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     >>> balanced_accuracy_score(y_true, y_pred)
     0.625
     """
-    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    C = confusion_matrix(y_true, y_pred, sample_weight=)
     with np.errstate(divide="ignore", invalid="ignore"):
         per_class = np.diag(C) / C.sum(axis=1)
     if np.any(np.isnan(per_class)):
@@ -2571,10 +2562,10 @@ def classification_report(
     p, r, f1, s = precision_recall_fscore_support(
         y_true,
         y_pred,
-        labels=labels,
+        labels=,
         average=None,
-        sample_weight=sample_weight,
-        zero_division=zero_division,
+        sample_weight=,
+        zero_division=,
     )
     rows = zip(target_names, p, r, f1, s)
 
@@ -2592,11 +2583,11 @@ def classification_report(
         name_width = max(len(cn) for cn in target_names)
         width = max(name_width, len(longest_last_line_heading), digits)
         head_fmt = "{:>{width}s} " + " {:>9}" * len(headers)
-        report = head_fmt.format("", *headers, width=width)
+        report = head_fmt.format("", *headers, width=)
         report += "\n\n"
         row_fmt = "{:>{width}s} " + " {:>9.{digits}f}" * 3 + " {:>9}\n"
         for row in rows:
-            report += row_fmt.format(*row, width=width, digits=digits)
+            report += row_fmt.format(*row, width=, digits=)
         report += "\n"
 
     # compute all applicable averages
@@ -2610,10 +2601,10 @@ def classification_report(
         avg_p, avg_r, avg_f1, _ = precision_recall_fscore_support(
             y_true,
             y_pred,
-            labels=labels,
-            average=average,
-            sample_weight=sample_weight,
-            zero_division=zero_division,
+            labels=,
+            average=,
+            sample_weight=,
+            zero_division=,
         )
         avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
@@ -2628,10 +2619,10 @@ def classification_report(
                     + " {:>9}\n"
                 )
                 report += row_fmt_accuracy.format(
-                    line_heading, "", "", *avg[2:], width=width, digits=digits
+                    line_heading, "", "", *avg[2:], width=, digits=
                 )
             else:
-                report += row_fmt.format(line_heading, *avg, width=width, digits=digits)
+                report += row_fmt.format(line_heading, *avg, width=, digits=)
 
     if output_dict:
         if "accuracy" in report_dict.keys():
@@ -2734,7 +2725,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
         weight_average = np.mean(sample_weight)
 
     if y_type.startswith("multilabel"):
-        n_differences = count_nonzero(y_true - y_pred, sample_weight=sample_weight)
+        n_differences = count_nonzero(y_true - y_pred, sample_weight=)
         return n_differences / (y_true.shape[0] * y_true.shape[1] * weight_average)
 
     elif y_type in ["binary", "multiclass"]:

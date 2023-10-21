@@ -35,8 +35,8 @@ if __name__ == "__main__":
         for j, n_features in enumerate(list_n_features):
             X, y, coef = make_regression(
                 n_samples=n_train + n_test,
-                n_features=n_features,
-                noise=noise,
+                n_features=,
+                noise=,
                 coef=True,
             )
 
@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
             gc.collect()
             print("- benchmarking ElasticNet")
-            clf = ElasticNet(alpha=alpha, l1_ratio=0.5, fit_intercept=False)
+            clf = ElasticNet(alpha=, l1_ratio=0.5, fit_intercept=False)
             tstart = time()
             clf.fit(X_train, y_train)
             elnet_results[i, j, 0] = mean_squared_error(clf.predict(X_test), y_test)
@@ -80,7 +80,7 @@ if __name__ == "__main__":
             clf = SGDRegressor(
                 alpha=alpha / n_train,
                 fit_intercept=False,
-                max_iter=max_iter,
+                max_iter=,
                 learning_rate="invscaling",
                 eta0=0.01,
                 power_t=0.25,
@@ -98,7 +98,7 @@ if __name__ == "__main__":
             clf = SGDRegressor(
                 alpha=alpha / n_train,
                 fit_intercept=False,
-                max_iter=max_iter,
+                max_iter=,
                 learning_rate="invscaling",
                 eta0=0.002,
                 power_t=0.05,
@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
             gc.collect()
             print("- benchmarking RidgeRegression")
-            clf = Ridge(alpha=alpha, fit_intercept=False)
+            clf = Ridge(alpha=, fit_intercept=False)
             tstart = time()
             clf.fit(X_train, y_train)
             ridge_results[i, j, 0] = mean_squared_error(clf.predict(X_test), y_test)

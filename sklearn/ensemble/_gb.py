@@ -335,8 +335,8 @@ class VerboseReporter:
                 self.verbose_fmt.format(
                     iter=j + 1,
                     train_score=est.train_score_[j],
-                    oob_impr=oob_impr,
-                    remaining_time=remaining_time,
+                    oob_impr=,
+                    remaining_time=,
                 )
             )
             if self.verbose == 1 and ((i + 1) // (self.verbose_mod * 10) > 0):
@@ -438,7 +438,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 loss=self._loss,
                 y_true=y,
                 raw_prediction=raw_predictions,
-                sample_weight=sample_weight,
+                sample_weight=,
             )
         # TODO: Without oob, i.e. with self.subsample = 1.0, we could call
         # self._loss.loss_gradient and use it to set train_score_.
@@ -471,7 +471,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 min_impurity_decrease=self.min_impurity_decrease,
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
-                random_state=random_state,
+                random_state=,
                 ccp_alpha=self.ccp_alpha,
             )
 
@@ -480,9 +480,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
             X = X_csc if X_csc is not None else X
-            tree.fit(
-                X, neg_g_view[:, k], sample_weight=sample_weight, check_input=False
-            )
+            tree.fit(X, neg_g_view[:, k], sample_weight=, check_input=False)
 
             # update tree leaves
             X_for_tree_update = X_csr if X_csr is not None else X
@@ -496,7 +494,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_weight,
                 sample_mask,
                 learning_rate=self.learning_rate,
-                k=k,
+                k=,
             )
 
             # add tree to ensemble
@@ -655,15 +653,15 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         sample_weight_is_none = sample_weight is None
         sample_weight = _check_sample_weight(sample_weight, X)
         if sample_weight_is_none:
-            y = self._encode_y(y=y, sample_weight=None)
+            y = self._encode_y(y=, sample_weight=None)
         else:
-            y = self._encode_y(y=y, sample_weight=sample_weight)
+            y = self._encode_y(y=, sample_weight=)
         y = column_or_1d(y, warn=True)  # TODO: Is this still required?
 
         self._set_max_features()
 
         # self.loss is guaranteed to be a string
-        self._loss = self._get_loss(sample_weight=sample_weight)
+        self._loss = self._get_loss(sample_weight=)
 
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
@@ -680,7 +678,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_weight,
                 random_state=self.random_state,
                 test_size=self.validation_fraction,
-                stratify=stratify,
+                stratify=,
             )
             if is_classifier(self):
                 if self.n_classes_ != np.unique(y_train).shape[0]:
@@ -878,8 +876,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_weight,
                 sample_mask,
                 random_state,
-                X_csc=X_csc,
-                X_csr=X_csr,
+                X_csc=,
+                X_csr=,
             )
 
             # track loss
@@ -902,7 +900,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 self.train_score_[i] = factor * self._loss(
                     y_true=y,
                     raw_prediction=raw_predictions,
-                    sample_weight=sample_weight,
+                    sample_weight=,
                 )
 
             if self.verbose > 0:
@@ -1465,26 +1463,26 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         ccp_alpha=0.0,
     ):
         super().__init__(
-            loss=loss,
-            learning_rate=learning_rate,
-            n_estimators=n_estimators,
-            criterion=criterion,
-            min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf,
-            min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_depth=max_depth,
-            init=init,
-            subsample=subsample,
-            max_features=max_features,
-            random_state=random_state,
-            verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes,
-            min_impurity_decrease=min_impurity_decrease,
-            warm_start=warm_start,
-            validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change,
-            tol=tol,
-            ccp_alpha=ccp_alpha,
+            loss=,
+            learning_rate=,
+            n_estimators=,
+            criterion=,
+            min_samples_split=,
+            min_samples_leaf=,
+            min_weight_fraction_leaf=,
+            max_depth=,
+            init=,
+            subsample=,
+            max_features=,
+            random_state=,
+            verbose=,
+            max_leaf_nodes=,
+            min_impurity_decrease=,
+            warm_start=,
+            validation_fraction=,
+            n_iter_no_change=,
+            tol=,
+            ccp_alpha=,
         )
 
     def _encode_y(self, y, sample_weight):
@@ -1520,10 +1518,10 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     def _get_loss(self, sample_weight):
         if self.loss == "log_loss":
             if self.n_classes_ == 2:
-                return HalfBinomialLoss(sample_weight=sample_weight)
+                return HalfBinomialLoss(sample_weight=)
             else:
                 return HalfMultinomialLoss(
-                    sample_weight=sample_weight, n_classes=self.n_classes_
+                    sample_weight=, n_classes=self.n_classes_
                 )
         elif self.loss == "exponential":
             if self.n_classes_ > 2:
@@ -1533,7 +1531,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
                     "Please use loss='log_loss' instead."
                 )
             else:
-                return ExponentialLoss(sample_weight=sample_weight)
+                return ExponentialLoss(sample_weight=)
 
     def decision_function(self, X):
         """Compute the decision function of ``X``.
@@ -2060,27 +2058,27 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         ccp_alpha=0.0,
     ):
         super().__init__(
-            loss=loss,
-            learning_rate=learning_rate,
-            n_estimators=n_estimators,
-            criterion=criterion,
-            min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf,
-            min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_depth=max_depth,
-            init=init,
-            subsample=subsample,
-            max_features=max_features,
-            min_impurity_decrease=min_impurity_decrease,
-            random_state=random_state,
-            alpha=alpha,
-            verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes,
-            warm_start=warm_start,
-            validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change,
-            tol=tol,
-            ccp_alpha=ccp_alpha,
+            loss=,
+            learning_rate=,
+            n_estimators=,
+            criterion=,
+            min_samples_split=,
+            min_samples_leaf=,
+            min_weight_fraction_leaf=,
+            max_depth=,
+            init=,
+            subsample=,
+            max_features=,
+            min_impurity_decrease=,
+            random_state=,
+            alpha=,
+            verbose=,
+            max_leaf_nodes=,
+            warm_start=,
+            validation_fraction=,
+            n_iter_no_change=,
+            tol=,
+            ccp_alpha=,
         )
 
     def _encode_y(self, y=None, sample_weight=None):
@@ -2091,9 +2089,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     def _get_loss(self, sample_weight):
         if self.loss in ("quantile", "huber"):
-            return _LOSSES[self.loss](sample_weight=sample_weight, quantile=self.alpha)
+            return _LOSSES[self.loss](sample_weight=, quantile=self.alpha)
         else:
-            return _LOSSES[self.loss](sample_weight=sample_weight)
+            return _LOSSES[self.loss](sample_weight=)
 
     def predict(self, X):
         """Predict regression target for X.

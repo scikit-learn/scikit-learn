@@ -98,27 +98,27 @@ est = HistGradientBoostingClassifier(
     loss="log_loss",
     learning_rate=lr,
     max_iter=n_trees,
-    max_bins=max_bins,
+    max_bins=,
     max_leaf_nodes=n_leaf_nodes,
     early_stopping=False,
     random_state=0,
     verbose=1,
-    interaction_cst=interaction_cst,
+    interaction_cst=,
 )
 fit(est, data_train, target_train, "sklearn")
 predict(est, data_test, target_test)
 
 if args.lightgbm:
-    est = get_equivalent_estimator(est, lib="lightgbm", n_classes=n_classes)
+    est = get_equivalent_estimator(est, lib="lightgbm", n_classes=)
     fit(est, data_train, target_train, "lightgbm")
     predict(est, data_test, target_test)
 
 if args.xgboost:
-    est = get_equivalent_estimator(est, lib="xgboost", n_classes=n_classes)
+    est = get_equivalent_estimator(est, lib="xgboost", n_classes=)
     fit(est, data_train, target_train, "xgboost")
     predict(est, data_test, target_test)
 
 if args.catboost:
-    est = get_equivalent_estimator(est, lib="catboost", n_classes=n_classes)
+    est = get_equivalent_estimator(est, lib="catboost", n_classes=)
     fit(est, data_train, target_train, "catboost")
     predict(est, data_test, target_test)

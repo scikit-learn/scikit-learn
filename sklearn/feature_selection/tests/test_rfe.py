@@ -207,7 +207,7 @@ def test_rfecv(csr_container):
 
     # Test using a customized loss function
     scoring = make_scorer(zero_one_loss, greater_is_better=False)
-    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, scoring=scoring)
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, scoring=)
     ignore_warnings(rfecv.fit)(X, y)
     X_r = rfecv.transform(X)
     assert_array_equal(X_r, iris.data)
@@ -305,8 +305,8 @@ def test_rfecv_cv_results_size(global_random_seed):
     for step, min_features_to_select in [[2, 1], [2, 2], [3, 3]]:
         rfecv = RFECV(
             estimator=MockClassifier(),
-            step=step,
-            min_features_to_select=min_features_to_select,
+            step=,
+            min_features_to_select=,
         )
         rfecv.fit(X, y)
 
@@ -331,7 +331,7 @@ def test_rfe_estimator_tags():
 def test_rfe_min_step(global_random_seed):
     n_features = 10
     X, y = make_friedman1(
-        n_samples=50, n_features=n_features, random_state=global_random_seed
+        n_samples=50, n_features=, random_state=global_random_seed
     )
     n_samples, n_features = X.shape
     estimator = SVR(kernel="linear")
@@ -379,11 +379,7 @@ def test_number_of_subsets_of_features(global_random_seed):
         generator = check_random_state(global_random_seed)
         X = generator.normal(size=(100, n_features))
         y = generator.rand(100).round()
-        rfe = RFE(
-            estimator=SVC(kernel="linear"),
-            n_features_to_select=n_features_to_select,
-            step=step,
-        )
+        rfe = RFE(estimator=SVC(kernel="linear"), n_features_to_select=, step=)
         rfe.fit(X, y)
         # this number also equals to the maximum of ranking_
         assert np.max(rfe.ranking_) == formula1(n_features, n_features_to_select, step)
@@ -405,7 +401,7 @@ def test_number_of_subsets_of_features(global_random_seed):
         generator = check_random_state(global_random_seed)
         X = generator.normal(size=(100, n_features))
         y = generator.rand(100).round()
-        rfecv = RFECV(estimator=SVC(kernel="linear"), step=step)
+        rfecv = RFECV(estimator=SVC(kernel="linear"), step=)
         rfecv.fit(X, y)
 
         for key in rfecv.cv_results_.keys():
@@ -452,7 +448,7 @@ def test_rfe_cv_groups():
         scoring="accuracy",
         cv=GroupKFold(n_splits=2),
     )
-    est_groups.fit(X, y, groups=groups)
+    est_groups.fit(X, y, groups=)
     assert est_groups.n_features_ > 0
 
 
@@ -470,7 +466,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
         regressor=estimator, func=np.log, inverse_func=np.exp
     )
 
-    selector = selector(log_estimator, importance_getter=importance_getter)
+    selector = selector(log_estimator, importance_getter=)
     sel = selector.fit(X, y)
     assert sel.support_.sum() == expected_n_features
 
@@ -492,7 +488,7 @@ def test_rfe_importance_getter_validation(importance_getter, err_type, Selector)
     )
 
     with pytest.raises(err_type):
-        model = Selector(log_estimator, importance_getter=importance_getter)
+        model = Selector(log_estimator, importance_getter=)
         model.fit(X, y)
 
 
@@ -508,7 +504,7 @@ def test_rfe_allow_nan_inf_in_x(cv):
 
     clf = MockClassifier()
     if cv is not None:
-        rfe = RFECV(estimator=clf, cv=cv)
+        rfe = RFECV(estimator=clf, cv=)
     else:
         rfe = RFE(estimator=clf)
     rfe.fit(X, y)

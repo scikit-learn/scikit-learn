@@ -475,7 +475,7 @@ def check_cross_validate_single_metric(clf, X, y, scores, cv):
                 y,
                 scoring="neg_mean_squared_error",
                 return_train_score=True,
-                cv=cv,
+                cv=,
             )
             assert_array_almost_equal(mse_scores_dict["train_score"], train_mse_scores)
         else:
@@ -485,7 +485,7 @@ def check_cross_validate_single_metric(clf, X, y, scores, cv):
                 y,
                 scoring="neg_mean_squared_error",
                 return_train_score=False,
-                cv=cv,
+                cv=,
             )
         assert isinstance(mse_scores_dict, dict)
         assert len(mse_scores_dict) == dict_len
@@ -495,12 +495,12 @@ def check_cross_validate_single_metric(clf, X, y, scores, cv):
         if return_train_score:
             # It must be True by default - deprecated
             r2_scores_dict = cross_validate(
-                clf, X, y, scoring=["r2"], return_train_score=True, cv=cv
+                clf, X, y, scoring=["r2"], return_train_score=True, cv=
             )
             assert_array_almost_equal(r2_scores_dict["train_r2"], train_r2_scores, True)
         else:
             r2_scores_dict = cross_validate(
-                clf, X, y, scoring=["r2"], return_train_score=False, cv=cv
+                clf, X, y, scoring=["r2"], return_train_score=False, cv=
             )
         assert isinstance(r2_scores_dict, dict)
         assert len(r2_scores_dict) == dict_len
@@ -508,7 +508,7 @@ def check_cross_validate_single_metric(clf, X, y, scores, cv):
 
     # Test return_estimator option
     mse_scores_dict = cross_validate(
-        clf, X, y, scoring="neg_mean_squared_error", return_estimator=True, cv=cv
+        clf, X, y, scoring="neg_mean_squared_error", return_estimator=True, cv=
     )
     for k, est in enumerate(mse_scores_dict["estimator"]):
         est_coef = est.coef_.copy()
@@ -564,7 +564,7 @@ def check_cross_validate_multi_metric(clf, X, y, scores, cv):
             if return_train_score:
                 # return_train_score must be True by default - deprecated
                 cv_results = cross_validate(
-                    clf, X, y, scoring=scoring, return_train_score=True, cv=cv
+                    clf, X, y, scoring=, return_train_score=True, cv=
                 )
                 assert_array_almost_equal(cv_results["train_r2"], train_r2_scores)
                 assert_array_almost_equal(
@@ -572,7 +572,7 @@ def check_cross_validate_multi_metric(clf, X, y, scores, cv):
                 )
             else:
                 cv_results = cross_validate(
-                    clf, X, y, scoring=scoring, return_train_score=False, cv=cv
+                    clf, X, y, scoring=, return_train_score=False, cv=
                 )
             assert isinstance(cv_results, dict)
             assert set(cv_results.keys()) == (
@@ -613,9 +613,9 @@ def test_cross_val_score_predict_groups():
     error_message = "The 'groups' parameter should not be None."
     for cv in group_cvs:
         with pytest.raises(ValueError, match=error_message):
-            cross_val_score(estimator=clf, X=X, y=y, cv=cv)
+            cross_val_score(estimator=clf, X=, y=, cv=)
         with pytest.raises(ValueError, match=error_message):
-            cross_val_predict(estimator=clf, X=X, y=y, cv=cv)
+            cross_val_predict(estimator=clf, X=, y=, cv=)
 
 
 @pytest.mark.filterwarnings("ignore: Using or importing the ABCs from")
@@ -730,7 +730,7 @@ def test_cross_val_score_score_func():
 
     with warnings.catch_warnings(record=True):
         scoring = make_scorer(score_func)
-        score = cross_val_score(clf, X, y, scoring=scoring, cv=3)
+        score = cross_val_score(clf, X, y, scoring=, cv=3)
     assert_array_equal(score, [1.0, 1.0, 1.0])
     # Test that score function is called only 3 times (for cv=3)
     assert len(_score_func_args) == 3
@@ -775,7 +775,7 @@ def test_cross_val_score_with_score_func_regression():
 
     # Explained variance
     scoring = make_scorer(explained_variance_score)
-    ev_scores = cross_val_score(reg, X, y, scoring=scoring)
+    ev_scores = cross_val_score(reg, X, y, scoring=)
     assert_array_almost_equal(ev_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
 
@@ -789,7 +789,7 @@ def test_permutation_score(coo_container):
     cv = StratifiedKFold(2)
 
     score, scores, pvalue = permutation_test_score(
-        svm, X, y, n_permutations=30, cv=cv, scoring="accuracy"
+        svm, X, y, n_permutations=30, cv=, scoring="accuracy"
     )
     assert score > 0.9
     assert_almost_equal(pvalue, 0.0, 1)
@@ -799,7 +799,7 @@ def test_permutation_score(coo_container):
         X,
         y,
         n_permutations=30,
-        cv=cv,
+        cv=,
         scoring="accuracy",
         groups=np.ones(y.size),
         random_state=0,
@@ -830,7 +830,7 @@ def test_permutation_score(coo_container):
 
     scorer = make_scorer(custom_score)
     score, _, pvalue = permutation_test_score(
-        svm, X, y, n_permutations=100, scoring=scorer, cv=cv, random_state=0
+        svm, X, y, n_permutations=100, scoring=scorer, cv=, random_state=0
     )
     assert_almost_equal(score, 0.93, 2)
     assert_almost_equal(pvalue, 0.01, 3)
@@ -839,7 +839,7 @@ def test_permutation_score(coo_container):
     y = np.mod(np.arange(len(y)), 3)
 
     score, scores, pvalue = permutation_test_score(
-        svm, X, y, n_permutations=30, cv=cv, scoring="accuracy"
+        svm, X, y, n_permutations=30, cv=, scoring="accuracy"
     )
 
     assert score < 0.5
@@ -932,14 +932,14 @@ def test_cross_val_predict(coo_container):
         est.fit(X[train], y[train])
         preds2[test] = est.predict(X[test])
 
-    preds = cross_val_predict(est, X, y, cv=cv)
+    preds = cross_val_predict(est, X, y, cv=)
     assert_array_almost_equal(preds, preds2)
 
     preds = cross_val_predict(est, X, y)
     assert len(preds) == len(y)
 
     cv = LeaveOneOut()
-    preds = cross_val_predict(est, X, y, cv=cv)
+    preds = cross_val_predict(est, X, y, cv=)
     assert len(preds) == len(y)
 
     Xsp = X.copy()
@@ -1148,7 +1148,7 @@ def test_cross_val_predict_unbalanced():
     clf = LogisticRegression(random_state=1, solver="liblinear")
     cv = StratifiedKFold(n_splits=2)
     train, test = list(cv.split(X, y))
-    yhat_proba = cross_val_predict(clf, X, y, cv=cv, method="predict_proba")
+    yhat_proba = cross_val_predict(clf, X, y, cv=, method="predict_proba")
     assert y[test[0]][0] == 2  # sanity check for further assertions
     assert np.all(yhat_proba[test[0]][:, 2] == 0)
     assert np.all(yhat_proba[test[0]][:, 0:1] > 0)
@@ -1183,7 +1183,7 @@ def test_learning_curve():
     n_samples = 30
     n_splits = 3
     X, y = make_classification(
-        n_samples=n_samples,
+        n_samples=,
         n_features=1,
         n_informative=1,
         n_redundant=0,
@@ -1204,7 +1204,7 @@ def test_learning_curve():
                 estimator,
                 X,
                 y,
-                cv=KFold(n_splits=n_splits),
+                cv=KFold(n_splits=),
                 train_sizes=np.linspace(0.1, 1.0, 10),
                 shuffle=shuffle_train,
                 return_times=True,
@@ -1230,7 +1230,7 @@ def test_learning_curve():
                 estimator,
                 X,
                 y,
-                cv=OneTimeSplitter(n_splits=n_splits, n_samples=n_samples),
+                cv=OneTimeSplitter(n_splits=, n_samples=),
                 train_sizes=np.linspace(0.1, 1.0, 10),
                 shuffle=shuffle_train,
             )
@@ -1368,7 +1368,7 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
         estimator,
         X,
         y,
-        train_sizes=train_sizes,
+        train_sizes=,
         cv=3,
         exploit_incremental_learning=True,
     )
@@ -1377,7 +1377,7 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
         X,
         y,
         cv=3,
-        train_sizes=train_sizes,
+        train_sizes=,
         exploit_incremental_learning=False,
     )
 
@@ -1448,7 +1448,7 @@ def test_learning_curve_with_boolean_indices():
     estimator = MockImprovingEstimator(20)
     cv = KFold(n_splits=3)
     train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=cv, train_sizes=np.linspace(0.1, 1.0, 10)
+        estimator, X, y, cv=, train_sizes=np.linspace(0.1, 1.0, 10)
     )
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores.mean(axis=1), np.linspace(1.9, 1.0, 10))
@@ -1488,10 +1488,10 @@ def test_learning_curve_with_shuffle():
         estimator,
         X,
         y,
-        cv=cv,
+        cv=,
         n_jobs=1,
         train_sizes=np.linspace(0.3, 1.0, 3),
-        groups=groups,
+        groups=,
         shuffle=True,
         random_state=2,
     )
@@ -1506,10 +1506,10 @@ def test_learning_curve_with_shuffle():
             estimator,
             X,
             y,
-            cv=cv,
+            cv=,
             n_jobs=1,
             train_sizes=np.linspace(0.3, 1.0, 3),
-            groups=groups,
+            groups=,
             error_score="raise",
         )
 
@@ -1517,10 +1517,10 @@ def test_learning_curve_with_shuffle():
         estimator,
         X,
         y,
-        cv=cv,
+        cv=,
         n_jobs=1,
         train_sizes=np.linspace(0.3, 1.0, 3),
-        groups=groups,
+        groups=,
         shuffle=True,
         random_state=2,
         exploit_incremental_learning=True,
@@ -1617,7 +1617,7 @@ def test_validation_curve():
             X,
             y,
             param_name="param",
-            param_range=param_range,
+            param_range=,
             cv=2,
         )
     if len(w) > 0:
@@ -1644,7 +1644,7 @@ def test_validation_curve_clone_estimator():
         X,
         y,
         param_name="param",
-        param_range=param_range,
+        param_range=,
         cv=2,
     )
 
@@ -1660,7 +1660,7 @@ def test_validation_curve_cv_splits_consistency():
         y,
         param_name="C",
         param_range=[0.1, 0.1, 0.2, 0.2],
-        cv=OneTimeSplitter(n_splits=n_splits, n_samples=n_samples),
+        cv=OneTimeSplitter(n_splits=, n_samples=),
     )
     # The OneTimeSplitter is a non-re-entrant cv splitter. Unless, the
     # `split` is called for each parameter, the following should produce
@@ -1674,7 +1674,7 @@ def test_validation_curve_cv_splits_consistency():
         y,
         param_name="C",
         param_range=[0.1, 0.1, 0.2, 0.2],
-        cv=KFold(n_splits=n_splits, shuffle=True),
+        cv=KFold(n_splits=, shuffle=True),
     )
 
     # For scores2, compare the 1st and 2nd parameter's scores
@@ -1688,7 +1688,7 @@ def test_validation_curve_cv_splits_consistency():
         y,
         param_name="C",
         param_range=[0.1, 0.1, 0.2, 0.2],
-        cv=KFold(n_splits=n_splits),
+        cv=KFold(n_splits=),
     )
 
     # OneTimeSplitter is basically unshuffled KFold(n_splits=5). Sanity check.
@@ -1783,7 +1783,7 @@ def check_cross_val_predict_binary(est, X, y, method):
     # Check actual outputs for several representations of y
     for tg in [y, y + 1, y - 2, y.astype("str")]:
         assert_allclose(
-            cross_val_predict(est, X, tg, method=method, cv=cv), expected_predictions
+            cross_val_predict(est, X, tg, method=, cv=), expected_predictions
         )
 
 
@@ -1811,7 +1811,7 @@ def check_cross_val_predict_multiclass(est, X, y, method):
     # Check actual outputs for several representations of y
     for tg in [y, y + 1, y - 2, y.astype("str")]:
         assert_allclose(
-            cross_val_predict(est, X, tg, method=method, cv=cv), expected_predictions
+            cross_val_predict(est, X, tg, method=, cv=), expected_predictions
         )
 
 
@@ -1861,7 +1861,7 @@ def check_cross_val_predict_multilabel(est, X, y, method):
 
     # Check actual outputs for several representations of y
     for tg in [y, y + 1, y - 2, y.astype("str")]:
-        cv_predict_output = cross_val_predict(est, X, tg, method=method, cv=cv)
+        cv_predict_output = cross_val_predict(est, X, tg, method=, cv=)
         assert len(cv_predict_output) == len(expected_preds)
         for i in range(len(cv_predict_output)):
             assert_allclose(cv_predict_output[i], expected_preds[i])
@@ -1919,11 +1919,11 @@ def test_cross_val_predict_with_method_multilabel_ovr():
     n_samp = 100
     n_classes = 4
     X, y = make_multilabel_classification(
-        n_samples=n_samp, n_labels=3, n_classes=n_classes, n_features=5, random_state=42
+        n_samples=n_samp, n_labels=3, n_classes=, n_features=5, random_state=42
     )
     est = OneVsRestClassifier(LogisticRegression(solver="liblinear", random_state=0))
     for method in ["predict_proba", "decision_function"]:
-        check_cross_val_predict_binary(est, X, y, method=method)
+        check_cross_val_predict_binary(est, X, y, method=)
 
 
 class RFWithDecisionFunction(RandomForestClassifier):
@@ -1944,7 +1944,7 @@ def test_cross_val_predict_with_method_multilabel_rf():
     # for each individual label.
     n_classes = 4
     X, y = make_multilabel_classification(
-        n_samples=100, n_labels=3, n_classes=n_classes, n_features=5, random_state=42
+        n_samples=100, n_labels=3, n_classes=, n_features=5, random_state=42
     )
     y[:, 0] += y[:, 1]  # Put three classes in the first column
     for method in ["predict_proba", "predict_log_proba", "decision_function"]:
@@ -1952,7 +1952,7 @@ def test_cross_val_predict_with_method_multilabel_rf():
         with warnings.catch_warnings():
             # Suppress "RuntimeWarning: divide by zero encountered in log"
             warnings.simplefilter("ignore")
-            check_cross_val_predict_multilabel(est, X, y, method=method)
+            check_cross_val_predict_multilabel(est, X, y, method=)
 
 
 def test_cross_val_predict_with_method_rare_class():
@@ -1983,7 +1983,7 @@ def test_cross_val_predict_with_method_multilabel_rf_rare_class():
         with warnings.catch_warnings():
             # Suppress "RuntimeWarning: divide by zero encountered in log"
             warnings.simplefilter("ignore")
-            check_cross_val_predict_multilabel(est, X, y, method=method)
+            check_cross_val_predict_multilabel(est, X, y, method=)
 
 
 def get_expected_predictions(X, y, cv, classes, est, method):
@@ -2021,7 +2021,7 @@ def test_cross_val_predict_class_subset():
         est = LogisticRegression(solver="liblinear")
 
         # Test with n_splits=3
-        predictions = cross_val_predict(est, X, y, method=method, cv=kfold3)
+        predictions = cross_val_predict(est, X, y, method=, cv=kfold3)
 
         # Runs a naive loop (should be same as cross_val_predict):
         expected_predictions = get_expected_predictions(
@@ -2030,7 +2030,7 @@ def test_cross_val_predict_class_subset():
         assert_array_almost_equal(expected_predictions, predictions)
 
         # Test with n_splits=4
-        predictions = cross_val_predict(est, X, y, method=method, cv=kfold4)
+        predictions = cross_val_predict(est, X, y, method=, cv=kfold4)
         expected_predictions = get_expected_predictions(
             X, y, kfold4, classes, est, method
         )
@@ -2038,7 +2038,7 @@ def test_cross_val_predict_class_subset():
 
         # Testing unordered labels
         y = shuffle(np.repeat(range(10), 10), random_state=0)
-        predictions = cross_val_predict(est, X, y, method=method, cv=kfold3)
+        predictions = cross_val_predict(est, X, y, method=, cv=kfold3)
         y = le.fit_transform(y)
         expected_predictions = get_expected_predictions(
             X, y, kfold3, classes, est, method
@@ -2100,7 +2100,7 @@ def test_fit_and_score_failing():
     X = np.arange(1, 10)
     fit_and_score_args = dict(
         estimator=failing_clf,
-        X=X,
+        X=,
         y=None,
         scorer=dict(),
         train=None,
@@ -2126,11 +2126,11 @@ def test_fit_and_score_working():
     # Test return_parameters option
     fit_and_score_args = dict(
         estimator=clf,
-        X=X,
-        y=y,
+        X=,
+        y=,
         scorer=dict(),
-        train=train,
-        test=test,
+        train=,
+        test=,
         verbose=0,
         parameters={"max_iter": 100, "tol": 0.1},
         fit_params=None,
@@ -2221,12 +2221,12 @@ def test_cross_val_score_failing_scorer(error_score):
     clf = LogisticRegression(max_iter=5).fit(X, y)
 
     error_msg = "This scorer is supposed to fail!!!"
-    failing_scorer = partial(_failing_scorer, error_msg=error_msg)
+    failing_scorer = partial(_failing_scorer, error_msg=)
 
     if error_score == "raise":
         with pytest.raises(ValueError, match=error_msg):
             cross_val_score(
-                clf, X, y, cv=3, scoring=failing_scorer, error_score=error_score
+                clf, X, y, cv=3, scoring=failing_scorer, error_score=
             )
     else:
         warning_msg = (
@@ -2235,7 +2235,7 @@ def test_cross_val_score_failing_scorer(error_score):
         )
         with pytest.warns(UserWarning, match=warning_msg):
             scores = cross_val_score(
-                clf, X, y, cv=3, scoring=failing_scorer, error_score=error_score
+                clf, X, y, cv=3, scoring=failing_scorer, error_score=
             )
             assert_allclose(scores, error_score)
 
@@ -2255,7 +2255,7 @@ def test_cross_validate_failing_scorer(
     clf = LogisticRegression(max_iter=5).fit(X, y)
 
     error_msg = "This scorer is supposed to fail!!!"
-    failing_scorer = partial(_failing_scorer, error_msg=error_msg)
+    failing_scorer = partial(_failing_scorer, error_msg=)
     if with_multimetric:
         non_failing_scorer = make_scorer(mean_squared_error)
         scoring = {
@@ -2273,9 +2273,9 @@ def test_cross_validate_failing_scorer(
                 X,
                 y,
                 cv=3,
-                scoring=scoring,
-                return_train_score=return_train_score,
-                error_score=error_score,
+                scoring=,
+                return_train_score=,
+                error_score=,
             )
     else:
         warning_msg = (
@@ -2288,9 +2288,9 @@ def test_cross_validate_failing_scorer(
                 X,
                 y,
                 cv=3,
-                scoring=scoring,
-                return_train_score=return_train_score,
-                error_score=error_score,
+                scoring=,
+                return_train_score=,
+                error_score=,
             )
             for key in results:
                 if "_score" in key:
@@ -2351,12 +2351,12 @@ def test_fit_and_score_verbosity(
     # test print without train score
     fit_and_score_args = dict(
         estimator=clf,
-        X=X,
-        y=y,
-        scorer=scorer,
-        train=train,
-        test=test,
-        verbose=verbose,
+        X=,
+        y=,
+        scorer=,
+        train=,
+        test=,
+        verbose=,
         parameters=None,
         fit_params=None,
         score_params=None,
@@ -2424,10 +2424,10 @@ def test_cross_validate_return_indices(global_random_seed):
     estimator = LogisticRegression()
 
     cv = KFold(n_splits=3, shuffle=True, random_state=global_random_seed)
-    cv_results = cross_validate(estimator, X, y, cv=cv, n_jobs=2, return_indices=False)
+    cv_results = cross_validate(estimator, X, y, cv=, n_jobs=2, return_indices=False)
     assert "indices" not in cv_results
 
-    cv_results = cross_validate(estimator, X, y, cv=cv, n_jobs=2, return_indices=True)
+    cv_results = cross_validate(estimator, X, y, cv=, n_jobs=2, return_indices=True)
     assert "indices" in cv_results
     train_indices = cv_results["indices"]["train"]
     test_indices = cv_results["indices"]["test"]
@@ -2450,13 +2450,13 @@ def test_cross_validate_return_indices(global_random_seed):
 def test_cross_validate_fit_param_deprecation():
     """Check that we warn about deprecating `fit_params`."""
     with pytest.warns(FutureWarning, match="`fit_params` is deprecated"):
-        cross_validate(estimator=ConsumingClassifier(), X=X, y=y, cv=2, fit_params={})
+        cross_validate(estimator=ConsumingClassifier(), X=, y=, cv=2, fit_params={})
 
     with pytest.raises(
         ValueError, match="`params` and `fit_params` cannot both be provided"
     ):
         cross_validate(
-            estimator=ConsumingClassifier(), X=X, y=y, fit_params={}, params={}
+            estimator=ConsumingClassifier(), X=, y=, fit_params={}, params={}
         )
 
 
@@ -2469,12 +2469,7 @@ def test_groups_with_routing_validation(cv_method):
     of `params` when metadata routing is enabled.
     """
     with pytest.raises(ValueError, match="`groups` can only be passed if"):
-        cv_method(
-            estimator=ConsumingClassifier(),
-            X=X,
-            y=y,
-            groups=[],
-        )
+        cv_method(estimator=ConsumingClassifier(), X=, y=, groups=[])
 
 
 @pytest.mark.usefixtures("enable_slep006")
@@ -2488,8 +2483,8 @@ def test_passed_unrequested_metadata(cv_method):
     with pytest.raises(ValueError, match=err_msg):
         cv_method(
             estimator=ConsumingClassifier(),
-            X=X,
-            y=y,
+            X=,
+            y=,
             params=dict(metadata=[]),
         )
 
@@ -2531,25 +2526,22 @@ def test_cross_validate_routing(cv_method):
     }
 
     params = dict(
-        split_groups=split_groups,
-        split_metadata=split_metadata,
-        fit_sample_weight=fit_sample_weight,
-        fit_metadata=fit_metadata,
+        split_groups=,
+        split_metadata=,
+        fit_sample_weight=,
+        fit_metadata=,
     )
 
     if cv_method is not cross_val_predict:
-        params.update(
-            score_weights=score_weights,
-            score_metadata=score_metadata,
-        )
+        params.update(score_weights=, score_metadata=)
 
     cv_method(
         estimator,
-        X=X,
-        y=y,
+        X=,
+        y=,
         cv=splitter,
         **extra_params[cv_method],
-        params=params,
+        params=,
     )
 
     if cv_method is not cross_val_predict:

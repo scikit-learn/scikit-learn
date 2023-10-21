@@ -60,7 +60,7 @@ for connectivity in (None, knn_graph):
         for index, linkage in enumerate(("average", "complete", "ward", "single")):
             plt.subplot(1, 4, index + 1)
             model = AgglomerativeClustering(
-                linkage=linkage, connectivity=connectivity, n_clusters=n_clusters
+                linkage=, connectivity=, n_clusters=
             )
             t0 = time.time()
             model.fit(X)

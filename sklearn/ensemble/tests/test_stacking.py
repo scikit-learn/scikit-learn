@@ -70,12 +70,7 @@ def test_stacking_classifier_iris(cv, final_estimator, passthrough):
         scale(X_iris), y_iris, stratify=y_iris, random_state=42
     )
     estimators = [("lr", LogisticRegression()), ("svc", LinearSVC(dual="auto"))]
-    clf = StackingClassifier(
-        estimators=estimators,
-        final_estimator=final_estimator,
-        cv=cv,
-        passthrough=passthrough,
-    )
+    clf = StackingClassifier(estimators=, final_estimator=, cv=, passthrough=)
     clf.fit(X_train, y_train)
     clf.predict(X_test)
     clf.predict_proba(X_test)
@@ -114,7 +109,7 @@ def test_stacking_classifier_drop_column_binary_classification():
         ("lr", LogisticRegression()),
         ("rf", RandomForestClassifier(random_state=42)),
     ]
-    clf = StackingClassifier(estimators=estimators, cv=3)
+    clf = StackingClassifier(estimators=, cv=3)
 
     clf.fit(X_train, y_train)
     X_trans = clf.transform(X_test)
@@ -122,7 +117,7 @@ def test_stacking_classifier_drop_column_binary_classification():
 
     # LinearSVC does not implement 'predict_proba' and will not drop one column
     estimators = [("lr", LogisticRegression()), ("svc", LinearSVC(dual="auto"))]
-    clf.set_params(estimators=estimators)
+    clf.set_params(estimators=)
 
     clf.fit(X_train, y_train)
     X_trans = clf.transform(X_test)
@@ -142,7 +137,7 @@ def test_stacking_classifier_drop_estimator():
         final_estimator=rf,
         cv=5,
     )
-    clf_drop = StackingClassifier(estimators=estimators, final_estimator=rf, cv=5)
+    clf_drop = StackingClassifier(estimators=, final_estimator=rf, cv=5)
 
     clf.fit(X_train, y_train)
     clf_drop.fit(X_train, y_train)
@@ -164,7 +159,7 @@ def test_stacking_regressor_drop_estimator():
         final_estimator=rf,
         cv=5,
     )
-    reg_drop = StackingRegressor(estimators=estimators, final_estimator=rf, cv=5)
+    reg_drop = StackingRegressor(estimators=, final_estimator=rf, cv=5)
 
     reg.fit(X_train, y_train)
     reg_drop.fit(X_train, y_train)
@@ -189,12 +184,7 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params, passth
         scale(X_diabetes), y_diabetes, random_state=42
     )
     estimators = [("lr", LinearRegression()), ("svr", LinearSVR(dual="auto"))]
-    reg = StackingRegressor(
-        estimators=estimators,
-        final_estimator=final_estimator,
-        cv=cv,
-        passthrough=passthrough,
-    )
+    reg = StackingRegressor(estimators=, final_estimator=, cv=, passthrough=)
     reg.fit(X_train, y_train)
     result = reg.predict(X_test, **predict_params)
     expected_result_length = 2 if predict_params else 1
@@ -229,7 +219,7 @@ def test_stacking_regressor_sparse_passthrough(sparse_container):
     estimators = [("lr", LinearRegression()), ("svr", LinearSVR(dual="auto"))]
     rf = RandomForestRegressor(n_estimators=10, random_state=42)
     clf = StackingRegressor(
-        estimators=estimators, final_estimator=rf, cv=5, passthrough=True
+        estimators=, final_estimator=rf, cv=5, passthrough=True
     )
     clf.fit(X_train, y_train)
     X_trans = clf.transform(X_test)
@@ -249,7 +239,7 @@ def test_stacking_classifier_sparse_passthrough(sparse_container):
     estimators = [("lr", LogisticRegression()), ("svc", LinearSVC(dual="auto"))]
     rf = RandomForestClassifier(n_estimators=10, random_state=42)
     clf = StackingClassifier(
-        estimators=estimators, final_estimator=rf, cv=5, passthrough=True
+        estimators=, final_estimator=rf, cv=5, passthrough=True
     )
     clf.fit(X_train, y_train)
     X_trans = clf.transform(X_test)
@@ -266,7 +256,7 @@ def test_stacking_classifier_drop_binary_prob():
     X_, y_ = scale(X_iris[:100]), y_iris[:100]
 
     estimators = [("lr", LogisticRegression()), ("rf", RandomForestClassifier())]
-    clf = StackingClassifier(estimators=estimators)
+    clf = StackingClassifier(estimators=)
     clf.fit(X_, y_)
     X_meta = clf.transform(X_)
     assert X_meta.shape[1] == 2
@@ -584,9 +574,7 @@ def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y
         predict_method_mocked.__name__ = stack_method
         setattr(estimator, stack_method, predict_method_mocked)
 
-    stacker = Stacker(
-        estimators=estimators, cv="prefit", final_estimator=final_estimator
-    )
+    stacker = Stacker(estimators=, cv="prefit", final_estimator=)
     stacker.fit(X_train2, y_train2)
 
     assert stacker.estimators_ == [estimator for _, estimator in estimators]
@@ -688,7 +676,7 @@ def test_stacking_classifier_multilabel_predict_proba(estimator):
 
     estimators = [("est", estimator)]
     stacker = StackingClassifier(
-        estimators=estimators,
+        estimators=,
         final_estimator=KNeighborsClassifier(),
         stack_method="predict_proba",
     ).fit(X_train, y_train)
@@ -714,7 +702,7 @@ def test_stacking_classifier_multilabel_decision_function():
 
     estimators = [("est", RidgeClassifier())]
     stacker = StackingClassifier(
-        estimators=estimators,
+        estimators=,
         final_estimator=KNeighborsClassifier(),
         stack_method="decision_function",
     ).fit(X_train, y_train)
@@ -746,10 +734,10 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
     final_estimator = KNeighborsClassifier()
 
     clf = StackingClassifier(
-        estimators=estimators,
-        final_estimator=final_estimator,
-        passthrough=passthrough,
-        stack_method=stack_method,
+        estimators=,
+        final_estimator=,
+        passthrough=,
+        stack_method=,
     ).fit(X_train, y_train)
 
     # make sure we don't change `y_train` inplace
@@ -839,7 +827,7 @@ def test_get_feature_names_out(
 ):
     """Check get_feature_names_out works for stacking."""
 
-    stacker.set_params(passthrough=passthrough)
+    stacker.set_params(passthrough=)
     stacker.fit(scale(X), y)
 
     if passthrough:

@@ -40,7 +40,7 @@ quantiles = [0.95, 0.5, 0.05]
 parameters = dict(loss="quantile", max_bins=32, max_iter=50)
 hist_quantiles = {
     f"quantile={quantile:.2f}": HistGradientBoostingRegressor(
-        **parameters, quantile=quantile
+        **parameters, quantile=
     ).fit(X, y)
     for quantile in quantiles
 }
@@ -185,7 +185,7 @@ true_W = rng.uniform(size=(n_samples, n_components))
 true_H = rng.uniform(size=(n_components, n_features))
 X = true_W @ true_H
 
-nmf = MiniBatchNMF(n_components=n_components, random_state=0)
+nmf = MiniBatchNMF(n_components=, random_state=0)
 
 for _ in range(10):
     nmf.partial_fit(X)

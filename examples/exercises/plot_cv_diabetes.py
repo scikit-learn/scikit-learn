@@ -68,7 +68,7 @@ plt.xlim([alphas[0], alphas[-1]])
 from sklearn.linear_model import LassoCV
 from sklearn.model_selection import KFold
 
-lasso_cv = LassoCV(alphas=alphas, random_state=0, max_iter=10000)
+lasso_cv = LassoCV(alphas=, random_state=0, max_iter=10000)
 k_fold = KFold(3)
 
 print("Answer to the bonus question:", "how much can you trust the selection of alpha?")

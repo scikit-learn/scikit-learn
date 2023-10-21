@@ -71,8 +71,8 @@ from sklearn.metrics import RocCurveDisplay, auc
 from sklearn.model_selection import StratifiedKFold
 
 n_splits = 6
-cv = StratifiedKFold(n_splits=n_splits)
-classifier = svm.SVC(kernel="linear", probability=True, random_state=random_state)
+cv = StratifiedKFold(n_splits=)
+classifier = svm.SVC(kernel="linear", probability=True, random_state=)
 
 tprs = []
 aucs = []
@@ -88,7 +88,7 @@ for fold, (train, test) in enumerate(cv.split(X, y)):
         name=f"ROC fold {fold}",
         alpha=0.3,
         lw=1,
-        ax=ax,
+        ax=,
         plot_chance_level=(fold == n_splits - 1),
     )
     interp_tpr = np.interp(mean_fpr, viz.fpr, viz.tpr)

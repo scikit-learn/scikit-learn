@@ -104,11 +104,11 @@ def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
     est.fit(X, y)
     result = partial_dependence(
         est,
-        X=X,
-        features=features,
-        method=method,
-        kind=kind,
-        grid_resolution=grid_resolution,
+        X=,
+        features=,
+        method=,
+        kind=,
+        grid_resolution=,
     )
     pdp, axes = result, result["grid_values"]
 
@@ -151,9 +151,7 @@ def test_grid_from_X():
 
     # n_unique_values > grid_resolution
     X = rng.normal(size=(20, 2))
-    grid, axes = _grid_from_X(
-        X, percentiles, is_categorical, grid_resolution=grid_resolution
-    )
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution=)
     assert grid.shape == (grid_resolution * grid_resolution, X.shape[1])
     assert np.asarray(axes).shape == (2, grid_resolution)
 
@@ -161,9 +159,7 @@ def test_grid_from_X():
     n_unique_values = 12
     X[n_unique_values - 1 :, 0] = 12345
     rng.shuffle(X)  # just to make sure the order is irrelevant
-    grid, axes = _grid_from_X(
-        X, percentiles, is_categorical, grid_resolution=grid_resolution
-    )
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution=)
     assert grid.shape == (n_unique_values * grid_resolution, X.shape[1])
     # axes is a list of arrays of different shapes
     assert axes[0].shape == (n_unique_values,)
@@ -185,9 +181,7 @@ def test_grid_from_X_with_categorical(grid_resolution):
     percentiles = (0.05, 0.95)
     is_categorical = [True]
     X = pd.DataFrame({"cat_feature": ["A", "B", "C", "A", "B", "D", "E"]})
-    grid, axes = _grid_from_X(
-        X, percentiles, is_categorical, grid_resolution=grid_resolution
-    )
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution=)
     assert grid.shape == (5, X.shape[1])
     assert axes[0].shape == (5,)
 
@@ -208,9 +202,7 @@ def test_grid_from_X_heterogeneous_type(grid_resolution):
     )
     nunique = X.nunique()
 
-    grid, axes = _grid_from_X(
-        X, percentiles, is_categorical, grid_resolution=grid_resolution
-    )
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution=)
     if grid_resolution == 3:
         assert grid.shape == (15, 2)
         assert axes[0].shape[0] == nunique["num"]
@@ -292,7 +284,7 @@ def test_partial_dependence_helpers(est, method, target_feature):
 
     # allow for greater margin for error with recursion method
     rtol = 1e-1 if method == "recursion" else 1e-3
-    assert np.allclose(pdp, mean_predictions, rtol=rtol)
+    assert np.allclose(pdp, mean_predictions, rtol=)
 
 
 @pytest.mark.parametrize("seed", range(1))
@@ -323,7 +315,7 @@ def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
         n_estimators=1,
         max_features=None,
         bootstrap=False,
-        max_depth=max_depth,
+        max_depth=,
         random_state=tree_seed,
     )
     # The forest will use ensemble.base._set_random_states to set the
@@ -334,10 +326,10 @@ def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
         n_estimators=1,
         learning_rate=1,
         criterion="squared_error",
-        max_depth=max_depth,
+        max_depth=,
         random_state=equiv_random_state,
     )
-    tree = DecisionTreeRegressor(max_depth=max_depth, random_state=equiv_random_state)
+    tree = DecisionTreeRegressor(max_depth=, random_state=equiv_random_state)
 
     forest.fit(X, y)
     gbdt.fit(X, y)
@@ -433,7 +425,7 @@ def test_partial_dependence_easy_target(est, power):
     est.fit(X, y)
 
     pdp = partial_dependence(
-        est, features=[target_variable], X=X, grid_resolution=1000, kind="average"
+        est, features=[target_variable], X=, grid_resolution=1000, kind="average"
     )
 
     new_X = pdp["grid_values"][0].reshape(-1, 1)
@@ -609,7 +601,7 @@ def test_partial_dependence_sample_weight_of_fitted_estimator():
     sample_weight[mask] = 1000.0
 
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
-    clf.fit(X, y, sample_weight=sample_weight)
+    clf.fit(X, y, sample_weight=)
 
     pdp = partial_dependence(clf, X, features=[1], kind="average")
 
@@ -693,7 +685,7 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
     pipe = make_pipeline(preprocessor, estimator)
     pipe.fit(df, iris.target)
     pdp_pipe = partial_dependence(
-        pipe, df, features=features, grid_resolution=10, kind="average"
+        pipe, df, features=, grid_resolution=10, kind="average"
     )
 
     # the column transformer will reorder the column when transforming
@@ -752,7 +744,7 @@ def test_partial_dependence_feature_type(features, expected_pd_shape):
     )
     pipe.fit(df, iris.target)
     pdp_pipe = partial_dependence(
-        pipe, df, features=features, grid_resolution=10, kind="average"
+        pipe, df, features=, grid_resolution=10, kind="average"
     )
     assert pdp_pipe["average"].shape == expected_pd_shape
     assert len(pdp_pipe["grid_values"]) == len(pdp_pipe["average"].shape) - 1
@@ -791,8 +783,8 @@ def test_kind_average_and_average_of_individual(Estimator, data):
     (X, y), n_targets = data
     est.fit(X, y)
 
-    pdp_avg = partial_dependence(est, X=X, features=[1, 2], kind="average")
-    pdp_ind = partial_dependence(est, X=X, features=[1, 2], kind="individual")
+    pdp_avg = partial_dependence(est, X=, features=[1, 2], kind="average")
+    pdp_ind = partial_dependence(est, X=, features=[1, 2], kind="individual")
     avg_ind = np.mean(pdp_ind["individual"], axis=1)
     assert_allclose(avg_ind, pdp_avg["average"])
 
@@ -811,9 +803,9 @@ def test_partial_dependence_kind_individual_ignores_sample_weight(Estimator, dat
     sample_weight = np.arange(X.shape[0])
     est.fit(X, y)
 
-    pdp_nsw = partial_dependence(est, X=X, features=[1, 2], kind="individual")
+    pdp_nsw = partial_dependence(est, X=, features=[1, 2], kind="individual")
     pdp_sw = partial_dependence(
-        est, X=X, features=[1, 2], kind="individual", sample_weight=sample_weight
+        est, X=, features=[1, 2], kind="individual", sample_weight=
     )
     assert_allclose(pdp_nsw["individual"], pdp_sw["individual"])
     assert_allclose(pdp_nsw["grid_values"], pdp_sw["grid_values"])
@@ -848,7 +840,7 @@ def test_partial_dependence_non_null_weight_idx(estimator, non_null_weight_idx):
         X,
         [2, 3],
         kind="average",
-        sample_weight=sample_weight,
+        sample_weight=,
         grid_resolution=10,
     )
     pdp_ind = partial_dependence(pipe, X, [2, 3], kind="individual", grid_resolution=10)
@@ -875,12 +867,12 @@ def test_partial_dependence_equivalence_equal_sample_weight(Estimator, data):
     est.fit(X, y)
 
     sample_weight, params = None, {"X": X, "features": [1, 2], "kind": "average"}
-    pdp_sw_none = partial_dependence(est, **params, sample_weight=sample_weight)
+    pdp_sw_none = partial_dependence(est, **params, sample_weight=)
     sample_weight = np.ones(len(y))
-    pdp_sw_unit = partial_dependence(est, **params, sample_weight=sample_weight)
+    pdp_sw_unit = partial_dependence(est, **params, sample_weight=)
     assert_allclose(pdp_sw_none["average"], pdp_sw_unit["average"])
     sample_weight = 2 * np.ones(len(y))
-    pdp_sw_doubling = partial_dependence(est, **params, sample_weight=sample_weight)
+    pdp_sw_doubling = partial_dependence(est, **params, sample_weight=)
     assert_allclose(pdp_sw_none["average"], pdp_sw_doubling["average"])
 
 
@@ -906,11 +898,11 @@ def test_partial_dependence_sample_weight_with_recursion():
     est = RandomForestRegressor()
     (X, y), n_targets = regression_data
     sample_weight = np.ones_like(y)
-    est.fit(X, y, sample_weight=sample_weight)
+    est.fit(X, y, sample_weight=)
 
     with pytest.raises(ValueError, match="'recursion' method can only be applied when"):
         partial_dependence(
-            est, X, features=[0], method="recursion", sample_weight=sample_weight
+            est, X, features=[0], method="recursion", sample_weight=
         )
 
 
@@ -922,7 +914,7 @@ def test_partial_dependence_bunch_values_deprecated():
     (X, y), _ = binary_classification_data
     est.fit(X, y)
 
-    pdp_avg = partial_dependence(est, X=X, features=[1, 2], kind="average")
+    pdp_avg = partial_dependence(est, X=, features=[1, 2], kind="average")
 
     msg = (
         "Key: 'values', is deprecated in 1.3 and will be "

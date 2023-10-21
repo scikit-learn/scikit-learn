@@ -76,8 +76,8 @@ def test_linear_regression_sample_weights(
     sample_weight = 1.0 + rng.uniform(size=n_samples)
 
     # LinearRegression with explicit sample_weight
-    reg = LinearRegression(fit_intercept=fit_intercept)
-    reg.fit(X, y, sample_weight=sample_weight)
+    reg = LinearRegression(fit_intercept=)
+    reg.fit(X, y, sample_weight=)
     coefs1 = reg.coef_
     inter1 = reg.intercept_
 
@@ -210,7 +210,7 @@ def test_linear_regression_sparse_equal_dense(fit_intercept, csr_container):
     X[X < 0.1] = 0.0
     Xcsr = csr_container(X)
     y = rng.rand(n_samples)
-    params = dict(fit_intercept=fit_intercept)
+    params = dict(fit_intercept=)
     clf_dense = LinearRegression(**params)
     clf_sparse = LinearRegression(**params)
     clf_dense.fit(X, y)
@@ -349,7 +349,7 @@ def test_inplace_data_preprocessing(sparse_container, use_sw, global_random_seed
 
     # Do not allow inplace preprocessing of X and y:
     reg = LinearRegression()
-    reg.fit(X, y, sample_weight=sample_weight)
+    reg.fit(X, y, sample_weight=)
     if sparse_container is not None:
         assert_allclose(X.toarray(), original_X_data)
     else:
@@ -361,7 +361,7 @@ def test_inplace_data_preprocessing(sparse_container, use_sw, global_random_seed
 
     # Allow inplace preprocessing of X and y
     reg = LinearRegression(copy_X=False)
-    reg.fit(X, y, sample_weight=sample_weight)
+    reg.fit(X, y, sample_weight=)
     if sparse_container is not None:
         # No optimization relying on the inplace modification of sparse input
         # data has been implemented at this time.
@@ -519,7 +519,7 @@ def test_preprocess_data_weighted(sparse_container, global_random_seed):
         y,
         fit_intercept=True,
         normalize=False,
-        sample_weight=sample_weight,
+        sample_weight=,
     )
     assert_array_almost_equal(X_mean, expected_X_mean)
     assert_array_almost_equal(y_mean, expected_y_mean)
@@ -536,7 +536,7 @@ def test_preprocess_data_weighted(sparse_container, global_random_seed):
         y,
         fit_intercept=True,
         normalize=True,
-        sample_weight=sample_weight,
+        sample_weight=,
     )
 
     assert_array_almost_equal(X_mean, expected_X_mean)
@@ -555,7 +555,7 @@ def test_preprocess_data_weighted(sparse_container, global_random_seed):
     # The two are equivalent up to a ratio of np.sqrt(n_samples) if unweighted
     # or np.sqrt(sample_weight.sum()) if weighted.
     if sparse_container is not None:
-        scaler = StandardScaler(with_mean=False).fit(X, sample_weight=sample_weight)
+        scaler = StandardScaler(with_mean=False).fit(X, sample_weight=)
 
         # Non-constant features are scaled similarly with np.sqrt(n_samples)
         assert_array_almost_equal(
@@ -568,7 +568,7 @@ def test_preprocess_data_weighted(sparse_container, global_random_seed):
             scaler.transform(X).toarray()[:, 2:], Xt.toarray()[:, 2:]
         )
     else:
-        scaler = StandardScaler(with_mean=True).fit(X, sample_weight=sample_weight)
+        scaler = StandardScaler(with_mean=True).fit(X, sample_weight=)
         assert_array_almost_equal(scaler.mean_, X_mean)
         assert_array_almost_equal(
             scaler.transform(X) / np.sqrt(sample_weight.sum()),
@@ -664,29 +664,29 @@ def test_dtype_preprocess_data(global_random_seed):
             Xt_32, yt_32, X_mean_32, y_mean_32, X_scale_32 = _preprocess_data(
                 X_32,
                 y_32,
-                fit_intercept=fit_intercept,
-                normalize=normalize,
+                fit_intercept=,
+                normalize=,
             )
 
             Xt_64, yt_64, X_mean_64, y_mean_64, X_scale_64 = _preprocess_data(
                 X_64,
                 y_64,
-                fit_intercept=fit_intercept,
-                normalize=normalize,
+                fit_intercept=,
+                normalize=,
             )
 
             Xt_3264, yt_3264, X_mean_3264, y_mean_3264, X_scale_3264 = _preprocess_data(
                 X_32,
                 y_64,
-                fit_intercept=fit_intercept,
-                normalize=normalize,
+                fit_intercept=,
+                normalize=,
             )
 
             Xt_6432, yt_6432, X_mean_6432, y_mean_6432, X_scale_6432 = _preprocess_data(
                 X_64,
                 y_32,
-                fit_intercept=fit_intercept,
-                normalize=normalize,
+                fit_intercept=,
+                normalize=,
             )
 
             assert Xt_32.dtype == np.float32
@@ -792,7 +792,7 @@ def test_fused_types_make_dataset(csr_container):
 
     assert xi_data_32.dtype == np.float32
     assert xi_data_64.dtype == np.float64
-    assert_allclose(yi_64, yi_32, rtol=rtol)
+    assert_allclose(yi_64, yi_32, rtol=)
 
     # csr
     datasetcsr_32, _ = make_dataset(X_csr_32, y_32, sample_weight_32)
@@ -805,8 +805,8 @@ def test_fused_types_make_dataset(csr_container):
     assert xicsr_data_32.dtype == np.float32
     assert xicsr_data_64.dtype == np.float64
 
-    assert_allclose(xicsr_data_64, xicsr_data_32, rtol=rtol)
-    assert_allclose(yicsr_64, yicsr_32, rtol=rtol)
+    assert_allclose(xicsr_data_64, xicsr_data_32, rtol=)
+    assert_allclose(yicsr_64, yicsr_32, rtol=)
 
     assert_array_equal(xi_data_32, xicsr_data_32)
     assert_array_equal(xi_data_64, xicsr_data_64)
@@ -832,7 +832,7 @@ def test_linear_regression_sample_weight_consistency(
     y = rng.rand(n_samples)
     if sparse_container is not None:
         X = sparse_container(X)
-    params = dict(fit_intercept=fit_intercept)
+    params = dict(fit_intercept=)
 
     reg = LinearRegression(**params).fit(X, y, sample_weight=None)
     coef = reg.coef_.copy()
@@ -843,21 +843,21 @@ def test_linear_regression_sample_weight_consistency(
     # same check as check_sample_weights_invariance(name, reg, kind="ones"), but we also
     # test with sparse input.
     sample_weight = np.ones_like(y)
-    reg.fit(X, y, sample_weight=sample_weight)
+    reg.fit(X, y, sample_weight=)
     assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
     # 2) sample_weight=None should be equivalent to sample_weight = number
     sample_weight = 123.0
-    reg.fit(X, y, sample_weight=sample_weight)
+    reg.fit(X, y, sample_weight=)
     assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
     # 3) scaling of sample_weight should have no effect, cf. np.average()
     sample_weight = rng.uniform(low=0.01, high=2, size=X.shape[0])
-    reg = reg.fit(X, y, sample_weight=sample_weight)
+    reg = reg.fit(X, y, sample_weight=)
     coef = reg.coef_.copy()
     if fit_intercept:
         intercept = reg.intercept_

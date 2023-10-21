@@ -159,16 +159,16 @@ def dbscan(
     """
 
     est = DBSCAN(
-        eps=eps,
-        min_samples=min_samples,
-        metric=metric,
-        metric_params=metric_params,
-        algorithm=algorithm,
-        leaf_size=leaf_size,
-        p=p,
-        n_jobs=n_jobs,
+        eps=,
+        min_samples=,
+        metric=,
+        metric_params=,
+        algorithm=,
+        leaf_size=,
+        p=,
+        n_jobs=,
     )
-    est.fit(X, sample_weight=sample_weight)
+    est.fit(X, sample_weight=)
     return est.core_sample_indices_, est.labels_
 
 
@@ -458,7 +458,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         labels : ndarray of shape (n_samples,)
             Cluster labels. Noisy samples are given the label -1.
         """
-        self.fit(X, sample_weight=sample_weight)
+        self.fit(X, sample_weight=)
         return self.labels_
 
     def _more_tags(self):

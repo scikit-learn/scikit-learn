@@ -289,7 +289,7 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             nbg = _fix_connected_components(
                 X=self.nbrs_._fit_X,
                 graph=nbg,
-                n_connected_components=n_connected_components,
+                n_connected_components=,
                 component_labels=labels,
                 mode="distance",
                 metric=self.nbrs_.effective_metric_,

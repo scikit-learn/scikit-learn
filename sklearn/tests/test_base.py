@@ -334,7 +334,7 @@ def test_score_sample_weight(tree, dataset):
     # generate random sample weights
     sample_weight = rng.randint(1, 10, size=len(y))
     score_unweighted = tree.score(X, y)
-    score_weighted = tree.score(X, y, sample_weight=sample_weight)
+    score_weighted = tree.score(X, y, sample_weight=)
     msg = "Unweighted and weighted scores are unexpectedly equal"
     assert score_unweighted != score_weighted, msg
 
@@ -751,11 +751,11 @@ def test_validate_data_cast_to_ndarray():
     X_df_out = no_op._validate_data(df, cast_to_ndarray=False)
     assert X_df_out is df
 
-    y_np_out = no_op._validate_data(y=y, cast_to_ndarray=True)
+    y_np_out = no_op._validate_data(y=, cast_to_ndarray=True)
     assert isinstance(y_np_out, np.ndarray)
     assert_allclose(y_np_out, y.to_numpy())
 
-    y_series_out = no_op._validate_data(y=y, cast_to_ndarray=False)
+    y_series_out = no_op._validate_data(y=, cast_to_ndarray=False)
     assert y_series_out is y
 
     X_np_out, y_np_out = no_op._validate_data(df, y, cast_to_ndarray=True)
@@ -842,7 +842,7 @@ def test_dataframe_protocol(constructor_name, minversion):
     data = [[1, 4, 2], [3, 3, 6]]
     columns = ["col_0", "col_1", "col_2"]
     df = _convert_container(
-        data, constructor_name, columns_name=columns, minversion=minversion
+        data, constructor_name, columns_name=columns, minversion=
     )
 
     class NoOpTransformer(TransformerMixin, BaseEstimator):

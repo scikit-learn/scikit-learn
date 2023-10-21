@@ -664,10 +664,10 @@ def make_regression(
     else:
         # Randomly generate a low rank, fat tail input set
         X = make_low_rank_matrix(
-            n_samples=n_samples,
-            n_features=n_features,
-            effective_rank=effective_rank,
-            tail_strength=tail_strength,
+            n_samples=,
+            n_features=,
+            effective_rank=,
+            tail_strength=,
             random_state=generator,
         )
 
@@ -1654,7 +1654,7 @@ def make_sparse_spd_matrix(
         data_rvs=lambda x: random_state.uniform(
             low=smallest_coef, high=largest_coef, size=x
         ),
-        random_state=random_state,
+        random_state=,
     )
     # We need to avoid "coo" format because it does not support slicing
     aux = sp.tril(aux, k=-1, format="csc")

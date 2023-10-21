@@ -828,21 +828,19 @@ class KNeighborsMixin:
         )
         if use_pairwise_distances_reductions:
             results = ArgKmin.compute(
-                X=X,
+                X=,
                 Y=self._fit_X,
                 k=n_neighbors,
                 metric=self.effective_metric_,
                 metric_kwargs=self.effective_metric_params_,
                 strategy="auto",
-                return_distance=return_distance,
+                return_distance=,
             )
 
         elif (
             self._fit_method == "brute" and self.metric == "precomputed" and issparse(X)
         ):
-            results = _kneighbors_from_graph(
-                X, n_neighbors=n_neighbors, return_distance=return_distance
-            )
+            results = _kneighbors_from_graph(X, n_neighbors=, return_distance=)
 
         elif self._fit_method == "brute":
             # Joblib-based backend, which is used when user-defined callable
@@ -854,8 +852,8 @@ class KNeighborsMixin:
             #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
             reduce_func = partial(
                 self._kneighbors_reduce_func,
-                n_neighbors=n_neighbors,
-                return_distance=return_distance,
+                n_neighbors=,
+                return_distance=,
             )
 
             # for efficiency, use squared euclidean distances
@@ -868,9 +866,9 @@ class KNeighborsMixin:
                 pairwise_distances_chunked(
                     X,
                     self._fit_X,
-                    reduce_func=reduce_func,
+                    reduce_func=,
                     metric=self.effective_metric_,
-                    n_jobs=n_jobs,
+                    n_jobs=,
                     **kwds,
                 )
             )
@@ -1165,21 +1163,21 @@ class RadiusNeighborsMixin:
 
         if use_pairwise_distances_reductions:
             results = RadiusNeighbors.compute(
-                X=X,
+                X=,
                 Y=self._fit_X,
-                radius=radius,
+                radius=,
                 metric=self.effective_metric_,
                 metric_kwargs=self.effective_metric_params_,
                 strategy="auto",
-                return_distance=return_distance,
-                sort_results=sort_results,
+                return_distance=,
+                sort_results=,
             )
 
         elif (
             self._fit_method == "brute" and self.metric == "precomputed" and issparse(X)
         ):
             results = _radius_neighbors_from_graph(
-                X, radius=radius, return_distance=return_distance
+                X, radius=, return_distance=
             )
 
         elif self._fit_method == "brute":
@@ -1200,14 +1198,14 @@ class RadiusNeighborsMixin:
 
             reduce_func = partial(
                 self._radius_neighbors_reduce_func,
-                radius=radius,
-                return_distance=return_distance,
+                radius=,
+                return_distance=,
             )
 
             chunked_results = pairwise_distances_chunked(
                 X,
                 self._fit_X,
-                reduce_func=reduce_func,
+                reduce_func=,
                 metric=self.effective_metric_,
                 n_jobs=self.n_jobs,
                 **kwds,
@@ -1242,7 +1240,7 @@ class RadiusNeighborsMixin:
             delayed_query = delayed(_tree_query_radius_parallel_helper)
             chunked_results = Parallel(n_jobs, prefer="threads")(
                 delayed_query(
-                    self._tree, X[s], radius, return_distance, sort_results=sort_results
+                    self._tree, X[s], radius, return_distance, sort_results=
                 )
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
@@ -1347,7 +1345,7 @@ class RadiusNeighborsMixin:
             A_data = None
         elif mode == "distance":
             dist, A_ind = self.radius_neighbors(
-                X, radius, return_distance=True, sort_results=sort_results
+                X, radius, return_distance=True, sort_results=
             )
             A_data = np.concatenate(list(dist))
         else:

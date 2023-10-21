@@ -69,10 +69,10 @@ def test_bayesian_ridge_score_values():
 
     # compute score with BayesianRidge
     clf = BayesianRidge(
-        alpha_1=alpha_1,
-        alpha_2=alpha_2,
-        lambda_1=lambda_1,
-        lambda_2=lambda_2,
+        alpha_1=,
+        alpha_2=,
+        lambda_1=,
+        lambda_2=,
         max_iter=1,
         fit_intercept=False,
         compute_score=True,
@@ -233,12 +233,12 @@ def test_return_std():
         m1 = BayesianRidge()
         m1.fit(X, y)
         y_mean1, y_std1 = m1.predict(X_test, return_std=True)
-        assert_array_almost_equal(y_std1, noise_mult, decimal=decimal)
+        assert_array_almost_equal(y_std1, noise_mult, decimal=)
 
         m2 = ARDRegression()
         m2.fit(X, y)
         y_mean2, y_std2 = m2.predict(X_test, return_std=True)
-        assert_array_almost_equal(y_std2, noise_mult, decimal=decimal)
+        assert_array_almost_equal(y_std2, noise_mult, decimal=)
 
 
 def test_update_sigma(global_random_seed):
@@ -269,7 +269,7 @@ def test_update_sigma(global_random_seed):
 @pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
 def test_dtype_match(dtype, Estimator):
     # Test that np.float32 input data is not cast to np.float64 when possible
-    X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]], dtype=dtype)
+    X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]], dtype=)
     y = np.array([1, 2, 3, 2, 0, 4, 5]).T
 
     model = Estimator()

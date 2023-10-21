@@ -87,7 +87,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                 clone(clf),
                 X,
                 y,
-                sample_weight=sample_weight,
+                sample_weight=,
                 message_clsname="Voting",
                 message=self._log_message(names[idx], idx + 1, len(clfs)),
             )
@@ -150,7 +150,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
     def _sk_visual_block_(self):
         names, estimators = zip(*self.estimators)
-        return _VisualBlock("parallel", estimators, names=names)
+        return _VisualBlock("parallel", estimators, names=)
 
     def _more_tags(self):
         return {"preserves_dtype": []}
@@ -305,7 +305,7 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
         flatten_transform=True,
         verbose=False,
     ):
-        super().__init__(estimators=estimators)
+        super().__init__(estimators=)
         self.voting = voting
         self.weights = weights
         self.n_jobs = n_jobs
@@ -340,7 +340,7 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
         self : object
             Returns the instance itself.
         """
-        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
+        _raise_for_unsupported_routing(self, "fit", sample_weight=)
         check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
             raise NotImplementedError(
@@ -575,7 +575,7 @@ class VotingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseVoting):
     """
 
     def __init__(self, estimators, *, weights=None, n_jobs=None, verbose=False):
-        super().__init__(estimators=estimators)
+        super().__init__(estimators=)
         self.weights = weights
         self.n_jobs = n_jobs
         self.verbose = verbose
@@ -606,7 +606,7 @@ class VotingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseVoting):
         self : object
             Fitted estimator.
         """
-        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
+        _raise_for_unsupported_routing(self, "fit", sample_weight=)
         y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
 

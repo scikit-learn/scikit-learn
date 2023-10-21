@@ -100,14 +100,14 @@ def test_svc():
         for kernel in kernels:
             clf = svm.SVC(
                 gamma=1,
-                kernel=kernel,
+                kernel=,
                 probability=True,
                 random_state=0,
                 decision_function_shape="ovo",
             )
             sp_clf = svm.SVC(
                 gamma=1,
-                kernel=kernel,
+                kernel=,
                 probability=True,
                 random_state=0,
                 decision_function_shape="ovo",
@@ -298,7 +298,7 @@ def test_sample_weights():
     assert_array_equal(clf.predict([X[2]]), [1.0])
 
     sample_weight = [0.1] * 3 + [10] * 3
-    clf.fit(X_sp, Y, sample_weight=sample_weight)
+    clf.fit(X_sp, Y, sample_weight=)
     assert_array_equal(clf.predict([X[2]]), [2.0])
 
 
@@ -322,8 +322,8 @@ def test_sparse_oneclasssvm(datasets_index, kernel):
         [iris.data, None, iris.data],
     ]
     dataset = datasets[datasets_index]
-    clf = svm.OneClassSVM(gamma=1, kernel=kernel)
-    sp_clf = svm.OneClassSVM(gamma=1, kernel=kernel)
+    clf = svm.OneClassSVM(gamma=1, kernel=)
+    sp_clf = svm.OneClassSVM(gamma=1, kernel=)
     check_svm_model_equal(clf, sp_clf, *dataset)
 
 

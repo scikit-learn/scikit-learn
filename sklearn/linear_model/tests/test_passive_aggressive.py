@@ -77,9 +77,9 @@ def test_classifier_accuracy(csr_container, fit_intercept, average):
     clf = PassiveAggressiveClassifier(
         C=1.0,
         max_iter=30,
-        fit_intercept=fit_intercept,
+        fit_intercept=,
         random_state=1,
-        average=average,
+        average=,
         tol=None,
     )
     clf.fit(data, y)
@@ -97,7 +97,7 @@ def test_classifier_accuracy(csr_container, fit_intercept, average):
 def test_classifier_partial_fit(csr_container, average):
     classes = np.unique(y)
     data = csr_container(X) if csr_container is not None else X
-    clf = PassiveAggressiveClassifier(random_state=0, average=average, max_iter=5)
+    clf = PassiveAggressiveClassifier(random_state=0, average=, max_iter=5)
     for t in range(30):
         clf.partial_fit(data, y, classes)
     score = clf.score(data, y)
@@ -124,11 +124,11 @@ def test_classifier_correctness(loss, csr_container):
     y_bin = y.copy()
     y_bin[y != 1] = -1
 
-    clf1 = MyPassiveAggressive(loss=loss, n_iter=2)
+    clf1 = MyPassiveAggressive(loss=, n_iter=2)
     clf1.fit(X, y_bin)
 
     data = csr_container(X) if csr_container is not None else X
-    clf2 = PassiveAggressiveClassifier(loss=loss, max_iter=2, shuffle=False, tol=None)
+    clf2 = PassiveAggressiveClassifier(loss=, max_iter=2, shuffle=False, tol=None)
     clf2.fit(data, y_bin)
 
     assert_array_almost_equal(clf1.w, clf2.coef_.ravel(), decimal=2)
@@ -212,9 +212,9 @@ def test_regressor_mse(csr_container, fit_intercept, average):
     data = csr_container(X) if csr_container is not None else X
     reg = PassiveAggressiveRegressor(
         C=1.0,
-        fit_intercept=fit_intercept,
+        fit_intercept=,
         random_state=0,
-        average=average,
+        average=,
         max_iter=5,
     )
     reg.fit(data, y_bin)
@@ -234,7 +234,7 @@ def test_regressor_partial_fit(csr_container, average):
     y_bin[y != 1] = -1
 
     data = csr_container(X) if csr_container is not None else X
-    reg = PassiveAggressiveRegressor(random_state=0, average=average, max_iter=100)
+    reg = PassiveAggressiveRegressor(random_state=0, average=, max_iter=100)
     for t in range(50):
         reg.partial_fit(data, y_bin)
     pred = reg.predict(data)
@@ -252,11 +252,11 @@ def test_regressor_correctness(loss, csr_container):
     y_bin = y.copy()
     y_bin[y != 1] = -1
 
-    reg1 = MyPassiveAggressive(loss=loss, n_iter=2)
+    reg1 = MyPassiveAggressive(loss=, n_iter=2)
     reg1.fit(X, y_bin)
 
     data = csr_container(X) if csr_container is not None else X
-    reg2 = PassiveAggressiveRegressor(tol=None, loss=loss, max_iter=2, shuffle=False)
+    reg2 = PassiveAggressiveRegressor(tol=None, loss=, max_iter=2, shuffle=False)
     reg2.fit(data, y_bin)
 
     assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)

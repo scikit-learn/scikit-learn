@@ -69,11 +69,11 @@ plot_idx = 1
 
 models = [
     DecisionTreeClassifier(max_depth=None),
-    RandomForestClassifier(n_estimators=n_estimators),
-    ExtraTreesClassifier(n_estimators=n_estimators),
+    RandomForestClassifier(n_estimators=),
+    ExtraTreesClassifier(n_estimators=),
     AdaBoostClassifier(
         DecisionTreeClassifier(max_depth=3),
-        n_estimators=n_estimators,
+        n_estimators=,
         algorithm="SAMME",
     ),
 ]
@@ -127,7 +127,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         if isinstance(model, DecisionTreeClassifier):
             Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
             Z = Z.reshape(xx.shape)
-            cs = plt.contourf(xx, yy, Z, cmap=cmap)
+            cs = plt.contourf(xx, yy, Z, cmap=)
         else:
             # Choose alpha blend level with respect to the number
             # of estimators
@@ -137,7 +137,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
             for tree in model.estimators_:
                 Z = tree.predict(np.c_[xx.ravel(), yy.ravel()])
                 Z = Z.reshape(xx.shape)
-                cs = plt.contourf(xx, yy, Z, alpha=estimator_alpha, cmap=cmap)
+                cs = plt.contourf(xx, yy, Z, alpha=estimator_alpha, cmap=)
 
         # Build a coarser grid to plot a set of ensemble classifications
         # to show how these are different to what we see in the decision
@@ -155,7 +155,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
             yy_coarser,
             s=15,
             c=Z_points_coarser,
-            cmap=cmap,
+            cmap=,
             edgecolors="none",
         )
 

@@ -50,11 +50,11 @@ class LogisticRegressionBenchmark(Predictor, Estimator, Benchmark):
         penalty = "l2" if solver == "lbfgs" else "l1"
 
         estimator = LogisticRegression(
-            solver=solver,
-            penalty=penalty,
+            solver=,
+            penalty=,
             multi_class="multinomial",
             tol=0.01,
-            n_jobs=n_jobs,
+            n_jobs=,
             random_state=0,
         )
 
@@ -93,7 +93,7 @@ class RidgeBenchmark(Predictor, Estimator, Benchmark):
     def make_estimator(self, params):
         representation, solver = params
 
-        estimator = Ridge(solver=solver, fit_intercept=False, random_state=0)
+        estimator = Ridge(solver=, fit_intercept=False, random_state=0)
 
         return estimator
 
@@ -168,7 +168,7 @@ class SGDRegressorBenchmark(Predictor, Estimator, Benchmark):
 
         max_iter = 60 if representation == "dense" else 300
 
-        estimator = SGDRegressor(max_iter=max_iter, tol=None, random_state=0)
+        estimator = SGDRegressor(max_iter=, tol=None, random_state=0)
 
         return estimator
 
@@ -202,7 +202,7 @@ class ElasticNetBenchmark(Predictor, Estimator, Benchmark):
     def make_estimator(self, params):
         representation, precompute = params
 
-        estimator = ElasticNet(precompute=precompute, alpha=0.001, random_state=0)
+        estimator = ElasticNet(precompute=, alpha=0.001, random_state=0)
 
         return estimator
 
@@ -243,7 +243,7 @@ class LassoBenchmark(Predictor, Estimator, Benchmark):
     def make_estimator(self, params):
         representation, precompute = params
 
-        estimator = Lasso(precompute=precompute, alpha=0.001, random_state=0)
+        estimator = Lasso(precompute=, alpha=0.001, random_state=0)
 
         return estimator
 

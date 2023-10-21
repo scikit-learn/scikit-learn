@@ -106,10 +106,10 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     # Define our CV splitting strategy
     if target_type == "binary":
         cv = StratifiedKFold(
-            n_splits=n_splits, random_state=global_random_seed, shuffle=True
+            n_splits=, random_state=global_random_seed, shuffle=True
         )
     else:
-        cv = KFold(n_splits=n_splits, random_state=global_random_seed, shuffle=True)
+        cv = KFold(n_splits=, random_state=global_random_seed, shuffle=True)
 
     # Compute the expected values using our reference Python implementation of
     # target encoding:
@@ -125,8 +125,8 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     # Check that we can obtain the same encodings by calling `fit_transform` on
     # the estimator with the same CV parameters:
     target_encoder = TargetEncoder(
-        smooth=smooth,
-        categories=categories,
+        smooth=,
+        categories=,
         cv=n_splits,
         random_state=global_random_seed,
     )
@@ -193,7 +193,7 @@ def test_encoding_multiclass(
 
     n_splits = 3
     cv = StratifiedKFold(
-        n_splits=n_splits, random_state=global_random_seed, shuffle=True
+        n_splits=, random_state=global_random_seed, shuffle=True
     )
 
     # Manually compute encodings for cv splits to validate `fit_transform`
@@ -216,7 +216,7 @@ def test_encoding_multiclass(
                 ]
 
     target_encoder = TargetEncoder(
-        smooth=smooth,
+        smooth=,
         cv=n_splits,
         random_state=global_random_seed,
     )
@@ -294,7 +294,7 @@ def test_custom_categories(X, categories, smooth):
     """Custom categories with unknown categories that are not in training data."""
     rng = np.random.RandomState(0)
     y = rng.uniform(low=-10, high=20, size=X.shape[0])
-    enc = TargetEncoder(categories=categories, smooth=smooth, random_state=0).fit(X, y)
+    enc = TargetEncoder(categories=, smooth=, random_state=0).fit(X, y)
 
     # The last element is unknown and encoded as the mean
     y_mean = y.mean()
@@ -449,7 +449,7 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
         dtype=np.float64,
     )
 
-    enc = TargetEncoder(smooth=smooth, cv=2, random_state=0)
+    enc = TargetEncoder(smooth=, cv=2, random_state=0)
     X_fit_transform = enc.fit_transform(X_train, y_train)
     assert_allclose(X_fit_transform, expected_X_fit_transform)
 
@@ -476,7 +476,7 @@ def test_constant_target_and_feature(y, y_mean, smooth):
     X = np.array([[1] * 20]).T
     n_samples = X.shape[0]
 
-    enc = TargetEncoder(cv=2, smooth=smooth, random_state=0)
+    enc = TargetEncoder(cv=2, smooth=, random_state=0)
     X_trans = enc.fit_transform(X, y)
     assert_allclose(X_trans, np.repeat([[y_mean]], n_samples, axis=0))
     assert enc.encodings_[0][0] == pytest.approx(y_mean)
@@ -518,9 +518,9 @@ def test_fit_transform_not_associated_with_y_if_ordinal_categorical_is_not(
     # about y_train has inadvertently leaked into the prior used to generate
     # `X_encoded_train_shuffled`:
     cv = ShuffleSplit(n_splits=50, random_state=global_random_seed)
-    assert cross_val_score(regressor, X_train, y_train, cv=cv).mean() < 0.1
+    assert cross_val_score(regressor, X_train, y_train, cv=).mean() < 0.1
     assert (
-        cross_val_score(regressor, X_encoded_train_shuffled, y_train, cv=cv).mean()
+        cross_val_score(regressor, X_encoded_train_shuffled, y_train, cv=).mean()
         < 0.1
     )
 
@@ -528,7 +528,7 @@ def test_fit_transform_not_associated_with_y_if_ordinal_categorical_is_not(
     # the per-fold y_train.mean() priors: shrinkage is no longer effective in this
     # case and would no longer be able to prevent downstream over-fitting.
     assert (
-        cross_val_score(regressor, X_encoded_train_no_shuffled, y_train, cv=cv).mean()
+        cross_val_score(regressor, X_encoded_train_no_shuffled, y_train, cv=).mean()
         > 0.5
     )
 
@@ -575,7 +575,7 @@ def test_invariance_of_encoding_under_label_permutation(smooth, global_random_se
     X_train_permuted = permutated_labels[X_train.astype(np.int32)]
     X_test_permuted = permutated_labels[X_test.astype(np.int32)]
 
-    target_encoder = TargetEncoder(smooth=smooth, random_state=global_random_seed)
+    target_encoder = TargetEncoder(smooth=, random_state=global_random_seed)
     X_train_encoded = target_encoder.fit_transform(X_train, y_train)
     X_test_encoded = target_encoder.transform(X_test)
 
@@ -660,7 +660,7 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
     # Now do the same with target encoding using the internal CV mechanism
     # implemented when using fit_transform.
     model_with_cv = make_pipeline(
-        TargetEncoder(smooth=smooth, random_state=rng), linear_regression
+        TargetEncoder(smooth=, random_state=rng), linear_regression
     ).fit(X_train, y_train)
 
     # This model should be able to fit the data well and also generalise to the
@@ -681,7 +681,7 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
 
     # Let's now disable the internal cross-validation by calling fit and then
     # transform separately on the training set:
-    target_encoder = TargetEncoder(smooth=smooth, random_state=rng).fit(
+    target_encoder = TargetEncoder(smooth=, random_state=rng).fit(
         X_train, y_train
     )
     X_enc_no_cv_train = target_encoder.transform(X_train)

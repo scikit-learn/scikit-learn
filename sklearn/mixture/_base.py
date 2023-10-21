@@ -113,7 +113,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             resp = np.zeros((n_samples, self.n_components))
             label = (
                 cluster.KMeans(
-                    n_clusters=self.n_components, n_init=1, random_state=random_state
+                    n_clusters=self.n_components, n_init=1, random_state=
                 )
                 .fit(X)
                 .labels_
@@ -130,11 +130,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             resp[indices, np.arange(self.n_components)] = 1
         elif self.init_params == "k-means++":
             resp = np.zeros((n_samples, self.n_components))
-            _, indices = kmeans_plusplus(
-                X,
-                self.n_components,
-                random_state=random_state,
-            )
+            _, indices = kmeans_plusplus(X, self.n_components, random_state=)
             resp[indices, np.arange(self.n_components)] = 1
 
         self._initialize(X, resp)

@@ -81,7 +81,7 @@ def test_invalid_n_bins(n_bins):
         n_bins
     )
     with pytest.raises(ValueError, match=err_msg):
-        _BinMapper(n_bins=n_bins).fit(DATA)
+        _BinMapper(n_bins=).fit(DATA)
 
 
 def test_bin_mapper_n_features_transform():
@@ -94,7 +94,7 @@ def test_bin_mapper_n_features_transform():
 @pytest.mark.parametrize("max_bins", [16, 128, 255])
 def test_map_to_bins(max_bins):
     bin_thresholds = [
-        _find_binning_thresholds(DATA[:, i], max_bins=max_bins) for i in range(2)
+        _find_binning_thresholds(DATA[:, i], max_bins=) for i in range(2)
     ]
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order="F")
     is_categorical = np.zeros(2, dtype=np.uint8)
@@ -122,7 +122,7 @@ def test_bin_mapper_random_data(max_bins):
 
     # max_bins is the number of bins for non-missing values
     n_bins = max_bins + 1
-    mapper = _BinMapper(n_bins=n_bins, random_state=42).fit(DATA)
+    mapper = _BinMapper(n_bins=, random_state=42).fit(DATA)
     binned = mapper.transform(DATA)
 
     assert binned.shape == (n_samples, n_features)
@@ -149,7 +149,7 @@ def test_bin_mapper_small_random_data(n_samples, max_bins):
 
     # max_bins is the number of bins for non-missing values
     n_bins = max_bins + 1
-    mapper = _BinMapper(n_bins=n_bins, random_state=42)
+    mapper = _BinMapper(n_bins=, random_state=42)
     binned = mapper.fit_transform(data)
 
     assert binned.shape == data.shape
@@ -169,7 +169,7 @@ def test_bin_mapper_identity_repeated_values(max_bins, n_distinct, multiplier):
     data = np.array(list(range(n_distinct)) * multiplier).reshape(-1, 1)
     # max_bins is the number of bins for non-missing values
     n_bins = max_bins + 1
-    binned = _BinMapper(n_bins=n_bins).fit_transform(data)
+    binned = _BinMapper(n_bins=).fit_transform(data)
     assert_array_equal(data, binned)
 
 
@@ -210,7 +210,7 @@ def test_bin_mapper_identity_small(max_bins, scale, offset):
     data = np.arange(max_bins).reshape(-1, 1) * scale + offset
     # max_bins is the number of bins for non-missing values
     n_bins = max_bins + 1
-    binned = _BinMapper(n_bins=n_bins).fit_transform(data)
+    binned = _BinMapper(n_bins=).fit_transform(data)
     assert_array_equal(binned, np.arange(max_bins).reshape(-1, 1))
 
 
@@ -245,7 +245,7 @@ def test_n_bins_non_missing(n_bins, diff):
     n_unique_values = n_bins + diff
     X = list(range(n_unique_values)) * 2
     X = np.array(X).reshape(-1, 1)
-    mapper = _BinMapper(n_bins=n_bins).fit(X)
+    mapper = _BinMapper(n_bins=).fit(X)
     assert np.all(mapper.n_bins_non_missing_ == min(n_bins - 1, n_unique_values))
 
 
@@ -306,7 +306,7 @@ def test_missing_values_support(n_bins, n_bins_non_missing, X_trans_expected):
 
     X = np.array(X)
 
-    mapper = _BinMapper(n_bins=n_bins)
+    mapper = _BinMapper(n_bins=)
     mapper.fit(X)
 
     assert_array_equal(mapper.n_bins_non_missing_, n_bins_non_missing)
@@ -349,9 +349,9 @@ def test_categorical_feature(n_bins):
     known_categories = [np.unique(X[~np.isnan(X)])]
 
     bin_mapper = _BinMapper(
-        n_bins=n_bins,
+        n_bins=,
         is_categorical=np.array([True]),
-        known_categories=known_categories,
+        known_categories=,
     ).fit(X)
     assert bin_mapper.n_bins_non_missing_ == [6]
     assert_array_equal(bin_mapper.bin_thresholds_[0], [0, 1, 4, 7, 10, 13])
@@ -402,9 +402,9 @@ def test_categorical_with_numerical_features(n_bins):
     known_categories = [None, np.unique(X2).astype(X_DTYPE)]
 
     bin_mapper = _BinMapper(
-        n_bins=n_bins,
+        n_bins=,
         is_categorical=np.array([False, True]),
-        known_categories=known_categories,
+        known_categories=,
     ).fit(X)
 
     assert_array_equal(bin_mapper.n_bins_non_missing_, [10, 5])
@@ -482,8 +482,6 @@ def test_categorical_parameters(is_categorical, known_categories, match):
 
     X = np.array([[1, 2, 3]], dtype=X_DTYPE)
 
-    bin_mapper = _BinMapper(
-        is_categorical=is_categorical, known_categories=known_categories
-    )
-    with pytest.raises(ValueError, match=match):
+    bin_mapper = _BinMapper(is_categorical=, known_categories=)
+    with pytest.raises(ValueError, match=):
         bin_mapper.fit(X)

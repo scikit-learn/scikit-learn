@@ -286,7 +286,7 @@ def test_dump(csr_container):
                     X_input = X.astype(dtype)
 
                     dump_svmlight_file(
-                        X_input, y, f, comment="test", zero_based=zero_based
+                        X_input, y, f, comment="test", zero_based=
                     )
                     f.seek(0)
 
@@ -300,7 +300,7 @@ def test_dump(csr_container):
 
                     assert ["one", "zero"][zero_based] + "-based" in comment
 
-                    X2, y2 = load_svmlight_file(f, dtype=dtype, zero_based=zero_based)
+                    X2, y2 = load_svmlight_file(f, dtype=, zero_based=)
                     assert X2.dtype == dtype
                     assert_array_equal(X2.sorted_indices().indices, X2.indices)
 
@@ -422,7 +422,7 @@ def test_dump_query_id():
     X = X.toarray()
     query_id = np.arange(X.shape[0]) // 2
     f = BytesIO()
-    dump_svmlight_file(X, y, f, query_id=query_id, zero_based=True)
+    dump_svmlight_file(X, y, f, query_id=, zero_based=True)
 
     f.seek(0)
     X1, y1, query_id1 = load_svmlight_file(f, query_id=True, zero_based=True)
@@ -476,7 +476,7 @@ def test_load_zeros(csr_container):
 
     for zero_based in ["auto", True, False]:
         f.seek(0)
-        X, y = load_svmlight_file(f, n_features=4, zero_based=zero_based)
+        X, y = load_svmlight_file(f, n_features=4, zero_based=)
         assert_array_almost_equal(y, true_y)
         assert_array_almost_equal(X.toarray(), true_X.toarray())
 
@@ -508,12 +508,12 @@ def test_load_with_offsets(sparsity, n_samples, n_features, csr_container):
 
     # load the original sparse matrix into 3 independent CSR matrices
     X_0, y_0 = load_svmlight_file(
-        f, n_features=n_features, offset=mark_0, length=length_0
+        f, n_features=, offset=mark_0, length=length_0
     )
     X_1, y_1 = load_svmlight_file(
-        f, n_features=n_features, offset=mark_1, length=length_1
+        f, n_features=, offset=mark_1, length=length_1
     )
-    X_2, y_2 = load_svmlight_file(f, n_features=n_features, offset=mark_2)
+    X_2, y_2 = load_svmlight_file(f, n_features=, offset=mark_2)
 
     y_concat = np.concatenate([y_0, y_1, y_2])
     X_concat = sp.vstack([X_0, X_1, X_2])
@@ -541,7 +541,7 @@ def test_load_offset_exhaustive_splits(csr_container):
     query_id = np.arange(n_samples) // 2
 
     f = BytesIO()
-    dump_svmlight_file(X, y, f, query_id=query_id)
+    dump_svmlight_file(X, y, f, query_id=)
     f.seek(0)
 
     size = len(f.getvalue())
@@ -551,10 +551,10 @@ def test_load_offset_exhaustive_splits(csr_container):
     for mark in range(size):
         f.seek(0)
         X_0, y_0, q_0 = load_svmlight_file(
-            f, n_features=n_features, query_id=True, offset=0, length=mark
+            f, n_features=, query_id=True, offset=0, length=mark
         )
         X_1, y_1, q_1 = load_svmlight_file(
-            f, n_features=n_features, query_id=True, offset=mark, length=-1
+            f, n_features=, query_id=True, offset=mark, length=-1
         )
         q_concat = np.concatenate([q_0, q_1])
         y_concat = np.concatenate([y_0, y_1])

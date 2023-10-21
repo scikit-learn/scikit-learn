@@ -114,7 +114,7 @@ average_bike_rentals = bikes.frame.groupby(
     ["year", "season", "weekday", "hour"], observed=True
 ).mean(numeric_only=True)["count"]
 for ax, (idx, df) in zip(axs, average_bike_rentals.groupby("year")):
-    df.groupby("season", observed=True).plot(ax=ax, legend=True)
+    df.groupby("season", observed=True).plot(ax=, legend=True)
 
     # decorate the plot
     ax.set_xticks(
@@ -268,7 +268,7 @@ display = PartialDependenceDisplay.from_estimator(
     mlp_model,
     X_train,
     **features_info,
-    ax=ax,
+    ax=,
     **common_params,
 )
 print(f"done in {time() - tic:.3f}s")
@@ -294,7 +294,7 @@ tic = time()
 hgbdt_model = make_pipeline(
     hgbdt_preprocessor,
     HistGradientBoostingRegressor(
-        categorical_features=categorical_features,
+        categorical_features=,
         random_state=0,
         max_iter=50,
     ),
@@ -322,7 +322,7 @@ display = PartialDependenceDisplay.from_estimator(
     hgbdt_model,
     X_train,
     **features_info,
-    ax=ax,
+    ax=,
     **common_params,
 )
 print(f"done in {time() - tic:.3f}s")
@@ -378,7 +378,7 @@ display = PartialDependenceDisplay.from_estimator(
     hgbdt_model,
     X_train,
     **features_info,
-    ax=ax,
+    ax=,
     **common_params,
 )
 print(f"done in {time() - tic:.3f}s")
@@ -413,7 +413,7 @@ display = PartialDependenceDisplay.from_estimator(
     hgbdt_model_without_interactions,
     X_train,
     **features_info,
-    ax=ax,
+    ax=,
     **common_params,
 )
 _ = display.figure_.suptitle("ICE and PDP representations", fontsize=16)
@@ -438,7 +438,7 @@ display = PartialDependenceDisplay.from_estimator(
     hgbdt_model,
     X_train,
     **features_info,
-    ax=ax,
+    ax=,
     **common_params,
 )
 print(f"done in {time() - tic:.3f}s")
@@ -474,7 +474,7 @@ display = PartialDependenceDisplay.from_estimator(
     hgbdt_model_without_interactions,
     X_train,
     **features_info,
-    ax=ax,
+    ax=,
     **common_params,
 )
 print(f"done in {time() - tic:.3f}s")
@@ -516,7 +516,7 @@ display = PartialDependenceDisplay.from_estimator(
     hgbdt_model,
     X_train,
     **features_info,
-    ax=ax,
+    ax=,
     **common_params,
 )
 
@@ -541,7 +541,7 @@ fig = plt.figure(figsize=(5.5, 5))
 
 features = ("temp", "humidity")
 pdp = partial_dependence(
-    hgbdt_model, X_train, features=features, kind="average", grid_resolution=10
+    hgbdt_model, X_train, features=, kind="average", grid_resolution=10
 )
 XX, YY = np.meshgrid(pdp["grid_values"][0], pdp["grid_values"][1])
 Z = pdp.average[0].T

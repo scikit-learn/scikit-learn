@@ -32,8 +32,8 @@ X, y = make_regression(n_samples=200, n_features=5000, random_state=0)
 X_sp = sparse.coo_matrix(X)
 
 alpha = 1
-sparse_lasso = Lasso(alpha=alpha, fit_intercept=False, max_iter=1000)
-dense_lasso = Lasso(alpha=alpha, fit_intercept=False, max_iter=1000)
+sparse_lasso = Lasso(alpha=, fit_intercept=False, max_iter=1000)
+dense_lasso = Lasso(alpha=, fit_intercept=False, max_iter=1000)
 
 t0 = time()
 sparse_lasso.fit(X_sp, y)
@@ -68,8 +68,8 @@ Xs_sp = Xs_sp.tocsc()
 print(f"Matrix density : {(Xs_sp.nnz / float(X.size) * 100):.3f}%")
 
 alpha = 0.1
-sparse_lasso = Lasso(alpha=alpha, fit_intercept=False, max_iter=10000)
-dense_lasso = Lasso(alpha=alpha, fit_intercept=False, max_iter=10000)
+sparse_lasso = Lasso(alpha=, fit_intercept=False, max_iter=10000)
+dense_lasso = Lasso(alpha=, fit_intercept=False, max_iter=10000)
 
 t0 = time()
 sparse_lasso.fit(Xs_sp, y)

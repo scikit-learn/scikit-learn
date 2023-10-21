@@ -417,12 +417,12 @@ def orthogonal_mp(
         return orthogonal_mp_gram(
             G,
             Xy,
-            n_nonzero_coefs=n_nonzero_coefs,
-            tol=tol,
-            norms_squared=norms_squared,
+            n_nonzero_coefs=,
+            tol=,
+            norms_squared=,
             copy_Gram=copy_X,
             copy_Xy=False,
-            return_path=return_path,
+            return_path=,
         )
 
     if return_path:
@@ -433,7 +433,7 @@ def orthogonal_mp(
 
     for k in range(y.shape[1]):
         out = _cholesky_omp(
-            X, y[:, k], n_nonzero_coefs, tol, copy_X=copy_X, return_path=return_path
+            X, y[:, k], n_nonzero_coefs, tol, copy_X=, return_path=
         )
         if return_path:
             _, idx, coefs, n_iter = out
@@ -598,9 +598,9 @@ def orthogonal_mp_gram(
             n_nonzero_coefs,
             norms_squared[k] if tol is not None else None,
             tol,
-            copy_Gram=copy_Gram,
+            copy_Gram=,
             copy_Xy=False,
-            return_path=return_path,
+            return_path=,
         )
         if return_path:
             _, idx, coefs, n_iter = out
@@ -800,7 +800,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
 
             coef_, self.n_iter_ = orthogonal_mp_gram(
                 Gram,
-                Xy=Xy,
+                Xy=,
                 n_nonzero_coefs=self.n_nonzero_coefs_,
                 tol=self.tol,
                 norms_squared=norms_sq,

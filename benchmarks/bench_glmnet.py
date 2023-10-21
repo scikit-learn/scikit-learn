@@ -36,7 +36,7 @@ def bench(factory, X, Y, X_test, Y_test, ref_coef):
 
     # start time
     tstart = time()
-    clf = factory(alpha=alpha).fit(X, Y)
+    clf = factory(alpha=).fit(X, Y)
     delta = time() - tstart
     # stop time
 
@@ -67,9 +67,9 @@ if __name__ == "__main__":
 
         X, Y, coef_ = make_regression(
             n_samples=(i * step) + n_test_samples,
-            n_features=n_features,
+            n_features=,
             noise=0.1,
-            n_informative=n_informative,
+            n_informative=,
             coef=True,
         )
 
@@ -111,9 +111,9 @@ if __name__ == "__main__":
 
         X, Y, coef_ = make_regression(
             n_samples=(i * step) + n_test_samples,
-            n_features=n_features,
+            n_features=,
             noise=0.1,
-            n_informative=n_informative,
+            n_informative=,
             coef=True,
         )
 

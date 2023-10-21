@@ -20,12 +20,12 @@ class TSNEBenchmark(Estimator, Benchmark):
 
         n_samples = 500 if method == "exact" else None
 
-        return _digits_dataset(n_samples=n_samples)
+        return _digits_dataset(n_samples=)
 
     def make_estimator(self, params):
         (method,) = params
 
-        estimator = TSNE(random_state=0, method=method)
+        estimator = TSNE(random_state=0, method=)
 
         return estimator
 

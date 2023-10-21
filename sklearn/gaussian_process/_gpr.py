@@ -253,8 +253,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             y,
             multi_output=True,
             y_numeric=True,
-            ensure_2d=ensure_2d,
-            dtype=dtype,
+            ensure_2d=,
+            dtype=,
         )
 
         n_targets_seen = y.shape[1] if y.ndim > 1 else 1
@@ -405,7 +405,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         else:
             dtype, ensure_2d = None, False
 
-        X = self._validate_data(X, ensure_2d=ensure_2d, dtype=dtype, reset=False)
+        X = self._validate_data(X, ensure_2d=, dtype=, reset=False)
 
         if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
             if self.kernel is None:
@@ -658,12 +658,12 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 initial_theta,
                 method="L-BFGS-B",
                 jac=True,
-                bounds=bounds,
+                bounds=,
             )
             _check_optimize_result("lbfgs", opt_res)
             theta_opt, func_min = opt_res.x, opt_res.fun
         elif callable(self.optimizer):
-            theta_opt, func_min = self.optimizer(obj_func, initial_theta, bounds=bounds)
+            theta_opt, func_min = self.optimizer(obj_func, initial_theta, bounds=)
         else:
             raise ValueError(f"Unknown optimizer {self.optimizer}.")
 

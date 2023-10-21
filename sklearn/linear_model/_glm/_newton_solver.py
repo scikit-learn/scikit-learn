@@ -147,9 +147,9 @@ class NewtonSolver(ABC):
         _, _, self.raw_prediction = self.linear_loss.weight_intercept_raw(self.coef, X)
         self.loss_value = self.linear_loss.loss(
             coef=self.coef,
-            X=X,
-            y=y,
-            sample_weight=sample_weight,
+            X=,
+            y=,
+            sample_weight=,
             l2_reg_strength=self.l2_reg_strength,
             n_threads=self.n_threads,
             raw_prediction=self.raw_prediction,
@@ -237,9 +237,9 @@ class NewtonSolver(ABC):
             raw = self.raw_prediction + t * raw_prediction_newton
             self.loss_value, self.gradient = self.linear_loss.loss_gradient(
                 coef=self.coef,
-                X=X,
-                y=y,
-                sample_weight=sample_weight,
+                X=,
+                y=,
+                sample_weight=,
                 l2_reg_strength=self.l2_reg_strength,
                 n_threads=self.n_threads,
                 raw_prediction=raw,
@@ -333,9 +333,9 @@ class NewtonSolver(ABC):
         if self.verbose:
             loss_value = self.linear_loss.loss(
                 coef=self.coef,
-                X=X,
-                y=y,
-                sample_weight=sample_weight,
+                X=,
+                y=,
+                sample_weight=,
                 l2_reg_strength=self.l2_reg_strength,
                 n_threads=self.n_threads,
             )
@@ -371,7 +371,7 @@ class NewtonSolver(ABC):
         # setup usually:
         #   - initializes self.coef if needed
         #   - initializes and calculates self.raw_predictions, self.loss_value
-        self.setup(X=X, y=y, sample_weight=sample_weight)
+        self.setup(X=, y=, sample_weight=)
 
         self.iteration = 1
         self.converged = False
@@ -384,7 +384,7 @@ class NewtonSolver(ABC):
             self.use_fallback_lbfgs_solve = False  # Fallback solver.
 
             # 1. Update Hessian and gradient
-            self.update_gradient_hessian(X=X, y=y, sample_weight=sample_weight)
+            self.update_gradient_hessian(X=, y=, sample_weight=)
 
             # TODO:
             # if iteration == 1:
@@ -394,7 +394,7 @@ class NewtonSolver(ABC):
             # 2. Inner solver
             #    Calculate Newton step/direction
             #    This usually sets self.coef_newton and self.gradient_times_newton.
-            self.inner_solve(X=X, y=y, sample_weight=sample_weight)
+            self.inner_solve(X=, y=, sample_weight=)
             if self.use_fallback_lbfgs_solve:
                 break
 
@@ -402,13 +402,13 @@ class NewtonSolver(ABC):
             #    This usually sets self.coef_old, self.coef, self.loss_value_old
             #    self.loss_value, self.gradient_old, self.gradient,
             #    self.raw_prediction.
-            self.line_search(X=X, y=y, sample_weight=sample_weight)
+            self.line_search(X=, y=, sample_weight=)
             if self.use_fallback_lbfgs_solve:
                 break
 
             # 4. Check convergence
             #    Sets self.converged.
-            self.check_convergence(X=X, y=y, sample_weight=sample_weight)
+            self.check_convergence(X=, y=, sample_weight=)
 
             # 5. Next iteration
             self.iteration += 1
@@ -418,7 +418,7 @@ class NewtonSolver(ABC):
                 # Note: The fallback solver circumvents check_convergence and relies on
                 # the convergence checks of lbfgs instead. Enough warnings have been
                 # raised on the way.
-                self.fallback_lbfgs_solve(X=X, y=y, sample_weight=sample_weight)
+                self.fallback_lbfgs_solve(X=, y=, sample_weight=)
             else:
                 warnings.warn(
                     (
@@ -429,7 +429,7 @@ class NewtonSolver(ABC):
                 )
 
         self.iteration -= 1
-        self.finalize(X=X, y=y, sample_weight=sample_weight)
+        self.finalize(X=, y=, sample_weight=)
         return self.coef
 
 
@@ -441,7 +441,7 @@ class NewtonCholeskySolver(NewtonSolver):
     """
 
     def setup(self, X, y, sample_weight):
-        super().setup(X=X, y=y, sample_weight=sample_weight)
+        super().setup(X=, y=, sample_weight=)
         n_dof = X.shape[1]
         if self.linear_loss.fit_intercept:
             n_dof += 1
@@ -451,9 +451,9 @@ class NewtonCholeskySolver(NewtonSolver):
     def update_gradient_hessian(self, X, y, sample_weight):
         _, _, self.hessian_warning = self.linear_loss.gradient_hessian(
             coef=self.coef,
-            X=X,
-            y=y,
-            sample_weight=sample_weight,
+            X=,
+            y=,
+            sample_weight=,
             l2_reg_strength=self.l2_reg_strength,
             n_threads=self.n_threads,
             gradient_out=self.gradient,

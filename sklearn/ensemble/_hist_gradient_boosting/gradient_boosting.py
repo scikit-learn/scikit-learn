@@ -424,7 +424,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_threads = _openmp_effective_n_threads()
 
         if isinstance(self.loss, str):
-            self._loss = self._get_loss(sample_weight=sample_weight)
+            self._loss = self._get_loss(sample_weight=)
         elif isinstance(self.loss, BaseLoss):
             self._loss = self.loss
 
@@ -449,7 +449,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     X,
                     y,
                     test_size=self.validation_fraction,
-                    stratify=stratify,
+                    stratify=,
                     random_state=self._random_seed,
                 )
                 sample_weight_train = sample_weight_val = None
@@ -468,7 +468,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     y,
                     sample_weight,
                     test_size=self.validation_fraction,
-                    stratify=stratify,
+                    stratify=,
                     random_state=self._random_seed,
                 )
         else:
@@ -485,11 +485,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # convention is that n_bins == max_bins + 1
         n_bins = self.max_bins + 1  # + 1 for missing values
         self._bin_mapper = _BinMapper(
-            n_bins=n_bins,
+            n_bins=,
             is_categorical=self.is_categorical_,
-            known_categories=known_categories,
+            known_categories=,
             random_state=self._random_seed,
-            n_threads=n_threads,
+            n_threads=,
         )
         X_binned_train = self._bin_data(X_train, is_training_data=True)
         if X_val is not None:
@@ -564,13 +564,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         raw_predictions_val += self._baseline_prediction
 
                     self._check_early_stopping_loss(
-                        raw_predictions=raw_predictions,
-                        y_train=y_train,
-                        sample_weight_train=sample_weight_train,
-                        raw_predictions_val=raw_predictions_val,
-                        y_val=y_val,
-                        sample_weight_val=sample_weight_val,
-                        n_threads=n_threads,
+                        raw_predictions=,
+                        y_train=,
+                        sample_weight_train=,
+                        raw_predictions_val=,
+                        y_val=,
+                        sample_weight_val=,
+                        n_threads=,
                     )
                 else:
                     self._scorer = check_scoring(self, self.scoring)
@@ -615,10 +615,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self.validation_score_ = self.validation_score_.tolist()
 
             # Compute raw predictions
-            raw_predictions = self._raw_predict(X_binned_train, n_threads=n_threads)
+            raw_predictions = self._raw_predict(X_binned_train, n_threads=)
             if self.do_early_stopping_ and self._use_validation_data:
                 raw_predictions_val = self._raw_predict(
-                    X_binned_val, n_threads=n_threads
+                    X_binned_val, n_threads=
                 )
             else:
                 raw_predictions_val = None
@@ -641,7 +641,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # initialize gradients and hessians (empty arrays).
         # shape = (n_samples, n_trees_per_iteration).
         gradient, hessian = self._loss.init_gradient_and_hessian(
-            n_samples=n_samples, dtype=G_H_DTYPE, order="F"
+            n_samples=, dtype=G_H_DTYPE, order="F"
         )
 
         for iteration in range(begin_at_stage, self.max_iter):
@@ -660,7 +660,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     raw_prediction=raw_predictions,
                     sample_weight=sample_weight_train,
                     gradient_out=gradient,
-                    n_threads=n_threads,
+                    n_threads=,
                 )
             else:
                 self._loss.gradient_hessian(
@@ -669,7 +669,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     sample_weight=sample_weight_train,
                     gradient_out=gradient,
                     hessian_out=hessian,
-                    n_threads=n_threads,
+                    n_threads=,
                 )
 
             # Append a list since there may be more than 1 predictor per iter
@@ -690,18 +690,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     X_binned=X_binned_train,
                     gradients=g_view[:, k],
                     hessians=h_view[:, k],
-                    n_bins=n_bins,
+                    n_bins=,
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
-                    has_missing_values=has_missing_values,
+                    has_missing_values=,
                     is_categorical=self.is_categorical_,
-                    monotonic_cst=monotonic_cst,
-                    interaction_cst=interaction_cst,
+                    monotonic_cst=,
+                    interaction_cst=,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,
                     l2_regularization=self.l2_regularization,
                     shrinkage=self.learning_rate,
-                    n_threads=n_threads,
+                    n_threads=,
                 )
                 grower.grow()
 
@@ -712,7 +712,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if not self._loss.differentiable:
                     _update_leaves_values(
                         loss=self._loss,
-                        grower=grower,
+                        grower=,
                         y_true=y_train,
                         raw_prediction=raw_predictions[:, k],
                         sample_weight=sample_weight_train,
@@ -743,13 +743,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                             )
 
                     should_early_stop = self._check_early_stopping_loss(
-                        raw_predictions=raw_predictions,
-                        y_train=y_train,
-                        sample_weight_train=sample_weight_train,
-                        raw_predictions_val=raw_predictions_val,
-                        y_val=y_val,
-                        sample_weight_val=sample_weight_val,
-                        n_threads=n_threads,
+                        raw_predictions=,
+                        y_train=,
+                        sample_weight_train=,
+                        raw_predictions_val=,
+                        y_val=,
+                        sample_weight_val=,
+                        n_threads=,
                     )
 
                 else:
@@ -834,7 +834,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 n_samples=subsample_size,
                 replace=False,
                 random_state=seed,
-                stratify=stratify,
+                stratify=,
             )
             X_binned_small_train = X_binned_train[indices]
             y_small_train = y_train[indices]
@@ -911,7 +911,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 y_true=y_train,
                 raw_prediction=raw_predictions,
                 sample_weight=sample_weight_train,
-                n_threads=n_threads,
+                n_threads=,
             )
         )
 
@@ -921,7 +921,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     y_true=y_val,
                     raw_prediction=raw_predictions_val,
                     sample_weight=sample_weight_val,
-                    n_threads=n_threads,
+                    n_threads=,
                 )
             )
             return self._should_stop(self.validation_score_)
@@ -1078,14 +1078,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     predict = partial(
                         predictor.predict_binned,
                         missing_values_bin_idx=self._bin_mapper.missing_values_bin_idx_,
-                        n_threads=n_threads,
+                        n_threads=,
                     )
                 else:
                     predict = partial(
                         predictor.predict,
-                        known_cat_bitsets=known_cat_bitsets,
-                        f_idx_map=f_idx_map,
-                        n_threads=n_threads,
+                        known_cat_bitsets=,
+                        f_idx_map=,
+                        n_threads=,
                     )
                 raw_predictions[:, k] += predict(X)
 
@@ -1132,7 +1132,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 self._predictors[iteration : iteration + 1],
                 raw_predictions,
                 is_binned=False,
-                n_threads=n_threads,
+                n_threads=,
             )
             yield raw_predictions.copy()
 
@@ -1479,25 +1479,25 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         random_state=None,
     ):
         super(HistGradientBoostingRegressor, self).__init__(
-            loss=loss,
-            learning_rate=learning_rate,
-            max_iter=max_iter,
-            max_leaf_nodes=max_leaf_nodes,
-            max_depth=max_depth,
-            min_samples_leaf=min_samples_leaf,
-            l2_regularization=l2_regularization,
-            max_bins=max_bins,
-            monotonic_cst=monotonic_cst,
-            interaction_cst=interaction_cst,
-            categorical_features=categorical_features,
-            early_stopping=early_stopping,
-            warm_start=warm_start,
-            scoring=scoring,
-            validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change,
-            tol=tol,
-            verbose=verbose,
-            random_state=random_state,
+            loss=,
+            learning_rate=,
+            max_iter=,
+            max_leaf_nodes=,
+            max_depth=,
+            min_samples_leaf=,
+            l2_regularization=,
+            max_bins=,
+            monotonic_cst=,
+            interaction_cst=,
+            categorical_features=,
+            early_stopping=,
+            warm_start=,
+            scoring=,
+            validation_fraction=,
+            n_iter_no_change=,
+            tol=,
+            verbose=,
+            random_state=,
         )
         self.quantile = quantile
 
@@ -1558,11 +1558,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     def _get_loss(self, sample_weight):
         if self.loss == "quantile":
-            return _LOSSES[self.loss](
-                sample_weight=sample_weight, quantile=self.quantile
-            )
+            return _LOSSES[self.loss](sample_weight=, quantile=self.quantile)
         else:
-            return _LOSSES[self.loss](sample_weight=sample_weight)
+            return _LOSSES[self.loss](sample_weight=)
 
 
 class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
@@ -1840,25 +1838,25 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         class_weight=None,
     ):
         super(HistGradientBoostingClassifier, self).__init__(
-            loss=loss,
-            learning_rate=learning_rate,
-            max_iter=max_iter,
-            max_leaf_nodes=max_leaf_nodes,
-            max_depth=max_depth,
-            min_samples_leaf=min_samples_leaf,
-            l2_regularization=l2_regularization,
-            max_bins=max_bins,
-            categorical_features=categorical_features,
-            monotonic_cst=monotonic_cst,
-            interaction_cst=interaction_cst,
-            warm_start=warm_start,
-            early_stopping=early_stopping,
-            scoring=scoring,
-            validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change,
-            tol=tol,
-            verbose=verbose,
-            random_state=random_state,
+            loss=,
+            learning_rate=,
+            max_iter=,
+            max_leaf_nodes=,
+            max_depth=,
+            min_samples_leaf=,
+            l2_regularization=,
+            max_bins=,
+            categorical_features=,
+            monotonic_cst=,
+            interaction_cst=,
+            warm_start=,
+            early_stopping=,
+            scoring=,
+            validation_fraction=,
+            n_iter_no_change=,
+            tol=,
+            verbose=,
+            random_state=,
         )
         self.class_weight = class_weight
 
@@ -2012,8 +2010,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     def _get_loss(self, sample_weight):
         # At this point self.loss == "log_loss"
         if self.n_trees_per_iteration_ == 1:
-            return HalfBinomialLoss(sample_weight=sample_weight)
+            return HalfBinomialLoss(sample_weight=)
         else:
             return HalfMultinomialLoss(
-                sample_weight=sample_weight, n_classes=self.n_trees_per_iteration_
+                sample_weight=, n_classes=self.n_trees_per_iteration_
             )

@@ -49,10 +49,10 @@ y = iris.target
 # data since we want to plot the support vectors
 C = 1.0  # SVM regularization parameter
 models = (
-    svm.SVC(kernel="linear", C=C),
-    svm.LinearSVC(C=C, max_iter=10000, dual="auto"),
-    svm.SVC(kernel="rbf", gamma=0.7, C=C),
-    svm.SVC(kernel="poly", degree=3, gamma="auto", C=C),
+    svm.SVC(kernel="linear", C=),
+    svm.LinearSVC(C=, max_iter=10000, dual="auto"),
+    svm.SVC(kernel="rbf", gamma=0.7, C=),
+    svm.SVC(kernel="poly", degree=3, gamma="auto", C=),
 )
 models = (clf.fit(X, y) for clf in models)
 
@@ -77,7 +77,7 @@ for clf, title, ax in zip(models, titles, sub.flatten()):
         response_method="predict",
         cmap=plt.cm.coolwarm,
         alpha=0.8,
-        ax=ax,
+        ax=,
         xlabel=iris.feature_names[0],
         ylabel=iris.feature_names[1],
     )

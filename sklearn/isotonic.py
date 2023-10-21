@@ -274,9 +274,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             # single y, constant prediction
             self.f_ = lambda x: y.repeat(x.shape)
         else:
-            self.f_ = interpolate.interp1d(
-                X, y, kind="linear", bounds_error=bounds_error
-            )
+            self.f_ = interpolate.interp1d(X, y, kind="linear", bounds_error=)
 
     def _build_y(self, X, y, sample_weight, trim_duplicates=True):
         """Build the y_ IsotonicRegression."""
@@ -392,7 +390,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         else:
             dtype = np.float64
 
-        T = check_array(T, dtype=dtype, ensure_2d=False)
+        T = check_array(T, dtype=, ensure_2d=False)
 
         self._check_input_data_shape(T)
         T = T.reshape(-1)  # use 1d view

@@ -38,7 +38,7 @@ def test_factor_analysis():
 
     fas = []
     for method in ["randomized", "lapack"]:
-        fa = FactorAnalysis(n_components=n_components, svd_method=method)
+        fa = FactorAnalysis(n_components=, svd_method=method)
         fa.fit(X)
         fas.append(fa)
 
@@ -59,7 +59,7 @@ def test_factor_analysis():
         diff = np.sum(np.abs(scov - mcov)) / W.size
         assert diff < 0.1, "Mean absolute difference is %f" % diff
         fa = FactorAnalysis(
-            n_components=n_components, noise_variance_init=np.ones(n_features)
+            n_components=, noise_variance_init=np.ones(n_features)
         )
         with pytest.raises(ValueError):
             fa.fit(X[:, :2])
@@ -90,7 +90,7 @@ def test_factor_analysis():
 
     results, projections = {}, {}
     for method in (None, "varimax", "quartimax"):
-        fa_var = FactorAnalysis(n_components=n_components, rotation=method)
+        fa_var = FactorAnalysis(n_components=, rotation=method)
         results[method] = fa_var.fit_transform(X)
         projections[method] = fa_var.get_covariance()
     for rot1, rot2 in combinations([None, "varimax", "quartimax"], 2):

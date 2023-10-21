@@ -109,7 +109,7 @@ else:
 sklearn_est = Estimator(
     learning_rate=lr,
     max_iter=n_trees,
-    max_bins=max_bins,
+    max_bins=,
     max_leaf_nodes=n_leaf_nodes,
     early_stopping=False,
     random_state=0,
@@ -124,7 +124,7 @@ else:
     # regression
     if loss == "default":
         loss = "squared_error"
-sklearn_est.set_params(loss=loss)
+sklearn_est.set_params(loss=)
 
 
 if args.print_params:
@@ -297,29 +297,29 @@ if args.plot or args.plot_filename:
     fig, axs = plt.subplots(2, figsize=(12, 12))
 
     label = f"sklearn {sklearn.__version__}"
-    axs[0].plot(n_threads_list, sklearn_fit_durations, label=label)
-    axs[1].plot(n_threads_list, sklearn_score_durations, label=label)
+    axs[0].plot(n_threads_list, sklearn_fit_durations, label=)
+    axs[1].plot(n_threads_list, sklearn_score_durations, label=)
 
     if args.lightgbm:
         import lightgbm
 
         label = f"LightGBM {lightgbm.__version__}"
-        axs[0].plot(n_threads_list, lightgbm_fit_durations, label=label)
-        axs[1].plot(n_threads_list, lightgbm_score_durations, label=label)
+        axs[0].plot(n_threads_list, lightgbm_fit_durations, label=)
+        axs[1].plot(n_threads_list, lightgbm_score_durations, label=)
 
     if args.xgboost:
         import xgboost
 
         label = f"XGBoost {xgboost.__version__}"
-        axs[0].plot(n_threads_list, xgb_fit_durations, label=label)
-        axs[1].plot(n_threads_list, xgb_score_durations, label=label)
+        axs[0].plot(n_threads_list, xgb_fit_durations, label=)
+        axs[1].plot(n_threads_list, xgb_score_durations, label=)
 
     if args.catboost:
         import catboost
 
         label = f"CatBoost {catboost.__version__}"
-        axs[0].plot(n_threads_list, cat_fit_durations, label=label)
-        axs[1].plot(n_threads_list, cat_score_durations, label=label)
+        axs[0].plot(n_threads_list, cat_fit_durations, label=)
+        axs[1].plot(n_threads_list, cat_score_durations, label=)
 
     for ax in axs:
         ax.set_xscale("log")

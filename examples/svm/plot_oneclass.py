@@ -52,7 +52,7 @@ DecisionBoundaryDisplay.from_estimator(
     X,
     response_method="decision_function",
     plot_method="contourf",
-    ax=ax,
+    ax=,
     cmap="PuBu",
 )
 DecisionBoundaryDisplay.from_estimator(
@@ -60,7 +60,7 @@ DecisionBoundaryDisplay.from_estimator(
     X,
     response_method="decision_function",
     plot_method="contourf",
-    ax=ax,
+    ax=,
     levels=[0, 10000],
     colors="palevioletred",
 )
@@ -69,16 +69,16 @@ DecisionBoundaryDisplay.from_estimator(
     X,
     response_method="decision_function",
     plot_method="contour",
-    ax=ax,
+    ax=,
     levels=[0],
     colors="darkred",
     linewidths=2,
 )
 
 s = 40
-b1 = ax.scatter(X_train[:, 0], X_train[:, 1], c="white", s=s, edgecolors="k")
-b2 = ax.scatter(X_test[:, 0], X_test[:, 1], c="blueviolet", s=s, edgecolors="k")
-c = ax.scatter(X_outliers[:, 0], X_outliers[:, 1], c="gold", s=s, edgecolors="k")
+b1 = ax.scatter(X_train[:, 0], X_train[:, 1], c="white", s=, edgecolors="k")
+b2 = ax.scatter(X_test[:, 0], X_test[:, 1], c="blueviolet", s=, edgecolors="k")
+c = ax.scatter(X_outliers[:, 0], X_outliers[:, 1], c="gold", s=, edgecolors="k")
 plt.legend(
     [mlines.Line2D([], [], color="darkred"), b1, b2, c],
     [

@@ -61,26 +61,26 @@ size = (N_SAMPLES, 1)
 
 
 # lognormal distribution
-X_lognormal = rng.lognormal(size=size)
+X_lognormal = rng.lognormal(size=)
 
 # chi-squared distribution
 df = 3
-X_chisq = rng.chisquare(df=df, size=size)
+X_chisq = rng.chisquare(df=, size=)
 
 # weibull distribution
 a = 50
-X_weibull = rng.weibull(a=a, size=size)
+X_weibull = rng.weibull(a=, size=)
 
 # gaussian distribution
 loc = 100
-X_gaussian = rng.normal(loc=loc, size=size)
+X_gaussian = rng.normal(loc=, size=)
 
 # uniform distribution
-X_uniform = rng.uniform(low=0, high=1, size=size)
+X_uniform = rng.uniform(low=0, high=1, size=)
 
 # bimodal distribution
 loc_a, loc_b = 100, 105
-X_a, X_b = rng.normal(loc=loc_a, size=size), rng.normal(loc=loc_b, size=size)
+X_a, X_b = rng.normal(loc=loc_a, size=), rng.normal(loc=loc_b, size=)
 X_bimodal = np.concatenate([X_a, X_b], axis=0)
 
 
@@ -122,7 +122,7 @@ for distribution, color, axes in zip(distributions, colors, axes_list):
 
     ax_original, ax_bc, ax_yj, ax_qt = axes
 
-    ax_original.hist(X_train, color=color, bins=BINS)
+    ax_original.hist(X_train, color=, bins=BINS)
     ax_original.set_title(name, fontsize=FONT_SIZE)
     ax_original.tick_params(axis="both", which="major", labelsize=FONT_SIZE)
 
@@ -132,7 +132,7 @@ for distribution, color, axes in zip(distributions, colors, axes_list):
         ("Box-Cox", "Yeo-Johnson", "Quantile transform"),
         (lmbda_bc, lmbda_yj, None),
     ):
-        ax.hist(X_trans, color=color, bins=BINS)
+        ax.hist(X_trans, color=, bins=BINS)
         title = "After {}".format(meth_name)
         if lmbda is not None:
             title += "\n$\\lambda$ = {}".format(lmbda)

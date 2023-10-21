@@ -106,7 +106,7 @@ def test_imputers_pandas_na_integer_array_support(imputer, add_indicator):
     # Test pandas IntegerArray with pd.NA
     pd = pytest.importorskip("pandas")
     marker = np.nan
-    imputer = imputer.set_params(add_indicator=add_indicator, missing_values=marker)
+    imputer = imputer.set_params(add_indicator=, missing_values=marker)
 
     X = np.array(
         [
@@ -134,7 +134,7 @@ def test_imputers_feature_names_out_pandas(imputer, add_indicator):
     """Check feature names out for imputers."""
     pd = pytest.importorskip("pandas")
     marker = np.nan
-    imputer = imputer.set_params(add_indicator=add_indicator, missing_values=marker)
+    imputer = imputer.set_params(add_indicator=, missing_values=marker)
 
     X = np.array(
         [
@@ -172,9 +172,7 @@ def test_imputers_feature_names_out_pandas(imputer, add_indicator):
 def test_keep_empty_features(imputer, keep_empty_features):
     """Check that the imputer keeps features with only missing values."""
     X = np.array([[np.nan, 1], [np.nan, 2], [np.nan, 3]])
-    imputer = imputer.set_params(
-        add_indicator=False, keep_empty_features=keep_empty_features
-    )
+    imputer = imputer.set_params(add_indicator=False, keep_empty_features=)
 
     for method in ["fit_transform", "transform"]:
         X_imputed = getattr(imputer, method)(X)

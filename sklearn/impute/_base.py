@@ -285,11 +285,7 @@ class SimpleImputer(_BaseImputer):
         add_indicator=False,
         keep_empty_features=False,
     ):
-        super().__init__(
-            missing_values=missing_values,
-            add_indicator=add_indicator,
-            keep_empty_features=keep_empty_features,
-        )
+        super().__init__(missing_values=, add_indicator=, keep_empty_features=)
         self.strategy = strategy
         self.fill_value = fill_value
         self.copy = copy
@@ -323,8 +319,8 @@ class SimpleImputer(_BaseImputer):
                 X,
                 reset=in_fit,
                 accept_sparse="csc",
-                dtype=dtype,
-                force_all_finite=force_all_finite,
+                dtype=,
+                force_all_finite=,
                 copy=self.copy,
             )
         except ValueError as ve:
@@ -870,7 +866,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             reset=in_fit,
             accept_sparse=("csc", "csr"),
             dtype=None,
-            force_all_finite=force_all_finite,
+            force_all_finite=,
         )
         _check_inputs_dtype(X, self.missing_values)
         if X.dtype.kind not in ("i", "u", "f", "O"):

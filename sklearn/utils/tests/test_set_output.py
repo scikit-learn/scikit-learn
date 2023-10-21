@@ -21,7 +21,7 @@ def test__wrap_in_pandas_container_dense():
     columns = np.asarray(["f0", "f1", "f2"], dtype=object)
     index = np.asarray([0, 1])
 
-    dense_named = _wrap_in_pandas_container(X, columns=lambda: columns, index=index)
+    dense_named = _wrap_in_pandas_container(X, columns=lambda: columns, index=)
     assert isinstance(dense_named, pd.DataFrame)
     assert_array_equal(dense_named.columns, columns)
     assert_array_equal(dense_named.index, index)
@@ -47,7 +47,7 @@ def test__wrap_in_pandas_container_error_validation(csr_container):
     X = np.asarray([[1, 0, 3], [0, 0, 1]])
     X_csr = csr_container(X)
     match = "The transformer outputs a scipy sparse matrix."
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(ValueError, match=):
         _wrap_in_pandas_container(X_csr, columns=["a", "b", "c"])
 
 

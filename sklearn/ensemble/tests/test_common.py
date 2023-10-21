@@ -154,7 +154,7 @@ def test_ensemble_heterogeneous_estimators_type(Ensemble):
         X, y = make_regression(n_samples=10)
         estimators = [("lr", LogisticRegression())]
         ensemble_type = "regressor"
-    ensemble = Ensemble(estimators=estimators)
+    ensemble = Ensemble(estimators=)
 
     err_msg = "should be a {}".format(ensemble_type)
     with pytest.raises(ValueError, match=err_msg):
@@ -176,7 +176,7 @@ def test_ensemble_heterogeneous_estimators_name_validation(X, y, Ensemble):
         estimators = [("lr__", LogisticRegression())]
     else:
         estimators = [("lr__", LinearRegression())]
-    ensemble = Ensemble(estimators=estimators)
+    ensemble = Ensemble(estimators=)
 
     err_msg = r"Estimator names must not contain __: got \['lr__'\]"
     with pytest.raises(ValueError, match=err_msg):
@@ -187,7 +187,7 @@ def test_ensemble_heterogeneous_estimators_name_validation(X, y, Ensemble):
         estimators = [("lr", LogisticRegression()), ("lr", LogisticRegression())]
     else:
         estimators = [("lr", LinearRegression()), ("lr", LinearRegression())]
-    ensemble = Ensemble(estimators=estimators)
+    ensemble = Ensemble(estimators=)
 
     err_msg = r"Names provided are not unique: \['lr', 'lr'\]"
     with pytest.raises(ValueError, match=err_msg):
@@ -198,7 +198,7 @@ def test_ensemble_heterogeneous_estimators_name_validation(X, y, Ensemble):
         estimators = [("estimators", LogisticRegression())]
     else:
         estimators = [("estimators", LinearRegression())]
-    ensemble = Ensemble(estimators=estimators)
+    ensemble = Ensemble(estimators=)
 
     err_msg = "Estimator names conflict with constructor arguments"
     with pytest.raises(ValueError, match=err_msg):

@@ -33,10 +33,10 @@ class KMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
 
         estimator = KMeans(
             n_clusters=20,
-            algorithm=algorithm,
-            init=init,
+            algorithm=,
+            init=,
             n_init=1,
-            max_iter=max_iter,
+            max_iter=,
             tol=0,
             random_state=0,
         )
@@ -82,9 +82,9 @@ class MiniBatchKMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
 
         estimator = MiniBatchKMeans(
             n_clusters=20,
-            init=init,
+            init=,
             n_init=1,
-            max_iter=max_iter,
+            max_iter=,
             batch_size=1000,
             max_no_improvement=None,
             compute_labels=False,

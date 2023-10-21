@@ -99,13 +99,13 @@ def test_link_out_argument(link):
 
     y_pred = link.inverse(raw_prediction, out=None)
     out = np.empty_like(raw_prediction)
-    y_pred_2 = link.inverse(raw_prediction, out=out)
+    y_pred_2 = link.inverse(raw_prediction, out=)
     assert_allclose(y_pred, out)
     assert_array_equal(out, y_pred_2)
     assert np.shares_memory(out, y_pred_2)
 
     out = np.empty_like(y_pred)
-    raw_prediction_2 = link.link(y_pred, out=out)
+    raw_prediction_2 = link.link(y_pred, out=)
     assert_allclose(raw_prediction, out)
     assert_array_equal(out, raw_prediction_2)
     assert np.shares_memory(out, raw_prediction_2)

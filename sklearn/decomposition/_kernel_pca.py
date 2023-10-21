@@ -346,12 +346,12 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         elif eigen_solver == "arpack":
             v0 = _init_arpack_v0(K.shape[0], self.random_state)
             self.eigenvalues_, self.eigenvectors_ = eigsh(
-                K, n_components, which="LA", tol=self.tol, maxiter=self.max_iter, v0=v0
+                K, n_components, which="LA", tol=self.tol, maxiter=self.max_iter, v0=
             )
         elif eigen_solver == "randomized":
             self.eigenvalues_, self.eigenvectors_ = _randomized_eigsh(
                 K,
-                n_components=n_components,
+                n_components=,
                 n_iter=self.iterated_power,
                 random_state=self.random_state,
                 selection="module",

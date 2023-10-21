@@ -132,7 +132,7 @@ def test_column_transformer():
     transformer_weights = {"trans1": 0.1, "trans2": 10}
     both = ColumnTransformer(
         [("trans1", Trans(), [0]), ("trans2", Trans(), [1])],
-        transformer_weights=transformer_weights,
+        transformer_weights=,
     )
     res = np.vstack(
         [
@@ -233,7 +233,7 @@ def test_column_transformer_dataframe():
     transformer_weights = {"trans1": 0.1, "trans2": 10}
     both = ColumnTransformer(
         [("trans1", Trans(), ["first"]), ("trans2", Trans(), ["second"])],
-        transformer_weights=transformer_weights,
+        transformer_weights=,
     )
     res = np.vstack(
         [
@@ -446,7 +446,7 @@ def test_column_transformer_sparse_array(csr_container):
     for col in [(0,), [0], slice(0, 1)]:
         for remainder, res in [("drop", X_res_first), ("passthrough", X_res_both)]:
             ct = ColumnTransformer(
-                [("trans", Trans(), col)], remainder=remainder, sparse_threshold=0.8
+                [("trans", Trans(), col)], remainder=, sparse_threshold=0.8
             )
             assert sparse.issparse(ct.fit_transform(X_sparse))
             assert_allclose_dense_sparse(ct.fit_transform(X_sparse), res)
@@ -632,19 +632,19 @@ def test_column_transformer_invalid_columns(remainder):
 
     # general invalid
     for col in [1.5, ["string", 1], slice(1, "s"), np.array([1.0])]:
-        ct = ColumnTransformer([("trans", Trans(), col)], remainder=remainder)
+        ct = ColumnTransformer([("trans", Trans(), col)], remainder=)
         with pytest.raises(ValueError, match="No valid specification"):
             ct.fit(X_array)
 
     # invalid for arrays
     for col in ["string", ["string", "other"], slice("a", "b")]:
-        ct = ColumnTransformer([("trans", Trans(), col)], remainder=remainder)
+        ct = ColumnTransformer([("trans", Trans(), col)], remainder=)
         with pytest.raises(ValueError, match="Specifying the columns"):
             ct.fit(X_array)
 
     # transformed n_features does not match fitted n_features
     col = [0, 1]
-    ct = ColumnTransformer([("trans", Trans(), col)], remainder=remainder)
+    ct = ColumnTransformer([("trans", Trans(), col)], remainder=)
     ct.fit(X_array)
     X_array_more = np.array([[0, 1, 2], [2, 4, 6], [3, 6, 9]]).T
     msg = "X has 3 features, but ColumnTransformer is expecting 2 features as input."
@@ -732,7 +732,7 @@ def test_make_column_transformer_remainder_transformer():
     norm = Normalizer()
     remainder = StandardScaler()
     ct = make_column_transformer(
-        (scaler, "first"), (norm, ["second"]), remainder=remainder
+        (scaler, "first"), (norm, ["second"]), remainder=
     )
     assert ct.remainder == remainder
 
@@ -1298,7 +1298,7 @@ def test_make_column_selector_with_select_dtypes(cols, pattern, include, exclude
     )
 
     selector = make_column_selector(
-        dtype_include=include, dtype_exclude=exclude, pattern=pattern
+        dtype_include=include, dtype_exclude=exclude, pattern=
     )
 
     assert_array_equal(selector(X_df), cols)
@@ -1422,7 +1422,7 @@ def test_sk_visual_block_remainder(remainder):
     # remainder='passthrough' or an estimator will be shown in repr_html
     ohe = OneHotEncoder()
     ct = ColumnTransformer(
-        transformers=[("ohe", ohe, ["col1", "col2"])], remainder=remainder
+        transformers=[("ohe", ohe, ["col1", "col2"])], remainder=
     )
     visual_block = ct._sk_visual_block_()
     assert visual_block.names == ("ohe", "remainder")
@@ -1446,7 +1446,7 @@ def test_sk_visual_block_remainder_fitted_pandas(remainder):
     pd = pytest.importorskip("pandas")
     ohe = OneHotEncoder()
     ct = ColumnTransformer(
-        transformers=[("ohe", ohe, ["col1", "col2"])], remainder=remainder
+        transformers=[("ohe", ohe, ["col1", "col2"])], remainder=
     )
     df = pd.DataFrame(
         {
@@ -1469,7 +1469,7 @@ def test_sk_visual_block_remainder_fitted_numpy(remainder):
     X = np.array([[1, 2, 3], [4, 5, 6]], dtype=float)
     scaler = StandardScaler()
     ct = ColumnTransformer(
-        transformers=[("scale", scaler, [0, 2])], remainder=remainder
+        transformers=[("scale", scaler, [0, 2])], remainder=
     )
     ct.fit(X)
     visual_block = ct._sk_visual_block_()
@@ -1492,7 +1492,7 @@ def test_column_transformer_reordered_column_names_remainder(
     X_trans_array = np.array([[2, 4, 6], [0, 1, 2]]).T
     X_trans_df = pd.DataFrame(X_trans_array, columns=["second", "first"])
 
-    tf = ColumnTransformer([("bycol", Trans(), explicit_colname)], remainder=remainder)
+    tf = ColumnTransformer([("bycol", Trans(), explicit_colname)], remainder=)
 
     tf.fit(X_fit_df)
     X_fit_trans = tf.transform(X_fit_df)
@@ -1704,10 +1704,7 @@ def test_verbose_feature_names_out_true(transformers, remainder, expected_names)
     """Check feature_names_out for verbose_feature_names_out=True (default)"""
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
-    ct = ColumnTransformer(
-        transformers,
-        remainder=remainder,
-    )
+    ct = ColumnTransformer(transformers, remainder=)
     ct.fit(df)
 
     names = ct.get_feature_names_out()
@@ -1837,7 +1834,7 @@ def test_verbose_feature_names_out_false(transformers, remainder, expected_names
     df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
     ct = ColumnTransformer(
         transformers,
-        remainder=remainder,
+        remainder=,
         verbose_feature_names_out=False,
     )
     ct.fit(df)
@@ -1964,7 +1961,7 @@ def test_verbose_feature_names_out_false_errors(
     df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"])
     ct = ColumnTransformer(
         transformers,
-        remainder=remainder,
+        remainder=,
         verbose_feature_names_out=False,
     )
     ct.fit(df)
@@ -1985,8 +1982,8 @@ def test_column_transformer_set_output(verbose_feature_names_out, remainder):
     df = pd.DataFrame([[1, 2, 3, 4]], columns=["a", "b", "c", "d"], index=[10])
     ct = ColumnTransformer(
         [("first", TransWithNames(), ["a", "c"]), ("second", TransWithNames(), ["d"])],
-        remainder=remainder,
-        verbose_feature_names_out=verbose_feature_names_out,
+        remainder=,
+        verbose_feature_names_out=,
     )
     X_trans = ct.fit_transform(df)
     assert isinstance(X_trans, np.ndarray)
@@ -2025,7 +2022,7 @@ def test_column_transform_set_output_mixed(remainder, fit_transform):
             ),
             ("age", StandardScaler(), ["age"]),
         ],
-        remainder=remainder,
+        remainder=,
         verbose_feature_names_out=False,
     ).set_output(transform="pandas")
     if fit_transform:
@@ -2068,7 +2065,7 @@ def test_column_transform_set_output_after_fitting(remainder):
             ),
             ("age", StandardScaler(), ["age"]),
         ],
-        remainder=remainder,
+        remainder=,
         verbose_feature_names_out=False,
     )
 
@@ -2279,7 +2276,7 @@ def test_metadata_routing_for_column_transformer(method):
         [
             (
                 "trans",
-                ConsumingTransformer(registry=registry)
+                ConsumingTransformer(registry=)
                 .set_fit_request(sample_weight=True, metadata=True)
                 .set_transform_request(sample_weight=True, metadata=True),
                 [0],
@@ -2289,15 +2286,13 @@ def test_metadata_routing_for_column_transformer(method):
 
     if method == "transform":
         trs.fit(X, y)
-        trs.transform(X, sample_weight=sample_weight, metadata=metadata)
+        trs.transform(X, sample_weight=, metadata=)
     else:
-        getattr(trs, method)(X, y, sample_weight=sample_weight, metadata=metadata)
+        getattr(trs, method)(X, y, sample_weight=, metadata=)
 
     assert len(registry)
     for _trs in registry:
-        check_recorded_metadata(
-            obj=_trs, method=method, sample_weight=sample_weight, metadata=metadata
-        )
+        check_recorded_metadata(obj=_trs, method=, sample_weight=, metadata=)
 
 
 @pytest.mark.usefixtures("enable_slep006")
@@ -2332,8 +2327,8 @@ def test_metadata_routing_no_fit_transform():
         ]
     )
 
-    trs.fit(X, y, sample_weight=sample_weight, metadata=metadata)
-    trs.fit_transform(X, y, sample_weight=sample_weight, metadata=metadata)
+    trs.fit(X, y, sample_weight=, metadata=)
+    trs.fit_transform(X, y, sample_weight=, metadata=)
 
 
 @pytest.mark.usefixtures("enable_slep006")
@@ -2352,9 +2347,9 @@ def test_metadata_routing_error_for_column_transformer(method):
     with pytest.raises(ValueError, match=re.escape(error_message)):
         if method == "transform":
             trs.fit(X, y)
-            trs.transform(X, sample_weight=sample_weight, metadata=metadata)
+            trs.transform(X, sample_weight=, metadata=)
         else:
-            getattr(trs, method)(X, y, sample_weight=sample_weight, metadata=metadata)
+            getattr(trs, method)(X, y, sample_weight=, metadata=)
 
 
 # End of Metadata Routing Tests

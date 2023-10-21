@@ -39,10 +39,10 @@ def test_silhouette(sparse_container, sample_size):
     D = pairwise_distances(X, metric="euclidean")
     # Given that the actual labels are used, we can assume that S would be positive.
     score_precomputed = silhouette_score(
-        D, y, metric="precomputed", sample_size=sample_size, random_state=0
+        D, y, metric="precomputed", sample_size=, random_state=0
     )
     score_euclidean = silhouette_score(
-        X, y, metric="euclidean", sample_size=sample_size, random_state=0
+        X, y, metric="euclidean", sample_size=, random_state=0
     )
     assert score_precomputed > 0
     assert score_euclidean > 0
@@ -262,7 +262,7 @@ def test_silhouette_nonzero_diag(dtype):
 
     # Construct a zero-diagonal matrix
     dists = pairwise_distances(
-        np.array([[0.2, 0.1, 0.12, 1.34, 1.11, 1.6]], dtype=dtype).T
+        np.array([[0.2, 0.1, 0.12, 1.34, 1.11, 1.6]], dtype=).T
     )
     labels = [0, 0, 0, 1, 1, 1]
 
@@ -322,7 +322,7 @@ def test_silhouette_reduce(sparse_container):
         TypeError,
         match="Expected CSR matrix. Please pass sparse matrix in CSR format.",
     ):
-        _silhouette_reduce(pdist_sparse, start=0, labels=y, label_freqs=label_freqs)
+        _silhouette_reduce(pdist_sparse, start=0, labels=y, label_freqs=)
 
 
 def assert_raises_on_only_one_label(func):

@@ -37,7 +37,7 @@ y[::5] += 1 * (0.5 - np.random.rand(8))
 n_neighbors = 5
 
 for i, weights in enumerate(["uniform", "distance"]):
-    knn = neighbors.KNeighborsRegressor(n_neighbors, weights=weights)
+    knn = neighbors.KNeighborsRegressor(n_neighbors, weights=)
     y_ = knn.fit(X, y).predict(T)
 
     plt.subplot(2, 1, i + 1)

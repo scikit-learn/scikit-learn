@@ -78,7 +78,7 @@ def test_raise_if_init_has_no_predict_proba():
 def test_classification_toy(loss, global_random_seed):
     # Check classification on a toy dataset.
     clf = GradientBoostingClassifier(
-        loss=loss, n_estimators=10, random_state=global_random_seed
+        loss=, n_estimators=10, random_state=global_random_seed
     )
 
     with pytest.raises(ValueError):
@@ -154,15 +154,15 @@ def test_regression_dataset(loss, subsample, global_random_seed):
         # keeping the resource used to execute this test low enough.
         reg = GradientBoostingRegressor(
             n_estimators=30,
-            loss=loss,
+            loss=,
             max_depth=4,
-            subsample=subsample,
+            subsample=,
             min_samples_split=2,
             random_state=global_random_seed,
             learning_rate=0.5,
         )
 
-        reg.fit(X_reg, y_reg, sample_weight=sample_weight)
+        reg.fit(X_reg, y_reg, sample_weight=)
         leaves = reg.apply(X_reg)
         assert leaves.shape == (100, 30)
 
@@ -192,9 +192,9 @@ def test_iris(subsample, sample_weight, global_random_seed):
         n_estimators=100,
         loss="log_loss",
         random_state=global_random_seed,
-        subsample=subsample,
+        subsample=,
     )
-    clf.fit(iris.data, iris.target, sample_weight=sample_weight)
+    clf.fit(iris.data, iris.target, sample_weight=)
     score = clf.score(iris.data, iris.target)
     assert score > 0.9
 
@@ -216,7 +216,7 @@ def test_regression_synthetic(global_random_seed):
     }
 
     # Friedman1
-    X, y = datasets.make_friedman1(n_samples=1200, random_state=random_state, noise=1.0)
+    X, y = datasets.make_friedman1(n_samples=1200, random_state=, noise=1.0)
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
 
@@ -226,7 +226,7 @@ def test_regression_synthetic(global_random_seed):
     assert mse < 6.5
 
     # Friedman2
-    X, y = datasets.make_friedman2(n_samples=1200, random_state=random_state)
+    X, y = datasets.make_friedman2(n_samples=1200, random_state=)
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
 
@@ -236,7 +236,7 @@ def test_regression_synthetic(global_random_seed):
     assert mse < 2500.0
 
     # Friedman3
-    X, y = datasets.make_friedman3(n_samples=1200, random_state=random_state)
+    X, y = datasets.make_friedman3(n_samples=1200, random_state=)
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
 
@@ -290,7 +290,7 @@ def test_single_class_with_sample_weight():
         "zero weights, while a minimum of 2 classes are required."
     )
     with pytest.raises(ValueError, match=msg):
-        clf.fit(X, y, sample_weight=sample_weight)
+        clf.fit(X, y, sample_weight=)
 
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
@@ -830,7 +830,7 @@ def test_warm_start_state_oob_scores(GradientBoosting):
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     n_estimators = 100
     estimator = GradientBoosting(
-        n_estimators=n_estimators,
+        n_estimators=,
         max_depth=1,
         subsample=0.5,
         warm_start=True,
@@ -846,7 +846,7 @@ def test_warm_start_state_oob_scores(GradientBoosting):
     assert len(estimator.oob_scores_) == n_more_estimators
     assert_allclose(estimator.oob_scores_[:n_estimators], oob_scores)
 
-    estimator.set_params(n_estimators=n_estimators, warm_start=False).fit(X, y)
+    estimator.set_params(n_estimators=, warm_start=False).fit(X, y)
     assert estimator.oob_scores_ is not oob_scores
     assert estimator.oob_score_ is not oob_score
     assert_allclose(estimator.oob_scores_, oob_scores)
@@ -1158,8 +1158,8 @@ def test_non_uniform_weights_toy_edge_case_reg(loss, value):
     y = [0, 0, 1, 0]
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
-    gb = GradientBoostingRegressor(learning_rate=1.0, n_estimators=2, loss=loss)
-    gb.fit(X, y, sample_weight=sample_weight)
+    gb = GradientBoostingRegressor(learning_rate=1.0, n_estimators=2, loss=)
+    gb.fit(X, y, sample_weight=)
     assert gb.predict([[1, 0]])[0] >= value
 
 
@@ -1169,8 +1169,8 @@ def test_non_uniform_weights_toy_edge_case_clf():
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
     for loss in ("log_loss", "exponential"):
-        gb = GradientBoostingClassifier(n_estimators=5, loss=loss)
-        gb.fit(X, y, sample_weight=sample_weight)
+        gb = GradientBoostingClassifier(n_estimators=5, loss=)
+        gb.fit(X, y, sample_weight=)
         assert_array_equal(gb.predict([[1, 0]]), [1])
 
 
@@ -1232,7 +1232,7 @@ def test_gradient_boosting_early_stopping(GradientBoostingEstimator):
     n_estimators = 1000
 
     gb_large_tol = GradientBoostingEstimator(
-        n_estimators=n_estimators,
+        n_estimators=,
         n_iter_no_change=10,
         learning_rate=0.1,
         max_depth=3,
@@ -1241,7 +1241,7 @@ def test_gradient_boosting_early_stopping(GradientBoostingEstimator):
     )
 
     gb_small_tol = GradientBoostingEstimator(
-        n_estimators=n_estimators,
+        n_estimators=,
         n_iter_no_change=10,
         learning_rate=0.1,
         max_depth=3,
@@ -1359,13 +1359,13 @@ def test_gradient_boosting_with_init(
 
     # init supports sample weights
     init_est = init_estimator()
-    gb(init=init_est).fit(X, y, sample_weight=sample_weight)
+    gb(init=init_est).fit(X, y, sample_weight=)
 
     # init does not support sample weights
     init_est = NoSampleWeightWrapper(init_estimator())
     gb(init=init_est).fit(X, y)  # ok no sample weights
     with pytest.raises(ValueError, match="estimator.*does not support sample weights"):
-        gb(init=init_est).fit(X, y, sample_weight=sample_weight)
+        gb(init=init_est).fit(X, y, sample_weight=)
 
 
 def test_gradient_boosting_with_init_pipeline():
@@ -1373,7 +1373,7 @@ def test_gradient_boosting_with_init_pipeline():
 
     X, y = make_regression(random_state=0)
     init = make_pipeline(LinearRegression())
-    gb = GradientBoostingRegressor(init=init)
+    gb = GradientBoostingRegressor(init=)
     gb.fit(X, y)  # pipeline without sample_weight works fine
 
     with pytest.raises(
@@ -1394,7 +1394,7 @@ def test_gradient_boosting_with_init_pipeline():
     with pytest.raises(InvalidParameterError, match=re.escape(err_msg)):
         # Note that NuSVR properly supports sample_weight
         init = NuSVR(gamma="auto", nu=invalid_nu)
-        gb = GradientBoostingRegressor(init=init)
+        gb = GradientBoostingRegressor(init=)
         gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
 

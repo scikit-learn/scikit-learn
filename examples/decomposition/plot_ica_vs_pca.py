@@ -77,8 +77,8 @@ def plot_samples(S, axis_list=None):
                 zorder=11,
                 width=0.01,
                 scale=6,
-                color=color,
-                label=label,
+                color=,
+                label=,
             )
 
     plt.hlines(0, -3, 3)
@@ -96,7 +96,7 @@ plt.title("True Independent Sources")
 
 axis_list = [(pca.components_.T, "orange", "PCA"), (ica.mixing_, "red", "ICA")]
 plt.subplot(2, 2, 2)
-plot_samples(X / np.std(X), axis_list=axis_list)
+plot_samples(X / np.std(X), axis_list=)
 legend = plt.legend(loc="lower right")
 legend.set_zorder(100)
 

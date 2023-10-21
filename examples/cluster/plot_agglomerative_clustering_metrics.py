@@ -104,7 +104,7 @@ for index, metric in enumerate(["cosine", "euclidean", "cityblock"]):
     for i in range(n_clusters):
         for j in range(n_clusters):
             avg_dist[i, j] = pairwise_distances(
-                X[y == i], X[y == j], metric=metric
+                X[y == i], X[y == j], metric=
             ).mean()
     avg_dist /= avg_dist.max()
     for i in range(n_clusters):
@@ -130,9 +130,7 @@ for index, metric in enumerate(["cosine", "euclidean", "cityblock"]):
 
 # Plot clustering results
 for index, metric in enumerate(["cosine", "euclidean", "cityblock"]):
-    model = AgglomerativeClustering(
-        n_clusters=n_clusters, linkage="average", metric=metric
-    )
+    model = AgglomerativeClustering(n_clusters=, linkage="average", metric=)
     model.fit(X)
     plt.figure()
     plt.axes([0, 0, 1, 1])

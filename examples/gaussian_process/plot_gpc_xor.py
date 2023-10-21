@@ -30,7 +30,7 @@ Y = np.logical_xor(X[:, 0] > 0, X[:, 1] > 0)
 plt.figure(figsize=(10, 5))
 kernels = [1.0 * RBF(length_scale=1.15), 1.0 * DotProduct(sigma_0=1.0) ** 2]
 for i, kernel in enumerate(kernels):
-    clf = GaussianProcessClassifier(kernel=kernel, warm_start=True).fit(X, Y)
+    clf = GaussianProcessClassifier(kernel=, warm_start=True).fit(X, Y)
 
     # plot the decision function for each datapoint on the grid
     Z = clf.predict_proba(np.vstack((xx.ravel(), yy.ravel())).T)[:, 1]

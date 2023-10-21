@@ -18,7 +18,7 @@ def test_knn_imputer_shape(weights, n_neighbors):
     X = np.random.rand(n_rows, n_cols)
     X[0, 0] = np.nan
 
-    imputer = KNNImputer(n_neighbors=n_neighbors, weights=weights)
+    imputer = KNNImputer(n_neighbors=, weights=)
     X_imputed = imputer.fit_transform(X)
     assert X_imputed.shape == (n_rows, n_cols)
 
@@ -242,12 +242,12 @@ def test_knn_imputer_all_samples_are_neighbors(na):
     X_imputed = np.array([[0, 0], [6, 2], [4, 3], [5, 5.5], [7, 7], [6, 8], [14, 13]])
 
     n_neighbors = X.shape[0] - 1
-    imputer = KNNImputer(n_neighbors=n_neighbors, missing_values=na)
+    imputer = KNNImputer(n_neighbors=, missing_values=na)
 
     assert_allclose(imputer.fit_transform(X), X_imputed)
 
     n_neighbors = X.shape[0]
-    imputer_plus1 = KNNImputer(n_neighbors=n_neighbors, missing_values=na)
+    imputer_plus1 = KNNImputer(n_neighbors=, missing_values=na)
     assert_allclose(imputer_plus1.fit_transform(X), X_imputed)
 
 
@@ -292,7 +292,7 @@ def test_knn_imputer_weight_distance(na):
     X_neighbors_idx = [0, 2, 3, 4, 5]
     dist = nan_euclidean_distances(X[1:2, :], X, missing_values=na)
     weights = 1 / dist[:, X_neighbors_idx].ravel()
-    manual_imputed_value = np.average(X[X_neighbors_idx, 0], weights=weights)
+    manual_imputed_value = np.average(X[X_neighbors_idx, 0], weights=)
 
     X_imputed_distance1 = np.array(
         [[0, 0], [manual_imputed_value, 2], [4, 3], [5, 6], [7, 7], [9, 8], [11, 10]]
@@ -485,7 +485,7 @@ def test_knn_imputer_with_simple_example(na, working_memory):
         ]
     )
 
-    with config_context(working_memory=working_memory):
+    with config_context(working_memory=):
         imputer_comp = KNNImputer(missing_values=na)
         assert_allclose(imputer_comp.fit_transform(X), X_imputed)
 
@@ -497,7 +497,7 @@ def test_knn_imputer_not_enough_valid_distances(na, weights):
     X1 = np.array([[na, 11], [na, 1], [3, na]])
     X1_imputed = np.array([[3, 11], [3, 1], [3, 6]])
 
-    knn = KNNImputer(missing_values=na, n_neighbors=1, weights=weights)
+    knn = KNNImputer(missing_values=na, n_neighbors=1, weights=)
     assert_allclose(knn.fit_transform(X1), X1_imputed)
 
     X2 = np.array([[4, na]])
@@ -533,7 +533,7 @@ def test_knn_imputer_distance_weighted_not_enough_neighbors(na, working_memory):
 
     X_expected = np.array([[3, X_01], [2, X_11], [X_20, 4], [5, 6], [6, 8], [X_50, 5]])
 
-    with config_context(working_memory=working_memory):
+    with config_context(working_memory=):
         knn_3 = KNNImputer(missing_values=na, n_neighbors=3, weights="distance")
         assert_allclose(knn_3.fit_transform(X), X_expected)
 

@@ -25,7 +25,7 @@ def test_configuration_passes_through_to_joblib(n_jobs, backend):
     # Tests that the global global configuration is passed to joblib jobs
 
     with config_context(working_memory=123):
-        results = Parallel(n_jobs=n_jobs, backend=backend)(
+        results = Parallel(n_jobs=, backend=)(
             delayed(get_working_memory)() for _ in range(2)
         )
 
@@ -74,18 +74,18 @@ def test_dispatch_config_parallel(n_jobs):
     dropper = make_column_transformer(
         ("drop", [0]),
         remainder="passthrough",
-        n_jobs=n_jobs,
+        n_jobs=,
     )
     param_grid = {"randomforestclassifier__max_depth": [1, 2, 3]}
     search_cv = GridSearchCV(
         make_pipeline(
             dropper,
             TransformerRequiredDataFrame(),
-            RandomForestClassifier(n_estimators=5, n_jobs=n_jobs),
+            RandomForestClassifier(n_estimators=5, n_jobs=),
         ),
         param_grid,
         cv=5,
-        n_jobs=n_jobs,
+        n_jobs=,
         error_score="raise",  # this search should not fail
     )
 

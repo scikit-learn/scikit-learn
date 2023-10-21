@@ -113,7 +113,7 @@ X = np.concatenate([X, random_state.randn(n_samples, 200 * n_features)], axis=1)
 
 # Limit to the two first classes, and split into training and test
 X_train, X_test, y_train, y_test = train_test_split(
-    X[y < 2], y[y < 2], test_size=0.5, random_state=random_state
+    X[y < 2], y[y < 2], test_size=0.5, random_state=
 )
 
 # %%
@@ -125,7 +125,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
 
 classifier = make_pipeline(
-    StandardScaler(), LinearSVC(random_state=random_state, dual="auto")
+    StandardScaler(), LinearSVC(random_state=, dual="auto")
 )
 classifier.fit(X_train, y_train)
 
@@ -181,7 +181,7 @@ n_classes = Y.shape[1]
 
 # Split into training and test
 X_train, X_test, Y_train, Y_test = train_test_split(
-    X, Y, test_size=0.5, random_state=random_state
+    X, Y, test_size=0.5, random_state=
 )
 
 # %%
@@ -190,7 +190,7 @@ X_train, X_test, Y_train, Y_test = train_test_split(
 from sklearn.multiclass import OneVsRestClassifier
 
 classifier = OneVsRestClassifier(
-    make_pipeline(StandardScaler(), LinearSVC(random_state=random_state, dual="auto"))
+    make_pipeline(StandardScaler(), LinearSVC(random_state=, dual="auto"))
 )
 classifier.fit(X_train, Y_train)
 y_score = classifier.decision_function(X_test)
@@ -254,7 +254,7 @@ display = PrecisionRecallDisplay(
     precision=precision["micro"],
     average_precision=average_precision["micro"],
 )
-display.plot(ax=ax, name="Micro-average precision-recall", color="gold")
+display.plot(ax=, name="Micro-average precision-recall", color="gold")
 
 for i, color in zip(range(n_classes), colors):
     display = PrecisionRecallDisplay(
@@ -262,14 +262,14 @@ for i, color in zip(range(n_classes), colors):
         precision=precision[i],
         average_precision=average_precision[i],
     )
-    display.plot(ax=ax, name=f"Precision-recall for class {i}", color=color)
+    display.plot(ax=, name=f"Precision-recall for class {i}", color=)
 
 # add the legend for the iso-f1 curves
 handles, labels = display.ax_.get_legend_handles_labels()
 handles.extend([l])
 labels.extend(["iso-f1 curves"])
 # set the legend and the axes
-ax.legend(handles=handles, labels=labels, loc="best")
+ax.legend(handles=, labels=, loc="best")
 ax.set_title("Extension of Precision-Recall curve to multi-class")
 
 plt.show()

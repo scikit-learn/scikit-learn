@@ -43,7 +43,7 @@ for ix, svr in enumerate(svrs):
         X,
         svr.fit(X, y).predict(X),
         color=model_color[ix],
-        lw=lw,
+        lw=,
         label="{} model".format(kernel_label[ix]),
     )
     axes[ix].scatter(

@@ -76,7 +76,7 @@ for ii, (model, name) in enumerate(zip(models, names), 1):
     plt.subplot(4, 1, ii)
     plt.title(name)
     for sig, color in zip(model.T, colors):
-        plt.plot(sig, color=color)
+        plt.plot(sig, color=)
 
 plt.tight_layout()
 plt.show()

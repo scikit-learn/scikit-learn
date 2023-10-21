@@ -53,7 +53,7 @@ def user_role(name, rawtext, text, lineno, inliner, options=None, content=None):
     else:
         text = "@{0}".format(target)
 
-    link = nodes.reference(text=text, refuri=ref, **options)
+    link = nodes.reference(text=, refuri=ref, **options)
     return [link], []
 
 
@@ -70,7 +70,7 @@ def cve_role(name, rawtext, text, lineno, inliner, options=None, content=None):
     title = utils.unescape(title).strip()
     ref = "https://cve.mitre.org/cgi-bin/cvename.cgi?name={0}".format(target)
     text = title if has_explicit_title else target
-    link = nodes.reference(text=text, refuri=ref, **options)
+    link = nodes.reference(text=, refuri=ref, **options)
     return [link], []
 
 
@@ -101,11 +101,11 @@ class IssueRole(object):
                 )
             path = name_map.get(name)
             ref = "https://github.com/{issues_github_path}/{path}/{n}".format(
-                issues_github_path="{}/{}".format(username, repo), path=path, n=issue
+                issues_github_path="{}/{}".format(username, repo), path=, n=issue
             )
             formatted_issue = self.format_text(issue).lstrip("#")
             text = "{username}/{repo}{symbol}{formatted_issue}".format(**locals())
-            link = nodes.reference(text=text, refuri=ref, **options)
+            link = nodes.reference(text=, refuri=ref, **options)
             return link
 
         if issue_no not in ("-", "0"):
@@ -137,7 +137,7 @@ class IssueRole(object):
         config = inliner.document.settings.env.app.config
         ret = []
         for i, issue_no in enumerate(issue_nos):
-            node = self.make_node(name, issue_no, config, options=options)
+            node = self.make_node(name, issue_no, config, options=)
             ret.append(node)
             if i != len(issue_nos) - 1:
                 sep = nodes.raw(text=", ", format="html")

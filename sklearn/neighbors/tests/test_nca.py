@@ -129,7 +129,7 @@ def test_params_validation():
         f"greater than its input dimensionality ({init.shape[1]})."
     )
     with pytest.raises(ValueError, match=re.escape(msg)):
-        NCA(init=init).fit(X, y)
+        NCA(init=).fit(X, y)
     n_components = 10
     msg = (
         "The preferred dimensionality of the projected space "
@@ -137,7 +137,7 @@ def test_params_validation():
         f"than the given data dimensionality ({X.shape[1]})!"
     )
     with pytest.raises(ValueError, match=re.escape(msg)):
-        NCA(n_components=n_components).fit(X, y)
+        NCA(n_components=).fit(X, y)
 
 
 def test_transformation_dimensions():
@@ -170,7 +170,7 @@ def test_n_components():
 
     # n_components = X.shape[1] != transformation.shape[0]
     n_components = X.shape[1]
-    nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
+    nca = NeighborhoodComponentsAnalysis(init=, n_components=)
     msg = (
         "The preferred dimensionality of the projected space "
         f"`n_components` ({n_components}) does not match the output "
@@ -182,7 +182,7 @@ def test_n_components():
 
     # n_components > X.shape[1]
     n_components = X.shape[1] + 2
-    nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
+    nca = NeighborhoodComponentsAnalysis(init=, n_components=)
     msg = (
         "The preferred dimensionality of the projected space "
         f"`n_components` ({n_components}) cannot be greater than "
@@ -221,12 +221,12 @@ def test_init_transformation():
     nca_lda.fit(X, y)
 
     init = rng.rand(X.shape[1], X.shape[1])
-    nca = NeighborhoodComponentsAnalysis(init=init)
+    nca = NeighborhoodComponentsAnalysis(init=)
     nca.fit(X, y)
 
     # init.shape[1] must match X.shape[1]
     init = rng.rand(X.shape[1], X.shape[1] + 1)
-    nca = NeighborhoodComponentsAnalysis(init=init)
+    nca = NeighborhoodComponentsAnalysis(init=)
     msg = (
         f"The input dimensionality ({init.shape[1]}) of the given "
         "linear transformation `init` must match the "
@@ -237,7 +237,7 @@ def test_init_transformation():
 
     # init.shape[0] must be <= init.shape[1]
     init = rng.rand(X.shape[1] + 1, X.shape[1])
-    nca = NeighborhoodComponentsAnalysis(init=init)
+    nca = NeighborhoodComponentsAnalysis(init=)
     msg = (
         f"The output dimensionality ({init.shape[0]}) of the given "
         "linear transformation `init` cannot be "
@@ -249,7 +249,7 @@ def test_init_transformation():
     # init.shape[0] must match n_components
     init = rng.rand(X.shape[1], X.shape[1])
     n_components = X.shape[1] - 2
-    nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
+    nca = NeighborhoodComponentsAnalysis(init=, n_components=)
     msg = (
         "The preferred dimensionality of the "
         f"projected space `n_components` ({n_components}) "
@@ -269,7 +269,7 @@ def test_auto_init(n_samples, n_features, n_classes, n_components):
     # of order of n_samples, n_features, n_classes and n_components.
     rng = np.random.RandomState(42)
     nca_base = NeighborhoodComponentsAnalysis(
-        init="auto", n_components=n_components, max_iter=1, random_state=rng
+        init="auto", n_components=, max_iter=1, random_state=rng
     )
     if n_classes >= n_samples:
         pass
@@ -374,7 +374,7 @@ def test_verbose(init_name, capsys):
         init = rng.randn(X.shape[1], X.shape[1])
     else:
         init = init_name
-    nca = NeighborhoodComponentsAnalysis(verbose=1, init=init)
+    nca = NeighborhoodComponentsAnalysis(verbose=1, init=)
     nca.fit(X, y)
     out, _ = capsys.readouterr()
 
@@ -469,7 +469,7 @@ def test_callback(capsys):
         print("{} iterations remaining...".format(rem_iter))
 
     # assert that my_cb is called
-    nca = NeighborhoodComponentsAnalysis(max_iter=max_iter, callback=my_cb, verbose=1)
+    nca = NeighborhoodComponentsAnalysis(max_iter=, callback=my_cb, verbose=1)
     nca.fit(iris_data, iris_target)
     out, _ = capsys.readouterr()
 

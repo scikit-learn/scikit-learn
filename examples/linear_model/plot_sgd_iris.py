@@ -43,7 +43,7 @@ DecisionBoundaryDisplay.from_estimator(
     clf,
     X,
     cmap=plt.cm.Paired,
-    ax=ax,
+    ax=,
     response_method="predict",
     xlabel=iris.feature_names[0],
     ylabel=iris.feature_names[1],
@@ -76,7 +76,7 @@ def plot_hyperplane(c, color):
     def line(x0):
         return (-(x0 * coef[c, 0]) - intercept[c]) / coef[c, 1]
 
-    plt.plot([xmin, xmax], [line(xmin), line(xmax)], ls="--", color=color)
+    plt.plot([xmin, xmax], [line(xmin), line(xmax)], ls="--", color=)
 
 
 for i, color in zip(clf.classes_, colors):

@@ -55,7 +55,7 @@ def test_input_data_dimension(pyplot):
     clf = LogisticRegression().fit(X, y)
     msg = "n_features must be equal to 2. Got 4 instead."
     with pytest.raises(ValueError, match=msg):
-        DecisionBoundaryDisplay.from_estimator(estimator=clf, X=X)
+        DecisionBoundaryDisplay.from_estimator(estimator=clf, X=)
 
 
 def test_check_boundary_response_method_error():
@@ -139,7 +139,7 @@ def test_multiclass_error(pyplot, response_method):
         " or 'auto'"
     )
     with pytest.raises(ValueError, match=msg):
-        DecisionBoundaryDisplay.from_estimator(lr, X, response_method=response_method)
+        DecisionBoundaryDisplay.from_estimator(lr, X, response_method=)
 
 
 @pytest.mark.parametrize("response_method", ["auto", "predict"])
@@ -152,7 +152,7 @@ def test_multiclass(pyplot, response_method):
     lr = LogisticRegression(random_state=0).fit(X, y)
 
     disp = DecisionBoundaryDisplay.from_estimator(
-        lr, X, response_method=response_method, grid_resolution=grid_resolution, eps=1.0
+        lr, X, response_method=, grid_resolution=, eps=1.0
     )
 
     x0_min, x0_max = X[:, 0].min() - eps, X[:, 0].max() + eps
@@ -214,10 +214,10 @@ def test_decision_boundary_display_classifier(
         fitted_clf,
         X,
         grid_resolution=5,
-        response_method=response_method,
-        plot_method=plot_method,
-        eps=eps,
-        ax=ax,
+        response_method=,
+        plot_method=,
+        eps=,
+        ax=,
     )
     assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
     assert disp.ax_ == ax
@@ -254,10 +254,10 @@ def test_decision_boundary_display_outlier_detector(
         outlier_detector,
         X,
         grid_resolution=5,
-        response_method=response_method,
-        plot_method=plot_method,
-        eps=eps,
-        ax=ax,
+        response_method=,
+        plot_method=,
+        eps=,
+        ax=,
     )
     assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
     assert disp.ax_ == ax
@@ -286,10 +286,10 @@ def test_decision_boundary_display_regressor(pyplot, response_method, plot_metho
     disp = DecisionBoundaryDisplay.from_estimator(
         tree,
         X,
-        response_method=response_method,
-        ax=ax,
-        eps=eps,
-        plot_method=plot_method,
+        response_method=,
+        ax=,
+        eps=,
+        plot_method=,
     )
     assert isinstance(disp.surface_, pyplot.matplotlib.contour.QuadContourSet)
     assert disp.ax_ == ax
@@ -349,7 +349,7 @@ def test_error_bad_response(pyplot, response_method, msg):
     clf = MyClassifier().fit(X, y)
 
     with pytest.raises(AttributeError, match=msg):
-        DecisionBoundaryDisplay.from_estimator(clf, X, response_method=response_method)
+        DecisionBoundaryDisplay.from_estimator(clf, X, response_method=)
 
 
 @pytest.mark.parametrize("response_method", ["auto", "predict", "predict_proba"])
@@ -361,11 +361,7 @@ def test_multilabel_classifier_error(pyplot, response_method):
 
     msg = "Multi-label and multi-output multi-class classifiers are not supported"
     with pytest.raises(ValueError, match=msg):
-        DecisionBoundaryDisplay.from_estimator(
-            tree,
-            X,
-            response_method=response_method,
-        )
+        DecisionBoundaryDisplay.from_estimator(tree, X, response_method=)
 
 
 @pytest.mark.parametrize("response_method", ["auto", "predict", "predict_proba"])
@@ -377,11 +373,7 @@ def test_multi_output_multi_class_classifier_error(pyplot, response_method):
 
     msg = "Multi-label and multi-output multi-class classifiers are not supported"
     with pytest.raises(ValueError, match=msg):
-        DecisionBoundaryDisplay.from_estimator(
-            tree,
-            X,
-            response_method=response_method,
-        )
+        DecisionBoundaryDisplay.from_estimator(tree, X, response_method=)
 
 
 def test_multioutput_regressor_error(pyplot):
@@ -404,7 +396,7 @@ def test_regressor_unsupported_response(pyplot, response_method):
     tree = DecisionTreeRegressor().fit(X, y)
     err_msg = "should either be a classifier to be used with response_method"
     with pytest.raises(ValueError, match=err_msg):
-        DecisionBoundaryDisplay.from_estimator(tree, X, response_method=response_method)
+        DecisionBoundaryDisplay.from_estimator(tree, X, response_method=)
 
 
 @pytest.mark.filterwarnings(
@@ -419,32 +411,32 @@ def test_dataframe_labels_used(pyplot, fitted_clf):
 
     # pandas column names are used by default
     _, ax = pyplot.subplots()
-    disp = DecisionBoundaryDisplay.from_estimator(fitted_clf, df, ax=ax)
+    disp = DecisionBoundaryDisplay.from_estimator(fitted_clf, df, ax=)
     assert ax.get_xlabel() == "col_x"
     assert ax.get_ylabel() == "col_y"
 
     # second call to plot will have the names
     fig, ax = pyplot.subplots()
-    disp.plot(ax=ax)
+    disp.plot(ax=)
     assert ax.get_xlabel() == "col_x"
     assert ax.get_ylabel() == "col_y"
 
     # axes with a label will not get overridden
     fig, ax = pyplot.subplots()
     ax.set(xlabel="hello", ylabel="world")
-    disp.plot(ax=ax)
+    disp.plot(ax=)
     assert ax.get_xlabel() == "hello"
     assert ax.get_ylabel() == "world"
 
     # labels get overridden only if provided to the `plot` method
-    disp.plot(ax=ax, xlabel="overwritten_x", ylabel="overwritten_y")
+    disp.plot(ax=, xlabel="overwritten_x", ylabel="overwritten_y")
     assert ax.get_xlabel() == "overwritten_x"
     assert ax.get_ylabel() == "overwritten_y"
 
     # labels do not get inferred if provided to `from_estimator`
     _, ax = pyplot.subplots()
     disp = DecisionBoundaryDisplay.from_estimator(
-        fitted_clf, df, ax=ax, xlabel="overwritten_x", ylabel="overwritten_y"
+        fitted_clf, df, ax=, xlabel="overwritten_x", ylabel="overwritten_y"
     )
     assert ax.get_xlabel() == "overwritten_x"
     assert ax.get_ylabel() == "overwritten_y"
@@ -501,13 +493,13 @@ def test_class_of_interest_binary(pyplot, response_method):
     disp_default = DecisionBoundaryDisplay.from_estimator(
         estimator,
         X,
-        response_method=response_method,
+        response_method=,
         class_of_interest=None,
     )
     disp_class_1 = DecisionBoundaryDisplay.from_estimator(
         estimator,
         X,
-        response_method=response_method,
+        response_method=,
         class_of_interest=estimator.classes_[1],
     )
 
@@ -519,7 +511,7 @@ def test_class_of_interest_binary(pyplot, response_method):
     disp_class_0 = DecisionBoundaryDisplay.from_estimator(
         estimator,
         X,
-        response_method=response_method,
+        response_method=,
         class_of_interest=estimator.classes_[0],
     )
 
@@ -544,7 +536,7 @@ def test_class_of_interest_multiclass(pyplot, response_method):
     disp = DecisionBoundaryDisplay.from_estimator(
         estimator,
         X,
-        response_method=response_method,
+        response_method=,
         class_of_interest=class_of_interest_idx,
     )
 
@@ -560,7 +552,7 @@ def test_class_of_interest_multiclass(pyplot, response_method):
     disp = DecisionBoundaryDisplay.from_estimator(
         estimator,
         X,
-        response_method=response_method,
+        response_method=,
         class_of_interest=iris.target_names[class_of_interest_idx],
     )
 
@@ -576,7 +568,7 @@ def test_class_of_interest_multiclass(pyplot, response_method):
         DecisionBoundaryDisplay.from_estimator(
             estimator,
             X,
-            response_method=response_method,
+            response_method=,
             class_of_interest=class_of_interest_idx,
         )
 
@@ -588,6 +580,6 @@ def test_class_of_interest_multiclass(pyplot, response_method):
         DecisionBoundaryDisplay.from_estimator(
             estimator,
             X,
-            response_method=response_method,
+            response_method=,
             class_of_interest=None,
         )

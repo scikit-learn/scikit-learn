@@ -560,7 +560,7 @@ class PartialDependenceDisplay:
                 fxs = (fxs,)
             try:
                 fxs = tuple(
-                    _get_feature_index(fx, feature_names=feature_names) for fx in fxs
+                    _get_feature_index(fx, feature_names=) for fx in fxs
                 )
             except TypeError as e:
                 raise ValueError(
@@ -618,7 +618,7 @@ class PartialDependenceDisplay:
             elif categorical_features.dtype.kind in ("i", "O", "U"):
                 # categorical features provided as a list of indices or feature names
                 categorical_features_idx = [
-                    _get_feature_index(cat, feature_names=feature_names)
+                    _get_feature_index(cat, feature_names=)
                     for cat in categorical_features
                 ]
                 is_categorical = [
@@ -700,18 +700,18 @@ class PartialDependenceDisplay:
                 )
 
         # compute predictions and/or averaged predictions
-        pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
+        pd_results = Parallel(n_jobs=, verbose=)(
             delayed(partial_dependence)(
                 estimator,
                 X,
                 fxs,
-                sample_weight=sample_weight,
-                feature_names=feature_names,
-                categorical_features=categorical_features,
-                response_method=response_method,
-                method=method,
-                grid_resolution=grid_resolution,
-                percentiles=percentiles,
+                sample_weight=,
+                feature_names=,
+                categorical_features=,
+                response_method=,
+                method=,
+                grid_resolution=,
+                percentiles=,
                 kind=kind_plot,
             )
             for kind_plot, fxs in zip(kind_, features)
@@ -745,24 +745,24 @@ class PartialDependenceDisplay:
                     deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
 
         display = PartialDependenceDisplay(
-            pd_results=pd_results,
-            features=features,
-            feature_names=feature_names,
-            target_idx=target_idx,
-            deciles=deciles,
-            kind=kind,
-            subsample=subsample,
-            random_state=random_state,
-            is_categorical=is_categorical,
+            pd_results=,
+            features=,
+            feature_names=,
+            target_idx=,
+            deciles=,
+            kind=,
+            subsample=,
+            random_state=,
+            is_categorical=,
         )
         return display.plot(
-            ax=ax,
-            n_cols=n_cols,
-            line_kw=line_kw,
-            ice_lines_kw=ice_lines_kw,
-            pd_line_kw=pd_line_kw,
-            contour_kw=contour_kw,
-            centered=centered,
+            ax=,
+            n_cols=,
+            line_kw=,
+            ice_lines_kw=,
+            pd_line_kw=,
+            contour_kw=,
+            centered=,
         )
 
     def _get_sample_count(self, n_samples):
@@ -1046,11 +1046,11 @@ class PartialDependenceDisplay:
                 values_format = ".2f"
                 text_data = format(data[row, col], values_format)
 
-                text_kwargs = dict(ha="center", va="center", color=color)
+                text_kwargs = dict(ha="center", va="center", color=)
                 text[row, col] = ax.text(col, row, text_data, **text_kwargs)
 
             fig = ax.figure
-            fig.colorbar(im, ax=ax)
+            fig.colorbar(im, ax=)
             ax.set(
                 xticks=np.arange(len(feature_values[1])),
                 yticks=np.arange(len(feature_values[0])),

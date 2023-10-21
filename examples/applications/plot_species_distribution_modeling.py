@@ -95,7 +95,7 @@ def create_species_bunch(species_name, train, test, coverages, xgrid, ygrid):
     """
     bunch = Bunch(name=" ".join(species_name.split("_")[:2]))
     species_name = species_name.encode("ascii")
-    points = dict(test=test, train=train)
+    points = dict(test=, train=)
 
     for label, pts in points.items():
         # choose points associated with the desired species
@@ -207,7 +207,7 @@ def plot_species_distribution(
         Z[land_reference == -9999] = -9999
 
         # plot contours of the prediction
-        plt.contourf(X, Y, Z, levels=levels, cmap=plt.cm.Reds)
+        plt.contourf(X, Y, Z, levels=, cmap=plt.cm.Reds)
         plt.colorbar(format="%.2f")
 
         # scatter training/testing points

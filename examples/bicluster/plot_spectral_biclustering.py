@@ -38,7 +38,7 @@ from sklearn.datasets import make_checkerboard
 
 n_clusters = (4, 3)
 data, rows, columns = make_checkerboard(
-    shape=(300, 300), n_clusters=n_clusters, noise=10, shuffle=False, random_state=42
+    shape=(300, 300), n_clusters=, noise=10, shuffle=False, random_state=42
 )
 
 plt.matshow(data, cmap=plt.cm.Blues)
@@ -74,7 +74,7 @@ _ = plt.show()
 from sklearn.cluster import SpectralBiclustering
 from sklearn.metrics import consensus_score
 
-model = SpectralBiclustering(n_clusters=n_clusters, method="log", random_state=0)
+model = SpectralBiclustering(n_clusters=, method="log", random_state=0)
 model.fit(data)
 
 # Compute the similarity of two sets of biclusters

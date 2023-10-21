@@ -104,7 +104,7 @@ def plot_on_dataset(X, y, ax, name):
 
     for label, param in zip(labels, params):
         print("training: %s" % label)
-        mlp = MLPClassifier(random_state=0, max_iter=max_iter, **param)
+        mlp = MLPClassifier(random_state=0, max_iter=, **param)
 
         # some parameter combinations will not converge as can be seen on the
         # plots so they are ignored here
@@ -118,7 +118,7 @@ def plot_on_dataset(X, y, ax, name):
         print("Training set score: %f" % mlp.score(X, y))
         print("Training set loss: %f" % mlp.loss_)
     for mlp, label, args in zip(mlps, labels, plot_args):
-        ax.plot(mlp.loss_curve_, label=label, **args)
+        ax.plot(mlp.loss_curve_, label=, **args)
 
 
 fig, axes = plt.subplots(2, 2, figsize=(15, 10))
@@ -135,7 +135,7 @@ data_sets = [
 for ax, data, name in zip(
     axes.ravel(), data_sets, ["iris", "digits", "circles", "moons"]
 ):
-    plot_on_dataset(*data, ax=ax, name=name)
+    plot_on_dataset(*data, ax=, name=)
 
 fig.legend(ax.get_lines(), labels, ncol=3, loc="upper center")
 plt.show()

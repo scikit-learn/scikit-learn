@@ -279,8 +279,8 @@ for class_id, color in zip(range(n_classes), colors):
         y_onehot_test[:, class_id],
         y_score[:, class_id],
         name=f"ROC curve for {target_names[class_id]}",
-        color=color,
-        ax=ax,
+        color=,
+        ax=,
         plot_chance_level=(class_id == 2),
     )
 
@@ -354,13 +354,13 @@ for ix, (label_a, label_b) in enumerate(pair_list):
     RocCurveDisplay.from_predictions(
         a_true,
         y_score[ab_mask, idx_a],
-        ax=ax,
+        ax=,
         name=f"{label_a} as positive class",
     )
     RocCurveDisplay.from_predictions(
         b_true,
         y_score[ab_mask, idx_b],
-        ax=ax,
+        ax=,
         name=f"{label_b} as positive class",
         plot_chance_level=True,
     )

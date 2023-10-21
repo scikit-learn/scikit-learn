@@ -176,11 +176,11 @@ def make_dataset(X, y, sample_weight, random_state=None):
         ArrayData = ArrayDataset64
 
     if sp.issparse(X):
-        dataset = CSRData(X.data, X.indptr, X.indices, y, sample_weight, seed=seed)
+        dataset = CSRData(X.data, X.indptr, X.indices, y, sample_weight, seed=)
         intercept_decay = SPARSE_INTERCEPT_DECAY
     else:
         X = np.ascontiguousarray(X)
-        dataset = ArrayData(X, y, sample_weight, seed=seed)
+        dataset = ArrayData(X, y, sample_weight, seed=)
         intercept_decay = 1.0
 
     return dataset, intercept_decay
@@ -235,7 +235,7 @@ def _preprocess_data(
         sample_weight = np.asarray(sample_weight)
 
     if check_input:
-        X = check_array(X, copy=copy, accept_sparse=["csr", "csc"], dtype=FLOAT_DTYPES)
+        X = check_array(X, copy=, accept_sparse=["csr", "csc"], dtype=FLOAT_DTYPES)
         y = check_array(y, dtype=X.dtype, copy=copy_y, ensure_2d=False)
     else:
         y = y.astype(X.dtype, copy=copy_y)
@@ -255,7 +255,7 @@ def _preprocess_data(
                     last_mean=0.0,
                     last_variance=0.0,
                     last_sample_count=0.0,
-                    sample_weight=sample_weight,
+                    sample_weight=,
                 )
             else:
                 X_offset = np.average(X, axis=0, weights=sample_weight)
@@ -494,7 +494,7 @@ class SparseCoefMixin:
             Fitted estimator.
         """
         msg = "Estimator, %(name)s, must be fitted before densifying."
-        check_is_fitted(self, msg=msg)
+        check_is_fitted(self, msg=)
         if sp.issparse(self.coef_):
             self.coef_ = self.coef_.toarray()
         return self
@@ -526,7 +526,7 @@ class SparseCoefMixin:
         method (if any) will not work until you call densify.
         """
         msg = "Estimator, %(name)s, must be fitted before sparsifying."
-        check_is_fitted(self, msg=msg)
+        check_is_fitted(self, msg=)
         self.coef_ = sp.csr_matrix(self.coef_)
         return self
 
@@ -676,7 +676,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         accept_sparse = False if self.positive else ["csr", "csc", "coo"]
 
         X, y = self._validate_data(
-            X, y, accept_sparse=accept_sparse, y_numeric=True, multi_output=True
+            X, y, accept_sparse=, y_numeric=True, multi_output=True
         )
 
         has_sw = sample_weight is not None
@@ -695,7 +695,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             y,
             fit_intercept=self.fit_intercept,
             copy=copy_X_in_preprocess_data,
-            sample_weight=sample_weight,
+            sample_weight=,
         )
 
         if has_sw:
@@ -735,7 +735,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                     return X.T.dot(b) - X_offset_scale * b.sum()
 
             X_centered = sparse.linalg.LinearOperator(
-                shape=X.shape, matvec=matvec, rmatvec=rmatvec
+                shape=X.shape, matvec=, rmatvec=
             )
 
             if y.ndim < 2:
@@ -810,7 +810,7 @@ def _check_precomputed_gram_matrix(
         rtols = [1e-4 if dtype == np.float32 else 1e-7 for dtype in dtypes]
         rtol = max(rtols)
 
-    if not np.isclose(expected, actual, rtol=rtol, atol=atol):
+    if not np.isclose(expected, actual, rtol=, atol=):
         raise ValueError(
             "Gram matrix passed in via 'precompute' parameter "
             "did not pass validation when a single element was "
@@ -845,28 +845,28 @@ def _pre_fit(
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
-            fit_intercept=fit_intercept,
-            normalize=normalize,
+            fit_intercept=,
+            normalize=,
             copy=False,
-            check_input=check_input,
-            sample_weight=sample_weight,
+            check_input=,
+            sample_weight=,
         )
     else:
         # copy was done in fit if necessary
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
-            fit_intercept=fit_intercept,
-            normalize=normalize,
-            copy=copy,
-            check_input=check_input,
-            sample_weight=sample_weight,
+            fit_intercept=,
+            normalize=,
+            copy=,
+            check_input=,
+            sample_weight=,
         )
         # Rescale only in dense case. Sparse cd solver directly deals with
         # sample_weight.
         if sample_weight is not None:
             # This triggers copies anyway.
-            X, y, _ = _rescale_data(X, y, sample_weight=sample_weight)
+            X, y, _ = _rescale_data(X, y, sample_weight=)
 
     # FIXME: 'normalize' to be removed in 1.4
     if hasattr(precompute, "__array__"):

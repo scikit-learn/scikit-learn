@@ -39,21 +39,15 @@ def _unique(values, *, return_inverse=False, return_counts=False):
         array. Only provided if `return_counts` is True.
     """
     if values.dtype == object:
-        return _unique_python(
-            values, return_inverse=return_inverse, return_counts=return_counts
-        )
+        return _unique_python(values, return_inverse=, return_counts=)
     # numerical
-    return _unique_np(
-        values, return_inverse=return_inverse, return_counts=return_counts
-    )
+    return _unique_np(values, return_inverse=, return_counts=)
 
 
 def _unique_np(values, return_inverse=False, return_counts=False):
     """Helper function to find unique values for numpy arrays that correctly
     accounts for nans. See `_unique` documentation for details."""
-    uniques = np.unique(
-        values, return_inverse=return_inverse, return_counts=return_counts
-    )
+    uniques = np.unique(values, return_inverse=, return_counts=)
 
     inverse, counts = None, None
 

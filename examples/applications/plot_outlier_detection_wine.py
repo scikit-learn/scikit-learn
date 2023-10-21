@@ -70,9 +70,9 @@ for color, (name, estimator) in zip(colors, estimators.items()):
         plot_method="contour",
         levels=[0],
         colors=color,
-        ax=ax,
+        ax=,
     )
-    legend_lines.append(mlines.Line2D([], [], color=color, label=name))
+    legend_lines.append(mlines.Line2D([], [], color=, label=name))
 
 
 ax.scatter(X[:, 0], X[:, 1], color="black")
@@ -121,9 +121,9 @@ for color, (name, estimator) in zip(colors, estimators.items()):
         plot_method="contour",
         levels=[0],
         colors=color,
-        ax=ax,
+        ax=,
     )
-    legend_lines.append(mlines.Line2D([], [], color=color, label=name))
+    legend_lines.append(mlines.Line2D([], [], color=, label=name))
 
 
 ax.scatter(X[:, 0], X[:, 1], color="black")

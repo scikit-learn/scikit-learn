@@ -70,12 +70,12 @@ def test_bayesian_mixture_weights_prior_initialisation():
     # Check correct init for a given value of weight_concentration_prior
     weight_concentration_prior = rng.rand()
     bgmm = BayesianGaussianMixture(
-        weight_concentration_prior=weight_concentration_prior, random_state=rng
+        weight_concentration_prior=, random_state=rng
     ).fit(X)
     assert_almost_equal(weight_concentration_prior, bgmm.weight_concentration_prior_)
 
     # Check correct init for the default value of weight_concentration_prior
-    bgmm = BayesianGaussianMixture(n_components=n_components, random_state=rng).fit(X)
+    bgmm = BayesianGaussianMixture(n_components=, random_state=rng).fit(X)
     assert_almost_equal(1.0 / n_components, bgmm.weight_concentration_prior_)
 
 
@@ -87,7 +87,7 @@ def test_bayesian_mixture_mean_prior_initialisation():
     # Check correct init for a given value of mean_precision_prior
     mean_precision_prior = rng.rand()
     bgmm = BayesianGaussianMixture(
-        mean_precision_prior=mean_precision_prior, random_state=rng
+        mean_precision_prior=, random_state=rng
     ).fit(X)
     assert_almost_equal(mean_precision_prior, bgmm.mean_precision_prior_)
 
@@ -98,12 +98,12 @@ def test_bayesian_mixture_mean_prior_initialisation():
     # Check correct init for a given value of mean_prior
     mean_prior = rng.rand(n_features)
     bgmm = BayesianGaussianMixture(
-        n_components=n_components, mean_prior=mean_prior, random_state=rng
+        n_components=, mean_prior=, random_state=rng
     ).fit(X)
     assert_almost_equal(mean_prior, bgmm.mean_prior_)
 
     # Check correct init for the default value of bemean_priorta
-    bgmm = BayesianGaussianMixture(n_components=n_components, random_state=rng).fit(X)
+    bgmm = BayesianGaussianMixture(n_components=, random_state=rng).fit(X)
     assert_almost_equal(X.mean(axis=0), bgmm.mean_prior_)
 
 
@@ -127,7 +127,7 @@ def test_bayesian_mixture_precisions_prior_initialisation():
     # Check correct init for a given value of degrees_of_freedom_prior
     degrees_of_freedom_prior = rng.rand() + n_features - 1.0
     bgmm = BayesianGaussianMixture(
-        degrees_of_freedom_prior=degrees_of_freedom_prior, random_state=rng
+        degrees_of_freedom_prior=, random_state=rng
     ).fit(X)
     assert_almost_equal(degrees_of_freedom_prior, bgmm.degrees_of_freedom_prior_)
 
@@ -335,7 +335,7 @@ def test_check_covariance_precision():
 
     # Computation of the full_covariance
     bgmm = BayesianGaussianMixture(
-        n_components=n_components, max_iter=100, random_state=rng, tol=1e-3, reg_covar=0
+        n_components=, max_iter=100, random_state=rng, tol=1e-3, reg_covar=0
     )
     for covar_type in COVARIANCE_TYPE:
         bgmm.covariance_type = covar_type
@@ -374,7 +374,7 @@ def test_invariant_translation():
             X = rand_data.X[covar_type]
             bgmm1 = BayesianGaussianMixture(
                 weight_concentration_prior_type=prior_type,
-                n_components=n_components,
+                n_components=,
                 max_iter=100,
                 random_state=0,
                 tol=1e-3,
@@ -382,7 +382,7 @@ def test_invariant_translation():
             ).fit(X)
             bgmm2 = BayesianGaussianMixture(
                 weight_concentration_prior_type=prior_type,
-                n_components=n_components,
+                n_components=,
                 max_iter=100,
                 random_state=0,
                 tol=1e-3,
@@ -411,10 +411,10 @@ def test_bayesian_mixture_fit_predict(seed, max_iter, tol):
 
     for covar_type in COVARIANCE_TYPE:
         bgmm1 = BayesianGaussianMixture(
-            n_components=n_components,
-            max_iter=max_iter,
+            n_components=,
+            max_iter=,
             random_state=rng,
-            tol=tol,
+            tol=,
             reg_covar=0,
         )
         bgmm1.covariance_type = covar_type

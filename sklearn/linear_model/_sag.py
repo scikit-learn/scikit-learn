@@ -312,8 +312,8 @@ def sag_solver(
         alpha_scaled,
         loss,
         fit_intercept,
-        n_samples=n_samples,
-        is_saga=is_saga,
+        n_samples=,
+        is_saga=,
     )
     if step_size * alpha_scaled == 1:
         raise ZeroDivisionError(

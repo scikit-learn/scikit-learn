@@ -83,7 +83,7 @@ def fit_and_plot_model(X_plot, y, clf, ax):
         X_plot,
         response_method="predict",
         alpha=0.5,
-        ax=ax,
+        ax=,
     )
     disp.ax_.scatter(X_plot["proline"], X_plot["hue"], c=y, s=20, edgecolor="k")
     disp.ax_.set_xlim((X_plot["proline"].min(), X_plot["proline"].max()))
@@ -161,19 +161,19 @@ for target_class, color, marker in zip(target_classes, colors, markers):
     ax1.scatter(
         x=X_train_transformed[y_train == target_class, 0],
         y=X_train_transformed[y_train == target_class, 1],
-        color=color,
+        color=,
         label=f"class {target_class}",
         alpha=0.5,
-        marker=marker,
+        marker=,
     )
 
     ax2.scatter(
         x=X_train_std_transformed[y_train == target_class, 0],
         y=X_train_std_transformed[y_train == target_class, 1],
-        color=color,
+        color=,
         label=f"class {target_class}",
         alpha=0.5,
-        marker=marker,
+        marker=,
     )
 
 ax1.set_title("Unscaled training dataset after PCA")
@@ -208,10 +208,10 @@ from sklearn.pipeline import make_pipeline
 
 Cs = np.logspace(-5, 5, 20)
 
-unscaled_clf = make_pipeline(pca, LogisticRegressionCV(Cs=Cs))
+unscaled_clf = make_pipeline(pca, LogisticRegressionCV(Cs=))
 unscaled_clf.fit(X_train, y_train)
 
-scaled_clf = make_pipeline(scaler, pca, LogisticRegressionCV(Cs=Cs))
+scaled_clf = make_pipeline(scaler, pca, LogisticRegressionCV(Cs=))
 scaled_clf.fit(X_train, y_train)
 
 print(f"Optimal C for the unscaled PCA: {unscaled_clf[-1].C_[0]:.4f}\n")

@@ -31,7 +31,7 @@ from sklearn.datasets.tests.test_common import (
 def test_fetch_kddcup99_percent10(
     fetch_kddcup99_fxt, as_frame, subset, n_samples, n_features
 ):
-    data = fetch_kddcup99_fxt(subset=subset, as_frame=as_frame)
+    data = fetch_kddcup99_fxt(subset=, as_frame=)
     assert data.data.shape == (n_samples, n_features)
     assert data.target.shape == (n_samples,)
     if as_frame:

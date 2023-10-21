@@ -23,7 +23,7 @@ y = [0, 1, 2, 2]
 
 def mkchi2(k):
     """Make k-best chi2 selector"""
-    return SelectKBest(chi2, k=k)
+    return SelectKBest(chi2, k=)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)

@@ -171,7 +171,7 @@ class PredictionErrorDisplay:
             )
             xlabel, ylabel = "Predicted values", "Residuals (actual - predicted)"
 
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+        ax.set(xlabel=, ylabel=)
 
         self.ax_ = ax
         self.figure_ = ax.figure
@@ -274,13 +274,13 @@ class PredictionErrorDisplay:
 
         return cls.from_predictions(
             y_true=y,
-            y_pred=y_pred,
-            kind=kind,
-            subsample=subsample,
-            random_state=random_state,
-            ax=ax,
-            scatter_kwargs=scatter_kwargs,
-            line_kwargs=line_kwargs,
+            y_pred=,
+            kind=,
+            subsample=,
+            random_state=,
+            ax=,
+            scatter_kwargs=,
+            line_kwargs=,
         )
 
     @classmethod
@@ -392,14 +392,6 @@ class PredictionErrorDisplay:
             y_true = _safe_indexing(y_true, indices, axis=0)
             y_pred = _safe_indexing(y_pred, indices, axis=0)
 
-        viz = PredictionErrorDisplay(
-            y_true=y_true,
-            y_pred=y_pred,
-        )
+        viz = PredictionErrorDisplay(y_true=, y_pred=)
 
-        return viz.plot(
-            ax=ax,
-            kind=kind,
-            scatter_kwargs=scatter_kwargs,
-            line_kwargs=line_kwargs,
-        )
+        return viz.plot(ax=, kind=, scatter_kwargs=, line_kwargs=)

@@ -60,7 +60,7 @@ def test_gpr_interpolation(kernel):
         pytest.xfail("This test may fail on 32 bit Python")
 
     # Test the interpolating property for different kernels.
-    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    gpr = GaussianProcessRegressor(kernel=).fit(X, y)
     y_pred, y_cov = gpr.predict(X, return_cov=True)
 
     assert_almost_equal(y_pred, y)
@@ -72,7 +72,7 @@ def test_gpr_interpolation_structured():
     kernel = MiniSeqKernel(baseline_similarity_bounds="fixed")
     X = ["A", "B", "C"]
     y = np.array([1, 2, 3])
-    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    gpr = GaussianProcessRegressor(kernel=).fit(X, y)
     y_pred, y_cov = gpr.predict(X, return_cov=True)
 
     assert_almost_equal(
@@ -88,7 +88,7 @@ def test_lml_improving(kernel):
         pytest.xfail("This test may fail on 32 bit Python")
 
     # Test that hyperparameter-tuning improves log-marginal likelihood.
-    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    gpr = GaussianProcessRegressor(kernel=).fit(X, y)
     assert gpr.log_marginal_likelihood(gpr.kernel_.theta) > gpr.log_marginal_likelihood(
         kernel.theta
     )
@@ -97,7 +97,7 @@ def test_lml_improving(kernel):
 @pytest.mark.parametrize("kernel", kernels)
 def test_lml_precomputed(kernel):
     # Test that lml of optimized kernel is stored correctly.
-    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    gpr = GaussianProcessRegressor(kernel=).fit(X, y)
     assert gpr.log_marginal_likelihood(gpr.kernel_.theta) == pytest.approx(
         gpr.log_marginal_likelihood()
     )
@@ -106,7 +106,7 @@ def test_lml_precomputed(kernel):
 @pytest.mark.parametrize("kernel", kernels)
 def test_lml_without_cloning_kernel(kernel):
     # Test that lml of optimized kernel is stored correctly.
-    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    gpr = GaussianProcessRegressor(kernel=).fit(X, y)
     input_theta = np.ones(gpr.kernel_.theta.shape, dtype=np.float64)
 
     gpr.log_marginal_likelihood(input_theta, clone_kernel=False)
@@ -116,7 +116,7 @@ def test_lml_without_cloning_kernel(kernel):
 @pytest.mark.parametrize("kernel", non_fixed_kernels)
 def test_converged_to_local_maximum(kernel):
     # Test that we are in local maximum after hyperparameter-optimization.
-    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    gpr = GaussianProcessRegressor(kernel=).fit(X, y)
 
     lml, lml_gradient = gpr.log_marginal_likelihood(gpr.kernel_.theta, True)
 
@@ -130,7 +130,7 @@ def test_converged_to_local_maximum(kernel):
 @pytest.mark.parametrize("kernel", non_fixed_kernels)
 def test_solution_inside_bounds(kernel):
     # Test that hyperparameter-optimization remains in bounds#
-    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    gpr = GaussianProcessRegressor(kernel=).fit(X, y)
 
     bounds = gpr.kernel_.bounds
     max_ = np.finfo(gpr.kernel_.theta.dtype).max
@@ -144,7 +144,7 @@ def test_solution_inside_bounds(kernel):
 @pytest.mark.parametrize("kernel", kernels)
 def test_lml_gradient(kernel):
     # Compare analytic and numeric gradient of log marginal likelihood.
-    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    gpr = GaussianProcessRegressor(kernel=).fit(X, y)
 
     lml, lml_gradient = gpr.log_marginal_likelihood(kernel.theta, True)
     lml_gradient_approx = approx_fprime(
@@ -157,7 +157,7 @@ def test_lml_gradient(kernel):
 @pytest.mark.parametrize("kernel", kernels)
 def test_prior(kernel):
     # Test that GP prior has mean 0 and identical variances.
-    gpr = GaussianProcessRegressor(kernel=kernel)
+    gpr = GaussianProcessRegressor(kernel=)
 
     y_mean, y_cov = gpr.predict(X, return_cov=True)
 
@@ -172,7 +172,7 @@ def test_prior(kernel):
 @pytest.mark.parametrize("kernel", kernels)
 def test_sample_statistics(kernel):
     # Test that statistics of samples drawn from GP are correct.
-    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    gpr = GaussianProcessRegressor(kernel=).fit(X, y)
 
     y_mean, y_cov = gpr.predict(X2, return_cov=True)
 
@@ -190,7 +190,7 @@ def test_sample_statistics(kernel):
 def test_no_optimizer():
     # Test that kernel parameters are unmodified when optimizer is None.
     kernel = RBF(1.0)
-    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None).fit(X, y)
+    gpr = GaussianProcessRegressor(kernel=, optimizer=None).fit(X, y)
     assert np.exp(gpr.kernel_.theta) == 1.0
 
 
@@ -201,7 +201,7 @@ def test_predict_cov_vs_std(kernel, target):
         pytest.xfail("This test may fail on 32 bit Python")
 
     # Test that predicted std.-dev. is consistent with cov's diagonal.
-    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    gpr = GaussianProcessRegressor(kernel=).fit(X, y)
     y_mean, y_cov = gpr.predict(X2, return_cov=True)
     y_mean, y_std = gpr.predict(X2, return_std=True)
     assert_almost_equal(np.sqrt(np.diag(y_cov)), y_std)
@@ -217,7 +217,7 @@ def test_anisotropic_kernel():
     y = X[:, 0] + 0.1 * X[:, 1]
 
     kernel = RBF([1.0, 1.0])
-    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    gpr = GaussianProcessRegressor(kernel=).fit(X, y)
     assert np.exp(gpr.kernel_.theta[1]) > np.exp(gpr.kernel_.theta[0]) * 5
 
 
@@ -239,8 +239,8 @@ def test_random_starts():
     last_lml = -np.inf
     for n_restarts_optimizer in range(5):
         gp = GaussianProcessRegressor(
-            kernel=kernel,
-            n_restarts_optimizer=n_restarts_optimizer,
+            kernel=,
+            n_restarts_optimizer=,
             random_state=0,
         ).fit(X, y)
         lml = gp.log_marginal_likelihood(gp.kernel_.theta)
@@ -265,11 +265,11 @@ def test_y_normalization(kernel):
     y_norm = (y - y_mean) / y_std
 
     # Fit non-normalizing GP on normalized y
-    gpr = GaussianProcessRegressor(kernel=kernel)
+    gpr = GaussianProcessRegressor(kernel=)
     gpr.fit(X, y_norm)
 
     # Fit normalizing GP on unnormalized y
-    gpr_norm = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+    gpr_norm = GaussianProcessRegressor(kernel=, normalize_y=True)
     gpr_norm.fit(X, y)
 
     # Compare predicted mean, std-devs and covariances
@@ -318,7 +318,7 @@ def test_large_variance_y():
     # Standard GP with normalize_y=True
     RBF_params = {"length_scale": 1.0}
     kernel = RBF(**RBF_params)
-    gpr = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+    gpr = GaussianProcessRegressor(kernel=, normalize_y=True)
     gpr.fit(X, y_large)
     y_pred, y_pred_std = gpr.predict(X2, return_std=True)
 
@@ -351,10 +351,10 @@ def test_y_multioutput():
     # of 1d GP and that second dimension is twice as large
     kernel = RBF(length_scale=1.0)
 
-    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None, normalize_y=False)
+    gpr = GaussianProcessRegressor(kernel=, optimizer=None, normalize_y=False)
     gpr.fit(X, y)
 
-    gpr_2d = GaussianProcessRegressor(kernel=kernel, optimizer=None, normalize_y=False)
+    gpr_2d = GaussianProcessRegressor(kernel=, optimizer=None, normalize_y=False)
     gpr_2d.fit(X, y_2d)
 
     y_pred_1d, y_std_1d = gpr.predict(X2, return_std=True)
@@ -380,10 +380,10 @@ def test_y_multioutput():
 
     # Test hyperparameter optimization
     for kernel in kernels:
-        gpr = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+        gpr = GaussianProcessRegressor(kernel=, normalize_y=True)
         gpr.fit(X, y)
 
-        gpr_2d = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+        gpr_2d = GaussianProcessRegressor(kernel=, normalize_y=True)
         gpr_2d.fit(X, np.vstack((y, y)).T)
 
         assert_almost_equal(gpr.kernel_.theta, gpr_2d.kernel_.theta, 4)
@@ -407,7 +407,7 @@ def test_custom_optimizer(kernel):
                 theta_opt, func_min = theta, f
         return theta_opt, func_min
 
-    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=optimizer)
+    gpr = GaussianProcessRegressor(kernel=, optimizer=)
     gpr.fit(X, y)
     # Checks that optimizer improved marginal likelihood
     assert gpr.log_marginal_likelihood(gpr.kernel_.theta) > gpr.log_marginal_likelihood(
@@ -419,7 +419,7 @@ def test_gpr_correct_error_message():
     X = np.arange(12).reshape(6, -1)
     y = np.ones(6)
     kernel = DotProduct()
-    gpr = GaussianProcessRegressor(kernel=kernel, alpha=0.0)
+    gpr = GaussianProcessRegressor(kernel=, alpha=0.0)
     message = (
         "The kernel, %s, is not returning a "
         "positive definite matrix. Try gradually increasing "
@@ -433,8 +433,8 @@ def test_gpr_correct_error_message():
 @pytest.mark.parametrize("kernel", kernels)
 def test_duplicate_input(kernel):
     # Test GPR can handle two different output-values for the same input.
-    gpr_equal_inputs = GaussianProcessRegressor(kernel=kernel, alpha=1e-2)
-    gpr_similar_inputs = GaussianProcessRegressor(kernel=kernel, alpha=1e-2)
+    gpr_equal_inputs = GaussianProcessRegressor(kernel=, alpha=1e-2)
+    gpr_similar_inputs = GaussianProcessRegressor(kernel=, alpha=1e-2)
 
     X_ = np.vstack((X, X[0]))
     y_ = np.hstack((y, y[0] + 1))
@@ -471,7 +471,7 @@ def test_no_fit_default_predict():
 
 def test_warning_bounds():
     kernel = RBF(length_scale_bounds=[1e-5, 1e-3])
-    gpr = GaussianProcessRegressor(kernel=kernel)
+    gpr = GaussianProcessRegressor(kernel=)
     warning_message = (
         "The optimal value found for dimension 0 of parameter "
         "length_scale is close to the specified upper bound "
@@ -555,7 +555,7 @@ def test_bound_check_fixed_hyperparameter():
         length_scale=1.0, periodicity=1.0, periodicity_bounds="fixed"
     )  # seasonal component
     kernel = k1 + k2
-    GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    GaussianProcessRegressor(kernel=).fit(X, y)
 
 
 @pytest.mark.parametrize("kernel", kernels)
@@ -569,7 +569,7 @@ def test_constant_target(kernel):
     """
     y_constant = np.ones(X.shape[0], dtype=np.float64)
 
-    gpr = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+    gpr = GaussianProcessRegressor(kernel=, normalize_y=True)
     gpr.fit(X, y_constant)
     assert gpr._y_train_std == pytest.approx(1.0)
 
@@ -609,7 +609,7 @@ def test_gpr_consistency_std_cov_non_invertible_kernel():
     kernel = C(8.98576054e05, (1e-12, 1e12)) * RBF(
         [5.91326520e02, 1.32584051e03], (1e-12, 1e12)
     ) + WhiteKernel(noise_level=1e-5)
-    gpr = GaussianProcessRegressor(kernel=kernel, alpha=0, optimizer=None)
+    gpr = GaussianProcessRegressor(kernel=, alpha=0, optimizer=None)
     X_train = np.array(
         [
             [0.0, 0.0],
@@ -716,7 +716,7 @@ def test_predict_shapes(normalize_y, n_targets):
     X_test = rng.randn(n_samples_test, n_features)
     y_train = rng.randn(*y_train_shape)
 
-    model = GaussianProcessRegressor(normalize_y=normalize_y)
+    model = GaussianProcessRegressor(normalize_y=)
     model.fit(X_train, y_train)
 
     y_pred, y_std = model.predict(X_test, return_std=True)
@@ -759,7 +759,7 @@ def test_sample_y_shapes(normalize_y, n_targets):
     X_test = rng.randn(n_samples_X_test, n_features)
     y_train = rng.randn(*y_train_shape)
 
-    model = GaussianProcessRegressor(normalize_y=normalize_y)
+    model = GaussianProcessRegressor(normalize_y=)
 
     # FIXME: before fitting, the estimator does not have information regarding
     # the number of targets and default to 1. This is inconsistent with the shape
@@ -784,10 +784,10 @@ def test_sample_y_shape_with_prior(n_targets, n_samples):
     X = rng.randn(10, 3)
     y = rng.randn(10, n_targets if n_targets is not None else 1)
 
-    model = GaussianProcessRegressor(n_targets=n_targets)
-    shape_before_fit = model.sample_y(X, n_samples=n_samples).shape
+    model = GaussianProcessRegressor(n_targets=)
+    shape_before_fit = model.sample_y(X, n_samples=).shape
     model.fit(X, y)
-    shape_after_fit = model.sample_y(X, n_samples=n_samples).shape
+    shape_after_fit = model.sample_y(X, n_samples=).shape
     assert shape_before_fit == shape_after_fit
 
 
@@ -800,7 +800,7 @@ def test_predict_shape_with_prior(n_targets):
     X = rng.randn(n_sample, 3)
     y = rng.randn(n_sample, n_targets if n_targets is not None else 1)
 
-    model = GaussianProcessRegressor(n_targets=n_targets)
+    model = GaussianProcessRegressor(n_targets=)
     mean_prior, cov_prior = model.predict(X, return_cov=True)
     _, std_prior = model.predict(X, return_std=True)
 

@@ -89,7 +89,7 @@ for i, (clf, name) in enumerate(clf_list):
         X_test,
         y_test,
         n_bins=10,
-        name=name,
+        name=,
         ax=ax_calibration_curve,
         color=colors(i),
     )
@@ -246,7 +246,7 @@ for i, (clf, name) in enumerate(clf_list):
         X_test,
         y_test,
         n_bins=10,
-        name=name,
+        name=,
         ax=ax_calibration_curve,
         color=colors(i),
     )

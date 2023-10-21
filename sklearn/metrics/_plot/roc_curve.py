@@ -124,7 +124,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
         """
-        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=, name=)
 
         line_kwargs = {}
         if self.roc_auc is not None and name is not None:
@@ -153,9 +153,9 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         xlabel = "False Positive Rate" + info_pos_label
         ylabel = "True Positive Rate" + info_pos_label
         self.ax_.set(
-            xlabel=xlabel,
+            xlabel=,
             xlim=(-0.01, 1.01),
-            ylabel=ylabel,
+            ylabel=,
             ylim=(-0.01, 1.01),
             aspect="equal",
         )
@@ -276,21 +276,21 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             estimator,
             X,
             y,
-            response_method=response_method,
-            pos_label=pos_label,
-            name=name,
+            response_method=,
+            pos_label=,
+            name=,
         )
 
         return cls.from_predictions(
             y_true=y,
-            y_pred=y_pred,
-            sample_weight=sample_weight,
-            drop_intermediate=drop_intermediate,
-            name=name,
-            ax=ax,
-            pos_label=pos_label,
-            plot_chance_level=plot_chance_level,
-            chance_level_kw=chance_level_kw,
+            y_pred=,
+            sample_weight=,
+            drop_intermediate=,
+            name=,
+            ax=,
+            pos_label=,
+            plot_chance_level=,
+            chance_level_kw=,
             **kwargs,
         )
 
@@ -390,30 +390,30 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> plt.show()
         """
         pos_label_validated, name = cls._validate_from_predictions_params(
-            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+            y_true, y_pred, sample_weight=, pos_label=, name=
         )
 
         fpr, tpr, _ = roc_curve(
             y_true,
             y_pred,
-            pos_label=pos_label,
-            sample_weight=sample_weight,
-            drop_intermediate=drop_intermediate,
+            pos_label=,
+            sample_weight=,
+            drop_intermediate=,
         )
         roc_auc = auc(fpr, tpr)
 
         viz = RocCurveDisplay(
-            fpr=fpr,
-            tpr=tpr,
-            roc_auc=roc_auc,
+            fpr=,
+            tpr=,
+            roc_auc=,
             estimator_name=name,
             pos_label=pos_label_validated,
         )
 
         return viz.plot(
-            ax=ax,
-            name=name,
-            plot_chance_level=plot_chance_level,
-            chance_level_kw=chance_level_kw,
+            ax=,
+            name=,
+            plot_chance_level=,
+            chance_level_kw=,
             **kwargs,
         )

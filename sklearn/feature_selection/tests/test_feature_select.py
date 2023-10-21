@@ -99,13 +99,13 @@ def test_r_regression(center):
         n_samples=2000, n_features=20, n_informative=5, shuffle=False, random_state=0
     )
 
-    corr_coeffs = r_regression(X, y, center=center)
+    corr_coeffs = r_regression(X, y, center=)
     assert (-1 < corr_coeffs).all()
     assert (corr_coeffs < 1).all()
 
     sparse_X = _convert_container(X, "sparse")
 
-    sparse_corr_coeffs = r_regression(sparse_X, y, center=center)
+    sparse_corr_coeffs = r_regression(sparse_X, y, center=)
     assert_allclose(sparse_corr_coeffs, corr_coeffs)
 
     # Testing against numpy for reference
@@ -214,7 +214,7 @@ def test_r_regression_force_finite(X, y, expected_corr_coef, force_finite):
     """
     with warnings.catch_warnings():
         warnings.simplefilter("error", RuntimeWarning)
-        corr_coef = r_regression(X, y, force_finite=force_finite)
+        corr_coef = r_regression(X, y, force_finite=)
     np.testing.assert_array_almost_equal(corr_coef, expected_corr_coef)
 
 
@@ -297,7 +297,7 @@ def test_f_regression_corner_case(
     """
     with warnings.catch_warnings():
         warnings.simplefilter("error", RuntimeWarning)
-        f_statistic, p_values = f_regression(X, y, force_finite=force_finite)
+        f_statistic, p_values = f_regression(X, y, force_finite=)
     np.testing.assert_array_almost_equal(f_statistic, expected_f_statistic)
     np.testing.assert_array_almost_equal(p_values, expected_p_values)
 
@@ -498,7 +498,7 @@ def test_select_heuristics_classif():
     gtruth[:5] = 1
     for mode in ["fdr", "fpr", "fwe"]:
         X_r2 = (
-            GenericUnivariateSelect(f_classif, mode=mode, param=0.01)
+            GenericUnivariateSelect(f_classif, mode=, param=0.01)
             .fit(X, y)
             .transform(X)
         )
@@ -615,7 +615,7 @@ def test_select_heuristics_regression():
     gtruth[:5] = 1
     for mode in ["fdr", "fpr", "fwe"]:
         X_r2 = (
-            GenericUnivariateSelect(f_regression, mode=mode, param=0.01)
+            GenericUnivariateSelect(f_regression, mode=, param=0.01)
             .fit(X, y)
             .transform(X)
         )
@@ -667,16 +667,16 @@ def test_select_fdr_regression(alpha, n_informative):
         X, y = make_regression(
             n_samples=150,
             n_features=20,
-            n_informative=n_informative,
+            n_informative=,
             shuffle=False,
-            random_state=random_state,
+            random_state=,
             noise=10,
         )
 
         with warnings.catch_warnings(record=True):
             # Warnings can be raised when no features are selected
             # (low alpha or very noisy data)
-            univariate_filter = SelectFdr(f_regression, alpha=alpha)
+            univariate_filter = SelectFdr(f_regression, alpha=)
             X_r = univariate_filter.fit(X, y).transform(X)
             X_r2 = (
                 GenericUnivariateSelect(f_regression, mode="fdr", param=alpha)

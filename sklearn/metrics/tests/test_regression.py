@@ -79,7 +79,7 @@ def test_regression_metrics(n_samples=50):
     ) + (1 - alpha) * np.maximum(y_pred - y_true, 0)
     y_quantile = np.percentile(y_true, q=alpha * 100)
     assert_almost_equal(
-        d2_pinball_score(y_true, y_pred, alpha=alpha),
+        d2_pinball_score(y_true, y_pred, alpha=),
         1
         - pinball_loss(y_true, y_pred, alpha).sum()
         / pinball_loss(y_true, y_quantile, alpha).sum(),
@@ -272,46 +272,46 @@ def test_regression_metrics_at_limits():
     # Tweedie deviance error
     power = -1.2
     assert_allclose(
-        mean_tweedie_deviance([0], [1.0], power=power), 2 / (2 - power), rtol=1e-3
+        mean_tweedie_deviance([0], [1.0], power=), 2 / (2 - power), rtol=1e-3
     )
     msg = "can only be used on strictly positive y_pred."
     with pytest.raises(ValueError, match=msg):
-        mean_tweedie_deviance([0.0], [0.0], power=power)
+        mean_tweedie_deviance([0.0], [0.0], power=)
     with pytest.raises(ValueError, match=msg):
-        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=)
 
     assert_almost_equal(mean_tweedie_deviance([0.0], [0.0], power=0), 0.0, 2)
 
     power = 1.0
     msg = "only be used on non-negative y and strictly positive y_pred."
     with pytest.raises(ValueError, match=msg):
-        mean_tweedie_deviance([0.0], [0.0], power=power)
+        mean_tweedie_deviance([0.0], [0.0], power=)
     with pytest.raises(ValueError, match=msg):
-        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=)
 
     power = 1.5
-    assert_allclose(mean_tweedie_deviance([0.0], [1.0], power=power), 2 / (2 - power))
+    assert_allclose(mean_tweedie_deviance([0.0], [1.0], power=), 2 / (2 - power))
     msg = "only be used on non-negative y and strictly positive y_pred."
     with pytest.raises(ValueError, match=msg):
-        mean_tweedie_deviance([0.0], [0.0], power=power)
+        mean_tweedie_deviance([0.0], [0.0], power=)
     with pytest.raises(ValueError, match=msg):
-        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=)
 
     power = 2.0
-    assert_allclose(mean_tweedie_deviance([1.0], [1.0], power=power), 0.00, atol=1e-8)
+    assert_allclose(mean_tweedie_deviance([1.0], [1.0], power=), 0.00, atol=1e-8)
     msg = "can only be used on strictly positive y and y_pred."
     with pytest.raises(ValueError, match=msg):
-        mean_tweedie_deviance([0.0], [0.0], power=power)
+        mean_tweedie_deviance([0.0], [0.0], power=)
     with pytest.raises(ValueError, match=msg):
-        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=)
 
     power = 3.0
-    assert_allclose(mean_tweedie_deviance([1.0], [1.0], power=power), 0.00, atol=1e-8)
+    assert_allclose(mean_tweedie_deviance([1.0], [1.0], power=), 0.00, atol=1e-8)
     msg = "can only be used on strictly positive y and y_pred."
     with pytest.raises(ValueError, match=msg):
-        mean_tweedie_deviance([0.0], [0.0], power=power)
+        mean_tweedie_deviance([0.0], [0.0], power=)
     with pytest.raises(ValueError, match=msg):
-        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
+        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=)
 
 
 def test__check_reg_targets():
@@ -599,7 +599,7 @@ def test_dummy_quantile_parameter_tuning():
     for alpha in all_quantiles:
         neg_mean_pinball_loss = make_scorer(
             mean_pinball_loss,
-            alpha=alpha,
+            alpha=,
             greater_is_better=False,
         )
         regressor = DummyRegressor(strategy="quantile", quantile=0.25)

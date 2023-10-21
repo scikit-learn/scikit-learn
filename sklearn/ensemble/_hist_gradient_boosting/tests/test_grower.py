@@ -84,7 +84,7 @@ def _check_children_consistency(parent, left, right):
 )
 def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
     X_binned, all_gradients, all_hessians = _make_training_data(
-        n_bins=n_bins, constant_hessian=constant_hessian
+        n_bins=, constant_hessian=
     )
     n_samples = X_binned.shape[0]
 
@@ -97,8 +97,8 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
         X_binned,
         all_gradients,
         all_hessians,
-        n_bins=n_bins,
-        shrinkage=shrinkage,
+        n_bins=,
+        shrinkage=,
         min_samples_leaf=1,
         **stopping_param,
     )
@@ -160,12 +160,12 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
 def test_predictor_from_grower():
     # Build a tree on the toy 3-leaf dataset to extract the predictor.
     n_bins = 256
-    X_binned, all_gradients, all_hessians = _make_training_data(n_bins=n_bins)
+    X_binned, all_gradients, all_hessians = _make_training_data(n_bins=)
     grower = TreeGrower(
         X_binned,
         all_gradients,
         all_hessians,
-        n_bins=n_bins,
+        n_bins=,
         shrinkage=1.0,
         max_leaf_nodes=3,
         min_samples_leaf=5,
@@ -230,7 +230,7 @@ def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins, constant_hessian,
     if noise:
         y_scale = y.std()
         y += rng.normal(scale=noise, size=n_samples) * y_scale
-    mapper = _BinMapper(n_bins=n_bins)
+    mapper = _BinMapper(n_bins=)
     X = mapper.fit_transform(X)
 
     all_gradients = y.astype(G_H_DTYPE)
@@ -240,9 +240,9 @@ def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins, constant_hessian,
         X,
         all_gradients,
         all_hessians,
-        n_bins=n_bins,
+        n_bins=,
         shrinkage=1.0,
-        min_samples_leaf=min_samples_leaf,
+        min_samples_leaf=,
         max_leaf_nodes=n_samples,
     )
     grower.grow()
@@ -269,7 +269,7 @@ def test_min_samples_leaf_root(n_samples, min_samples_leaf):
     # data = linear target, 3 features, 1 irrelevant.
     X = rng.normal(size=(n_samples, 3))
     y = X[:, 0] - X[:, 1]
-    mapper = _BinMapper(n_bins=n_bins)
+    mapper = _BinMapper(n_bins=)
     X = mapper.fit_transform(X)
 
     all_gradients = y.astype(G_H_DTYPE)
@@ -278,9 +278,9 @@ def test_min_samples_leaf_root(n_samples, min_samples_leaf):
         X,
         all_gradients,
         all_hessians,
-        n_bins=n_bins,
+        n_bins=,
         shrinkage=1.0,
-        min_samples_leaf=min_samples_leaf,
+        min_samples_leaf=,
         max_leaf_nodes=n_samples,
     )
     grower.grow()
@@ -308,12 +308,12 @@ def test_max_depth(max_depth):
     # data = linear target, 3 features, 1 irrelevant.
     X = rng.normal(size=(n_samples, 3))
     y = X[:, 0] - X[:, 1]
-    mapper = _BinMapper(n_bins=n_bins)
+    mapper = _BinMapper(n_bins=)
     X = mapper.fit_transform(X)
 
     all_gradients = y.astype(G_H_DTYPE)
     all_hessians = np.ones(shape=1, dtype=G_H_DTYPE)
-    grower = TreeGrower(X, all_gradients, all_hessians, max_depth=max_depth)
+    grower = TreeGrower(X, all_gradients, all_hessians, max_depth=)
     grower.grow()
 
     depth = max(leaf.depth for leaf in grower.finalized_leaves)
@@ -410,10 +410,10 @@ def test_split_on_nan_with_infinite_values():
         X_binned,
         gradients,
         hessians,
-        n_bins_non_missing=n_bins_non_missing,
-        has_missing_values=has_missing_values,
+        n_bins_non_missing=,
+        has_missing_values=,
         min_samples_leaf=1,
-        n_threads=n_threads,
+        n_threads=,
     )
 
     grower.grow()
@@ -433,7 +433,7 @@ def test_split_on_nan_with_infinite_values():
     predictions_binned = predictor.predict_binned(
         X_binned,
         missing_values_bin_idx=bin_mapper.missing_values_bin_idx_,
-        n_threads=n_threads,
+        n_threads=,
     )
     np.testing.assert_allclose(predictions, -gradients)
     np.testing.assert_allclose(predictions_binned, -gradients)
@@ -456,8 +456,8 @@ def test_grow_tree_categories():
         n_bins=4,
         shrinkage=1.0,
         min_samples_leaf=1,
-        is_categorical=is_categorical,
-        n_threads=n_threads,
+        is_categorical=,
+        n_threads=,
     )
     grower.grow()
     assert grower.n_nodes == 3
@@ -495,7 +495,7 @@ def test_grow_tree_categories():
     prediction_binned = predictor.predict_binned(
         np.asarray([[6]]).astype(X_BINNED_DTYPE),
         missing_values_bin_idx=6,
-        n_threads=n_threads,
+        n_threads=,
     )
     assert_allclose(prediction_binned, [-1])  # negative gradient
 
@@ -548,7 +548,7 @@ def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target):
         binning_thresholds=np.zeros((1, n_unique_categories))
     )
     preds = predictor.predict_binned(
-        X_binned, missing_values_bin_idx=255, n_threads=n_threads
+        X_binned, missing_values_bin_idx=255, n_threads=
     )
 
     grower_ohe = TreeGrower(X_ohe, gradients, hessians, **grower_params)
@@ -557,7 +557,7 @@ def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target):
         binning_thresholds=np.zeros((X_ohe.shape[1], n_unique_categories))
     )
     preds_ohe = predictor_ohe.predict_binned(
-        X_ohe, missing_values_bin_idx=255, n_threads=n_threads
+        X_ohe, missing_values_bin_idx=255, n_threads=
     )
 
     assert predictor.get_max_depth() <= predictor_ohe.get_max_depth()
@@ -599,10 +599,10 @@ def test_grower_interaction_constraints():
             X_binned,
             gradients,
             hessians,
-            n_bins=n_bins,
+            n_bins=,
             min_samples_leaf=1,
-            interaction_cst=interaction_cst,
-            n_threads=n_threads,
+            interaction_cst=,
+            n_threads=,
         )
         grower.grow()
 

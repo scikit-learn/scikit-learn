@@ -148,7 +148,7 @@ def _graphical_lasso(
                             n_samples=row.size,
                             alpha_min=alpha / (n_features - 1),
                             copy_Gram=True,
-                            eps=eps,
+                            eps=,
                             method="lars",
                             return_path=False,
                         )
@@ -336,14 +336,14 @@ def graphical_lasso(
         )
 
     model = GraphicalLasso(
-        alpha=alpha,
-        mode=mode,
+        alpha=,
+        mode=,
         covariance="precomputed",
-        tol=tol,
-        enet_tol=enet_tol,
-        max_iter=max_iter,
-        verbose=verbose,
-        eps=eps,
+        tol=,
+        enet_tol=,
+        max_iter=,
+        verbose=,
+        eps=,
         assume_centered=True,
     ).fit(emp_cov)
 
@@ -377,7 +377,7 @@ class BaseGraphicalLasso(EmpiricalCovariance):
         eps=np.finfo(np.float64).eps,
         assume_centered=False,
     ):
-        super().__init__(assume_centered=assume_centered)
+        super().__init__(assume_centered=)
         self.tol = tol
         self.enet_tol = enet_tol
         self.max_iter = max_iter
@@ -522,13 +522,13 @@ class GraphicalLasso(BaseGraphicalLasso):
         assume_centered=False,
     ):
         super().__init__(
-            tol=tol,
-            enet_tol=enet_tol,
-            max_iter=max_iter,
-            mode=mode,
-            verbose=verbose,
-            eps=eps,
-            assume_centered=assume_centered,
+            tol=,
+            enet_tol=,
+            max_iter=,
+            mode=,
+            verbose=,
+            eps=,
+            assume_centered=,
         )
         self.alpha = alpha
         self.covariance = covariance
@@ -670,14 +670,14 @@ def graphical_lasso_path(
             # Capture the errors, and move on
             covariance_, precision_, _, _ = _graphical_lasso(
                 emp_cov,
-                alpha=alpha,
+                alpha=,
                 cov_init=covariance_,
-                mode=mode,
-                tol=tol,
-                enet_tol=enet_tol,
-                max_iter=max_iter,
+                mode=,
+                tol=,
+                enet_tol=,
+                max_iter=,
                 verbose=inner_verbose,
-                eps=eps,
+                eps=,
             )
             covariances_.append(covariance_)
             precisions_.append(precision_)
@@ -913,13 +913,13 @@ class GraphicalLassoCV(_RoutingNotSupportedMixin, BaseGraphicalLasso):
         assume_centered=False,
     ):
         super().__init__(
-            tol=tol,
-            enet_tol=enet_tol,
-            max_iter=max_iter,
-            mode=mode,
-            verbose=verbose,
-            eps=eps,
-            assume_centered=assume_centered,
+            tol=,
+            enet_tol=,
+            max_iter=,
+            mode=,
+            verbose=,
+            eps=,
+            assume_centered=,
         )
         self.alphas = alphas
         self.n_refinements = n_refinements
@@ -991,7 +991,7 @@ class GraphicalLassoCV(_RoutingNotSupportedMixin, BaseGraphicalLasso):
                 this_path = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                     delayed(graphical_lasso_path)(
                         X[train],
-                        alphas=alphas,
+                        alphas=,
                         X_test=X[test],
                         mode=self.mode,
                         tol=self.tol,
@@ -1063,7 +1063,7 @@ class GraphicalLassoCV(_RoutingNotSupportedMixin, BaseGraphicalLasso):
             cross_val_score(
                 EmpiricalCovariance(),
                 X,
-                cv=cv,
+                cv=,
                 n_jobs=self.n_jobs,
                 verbose=inner_verbose,
             )

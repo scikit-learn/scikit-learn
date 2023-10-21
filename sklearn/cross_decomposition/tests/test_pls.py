@@ -360,7 +360,7 @@ def test_attibutes_shapes(Est):
     X = d.data
     Y = d.target
     n_components = 2
-    pls = Est(n_components=n_components)
+    pls = Est(n_components=)
     pls.fit(X, Y)
     assert all(
         attr.shape[1] == n_components for attr in (pls.x_weights_, pls.y_weights_)
@@ -584,7 +584,7 @@ def test_pls_prediction(PLSEstimator, scale):
     X = d.data
     Y = d.target
 
-    pls = PLSEstimator(copy=True, scale=scale).fit(X, Y)
+    pls = PLSEstimator(copy=True, scale=).fit(X, Y)
     Y_pred = pls.predict(X, copy=True)
 
     y_mean = Y.mean(axis=0)

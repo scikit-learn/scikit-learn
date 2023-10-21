@@ -16,7 +16,7 @@ from sklearn.utils.fixes import CSR_CONTAINERS
 
 def test_bad_n_features_to_select():
     n_features = 5
-    X, y = make_regression(n_features=n_features)
+    X, y = make_regression(n_features=)
     sfs = SequentialFeatureSelector(LinearRegression(), n_features_to_select=n_features)
     with pytest.raises(ValueError, match="n_features_to_select must be < n_features"):
         sfs.fit(X, y)
@@ -28,11 +28,11 @@ def test_n_features_to_select(direction, n_features_to_select):
     # Make sure n_features_to_select is respected
 
     n_features = 10
-    X, y = make_regression(n_features=n_features, random_state=0)
+    X, y = make_regression(n_features=, random_state=0)
     sfs = SequentialFeatureSelector(
         LinearRegression(),
-        n_features_to_select=n_features_to_select,
-        direction=direction,
+        n_features_to_select=,
+        direction=,
         cv=2,
     )
     sfs.fit(X, y)
@@ -53,12 +53,12 @@ def test_n_features_to_select_auto(direction):
 
     n_features = 10
     tol = 1e-3
-    X, y = make_regression(n_features=n_features, random_state=0)
+    X, y = make_regression(n_features=, random_state=0)
     sfs = SequentialFeatureSelector(
         LinearRegression(),
         n_features_to_select="auto",
-        tol=tol,
-        direction=direction,
+        tol=,
+        direction=,
         cv=2,
     )
     sfs.fit(X, y)
@@ -98,8 +98,8 @@ def test_n_features_to_select_stopping_criterion(direction):
     sfs = SequentialFeatureSelector(
         LinearRegression(),
         n_features_to_select="auto",
-        tol=tol,
-        direction=direction,
+        tol=,
+        direction=,
         cv=2,
     )
     sfs.fit(X, y)
@@ -147,8 +147,8 @@ def test_n_features_to_select_float(direction, n_features_to_select, expected):
     X, y = make_regression(n_features=10)
     sfs = SequentialFeatureSelector(
         LinearRegression(),
-        n_features_to_select=n_features_to_select,
-        direction=direction,
+        n_features_to_select=,
+        direction=,
         cv=2,
     )
     sfs.fit(X, y)
@@ -176,8 +176,8 @@ def test_sanity(seed, direction, n_features_to_select, expected_selected_feature
 
     sfs = SequentialFeatureSelector(
         LinearRegression(),
-        n_features_to_select=n_features_to_select,
-        direction=direction,
+        n_features_to_select=,
+        direction=,
         cv=2,
     )
     sfs.fit(X, y)
@@ -246,10 +246,7 @@ def test_unsupervised_model_fit(n_features_to_select):
     # validated
 
     X, y = make_blobs(n_features=4)
-    sfs = SequentialFeatureSelector(
-        KMeans(n_init=1),
-        n_features_to_select=n_features_to_select,
-    )
+    sfs = SequentialFeatureSelector(KMeans(n_init=1), n_features_to_select=)
     sfs.fit(X)
     assert sfs.transform(X).shape[1] == n_features_to_select
 
@@ -315,7 +312,7 @@ def test_cv_generator_support():
     groups[y.size // 2 :] = 1
 
     cv = LeaveOneGroupOut()
-    splits = cv.split(X, y, groups=groups)
+    splits = cv.split(X, y, groups=)
 
     knc = KNeighborsClassifier(n_neighbors=5)
 

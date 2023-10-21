@@ -291,7 +291,7 @@ class SelectFromModel(
             )
 
         scores = _get_feature_importances(
-            estimator=estimator,
+            estimator=,
             getter=self.importance_getter,
             transform_func="norm",
             norm_order=self.norm_order,

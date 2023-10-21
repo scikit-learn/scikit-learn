@@ -56,7 +56,7 @@ def test_lle_simple_grid(global_dtype):
 
     n_components = 2
     clf = manifold.LocallyLinearEmbedding(
-        n_neighbors=5, n_components=n_components, random_state=rng
+        n_neighbors=5, n_components=, random_state=rng
     )
     tol = 0.1
 
@@ -93,7 +93,7 @@ def test_lle_manifold(global_dtype, method, solver):
     n_components = 2
 
     clf = manifold.LocallyLinearEmbedding(
-        n_neighbors=6, n_components=n_components, method=method, random_state=0
+        n_neighbors=6, n_components=, method=, random_state=0
     )
     tol = 1.5 if method == "standard" else 3
 
@@ -154,7 +154,7 @@ def test_integer_input():
     X = rand.randint(0, 100, size=(20, 3))
 
     for method in ["standard", "hessian", "modified", "ltsa"]:
-        clf = manifold.LocallyLinearEmbedding(method=method, n_neighbors=10)
+        clf = manifold.LocallyLinearEmbedding(method=, n_neighbors=10)
         clf.fit(X)  # this previously raised a TypeError
 
 
@@ -163,7 +163,7 @@ def test_get_feature_names_out():
     X, y = make_blobs(random_state=0, n_features=4)
     n_components = 2
 
-    iso = manifold.LocallyLinearEmbedding(n_components=n_components)
+    iso = manifold.LocallyLinearEmbedding(n_components=)
     iso.fit(X)
     names = iso.get_feature_names_out()
     assert_array_equal(

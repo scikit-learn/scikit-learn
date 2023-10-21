@@ -61,9 +61,7 @@ from sklearn.cluster import AgglomerativeClustering
 print("Compute structured hierarchical clustering...")
 st = time.time()
 n_clusters = 27  # number of regions
-ward = AgglomerativeClustering(
-    n_clusters=n_clusters, linkage="ward", connectivity=connectivity
-)
+ward = AgglomerativeClustering(n_clusters=, linkage="ward", connectivity=)
 ward.fit(X)
 label = np.reshape(ward.labels_, rescaled_coins.shape)
 print(f"Elapsed time: {time.time() - st:.3f}s")

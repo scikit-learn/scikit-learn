@@ -34,7 +34,7 @@ def test_graphical_lassos(random_state=1):
     dim = 20
     n_samples = 100
     random_state = check_random_state(random_state)
-    prec = make_sparse_spd_matrix(dim, alpha=0.95, random_state=random_state)
+    prec = make_sparse_spd_matrix(dim, alpha=0.95, random_state=)
     cov = linalg.inv(prec)
     X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
     emp_cov = empirical_covariance(X)
@@ -44,7 +44,7 @@ def test_graphical_lassos(random_state=1):
         icovs = dict()
         for method in ("cd", "lars"):
             cov_, icov_, costs = graphical_lasso(
-                emp_cov, return_costs=True, alpha=alpha, mode=method
+                emp_cov, return_costs=True, alpha=, mode=method
             )
             covs[method] = cov_
             icovs[method] = icov_
@@ -68,7 +68,7 @@ def test_graphical_lassos(random_state=1):
     Z = X - X.mean(0)
     precs = list()
     for assume_centered in (False, True):
-        prec_ = GraphicalLasso(assume_centered=assume_centered).fit(Z).precision_
+        prec_ = GraphicalLasso(assume_centered=).fit(Z).precision_
         precs.append(prec_)
     assert_array_almost_equal(precs[0], precs[1])
 
@@ -91,7 +91,7 @@ def test_graphical_lasso_n_iter(mode):
     emp_cov = empirical_covariance(X)
 
     _, _, n_iter = graphical_lasso(
-        emp_cov, 0.2, mode=mode, max_iter=2, return_n_iter=True
+        emp_cov, 0.2, mode=, max_iter=2, return_n_iter=True
     )
     assert n_iter == 2
 
@@ -174,7 +174,7 @@ def test_graphical_lasso_cv(random_state=1):
     dim = 5
     n_samples = 6
     random_state = check_random_state(random_state)
-    prec = make_sparse_spd_matrix(dim, alpha=0.96, random_state=random_state)
+    prec = make_sparse_spd_matrix(dim, alpha=0.96, random_state=)
     cov = linalg.inv(prec)
     X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
     # Capture stdout, to smoke test the verbose mode
@@ -205,7 +205,7 @@ def test_graphical_lasso_cv_alphas_iterable(alphas_container_type):
     rng = np.random.RandomState(0)
     X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
     alphas = _convert_container([0.02, 0.03], alphas_container_type)
-    GraphicalLassoCV(alphas=alphas, tol=1e-1, n_jobs=1).fit(X)
+    GraphicalLassoCV(alphas=, tol=1e-1, n_jobs=1).fit(X)
 
 
 @pytest.mark.parametrize(
@@ -233,7 +233,7 @@ def test_graphical_lasso_cv_alphas_invalid_array(alphas, err_type, err_msg):
     X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
 
     with pytest.raises(err_type, match=err_msg):
-        GraphicalLassoCV(alphas=alphas, tol=1e-1, n_jobs=1).fit(X)
+        GraphicalLassoCV(alphas=, tol=1e-1, n_jobs=1).fit(X)
 
 
 def test_graphical_lasso_cv_scores():
@@ -250,7 +250,7 @@ def test_graphical_lasso_cv_scores():
     )
     rng = np.random.RandomState(0)
     X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
-    cov = GraphicalLassoCV(cv=splits, alphas=n_alphas, n_refinements=n_refinements).fit(
+    cov = GraphicalLassoCV(cv=splits, alphas=n_alphas, n_refinements=).fit(
         X
     )
 

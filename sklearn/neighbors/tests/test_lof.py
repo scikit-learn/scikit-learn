@@ -229,7 +229,7 @@ def test_predicted_outlier_number(expected_outliers):
     n_samples = X.shape[0]
     contamination = float(expected_outliers) / n_samples
 
-    clf = neighbors.LocalOutlierFactor(contamination=contamination)
+    clf = neighbors.LocalOutlierFactor(contamination=)
     y_pred = clf.fit_predict(X)
 
     num_outliers = np.sum(y_pred != 1)
@@ -263,7 +263,7 @@ def test_lof_input_dtype_preservation(global_dtype, algorithm, contamination, no
     X = iris.data.astype(global_dtype, copy=False)
 
     iso = neighbors.LocalOutlierFactor(
-        n_neighbors=5, algorithm=algorithm, contamination=contamination, novelty=novelty
+        n_neighbors=5, algorithm=, contamination=, novelty=
     )
     iso.fit(X)
 
@@ -287,15 +287,11 @@ def test_lof_dtype_equivalence(algorithm, novelty, contamination):
     # making the computation in 32 and 64 bits.
     X = np.concatenate([inliers, outliers], axis=0).astype(np.float32)
 
-    lof_32 = neighbors.LocalOutlierFactor(
-        algorithm=algorithm, novelty=novelty, contamination=contamination
-    )
+    lof_32 = neighbors.LocalOutlierFactor(algorithm=, novelty=, contamination=)
     X_32 = X.astype(np.float32, copy=True)
     lof_32.fit(X_32)
 
-    lof_64 = neighbors.LocalOutlierFactor(
-        algorithm=algorithm, novelty=novelty, contamination=contamination
-    )
+    lof_64 = neighbors.LocalOutlierFactor(algorithm=, novelty=, contamination=)
     X_64 = X.astype(np.float64, copy=True)
     lof_64.fit(X_64)
 

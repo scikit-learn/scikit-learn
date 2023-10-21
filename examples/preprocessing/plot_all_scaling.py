@@ -123,7 +123,7 @@ cmap = getattr(cm, "plasma_r", cm.hot_r)
 
 
 def create_axes(title, figsize=(16, 6)):
-    fig = plt.figure(figsize=figsize)
+    fig = plt.figure(figsize=)
     fig.suptitle(title)
 
     # define the axis for the first plot
@@ -243,8 +243,8 @@ def make_plot(item_idx):
     norm = mpl.colors.Normalize(y_full.min(), y_full.max())
     mpl.colorbar.ColorbarBase(
         ax_colorbar,
-        cmap=cmap,
-        norm=norm,
+        cmap=,
+        norm=,
         orientation="vertical",
         label="Color mapping for values of y",
     )

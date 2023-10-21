@@ -209,7 +209,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             are no missing values, return None.
         """
         estimator_name = estimator_name or self.__class__.__name__
-        common_kwargs = dict(estimator_name=estimator_name, input_name="X")
+        common_kwargs = dict(estimator_name=, input_name="X")
 
         if not self._support_missing_values(X):
             assert_all_finite(X, **common_kwargs)
@@ -513,7 +513,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 dtype=DTYPE,
                 accept_sparse="csr",
                 reset=False,
-                force_all_finite=force_all_finite,
+                force_all_finite=,
             )
             if issparse(X) and (
                 X.indices.dtype != np.intc or X.indptr.dtype != np.intc
@@ -686,7 +686,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 corresponding alpha value in ``ccp_alphas``.
         """
         est = clone(self).set_params(ccp_alpha=0.0)
-        est.fit(X, y, sample_weight=sample_weight)
+        est.fit(X, y, sample_weight=)
         return Bunch(**ccp_pruning_path(est.tree_))
 
     @property
@@ -982,19 +982,19 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         monotonic_cst=None,
     ):
         super().__init__(
-            criterion=criterion,
-            splitter=splitter,
-            max_depth=max_depth,
-            min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf,
-            min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_features=max_features,
-            max_leaf_nodes=max_leaf_nodes,
-            class_weight=class_weight,
-            random_state=random_state,
-            min_impurity_decrease=min_impurity_decrease,
-            monotonic_cst=monotonic_cst,
-            ccp_alpha=ccp_alpha,
+            criterion=,
+            splitter=,
+            max_depth=,
+            min_samples_split=,
+            min_samples_leaf=,
+            min_weight_fraction_leaf=,
+            max_features=,
+            max_leaf_nodes=,
+            class_weight=,
+            random_state=,
+            min_impurity_decrease=,
+            monotonic_cst=,
+            ccp_alpha=,
         )
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1028,12 +1028,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Fitted estimator.
         """
 
-        super()._fit(
-            X,
-            y,
-            sample_weight=sample_weight,
-            check_input=check_input,
-        )
+        super()._fit(X, y, sample_weight=, check_input=)
         return self
 
     def predict_proba(self, X, check_input=True):
@@ -1363,18 +1358,18 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         monotonic_cst=None,
     ):
         super().__init__(
-            criterion=criterion,
-            splitter=splitter,
-            max_depth=max_depth,
-            min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf,
-            min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_features=max_features,
-            max_leaf_nodes=max_leaf_nodes,
-            random_state=random_state,
-            min_impurity_decrease=min_impurity_decrease,
-            ccp_alpha=ccp_alpha,
-            monotonic_cst=monotonic_cst,
+            criterion=,
+            splitter=,
+            max_depth=,
+            min_samples_split=,
+            min_samples_leaf=,
+            min_weight_fraction_leaf=,
+            max_features=,
+            max_leaf_nodes=,
+            random_state=,
+            min_impurity_decrease=,
+            ccp_alpha=,
+            monotonic_cst=,
         )
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -1407,12 +1402,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             Fitted estimator.
         """
 
-        super()._fit(
-            X,
-            y,
-            sample_weight=sample_weight,
-            check_input=check_input,
-        )
+        super()._fit(X, y, sample_weight=, check_input=)
         return self
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
@@ -1711,19 +1701,19 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         monotonic_cst=None,
     ):
         super().__init__(
-            criterion=criterion,
-            splitter=splitter,
-            max_depth=max_depth,
-            min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf,
-            min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_features=max_features,
-            max_leaf_nodes=max_leaf_nodes,
-            class_weight=class_weight,
-            min_impurity_decrease=min_impurity_decrease,
-            random_state=random_state,
-            ccp_alpha=ccp_alpha,
-            monotonic_cst=monotonic_cst,
+            criterion=,
+            splitter=,
+            max_depth=,
+            min_samples_split=,
+            min_samples_leaf=,
+            min_weight_fraction_leaf=,
+            max_features=,
+            max_leaf_nodes=,
+            class_weight=,
+            min_impurity_decrease=,
+            random_state=,
+            ccp_alpha=,
+            monotonic_cst=,
         )
 
 
@@ -1956,16 +1946,16 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         monotonic_cst=None,
     ):
         super().__init__(
-            criterion=criterion,
-            splitter=splitter,
-            max_depth=max_depth,
-            min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf,
-            min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_features=max_features,
-            max_leaf_nodes=max_leaf_nodes,
-            min_impurity_decrease=min_impurity_decrease,
-            random_state=random_state,
-            ccp_alpha=ccp_alpha,
-            monotonic_cst=monotonic_cst,
+            criterion=,
+            splitter=,
+            max_depth=,
+            min_samples_split=,
+            min_samples_leaf=,
+            min_weight_fraction_leaf=,
+            max_features=,
+            max_leaf_nodes=,
+            min_impurity_decrease=,
+            random_state=,
+            ccp_alpha=,
+            monotonic_cst=,
         )

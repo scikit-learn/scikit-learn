@@ -42,7 +42,7 @@ def _assign_where(X1, X2, cond):
         Boolean mask to assign data.
     """
     if hasattr(X1, "mask"):  # pandas dataframes
-        X1.mask(cond=cond, other=X2, inplace=True)
+        X1.mask(cond=, other=X2, inplace=True)
     else:  # ndarrays
         X1[cond] = X2[cond]
 
@@ -321,11 +321,7 @@ class IterativeImputer(_RoutingNotSupportedMixin, _BaseImputer):
         add_indicator=False,
         keep_empty_features=False,
     ):
-        super().__init__(
-            missing_values=missing_values,
-            add_indicator=add_indicator,
-            keep_empty_features=keep_empty_features,
-        )
+        super().__init__(missing_values=, add_indicator=, keep_empty_features=)
 
         self.estimator = estimator
         self.sample_posterior = sample_posterior
@@ -441,7 +437,7 @@ class IterativeImputer(_RoutingNotSupportedMixin, _BaseImputer):
             a = (self._min_value[feat_idx] - mus) / sigmas
             b = (self._max_value[feat_idx] - mus) / sigmas
 
-            truncated_normal = stats.truncnorm(a=a, b=b, loc=mus, scale=sigmas)
+            truncated_normal = stats.truncnorm(a=, b=, loc=mus, scale=sigmas)
             imputed_values[inrange_mask] = truncated_normal.rvs(
                 random_state=self.random_state_
             )
@@ -488,7 +484,7 @@ class IterativeImputer(_RoutingNotSupportedMixin, _BaseImputer):
         if self.n_nearest_features is not None and self.n_nearest_features < n_features:
             p = abs_corr_mat[:, feat_idx]
             neighbor_feat_idx = self.random_state_.choice(
-                np.arange(n_features), self.n_nearest_features, replace=False, p=p
+                np.arange(n_features), self.n_nearest_features, replace=False, p=
             )
         else:
             inds_left = np.arange(feat_idx)
@@ -615,7 +611,7 @@ class IterativeImputer(_RoutingNotSupportedMixin, _BaseImputer):
             dtype=FLOAT_DTYPES,
             order="F",
             reset=in_fit,
-            force_all_finite=force_all_finite,
+            force_all_finite=,
         )
         _check_inputs_dtype(X, self.missing_values)
 

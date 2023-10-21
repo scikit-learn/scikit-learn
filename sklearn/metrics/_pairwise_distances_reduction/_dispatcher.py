@@ -265,26 +265,26 @@ class ArgKmin(BaseDistancesReductionDispatcher):
         """
         if X.dtype == Y.dtype == np.float64:
             return ArgKmin64.compute(
-                X=X,
-                Y=Y,
-                k=k,
-                metric=metric,
-                chunk_size=chunk_size,
-                metric_kwargs=metric_kwargs,
-                strategy=strategy,
-                return_distance=return_distance,
+                X=,
+                Y=,
+                k=,
+                metric=,
+                chunk_size=,
+                metric_kwargs=,
+                strategy=,
+                return_distance=,
             )
 
         if X.dtype == Y.dtype == np.float32:
             return ArgKmin32.compute(
-                X=X,
-                Y=Y,
-                k=k,
-                metric=metric,
-                chunk_size=chunk_size,
-                metric_kwargs=metric_kwargs,
-                strategy=strategy,
-                return_distance=return_distance,
+                X=,
+                Y=,
+                k=,
+                metric=,
+                chunk_size=,
+                metric_kwargs=,
+                strategy=,
+                return_distance=,
             )
 
         raise ValueError(
@@ -409,28 +409,28 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
         """
         if X.dtype == Y.dtype == np.float64:
             return RadiusNeighbors64.compute(
-                X=X,
-                Y=Y,
-                radius=radius,
-                metric=metric,
-                chunk_size=chunk_size,
-                metric_kwargs=metric_kwargs,
-                strategy=strategy,
-                sort_results=sort_results,
-                return_distance=return_distance,
+                X=,
+                Y=,
+                radius=,
+                metric=,
+                chunk_size=,
+                metric_kwargs=,
+                strategy=,
+                sort_results=,
+                return_distance=,
             )
 
         if X.dtype == Y.dtype == np.float32:
             return RadiusNeighbors32.compute(
-                X=X,
-                Y=Y,
-                radius=radius,
-                metric=metric,
-                chunk_size=chunk_size,
-                metric_kwargs=metric_kwargs,
-                strategy=strategy,
-                sort_results=sort_results,
-                return_distance=return_distance,
+                X=,
+                Y=,
+                radius=,
+                metric=,
+                chunk_size=,
+                metric_kwargs=,
+                strategy=,
+                sort_results=,
+                return_distance=,
             )
 
         raise ValueError(
@@ -571,30 +571,30 @@ class ArgKminClassMode(BaseDistancesReductionDispatcher):
             )
         if X.dtype == Y.dtype == np.float64:
             return ArgKminClassMode64.compute(
-                X=X,
-                Y=Y,
-                k=k,
-                weights=weights,
+                X=,
+                Y=,
+                k=,
+                weights=,
                 Y_labels=np.array(Y_labels, dtype=np.intp),
                 unique_Y_labels=np.array(unique_Y_labels, dtype=np.intp),
-                metric=metric,
-                chunk_size=chunk_size,
-                metric_kwargs=metric_kwargs,
-                strategy=strategy,
+                metric=,
+                chunk_size=,
+                metric_kwargs=,
+                strategy=,
             )
 
         if X.dtype == Y.dtype == np.float32:
             return ArgKminClassMode32.compute(
-                X=X,
-                Y=Y,
-                k=k,
-                weights=weights,
+                X=,
+                Y=,
+                k=,
+                weights=,
                 Y_labels=np.array(Y_labels, dtype=np.intp),
                 unique_Y_labels=np.array(unique_Y_labels, dtype=np.intp),
-                metric=metric,
-                chunk_size=chunk_size,
-                metric_kwargs=metric_kwargs,
-                strategy=strategy,
+                metric=,
+                chunk_size=,
+                metric_kwargs=,
+                strategy=,
             )
 
         raise ValueError(
@@ -719,32 +719,32 @@ class RadiusNeighborsClassMode(BaseDistancesReductionDispatcher):
             )
         if X.dtype == Y.dtype == np.float64:
             return RadiusNeighborsClassMode64.compute(
-                X=X,
-                Y=Y,
-                radius=radius,
-                weights=weights,
+                X=,
+                Y=,
+                radius=,
+                weights=,
                 Y_labels=np.array(Y_labels, dtype=np.intp),
                 unique_Y_labels=np.array(unique_Y_labels, dtype=np.intp),
-                outlier_label=outlier_label,
-                metric=metric,
-                chunk_size=chunk_size,
-                metric_kwargs=metric_kwargs,
-                strategy=strategy,
+                outlier_label=,
+                metric=,
+                chunk_size=,
+                metric_kwargs=,
+                strategy=,
             )
 
         if X.dtype == Y.dtype == np.float32:
             return RadiusNeighborsClassMode32.compute(
-                X=X,
-                Y=Y,
-                radius=radius,
-                weights=weights,
+                X=,
+                Y=,
+                radius=,
+                weights=,
                 Y_labels=np.array(Y_labels, dtype=np.intp),
                 unique_Y_labels=np.array(unique_Y_labels, dtype=np.intp),
-                outlier_label=outlier_label,
-                metric=metric,
-                chunk_size=chunk_size,
-                metric_kwargs=metric_kwargs,
-                strategy=strategy,
+                outlier_label=,
+                metric=,
+                chunk_size=,
+                metric_kwargs=,
+                strategy=,
             )
 
         raise ValueError(

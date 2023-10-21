@@ -51,7 +51,7 @@ nu = 0.05
 gamma = 2.0
 
 # Fit the One-Class SVM
-clf = OneClassSVM(gamma=gamma, kernel="rbf", nu=nu)
+clf = OneClassSVM(gamma=, kernel="rbf", nu=)
 clf.fit(X_train)
 y_pred_train = clf.predict(X_train)
 y_pred_test = clf.predict(X_test)
@@ -61,9 +61,9 @@ n_error_test = y_pred_test[y_pred_test == -1].size
 n_error_outliers = y_pred_outliers[y_pred_outliers == 1].size
 
 # Fit the One-Class SVM using a kernel approximation and SGD
-transform = Nystroem(gamma=gamma, random_state=random_state)
+transform = Nystroem(gamma=, random_state=)
 clf_sgd = SGDOneClassSVM(
-    nu=nu, shuffle=True, fit_intercept=True, random_state=random_state, tol=1e-4
+    nu=, shuffle=True, fit_intercept=True, random_state=, tol=1e-4
 )
 pipe_sgd = make_pipeline(transform, clf_sgd)
 pipe_sgd.fit(X_train)
@@ -87,7 +87,7 @@ DecisionBoundaryDisplay.from_estimator(
     X,
     response_method="decision_function",
     plot_method="contourf",
-    ax=ax,
+    ax=,
     cmap="PuBu",
 )
 DecisionBoundaryDisplay.from_estimator(
@@ -95,7 +95,7 @@ DecisionBoundaryDisplay.from_estimator(
     X,
     response_method="decision_function",
     plot_method="contour",
-    ax=ax,
+    ax=,
     linewidths=2,
     colors="darkred",
     levels=[0],
@@ -105,15 +105,15 @@ DecisionBoundaryDisplay.from_estimator(
     X,
     response_method="decision_function",
     plot_method="contourf",
-    ax=ax,
+    ax=,
     colors="palevioletred",
     levels=[0, clf.decision_function(X).max()],
 )
 
 s = 20
-b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c="white", s=s, edgecolors="k")
-b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c="blueviolet", s=s, edgecolors="k")
-c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c="gold", s=s, edgecolors="k")
+b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c="white", s=, edgecolors="k")
+b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c="blueviolet", s=, edgecolors="k")
+c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c="gold", s=, edgecolors="k")
 
 ax.set(
     title="One-Class SVM",
@@ -146,7 +146,7 @@ DecisionBoundaryDisplay.from_estimator(
     X,
     response_method="decision_function",
     plot_method="contourf",
-    ax=ax,
+    ax=,
     cmap="PuBu",
 )
 DecisionBoundaryDisplay.from_estimator(
@@ -154,7 +154,7 @@ DecisionBoundaryDisplay.from_estimator(
     X,
     response_method="decision_function",
     plot_method="contour",
-    ax=ax,
+    ax=,
     linewidths=2,
     colors="darkred",
     levels=[0],
@@ -164,15 +164,15 @@ DecisionBoundaryDisplay.from_estimator(
     X,
     response_method="decision_function",
     plot_method="contourf",
-    ax=ax,
+    ax=,
     colors="palevioletred",
     levels=[0, pipe_sgd.decision_function(X).max()],
 )
 
 s = 20
-b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c="white", s=s, edgecolors="k")
-b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c="blueviolet", s=s, edgecolors="k")
-c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c="gold", s=s, edgecolors="k")
+b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c="white", s=, edgecolors="k")
+b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c="blueviolet", s=, edgecolors="k")
+c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c="gold", s=, edgecolors="k")
 
 ax.set(
     title="Online One-Class SVM",

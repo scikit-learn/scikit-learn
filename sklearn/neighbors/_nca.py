@@ -313,7 +313,7 @@ class NeighborhoodComponentsAnalysis(
             "jac": True,
             "x0": transformation,
             "tol": self.tol,
-            "options": dict(maxiter=self.max_iter, disp=disp),
+            "options": dict(maxiter=self.max_iter, disp=),
             "callback": self._callback,
         }
 
@@ -413,9 +413,7 @@ class NeighborhoodComponentsAnalysis(
             elif init in {"pca", "lda"}:
                 init_time = time.time()
                 if init == "pca":
-                    pca = PCA(
-                        n_components=n_components, random_state=self.random_state_
-                    )
+                    pca = PCA(n_components=, random_state=self.random_state_)
                     if self.verbose:
                         print("Finding principal components... ", end="")
                         sys.stdout.flush()
@@ -424,7 +422,7 @@ class NeighborhoodComponentsAnalysis(
                 elif init == "lda":
                     from ..discriminant_analysis import LinearDiscriminantAnalysis
 
-                    lda = LinearDiscriminantAnalysis(n_components=n_components)
+                    lda = LinearDiscriminantAnalysis(n_components=)
                     if self.verbose:
                         print("Finding most discriminative components... ", end="")
                         sys.stdout.flush()

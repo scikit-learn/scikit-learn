@@ -77,9 +77,9 @@ fig = plt.figure(1)
 ax = plt.axes([0.0, 0.0, 1.0, 1.0])
 
 s = 100
-plt.scatter(X_true[:, 0], X_true[:, 1], color="navy", s=s, lw=0, label="True Position")
-plt.scatter(pos[:, 0], pos[:, 1], color="turquoise", s=s, lw=0, label="MDS")
-plt.scatter(npos[:, 0], npos[:, 1], color="darkorange", s=s, lw=0, label="NMDS")
+plt.scatter(X_true[:, 0], X_true[:, 1], color="navy", s=, lw=0, label="True Position")
+plt.scatter(pos[:, 0], pos[:, 1], color="turquoise", s=, lw=0, label="MDS")
+plt.scatter(npos[:, 0], npos[:, 1], color="darkorange", s=, lw=0, label="NMDS")
 plt.legend(scatterpoints=1, loc="best", shadow=False)
 
 similarities = similarities.max() / (similarities + EPSILON) * 100

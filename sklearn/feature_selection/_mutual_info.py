@@ -53,7 +53,7 @@ def _compute_mi_cc(x, y, n_neighbors):
     xy = np.hstack((x, y))
 
     # Here we rely on NearestNeighbors to select the fastest algorithm.
-    nn = NearestNeighbors(metric="chebyshev", n_neighbors=n_neighbors)
+    nn = NearestNeighbors(metric="chebyshev", n_neighbors=)
 
     nn.fit(xy)
     radius = nn.kneighbors()[0]
@@ -280,7 +280,7 @@ def _estimate_mi(
 
     rng = check_random_state(random_state)
     if np.any(continuous_mask):
-        X = X.astype(np.float64, copy=copy)
+        X = X.astype(np.float64, copy=)
         X[:, continuous_mask] = scale(
             X[:, continuous_mask], with_mean=False, copy=False
         )

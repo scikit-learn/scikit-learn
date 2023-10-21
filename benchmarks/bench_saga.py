@@ -85,18 +85,18 @@ def fit_single(
         if solver == "lightning":
             lr = SAGAClassifier(
                 loss="log",
-                alpha=alpha,
-                beta=beta,
+                alpha=,
+                beta=,
                 penalty=lightning_penalty,
                 tol=-1,
                 max_iter=this_max_iter,
             )
         else:
             lr = LogisticRegression(
-                solver=solver,
-                multi_class=multi_class,
-                C=C,
-                penalty=penalty,
+                solver=,
+                multi_class=,
+                C=,
+                penalty=,
                 fit_intercept=False,
                 tol=0,
                 max_iter=this_max_iter,
@@ -195,17 +195,17 @@ def exp(
     X = X[:n_samples]
     y = y[:n_samples]
 
-    out = Parallel(n_jobs=n_jobs, mmap_mode=None)(
+    out = Parallel(n_jobs=, mmap_mode=None)(
         delayed(fit_single)(
             solver,
             X,
             y,
-            penalty=penalty,
-            single_target=single_target,
-            dtype=dtype,
+            penalty=,
+            single_target=,
+            dtype=,
             C=1,
-            max_iter=max_iter,
-            skip_slow=skip_slow,
+            max_iter=,
+            skip_slow=,
         )
         for solver in solvers
         for dtype in dtypes_mapping.values()
@@ -218,14 +218,14 @@ def exp(
             if not (skip_slow and solver == "lightning" and penalty == "l1"):
                 lr, times, train_scores, test_scores, accuracies = out[idx]
                 this_res = dict(
-                    solver=solver,
-                    penalty=penalty,
+                    solver=,
+                    penalty=,
                     dtype=dtype_name,
-                    single_target=single_target,
-                    times=times,
-                    train_scores=train_scores,
-                    test_scores=test_scores,
-                    accuracies=accuracies,
+                    single_target=,
+                    times=,
+                    train_scores=,
+                    test_scores=,
+                    accuracies=,
                 )
                 res.append(this_res)
             idx += 1

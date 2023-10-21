@@ -303,9 +303,9 @@ for ax, dataset_name in zip(axs.ravel(), datasets_names):
         display = RocCurveDisplay.from_predictions(
             y_true[dataset_name],
             y_pred[model_name][dataset_name],
-            pos_label=pos_label,
+            pos_label=,
             name=model_name,
-            ax=ax,
+            ax=,
             plot_chance_level=(model_idx == len(model_names) - 1),
             chance_level_kw={"linestyle": ":"},
         )
@@ -347,12 +347,12 @@ for model_idx, (linestyle, n_neighbors) in enumerate(zip(linestyles, n_neighbors
     display = RocCurveDisplay.from_predictions(
         y,
         y_pred,
-        pos_label=pos_label,
+        pos_label=,
         name=f"n_neighbors = {n_neighbors}",
-        ax=ax,
+        ax=,
         plot_chance_level=(model_idx == len(n_neighbors_list) - 1),
         chance_level_kw={"linestyle": (0, (1, 10))},
-        linestyle=linestyle,
+        linestyle=,
         linewidth=2,
     )
 _ = ax.set_title("RobustScaler with varying n_neighbors\non forestcover dataset")
@@ -387,12 +387,12 @@ for model_idx, (linestyle, preprocessor) in enumerate(
     display = RocCurveDisplay.from_predictions(
         y,
         y_pred,
-        pos_label=pos_label,
+        pos_label=,
         name=str(preprocessor).split("(")[0],
-        ax=ax,
+        ax=,
         plot_chance_level=(model_idx == len(preprocessor_list) - 1),
         chance_level_kw={"linestyle": (0, (1, 10))},
-        linestyle=linestyle,
+        linestyle=,
         linewidth=2,
     )
 _ = ax.set_title("Fixed n_neighbors with varying preprocessing\non forestcover dataset")
@@ -439,12 +439,12 @@ for model_idx, (linestyle, preprocessor) in enumerate(
     display = RocCurveDisplay.from_predictions(
         y,
         y_pred,
-        pos_label=pos_label,
+        pos_label=,
         name=str(preprocessor).split("(")[0],
-        ax=ax,
+        ax=,
         plot_chance_level=(model_idx == len(preprocessor_list) - 1),
         chance_level_kw={"linestyle": (0, (1, 10))},
-        linestyle=linestyle,
+        linestyle=,
         linewidth=2,
     )
 ax.set_title(

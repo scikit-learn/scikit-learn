@@ -66,10 +66,10 @@ def plot_gallery(title, images, n_col=n_col, n_row=n_row, cmap=plt.cm.gray):
         vmax = max(vec.max(), -vec.min())
         im = ax.imshow(
             vec.reshape(image_shape),
-            cmap=cmap,
+            cmap=,
             interpolation="nearest",
             vmin=-vmax,
-            vmax=vmax,
+            vmax=,
         )
         ax.axis("off")
 
@@ -109,7 +109,7 @@ plot_gallery("Faces from dataset", faces_centered[:n_components])
 
 # %%
 pca_estimator = decomposition.PCA(
-    n_components=n_components, svd_solver="randomized", whiten=True
+    n_components=, svd_solver="randomized", whiten=True
 )
 pca_estimator.fit(faces_centered)
 plot_gallery(
@@ -123,7 +123,7 @@ plot_gallery(
 # Estimate non-negative original data as production of two non-negative matrices.
 
 # %%
-nmf_estimator = decomposition.NMF(n_components=n_components, tol=5e-3)
+nmf_estimator = decomposition.NMF(n_components=, tol=5e-3)
 nmf_estimator.fit(faces)  # original non- negative dataset
 plot_gallery("Non-negative components - NMF", nmf_estimator.components_[:n_components])
 
@@ -135,7 +135,7 @@ plot_gallery("Non-negative components - NMF", nmf_estimator.components_[:n_compo
 
 # %%
 ica_estimator = decomposition.FastICA(
-    n_components=n_components, max_iter=400, whiten="arbitrary-variance", tol=15e-5
+    n_components=, max_iter=400, whiten="arbitrary-variance", tol=15e-5
 )
 ica_estimator.fit(faces_centered)
 plot_gallery(
@@ -153,7 +153,7 @@ plot_gallery(
 
 # %%
 batch_pca_estimator = decomposition.MiniBatchSparsePCA(
-    n_components=n_components, alpha=0.1, max_iter=100, batch_size=3, random_state=rng
+    n_components=, alpha=0.1, max_iter=100, batch_size=3, random_state=rng
 )
 batch_pca_estimator.fit(faces_centered)
 plot_gallery(
@@ -171,7 +171,7 @@ plot_gallery(
 
 # %%
 batch_dict_estimator = decomposition.MiniBatchDictionaryLearning(
-    n_components=n_components, alpha=0.1, max_iter=50, batch_size=3, random_state=rng
+    n_components=, alpha=0.1, max_iter=50, batch_size=3, random_state=rng
 )
 batch_dict_estimator.fit(faces_centered)
 plot_gallery("Dictionary learning", batch_dict_estimator.components_[:n_components])
@@ -212,7 +212,7 @@ plot_gallery(
 # noise). Read more in the :ref:`User Guide <FA>`.
 
 # %%
-fa_estimator = decomposition.FactorAnalysis(n_components=n_components, max_iter=20)
+fa_estimator = decomposition.FactorAnalysis(n_components=, max_iter=20)
 fa_estimator.fit(faces_centered)
 plot_gallery("Factor Analysis (FA)", fa_estimator.components_[:n_components])
 
@@ -225,7 +225,7 @@ plt.imshow(
     cmap=plt.cm.gray,
     interpolation="nearest",
     vmin=-vmax,
-    vmax=vmax,
+    vmax=,
 )
 plt.axis("off")
 plt.title("Pixelwise variance from \n Factor Analysis (FA)", size=16, wrap=True)
@@ -274,7 +274,7 @@ plot_gallery("Faces from dataset", faces_centered[:n_components], cmap=plt.cm.Rd
 
 # %%
 dict_pos_dict_estimator = decomposition.MiniBatchDictionaryLearning(
-    n_components=n_components,
+    n_components=,
     alpha=0.1,
     max_iter=50,
     batch_size=3,
@@ -296,7 +296,7 @@ plot_gallery(
 
 # %%
 dict_pos_code_estimator = decomposition.MiniBatchDictionaryLearning(
-    n_components=n_components,
+    n_components=,
     alpha=0.1,
     max_iter=50,
     batch_size=3,
@@ -320,7 +320,7 @@ plot_gallery(
 
 # %%
 dict_pos_estimator = decomposition.MiniBatchDictionaryLearning(
-    n_components=n_components,
+    n_components=,
     alpha=0.1,
     max_iter=50,
     batch_size=3,

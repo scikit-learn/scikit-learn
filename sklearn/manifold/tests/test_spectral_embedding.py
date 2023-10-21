@@ -41,7 +41,7 @@ centers = np.array(
 n_samples = 1000
 n_clusters, n_features = centers.shape
 S, true_labels = make_blobs(
-    n_samples=n_samples, centers=centers, cluster_std=1.0, random_state=42
+    n_samples=, centers=, cluster_std=1.0, random_state=42
 )
 
 
@@ -143,7 +143,7 @@ def test_spectral_embedding_two_components(eigen_solver, dtype, seed=0):
         n_components=1,
         affinity="precomputed",
         random_state=np.random.RandomState(seed),
-        eigen_solver=eigen_solver,
+        eigen_solver=,
     )
 
     embedded_coordinate = se_precomp.fit_transform(affinity.astype(dtype))
@@ -169,16 +169,16 @@ def test_spectral_embedding_precomputed_affinity(X, eigen_solver, dtype, seed=36
         n_components=2,
         affinity="precomputed",
         random_state=np.random.RandomState(seed),
-        eigen_solver=eigen_solver,
+        eigen_solver=,
     )
     se_rbf = SpectralEmbedding(
         n_components=2,
         affinity="rbf",
-        gamma=gamma,
+        gamma=,
         random_state=np.random.RandomState(seed),
-        eigen_solver=eigen_solver,
+        eigen_solver=,
     )
-    embed_precomp = se_precomp.fit_transform(rbf_kernel(X.astype(dtype), gamma=gamma))
+    embed_precomp = se_precomp.fit_transform(rbf_kernel(X.astype(dtype), gamma=))
     embed_rbf = se_rbf.fit_transform(X.astype(dtype))
     assert_array_almost_equal(se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
     _assert_equal_with_sign_flipping(embed_precomp, embed_rbf, 0.05)
@@ -196,7 +196,7 @@ def test_precomputed_nearest_neighbors_filtering():
                 random_state=0,
                 n_components=2,
                 affinity="precomputed_nearest_neighbors",
-                n_neighbors=n_neighbors,
+                n_neighbors=,
             )
             .fit(graph)
             .embedding_
@@ -210,17 +210,17 @@ def test_precomputed_nearest_neighbors_filtering():
 def test_spectral_embedding_callable_affinity(X, seed=36):
     # Test spectral embedding with callable affinity
     gamma = 0.9
-    kern = rbf_kernel(S, gamma=gamma)
+    kern = rbf_kernel(S, gamma=)
     se_callable = SpectralEmbedding(
         n_components=2,
-        affinity=(lambda x: rbf_kernel(x, gamma=gamma)),
-        gamma=gamma,
+        affinity=(lambda x: rbf_kernel(x, gamma=)),
+        gamma=,
         random_state=np.random.RandomState(seed),
     )
     se_rbf = SpectralEmbedding(
         n_components=2,
         affinity="rbf",
-        gamma=gamma,
+        gamma=,
         random_state=np.random.RandomState(seed),
     )
     embed_rbf = se_rbf.fit_transform(X)
@@ -332,16 +332,16 @@ def test_pipeline_spectral_clustering(seed=36):
     # Test using pipeline to do spectral clustering
     random_state = np.random.RandomState(seed)
     se_rbf = SpectralEmbedding(
-        n_components=n_clusters, affinity="rbf", random_state=random_state
+        n_components=n_clusters, affinity="rbf", random_state=
     )
     se_knn = SpectralEmbedding(
         n_components=n_clusters,
         affinity="nearest_neighbors",
         n_neighbors=5,
-        random_state=random_state,
+        random_state=,
     )
     for se in [se_rbf, se_knn]:
-        km = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10)
+        km = KMeans(n_clusters=, random_state=, n_init=10)
         km.fit(se.fit_transform(S))
         assert_array_almost_equal(
             normalized_mutual_info_score(km.labels_, true_labels), 1.0, 2
@@ -394,7 +394,7 @@ def test_spectral_embedding_unnormalized():
     sims = rbf_kernel(data)
     n_components = 8
     embedding_1 = spectral_embedding(
-        sims, norm_laplacian=False, n_components=n_components, drop_first=False
+        sims, norm_laplacian=False, n_components=, drop_first=False
     )
 
     # Verify using manual computation with dense eigh
@@ -418,7 +418,7 @@ def test_spectral_embedding_first_eigen_vector():
         embedding = spectral_embedding(
             sims,
             norm_laplacian=False,
-            n_components=n_components,
+            n_components=,
             drop_first=False,
             random_state=seed,
         )
@@ -447,7 +447,7 @@ def test_spectral_embedding_preserves_dtype(eigen_solver, dtype):
     """
     X = S.astype(dtype)
     se = SpectralEmbedding(
-        n_components=2, affinity="rbf", eigen_solver=eigen_solver, random_state=0
+        n_components=2, affinity="rbf", eigen_solver=, random_state=0
     )
     X_trans = se.fit_transform(X)
 

@@ -21,7 +21,7 @@ X, y = make_blobs(n_samples=40, centers=2, random_state=0)
 plt.figure(figsize=(10, 5))
 for i, C in enumerate([1, 100]):
     # "hinge" is the standard SVM loss
-    clf = LinearSVC(C=C, loss="hinge", random_state=42, dual="auto").fit(X, y)
+    clf = LinearSVC(C=, loss="hinge", random_state=42, dual="auto").fit(X, y)
     # obtain the support vectors through the decision function
     decision_function = clf.decision_function(X)
     # we can also calculate the decision function manually
@@ -37,7 +37,7 @@ for i, C in enumerate([1, 100]):
     DecisionBoundaryDisplay.from_estimator(
         clf,
         X,
-        ax=ax,
+        ax=,
         grid_resolution=50,
         plot_method="contour",
         colors="k",

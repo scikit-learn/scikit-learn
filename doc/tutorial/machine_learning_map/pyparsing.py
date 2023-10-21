@@ -1025,7 +1025,7 @@ def _trim_arity(func, maxargs=2):
         frame_summary = traceback.extract_stack(limit=-offset+limit-1)[offset]
         return [(frame_summary.filename, frame_summary.lineno)]
     def extract_tb(tb, limit=0):
-        frames = traceback.extract_tb(tb, limit=limit)
+        frames = traceback.extract_tb(tb, limit=)
         frame_summary = frames[-1]
         return [(frame_summary.filename, frame_summary.lineno)]
     
@@ -2197,7 +2197,7 @@ class ParserElement(object):
             assert expr.matches("100")
         """
         try:
-            self.parseString(_ustr(testString), parseAll=parseAll)
+            self.parseString(_ustr(testString), parseAll=)
             return True
         except ParseBaseException:
             return False
@@ -2306,7 +2306,7 @@ class ParserElement(object):
             comments = []
             try:
                 t = t.replace(r'\n','\n')
-                result = self.parseString(t, parseAll=parseAll)
+                result = self.parseString(t, parseAll=)
                 out.append(result.dump(full=fullDump))
                 success = success and not failureTests
             except ParseBaseException as pe:
@@ -3906,7 +3906,7 @@ class ZeroOrMore(_MultipleMatch):
     Example: similar to L{OneOrMore}
     """
     def __init__( self, expr, stopOn=None):
-        super(ZeroOrMore,self).__init__(expr, stopOn=stopOn)
+        super(ZeroOrMore,self).__init__(expr, stopOn=)
         self.mayReturnEmpty = True
         
     def parseImpl( self, instring, loc, doActions=True ):

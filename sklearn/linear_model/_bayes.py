@@ -302,7 +302,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
             y,
             self.fit_intercept,
             copy=self.copy_X,
-            sample_weight=sample_weight,
+            sample_weight=,
         )
 
         if sample_weight is not None:

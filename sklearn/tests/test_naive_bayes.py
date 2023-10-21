@@ -118,7 +118,7 @@ def test_gnb_sample_weight(global_random_seed):
     # non-regression test for gh-24140 where a division by zero was
     # occurring when a single class was present
     sample_weight = (y == 1).astype(np.float64)
-    clf = GaussianNB().fit(X, y, sample_weight=sample_weight)
+    clf = GaussianNB().fit(X, y, sample_weight=)
 
 
 def test_gnb_neg_priors():
@@ -159,7 +159,7 @@ def test_gnb_priors_sum_isclose():
     )
     priors = np.array([0.08, 0.14, 0.03, 0.16, 0.11, 0.16, 0.07, 0.14, 0.11, 0.0])
     Y = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-    clf = GaussianNB(priors=priors)
+    clf = GaussianNB(priors=)
     # smoke test for issue #9633
     clf.fit(X, Y)
 
@@ -401,7 +401,7 @@ def test_discretenb_sample_weight_multiclass(DiscreteNaiveBayes):
     y = [0, 0, 1, 2]
     sample_weight = np.array([1, 1, 2, 2], dtype=np.float64)
     sample_weight /= sample_weight.sum()
-    clf = DiscreteNaiveBayes().fit(X, y, sample_weight=sample_weight)
+    clf = DiscreteNaiveBayes().fit(X, y, sample_weight=)
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
 
     # Check sample weight using the partial_fit method
@@ -439,7 +439,7 @@ def test_discretenb_degenerate_one_class_case(
 
     clf = DiscreteNaiveBayes()
     if use_partial_fit:
-        clf.partial_fit(X, y, classes=classes)
+        clf.partial_fit(X, y, classes=)
     else:
         clf.fit(X, y)
     assert clf.predict(X[:1]) == y[0]
@@ -742,7 +742,7 @@ def test_categoricalnb(global_random_seed):
         y = np.array([1, 1, 2, 2])
         sample_weight = np.array([1, 1, 10, 0.1]) * factor
         clf = CategoricalNB(alpha=1, fit_prior=False)
-        clf.fit(X, y, sample_weight=sample_weight)
+        clf.fit(X, y, sample_weight=)
         assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([2]))
         assert_array_equal(clf.n_categories_, np.array([2, 2]))
 
@@ -785,7 +785,7 @@ def test_categoricalnb_with_min_categories(
     y_n_categories = np.array([1, 1, 2, 2])
     expected_prediction = np.array([1])
 
-    clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=min_categories)
+    clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=)
     clf.fit(X_n_categories, y_n_categories)
     X1_count, X2_count = clf.category_count_
     assert_array_equal(X1_count, exp_X1_count)
@@ -805,7 +805,7 @@ def test_categoricalnb_min_categories_errors(min_categories, error_msg):
     X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
     y = np.array([1, 1, 2, 2])
 
-    clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=min_categories)
+    clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=)
     with pytest.raises(ValueError, match=error_msg):
         clf.fit(X, y)
 
@@ -860,7 +860,7 @@ def test_alpha_vector():
     # Setting alpha=np.array with same length
     # as number of features should be fine
     alpha = np.array([1, 2])
-    nb = MultinomialNB(alpha=alpha)
+    nb = MultinomialNB(alpha=)
     nb.partial_fit(X, y, classes=[0, 1])
 
     # Test feature probabilities uses pseudo-counts (alpha)
@@ -873,7 +873,7 @@ def test_alpha_vector():
 
     # Test alpha non-negative
     alpha = np.array([1.0, -0.1])
-    m_nb = MultinomialNB(alpha=alpha)
+    m_nb = MultinomialNB(alpha=)
     expected_msg = "All values in alpha must be greater than 0."
     with pytest.raises(ValueError, match=expected_msg):
         m_nb.fit(X, y)
@@ -881,13 +881,13 @@ def test_alpha_vector():
     # Test that too small pseudo-counts are replaced
     ALPHA_MIN = 1e-10
     alpha = np.array([ALPHA_MIN / 2, 0.5])
-    m_nb = MultinomialNB(alpha=alpha)
+    m_nb = MultinomialNB(alpha=)
     m_nb.partial_fit(X, y, classes=[0, 1])
     assert_array_almost_equal(m_nb._check_alpha(), [ALPHA_MIN, 0.5], decimal=12)
 
     # Test correct dimensions
     alpha = np.array([1.0, 2.0, 3.0])
-    m_nb = MultinomialNB(alpha=alpha)
+    m_nb = MultinomialNB(alpha=)
     expected_msg = "When alpha is an array, it should contains `n_features`"
     with pytest.raises(ValueError, match=expected_msg):
         m_nb.fit(X, y)
@@ -936,8 +936,8 @@ def test_force_alpha_deprecation(Estimator, alpha):
     y = np.array([1, 0])
     alpha_min = 1e-10
     msg = "The default value for `force_alpha` will change to `True`"
-    est = Estimator(alpha=alpha)
-    est_force = Estimator(alpha=alpha, force_alpha=True)
+    est = Estimator(alpha=)
+    est_force = Estimator(alpha=, force_alpha=True)
     if np.min(alpha) < alpha_min:
         with pytest.warns(FutureWarning, match=msg):
             est.fit(X, y)

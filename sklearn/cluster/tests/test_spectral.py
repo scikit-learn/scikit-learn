@@ -28,7 +28,7 @@ centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
 X, _ = make_blobs(
     n_samples=60,
     n_features=2,
-    centers=centers,
+    centers=,
     cluster_std=0.4,
     shuffle=True,
     random_state=0,
@@ -55,8 +55,8 @@ def test_spectral_clustering(eigen_solver, assign_labels):
             random_state=0,
             n_clusters=2,
             affinity="precomputed",
-            eigen_solver=eigen_solver,
-            assign_labels=assign_labels,
+            eigen_solver=,
+            assign_labels=,
         ).fit(mat)
         labels = model.labels_
         if labels[0] == 0:
@@ -85,7 +85,7 @@ def test_spectral_clustering_sparse(assign_labels):
             random_state=0,
             n_clusters=2,
             affinity="precomputed",
-            assign_labels=assign_labels,
+            assign_labels=,
         )
         .fit(S)
         .labels_
@@ -109,7 +109,7 @@ def test_precomputed_nearest_neighbors_filtering():
                 random_state=0,
                 n_clusters=2,
                 affinity="precomputed_nearest_neighbors",
-                n_neighbors=n_neighbors,
+                n_neighbors=,
             )
             .fit(graph)
             .labels_
@@ -207,7 +207,7 @@ def test_discretize(n_samples):
         y_true_noisy = y_indicator.toarray() + 0.1 * random_state.randn(
             n_samples, n_class + 1
         )
-        y_pred = discretize(y_true_noisy, random_state=random_state)
+        y_pred = discretize(y_true_noisy, random_state=)
         assert adjusted_rand_score(y_true, y_pred) > 0.8
 
 
@@ -245,7 +245,7 @@ def test_spectral_clustering_with_arpack_amg_solvers():
     mask = circles.copy()
     img = circles.astype(float)
 
-    graph = img_to_graph(img, mask=mask)
+    graph = img_to_graph(img, mask=)
     graph.data = np.exp(-graph.data / graph.data.std())
 
     labels_arpack = spectral_clustering(

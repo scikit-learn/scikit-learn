@@ -30,11 +30,7 @@ def random_X_y_coef(
     """Random generate y, X and coef in valid range."""
     rng = np.random.RandomState(seed)
     n_dof = n_features + linear_model_loss.fit_intercept
-    X = make_low_rank_matrix(
-        n_samples=n_samples,
-        n_features=n_features,
-        random_state=rng,
-    )
+    X = make_low_rank_matrix(n_samples=, n_features=, random_state=rng)
     coef = linear_model_loss.init_zero_coef(X)
 
     if linear_model_loss.base_loss.is_multiclass:
@@ -82,10 +78,10 @@ def random_X_y_coef(
 @pytest.mark.parametrize("dtype", [None, np.float32, np.float64, np.int64])
 def test_init_zero_coef(base_loss, fit_intercept, n_features, dtype):
     """Test that init_zero_coef initializes coef correctly."""
-    loss = LinearModelLoss(base_loss=base_loss(), fit_intercept=fit_intercept)
+    loss = LinearModelLoss(base_loss=base_loss(), fit_intercept=)
     rng = np.random.RandomState(42)
     X = rng.normal(size=(5, n_features))
-    coef = loss.init_zero_coef(X, dtype=dtype)
+    coef = loss.init_zero_coef(X, dtype=)
     if loss.base_loss.is_multiclass:
         n_classes = loss.base_loss.n_classes
         assert coef.shape == (n_classes, n_features + fit_intercept)
@@ -110,7 +106,7 @@ def test_loss_grad_hess_are_the_same(
     base_loss, fit_intercept, sample_weight, l2_reg_strength, csr_container
 ):
     """Test that loss and gradient are the same across different functions."""
-    loss = LinearModelLoss(base_loss=base_loss(), fit_intercept=fit_intercept)
+    loss = LinearModelLoss(base_loss=base_loss(), fit_intercept=)
     X, y, coef = random_X_y_coef(
         linear_model_loss=loss, n_samples=10, n_features=5, seed=42
     )
@@ -118,31 +114,19 @@ def test_loss_grad_hess_are_the_same(
     if sample_weight == "range":
         sample_weight = np.linspace(1, y.shape[0], num=y.shape[0])
 
-    l1 = loss.loss(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
-    )
-    g1 = loss.gradient(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
-    )
-    l2, g2 = loss.loss_gradient(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
-    )
+    l1 = loss.loss(coef, X, y, sample_weight=, l2_reg_strength=)
+    g1 = loss.gradient(coef, X, y, sample_weight=, l2_reg_strength=)
+    l2, g2 = loss.loss_gradient(coef, X, y, sample_weight=, l2_reg_strength=)
     g3, h3 = loss.gradient_hessian_product(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        coef, X, y, sample_weight=, l2_reg_strength=
     )
     if not base_loss.is_multiclass:
         g4, h4, _ = loss.gradient_hessian(
-            coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+            coef, X, y, sample_weight=, l2_reg_strength=
         )
     else:
         with pytest.raises(NotImplementedError):
-            loss.gradient_hessian(
-                coef,
-                X,
-                y,
-                sample_weight=sample_weight,
-                l2_reg_strength=l2_reg_strength,
-            )
+            loss.gradient_hessian(coef, X, y, sample_weight=, l2_reg_strength=)
 
     assert_allclose(l1, l2)
     assert_allclose(g1, g2)
@@ -153,21 +137,17 @@ def test_loss_grad_hess_are_the_same(
 
     # same for sparse X
     X = csr_container(X)
-    l1_sp = loss.loss(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
-    )
-    g1_sp = loss.gradient(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
-    )
+    l1_sp = loss.loss(coef, X, y, sample_weight=, l2_reg_strength=)
+    g1_sp = loss.gradient(coef, X, y, sample_weight=, l2_reg_strength=)
     l2_sp, g2_sp = loss.loss_gradient(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        coef, X, y, sample_weight=, l2_reg_strength=
     )
     g3_sp, h3_sp = loss.gradient_hessian_product(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        coef, X, y, sample_weight=, l2_reg_strength=
     )
     if not base_loss.is_multiclass:
         g4_sp, h4_sp, _ = loss.gradient_hessian(
-            coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+            coef, X, y, sample_weight=, l2_reg_strength=
         )
 
     assert_allclose(l1, l1_sp)
@@ -193,7 +173,7 @@ def test_loss_gradients_hessp_intercept(
     loss_inter = LinearModelLoss(base_loss=base_loss(), fit_intercept=True)
     n_samples, n_features = 10, 5
     X, y, coef = random_X_y_coef(
-        linear_model_loss=loss, n_samples=n_samples, n_features=n_features, seed=42
+        linear_model_loss=loss, n_samples=, n_features=, seed=42
     )
 
     X[:, -1] = 1  # make last column of 1 to mimic intercept term
@@ -207,17 +187,15 @@ def test_loss_gradients_hessp_intercept(
     if sample_weight == "range":
         sample_weight = np.linspace(1, y.shape[0], num=y.shape[0])
 
-    l, g = loss.loss_gradient(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
-    )
+    l, g = loss.loss_gradient(coef, X, y, sample_weight=, l2_reg_strength=)
     _, hessp = loss.gradient_hessian_product(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        coef, X, y, sample_weight=, l2_reg_strength=
     )
     l_inter, g_inter = loss_inter.loss_gradient(
-        coef, X_inter, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        coef, X_inter, y, sample_weight=, l2_reg_strength=
     )
     _, hessp_inter = loss_inter.gradient_hessian_product(
-        coef, X_inter, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        coef, X_inter, y, sample_weight=, l2_reg_strength=
     )
 
     # Note, that intercept gets no L2 penalty.
@@ -249,10 +227,10 @@ def test_gradients_hessians_numerically(
     Gradient should equal the numerical derivatives of the loss function.
     Hessians should equal the numerical derivatives of gradients.
     """
-    loss = LinearModelLoss(base_loss=base_loss(), fit_intercept=fit_intercept)
+    loss = LinearModelLoss(base_loss=base_loss(), fit_intercept=)
     n_samples, n_features = 10, 5
     X, y, coef = random_X_y_coef(
-        linear_model_loss=loss, n_samples=n_samples, n_features=n_features, seed=42
+        linear_model_loss=loss, n_samples=, n_features=, seed=42
     )
     coef = coef.ravel(order="F")  # this is important only for multinomial loss
 
@@ -262,7 +240,7 @@ def test_gradients_hessians_numerically(
     # 1. Check gradients numerically
     eps = 1e-6
     g, hessp = loss.gradient_hessian_product(
-        coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        coef, X, y, sample_weight=, l2_reg_strength=
     )
     # Use a trick to get central finite difference of accuracy 4 (five-point stencil)
     # https://en.wikipedia.org/wiki/Numerical_differentiation
@@ -274,8 +252,8 @@ def test_gradients_hessians_numerically(
             coef - eps,
             X,
             y,
-            sample_weight=sample_weight,
-            l2_reg_strength=l2_reg_strength,
+            sample_weight=,
+            l2_reg_strength=,
         ),
         2 * eps,
     )
@@ -286,8 +264,8 @@ def test_gradients_hessians_numerically(
             coef - 2 * eps,
             X,
             y,
-            sample_weight=sample_weight,
-            l2_reg_strength=l2_reg_strength,
+            sample_weight=,
+            l2_reg_strength=,
         ),
         4 * eps,
     )
@@ -311,8 +289,8 @@ def test_gradients_hessians_numerically(
                 coef + t * vector,
                 X,
                 y,
-                sample_weight=sample_weight,
-                l2_reg_strength=l2_reg_strength,
+                sample_weight=,
+                l2_reg_strength=,
             )
             for t in d_x
         ]
@@ -325,10 +303,10 @@ def test_gradients_hessians_numerically(
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_multinomial_coef_shape(fit_intercept):
     """Test that multinomial LinearModelLoss respects shape of coef."""
-    loss = LinearModelLoss(base_loss=HalfMultinomialLoss(), fit_intercept=fit_intercept)
+    loss = LinearModelLoss(base_loss=HalfMultinomialLoss(), fit_intercept=)
     n_samples, n_features = 10, 5
     X, y, coef = random_X_y_coef(
-        linear_model_loss=loss, n_samples=n_samples, n_features=n_features, seed=42
+        linear_model_loss=loss, n_samples=, n_features=, seed=42
     )
     s = np.random.RandomState(42).randn(*coef.shape)
 

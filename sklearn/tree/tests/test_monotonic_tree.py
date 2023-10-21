@@ -42,7 +42,7 @@ def test_monotonic_constraints_classifications(
     n_samples = 1000
     n_samples_train = 900
     X, y = make_classification(
-        n_samples=n_samples,
+        n_samples=,
         n_classes=2,
         n_features=5,
         n_informative=5,
@@ -63,11 +63,11 @@ def test_monotonic_constraints_classifications(
     monotonic_cst[1] = -1
 
     if depth_first_builder:
-        est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst)
+        est = TreeClassifier(max_depth=None, monotonic_cst=)
     else:
         est = TreeClassifier(
             max_depth=None,
-            monotonic_cst=monotonic_cst,
+            monotonic_cst=,
             max_leaf_nodes=n_samples_train,
         )
     if hasattr(est, "random_state"):
@@ -105,7 +105,7 @@ def test_monotonic_constraints_regressions(
     n_samples_train = 900
     # Build a regression task using 5 informative features
     X, y = make_regression(
-        n_samples=n_samples,
+        n_samples=,
         n_features=5,
         n_informative=5,
         random_state=global_random_seed,
@@ -124,16 +124,12 @@ def test_monotonic_constraints_regressions(
     monotonic_cst[1] = -1
 
     if depth_first_builder:
-        est = TreeRegressor(
-            max_depth=None,
-            monotonic_cst=monotonic_cst,
-            criterion=criterion,
-        )
+        est = TreeRegressor(max_depth=None, monotonic_cst=, criterion=)
     else:
         est = TreeRegressor(
             max_depth=8,
-            monotonic_cst=monotonic_cst,
-            criterion=criterion,
+            monotonic_cst=,
+            criterion=,
             max_leaf_nodes=n_samples_train,
         )
     if hasattr(est, "random_state"):
@@ -164,7 +160,7 @@ def test_multiclass_raises(TreeClassifier):
     monotonic_cst = np.zeros(X.shape[1])
     monotonic_cst[0] = -1
     monotonic_cst[1] = 1
-    est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst, random_state=0)
+    est = TreeClassifier(max_depth=None, monotonic_cst=, random_state=0)
 
     msg = "Monotonicity constraints are not supported with multiclass classification"
     with pytest.raises(ValueError, match=msg):
@@ -194,9 +190,7 @@ def test_missing_values_raises(DecisionTreeEstimator):
     X[0, 0] = np.nan
     monotonic_cst = np.zeros(X.shape[1])
     monotonic_cst[0] = 1
-    est = DecisionTreeEstimator(
-        max_depth=None, monotonic_cst=monotonic_cst, random_state=0
-    )
+    est = DecisionTreeEstimator(max_depth=None, monotonic_cst=, random_state=0)
 
     msg = "Input X contains NaN"
     with pytest.raises(ValueError, match=msg):
@@ -330,7 +324,7 @@ def test_1d_tree_nodes_values(
         # No max_leaf_nodes, default depth first tree builder
         clf = TreeRegressor(
             monotonic_cst=[monotonic_sign],
-            criterion=criterion,
+            criterion=,
             random_state=global_random_seed,
         )
     else:
@@ -338,7 +332,7 @@ def test_1d_tree_nodes_values(
         clf = TreeRegressor(
             monotonic_cst=[monotonic_sign],
             max_leaf_nodes=n_samples,
-            criterion=criterion,
+            criterion=,
             random_state=global_random_seed,
         )
     clf.fit(X, y)
@@ -486,16 +480,16 @@ def test_nd_tree_nodes_values(
     if depth_first_builder:
         # No max_leaf_nodes, default depth first tree builder
         clf = TreeRegressor(
-            monotonic_cst=monotonic_cst,
-            criterion=criterion,
+            monotonic_cst=,
+            criterion=,
             random_state=global_random_seed,
         )
     else:
         # max_leaf_nodes triggers best first tree builder
         clf = TreeRegressor(
-            monotonic_cst=monotonic_cst,
+            monotonic_cst=,
             max_leaf_nodes=n_samples,
-            criterion=criterion,
+            criterion=,
             random_state=global_random_seed,
         )
     clf.fit(X, y)

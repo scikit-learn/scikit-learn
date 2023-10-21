@@ -262,7 +262,7 @@ def fetch_20newsgroups(
         .. versionadded:: 0.22
     """
 
-    data_home = get_data_home(data_home=data_home)
+    data_home = get_data_home(data_home=)
     cache_path = _pkl_filepath(data_home, CACHE_NAME)
     twenty_home = os.path.join(data_home, "20news_home")
     cache = None
@@ -281,9 +281,7 @@ def fetch_20newsgroups(
     if cache is None:
         if download_if_missing:
             logger.info("Downloading 20news dataset. This may take a few minutes.")
-            cache = _download_20newsgroups(
-                target_dir=twenty_home, cache_path=cache_path
-            )
+            cache = _download_20newsgroups(target_dir=twenty_home, cache_path=)
         else:
             raise OSError("20Newsgroups dataset not found")
 
@@ -466,7 +464,7 @@ def fetch_20newsgroups_vectorized(
 
         .. versionadded:: 0.20
     """
-    data_home = get_data_home(data_home=data_home)
+    data_home = get_data_home(data_home=)
     filebase = "20newsgroup_vectorized"
     if remove:
         filebase += "remove-" + "-".join(remove)
@@ -474,23 +472,23 @@ def fetch_20newsgroups_vectorized(
 
     # we shuffle but use a fixed seed for the memoization
     data_train = fetch_20newsgroups(
-        data_home=data_home,
+        data_home=,
         subset="train",
         categories=None,
         shuffle=True,
         random_state=12,
-        remove=remove,
-        download_if_missing=download_if_missing,
+        remove=,
+        download_if_missing=,
     )
 
     data_test = fetch_20newsgroups(
-        data_home=data_home,
+        data_home=,
         subset="test",
         categories=None,
         shuffle=True,
         random_state=12,
-        remove=remove,
-        download_if_missing=download_if_missing,
+        remove=,
+        download_if_missing=,
     )
 
     if os.path.exists(target_file):
@@ -550,10 +548,10 @@ def fetch_20newsgroups_vectorized(
         return data, target
 
     return Bunch(
-        data=data,
-        target=target,
-        frame=frame,
-        target_names=target_names,
-        feature_names=feature_names,
+        data=,
+        target=,
+        frame=,
+        target_names=,
+        feature_names=,
         DESCR=fdescr,
     )

@@ -236,10 +236,10 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                         v,
                         feature_names,
                         vocab,
-                        fitting=fitting,
-                        transforming=transforming,
-                        indices=indices,
-                        values=values,
+                        fitting=,
+                        transforming=,
+                        indices=,
+                        values=,
                     )
                 else:
                     raise TypeError(
@@ -266,7 +266,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         shape = (len(indptr) - 1, len(vocab))
 
         result_matrix = sp.csr_matrix(
-            (values, indices, indptr), shape=shape, dtype=dtype
+            (values, indices, indptr), shape=, dtype=
         )
 
         # Sort everything if asked

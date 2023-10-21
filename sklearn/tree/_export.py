@@ -196,19 +196,19 @@ def plot_tree(
     check_is_fitted(decision_tree)
 
     exporter = _MPLTreeExporter(
-        max_depth=max_depth,
-        feature_names=feature_names,
-        class_names=class_names,
-        label=label,
-        filled=filled,
-        impurity=impurity,
-        node_ids=node_ids,
-        proportion=proportion,
-        rounded=rounded,
-        precision=precision,
-        fontsize=fontsize,
+        max_depth=,
+        feature_names=,
+        class_names=,
+        label=,
+        filled=,
+        impurity=,
+        node_ids=,
+        proportion=,
+        rounded=,
+        precision=,
+        fontsize=,
     )
-    return exporter.export(decision_tree, ax=ax)
+    return exporter.export(decision_tree, ax=)
 
 
 class _BaseTreeExporter:
@@ -418,16 +418,16 @@ class _DOTTreeExporter(_BaseTreeExporter):
         fontname="helvetica",
     ):
         super().__init__(
-            max_depth=max_depth,
-            feature_names=feature_names,
-            class_names=class_names,
-            label=label,
-            filled=filled,
-            impurity=impurity,
-            node_ids=node_ids,
-            proportion=proportion,
-            rounded=rounded,
-            precision=precision,
+            max_depth=,
+            feature_names=,
+            class_names=,
+            label=,
+            filled=,
+            impurity=,
+            node_ids=,
+            proportion=,
+            rounded=,
+            precision=,
         )
         self.leaves_parallel = leaves_parallel
         self.out_file = out_file
@@ -546,14 +546,14 @@ class _DOTTreeExporter(_BaseTreeExporter):
                 self.recurse(
                     tree,
                     left_child,
-                    criterion=criterion,
+                    criterion=,
                     parent=node_id,
                     depth=depth + 1,
                 )
                 self.recurse(
                     tree,
                     right_child,
-                    criterion=criterion,
+                    criterion=,
                     parent=node_id,
                     depth=depth + 1,
                 )
@@ -588,16 +588,16 @@ class _MPLTreeExporter(_BaseTreeExporter):
         fontsize=None,
     ):
         super().__init__(
-            max_depth=max_depth,
-            feature_names=feature_names,
-            class_names=class_names,
-            label=label,
-            filled=filled,
-            impurity=impurity,
-            node_ids=node_ids,
-            proportion=proportion,
-            rounded=rounded,
-            precision=precision,
+            max_depth=,
+            feature_names=,
+            class_names=,
+            label=,
+            filled=,
+            impurity=,
+            node_ids=,
+            proportion=,
+            rounded=,
+            precision=,
         )
         self.fontsize = fontsize
 
@@ -616,7 +616,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
     def _make_tree(self, node_id, et, criterion, depth=0):
         # traverses _tree.Tree recursively, builds intermediate
         # "_reingold_tilford.Tree" object
-        name = self.node_to_str(et, node_id, criterion=criterion)
+        name = self.node_to_str(et, node_id, criterion=)
         if et.children_left[node_id] != _tree.TREE_LEAF and (
             self.max_depth is None or depth <= self.max_depth
         ):
@@ -886,21 +886,21 @@ def export_graphviz(
             out_file = StringIO()
 
         exporter = _DOTTreeExporter(
-            out_file=out_file,
-            max_depth=max_depth,
-            feature_names=feature_names,
-            class_names=class_names,
-            label=label,
-            filled=filled,
-            leaves_parallel=leaves_parallel,
-            impurity=impurity,
-            node_ids=node_ids,
-            proportion=proportion,
-            rotate=rotate,
-            rounded=rounded,
-            special_characters=special_characters,
-            precision=precision,
-            fontname=fontname,
+            out_file=,
+            max_depth=,
+            feature_names=,
+            class_names=,
+            label=,
+            filled=,
+            leaves_parallel=,
+            impurity=,
+            node_ids=,
+            proportion=,
+            rotate=,
+            rounded=,
+            special_characters=,
+            precision=,
+            fontname=,
         )
         exporter.export(decision_tree)
 

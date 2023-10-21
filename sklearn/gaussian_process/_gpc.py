@@ -472,12 +472,12 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
             opt_res = scipy.optimize.minimize(
-                obj_func, initial_theta, method="L-BFGS-B", jac=True, bounds=bounds
+                obj_func, initial_theta, method="L-BFGS-B", jac=True, bounds=
             )
             _check_optimize_result("lbfgs", opt_res)
             theta_opt, func_min = opt_res.x, opt_res.fun
         elif callable(self.optimizer):
-            theta_opt, func_min = self.optimizer(obj_func, initial_theta, bounds=bounds)
+            theta_opt, func_min = self.optimizer(obj_func, initial_theta, bounds=)
         else:
             raise ValueError("Unknown optimizer %s." % self.optimizer)
 
@@ -864,7 +864,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         theta = np.asarray(theta)
         if self.n_classes_ == 2:
             return self.base_estimator_.log_marginal_likelihood(
-                theta, eval_gradient, clone_kernel=clone_kernel
+                theta, eval_gradient, clone_kernel=
             )
         else:
             if eval_gradient:
@@ -877,9 +877,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             if theta.shape[0] == n_dims:  # use same theta for all sub-kernels
                 return np.mean(
                     [
-                        estimator.log_marginal_likelihood(
-                            theta, clone_kernel=clone_kernel
-                        )
+                        estimator.log_marginal_likelihood(theta, clone_kernel=)
                         for i, estimator in enumerate(estimators)
                     ]
                 )
@@ -889,7 +887,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
                     [
                         estimator.log_marginal_likelihood(
                             theta[n_dims * i : n_dims * (i + 1)],
-                            clone_kernel=clone_kernel,
+                            clone_kernel=,
                         )
                         for i, estimator in enumerate(estimators)
                     ]

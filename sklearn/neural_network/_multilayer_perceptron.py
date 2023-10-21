@@ -591,7 +591,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 y,
                 random_state=self._random_state,
                 test_size=self.validation_fraction,
-                stratify=stratify,
+                stratify=,
             )
             if is_classifier(self):
                 y_val = self._label_binarizer.inverse_transform(y_val)
@@ -1062,30 +1062,30 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         max_fun=15000,
     ):
         super().__init__(
-            hidden_layer_sizes=hidden_layer_sizes,
-            activation=activation,
-            solver=solver,
-            alpha=alpha,
-            batch_size=batch_size,
-            learning_rate=learning_rate,
-            learning_rate_init=learning_rate_init,
-            power_t=power_t,
-            max_iter=max_iter,
+            hidden_layer_sizes=,
+            activation=,
+            solver=,
+            alpha=,
+            batch_size=,
+            learning_rate=,
+            learning_rate_init=,
+            power_t=,
+            max_iter=,
             loss="log_loss",
-            shuffle=shuffle,
-            random_state=random_state,
-            tol=tol,
-            verbose=verbose,
-            warm_start=warm_start,
-            momentum=momentum,
-            nesterovs_momentum=nesterovs_momentum,
-            early_stopping=early_stopping,
-            validation_fraction=validation_fraction,
-            beta_1=beta_1,
-            beta_2=beta_2,
-            epsilon=epsilon,
-            n_iter_no_change=n_iter_no_change,
-            max_fun=max_fun,
+            shuffle=,
+            random_state=,
+            tol=,
+            verbose=,
+            warm_start=,
+            momentum=,
+            nesterovs_momentum=,
+            early_stopping=,
+            validation_fraction=,
+            beta_1=,
+            beta_2=,
+            epsilon=,
+            n_iter_no_change=,
+            max_fun=,
         )
 
     def _validate_input(self, X, y, incremental, reset):
@@ -1095,7 +1095,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             accept_sparse=["csr", "csc"],
             multi_output=True,
             dtype=(np.float64, np.float32),
-            reset=reset,
+            reset=,
         )
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
@@ -1160,7 +1160,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     def _predict(self, X, check_input=True):
         """Private predict method with optional input validation"""
-        y_pred = self._forward_pass_fast(X, check_input=check_input)
+        y_pred = self._forward_pass_fast(X, check_input=)
 
         if self.n_outputs_ == 1:
             y_pred = y_pred.ravel()
@@ -1555,30 +1555,30 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         max_fun=15000,
     ):
         super().__init__(
-            hidden_layer_sizes=hidden_layer_sizes,
-            activation=activation,
-            solver=solver,
-            alpha=alpha,
-            batch_size=batch_size,
-            learning_rate=learning_rate,
-            learning_rate_init=learning_rate_init,
-            power_t=power_t,
-            max_iter=max_iter,
+            hidden_layer_sizes=,
+            activation=,
+            solver=,
+            alpha=,
+            batch_size=,
+            learning_rate=,
+            learning_rate_init=,
+            power_t=,
+            max_iter=,
             loss="squared_error",
-            shuffle=shuffle,
-            random_state=random_state,
-            tol=tol,
-            verbose=verbose,
-            warm_start=warm_start,
-            momentum=momentum,
-            nesterovs_momentum=nesterovs_momentum,
-            early_stopping=early_stopping,
-            validation_fraction=validation_fraction,
-            beta_1=beta_1,
-            beta_2=beta_2,
-            epsilon=epsilon,
-            n_iter_no_change=n_iter_no_change,
-            max_fun=max_fun,
+            shuffle=,
+            random_state=,
+            tol=,
+            verbose=,
+            warm_start=,
+            momentum=,
+            nesterovs_momentum=,
+            early_stopping=,
+            validation_fraction=,
+            beta_1=,
+            beta_2=,
+            epsilon=,
+            n_iter_no_change=,
+            max_fun=,
         )
 
     def predict(self, X):
@@ -1599,7 +1599,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     def _predict(self, X, check_input=True):
         """Private predict method with optional input validation"""
-        y_pred = self._forward_pass_fast(X, check_input=check_input)
+        y_pred = self._forward_pass_fast(X, check_input=)
         if y_pred.shape[1] == 1:
             return y_pred.ravel()
         return y_pred
@@ -1618,7 +1618,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             multi_output=True,
             y_numeric=True,
             dtype=(np.float64, np.float32),
-            reset=reset,
+            reset=,
         )
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)

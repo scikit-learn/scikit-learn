@@ -141,13 +141,13 @@ def test_iris_criterion(name, criterion):
     # Check consistency on dataset iris.
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
-    clf = ForestClassifier(n_estimators=10, criterion=criterion, random_state=1)
+    clf = ForestClassifier(n_estimators=10, criterion=, random_state=1)
     clf.fit(iris.data, iris.target)
     score = clf.score(iris.data, iris.target)
     assert score > 0.9, "Failed with criterion %s and score = %f" % (criterion, score)
 
     clf = ForestClassifier(
-        n_estimators=10, criterion=criterion, max_features=2, random_state=1
+        n_estimators=10, criterion=, max_features=2, random_state=1
     )
     clf.fit(iris.data, iris.target)
     score = clf.score(iris.data, iris.target)
@@ -162,7 +162,7 @@ def test_regression_criterion(name, criterion):
     # Check consistency on regression dataset.
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    reg = ForestRegressor(n_estimators=5, criterion=criterion, random_state=1)
+    reg = ForestRegressor(n_estimators=5, criterion=, random_state=1)
     reg.fit(X_reg, y_reg)
     score = reg.score(X_reg, y_reg)
     assert (
@@ -173,7 +173,7 @@ def test_regression_criterion(name, criterion):
     )
 
     reg = ForestRegressor(
-        n_estimators=5, criterion=criterion, max_features=6, random_state=1
+        n_estimators=5, criterion=, max_features=6, random_state=1
     )
     reg.fit(X_reg, y_reg)
     score = reg.score(X_reg, y_reg)
@@ -192,7 +192,7 @@ def test_poisson_vs_mse():
     rng = np.random.RandomState(42)
     n_train, n_test, n_features = 500, 500, 10
     X = datasets.make_low_rank_matrix(
-        n_samples=n_train + n_test, n_features=n_features, random_state=rng
+        n_samples=n_train + n_test, n_features=, random_state=rng
     )
     #  We create a log-linear Poisson model and downscale coef as it will get
     # exponentiated.
@@ -242,14 +242,14 @@ def test_balance_property_random_forest(criterion):
     rng = np.random.RandomState(42)
     n_train, n_test, n_features = 500, 500, 10
     X = datasets.make_low_rank_matrix(
-        n_samples=n_train + n_test, n_features=n_features, random_state=rng
+        n_samples=n_train + n_test, n_features=, random_state=rng
     )
 
     coef = rng.uniform(low=-2, high=2, size=n_features) / np.max(X, axis=0)
     y = rng.poisson(lam=np.exp(X @ coef))
 
     reg = RandomForestRegressor(
-        criterion=criterion, n_estimators=10, bootstrap=False, random_state=rng
+        criterion=, n_estimators=10, bootstrap=False, random_state=rng
     )
     reg.fit(X, y)
 
@@ -304,7 +304,7 @@ def test_importances(dtype, name, criterion):
 
     ForestEstimator = FOREST_ESTIMATORS[name]
 
-    est = ForestEstimator(n_estimators=10, criterion=criterion, random_state=0)
+    est = ForestEstimator(n_estimators=10, criterion=, random_state=0)
     est.fit(X, y)
     importances = est.feature_importances_
 
@@ -323,13 +323,13 @@ def test_importances(dtype, name, criterion):
 
     # Check with sample weights
     sample_weight = check_random_state(0).randint(1, 10, len(X))
-    est = ForestEstimator(n_estimators=10, random_state=0, criterion=criterion)
-    est.fit(X, y, sample_weight=sample_weight)
+    est = ForestEstimator(n_estimators=10, random_state=0, criterion=)
+    est.fit(X, y, sample_weight=)
     importances = est.feature_importances_
     assert np.all(importances >= 0.0)
 
     for scale in [0.5, 100]:
-        est = ForestEstimator(n_estimators=10, random_state=0, criterion=criterion)
+        est = ForestEstimator(n_estimators=10, random_state=0, criterion=)
         est.fit(X, y, sample_weight=scale * sample_weight)
         importances_bis = est.feature_importances_
         assert np.abs(importances - importances_bis).mean() < tolerance
@@ -495,7 +495,7 @@ def test_forest_classifier_oob(
     classifier = ForestClassifier(
         n_estimators=40,
         bootstrap=True,
-        oob_score=oob_score,
+        oob_score=,
         random_state=0,
     )
 
@@ -555,7 +555,7 @@ def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2, oob
     regressor = ForestRegressor(
         n_estimators=50,
         bootstrap=True,
-        oob_score=oob_score,
+        oob_score=,
         random_state=0,
     )
 
@@ -623,7 +623,7 @@ def test_forest_oob_error(ForestEstimator, X, y, params, err_msg):
 @pytest.mark.parametrize("oob_score", [True, False])
 def test_random_trees_embedding_raise_error_oob(oob_score):
     with pytest.raises(TypeError, match="got an unexpected keyword argument"):
-        RandomTreesEmbedding(oob_score=oob_score)
+        RandomTreesEmbedding(oob_score=)
     with pytest.raises(NotImplementedError, match="OOB score not supported"):
         RandomTreesEmbedding()._set_oob_score_and_attributes(X, y)
 
@@ -881,7 +881,7 @@ def test_parallel_train():
     y_train = rng.randint(0, 2, n_samples)
 
     clfs = [
-        RandomForestClassifier(n_estimators=20, n_jobs=n_jobs, random_state=12345).fit(
+        RandomForestClassifier(n_estimators=20, n_jobs=, random_state=12345).fit(
             X_train, y_train
         )
         for n_jobs in [1, 2, 3, 8, 16, 32]
@@ -1028,7 +1028,7 @@ def test_min_weight_fraction_leaf(name):
 
         est.fit(X, y, sample_weight=weights)
         out = est.estimators_[0].tree_.apply(X)
-        node_weights = np.bincount(out, weights=weights)
+        node_weights = np.bincount(out, weights=)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
         assert (
@@ -1086,19 +1086,19 @@ def test_memory_layout(name, dtype):
         (np.asarray, {"order": "F"}),  # F-order
         (np.ascontiguousarray, {}),  # Contiguous
     ):
-        X = container(iris.data, dtype=dtype, **kwargs)
+        X = container(iris.data, dtype=, **kwargs)
         y = iris.target
         assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
     # Sparse (if applicable)
     if est.estimator.splitter in SPARSE_SPLITTERS:
         for sparse_container in COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS:
-            X = sparse_container(iris.data, dtype=dtype)
+            X = sparse_container(iris.data, dtype=)
             y = iris.target
             assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
     # Strided
-    X = np.asarray(iris.data[::3], dtype=dtype)
+    X = np.asarray(iris.data[::3], dtype=)
     y = iris.target[::3]
     assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
@@ -1158,14 +1158,14 @@ def test_class_weights(name):
     class_weight = {0: 1.0, 1: 100.0, 2: 1.0}
     clf1 = ForestClassifier(random_state=0)
     clf1.fit(iris.data, iris.target, sample_weight)
-    clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
+    clf2 = ForestClassifier(class_weight=, random_state=0)
     clf2.fit(iris.data, iris.target)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
     # Check that sample_weight and class_weight are multiplicative
     clf1 = ForestClassifier(random_state=0)
     clf1.fit(iris.data, iris.target, sample_weight**2)
-    clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
+    clf2 = ForestClassifier(class_weight=, random_state=0)
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
@@ -1218,10 +1218,10 @@ def test_warm_start(name):
     for n_estimators in [5, 10]:
         if est_ws is None:
             est_ws = ForestEstimator(
-                n_estimators=n_estimators, random_state=42, warm_start=True
+                n_estimators=, random_state=42, warm_start=True
             )
         else:
-            est_ws.set_params(n_estimators=n_estimators)
+            est_ws.set_params(n_estimators=)
         est_ws.fit(X, y)
         assert len(est_ws) == n_estimators
 
@@ -1506,7 +1506,7 @@ def test_large_max_samples_exception(name):
     # Check invalid `max_samples`
     est = FOREST_CLASSIFIERS_REGRESSORS[name](bootstrap=True, max_samples=int(1e9))
     match = "`max_samples` must be <= n_samples=6 but got value 1000000000"
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(ValueError, match=):
         est.fit(X, y)
 
 
@@ -1681,7 +1681,7 @@ def test_round_samples_to_one_when_samples_too_low(class_weight):
     """
     X, y = datasets.load_wine(return_X_y=True)
     forest = RandomForestClassifier(
-        n_estimators=10, max_samples=1e-4, class_weight=class_weight, random_state=0
+        n_estimators=10, max_samples=1e-4, class_weight=, random_state=0
     )
     forest.fit(X, y)
 
@@ -1698,7 +1698,7 @@ def test_missing_values_is_resilient(make_data, Forest):
 
     rng = np.random.RandomState(0)
     n_samples, n_features = 1000, 10
-    X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
+    X, y = make_data(n_samples=, n_features=, random_state=rng)
 
     # Create dataset with missing values
     X_missing = X.copy()

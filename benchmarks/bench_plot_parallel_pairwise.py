@@ -35,11 +35,11 @@ def plot(func):
 
 
 def euclidean_distances(X, n_jobs):
-    return pairwise_distances(X, metric="euclidean", n_jobs=n_jobs)
+    return pairwise_distances(X, metric="euclidean", n_jobs=)
 
 
 def rbf_kernels(X, n_jobs):
-    return pairwise_kernels(X, metric="rbf", n_jobs=n_jobs, gamma=0.1)
+    return pairwise_kernels(X, metric="rbf", n_jobs=, gamma=0.1)
 
 
 plot(euclidean_distances)

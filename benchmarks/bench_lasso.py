@@ -35,7 +35,7 @@ def compute_bench(alpha, n_samples, n_features, precompute):
             X, Y, coef_ = make_regression(
                 n_samples=ns,
                 n_features=nf,
-                n_informative=n_informative,
+                n_informative=,
                 noise=0.1,
                 coef=True,
             )
@@ -44,14 +44,14 @@ def compute_bench(alpha, n_samples, n_features, precompute):
 
             gc.collect()
             print("- benchmarking Lasso")
-            clf = Lasso(alpha=alpha, fit_intercept=False, precompute=precompute)
+            clf = Lasso(alpha=, fit_intercept=False, precompute=)
             tstart = time()
             clf.fit(X, Y)
             lasso_results.append(time() - tstart)
 
             gc.collect()
             print("- benchmarking LassoLars")
-            clf = LassoLars(alpha=alpha, fit_intercept=False, precompute=precompute)
+            clf = LassoLars(alpha=, fit_intercept=False, precompute=)
             tstart = time()
             clf.fit(X, Y)
             lars_lasso_results.append(time() - tstart)

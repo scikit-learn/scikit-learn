@@ -115,22 +115,14 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
 
     if sp.issparse(X) and X.format == "csr":
         if axis == 0:
-            return _csr_mean_var_axis0(
-                X, weights=weights, return_sum_weights=return_sum_weights
-            )
+            return _csr_mean_var_axis0(X, weights=, return_sum_weights=)
         else:
-            return _csc_mean_var_axis0(
-                X.T, weights=weights, return_sum_weights=return_sum_weights
-            )
+            return _csc_mean_var_axis0(X.T, weights=, return_sum_weights=)
     elif sp.issparse(X) and X.format == "csc":
         if axis == 0:
-            return _csc_mean_var_axis0(
-                X, weights=weights, return_sum_weights=return_sum_weights
-            )
+            return _csc_mean_var_axis0(X, weights=, return_sum_weights=)
         else:
-            return _csr_mean_var_axis0(
-                X.T, weights=weights, return_sum_weights=return_sum_weights
-            )
+            return _csr_mean_var_axis0(X.T, weights=, return_sum_weights=)
     else:
         _raise_typeerror(X)
 
@@ -224,9 +216,7 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n, weights=Non
     if weights is not None:
         weights = _check_sample_weight(weights, X, dtype=X.dtype)
 
-    return _incr_mean_var_axis0(
-        X, last_mean=last_mean, last_var=last_var, last_n=last_n, weights=weights
-    )
+    return _incr_mean_var_axis0(X, last_mean=, last_var=, last_n=, weights=)
 
 
 def inplace_column_scale(X, scale):
@@ -447,9 +437,9 @@ def min_max_axis(X, axis, ignore_nan=False):
     """
     if sp.issparse(X) and X.format in ("csr", "csc"):
         if ignore_nan:
-            return _sparse_nan_min_max(X, axis=axis)
+            return _sparse_nan_min_max(X, axis=)
         else:
-            return _sparse_min_max(X, axis=axis)
+            return _sparse_min_max(X, axis=)
     else:
         _raise_typeerror(X)
 
@@ -503,7 +493,7 @@ def count_nonzero(X, axis=None, sample_weight=None):
             return np.bincount(X.indices, minlength=X.shape[1])
         else:
             weights = np.repeat(sample_weight, np.diff(X.indptr))
-            return np.bincount(X.indices, minlength=X.shape[1], weights=weights)
+            return np.bincount(X.indices, minlength=X.shape[1], weights=)
     else:
         raise ValueError("Unsupported axis: {0}".format(axis))
 

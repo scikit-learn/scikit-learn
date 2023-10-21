@@ -52,13 +52,13 @@ def test_kd_tree_numerical_consistency(global_random_seed, metric):
     )
 
     metric_params = METRICS.get(metric, {})
-    kd_64 = KDTree64(X_64, leaf_size=2, metric=metric, **metric_params)
-    kd_32 = KDTree32(X_32, leaf_size=2, metric=metric, **metric_params)
+    kd_64 = KDTree64(X_64, leaf_size=2, metric=, **metric_params)
+    kd_32 = KDTree32(X_32, leaf_size=2, metric=, **metric_params)
 
     # Test consistency with respect to the `query` method
     k = 4
-    dist_64, ind_64 = kd_64.query(Y_64, k=k)
-    dist_32, ind_32 = kd_32.query(Y_32, k=k)
+    dist_64, ind_64 = kd_64.query(Y_64, k=)
+    dist_32, ind_32 = kd_32.query(Y_32, k=)
     assert_allclose(dist_64, dist_32, rtol=1e-5)
     assert_equal(ind_64, ind_32)
     assert dist_64.dtype == np.float64
@@ -66,15 +66,15 @@ def test_kd_tree_numerical_consistency(global_random_seed, metric):
 
     # Test consistency with respect to the `query_radius` method
     r = 2.38
-    ind_64 = kd_64.query_radius(Y_64, r=r)
-    ind_32 = kd_32.query_radius(Y_32, r=r)
+    ind_64 = kd_64.query_radius(Y_64, r=)
+    ind_32 = kd_32.query_radius(Y_32, r=)
     for _ind64, _ind32 in zip(ind_64, ind_32):
         assert_equal(_ind64, _ind32)
 
     # Test consistency with respect to the `query_radius` method
     # with return distances being true
-    ind_64, dist_64 = kd_64.query_radius(Y_64, r=r, return_distance=True)
-    ind_32, dist_32 = kd_32.query_radius(Y_32, r=r, return_distance=True)
+    ind_64, dist_64 = kd_64.query_radius(Y_64, r=, return_distance=True)
+    ind_32, dist_32 = kd_32.query_radius(Y_32, r=, return_distance=True)
     for _ind64, _ind32, _dist_64, _dist_32 in zip(ind_64, ind_32, dist_64, dist_32):
         assert_equal(_ind64, _ind32)
         assert_allclose(_dist_64, _dist_32, rtol=1e-5)
@@ -88,13 +88,13 @@ def test_kernel_density_numerical_consistency(global_random_seed, metric):
     X_64, X_32, Y_64, Y_32 = get_dataset_for_binary_tree(random_seed=global_random_seed)
 
     metric_params = METRICS.get(metric, {})
-    kd_64 = KDTree64(X_64, leaf_size=2, metric=metric, **metric_params)
-    kd_32 = KDTree32(X_32, leaf_size=2, metric=metric, **metric_params)
+    kd_64 = KDTree64(X_64, leaf_size=2, metric=, **metric_params)
+    kd_32 = KDTree32(X_32, leaf_size=2, metric=, **metric_params)
 
     kernel = "gaussian"
     h = 0.1
-    density64 = kd_64.kernel_density(Y_64, h=h, kernel=kernel, breadth_first=True)
-    density32 = kd_32.kernel_density(Y_32, h=h, kernel=kernel, breadth_first=True)
+    density64 = kd_64.kernel_density(Y_64, h=, kernel=, breadth_first=True)
+    density32 = kd_32.kernel_density(Y_32, h=, kernel=, breadth_first=True)
     assert_allclose(density64, density32, rtol=1e-5)
     assert density64.dtype == np.float64
     assert density32.dtype == np.float32

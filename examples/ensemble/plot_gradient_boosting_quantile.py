@@ -36,7 +36,7 @@ expected_y = f(X).ravel()
 # The lognormal distribution is non-symmetric and long tailed: observing large
 # outliers is likely but it is impossible to observe small outliers.
 sigma = 0.5 + X.ravel() / 10
-noise = rng.lognormal(sigma=sigma) - np.exp(sigma**2 / 2)
+noise = rng.lognormal(sigma=) - np.exp(sigma**2 / 2)
 y = expected_y + noise
 
 # %%
@@ -68,7 +68,7 @@ common_params = dict(
     min_samples_split=9,
 )
 for alpha in [0.05, 0.5, 0.95]:
-    gbr = GradientBoostingRegressor(loss="quantile", alpha=alpha, **common_params)
+    gbr = GradientBoostingRegressor(loss="quantile", alpha=, **common_params)
     all_models["q %1.2f" % alpha] = gbr.fit(X_train, y_train)
 
 # %%
@@ -143,7 +143,7 @@ for name, gbr in sorted(all_models.items()):
     metrics = {"model": name}
     y_pred = gbr.predict(X_train)
     for alpha in [0.05, 0.5, 0.95]:
-        metrics["pbl=%1.2f" % alpha] = mean_pinball_loss(y_train, y_pred, alpha=alpha)
+        metrics["pbl=%1.2f" % alpha] = mean_pinball_loss(y_train, y_pred, alpha=)
     metrics["MSE"] = mean_squared_error(y_train, y_pred)
     results.append(metrics)
 
@@ -170,7 +170,7 @@ for name, gbr in sorted(all_models.items()):
     metrics = {"model": name}
     y_pred = gbr.predict(X_test)
     for alpha in [0.05, 0.5, 0.95]:
-        metrics["pbl=%1.2f" % alpha] = mean_pinball_loss(y_test, y_pred, alpha=alpha)
+        metrics["pbl=%1.2f" % alpha] = mean_pinball_loss(y_test, y_pred, alpha=)
     metrics["MSE"] = mean_squared_error(y_test, y_pred)
     results.append(metrics)
 
@@ -250,10 +250,10 @@ param_grid = dict(
 alpha = 0.05
 neg_mean_pinball_loss_05p_scorer = make_scorer(
     mean_pinball_loss,
-    alpha=alpha,
+    alpha=,
     greater_is_better=False,  # maximize the negative loss
 )
-gbr = GradientBoostingRegressor(loss="quantile", alpha=alpha, random_state=0)
+gbr = GradientBoostingRegressor(loss="quantile", alpha=, random_state=0)
 search_05p = HalvingRandomSearchCV(
     gbr,
     param_grid,
@@ -280,7 +280,7 @@ from sklearn.base import clone
 alpha = 0.95
 neg_mean_pinball_loss_95p_scorer = make_scorer(
     mean_pinball_loss,
-    alpha=alpha,
+    alpha=,
     greater_is_better=False,  # maximize the negative loss
 )
 search_95p = clone(search_05p).set_params(

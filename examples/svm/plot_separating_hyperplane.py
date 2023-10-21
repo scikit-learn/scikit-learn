@@ -34,7 +34,7 @@ DecisionBoundaryDisplay.from_estimator(
     levels=[-1, 0, 1],
     alpha=0.5,
     linestyles=["--", "-", "--"],
-    ax=ax,
+    ax=,
 )
 # plot support vectors
 ax.scatter(

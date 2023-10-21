@@ -41,7 +41,7 @@ from sklearn.datasets import make_swiss_roll
 
 n_samples = 1500
 noise = 0.05
-X, _ = make_swiss_roll(n_samples, noise=noise)
+X, _ = make_swiss_roll(n_samples, noise=)
 # Make it thinner
 X[:, 1] *= 0.5
 
@@ -100,7 +100,7 @@ connectivity = kneighbors_graph(X, n_neighbors=10, include_self=False)
 print("Compute structured hierarchical clustering...")
 st = time.time()
 ward = AgglomerativeClustering(
-    n_clusters=6, connectivity=connectivity, linkage="ward"
+    n_clusters=6, connectivity=, linkage="ward"
 ).fit(X)
 elapsed_time = time.time() - st
 label = ward.labels_

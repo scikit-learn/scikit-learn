@@ -45,7 +45,7 @@ def test_kernel_pca():
 
             # transform fit data
             kpca = KernelPCA(
-                4, kernel=kernel, eigen_solver=eigen_solver, fit_inverse_transform=inv
+                4, kernel=, eigen_solver=, fit_inverse_transform=inv
             )
             X_fit_transformed = kpca.fit_transform(X_fit)
             X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
@@ -133,8 +133,8 @@ def test_kernel_pca_sparse(csr_container):
             # transform fit data
             kpca = KernelPCA(
                 4,
-                kernel=kernel,
-                eigen_solver=eigen_solver,
+                kernel=,
+                eigen_solver=,
                 fit_inverse_transform=False,
                 random_state=0,
             )
@@ -193,7 +193,7 @@ def test_kernel_pca_n_components():
 
     for eigen_solver in ("dense", "arpack", "randomized"):
         for c in [1, 2, 4]:
-            kpca = KernelPCA(n_components=c, eigen_solver=eigen_solver)
+            kpca = KernelPCA(n_components=c, eigen_solver=)
             shape = kpca.fit(X_fit).transform(X_pred).shape
 
             assert shape == (2, c)
@@ -254,27 +254,23 @@ def test_kernel_pca_precomputed():
 
     for eigen_solver in ("dense", "arpack", "randomized"):
         X_kpca = (
-            KernelPCA(4, eigen_solver=eigen_solver, random_state=0)
+            KernelPCA(4, eigen_solver=, random_state=0)
             .fit(X_fit)
             .transform(X_pred)
         )
 
         X_kpca2 = (
-            KernelPCA(
-                4, eigen_solver=eigen_solver, kernel="precomputed", random_state=0
-            )
+            KernelPCA(4, eigen_solver=, kernel="precomputed", random_state=0)
             .fit(np.dot(X_fit, X_fit.T))
             .transform(np.dot(X_pred, X_fit.T))
         )
 
         X_kpca_train = KernelPCA(
-            4, eigen_solver=eigen_solver, kernel="precomputed", random_state=0
+            4, eigen_solver=, kernel="precomputed", random_state=0
         ).fit_transform(np.dot(X_fit, X_fit.T))
 
         X_kpca_train2 = (
-            KernelPCA(
-                4, eigen_solver=eigen_solver, kernel="precomputed", random_state=0
-            )
+            KernelPCA(4, eigen_solver=, kernel="precomputed", random_state=0)
             .fit(np.dot(X_fit, X_fit.T))
             .transform(np.dot(X_fit, X_fit.T))
         )
@@ -321,7 +317,7 @@ def test_gridsearch_pipeline():
     kpca = KernelPCA(kernel="rbf", n_components=2)
     pipeline = Pipeline([("kernel_pca", kpca), ("Perceptron", Perceptron(max_iter=5))])
     param_grid = dict(kernel_pca__gamma=2.0 ** np.arange(-2, 2))
-    grid_search = GridSearchCV(pipeline, cv=3, param_grid=param_grid)
+    grid_search = GridSearchCV(pipeline, cv=3, param_grid=)
     grid_search.fit(X, y)
     assert grid_search.best_score_ == 1
 
@@ -336,7 +332,7 @@ def test_gridsearch_pipeline_precomputed():
     kpca = KernelPCA(kernel="precomputed", n_components=2)
     pipeline = Pipeline([("kernel_pca", kpca), ("Perceptron", Perceptron(max_iter=5))])
     param_grid = dict(Perceptron__max_iter=np.arange(1, 5))
-    grid_search = GridSearchCV(pipeline, cv=3, param_grid=param_grid)
+    grid_search = GridSearchCV(pipeline, cv=3, param_grid=)
     X_kernel = rbf_kernel(X, gamma=2.0)
     grid_search.fit(X_kernel, y)
     assert grid_search.best_score_ == 1

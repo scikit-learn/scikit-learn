@@ -31,7 +31,7 @@ def test_permutation_invariance():
     y = [1, 41, 51, 1, 2, 5, 24]
     sample_weight = [1, 2, 3, 4, 5, 6, 7]
     x_s, y_s, sample_weight_s = shuffle(x, y, sample_weight, random_state=0)
-    y_transformed = ir.fit_transform(x, y, sample_weight=sample_weight)
+    y_transformed = ir.fit_transform(x, y, sample_weight=)
     y_transformed_s = ir.fit(x_s, y_s, sample_weight=sample_weight_s).transform(x)
 
     assert_array_equal(y_transformed, y_transformed_s)
@@ -320,7 +320,7 @@ def test_isotonic_sample_weight():
     y = [1, 41, 51, 1, 2, 5, 24]
     sample_weight = [1, 2, 3, 4, 5, 6, 7]
     expected_y = [1, 13.95, 13.95, 13.95, 13.95, 13.95, 24]
-    received_y = ir.fit_transform(x, y, sample_weight=sample_weight)
+    received_y = ir.fit_transform(x, y, sample_weight=)
 
     assert_array_equal(expected_y, received_y)
 
@@ -509,16 +509,16 @@ def test_isotonic_dtype():
 
     for dtype in (np.int32, np.int64, np.float32, np.float64):
         for sample_weight in (None, weights.astype(np.float32), weights):
-            y_np = np.array(y, dtype=dtype)
+            y_np = np.array(y, dtype=)
             expected_dtype = check_array(
                 y_np, dtype=[np.float64, np.float32], ensure_2d=False
             ).dtype
 
-            res = isotonic_regression(y_np, sample_weight=sample_weight)
+            res = isotonic_regression(y_np, sample_weight=)
             assert res.dtype == expected_dtype
 
             X = np.arange(len(y)).astype(dtype)
-            reg.fit(X, y_np, sample_weight=sample_weight)
+            reg.fit(X, y_np, sample_weight=)
             res = reg.predict(X)
             assert res.dtype == expected_dtype
 
@@ -537,7 +537,7 @@ def test_isotonic_mismatched_dtype(y_dtype):
 def test_make_unique_dtype():
     x_list = [2, 2, 2, 3, 5]
     for dtype in (np.float32, np.float64):
-        x = np.array(x_list, dtype=dtype)
+        x = np.array(x_list, dtype=)
         y = x.copy()
         w = np.ones_like(x)
         x, y, w = _make_unique(x, y, w)
@@ -547,7 +547,7 @@ def test_make_unique_dtype():
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_make_unique_tolerance(dtype):
     # Check that equality takes account of np.finfo tolerance
-    x = np.array([0, 1e-16, 1, 1 + 1e-14], dtype=dtype)
+    x = np.array([0, 1e-16, 1, 1 + 1e-14], dtype=)
     y = x.copy()
     w = np.ones_like(x)
     x, y, w = _make_unique(x, y, w)
@@ -587,7 +587,7 @@ def test_isotonic_thresholds(increasing):
     n_samples = 30
     X = rng.normal(size=n_samples)
     y = rng.normal(size=n_samples)
-    ireg = IsotonicRegression(increasing=increasing).fit(X, y)
+    ireg = IsotonicRegression(increasing=).fit(X, y)
     X_thresholds, y_thresholds = ireg.X_thresholds_, ireg.y_thresholds_
     assert X_thresholds.shape == y_thresholds.shape
 

@@ -144,12 +144,12 @@ def test_standard_scaler_sample_weight(Xw, X, sample_weight, array_constructor):
 
     # weighted StandardScaler
     yw = np.ones(Xw.shape[0])
-    scaler_w = StandardScaler(with_mean=with_mean)
-    scaler_w.fit(Xw, yw, sample_weight=sample_weight)
+    scaler_w = StandardScaler(with_mean=)
+    scaler_w.fit(Xw, yw, sample_weight=)
 
     # unweighted, but with repeated samples
     y = np.ones(X.shape[0])
-    scaler = StandardScaler(with_mean=with_mean)
+    scaler = StandardScaler(with_mean=)
     scaler.fit(X, y)
 
     X_test = [[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]
@@ -214,8 +214,8 @@ def test_standard_scaler_dtype(add_sample_weight, sparse_container):
             X = sparse_container(X)
             with_mean = False
 
-        scaler = StandardScaler(with_mean=with_mean)
-        X_scaled = scaler.fit(X, sample_weight=sample_weight).transform(X)
+        scaler = StandardScaler(with_mean=)
+        X_scaled = scaler.fit(X, sample_weight=).transform(X)
         assert X.dtype == X_scaled.dtype
         assert scaler.mean_.dtype == np.float64
         assert scaler.scale_.dtype == np.float64
@@ -245,7 +245,7 @@ def test_standard_scaler_constant_features(
         fit_params = dict(sample_weight=rng.uniform(size=n_samples) * 2)
     else:
         fit_params = {}
-    X_array = np.full(shape=(n_samples, n_features), fill_value=constant, dtype=dtype)
+    X_array = np.full(shape=(n_samples, n_features), fill_value=constant, dtype=)
     X = X_array if sparse_container is None else sparse_container(X_array)
     X_scaled = scaler.fit(X, **fit_params).transform(X)
 
@@ -277,10 +277,10 @@ def test_standard_scaler_near_constant_features(
     # is considered constant and not scaled.
 
     scale_min, scale_max = -30, 19
-    scales = np.array([10**i for i in range(scale_min, scale_max + 1)], dtype=dtype)
+    scales = np.array([10**i for i in range(scale_min, scale_max + 1)], dtype=)
 
     n_features = scales.shape[0]
-    X = np.empty((n_samples, n_features), dtype=dtype)
+    X = np.empty((n_samples, n_features), dtype=)
     # Make a dataset of known var = scales**2 and mean = average
     X[: n_samples // 2, :] = average + scales
     X[n_samples // 2 :, :] = average - scales
@@ -498,8 +498,8 @@ def test_minmax_scaler_partial_fit():
                 i,
                 batch_start=batch.start,
                 batch_stop=batch.stop,
-                n=n,
-                chunk_size=chunk_size,
+                n=,
+                chunk_size=,
                 n_samples_seen=scaler_incr.n_samples_seen_,
             )
 
@@ -546,8 +546,8 @@ def test_standard_scaler_partial_fit():
                 i,
                 batch_start=batch.start,
                 batch_stop=batch.stop,
-                n=n,
-                chunk_size=chunk_size,
+                n=,
+                chunk_size=,
                 n_samples_seen=scaler_incr.n_samples_seen_,
             )
 
@@ -608,7 +608,7 @@ def test_partial_fit_sparse_input(sample_weight, sparse_container):
         sample_weight = rng.rand(X.shape[0])
 
     null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
-    X_null = null_transform.partial_fit(X, sample_weight=sample_weight).transform(X)
+    X_null = null_transform.partial_fit(X, sample_weight=).transform(X)
     assert_array_equal(X_null.toarray(), X.toarray())
     X_orig = null_transform.inverse_transform(X_null)
     assert_array_equal(X_orig.toarray(), X_null.toarray())
@@ -696,7 +696,7 @@ def test_standard_check_array_of_inverse_transform():
 )
 def test_scaler_array_api_compliance(estimator, check, array_namespace, device, dtype):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namespace, device=device, dtype=dtype)
+    check(name, estimator, array_namespace, device=, dtype=)
 
 
 def test_min_max_scaler_iris():
@@ -821,12 +821,12 @@ def test_scaler_without_centering(sample_weight, sparse_container):
     with pytest.raises(ValueError):
         StandardScaler().fit(X_sparse)
 
-    scaler = StandardScaler(with_mean=False).fit(X, sample_weight=sample_weight)
+    scaler = StandardScaler(with_mean=False).fit(X, sample_weight=)
     X_scaled = scaler.transform(X, copy=True)
     assert not np.any(np.isnan(X_scaled))
 
     scaler_sparse = StandardScaler(with_mean=False).fit(
-        X_sparse, sample_weight=sample_weight
+        X_sparse, sample_weight=
     )
     X_sparse_scaled = scaler_sparse.transform(X_sparse, copy=True)
     assert not np.any(np.isnan(X_sparse_scaled.data))
@@ -881,7 +881,7 @@ def test_scaler_n_samples_seen_with_nan(with_mean, with_std, sparse_container):
     if sparse.issparse(X) and with_mean:
         pytest.skip("'with_mean=True' cannot be used with sparse matrix.")
 
-    transformer = StandardScaler(with_mean=with_mean, with_std=with_std)
+    transformer = StandardScaler(with_mean=, with_std=)
     transformer.fit(X)
 
     assert_array_equal(transformer.n_samples_seen_, np.array([3, 4, 2]))
@@ -1041,7 +1041,7 @@ def test_robust_scaler_attributes(X, with_centering, with_scaling):
     if with_centering and sparse.issparse(X):
         pytest.skip("RobustScaler cannot center sparse matrix")
 
-    scaler = RobustScaler(with_centering=with_centering, with_scaling=with_scaling)
+    scaler = RobustScaler(with_centering=, with_scaling=)
     scaler.fit(X)
 
     if with_centering:
@@ -1087,7 +1087,7 @@ def test_robust_scaler_2d_arrays():
 @pytest.mark.parametrize("strictly_signed", ["positive", "negative", "zeros", None])
 def test_robust_scaler_equivalence_dense_sparse(density, strictly_signed):
     # Check the equivalence of the fitting with dense and sparse matrices
-    X_sparse = sparse.rand(1000, 5, density=density).tocsc()
+    X_sparse = sparse.rand(1000, 5, density=).tocsc()
     if strictly_signed == "positive":
         X_sparse.data = np.abs(X_sparse.data)
     elif strictly_signed == "negative":
@@ -1335,8 +1335,8 @@ def test_quantile_transform_subsampling():
     inf_norm_arr = []
     for random_state in range(ROUND):
         transformer = QuantileTransformer(
-            random_state=random_state,
-            n_quantiles=n_quantiles,
+            random_state=,
+            n_quantiles=,
             subsample=n_samples // 10,
         )
         transformer.fit(X)
@@ -1354,8 +1354,8 @@ def test_quantile_transform_subsampling():
     inf_norm_arr = []
     for random_state in range(ROUND):
         transformer = QuantileTransformer(
-            random_state=random_state,
-            n_quantiles=n_quantiles,
+            random_state=,
+            n_quantiles=,
             subsample=n_samples // 10,
         )
         transformer.fit(X)
@@ -1486,7 +1486,7 @@ def test_quantile_transformer_sorted_quantiles(array_type):
     X = _convert_container(X, array_type)
 
     n_quantiles = 100
-    qt = QuantileTransformer(n_quantiles=n_quantiles).fit(X)
+    qt = QuantileTransformer(n_quantiles=).fit(X)
 
     # Check that the estimated quantile thresholds are monotically
     # increasing:
@@ -1597,7 +1597,7 @@ def test_robust_scaler_unit_variance():
     X_with_outliers = np.vstack([X, np.ones((100, 1)) * 100, np.ones((100, 1)) * -100])
 
     quantile_range = (1, 99)
-    robust_scaler = RobustScaler(quantile_range=quantile_range, unit_variance=True).fit(
+    robust_scaler = RobustScaler(quantile_range=, unit_variance=True).fit(
         X_with_outliers
     )
     X_trans = robust_scaler.transform(X)
@@ -1765,8 +1765,8 @@ def test_maxabs_scaler_partial_fit(csr_container):
                 i,
                 batch_start=batch.start,
                 batch_stop=batch.stop,
-                n=n,
-                chunk_size=chunk_size,
+                n=,
+                chunk_size=,
                 n_samples_seen=scaler_incr.n_samples_seen_,
             )
 
@@ -1812,12 +1812,12 @@ def test_normalizer_l1_l2_max(norm, csr_container):
 
     # check inputs that support the no-copy optim
     for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
-        normalizer = Normalizer(norm=norm, copy=True)
+        normalizer = Normalizer(norm=, copy=True)
         X_norm1 = normalizer.transform(X)
         assert X_norm1 is not X
         X_norm1 = toarray(X_norm1)
 
-        normalizer = Normalizer(norm=norm, copy=False)
+        normalizer = Normalizer(norm=, copy=False)
         X_norm2 = normalizer.transform(X)
         assert X_norm2 is X
         X_norm2 = toarray(X_norm2)
@@ -1838,7 +1838,7 @@ def test_normalizer_l1_l2_max_non_csr(norm, sparse_container):
     X_dense[3, :] = 0.0
 
     X = sparse_container(X_dense)
-    X_norm = Normalizer(norm=norm, copy=False).transform(X)
+    X_norm = Normalizer(norm=, copy=False).transform(X)
 
     assert X_norm is not X
     assert sparse.issparse(X_norm) and X_norm.format == "csr"
@@ -1883,7 +1883,7 @@ def test_normalize(csr_container):
         for dtype in (np.float32, np.float64):
             for norm in ("l1", "l2"):
                 X = X.astype(dtype)
-                X_norm = normalize(X, norm=norm)
+                X_norm = normalize(X, norm=)
                 assert X_norm.dtype == dtype
 
                 X_norm = toarray(X_norm)
@@ -1898,7 +1898,7 @@ def test_normalize(csr_container):
     # Test return_norm
     X_dense = np.array([[3.0, 0, 4.0], [1.0, 0.0, 0.0], [2.0, 3.0, 0.0]])
     for norm in ("l1", "l2", "max"):
-        _, norms = normalize(X_dense, norm=norm, return_norm=True)
+        _, norms = normalize(X_dense, norm=, return_norm=True)
         if norm == "l1":
             assert_array_almost_equal(norms, np.array([7.0, 1.0, 5.0]))
         elif norm == "l2":
@@ -1909,7 +1909,7 @@ def test_normalize(csr_container):
     X_sparse = csr_container(X_dense)
     for norm in ("l1", "l2"):
         with pytest.raises(NotImplementedError):
-            normalize(X_sparse, norm=norm, return_norm=True)
+            normalize(X_sparse, norm=, return_norm=True)
     _, norms = normalize(X_sparse, norm="max", return_norm=True)
     assert_array_almost_equal(norms, np.array([4.0, 1.0, 3.0]))
 
@@ -2135,7 +2135,7 @@ def test_fit_cold_start():
 
 @pytest.mark.parametrize("method", ["box-cox", "yeo-johnson"])
 def test_power_transformer_notfitted(method):
-    pt = PowerTransformer(method=method)
+    pt = PowerTransformer(method=)
     X = np.abs(X_1col)
     with pytest.raises(NotFittedError):
         pt.transform(X)
@@ -2150,7 +2150,7 @@ def test_power_transformer_inverse(method, standardize, X):
     # Make sure we get the original input when applying transform and then
     # inverse transform
     X = np.abs(X) if method == "box-cox" else X
-    pt = PowerTransformer(method=method, standardize=standardize)
+    pt = PowerTransformer(method=, standardize=)
     X_trans = pt.fit_transform(X)
     assert_almost_equal(X, pt.inverse_transform(X_trans))
 
@@ -2159,10 +2159,10 @@ def test_power_transformer_1d():
     X = np.abs(X_1col)
 
     for standardize in [True, False]:
-        pt = PowerTransformer(method="box-cox", standardize=standardize)
+        pt = PowerTransformer(method="box-cox", standardize=)
 
         X_trans = pt.fit_transform(X)
-        X_trans_func = power_transform(X, method="box-cox", standardize=standardize)
+        X_trans_func = power_transform(X, method="box-cox", standardize=)
 
         X_expected, lambda_expected = stats.boxcox(X.flatten())
 
@@ -2183,10 +2183,10 @@ def test_power_transformer_2d():
     X = np.abs(X_2d)
 
     for standardize in [True, False]:
-        pt = PowerTransformer(method="box-cox", standardize=standardize)
+        pt = PowerTransformer(method="box-cox", standardize=)
 
         X_trans_class = pt.fit_transform(X)
-        X_trans_func = power_transform(X, method="box-cox", standardize=standardize)
+        X_trans_func = power_transform(X, method="box-cox", standardize=)
 
         for X_trans in [X_trans_class, X_trans_func]:
             for j in range(X_trans.shape[1]):
@@ -2242,7 +2242,7 @@ def test_power_transformer_yeojohnson_any_input(X):
 
 @pytest.mark.parametrize("method", ["box-cox", "yeo-johnson"])
 def test_power_transformer_shape_exception(method):
-    pt = PowerTransformer(method=method)
+    pt = PowerTransformer(method=)
     X = np.abs(X_2d)
     pt.fit(X)
 
@@ -2300,11 +2300,11 @@ def test_optimization_power_transformer(method, lmbda):
     n_samples = 20000
     X = rng.normal(loc=0, scale=1, size=(n_samples, 1))
 
-    pt = PowerTransformer(method=method, standardize=False)
+    pt = PowerTransformer(method=, standardize=False)
     pt.lambdas_ = [lmbda]
     X_inv = pt.inverse_transform(X)
 
-    pt = PowerTransformer(method=method, standardize=False)
+    pt = PowerTransformer(method=, standardize=False)
     X_inv_trans = pt.fit_transform(X_inv)
 
     assert_almost_equal(0, np.linalg.norm(X - X_inv_trans) / n_samples, decimal=2)
@@ -2327,7 +2327,7 @@ def test_power_transformer_nans(method):
     # and that transform() supports NaN silently
 
     X = np.abs(X_1col)
-    pt = PowerTransformer(method=method)
+    pt = PowerTransformer(method=)
     pt.fit(X)
     lmbda_no_nans = pt.lambdas_[0]
 
@@ -2352,7 +2352,7 @@ def test_power_transformer_fit_transform(method, standardize):
     if method == "box-cox":
         X = np.abs(X)
 
-    pt = PowerTransformer(method, standardize=standardize)
+    pt = PowerTransformer(method, standardize=)
     assert_array_almost_equal(pt.fit(X).transform(X), pt.fit_transform(X))
 
 
@@ -2369,7 +2369,7 @@ def test_power_transformer_copy_True(method, standardize):
     assert X is not X_original  # sanity checks
     assert_array_almost_equal(X, X_original)
 
-    pt = PowerTransformer(method, standardize=standardize, copy=True)
+    pt = PowerTransformer(method, standardize=, copy=True)
 
     pt.fit(X)
     assert_array_almost_equal(X, X_original)
@@ -2397,7 +2397,7 @@ def test_power_transformer_copy_False(method, standardize):
     assert X is not X_original  # sanity checks
     assert_array_almost_equal(X, X_original)
 
-    pt = PowerTransformer(method, standardize=standardize, copy=False)
+    pt = PowerTransformer(method, standardize=, copy=False)
 
     pt.fit(X)
     assert_array_almost_equal(X, X_original)  # fit didn't change X
@@ -2450,7 +2450,7 @@ def test_standard_scaler_sparse_partial_fit_finite_variance(X_2):
 def test_minmax_scaler_clip(feature_range):
     # test behaviour of the parameter 'clip' in MinMaxScaler
     X = iris.data
-    scaler = MinMaxScaler(feature_range=feature_range, clip=True).fit(X)
+    scaler = MinMaxScaler(feature_range=, clip=True).fit(X)
     X_min, X_max = np.min(X, axis=0), np.max(X, axis=0)
     X_test = [np.r_[X_min[:2] - 10, X_max[2:] + 10]]
     X_transformed = scaler.transform(X_test)
@@ -2564,7 +2564,7 @@ def test_power_transformer_constant_feature(standardize):
     """Check that PowerTransfomer leaves constant features unchanged."""
     X = [[-2, 0, 2], [-2, 0, 2], [-2, 0, 2]]
 
-    pt = PowerTransformer(method="yeo-johnson", standardize=standardize).fit(X)
+    pt = PowerTransformer(method="yeo-johnson", standardize=).fit(X)
 
     assert_allclose(pt.lambdas_, [1, 1, 1])
 

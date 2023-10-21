@@ -78,7 +78,7 @@ for i, method in enumerate(methods):
     t0 = time()
     trans_data = (
         manifold.LocallyLinearEmbedding(
-            n_neighbors=n_neighbors, n_components=2, method=method, random_state=42
+            n_neighbors=, n_components=2, method=, random_state=42
         )
         .fit_transform(sphere_data)
         .T
@@ -96,7 +96,7 @@ for i, method in enumerate(methods):
 # Perform Isomap Manifold learning.
 t0 = time()
 trans_data = (
-    manifold.Isomap(n_neighbors=n_neighbors, n_components=2)
+    manifold.Isomap(n_neighbors=, n_components=2)
     .fit_transform(sphere_data)
     .T
 )
@@ -126,9 +126,7 @@ plt.axis("tight")
 
 # Perform Spectral Embedding.
 t0 = time()
-se = manifold.SpectralEmbedding(
-    n_components=2, n_neighbors=n_neighbors, random_state=42
-)
+se = manifold.SpectralEmbedding(n_components=2, n_neighbors=, random_state=42)
 trans_data = se.fit_transform(sphere_data).T
 t1 = time()
 print("Spectral Embedding: %.2g sec" % (t1 - t0))

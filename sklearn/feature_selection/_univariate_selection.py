@@ -437,9 +437,7 @@ def f_regression(X, y, *, center=True, force_finite=True):
     SelectPercentile: Select features based on percentile of the highest
         scores.
     """
-    correlation_coefficient = r_regression(
-        X, y, center=center, force_finite=force_finite
-    )
+    correlation_coefficient = r_regression(X, y, center=, force_finite=)
     deg_of_freedom = y.size - (2 if center else 1)
 
     corr_coef_squared = correlation_coefficient**2
@@ -599,7 +597,7 @@ class SelectPercentile(_BaseFilter):
     }
 
     def __init__(self, score_func=f_classif, *, percentile=10):
-        super().__init__(score_func=score_func)
+        super().__init__(score_func=)
         self.percentile = percentile
 
     def _get_support_mask(self):
@@ -698,7 +696,7 @@ class SelectKBest(_BaseFilter):
     }
 
     def __init__(self, score_func=f_classif, *, k=10):
-        super().__init__(score_func=score_func)
+        super().__init__(score_func=)
         self.k = k
 
     def _check_params(self, X, y):
@@ -796,7 +794,7 @@ class SelectFpr(_BaseFilter):
     }
 
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
-        super().__init__(score_func=score_func)
+        super().__init__(score_func=)
         self.alpha = alpha
 
     def _get_support_mask(self):
@@ -880,7 +878,7 @@ class SelectFdr(_BaseFilter):
     }
 
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
-        super().__init__(score_func=score_func)
+        super().__init__(score_func=)
         self.alpha = alpha
 
     def _get_support_mask(self):
@@ -962,7 +960,7 @@ class SelectFwe(_BaseFilter):
     }
 
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
-        super().__init__(score_func=score_func)
+        super().__init__(score_func=)
         self.alpha = alpha
 
     def _get_support_mask(self):
@@ -1057,7 +1055,7 @@ class GenericUnivariateSelect(_BaseFilter):
     }
 
     def __init__(self, score_func=f_classif, *, mode="percentile", param=1e-5):
-        super().__init__(score_func=score_func)
+        super().__init__(score_func=)
         self.mode = mode
         self.param = param
 

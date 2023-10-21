@@ -81,7 +81,7 @@ def generate_data(case):
         train_size = 0.4  # to make the example run faster
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, train_size=train_size, random_state=0
+        X, y, train_size=, random_state=0
     )
 
     data = {"X_train": X_train, "X_test": X_test, "y_train": y_train, "y_test": y_test}

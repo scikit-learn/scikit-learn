@@ -166,7 +166,7 @@ def test_docstring(Klass, method, request):
 
     res = numpydoc_validation.validate(import_path)
 
-    res["errors"] = list(filter_errors(res["errors"], method, Klass=Klass))
+    res["errors"] = list(filter_errors(res["errors"], method, Klass=))
 
     if res["errors"]:
         msg = repr_errors(res, Klass, method)

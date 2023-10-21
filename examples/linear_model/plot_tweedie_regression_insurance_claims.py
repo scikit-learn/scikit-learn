@@ -126,7 +126,7 @@ def plot_obs_pred(
         .assign(predicted=lambda x: x["predicted"] / x[weight])
     )
 
-    ax = df_.loc[:, ["observed", "predicted"]].plot(style=".", ax=ax)
+    ax = df_.loc[:, ["observed", "predicted"]].plot(style=".", ax=)
     y_max = df_.loc[:, ["observed", "predicted"]].values.max() * 0.8
     p2 = ax.fill_between(
         df_.index,
@@ -164,7 +164,7 @@ def score_estimator(
         metrics += [
             (
                 "mean Tweedie dev p={:.4f}".format(power),
-                partial(mean_tweedie_deviance, power=power),
+                partial(mean_tweedie_deviance, power=),
             )
             for power in tweedie_powers
         ]
@@ -558,7 +558,7 @@ scores_product_model = score_estimator(
     df_test,
     target="PurePremium",
     weights="Exposure",
-    tweedie_powers=tweedie_powers,
+    tweedie_powers=,
 )
 
 scores_glm_pure_premium = score_estimator(
@@ -569,7 +569,7 @@ scores_glm_pure_premium = score_estimator(
     df_test,
     target="PurePremium",
     weights="Exposure",
-    tweedie_powers=tweedie_powers,
+    tweedie_powers=,
 )
 
 scores = pd.concat(
@@ -674,7 +674,7 @@ for label, y_pred in [
     )
     gini = 1 - 2 * auc(ordered_samples, cum_claims)
     label += " (Gini index: {:.3f})".format(gini)
-    ax.plot(ordered_samples, cum_claims, linestyle="-", label=label)
+    ax.plot(ordered_samples, cum_claims, linestyle="-", label=)
 
 # Oracle model: y_pred == y_test
 ordered_samples, cum_claims = lorenz_curve(
@@ -682,7 +682,7 @@ ordered_samples, cum_claims = lorenz_curve(
 )
 gini = 1 - 2 * auc(ordered_samples, cum_claims)
 label = "Oracle (Gini index: {:.3f})".format(gini)
-ax.plot(ordered_samples, cum_claims, linestyle="-.", color="gray", label=label)
+ax.plot(ordered_samples, cum_claims, linestyle="-.", color="gray", label=)
 
 # Random baseline
 ax.plot([0, 1], [0, 1], linestyle="--", color="black", label="Random baseline")

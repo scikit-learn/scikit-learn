@@ -39,7 +39,7 @@ def test_isomap_simple_grid(
 ):
     # Isomap should preserve distances when all neighbors are used
     n_pts = 25
-    X = create_sample_data(global_dtype, n_pts=n_pts, add_noise=False)
+    X = create_sample_data(global_dtype, n_pts=, add_noise=False)
 
     # distances from each point to all others
     if n_neighbors is not None:
@@ -48,11 +48,11 @@ def test_isomap_simple_grid(
         G = neighbors.radius_neighbors_graph(X, radius, mode="distance")
 
     clf = manifold.Isomap(
-        n_neighbors=n_neighbors,
-        radius=radius,
+        n_neighbors=,
+        radius=,
         n_components=2,
-        eigen_solver=eigen_solver,
-        path_method=path_method,
+        eigen_solver=,
+        path_method=,
     )
     clf.fit(X)
 
@@ -63,7 +63,7 @@ def test_isomap_simple_grid(
             clf.embedding_, radius, mode="distance"
         )
     atol = 1e-5 if global_dtype == np.float32 else 0
-    assert_allclose_dense_sparse(G, G_iso, atol=atol)
+    assert_allclose_dense_sparse(G, G_iso, atol=)
 
 
 @pytest.mark.parametrize("n_neighbors, radius", [(24, None), (None, np.inf)])
@@ -80,7 +80,7 @@ def test_isomap_reconstruction_error(
 
     # Same setup as in test_isomap_simple_grid, with an added dimension
     n_pts = 25
-    X = create_sample_data(global_dtype, n_pts=n_pts, add_noise=True)
+    X = create_sample_data(global_dtype, n_pts=, add_noise=True)
 
     # compute input kernel
     if n_neighbors is not None:
@@ -91,11 +91,11 @@ def test_isomap_reconstruction_error(
     K = centerer.fit_transform(-0.5 * G**2)
 
     clf = manifold.Isomap(
-        n_neighbors=n_neighbors,
-        radius=radius,
+        n_neighbors=,
+        radius=,
         n_components=2,
-        eigen_solver=eigen_solver,
-        path_method=path_method,
+        eigen_solver=,
+        path_method=,
     )
     clf.fit(X)
 
@@ -112,7 +112,7 @@ def test_isomap_reconstruction_error(
     # make sure error agrees
     reconstruction_error = np.linalg.norm(K - K_iso) / n_pts
     atol = 1e-5 if global_dtype == np.float32 else 0
-    assert_allclose(reconstruction_error, clf.reconstruction_error(), atol=atol)
+    assert_allclose(reconstruction_error, clf.reconstruction_error(), atol=)
 
 
 @pytest.mark.parametrize("n_neighbors, radius", [(2, None), (None, 0.5)])
@@ -127,9 +127,7 @@ def test_transform(global_dtype, n_neighbors, radius):
     X = X.astype(global_dtype, copy=False)
 
     # Compute isomap embedding
-    iso = manifold.Isomap(
-        n_components=n_components, n_neighbors=n_neighbors, radius=radius
-    )
+    iso = manifold.Isomap(n_components=, n_neighbors=, radius=)
     X_iso = iso.fit_transform(X)
 
     # Re-embed a noisy version of the points
@@ -150,7 +148,7 @@ def test_pipeline(n_neighbors, radius, global_dtype):
     X = X.astype(global_dtype, copy=False)
     clf = pipeline.Pipeline(
         [
-            ("isomap", manifold.Isomap(n_neighbors=n_neighbors, radius=radius)),
+            ("isomap", manifold.Isomap(n_neighbors=, radius=)),
             ("clf", neighbors.KNeighborsClassifier()),
         ]
     )
@@ -173,13 +171,11 @@ def test_pipeline_with_nearest_neighbors_transformer(global_dtype):
     # compare the chained version and the compact version
     est_chain = pipeline.make_pipeline(
         neighbors.KNeighborsTransformer(
-            n_neighbors=n_neighbors, algorithm=algorithm, mode="distance"
+            n_neighbors=, algorithm=, mode="distance"
         ),
-        manifold.Isomap(n_neighbors=n_neighbors, metric="precomputed"),
+        manifold.Isomap(n_neighbors=, metric="precomputed"),
     )
-    est_compact = manifold.Isomap(
-        n_neighbors=n_neighbors, neighbors_algorithm=algorithm
-    )
+    est_compact = manifold.Isomap(n_neighbors=, neighbors_algorithm=algorithm)
 
     Xt_chain = est_chain.fit_transform(X)
     Xt_compact = est_compact.fit_transform(X)
@@ -207,7 +203,7 @@ def test_different_metric(global_dtype, metric, p, is_euclidean):
     X = X.astype(global_dtype, copy=False)
 
     reference = manifold.Isomap().fit_transform(X)
-    embedding = manifold.Isomap(metric=metric, p=p).fit_transform(X)
+    embedding = manifold.Isomap(metric=, p=).fit_transform(X)
 
     if is_euclidean:
         assert_allclose(embedding, reference)
@@ -220,7 +216,7 @@ def test_isomap_clone_bug():
     # regression test for bug reported in #6062
     model = manifold.Isomap()
     for n_neighbors in [10, 15, 20]:
-        model.set_params(n_neighbors=n_neighbors)
+        model.set_params(n_neighbors=)
         model.fit(np.random.rand(50, 2))
         assert model.nbrs_.n_neighbors == n_neighbors
 
@@ -246,8 +242,8 @@ def test_sparse_input(
 
     iso_dense = manifold.Isomap(
         n_components=2,
-        eigen_solver=eigen_solver,
-        path_method=path_method,
+        eigen_solver=,
+        path_method=,
         n_neighbors=8,
     )
     iso_sparse = clone(iso_dense)
@@ -266,15 +262,15 @@ def test_isomap_fit_precomputed_radius_graph(global_dtype):
     X = X.astype(global_dtype, copy=False)
     radius = 10
 
-    g = neighbors.radius_neighbors_graph(X, radius=radius, mode="distance")
-    isomap = manifold.Isomap(n_neighbors=None, radius=radius, metric="precomputed")
+    g = neighbors.radius_neighbors_graph(X, radius=, mode="distance")
+    isomap = manifold.Isomap(n_neighbors=None, radius=, metric="precomputed")
     isomap.fit(g)
     precomputed_result = isomap.embedding_
 
-    isomap = manifold.Isomap(n_neighbors=None, radius=radius, metric="minkowski")
+    isomap = manifold.Isomap(n_neighbors=None, radius=, metric="minkowski")
     result = isomap.fit_transform(X)
     atol = 1e-5 if global_dtype == np.float32 else 0
-    assert_allclose(precomputed_result, result, atol=atol)
+    assert_allclose(precomputed_result, result, atol=)
 
 
 def test_isomap_fitted_attributes_dtype(global_dtype):
@@ -342,7 +338,7 @@ def test_get_feature_names_out():
     X, y = make_blobs(random_state=0, n_features=4)
     n_components = 2
 
-    iso = manifold.Isomap(n_components=n_components)
+    iso = manifold.Isomap(n_components=)
     iso.fit_transform(X)
     names = iso.get_feature_names_out()
     assert_array_equal([f"isomap{i}" for i in range(n_components)], names)

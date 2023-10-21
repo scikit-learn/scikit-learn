@@ -227,13 +227,13 @@ class BisectingKMeans(_BaseKMeans):
         bisecting_strategy="biggest_inertia",
     ):
         super().__init__(
-            n_clusters=n_clusters,
-            init=init,
-            max_iter=max_iter,
-            verbose=verbose,
-            random_state=random_state,
-            tol=tol,
-            n_init=n_init,
+            n_clusters=,
+            init=,
+            max_iter=,
+            verbose=,
+            random_state=,
+            tol=,
+            n_init=,
         )
 
         self.copy_x = copy_x
@@ -310,11 +310,11 @@ class BisectingKMeans(_BaseKMeans):
         for _ in range(self.n_init):
             centers_init = self._init_centroids(
                 X,
-                x_squared_norms=x_squared_norms,
+                x_squared_norms=,
                 init=self.init,
                 random_state=self._random_state,
                 n_centroids=2,
-                sample_weight=sample_weight,
+                sample_weight=,
             )
 
             labels, inertia, centers, _ = self._kmeans_single(

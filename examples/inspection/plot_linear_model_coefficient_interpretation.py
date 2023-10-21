@@ -190,7 +190,7 @@ scores = {
 # %%
 _, ax = plt.subplots(figsize=(5, 5))
 display = PredictionErrorDisplay.from_predictions(
-    y_test, y_pred, kind="actual_vs_predicted", ax=ax, scatter_kwargs={"alpha": 0.5}
+    y_test, y_pred, kind="actual_vs_predicted", ax=, scatter_kwargs={"alpha": 0.5}
 )
 ax.set_title("Ridge model, small regularization")
 for name, score in scores.items():
@@ -320,14 +320,7 @@ plt.subplots_adjust(left=0.3)
 from sklearn.model_selection import RepeatedKFold, cross_validate
 
 cv = RepeatedKFold(n_splits=5, n_repeats=5, random_state=0)
-cv_model = cross_validate(
-    model,
-    X,
-    y,
-    cv=cv,
-    return_estimator=True,
-    n_jobs=2,
-)
+cv_model = cross_validate(model, X, y, cv=, return_estimator=True, n_jobs=2)
 
 coefs = pd.DataFrame(
     [
@@ -382,7 +375,7 @@ cv_model = cross_validate(
     model,
     X.drop(columns=column_to_drop),
     y,
-    cv=cv,
+    cv=,
     return_estimator=True,
     n_jobs=2,
 )
@@ -456,7 +449,7 @@ scores = {
 
 _, ax = plt.subplots(figsize=(5, 5))
 display = PredictionErrorDisplay.from_predictions(
-    y_test, y_pred, kind="actual_vs_predicted", ax=ax, scatter_kwargs={"alpha": 0.5}
+    y_test, y_pred, kind="actual_vs_predicted", ax=, scatter_kwargs={"alpha": 0.5}
 )
 ax.set_title("Ridge model, small regularization")
 for name, score in scores.items():
@@ -485,14 +478,7 @@ plt.subplots_adjust(left=0.3)
 # of the feature values since this scaling was already
 # done in the preprocessing step of the pipeline.
 
-cv_model = cross_validate(
-    model,
-    X,
-    y,
-    cv=cv,
-    return_estimator=True,
-    n_jobs=2,
-)
+cv_model = cross_validate(model, X, y, cv=, return_estimator=True, n_jobs=2)
 coefs = pd.DataFrame(
     [est[-1].regressor_.coef_ for est in cv_model["estimator"]], columns=feature_names
 )
@@ -526,7 +512,7 @@ alphas = np.logspace(-10, 10, 21)  # alpha values to be chosen from by cross-val
 model = make_pipeline(
     preprocessor,
     TransformedTargetRegressor(
-        regressor=RidgeCV(alphas=alphas),
+        regressor=RidgeCV(alphas=),
         func=np.log10,
         inverse_func=sp.special.exp10,
     ),
@@ -550,7 +536,7 @@ scores = {
 
 _, ax = plt.subplots(figsize=(5, 5))
 display = PredictionErrorDisplay.from_predictions(
-    y_test, y_pred, kind="actual_vs_predicted", ax=ax, scatter_kwargs={"alpha": 0.5}
+    y_test, y_pred, kind="actual_vs_predicted", ax=, scatter_kwargs={"alpha": 0.5}
 )
 ax.set_title("Ridge model, optimum regularization")
 for name, score in scores.items():
@@ -588,14 +574,7 @@ plt.subplots_adjust(left=0.3)
 # perturbations, in a cross-validation. This plot can be compared with
 # the :ref:`previous one<covariation>`.
 
-cv_model = cross_validate(
-    model,
-    X,
-    y,
-    cv=cv,
-    return_estimator=True,
-    n_jobs=2,
-)
+cv_model = cross_validate(model, X, y, cv=, return_estimator=True, n_jobs=2)
 coefs = pd.DataFrame(
     [est[-1].regressor_.coef_ for est in cv_model["estimator"]], columns=feature_names
 )
@@ -628,7 +607,7 @@ alphas = np.logspace(-10, 10, 21)  # alpha values to be chosen from by cross-val
 model = make_pipeline(
     preprocessor,
     TransformedTargetRegressor(
-        regressor=LassoCV(alphas=alphas, max_iter=100_000),
+        regressor=LassoCV(alphas=, max_iter=100_000),
         func=np.log10,
         inverse_func=sp.special.exp10,
     ),
@@ -654,7 +633,7 @@ scores = {
 
 _, ax = plt.subplots(figsize=(6, 6))
 display = PredictionErrorDisplay.from_predictions(
-    y_test, y_pred, kind="actual_vs_predicted", ax=ax, scatter_kwargs={"alpha": 0.5}
+    y_test, y_pred, kind="actual_vs_predicted", ax=, scatter_kwargs={"alpha": 0.5}
 )
 ax.set_title("Lasso model, optimum regularization")
 for name, score in scores.items():
@@ -687,14 +666,7 @@ plt.subplots_adjust(left=0.3)
 # caution.
 #
 # Indeed, we can check the variability of the coefficients across folds.
-cv_model = cross_validate(
-    model,
-    X,
-    y,
-    cv=cv,
-    return_estimator=True,
-    n_jobs=2,
-)
+cv_model = cross_validate(model, X, y, cv=, return_estimator=True, n_jobs=2)
 coefs = pd.DataFrame(
     [est[-1].regressor_.coef_ for est in cv_model["estimator"]], columns=feature_names
 )

@@ -104,9 +104,9 @@ print(
 )
 t0 = time()
 nmf = NMF(
-    n_components=n_components,
+    n_components=,
     random_state=1,
-    init=init,
+    init=,
     beta_loss="frobenius",
     alpha_W=0.00005,
     alpha_H=0.00005,
@@ -129,9 +129,9 @@ print(
 )
 t0 = time()
 nmf = NMF(
-    n_components=n_components,
+    n_components=,
     random_state=1,
-    init=init,
+    init=,
     beta_loss="kullback-leibler",
     solver="mu",
     max_iter=1000,
@@ -158,10 +158,10 @@ print(
 )
 t0 = time()
 mbnmf = MiniBatchNMF(
-    n_components=n_components,
+    n_components=,
     random_state=1,
-    batch_size=batch_size,
-    init=init,
+    batch_size=,
+    init=,
     beta_loss="frobenius",
     alpha_W=0.00005,
     alpha_H=0.00005,
@@ -187,10 +187,10 @@ print(
 )
 t0 = time()
 mbnmf = MiniBatchNMF(
-    n_components=n_components,
+    n_components=,
     random_state=1,
-    batch_size=batch_size,
-    init=init,
+    batch_size=,
+    init=,
     beta_loss="kullback-leibler",
     alpha_W=0.00005,
     alpha_H=0.00005,
@@ -212,7 +212,7 @@ print(
     % (n_samples, n_features),
 )
 lda = LatentDirichletAllocation(
-    n_components=n_components,
+    n_components=,
     max_iter=5,
     learning_method="online",
     learning_offset=50.0,

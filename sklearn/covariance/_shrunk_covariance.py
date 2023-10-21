@@ -34,10 +34,8 @@ def _ledoit_wolf(X, *, assume_centered, block_size):
     n_features = X.shape[1]
 
     # get Ledoit-Wolf shrinkage
-    shrinkage = ledoit_wolf_shrinkage(
-        X, assume_centered=assume_centered, block_size=block_size
-    )
-    emp_cov = empirical_covariance(X, assume_centered=assume_centered)
+    shrinkage = ledoit_wolf_shrinkage(X, assume_centered=, block_size=)
+    emp_cov = empirical_covariance(X, assume_centered=)
     mu = np.sum(np.trace(emp_cov)) / n_features
     shrunk_cov = (1.0 - shrinkage) * emp_cov
     shrunk_cov.flat[:: n_features + 1] += shrinkage * mu
@@ -62,7 +60,7 @@ def _oas(X, *, assume_centered=False):
 
     n_samples, n_features = X.shape
 
-    emp_cov = empirical_covariance(X, assume_centered=assume_centered)
+    emp_cov = empirical_covariance(X, assume_centered=)
 
     # The shrinkage is defined as:
     # shrinkage = min(
@@ -235,9 +233,7 @@ class ShrunkCovariance(EmpiricalCovariance):
     }
 
     def __init__(self, *, store_precision=True, assume_centered=False, shrinkage=0.1):
-        super().__init__(
-            store_precision=store_precision, assume_centered=assume_centered
-        )
+        super().__init__(store_precision=, assume_centered=)
         self.shrinkage = shrinkage
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -420,8 +416,8 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     where mu = trace(cov) / n_features
     """
     estimator = LedoitWolf(
-        assume_centered=assume_centered,
-        block_size=block_size,
+        assume_centered=,
+        block_size=,
         store_precision=False,
     ).fit(X)
 
@@ -535,9 +531,7 @@ class LedoitWolf(EmpiricalCovariance):
     }
 
     def __init__(self, *, store_precision=True, assume_centered=False, block_size=1000):
-        super().__init__(
-            store_precision=store_precision, assume_centered=assume_centered
-        )
+        super().__init__(store_precision=, assume_centered=)
         self.block_size = block_size
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -625,9 +619,7 @@ def oas(X, *, assume_centered=False):
            IEEE Transactions on Signal Processing, 58(10), 5016-5029, 2010.
            <0907.4698>`
     """
-    estimator = OAS(
-        assume_centered=assume_centered,
-    ).fit(X)
+    estimator = OAS(assume_centered=).fit(X)
     return estimator.covariance_, estimator.shrinkage_
 
 

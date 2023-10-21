@@ -106,11 +106,11 @@ def test_early_stopping_regression(
         verbose=1,  # just for coverage
         min_samples_leaf=5,  # easier to overfit fast
         scoring=scoring,
-        tol=tol,
-        early_stopping=early_stopping,
-        validation_fraction=validation_fraction,
-        max_iter=max_iter,
-        n_iter_no_change=n_iter_no_change,
+        tol=,
+        early_stopping=,
+        validation_fraction=,
+        max_iter=,
+        n_iter_no_change=,
         random_state=0,
     )
     gb.fit(X, y)
@@ -153,11 +153,11 @@ def test_early_stopping_classification(
         verbose=1,  # just for coverage
         min_samples_leaf=5,  # easier to overfit fast
         scoring=scoring,
-        tol=tol,
-        early_stopping=early_stopping,
-        validation_fraction=validation_fraction,
-        max_iter=max_iter,
-        n_iter_no_change=n_iter_no_change,
+        tol=,
+        early_stopping=,
+        validation_fraction=,
+        max_iter=,
+        n_iter_no_change=,
         random_state=0,
     )
     gb.fit(X, y)
@@ -204,7 +204,7 @@ def test_early_stopping_default(GradientBoosting, X, y):
     ],
 )
 def test_should_stop(scores, n_iter_no_change, tol, stopping):
-    gbdt = HistGradientBoostingClassifier(n_iter_no_change=n_iter_no_change, tol=tol)
+    gbdt = HistGradientBoostingClassifier(n_iter_no_change=, tol=)
     assert gbdt._should_stop(scores) == stopping
 
 
@@ -227,7 +227,7 @@ def test_absolute_error_sample_weight():
     y = rng.uniform(-1, 1, size=n_samples)
     sample_weight = rng.uniform(0, 1, size=n_samples)
     gbdt = HistGradientBoostingRegressor(loss="absolute_error")
-    gbdt.fit(X, y, sample_weight=sample_weight)
+    gbdt.fit(X, y, sample_weight=)
 
 
 @pytest.mark.parametrize("y", [([1.0, -2.0, 0.0]), ([0.0, 1.0, 2.0])])
@@ -254,7 +254,7 @@ def test_gamma():
     n_train, n_test, n_features = 500, 100, 20
     X = make_low_rank_matrix(
         n_samples=n_train + n_test,
-        n_features=n_features,
+        n_features=,
         random_state=rng,
     )
     # We create a log-linear Gamma model. This gives y.min ~ 1e-2, y.max ~ 1e2
@@ -310,14 +310,14 @@ def test_quantile_asymmetric_error(quantile):
     )
     model = HistGradientBoostingRegressor(
         loss="quantile",
-        quantile=quantile,
+        quantile=,
         max_iter=25,
         random_state=0,
         max_leaf_nodes=10,
     ).fit(X, y)
     assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=1e-2)
 
-    pinball_loss = PinballLoss(quantile=quantile)
+    pinball_loss = PinballLoss(quantile=)
     loss_true_quantile = pinball_loss(y, X @ coef + intercept)
     loss_pred_quantile = pinball_loss(y, model.predict(X))
     # we are overfitting
@@ -339,7 +339,7 @@ def test_poisson():
     rng = np.random.RandomState(42)
     n_train, n_test, n_features = 500, 100, 100
     X = make_low_rank_matrix(
-        n_samples=n_train + n_test, n_features=n_features, random_state=rng
+        n_samples=n_train + n_test, n_features=, random_state=rng
     )
     # We create a log-linear Poisson model and downscale coef as it will get
     # exponentiated.
@@ -370,7 +370,7 @@ def test_binning_train_validation_are_separated():
     rng = np.random.RandomState(0)
     validation_fraction = 0.2
     gb = HistGradientBoostingClassifier(
-        early_stopping=True, validation_fraction=validation_fraction, random_state=rng
+        early_stopping=True, validation_fraction=, random_state=rng
     )
     gb.fit(X_classification, y_classification)
     mapper_training_data = gb._bin_mapper
@@ -432,8 +432,8 @@ def test_missing_values_resilience(
     n_features = 2
     if problem == "regression":
         X, y = make_regression(
-            n_samples=n_samples,
-            n_features=n_features,
+            n_samples=,
+            n_features=,
             n_informative=n_features,
             random_state=rng,
         )
@@ -441,8 +441,8 @@ def test_missing_values_resilience(
         expected_min_score = expected_min_score_regression
     else:
         X, y = make_classification(
-            n_samples=n_samples,
-            n_features=n_features,
+            n_samples=,
+            n_features=,
             n_informative=n_features,
             n_redundant=0,
             n_repeated=0,
@@ -553,7 +553,7 @@ def test_missing_values_minmax_imputation():
 
     def make_missing_value_data(n_samples=int(1e4), seed=0):
         rng = np.random.RandomState(seed)
-        X, y = make_regression(n_samples=n_samples, n_features=4, random_state=rng)
+        X, y = make_regression(n_samples=, n_features=4, random_state=rng)
 
         # Pre-bin the data to ensure a deterministic handling by the 2
         # strategies and also make it easier to insert np.nan in a structured
@@ -663,7 +663,7 @@ def test_string_target_early_stopping(scoring):
     rng = np.random.RandomState(42)
     X = rng.randn(100, 10)
     y = np.array(["x"] * 50 + ["y"] * 50, dtype=object)
-    gbrt = HistGradientBoostingClassifier(n_iter_no_change=10, scoring=scoring)
+    gbrt = HistGradientBoostingClassifier(n_iter_no_change=10, scoring=)
     gbrt.fit(X, y)
 
 
@@ -676,7 +676,7 @@ def test_zero_sample_weights_regression():
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
     gb = HistGradientBoostingRegressor(min_samples_leaf=1)
-    gb.fit(X, y, sample_weight=sample_weight)
+    gb.fit(X, y, sample_weight=)
     assert gb.predict([[1, 0]])[0] > 0.5
 
 
@@ -689,7 +689,7 @@ def test_zero_sample_weights_classification():
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
     gb = HistGradientBoostingClassifier(loss="log_loss", min_samples_leaf=1)
-    gb.fit(X, y, sample_weight=sample_weight)
+    gb.fit(X, y, sample_weight=)
     assert_array_equal(gb.predict([[1, 0]]), [1])
 
     X = [[1, 0], [1, 0], [1, 0], [0, 1], [1, 1]]
@@ -697,7 +697,7 @@ def test_zero_sample_weights_classification():
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1, 1]
     gb = HistGradientBoostingClassifier(loss="log_loss", min_samples_leaf=1)
-    gb.fit(X, y, sample_weight=sample_weight)
+    gb.fit(X, y, sample_weight=)
     assert_array_equal(gb.predict([[1, 0]]), [1])
 
 
@@ -716,8 +716,8 @@ def test_sample_weight_effect(problem, duplication):
     n_features = 2
     if problem == "regression":
         X, y = make_regression(
-            n_samples=n_samples,
-            n_features=n_features,
+            n_samples=,
+            n_features=,
             n_informative=n_features,
             random_state=0,
         )
@@ -725,12 +725,12 @@ def test_sample_weight_effect(problem, duplication):
     else:
         n_classes = 2 if problem == "binary_classification" else 3
         X, y = make_classification(
-            n_samples=n_samples,
-            n_features=n_features,
+            n_samples=,
+            n_features=,
             n_informative=n_features,
             n_redundant=0,
             n_clusters_per_class=1,
-            n_classes=n_classes,
+            n_classes=,
             random_state=0,
         )
         Klass = HistGradientBoostingClassifier
@@ -751,7 +751,7 @@ def test_sample_weight_effect(problem, duplication):
     sample_weight = np.ones(shape=(n_samples))
     sample_weight[:lim] = 2
 
-    est_sw = clone(est).fit(X, y, sample_weight=sample_weight)
+    est_sw = clone(est).fit(X, y, sample_weight=)
     est_dup = clone(est).fit(X_dup, y_dup)
 
     # checking raw_predict is stricter than just predict for classification
@@ -767,26 +767,26 @@ def test_sum_hessians_are_sample_weight(Loss):
     rng = np.random.RandomState(0)
     n_samples = 1000
     n_features = 2
-    X, y = make_regression(n_samples=n_samples, n_features=n_features, random_state=rng)
+    X, y = make_regression(n_samples=, n_features=, random_state=rng)
     bin_mapper = _BinMapper()
     X_binned = bin_mapper.fit_transform(X)
 
     # While sample weights are supposed to be positive, this still works.
     sample_weight = rng.normal(size=n_samples)
 
-    loss = Loss(sample_weight=sample_weight)
+    loss = Loss(sample_weight=)
     gradients, hessians = loss.init_gradient_and_hessian(
-        n_samples=n_samples, dtype=G_H_DTYPE
+        n_samples=, dtype=G_H_DTYPE
     )
     gradients, hessians = gradients.reshape((-1, 1)), hessians.reshape((-1, 1))
     raw_predictions = rng.normal(size=(n_samples, 1))
     loss.gradient_hessian(
         y_true=y,
         raw_prediction=raw_predictions,
-        sample_weight=sample_weight,
+        sample_weight=,
         gradient_out=gradients,
         hessian_out=hessians,
-        n_threads=n_threads,
+        n_threads=,
     )
 
     # build sum_sample_weight which contains the sum of the sample weights at
@@ -888,7 +888,7 @@ def test_single_node_trees(Est):
     ],
 )
 def test_custom_loss(Est, loss, X, y):
-    est = Est(loss=loss, max_iter=20)
+    est = Est(loss=, max_iter=20)
     est.fit(X, y)
 
 
@@ -970,7 +970,7 @@ def test_unknown_categories_nan(
         assert mask.sum() > 0
         X[mask] = missing_value
 
-    est = Est(max_iter=20, categorical_features=categorical_features).fit(X, y)
+    est = Est(max_iter=20, categorical_features=).fit(X, y)
     assert_array_equal(est.is_categorical_, [False, True])
 
     # Make sure no error is raised on unknown categories and nans
@@ -1102,11 +1102,11 @@ def test_categorical_spec_errors(
 ):
     # Test errors when categories are specified incorrectly
     n_samples = 100
-    X, y = make_classification(random_state=0, n_features=4, n_samples=n_samples)
+    X, y = make_classification(random_state=0, n_features=4, n_samples=)
     rng = np.random.RandomState(0)
     X[:, 0] = rng.randint(0, 10, size=n_samples)
     X[:, 1] = rng.randint(0, 10, size=n_samples)
-    est = Est(categorical_features=categorical_features, monotonic_cst=monotonic_cst)
+    est = Est(categorical_features=, monotonic_cst=)
 
     with pytest.raises(ValueError, match=expected_msg):
         est.fit(X, y)
@@ -1157,7 +1157,7 @@ def test_categorical_spec_no_categories(Est, categorical_features, as_array):
     y = np.arange(5)
     if as_array:
         categorical_features = np.asarray(categorical_features)
-    est = Est(categorical_features=categorical_features).fit(X, y)
+    est = Est(categorical_features=).fit(X, y)
     assert est.is_categorical_ is None
 
 
@@ -1237,7 +1237,7 @@ def test_uint8_predict(Est):
 def test_check_interaction_cst(interaction_cst, n_features, result):
     """Check that _check_interaction_cst returns the expected list of sets"""
     est = HistGradientBoostingRegressor()
-    est.set_params(interaction_cst=interaction_cst)
+    est.set_params(interaction_cst=)
     assert est._check_interaction_cst(n_features) == result
 
 
@@ -1315,8 +1315,8 @@ def test_class_weights():
     n_features = 2
 
     X, y = make_classification(
-        n_samples=n_samples,
-        n_features=n_features,
+        n_samples=,
+        n_features=,
         n_informative=n_features,
         n_redundant=0,
         n_clusters_per_class=1,
@@ -1331,17 +1331,17 @@ def test_class_weights():
     )
     sample_weight = np.ones(shape=(n_samples))
     sample_weight[y_is_1] = 3.0
-    clf.fit(X, y, sample_weight=sample_weight)
+    clf.fit(X, y, sample_weight=)
 
     class_weight = {0: 1.0, 1: 3.0}
-    clf_class_weighted = clone(clf).set_params(class_weight=class_weight)
+    clf_class_weighted = clone(clf).set_params(class_weight=)
     clf_class_weighted.fit(X, y)
 
     assert_allclose(clf.decision_function(X), clf_class_weighted.decision_function(X))
 
     # Check that sample_weight and class_weight are multiplicative
     clf.fit(X, y, sample_weight=sample_weight**2)
-    clf_class_weighted.fit(X, y, sample_weight=sample_weight)
+    clf_class_weighted.fit(X, y, sample_weight=)
     assert_allclose(clf.decision_function(X), clf_class_weighted.decision_function(X))
 
     # Make imbalanced dataset
@@ -1356,7 +1356,7 @@ def test_class_weights():
     class_weight = y_imb.shape[0] / (2 * np.bincount(y_imb))
     sample_weight = class_weight[y_imb]
     clf_sample_weight = clone(clf).set_params(class_weight=None)
-    clf_sample_weight.fit(X_imb, y_imb, sample_weight=sample_weight)
+    clf_sample_weight.fit(X_imb, y_imb, sample_weight=)
 
     assert_allclose(
         clf_balanced.decision_function(X_imb),

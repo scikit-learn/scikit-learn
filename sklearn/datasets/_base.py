@@ -282,16 +282,14 @@ def load_files(
         if encoding is not None:
             data = [d.decode(encoding, decode_error) for d in data]
         return Bunch(
-            data=data,
-            filenames=filenames,
-            target_names=target_names,
-            target=target,
+            data=,
+            filenames=,
+            target_names=,
+            target=,
             DESCR=description,
         )
 
-    return Bunch(
-        filenames=filenames, target_names=target_names, target=target, DESCR=description
-    )
+    return Bunch(filenames=, target_names=, target=, DESCR=description)
 
 
 def load_csv_data(
@@ -357,7 +355,7 @@ def load_csv_data(
         return data, target, target_names
     else:
         assert descr_module is not None
-        descr = load_descr(descr_module=descr_module, descr_file_name=descr_file_name)
+        descr = load_descr(descr_module=, descr_file_name=)
         return data, target, target_names, descr
 
 
@@ -414,14 +412,14 @@ def load_gzip_compressed_csv_data(
         Only returned if `descr_file_name` is not None.
     """
     with _open_binary(data_module, data_file_name) as compressed_file:
-        compressed_file = gzip.open(compressed_file, mode="rt", encoding=encoding)
+        compressed_file = gzip.open(compressed_file, mode="rt", encoding=)
         data = np.loadtxt(compressed_file, **kwargs)
 
     if descr_file_name is None:
         return data
     else:
         assert descr_module is not None
-        descr = load_descr(descr_module=descr_module, descr_file_name=descr_file_name)
+        descr = load_descr(descr_module=, descr_file_name=)
         return data, descr
 
 
@@ -568,12 +566,12 @@ def load_wine(*, return_X_y=False, as_frame=False):
         return data, target
 
     return Bunch(
-        data=data,
-        target=target,
-        frame=frame,
-        target_names=target_names,
+        data=,
+        target=,
+        frame=,
+        target_names=,
         DESCR=fdescr,
-        feature_names=feature_names,
+        feature_names=,
     )
 
 
@@ -673,7 +671,7 @@ def load_iris(*, return_X_y=False, as_frame=False):
     """
     data_file_name = "iris.csv"
     data, target, target_names, fdescr = load_csv_data(
-        data_file_name=data_file_name, descr_file_name="iris.rst"
+        data_file_name=, descr_file_name="iris.rst"
     )
 
     feature_names = [
@@ -696,12 +694,12 @@ def load_iris(*, return_X_y=False, as_frame=False):
         return data, target
 
     return Bunch(
-        data=data,
-        target=target,
-        frame=frame,
-        target_names=target_names,
+        data=,
+        target=,
+        frame=,
+        target_names=,
         DESCR=fdescr,
-        feature_names=feature_names,
+        feature_names=,
         filename=data_file_name,
         data_module=DATA_MODULE,
     )
@@ -798,7 +796,7 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
     """
     data_file_name = "breast_cancer.csv"
     data, target, target_names, fdescr = load_csv_data(
-        data_file_name=data_file_name, descr_file_name="breast_cancer.rst"
+        data_file_name=, descr_file_name="breast_cancer.rst"
     )
 
     feature_names = np.array(
@@ -849,12 +847,12 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         return data, target
 
     return Bunch(
-        data=data,
-        target=target,
-        frame=frame,
-        target_names=target_names,
+        data=,
+        target=,
+        frame=,
+        target_names=,
         DESCR=fdescr,
-        feature_names=feature_names,
+        feature_names=,
         filename=data_file_name,
         data_module=DATA_MODULE,
     )
@@ -992,11 +990,11 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
 
     return Bunch(
         data=flat_data,
-        target=target,
-        frame=frame,
-        feature_names=feature_names,
+        target=,
+        frame=,
+        feature_names=,
         target_names=np.arange(10),
-        images=images,
+        images=,
         DESCR=fdescr,
     )
 
@@ -1105,13 +1103,13 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
         return data, target
 
     return Bunch(
-        data=data,
-        target=target,
-        frame=frame,
+        data=,
+        target=,
+        frame=,
         DESCR=fdescr,
-        feature_names=feature_names,
-        data_filename=data_filename,
-        target_filename=target_filename,
+        feature_names=,
+        data_filename=,
+        target_filename=,
         data_module=DATA_MODULE,
     )
 
@@ -1223,10 +1221,10 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         feature_names=header_exercise,
         target=data_physiological,
         target_names=header_physiological,
-        frame=frame,
+        frame=,
         DESCR=fdescr,
-        data_filename=data_filename,
-        target_filename=target_filename,
+        data_filename=,
+        target_filename=,
         data_module=DATA_MODULE,
     )
 
@@ -1285,7 +1283,7 @@ def load_sample_images():
                 image = np.asarray(pil_image)
             images.append(image)
 
-    return Bunch(images=images, filenames=filenames, DESCR=descr)
+    return Bunch(images=, filenames=, DESCR=descr)
 
 
 @validate_params(

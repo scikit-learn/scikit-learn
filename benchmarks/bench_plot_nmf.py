@@ -164,7 +164,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter, nls_max_iter, alpha, l1_rati
 
         # update W
         Wt, gradWt, iterW = _nls_subproblem(
-            X.T, H.T, W.T, tolW, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio
+            X.T, H.T, W.T, tolW, nls_max_iter, alpha=, l1_ratio=
         )
         W, gradW = Wt.T, gradWt.T
 
@@ -173,7 +173,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter, nls_max_iter, alpha, l1_rati
 
         # update H
         H, gradH, iterH = _nls_subproblem(
-            X, W, H, tolH, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio
+            X, W, H, tolH, nls_max_iter, alpha=, l1_ratio=
         )
         if iterH == 1:
             tolH = 0.1 * tolH
@@ -182,7 +182,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter, nls_max_iter, alpha, l1_rati
 
     if n_iter == max_iter:
         Wt, _, _ = _nls_subproblem(
-            X.T, H.T, W.T, tolW, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio
+            X.T, H.T, W.T, tolW, nls_max_iter, alpha=, l1_ratio=
         )
         W = Wt.T
 
@@ -210,15 +210,15 @@ class _PGNMF(NMF):
         nls_max_iter=10,
     ):
         super().__init__(
-            n_components=n_components,
-            init=init,
-            solver=solver,
-            tol=tol,
-            max_iter=max_iter,
-            random_state=random_state,
+            n_components=,
+            init=,
+            solver=,
+            tol=,
+            max_iter=,
+            random_state=,
             alpha_W=alpha,
             alpha_H=alpha,
-            l1_ratio=l1_ratio,
+            l1_ratio=,
         )
         self.nls_max_iter = nls_max_iter
 
@@ -229,7 +229,7 @@ class _PGNMF(NMF):
     def transform(self, X):
         check_is_fitted(self)
         H = self.components_
-        W, _, self.n_iter_ = self._fit_transform(X, H=H, update_H=False)
+        W, _, self.n_iter_ = self._fit_transform(X, H=, update_H=False)
         return W
 
     def inverse_transform(self, W):
@@ -237,7 +237,7 @@ class _PGNMF(NMF):
         return np.dot(W, self.components_)
 
     def fit_transform(self, X, y=None, W=None, H=None):
-        W, H, self.n_iter = self._fit_transform(X, W=W, H=H, update_H=True)
+        W, H, self.n_iter = self._fit_transform(X, W=, H=, update_H=True)
         self.components_ = H
         return W
 
@@ -362,7 +362,7 @@ def bench_one(
 
     clf = clf_type(**clf_params)
     st = time()
-    W = clf.fit_transform(X, W=W, H=H)
+    W = clf.fit_transform(X, W=, H=)
     end = time()
     H = clf.components_
 

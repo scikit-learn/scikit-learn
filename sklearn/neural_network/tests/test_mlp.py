@@ -71,7 +71,7 @@ def test_alpha():
     absolute_sum = lambda x: np.sum(np.abs(x))
 
     for alpha in alpha_values:
-        mlp = MLPClassifier(hidden_layer_sizes=10, alpha=alpha, random_state=1)
+        mlp = MLPClassifier(hidden_layer_sizes=10, alpha=, random_state=1)
         with ignore_warnings(category=ConvergenceWarning):
             mlp.fit(X, y)
         alpha_vectors.append(
@@ -195,7 +195,7 @@ def test_gradient():
 
         for activation in ACTIVATION_TYPES:
             mlp = MLPClassifier(
-                activation=activation,
+                activation=,
                 hidden_layer_sizes=10,
                 solver="lbfgs",
                 alpha=1e-5,
@@ -261,7 +261,7 @@ def test_lbfgs_classification(X, y):
             max_iter=150,
             shuffle=True,
             random_state=1,
-            activation=activation,
+            activation=,
         )
         mlp.fit(X_train, y_train)
         y_predict = mlp.predict(X_test)
@@ -279,7 +279,7 @@ def test_lbfgs_regression(X, y):
             max_iter=150,
             shuffle=True,
             random_state=1,
-            activation=activation,
+            activation=,
         )
         mlp.fit(X, y)
         if activation == "identity":
@@ -300,10 +300,10 @@ def test_lbfgs_classification_maxfun(X, y):
             solver="lbfgs",
             hidden_layer_sizes=50,
             max_iter=150,
-            max_fun=max_fun,
+            max_fun=,
             shuffle=True,
             random_state=1,
-            activation=activation,
+            activation=,
         )
         with pytest.warns(ConvergenceWarning):
             mlp.fit(X, y)
@@ -322,10 +322,10 @@ def test_lbfgs_regression_maxfun(X, y):
             hidden_layer_sizes=50,
             tol=0.0,
             max_iter=150,
-            max_fun=max_fun,
+            max_fun=,
             shuffle=True,
             random_state=1,
-            activation=activation,
+            activation=,
         )
         with pytest.warns(ConvergenceWarning):
             mlp.fit(X, y)
@@ -340,7 +340,7 @@ def test_learning_rate_warmstart():
         mlp = MLPClassifier(
             solver="sgd",
             hidden_layer_sizes=4,
-            learning_rate=learning_rate,
+            learning_rate=,
             max_iter=1,
             power_t=0.25,
             warm_start=True,
@@ -466,7 +466,7 @@ def test_partial_fit_regression():
             random_state=1,
             learning_rate_init=0.01,
             batch_size=X.shape[0],
-            momentum=momentum,
+            momentum=,
         )
         with warnings.catch_warnings(record=True):
             # catch convergence warning
@@ -478,7 +478,7 @@ def test_partial_fit_regression():
             learning_rate_init=0.01,
             random_state=1,
             batch_size=X.shape[0],
-            momentum=momentum,
+            momentum=,
         )
         for i in range(100):
             mlp.partial_fit(X, y)
@@ -599,14 +599,14 @@ def test_shuffle():
             max_iter=1,
             batch_size=1,
             random_state=0,
-            shuffle=shuffle,
+            shuffle=,
         )
         mlp2 = MLPRegressor(
             hidden_layer_sizes=1,
             max_iter=1,
             batch_size=1,
             random_state=0,
-            shuffle=shuffle,
+            shuffle=,
         )
         mlp1.fit(X, y)
         mlp2.fit(X, y)
@@ -675,7 +675,7 @@ def test_early_stopping(MLPEstimator):
     y = y_digits_binary[:100]
     tol = 0.2
     mlp_estimator = MLPEstimator(
-        tol=tol, max_iter=3000, solver="sgd", early_stopping=True
+        tol=, max_iter=3000, solver="sgd", early_stopping=True
     )
     mlp_estimator.fit(X, y)
     assert mlp_estimator.max_iter > mlp_estimator.n_iter_
@@ -692,7 +692,7 @@ def test_early_stopping(MLPEstimator):
     # check that the attributes `validation_scores_` and `best_validation_score_`
     # are set to None when `early_stopping=False`
     mlp_estimator = MLPEstimator(
-        tol=tol, max_iter=3000, solver="sgd", early_stopping=False
+        tol=, max_iter=3000, solver="sgd", early_stopping=False
     )
     mlp_estimator.fit(X, y)
     assert mlp_estimator.validation_scores_ is None
@@ -748,7 +748,7 @@ def test_warm_start_full_iteration(MLPEstimator):
     X, y = X_iris, y_iris
     max_iter = 3
     clf = MLPEstimator(
-        hidden_layer_sizes=2, solver="sgd", warm_start=True, max_iter=max_iter
+        hidden_layer_sizes=2, solver="sgd", warm_start=True, max_iter=
     )
     clf.fit(X, y)
     assert max_iter == clf.n_iter_
@@ -766,9 +766,7 @@ def test_n_iter_no_change():
 
     # test multiple n_iter_no_change
     for n_iter_no_change in [2, 5, 10, 50, 100]:
-        clf = MLPClassifier(
-            tol=tol, max_iter=max_iter, solver="sgd", n_iter_no_change=n_iter_no_change
-        )
+        clf = MLPClassifier(tol=, max_iter=, solver="sgd", n_iter_no_change=)
         clf.fit(X, y)
 
         # validate n_iter_no_change
@@ -790,9 +788,7 @@ def test_n_iter_no_change_inf():
     # fit
     n_iter_no_change = np.inf
     max_iter = 3000
-    clf = MLPClassifier(
-        tol=tol, max_iter=max_iter, solver="sgd", n_iter_no_change=n_iter_no_change
-    )
+    clf = MLPClassifier(tol=, max_iter=, solver="sgd", n_iter_no_change=)
     clf.fit(X, y)
 
     # validate n_iter_no_change doesn't cause early stopping
@@ -938,7 +934,7 @@ def test_mlp_warm_start_no_convergence(MLPEstimator, solver):
     https://github.com/scikit-learn/scikit-learn/issues/24764
     """
     model = MLPEstimator(
-        solver=solver,
+        solver=,
         warm_start=True,
         early_stopping=False,
         max_iter=10,

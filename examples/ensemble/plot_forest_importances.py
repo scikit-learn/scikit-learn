@@ -74,7 +74,7 @@ import pandas as pd
 forest_importances = pd.Series(importances, index=feature_names)
 
 fig, ax = plt.subplots()
-forest_importances.plot.bar(yerr=std, ax=ax)
+forest_importances.plot.bar(yerr=std, ax=)
 ax.set_title("Feature importances using MDI")
 ax.set_ylabel("Mean decrease in impurity")
 fig.tight_layout()
@@ -105,7 +105,7 @@ forest_importances = pd.Series(result.importances_mean, index=feature_names)
 # the importance ranking.
 
 fig, ax = plt.subplots()
-forest_importances.plot.bar(yerr=result.importances_std, ax=ax)
+forest_importances.plot.bar(yerr=result.importances_std, ax=)
 ax.set_title("Feature importances using permutation on full model")
 ax.set_ylabel("Mean accuracy decrease")
 fig.tight_layout()

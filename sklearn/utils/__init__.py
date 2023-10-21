@@ -200,7 +200,7 @@ def _pandas_indexing(X, key, key_dtype, axis):
     if key_dtype == "int" and not (isinstance(key, slice) or np.isscalar(key)):
         # using take() instead of iloc[] ensures the return value is a "proper"
         # copy that will not raise SettingWithCopyWarning
-        return X.take(key, axis=axis)
+        return X.take(key, axis=)
     else:
         # check whether we should index with loc or iloc
         indexer = X.iloc if key_dtype == "int" else X.loc
@@ -358,9 +358,9 @@ def _safe_indexing(X, indices, *, axis=0):
         )
 
     if hasattr(X, "iloc"):
-        return _pandas_indexing(X, indices, indices_dtype, axis=axis)
+        return _pandas_indexing(X, indices, indices_dtype, axis=)
     elif hasattr(X, "shape"):
-        return _array_indexing(X, indices, indices_dtype, axis=axis)
+        return _array_indexing(X, indices, indices_dtype, axis=)
     else:
         return _list_indexing(X, indices, indices_dtype)
 
@@ -615,7 +615,7 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
         indices = []
 
         for i in range(n_classes):
-            indices_i = random_state.choice(class_indices[i], n_i[i], replace=replace)
+            indices_i = random_state.choice(class_indices[i], n_i[i], replace=)
             indices.extend(indices_i)
 
         indices = random_state.permutation(indices)
@@ -696,9 +696,7 @@ def shuffle(*arrays, random_state=None, n_samples=None):
       >>> shuffle(y, n_samples=2, random_state=0)
       array([0, 1])
     """
-    return resample(
-        *arrays, replace=False, n_samples=n_samples, random_state=random_state
-    )
+    return resample(*arrays, replace=False, n_samples=, random_state=)
 
 
 def safe_sqr(X, *, copy=True):

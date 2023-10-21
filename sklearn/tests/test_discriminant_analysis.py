@@ -72,7 +72,7 @@ def test_lda_predict():
     # values for simple toy data.
     for test_case in solver_shrinkage:
         solver, shrinkage = test_case
-        clf = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
+        clf = LinearDiscriminantAnalysis(solver=, shrinkage=)
         y_pred = clf.fit(X, y).predict(X)
         assert_array_equal(y_pred, y, "solver %s" % solver)
 
@@ -153,7 +153,7 @@ def test_lda_predict_proba(solver, n_classes):
         n_samples=90000, centers=blob_centers, covariances=blob_stds, random_state=42
     )
     lda = LinearDiscriminantAnalysis(
-        solver=solver, store_covariance=True, shrinkage=None
+        solver=, store_covariance=True, shrinkage=None
     ).fit(X, y)
     # check that the empirical means and covariances are close enough to the
     # one used to generate the data
@@ -228,7 +228,7 @@ def test_lda_predict_proba(solver, n_classes):
 def test_lda_priors():
     # Test priors (negative priors)
     priors = np.array([0.5, -0.5])
-    clf = LinearDiscriminantAnalysis(priors=priors)
+    clf = LinearDiscriminantAnalysis(priors=)
     msg = "priors must be non-negative"
 
     with pytest.raises(ValueError, match=msg):
@@ -242,7 +242,7 @@ def test_lda_priors():
     # Test that priors always sum to 1
     priors = np.array([0.5, 0.6])
     prior_norm = np.array([0.45, 0.55])
-    clf = LinearDiscriminantAnalysis(priors=priors)
+    clf = LinearDiscriminantAnalysis(priors=)
 
     with pytest.warns(UserWarning):
         clf.fit(X, y)
@@ -256,7 +256,7 @@ def test_lda_coefs():
     n_classes = 2
     n_samples = 1000
     X, y = make_blobs(
-        n_samples=n_samples, n_features=n_features, centers=n_classes, random_state=11
+        n_samples=, n_features=, centers=n_classes, random_state=11
     )
 
     clf_lda_svd = LinearDiscriminantAnalysis(solver="svd")
@@ -371,7 +371,7 @@ def test_lda_scaling():
     y = [-1] * n + [1] * n
 
     for solver in ("svd", "lsqr", "eigen"):
-        clf = LinearDiscriminantAnalysis(solver=solver)
+        clf = LinearDiscriminantAnalysis(solver=)
         # should be able to separate the data perfectly
         assert clf.fit(x, y).score(x, y) == 1.0, "using covariance: %s" % solver
 
@@ -380,11 +380,11 @@ def test_lda_store_covariance():
     # Test for solver 'lsqr' and 'eigen'
     # 'store_covariance' has no effect on 'lsqr' and 'eigen' solvers
     for solver in ("lsqr", "eigen"):
-        clf = LinearDiscriminantAnalysis(solver=solver).fit(X6, y6)
+        clf = LinearDiscriminantAnalysis(solver=).fit(X6, y6)
         assert hasattr(clf, "covariance_")
 
         # Test the actual attribute:
-        clf = LinearDiscriminantAnalysis(solver=solver, store_covariance=True).fit(
+        clf = LinearDiscriminantAnalysis(solver=, store_covariance=True).fit(
             X6, y6
         )
         assert hasattr(clf, "covariance_")
@@ -398,7 +398,7 @@ def test_lda_store_covariance():
     assert not hasattr(clf, "covariance_")
 
     # Test the actual attribute:
-    clf = LinearDiscriminantAnalysis(solver=solver, store_covariance=True).fit(X6, y6)
+    clf = LinearDiscriminantAnalysis(solver=, store_covariance=True).fit(X6, y6)
     assert hasattr(clf, "covariance_")
 
     assert_array_almost_equal(
@@ -468,7 +468,7 @@ def test_lda_dimension_warning(n_classes, n_features):
 
     for n_components in [max_components - 1, None, max_components]:
         # if n_components <= min(n_classes - 1, n_features), no warning
-        lda = LinearDiscriminantAnalysis(n_components=n_components)
+        lda = LinearDiscriminantAnalysis(n_components=)
         lda.fit(X, y)
 
     for n_components in [max_components + 1, max(n_features, n_classes - 1) + 1]:
@@ -476,7 +476,7 @@ def test_lda_dimension_warning(n_classes, n_features):
         # We test one unit higher than max_components, and then something
         # larger than both n_features and n_classes - 1 to ensure the test
         # works for any value of n_component
-        lda = LinearDiscriminantAnalysis(n_components=n_components)
+        lda = LinearDiscriminantAnalysis(n_components=)
         msg = "n_components cannot be larger than "
         with pytest.raises(ValueError, match=msg):
             lda.fit(X, y)
@@ -493,21 +493,21 @@ def test_lda_dimension_warning(n_classes, n_features):
 )
 def test_lda_dtype_match(data_type, expected_type):
     for solver, shrinkage in solver_shrinkage:
-        clf = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
+        clf = LinearDiscriminantAnalysis(solver=, shrinkage=)
         clf.fit(X.astype(data_type), y.astype(data_type))
         assert clf.coef_.dtype == expected_type
 
 
 def test_lda_numeric_consistency_float32_float64():
     for solver, shrinkage in solver_shrinkage:
-        clf_32 = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
+        clf_32 = LinearDiscriminantAnalysis(solver=, shrinkage=)
         clf_32.fit(X.astype(np.float32), y.astype(np.float32))
-        clf_64 = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
+        clf_64 = LinearDiscriminantAnalysis(solver=, shrinkage=)
         clf_64.fit(X.astype(np.float64), y.astype(np.float64))
 
         # Check value consistency between types
         rtol = 1e-6
-        assert_allclose(clf_32.coef_, clf_64.coef_, rtol=rtol)
+        assert_allclose(clf_32.coef_, clf_64.coef_, rtol=)
 
 
 def test_qda():
@@ -564,7 +564,7 @@ def test_qda_prior_type(priors_type):
 def test_qda_prior_copy():
     """Check that altering `priors` without `fit` doesn't change `priors_`"""
     priors = np.array([0.5, 0.5])
-    qda = QuadraticDiscriminantAnalysis(priors=priors).fit(X, y)
+    qda = QuadraticDiscriminantAnalysis(priors=).fit(X, y)
 
     # we expect the following
     assert_array_equal(qda.priors_, qda.priors)
@@ -655,7 +655,7 @@ def test_raises_value_error_on_same_number_of_classes_and_samples(solver):
     """
     X = np.array([[0.5, 0.6], [0.6, 0.5]])
     y = np.array(["a", "b"])
-    clf = LinearDiscriminantAnalysis(solver=solver)
+    clf = LinearDiscriminantAnalysis(solver=)
     with pytest.raises(ValueError, match="The number of samples must be more"):
         clf.fit(X, y)
 

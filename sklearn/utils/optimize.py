@@ -233,7 +233,7 @@ def _newton_cg(
         if line_search:
             try:
                 alphak, fc, gc, old_fval, old_old_fval, gfkp1 = _line_search_wolfe12(
-                    func, grad, xk, xsupi, fgrad, old_fval, old_old_fval, args=args
+                    func, grad, xk, xsupi, fgrad, old_fval, old_old_fval, args=
                 )
             except _LineSearchError:
                 warnings.warn("Line Search failed")

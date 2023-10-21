@@ -48,12 +48,10 @@ class FastClassifier(DummyClassifier):
     def __init__(
         self, strategy="stratified", random_state=None, constant=None, **kwargs
     ):
-        super().__init__(
-            strategy=strategy, random_state=random_state, constant=constant
-        )
+        super().__init__(strategy=, random_state=, constant=)
 
     def get_params(self, deep=False):
-        params = super().get_params(deep=deep)
+        params = super().get_params(deep=)
         for char in range(ord("a"), ord("z") + 1):
             params[chr(char)] = "whatever"
         return params
@@ -75,9 +73,7 @@ class SometimesFailClassifier(DummyClassifier):
         self.n_estimators = n_estimators
         self.a = a
 
-        super().__init__(
-            strategy=strategy, random_state=random_state, constant=constant
-        )
+        super().__init__(strategy=, random_state=, constant=)
 
     def fit(self, X, y):
         if self.fail_fit:
@@ -99,7 +95,7 @@ def test_nan_handling(HalvingSearch, fail_at):
     """Check the selection of the best scores in presence of failure represented by
     NaN values."""
     n_samples = 1_000
-    X, y = make_classification(n_samples=n_samples, random_state=0)
+    X, y = make_classification(n_samples=, random_state=0)
 
     search = HalvingSearch(
         SometimesFailClassifier(),
@@ -170,7 +166,7 @@ def test_aggressive_elimination(
     # Test the aggressive_elimination parameter.
 
     n_samples = 1000
-    X, y = make_classification(n_samples=n_samples, random_state=0)
+    X, y = make_classification(n_samples=, random_state=0)
     param_grid = {"a": ("l1", "l2"), "b": list(range(30))}
     base_estimator = FastClassifier()
 
@@ -182,8 +178,8 @@ def test_aggressive_elimination(
     sh = Est(
         base_estimator,
         param_grid,
-        aggressive_elimination=aggressive_elimination,
-        max_resources=max_resources,
+        aggressive_elimination=,
+        max_resources=,
         factor=3,
     )
     sh.set_params(verbose=True)  # just for test coverage
@@ -242,7 +238,7 @@ def test_min_max_resources(
     # Test the min_resources and max_resources parameters, and how they affect
     # the number of resources used at each iteration
     n_samples = 1000
-    X, y = make_classification(n_samples=n_samples, random_state=0)
+    X, y = make_classification(n_samples=, random_state=0)
     param_grid = {"a": [1, 2], "b": [1, 2, 3]}
     base_estimator = FastClassifier()
 
@@ -250,8 +246,8 @@ def test_min_max_resources(
         base_estimator,
         param_grid,
         factor=3,
-        min_resources=min_resources,
-        max_resources=max_resources,
+        min_resources=,
+        max_resources=,
     )
     if Est is HalvingRandomSearchCV:
         sh.set_params(n_candidates=6)  # same number as with the grid
@@ -288,7 +284,7 @@ def test_n_iterations(Est, max_resources, n_iterations, n_possible_iterations):
     # max_resources
 
     n_samples = 1024
-    X, y = make_classification(n_samples=n_samples, random_state=1)
+    X, y = make_classification(n_samples=, random_state=1)
     param_grid = {"a": [1, 2], "b": list(range(10))}
     base_estimator = FastClassifier()
     factor = 2
@@ -297,8 +293,8 @@ def test_n_iterations(Est, max_resources, n_iterations, n_possible_iterations):
         base_estimator,
         param_grid,
         cv=2,
-        factor=factor,
-        max_resources=max_resources,
+        factor=,
+        max_resources=,
         min_resources=4,
     )
     if Est is HalvingRandomSearchCV:
@@ -314,7 +310,7 @@ def test_resource_parameter(Est):
     # Test the resource parameter
 
     n_samples = 1000
-    X, y = make_classification(n_samples=n_samples, random_state=0)
+    X, y = make_classification(n_samples=, random_state=0)
     param_grid = {"a": [1, 2], "b": list(range(10))}
     base_estimator = FastClassifier()
     sh = Est(base_estimator, param_grid, cv=2, resource="c", max_resources=10, factor=3)
@@ -364,15 +360,15 @@ def test_random_search(max_resources, n_candidates, expected_n_candidates):
     # as expected
 
     n_samples = 1024
-    X, y = make_classification(n_samples=n_samples, random_state=0)
+    X, y = make_classification(n_samples=, random_state=0)
     param_grid = {"a": norm, "b": norm}
     base_estimator = FastClassifier()
     sh = HalvingRandomSearchCV(
         base_estimator,
         param_grid,
-        n_candidates=n_candidates,
+        n_candidates=,
         cv=2,
-        max_resources=max_resources,
+        max_resources=,
         factor=2,
         min_resources=4,
     )
@@ -402,7 +398,7 @@ def test_random_search_discrete_distributions(
     # development of SH
 
     n_samples = 1024
-    X, y = make_classification(n_samples=n_samples, random_state=0)
+    X, y = make_classification(n_samples=, random_state=0)
     base_estimator = FastClassifier()
     sh = HalvingRandomSearchCV(base_estimator, param_distributions, n_candidates=10)
     sh.fit(X, y)
@@ -485,8 +481,8 @@ def test_subsample_splitter_shapes(
     X, y = make_classification(n_samples)
     cv = _SubsampleMetaSplitter(
         base_cv=KFold(5),
-        fraction=fraction,
-        subsample_test=subsample_test,
+        fraction=,
+        subsample_test=,
         random_state=None,
     )
 
@@ -514,7 +510,7 @@ def test_subsample_splitter_determinism(subsample_test):
     n_samples = 100
     X, y = make_classification(n_samples)
     cv = _SubsampleMetaSplitter(
-        base_cv=KFold(5), fraction=0.5, subsample_test=subsample_test, random_state=None
+        base_cv=KFold(5), fraction=0.5, subsample_test=, random_state=None
     )
 
     folds_a = list(cv.split(X, y, groups=None))
@@ -550,7 +546,7 @@ def test_top_k(k, itr, expected):
         "mean_test_score": [4, 3, 5, 1, 11, 10, 5, 6, 9],
         "params": ["a", "b", "c", "d", "e", "f", "g", "h", "i"],
     }
-    got = _top_k(results, k=k, itr=itr)
+    got = _top_k(results, k=, itr=)
     assert np.all(got == expected)
 
 
@@ -564,7 +560,7 @@ def test_cv_results(Est):
     rng = np.random.RandomState(0)
 
     n_samples = 1000
-    X, y = make_classification(n_samples=n_samples, random_state=0)
+    X, y = make_classification(n_samples=, random_state=0)
     param_grid = {"a": ("l1", "l2"), "b": list(range(30))}
     base_estimator = FastClassifier()
 
@@ -680,7 +676,7 @@ def test_base_estimator_inputs(Est):
 
     n_samples = 1024
     n_splits = 2
-    X, y = make_classification(n_samples=n_samples, random_state=0)
+    X, y = make_classification(n_samples=, random_state=0)
     param_grid = {"a": ("l1", "l2"), "b": list(range(30))}
     base_estimator = FastClassifierBookKeeping()
 
@@ -743,14 +739,14 @@ def test_groups_support(Est):
     ]
     error_msg = "The 'groups' parameter should not be None."
     for cv in group_cvs:
-        gs = Est(clf, grid, cv=cv, random_state=0)
+        gs = Est(clf, grid, cv=, random_state=0)
         with pytest.raises(ValueError, match=error_msg):
             gs.fit(X, y)
-        gs.fit(X, y, groups=groups)
+        gs.fit(X, y, groups=)
 
     non_group_cvs = [StratifiedKFold(), StratifiedShuffleSplit(random_state=0)]
     for cv in non_group_cvs:
-        gs = Est(clf, grid, cv=cv)
+        gs = Est(clf, grid, cv=)
         # Should not raise an error
         gs.fit(X, y)
 

@@ -173,7 +173,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         `drawstyle="default"`. However, the curve will not be strictly
         consistent with the reported average precision.
         """
-        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=, name=)
 
         line_kwargs = {"drawstyle": "steps-post"}
         if self.average_precision is not None and name is not None:
@@ -193,9 +193,9 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         xlabel = "Recall" + info_pos_label
         ylabel = "Precision" + info_pos_label
         self.ax_.set(
-            xlabel=xlabel,
+            xlabel=,
             xlim=(-0.01, 1.01),
-            ylabel=ylabel,
+            ylabel=,
             ylim=(-0.01, 1.01),
             aspect="equal",
         )
@@ -349,21 +349,21 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
             estimator,
             X,
             y,
-            response_method=response_method,
-            pos_label=pos_label,
-            name=name,
+            response_method=,
+            pos_label=,
+            name=,
         )
 
         return cls.from_predictions(
             y,
             y_pred,
-            sample_weight=sample_weight,
-            name=name,
-            pos_label=pos_label,
-            drop_intermediate=drop_intermediate,
-            ax=ax,
-            plot_chance_level=plot_chance_level,
-            chance_level_kw=chance_level_kw,
+            sample_weight=,
+            name=,
+            pos_label=,
+            drop_intermediate=,
+            ax=,
+            plot_chance_level=,
+            chance_level_kw=,
             **kwargs,
         )
 
@@ -469,36 +469,36 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> plt.show()
         """
         pos_label, name = cls._validate_from_predictions_params(
-            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+            y_true, y_pred, sample_weight=, pos_label=, name=
         )
 
         precision, recall, _ = precision_recall_curve(
             y_true,
             y_pred,
-            pos_label=pos_label,
-            sample_weight=sample_weight,
-            drop_intermediate=drop_intermediate,
+            pos_label=,
+            sample_weight=,
+            drop_intermediate=,
         )
         average_precision = average_precision_score(
-            y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
+            y_true, y_pred, pos_label=, sample_weight=
         )
 
         class_count = Counter(y_true)
         prevalence_pos_label = class_count[pos_label] / sum(class_count.values())
 
         viz = PrecisionRecallDisplay(
-            precision=precision,
-            recall=recall,
-            average_precision=average_precision,
+            precision=,
+            recall=,
+            average_precision=,
             estimator_name=name,
-            pos_label=pos_label,
-            prevalence_pos_label=prevalence_pos_label,
+            pos_label=,
+            prevalence_pos_label=,
         )
 
         return viz.plot(
-            ax=ax,
-            name=name,
-            plot_chance_level=plot_chance_level,
-            chance_level_kw=chance_level_kw,
+            ax=,
+            name=,
+            plot_chance_level=,
+            chance_level_kw=,
             **kwargs,
         )

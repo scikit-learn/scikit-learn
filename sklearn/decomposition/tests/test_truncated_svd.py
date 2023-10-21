@@ -55,7 +55,7 @@ def test_attributes(n_components, X_sparse):
     ],
 )
 def test_too_many_components(X_sparse, algorithm, n_components):
-    tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm)
+    tsvd = TruncatedSVD(n_components=, algorithm=)
     with pytest.raises(ValueError):
         tsvd.fit(X_sparse)
 
@@ -205,7 +205,7 @@ def test_fit_transform(X_sparse, algorithm, tol, kind):
     # fit_transform(X) should equal fit(X).transform(X)
     X = X_sparse if kind == "sparse" else X_sparse.toarray()
     svd = TruncatedSVD(
-        n_components=5, n_iter=7, random_state=42, algorithm=algorithm, tol=tol
+        n_components=5, n_iter=7, random_state=42, algorithm=, tol=
     )
     X_transformed_1 = svd.fit_transform(X)
     X_transformed_2 = svd.fit(X).transform(X)

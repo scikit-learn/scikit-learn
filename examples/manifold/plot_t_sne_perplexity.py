@@ -41,7 +41,7 @@ n_components = 2
 perplexities = [5, 30, 50, 100]
 
 X, y = datasets.make_circles(
-    n_samples=n_samples, factor=0.5, noise=0.05, random_state=0
+    n_samples=, factor=0.5, noise=0.05, random_state=0
 )
 
 red = y == 0
@@ -59,10 +59,10 @@ for i, perplexity in enumerate(perplexities):
 
     t0 = time()
     tsne = manifold.TSNE(
-        n_components=n_components,
+        n_components=,
         init="random",
         random_state=0,
-        perplexity=perplexity,
+        perplexity=,
         n_iter=300,
     )
     Y = tsne.fit_transform(X)
@@ -88,10 +88,10 @@ for i, perplexity in enumerate(perplexities):
 
     t0 = time()
     tsne = manifold.TSNE(
-        n_components=n_components,
+        n_components=,
         init="random",
         random_state=0,
-        perplexity=perplexity,
+        perplexity=,
         learning_rate="auto",
         n_iter=300,
     )
@@ -126,10 +126,10 @@ for i, perplexity in enumerate(perplexities):
 
     t0 = time()
     tsne = manifold.TSNE(
-        n_components=n_components,
+        n_components=,
         init="random",
         random_state=0,
-        perplexity=perplexity,
+        perplexity=,
         n_iter=400,
     )
     Y = tsne.fit_transform(X)

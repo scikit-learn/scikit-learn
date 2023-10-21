@@ -90,8 +90,8 @@ fig, [ax_roc, ax_det] = plt.subplots(1, 2, figsize=(11, 5))
 for name, clf in classifiers.items():
     clf.fit(X_train, y_train)
 
-    RocCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_roc, name=name)
-    DetCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_det, name=name)
+    RocCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_roc, name=)
+    DetCurveDisplay.from_estimator(clf, X_test, y_test, ax=ax_det, name=)
 
 ax_roc.set_title("Receiver Operating Characteristic (ROC) curves")
 ax_det.set_title("Detection Error Tradeoff (DET) curves")

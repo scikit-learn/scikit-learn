@@ -60,7 +60,7 @@ from sklearn.metrics import RocCurveDisplay, roc_curve
 y_score = clf.decision_function(X_test)
 
 fpr, tpr, _ = roc_curve(y_test, y_score, pos_label=clf.classes_[1])
-roc_display = RocCurveDisplay(fpr=fpr, tpr=tpr).plot()
+roc_display = RocCurveDisplay(fpr=, tpr=).plot()
 
 # %%
 # Create :class:`PrecisionRecallDisplay`
@@ -70,7 +70,7 @@ roc_display = RocCurveDisplay(fpr=fpr, tpr=tpr).plot()
 from sklearn.metrics import PrecisionRecallDisplay, precision_recall_curve
 
 prec, recall, _ = precision_recall_curve(y_test, y_score, pos_label=clf.classes_[1])
-pr_display = PrecisionRecallDisplay(precision=prec, recall=recall).plot()
+pr_display = PrecisionRecallDisplay(precision=prec, recall=).plot()
 
 # %%
 # Combining the display objects into a single plot

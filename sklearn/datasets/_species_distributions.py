@@ -81,7 +81,7 @@ def _load_coverage(F, header_length=6, dtype=np.int16):
     make_tuple = lambda t: (t.split()[0], float(t.split()[1]))
     header = dict([make_tuple(line) for line in header])
 
-    M = np.loadtxt(F, dtype=dtype)
+    M = np.loadtxt(F, dtype=)
     nodata = int(header[b"NODATA_value"])
     if nodata != -9999:
         M[nodata] = -9999
@@ -250,10 +250,10 @@ def fetch_species_distributions(*, data_home=None, download_if_missing=True):
                 fhandle = BytesIO(X[f])
                 logger.debug(" - converting {}".format(f))
                 coverages.append(_load_coverage(fhandle))
-            coverages = np.asarray(coverages, dtype=dtype)
+            coverages = np.asarray(coverages, dtype=)
         remove(coverages_path)
 
-        bunch = Bunch(coverages=coverages, test=test, train=train, **extra_params)
+        bunch = Bunch(coverages=, test=, train=, **extra_params)
         joblib.dump(bunch, archive_path, compress=9)
     else:
         bunch = joblib.load(archive_path)

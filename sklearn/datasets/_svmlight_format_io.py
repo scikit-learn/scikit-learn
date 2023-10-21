@@ -189,13 +189,13 @@ def load_svmlight_file(
     return tuple(
         load_svmlight_files(
             [f],
-            n_features=n_features,
-            dtype=dtype,
-            multilabel=multilabel,
-            zero_based=zero_based,
-            query_id=query_id,
-            offset=offset,
-            length=length,
+            n_features=,
+            dtype=,
+            multilabel=,
+            zero_based=,
+            query_id=,
+            offset=,
+            length=,
         )
     )
 
@@ -240,7 +240,7 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id, offset=0, length=
     indptr = np.frombuffer(indptr, dtype=np.longlong)  # never empty
     query = np.frombuffer(query, np.int64)
 
-    data = np.asarray(data, dtype=dtype)  # no-op for float{32,64}
+    data = np.asarray(data, dtype=)  # no-op for float{32,64}
     return data, indices, indptr, labels, query
 
 
@@ -375,8 +375,8 @@ def load_svmlight_files(
             multilabel,
             bool(zero_based),
             bool(query_id),
-            offset=offset,
-            length=length,
+            offset=,
+            length=,
         )
         for f in files
     ]

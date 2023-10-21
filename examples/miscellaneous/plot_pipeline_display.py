@@ -176,5 +176,5 @@ param_grid = {
     "classifier__criterion": ["gini", "entropy"],
 }
 
-grid_search = GridSearchCV(pipe, param_grid=param_grid, n_jobs=1)
+grid_search = GridSearchCV(pipe, param_grid=, n_jobs=1)
 grid_search  # click on the diagram below to see the details of each step

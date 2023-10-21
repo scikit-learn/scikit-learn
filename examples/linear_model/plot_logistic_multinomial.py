@@ -21,13 +21,13 @@ from sklearn.linear_model import LogisticRegression
 
 # make 3-class dataset for classification
 centers = [[-5, 0], [0, 1.5], [5, -1]]
-X, y = make_blobs(n_samples=1000, centers=centers, random_state=40)
+X, y = make_blobs(n_samples=1000, centers=, random_state=40)
 transformation = [[0.4, 0.2], [-0.4, 1.2]]
 X = np.dot(X, transformation)
 
 for multi_class in ("multinomial", "ovr"):
     clf = LogisticRegression(
-        solver="sag", max_iter=100, random_state=42, multi_class=multi_class
+        solver="sag", max_iter=100, random_state=42, multi_class=
     ).fit(X, y)
 
     # print the training scores
@@ -35,7 +35,7 @@ for multi_class in ("multinomial", "ovr"):
 
     _, ax = plt.subplots()
     DecisionBoundaryDisplay.from_estimator(
-        clf, X, response_method="predict", cmap=plt.cm.Paired, ax=ax
+        clf, X, response_method="predict", cmap=plt.cm.Paired, ax=
     )
     plt.title("Decision surface of LogisticRegression (%s)" % multi_class)
     plt.axis("tight")
@@ -58,7 +58,7 @@ for multi_class in ("multinomial", "ovr"):
         def line(x0):
             return (-(x0 * coef[c, 0]) - intercept[c]) / coef[c, 1]
 
-        plt.plot([xmin, xmax], [line(xmin), line(xmax)], ls="--", color=color)
+        plt.plot([xmin, xmax], [line(xmin), line(xmax)], ls="--", color=)
 
     for i, color in zip(clf.classes_, colors):
         plot_hyperplane(i, color)

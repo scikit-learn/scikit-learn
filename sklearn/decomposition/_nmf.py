@@ -317,7 +317,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6, random_state=None):
         return W, H
 
     # NNDSVD initialization
-    U, S, V = randomized_svd(X, n_components, random_state=random_state)
+    U, S, V = randomized_svd(X, n_components, random_state=)
     W = np.zeros_like(U)
     H = np.zeros_like(V)
 
@@ -838,14 +838,14 @@ def _fit_multiplicative_update(
             X,
             W,
             H,
-            beta_loss=beta_loss,
-            l1_reg_W=l1_reg_W,
-            l2_reg_W=l2_reg_W,
-            gamma=gamma,
-            H_sum=H_sum,
-            HHt=HHt,
-            XHt=XHt,
-            update_H=update_H,
+            beta_loss=,
+            l1_reg_W=,
+            l2_reg_W=,
+            gamma=,
+            H_sum=,
+            HHt=,
+            XHt=,
+            update_H=,
         )
 
         # necessary for stability with beta_loss < 1
@@ -858,10 +858,10 @@ def _fit_multiplicative_update(
                 X,
                 W,
                 H,
-                beta_loss=beta_loss,
-                l1_reg_H=l1_reg_H,
-                l2_reg_H=l2_reg_H,
-                gamma=gamma,
+                beta_loss=,
+                l1_reg_H=,
+                l2_reg_H=,
+                gamma=,
             )
 
             # These values will be recomputed since H changed
@@ -1112,25 +1112,25 @@ def non_negative_factorization(
     ...     X, n_components=2, init='random', random_state=0)
     """
     est = NMF(
-        n_components=n_components,
-        init=init,
-        solver=solver,
-        beta_loss=beta_loss,
-        tol=tol,
-        max_iter=max_iter,
-        random_state=random_state,
-        alpha_W=alpha_W,
-        alpha_H=alpha_H,
-        l1_ratio=l1_ratio,
-        verbose=verbose,
-        shuffle=shuffle,
+        n_components=,
+        init=,
+        solver=,
+        beta_loss=,
+        tol=,
+        max_iter=,
+        random_state=,
+        alpha_W=,
+        alpha_H=,
+        l1_ratio=,
+        verbose=,
+        shuffle=,
     )
     est._validate_params()
 
     X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
 
     with config_context(assume_finite=True):
-        W, H, n_iter = est._fit_transform(X, W=W, H=H, update_H=update_H)
+        W, H, n_iter = est._fit_transform(X, W=, H=, update_H=)
 
     return W, H, n_iter
 
@@ -1592,16 +1592,16 @@ class NMF(_BaseNMF):
         shuffle=False,
     ):
         super().__init__(
-            n_components=n_components,
-            init=init,
-            beta_loss=beta_loss,
-            tol=tol,
-            max_iter=max_iter,
-            random_state=random_state,
-            alpha_W=alpha_W,
-            alpha_H=alpha_H,
-            l1_ratio=l1_ratio,
-            verbose=verbose,
+            n_components=,
+            init=,
+            beta_loss=,
+            tol=,
+            max_iter=,
+            random_state=,
+            alpha_W=,
+            alpha_H=,
+            l1_ratio=,
+            verbose=,
         )
 
         self.solver = solver
@@ -1663,7 +1663,7 @@ class NMF(_BaseNMF):
         )
 
         with config_context(assume_finite=True):
-            W, H, n_iter = self._fit_transform(X, W=W, H=H)
+            W, H, n_iter = self._fit_transform(X, W=, H=)
 
         self.reconstruction_err_ = _beta_divergence(
             X, W, H, self._beta_loss, square_root=True
@@ -1743,7 +1743,7 @@ class NMF(_BaseNMF):
                 l1_reg_H,
                 l2_reg_W,
                 l2_reg_H,
-                update_H=update_H,
+                update_H=,
                 verbose=self.verbose,
                 shuffle=self.shuffle,
                 random_state=self.random_state,
@@ -2037,16 +2037,16 @@ class MiniBatchNMF(_BaseNMF):
         verbose=0,
     ):
         super().__init__(
-            n_components=n_components,
-            init=init,
-            beta_loss=beta_loss,
-            tol=tol,
-            max_iter=max_iter,
-            random_state=random_state,
-            alpha_W=alpha_W,
-            alpha_H=alpha_H,
-            l1_ratio=l1_ratio,
-            verbose=verbose,
+            n_components=,
+            init=,
+            beta_loss=,
+            tol=,
+            max_iter=,
+            random_state=,
+            alpha_W=,
+            alpha_H=,
+            l1_ratio=,
+            verbose=,
         )
 
         self.max_no_improvement = max_no_improvement
@@ -2144,8 +2144,8 @@ class MiniBatchNMF(_BaseNMF):
                 W,
                 H,
                 beta_loss=self._beta_loss,
-                l1_reg_H=l1_reg_H,
-                l2_reg_H=l2_reg_H,
+                l1_reg_H=,
+                l2_reg_H=,
                 gamma=self._gamma,
                 A=self._components_numerator,
                 B=self._components_denominator,
@@ -2250,7 +2250,7 @@ class MiniBatchNMF(_BaseNMF):
         )
 
         with config_context(assume_finite=True):
-            W, H, n_iter, n_steps = self._fit_transform(X, W=W, H=H)
+            W, H, n_iter, n_steps = self._fit_transform(X, W=, H=)
 
         self.reconstruction_err_ = _beta_divergence(
             X, W, H, self._beta_loss, square_root=True
@@ -2426,7 +2426,7 @@ class MiniBatchNMF(_BaseNMF):
         if not has_components:
             # This instance has not been fitted yet (fit or partial_fit)
             self._check_params(X)
-            _, H = self._check_w_h(X, W=W, H=H, update_H=True)
+            _, H = self._check_w_h(X, W=, H=, update_H=True)
 
             self._components_numerator = H.copy()
             self._components_denominator = np.ones(H.shape, dtype=H.dtype)

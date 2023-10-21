@@ -135,13 +135,13 @@ def test_gaussian_mixture_attributes():
     n_components, tol, n_init, max_iter, reg_covar = 2, 1e-4, 3, 30, 1e-1
     covariance_type, init_params = "full", "random"
     gmm = GaussianMixture(
-        n_components=n_components,
-        tol=tol,
-        n_init=n_init,
-        max_iter=max_iter,
-        reg_covar=reg_covar,
-        covariance_type=covariance_type,
-        init_params=init_params,
+        n_components=,
+        tol=,
+        n_init=,
+        max_iter=,
+        reg_covar=,
+        covariance_type=,
+        init_params=,
     ).fit(X)
 
     assert gmm.n_components == n_components
@@ -160,7 +160,7 @@ def test_check_weights():
     n_components = rand_data.n_components
     X = rand_data.X["full"]
 
-    g = GaussianMixture(n_components=n_components)
+    g = GaussianMixture(n_components=)
 
     # Check bad shape
     weights_bad_shape = rng.rand(n_components, 1)
@@ -196,7 +196,7 @@ def test_check_weights():
 
     # Check good weights matrix
     weights = rand_data.weights
-    g = GaussianMixture(weights_init=weights, n_components=n_components)
+    g = GaussianMixture(weights_init=weights, n_components=)
     g.fit(X)
     assert_array_equal(weights, g.weights_init)
 
@@ -208,7 +208,7 @@ def test_check_means():
     n_components, n_features = rand_data.n_components, rand_data.n_features
     X = rand_data.X["full"]
 
-    g = GaussianMixture(n_components=n_components)
+    g = GaussianMixture(n_components=)
 
     # Check means bad shape
     means_bad_shape = rng.rand(n_components + 1, n_features)
@@ -260,7 +260,7 @@ def test_check_precisions():
     for covar_type in COVARIANCE_TYPE:
         X = RandomData(rng).X[covar_type]
         g = GaussianMixture(
-            n_components=n_components, covariance_type=covar_type, random_state=rng
+            n_components=, covariance_type=covar_type, random_state=rng
         )
 
         # Check precisions with bad shapes
@@ -420,7 +420,7 @@ def test_compute_log_det_cholesky():
         expected_det = _compute_log_det_cholesky(
             _compute_precision_cholesky(covariance, covar_type),
             covar_type,
-            n_features=n_features,
+            n_features=,
         )
         assert_array_almost_equal(expected_det, -0.5 * np.log(predected_det))
 
@@ -495,7 +495,7 @@ def test_gaussian_mixture_estimate_log_prob_resp():
         means = rand_data.means
         precisions = rand_data.precisions[covar_type]
         g = GaussianMixture(
-            n_components=n_components,
+            n_components=,
             random_state=rng,
             weights_init=weights,
             means_init=means,
@@ -563,8 +563,8 @@ def test_gaussian_mixture_fit_predict(seed, max_iter, tol):
             means_init=rand_data.means,
             precisions_init=rand_data.precisions[covar_type],
             covariance_type=covar_type,
-            max_iter=max_iter,
-            tol=tol,
+            max_iter=,
+            tol=,
         )
 
         # check if fit_predict(X) is equivalent to fit(X).predict(X)
@@ -594,7 +594,7 @@ def test_gaussian_mixture_fit():
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
         g = GaussianMixture(
-            n_components=n_components,
+            n_components=,
             n_init=20,
             reg_covar=0,
             random_state=rng,
@@ -645,7 +645,7 @@ def test_gaussian_mixture_fit_best_params():
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
         g = GaussianMixture(
-            n_components=n_components,
+            n_components=,
             n_init=1,
             reg_covar=0,
             random_state=rng,
@@ -657,8 +657,8 @@ def test_gaussian_mixture_fit_best_params():
             ll.append(g.score(X))
         ll = np.array(ll)
         g_best = GaussianMixture(
-            n_components=n_components,
-            n_init=n_init,
+            n_components=,
+            n_init=,
             reg_covar=0,
             random_state=rng,
             covariance_type=covar_type,
@@ -675,9 +675,9 @@ def test_gaussian_mixture_fit_convergence_warning():
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
         g = GaussianMixture(
-            n_components=n_components,
+            n_components=,
             n_init=1,
-            max_iter=max_iter,
+            max_iter=,
             reg_covar=0,
             random_state=rng,
             covariance_type=covar_type,
@@ -699,14 +699,14 @@ def test_multiple_init():
     for cv_type in COVARIANCE_TYPE:
         train1 = (
             GaussianMixture(
-                n_components=n_components, covariance_type=cv_type, random_state=0
+                n_components=, covariance_type=cv_type, random_state=0
             )
             .fit(X)
             .score(X)
         )
         train2 = (
             GaussianMixture(
-                n_components=n_components,
+                n_components=,
                 covariance_type=cv_type,
                 random_state=0,
                 n_init=5,
@@ -725,7 +725,7 @@ def test_gaussian_mixture_n_parameters():
     n_params = {"spherical": 13, "diag": 21, "tied": 26, "full": 41}
     for cv_type in COVARIANCE_TYPE:
         g = GaussianMixture(
-            n_components=n_components, covariance_type=cv_type, random_state=rng
+            n_components=, covariance_type=cv_type, random_state=rng
         ).fit(X)
         assert g._n_parameters() == n_params[cv_type]
 
@@ -738,18 +738,14 @@ def test_bic_1d_1component():
     X = rng.randn(n_samples, n_dim)
     bic_full = (
         GaussianMixture(
-            n_components=n_components, covariance_type="full", random_state=rng
+            n_components=, covariance_type="full", random_state=rng
         )
         .fit(X)
         .bic(X)
     )
     for covariance_type in ["tied", "diag", "spherical"]:
         bic = (
-            GaussianMixture(
-                n_components=n_components,
-                covariance_type=covariance_type,
-                random_state=rng,
-            )
+            GaussianMixture(n_components=, covariance_type=, random_state=rng)
             .fit(X)
             .bic(X)
         )
@@ -767,7 +763,7 @@ def test_gaussian_mixture_aic_bic():
     )
     for cv_type in COVARIANCE_TYPE:
         g = GaussianMixture(
-            n_components=n_components,
+            n_components=,
             covariance_type=cv_type,
             random_state=rng,
             max_iter=200,
@@ -787,7 +783,7 @@ def test_gaussian_mixture_verbose():
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
         g = GaussianMixture(
-            n_components=n_components,
+            n_components=,
             n_init=1,
             reg_covar=0,
             random_state=rng,
@@ -795,7 +791,7 @@ def test_gaussian_mixture_verbose():
             verbose=1,
         )
         h = GaussianMixture(
-            n_components=n_components,
+            n_components=,
             n_init=1,
             reg_covar=0,
             random_state=rng,
@@ -821,19 +817,19 @@ def test_warm_start(seed):
 
     # Assert the warm_start give the same result for the same number of iter
     g = GaussianMixture(
-        n_components=n_components,
+        n_components=,
         n_init=1,
         max_iter=2,
         reg_covar=0,
-        random_state=random_state,
+        random_state=,
         warm_start=False,
     )
     h = GaussianMixture(
-        n_components=n_components,
+        n_components=,
         n_init=1,
         max_iter=1,
         reg_covar=0,
-        random_state=random_state,
+        random_state=,
         warm_start=True,
     )
 
@@ -848,20 +844,20 @@ def test_warm_start(seed):
 
     # Assert that by using warm_start we can converge to a good solution
     g = GaussianMixture(
-        n_components=n_components,
+        n_components=,
         n_init=1,
         max_iter=5,
         reg_covar=0,
-        random_state=random_state,
+        random_state=,
         warm_start=False,
         tol=1e-6,
     )
     h = GaussianMixture(
-        n_components=n_components,
+        n_components=,
         n_init=1,
         max_iter=5,
         reg_covar=0,
-        random_state=random_state,
+        random_state=,
         warm_start=True,
         tol=1e-6,
     )
@@ -890,9 +886,9 @@ def test_convergence_detected_with_warm_start():
 
     for max_iter in (1, 2, 50):
         gmm = GaussianMixture(
-            n_components=n_components,
+            n_components=,
             warm_start=True,
-            max_iter=max_iter,
+            max_iter=,
             random_state=rng,
         )
         for _ in range(100):
@@ -912,7 +908,7 @@ def test_score():
 
     # Check the error message if we don't call fit
     gmm1 = GaussianMixture(
-        n_components=n_components,
+        n_components=,
         n_init=1,
         max_iter=1,
         reg_covar=0,
@@ -936,7 +932,7 @@ def test_score():
 
     # Check if the score increase
     gmm2 = GaussianMixture(
-        n_components=n_components,
+        n_components=,
         n_init=1,
         reg_covar=0,
         random_state=rng,
@@ -954,7 +950,7 @@ def test_score_samples():
 
     # Check the error message if we don't call fit
     gmm = GaussianMixture(
-        n_components=n_components,
+        n_components=,
         n_init=1,
         reg_covar=0,
         random_state=rng,
@@ -981,7 +977,7 @@ def test_monotonic_likelihood():
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
         gmm = GaussianMixture(
-            n_components=n_components,
+            n_components=,
             covariance_type=covar_type,
             reg_covar=0,
             warm_start=True,
@@ -1045,7 +1041,7 @@ def test_property():
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
         gmm = GaussianMixture(
-            n_components=n_components,
+            n_components=,
             covariance_type=covar_type,
             random_state=rng,
             n_init=5,
@@ -1069,7 +1065,7 @@ def test_sample():
         X = rand_data.X[covar_type]
 
         gmm = GaussianMixture(
-            n_components=n_components, covariance_type=covar_type, random_state=rng
+            n_components=, covariance_type=covar_type, random_state=rng
         )
         # To sample we need that GaussianMixture is fitted
         msg = "This GaussianMixture instance is not fitted"
@@ -1128,10 +1124,10 @@ def test_init():
         X = rand_data.X["full"]
 
         gmm1 = GaussianMixture(
-            n_components=n_components, n_init=1, max_iter=1, random_state=random_state
+            n_components=, n_init=1, max_iter=1, random_state=
         ).fit(X)
         gmm2 = GaussianMixture(
-            n_components=n_components, n_init=10, max_iter=1, random_state=random_state
+            n_components=, n_init=10, max_iter=1, random_state=
         ).fit(X)
 
         assert gmm2.lower_bound_ >= gmm1.lower_bound_
@@ -1181,11 +1177,11 @@ def test_gaussian_mixture_setting_best_params():
     gmm = GaussianMixture(
         covariance_type="spherical",
         reg_covar=0,
-        means_init=means_init,
-        weights_init=weights_init,
+        means_init=,
+        weights_init=,
         random_state=rnd,
         n_components=len(weights_init),
-        precisions_init=precisions_init,
+        precisions_init=,
         max_iter=1,
     )
     # ensure that no error is thrown during fit
@@ -1217,7 +1213,7 @@ def test_init_means_not_duplicated(init_params, global_random_seed):
     X = rand_data.X["full"]
 
     gmm = GaussianMixture(
-        n_components=n_components, init_params=init_params, random_state=rng, max_iter=0
+        n_components=, init_params=, random_state=rng, max_iter=0
     )
     gmm.fit(X)
 
@@ -1236,9 +1232,7 @@ def test_means_for_all_inits(init_params, global_random_seed):
     n_components = rand_data.n_components
     X = rand_data.X["full"]
 
-    gmm = GaussianMixture(
-        n_components=n_components, init_params=init_params, random_state=rng
-    )
+    gmm = GaussianMixture(n_components=, init_params=, random_state=rng)
     gmm.fit(X)
 
     assert gmm.means_.shape == (n_components, X.shape[1])
@@ -1256,9 +1250,9 @@ def test_max_iter_zero():
     X = rand_data.X["full"]
     means_init = [[20, 30], [30, 25]]
     gmm = GaussianMixture(
-        n_components=n_components,
+        n_components=,
         random_state=rng,
-        means_init=means_init,
+        means_init=,
         tol=1e-06,
         max_iter=0,
     )
@@ -1297,29 +1291,29 @@ def test_gaussian_mixture_precisions_init_diag():
     # - compute the precision matrix from the estimated covariance
     resp = np.zeros((X.shape[0], n_components))
     label = (
-        KMeans(n_clusters=n_components, n_init=1, random_state=random_state)
+        KMeans(n_clusters=n_components, n_init=1, random_state=)
         .fit(X)
         .labels_
     )
     resp[np.arange(X.shape[0]), label] = 1
     _, _, covariance = _estimate_gaussian_parameters(
-        X, resp, reg_covar=reg_covar, covariance_type=covariance_type
+        X, resp, reg_covar=, covariance_type=
     )
     precisions_init = 1 / covariance
 
     gm_with_init = GaussianMixture(
-        n_components=n_components,
-        covariance_type=covariance_type,
-        reg_covar=reg_covar,
-        precisions_init=precisions_init,
-        random_state=random_state,
+        n_components=,
+        covariance_type=,
+        reg_covar=,
+        precisions_init=,
+        random_state=,
     ).fit(X)
 
     gm_without_init = GaussianMixture(
-        n_components=n_components,
-        covariance_type=covariance_type,
-        reg_covar=reg_covar,
-        random_state=random_state,
+        n_components=,
+        covariance_type=,
+        reg_covar=,
+        random_state=,
     ).fit(X)
 
     assert gm_without_init.n_iter_ == gm_with_init.n_iter_
@@ -1352,7 +1346,7 @@ def _calculate_precisions(X, resp, covariance_type):
     # `_set_parameters` method to return the `precisions_` and
     #  `precisions_cholesky_` from matching the `covariance_type`
     # provided.
-    gmm = GaussianMixture(n_components=n_components, covariance_type=covariance_type)
+    gmm = GaussianMixture(n_components=, covariance_type=)
     params = (weights, means, covariances, precisions_cholesky)
     gmm._set_parameters(params)
     return gmm.precisions_, gmm.precisions_cholesky_
@@ -1372,9 +1366,7 @@ def test_gaussian_mixture_precisions_init(covariance_type, global_random_seed):
     precisions_init, desired_precisions_cholesky = _calculate_precisions(
         X, resp, covariance_type
     )
-    gmm = GaussianMixture(
-        covariance_type=covariance_type, precisions_init=precisions_init
-    )
+    gmm = GaussianMixture(covariance_type=, precisions_init=)
     gmm._initialize(X, resp)
     actual_precisions_cholesky = gmm.precisions_cholesky_
     assert_allclose(actual_precisions_cholesky, desired_precisions_cholesky)

@@ -382,7 +382,7 @@ def type_of_target(y, input_name=""):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
         data = y.data if issparse(y) else y
         if xp.any(data != xp.astype(data, int)):
-            _assert_all_finite(data, input_name=input_name)
+            _assert_all_finite(data, input_name=)
             return "continuous" + suffix
 
     # Check multiclass

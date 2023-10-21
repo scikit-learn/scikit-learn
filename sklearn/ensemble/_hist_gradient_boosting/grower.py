@@ -389,10 +389,10 @@ class TreeGrower:
         else:
             sum_hessians = sum_parallel(hessians, self.n_threads)
         self.root = TreeNode(
-            depth=depth,
+            depth=,
             sample_indices=self.splitter.partition,
-            sum_gradients=sum_gradients,
-            sum_hessians=sum_hessians,
+            sum_gradients=,
+            sum_hessians=,
             value=0,
         )
 
@@ -766,10 +766,10 @@ def _fill_predictor_arrays(
         binned_left_cat_bitsets,
         raw_left_cat_bitsets,
         grower_node.left_child,
-        binning_thresholds=binning_thresholds,
-        n_bins_non_missing=n_bins_non_missing,
-        next_free_node_idx=next_free_node_idx,
-        next_free_bitset_idx=next_free_bitset_idx,
+        binning_thresholds=,
+        n_bins_non_missing=,
+        next_free_node_idx=,
+        next_free_bitset_idx=,
     )
 
     node["right"] = next_free_node_idx
@@ -778,8 +778,8 @@ def _fill_predictor_arrays(
         binned_left_cat_bitsets,
         raw_left_cat_bitsets,
         grower_node.right_child,
-        binning_thresholds=binning_thresholds,
-        n_bins_non_missing=n_bins_non_missing,
-        next_free_node_idx=next_free_node_idx,
-        next_free_bitset_idx=next_free_bitset_idx,
+        binning_thresholds=,
+        n_bins_non_missing=,
+        next_free_node_idx=,
+        next_free_bitset_idx=,
     )

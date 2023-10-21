@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots(figsize=(12, 4))
 average_week_demand = df.groupby(["weekday", "hour"])["count"].mean()
-average_week_demand.plot(ax=ax)
+average_week_demand.plot(ax=)
 _ = ax.set(
     title="Average hourly bike demand during the week",
     xticks=[i * 24 for i in range(7)],
@@ -73,7 +73,7 @@ y = df["count"] / df["count"].max()
 
 # %%
 fig, ax = plt.subplots(figsize=(12, 4))
-y.hist(bins=30, ax=ax)
+y.hist(bins=30, ax=)
 _ = ax.set(
     xlabel="Fraction of rented fleet demand",
     ylabel="Number of hours",
@@ -201,7 +201,7 @@ categories = [
     ["False", "True"],
     ["False", "True"],
 ]
-ordinal_encoder = OrdinalEncoder(categories=categories)
+ordinal_encoder = OrdinalEncoder(categories=)
 
 
 gbrt_pipeline = make_pipeline(
@@ -236,7 +236,7 @@ def evaluate(model, X, y, cv, model_prop=None, model_step=None):
         model,
         X,
         y,
-        cv=cv,
+        cv=,
         scoring=["neg_mean_absolute_error", "neg_root_mean_squared_error"],
         return_estimator=model_prop is not None,
     )
@@ -297,7 +297,7 @@ naive_linear_pipeline = make_pipeline(
         ],
         remainder=MinMaxScaler(),
     ),
-    RidgeCV(alphas=alphas),
+    RidgeCV(alphas=),
 )
 
 
@@ -344,7 +344,7 @@ one_hot_linear_pipeline = make_pipeline(
         ],
         remainder=MinMaxScaler(),
     ),
-    RidgeCV(alphas=alphas),
+    RidgeCV(alphas=),
 )
 
 evaluate(one_hot_linear_pipeline, X, y, cv=ts_cv)
@@ -437,7 +437,7 @@ cyclic_cossin_transformer = ColumnTransformer(
 )
 cyclic_cossin_linear_pipeline = make_pipeline(
     cyclic_cossin_transformer,
-    RidgeCV(alphas=alphas),
+    RidgeCV(alphas=),
 )
 evaluate(cyclic_cossin_linear_pipeline, X, y, cv=ts_cv)
 
@@ -464,8 +464,8 @@ def periodic_spline_transformer(period, n_splines=None, degree=3):
         n_splines = period
     n_knots = n_splines + 1  # periodic and include_bias is True
     return SplineTransformer(
-        degree=degree,
-        n_knots=n_knots,
+        degree=,
+        n_knots=,
         knots=np.linspace(0, period, n_knots).reshape(n_knots, 1),
         extrapolation="periodic",
         include_bias=True,
@@ -510,7 +510,7 @@ cyclic_spline_transformer = ColumnTransformer(
 )
 cyclic_spline_linear_pipeline = make_pipeline(
     cyclic_spline_transformer,
-    RidgeCV(alphas=alphas),
+    RidgeCV(alphas=),
 )
 evaluate(cyclic_spline_linear_pipeline, X, y, cv=ts_cv)
 
@@ -668,7 +668,7 @@ cyclic_spline_interactions_pipeline = make_pipeline(
             ("interactions", hour_workday_interaction),
         ]
     ),
-    RidgeCV(alphas=alphas),
+    RidgeCV(alphas=),
 )
 evaluate(cyclic_spline_interactions_pipeline, X, y, cv=ts_cv)
 
@@ -694,7 +694,7 @@ from sklearn.kernel_approximation import Nystroem
 cyclic_spline_poly_pipeline = make_pipeline(
     cyclic_spline_transformer,
     Nystroem(kernel="poly", degree=2, n_components=300, random_state=0),
-    RidgeCV(alphas=alphas),
+    RidgeCV(alphas=),
 )
 evaluate(cyclic_spline_poly_pipeline, X, y, cv=ts_cv)
 
@@ -720,7 +720,7 @@ one_hot_poly_pipeline = make_pipeline(
         remainder="passthrough",
     ),
     Nystroem(kernel="poly", degree=2, n_components=300, random_state=0),
-    RidgeCV(alphas=alphas),
+    RidgeCV(alphas=),
 )
 evaluate(one_hot_poly_pipeline, X, y, cv=ts_cv)
 
@@ -817,9 +817,9 @@ for axis_idx, kind in enumerate(plot_kinds):
         disp = PredictionErrorDisplay.from_predictions(
             y_true=y.iloc[test_0],
             y_pred=pred,
-            kind=kind,
+            kind=,
             scatter_kwargs={"alpha": 0.3},
-            ax=ax,
+            ax=,
         )
         ax.set_xticks(np.linspace(0, 1, num=5))
         if axis_idx == 0:

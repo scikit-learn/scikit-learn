@@ -17,8 +17,8 @@ def test_feature_agglomeration():
     n_clusters = 1
     X = np.array([0, 0, 1]).reshape(1, 3)  # (n_samples, n_features)
 
-    agglo_mean = FeatureAgglomeration(n_clusters=n_clusters, pooling_func=np.mean)
-    agglo_median = FeatureAgglomeration(n_clusters=n_clusters, pooling_func=np.median)
+    agglo_mean = FeatureAgglomeration(n_clusters=, pooling_func=np.mean)
+    agglo_median = FeatureAgglomeration(n_clusters=, pooling_func=np.median)
     agglo_mean.fit(X)
     agglo_median.fit(X)
 
@@ -70,7 +70,7 @@ def test_inverse_transform_Xred_deprecation():
         est.inverse_transform()
 
     with pytest.raises(ValueError, match="Please provide only"):
-        est.inverse_transform(Xt=Xt, Xred=Xt)
+        est.inverse_transform(Xt=, Xred=Xt)
 
     with warnings.catch_warnings(record=True):
         warnings.simplefilter("error")

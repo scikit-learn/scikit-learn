@@ -462,7 +462,7 @@ class _VectorizerMixin:
                 tokenizer=tokenize,
                 preprocessor=preprocess,
                 decoder=self.decode,
-                stop_words=stop_words,
+                stop_words=,
             )
 
         else:
@@ -853,7 +853,7 @@ class HashingVectorizer(
         self._warn_for_unused_params()
         self._validate_ngram_range()
 
-        self._get_hasher().fit(X, y=y)
+        self._get_hasher().fit(X, y=)
         return self
 
     def transform(self, X):
@@ -1685,7 +1685,7 @@ class TfidfTransformer(
                 offsets=0,
                 shape=(n_features, n_features),
                 format="csr",
-                dtype=dtype,
+                dtype=,
             )
 
         return self
@@ -1708,7 +1708,7 @@ class TfidfTransformer(
             Tf-idf-weighted document-term matrix.
         """
         X = self._validate_data(
-            X, accept_sparse="csr", dtype=FLOAT_DTYPES, copy=copy, reset=False
+            X, accept_sparse="csr", dtype=FLOAT_DTYPES, copy=, reset=False
         )
         if not sp.issparse(X):
             X = sp.csr_matrix(X, dtype=np.float64)
@@ -2008,23 +2008,23 @@ class TfidfVectorizer(CountVectorizer):
         sublinear_tf=False,
     ):
         super().__init__(
-            input=input,
-            encoding=encoding,
-            decode_error=decode_error,
-            strip_accents=strip_accents,
-            lowercase=lowercase,
-            preprocessor=preprocessor,
-            tokenizer=tokenizer,
-            analyzer=analyzer,
-            stop_words=stop_words,
-            token_pattern=token_pattern,
-            ngram_range=ngram_range,
-            max_df=max_df,
-            min_df=min_df,
-            max_features=max_features,
-            vocabulary=vocabulary,
-            binary=binary,
-            dtype=dtype,
+            input=,
+            encoding=,
+            decode_error=,
+            strip_accents=,
+            lowercase=,
+            preprocessor=,
+            tokenizer=,
+            analyzer=,
+            stop_words=,
+            token_pattern=,
+            ngram_range=,
+            max_df=,
+            min_df=,
+            max_features=,
+            vocabulary=,
+            binary=,
+            dtype=,
         )
         self.norm = norm
         self.use_idf = use_idf

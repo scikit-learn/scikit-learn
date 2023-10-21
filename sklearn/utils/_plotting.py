@@ -34,8 +34,8 @@ class _BinaryClassifierCurveDisplayMixin:
         y_pred, pos_label = _get_response_values_binary(
             estimator,
             X,
-            response_method=response_method,
-            pos_label=pos_label,
+            response_method=,
+            pos_label=,
         )
 
         return y_pred, pos_label, name

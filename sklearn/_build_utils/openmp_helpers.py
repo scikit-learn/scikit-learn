@@ -63,9 +63,7 @@ def check_openmp_support():
 
     openmp_exception = None
     try:
-        output = compile_test_program(
-            code, extra_preargs=extra_preargs, extra_postargs=extra_postargs
-        )
+        output = compile_test_program(code, extra_preargs=, extra_postargs=)
 
         if output and "nthreads=" in output[0]:
             nthreads = int(output[0].strip().split("=")[1])

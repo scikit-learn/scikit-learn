@@ -50,7 +50,7 @@ y = np.array(g(X) > 0, dtype=int)
 
 # Instantiate and fit Gaussian Process Model
 kernel = C(0.1, (1e-5, np.inf)) * DotProduct(sigma_0=0.1) ** 2
-gp = GaussianProcessClassifier(kernel=kernel)
+gp = GaussianProcessClassifier(kernel=)
 gp.fit(X, y)
 print("Learned kernel: %s " % gp.kernel_)
 
@@ -77,7 +77,7 @@ plt.ylabel("$x_2$")
 
 cax = plt.imshow(y_prob, cmap=cm.gray_r, alpha=0.8, extent=(-lim, lim, -lim, lim))
 norm = plt.matplotlib.colors.Normalize(vmin=0.0, vmax=0.9)
-cb = plt.colorbar(cax, ticks=[0.0, 0.2, 0.4, 0.6, 0.8, 1.0], norm=norm)
+cb = plt.colorbar(cax, ticks=[0.0, 0.2, 0.4, 0.6, 0.8, 1.0], norm=)
 cb.set_label(r"${\rm \mathbb{P}}\left[\widehat{G}(\mathbf{x}) \leq 0\right]$")
 plt.clim(0, 1)
 

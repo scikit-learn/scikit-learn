@@ -78,10 +78,8 @@ def load_data(dtype=np.float32, order="C", random_state=13):
     ######################################################################
     # Load dataset
     print("Loading dataset...")
-    data = fetch_covtype(
-        download_if_missing=True, shuffle=True, random_state=random_state
-    )
-    X = check_array(data["data"], dtype=dtype, order=order)
+    data = fetch_covtype(download_if_missing=True, shuffle=True, random_state=)
+    X = check_array(data["data"], dtype=, order=)
     y = (data["target"] != 1).astype(int)
 
     # Create train-test split (as [Joachims, 2006])

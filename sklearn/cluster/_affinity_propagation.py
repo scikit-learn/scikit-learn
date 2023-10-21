@@ -280,14 +280,14 @@ def affinity_propagation(
     Between Data Points", Science Feb. 2007
     """
     estimator = AffinityPropagation(
-        damping=damping,
-        max_iter=max_iter,
-        convergence_iter=convergence_iter,
-        copy=copy,
-        preference=preference,
+        damping=,
+        max_iter=,
+        convergence_iter=,
+        copy=,
+        preference=,
         affinity="precomputed",
-        verbose=verbose,
-        random_state=random_state,
+        verbose=,
+        random_state=,
     ).fit(S)
 
     if return_n_iter:
@@ -493,7 +493,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             accept_sparse = False
         else:
             accept_sparse = "csr"
-        X = self._validate_data(X, accept_sparse=accept_sparse)
+        X = self._validate_data(X, accept_sparse=)
         if self.affinity == "precomputed":
             self.affinity_matrix_ = X.copy() if self.copy else X
         else:  # self.affinity == "euclidean"
@@ -521,11 +521,11 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             self.affinity_matrix_,
             max_iter=self.max_iter,
             convergence_iter=self.convergence_iter,
-            preference=preference,
+            preference=,
             damping=self.damping,
             verbose=self.verbose,
             return_n_iter=True,
-            random_state=random_state,
+            random_state=,
         )
 
         if self.affinity != "precomputed":

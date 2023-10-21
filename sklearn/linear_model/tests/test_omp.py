@@ -27,7 +27,7 @@ y, X, gamma = make_sparse_coded_signal(
     n_samples=n_targets,
     n_components=n_features,
     n_features=n_samples,
-    n_nonzero_coefs=n_nonzero_coefs,
+    n_nonzero_coefs=,
     random_state=0,
 )
 y, X, gamma = y.T, X.T, gamma.T
@@ -55,7 +55,7 @@ def test_assure_warning_when_normalize(OmpModel, normalize, n_warnings):
     X[X < 0.1] = 0.0
     y = rng.rand(n_samples)
 
-    model = OmpModel(normalize=normalize)
+    model = OmpModel(normalize=)
     with warnings.catch_warnings(record=True) as rec:
         warnings.simplefilter("always", FutureWarning)
         model.fit(X, y)
@@ -83,8 +83,8 @@ def test_n_nonzero_coefs():
 
 def test_tol():
     tol = 0.5
-    gamma = orthogonal_mp(X, y[:, 0], tol=tol)
-    gamma_gram = orthogonal_mp(X, y[:, 0], tol=tol, precompute=True)
+    gamma = orthogonal_mp(X, y[:, 0], tol=)
+    gamma_gram = orthogonal_mp(X, y[:, 0], tol=, precompute=True)
     assert np.sum((y[:, 0] - np.dot(X, gamma)) ** 2) <= tol
     assert np.sum((y[:, 0] - np.dot(X, gamma_gram)) ** 2) <= tol
 
@@ -156,7 +156,7 @@ def test_orthogonal_mp_gram_readonly():
 # TODO(1.4): 'normalize' to be removed
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_estimator():
-    omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
+    omp = OrthogonalMatchingPursuit(n_nonzero_coefs=)
     omp.fit(X, y[:, 0])
     assert omp.coef_.shape == (n_features,)
     assert omp.intercept_.shape == ()

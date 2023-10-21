@@ -79,7 +79,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         verbose=0,
         passthrough=False,
     ):
-        super().__init__(estimators=estimators)
+        super().__init__(estimators=)
         self.final_estimator = final_estimator
         self.cv = cv
         self.stack_method = stack_method
@@ -243,7 +243,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             # To ensure that the data provided to each estimator are the same,
             # we need to set the random state of the cv if there is one and we
             # need to take a copy.
-            cv = check_cv(self.cv, y=y, classifier=is_classifier(self))
+            cv = check_cv(self.cv, y=, classifier=is_classifier(self))
             if hasattr(cv, "random_state") and cv.random_state is None:
                 cv.random_state = np.random.RandomState()
 
@@ -274,9 +274,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         ]
 
         X_meta = self._concatenate_predictions(X, predictions)
-        _fit_single_estimator(
-            self.final_estimator_, X_meta, y, sample_weight=sample_weight
-        )
+        _fit_single_estimator(self.final_estimator_, X_meta, y, sample_weight=)
 
         return self
 
@@ -374,7 +372,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
 
     def _sk_visual_block_with_final_estimator(self, final_estimator):
         names, estimators = zip(*self.estimators)
-        parallel = _VisualBlock("parallel", estimators, names=names, dash_wrapped=False)
+        parallel = _VisualBlock("parallel", estimators, names=, dash_wrapped=False)
 
         # final estimator is wrapped in a parallel block to show the label:
         # 'final_estimator' in the html repr
@@ -579,13 +577,13 @@ class StackingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseStacki
         verbose=0,
     ):
         super().__init__(
-            estimators=estimators,
-            final_estimator=final_estimator,
-            cv=cv,
-            stack_method=stack_method,
-            n_jobs=n_jobs,
-            passthrough=passthrough,
-            verbose=verbose,
+            estimators=,
+            final_estimator=,
+            cv=,
+            stack_method=,
+            n_jobs=,
+            passthrough=,
+            verbose=,
         )
 
     def _validate_final_estimator(self):
@@ -645,7 +643,7 @@ class StackingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseStacki
         self : object
             Returns a fitted instance of estimator.
         """
-        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
+        _raise_for_unsupported_routing(self, "fit", sample_weight=)
         check_classification_targets(y)
         if type_of_target(y) == "multilabel-indicator":
             self._label_encoder = [LabelEncoder().fit(yk) for yk in y.T]
@@ -917,13 +915,13 @@ class StackingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseStacking
         verbose=0,
     ):
         super().__init__(
-            estimators=estimators,
-            final_estimator=final_estimator,
-            cv=cv,
+            estimators=,
+            final_estimator=,
+            cv=,
             stack_method="predict",
-            n_jobs=n_jobs,
-            passthrough=passthrough,
-            verbose=verbose,
+            n_jobs=,
+            passthrough=,
+            verbose=,
         )
 
     def _validate_final_estimator(self):
@@ -957,7 +955,7 @@ class StackingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseStacking
         self : object
             Returns a fitted instance.
         """
-        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
+        _raise_for_unsupported_routing(self, "fit", sample_weight=)
         y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
 
@@ -999,7 +997,7 @@ class StackingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseStacking
         y_preds : ndarray of shape (n_samples, n_estimators)
             Prediction outputs for each estimator.
         """
-        return super().fit_transform(X, y, sample_weight=sample_weight)
+        return super().fit_transform(X, y, sample_weight=)
 
     def _sk_visual_block_(self):
         # If final_estimator's default changes then this should be

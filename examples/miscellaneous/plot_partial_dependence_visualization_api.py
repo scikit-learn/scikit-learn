@@ -53,7 +53,7 @@ mlp.fit(X, y)
 # defined by `ax` .
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Decision Tree")
-tree_disp = PartialDependenceDisplay.from_estimator(tree, X, ["age", "bmi"], ax=ax)
+tree_disp = PartialDependenceDisplay.from_estimator(tree, X, ["age", "bmi"], ax=)
 
 # %%
 # The partial dependence curves can be plotted for the multi-layer perceptron.
@@ -63,7 +63,7 @@ tree_disp = PartialDependenceDisplay.from_estimator(tree, X, ["age", "bmi"], ax=
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Multi-layer Perceptron")
 mlp_disp = PartialDependenceDisplay.from_estimator(
-    mlp, X, ["age", "bmi"], ax=ax, line_kw={"color": "red"}
+    mlp, X, ["age", "bmi"], ax=, line_kw={"color": "red"}
 )
 
 # %%

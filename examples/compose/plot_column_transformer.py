@@ -48,14 +48,14 @@ categories = ["sci.med", "sci.space"]
 X_train, y_train = fetch_20newsgroups(
     random_state=1,
     subset="train",
-    categories=categories,
+    categories=,
     remove=("footers", "quotes"),
     return_X_y=True,
 )
 X_test, y_test = fetch_20newsgroups(
     random_state=1,
     subset="test",
-    categories=categories,
+    categories=,
     remove=("footers", "quotes"),
     return_X_y=True,
 )

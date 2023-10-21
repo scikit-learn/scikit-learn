@@ -76,12 +76,12 @@ def test_predict_proba(global_dtype, Estimator, parameters):
 @pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
 def test_label_spreading_closed_form(global_dtype, Estimator, parameters, alpha):
     n_classes = 2
-    X, y = make_classification(n_classes=n_classes, n_samples=200, random_state=0)
+    X, y = make_classification(n_classes=, n_samples=200, random_state=0)
     X = X.astype(global_dtype, copy=False)
     y[::3] = -1
 
     gamma = 0.1
-    clf = label_propagation.LabelSpreading(gamma=gamma).fit(X, y)
+    clf = label_propagation.LabelSpreading(gamma=).fit(X, y)
     # adopting notation from Zhou et al (2004):
     S = clf._build_graph()
     Y = np.zeros((len(y), n_classes + 1), dtype=X.dtype)
@@ -92,7 +92,7 @@ def test_label_spreading_closed_form(global_dtype, Estimator, parameters, alpha)
     expected /= expected.sum(axis=1)[:, np.newaxis]
 
     clf = label_propagation.LabelSpreading(
-        max_iter=100, alpha=alpha, tol=1e-10, gamma=gamma
+        max_iter=100, alpha=, tol=1e-10, gamma=
     )
     clf.fit(X, y)
 
@@ -101,7 +101,7 @@ def test_label_spreading_closed_form(global_dtype, Estimator, parameters, alpha)
 
 def test_label_propagation_closed_form(global_dtype):
     n_classes = 2
-    X, y = make_classification(n_classes=n_classes, n_samples=200, random_state=0)
+    X, y = make_classification(n_classes=, n_samples=200, random_state=0)
     X = X.astype(global_dtype, copy=False)
     y[::3] = -1
     Y = np.zeros((len(y), n_classes + 1))
@@ -215,8 +215,8 @@ def test_predict_sparse_callable_kernel(global_dtype):
     n_samples = 500
     n_test = 10
     X, y = make_classification(
-        n_classes=n_classes,
-        n_samples=n_samples,
+        n_classes=,
+        n_samples=,
         n_features=20,
         n_informative=20,
         n_redundant=0,

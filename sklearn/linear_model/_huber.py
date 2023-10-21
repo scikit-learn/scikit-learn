@@ -329,7 +329,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
             jac=True,
             args=(X, y, self.epsilon, self.alpha, sample_weight),
             options={"maxiter": self.max_iter, "gtol": self.tol, "iprint": -1},
-            bounds=bounds,
+            bounds=,
         )
 
         parameters = opt_res.x

@@ -125,7 +125,7 @@ plt.errorbar(
     err_loc_mcd.mean(1),
     yerr=err_loc_mcd.std(1) / np.sqrt(repeat),
     label="Robust location",
-    lw=lw,
+    lw=,
     color="m",
 )
 plt.errorbar(
@@ -133,7 +133,7 @@ plt.errorbar(
     err_loc_emp_full.mean(1),
     yerr=err_loc_emp_full.std(1) / np.sqrt(repeat),
     label="Full data set mean",
-    lw=lw,
+    lw=,
     color="green",
 )
 plt.errorbar(
@@ -141,7 +141,7 @@ plt.errorbar(
     err_loc_emp_pure.mean(1),
     yerr=err_loc_emp_pure.std(1) / np.sqrt(repeat),
     label="Pure data set mean",
-    lw=lw,
+    lw=,
     color="black",
 )
 plt.title("Influence of outliers on the location estimation")

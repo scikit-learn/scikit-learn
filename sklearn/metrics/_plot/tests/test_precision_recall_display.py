@@ -49,18 +49,18 @@ def test_precision_recall_display_plotting(
             classifier,
             X,
             y,
-            response_method=response_method,
-            drop_intermediate=drop_intermediate,
+            response_method=,
+            drop_intermediate=,
         )
     else:
         display = PrecisionRecallDisplay.from_predictions(
-            y, y_pred, pos_label=pos_label, drop_intermediate=drop_intermediate
+            y, y_pred, pos_label=, drop_intermediate=
         )
 
     precision, recall, _ = precision_recall_curve(
-        y, y_pred, pos_label=pos_label, drop_intermediate=drop_intermediate
+        y, y_pred, pos_label=, drop_intermediate=
     )
-    average_precision = average_precision_score(y, y_pred, pos_label=pos_label)
+    average_precision = average_precision_score(y, y_pred, pos_label=)
 
     np.testing.assert_allclose(display.precision, precision)
     np.testing.assert_allclose(display.recall, recall)
@@ -108,14 +108,14 @@ def test_precision_recall_chance_level_line(
             X,
             y,
             plot_chance_level=True,
-            chance_level_kw=chance_level_kw,
+            chance_level_kw=,
         )
     else:
         display = PrecisionRecallDisplay.from_predictions(
             y,
             y_pred,
             plot_chance_level=True,
-            chance_level_kw=chance_level_kw,
+            chance_level_kw=,
         )
 
     import matplotlib as mpl  # noqa
@@ -155,10 +155,10 @@ def test_precision_recall_display_name(pyplot, constructor_name, default_label):
         display = PrecisionRecallDisplay.from_estimator(classifier, X, y)
     else:
         display = PrecisionRecallDisplay.from_predictions(
-            y, y_pred, pos_label=pos_label
+            y, y_pred, pos_label=
         )
 
-    average_precision = average_precision_score(y, y_pred, pos_label=pos_label)
+    average_precision = average_precision_score(y, y_pred, pos_label=)
 
     # check that the default name is used
     assert display.line_.get_label() == default_label.format(average_precision)
@@ -231,8 +231,8 @@ def test_default_labels(pyplot, average_precision, estimator_name, expected_labe
     display = PrecisionRecallDisplay(
         precision,
         recall,
-        average_precision=average_precision,
-        estimator_name=estimator_name,
+        average_precision=,
+        estimator_name=,
     )
     display.plot()
     assert display.line_.get_label() == expected_label
@@ -279,7 +279,7 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
             X_test,
             y_test,
             pos_label="cancer",
-            response_method=response_method,
+            response_method=,
         )
     else:
         display = PrecisionRecallDisplay.from_predictions(
@@ -298,7 +298,7 @@ def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_meth
             classifier,
             X_test,
             y_test,
-            response_method=response_method,
+            response_method=,
             pos_label="not cancer",
         )
     else:

@@ -67,7 +67,7 @@ for ax, weights in zip(axs, ("uniform", "distance")):
         ylabel=iris.feature_names[1],
         shading="auto",
         alpha=0.5,
-        ax=ax,
+        ax=,
     )
     scatter = disp.ax_.scatter(X.iloc[:, 0], X.iloc[:, 1], c=y, edgecolors="k")
     disp.ax_.legend(

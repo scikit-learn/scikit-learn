@@ -23,22 +23,22 @@ def modified_huber_loss(y_true, y_pred):
 xmin, xmax = -4, 4
 xx = np.linspace(xmin, xmax, 100)
 lw = 2
-plt.plot([xmin, 0, 0, xmax], [1, 1, 0, 0], color="gold", lw=lw, label="Zero-one loss")
-plt.plot(xx, np.where(xx < 1, 1 - xx, 0), color="teal", lw=lw, label="Hinge loss")
-plt.plot(xx, -np.minimum(xx, 0), color="yellowgreen", lw=lw, label="Perceptron loss")
-plt.plot(xx, np.log2(1 + np.exp(-xx)), color="cornflowerblue", lw=lw, label="Log loss")
+plt.plot([xmin, 0, 0, xmax], [1, 1, 0, 0], color="gold", lw=, label="Zero-one loss")
+plt.plot(xx, np.where(xx < 1, 1 - xx, 0), color="teal", lw=, label="Hinge loss")
+plt.plot(xx, -np.minimum(xx, 0), color="yellowgreen", lw=, label="Perceptron loss")
+plt.plot(xx, np.log2(1 + np.exp(-xx)), color="cornflowerblue", lw=, label="Log loss")
 plt.plot(
     xx,
     np.where(xx < 1, 1 - xx, 0) ** 2,
     color="orange",
-    lw=lw,
+    lw=,
     label="Squared hinge loss",
 )
 plt.plot(
     xx,
     modified_huber_loss(xx, 1),
     color="darkorchid",
-    lw=lw,
+    lw=,
     linestyle="--",
     label="Modified Huber loss",
 )

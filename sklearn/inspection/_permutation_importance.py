@@ -21,7 +21,7 @@ from ..utils.parallel import Parallel, delayed
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
     if sample_weight is not None:
-        return scorer(estimator, X, y, sample_weight=sample_weight)
+        return scorer(estimator, X, y, sample_weight=)
     return scorer(estimator, X, y)
 
 
@@ -47,7 +47,7 @@ def _calculate_permutation_scores(
     # writable data-structure whose columns can be shuffled inplace.
     if max_samples < X.shape[0]:
         row_indices = _generate_indices(
-            random_state=random_state,
+            random_state=,
             bootstrap=False,
             n_population=X.shape[0],
             n_samples=max_samples,
@@ -102,7 +102,7 @@ def _create_importances_bunch(baseline_score, permuted_score):
     return Bunch(
         importances_mean=np.mean(importances, axis=1),
         importances_std=np.std(importances, axis=1),
-        importances=importances,
+        importances=,
     )
 
 
@@ -279,14 +279,14 @@ def permutation_importance(
     if callable(scoring):
         scorer = scoring
     elif scoring is None or isinstance(scoring, str):
-        scorer = check_scoring(estimator, scoring=scoring)
+        scorer = check_scoring(estimator, scoring=)
     else:
         scorers_dict = _check_multimetric_scoring(estimator, scoring)
         scorer = _MultimetricScorer(scorers=scorers_dict)
 
     baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
 
-    scores = Parallel(n_jobs=n_jobs)(
+    scores = Parallel(n_jobs=)(
         delayed(_calculate_permutation_scores)(
             estimator,
             X,

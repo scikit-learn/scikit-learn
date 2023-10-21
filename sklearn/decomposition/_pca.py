@@ -627,7 +627,7 @@ class PCA(_BasePCA):
 
         if svd_solver == "arpack":
             v0 = _init_arpack_v0(min(X.shape), random_state)
-            U, S, Vt = svds(X, k=n_components, tol=self.tol, v0=v0)
+            U, S, Vt = svds(X, k=n_components, tol=self.tol, v0=)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             S = S[::-1]
@@ -638,12 +638,12 @@ class PCA(_BasePCA):
             # sign flipping is done inside
             U, S, Vt = randomized_svd(
                 X,
-                n_components=n_components,
+                n_components=,
                 n_oversamples=self.n_oversamples,
                 n_iter=self.iterated_power,
                 power_iteration_normalizer=self.power_iteration_normalizer,
                 flip_sign=True,
-                random_state=random_state,
+                random_state=,
             )
 
         self.n_samples_ = n_samples

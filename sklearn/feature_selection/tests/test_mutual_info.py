@@ -54,7 +54,7 @@ def test_compute_mi_cc(global_dtype):
     # We here check with a large relative tolerance
     for n_neighbors in [3, 5, 7]:
         I_computed = _compute_mi(
-            x, y, x_discrete=False, y_discrete=False, n_neighbors=n_neighbors
+            x, y, x_discrete=False, y_discrete=False, n_neighbors=
         )
         assert_allclose(I_computed, I_theory, rtol=1e-1)
 
@@ -93,7 +93,7 @@ def test_compute_mi_cd(global_dtype):
         # Assert the same tolerance.
         for n_neighbors in [3, 5, 7]:
             I_computed = _compute_mi(
-                x, y, x_discrete=True, y_discrete=False, n_neighbors=n_neighbors
+                x, y, x_discrete=True, y_discrete=False, n_neighbors=
             )
             assert_allclose(I_computed, I_theory, rtol=1e-1)
 
@@ -165,7 +165,7 @@ def test_mutual_info_classif_mixed(global_dtype):
     assert_array_equal(np.argsort(-mi), [2, 0, 1])
     for n_neighbors in [5, 7, 9]:
         mi_nn = mutual_info_classif(
-            X, y, discrete_features=[2], n_neighbors=n_neighbors, random_state=0
+            X, y, discrete_features=[2], n_neighbors=, random_state=0
         )
         # Check that the continuous values have an higher MI with greater
         # n_neighbors

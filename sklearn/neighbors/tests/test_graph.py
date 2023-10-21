@@ -22,7 +22,7 @@ def test_transformer_result():
     # with n_neighbors
     for mode in ["distance", "connectivity"]:
         add_one = mode == "distance"
-        nnt = KNeighborsTransformer(n_neighbors=n_neighbors, mode=mode)
+        nnt = KNeighborsTransformer(n_neighbors=, mode=)
         Xt = nnt.fit_transform(X)
         assert Xt.shape == (n_samples_fit, n_samples_fit)
         assert Xt.data.shape == (n_samples_fit * (n_neighbors + add_one),)
@@ -38,7 +38,7 @@ def test_transformer_result():
     # with radius
     for mode in ["distance", "connectivity"]:
         add_one = mode == "distance"
-        nnt = RadiusNeighborsTransformer(radius=radius, mode=mode)
+        nnt = RadiusNeighborsTransformer(radius=, mode=)
         Xt = nnt.fit_transform(X)
         assert Xt.shape == (n_samples_fit, n_samples_fit)
         assert not Xt.data.shape == (n_samples_fit * (n_neighbors + add_one),)
@@ -67,7 +67,7 @@ def test_explicit_diagonal():
     X = rng.randn(n_samples_fit, n_features)
     X2 = rng.randn(n_samples_transform, n_features)
 
-    nnt = KNeighborsTransformer(n_neighbors=n_neighbors)
+    nnt = KNeighborsTransformer(n_neighbors=)
     Xt = nnt.fit_transform(X)
     assert _has_explicit_diagonal(Xt)
     assert np.all(Xt.data.reshape(n_samples_fit, n_neighbors + 1)[:, 0] == 0)

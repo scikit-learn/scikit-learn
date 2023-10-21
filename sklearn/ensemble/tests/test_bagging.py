@@ -75,7 +75,7 @@ def test_classification():
     # doing the full cartesian product to keep the test durations low.
     for params, estimator in zip(grid, cycle(estimators)):
         BaggingClassifier(
-            estimator=estimator,
+            estimator=,
             random_state=rng,
             n_estimators=2,
             **params,
@@ -169,7 +169,7 @@ def test_regression():
         SVR(),
     ]:
         for params in grid:
-            BaggingRegressor(estimator=estimator, random_state=rng, **params).fit(
+            BaggingRegressor(estimator=, random_state=rng, **params).fit(
                 X_train, y_train
             ).predict(X_test)
 
@@ -355,7 +355,7 @@ def test_oob_score_classification():
 
     for estimator in [DecisionTreeClassifier(), SVC()]:
         clf = BaggingClassifier(
-            estimator=estimator,
+            estimator=,
             n_estimators=100,
             bootstrap=True,
             oob_score=True,
@@ -373,7 +373,7 @@ def test_oob_score_classification():
         )
         with pytest.warns(UserWarning, match=warn_msg):
             clf = BaggingClassifier(
-                estimator=estimator,
+                estimator=,
                 n_estimators=1,
                 bootstrap=True,
                 oob_score=True,
@@ -607,15 +607,15 @@ def test_warm_start(random_state=42):
     for n_estimators in [5, 10]:
         if clf_ws is None:
             clf_ws = BaggingClassifier(
-                n_estimators=n_estimators, random_state=random_state, warm_start=True
+                n_estimators=, random_state=, warm_start=True
             )
         else:
-            clf_ws.set_params(n_estimators=n_estimators)
+            clf_ws.set_params(n_estimators=)
         clf_ws.fit(X, y)
         assert len(clf_ws) == n_estimators
 
     clf_no_ws = BaggingClassifier(
-        n_estimators=10, random_state=random_state, warm_start=False
+        n_estimators=10, random_state=, warm_start=False
     )
     clf_no_ws.fit(X, y)
 
@@ -780,7 +780,7 @@ def test_max_samples_consistency():
     X, y = make_hastie_10_2(n_samples=2 * max_samples, random_state=1)
     bagging = BaggingClassifier(
         KNeighborsClassifier(),
-        max_samples=max_samples,
+        max_samples=,
         max_features=0.5,
         random_state=1,
     )
@@ -797,17 +797,17 @@ def test_set_oob_score_label_encoding():
     Y2 = [-1, 0, 1] * 5
     Y3 = [0, 1, 2] * 5
     x1 = (
-        BaggingClassifier(oob_score=True, random_state=random_state)
+        BaggingClassifier(oob_score=True, random_state=)
         .fit(X, Y1)
         .oob_score_
     )
     x2 = (
-        BaggingClassifier(oob_score=True, random_state=random_state)
+        BaggingClassifier(oob_score=True, random_state=)
         .fit(X, Y2)
         .oob_score_
     )
     x3 = (
-        BaggingClassifier(oob_score=True, random_state=random_state)
+        BaggingClassifier(oob_score=True, random_state=)
         .fit(X, Y3)
         .oob_score_
     )

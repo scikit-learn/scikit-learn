@@ -102,7 +102,7 @@ for name, model in models.items():
         estimator=model,
         param_grid=param_grids[name],
         return_train_score=True,
-        cv=cv,
+        cv=,
     ).fit(X, y)
     result = {"model": name, "cv_results": pd.DataFrame(grid_search.cv_results_)}
     results.append(result)

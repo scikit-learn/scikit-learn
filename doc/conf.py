@@ -475,7 +475,7 @@ def notebook_modification_function(notebook_content, notebook_filename):
         " about it."
     )
 
-    markdown = warning_template.format(message_class=message_class, message=message)
+    markdown = warning_template.format(message_class=, message=)
 
     dummy_notebook_content = {"cells": []}
     add_markdown_cell(dummy_notebook_content, markdown)

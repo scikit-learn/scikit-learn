@@ -71,27 +71,27 @@ def test_roc_curve_display_plotting(
             lr,
             X,
             y,
-            sample_weight=sample_weight,
-            drop_intermediate=drop_intermediate,
-            pos_label=pos_label,
+            sample_weight=,
+            drop_intermediate=,
+            pos_label=,
             alpha=0.8,
         )
     else:
         display = RocCurveDisplay.from_predictions(
             y,
             y_pred,
-            sample_weight=sample_weight,
-            drop_intermediate=drop_intermediate,
-            pos_label=pos_label,
+            sample_weight=,
+            drop_intermediate=,
+            pos_label=,
             alpha=0.8,
         )
 
     fpr, tpr, _ = roc_curve(
         y,
         y_pred,
-        sample_weight=sample_weight,
-        drop_intermediate=drop_intermediate,
-        pos_label=pos_label,
+        sample_weight=,
+        drop_intermediate=,
+        pos_label=,
     )
 
     assert_allclose(display.roc_auc, auc(fpr, tpr))
@@ -152,16 +152,16 @@ def test_roc_curve_chance_level_line(
             X,
             y,
             alpha=0.8,
-            plot_chance_level=plot_chance_level,
-            chance_level_kw=chance_level_kw,
+            plot_chance_level=,
+            chance_level_kw=,
         )
     else:
         display = RocCurveDisplay.from_predictions(
             y,
             y_pred,
             alpha=0.8,
-            plot_chance_level=plot_chance_level,
-            chance_level_kw=chance_level_kw,
+            plot_chance_level=,
+            chance_level_kw=,
         )
 
     import matplotlib as mpl  # noqa
@@ -235,9 +235,7 @@ def test_roc_curve_display_default_labels(
     """Check the default labels used in the display."""
     fpr = np.array([0, 0.5, 1])
     tpr = np.array([0, 0.5, 1])
-    disp = RocCurveDisplay(
-        fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=estimator_name
-    ).plot()
+    disp = RocCurveDisplay(fpr=, tpr=, roc_auc=, estimator_name=).plot()
     assert disp.line_.get_label() == expected_label
 
 
@@ -282,7 +280,7 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
             X_test,
             y_test,
             pos_label="cancer",
-            response_method=response_method,
+            response_method=,
         )
     else:
         display = RocCurveDisplay.from_predictions(
@@ -301,7 +299,7 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
             classifier,
             X_test,
             y_test,
-            response_method=response_method,
+            response_method=,
             pos_label="not cancer",
         )
     else:

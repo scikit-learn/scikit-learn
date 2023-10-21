@@ -49,7 +49,7 @@ svc = SVC(random_state=0)
 
 cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=10, random_state=0)
 
-search = GridSearchCV(estimator=svc, param_grid=param_grid, scoring="roc_auc", cv=cv)
+search = GridSearchCV(estimator=svc, param_grid=, scoring="roc_auc", cv=)
 search.fit(X, y)
 
 # %%
@@ -101,7 +101,7 @@ sns.lineplot(
     palette="Set1",
     marker="o",
     alpha=0.5,
-    ax=ax,
+    ax=,
 )
 ax.set_xlabel("CV test fold", size=12, labelpad=10)
 ax.set_ylabel("Model AUC", size=12)

@@ -67,7 +67,7 @@ class NMSlibTransformer(TransformerMixin, BaseEstimator):
             "l2": "l2",
         }[self.metric]
 
-        self.nmslib_ = nmslib.init(method=self.method, space=space)
+        self.nmslib_ = nmslib.init(method=self.method, space=)
         self.nmslib_.addDataPointBatch(X.copy())
         self.nmslib_.createIndex()
         return self
@@ -87,7 +87,7 @@ class NMSlibTransformer(TransformerMixin, BaseEstimator):
             num_threads = self.n_jobs
 
         results = self.nmslib_.knnQueryBatch(
-            X.copy(), k=n_neighbors, num_threads=num_threads
+            X.copy(), k=n_neighbors, num_threads=
         )
         indices, distances = zip(*results)
         indices, distances = np.vstack(indices), np.vstack(distances)
@@ -134,23 +134,23 @@ tsne_params = dict(
     perplexity=perplexity,
     method="barnes_hut",
     random_state=42,
-    n_iter=n_iter,
+    n_iter=,
     learning_rate="auto",
 )
 
 transformers = [
     (
         "KNeighborsTransformer",
-        KNeighborsTransformer(n_neighbors=n_neighbors, mode="distance", metric=metric),
+        KNeighborsTransformer(n_neighbors=, mode="distance", metric=),
     ),
     (
         "NMSlibTransformer",
-        NMSlibTransformer(n_neighbors=n_neighbors, metric=metric),
+        NMSlibTransformer(n_neighbors=, metric=),
     ),
     (
         "PyNNDescentTransformer",
         PyNNDescentTransformer(
-            n_neighbors=n_neighbors, metric=metric, parallel_batch_queries=True
+            n_neighbors=, metric=, parallel_batch_queries=True
         ),
     ),
 ]
@@ -214,20 +214,18 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 
 transformers = [
-    ("TSNE with internal NearestNeighbors", TSNE(metric=metric, **tsne_params)),
+    ("TSNE with internal NearestNeighbors", TSNE(metric=, **tsne_params)),
     (
         "TSNE with KNeighborsTransformer",
         make_pipeline(
-            KNeighborsTransformer(
-                n_neighbors=n_neighbors, mode="distance", metric=metric
-            ),
+            KNeighborsTransformer(n_neighbors=, mode="distance", metric=),
             TSNE(metric="precomputed", **tsne_params),
         ),
     ),
     (
         "TSNE with NMSlibTransformer",
         make_pipeline(
-            NMSlibTransformer(n_neighbors=n_neighbors, metric=metric),
+            NMSlibTransformer(n_neighbors=, metric=),
             TSNE(metric="precomputed", **tsne_params),
         ),
     ),
@@ -237,7 +235,7 @@ transformers = [
 nrows = len(datasets)
 ncols = np.sum([1 for name, model in transformers if "TSNE" in name])
 fig, axes = plt.subplots(
-    nrows=nrows, ncols=ncols, squeeze=False, figsize=(5 * ncols, 4 * nrows)
+    nrows=, ncols=, squeeze=False, figsize=(5 * ncols, 4 * nrows)
 )
 axes = axes.ravel()
 i_ax = 0

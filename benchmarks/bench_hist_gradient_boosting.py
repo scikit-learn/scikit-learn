@@ -107,7 +107,7 @@ def one_run(n_samples):
     est = Estimator(
         learning_rate=lr,
         max_iter=n_trees,
-        max_bins=max_bins,
+        max_bins=,
         max_leaf_nodes=n_leaf_nodes,
         early_stopping=False,
         random_state=0,
@@ -121,7 +121,7 @@ def one_run(n_samples):
         # regression
         if loss == "default":
             loss = "squared_error"
-    est.set_params(loss=loss)
+    est.set_params(loss=)
     est.fit(X_train, y_train, sample_weight=sample_weight_train)
     sklearn_fit_duration = time() - tic
     tic = time()

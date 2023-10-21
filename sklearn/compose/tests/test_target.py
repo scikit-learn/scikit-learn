@@ -36,7 +36,7 @@ def test_transform_target_regressor_error():
         TypeError,
         match=r"fit\(\) got an unexpected " "keyword argument 'sample_weight'",
     ):
-        regr.fit(X, y, sample_weight=sample_weight)
+        regr.fit(X, y, sample_weight=)
     # func is given but inverse_func is not
     regr = TransformedTargetRegressor(func=np.exp)
     with pytest.raises(
@@ -128,7 +128,7 @@ def test_transform_target_regressor_1d_transformer(X, y):
         func=lambda x: x + 1, inverse_func=lambda x: x - 1
     )
     regr = TransformedTargetRegressor(
-        regressor=LinearRegression(), transformer=transformer
+        regressor=LinearRegression(), transformer=
     )
     y_pred = regr.fit(X, y).predict(X)
     assert y.shape == y_pred.shape
@@ -155,7 +155,7 @@ def test_transform_target_regressor_2d_transformer(X, y):
     # array.
     transformer = StandardScaler()
     regr = TransformedTargetRegressor(
-        regressor=LinearRegression(), transformer=transformer
+        regressor=LinearRegression(), transformer=
     )
     y_pred = regr.fit(X, y).predict(X)
     assert y.shape == y_pred.shape
@@ -191,7 +191,7 @@ def test_transform_target_regressor_2d_transformer_multioutput():
     y = np.vstack((friedman[1], friedman[1] ** 2 + 1)).T
     transformer = StandardScaler()
     regr = TransformedTargetRegressor(
-        regressor=LinearRegression(), transformer=transformer
+        regressor=LinearRegression(), transformer=
     )
     y_pred = regr.fit(X, y).predict(X)
     assert y.shape == y_pred.shape
@@ -225,7 +225,7 @@ def test_transform_target_regressor_3d_target():
 
     transformer = FunctionTransformer(func=flatten_data, inverse_func=unflatten_data)
     regr = TransformedTargetRegressor(
-        regressor=LinearRegression(), transformer=transformer
+        regressor=LinearRegression(), transformer=
     )
     y_pred = regr.fit(X, y).predict(X)
     assert y.shape == y_pred.shape
@@ -242,9 +242,7 @@ def test_transform_target_regressor_multi_to_single():
     def inverse_func(y):
         return y
 
-    tt = TransformedTargetRegressor(
-        func=func, inverse_func=inverse_func, check_inverse=False
-    )
+    tt = TransformedTargetRegressor(func=, inverse_func=, check_inverse=False)
     tt.fit(X, y)
     y_pred_2d_func = tt.predict(X)
     assert y_pred_2d_func.shape == (100, 1)
@@ -253,9 +251,7 @@ def test_transform_target_regressor_multi_to_single():
     def func(y):
         return np.sqrt(y[:, 0] ** 2 + y[:, 1] ** 2)
 
-    tt = TransformedTargetRegressor(
-        func=func, inverse_func=inverse_func, check_inverse=False
-    )
+    tt = TransformedTargetRegressor(func=, inverse_func=, check_inverse=False)
     tt.fit(X, y)
     y_pred_1d_func = tt.predict(X)
     assert y_pred_1d_func.shape == (100, 1)
@@ -328,7 +324,7 @@ def test_transform_target_regressor_count_fit(check_inverse):
     # check that we only call a single time fit for the transformer
     X, y = friedman
     ttr = TransformedTargetRegressor(
-        transformer=DummyTransformer(), check_inverse=check_inverse
+        transformer=DummyTransformer(), check_inverse=
     )
     ttr.fit(X, y)
     assert ttr.transformer_.fit_counter == 1

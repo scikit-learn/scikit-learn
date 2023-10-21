@@ -220,7 +220,7 @@ def test_predictions(global_random_seed, use_feature_names):
     X = np.c_[f_0, f_1]
     columns_name = ["f_0", "f_1"]
     constructor_name = "dataframe" if use_feature_names else "array"
-    X = _convert_container(X, constructor_name, columns_name=columns_name)
+    X = _convert_container(X, constructor_name, columns_name=)
 
     noise = rng.normal(loc=0.0, scale=0.01, size=n_samples)
     y = 5 * f_0 + np.sin(10 * np.pi * f_0) - 5 * f_1 - np.cos(10 * np.pi * f_1) + noise
@@ -230,7 +230,7 @@ def test_predictions(global_random_seed, use_feature_names):
     else:
         monotonic_cst = [+1, -1]
 
-    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=)
     gbdt.fit(X, y)
 
     linspace = np.linspace(0, 1, 100)
@@ -250,24 +250,24 @@ def test_predictions(global_random_seed, use_feature_names):
     # First feature (POS)
     # assert pred is all increasing when f_0 is all increasing
     X = np.c_[linspace, constant]
-    X = _convert_container(X, constructor_name, columns_name=columns_name)
+    X = _convert_container(X, constructor_name, columns_name=)
     pred = gbdt.predict(X)
     assert is_increasing(pred)
     # assert pred actually follows the variations of f_0
     X = np.c_[sin, constant]
-    X = _convert_container(X, constructor_name, columns_name=columns_name)
+    X = _convert_container(X, constructor_name, columns_name=)
     pred = gbdt.predict(X)
     assert np.all((np.diff(pred) >= 0) == (np.diff(sin) >= 0))
 
     # Second feature (NEG)
     # assert pred is all decreasing when f_1 is all increasing
     X = np.c_[constant, linspace]
-    X = _convert_container(X, constructor_name, columns_name=columns_name)
+    X = _convert_container(X, constructor_name, columns_name=)
     pred = gbdt.predict(X)
     assert is_decreasing(pred)
     # assert pred actually follows the inverse variations of f_1
     X = np.c_[constant, sin]
-    X = _convert_container(X, constructor_name, columns_name=columns_name)
+    X = _convert_container(X, constructor_name, columns_name=)
     pred = gbdt.predict(X)
     assert ((np.diff(pred) <= 0) == (np.diff(sin) >= 0)).all()
 
@@ -283,7 +283,7 @@ def test_input_error():
         gbdt.fit(X, y)
 
     for monotonic_cst in ([1, 3], [1, -3], [0.3, -0.7]):
-        gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+        gbdt = HistGradientBoostingRegressor(monotonic_cst=)
         expected_msg = re.escape(
             "must be an array-like of -1, 0 or 1. Observed values:"
         )
@@ -304,7 +304,7 @@ def test_input_error_related_to_feature_names():
     y = np.array([0, 1, 0])
 
     monotonic_cst = {"d": 1, "a": 1, "c": -1}
-    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=)
     expected_msg = re.escape(
         "monotonic_cst contains 2 unexpected feature names: ['c', 'd']."
     )
@@ -312,7 +312,7 @@ def test_input_error_related_to_feature_names():
         gbdt.fit(X, y)
 
     monotonic_cst = {k: 1 for k in "abcdefghijklmnopqrstuvwxyz"}
-    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=)
     expected_msg = re.escape(
         "monotonic_cst contains 24 unexpected feature names: "
         "['c', 'd', 'e', 'f', 'g', '...']."
@@ -321,7 +321,7 @@ def test_input_error_related_to_feature_names():
         gbdt.fit(X, y)
 
     monotonic_cst = {"a": 1}
-    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=)
     expected_msg = re.escape(
         "HistGradientBoostingRegressor was not fitted on data with feature "
         "names. Pass monotonic_cst as an integer array instead."
@@ -330,7 +330,7 @@ def test_input_error_related_to_feature_names():
         gbdt.fit(X.values, y)
 
     monotonic_cst = {"b": -1, "a": "+"}
-    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=)
     expected_msg = re.escape("monotonic_cst['a'] must be either -1, 0 or 1. Got '+'.")
     with pytest.raises(ValueError, match=expected_msg):
         gbdt.fit(X, y)

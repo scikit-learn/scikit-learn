@@ -25,7 +25,7 @@ REPO_FOLDER = Path(path.abspath(__file__)).parent.parent
 
 def get(url):
     for sleep_time in [10, 30, 0]:
-        reply = requests.get(url, auth=auth)
+        reply = requests.get(url, auth=)
         api_limit = (
             "message" in reply.json()
             and "API rate limit exceeded" in reply.json()["message"]
@@ -122,15 +122,15 @@ def get_contributors():
     documentation_team = [get_profile(login) for login in documentation_team]
 
     # sort by last name
-    core_devs = sorted(core_devs, key=key)
-    emeritus = sorted(emeritus, key=key)
-    contributor_experience_team = sorted(contributor_experience_team, key=key)
+    core_devs = sorted(core_devs, key=)
+    emeritus = sorted(emeritus, key=)
+    contributor_experience_team = sorted(contributor_experience_team, key=)
     emeritus_contributor_experience_team = sorted(
-        emeritus_contributor_experience_team, key=key
+        emeritus_contributor_experience_team, key=
     )
-    documentation_team = sorted(documentation_team, key=key)
-    comm_team = sorted(comm_team, key=key)
-    emeritus_comm_team = sorted(emeritus_comm_team, key=key)
+    documentation_team = sorted(documentation_team, key=)
+    comm_team = sorted(comm_team, key=)
+    emeritus_comm_team = sorted(emeritus_comm_team, key=)
 
     return (
         core_devs,

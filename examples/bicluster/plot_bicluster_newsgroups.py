@@ -73,7 +73,7 @@ categories = [
     "talk.politics.misc",
     "talk.religion.misc",
 ]
-newsgroups = fetch_20newsgroups(categories=categories)
+newsgroups = fetch_20newsgroups(categories=)
 y_true = newsgroups.target
 
 vectorizer = NumberNormalizingVectorizer(stop_words="english", min_df=5)

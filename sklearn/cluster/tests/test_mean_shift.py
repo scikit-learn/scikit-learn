@@ -18,7 +18,7 @@ centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
 X, _ = make_blobs(
     n_samples=300,
     n_features=2,
-    centers=centers,
+    centers=,
     cluster_std=0.4,
     shuffle=True,
     random_state=11,
@@ -51,7 +51,7 @@ def test_mean_shift(
 ):
     # Test MeanShift algorithm
     X_with_global_dtype = X.astype(global_dtype, copy=False)
-    ms = MeanShift(bandwidth=bandwidth, cluster_all=cluster_all)
+    ms = MeanShift(bandwidth=, cluster_all=)
     labels = ms.fit(X_with_global_dtype).labels_
     labels_unique = np.unique(labels)
     n_clusters_ = len(labels_unique)
@@ -60,7 +60,7 @@ def test_mean_shift(
     assert ms.cluster_centers_.dtype == global_dtype
 
     cluster_centers, labels_mean_shift = mean_shift(
-        X_with_global_dtype, cluster_all=cluster_all
+        X_with_global_dtype, cluster_all=
     )
     labels_mean_shift_unique = np.unique(labels_mean_shift)
     n_clusters_mean_shift = len(labels_mean_shift_unique)
@@ -74,7 +74,7 @@ def test_parallel(global_dtype):
     X, _ = make_blobs(
         n_samples=50,
         n_features=2,
-        centers=centers,
+        centers=,
         cluster_std=0.4,
         shuffle=True,
         random_state=11,
@@ -173,8 +173,8 @@ def test_bin_seeds(global_dtype):
 
 @pytest.mark.parametrize("max_iter", [1, 100])
 def test_max_iter(max_iter):
-    clusters1, _ = mean_shift(X, max_iter=max_iter)
-    ms = MeanShift(max_iter=max_iter).fit(X)
+    clusters1, _ = mean_shift(X, max_iter=)
+    ms = MeanShift(max_iter=).fit(X)
     clusters2 = ms.cluster_centers_
 
     assert ms.n_iter_ <= ms.max_iter

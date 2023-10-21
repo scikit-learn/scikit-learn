@@ -85,7 +85,7 @@ def _cached_call(cache, estimator, response_method, *args, **kwargs):
         return cache[response_method]
 
     result, _ = _get_response_values(
-        estimator, *args, response_method=response_method, **kwargs
+        estimator, *args, response_method=, **kwargs
     )
 
     if cache is not None:
@@ -293,11 +293,11 @@ class _BaseScorer(_MetadataRequester):
                 "overridden by passed metadata if provided. Please pass them either "
                 "as metadata or kwargs to `make_scorer`."
             ),
-            kwargs=kwargs,
+            kwargs=,
         )
         self._metadata_request = MetadataRequest(owner=self.__class__.__name__)
         for param, alias in kwargs.items():
-            self._metadata_request.score.add_request(param=param, alias=alias)
+            self._metadata_request.score.add_request(param=, alias=)
         return self
 
 
@@ -337,13 +337,13 @@ class _Scorer(_BaseScorer):
                 " passed metadata. Please pass them either as kwargs to `make_scorer`"
                 " or metadata, but not both."
             ),
-            kwargs=kwargs,
+            kwargs=,
         )
 
         pos_label = None if is_regressor(estimator) else self._get_pos_label()
         response_method = _check_response_method(estimator, self._response_method)
         y_pred = method_caller(
-            estimator, response_method.__name__, X, pos_label=pos_label
+            estimator, response_method.__name__, X, pos_label=
         )
 
         scoring_kwargs = {**self._kwargs, **kwargs}
@@ -852,7 +852,7 @@ for name, metric in [
     _SCORERS[name] = make_scorer(metric, average="binary")
     for average in ["macro", "micro", "samples", "weighted"]:
         qualified_name = "{0}_{1}".format(name, average)
-        _SCORERS[qualified_name] = make_scorer(metric, pos_label=None, average=average)
+        _SCORERS[qualified_name] = make_scorer(metric, pos_label=None, average=)
 
 
 @validate_params(

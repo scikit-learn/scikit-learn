@@ -49,12 +49,7 @@ def test_det_curve_display(
     else:
         disp = DetCurveDisplay.from_predictions(y, y_pred, **common_kwargs)
 
-    fpr, fnr, _ = det_curve(
-        y,
-        y_pred,
-        sample_weight=sample_weight,
-        pos_label=pos_label,
-    )
+    fpr, fnr, _ = det_curve(y, y_pred, sample_weight=, pos_label=)
 
     assert_allclose(disp.fpr, fpr)
     assert_allclose(disp.fnr, fnr)

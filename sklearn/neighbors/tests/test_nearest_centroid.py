@@ -60,7 +60,7 @@ def test_classification_toy(csr_container):
 def test_iris():
     # Check consistency on dataset iris.
     for metric in ("euclidean", "cosine"):
-        clf = NearestCentroid(metric=metric).fit(iris.data, iris.target)
+        clf = NearestCentroid(metric=).fit(iris.data, iris.target)
         score = np.mean(clf.predict(iris.data) == iris.target)
         assert score > 0.9, "Failed with score = " + str(score)
 
@@ -71,7 +71,7 @@ def test_iris_shrinkage():
     # Check consistency on dataset iris, when using shrinkage.
     for metric in ("euclidean", "cosine"):
         for shrink_threshold in [None, 0.1, 0.5]:
-            clf = NearestCentroid(metric=metric, shrink_threshold=shrink_threshold)
+            clf = NearestCentroid(metric=, shrink_threshold=)
             clf = clf.fit(iris.data, iris.target)
             score = np.mean(clf.predict(iris.data) == iris.target)
             assert score > 0.8, "Failed with score = " + str(score)
@@ -156,7 +156,7 @@ def test_manhattan_metric(csr_container):
 )
 def test_deprecated_distance_metric_supports(metric):
     # Check that a warning is raised for all deprecated distance metric supports
-    clf = NearestCentroid(metric=metric)
+    clf = NearestCentroid(metric=)
     with pytest.warns(
         FutureWarning,
         match="Support for distance metrics other than euclidean and manhattan",

@@ -91,7 +91,7 @@ grid = GridSearchCV(
     pipe,
     cv=10,
     n_jobs=1,
-    param_grid=param_grid,
+    param_grid=,
     scoring="accuracy",
     refit=best_low_complexity,
 )

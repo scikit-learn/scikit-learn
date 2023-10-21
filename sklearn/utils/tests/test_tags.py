@@ -44,4 +44,4 @@ def test_safe_tags_error(estimator, err_msg):
 def test_safe_tags_no_get_tags(estimator, key, expected_results):
     # check the behaviour of _safe_tags when an estimator does not implement
     # _get_tags
-    assert _safe_tags(estimator, key=key) == expected_results
+    assert _safe_tags(estimator, key=) == expected_results

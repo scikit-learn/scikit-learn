@@ -46,7 +46,7 @@ def barplot_neighbors(
         X = get_data(NN, D, dataset)
         for algorithm in algorithms:
             nbrs = neighbors.NearestNeighbors(
-                n_neighbors=min(NN, k), algorithm=algorithm, leaf_size=leaf_size
+                n_neighbors=min(NN, k), algorithm=, leaf_size=
             )
             t0 = time()
             nbrs.fit(X)
@@ -67,7 +67,7 @@ def barplot_neighbors(
         X = get_data(N, DD, dataset)
         for algorithm in algorithms:
             nbrs = neighbors.NearestNeighbors(
-                n_neighbors=k, algorithm=algorithm, leaf_size=leaf_size
+                n_neighbors=k, algorithm=, leaf_size=
             )
             t0 = time()
             nbrs.fit(X)
@@ -89,7 +89,7 @@ def barplot_neighbors(
         print("k = %i (%i out of %i)" % (kk, i + 1, len(krange)))
         for algorithm in algorithms:
             nbrs = neighbors.NearestNeighbors(
-                n_neighbors=kk, algorithm=algorithm, leaf_size=leaf_size
+                n_neighbors=kk, algorithm=, leaf_size=
             )
             t0 = time()
             nbrs.fit(X)

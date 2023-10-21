@@ -228,7 +228,7 @@ def average_precision_score(
         y_true, y_score, pos_label=1, sample_weight=None
     ):
         precision, recall, _ = precision_recall_curve(
-            y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
+            y_true, y_score, pos_label=, sample_weight=
         )
         # Return the step function integral
         # The following works because the last entry of precision is
@@ -263,10 +263,10 @@ def average_precision_score(
         y_true = label_binarize(y_true, classes=present_labels)
 
     average_precision = partial(
-        _binary_uninterpolated_average_precision, pos_label=pos_label
+        _binary_uninterpolated_average_precision, pos_label=
     )
     return _average_binary_score(
-        average_precision, y_true, y_score, average, sample_weight=sample_weight
+        average_precision, y_true, y_score, average, sample_weight=
     )
 
 
@@ -349,7 +349,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     array([0.35, 0.4 , 0.8 ])
     """
     fps, tps, thresholds = _binary_clf_curve(
-        y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
+        y_true, y_score, pos_label=, sample_weight=
     )
 
     if len(np.unique(y_true)) != 2:
@@ -384,7 +384,7 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
             "is not defined in that case."
         )
 
-    fpr, tpr, _ = roc_curve(y_true, y_score, sample_weight=sample_weight)
+    fpr, tpr, _ = roc_curve(y_true, y_score, sample_weight=)
     if max_fpr is None or max_fpr == 1:
         return auc(fpr, tpr)
     if max_fpr <= 0 or max_fpr > 1:
@@ -625,19 +625,19 @@ def roc_auc_score(
         labels = np.unique(y_true)
         y_true = label_binarize(y_true, classes=labels)[:, 0]
         return _average_binary_score(
-            partial(_binary_roc_auc_score, max_fpr=max_fpr),
+            partial(_binary_roc_auc_score, max_fpr=),
             y_true,
             y_score,
             average,
-            sample_weight=sample_weight,
+            sample_weight=,
         )
     else:  # multilabel-indicator
         return _average_binary_score(
-            partial(_binary_roc_auc_score, max_fpr=max_fpr),
+            partial(_binary_roc_auc_score, max_fpr=),
             y_true,
             y_score,
             average,
-            sample_weight=sample_weight,
+            sample_weight=,
         )
 
 
@@ -750,17 +750,17 @@ def _multiclass_roc_auc_score(
         y_true_encoded = _encode(y_true, uniques=classes)
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(
-            _binary_roc_auc_score, y_true_encoded, y_score, average=average
+            _binary_roc_auc_score, y_true_encoded, y_score, average=
         )
     else:
         # ovr is same as multi-label
-        y_true_multilabel = label_binarize(y_true, classes=classes)
+        y_true_multilabel = label_binarize(y_true, classes=)
         return _average_binary_score(
             _binary_roc_auc_score,
             y_true_multilabel,
             y_score,
             average,
-            sample_weight=sample_weight,
+            sample_weight=,
         )
 
 
@@ -950,7 +950,7 @@ def precision_recall_curve(
     array([0.1 , 0.35, 0.4 , 0.8 ])
     """
     fps, tps, thresholds = _binary_clf_curve(
-        y_true, probas_pred, pos_label=pos_label, sample_weight=sample_weight
+        y_true, probas_pred, pos_label=, sample_weight=
     )
 
     if drop_intermediate and len(fps) > 2:
@@ -1093,7 +1093,7 @@ def roc_curve(
     array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
     """
     fps, tps, thresholds = _binary_clf_curve(
-        y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
+        y_true, y_score, pos_label=, sample_weight=
     )
 
     # Attempt to drop thresholds corresponding to points in between and
@@ -1633,9 +1633,7 @@ def dcg_score(
     check_consistent_length(y_true, y_score, sample_weight)
     _check_dcg_target_type(y_true)
     return np.average(
-        _dcg_sample_scores(
-            y_true, y_score, k=k, log_base=log_base, ignore_ties=ignore_ties
-        ),
+        _dcg_sample_scores(y_true, y_score, k=, log_base=, ignore_ties=),
         weights=sample_weight,
     )
 
@@ -1680,7 +1678,7 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     dcg_score : Discounted Cumulative Gain (not normalized).
 
     """
-    gain = _dcg_sample_scores(y_true, y_score, k, ignore_ties=ignore_ties)
+    gain = _dcg_sample_scores(y_true, y_score, k, ignore_ties=)
     # Here we use the order induced by y_true so we can ignore ties since
     # the gain associated to tied indices is the same (permuting ties doesn't
     # change the value of the re-ordered y_true)
@@ -1818,7 +1816,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
             f"Got {y_true.shape[1]} instead."
         )
     _check_dcg_target_type(y_true)
-    gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
+    gain = _ndcg_sample_scores(y_true, y_score, k=, ignore_ties=)
     return np.average(gain, weights=sample_weight)
 
 

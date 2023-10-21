@@ -36,7 +36,7 @@ y_test = y[int(0.9 * n_sample) :]
 
 # fit the model
 for kernel in ("linear", "rbf", "poly"):
-    clf = svm.SVC(kernel=kernel, gamma=10)
+    clf = svm.SVC(kernel=, gamma=10)
     clf.fit(X_train, y_train)
 
     plt.figure()

@@ -28,10 +28,10 @@ n_samples = 1500
 random_state = 170
 transformation = [[0.60834549, -0.63667341], [-0.40887718, 0.85253229]]
 
-X, y = make_blobs(n_samples=n_samples, random_state=random_state)
+X, y = make_blobs(n_samples=, random_state=)
 X_aniso = np.dot(X, transformation)  # Anisotropic blobs
 X_varied, y_varied = make_blobs(
-    n_samples=n_samples, cluster_std=[1.0, 2.5, 0.5], random_state=random_state
+    n_samples=, cluster_std=[1.0, 2.5, 0.5], random_state=
 )  # Unequal variance
 X_filtered = np.vstack(
     (X[y == 0][:500], X[y == 1][:100], X[y == 2][:10])
@@ -129,7 +129,7 @@ plt.show()
 # initializations. In this case we set `n_init=10` to avoid finding a
 # sub-optimal local minimum. For more details see :ref:`kmeans_sparse_high_dim`.
 
-y_pred = KMeans(n_clusters=3, n_init=10, random_state=random_state).fit_predict(
+y_pred = KMeans(n_clusters=3, n_init=10, random_state=).fit_predict(
     X_filtered
 )
 plt.scatter(X_filtered[:, 0], X_filtered[:, 1], c=y_pred)

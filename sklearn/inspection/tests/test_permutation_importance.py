@@ -46,10 +46,10 @@ def test_permutation_importance_correlated_feature_regression(n_jobs, max_sample
         clf,
         X,
         y,
-        n_repeats=n_repeats,
+        n_repeats=,
         random_state=rng,
-        n_jobs=n_jobs,
-        max_samples=max_samples,
+        n_jobs=,
+        max_samples=,
     )
 
     assert result.importances.shape == (X.shape[1], n_repeats)
@@ -86,10 +86,10 @@ def test_permutation_importance_correlated_feature_regression_pandas(
         clf,
         X,
         y,
-        n_repeats=n_repeats,
+        n_repeats=,
         random_state=rng,
-        n_jobs=n_jobs,
-        max_samples=max_samples,
+        n_jobs=,
+        max_samples=,
     )
 
     assert result.importances.shape == (X.shape[1], n_repeats)
@@ -153,10 +153,10 @@ def test_robustness_to_high_cardinality_noisy_feature(n_jobs, max_samples, seed=
         clf,
         X_test,
         y_test,
-        n_repeats=n_repeats,
+        n_repeats=,
         random_state=rng,
-        n_jobs=n_jobs,
-        max_samples=max_samples,
+        n_jobs=,
+        max_samples=,
     )
 
     assert r.importances.shape == (X.shape[1], n_repeats)
@@ -190,7 +190,7 @@ def test_permutation_importance_mixed_types():
 
     clf = make_pipeline(SimpleImputer(), LogisticRegression(solver="lbfgs"))
     clf.fit(X, y)
-    result = permutation_importance(clf, X, y, n_repeats=n_repeats, random_state=rng)
+    result = permutation_importance(clf, X, y, n_repeats=, random_state=rng)
 
     assert result.importances.shape == (X.shape[1], n_repeats)
 
@@ -200,7 +200,7 @@ def test_permutation_importance_mixed_types():
 
     # use another random state
     rng = np.random.RandomState(0)
-    result2 = permutation_importance(clf, X, y, n_repeats=n_repeats, random_state=rng)
+    result2 = permutation_importance(clf, X, y, n_repeats=, random_state=rng)
     assert result2.importances.shape == (X.shape[1], n_repeats)
 
     assert not np.allclose(result.importances, result2.importances)
@@ -226,7 +226,7 @@ def test_permutation_importance_mixed_types_pandas():
     clf = make_pipeline(preprocess, LogisticRegression(solver="lbfgs"))
     clf.fit(X, y)
 
-    result = permutation_importance(clf, X, y, n_repeats=n_repeats, random_state=rng)
+    result = permutation_importance(clf, X, y, n_repeats=, random_state=rng)
 
     assert result.importances.shape == (X.shape[1], n_repeats)
     # the correlated feature with y is the last column and should
@@ -261,7 +261,7 @@ def test_permutation_importance_equivalence_sequential_parallel(max_samples):
     lr = LinearRegression().fit(X, y)
 
     importance_sequential = permutation_importance(
-        lr, X, y, n_repeats=5, random_state=0, n_jobs=1, max_samples=max_samples
+        lr, X, y, n_repeats=5, random_state=0, n_jobs=1, max_samples=
     )
 
     # First check that the problem is structured enough and that the model is
@@ -335,10 +335,10 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
         rf,
         X,
         y,
-        n_repeats=n_repeats,
+        n_repeats=,
         random_state=0,
-        n_jobs=n_jobs,
-        max_samples=max_samples,
+        n_jobs=,
+        max_samples=,
     )
 
     # First check that the problem is structured enough and that the model is
@@ -353,10 +353,10 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
         rf,
         X_df,
         y,
-        n_repeats=n_repeats,
+        n_repeats=,
         random_state=0,
-        n_jobs=n_jobs,
-        max_samples=max_samples,
+        n_jobs=,
+        max_samples=,
     )
     assert_allclose(
         importance_array["importances"], importance_dataframe["importances"]
@@ -368,9 +368,7 @@ def test_permutation_importance_large_memmaped_data(input_type):
     # Smoke, non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15810
     n_samples, n_features = int(5e4), 4
-    X, y = make_classification(
-        n_samples=n_samples, n_features=n_features, random_state=0
-    )
+    X, y = make_classification(n_samples=, n_features=, random_state=0)
     assert X.nbytes > 1e6  # trigger joblib memmaping
 
     X = _convert_container(X, input_type)
@@ -378,7 +376,7 @@ def test_permutation_importance_large_memmaped_data(input_type):
 
     # Actual smoke test: should not raise any error:
     n_repeats = 5
-    r = permutation_importance(clf, X, y, n_repeats=n_repeats, n_jobs=2)
+    r = permutation_importance(clf, X, y, n_repeats=, n_jobs=2)
 
     # Auxiliary check: DummyClassifier is feature independent:
     # permutating feature should not change the predictions

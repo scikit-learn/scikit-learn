@@ -25,7 +25,7 @@ def test_sample_without_replacement_algorithms():
             n_population, n_samples, random_state=None
         ):
             return sample_without_replacement(
-                n_population, n_samples, method=m, random_state=random_state
+                n_population, n_samples, method=m, random_state=
             )
 
         check_edge_case_of_sample_int(sample_without_replacement_method)
@@ -122,9 +122,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
     classes = [[0, 1], [1, 2]]  # test for array-like support
     class_probabilities = [np.array([0.5, 0.5]), np.array([0, 1 / 2, 1 / 2])]
 
-    got = _random_choice_csc(
-        n_samples=n_samples, classes=classes, random_state=random_state
-    )
+    got = _random_choice_csc(n_samples=, classes=, random_state=)
     assert sp.issparse(got)
 
     for k in range(len(classes)):
@@ -151,9 +149,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
     classes = [[1], [0]]  # test for array-like support
     class_probabilities = [np.array([0.0, 1.0]), np.array([1.0])]
 
-    got = _random_choice_csc(
-        n_samples=n_samples, classes=classes, random_state=random_state
-    )
+    got = _random_choice_csc(n_samples=, classes=, random_state=)
     assert sp.issparse(got)
 
     for k in range(len(classes)):

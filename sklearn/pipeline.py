@@ -188,7 +188,7 @@ class Pipeline(_BaseComposition):
             Estimator instance.
         """
         for _, _, step in self._iter():
-            _safe_set_output(step, transform=transform)
+            _safe_set_output(step, transform=)
         return self
 
     def get_params(self, deep=True):
@@ -208,7 +208,7 @@ class Pipeline(_BaseComposition):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("steps", deep=deep)
+        return self._get_params("steps", deep=)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -991,7 +991,7 @@ class Pipeline(_BaseComposition):
 
         # metadata routing is enabled.
         routed_params = process_routing(
-            self, "score", sample_weight=sample_weight, **params
+            self, "score", sample_weight=, **params
         )
 
         Xt = X
@@ -1098,8 +1098,8 @@ class Pipeline(_BaseComposition):
         return _VisualBlock(
             "serial",
             estimators,
-            names=names,
-            name_details=name_details,
+            names=,
+            name_details=,
             dash_wrapped=False,
         )
 
@@ -1149,7 +1149,7 @@ class Pipeline(_BaseComposition):
                 .add(caller="score", callee="transform")
             )
 
-            router.add(method_mapping=method_mapping, **{name: trans})
+            router.add(method_mapping=, **{name: trans})
 
         final_name, final_est = self.steps[-1]
         if final_est is None or final_est == "passthrough":
@@ -1175,7 +1175,7 @@ class Pipeline(_BaseComposition):
             .add(caller="score", callee="score")
         )
 
-        router.add(method_mapping=method_mapping, **{final_name: final_est})
+        router.add(method_mapping=, **{final_name: final_est})
         return router
 
 
@@ -1248,7 +1248,7 @@ def make_pipeline(*steps, memory=None, verbose=False):
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('gaussiannb', GaussianNB())])
     """
-    return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
+    return Pipeline(_name_estimators(steps), memory=, verbose=)
 
 
 def _transform_one(transformer, X, y, weight, params):
@@ -1437,9 +1437,9 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
         self : estimator instance
             Estimator instance.
         """
-        super().set_output(transform=transform)
+        super().set_output(transform=)
         for _, step, _ in self._iter():
-            _safe_set_output(step, transform=transform)
+            _safe_set_output(step, transform=)
         return self
 
     @property
@@ -1465,7 +1465,7 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params("transformer_list", deep=deep)
+        return self._get_params("transformer_list", deep=)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -1640,7 +1640,7 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
                 weight,
                 message_clsname="FeatureUnion",
                 message=self._log_message(name, idx, len(transformers)),
-                params=params,
+                params=,
             )
             for idx, (name, transformer, weight) in enumerate(transformers, 1)
         )
@@ -1713,7 +1713,7 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
 
     def _sk_visual_block_(self):
         names, transformers = zip(*self.transformer_list)
-        return _VisualBlock("parallel", transformers, names=names)
+        return _VisualBlock("parallel", transformers, names=)
 
     def __getitem__(self, name):
         """Return transformer with name."""
@@ -1767,4 +1767,4 @@ def make_union(*transformers, n_jobs=None, verbose=False):
      FeatureUnion(transformer_list=[('pca', PCA()),
                                    ('truncatedsvd', TruncatedSVD())])
     """
-    return FeatureUnion(_name_estimators(transformers), n_jobs=n_jobs, verbose=verbose)
+    return FeatureUnion(_name_estimators(transformers), n_jobs=, verbose=)

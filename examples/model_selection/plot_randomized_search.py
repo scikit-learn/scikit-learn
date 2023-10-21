@@ -81,7 +81,7 @@ param_grid = {
 }
 
 # run grid search
-grid_search = GridSearchCV(clf, param_grid=param_grid)
+grid_search = GridSearchCV(clf, param_grid=)
 start = time()
 grid_search.fit(X, y)
 

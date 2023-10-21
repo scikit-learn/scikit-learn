@@ -125,11 +125,11 @@ def _assert_all_finite(
 
     _assert_all_finite_element_wise(
         X,
-        xp=xp,
-        allow_nan=allow_nan,
-        msg_dtype=msg_dtype,
-        estimator_name=estimator_name,
-        input_name=input_name,
+        xp=,
+        allow_nan=,
+        msg_dtype=,
+        estimator_name=,
+        input_name=,
     )
 
 
@@ -141,7 +141,7 @@ def _assert_all_finite_element_wise(
         xp is np and X.data.contiguous and X.dtype.type in {np.float32, np.float64}
     )
     if use_cython:
-        out = cy_isfinite(X.reshape(-1), allow_nan=allow_nan)
+        out = cy_isfinite(X.reshape(-1), allow_nan=)
         has_nan_error = False if allow_nan else out == FiniteStatus.has_nan
         has_inf = out == FiniteStatus.has_infinite
     else:
@@ -203,9 +203,9 @@ def assert_all_finite(
     """
     _assert_all_finite(
         X.data if sp.issparse(X) else X,
-        allow_nan=allow_nan,
-        estimator_name=estimator_name,
-        input_name=input_name,
+        allow_nan=,
+        estimator_name=,
+        input_name=,
     )
 
 
@@ -252,8 +252,8 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
             X,
             accept_sparse=["csr", "csc", "coo"],
             dtype=np.float64,
-            copy=copy,
-            force_all_finite=force_all_finite,
+            copy=,
+            force_all_finite=,
             ensure_2d=False,
         )
     elif sp.issparse(X) and X.dtype in [np.float32, np.float64]:
@@ -575,8 +575,8 @@ def _ensure_sparse_format(
             _assert_all_finite(
                 spmatrix.data,
                 allow_nan=force_all_finite == "allow-nan",
-                estimator_name=estimator_name,
-                input_name=input_name,
+                estimator_name=,
+                input_name=,
             )
 
     return spmatrix
@@ -881,13 +881,13 @@ def check_array(
         _ensure_no_complex_data(array)
         array = _ensure_sparse_format(
             array,
-            accept_sparse=accept_sparse,
-            dtype=dtype,
-            copy=copy,
-            force_all_finite=force_all_finite,
-            accept_large_sparse=accept_large_sparse,
-            estimator_name=estimator_name,
-            input_name=input_name,
+            accept_sparse=,
+            dtype=,
+            copy=,
+            force_all_finite=,
+            accept_large_sparse=,
+            estimator_name=,
+            input_name=,
         )
     else:
         # If np.array(..) gives ComplexWarning, then we convert the warning
@@ -902,18 +902,18 @@ def check_array(
                     # Conversion float -> int should not contain NaN or
                     # inf (numpy#14412). We cannot use casting='safe' because
                     # then conversion float -> int would be disallowed.
-                    array = _asarray_with_order(array, order=order, xp=xp)
+                    array = _asarray_with_order(array, order=, xp=)
                     if xp.isdtype(array.dtype, ("real floating", "complex floating")):
                         _assert_all_finite(
                             array,
                             allow_nan=False,
                             msg_dtype=dtype,
-                            estimator_name=estimator_name,
-                            input_name=input_name,
+                            estimator_name=,
+                            input_name=,
                         )
                     array = xp.astype(array, dtype, copy=False)
                 else:
-                    array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)
+                    array = _asarray_with_order(array, order=, dtype=, xp=)
             except ComplexWarning as complex_warning:
                 raise ValueError(
                     "Complex data not supported\n{}\n".format(array)
@@ -957,8 +957,8 @@ def check_array(
         if force_all_finite:
             _assert_all_finite(
                 array,
-                input_name=input_name,
-                estimator_name=estimator_name,
+                input_name=,
+                estimator_name=,
                 allow_nan=force_all_finite == "allow-nan",
             )
 
@@ -967,12 +967,12 @@ def check_array(
                 # only make a copy if `array` and `array_orig` may share memory`
                 if np.may_share_memory(array, array_orig):
                     array = _asarray_with_order(
-                        array, dtype=dtype, order=order, copy=True, xp=xp
+                        array, dtype=, order=, copy=True, xp=
                     )
             else:
                 # always make a copy for non-numpy arrays
                 array = _asarray_with_order(
-                    array, dtype=dtype, order=order, copy=True, xp=xp
+                    array, dtype=, order=, copy=True, xp=
                 )
 
     if ensure_min_samples > 0:
@@ -1146,21 +1146,21 @@ def check_X_y(
 
     X = check_array(
         X,
-        accept_sparse=accept_sparse,
-        accept_large_sparse=accept_large_sparse,
-        dtype=dtype,
-        order=order,
-        copy=copy,
-        force_all_finite=force_all_finite,
-        ensure_2d=ensure_2d,
-        allow_nd=allow_nd,
-        ensure_min_samples=ensure_min_samples,
-        ensure_min_features=ensure_min_features,
-        estimator=estimator,
+        accept_sparse=,
+        accept_large_sparse=,
+        dtype=,
+        order=,
+        copy=,
+        force_all_finite=,
+        ensure_2d=,
+        allow_nd=,
+        ensure_min_samples=,
+        ensure_min_features=,
+        estimator=,
         input_name="X",
     )
 
-    y = _check_y(y, multi_output=multi_output, y_numeric=y_numeric, estimator=estimator)
+    y = _check_y(y, multi_output=, y_numeric=, estimator=)
 
     check_consistent_length(X, y)
 
@@ -1177,12 +1177,12 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
             ensure_2d=False,
             dtype=None,
             input_name="y",
-            estimator=estimator,
+            estimator=,
         )
     else:
         estimator_name = _check_estimator_name(estimator)
         y = column_or_1d(y, warn=True)
-        _assert_all_finite(y, input_name="y", estimator_name=estimator_name)
+        _assert_all_finite(y, input_name="y", estimator_name=)
         _ensure_no_complex_data(y)
     if y_numeric and y.dtype.kind == "O":
         y = y.astype(np.float64)
@@ -1220,7 +1220,7 @@ def column_or_1d(y, *, dtype=None, warn=False):
     y = check_array(
         y,
         ensure_2d=False,
-        dtype=dtype,
+        dtype=,
         input_name="y",
         force_all_finite=False,
         ensure_min_samples=0,
@@ -1228,7 +1228,7 @@ def column_or_1d(y, *, dtype=None, warn=False):
 
     shape = y.shape
     if len(shape) == 1:
-        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
+        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=)
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn(
@@ -1240,7 +1240,7 @@ def column_or_1d(y, *, dtype=None, warn=False):
                 DataConversionWarning,
                 stacklevel=2,
             )
-        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=xp)
+        return _asarray_with_order(xp.reshape(y, (-1,)), order="C", xp=)
 
     raise ValueError(
         "y should be a 1d array, got an array of shape {} instead.".format(shape)
@@ -1831,9 +1831,9 @@ def _check_sample_weight(
         dtype = np.float64
 
     if sample_weight is None:
-        sample_weight = np.ones(n_samples, dtype=dtype)
+        sample_weight = np.ones(n_samples, dtype=)
     elif isinstance(sample_weight, numbers.Number):
-        sample_weight = np.full(n_samples, sample_weight, dtype=dtype)
+        sample_weight = np.full(n_samples, sample_weight, dtype=)
     else:
         if dtype is None:
             dtype = [np.float64, np.float32]
@@ -1841,9 +1841,9 @@ def _check_sample_weight(
             sample_weight,
             accept_sparse=False,
             ensure_2d=False,
-            dtype=dtype,
+            dtype=,
             order="C",
-            copy=copy,
+            copy=,
             input_name="sample_weight",
         )
         if sample_weight.ndim != 1:
@@ -1892,10 +1892,10 @@ def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
         return (
             np.array_equal(x.indices, y.indices)
             and np.array_equal(x.indptr, y.indptr)
-            and np.allclose(x.data, y.data, rtol=rtol, atol=atol)
+            and np.allclose(x.data, y.data, rtol=, atol=)
         )
     elif not sp.issparse(x) and not sp.issparse(y):
-        return np.allclose(x, y, rtol=rtol, atol=atol)
+        return np.allclose(x, y, rtol=, atol=)
     raise ValueError(
         "Can only compare two sparse matrices, not a sparse matrix and an array"
     )

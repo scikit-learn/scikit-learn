@@ -127,9 +127,9 @@ def isdtype(dtype, kind, *, xp):
     https://data-apis.org/array-api/latest/API_specification/generated/array_api.isdtype.html
     """
     if isinstance(kind, tuple):
-        return any(_isdtype_single(dtype, k, xp=xp) for k in kind)
+        return any(_isdtype_single(dtype, k, xp=) for k in kind)
     else:
-        return _isdtype_single(dtype, kind, xp=xp)
+        return _isdtype_single(dtype, kind, xp=)
 
 
 def _isdtype_single(dtype, kind, *, xp):
@@ -142,7 +142,7 @@ def _isdtype_single(dtype, kind, *, xp):
             return dtype in {xp.uint8, xp.uint16, xp.uint32, xp.uint64}
         elif kind == "integral":
             return any(
-                _isdtype_single(dtype, k, xp=xp)
+                _isdtype_single(dtype, k, xp=)
                 for k in ("signed integer", "unsigned integer")
             )
         elif kind == "real floating":
@@ -158,7 +158,7 @@ def _isdtype_single(dtype, kind, *, xp):
             return dtype in complex_dtypes
         elif kind == "numeric":
             return any(
-                _isdtype_single(dtype, k, xp=xp)
+                _isdtype_single(dtype, k, xp=)
                 for k in ("integral", "real floating", "complex floating")
             )
         else:
@@ -209,7 +209,7 @@ class _ArrayAPIWrapper:
         # When array_api supports `take` we can use this directly
         # https://github.com/data-apis/array-api/issues/177
         if self._namespace.__name__ == "numpy.array_api":
-            X_np = numpy.take(X, indices, axis=axis)
+            X_np = numpy.take(X, indices, axis=)
             return self._namespace.asarray(X_np)
 
         # We only support axis in (0, 1) and ndim in (1, 2) because that is all we need
@@ -227,7 +227,7 @@ class _ArrayAPIWrapper:
                 selected = [X[i, :] for i in indices]
         else:  # axis == 1
             selected = [X[:, i] for i in indices]
-        return self._namespace.stack(selected, axis=axis)
+        return self._namespace.stack(selected, axis=)
 
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self._namespace)
@@ -311,15 +311,15 @@ class _NumPyAPIWrapper:
 
     def astype(self, x, dtype, *, copy=True, casting="unsafe"):
         # astype is not defined in the top level NumPy namespace
-        return x.astype(dtype, copy=copy, casting=casting)
+        return x.astype(dtype, copy=, casting=)
 
     def asarray(self, x, *, dtype=None, device=None, copy=None):  # noqa
         _check_device_cpu(device)
         # Support copy in NumPy namespace
         if copy is True:
-            return numpy.array(x, copy=True, dtype=dtype)
+            return numpy.array(x, copy=True, dtype=)
         else:
-            return numpy.asarray(x, dtype=dtype)
+            return numpy.asarray(x, dtype=)
 
     def unique_inverse(self, x):
         return numpy.unique(x, return_inverse=True)
@@ -331,7 +331,7 @@ class _NumPyAPIWrapper:
         return numpy.unique(x)
 
     def concat(self, arrays, *, axis=None):
-        return numpy.concatenate(arrays, axis=axis)
+        return numpy.concatenate(arrays, axis=)
 
     def reshape(self, x, shape, *, copy=None):
         """Gives a new shape to an array without changing its data.
@@ -491,13 +491,13 @@ def _nanmin(X, axis=None):
     # https://github.com/data-apis/array-api/issues/621
     xp, _ = get_namespace(X)
     if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nanmin(X, axis=axis))
+        return xp.asarray(numpy.nanmin(X, axis=))
 
     else:
         mask = xp.isnan(X)
-        X = xp.min(xp.where(mask, xp.asarray(+xp.inf, device=device(X)), X), axis=axis)
+        X = xp.min(xp.where(mask, xp.asarray(+xp.inf, device=device(X)), X), axis=)
         # Replace Infs from all NaN slices with NaN again
-        mask = xp.all(mask, axis=axis)
+        mask = xp.all(mask, axis=)
         if xp.any(mask):
             X = xp.where(mask, xp.asarray(xp.nan), X)
         return X
@@ -508,13 +508,13 @@ def _nanmax(X, axis=None):
     # https://github.com/data-apis/array-api/issues/621
     xp, _ = get_namespace(X)
     if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nanmax(X, axis=axis))
+        return xp.asarray(numpy.nanmax(X, axis=))
 
     else:
         mask = xp.isnan(X)
-        X = xp.max(xp.where(mask, xp.asarray(-xp.inf, device=device(X)), X), axis=axis)
+        X = xp.max(xp.where(mask, xp.asarray(-xp.inf, device=device(X)), X), axis=)
         # Replace Infs from all NaN slices with NaN again
-        mask = xp.all(mask, axis=axis)
+        mask = xp.all(mask, axis=)
         if xp.any(mask):
             X = xp.where(mask, xp.asarray(xp.nan), X)
         return X
@@ -538,15 +538,15 @@ def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):
     if _is_numpy_namespace(xp):
         # Use NumPy API to support order
         if copy is True:
-            array = numpy.array(array, order=order, dtype=dtype)
+            array = numpy.array(array, order=, dtype=)
         else:
-            array = numpy.asarray(array, order=order, dtype=dtype)
+            array = numpy.asarray(array, order=, dtype=)
 
         # At this point array is a NumPy ndarray. We convert it to an array
         # container that is consistent with the input's namespace.
         return xp.asarray(array)
     else:
-        return xp.asarray(array, dtype=dtype, copy=copy)
+        return xp.asarray(array, dtype=, copy=)
 
 
 def _convert_to_numpy(array, xp):

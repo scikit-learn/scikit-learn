@@ -33,10 +33,10 @@ X = iris.data
 y = iris.target
 
 n_components = 2
-ipca = IncrementalPCA(n_components=n_components, batch_size=10)
+ipca = IncrementalPCA(n_components=, batch_size=10)
 X_ipca = ipca.fit_transform(X)
 
-pca = PCA(n_components=n_components)
+pca = PCA(n_components=)
 X_pca = pca.fit_transform(X)
 
 colors = ["navy", "turquoise", "darkorange"]
@@ -47,7 +47,7 @@ for X_transformed, title in [(X_ipca, "Incremental PCA"), (X_pca, "PCA")]:
         plt.scatter(
             X_transformed[y == i, 0],
             X_transformed[y == i, 1],
-            color=color,
+            color=,
             lw=2,
             label=target_name,
         )

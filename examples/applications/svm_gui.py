@@ -98,18 +98,18 @@ class Controller:
         if len(np.unique(y)) == 1:
             clf = svm.OneClassSVM(
                 kernel=kernel_map[self.kernel.get()],
-                gamma=gamma,
-                coef0=coef0,
-                degree=degree,
+                gamma=,
+                coef0=,
+                degree=,
             )
             clf.fit(X)
         else:
             clf = svm.SVC(
                 kernel=kernel_map[self.kernel.get()],
-                C=C,
-                gamma=gamma,
-                coef0=coef0,
-                degree=degree,
+                C=,
+                gamma=,
+                coef0=,
+                degree=,
             )
             clf.fit(X, y)
         if hasattr(clf, "score"):
@@ -252,7 +252,7 @@ class View:
             linestyles = ["dashed", "solid", "dashed"]
             colors = "k"
             self.contours.append(
-                self.ax.contour(X1, X2, Z, levels, colors=colors, linestyles=linestyles)
+                self.ax.contour(X1, X2, Z, levels, colors=, linestyles=)
             )
         elif type == 1:
             self.contours.append(

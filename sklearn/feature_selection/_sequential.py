@@ -283,7 +283,7 @@ class SequentialFeatureSelector(
                 estimator,
                 X_new,
                 y,
-                cv=cv,
+                cv=,
                 scoring=self.scoring,
                 n_jobs=self.n_jobs,
             ).mean()

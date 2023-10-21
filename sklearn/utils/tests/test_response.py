@@ -33,7 +33,7 @@ def test_get_response_values_regressor_error(response_method):
     X = "mocking_data", "mocking_target"
     err_msg = f"{my_estimator.__class__.__name__} should either be a classifier"
     with pytest.raises(ValueError, match=err_msg):
-        _get_response_values(my_estimator, X, response_method=response_method)
+        _get_response_values(my_estimator, X, response_method=)
 
 
 @pytest.mark.parametrize("return_response_method_used", [True, False])
@@ -45,7 +45,7 @@ def test_get_response_values_regressor(return_response_method_used):
         regressor,
         X,
         response_method="predict",
-        return_response_method_used=return_response_method_used,
+        return_response_method_used=,
     )
     assert_array_equal(results[0], regressor.predict(X))
     assert results[1] is None
@@ -67,8 +67,8 @@ def test_get_response_values_outlier_detection(
     results = _get_response_values(
         outlier_detector,
         X,
-        response_method=response_method,
-        return_response_method_used=return_response_method_used,
+        response_method=,
+        return_response_method_used=,
     )
     chosen_response_method = (
         response_method[0] if isinstance(response_method, list) else response_method
@@ -96,7 +96,7 @@ def test_get_response_values_classifier_unknown_pos_label(response_method):
         _get_response_values(
             classifier,
             X,
-            response_method=response_method,
+            response_method=,
             pos_label="whatever",
         )
 
@@ -135,9 +135,9 @@ def test_get_response_values_binary_classifier_decision_function(
     results = _get_response_values(
         classifier,
         X,
-        response_method=response_method,
+        response_method=,
         pos_label=None,
-        return_response_method_used=return_response_method_used,
+        return_response_method_used=,
     )
     assert_allclose(results[0], classifier.decision_function(X))
     assert results[1] == 1
@@ -148,9 +148,9 @@ def test_get_response_values_binary_classifier_decision_function(
     results = _get_response_values(
         classifier,
         X,
-        response_method=response_method,
+        response_method=,
         pos_label=classifier.classes_[0],
-        return_response_method_used=return_response_method_used,
+        return_response_method_used=,
     )
     assert_allclose(results[0], classifier.decision_function(X) * -1)
     assert results[1] == 0
@@ -177,9 +177,9 @@ def test_get_response_values_binary_classifier_predict_proba(
     results = _get_response_values(
         classifier,
         X,
-        response_method=response_method,
+        response_method=,
         pos_label=None,
-        return_response_method_used=return_response_method_used,
+        return_response_method_used=,
     )
     assert_allclose(results[0], classifier.predict_proba(X)[:, 1])
     assert results[1] == 1
@@ -193,9 +193,9 @@ def test_get_response_values_binary_classifier_predict_proba(
     y_pred, pos_label, *_ = _get_response_values(
         classifier,
         X,
-        response_method=response_method,
+        response_method=,
         pos_label=classifier.classes_[0],
-        return_response_method_used=return_response_method_used,
+        return_response_method_used=,
     )
     assert_allclose(y_pred, classifier.predict_proba(X)[:, 0])
     assert pos_label == 0
@@ -280,7 +280,7 @@ def test_get_response_values_multiclass(estimator, response_method):
     """
     estimator.fit(X, y)
     predictions, pos_label = _get_response_values(
-        estimator, X, response_method=response_method
+        estimator, X, response_method=
     )
 
     assert pos_label is None
@@ -323,9 +323,7 @@ def test_get_response_values_multilabel_indicator(response_method):
     X, Y = make_multilabel_classification(random_state=0)
     estimator = ClassifierChain(LogisticRegression()).fit(X, Y)
 
-    y_pred, pos_label = _get_response_values(
-        estimator, X, response_method=response_method
-    )
+    y_pred, pos_label = _get_response_values(estimator, X, response_method=)
     assert pos_label is None
     assert y_pred.shape == Y.shape
 

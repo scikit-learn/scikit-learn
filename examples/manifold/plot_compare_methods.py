@@ -60,7 +60,7 @@ def plot_3d(points, points_color, title):
     ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
     ax.zaxis.set_major_locator(ticker.MultipleLocator(1))
 
-    fig.colorbar(col, ax=ax, orientation="horizontal", shrink=0.6, aspect=60, pad=0.01)
+    fig.colorbar(col, ax=, orientation="horizontal", shrink=0.6, aspect=60, pad=0.01)
     plt.show()
 
 
@@ -148,7 +148,7 @@ plt.show()
 # Isomap seeks a lower-dimensional embedding which maintains geodesic
 # distances between all points. Read more in the :ref:`User Guide <isomap>`.
 
-isomap = manifold.Isomap(n_neighbors=n_neighbors, n_components=n_components, p=1)
+isomap = manifold.Isomap(n_neighbors=, n_components=, p=1)
 S_isomap = isomap.fit_transform(S_points)
 
 plot_2d(S_isomap, S_color, "Isomap Embedding")
@@ -163,7 +163,7 @@ plot_2d(S_isomap, S_color, "Isomap Embedding")
 # Read more in the :ref:`User Guide <multidimensional_scaling>`.
 
 md_scaling = manifold.MDS(
-    n_components=n_components,
+    n_components=,
     max_iter=50,
     n_init=4,
     random_state=0,
@@ -182,7 +182,7 @@ plot_2d(S_scaling, S_color, "Multidimensional scaling")
 # Read more in the :ref:`User Guide <spectral_embedding>`.
 
 spectral = manifold.SpectralEmbedding(
-    n_components=n_components, n_neighbors=n_neighbors, random_state=42
+    n_components=, n_neighbors=, random_state=42
 )
 S_spectral = spectral.fit_transform(S_points)
 
@@ -199,7 +199,7 @@ plot_2d(S_spectral, S_color, "Spectral Embedding")
 # different results. Read more in the :ref:`User Guide <t_sne>`.
 
 t_sne = manifold.TSNE(
-    n_components=n_components,
+    n_components=,
     perplexity=30,
     init="random",
     n_iter=250,

@@ -58,7 +58,7 @@ def test_invalid_input():
         alpha=0.1, max_iter=10, shuffle=True, random_state=None, tol=None
     )
     for threshold in ["gobbledigook", ".5 * gobbledigook"]:
-        model = SelectFromModel(clf, threshold=threshold)
+        model = SelectFromModel(clf, threshold=)
         model.fit(data, y)
         with pytest.raises(ValueError):
             model.transform(data)
@@ -102,7 +102,7 @@ def test_max_features_error(max_features, err_type, err_msg):
     clf = RandomForestClassifier(n_estimators=5, random_state=0)
 
     transformer = SelectFromModel(
-        estimator=clf, max_features=max_features, threshold=-np.inf
+        estimator=clf, max_features=, threshold=-np.inf
     )
     with pytest.raises(err_type, match=err_msg):
         transformer.fit(data, y)
@@ -113,7 +113,7 @@ def test_inferred_max_features_integer(max_features):
     """Check max_features_ and output shape for integer max_features."""
     clf = RandomForestClassifier(n_estimators=5, random_state=0)
     transformer = SelectFromModel(
-        estimator=clf, max_features=max_features, threshold=-np.inf
+        estimator=clf, max_features=, threshold=-np.inf
     )
     X_trans = transformer.fit_transform(data, y)
     if max_features is not None:
@@ -132,7 +132,7 @@ def test_inferred_max_features_callable(max_features):
     """Check max_features_ and output shape for callable max_features."""
     clf = RandomForestClassifier(n_estimators=5, random_state=0)
     transformer = SelectFromModel(
-        estimator=clf, max_features=max_features, threshold=-np.inf
+        estimator=clf, max_features=, threshold=-np.inf
     )
     X_trans = transformer.fit_transform(data, y)
     assert transformer.max_features_ == max_features(data)
@@ -151,7 +151,7 @@ def test_max_features_array_like(max_features):
 
     clf = RandomForestClassifier(n_estimators=5, random_state=0)
     transformer = SelectFromModel(
-        estimator=clf, max_features=max_features, threshold=-np.inf
+        estimator=clf, max_features=, threshold=-np.inf
     )
     X_trans = transformer.fit_transform(X, y)
     assert X_trans.shape[1] == transformer.max_features_
@@ -194,7 +194,7 @@ def test_max_features():
 
     transformer1 = SelectFromModel(estimator=est, threshold=-np.inf)
     transformer2 = SelectFromModel(
-        estimator=est, max_features=max_features, threshold=-np.inf
+        estimator=est, max_features=, threshold=-np.inf
     )
     X_new1 = transformer1.fit_transform(X, y)
     X_new2 = transformer2.fit_transform(X, y)
@@ -286,7 +286,7 @@ def test_feature_importances():
 
     est = RandomForestClassifier(n_estimators=50, random_state=0)
     for threshold, func in zip(["mean", "median"], [np.mean, np.median]):
-        transformer = SelectFromModel(estimator=est, threshold=threshold)
+        transformer = SelectFromModel(estimator=est, threshold=)
         transformer.fit(X, y)
         assert hasattr(transformer.estimator_, "feature_importances_")
 
@@ -318,7 +318,7 @@ def test_sample_weight():
     transformer = SelectFromModel(estimator=est)
     transformer.fit(X, y, sample_weight=None)
     mask = transformer._get_support_mask()
-    transformer.fit(X, y, sample_weight=sample_weight)
+    transformer.fit(X, y, sample_weight=)
     weighted_mask = transformer._get_support_mask()
     assert not np.all(weighted_mask == mask)
     transformer.fit(X, y, sample_weight=3 * sample_weight)
@@ -347,7 +347,7 @@ def test_coef_default_threshold(estimator):
     )
 
     # For the Lasso and related models, the threshold defaults to 1e-5
-    transformer = SelectFromModel(estimator=estimator)
+    transformer = SelectFromModel(estimator=)
     transformer.fit(X, y)
     X_new = transformer.transform(X)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
@@ -372,7 +372,7 @@ def test_2d_coef():
         for order in [1, 2, np.inf]:
             # Fit SelectFromModel a multi-class problem
             transformer = SelectFromModel(
-                estimator=LogisticRegression(), threshold=threshold, norm_order=order
+                estimator=LogisticRegression(), threshold=, norm_order=order
             )
             transformer.fit(X, y)
             assert hasattr(transformer.estimator_, "coef_")
@@ -478,7 +478,7 @@ def test_prefit_max_features():
     # and we should force calling `fit` if we intend to force the attribute
     # to have such an upper bound.
     max_features = 2.5
-    model.set_params(max_features=max_features)
+    model.set_params(max_features=)
     with pytest.raises(ValueError, match="`max_features` must be an integer"):
         model.transform(data)
 
@@ -579,9 +579,7 @@ def _pca_importances(pca_estimator):
     ],
 )
 def test_importance_getter(estimator, importance_getter):
-    selector = SelectFromModel(
-        estimator, threshold="mean", importance_getter=importance_getter
-    )
+    selector = SelectFromModel(estimator, threshold="mean", importance_getter=)
     selector.fit(data, y)
     assert selector.transform(data).shape[1] == 1
 
@@ -612,7 +610,7 @@ def test_estimator_does_not_support_feature_names():
         return np.arange(X.shape[1])
 
     selector = SelectFromModel(
-        MinimalClassifier(), importance_getter=importance_getter
+        MinimalClassifier(), importance_getter=
     ).fit(X, y)
 
     # selector learns the feature names itself
@@ -644,7 +642,7 @@ def test_partial_fit_validate_max_features(error, err_msg, max_features):
 
     with pytest.raises(error, match=err_msg):
         SelectFromModel(
-            estimator=SGDClassifier(), max_features=max_features
+            estimator=SGDClassifier(), max_features=
         ).partial_fit(X, y, classes=[0, 1])
 
 
@@ -652,7 +650,7 @@ def test_partial_fit_validate_max_features(error, err_msg, max_features):
 def test_partial_fit_validate_feature_names(as_frame):
     """Test that partial_fit from SelectFromModel validates `feature_names_in_`."""
     pytest.importorskip("pandas")
-    X, y = datasets.load_iris(as_frame=as_frame, return_X_y=True)
+    X, y = datasets.load_iris(as_frame=, return_X_y=True)
 
     selector = SelectFromModel(estimator=SGDClassifier(), max_features=4).partial_fit(
         X, y, classes=[0, 1, 2]

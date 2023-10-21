@@ -113,7 +113,7 @@ if __name__ == "__main__":
     # Set custom automatic method selection
     sampling_algorithm["custom-auto"] = (
         lambda n_population, n_samples, random_state=None: sample_without_replacement(
-            n_population, n_samples, method="auto", random_state=random_state
+            n_population, n_samples, method="auto", random_state=
         )
     )
 
@@ -124,7 +124,7 @@ if __name__ == "__main__":
             n_population,
             n_samples,
             method="tracking_selection",
-            random_state=random_state,
+            random_state=,
         )
     )
 
@@ -135,7 +135,7 @@ if __name__ == "__main__":
             n_population,
             n_samples,
             method="reservoir_sampling",
-            random_state=random_state,
+            random_state=,
         )
     )
 
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     # Set custom reservoir based method
     sampling_algorithm["custom-pool"] = (
         lambda n_population, n_samples, random_state=None: sample_without_replacement(
-            n_population, n_samples, method="pool", random_state=random_state
+            n_population, n_samples, method="pool", random_state=
         )
     )
 

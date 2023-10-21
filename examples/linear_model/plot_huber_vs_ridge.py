@@ -45,7 +45,7 @@ colors = ["r-", "b-", "y-", "m-"]
 x = np.linspace(X.min(), X.max(), 7)
 epsilon_values = [1, 1.5, 1.75, 1.9]
 for k, epsilon in enumerate(epsilon_values):
-    huber = HuberRegressor(alpha=0.0, epsilon=epsilon)
+    huber = HuberRegressor(alpha=0.0, epsilon=)
     huber.fit(X, y)
     coef_ = huber.coef_ * x + huber.intercept_
     plt.plot(x, coef_, colors[k], label="huber loss, %s" % epsilon)

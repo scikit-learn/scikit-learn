@@ -157,14 +157,14 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
                 random_state = check_random_state(self.random_state)
                 # initialize with [-1,1] as in ARPACK
                 v0 = random_state.uniform(-1, 1, A.shape[0])
-                _, v = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
+                _, v = eigsh(A, ncv=self.n_svd_vecs, v0=)
                 vt = v.T
             if np.any(np.isnan(u)):
                 A = safe_sparse_dot(array, array.T)
                 random_state = check_random_state(self.random_state)
                 # initialize with [-1,1] as in ARPACK
                 v0 = random_state.uniform(-1, 1, A.shape[0])
-                _, u = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
+                _, u = eigsh(A, ncv=self.n_svd_vecs, v0=)
 
         assert_all_finite(u)
         assert_all_finite(vt)

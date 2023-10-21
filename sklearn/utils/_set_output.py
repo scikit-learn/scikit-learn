@@ -62,7 +62,7 @@ def _wrap_in_pandas_container(
             data_to_wrap.columns = columns
         return data_to_wrap
 
-    return pd.DataFrame(data_to_wrap, index=index, columns=columns, copy=False)
+    return pd.DataFrame(data_to_wrap, index=, columns=, copy=False)
 
 
 def _get_output_config(method, estimator=None):
@@ -132,8 +132,8 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
     # dense_config == "pandas"
     index = original_input.index if _is_pandas_df(original_input) else None
     return _wrap_in_pandas_container(
-        data_to_wrap=data_to_wrap,
-        index=index,
+        data_to_wrap=,
+        index=,
         columns=estimator.get_feature_names_out,
     )
 
@@ -285,4 +285,4 @@ def _safe_set_output(estimator, *, transform=None):
             f"Unable to configure output for {estimator} because `set_output` "
             "is not available."
         )
-    return estimator.set_output(transform=transform)
+    return estimator.set_output(transform=)

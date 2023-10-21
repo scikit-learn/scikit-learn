@@ -381,7 +381,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 routed_params = process_routing(
                     self,
                     "fit",
-                    sample_weight=sample_weight,
+                    sample_weight=,
                     **fit_params,
                 )
             else:
@@ -431,11 +431,11 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                         clone(estimator),
                         X,
                         y,
-                        train=train,
-                        test=test,
+                        train=,
+                        test=,
                         method=self.method,
                         classes=self.classes_,
-                        sample_weight=sample_weight,
+                        sample_weight=,
                         fit_params=routed_params.estimator.fit,
                     )
                     for train, test in cv.split(X, y, **routed_params.splitter.split)
@@ -446,9 +446,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 pred_method = partial(
                     cross_val_predict,
                     estimator=this_estimator,
-                    X=X,
-                    y=y,
-                    cv=cv,
+                    X=,
+                    y=,
+                    cv=,
                     method=method_name,
                     n_jobs=self.n_jobs,
                     params=routed_params.estimator.fit,
@@ -681,7 +681,7 @@ def _compute_predictions(pred_method, method_name, X, n_classes):
         The predictions. Note if there are 2 classes, array is of shape
         (X.shape[0], 1).
     """
-    predictions = pred_method(X=X)
+    predictions = pred_method(X=)
 
     if method_name == "decision_function":
         if predictions.ndim == 1:
@@ -727,7 +727,7 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     -------
     pipeline : _CalibratedClassifier instance
     """
-    Y = label_binarize(y, classes=classes)
+    Y = label_binarize(y, classes=)
     label_encoder = LabelEncoder().fit(classes)
     pos_class_indices = label_encoder.transform(clf.classes_)
     calibrators = []
@@ -739,7 +739,7 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
         calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
         calibrators.append(calibrator)
 
-    pipeline = _CalibratedClassifier(clf, calibrators, method=method, classes=classes)
+    pipeline = _CalibratedClassifier(clf, calibrators, method=, classes=)
     return pipeline
 
 
@@ -893,7 +893,7 @@ def _sigmoid_calibration(
         l, g = bin_loss.loss_gradient(
             y_true=T,
             raw_prediction=-(AB[0] * F + AB[1]),
-            sample_weight=sample_weight,
+            sample_weight=,
         )
         loss = l.sum()
         grad = np.array([-g @ F, -g.sum()])
@@ -1206,7 +1206,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.calibration.CalibrationDisplay`
             Object that stores computed values.
         """
-        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=, name=)
 
         info_pos_label = (
             f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
@@ -1228,7 +1228,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
         xlabel = f"Mean predicted probability {info_pos_label}"
         ylabel = f"Fraction of positives {info_pos_label}"
-        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(xlabel=, ylabel=)
 
         return self
 
@@ -1340,19 +1340,19 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             X,
             y,
             response_method="predict_proba",
-            pos_label=pos_label,
-            name=name,
+            pos_label=,
+            name=,
         )
 
         return cls.from_predictions(
             y,
             y_prob,
-            n_bins=n_bins,
-            strategy=strategy,
-            pos_label=pos_label,
-            name=name,
-            ref_line=ref_line,
-            ax=ax,
+            n_bins=,
+            strategy=,
+            pos_label=,
+            name=,
+            ref_line=,
+            ax=,
             **kwargs,
         )
 
@@ -1453,18 +1453,18 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> plt.show()
         """
         pos_label_validated, name = cls._validate_from_predictions_params(
-            y_true, y_prob, sample_weight=None, pos_label=pos_label, name=name
+            y_true, y_prob, sample_weight=None, pos_label=, name=
         )
 
         prob_true, prob_pred = calibration_curve(
-            y_true, y_prob, n_bins=n_bins, strategy=strategy, pos_label=pos_label
+            y_true, y_prob, n_bins=, strategy=, pos_label=
         )
 
         disp = cls(
-            prob_true=prob_true,
-            prob_pred=prob_pred,
-            y_prob=y_prob,
+            prob_true=,
+            prob_pred=,
+            y_prob=,
             estimator_name=name,
             pos_label=pos_label_validated,
         )
-        return disp.plot(ax=ax, ref_line=ref_line, **kwargs)
+        return disp.plot(ax=, ref_line=, **kwargs)

@@ -68,13 +68,13 @@ for X, y in data_list:
     # We specify that if the scores don't improve by at least 0.01 for the last
     # 10 stages, stop fitting additional stages
     gbes = ensemble.GradientBoostingClassifier(
-        n_estimators=n_estimators,
+        n_estimators=,
         validation_fraction=0.2,
         n_iter_no_change=5,
         tol=0.01,
         random_state=0,
     )
-    gb = ensemble.GradientBoostingClassifier(n_estimators=n_estimators, random_state=0)
+    gb = ensemble.GradientBoostingClassifier(n_estimators=, random_state=0)
     start = time.time()
     gb.fit(X_train, y_train)
     time_gb.append(time.time() - start)

@@ -683,7 +683,7 @@ def partial_dependence(
         elif categorical_features.dtype.kind in ("i", "O", "U"):
             # categorical features provided as a list of indices or feature names
             categorical_features_idx = [
-                _get_feature_index(cat, feature_names=feature_names)
+                _get_feature_index(cat, feature_names=)
                 for cat in categorical_features
             ]
             is_categorical = [

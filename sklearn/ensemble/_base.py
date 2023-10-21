@@ -22,7 +22,7 @@ def _fit_single_estimator(
     if sample_weight is not None:
         try:
             with _print_elapsed_time(message_clsname, message):
-                estimator.fit(X, y, sample_weight=sample_weight)
+                estimator.fit(X, y, sample_weight=)
         except TypeError as exc:
             if "unexpected keyword argument 'sample_weight'" in str(exc):
                 raise TypeError(
@@ -331,4 +331,4 @@ class _BaseHeterogeneousEnsemble(
             Parameter and estimator names mapped to their values or parameter
             names mapped to their values.
         """
-        return super()._get_params("estimators", deep=deep)
+        return super()._get_params("estimators", deep=)

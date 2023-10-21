@@ -111,7 +111,7 @@ def discretize(
 
     random_state = check_random_state(random_state)
 
-    vectors = as_float_array(vectors, copy=copy)
+    vectors = as_float_array(vectors, copy=)
 
     eps = np.finfo(float).eps
     n_samples, n_components = vectors.shape
@@ -349,15 +349,15 @@ def spectral_clustering(
     """
 
     clusterer = SpectralClustering(
-        n_clusters=n_clusters,
-        n_components=n_components,
-        eigen_solver=eigen_solver,
-        random_state=random_state,
-        n_init=n_init,
+        n_clusters=,
+        n_components=,
+        eigen_solver=,
+        random_state=,
+        n_init=,
         affinity="precomputed",
-        eigen_tol=eigen_tol,
-        assign_labels=assign_labels,
-        verbose=verbose,
+        eigen_tol=,
+        assign_labels=,
+        verbose=,
     ).fit(affinity)
 
     return clusterer.labels_
@@ -701,7 +701,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             estimator = NearestNeighbors(
                 n_neighbors=self.n_neighbors, n_jobs=self.n_jobs, metric="precomputed"
             ).fit(X)
-            connectivity = estimator.kneighbors_graph(X=X, mode="connectivity")
+            connectivity = estimator.kneighbors_graph(X=, mode="connectivity")
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
         elif self.affinity == "precomputed":
             self.affinity_matrix_ = X
@@ -729,9 +729,9 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         # See spectral_embedding documentation.
         maps = spectral_embedding(
             self.affinity_matrix_,
-            n_components=n_components,
+            n_components=,
             eigen_solver=self.eigen_solver,
-            random_state=random_state,
+            random_state=,
             eigen_tol=self.eigen_tol,
             drop_first=False,
         )
@@ -742,14 +742,14 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             _, self.labels_, _ = k_means(
                 maps,
                 self.n_clusters,
-                random_state=random_state,
+                random_state=,
                 n_init=self.n_init,
                 verbose=self.verbose,
             )
         elif self.assign_labels == "cluster_qr":
             self.labels_ = cluster_qr(maps)
         else:
-            self.labels_ = discretize(maps, random_state=random_state)
+            self.labels_ = discretize(maps, random_state=)
 
         return self
 

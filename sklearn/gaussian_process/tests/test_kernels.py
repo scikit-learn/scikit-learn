@@ -64,7 +64,7 @@ kernels = [
 for metric in PAIRWISE_KERNEL_FUNCTIONS:
     if metric in ["additive_chi2", "chi2"]:
         continue
-    kernels.append(PairwiseKernel(gamma=1.0, metric=metric))
+    kernels.append(PairwiseKernel(gamma=1.0, metric=))
 
 
 @pytest.mark.parametrize("kernel", kernels)
@@ -300,7 +300,7 @@ def test_matern_kernel():
     # [0.5 + tiny, 1.5 + tiny, 2.5 + tiny]
     tiny = 1e-10
     for nu in [0.5, 1.5, 2.5]:
-        K1 = Matern(nu=nu, length_scale=1.0)(X)
+        K1 = Matern(nu=, length_scale=1.0)(X)
         K2 = Matern(nu=nu + tiny, length_scale=1.0)(X)
         assert_array_almost_equal(K1, K2)
     # test that coef0==large is close to RBF

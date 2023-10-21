@@ -53,7 +53,7 @@ class MockDataFrame:
         return not self == other
 
     def take(self, indices, axis=0):
-        return MockDataFrame(self.array.take(indices, axis=axis))
+        return MockDataFrame(self.array.take(indices, axis=))
 
 
 class CheckingClassifier(ClassifierMixin, BaseEstimator):

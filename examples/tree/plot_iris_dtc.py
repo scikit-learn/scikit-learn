@@ -52,7 +52,7 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]])
         X,
         cmap=plt.cm.RdYlBu,
         response_method="predict",
-        ax=ax,
+        ax=,
         xlabel=iris.feature_names[pair[0]],
         ylabel=iris.feature_names[pair[1]],
     )

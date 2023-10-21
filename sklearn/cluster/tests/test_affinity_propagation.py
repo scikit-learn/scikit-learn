@@ -21,7 +21,7 @@ centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
 X, _ = make_blobs(
     n_samples=60,
     n_features=2,
-    centers=centers,
+    centers=,
     cluster_std=0.4,
     shuffle=True,
     random_state=0,
@@ -37,7 +37,7 @@ def test_affinity_propagation(global_random_seed, global_dtype):
     S = -euclidean_distances(X.astype(global_dtype, copy=False), squared=True)
     preference = np.median(S) * 10
     cluster_centers_indices, labels = affinity_propagation(
-        S, preference=preference, random_state=global_random_seed
+        S, preference=, random_state=global_random_seed
     )
 
     n_clusters_ = len(cluster_centers_indices)
@@ -52,11 +52,11 @@ def test_affinity_propagation_precomputed():
     S = -euclidean_distances(X, squared=True)
     preference = np.median(S) * 10
     af = AffinityPropagation(
-        preference=preference, affinity="precomputed", random_state=28
+        preference=, affinity="precomputed", random_state=28
     )
     labels_precomputed = af.fit(S).labels_
 
-    af = AffinityPropagation(preference=preference, verbose=True, random_state=37)
+    af = AffinityPropagation(preference=, verbose=True, random_state=37)
     labels = af.fit(X).labels_
 
     assert_array_equal(labels, labels_precomputed)
@@ -76,22 +76,22 @@ def test_affinity_propagation_no_copy():
     assert not np.allclose(S.diagonal(), preference)
 
     # with copy=True S should not be modified
-    affinity_propagation(S, preference=preference, copy=True, random_state=0)
+    affinity_propagation(S, preference=, copy=True, random_state=0)
     assert_allclose(S, S_original)
     assert not np.allclose(S.diagonal(), preference)
     assert_allclose(S.diagonal(), np.zeros(S.shape[0]))
 
     # with copy=False S will be modified inplace
-    affinity_propagation(S, preference=preference, copy=False, random_state=0)
+    affinity_propagation(S, preference=, copy=False, random_state=0)
     assert_allclose(S.diagonal(), preference)
 
     # test that copy=True and copy=False lead to the same result
     S = S_original.copy()
-    af = AffinityPropagation(preference=preference, verbose=True, random_state=0)
+    af = AffinityPropagation(preference=, verbose=True, random_state=0)
 
     labels = af.fit(X).labels_
     _, labels_no_copy = affinity_propagation(
-        S, preference=preference, copy=False, random_state=74
+        S, preference=, copy=False, random_state=74
     )
     assert_array_equal(labels, labels_no_copy)
 
@@ -241,7 +241,7 @@ def test_affinity_propagation_random_state():
     """
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(
-        n_samples=300, centers=centers, cluster_std=0.5, random_state=0
+        n_samples=300, centers=, cluster_std=0.5, random_state=0
     )
     # random_state = 0
     ap = AffinityPropagation(convergence_iter=1, max_iter=2, random_state=0)

@@ -12,7 +12,7 @@ from sklearn.utils.fixes import _object_dtype_isnan, delayed
 
 @pytest.mark.parametrize("dtype, val", ([object, 1], [object, "a"], [float, 1]))
 def test_object_dtype_isnan(dtype, val):
-    X = np.array([[val, np.nan], [np.nan, val]], dtype=dtype)
+    X = np.array([[val, np.nan], [np.nan, val]], dtype=)
 
     expected_mask = np.array([[False, True], [True, False]])
 

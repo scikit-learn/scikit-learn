@@ -242,7 +242,7 @@ def check_cv_coverage(cv, X, y, groups, expected_n_splits):
     collected_test_samples = set()
     iterations = 0
     for train, test in cv.split(X, y, groups):
-        check_valid_split(train, test, n_samples=n_samples)
+        check_valid_split(train, test, n_samples=)
         iterations += 1
         collected_test_samples.update(test)
 
@@ -426,8 +426,8 @@ def test_stratified_kfold_ratios(k, shuffle, kfold):
 
     test_sizes = []
     random_state = None if not shuffle else 0
-    skf = kfold(k, random_state=random_state, shuffle=shuffle)
-    for train, test in skf.split(X, y, groups=groups):
+    skf = kfold(k, random_state=, shuffle=)
+    for train, test in skf.split(X, y, groups=):
         assert_allclose(np.bincount(y[train]) / len(train), distr, atol=0.02)
         assert_allclose(np.bincount(y[test]) / len(test), distr, atol=0.02)
         test_sizes.append(len(test))
@@ -454,8 +454,8 @@ def test_stratified_kfold_label_invariance(k, shuffle, kfold):
         return [
             (list(train), list(test))
             for train, test in kfold(
-                k, random_state=random_state, shuffle=shuffle
-            ).split(X, y, groups=groups)
+                k, random_state=, shuffle=
+            ).split(X, y, groups=)
         ]
 
     splits_base = get_splits(y)
@@ -486,7 +486,7 @@ def test_stratifiedkfold_balance(kfold):
     groups = np.arange(len(y))
 
     for shuffle in (True, False):
-        cv = kfold(3, shuffle=shuffle)
+        cv = kfold(3, shuffle=)
         for i in range(11, 17):
             skf = cv.split(X[:i], y[:i], groups[:i])
             sizes = [len(test) for _, test in skf]
@@ -587,8 +587,8 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
 
     n_splits = 3
 
-    cv = KFold(n_splits=n_splits, shuffle=False)
-    mean_score = cross_val_score(model, X, y, cv=cv).mean()
+    cv = KFold(n_splits=, shuffle=False)
+    mean_score = cross_val_score(model, X, y, cv=).mean()
     assert 0.92 > mean_score
     assert mean_score > 0.80
 
@@ -597,11 +597,11 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     # by yielding a seriously overestimated score:
 
     cv = KFold(n_splits, shuffle=True, random_state=0)
-    mean_score = cross_val_score(model, X, y, cv=cv).mean()
+    mean_score = cross_val_score(model, X, y, cv=).mean()
     assert mean_score > 0.92
 
     cv = KFold(n_splits, shuffle=True, random_state=1)
-    mean_score = cross_val_score(model, X, y, cv=cv).mean()
+    mean_score = cross_val_score(model, X, y, cv=).mean()
     assert mean_score > 0.92
 
     # Similarly, StratifiedKFold should try to shuffle the data as little
@@ -612,7 +612,7 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     # non-shuffled KFold
 
     cv = StratifiedKFold(n_splits)
-    mean_score = cross_val_score(model, X, y, cv=cv).mean()
+    mean_score = cross_val_score(model, X, y, cv=).mean()
     assert 0.94 > mean_score
     assert mean_score > 0.80
 
@@ -684,8 +684,8 @@ def test_stratified_group_kfold_against_group_kfold(cls_distr, n_groups):
     # Check that given sufficient amount of samples StratifiedGroupKFold
     # produces better stratified folds than regular GroupKFold
     n_splits = 5
-    sgkf = StratifiedGroupKFold(n_splits=n_splits)
-    gkf = GroupKFold(n_splits=n_splits)
+    sgkf = StratifiedGroupKFold(n_splits=)
+    gkf = GroupKFold(n_splits=)
     rng = np.random.RandomState(0)
     n_points = 1000
     y = rng.choice(2, size=n_points, p=cls_distr)
@@ -731,7 +731,7 @@ def test_shuffle_split_default_test_size(split_class, train_size, exp_train, exp
     X = np.ones(10)
     y = np.ones(10)
 
-    X_train, X_test = next(split_class(train_size=train_size).split(X, y))
+    X_train, X_test = next(split_class(train_size=).split(X, y))
 
     assert len(X_train) == exp_train
     assert len(X_test) == exp_test
@@ -747,7 +747,7 @@ def test_group_shuffle_split_default_test_size(train_size, exp_train, exp_test):
     y = np.ones(10)
     groups = range(10)
 
-    X_train, X_test = next(GroupShuffleSplit(train_size=train_size).split(X, y, groups))
+    X_train, X_test = next(GroupShuffleSplit(train_size=).split(X, y, groups))
 
     assert len(X_train) == exp_train
     assert len(X_test) == exp_test
@@ -784,7 +784,7 @@ def test_stratified_shuffle_split_respects_test_size():
     test_size = 5
     train_size = 10
     sss = StratifiedShuffleSplit(
-        6, test_size=test_size, train_size=train_size, random_state=0
+        6, test_size=, train_size=, random_state=0
     ).split(np.ones(len(y)), y)
     for train, test in sss:
         assert len(train) == train_size
@@ -848,7 +848,7 @@ def test_stratified_shuffle_split_even():
     for n_samples in (6, 22):
         groups = np.array((n_samples // 2) * [0, 1])
         splits = StratifiedShuffleSplit(
-            n_splits=n_splits, test_size=1.0 / n_folds, random_state=0
+            n_splits=, test_size=1.0 / n_folds, random_state=0
         )
 
         train_counts = [0] * n_samples
@@ -888,7 +888,7 @@ def test_stratified_shuffle_split_overlap_train_test_bug():
 
     sss = StratifiedShuffleSplit(n_splits=1, test_size=0.5, random_state=0)
 
-    train, test = next(sss.split(X=X, y=y))
+    train, test = next(sss.split(X=, y=))
 
     # no overlap
     assert_array_equal(np.intersect1d(train, test), [])
@@ -905,7 +905,7 @@ def test_stratified_shuffle_split_multilabel():
     ]:
         X = np.ones_like(y)
         sss = StratifiedShuffleSplit(n_splits=1, test_size=0.5, random_state=0)
-        train, test = next(sss.split(X=X, y=y))
+        train, test = next(sss.split(X=, y=))
         y_train = y[train]
         y_test = y[test]
 
@@ -934,7 +934,7 @@ def test_stratified_shuffle_split_multilabel_many_labels():
     X = np.ones_like(y)
 
     sss = StratifiedShuffleSplit(n_splits=1, test_size=0.5, random_state=0)
-    train, test = next(sss.split(X=X, y=y))
+    train, test = next(sss.split(X=, y=))
     y_train = y[train]
     y_test = y[test]
 
@@ -967,7 +967,7 @@ def test_group_shuffle_split():
         X = y = np.ones(len(groups_i))
         n_splits = 6
         test_size = 1.0 / 3
-        slo = GroupShuffleSplit(n_splits, test_size=test_size, random_state=0)
+        slo = GroupShuffleSplit(n_splits, test_size=, random_state=0)
 
         # Make sure the repr works
         repr(slo)
@@ -1060,10 +1060,10 @@ def test_leave_group_out_changing_groups():
     groups = np.array([0, 1, 2, 1, 1, 2, 0, 0])
     X = np.ones(len(groups))
     groups_changing = np.array(groups, copy=True)
-    lolo = LeaveOneGroupOut().split(X, groups=groups)
-    lolo_changing = LeaveOneGroupOut().split(X, groups=groups)
-    lplo = LeavePGroupsOut(n_groups=2).split(X, groups=groups)
-    lplo_changing = LeavePGroupsOut(n_groups=2).split(X, groups=groups)
+    lolo = LeaveOneGroupOut().split(X, groups=)
+    lolo_changing = LeaveOneGroupOut().split(X, groups=)
+    lplo = LeavePGroupsOut(n_groups=2).split(X, groups=)
+    lplo_changing = LeavePGroupsOut(n_groups=2).split(X, groups=)
     groups_changing[:] = 0
     for llo, llo_changing in [(lolo, lolo_changing), (lplo, lplo_changing)]:
         for (train, test), (train_chan, test_chan) in zip(llo, llo_changing):
@@ -1071,9 +1071,9 @@ def test_leave_group_out_changing_groups():
             assert_array_equal(test, test_chan)
 
     # n_splits = no of 2 (p) group combinations of the unique groups = 3C2 = 3
-    assert 3 == LeavePGroupsOut(n_groups=2).get_n_splits(X, y=X, groups=groups)
+    assert 3 == LeavePGroupsOut(n_groups=2).get_n_splits(X, y=X, groups=)
     # n_splits = no of unique groups (C(uniq_lbls, 1) = n_unique_groups)
-    assert 3 == LeaveOneGroupOut().get_n_splits(X, y=X, groups=groups)
+    assert 3 == LeaveOneGroupOut().get_n_splits(X, y=X, groups=)
 
 
 def test_leave_group_out_order_dependence():
@@ -1082,7 +1082,7 @@ def test_leave_group_out_order_dependence():
     groups = np.array([2, 2, 0, 0, 1, 1])
     X = np.ones(len(groups))
 
-    splits = iter(LeaveOneGroupOut().split(X, groups=groups))
+    splits = iter(LeaveOneGroupOut().split(X, groups=))
 
     expected_indices = [
         ([0, 1, 4, 5], [2, 3]),
@@ -1144,7 +1144,7 @@ def test_repeated_cv_value_errors():
 @pytest.mark.parametrize("RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold])
 def test_repeated_cv_repr(RepeatedCV):
     n_splits, n_repeats = 2, 6
-    repeated_cv = RepeatedCV(n_splits=n_splits, n_repeats=n_repeats)
+    repeated_cv = RepeatedCV(n_splits=, n_repeats=)
     repeated_cv_repr = "{}(n_repeats=6, n_splits=2, random_state=None)".format(
         repeated_cv.__class__.__name__
     )
@@ -1154,7 +1154,7 @@ def test_repeated_cv_repr(RepeatedCV):
 def test_repeated_kfold_determinstic_split():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
     random_state = 258173307
-    rkf = RepeatedKFold(n_splits=2, n_repeats=2, random_state=random_state)
+    rkf = RepeatedKFold(n_splits=2, n_repeats=2, random_state=)
 
     # split should produce same and deterministic splits on
     # each call
@@ -1183,7 +1183,7 @@ def test_repeated_kfold_determinstic_split():
 def test_get_n_splits_for_repeated_kfold():
     n_splits = 3
     n_repeats = 4
-    rkf = RepeatedKFold(n_splits=n_splits, n_repeats=n_repeats)
+    rkf = RepeatedKFold(n_splits=, n_repeats=)
     expected_n_splits = n_splits * n_repeats
     assert expected_n_splits == rkf.get_n_splits()
 
@@ -1191,7 +1191,7 @@ def test_get_n_splits_for_repeated_kfold():
 def test_get_n_splits_for_repeated_stratified_kfold():
     n_splits = 3
     n_repeats = 4
-    rskf = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats)
+    rskf = RepeatedStratifiedKFold(n_splits=, n_repeats=)
     expected_n_splits = n_splits * n_repeats
     assert expected_n_splits == rskf.get_n_splits()
 
@@ -1200,7 +1200,7 @@ def test_repeated_stratified_kfold_determinstic_split():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
     y = [1, 1, 1, 0, 0]
     random_state = 1944695409
-    rskf = RepeatedStratifiedKFold(n_splits=2, n_repeats=2, random_state=random_state)
+    rskf = RepeatedStratifiedKFold(n_splits=2, n_repeats=2, random_state=)
 
     # split should produce same and deterministic splits on
     # each call
@@ -1260,7 +1260,7 @@ def test_train_test_split_errors():
 def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
     # Check that the default value has the expected behavior, i.e. complement
     # train_size unless both are specified.
-    X_train, X_test = train_test_split(X, train_size=train_size)
+    X_train, X_test = train_test_split(X, train_size=)
 
     assert len(X_train) == exp_train
     assert len(X_test) == exp_test
@@ -1285,13 +1285,13 @@ def test_array_api_train_test_split(shuffle, stratify, array_namepsace, device, 
     y = np.arange(10)
 
     X_np = X.astype(dtype)
-    X_xp = xp.asarray(X_np, device=device)
+    X_xp = xp.asarray(X_np, device=)
 
     y_np = y.astype(dtype)
-    y_xp = xp.asarray(y_np, device=device)
+    y_xp = xp.asarray(y_np, device=)
 
     X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
-        X_np, y, random_state=0, shuffle=shuffle, stratify=stratify
+        X_np, y, random_state=0, shuffle=, stratify=
     )
     with config_context(array_api_dispatch=True):
         if stratify is not None:
@@ -1299,7 +1299,7 @@ def test_array_api_train_test_split(shuffle, stratify, array_namepsace, device, 
         else:
             stratify_xp = stratify
         X_train_xp, X_test_xp, y_train_xp, y_test_xp = train_test_split(
-            X_xp, y_xp, shuffle=shuffle, stratify=stratify_xp, random_state=0
+            X_xp, y_xp, shuffle=, stratify=stratify_xp, random_state=0
         )
 
         # Check that namespace is preserved, has to happen with
@@ -1321,11 +1321,11 @@ def test_array_api_train_test_split(shuffle, stratify, array_namepsace, device, 
     assert y_test_xp.dtype == y_xp.dtype
 
     assert_allclose(
-        _convert_to_numpy(X_train_xp, xp=xp),
+        _convert_to_numpy(X_train_xp, xp=),
         X_train_np,
     )
     assert_allclose(
-        _convert_to_numpy(X_test_xp, xp=xp),
+        _convert_to_numpy(X_test_xp, xp=),
         X_test_np,
     )
 
@@ -1363,7 +1363,7 @@ def test_train_test_split(coo_container):
     y = np.array([1, 1, 1, 1, 2, 2, 2, 2])
     for test_size, exp_test_size in zip([2, 4, 0.25, 0.5, 0.75], [2, 4, 2, 4, 6]):
         train, test = train_test_split(
-            y, test_size=test_size, stratify=y, random_state=0
+            y, test_size=, stratify=y, random_state=0
         )
         assert len(test) == exp_test_size
         assert len(test) + len(train) == len(y)
@@ -1373,7 +1373,7 @@ def test_train_test_split(coo_container):
     # test unshuffled split
     y = np.arange(10)
     for test_size in [2, 0.2]:
-        train, test = train_test_split(y, shuffle=False, test_size=test_size)
+        train, test = train_test_split(y, shuffle=False, test_size=)
         assert_array_equal(test, [8, 9])
         assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7])
 
@@ -1471,7 +1471,7 @@ def test_train_test_split_list_input():
 )
 def test_shufflesplit_errors(test_size, train_size):
     with pytest.raises(ValueError):
-        next(ShuffleSplit(test_size=test_size, train_size=train_size).split(X))
+        next(ShuffleSplit(test_size=, train_size=).split(X))
 
 
 def test_shufflesplit_reproducible():
@@ -1600,7 +1600,7 @@ def test_group_kfold(kfold):
     len(np.unique(groups))
     # Get the test fold indices from the test set indices of each fold
     folds = np.zeros(n_samples)
-    lkf = kfold(n_splits=n_splits)
+    lkf = kfold(n_splits=)
     for i, (_, test) in enumerate(lkf.split(X, y, groups)):
         folds[test] = i
 
@@ -1881,7 +1881,7 @@ def test_nested_cv():
             error_score="raise",
         )
         cross_val_score(
-            gs, X=X, y=y, groups=groups, cv=outer_cv, params={"groups": groups}
+            gs, X=, y=, groups=, cv=outer_cv, params={"groups": groups}
         )
 
 

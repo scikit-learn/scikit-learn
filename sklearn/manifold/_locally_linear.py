@@ -113,11 +113,11 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     sklearn.neighbors.kneighbors_graph
     sklearn.neighbors.radius_neighbors_graph
     """
-    knn = NearestNeighbors(n_neighbors=n_neighbors + 1, n_jobs=n_jobs).fit(X)
+    knn = NearestNeighbors(n_neighbors=n_neighbors + 1, n_jobs=).fit(X)
     X = knn._fit_X
     n_samples = knn.n_samples_fit_
     ind = knn.kneighbors(X, return_distance=False)[:, 1:]
-    data = barycenter_weights(X, X, ind, reg=reg)
+    data = barycenter_weights(X, X, ind, reg=)
     indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
     return csr_matrix((data.ravel(), ind.ravel(), indptr), shape=(n_samples, n_samples))
 
@@ -174,7 +174,7 @@ def null_space(
         v0 = _init_arpack_v0(M.shape[0], random_state)
         try:
             eigen_values, eigen_vectors = eigsh(
-                M, k + k_skip, sigma=0.0, tol=tol, maxiter=max_iter, v0=v0
+                M, k + k_skip, sigma=0.0, tol=, maxiter=max_iter, v0=
             )
         except RuntimeError as e:
             raise ValueError(
@@ -314,7 +314,7 @@ def locally_linear_embedding(
     if method not in ("standard", "hessian", "modified", "ltsa"):
         raise ValueError("unrecognized method '%s'" % method)
 
-    nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1, n_jobs=n_jobs)
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1, n_jobs=)
     nbrs.fit(X)
     X = nbrs._fit_X
 
@@ -336,9 +336,7 @@ def locally_linear_embedding(
     M_sparse = eigen_solver != "dense"
 
     if method == "standard":
-        W = barycenter_kneighbors_graph(
-            nbrs, n_neighbors=n_neighbors, reg=reg, n_jobs=n_jobs
-        )
+        W = barycenter_kneighbors_graph(nbrs, n_neighbors=, reg=, n_jobs=)
 
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
@@ -543,10 +541,10 @@ def locally_linear_embedding(
         M,
         n_components,
         k_skip=1,
-        eigen_solver=eigen_solver,
-        tol=tol,
-        max_iter=max_iter,
-        random_state=random_state,
+        eigen_solver=,
+        tol=,
+        max_iter=,
+        random_state=,
     )
 
 
@@ -752,7 +750,7 @@ class LocallyLinearEmbedding(
             method=self.method,
             hessian_tol=self.hessian_tol,
             modified_tol=self.modified_tol,
-            random_state=random_state,
+            random_state=,
             reg=self.reg,
             n_jobs=self.n_jobs,
         )

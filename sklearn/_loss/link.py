@@ -170,10 +170,10 @@ class LogLink(BaseLink):
     interval_y_pred = Interval(0, np.inf, False, False)
 
     def link(self, y_pred, out=None):
-        return np.log(y_pred, out=out)
+        return np.log(y_pred, out=)
 
     def inverse(self, raw_prediction, out=None):
-        return np.exp(raw_prediction, out=out)
+        return np.exp(raw_prediction, out=)
 
 
 class LogitLink(BaseLink):
@@ -182,10 +182,10 @@ class LogitLink(BaseLink):
     interval_y_pred = Interval(0, 1, False, False)
 
     def link(self, y_pred, out=None):
-        return logit(y_pred, out=out)
+        return logit(y_pred, out=)
 
     def inverse(self, raw_prediction, out=None):
-        return expit(raw_prediction, out=out)
+        return expit(raw_prediction, out=)
 
 
 class HalfLogitLink(BaseLink):
@@ -197,7 +197,7 @@ class HalfLogitLink(BaseLink):
     interval_y_pred = Interval(0, 1, False, False)
 
     def link(self, y_pred, out=None):
-        out = logit(y_pred, out=out)
+        out = logit(y_pred, out=)
         out *= 0.5
         return out
 
@@ -260,7 +260,7 @@ class MultinomialLogit(BaseLink):
     def link(self, y_pred, out=None):
         # geometric mean as reference category
         gm = gmean(y_pred, axis=1)
-        return np.log(y_pred / gm[:, np.newaxis], out=out)
+        return np.log(y_pred / gm[:, np.newaxis], out=)
 
     def inverse(self, raw_prediction, out=None):
         if out is None:

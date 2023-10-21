@@ -115,13 +115,13 @@ def test_warm_start_early_stopping(GradientBoosting, X, y, scoring):
 
     n_iter_no_change = 5
     gb = GradientBoosting(
-        n_iter_no_change=n_iter_no_change,
+        n_iter_no_change=,
         max_iter=10000,
         early_stopping=True,
         random_state=42,
         warm_start=True,
         tol=1e-3,
-        scoring=scoring,
+        scoring=,
     )
     gb.fit(X, y)
     n_iter_first_fit = gb.n_iter_
@@ -197,7 +197,7 @@ def test_random_seeds_warm_start(GradientBoosting, X, y, rng_type):
             return np.random.RandomState(0)
 
     random_state = _get_rng(rng_type)
-    gb_1 = GradientBoosting(early_stopping=True, max_iter=2, random_state=random_state)
+    gb_1 = GradientBoosting(early_stopping=True, max_iter=2, random_state=)
     gb_1.set_params(scoring=check_scoring(gb_1))
     gb_1.fit(X, y)
     random_seed_1_1 = gb_1._random_seed
@@ -207,7 +207,7 @@ def test_random_seeds_warm_start(GradientBoosting, X, y, rng_type):
 
     random_state = _get_rng(rng_type)
     gb_2 = GradientBoosting(
-        early_stopping=True, max_iter=2, random_state=random_state, warm_start=True
+        early_stopping=True, max_iter=2, random_state=, warm_start=True
     )
     gb_2.set_params(scoring=check_scoring(gb_2))
     gb_2.fit(X, y)  # inits state

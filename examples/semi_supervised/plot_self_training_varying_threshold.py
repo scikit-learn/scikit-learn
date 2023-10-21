@@ -59,11 +59,11 @@ amount_labeled = np.empty((x_values.shape[0], n_splits))
 amount_iterations = np.empty((x_values.shape[0], n_splits))
 
 for i, threshold in enumerate(x_values):
-    self_training_clf = SelfTrainingClassifier(base_classifier, threshold=threshold)
+    self_training_clf = SelfTrainingClassifier(base_classifier, threshold=)
 
     # We need manual cross validation so that we don't treat -1 as a separate
     # class when computing accuracy
-    skfolds = StratifiedKFold(n_splits=n_splits)
+    skfolds = StratifiedKFold(n_splits=)
     for fold, (train_index, test_index) in enumerate(skfolds.split(X, y)):
         X_train = X[train_index]
         y_train = y[train_index]

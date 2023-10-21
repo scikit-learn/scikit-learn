@@ -158,19 +158,19 @@ def test_sparse_enet_not_as_toy_dataset(csc_container, alpha, fit_intercept, pos
     n_informative = 10
 
     X, y = make_sparse_data(
-        csc_container, n_samples, n_features, n_informative, positive=positive
+        csc_container, n_samples, n_features, n_informative, positive=
     )
 
     X_train, X_test = X[n_samples // 2 :], X[: n_samples // 2]
     y_train, y_test = y[n_samples // 2 :], y[: n_samples // 2]
 
     s_clf = ElasticNet(
-        alpha=alpha,
+        alpha=,
         l1_ratio=0.8,
-        fit_intercept=fit_intercept,
-        max_iter=max_iter,
+        fit_intercept=,
+        max_iter=,
         tol=1e-7,
-        positive=positive,
+        positive=,
         warm_start=True,
     )
     s_clf.fit(X_train, y_train)
@@ -180,12 +180,12 @@ def test_sparse_enet_not_as_toy_dataset(csc_container, alpha, fit_intercept, pos
 
     # check the convergence is the same as the dense version
     d_clf = ElasticNet(
-        alpha=alpha,
+        alpha=,
         l1_ratio=0.8,
-        fit_intercept=fit_intercept,
-        max_iter=max_iter,
+        fit_intercept=,
+        max_iter=,
         tol=1e-7,
-        positive=positive,
+        positive=,
         warm_start=True,
     )
     d_clf.fit(X_train.toarray(), y_train)
@@ -205,20 +205,18 @@ def test_sparse_lasso_not_as_toy_dataset(csc_container):
     n_samples = 100
     max_iter = 1000
     n_informative = 10
-    X, y = make_sparse_data(
-        csc_container, n_samples=n_samples, n_informative=n_informative
-    )
+    X, y = make_sparse_data(csc_container, n_samples=, n_informative=)
 
     X_train, X_test = X[n_samples // 2 :], X[: n_samples // 2]
     y_train, y_test = y[n_samples // 2 :], y[: n_samples // 2]
 
-    s_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-7)
+    s_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=, tol=1e-7)
     s_clf.fit(X_train, y_train)
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
     assert s_clf.score(X_test, y_test) > 0.85
 
     # check the convergence is the same as the dense version
-    d_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-7)
+    d_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=, tol=1e-7)
     d_clf.fit(X_train.toarray(), y_train)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
     assert d_clf.score(X_test, y_test) > 0.85
@@ -230,7 +228,7 @@ def test_sparse_lasso_not_as_toy_dataset(csc_container):
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_enet_multitarget(csc_container):
     n_targets = 3
-    X, y = make_sparse_data(csc_container, n_targets=n_targets)
+    X, y = make_sparse_data(csc_container, n_targets=)
 
     estimator = ElasticNet(alpha=0.01, precompute=False)
     # XXX: There is a bug when precompute is not False!
@@ -254,9 +252,9 @@ def test_path_parameters(csc_container):
     max_iter = 50
     n_alphas = 10
     clf = ElasticNetCV(
-        n_alphas=n_alphas,
+        n_alphas=,
         eps=1e-3,
-        max_iter=max_iter,
+        max_iter=,
         l1_ratio=0.5,
         fit_intercept=False,
     )
@@ -278,8 +276,8 @@ def test_sparse_dense_equality(
     Model, fit_intercept, n_samples, n_features, with_sample_weight, csc_container
 ):
     X, y = make_regression(
-        n_samples=n_samples,
-        n_features=n_features,
+        n_samples=,
+        n_features=,
         effective_rank=n_features // 2,
         n_informative=n_features // 2,
         bias=4 * fit_intercept,
@@ -374,7 +372,7 @@ def test_sparse_read_only_buffer(copy_X):
     """Test that sparse coordinate descent works for read-only buffers"""
     rng = np.random.RandomState(0)
 
-    clf = ElasticNet(alpha=0.1, copy_X=copy_X, random_state=rng)
+    clf = ElasticNet(alpha=0.1, copy_X=, random_state=rng)
     X = sp.random(100, 20, format="csc", random_state=rng)
 
     # Make X.data read-only

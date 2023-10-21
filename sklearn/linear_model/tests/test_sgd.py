@@ -354,8 +354,8 @@ def test_late_onset_averaging_reached(klass):
         average=7,
         learning_rate="constant",
         loss="squared_error",
-        eta0=eta0,
-        alpha=alpha,
+        eta0=,
+        alpha=,
         max_iter=2,
         shuffle=False,
     )
@@ -363,8 +363,8 @@ def test_late_onset_averaging_reached(klass):
         average=0,
         learning_rate="constant",
         loss="squared_error",
-        eta0=eta0,
-        alpha=alpha,
+        eta0=,
+        alpha=,
         max_iter=1,
         shuffle=False,
     )
@@ -394,7 +394,7 @@ def test_early_stopping(klass):
     Y = iris.target[iris.target > 0]
     for early_stopping in [True, False]:
         max_iter = 1000
-        clf = klass(early_stopping=early_stopping, tol=1e-3, max_iter=max_iter).fit(
+        clf = klass(early_stopping=, tol=1e-3, max_iter=).fit(
             X, Y
         )
         assert clf.n_iter_ < max_iter
@@ -423,12 +423,12 @@ def test_validation_set_not_used_for_training(klass):
     clf1 = klass(
         early_stopping=True,
         random_state=np.random.RandomState(seed),
-        validation_fraction=validation_fraction,
+        validation_fraction=,
         learning_rate="constant",
         eta0=0.01,
         tol=None,
-        max_iter=max_iter,
-        shuffle=shuffle,
+        max_iter=,
+        shuffle=,
     )
     clf1.fit(X, Y)
     assert clf1.n_iter_ == max_iter
@@ -439,8 +439,8 @@ def test_validation_set_not_used_for_training(klass):
         learning_rate="constant",
         eta0=0.01,
         tol=None,
-        max_iter=max_iter,
-        shuffle=shuffle,
+        max_iter=,
+        shuffle=,
     )
 
     if is_classifier(clf2):
@@ -463,12 +463,7 @@ def test_n_iter_no_change(klass):
     # test that n_iter_ increases monotonically with n_iter_no_change
     for early_stopping in [True, False]:
         n_iter_list = [
-            klass(
-                early_stopping=early_stopping,
-                n_iter_no_change=n_iter_no_change,
-                tol=1e-4,
-                max_iter=1000,
-            )
+            klass(early_stopping=, n_iter_no_change=, tol=1e-4, max_iter=1000)
             .fit(X, Y)
             .n_iter_
             for n_iter_no_change in [2, 3, 10]
@@ -499,7 +494,7 @@ def test_sgd_clf(klass):
             penalty="l2",
             alpha=0.01,
             fit_intercept=True,
-            loss=loss,
+            loss=,
             max_iter=10,
             shuffle=True,
         )
@@ -575,7 +570,7 @@ def test_average_binary_computed_correctly(klass):
         loss="squared_error",
         learning_rate="constant",
         eta0=eta,
-        alpha=alpha,
+        alpha=,
         fit_intercept=True,
         max_iter=1,
         average=True,
@@ -649,7 +644,7 @@ def test_sgd_multiclass_average(klass):
         loss="squared_error",
         learning_rate="constant",
         eta0=eta,
-        alpha=alpha,
+        alpha=,
         fit_intercept=True,
         max_iter=1,
         average=True,
@@ -719,7 +714,7 @@ def test_sgd_predict_proba_method_access(klass):
     # https://github.com/scikit-learn/scikit-learn/issues/10938 for more
     # details.
     for loss in linear_model.SGDClassifier.loss_functions:
-        clf = SGDClassifier(loss=loss)
+        clf = SGDClassifier(loss=)
         if loss in ("log_loss", "modified_huber"):
             assert hasattr(clf, "predict_proba")
             assert hasattr(clf, "predict_log_proba")
@@ -749,7 +744,7 @@ def test_sgd_proba(klass):
     # log and modified_huber losses can output probability estimates
     # binary case
     for loss in ["log_loss", "modified_huber"]:
-        clf = klass(loss=loss, alpha=0.01, max_iter=10)
+        clf = klass(loss=, alpha=0.01, max_iter=10)
         clf.fit(X, Y)
         p = clf.predict_proba([[3, 2]])
         assert p[0, 1] > 0.5
@@ -997,7 +992,7 @@ def test_partial_fit_binary(klass):
     clf = klass(alpha=0.01)
     classes = np.unique(Y)
 
-    clf.partial_fit(X[:third], Y[:third], classes=classes)
+    clf.partial_fit(X[:third], Y[:third], classes=)
     assert clf.coef_.shape == (1, X.shape[1])
     assert clf.intercept_.shape == (1,)
     assert clf.decision_function([[0, 0]]).shape == (1,)
@@ -1018,7 +1013,7 @@ def test_partial_fit_multiclass(klass):
     clf = klass(alpha=0.01)
     classes = np.unique(Y2)
 
-    clf.partial_fit(X2[:third], Y2[:third], classes=classes)
+    clf.partial_fit(X2[:third], Y2[:third], classes=)
     assert clf.coef_.shape == (3, X2.shape[1])
     assert clf.intercept_.shape == (3,)
     assert clf.decision_function([[0, 0]]).shape == (1, 3)
@@ -1036,7 +1031,7 @@ def test_partial_fit_multiclass_average(klass):
     clf = klass(alpha=0.01, average=X2.shape[0])
     classes = np.unique(Y2)
 
-    clf.partial_fit(X2[:third], Y2[:third], classes=classes)
+    clf.partial_fit(X2[:third], Y2[:third], classes=)
     assert clf.coef_.shape == (3, X2.shape[1])
     assert clf.intercept_.shape == (3,)
 
@@ -1067,7 +1062,7 @@ def test_partial_fit_equal_fit_classif(klass, lr):
         classes = np.unique(Y_)
         clf = klass(alpha=0.01, eta0=0.01, learning_rate=lr, shuffle=False)
         for i in range(2):
-            clf.partial_fit(X_, Y_, classes=classes)
+            clf.partial_fit(X_, Y_, classes=)
         y_pred2 = clf.decision_function(T_)
 
         assert clf.t_ == t
@@ -1082,7 +1077,7 @@ def test_regression_losses(klass):
         learning_rate="constant",
         eta0=0.1,
         loss="epsilon_insensitive",
-        random_state=random_state,
+        random_state=,
     )
     clf.fit(X, Y)
     assert 1.0 == np.mean(clf.predict(X) == Y)
@@ -1092,12 +1087,12 @@ def test_regression_losses(klass):
         learning_rate="constant",
         eta0=0.1,
         loss="squared_epsilon_insensitive",
-        random_state=random_state,
+        random_state=,
     )
     clf.fit(X, Y)
     assert 1.0 == np.mean(clf.predict(X) == Y)
 
-    clf = klass(alpha=0.01, loss="huber", random_state=random_state)
+    clf = klass(alpha=0.01, loss="huber", random_state=)
     clf.fit(X, Y)
     assert 1.0 == np.mean(clf.predict(X) == Y)
 
@@ -1106,7 +1101,7 @@ def test_regression_losses(klass):
         learning_rate="constant",
         eta0=0.01,
         loss="squared_error",
-        random_state=random_state,
+        random_state=,
     )
     clf.fit(X, Y)
     assert 1.0 == np.mean(clf.predict(X) == Y)
@@ -1160,7 +1155,7 @@ def test_sgd_averaged_computed_correctly(klass):
         loss="squared_error",
         learning_rate="constant",
         eta0=eta,
-        alpha=alpha,
+        alpha=,
         fit_intercept=True,
         max_iter=1,
         average=True,
@@ -1192,7 +1187,7 @@ def test_sgd_averaged_partial_fit(klass):
         loss="squared_error",
         learning_rate="constant",
         eta0=eta,
-        alpha=alpha,
+        alpha=,
         fit_intercept=True,
         max_iter=1,
         average=True,
@@ -1217,7 +1212,7 @@ def test_average_sparse(klass):
         loss="squared_error",
         learning_rate="constant",
         eta0=eta,
-        alpha=alpha,
+        alpha=,
         fit_intercept=True,
         max_iter=1,
         average=True,
@@ -1334,14 +1329,14 @@ def test_elasticnet_convergence(klass):
     for alpha in [0.01, 0.001]:
         for l1_ratio in [0.5, 0.8, 1.0]:
             cd = linear_model.ElasticNet(
-                alpha=alpha, l1_ratio=l1_ratio, fit_intercept=False
+                alpha=, l1_ratio=, fit_intercept=False
             )
             cd.fit(X, y)
             sgd = klass(
                 penalty="elasticnet",
                 max_iter=50,
-                alpha=alpha,
-                l1_ratio=l1_ratio,
+                alpha=,
+                l1_ratio=,
                 fit_intercept=False,
             )
             sgd.fit(X, y)
@@ -1349,7 +1344,7 @@ def test_elasticnet_convergence(klass):
                 "cd and sgd did not converge to comparable "
                 "results for alpha=%f and l1_ratio=%f" % (alpha, l1_ratio)
             )
-            assert_almost_equal(cd.coef_, sgd.coef_, decimal=2, err_msg=err_msg)
+            assert_almost_equal(cd.coef_, sgd.coef_, decimal=2, err_msg=)
 
 
 @ignore_warnings
@@ -1529,11 +1524,11 @@ def test_late_onset_averaging_reached_oneclass(klass):
 
     # 2 passes over the training set but average only at second pass
     clf1 = klass(
-        average=7, learning_rate="constant", eta0=eta0, nu=nu, max_iter=2, shuffle=False
+        average=7, learning_rate="constant", eta0=, nu=, max_iter=2, shuffle=False
     )
     # 1 pass over the training set with no averaging
     clf2 = klass(
-        average=0, learning_rate="constant", eta0=eta0, nu=nu, max_iter=1, shuffle=False
+        average=0, learning_rate="constant", eta0=, nu=, max_iter=1, shuffle=False
     )
 
     clf1.fit(X)
@@ -1562,7 +1557,7 @@ def test_sgd_averaged_computed_correctly_oneclass(klass):
     clf = klass(
         learning_rate="constant",
         eta0=eta,
-        nu=nu,
+        nu=,
         fit_intercept=True,
         max_iter=1,
         average=True,
@@ -1589,7 +1584,7 @@ def test_sgd_averaged_partial_fit_oneclass(klass):
     clf = klass(
         learning_rate="constant",
         eta0=eta,
-        nu=nu,
+        nu=,
         fit_intercept=True,
         max_iter=1,
         average=True,
@@ -1612,7 +1607,7 @@ def test_average_sparse_oneclass(klass):
     clf = klass(
         learning_rate="constant",
         eta0=eta,
-        nu=nu,
+        nu=,
         fit_intercept=True,
         max_iter=1,
         average=True,
@@ -1666,20 +1661,20 @@ def test_ocsvm_vs_sgdocsvm():
     X_test = np.r_[X + 2, X - 2]
 
     # One-Class SVM
-    clf = OneClassSVM(gamma=gamma, kernel="rbf", nu=nu)
+    clf = OneClassSVM(gamma=, kernel="rbf", nu=)
     clf.fit(X_train)
     y_pred_ocsvm = clf.predict(X_test)
     dec_ocsvm = clf.decision_function(X_test).reshape(1, -1)
 
     # SGDOneClassSVM using kernel approximation
     max_iter = 15
-    transform = Nystroem(gamma=gamma, random_state=random_state)
+    transform = Nystroem(gamma=, random_state=)
     clf_sgd = SGDOneClassSVM(
-        nu=nu,
+        nu=,
         shuffle=True,
         fit_intercept=True,
-        max_iter=max_iter,
-        random_state=random_state,
+        max_iter=,
+        random_state=,
         tol=None,
     )
     pipe_sgd = make_pipeline(transform, clf_sgd)
@@ -1792,7 +1787,7 @@ def test_large_regularization(penalty):
         alpha=1e5,
         learning_rate="constant",
         eta0=0.1,
-        penalty=penalty,
+        penalty=,
         shuffle=False,
         tol=None,
         max_iter=6,
@@ -1809,19 +1804,19 @@ def test_tol_parameter():
 
     # With tol is None, the number of iteration should be equal to max_iter
     max_iter = 42
-    model_0 = SGDClassifier(tol=None, random_state=0, max_iter=max_iter)
+    model_0 = SGDClassifier(tol=None, random_state=0, max_iter=)
     model_0.fit(X, y)
     assert max_iter == model_0.n_iter_
 
     # If tol is not None, the number of iteration should be less than max_iter
     max_iter = 2000
-    model_1 = SGDClassifier(tol=0, random_state=0, max_iter=max_iter)
+    model_1 = SGDClassifier(tol=0, random_state=0, max_iter=)
     model_1.fit(X, y)
     assert max_iter > model_1.n_iter_
     assert model_1.n_iter_ > 5
 
     # A larger tol should yield a smaller number of iteration
-    model_2 = SGDClassifier(tol=0.1, random_state=0, max_iter=max_iter)
+    model_2 = SGDClassifier(tol=0.1, random_state=0, max_iter=)
     model_2.fit(X, y)
     assert model_1.n_iter_ > model_2.n_iter_
     assert model_2.n_iter_ > 3
@@ -2049,7 +2044,7 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # Create a classification problem with 50000 features and 20 classes. Using
     # loky or multiprocessing this make the clf.coef_ exceed the threshold
     # above which memmaping is used in joblib and loky (1MB as of 2018/11/1).
-    X = sp.random(500, 2000, density=0.02, format="csr", random_state=random_state)
+    X = sp.random(500, 2000, density=0.02, format="csr", random_state=)
     y = random_state.choice(20, 500)
 
     # Begin by fitting a SGD classifier sequentially
@@ -2059,7 +2054,7 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # Fit a SGDClassifier using the specified backend, and make sure the
     # coefficients are equal to those obtained using a sequential fit
     clf_parallel = SGDClassifier(max_iter=1000, n_jobs=4, random_state=42)
-    with joblib.parallel_backend(backend=backend):
+    with joblib.parallel_backend(backend=):
         clf_parallel.fit(X, y)
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
 
@@ -2114,7 +2109,7 @@ def test_validation_mask_correctly_subsets(monkeypatch):
         early_stopping=True,
         tol=1e-3,
         max_iter=1000,
-        validation_fraction=validation_fraction,
+        validation_fraction=,
     )
 
     mock = Mock(side_effect=_stochastic_gradient._ValidationScoreCallback)
@@ -2134,7 +2129,7 @@ def test_sgd_error_on_zero_validation_weight():
     validation_fraction = 0.4
 
     clf = linear_model.SGDClassifier(
-        early_stopping=True, validation_fraction=validation_fraction, random_state=0
+        early_stopping=True, validation_fraction=, random_state=0
     )
 
     error_message = (
@@ -2142,7 +2137,7 @@ def test_sgd_error_on_zero_validation_weight():
         " different random state."
     )
     with pytest.raises(ValueError, match=error_message):
-        clf.fit(X, Y, sample_weight=sample_weight)
+        clf.fit(X, Y, sample_weight=)
 
 
 @pytest.mark.parametrize("Estimator", [SGDClassifier, SGDRegressor])

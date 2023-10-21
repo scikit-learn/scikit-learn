@@ -236,7 +236,7 @@ def test_manhattan_distances_deprecated_sum_over_features(sum_over_features):
             " removed in version 1.4."
         ),
     ):
-        manhattan_distances(X, Y, sum_over_features=sum_over_features)
+        manhattan_distances(X, Y, sum_over_features=)
 
 
 @pytest.mark.parametrize("metric", PAIRWISE_BOOLEAN_FUNCTIONS)
@@ -250,7 +250,7 @@ def test_pairwise_boolean_distance(metric):
     # ignore conversion to boolean in pairwise_distances
     with ignore_warnings(category=DataConversionWarning):
         for Z in [Y, None]:
-            res = pairwise_distances(X, Z, metric=metric)
+            res = pairwise_distances(X, Z, metric=)
             np.nan_to_num(res, nan=0, posinf=0, neginf=0, copy=False)
             assert np.sum(res != 0) == 0
 
@@ -258,16 +258,16 @@ def test_pairwise_boolean_distance(metric):
     # distance metrics with a data conversion warning
     msg = "Data was converted to boolean for metric %s" % metric
     with pytest.warns(DataConversionWarning, match=msg):
-        pairwise_distances(X, metric=metric)
+        pairwise_distances(X, metric=)
 
     # Check that the warning is raised if X is boolean by Y is not boolean:
     with pytest.warns(DataConversionWarning, match=msg):
-        pairwise_distances(X.astype(bool), Y=Y, metric=metric)
+        pairwise_distances(X.astype(bool), Y=, metric=)
 
     # Check that no warning is raised if X is already boolean and Y is None:
     with warnings.catch_warnings():
         warnings.simplefilter("error", DataConversionWarning)
-        pairwise_distances(X.astype(bool), metric=metric)
+        pairwise_distances(X.astype(bool), metric=)
 
 
 def test_no_data_conversion_warning():
@@ -365,15 +365,15 @@ def callable_rbf_kernel(x, y, **kwds):
 @pytest.mark.parametrize("dtype", [np.float64, np.float32, int])
 def test_pairwise_parallel(func, metric, kwds, dtype):
     rng = np.random.RandomState(0)
-    X = np.array(5 * rng.random_sample((5, 4)), dtype=dtype)
-    Y = np.array(5 * rng.random_sample((3, 4)), dtype=dtype)
+    X = np.array(5 * rng.random_sample((5, 4)), dtype=)
+    Y = np.array(5 * rng.random_sample((3, 4)), dtype=)
 
-    S = func(X, metric=metric, n_jobs=1, **kwds)
-    S2 = func(X, metric=metric, n_jobs=2, **kwds)
+    S = func(X, metric=, n_jobs=1, **kwds)
+    S2 = func(X, metric=, n_jobs=2, **kwds)
     assert_allclose(S, S2)
 
-    S = func(X, Y, metric=metric, n_jobs=1, **kwds)
-    S2 = func(X, Y, metric=metric, n_jobs=2, **kwds)
+    S = func(X, Y, metric=, n_jobs=1, **kwds)
+    S2 = func(X, Y, metric=, n_jobs=2, **kwds)
     assert_allclose(S, S2)
 
 
@@ -398,17 +398,17 @@ def test_pairwise_kernels(metric, csr_container):
     Y = rng.random_sample((2, 4))
     function = PAIRWISE_KERNEL_FUNCTIONS[metric]
     # Test with Y=None
-    K1 = pairwise_kernels(X, metric=metric)
+    K1 = pairwise_kernels(X, metric=)
     K2 = function(X)
     assert_allclose(K1, K2)
     # Test with Y=Y
-    K1 = pairwise_kernels(X, Y=Y, metric=metric)
-    K2 = function(X, Y=Y)
+    K1 = pairwise_kernels(X, Y=, metric=)
+    K2 = function(X, Y=)
     assert_allclose(K1, K2)
     # Test with tuples as X and Y
     X_tuples = tuple([tuple([v for v in row]) for row in X])
     Y_tuples = tuple([tuple([v for v in row]) for row in Y])
-    K2 = pairwise_kernels(X_tuples, Y_tuples, metric=metric)
+    K2 = pairwise_kernels(X_tuples, Y_tuples, metric=)
     assert_allclose(K1, K2)
 
     # Test with sparse X and Y
@@ -417,7 +417,7 @@ def test_pairwise_kernels(metric, csr_container):
     if metric in ["chi2", "additive_chi2"]:
         # these don't support sparse matrices yet
         return
-    K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
+    K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=)
     assert_allclose(K1, K2)
 
 
@@ -430,12 +430,12 @@ def test_pairwise_kernels_callable():
 
     metric = callable_rbf_kernel
     kwds = {"gamma": 0.1}
-    K1 = pairwise_kernels(X, Y=Y, metric=metric, **kwds)
-    K2 = rbf_kernel(X, Y=Y, **kwds)
+    K1 = pairwise_kernels(X, Y=, metric=, **kwds)
+    K2 = rbf_kernel(X, Y=, **kwds)
     assert_allclose(K1, K2)
 
     # callable function, X=Y
-    K1 = pairwise_kernels(X, Y=X, metric=metric, **kwds)
+    K1 = pairwise_kernels(X, Y=X, metric=, **kwds)
     K2 = rbf_kernel(X, Y=X, **kwds)
     assert_allclose(K1, K2)
 
@@ -463,7 +463,7 @@ def test_paired_distances(metric, func, csr_container):
     # Euclidean distance, with Y != X.
     Y = rng.random_sample((5, 4))
 
-    S = paired_distances(X, Y, metric=metric)
+    S = paired_distances(X, Y, metric=)
     S2 = func(X, Y)
     assert_allclose(S, S2)
     S3 = func(csr_container(X), csr_container(Y))
@@ -724,7 +724,7 @@ def test_pairwise_distances_chunked_reduce_invalid(
 
 
 def check_pairwise_distances_chunked(X, Y, working_memory, metric="euclidean"):
-    gen = pairwise_distances_chunked(X, Y, working_memory=working_memory, metric=metric)
+    gen = pairwise_distances_chunked(X, Y, working_memory=, metric=)
     assert isinstance(gen, GeneratorType)
     blockwise_distances = list(gen)
     Y = X if Y is None else Y
@@ -735,7 +735,7 @@ def check_pairwise_distances_chunked(X, Y, working_memory, metric="euclidean"):
         assert memory_used <= max(working_memory, min_block_mib) * 2**20
 
     blockwise_distances = np.vstack(blockwise_distances)
-    S = pairwise_distances(X, Y, metric=metric)
+    S = pairwise_distances(X, Y, metric=)
     assert_allclose(blockwise_distances, S, atol=1e-7)
 
 
@@ -743,7 +743,7 @@ def check_pairwise_distances_chunked(X, Y, working_memory, metric="euclidean"):
 def test_pairwise_distances_chunked_diagonal(metric, global_dtype):
     rng = np.random.RandomState(0)
     X = rng.normal(size=(1000, 10), scale=1e10).astype(global_dtype, copy=False)
-    chunks = list(pairwise_distances_chunked(X, working_memory=1, metric=metric))
+    chunks = list(pairwise_distances_chunked(X, working_memory=1, metric=))
     assert len(chunks) > 1
     assert_allclose(np.diag(np.vstack(chunks)), 0, rtol=1e-10)
 
@@ -752,7 +752,7 @@ def test_pairwise_distances_chunked_diagonal(metric, global_dtype):
 def test_parallel_pairwise_distances_diagonal(metric, global_dtype):
     rng = np.random.RandomState(0)
     X = rng.normal(size=(1000, 10), scale=1e10).astype(global_dtype, copy=False)
-    distances = pairwise_distances(X, metric=metric, n_jobs=2)
+    distances = pairwise_distances(X, metric=, n_jobs=2)
     assert_allclose(np.diag(distances), 0, atol=1e-10)
 
 
@@ -857,9 +857,7 @@ def test_euclidean_distances_norm_shapes():
     X_norm_squared = (X**2).sum(axis=1)
     Y_norm_squared = (Y**2).sum(axis=1)
 
-    D1 = euclidean_distances(
-        X, Y, X_norm_squared=X_norm_squared, Y_norm_squared=Y_norm_squared
-    )
+    D1 = euclidean_distances(X, Y, X_norm_squared=, Y_norm_squared=)
     D2 = euclidean_distances(
         X,
         Y,
@@ -959,7 +957,7 @@ def test_euclidean_distances_upcast(batch_size, x_array_constr, y_array_constr):
 
     X = x_array_constr(X)
     Y = y_array_constr(Y)
-    distances = _euclidean_distances_upcast(X, Y=Y, batch_size=batch_size)
+    distances = _euclidean_distances_upcast(X, Y=, batch_size=)
     distances = np.sqrt(np.maximum(distances, 0))
 
     # the default rtol=1e-7 is too close to the float32 precision
@@ -982,7 +980,7 @@ def test_euclidean_distances_upcast_sym(batch_size, x_array_constr):
     expected = squareform(pdist(X))
 
     X = x_array_constr(X)
-    distances = _euclidean_distances_upcast(X, Y=X, batch_size=batch_size)
+    distances = _euclidean_distances_upcast(X, Y=X, batch_size=)
     distances = np.sqrt(np.maximum(distances, 0))
 
     # the default rtol=1e-7 is too close to the float32 precision
@@ -1006,8 +1004,8 @@ def test_euclidean_distances_upcast_sym(batch_size, x_array_constr):
 def test_euclidean_distances_extreme_values(dtype, eps, rtol, dim):
     # check that euclidean distances is correct with float32 input thanks to
     # upcasting. On float64 there are still precision issues.
-    X = np.array([[1.0] * dim], dtype=dtype)
-    Y = np.array([[1.0 + eps] * dim], dtype=dtype)
+    X = np.array([[1.0] * dim], dtype=)
+    Y = np.array([[1.0 + eps] * dim], dtype=)
 
     distances = euclidean_distances(X, Y)
     expected = cdist(X, Y)
@@ -1022,8 +1020,8 @@ def test_nan_euclidean_distances_equal_to_euclidean_distance(squared):
     X = rng.randn(3, 4)
     Y = rng.randn(4, 4)
 
-    normal_distance = euclidean_distances(X, Y=Y, squared=squared)
-    nan_distance = nan_euclidean_distances(X, Y=Y, squared=squared)
+    normal_distance = euclidean_distances(X, Y=, squared=)
+    nan_distance = nan_euclidean_distances(X, Y=, squared=)
     assert_allclose(normal_distance, nan_distance)
 
 
@@ -1031,7 +1029,7 @@ def test_nan_euclidean_distances_equal_to_euclidean_distance(squared):
 @pytest.mark.parametrize("Y", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]]), None])
 def test_nan_euclidean_distances_infinite_values(X, Y):
     with pytest.raises(ValueError) as excinfo:
-        nan_euclidean_distances(X, Y=Y)
+        nan_euclidean_distances(X, Y=)
 
     exp_msg = "Input contains infinity or a value too large for dtype('float64')."
     assert exp_msg == str(excinfo.value)
@@ -1242,7 +1240,7 @@ def test_chi_square_kernel():
     Y = rng.random_sample((10, 4))
     K_add = additive_chi2_kernel(X, Y)
     gamma = 0.1
-    K = chi2_kernel(X, Y, gamma=gamma)
+    K = chi2_kernel(X, Y, gamma=)
     assert K.dtype == float
     for i, x in enumerate(X):
         for j, y in enumerate(Y):
@@ -1380,7 +1378,7 @@ def test_pairwise_similarity_sparse_output(metric, pairwise_func, csr_container)
     assert_allclose(K1.toarray(), K2)
 
     # show the kernel output equal to the sparse.toarray()
-    K3 = pairwise_kernels(X, Y=Y, metric=metric)
+    K3 = pairwise_kernels(X, Y=, metric=)
     assert_allclose(K1.toarray(), K3)
 
 
@@ -1538,8 +1536,8 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function):
         rng = np.random.RandomState(0)
         X = rng.random_sample((100, 10))
 
-        expected_dist = squareform(pdist(X, metric=metric))
-        dist = np.vstack(tuple(dist_function(X, metric=metric, n_jobs=n_jobs)))
+        expected_dist = squareform(pdist(X, metric=))
+        dist = np.vstack(tuple(dist_function(X, metric=, n_jobs=)))
 
         assert_allclose(dist, expected_dist)
 
@@ -1556,7 +1554,7 @@ def test_pairwise_distances_data_derived_params_error(metric):
         ValueError,
         match=rf"The '(V|VI)' parameter is required for the " rf"{metric} metric",
     ):
-        pairwise_distances(X, Y, metric=metric)
+        pairwise_distances(X, Y, metric=)
 
 
 @pytest.mark.parametrize(
@@ -1593,17 +1591,17 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
     params = {}
     if y_is_x:
         Y = X
-        expected_dist = squareform(pdist(X, metric=metric))
+        expected_dist = squareform(pdist(X, metric=))
     else:
         Y = rng.random_sample((5, 4)).astype(global_dtype, copy=False)
-        expected_dist = cdist(X, Y, metric=metric)
+        expected_dist = cdist(X, Y, metric=)
         # precompute parameters for seuclidean & mahalanobis when x is not y
         if metric == "seuclidean":
             params = {"V": np.var(np.vstack([X, Y]), axis=0, ddof=1, dtype=np.float64)}
         elif metric == "mahalanobis":
             params = {"VI": np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
 
-    dist = pairwise_distances(X, Y, metric=metric, **params)
+    dist = pairwise_distances(X, Y, metric=, **params)
 
     assert_allclose(dist, expected_dist)
 

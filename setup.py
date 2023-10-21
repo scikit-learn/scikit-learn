@@ -551,14 +551,14 @@ def configure_extension_modules():
             libraries_ext = extension.get("libraries", []) + default_libraries
 
             new_ext = Extension(
-                name=name,
-                sources=sources,
+                name=,
+                sources=,
                 language=extension.get("language", None),
-                include_dirs=include_dirs,
+                include_dirs=,
                 libraries=libraries_ext,
-                depends=depends,
+                depends=,
                 extra_link_args=extension.get("extra_link_args", None),
-                extra_compile_args=extra_compile_args,
+                extra_compile_args=,
             )
             cython_exts.append(new_ext)
 
@@ -602,8 +602,8 @@ def setup_package():
             "Programming Language :: Python :: Implementation :: CPython",
             "Programming Language :: Python :: Implementation :: PyPy",
         ],
-        cmdclass=cmdclass,
-        python_requires=python_requires,
+        cmdclass=,
+        python_requires=,
         install_requires=min_deps.tag_to_packages["install"],
         package_data={"": ["*.csv", "*.gz", "*.txt", "*.pxd", "*.rst", "*.jpg"]},
         zip_safe=False,  # the package can run out of an .egg file

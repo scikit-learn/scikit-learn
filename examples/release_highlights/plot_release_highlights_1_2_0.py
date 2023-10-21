@@ -125,8 +125,8 @@ _ = PartialDependenceDisplay.from_estimator(
     model,
     X,
     features=["age", "sex", ("pclass", "sex")],
-    categorical_features=categorical_features,
-    ax=ax,
+    categorical_features=,
+    ax=,
 )
 
 # %%

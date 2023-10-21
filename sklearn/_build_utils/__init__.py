@@ -81,7 +81,7 @@ def cythonize_extensions(extension):
     return cythonize(
         extension,
         nthreads=n_jobs,
-        compiler_directives=compiler_directives,
+        compiler_directives=,
         annotate=False,
     )
 

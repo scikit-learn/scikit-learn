@@ -477,7 +477,7 @@ class KFold(_BaseKFold):
     """
 
     def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
-        super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
+        super().__init__(n_splits=, shuffle=, random_state=)
 
     def _iter_test_indices(self, X, y=None, groups=None):
         n_samples = _num_samples(X)
@@ -702,7 +702,7 @@ class StratifiedKFold(_BaseKFold):
     """
 
     def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
-        super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
+        super().__init__(n_splits=, shuffle=, random_state=)
 
     def _make_test_folds(self, X, y=None):
         rng = check_random_state(self.random_state)
@@ -909,7 +909,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
     """
 
     def __init__(self, n_splits=5, shuffle=False, random_state=None):
-        super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
+        super().__init__(n_splits=, shuffle=, random_state=)
 
     def _iter_test_indices(self, X, y, groups):
         # Implementation is based on this kaggle kernel:
@@ -977,9 +977,9 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         for group_idx in sorted_groups_idx:
             group_y_counts = y_counts_per_group[group_idx]
             best_fold = self._find_best_fold(
-                y_counts_per_fold=y_counts_per_fold,
-                y_cnt=y_cnt,
-                group_y_counts=group_y_counts,
+                y_counts_per_fold=,
+                y_cnt=,
+                group_y_counts=,
             )
             y_counts_per_fold[best_fold] += group_y_counts
             groups_per_fold[best_fold].add(group_idx)
@@ -1618,9 +1618,7 @@ class RepeatedKFold(_RepeatedSplits):
     """
 
     def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
-        super().__init__(
-            KFold, n_repeats=n_repeats, random_state=random_state, n_splits=n_splits
-        )
+        super().__init__(KFold, n_repeats=, random_state=, n_splits=)
 
 
 class RepeatedStratifiedKFold(_RepeatedSplits):
@@ -1686,12 +1684,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     """
 
     def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
-        super().__init__(
-            StratifiedKFold,
-            n_repeats=n_repeats,
-            random_state=random_state,
-            n_splits=n_splits,
-        )
+        super().__init__(StratifiedKFold, n_repeats=, random_state=, n_splits=)
 
 
 class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
@@ -1870,12 +1863,7 @@ class ShuffleSplit(BaseShuffleSplit):
     def __init__(
         self, n_splits=10, *, test_size=None, train_size=None, random_state=None
     ):
-        super().__init__(
-            n_splits=n_splits,
-            test_size=test_size,
-            train_size=train_size,
-            random_state=random_state,
-        )
+        super().__init__(n_splits=, test_size=, train_size=, random_state=)
         self._default_test_size = 0.1
 
     def _iter_indices(self, X, y=None, groups=None):
@@ -1984,12 +1972,7 @@ class GroupShuffleSplit(GroupsConsumerMixin, ShuffleSplit):
     def __init__(
         self, n_splits=5, *, test_size=None, train_size=None, random_state=None
     ):
-        super().__init__(
-            n_splits=n_splits,
-            test_size=test_size,
-            train_size=train_size,
-            random_state=random_state,
-        )
+        super().__init__(n_splits=, test_size=, train_size=, random_state=)
         self._default_test_size = 0.2
 
     def _iter_indices(self, X, y, groups):
@@ -2116,12 +2099,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     def __init__(
         self, n_splits=10, *, test_size=None, train_size=None, random_state=None
     ):
-        super().__init__(
-            n_splits=n_splits,
-            test_size=test_size,
-            train_size=train_size,
-            random_state=random_state,
-        )
+        super().__init__(n_splits=, test_size=, train_size=, random_state=)
         self._default_test_size = 0.1
 
     def _iter_indices(self, X, y, groups=None):
@@ -2665,7 +2643,7 @@ def train_test_split(
         else:
             CVClass = ShuffleSplit
 
-        cv = CVClass(test_size=n_test, train_size=n_train, random_state=random_state)
+        cv = CVClass(test_size=n_test, train_size=n_train, random_state=)
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
 

@@ -42,7 +42,7 @@ for alpha in alphas:
             StandardScaler(),
             MLPClassifier(
                 solver="lbfgs",
-                alpha=alpha,
+                alpha=,
                 random_state=1,
                 max_iter=2000,
                 early_stopping=True,

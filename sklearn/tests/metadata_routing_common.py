@@ -142,7 +142,7 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
             self.registry.append(self)
 
         record_metadata_not_default(
-            self, "partial_fit", sample_weight=sample_weight, metadata=metadata
+            self, "partial_fit", sample_weight=, metadata=
         )
         return self
 
@@ -150,9 +150,7 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_default(
-            self, "fit", sample_weight=sample_weight, metadata=metadata
-        )
+        record_metadata_not_default(self, "fit", sample_weight=, metadata=)
         return self
 
     def predict(self, X, sample_weight="default", metadata="default"):
@@ -209,7 +207,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
             self.registry.append(self)
 
         record_metadata_not_default(
-            self, "partial_fit", sample_weight=sample_weight, metadata=metadata
+            self, "partial_fit", sample_weight=, metadata=
         )
         _check_partial_fit_first_call(self, classes)
         return self
@@ -218,16 +216,12 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_default(
-            self, "fit", sample_weight=sample_weight, metadata=metadata
-        )
+        record_metadata_not_default(self, "fit", sample_weight=, metadata=)
         self.classes_ = np.unique(y)
         return self
 
     def predict(self, X, sample_weight="default", metadata="default"):
-        record_metadata_not_default(
-            self, "predict", sample_weight=sample_weight, metadata=metadata
-        )
+        record_metadata_not_default(self, "predict", sample_weight=, metadata=)
         return np.zeros(shape=(len(X),))
 
     def predict_proba(self, X, sample_weight="default", metadata="default"):
@@ -250,7 +244,7 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
 
     def decision_function(self, X, sample_weight="default", metadata="default"):
         record_metadata_not_default(
-            self, "predict_proba", sample_weight=sample_weight, metadata=metadata
+            self, "predict_proba", sample_weight=, metadata=
         )
         return np.zeros(shape=(len(X),))
 
@@ -274,15 +268,11 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_default(
-            self, "fit", sample_weight=sample_weight, metadata=metadata
-        )
+        record_metadata_not_default(self, "fit", sample_weight=, metadata=)
         return self
 
     def transform(self, X, sample_weight=None, metadata=None):
-        record_metadata(
-            self, "transform", sample_weight=sample_weight, metadata=metadata
-        )
+        record_metadata(self, "transform", sample_weight=, metadata=)
         return X
 
     def fit_transform(self, X, y, sample_weight=None, metadata=None):
@@ -290,17 +280,13 @@ class ConsumingTransformer(TransformerMixin, BaseEstimator):
         # ``TransformerMixin.fit_transform`` doesn't route any metadata to
         # ``transform``, while here we want ``transform`` to receive
         # ``sample_weight`` and ``metadata``.
-        record_metadata(
-            self, "fit_transform", sample_weight=sample_weight, metadata=metadata
-        )
-        return self.fit(X, y, sample_weight=sample_weight, metadata=metadata).transform(
-            X, sample_weight=sample_weight, metadata=metadata
+        record_metadata(self, "fit_transform", sample_weight=, metadata=)
+        return self.fit(X, y, sample_weight=, metadata=).transform(
+            X, sample_weight=, metadata=
         )
 
     def inverse_transform(self, X, sample_weight=None, metadata=None):
-        record_metadata(
-            self, "inverse_transform", sample_weight=sample_weight, metadata=metadata
-        )
+        record_metadata(self, "inverse_transform", sample_weight=, metadata=)
         return X
 
 
@@ -318,7 +304,7 @@ class ConsumingScorer(_Scorer):
         record_metadata_not_default(self, "score", **kwargs)
 
         sample_weight = kwargs.get("sample_weight", None)
-        return super()._score(method_caller, clf, X, y, sample_weight=sample_weight)
+        return super()._score(method_caller, clf, X, y, sample_weight=)
 
 
 class ConsumingSplitter(BaseCrossValidator, GroupsConsumerMixin):
@@ -329,7 +315,7 @@ class ConsumingSplitter(BaseCrossValidator, GroupsConsumerMixin):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata_not_default(self, "split", groups=groups, metadata=metadata)
+        record_metadata_not_default(self, "split", groups=, metadata=)
 
         split_index = len(X) // 2
         train_indices = list(range(0, split_index))
@@ -376,8 +362,8 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata(self, "fit", sample_weight=sample_weight)
-        params = process_routing(self, "fit", sample_weight=sample_weight, **fit_params)
+        record_metadata(self, "fit", sample_weight=)
+        params = process_routing(self, "fit", sample_weight=, **fit_params)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
         return self
 
@@ -405,8 +391,8 @@ class WeightedMetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator)
         if self.registry is not None:
             self.registry.append(self)
 
-        record_metadata(self, "fit", sample_weight=sample_weight)
-        params = process_routing(self, "fit", sample_weight=sample_weight, **kwargs)
+        record_metadata(self, "fit", sample_weight=)
+        params = process_routing(self, "fit", sample_weight=, **kwargs)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
         return self
 

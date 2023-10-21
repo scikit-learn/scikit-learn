@@ -22,7 +22,7 @@ class PCABenchmark(Transformer, Estimator, Benchmark):
     def make_estimator(self, params):
         (svd_solver,) = params
 
-        estimator = PCA(n_components=32, svd_solver=svd_solver, random_state=0)
+        estimator = PCA(n_components=32, svd_solver=, random_state=0)
 
         return estimator
 
@@ -49,13 +49,13 @@ class DictionaryLearningBenchmark(Transformer, Estimator, Benchmark):
 
         estimator = DictionaryLearning(
             n_components=15,
-            fit_algorithm=fit_algorithm,
+            fit_algorithm=,
             alpha=0.1,
             transform_alpha=1,
             max_iter=20,
             tol=1e-16,
             random_state=0,
-            n_jobs=n_jobs,
+            n_jobs=,
         )
 
         return estimator
@@ -83,11 +83,11 @@ class MiniBatchDictionaryLearningBenchmark(Transformer, Estimator, Benchmark):
 
         estimator = MiniBatchDictionaryLearning(
             n_components=15,
-            fit_algorithm=fit_algorithm,
+            fit_algorithm=,
             alpha=0.1,
             batch_size=3,
             random_state=0,
-            n_jobs=n_jobs,
+            n_jobs=,
         )
 
         return estimator

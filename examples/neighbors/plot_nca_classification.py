@@ -52,14 +52,14 @@ classifiers = [
     Pipeline(
         [
             ("scaler", StandardScaler()),
-            ("knn", KNeighborsClassifier(n_neighbors=n_neighbors)),
+            ("knn", KNeighborsClassifier(n_neighbors=)),
         ]
     ),
     Pipeline(
         [
             ("scaler", StandardScaler()),
             ("nca", NeighborhoodComponentsAnalysis()),
-            ("knn", KNeighborsClassifier(n_neighbors=n_neighbors)),
+            ("knn", KNeighborsClassifier(n_neighbors=)),
         ]
     ),
 ]
@@ -74,7 +74,7 @@ for name, clf in zip(names, classifiers):
         X,
         cmap=cmap_light,
         alpha=0.8,
-        ax=ax,
+        ax=,
         response_method="predict",
         plot_method="pcolormesh",
         shading="auto",

@@ -127,8 +127,8 @@ def glm_dataset(global_random_seed, request):
     k = min(n_samples, n_features)
     rng = np.random.RandomState(global_random_seed)
     X = make_low_rank_matrix(
-        n_samples=n_samples,
-        n_features=n_features,
+        n_samples=,
+        n_features=,
         effective_rank=k,
         tail_strength=0.1,
         random_state=rng,
@@ -159,16 +159,16 @@ def glm_dataset(global_random_seed, request):
     fun = partial(
         linear_loss.loss,
         X=X[:, :-1],
-        y=y,
+        y=,
         sample_weight=sw,
-        l2_reg_strength=l2_reg_strength,
+        l2_reg_strength=,
     )
     grad = partial(
         linear_loss.gradient,
         X=X[:, :-1],
-        y=y,
+        y=,
         sample_weight=sw,
-        l2_reg_strength=l2_reg_strength,
+        l2_reg_strength=,
     )
     coef_penalized_with_intercept = _special_minimize(
         fun, grad, coef_unpenalized, tol_NM=1e-6, tol=1e-14
@@ -178,16 +178,16 @@ def glm_dataset(global_random_seed, request):
     fun = partial(
         linear_loss.loss,
         X=X[:, :-1],
-        y=y,
+        y=,
         sample_weight=sw,
-        l2_reg_strength=l2_reg_strength,
+        l2_reg_strength=,
     )
     grad = partial(
         linear_loss.gradient,
         X=X[:, :-1],
-        y=y,
+        y=,
         sample_weight=sw,
-        l2_reg_strength=l2_reg_strength,
+        l2_reg_strength=,
     )
     coef_penalized_without_intercept = _special_minimize(
         fun, grad, coef_unpenalized[:-1], tol_NM=1e-6, tol=1e-14
@@ -217,13 +217,7 @@ def test_glm_regression(solver, fit_intercept, glm_dataset):
     We work with a simple constructed data set with known solution.
     """
     model, X, y, _, coef_with_intercept, coef_without_intercept, alpha = glm_dataset
-    params = dict(
-        alpha=alpha,
-        fit_intercept=fit_intercept,
-        solver=solver,
-        tol=1e-12,
-        max_iter=1000,
-    )
+    params = dict(alpha=, fit_intercept=, solver=, tol=1e-12, max_iter=1000)
 
     model = clone(model).set_params(**params)
     X = X[:, :-1]  # remove intercept
@@ -239,14 +233,14 @@ def test_glm_regression(solver, fit_intercept, glm_dataset):
 
     rtol = 5e-5 if solver == "lbfgs" else 1e-9
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
-    assert_allclose(model.coef_, coef, rtol=rtol)
+    assert_allclose(model.coef_, coef, rtol=)
 
     # Same with sample_weight.
     model = (
         clone(model).set_params(**params).fit(X, y, sample_weight=np.ones(X.shape[0]))
     )
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
-    assert_allclose(model.coef_, coef, rtol=rtol)
+    assert_allclose(model.coef_, coef, rtol=)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -262,8 +256,8 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
     n_samples, n_features = X.shape
     params = dict(
         alpha=alpha / 2,
-        fit_intercept=fit_intercept,
-        solver=solver,
+        fit_intercept=,
+        solver=,
         tol=1e-12,
         max_iter=1000,
     )
@@ -290,7 +284,7 @@ def test_glm_regression_hstacked_X(solver, fit_intercept, glm_dataset):
 
     rtol = 2e-4 if solver == "lbfgs" else 5e-9
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
-    assert_allclose(model.coef_, np.r_[coef, coef], rtol=rtol)
+    assert_allclose(model.coef_, np.r_[coef, coef], rtol=)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -306,13 +300,7 @@ def test_glm_regression_vstacked_X(solver, fit_intercept, glm_dataset):
     """
     model, X, y, _, coef_with_intercept, coef_without_intercept, alpha = glm_dataset
     n_samples, n_features = X.shape
-    params = dict(
-        alpha=alpha,
-        fit_intercept=fit_intercept,
-        solver=solver,
-        tol=1e-12,
-        max_iter=1000,
-    )
+    params = dict(alpha=, fit_intercept=, solver=, tol=1e-12, max_iter=1000)
 
     model = clone(model).set_params(**params)
     X = X[:, :-1]  # remove intercept
@@ -330,7 +318,7 @@ def test_glm_regression_vstacked_X(solver, fit_intercept, glm_dataset):
 
     rtol = 3e-5 if solver == "lbfgs" else 5e-9
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
-    assert_allclose(model.coef_, coef, rtol=rtol)
+    assert_allclose(model.coef_, coef, rtol=)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -346,13 +334,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
     model, X, y, coef, _, _, _ = glm_dataset
     n_samples, n_features = X.shape
     alpha = 0  # unpenalized
-    params = dict(
-        alpha=alpha,
-        fit_intercept=fit_intercept,
-        solver=solver,
-        tol=1e-12,
-        max_iter=1000,
-    )
+    params = dict(alpha=, fit_intercept=, solver=, tol=1e-12, max_iter=1000)
 
     model = clone(model).set_params(**params)
     if fit_intercept:
@@ -380,14 +362,14 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
     if n_samples > n_features:
         rtol = 5e-5 if solver == "lbfgs" else 1e-7
         assert model.intercept_ == pytest.approx(intercept)
-        assert_allclose(model.coef_, coef, rtol=rtol)
+        assert_allclose(model.coef_, coef, rtol=)
     else:
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         rtol = 5e-5
         if solver == "newton-cholesky":
             rtol = 5e-4
-        assert_allclose(model.predict(X), y, rtol=rtol)
+        assert_allclose(model.predict(X), y, rtol=)
 
         norm_solution = np.linalg.norm(np.r_[intercept, coef])
         norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
@@ -396,7 +378,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
             # with norm_model <= norm_solution! So we check conditionally.
             if norm_model < (1 + 1e-12) * norm_solution:
                 assert model.intercept_ == pytest.approx(intercept)
-                assert_allclose(model.coef_, coef, rtol=rtol)
+                assert_allclose(model.coef_, coef, rtol=)
         elif solver == "lbfgs" and fit_intercept:
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
@@ -412,7 +394,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
             # solution on this problem.
             # XXX: Do we have any theoretical guarantees why this should be the case?
             assert model.intercept_ == pytest.approx(intercept, rel=rtol)
-            assert_allclose(model.coef_, coef, rtol=rtol)
+            assert_allclose(model.coef_, coef, rtol=)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -429,13 +411,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
     model, X, y, coef, _, _, _ = glm_dataset
     n_samples, n_features = X.shape
     alpha = 0  # unpenalized
-    params = dict(
-        alpha=alpha,
-        fit_intercept=fit_intercept,
-        solver=solver,
-        tol=1e-12,
-        max_iter=1000,
-    )
+    params = dict(alpha=, fit_intercept=, solver=, tol=1e-12, max_iter=1000)
 
     model = clone(model).set_params(**params)
     if fit_intercept:
@@ -478,12 +454,12 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
     if n_samples > n_features:
         assert model_intercept == pytest.approx(intercept)
         rtol = 1e-4
-        assert_allclose(model_coef, np.r_[coef, coef], rtol=rtol)
+        assert_allclose(model_coef, np.r_[coef, coef], rtol=)
     else:
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         rtol = 1e-6 if solver == "lbfgs" else 5e-6
-        assert_allclose(model.predict(X), y, rtol=rtol)
+        assert_allclose(model.predict(X), y, rtol=)
         if (solver == "lbfgs" and fit_intercept) or solver == "newton-cholesky":
             # Same as in test_glm_regression_unpenalized.
             # But it is not the minimum norm solution. Otherwise the norms would be
@@ -515,13 +491,7 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
     model, X, y, coef, _, _, _ = glm_dataset
     n_samples, n_features = X.shape
     alpha = 0  # unpenalized
-    params = dict(
-        alpha=alpha,
-        fit_intercept=fit_intercept,
-        solver=solver,
-        tol=1e-12,
-        max_iter=1000,
-    )
+    params = dict(alpha=, fit_intercept=, solver=, tol=1e-12, max_iter=1000)
 
     model = clone(model).set_params(**params)
     if fit_intercept:
@@ -549,12 +519,12 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
     if n_samples > n_features:
         rtol = 5e-5 if solver == "lbfgs" else 1e-6
         assert model.intercept_ == pytest.approx(intercept)
-        assert_allclose(model.coef_, coef, rtol=rtol)
+        assert_allclose(model.coef_, coef, rtol=)
     else:
         # As it is an underdetermined problem, prediction = y. The following shows that
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         rtol = 1e-6 if solver == "lbfgs" else 5e-6
-        assert_allclose(model.predict(X), y, rtol=rtol)
+        assert_allclose(model.predict(X), y, rtol=)
 
         norm_solution = np.linalg.norm(np.r_[intercept, coef])
         norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
@@ -572,7 +542,7 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
         else:
             rtol = 1e-5 if solver == "newton-cholesky" else 1e-4
             assert model.intercept_ == pytest.approx(intercept, rel=rtol)
-            assert_allclose(model.coef_, coef, rtol=rtol)
+            assert_allclose(model.coef_, coef, rtol=)
 
 
 def test_sample_weights_validation():
@@ -621,11 +591,7 @@ def test_glm_identity_regression(fit_intercept):
     coef = [1.0, 2.0]
     X = np.array([[1, 1, 1, 1, 1], [0, 1, 2, 3, 4]]).T
     y = np.dot(X, coef)
-    glm = _GeneralizedLinearRegressor(
-        alpha=0,
-        fit_intercept=fit_intercept,
-        tol=1e-12,
-    )
+    glm = _GeneralizedLinearRegressor(alpha=0, fit_intercept=, tol=1e-12)
     if fit_intercept:
         glm.fit(X[:, 1:], y)
         assert_allclose(glm.coef_, coef[1:], rtol=1e-10)
@@ -647,26 +613,26 @@ def test_glm_sample_weight_consistency(fit_intercept, alpha, GLMEstimator):
 
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
-    glm_params = dict(alpha=alpha, fit_intercept=fit_intercept)
+    glm_params = dict(alpha=, fit_intercept=)
 
     glm = GLMEstimator(**glm_params).fit(X, y)
     coef = glm.coef_.copy()
 
     # sample_weight=np.ones(..) should be equivalent to sample_weight=None
     sample_weight = np.ones(y.shape)
-    glm.fit(X, y, sample_weight=sample_weight)
+    glm.fit(X, y, sample_weight=)
     assert_allclose(glm.coef_, coef, rtol=1e-12)
 
     # sample_weight are normalized to 1 so, scaling them has no effect
     sample_weight = 2 * np.ones(y.shape)
-    glm.fit(X, y, sample_weight=sample_weight)
+    glm.fit(X, y, sample_weight=)
     assert_allclose(glm.coef_, coef, rtol=1e-12)
 
     # setting one element of sample_weight to 0 is equivalent to removing
     # the corresponding sample
     sample_weight = np.ones(y.shape)
     sample_weight[-1] = 0
-    glm.fit(X, y, sample_weight=sample_weight)
+    glm.fit(X, y, sample_weight=)
     coef1 = glm.coef_.copy()
     glm.fit(X[:-1], y[:-1])
     assert_allclose(glm.coef_, coef1, rtol=1e-12)
@@ -704,8 +670,8 @@ def test_glm_log_regression(solver, fit_intercept, estimator):
     y = np.exp(np.dot(X, coef))
     glm = clone(estimator).set_params(
         alpha=0,
-        fit_intercept=fit_intercept,
-        solver=solver,
+        fit_intercept=,
+        solver=,
         tol=1e-8,
     )
     if fit_intercept:
@@ -722,8 +688,8 @@ def test_glm_log_regression(solver, fit_intercept, estimator):
 def test_warm_start(solver, fit_intercept, global_random_seed):
     n_samples, n_features = 100, 10
     X, y = make_regression(
-        n_samples=n_samples,
-        n_features=n_features,
+        n_samples=,
+        n_features=,
         n_informative=n_features - 2,
         bias=fit_intercept * 1.0,
         noise=1.0,
@@ -737,32 +703,29 @@ def test_warm_start(solver, fit_intercept, global_random_seed):
         "tol": 1e-10,
     }
 
-    glm1 = PoissonRegressor(warm_start=False, max_iter=1000, alpha=alpha, **params)
+    glm1 = PoissonRegressor(warm_start=False, max_iter=1000, alpha=, **params)
     glm1.fit(X, y)
 
-    glm2 = PoissonRegressor(warm_start=True, max_iter=1, alpha=alpha, **params)
+    glm2 = PoissonRegressor(warm_start=True, max_iter=1, alpha=, **params)
     # As we intentionally set max_iter=1 such that the solver should raise a
     # ConvergenceWarning.
     with pytest.warns(ConvergenceWarning):
         glm2.fit(X, y)
 
-    linear_loss = LinearModelLoss(
-        base_loss=glm1._get_loss(),
-        fit_intercept=fit_intercept,
-    )
+    linear_loss = LinearModelLoss(base_loss=glm1._get_loss(), fit_intercept=)
     sw = np.full_like(y, fill_value=1 / n_samples)
 
     objective_glm1 = linear_loss.loss(
         coef=np.r_[glm1.coef_, glm1.intercept_] if fit_intercept else glm1.coef_,
-        X=X,
-        y=y,
+        X=,
+        y=,
         sample_weight=sw,
         l2_reg_strength=alpha,
     )
     objective_glm2 = linear_loss.loss(
         coef=np.r_[glm2.coef_, glm2.intercept_] if fit_intercept else glm2.coef_,
-        X=X,
-        y=y,
+        X=,
+        y=,
         sample_weight=sw,
         l2_reg_strength=alpha,
     )
@@ -774,7 +737,7 @@ def test_warm_start(solver, fit_intercept, global_random_seed):
     # computes the approximate hessian from previous iterations, which
     # will not be strictly identical in the case of a warm start.
     rtol = 2e-4 if solver == "lbfgs" else 1e-9
-    assert_allclose(glm1.coef_, glm2.coef_, rtol=rtol)
+    assert_allclose(glm1.coef_, glm2.coef_, rtol=)
     assert_allclose(glm1.score(X, y), glm2.score(X, y), rtol=1e-5)
 
 
@@ -788,7 +751,7 @@ def test_normal_ridge_comparison(
     test_size = 10
     X, y = make_regression(
         n_samples=n_samples + test_size,
-        n_features=n_features,
+        n_features=,
         n_informative=n_features - 2,
         noise=0.5,
         random_state=42,
@@ -804,7 +767,7 @@ def test_normal_ridge_comparison(
         X_test,
         y_train,
         y_test,
-    ) = train_test_split(X, y, test_size=test_size, random_state=0)
+    ) = train_test_split(X, y, test_size=, random_state=0)
 
     alpha = 1.0
     if sample_weight is None:
@@ -818,14 +781,14 @@ def test_normal_ridge_comparison(
     ridge = Ridge(
         alpha=alpha_ridge,
         random_state=42,
-        fit_intercept=fit_intercept,
+        fit_intercept=,
         **ridge_params,
     )
     ridge.fit(X_train, y_train, sample_weight=sw_train)
 
     glm = _GeneralizedLinearRegressor(
-        alpha=alpha,
-        fit_intercept=fit_intercept,
+        alpha=,
+        fit_intercept=,
         max_iter=300,
         tol=1e-5,
     )
@@ -858,7 +821,7 @@ def test_poisson_glmnet(solver):
         fit_intercept=True,
         tol=1e-7,
         max_iter=300,
-        solver=solver,
+        solver=,
     )
     glm.fit(X, y)
     assert_allclose(glm.intercept_, -0.12889386979, rtol=1e-5)
@@ -897,7 +860,7 @@ def test_tweedie_link_auto(power, expected_link_class):
     """Test that link='auto' delivers the expected link function"""
     y = np.array([0.1, 0.5])  # in range of all distributions
     X = np.array([[1], [2]])
-    glm = TweedieRegressor(link="auto", power=power).fit(X, y)
+    glm = TweedieRegressor(link="auto", power=).fit(X, y)
     assert isinstance(glm._base_loss.link, expected_link_class)
 
 
@@ -908,9 +871,9 @@ def test_tweedie_score(regression_data, power, link):
     X, y = regression_data
     # make y positive
     y = np.abs(y) + 1.0
-    glm = TweedieRegressor(power=power, link=link).fit(X, y)
+    glm = TweedieRegressor(power=, link=).fit(X, y)
     assert glm.score(X, y) == pytest.approx(
-        d2_tweedie_score(y, glm.predict(X), power=power)
+        d2_tweedie_score(y, glm.predict(X), power=)
     )
 
 
@@ -949,7 +912,7 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
     tol = 1e-10
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        reg = PoissonRegressor(solver=newton_solver, alpha=0.0, tol=tol).fit(X_orig, y)
+        reg = PoissonRegressor(solver=newton_solver, alpha=0.0, tol=).fit(X_orig, y)
     original_newton_deviance = mean_poisson_deviance(y, reg.predict(X_orig))
 
     # On this dataset, we should have enough data points to not make it
@@ -968,7 +931,7 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
     # solution
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        reg = PoissonRegressor(solver="lbfgs", alpha=0.0, tol=tol).fit(X_collinear, y)
+        reg = PoissonRegressor(solver="lbfgs", alpha=0.0, tol=).fit(X_collinear, y)
     collinear_lbfgs_deviance = mean_poisson_deviance(y, reg.predict(X_collinear))
 
     # The LBFGS solution on the collinear is expected to reach a comparable
@@ -984,7 +947,7 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
         "ill-conditioned Hessian matrix"
     )
     with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
-        reg = PoissonRegressor(solver=newton_solver, alpha=0.0, tol=tol).fit(
+        reg = PoissonRegressor(solver=newton_solver, alpha=0.0, tol=).fit(
             X_collinear, y
         )
     # As a result we should still automatically converge to a good solution.
@@ -1016,9 +979,9 @@ def test_newton_solver_verbosity(capsys, verbose):
     linear_loss = LinearModelLoss(base_loss=HalfPoissonLoss(), fit_intercept=False)
     sol = NewtonCholeskySolver(
         coef=linear_loss.init_zero_coef(X),
-        linear_loss=linear_loss,
+        linear_loss=,
         l2_reg_strength=0,
-        verbose=verbose,
+        verbose=,
     )
     sol.solve(X, y, None)  # returns array([0., 0.69314758])
     captured = capsys.readouterr()
@@ -1044,18 +1007,18 @@ def test_newton_solver_verbosity(capsys, verbose):
     # Set the Newton solver to a state with a completely wrong Newton step.
     sol = NewtonCholeskySolver(
         coef=linear_loss.init_zero_coef(X),
-        linear_loss=linear_loss,
+        linear_loss=,
         l2_reg_strength=0,
-        verbose=verbose,
+        verbose=,
     )
-    sol.setup(X=X, y=y, sample_weight=None)
+    sol.setup(X=, y=, sample_weight=None)
     sol.iteration = 1
-    sol.update_gradient_hessian(X=X, y=y, sample_weight=None)
+    sol.update_gradient_hessian(X=, y=, sample_weight=None)
     sol.coef_newton = np.array([1.0, 0])
     sol.gradient_times_newton = sol.gradient @ sol.coef_newton
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", ConvergenceWarning)
-        sol.line_search(X=X, y=y, sample_weight=None)
+        sol.line_search(X=, y=, sample_weight=None)
         captured = capsys.readouterr()
     if verbose >= 1:
         assert (
@@ -1066,18 +1029,18 @@ def test_newton_solver_verbosity(capsys, verbose):
     # improvement in line search is tiny.
     sol = NewtonCholeskySolver(
         coef=np.array([1e-12, 0.69314758]),
-        linear_loss=linear_loss,
+        linear_loss=,
         l2_reg_strength=0,
-        verbose=verbose,
+        verbose=,
     )
-    sol.setup(X=X, y=y, sample_weight=None)
+    sol.setup(X=, y=, sample_weight=None)
     sol.iteration = 1
-    sol.update_gradient_hessian(X=X, y=y, sample_weight=None)
+    sol.update_gradient_hessian(X=, y=, sample_weight=None)
     sol.coef_newton = np.array([1e-6, 0])
     sol.gradient_times_newton = sol.gradient @ sol.coef_newton
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", ConvergenceWarning)
-        sol.line_search(X=X, y=y, sample_weight=None)
+        sol.line_search(X=, y=, sample_weight=None)
         captured = capsys.readouterr()
     if verbose >= 2:
         msg = [
@@ -1096,9 +1059,9 @@ def test_newton_solver_verbosity(capsys, verbose):
     )
     sol = NewtonCholeskySolver(
         coef=linear_loss.init_zero_coef(X) + 1,
-        linear_loss=linear_loss,
+        linear_loss=,
         l2_reg_strength=0,
-        verbose=verbose,
+        verbose=,
     )
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", ConvergenceWarning)

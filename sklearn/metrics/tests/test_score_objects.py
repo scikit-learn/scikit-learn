@@ -344,7 +344,7 @@ def test_check_scoring_and_check_multimetric_scoring_errors(scoring, msg):
     estimator.fit([[1]], [1])
 
     with pytest.raises(ValueError, match=msg):
-        _check_multimetric_scoring(estimator, scoring=scoring)
+        _check_multimetric_scoring(estimator, scoring=)
 
 
 def test_check_scoring_gridsearchcv():
@@ -612,9 +612,7 @@ def test_classification_scorer_sample_weight():
         else:
             target = y_test
         try:
-            weighted = scorer(
-                estimator[name], X_test, target, sample_weight=sample_weight
-            )
+            weighted = scorer(estimator[name], X_test, target, sample_weight=)
             ignored = scorer(estimator[name], X_test[10:], target[10:])
             unweighted = scorer(estimator[name], X_test, target)
             # this should not raise. sample_weight should be ignored if None.
@@ -663,7 +661,7 @@ def test_regression_scorer_sample_weight():
             # skip classification scorers
             continue
         try:
-            weighted = scorer(reg, X_test, y_test, sample_weight=sample_weight)
+            weighted = scorer(reg, X_test, y_test, sample_weight=)
             ignored = scorer(reg, X_test[11:], y_test[11:])
             unweighted = scorer(reg, X_test, y_test)
             assert weighted != unweighted, (
@@ -897,7 +895,7 @@ def test_multimetric_scorer_exception_handling(raise_exc):
     clf = DecisionTreeClassifier().fit(X, y)
 
     scorer_dict = _check_multimetric_scoring(clf, scorers)
-    multi_scorer = _MultimetricScorer(scorers=scorer_dict, raise_exc=raise_exc)
+    multi_scorer = _MultimetricScorer(scorers=scorer_dict, raise_exc=)
 
     error_msg = (
         "Mean Squared Logarithmic Error cannot be used when targets contain"
@@ -1060,9 +1058,9 @@ def test_average_precision_pos_label(string_labeled_classification_problem):
 
     # check that when calling the scoring function, probability estimates and
     # decision values lead to the same results
-    ap_proba = average_precision_score(y_test, y_pred_proba, pos_label=pos_label)
+    ap_proba = average_precision_score(y_test, y_pred_proba, pos_label=)
     ap_decision_function = average_precision_score(
-        y_test, y_pred_decision, pos_label=pos_label
+        y_test, y_pred_decision, pos_label=
     )
     assert ap_proba == pytest.approx(ap_decision_function)
 
@@ -1081,7 +1079,7 @@ def test_average_precision_pos_label(string_labeled_classification_problem):
     average_precision_scorer = make_scorer(
         average_precision_score,
         response_method=("decision_function", "predict_proba"),
-        pos_label=pos_label,
+        pos_label=,
     )
     ap_scorer = average_precision_scorer(clf, X_test, y_test)
 
@@ -1124,7 +1122,7 @@ def test_brier_score_loss_pos_label(string_labeled_classification_problem):
     brier_scorer = make_scorer(
         brier_score_loss,
         response_method="predict_proba",
-        pos_label=pos_label,
+        pos_label=,
     )
     assert brier_scorer(clf, X_test, y_test) == pytest.approx(brier_pos_cancer)
 
@@ -1148,7 +1146,7 @@ def test_non_symmetric_metric_pos_label(
 
     assert score_pos_cancer != pytest.approx(score_pos_not_cancer)
 
-    scorer = make_scorer(score_func, pos_label=pos_label)
+    scorer = make_scorer(score_func, pos_label=)
     assert scorer(clf, X_test, y_test) == pytest.approx(score_pos_cancer)
 
 

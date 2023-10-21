@@ -43,7 +43,7 @@ def compute_bench(samples_range, features_range):
             tstart = time()
             G = np.dot(X.T, X)  # precomputed Gram matrix
             Xy = np.dot(X.T, y)
-            lars_path_gram(Xy=Xy, Gram=G, n_samples=y.size, method="lasso")
+            lars_path_gram(Xy=, Gram=G, n_samples=y.size, method="lasso")
             delta = time() - tstart
             print("%0.3fs" % delta)
             results["lars_path (with Gram)"].append(delta)

@@ -127,7 +127,7 @@ X = np.array(["AGCT", "AGC", "AACT", "TAA", "AAA", "GAACA"])
 Y = np.array([1.0, 1.0, 2.0, 2.0, 3.0, 3.0])
 
 training_idx = [0, 1, 3, 4]
-gp = GaussianProcessRegressor(kernel=kernel)
+gp = GaussianProcessRegressor(kernel=)
 gp.fit(X[training_idx], Y[training_idx])
 
 plt.figure(figsize=(8, 5))

@@ -62,7 +62,7 @@ disp = PartialDependenceDisplay.from_estimator(
         "Second feature",
     ),
     line_kw={"linewidth": 4, "label": "unconstrained", "color": "tab:blue"},
-    ax=ax,
+    ax=,
 )
 PartialDependenceDisplay.from_estimator(
     gbdt_with_monotonic_cst,

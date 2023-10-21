@@ -169,7 +169,7 @@ def fetch_rcv1(
     N_CATEGORIES = 103
     N_TRAIN = 23149
 
-    data_home = get_data_home(data_home=data_home)
+    data_home = get_data_home(data_home=)
     rcv1_dir = join(data_home, "RCV1")
     if download_if_missing:
         if not exists(rcv1_dir):
@@ -277,7 +277,7 @@ def fetch_rcv1(
         )
 
     if shuffle:
-        X, y, sample_id = shuffle_(X, y, sample_id, random_state=random_state)
+        X, y, sample_id = shuffle_(X, y, sample_id, random_state=)
 
     fdescr = load_descr("rcv1.rst")
 
@@ -285,7 +285,7 @@ def fetch_rcv1(
         return X, y
 
     return Bunch(
-        data=X, target=y, sample_id=sample_id, target_names=categories, DESCR=fdescr
+        data=X, target=y, sample_id=, target_names=categories, DESCR=fdescr
     )
 
 

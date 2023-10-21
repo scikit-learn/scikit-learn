@@ -133,7 +133,7 @@ for dat, dataset_name in enumerate(datasets):
     for random_state in random_states:
         print("random state: %s" % random_state)
 
-        X, y = shuffle(X, y, random_state=random_state)
+        X, y = shuffle(X, y, random_state=)
         X_train = X[:n_samples_train]
         X_test = X[n_samples_train:]
         y_train = y[:n_samples_train]
@@ -146,7 +146,7 @@ for dat, dataset_name in enumerate(datasets):
         std = StandardScaler()
 
         print("----------- LibSVM OCSVM ------------")
-        ocsvm = OneClassSVM(kernel="rbf", gamma=gamma, nu=nu)
+        ocsvm = OneClassSVM(kernel="rbf", gamma=, nu=)
         pipe_libsvm = make_pipeline(std, ocsvm)
 
         tstart = time()
@@ -163,8 +163,8 @@ for dat, dataset_name in enumerate(datasets):
         tpr_libsvm += f_libsvm(x_axis)
 
         print("----------- Online OCSVM ------------")
-        nystroem = Nystroem(gamma=gamma, random_state=random_state)
-        online_ocsvm = SGDOneClassSVM(nu=nu, random_state=random_state)
+        nystroem = Nystroem(gamma=, random_state=)
+        online_ocsvm = SGDOneClassSVM(nu=, random_state=)
         pipe_online = make_pipeline(std, nystroem, online_ocsvm)
 
         tstart = time()
@@ -258,8 +258,8 @@ def autolabel_time(rects, ax):
 fig, ax = plt.subplots(figsize=(15, 8))
 ax.set_ylabel("AUC")
 ax.set_ylim((0, 1.3))
-rect_libsvm = ax.bar(ind, auc_libsvm_all, width=width, color="r")
-rect_online = ax.bar(ind + width, auc_online_all, width=width, color="y")
+rect_libsvm = ax.bar(ind, auc_libsvm_all, width=, color="r")
+rect_online = ax.bar(ind + width, auc_online_all, width=, color="y")
 ax.legend((rect_libsvm[0], rect_online[0]), ("LibSVM", "Online SVM"))
 ax.set_xticks(ind + width / 2)
 ax.set_xticklabels(x_tickslabels)
@@ -271,8 +271,8 @@ plt.show()
 fig, ax = plt.subplots(figsize=(15, 8))
 ax.set_ylabel("Training time (sec) - Log scale")
 ax.set_yscale("log")
-rect_libsvm = ax.bar(ind, fit_time_libsvm_all, color="r", width=width)
-rect_online = ax.bar(ind + width, fit_time_online_all, color="y", width=width)
+rect_libsvm = ax.bar(ind, fit_time_libsvm_all, color="r", width=)
+rect_online = ax.bar(ind + width, fit_time_online_all, color="y", width=)
 ax.legend((rect_libsvm[0], rect_online[0]), ("LibSVM", "Online SVM"))
 ax.set_xticks(ind + width / 2)
 ax.set_xticklabels(x_tickslabels)
@@ -284,8 +284,8 @@ plt.show()
 fig, ax = plt.subplots(figsize=(15, 8))
 ax.set_ylabel("Testing time (sec) - Log scale")
 ax.set_yscale("log")
-rect_libsvm = ax.bar(ind, predict_time_libsvm_all, color="r", width=width)
-rect_online = ax.bar(ind + width, predict_time_online_all, color="y", width=width)
+rect_libsvm = ax.bar(ind, predict_time_libsvm_all, color="r", width=)
+rect_online = ax.bar(ind + width, predict_time_online_all, color="y", width=)
 ax.legend((rect_libsvm[0], rect_online[0]), ("LibSVM", "Online SVM"))
 ax.set_xticks(ind + width / 2)
 ax.set_xticklabels(x_tickslabels)

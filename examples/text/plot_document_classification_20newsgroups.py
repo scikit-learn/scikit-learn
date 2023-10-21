@@ -58,18 +58,18 @@ def load_dataset(verbose=False, remove=()):
 
     data_train = fetch_20newsgroups(
         subset="train",
-        categories=categories,
+        categories=,
         shuffle=True,
         random_state=42,
-        remove=remove,
+        remove=,
     )
 
     data_test = fetch_20newsgroups(
         subset="test",
-        categories=categories,
+        categories=,
         shuffle=True,
         random_state=42,
-        remove=remove,
+        remove=,
     )
 
     # order of labels in `target_names` can be different from `categories`
@@ -163,7 +163,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import ConfusionMatrixDisplay
 
 fig, ax = plt.subplots(figsize=(10, 5))
-ConfusionMatrixDisplay.from_predictions(y_test, pred, ax=ax)
+ConfusionMatrixDisplay.from_predictions(y_test, pred, ax=)
 ax.xaxis.set_ticklabels(target_names)
 ax.yaxis.set_ticklabels(target_names)
 _ = ax.set_title(
@@ -214,7 +214,7 @@ def plot_feature_effects():
             y_locs + (i - 2) * bar_size,
             average_feature_effects[i, top_indices],
             height=bar_size,
-            label=label,
+            label=,
         )
     ax.set(
         yticks=y_locs,
@@ -248,7 +248,7 @@ _ = plot_feature_effects().set_title("Average feature effect on the original dat
 # of the sender of previous emails in the discussion as can be seen below:
 
 data_train = fetch_20newsgroups(
-    subset="train", categories=categories, shuffle=True, random_state=42
+    subset="train", categories=, shuffle=True, random_state=42
 )
 
 for doc in data_train.data:
@@ -287,7 +287,7 @@ clf.fit(X_train, y_train)
 pred = clf.predict(X_test)
 
 fig, ax = plt.subplots(figsize=(10, 5))
-ConfusionMatrixDisplay.from_predictions(y_test, pred, ax=ax)
+ConfusionMatrixDisplay.from_predictions(y_test, pred, ax=)
 ax.xaxis.set_ticklabels(target_names)
 ax.yaxis.set_ticklabels(target_names)
 _ = ax.set_title(

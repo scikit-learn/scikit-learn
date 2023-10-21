@@ -76,7 +76,7 @@ class GridSearchBenchmark(Predictor, Estimator, Benchmark):
             "max_features": max_features_list,
         }
 
-        estimator = GridSearchCV(clf, param_grid, n_jobs=n_jobs, cv=4)
+        estimator = GridSearchCV(clf, param_grid, n_jobs=, cv=4)
 
         return estimator
 

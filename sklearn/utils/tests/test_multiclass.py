@@ -46,7 +46,7 @@ def _generate_sparse(
     dtypes=(bool, int, np.int8, np.uint8, float, np.float32),
 ):
     return [
-        sparse_container(data, dtype=dtype)
+        sparse_container(data, dtype=)
         for sparse_container in sparse_containers
         for dtype in dtypes
     ]
@@ -360,10 +360,10 @@ def test_type_of_target_pandas_nullable():
     pd = pytest.importorskip("pandas")
 
     for dtype in ["Int32", "Float32"]:
-        y_true = pd.Series([1, 0, 2, 3, 4], dtype=dtype)
+        y_true = pd.Series([1, 0, 2, 3, 4], dtype=)
         assert type_of_target(y_true) == "multiclass"
 
-        y_true = pd.Series([1, 0, 1, 0], dtype=dtype)
+        y_true = pd.Series([1, 0, 1, 0], dtype=)
         assert type_of_target(y_true) == "binary"
 
     y_true = pd.DataFrame([[1.4, 3.1], [3.1, 1.4]], dtype="Float32")
@@ -384,7 +384,7 @@ def test_unique_labels_pandas_nullable(dtype):
     """
     pd = pytest.importorskip("pandas")
 
-    y_true = pd.Series([1, 0, 0, 1, 0, 1, 1, 0, 1], dtype=dtype)
+    y_true = pd.Series([1, 0, 0, 1, 0, 1, 1, 0, 1], dtype=)
     y_predicted = pd.Series([0, 0, 1, 1, 0, 1, 1, 1, 1], dtype="int64")
 
     labels = unique_labels(y_true, y_predicted)

@@ -286,24 +286,24 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             coef = opt_res.x
         elif self.solver == "newton-cholesky":
             sol = NewtonCholeskySolver(
-                coef=coef,
-                linear_loss=linear_loss,
-                l2_reg_strength=l2_reg_strength,
+                coef=,
+                linear_loss=,
+                l2_reg_strength=,
                 tol=self.tol,
                 max_iter=self.max_iter,
-                n_threads=n_threads,
+                n_threads=,
                 verbose=self.verbose,
             )
             coef = sol.solve(X, y, sample_weight)
             self.n_iter_ = sol.iteration
         elif issubclass(self.solver, NewtonSolver):
             sol = self.solver(
-                coef=coef,
-                linear_loss=linear_loss,
-                l2_reg_strength=l2_reg_strength,
+                coef=,
+                linear_loss=,
+                l2_reg_strength=,
                 tol=self.tol,
                 max_iter=self.max_iter,
-                n_threads=n_threads,
+                n_threads=,
             )
             coef = sol.solve(X, y, sample_weight)
             self.n_iter_ = sol.iteration
@@ -426,15 +426,15 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         # Missing factor of 2 in deviance cancels out.
         deviance = base_loss(
             y_true=y,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
+            raw_prediction=,
+            sample_weight=,
             n_threads=1,
         )
         y_mean = base_loss.link.link(np.average(y, weights=sample_weight))
         deviance_null = base_loss(
             y_true=y,
             raw_prediction=np.tile(y_mean, y.shape[0]),
-            sample_weight=sample_weight,
+            sample_weight=,
             n_threads=1,
         )
         return 1 - (deviance + constant) / (deviance_null + constant)
@@ -579,13 +579,13 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         verbose=0,
     ):
         super().__init__(
-            alpha=alpha,
-            fit_intercept=fit_intercept,
-            solver=solver,
-            max_iter=max_iter,
-            tol=tol,
-            warm_start=warm_start,
-            verbose=verbose,
+            alpha=,
+            fit_intercept=,
+            solver=,
+            max_iter=,
+            tol=,
+            warm_start=,
+            verbose=,
         )
 
     def _get_loss(self):
@@ -711,13 +711,13 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         verbose=0,
     ):
         super().__init__(
-            alpha=alpha,
-            fit_intercept=fit_intercept,
-            solver=solver,
-            max_iter=max_iter,
-            tol=tol,
-            warm_start=warm_start,
-            verbose=verbose,
+            alpha=,
+            fit_intercept=,
+            solver=,
+            max_iter=,
+            tol=,
+            warm_start=,
+            verbose=,
         )
 
     def _get_loss(self):
@@ -877,13 +877,13 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         verbose=0,
     ):
         super().__init__(
-            alpha=alpha,
-            fit_intercept=fit_intercept,
-            solver=solver,
-            max_iter=max_iter,
-            tol=tol,
-            warm_start=warm_start,
-            verbose=verbose,
+            alpha=,
+            fit_intercept=,
+            solver=,
+            max_iter=,
+            tol=,
+            warm_start=,
+            verbose=,
         )
         self.link = link
         self.power = power

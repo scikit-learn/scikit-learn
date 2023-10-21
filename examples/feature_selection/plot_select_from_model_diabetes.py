@@ -75,7 +75,7 @@ from sklearn.feature_selection import SelectFromModel
 threshold = np.sort(importance)[-3] + 0.01
 
 tic = time()
-sfm = SelectFromModel(ridge, threshold=threshold).fit(X, y)
+sfm = SelectFromModel(ridge, threshold=).fit(X, y)
 toc = time()
 print(f"Features selected by SelectFromModel: {feature_names[sfm.get_support()]}")
 print(f"Done in {toc - tic:.3f}s")
@@ -178,7 +178,7 @@ for tol in [-1e-2, -1e-3, -1e-4]:
         n_features_to_select="auto",
         direction="backward",
         scoring="roc_auc",
-        tol=tol,
+        tol=,
         n_jobs=2,
     )
     model = make_pipeline(StandardScaler(), feature_selector, LogisticRegression())

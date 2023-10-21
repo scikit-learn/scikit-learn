@@ -31,7 +31,7 @@ def generate_data(n_samples, n_features):
     Only one feature contains discriminative information, the other features
     contain only noise.
     """
-    X, y = make_blobs(n_samples=n_samples, n_features=1, centers=[[-2], [2]])
+    X, y = make_blobs(n_samples=, n_features=1, centers=[[-2], [2]])
 
     # add non-discriminative features
     if n_features > 1:

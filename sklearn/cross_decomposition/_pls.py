@@ -297,7 +297,7 @@ class _PLS(
                         mode=self.mode,
                         max_iter=self.max_iter,
                         tol=self.tol,
-                        norm_y_weights=norm_y_weights,
+                        norm_y_weights=,
                     )
                 except StopIteration as e:
                     if str(e) != "Y residual is constant":
@@ -382,7 +382,7 @@ class _PLS(
             Return `x_scores` if `Y` is not given, `(x_scores, y_scores)` otherwise.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
+        X = self._validate_data(X, copy=, dtype=FLOAT_DTYPES, reset=False)
         # Normalize
         X -= self._x_mean
         X /= self._x_std
@@ -390,7 +390,7 @@ class _PLS(
         x_scores = np.dot(X, self.x_rotations_)
         if Y is not None:
             Y = check_array(
-                Y, input_name="Y", ensure_2d=False, copy=copy, dtype=FLOAT_DTYPES
+                Y, input_name="Y", ensure_2d=False, copy=, dtype=FLOAT_DTYPES
             )
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
@@ -468,7 +468,7 @@ class _PLS(
         space.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, copy=copy, dtype=FLOAT_DTYPES, reset=False)
+        X = self._validate_data(X, copy=, dtype=FLOAT_DTYPES, reset=False)
         # Normalize
         X -= self._x_mean
         X /= self._x_std
@@ -612,14 +612,14 @@ class PLSRegression(_PLS):
         self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
     ):
         super().__init__(
-            n_components=n_components,
-            scale=scale,
+            n_components=,
+            scale=,
             deflation_mode="regression",
             mode="A",
             algorithm="nipals",
-            max_iter=max_iter,
-            tol=tol,
-            copy=copy,
+            max_iter=,
+            tol=,
+            copy=,
         )
 
     def fit(self, X, Y):
@@ -766,14 +766,14 @@ class PLSCanonical(_PLS):
         copy=True,
     ):
         super().__init__(
-            n_components=n_components,
-            scale=scale,
+            n_components=,
+            scale=,
             deflation_mode="canonical",
             mode="A",
-            algorithm=algorithm,
-            max_iter=max_iter,
-            tol=tol,
-            copy=copy,
+            algorithm=,
+            max_iter=,
+            tol=,
+            copy=,
         )
 
 
@@ -873,14 +873,14 @@ class CCA(_PLS):
         self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
     ):
         super().__init__(
-            n_components=n_components,
-            scale=scale,
+            n_components=,
+            scale=,
             deflation_mode="canonical",
             mode="B",
             algorithm="nipals",
-            max_iter=max_iter,
-            tol=tol,
-            copy=copy,
+            max_iter=,
+            tol=,
+            copy=,
         )
 
 

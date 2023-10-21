@@ -168,7 +168,7 @@ def test_iforest_works(contamination, global_random_seed):
     X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [7, 4], [-5, 9]]
 
     # Test IsolationForest
-    clf = IsolationForest(random_state=global_random_seed, contamination=contamination)
+    clf = IsolationForest(random_state=global_random_seed, contamination=)
     clf.fit(X)
     decision_func = -clf.decision_function(X)
     pred = clf.predict(X)

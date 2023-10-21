@@ -49,9 +49,9 @@ cv = StratifiedKFold(5)
 rfecv = RFECV(
     estimator=clf,
     step=1,
-    cv=cv,
+    cv=,
     scoring="accuracy",
-    min_features_to_select=min_features_to_select,
+    min_features_to_select=,
     n_jobs=2,
 )
 rfecv.fit(X, y)

@@ -44,7 +44,7 @@ def compute_bench(samples_range, features_range, n_iter=3, rank=50):
             gc.collect()
             print("benchmarking scikit-learn randomized_svd: n_iter=%d " % n_iter)
             tstart = time()
-            randomized_svd(X, rank, n_iter=n_iter)
+            randomized_svd(X, rank, n_iter=)
             results["scikit-learn randomized_svd (n_iter=%d)" % n_iter].append(
                 time() - tstart
             )
@@ -70,7 +70,7 @@ if __name__ == "__main__":
         ax.plot_surface(X, Y, Z, rstride=8, cstride=8, alpha=0.3, color=c)
         # dummy point plot to stick the legend to since surface plot do not
         # support legends (yet?)
-        ax.plot([1], [1], [1], color=c, label=label)
+        ax.plot([1], [1], [1], color=c, label=)
 
     ax.set_xlabel("n_samples")
     ax.set_ylabel("n_features")

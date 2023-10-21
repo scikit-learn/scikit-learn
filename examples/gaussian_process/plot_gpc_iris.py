@@ -25,9 +25,9 @@ y = np.array(iris.target, dtype=int)
 h = 0.02  # step size in the mesh
 
 kernel = 1.0 * RBF([1.0])
-gpc_rbf_isotropic = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+gpc_rbf_isotropic = GaussianProcessClassifier(kernel=).fit(X, y)
 kernel = 1.0 * RBF([1.0, 1.0])
-gpc_rbf_anisotropic = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+gpc_rbf_anisotropic = GaussianProcessClassifier(kernel=).fit(X, y)
 
 # create a mesh to plot in
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1

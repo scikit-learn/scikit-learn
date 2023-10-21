@@ -109,10 +109,10 @@ names = [get_name(e).replace("StandardScaler + ", "") for e, _ in classifiers]
 
 n_samples = 100
 datasets = [
-    make_moons(n_samples=n_samples, noise=0.2, random_state=0),
-    make_circles(n_samples=n_samples, noise=0.2, factor=0.5, random_state=1),
+    make_moons(n_samples=, noise=0.2, random_state=0),
+    make_circles(n_samples=, noise=0.2, factor=0.5, random_state=1),
     make_classification(
-        n_samples=n_samples,
+        n_samples=,
         n_features=2,
         n_redundant=0,
         n_informative=2,
@@ -161,7 +161,7 @@ for ds_cnt, (X, y) in enumerate(datasets):
     for est_idx, (name, (estimator, param_grid)) in enumerate(zip(names, classifiers)):
         ax = axes[ds_cnt, est_idx + 1]
 
-        clf = GridSearchCV(estimator=estimator, param_grid=param_grid)
+        clf = GridSearchCV(estimator=, param_grid=)
         with ignore_warnings(category=ConvergenceWarning):
             clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)

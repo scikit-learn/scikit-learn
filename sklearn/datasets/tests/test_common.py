@@ -109,7 +109,7 @@ def _generate_func_supporting_param(param, dataset_type=("load", "fetch")):
             if name in markers_fetch:
                 marks.append(markers_fetch[name])
 
-            yield pytest.param(name, obj, marks=marks)
+            yield pytest.param(name, obj, marks=)
 
 
 @pytest.mark.parametrize(

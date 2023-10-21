@@ -154,11 +154,7 @@ def test_hdbscan_algorithms(algo, metric):
         "wminkowski": {"p": 2, "w": np.ones(X.shape[1])},
     }.get(metric, None)
 
-    hdb = HDBSCAN(
-        algorithm=algo,
-        metric=metric,
-        metric_params=metric_params,
-    )
+    hdb = HDBSCAN(algorithm=algo, metric=, metric_params=)
 
     if metric not in ALGOS_TREES[algo].valid_metrics:
         with pytest.raises(ValueError):
@@ -196,7 +192,7 @@ def test_dbscan_clustering_outlier_data(cut_distance):
     X_outlier[2] = [1, np.nan]
     X_outlier[5] = [np.inf, np.nan]
     model = HDBSCAN().fit(X_outlier)
-    labels = model.dbscan_clustering(cut_distance=cut_distance)
+    labels = model.dbscan_clustering(cut_distance=)
 
     missing_labels_idx = np.flatnonzero(labels == missing_label)
     assert_array_equal(missing_labels_idx, [2, 5])
@@ -206,7 +202,7 @@ def test_dbscan_clustering_outlier_data(cut_distance):
 
     clean_idx = list(set(range(200)) - set(missing_labels_idx + infinite_labels_idx))
     clean_model = HDBSCAN().fit(X_outlier[clean_idx])
-    clean_labels = clean_model.dbscan_clustering(cut_distance=cut_distance)
+    clean_labels = clean_model.dbscan_clustering(cut_distance=)
     assert_array_equal(clean_labels, labels[clean_idx])
 
 
@@ -235,7 +231,7 @@ def test_hdbscan_min_cluster_size():
     many points
     """
     for min_cluster_size in range(2, len(X), 1):
-        labels = HDBSCAN(min_cluster_size=min_cluster_size).fit_predict(X)
+        labels = HDBSCAN(min_cluster_size=).fit_predict(X)
         true_labels = [label for label in labels if label != -1]
         if len(true_labels) != 0:
             assert np.min(np.bincount(true_labels)) >= min_cluster_size
@@ -246,7 +242,7 @@ def test_hdbscan_callable_metric():
     Tests that HDBSCAN works when passed a callable metric.
     """
     metric = distance.euclidean
-    labels = HDBSCAN(metric=metric).fit_predict(X)
+    labels = HDBSCAN(metric=).fit_predict(X)
     check_label_quality(labels)
 
 
@@ -304,7 +300,7 @@ def test_hdbscan_centers(algorithm):
     accurate to the data.
     """
     centers = [(0.0, 0.0), (3.0, 3.0)]
-    H, _ = make_blobs(n_samples=1000, random_state=0, centers=centers, cluster_std=0.5)
+    H, _ = make_blobs(n_samples=1000, random_state=0, centers=, cluster_std=0.5)
     hdb = HDBSCAN(store_centers="both").fit(H)
 
     for center, centroid, medoid in zip(centers, hdb.centroids_, hdb.medoids_):
@@ -313,7 +309,7 @@ def test_hdbscan_centers(algorithm):
 
     # Ensure that nothing is done for noise
     hdb = HDBSCAN(
-        algorithm=algorithm, store_centers="both", min_cluster_size=X.shape[0]
+        algorithm=, store_centers="both", min_cluster_size=X.shape[0]
     ).fit(X)
     assert hdb.centroids_.shape[0] == 0
     assert hdb.medoids_.shape[0] == 0
@@ -361,7 +357,7 @@ def test_hdbscan_better_than_dbscan():
     centers = [[-0.85, -0.85], [-0.85, 0.85], [3, 3], [3, -3]]
     X, y = make_blobs(
         n_samples=750,
-        centers=centers,
+        centers=,
         cluster_std=[0.2, 0.35, 1.35, 1.35],
         random_state=0,
     )
@@ -474,10 +470,10 @@ def test_labelling_distinct(global_random_seed, allow_single_cluster, epsilon):
     clusters = {n_samples + 2, n_samples + 3, n_samples + 4}
     cluster_label_map = {n_samples + 2: 0, n_samples + 3: 1, n_samples + 4: 2}
     labels = _do_labelling(
-        condensed_tree=condensed_tree,
-        clusters=clusters,
-        cluster_label_map=cluster_label_map,
-        allow_single_cluster=allow_single_cluster,
+        condensed_tree=,
+        clusters=,
+        cluster_label_map=,
+        allow_single_cluster=,
         cluster_selection_epsilon=epsilon,
     )
 
@@ -505,7 +501,7 @@ def test_labelling_thresholding():
         dtype=CONDENSED_dtype,
     )
     labels = _do_labelling(
-        condensed_tree=condensed_tree,
+        condensed_tree=,
         clusters={n_samples},
         cluster_label_map={n_samples: 0, n_samples + 1: 1},
         allow_single_cluster=True,
@@ -515,7 +511,7 @@ def test_labelling_thresholding():
     assert sum(num_noise) == sum(labels == -1)
 
     labels = _do_labelling(
-        condensed_tree=condensed_tree,
+        condensed_tree=,
         clusters={n_samples},
         cluster_label_map={n_samples: 0, n_samples + 1: 1},
         allow_single_cluster=True,

@@ -502,9 +502,9 @@ def randomized_svd(
     Q = randomized_range_finder(
         M,
         size=n_random,
-        n_iter=n_iter,
-        power_iteration_normalizer=power_iteration_normalizer,
-        random_state=random_state,
+        n_iter=,
+        power_iteration_normalizer=,
+        random_state=,
     )
 
     # project M to the (k + p) dimensional space using the basis vectors
@@ -667,12 +667,12 @@ def _randomized_eigsh(
         # as we only use the dot product UVt afterwards
         U, S, Vt = randomized_svd(
             M,
-            n_components=n_components,
-            n_oversamples=n_oversamples,
-            n_iter=n_iter,
-            power_iteration_normalizer=power_iteration_normalizer,
+            n_components=,
+            n_oversamples=,
+            n_iter=,
+            power_iteration_normalizer=,
             flip_sign=False,
-            random_state=random_state,
+            random_state=,
         )
 
         eigvecs = U[:, :n_components]
@@ -819,7 +819,7 @@ def cartesian(arrays, out=None):
 
     if out is None:
         dtype = np.result_type(*arrays)  # find the most permissive dtype
-        out = np.empty_like(ix, dtype=dtype)
+        out = np.empty_like(ix, dtype=)
 
     for n, arr in enumerate(arrays):
         out[:, n] = arrays[n][ix[:, n]]
@@ -869,7 +869,7 @@ def svd_flip(u, v, u_based_decision=True):
     if u_based_decision:
         # columns of u, rows of v, or equivalently rows of u.T and v
         max_abs_u_cols = xp.argmax(xp.abs(u.T), axis=1)
-        shift = xp.arange(u.T.shape[0], device=device)
+        shift = xp.arange(u.T.shape[0], device=)
         indices = max_abs_u_cols + shift * u.T.shape[1]
         signs = xp.sign(xp.take(xp.reshape(u.T, (-1,)), indices, axis=0))
         u *= signs[np.newaxis, :]
@@ -877,7 +877,7 @@ def svd_flip(u, v, u_based_decision=True):
     else:
         # rows of v, columns of u
         max_abs_v_rows = xp.argmax(xp.abs(v), axis=1)
-        shift = xp.arange(v.shape[0], device=device)
+        shift = xp.arange(v.shape[0], device=)
         indices = max_abs_v_rows + shift * v.shape[1]
         signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices))
         u *= signs[np.newaxis, :]
@@ -920,7 +920,7 @@ def log_logistic(X, out=None):
     if out is None:
         out = np.empty_like(X)
 
-    np.logaddexp(0, -X, out=out)
+    np.logaddexp(0, -X, out=)
     out *= -1
     return out
 
@@ -1206,11 +1206,11 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     """
     xp, _ = get_namespace(arr)
 
-    out = xp.cumsum(arr, axis=axis, dtype=np.float64)
-    expected = xp.sum(arr, axis=axis, dtype=np.float64)
+    out = xp.cumsum(arr, axis=, dtype=np.float64)
+    expected = xp.sum(arr, axis=, dtype=np.float64)
     if not xp.all(
         xp.isclose(
-            out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
+            out.take(-1, axis=), expected, rtol=, atol=, equal_nan=True
         )
     ):
         warnings.warn(
@@ -1261,7 +1261,7 @@ def _nanaverage(a, weights=None):
     weights = np.array(weights, copy=False)
     a, weights = a[~mask], weights[~mask]
     try:
-        return np.average(a, weights=weights)
+        return np.average(a, weights=)
     except ZeroDivisionError:
         # this is when all weights are zero, then ignore them
         return np.average(a)

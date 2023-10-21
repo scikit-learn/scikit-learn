@@ -107,7 +107,7 @@ def generate_dataset(n_train, n_test, n_features, noise=0.1, verbose=False):
         print("generating dataset...")
 
     X, y, coef = make_regression(
-        n_samples=n_train + n_test, n_features=n_features, noise=noise, coef=True
+        n_samples=n_train + n_test, n_features=, noise=, coef=True
     )
 
     random_seed = 13

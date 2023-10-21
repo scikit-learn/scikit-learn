@@ -83,18 +83,18 @@ def test_data_home(path_container, data_home):
     # get_data_home will point to a pre-existing folder
     if path_container is not None:
         data_home = path_container(data_home)
-    data_home = get_data_home(data_home=data_home)
+    data_home = get_data_home(data_home=)
     assert data_home == data_home
     assert os.path.exists(data_home)
 
     # clear_data_home will delete both the content and the folder it-self
     if path_container is not None:
         data_home = path_container(data_home)
-    clear_data_home(data_home=data_home)
+    clear_data_home(data_home=)
     assert not os.path.exists(data_home)
 
     # if the folder is missing it will be created again
-    data_home = get_data_home(data_home=data_home)
+    data_home = get_data_home(data_home=)
     assert os.path.exists(data_home)
 
 
@@ -146,7 +146,7 @@ def test_load_files_allowed_extensions(tmp_path, allowed_extensions):
     paths = [d / f for f in files]
     for p in paths:
         p.write_bytes(b"hello")
-    res = load_files(tmp_path, allowed_extensions=allowed_extensions)
+    res = load_files(tmp_path, allowed_extensions=)
     assert set([str(p) for p in paths if p.suffix in allowed_extensions]) == set(
         res.filenames
     )
@@ -174,10 +174,8 @@ def test_load_csv_data_with_descr():
     data_file_name = "iris.csv"
     descr_file_name = "iris.rst"
 
-    res_without_descr = load_csv_data(data_file_name=data_file_name)
-    res_with_descr = load_csv_data(
-        data_file_name=data_file_name, descr_file_name=descr_file_name
-    )
+    res_without_descr = load_csv_data(data_file_name=)
+    res_with_descr = load_csv_data(data_file_name=, descr_file_name=)
     assert len(res_with_descr) == 4
     assert len(res_without_descr) == 3
 
@@ -205,10 +203,10 @@ def test_load_gzip_compressed_csv_data_with_descr():
     data_file_name = "diabetes_target.csv.gz"
     descr_file_name = "diabetes.rst"
 
-    expected_data = load_gzip_compressed_csv_data(data_file_name=data_file_name)
+    expected_data = load_gzip_compressed_csv_data(data_file_name=)
     actual_data, descr = load_gzip_compressed_csv_data(
-        data_file_name=data_file_name,
-        descr_file_name=descr_file_name,
+        data_file_name=,
+        descr_file_name=,
     )
 
     np.testing.assert_array_equal(actual_data, expected_data)

@@ -69,7 +69,7 @@ def test_ball_tree_query_metrics(metric, array_type, BallTreeImplementation):
 
     k = 5
 
-    bt = BallTreeImplementation(X, leaf_size=1, metric=metric)
+    bt = BallTreeImplementation(X, leaf_size=1, metric=)
     dist1, ind1 = bt.query(Y, k)
     dist2, ind2 = brute_force_neighbors(X, Y, k, metric)
     assert_array_almost_equal(dist1, dist2)
@@ -124,13 +124,13 @@ def test_ball_tree_numerical_consistency(global_random_seed, metric):
     )
 
     metric_params = METRICS.get(metric, {})
-    bt_64 = BallTree64(X_64, leaf_size=1, metric=metric, **metric_params)
-    bt_32 = BallTree32(X_32, leaf_size=1, metric=metric, **metric_params)
+    bt_64 = BallTree64(X_64, leaf_size=1, metric=, **metric_params)
+    bt_32 = BallTree32(X_32, leaf_size=1, metric=, **metric_params)
 
     # Test consistency with respect to the `query` method
     k = 5
-    dist_64, ind_64 = bt_64.query(Y_64, k=k)
-    dist_32, ind_32 = bt_32.query(Y_32, k=k)
+    dist_64, ind_64 = bt_64.query(Y_64, k=)
+    dist_32, ind_32 = bt_32.query(Y_32, k=)
     assert_allclose(dist_64, dist_32, rtol=1e-5)
     assert_equal(ind_64, ind_32)
     assert dist_64.dtype == np.float64
@@ -138,15 +138,15 @@ def test_ball_tree_numerical_consistency(global_random_seed, metric):
 
     # Test consistency with respect to the `query_radius` method
     r = 2.38
-    ind_64 = bt_64.query_radius(Y_64, r=r)
-    ind_32 = bt_32.query_radius(Y_32, r=r)
+    ind_64 = bt_64.query_radius(Y_64, r=)
+    ind_32 = bt_32.query_radius(Y_32, r=)
     for _ind64, _ind32 in zip(ind_64, ind_32):
         assert_equal(_ind64, _ind32)
 
     # Test consistency with respect to the `query_radius` method
     # with return distances being true
-    ind_64, dist_64 = bt_64.query_radius(Y_64, r=r, return_distance=True)
-    ind_32, dist_32 = bt_32.query_radius(Y_32, r=r, return_distance=True)
+    ind_64, dist_64 = bt_64.query_radius(Y_64, r=, return_distance=True)
+    ind_32, dist_32 = bt_32.query_radius(Y_32, r=, return_distance=True)
     for _ind64, _ind32, _dist_64, _dist_32 in zip(ind_64, ind_32, dist_64, dist_32):
         assert_equal(_ind64, _ind32)
         assert_allclose(_dist_64, _dist_32, rtol=1e-5)
@@ -160,13 +160,13 @@ def test_kernel_density_numerical_consistency(global_random_seed, metric):
     X_64, X_32, Y_64, Y_32 = get_dataset_for_binary_tree(random_seed=global_random_seed)
 
     metric_params = METRICS.get(metric, {})
-    bt_64 = BallTree64(X_64, leaf_size=1, metric=metric, **metric_params)
-    bt_32 = BallTree32(X_32, leaf_size=1, metric=metric, **metric_params)
+    bt_64 = BallTree64(X_64, leaf_size=1, metric=, **metric_params)
+    bt_32 = BallTree32(X_32, leaf_size=1, metric=, **metric_params)
 
     kernel = "gaussian"
     h = 0.1
-    density64 = bt_64.kernel_density(Y_64, h=h, kernel=kernel, breadth_first=True)
-    density32 = bt_32.kernel_density(Y_32, h=h, kernel=kernel, breadth_first=True)
+    density64 = bt_64.kernel_density(Y_64, h=, kernel=, breadth_first=True)
+    density32 = bt_32.kernel_density(Y_32, h=, kernel=, breadth_first=True)
     assert_allclose(density64, density32, rtol=1e-5)
     assert density64.dtype == np.float64
     assert density32.dtype == np.float32
@@ -181,8 +181,8 @@ def test_two_point_correlation_numerical_consistency(global_random_seed):
 
     r = np.linspace(0, 1, 10)
 
-    counts_64 = bt_64.two_point_correlation(Y_64, r=r, dualtree=True)
-    counts_32 = bt_32.two_point_correlation(Y_32, r=r, dualtree=True)
+    counts_64 = bt_64.two_point_correlation(Y_64, r=, dualtree=True)
+    counts_32 = bt_32.two_point_correlation(Y_32, r=, dualtree=True)
     assert_allclose(counts_64, counts_32)
 
 

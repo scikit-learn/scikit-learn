@@ -119,12 +119,12 @@ def ignore_warnings(obj=None, category=Warning):
             "'obj' should be a callable where you want to ignore warnings. "
             "You passed a warning class instead: 'obj={warning_name}'. "
             "If you want to pass a warning class to ignore_warnings, "
-            "you should use 'category={warning_name}'".format(warning_name=warning_name)
+            "you should use 'category={warning_name}'".format(warning_name=)
         )
     elif callable(obj):
-        return _IgnoreWarnings(category=category)(obj)
+        return _IgnoreWarnings(category=)(obj)
     else:
-        return _IgnoreWarnings(category=category)
+        return _IgnoreWarnings(category=)
 
 
 class _IgnoreWarnings:
@@ -291,11 +291,11 @@ def assert_allclose(
     np_assert_allclose(
         actual,
         desired,
-        rtol=rtol,
-        atol=atol,
-        equal_nan=equal_nan,
-        err_msg=err_msg,
-        verbose=verbose,
+        rtol=,
+        atol=,
+        equal_nan=,
+        err_msg=,
+        verbose=,
     )
 
 
@@ -329,12 +329,12 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=""):
         y = y.tocsr()
         x.sum_duplicates()
         y.sum_duplicates()
-        assert_array_equal(x.indices, y.indices, err_msg=err_msg)
-        assert_array_equal(x.indptr, y.indptr, err_msg=err_msg)
-        assert_allclose(x.data, y.data, rtol=rtol, atol=atol, err_msg=err_msg)
+        assert_array_equal(x.indices, y.indices, err_msg=)
+        assert_array_equal(x.indptr, y.indptr, err_msg=)
+        assert_allclose(x.data, y.data, rtol=, atol=, err_msg=)
     elif not sp.sparse.issparse(x) and not sp.sparse.issparse(y):
         # both dense
-        assert_allclose(x, y, rtol=rtol, atol=atol, err_msg=err_msg)
+        assert_allclose(x, y, rtol=, atol=, err_msg=)
     else:
         raise ValueError(
             "Can only compare two sparse matrices, not a sparse matrix and an array."
@@ -354,7 +354,7 @@ def set_random_state(estimator, random_state=0):
         See :term:`Glossary <random_state>`.
     """
     if "random_state" in estimator.get_params():
-        estimator.set_params(random_state=random_state)
+        estimator.set_params(random_state=)
 
 
 try:
@@ -514,7 +514,7 @@ def create_memmap_backed_data(data, mmap_mode="r", return_folder=False, aligned=
     else:
         filename = op.join(temp_folder, "data.pkl")
         joblib.dump(data, filename)
-        memmap_backed_data = joblib.load(filename, mmap_mode=mmap_mode)
+        memmap_backed_data = joblib.load(filename, mmap_mode=)
     result = (
         memmap_backed_data if not return_folder else (memmap_backed_data, temp_folder)
     )
@@ -803,50 +803,50 @@ def _convert_container(
         if dtype is None:
             return list(container)
         else:
-            return np.asarray(container, dtype=dtype).tolist()
+            return np.asarray(container, dtype=).tolist()
     elif constructor_name == "tuple":
         if dtype is None:
             return tuple(container)
         else:
-            return tuple(np.asarray(container, dtype=dtype).tolist())
+            return tuple(np.asarray(container, dtype=).tolist())
     elif constructor_name == "array":
-        return np.asarray(container, dtype=dtype)
+        return np.asarray(container, dtype=)
     elif constructor_name == "sparse":
-        return sp.sparse.csr_matrix(container, dtype=dtype)
+        return sp.sparse.csr_matrix(container, dtype=)
     elif constructor_name == "dataframe":
-        pd = pytest.importorskip("pandas", minversion=minversion)
-        return pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
+        pd = pytest.importorskip("pandas", minversion=)
+        return pd.DataFrame(container, columns=columns_name, dtype=, copy=False)
     elif constructor_name == "pyarrow":
-        pa = pytest.importorskip("pyarrow", minversion=minversion)
+        pa = pytest.importorskip("pyarrow", minversion=)
         array = np.asarray(container)
         if columns_name is None:
             columns_name = [f"col{i}" for i in range(array.shape[1])]
         data = {name: array[:, i] for i, name in enumerate(columns_name)}
         return pa.Table.from_pydict(data)
     elif constructor_name == "polars":
-        pl = pytest.importorskip("polars", minversion=minversion)
+        pl = pytest.importorskip("polars", minversion=)
         return pl.DataFrame(container, schema=columns_name)
     elif constructor_name == "series":
-        pd = pytest.importorskip("pandas", minversion=minversion)
-        return pd.Series(container, dtype=dtype)
+        pd = pytest.importorskip("pandas", minversion=)
+        return pd.Series(container, dtype=)
     elif constructor_name == "index":
-        pd = pytest.importorskip("pandas", minversion=minversion)
-        return pd.Index(container, dtype=dtype)
+        pd = pytest.importorskip("pandas", minversion=)
+        return pd.Index(container, dtype=)
     elif constructor_name == "slice":
         return slice(container[0], container[1])
     elif constructor_name == "sparse_csr":
-        return sp.sparse.csr_matrix(container, dtype=dtype)
+        return sp.sparse.csr_matrix(container, dtype=)
     elif constructor_name == "sparse_csr_array":
         if sp_version >= parse_version("1.8"):
-            return sp.sparse.csr_array(container, dtype=dtype)
+            return sp.sparse.csr_array(container, dtype=)
         raise ValueError(
             f"sparse_csr_array is only available with scipy>=1.8.0, got {sp_version}"
         )
     elif constructor_name == "sparse_csc":
-        return sp.sparse.csc_matrix(container, dtype=dtype)
+        return sp.sparse.csc_matrix(container, dtype=)
     elif constructor_name == "sparse_csc_array":
         if sp_version >= parse_version("1.8"):
-            return sp.sparse.csc_array(container, dtype=dtype)
+            return sp.sparse.csc_array(container, dtype=)
         raise ValueError(
             f"sparse_csc_array is only available with scipy>=1.8.0, got {sp_version}"
         )

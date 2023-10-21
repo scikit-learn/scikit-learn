@@ -474,9 +474,9 @@ def test_normalized_mutual_info_score_bounded(average_method):
     labels3 = [0, 1] + labels1[2:]
 
     # labels1 is constant. The mutual info between labels1 and any other labelling is 0.
-    nmi = normalized_mutual_info_score(labels1, labels2, average_method=average_method)
+    nmi = normalized_mutual_info_score(labels1, labels2, average_method=)
     assert nmi == 0
 
     # non constant, non perfect matching labels
-    nmi = normalized_mutual_info_score(labels2, labels3, average_method=average_method)
+    nmi = normalized_mutual_info_score(labels2, labels3, average_method=)
     assert 0 <= nmi < 1

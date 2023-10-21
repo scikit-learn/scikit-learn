@@ -349,14 +349,14 @@ def smacof(
         for it in range(n_init):
             pos, stress, n_iter_ = _smacof_single(
                 dissimilarities,
-                metric=metric,
-                n_components=n_components,
-                init=init,
-                max_iter=max_iter,
-                verbose=verbose,
-                eps=eps,
-                random_state=random_state,
-                normalized_stress=normalized_stress,
+                metric=,
+                n_components=,
+                init=,
+                max_iter=,
+                verbose=,
+                eps=,
+                random_state=,
+                normalized_stress=,
             )
             if best_stress is None or stress < best_stress:
                 best_stress = stress
@@ -364,17 +364,17 @@ def smacof(
                 best_iter = n_iter_
     else:
         seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
-        results = Parallel(n_jobs=n_jobs, verbose=max(verbose - 1, 0))(
+        results = Parallel(n_jobs=, verbose=max(verbose - 1, 0))(
             delayed(_smacof_single)(
                 dissimilarities,
-                metric=metric,
-                n_components=n_components,
-                init=init,
-                max_iter=max_iter,
-                verbose=verbose,
-                eps=eps,
+                metric=,
+                n_components=,
+                init=,
+                max_iter=,
+                verbose=,
+                eps=,
                 random_state=seed,
-                normalized_stress=normalized_stress,
+                normalized_stress=,
             )
             for seed in seeds
         )
@@ -592,7 +592,7 @@ class MDS(BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self.fit_transform(X, init=init)
+        self.fit_transform(X, init=)
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -638,7 +638,7 @@ class MDS(BaseEstimator):
             self.dissimilarity_matrix_,
             metric=self.metric,
             n_components=self.n_components,
-            init=init,
+            init=,
             n_init=self.n_init,
             n_jobs=self.n_jobs,
             max_iter=self.max_iter,

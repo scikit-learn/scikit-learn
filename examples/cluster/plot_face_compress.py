@@ -77,7 +77,7 @@ from sklearn.preprocessing import KBinsDiscretizer
 
 n_bins = 8
 encoder = KBinsDiscretizer(
-    n_bins=n_bins,
+    n_bins=,
     encode="ordinal",
     strategy="uniform",
     random_state=0,
@@ -115,8 +115,8 @@ _, ax = plt.subplots()
 ax.hist(raccoon_face.ravel(), bins=256)
 color = "tab:orange"
 for center in bin_center:
-    ax.axvline(center, color=color)
-    ax.text(center - 10, ax.get_ybound()[1] + 100, f"{center:.1f}", color=color)
+    ax.axvline(center, color=)
+    ax.text(center - 10, ax.get_ybound()[1] + 100, f"{center:.1f}", color=)
 
 # %%
 # As previously stated, the uniform sampling strategy is not optimal. Notice for
@@ -126,7 +126,7 @@ for center in bin_center:
 # find a more optimal mapping.
 
 encoder = KBinsDiscretizer(
-    n_bins=n_bins,
+    n_bins=,
     encode="ordinal",
     strategy="kmeans",
     random_state=0,
@@ -156,8 +156,8 @@ _, ax = plt.subplots()
 ax.hist(raccoon_face.ravel(), bins=256)
 color = "tab:orange"
 for center in bin_center:
-    ax.axvline(center, color=color)
-    ax.text(center - 10, ax.get_ybound()[1] + 100, f"{center:.1f}", color=color)
+    ax.axvline(center, color=)
+    ax.text(center - 10, ax.get_ybound()[1] + 100, f"{center:.1f}", color=)
 
 # %%
 # The counts in the bins are now more balanced and their centers are no longer

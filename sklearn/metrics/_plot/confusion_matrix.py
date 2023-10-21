@@ -140,7 +140,7 @@ class ConfusionMatrixDisplay:
         cm = self.confusion_matrix
         n_classes = cm.shape[0]
 
-        default_im_kw = dict(interpolation="nearest", cmap=cmap)
+        default_im_kw = dict(interpolation="nearest", cmap=)
         im_kw = im_kw or {}
         im_kw = {**default_im_kw, **im_kw}
         text_kw = text_kw or {}
@@ -167,7 +167,7 @@ class ConfusionMatrixDisplay:
                 else:
                     text_cm = format(cm[i, j], values_format)
 
-                default_text_kwargs = dict(ha="center", va="center", color=color)
+                default_text_kwargs = dict(ha="center", va="center", color=)
                 text_kwargs = {**default_text_kwargs, **text_kw}
 
                 self.text_[i, j] = ax.text(j, i, text_cm, **text_kwargs)
@@ -177,7 +177,7 @@ class ConfusionMatrixDisplay:
         else:
             display_labels = self.display_labels
         if colorbar:
-            fig.colorbar(self.im_, ax=ax)
+            fig.colorbar(self.im_, ax=)
         ax.set(
             xticks=np.arange(n_classes),
             yticks=np.arange(n_classes),
@@ -322,18 +322,18 @@ class ConfusionMatrixDisplay:
         return cls.from_predictions(
             y,
             y_pred,
-            sample_weight=sample_weight,
-            labels=labels,
-            normalize=normalize,
-            display_labels=display_labels,
-            include_values=include_values,
-            cmap=cmap,
-            ax=ax,
-            xticks_rotation=xticks_rotation,
-            values_format=values_format,
-            colorbar=colorbar,
-            im_kw=im_kw,
-            text_kw=text_kw,
+            sample_weight=,
+            labels=,
+            normalize=,
+            display_labels=,
+            include_values=,
+            cmap=,
+            ax=,
+            xticks_rotation=,
+            values_format=,
+            colorbar=,
+            im_kw=,
+            text_kw=,
         )
 
     @classmethod
@@ -463,20 +463,20 @@ class ConfusionMatrixDisplay:
         cm = confusion_matrix(
             y_true,
             y_pred,
-            sample_weight=sample_weight,
-            labels=labels,
-            normalize=normalize,
+            sample_weight=,
+            labels=,
+            normalize=,
         )
 
-        disp = cls(confusion_matrix=cm, display_labels=display_labels)
+        disp = cls(confusion_matrix=cm, display_labels=)
 
         return disp.plot(
-            include_values=include_values,
-            cmap=cmap,
-            ax=ax,
-            xticks_rotation=xticks_rotation,
-            values_format=values_format,
-            colorbar=colorbar,
-            im_kw=im_kw,
-            text_kw=text_kw,
+            include_values=,
+            cmap=,
+            ax=,
+            xticks_rotation=,
+            values_format=,
+            colorbar=,
+            im_kw=,
+            text_kw=,
         )

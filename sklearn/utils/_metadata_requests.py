@@ -420,7 +420,7 @@ class MethodMetadataRequest:
             A :class:`~sklearn.utils.Bunch` of {prop: value} which can be given to the
             corresponding method.
         """
-        self._check_warnings(params=params)
+        self._check_warnings(params=)
         unrequested = dict()
         args = {arg: value for arg, value in params.items() if value is not None}
         res = Bunch()
@@ -512,7 +512,7 @@ class MetadataRequest:
             setattr(
                 self,
                 method,
-                MethodMetadataRequest(owner=owner, method=method),
+                MethodMetadataRequest(owner=, method=),
             )
 
     def consumes(self, method, params):
@@ -533,7 +533,7 @@ class MetadataRequest:
         consumed : set of str
             A set of parameters which are consumed by the given method.
         """
-        return getattr(self, method)._consumes(params=params)
+        return getattr(self, method)._consumes(params=)
 
     def __getattr__(self, name):
         # Called when the default attribute access fails with an AttributeError
@@ -563,7 +563,7 @@ class MetadataRequest:
                     " same request value."
                 )
             requests.update(mmr._requests)
-        return MethodMetadataRequest(owner=self.owner, method=name, requests=requests)
+        return MethodMetadataRequest(owner=self.owner, method=name, requests=)
 
     def _get_param_names(self, method, return_alias, ignore_self_request=None):
         """Get names of all metadata that can be consumed or routed by specified \
@@ -589,7 +589,7 @@ class MetadataRequest:
         names : set of str
             A set of strings with the names of all parameters.
         """
-        return getattr(self, method)._get_param_names(return_alias=return_alias)
+        return getattr(self, method)._get_param_names(return_alias=)
 
     def _route_params(self, *, method, params):
         """Prepare the given parameters to be passed to the method.
@@ -612,7 +612,7 @@ class MetadataRequest:
             A :class:`~sklearn.utils.Bunch` of {prop: value} which can be given to the
             corresponding method.
         """
-        return getattr(self, method)._route_params(params=params)
+        return getattr(self, method)._route_params(params=)
 
     def _check_warnings(self, *, method, params):
         """Check whether metadata is passed which is marked as WARN.
@@ -627,7 +627,7 @@ class MetadataRequest:
         params : dict
             The metadata passed to a method.
         """
-        getattr(self, method)._check_warnings(params=params)
+        getattr(self, method)._check_warnings(params=)
 
     def _serialize(self):
         """Serialize the object.
@@ -712,7 +712,7 @@ class MethodMapping:
                 f"Given caller:{caller} is not a valid method. Valid methods are:"
                 f" {METHODS}"
             )
-        self._routes.append(MethodPair(callee=callee, caller=caller))
+        self._routes.append(MethodPair(callee=, caller=))
         return self
 
     def _serialize(self):
@@ -883,13 +883,13 @@ class MetadataRouter:
         """
         res = set()
         if self._self_request:
-            res = res | self._self_request.consumes(method=method, params=params)
+            res = res | self._self_request.consumes(method=, params=)
 
         for _, route_mapping in self._route_mappings.items():
             for callee, caller in route_mapping.mapping:
                 if caller == method:
                     res = res | route_mapping.router.consumes(
-                        method=callee, params=params
+                        method=callee, params=
                     )
 
         return res
@@ -923,9 +923,7 @@ class MetadataRouter:
         res = set()
         if self._self_request and not ignore_self_request:
             res = res.union(
-                self._self_request._get_param_names(
-                    method=method, return_alias=return_alias
-                )
+                self._self_request._get_param_names(method=, return_alias=)
             )
 
         for name, route_mapping in self._route_mappings.items():
@@ -965,10 +963,10 @@ class MetadataRouter:
         """
         res = Bunch()
         if self._self_request:
-            res.update(self._self_request._route_params(params=params, method=method))
+            res.update(self._self_request._route_params(params=, method=))
 
         param_names = self._get_param_names(
-            method=method, return_alias=True, ignore_self_request=True
+            method=, return_alias=True, ignore_self_request=True
         )
         child_params = {
             key: value for key, value in params.items() if key in param_names
@@ -1016,7 +1014,7 @@ class MetadataRouter:
             corresponding child objects.
         """
         if self._self_request:
-            self._self_request._check_warnings(params=params, method=caller)
+            self._self_request._check_warnings(params=, method=caller)
 
         res = Bunch()
         for name, route_mapping in self._route_mappings.items():
@@ -1026,7 +1024,7 @@ class MetadataRouter:
             for _callee, _caller in mapping:
                 if _caller == caller:
                     res[name][_callee] = router._route_params(
-                        params=params, method=_callee
+                        params=, method=_callee
                     )
         return res
 
@@ -1047,11 +1045,11 @@ class MetadataRouter:
             A dictionary of provided metadata.
         """
         param_names = self._get_param_names(
-            method=method, return_alias=False, ignore_self_request=False
+            method=, return_alias=False, ignore_self_request=False
         )
         if self._self_request:
             self_params = self._self_request._get_param_names(
-                method=method, return_alias=False
+                method=, return_alias=False
             )
         else:
             self_params = set()
@@ -1256,7 +1254,7 @@ class RequestMethod:
 
             for prop, alias in kw.items():
                 if alias is not UNCHANGED:
-                    method_metadata_request.add_request(param=prop, alias=alias)
+                    method_metadata_request.add_request(param=prop, alias=)
             instance._metadata_request = requests
 
             return instance
@@ -1288,7 +1286,7 @@ class RequestMethod:
         )
         doc = REQUESTER_DOC.format(method=self.name)
         for metadata in self.keys:
-            doc += REQUESTER_DOC_PARAM.format(metadata=metadata, method=self.name)
+            doc += REQUESTER_DOC_PARAM.format(metadata=, method=self.name)
         doc += REQUESTER_DOC_RETURN
         func.__doc__ = doc
         return func
@@ -1381,7 +1379,7 @@ class _MetadataRequester:
         method_request : MethodMetadataRequest
             The prepared request using the method's signature.
         """
-        mmr = MethodMetadataRequest(owner=cls.__name__, method=method)
+        mmr = MethodMetadataRequest(owner=cls.__name__, method=)
         # Here we use `isfunction` instead of `ismethod` because calling `getattr`
         # on a class instead of an instance returns an unbound function.
         if not hasattr(cls, method) or not inspect.isfunction(getattr(cls, method)):
@@ -1413,7 +1411,7 @@ class _MetadataRequester:
             setattr(
                 requests,
                 method,
-                cls._build_request_for_signature(router=requests, method=method),
+                cls._build_request_for_signature(router=requests, method=),
             )
 
         # Then overwrite those defaults with the ones provided in
@@ -1441,7 +1439,7 @@ class _MetadataRequester:
             substr = "__metadata_request__"
             method = attr[attr.index(substr) + len(substr) :]
             for prop, alias in value.items():
-                getattr(requests, method).add_request(param=prop, alias=alias)
+                getattr(requests, method).add_request(param=prop, alias=)
 
         return requests
 

@@ -67,7 +67,7 @@ for ax, (method, fa) in zip(axes, methods):
     print(components)
 
     vmax = np.abs(components).max()
-    ax.imshow(components, cmap="RdBu_r", vmax=vmax, vmin=-vmax)
+    ax.imshow(components, cmap="RdBu_r", vmax=, vmin=-vmax)
     ax.set_yticks(np.arange(len(feature_names)))
     ax.set_yticklabels(feature_names)
     ax.set_title(str(method))

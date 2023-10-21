@@ -61,8 +61,8 @@ cov_class_2 = cov_class_1.T
 X_different_covariance, y_different_covariance = make_data(
     n_samples=300,
     n_features=2,
-    cov_class_1=cov_class_1,
-    cov_class_2=cov_class_2,
+    cov_class_1=,
+    cov_class_2=,
     seed=0,
 )
 
@@ -115,7 +115,7 @@ def plot_result(estimator, X, y, ax):
         X,
         response_method="predict_proba",
         plot_method="pcolormesh",
-        ax=ax,
+        ax=,
         cmap="RdBu",
         alpha=0.3,
     )
@@ -124,20 +124,20 @@ def plot_result(estimator, X, y, ax):
         X,
         response_method="predict_proba",
         plot_method="contour",
-        ax=ax,
+        ax=,
         alpha=1.0,
         levels=[0.5],
     )
     y_pred = estimator.predict(X)
     X_right, y_right = X[y == y_pred], y[y == y_pred]
     X_wrong, y_wrong = X[y != y_pred], y[y != y_pred]
-    ax.scatter(X_right[:, 0], X_right[:, 1], c=y_right, s=20, cmap=cmap, alpha=0.5)
+    ax.scatter(X_right[:, 0], X_right[:, 1], c=y_right, s=20, cmap=, alpha=0.5)
     ax.scatter(
         X_wrong[:, 0],
         X_wrong[:, 1],
         c=y_wrong,
         s=30,
-        cmap=cmap,
+        cmap=,
         alpha=0.9,
         marker="x",
     )

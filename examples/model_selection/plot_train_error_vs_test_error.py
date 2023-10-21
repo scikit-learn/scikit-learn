@@ -27,7 +27,7 @@ from sklearn.model_selection import train_test_split
 n_samples_train, n_samples_test, n_features = 75, 150, 500
 X, y, coef = make_regression(
     n_samples=n_samples_train + n_samples_test,
-    n_features=n_features,
+    n_features=,
     n_informative=50,
     shuffle=False,
     noise=1.0,
@@ -44,7 +44,7 @@ enet = linear_model.ElasticNet(l1_ratio=0.7, max_iter=10000)
 train_errors = list()
 test_errors = list()
 for alpha in alphas:
-    enet.set_params(alpha=alpha)
+    enet.set_params(alpha=)
     enet.fit(X_train, y_train)
     train_errors.append(enet.score(X_train, y_train))
     test_errors.append(enet.score(X_test, y_test))

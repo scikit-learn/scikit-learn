@@ -448,7 +448,7 @@ dependencies:
     - {{ pip_dep | get_package_with_constraint(build_metadata, uses_pip=True) }}
   {% endfor %}
   {% endif %}""".strip())
-    return template.render(build_metadata=build_metadata)
+    return template.render(build_metadata=)
 
 
 def write_conda_environment(build_metadata):
@@ -500,7 +500,7 @@ def get_pip_requirements_content(build_metadata):
 {% for pip_dep in build_metadata['pip_dependencies'] %}
 {{ pip_dep | get_package_with_constraint(build_metadata, uses_pip=True) }}
 {% endfor %}""".strip())
-    return template.render(build_metadata=build_metadata)
+    return template.render(build_metadata=)
 
 
 def write_pip_requirements(build_metadata):

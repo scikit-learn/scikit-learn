@@ -173,11 +173,11 @@ def get_data(dataset_name):
             n_features=int(1e4),
             effective_rank=100,
             tail_strength=0.5,
-            random_state=random_state,
+            random_state=,
         )
     elif dataset_name == "uncorrelated matrix":
         X, _ = make_sparse_uncorrelated(
-            n_samples=500, n_features=10000, random_state=random_state
+            n_samples=500, n_features=10000, random_state=
         )
     elif dataset_name == "big sparse matrix":
         sparsity = int(1e6)
@@ -282,10 +282,10 @@ def svd_timing(
         U, mu, V = randomized_svd(
             X,
             n_comps,
-            n_oversamples=n_oversamples,
-            n_iter=n_iter,
-            power_iteration_normalizer=power_iteration_normalizer,
-            random_state=random_state,
+            n_oversamples=,
+            n_iter=,
+            power_iteration_normalizer=,
+            random_state=,
             transpose=False,
         )
         call_time = time() - t0
@@ -294,7 +294,7 @@ def svd_timing(
         t0 = time()
         # There is a different convention for l here
         U, mu, V = fbpca.pca(
-            X, n_comps, raw=True, n_iter=n_iter, l=n_oversamples + n_comps
+            X, n_comps, raw=True, n_iter=, l=n_oversamples + n_comps
         )
         call_time = time() - t0
 
@@ -314,7 +314,7 @@ def norm_diff(A, norm=2, msg=True, random_state=None):
     if norm == 2:
         # s = sp.linalg.norm(A, ord=2)  # slow
         v0 = _init_arpack_v0(min(A.shape), random_state)
-        value = sp.sparse.linalg.svds(A, k=1, return_singular_vectors=False, v0=v0)
+        value = sp.sparse.linalg.svds(A, k=1, return_singular_vectors=False, v0=)
     else:
         if sp.sparse.issparse(A):
             value = sp.sparse.linalg.norm(A, ord=norm)
@@ -358,7 +358,7 @@ def bench_a(X, dataset_name, power_iter, n_oversamples, n_comps):
                 n_comps,
                 n_iter=pi,
                 power_iteration_normalizer=pm,
-                n_oversamples=n_oversamples,
+                n_oversamples=,
             )
             label = "sklearn - %s" % pm
             all_time[label].append(time)
@@ -377,7 +377,7 @@ def bench_a(X, dataset_name, power_iter, n_oversamples, n_comps):
                 n_comps,
                 n_iter=pi,
                 power_iteration_normalizer=pm,
-                n_oversamples=n_oversamples,
+                n_oversamples=,
                 method="fbpca",
             )
             label = "fbpca"

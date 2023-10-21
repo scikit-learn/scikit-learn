@@ -59,7 +59,7 @@ disp = DecisionBoundaryDisplay.from_estimator(
     X,
     cmap=plt.cm.Paired,
     response_method="predict",
-    ax=ax,
+    ax=,
     xlabel="x",
     ylabel="y",
 )
@@ -73,7 +73,7 @@ for i, n, c in zip(range(2), class_names, plot_colors):
     plt.scatter(
         X[idx, 0],
         X[idx, 1],
-        c=c,
+        c=,
         cmap=plt.cm.Paired,
         s=20,
         edgecolor="k",

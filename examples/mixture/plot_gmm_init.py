@@ -61,7 +61,7 @@ x_squared_norms = row_norms(X, squared=True)
 def get_initial_means(X, init_params, r):
     # Run a GaussianMixture with max_iter=0 to output the initialization means
     gmm = GaussianMixture(
-        n_components=4, init_params=init_params, tol=1e-9, max_iter=0, random_state=r
+        n_components=4, init_params=, tol=1e-9, max_iter=0, random_state=r
     ).fit(X)
     return gmm.means_
 
@@ -92,7 +92,7 @@ for n, method in enumerate(methods):
     times_init[method] = init_time
     for i, color in enumerate(colors):
         data = X[gmm.predict(X) == i]
-        plt.scatter(data[:, 0], data[:, 1], color=color, marker="x")
+        plt.scatter(data[:, 0], data[:, 1], color=, marker="x")
 
     plt.scatter(
         ini[:, 0], ini[:, 1], s=75, marker="D", c="orange", lw=1.5, edgecolors="black"

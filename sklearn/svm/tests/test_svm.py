@@ -509,18 +509,18 @@ def test_svm_classifier_sided_sample_weight(estimator):
     # check that with unit weights, a sample is supposed to be predicted on
     # the boundary
     sample_weight = [1] * 6
-    estimator.fit(X, Y, sample_weight=sample_weight)
+    estimator.fit(X, Y, sample_weight=)
     y_pred = estimator.decision_function([[-1.0, 1.0]])
     assert y_pred == pytest.approx(0)
 
     # give more weights to opposed samples
     sample_weight = [10.0, 0.1, 0.1, 0.1, 0.1, 10]
-    estimator.fit(X, Y, sample_weight=sample_weight)
+    estimator.fit(X, Y, sample_weight=)
     y_pred = estimator.decision_function([[-1.0, 1.0]])
     assert y_pred < 0
 
     sample_weight = [1.0, 0.1, 10.0, 10.0, 0.1, 0.1]
-    estimator.fit(X, Y, sample_weight=sample_weight)
+    estimator.fit(X, Y, sample_weight=)
     y_pred = estimator.decision_function([[-1.0, 1.0]])
     assert y_pred > 0
 
@@ -535,18 +535,18 @@ def test_svm_regressor_sided_sample_weight(estimator):
     # check that with unit weights, a sample is supposed to be predicted on
     # the boundary
     sample_weight = [1] * 6
-    estimator.fit(X, Y, sample_weight=sample_weight)
+    estimator.fit(X, Y, sample_weight=)
     y_pred = estimator.predict([[-1.0, 1.0]])
     assert y_pred == pytest.approx(1.5)
 
     # give more weights to opposed samples
     sample_weight = [10.0, 0.1, 0.1, 0.1, 0.1, 10]
-    estimator.fit(X, Y, sample_weight=sample_weight)
+    estimator.fit(X, Y, sample_weight=)
     y_pred = estimator.predict([[-1.0, 1.0]])
     assert y_pred < 1.5
 
     sample_weight = [1.0, 0.1, 10.0, 10.0, 0.1, 0.1]
-    estimator.fit(X, Y, sample_weight=sample_weight)
+    estimator.fit(X, Y, sample_weight=)
     y_pred = estimator.predict([[-1.0, 1.0]])
     assert y_pred > 1.5
 
@@ -580,7 +580,7 @@ def test_svm_equivalence_sample_weight_C():
 def test_negative_sample_weights_mask_all_samples(Estimator, err_msg, sample_weight):
     est = Estimator(kernel="linear")
     with pytest.raises(ValueError, match=err_msg):
-        est.fit(X, Y, sample_weight=sample_weight)
+        est.fit(X, Y, sample_weight=)
 
 
 @pytest.mark.parametrize(
@@ -605,7 +605,7 @@ def test_negative_sample_weights_mask_all_samples(Estimator, err_msg, sample_wei
 def test_negative_weights_svc_leave_just_one_label(Classifier, err_msg, sample_weight):
     clf = Classifier(kernel="linear")
     with pytest.raises(ValueError, match=err_msg):
-        clf.fit(X, Y, sample_weight=sample_weight)
+        clf.fit(X, Y, sample_weight=)
 
 
 @pytest.mark.parametrize(
@@ -625,7 +625,7 @@ def test_negative_weights_svc_leave_two_labels(
     Classifier, model, sample_weight, mask_side
 ):
     clf = Classifier(kernel="linear")
-    clf.fit(X, Y, sample_weight=sample_weight)
+    clf.fit(X, Y, sample_weight=)
     assert_allclose(clf.coef_, [model[mask_side]], rtol=1e-3)
 
 
@@ -640,7 +640,7 @@ def test_negative_weights_svc_leave_two_labels(
 def test_negative_weight_equal_coeffs(Estimator, sample_weight):
     # model generates equal coefficients
     est = Estimator(kernel="linear")
-    est.fit(X, Y, sample_weight=sample_weight)
+    est.fit(X, Y, sample_weight=)
     coef = np.abs(est.coef_).ravel()
     assert coef[0] == pytest.approx(coef[1], rel=1e-3)
 
@@ -662,7 +662,7 @@ def test_auto_weight():
     unbalanced = np.delete(np.arange(y.size), np.where(y > 2)[0][::2])
 
     classes = np.unique(y[unbalanced])
-    class_weights = compute_class_weight("balanced", classes=classes, y=y[unbalanced])
+    class_weights = compute_class_weight("balanced", classes=, y=y[unbalanced])
     assert np.argmax(class_weights) == 2
 
     for clf in (
@@ -772,7 +772,7 @@ def test_linearsvc_parameters(loss, penalty, dual):
     # Generate list of possible parameter combinations
     X, y = make_classification(n_samples=5, n_features=5, random_state=0)
 
-    clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual, random_state=0)
+    clf = svm.LinearSVC(penalty=, loss=, dual=, random_state=0)
     if (
         (loss, penalty) == ("hinge", "l1")
         or (loss, penalty, dual) == ("hinge", "l2", False)
@@ -883,7 +883,7 @@ def test_crammer_singer_binary():
         acc = (
             svm.LinearSVC(
                 dual="auto",
-                fit_intercept=fit_intercept,
+                fit_intercept=,
                 multi_class="crammer_singer",
                 random_state=0,
             )
@@ -1290,9 +1290,7 @@ def test_linearsvm_liblinear_sample_weight(SVM, params):
     base_estimator.set_params(**params)
     base_estimator.set_params(tol=1e-12, max_iter=1000)
     est_no_weight = base.clone(base_estimator).fit(X, y)
-    est_with_weight = base.clone(base_estimator).fit(
-        X2, y2, sample_weight=sample_weight
-    )
+    est_with_weight = base.clone(base_estimator).fit(X2, y2, sample_weight=)
 
     for method in ("predict", "decision_function"):
         if hasattr(base_estimator, method):

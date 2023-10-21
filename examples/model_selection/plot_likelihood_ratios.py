@@ -101,7 +101,7 @@ def extract_score(cv_results):
 from sklearn.model_selection import cross_validate
 
 estimator = LogisticRegression()
-extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
+extract_score(cross_validate(estimator, X, y, scoring=, cv=10))
 
 # %%
 # We confirm that the model is useful: the post-test odds are between 12 and 20
@@ -114,7 +114,7 @@ extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 from sklearn.dummy import DummyClassifier
 
 estimator = DummyClassifier(strategy="stratified", random_state=1234)
-extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
+extract_score(cross_validate(estimator, X, y, scoring=, cv=10))
 
 # %%
 # Here both class likelihood ratios are compatible with 1.0 which makes this
@@ -124,7 +124,7 @@ extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 # class, which in this case is "no-disease".
 
 estimator = DummyClassifier(strategy="most_frequent")
-extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
+extract_score(cross_validate(estimator, X, y, scoring=, cv=10))
 
 # %%
 # The absence of positive predictions means there will be no true positives nor
@@ -145,7 +145,7 @@ extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
 
 estimator = LogisticRegression()
 X, y = make_classification(n_samples=300, weights=[0.9, 0.1], random_state=0)
-extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
+extract_score(cross_validate(estimator, X, y, scoring=, cv=10))
 
 # %%
 # Invariance with respect to prevalence
@@ -187,7 +187,7 @@ weights = weights[::-1]
 # fit and evaluate base model on balanced classes
 X, y = make_classification(**common_params, weights=[0.5, 0.5])
 estimator = LogisticRegression().fit(X, y)
-lr_base = extract_score(cross_validate(estimator, X, y, scoring=scoring, cv=10))
+lr_base = extract_score(cross_validate(estimator, X, y, scoring=, cv=10))
 pos_lr_base, pos_lr_base_std = lr_base["positive"].values
 neg_lr_base, neg_lr_base_std = lr_base["negative"].values
 
@@ -219,7 +219,7 @@ for ax, (n, weight) in zip(axs.ravel(), enumerate(weights)):
         X_plot,
         response_method="predict",
         alpha=0.5,
-        ax=ax,
+        ax=,
     )
     scatter = disp.ax_.scatter(X_plot[:, 0], X_plot[:, 1], c=y_plot, edgecolor="k")
     disp.ax_.set_title(f"prevalence = {y_plot.mean():.2f}")
@@ -253,7 +253,7 @@ for prevalence, X, y in zip(
     populations["prevalence"], populations["X"], populations["y"]
 ):
     results_for_prevalence = scoring_on_bootstrap(
-        estimator, X, y, rng, n_bootstrap=n_bootstrap
+        estimator, X, y, rng, n_bootstrap=
     )
     results["prevalence"].append(prevalence)
     results["metrics"].append(

@@ -52,8 +52,8 @@ X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
 # TODO(1.5) remove warning filter when kbd's subsample default is changed
 @pytest.mark.filterwarnings("ignore:In version 1.5 onwards, subsample=200_000")
 def test_fit_transform(strategy, expected, sample_weight):
-    est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy=strategy)
-    est.fit(X, sample_weight=sample_weight)
+    est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy=)
+    est.fit(X, sample_weight=)
     assert_array_equal(expected, est.transform(X))
 
 
@@ -67,32 +67,32 @@ def test_valid_n_bins():
 def test_kbinsdiscretizer_wrong_strategy_with_weights(strategy):
     """Check that we raise an error when the wrong strategy is used."""
     sample_weight = np.ones(shape=(len(X)))
-    est = KBinsDiscretizer(n_bins=3, strategy=strategy)
+    est = KBinsDiscretizer(n_bins=3, strategy=)
     err_msg = (
         "`sample_weight` was provided but it cannot be used with strategy='uniform'."
     )
     with pytest.raises(ValueError, match=err_msg):
-        est.fit(X, sample_weight=sample_weight)
+        est.fit(X, sample_weight=)
 
 
 def test_invalid_n_bins_array():
     # Bad shape
     n_bins = np.full((2, 4), 2.0)
-    est = KBinsDiscretizer(n_bins=n_bins)
+    est = KBinsDiscretizer(n_bins=)
     err_msg = r"n_bins must be a scalar or array of shape \(n_features,\)."
     with pytest.raises(ValueError, match=err_msg):
         est.fit_transform(X)
 
     # Incorrect number of features
     n_bins = [1, 2, 2]
-    est = KBinsDiscretizer(n_bins=n_bins)
+    est = KBinsDiscretizer(n_bins=)
     err_msg = r"n_bins must be a scalar or array of shape \(n_features,\)."
     with pytest.raises(ValueError, match=err_msg):
         est.fit_transform(X)
 
     # Bad bin values
     n_bins = [1, 2, 2, 1]
-    est = KBinsDiscretizer(n_bins=n_bins)
+    est = KBinsDiscretizer(n_bins=)
     err_msg = (
         "KBinsDiscretizer received an invalid number of bins "
         "at indices 0, 3. Number of bins must be at least 2, "
@@ -103,7 +103,7 @@ def test_invalid_n_bins_array():
 
     # Float bin values
     n_bins = [2.1, 2, 2.1, 2]
-    est = KBinsDiscretizer(n_bins=n_bins)
+    est = KBinsDiscretizer(n_bins=)
     err_msg = (
         "KBinsDiscretizer received an invalid number of bins "
         "at indices 0, 2. Number of bins must be at least 2, "
@@ -153,8 +153,8 @@ def test_invalid_n_bins_array():
 @pytest.mark.filterwarnings("ignore:In version 1.5 onwards, subsample=200_000")
 def test_fit_transform_n_bins_array(strategy, expected, sample_weight):
     est = KBinsDiscretizer(
-        n_bins=[2, 3, 3, 3], encode="ordinal", strategy=strategy
-    ).fit(X, sample_weight=sample_weight)
+        n_bins=[2, 3, 3, 3], encode="ordinal", strategy=
+    ).fit(X, sample_weight=)
     assert_array_equal(expected, est.transform(X))
 
     # test the shape of bin_edges_
@@ -181,10 +181,10 @@ def test_kbinsdiscretizer_effect_sample_weight():
 @pytest.mark.parametrize("strategy", ["kmeans", "quantile"])
 def test_kbinsdiscretizer_no_mutating_sample_weight(strategy):
     """Make sure that `sample_weight` is not changed in place."""
-    est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy=strategy)
+    est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy=)
     sample_weight = np.array([1, 3, 1, 2], dtype=np.float64)
     sample_weight_copy = np.copy(sample_weight)
-    est.fit(X, sample_weight=sample_weight)
+    est.fit(X, sample_weight=)
     assert_allclose(sample_weight, sample_weight_copy)
 
 
@@ -192,7 +192,7 @@ def test_kbinsdiscretizer_no_mutating_sample_weight(strategy):
 def test_same_min_max(strategy):
     warnings.simplefilter("always")
     X = np.array([[1, -2], [1, -1], [1, 0], [1, 1]])
-    est = KBinsDiscretizer(strategy=strategy, n_bins=3, encode="ordinal")
+    est = KBinsDiscretizer(strategy=, n_bins=3, encode="ordinal")
     warning_message = "Feature 0 is constant and will be replaced with 0."
     with pytest.warns(UserWarning, match=warning_message):
         est.fit(X)
@@ -266,17 +266,17 @@ def test_nonuniform_strategies(
     X = np.array([0, 0.5, 2, 3, 9, 10]).reshape(-1, 1)
 
     # with 2 bins
-    est = KBinsDiscretizer(n_bins=2, strategy=strategy, encode="ordinal")
+    est = KBinsDiscretizer(n_bins=2, strategy=, encode="ordinal")
     Xt = est.fit_transform(X)
     assert_array_equal(expected_2bins, Xt.ravel())
 
     # with 3 bins
-    est = KBinsDiscretizer(n_bins=3, strategy=strategy, encode="ordinal")
+    est = KBinsDiscretizer(n_bins=3, strategy=, encode="ordinal")
     Xt = est.fit_transform(X)
     assert_array_equal(expected_3bins, Xt.ravel())
 
     # with 5 bins
-    est = KBinsDiscretizer(n_bins=5, strategy=strategy, encode="ordinal")
+    est = KBinsDiscretizer(n_bins=5, strategy=, encode="ordinal")
     Xt = est.fit_transform(X)
     assert_array_equal(expected_5bins, Xt.ravel())
 
@@ -317,7 +317,7 @@ def test_nonuniform_strategies(
 @pytest.mark.filterwarnings("ignore:In version 1.5 onwards, subsample=200_000")
 @pytest.mark.parametrize("encode", ["ordinal", "onehot", "onehot-dense"])
 def test_inverse_transform(strategy, encode, expected_inv):
-    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, encode=encode)
+    kbd = KBinsDiscretizer(n_bins=3, strategy=, encode=)
     Xt = kbd.fit_transform(X)
     Xinv = kbd.inverse_transform(Xt)
     assert_array_almost_equal(expected_inv, Xinv)
@@ -328,7 +328,7 @@ def test_inverse_transform(strategy, encode, expected_inv):
 @pytest.mark.parametrize("strategy", ["uniform", "kmeans", "quantile"])
 def test_transform_outside_fit_range(strategy):
     X = np.array([0, 1, 2, 3])[:, None]
-    kbd = KBinsDiscretizer(n_bins=4, strategy=strategy, encode="ordinal")
+    kbd = KBinsDiscretizer(n_bins=4, strategy=, encode="ordinal")
     kbd.fit(X)
 
     X2 = np.array([-2, 5])[:, None]
@@ -356,7 +356,7 @@ def test_overwrite():
 )
 def test_redundant_bins(strategy, expected_bin_edges):
     X = [[0], [0], [0], [0], [3], [3]]
-    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy)
+    kbd = KBinsDiscretizer(n_bins=3, strategy=)
     warning_message = "Consider decreasing the number of bins."
     with pytest.warns(UserWarning, match=warning_message):
         kbd.fit(X)
@@ -381,7 +381,7 @@ def test_percentile_numeric_stability():
 @pytest.mark.parametrize("encode", ["ordinal", "onehot", "onehot-dense"])
 def test_consistent_dtype(in_dtype, out_dtype, encode):
     X_input = np.array(X, dtype=in_dtype)
-    kbd = KBinsDiscretizer(n_bins=3, encode=encode, dtype=out_dtype)
+    kbd = KBinsDiscretizer(n_bins=3, encode=, dtype=out_dtype)
     kbd.fit(X_input)
 
     # test output dtype
@@ -404,12 +404,12 @@ def test_32_equal_64(input_dtype, encode):
     X_input = np.array(X, dtype=input_dtype)
 
     # 32 bit output
-    kbd_32 = KBinsDiscretizer(n_bins=3, encode=encode, dtype=np.float32)
+    kbd_32 = KBinsDiscretizer(n_bins=3, encode=, dtype=np.float32)
     kbd_32.fit(X_input)
     Xt_32 = kbd_32.transform(X_input)
 
     # 64 bit output
-    kbd_64 = KBinsDiscretizer(n_bins=3, encode=encode, dtype=np.float64)
+    kbd_64 = KBinsDiscretizer(n_bins=3, encode=, dtype=np.float64)
     kbd_64.fit(X_input)
     Xt_64 = kbd_64.transform(X_input)
 
@@ -461,7 +461,7 @@ def test_kbinsdiscrtizer_get_feature_names_out(encode, expected_names):
     """
     X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
 
-    kbd = KBinsDiscretizer(n_bins=4, encode=encode).fit(X)
+    kbd = KBinsDiscretizer(n_bins=4, encode=).fit(X)
     Xt = kbd.transform(X)
 
     input_features = [f"feat{i}" for i in range(3)]
@@ -477,7 +477,7 @@ def test_kbinsdiscretizer_subsample(strategy, global_random_seed):
     X = np.random.RandomState(global_random_seed).random_sample((100000, 1)) + 1
 
     kbd_subsampling = KBinsDiscretizer(
-        strategy=strategy, subsample=50000, random_state=global_random_seed
+        strategy=, subsample=50000, random_state=global_random_seed
     )
     kbd_subsampling.fit(X)
 
@@ -498,6 +498,6 @@ def test_kbd_subsample_warning(strategy):
     # Check the future warning for the change of default of subsample
     X = np.random.RandomState(0).random_sample((100, 1))
 
-    kbd = KBinsDiscretizer(strategy=strategy, random_state=0)
+    kbd = KBinsDiscretizer(strategy=, random_state=0)
     with pytest.warns(FutureWarning, match="subsample=200_000 will be used by default"):
         kbd.fit(X)

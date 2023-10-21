@@ -53,7 +53,7 @@ from sklearn.datasets import make_classification
 
 n_samples, n_features = 100, 300
 X, y = make_classification(
-    n_samples=n_samples, n_features=n_features, n_informative=5, random_state=1
+    n_samples=, n_features=, n_informative=5, random_state=1
 )
 
 # %%
@@ -92,14 +92,14 @@ shuffle_params = {
 
 results = {"C": Cs}
 for label, train_size in zip(labels, train_sizes):
-    cv = ShuffleSplit(train_size=train_size, **shuffle_params)
+    cv = ShuffleSplit(train_size=, **shuffle_params)
     train_scores, test_scores = validation_curve(
         model_l1,
         X,
         y,
         param_name="C",
         param_range=Cs,
-        cv=cv,
+        cv=,
         n_jobs=2,
     )
     results[label] = test_scores.mean(axis=1)
@@ -125,7 +125,7 @@ for train_size_idx, label in enumerate(labels):
     results_scaled = results[[label]].assign(
         C_scaled=Cs * float(n_samples * np.sqrt(train_size))
     )
-    results_scaled.plot(x="C_scaled", ax=axes[1], logx=True, label=label)
+    results_scaled.plot(x="C_scaled", ax=axes[1], logx=True, label=)
     best_C_scaled = results_scaled["C_scaled"].loc[results[label].idxmax()]
     axes[1].axvline(x=best_C_scaled, linestyle="--", color="grey", alpha=0.7)
 
@@ -159,14 +159,14 @@ Cs = np.logspace(-8, 4, 11)
 labels = [f"fraction: {train_size}" for train_size in train_sizes]
 results = {"C": Cs}
 for label, train_size in zip(labels, train_sizes):
-    cv = ShuffleSplit(train_size=train_size, **shuffle_params)
+    cv = ShuffleSplit(train_size=, **shuffle_params)
     train_scores, test_scores = validation_curve(
         model_l2,
         X,
         y,
         param_name="C",
         param_range=Cs,
-        cv=cv,
+        cv=,
         n_jobs=2,
     )
     results[label] = test_scores.mean(axis=1)
@@ -191,7 +191,7 @@ for train_size_idx, label in enumerate(labels):
     results_scaled = results[[label]].assign(
         C_scaled=Cs * float(n_samples * np.sqrt(train_sizes[train_size_idx]))
     )
-    results_scaled.plot(x="C_scaled", ax=axes[1], logx=True, label=label)
+    results_scaled.plot(x="C_scaled", ax=axes[1], logx=True, label=)
     best_C_scaled = results_scaled["C_scaled"].loc[results[label].idxmax()]
     axes[1].axvline(x=best_C_scaled, linestyle="--", color="grey", alpha=0.8)
 axes[1].set_title("Scaling C by sqrt(1 / n_samples)")

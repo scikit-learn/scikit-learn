@@ -44,11 +44,11 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 max_depth = 30
 regr_multirf = MultiOutputRegressor(
-    RandomForestRegressor(n_estimators=100, max_depth=max_depth, random_state=0)
+    RandomForestRegressor(n_estimators=100, max_depth=, random_state=0)
 )
 regr_multirf.fit(X_train, y_train)
 
-regr_rf = RandomForestRegressor(n_estimators=100, max_depth=max_depth, random_state=2)
+regr_rf = RandomForestRegressor(n_estimators=100, max_depth=, random_state=2)
 regr_rf.fit(X_train, y_train)
 
 # Predict on new data
@@ -64,7 +64,7 @@ plt.scatter(
     y_test[:, 1],
     edgecolor="k",
     c="navy",
-    s=s,
+    s=,
     marker="s",
     alpha=a,
     label="Data",
@@ -74,7 +74,7 @@ plt.scatter(
     y_multirf[:, 1],
     edgecolor="k",
     c="cornflowerblue",
-    s=s,
+    s=,
     alpha=a,
     label="Multi RF score=%.2f" % regr_multirf.score(X_test, y_test),
 )
@@ -83,7 +83,7 @@ plt.scatter(
     y_rf[:, 1],
     edgecolor="k",
     c="c",
-    s=s,
+    s=,
     marker="^",
     alpha=a,
     label="RF score=%.2f" % regr_rf.score(X_test, y_test),

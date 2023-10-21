@@ -40,7 +40,7 @@ for dataset_name in datasets:
     print("loading data")
     if dataset_name in ["http", "smtp", "SA", "SF"]:
         dataset = fetch_kddcup99(
-            subset=dataset_name, percent10=True, random_state=random_state
+            subset=dataset_name, percent10=True, random_state=
         )
         X = dataset.data
         y = dataset.target

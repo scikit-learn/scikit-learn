@@ -50,7 +50,7 @@ non_fixed_kernels = [kernel for kernel in kernels if kernel != fixed_kernel]
 @pytest.mark.parametrize("kernel", kernels)
 def test_predict_consistent(kernel):
     # Check binary predict decision has also predicted probability above 0.5.
-    gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+    gpc = GaussianProcessClassifier(kernel=).fit(X, y)
     assert_array_equal(gpc.predict(X), gpc.predict_proba(X)[:, 1] >= 0.5)
 
 
@@ -59,14 +59,14 @@ def test_predict_consistent_structured():
     X = ["A", "AB", "B"]
     y = np.array([True, False, True])
     kernel = MiniSeqKernel(baseline_similarity_bounds="fixed")
-    gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+    gpc = GaussianProcessClassifier(kernel=).fit(X, y)
     assert_array_equal(gpc.predict(X), gpc.predict_proba(X)[:, 1] >= 0.5)
 
 
 @pytest.mark.parametrize("kernel", non_fixed_kernels)
 def test_lml_improving(kernel):
     # Test that hyperparameter-tuning improves log-marginal likelihood.
-    gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+    gpc = GaussianProcessClassifier(kernel=).fit(X, y)
     assert gpc.log_marginal_likelihood(gpc.kernel_.theta) > gpc.log_marginal_likelihood(
         kernel.theta
     )
@@ -75,7 +75,7 @@ def test_lml_improving(kernel):
 @pytest.mark.parametrize("kernel", kernels)
 def test_lml_precomputed(kernel):
     # Test that lml of optimized kernel is stored correctly.
-    gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+    gpc = GaussianProcessClassifier(kernel=).fit(X, y)
     assert_almost_equal(
         gpc.log_marginal_likelihood(gpc.kernel_.theta), gpc.log_marginal_likelihood(), 7
     )
@@ -84,7 +84,7 @@ def test_lml_precomputed(kernel):
 @pytest.mark.parametrize("kernel", kernels)
 def test_lml_without_cloning_kernel(kernel):
     # Test that clone_kernel=False has side-effects of kernel.theta.
-    gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+    gpc = GaussianProcessClassifier(kernel=).fit(X, y)
     input_theta = np.ones(gpc.kernel_.theta.shape, dtype=np.float64)
 
     gpc.log_marginal_likelihood(input_theta, clone_kernel=False)
@@ -94,7 +94,7 @@ def test_lml_without_cloning_kernel(kernel):
 @pytest.mark.parametrize("kernel", non_fixed_kernels)
 def test_converged_to_local_maximum(kernel):
     # Test that we are in local maximum after hyperparameter-optimization.
-    gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+    gpc = GaussianProcessClassifier(kernel=).fit(X, y)
 
     lml, lml_gradient = gpc.log_marginal_likelihood(gpc.kernel_.theta, True)
 
@@ -108,7 +108,7 @@ def test_converged_to_local_maximum(kernel):
 @pytest.mark.parametrize("kernel", kernels)
 def test_lml_gradient(kernel):
     # Compare analytic and numeric gradient of log marginal likelihood.
-    gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+    gpc = GaussianProcessClassifier(kernel=).fit(X, y)
 
     lml, lml_gradient = gpc.log_marginal_likelihood(kernel.theta, True)
     lml_gradient_approx = approx_fprime(
@@ -132,8 +132,8 @@ def test_random_starts(global_random_seed):
     last_lml = -np.inf
     for n_restarts_optimizer in range(5):
         gp = GaussianProcessClassifier(
-            kernel=kernel,
-            n_restarts_optimizer=n_restarts_optimizer,
+            kernel=,
+            n_restarts_optimizer=,
             random_state=global_random_seed,
         ).fit(X, y)
         lml = gp.log_marginal_likelihood(gp.kernel_.theta)
@@ -159,7 +159,7 @@ def test_custom_optimizer(kernel, global_random_seed):
                 theta_opt, func_min = theta, f
         return theta_opt, func_min
 
-    gpc = GaussianProcessClassifier(kernel=kernel, optimizer=optimizer)
+    gpc = GaussianProcessClassifier(kernel=, optimizer=)
     gpc.fit(X, y_mc)
     # Checks that optimizer improved marginal likelihood
     assert gpc.log_marginal_likelihood(
@@ -170,7 +170,7 @@ def test_custom_optimizer(kernel, global_random_seed):
 @pytest.mark.parametrize("kernel", kernels)
 def test_multi_class(kernel):
     # Test GPC for multi-class classification problems.
-    gpc = GaussianProcessClassifier(kernel=kernel)
+    gpc = GaussianProcessClassifier(kernel=)
     gpc.fit(X, y_mc)
 
     y_prob = gpc.predict_proba(X2)
@@ -183,10 +183,10 @@ def test_multi_class(kernel):
 @pytest.mark.parametrize("kernel", kernels)
 def test_multi_class_n_jobs(kernel):
     # Test that multi-class GPC produces identical results with n_jobs>1.
-    gpc = GaussianProcessClassifier(kernel=kernel)
+    gpc = GaussianProcessClassifier(kernel=)
     gpc.fit(X, y_mc)
 
-    gpc_2 = GaussianProcessClassifier(kernel=kernel, n_jobs=2)
+    gpc_2 = GaussianProcessClassifier(kernel=, n_jobs=2)
     gpc_2.fit(X, y_mc)
 
     y_prob = gpc.predict_proba(X2)
@@ -196,7 +196,7 @@ def test_multi_class_n_jobs(kernel):
 
 def test_warning_bounds():
     kernel = RBF(length_scale_bounds=[1e-5, 1e-3])
-    gpc = GaussianProcessClassifier(kernel=kernel)
+    gpc = GaussianProcessClassifier(kernel=)
     warning_message = (
         "The optimal value found for dimension 0 of parameter "
         "length_scale is close to the specified upper bound "

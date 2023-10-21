@@ -81,11 +81,11 @@ def _set_order(X, y, order="C"):
         if sparse_X:
             X = X.asformat(sparse_format, copy=False)
         else:
-            X = np.asarray(X, order=order)
+            X = np.asarray(X, order=)
         if sparse_y:
             y = y.asformat(sparse_format)
         else:
-            y = np.asarray(y, order=order)
+            y = np.asarray(y, order=)
     return X, y
 
 
@@ -358,16 +358,16 @@ def lasso_path(
         X,
         y,
         l1_ratio=1.0,
-        eps=eps,
-        n_alphas=n_alphas,
-        alphas=alphas,
-        precompute=precompute,
-        Xy=Xy,
-        copy_X=copy_X,
-        coef_init=coef_init,
-        verbose=verbose,
-        positive=positive,
-        return_n_iter=return_n_iter,
+        eps=,
+        n_alphas=,
+        alphas=,
+        precompute=,
+        Xy=,
+        copy_X=,
+        coef_init=,
+        verbose=,
+        positive=,
+        return_n_iter=,
         **params,
     )
 
@@ -591,7 +591,7 @@ def enet_path(
             normalize=False,
             fit_intercept=False,
             copy=False,
-            check_input=check_input,
+            check_input=,
         )
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
@@ -599,11 +599,11 @@ def enet_path(
         alphas = _alpha_grid(
             X,
             y,
-            Xy=Xy,
-            l1_ratio=l1_ratio,
+            Xy=,
+            l1_ratio=,
             fit_intercept=False,
-            eps=eps,
-            n_alphas=n_alphas,
+            eps=,
+            n_alphas=,
             copy_X=False,
         )
     elif len(alphas) > 1:
@@ -640,14 +640,14 @@ def enet_path(
                 X_data=X.data,
                 X_indices=X.indices,
                 X_indptr=X.indptr,
-                y=y,
-                sample_weight=sample_weight,
+                y=,
+                sample_weight=,
                 X_mean=X_sparse_scaling,
-                max_iter=max_iter,
-                tol=tol,
-                rng=rng,
-                random=random,
-                positive=positive,
+                max_iter=,
+                tol=,
+                rng=,
+                random=,
+                positive=,
             )
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
@@ -1016,8 +1016,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             normalize=False,
             fit_intercept=self.fit_intercept,
             copy=should_copy,
-            check_input=check_input,
-            sample_weight=sample_weight,
+            check_input=,
+            sample_weight=,
         )
         # coordinate descent needs F-ordered arrays and _pre_fit might have
         # called _rescale_data
@@ -1052,7 +1052,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 eps=None,
                 n_alphas=None,
                 alphas=[alpha],
-                precompute=precompute,
+                precompute=,
                 Xy=this_Xy,
                 copy_X=True,
                 coef_init=coef_[k],
@@ -1062,12 +1062,12 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 check_input=False,
                 # from here on **params
                 tol=self.tol,
-                X_offset=X_offset,
-                X_scale=X_scale,
+                X_offset=,
+                X_scale=,
                 max_iter=self.max_iter,
                 random_state=self.random_state,
                 selection=self.selection,
-                sample_weight=sample_weight,
+                sample_weight=,
             )
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
@@ -1293,17 +1293,17 @@ class Lasso(ElasticNet):
         selection="cyclic",
     ):
         super().__init__(
-            alpha=alpha,
+            alpha=,
             l1_ratio=1.0,
-            fit_intercept=fit_intercept,
-            precompute=precompute,
-            copy_X=copy_X,
-            max_iter=max_iter,
-            tol=tol,
-            warm_start=warm_start,
-            positive=positive,
-            random_state=random_state,
-            selection=selection,
+            fit_intercept=,
+            precompute=,
+            copy_X=,
+            max_iter=,
+            tol=,
+            warm_start=,
+            positive=,
+            random_state=,
+            selection=,
         )
 
 
@@ -1412,7 +1412,7 @@ def _path_residuals(
         None,
         precompute,
         normalize=False,
-        fit_intercept=fit_intercept,
+        fit_intercept=,
         copy=False,
         sample_weight=sw_train,
     )
@@ -1432,7 +1432,7 @@ def _path_residuals(
 
     # Do the ordering and type casting here, as if it is done in the path,
     # X is copied and a reference is kept here
-    X_train = check_array(X_train, accept_sparse="csc", dtype=dtype, order=X_order)
+    X_train = check_array(X_train, accept_sparse="csc", dtype=, order=X_order)
     alphas, coefs, _ = path(X_train, y_train, **path_params)
     del X_train, y_train
 
@@ -1667,7 +1667,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
                 _alpha_grid(
                     X,
                     y,
-                    l1_ratio=l1_ratio,
+                    l1_ratio=,
                     fit_intercept=self.fit_intercept,
                     eps=self.eps,
                     n_alphas=self.n_alphas,
@@ -1793,7 +1793,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             # not sample_weight=None.
             model.fit(X, y)
         else:
-            model.fit(X, y, sample_weight=sample_weight)
+            model.fit(X, y, sample_weight=)
         if not hasattr(self, "l1_ratio"):
             del self.l1_ratio_
         self.coef_ = model.coef_
@@ -2028,20 +2028,20 @@ class LassoCV(RegressorMixin, LinearModelCV):
         selection="cyclic",
     ):
         super().__init__(
-            eps=eps,
-            n_alphas=n_alphas,
-            alphas=alphas,
-            fit_intercept=fit_intercept,
-            precompute=precompute,
-            max_iter=max_iter,
-            tol=tol,
-            copy_X=copy_X,
-            cv=cv,
-            verbose=verbose,
-            n_jobs=n_jobs,
-            positive=positive,
-            random_state=random_state,
-            selection=selection,
+            eps=,
+            n_alphas=,
+            alphas=,
+            fit_intercept=,
+            precompute=,
+            max_iter=,
+            tol=,
+            copy_X=,
+            cv=,
+            verbose=,
+            n_jobs=,
+            positive=,
+            random_state=,
+            selection=,
         )
 
     def _get_estimator(self):
@@ -3124,18 +3124,18 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         selection="cyclic",
     ):
         super().__init__(
-            eps=eps,
-            n_alphas=n_alphas,
-            alphas=alphas,
-            fit_intercept=fit_intercept,
-            max_iter=max_iter,
-            tol=tol,
-            copy_X=copy_X,
-            cv=cv,
-            verbose=verbose,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            selection=selection,
+            eps=,
+            n_alphas=,
+            alphas=,
+            fit_intercept=,
+            max_iter=,
+            tol=,
+            copy_X=,
+            cv=,
+            verbose=,
+            n_jobs=,
+            random_state=,
+            selection=,
         )
 
     def _get_estimator(self):

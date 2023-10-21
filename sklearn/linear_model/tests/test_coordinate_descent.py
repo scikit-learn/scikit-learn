@@ -64,7 +64,7 @@ def test_set_order_dense(order, input_order):
     """Check that _set_order returns arrays with promised order."""
     X = np.array([[0], [0], [0]], order=input_order)
     y = np.array([0, 0, 0], order=input_order)
-    X2, y2 = _set_order(X, y, order=order)
+    X2, y2 = _set_order(X, y, order=)
     if order == "C":
         assert X2.flags["C_CONTIGUOUS"]
         assert y2.flags["C_CONTIGUOUS"]
@@ -87,7 +87,7 @@ def test_set_order_sparse(order, input_order, coo_container):
     sparse_format = "csc" if input_order == "F" else "csr"
     X = X.asformat(sparse_format)
     y = X.asformat(sparse_format)
-    X2, y2 = _set_order(X, y, order=order)
+    X2, y2 = _set_order(X, y, order=)
 
     format = "csc" if order == "F" else "csr"
     assert sparse.issparse(X2) and X2.format == format
@@ -213,7 +213,7 @@ def test_lasso_dual_gap():
     X, y, _, _ = build_dataset(n_samples=10, n_features=30)
     n_samples = len(y)
     alpha = 0.01 * np.max(np.abs(X.T @ y)) / n_samples
-    clf = Lasso(alpha=alpha, fit_intercept=False).fit(X, y)
+    clf = Lasso(alpha=, fit_intercept=False).fit(X, y)
     w = clf.coef_
     R = y - X @ w
     primal = 0.5 * np.mean(R**2) + clf.alpha * np.sum(np.abs(w))
@@ -244,10 +244,10 @@ def build_dataset(n_samples=50, n_features=200, n_informative_features=10, n_tar
 def test_lasso_cv():
     X, y, X_test, y_test = build_dataset()
     max_iter = 150
-    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, cv=3).fit(X, y)
+    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=, cv=3).fit(X, y)
     assert_almost_equal(clf.alpha_, 0.056, 2)
 
-    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, precompute=True, cv=3)
+    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=, precompute=True, cv=3)
     clf.fit(X, y)
     assert_almost_equal(clf.alpha_, 0.056, 2)
 
@@ -290,13 +290,13 @@ def test_lasso_cv_positive_constraint():
     max_iter = 500
 
     # Ensure the unconstrained fit has a negative coefficient
-    clf_unconstrained = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2, n_jobs=1)
+    clf_unconstrained = LassoCV(n_alphas=3, eps=1e-1, max_iter=, cv=2, n_jobs=1)
     clf_unconstrained.fit(X, y)
     assert min(clf_unconstrained.coef_) < 0
 
     # On same data, constrained fit has non-negative coefficients
     clf_constrained = LassoCV(
-        n_alphas=3, eps=1e-1, max_iter=max_iter, positive=True, cv=2, n_jobs=1
+        n_alphas=3, eps=1e-1, max_iter=, positive=True, cv=2, n_jobs=1
     )
     clf_constrained.fit(X, y)
     assert min(clf_constrained.coef_) >= 0
@@ -325,7 +325,7 @@ def test_lassocv_alphas_validation(alphas, err_type, err_msg):
     rng = np.random.RandomState(0)
     X = rng.randn(n_samples, n_features)
     y = rng.randint(0, 2, n_samples)
-    lassocv = LassoCV(alphas=alphas)
+    lassocv = LassoCV(alphas=)
     with pytest.raises(err_type, match=err_msg):
         lassocv.fit(X, y)
 
@@ -345,7 +345,7 @@ def _scale_alpha_inplace(estimator, n_samples):
         # We convert it to a np.ndarray to make sure broadcasting
         # is used.
         alphas = np.asarray(estimator.alphas) * n_samples
-        return estimator.set_params(alphas=alphas)
+        return estimator.set_params(alphas=)
     if isinstance(estimator, (Lasso, LassoLars, MultiTaskLasso)):
         alpha = estimator.alpha * np.sqrt(n_samples)
     if isinstance(estimator, (Ridge, RidgeClassifier)):
@@ -359,7 +359,7 @@ def _scale_alpha_inplace(estimator, n_samples):
             # To avoid silent errors in case of refactoring
             raise NotImplementedError
 
-    estimator.set_params(alpha=alpha)
+    estimator.set_params(alpha=)
 
 
 # TODO(1.4): remove 'normalize'
@@ -484,7 +484,7 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     coef_path_cont_lars = interpolate.interp1d(
         alphas_lars[::-1], coef_path_lars[:, ::-1]
     )
-    alphas_lasso2, coef_path_lasso2, _ = lasso_path(X, y, alphas=alphas)
+    alphas_lasso2, coef_path_lasso2, _ = lasso_path(X, y, alphas=)
     coef_path_cont_lasso = interpolate.interp1d(
         alphas_lasso2[::-1], coef_path_lasso2[:, ::-1]
     )
@@ -505,7 +505,7 @@ def test_enet_path():
     # Here we have a small number of iterations, and thus the
     # ElasticNet might not converge. This is to speed up tests
     clf = ElasticNetCV(
-        alphas=[0.01, 0.05, 0.1], eps=2e-3, l1_ratio=[0.5, 0.7], cv=3, max_iter=max_iter
+        alphas=[0.01, 0.05, 0.1], eps=2e-3, l1_ratio=[0.5, 0.7], cv=3, max_iter=
     )
     ignore_warnings(clf.fit)(X, y)
     # Well-conditioned settings, we should have selected our
@@ -520,7 +520,7 @@ def test_enet_path():
         eps=2e-3,
         l1_ratio=[0.5, 0.7],
         cv=3,
-        max_iter=max_iter,
+        max_iter=,
         precompute=True,
     )
     ignore_warnings(clf.fit)(X, y)
@@ -539,7 +539,7 @@ def test_enet_path():
     # Multi-output/target case
     X, y, X_test, y_test = build_dataset(n_features=10, n_targets=3)
     clf = MultiTaskElasticNetCV(
-        n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3, max_iter=max_iter
+        n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3, max_iter=
     )
     ignore_warnings(clf.fit)(X, y)
     # We are in well-conditioned settings with low noise: we should
@@ -562,7 +562,7 @@ def test_path_parameters():
     X, y, _, _ = build_dataset()
     max_iter = 100
 
-    clf = ElasticNetCV(n_alphas=50, eps=1e-3, max_iter=max_iter, l1_ratio=0.5, tol=1e-3)
+    clf = ElasticNetCV(n_alphas=50, eps=1e-3, max_iter=, l1_ratio=0.5, tol=1e-3)
     clf.fit(X, y)  # new params
     assert_almost_equal(0.5, clf.l1_ratio)
     assert 50 == clf.n_alphas
@@ -622,14 +622,14 @@ def test_enet_cv_positive_constraint():
 
     # Ensure the unconstrained fit has a negative coefficient
     enetcv_unconstrained = ElasticNetCV(
-        n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2, n_jobs=1
+        n_alphas=3, eps=1e-1, max_iter=, cv=2, n_jobs=1
     )
     enetcv_unconstrained.fit(X, y)
     assert min(enetcv_unconstrained.coef_) < 0
 
     # On same data, constrained fit has non-negative coefficients
     enetcv_constrained = ElasticNetCV(
-        n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2, positive=True, n_jobs=1
+        n_alphas=3, eps=1e-1, max_iter=, cv=2, positive=True, n_jobs=1
     )
     enetcv_constrained.fit(X, y)
     assert min(enetcv_constrained.coef_) >= 0
@@ -713,7 +713,7 @@ def test_multi_task_lasso_readonly_data():
 def test_enet_multitarget():
     n_targets = 3
     X, y, _, _ = build_dataset(
-        n_samples=10, n_features=8, n_informative_features=10, n_targets=n_targets
+        n_samples=10, n_features=8, n_informative_features=10, n_targets=
     )
     estimator = ElasticNet(alpha=0.01)
     estimator.fit(X, y)
@@ -820,7 +820,7 @@ def test_elasticnet_precompute_incorrect_gram():
     garbage = rng.standard_normal(X.shape)
     precompute = np.dot(garbage.T, garbage)
 
-    clf = ElasticNet(alpha=0.01, precompute=precompute)
+    clf = ElasticNet(alpha=0.01, precompute=)
     msg = "Gram matrix.*did not pass validation.*"
     with pytest.raises(ValueError, match=msg):
         clf.fit(X_centered, y)
@@ -840,10 +840,10 @@ def test_elasticnet_precompute_gram_weighted_samples():
     gram = np.dot(X_r.T, X_r)
 
     clf1 = ElasticNet(alpha=0.01, precompute=gram)
-    clf1.fit(X_c, y, sample_weight=sample_weight)
+    clf1.fit(X_c, y, sample_weight=)
 
     clf2 = ElasticNet(alpha=0.01, precompute=False)
-    clf2.fit(X, y, sample_weight=sample_weight)
+    clf2.fit(X, y, sample_weight=)
 
     assert_allclose(clf1.coef_, clf2.coef_)
 
@@ -1022,7 +1022,7 @@ def test_enet_copy_X_True(check_input):
 
     original_X = X.copy()
     enet = ElasticNet(copy_X=True)
-    enet.fit(X, y, check_input=check_input)
+    enet.fit(X, y, check_input=)
 
     assert_array_equal(original_X, X)
 
@@ -1079,7 +1079,7 @@ def test_enet_float_precision():
                 alpha=0.5,
                 max_iter=100,
                 precompute=False,
-                fit_intercept=fit_intercept,
+                fit_intercept=,
             )
 
             X = dtype(X)
@@ -1097,7 +1097,7 @@ def test_enet_float_precision():
                 alpha=0.5,
                 max_iter=100,
                 precompute=Gram,
-                fit_intercept=fit_intercept,
+                fit_intercept=,
             )
             ignore_warnings(clf_precompute.fit)(X, y)
             assert_array_almost_equal(clf.coef_, clf_precompute.coef_)
@@ -1108,7 +1108,7 @@ def test_enet_float_precision():
             clf_multioutput = MultiTaskElasticNet(
                 alpha=0.5,
                 max_iter=100,
-                fit_intercept=fit_intercept,
+                fit_intercept=,
             )
             clf_multioutput.fit(X, multi_y)
             coef[("multi", dtype)] = clf_multioutput.coef_
@@ -1257,7 +1257,7 @@ def test_lassoCV_does_not_set_precompute(monkeypatch, precompute, inner_precompu
             assert self.precompute == inner_precompute
 
     monkeypatch.setattr("sklearn.linear_model._coordinate_descent.Lasso", LassoMock)
-    clf = LassoCV(precompute=precompute)
+    clf = LassoCV(precompute=)
     clf.fit(X, y)
     assert calls > 0
 
@@ -1291,13 +1291,7 @@ def test_enet_sample_weight_consistency(
     y = rng.rand(n_samples)
     if sparse_container is not None:
         X = sparse_container(X)
-    params = dict(
-        alpha=alpha,
-        fit_intercept=fit_intercept,
-        precompute=precompute,
-        tol=1e-6,
-        l1_ratio=0.5,
-    )
+    params = dict(alpha=, fit_intercept=, precompute=, tol=1e-6, l1_ratio=0.5)
 
     reg = ElasticNet(**params).fit(X, y)
     coef = reg.coef_.copy()
@@ -1306,21 +1300,21 @@ def test_enet_sample_weight_consistency(
 
     # 1) sample_weight=np.ones(..) should be equivalent to sample_weight=None
     sample_weight = np.ones_like(y)
-    reg.fit(X, y, sample_weight=sample_weight)
+    reg.fit(X, y, sample_weight=)
     assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
     # 2) sample_weight=None should be equivalent to sample_weight = number
     sample_weight = 123.0
-    reg.fit(X, y, sample_weight=sample_weight)
+    reg.fit(X, y, sample_weight=)
     assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
     # 3) scaling of sample_weight should have no effect, cf. np.average()
     sample_weight = rng.uniform(low=0.01, high=2, size=X.shape[0])
-    reg = reg.fit(X, y, sample_weight=sample_weight)
+    reg = reg.fit(X, y, sample_weight=)
     coef = reg.coef_.copy()
     if fit_intercept:
         intercept = reg.intercept_
@@ -1388,9 +1382,7 @@ def test_enet_cv_sample_weight_correctness(fit_intercept, sparse_container):
         np.full(n_samples, 0), np.full(n_samples, 1), np.full(n_samples, 2)
     ]
     splits_sw = list(LeaveOneGroupOut().split(X, groups=groups_sw))
-    reg_sw = ElasticNetCV(
-        alphas=alphas, cv=splits_sw, fit_intercept=fit_intercept, **params
-    )
+    reg_sw = ElasticNetCV(alphas=, cv=splits_sw, fit_intercept=, **params)
     reg_sw.fit(X, y, sample_weight=sw)
 
     # We repeat the first fold 2 times and provide splits ourselves
@@ -1403,8 +1395,8 @@ def test_enet_cv_sample_weight_correctness(fit_intercept, sparse_container):
     groups = np.r_[
         np.full(2 * n_samples, 0), np.full(n_samples, 1), np.full(n_samples, 2)
     ]
-    splits = list(LeaveOneGroupOut().split(X, groups=groups))
-    reg = ElasticNetCV(alphas=alphas, cv=splits, fit_intercept=fit_intercept, **params)
+    splits = list(LeaveOneGroupOut().split(X, groups=))
+    reg = ElasticNetCV(alphas=, cv=splits, fit_intercept=, **params)
     reg.fit(X, y)
 
     # ensure that we chose meaningful alphas, i.e. not boundaries
@@ -1420,8 +1412,8 @@ def test_enet_cv_grid_search(sample_weight):
     n_samples, n_features = 200, 10
     cv = 5
     X, y = make_regression(
-        n_samples=n_samples,
-        n_features=n_features,
+        n_samples=,
+        n_features=,
         effective_rank=10,
         n_informative=n_features - 4,
         noise=10,
@@ -1434,16 +1426,16 @@ def test_enet_cv_grid_search(sample_weight):
 
     alphas = np.logspace(np.log10(1e-5), np.log10(1), num=10)
     l1_ratios = [0.1, 0.5, 0.9]
-    reg = ElasticNetCV(cv=cv, alphas=alphas, l1_ratio=l1_ratios)
-    reg.fit(X, y, sample_weight=sample_weight)
+    reg = ElasticNetCV(cv=, alphas=, l1_ratio=l1_ratios)
+    reg.fit(X, y, sample_weight=)
 
     param = {"alpha": alphas, "l1_ratio": l1_ratios}
     gs = GridSearchCV(
         estimator=ElasticNet(),
         param_grid=param,
-        cv=cv,
+        cv=,
         scoring="neg_mean_squared_error",
-    ).fit(X, y, sample_weight=sample_weight)
+    ).fit(X, y, sample_weight=)
 
     assert reg.l1_ratio_ == pytest.approx(gs.best_params_["l1_ratio"])
     assert reg.alpha_ == pytest.approx(gs.best_params_["alpha"])
@@ -1462,13 +1454,7 @@ def test_enet_cv_sample_weight_consistency(
 
     X = rng.rand(n_samples, n_features)
     y = X.sum(axis=1) + rng.rand(n_samples)
-    params = dict(
-        l1_ratio=l1_ratio,
-        fit_intercept=fit_intercept,
-        precompute=precompute,
-        tol=1e-6,
-        cv=3,
-    )
+    params = dict(l1_ratio=, fit_intercept=, precompute=, tol=1e-6, cv=3)
     if sparse_container is not None:
         X = sparse_container(X)
 
@@ -1483,21 +1469,21 @@ def test_enet_cv_sample_weight_consistency(
 
     # sample_weight=np.ones(..) should be equivalent to sample_weight=None
     sample_weight = np.ones_like(y)
-    reg.fit(X, y, sample_weight=sample_weight)
+    reg.fit(X, y, sample_weight=)
     assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
     # sample_weight=None should be equivalent to sample_weight = number
     sample_weight = 123.0
-    reg.fit(X, y, sample_weight=sample_weight)
+    reg.fit(X, y, sample_weight=)
     assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
     # scaling of sample_weight should have no effect, cf. np.average()
     sample_weight = 2 * np.ones_like(y)
-    reg.fit(X, y, sample_weight=sample_weight)
+    reg.fit(X, y, sample_weight=)
     assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
@@ -1532,7 +1518,7 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     sample_weight = sample_weight_1_25.copy()
 
     reg = ElasticNet()
-    reg.fit(X, y, sample_weight=sample_weight, check_input=check_input)
+    reg.fit(X, y, sample_weight=, check_input=)
 
     assert_array_equal(sample_weight, sample_weight_1_25)
 
@@ -1550,7 +1536,7 @@ def test_enet_ridge_consistency(ridge_alpha):
     rng = np.random.RandomState(42)
     n_samples = 300
     X, y = make_regression(
-        n_samples=n_samples,
+        n_samples=,
         n_features=100,
         effective_rank=10,
         n_informative=50,
@@ -1561,7 +1547,7 @@ def test_enet_ridge_consistency(ridge_alpha):
     common_params = dict(
         tol=1e-12,
     )
-    ridge = Ridge(alpha=alpha, **common_params).fit(X, y, sample_weight=sw)
+    ridge = Ridge(alpha=, **common_params).fit(X, y, sample_weight=sw)
 
     alpha_enet = alpha / sw.sum()
     enet = ElasticNet(alpha=alpha_enet, l1_ratio=0, **common_params).fit(
@@ -1649,7 +1635,7 @@ def test_cv_estimators_reject_params_with_no_routing_enabled(EstimatorCV):
     estimator = EstimatorCV()
     msg = "is only supported if enable_metadata_routing=True"
     with pytest.raises(ValueError, match=msg):
-        estimator.fit(X, y, groups=groups)
+        estimator.fit(X, y, groups=)
 
 
 @pytest.mark.usefixtures("enable_slep006")
@@ -1686,11 +1672,11 @@ def test_multitask_cv_estimators_with_sample_weight(MultiTaskEstimatorCV):
     estimator = MultiTaskEstimatorCV(cv=splitter)
     msg = "do not support sample weights"
     with pytest.raises(ValueError, match=msg):
-        estimator.fit(X, y, sample_weight=sample_weight)
+        estimator.fit(X, y, sample_weight=)
 
     # If CV splitter does support sample_weight no error is raised
     splitter = CVSplitterSampleWeight().set_split_request(
         groups=True, sample_weight=True
     )
     estimator = MultiTaskEstimatorCV(cv=splitter)
-    estimator.fit(X, y, sample_weight=sample_weight)
+    estimator.fit(X, y, sample_weight=)

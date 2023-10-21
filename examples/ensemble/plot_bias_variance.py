@@ -119,11 +119,11 @@ X_train = []
 y_train = []
 
 for i in range(n_repeat):
-    X, y = generate(n_samples=n_train, noise=noise)
+    X, y = generate(n_samples=n_train, noise=)
     X_train.append(X)
     y_train.append(y)
 
-X_test, y_test = generate(n_samples=n_test, noise=noise, n_repeat=n_repeat)
+X_test, y_test = generate(n_samples=n_test, noise=, n_repeat=)
 
 plt.figure(figsize=(10, 8))
 

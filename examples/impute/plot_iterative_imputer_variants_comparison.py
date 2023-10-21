@@ -91,7 +91,7 @@ X_missing[missing_samples, missing_features] = np.nan
 score_simple_imputer = pd.DataFrame()
 for strategy in ("mean", "median"):
     estimator = make_pipeline(
-        SimpleImputer(missing_values=np.nan, strategy=strategy), br_estimator
+        SimpleImputer(missing_values=np.nan, strategy=), br_estimator
     )
     score_simple_imputer[strategy] = cross_val_score(
         estimator, X_missing, y_missing, scoring="neg_mean_squared_error", cv=N_SPLITS
@@ -126,7 +126,7 @@ tolerances = (1e-3, 1e-1, 1e-1, 1e-2)
 for impute_estimator, tol in zip(estimators, tolerances):
     estimator = make_pipeline(
         IterativeImputer(
-            random_state=0, estimator=impute_estimator, max_iter=25, tol=tol
+            random_state=0, estimator=impute_estimator, max_iter=25, tol=
         ),
         br_estimator,
     )
@@ -144,7 +144,7 @@ scores = pd.concat(
 fig, ax = plt.subplots(figsize=(13, 6))
 means = -scores.mean()
 errors = scores.std()
-means.plot.barh(xerr=errors, ax=ax)
+means.plot.barh(xerr=errors, ax=)
 ax.set_title("California Housing Regression with Different Imputation Methods")
 ax.set_xlabel("MSE (smaller is better)")
 ax.set_yticks(np.arange(means.shape[0]))

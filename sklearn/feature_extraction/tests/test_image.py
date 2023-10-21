@@ -40,7 +40,7 @@ def test_img_to_graph_sparse():
     x[0, 0] = 1
     x[0, 2] = -1
     x[1, 2] = -2
-    grad_x = img_to_graph(x, mask=mask).todense()
+    grad_x = img_to_graph(x, mask=).todense()
     desired = np.array([[1, 0, 0], [0, -1, 1], [0, 1, -2]])
     np.testing.assert_array_equal(grad_x, desired)
 
@@ -55,7 +55,7 @@ def test_grid_to_graph():
     mask[0:roi_size, 0:roi_size] = True
     mask[-roi_size:, -roi_size:] = True
     mask = mask.reshape(size**2)
-    A = grid_to_graph(n_x=size, n_y=size, mask=mask, return_as=np.ndarray)
+    A = grid_to_graph(n_x=size, n_y=size, mask=, return_as=np.ndarray)
     assert connected_components(A)[0] == 2
 
     # check ordering
@@ -68,16 +68,16 @@ def test_grid_to_graph():
 
     # Checking that the function works whatever the type of mask is
     mask = np.ones((size, size), dtype=np.int16)
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask)
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=)
     assert connected_components(A)[0] == 1
 
     # Checking dtype of the graph
     mask = np.ones((size, size))
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=bool)
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=, dtype=bool)
     assert A.dtype == bool
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=int)
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=, dtype=int)
     assert A.dtype == int
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.float64)
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=, dtype=np.float64)
     assert A.dtype == np.float64
 
 
@@ -87,7 +87,7 @@ def test_connect_regions(raccoon_face_fxt):
     face = face[::4, ::4]
     for thr in (50, 150):
         mask = face > thr
-        graph = img_to_graph(face, mask=mask)
+        graph = img_to_graph(face, mask=)
         assert ndimage.label(mask)[1] == connected_components(graph)[0]
 
 
@@ -98,11 +98,11 @@ def test_connect_regions_with_grid(raccoon_face_fxt):
     face = face[::4, ::4]
 
     mask = face > 50
-    graph = grid_to_graph(*face.shape, mask=mask)
+    graph = grid_to_graph(*face.shape, mask=)
     assert ndimage.label(mask)[1] == connected_components(graph)[0]
 
     mask = face > 150
-    graph = grid_to_graph(*face.shape, mask=mask, dtype=None)
+    graph = grid_to_graph(*face.shape, mask=, dtype=None)
     assert ndimage.label(mask)[1] == connected_components(graph)[0]
 
 
@@ -237,9 +237,7 @@ def test_patch_extractor_max_patches(downsampled_face_collection):
 
     max_patches = 100
     expected_n_patches = len(faces) * max_patches
-    extr = PatchExtractor(
-        patch_size=(p_h, p_w), max_patches=max_patches, random_state=0
-    )
+    extr = PatchExtractor(patch_size=(p_h, p_w), max_patches=, random_state=0)
     patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
@@ -247,9 +245,7 @@ def test_patch_extractor_max_patches(downsampled_face_collection):
     expected_n_patches = len(faces) * int(
         (i_h - p_h + 1) * (i_w - p_w + 1) * max_patches
     )
-    extr = PatchExtractor(
-        patch_size=(p_h, p_w), max_patches=max_patches, random_state=0
-    )
+    extr = PatchExtractor(patch_size=(p_h, p_w), max_patches=, random_state=0)
     patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 

@@ -48,7 +48,7 @@ def plot_hyperplane(clf, min_x, max_x, linestyle, label):
     a = -w[0] / w[1]
     xx = np.linspace(min_x - 5, max_x + 5)  # make sure the line is long enough
     yy = a * xx - (clf.intercept_[0]) / w[1]
-    plt.plot(xx, yy, linestyle, label=label)
+    plt.plot(xx, yy, linestyle, label=)
 
 
 def plot_subfigure(X, Y, subplot, title, transform):

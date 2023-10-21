@@ -99,11 +99,11 @@ def c_step(
     return _c_step(
         X,
         n_support,
-        remaining_iterations=remaining_iterations,
-        initial_estimates=initial_estimates,
-        verbose=verbose,
-        cov_computation_method=cov_computation_method,
-        random_state=random_state,
+        remaining_iterations=,
+        initial_estimates=,
+        verbose=,
+        cov_computation_method=,
+        random_state=,
     )
 
 
@@ -321,9 +321,9 @@ def select_candidates(
                     X,
                     n_support,
                     remaining_iterations=n_iter,
-                    verbose=verbose,
-                    cov_computation_method=cov_computation_method,
-                    random_state=random_state,
+                    verbose=,
+                    cov_computation_method=,
+                    random_state=,
                 )
             )
     else:
@@ -335,10 +335,10 @@ def select_candidates(
                     X,
                     n_support,
                     remaining_iterations=n_iter,
-                    initial_estimates=initial_estimates,
-                    verbose=verbose,
-                    cov_computation_method=cov_computation_method,
-                    random_state=random_state,
+                    initial_estimates=,
+                    verbose=,
+                    cov_computation_method=,
+                    random_state=,
                 )
             )
     all_locs_sub, all_covs_sub, all_dets_sub, all_supports_sub, all_ds_sub = zip(
@@ -498,8 +498,8 @@ def fast_mcd(
                 n_trials,
                 select=n_best_sub,
                 n_iter=2,
-                cov_computation_method=cov_computation_method,
-                random_state=random_state,
+                cov_computation_method=,
+                random_state=,
             )
             subset_slice = np.arange(i * n_best_sub, (i + 1) * n_best_sub)
             all_best_locations[subset_slice] = best_locations_sub
@@ -519,8 +519,8 @@ def fast_mcd(
             h_merged,
             n_trials=(all_best_locations, all_best_covariances),
             select=n_best_merged,
-            cov_computation_method=cov_computation_method,
-            random_state=random_state,
+            cov_computation_method=,
+            random_state=,
         )
         # 3. Finally get the overall best (locations, covariance) couple
         if n_samples < 1500:
@@ -538,8 +538,8 @@ def fast_mcd(
                 n_support,
                 n_trials=(locations_merged, covariances_merged),
                 select=1,
-                cov_computation_method=cov_computation_method,
-                random_state=random_state,
+                cov_computation_method=,
+                random_state=,
             )
             location = locations_full[0]
             covariance = covariances_full[0]
@@ -553,11 +553,11 @@ def fast_mcd(
         locations_best, covariances_best, _, _ = select_candidates(
             X,
             n_support,
-            n_trials=n_trials,
+            n_trials=,
             select=n_best,
             n_iter=2,
-            cov_computation_method=cov_computation_method,
-            random_state=random_state,
+            cov_computation_method=,
+            random_state=,
         )
         # 2. Select the best couple on the full dataset amongst the 10
         locations_full, covariances_full, supports_full, d = select_candidates(
@@ -565,8 +565,8 @@ def fast_mcd(
             n_support,
             n_trials=(locations_best, covariances_best),
             select=1,
-            cov_computation_method=cov_computation_method,
-            random_state=random_state,
+            cov_computation_method=,
+            random_state=,
         )
         location = locations_full[0]
         covariance = covariances_full[0]
@@ -752,7 +752,7 @@ class MinCovDet(EmpiricalCovariance):
             X,
             support_fraction=self.support_fraction,
             cov_computation_method=self._nonrobust_covariance,
-            random_state=random_state,
+            random_state=,
         )
         if self.assume_centered:
             raw_location = np.zeros(n_features)

@@ -148,7 +148,7 @@ def _fix_connected_components(
             if metric == "precomputed":
                 D = X[np.ix_(idx_i, idx_j)]
             else:
-                D = pairwise_distances(Xi, Xj, metric=metric, **kwargs)
+                D = pairwise_distances(Xi, Xj, metric=, **kwargs)
 
             ii, jj = np.unravel_index(D.argmin(axis=None), D.shape)
             if mode == "connectivity":

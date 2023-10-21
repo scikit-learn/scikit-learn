@@ -44,13 +44,13 @@ X_list = [
         ],
         cluster_std=0.5,
         centers=centers_0,
-        random_state=random_state,
+        random_state=,
     )[0],
     make_blobs(
         n_samples=[n_samples // 5, n_samples * 4 // 5],
         cluster_std=0.5,
         centers=centers_1,
-        random_state=random_state,
+        random_state=,
     )[0],
 ]
 
@@ -77,7 +77,7 @@ for ds_cnt, X in enumerate(X_list):
     # transform the dataset with KBinsDiscretizer
     for strategy in strategies:
         enc = KBinsDiscretizer(
-            n_bins=4, encode="ordinal", strategy=strategy, subsample=200_000
+            n_bins=4, encode="ordinal", strategy=, subsample=200_000
         )
         enc.fit(X)
         grid_encoded = enc.transform(grid)

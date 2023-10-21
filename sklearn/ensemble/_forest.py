@@ -183,24 +183,24 @@ def _parallel_build_trees(
         if class_weight == "subsample":
             with catch_warnings():
                 simplefilter("ignore", DeprecationWarning)
-                curr_sample_weight *= compute_sample_weight("auto", y, indices=indices)
+                curr_sample_weight *= compute_sample_weight("auto", y, indices=)
         elif class_weight == "balanced_subsample":
-            curr_sample_weight *= compute_sample_weight("balanced", y, indices=indices)
+            curr_sample_weight *= compute_sample_weight("balanced", y, indices=)
 
         tree._fit(
             X,
             y,
             sample_weight=curr_sample_weight,
             check_input=False,
-            missing_values_in_feature_mask=missing_values_in_feature_mask,
+            missing_values_in_feature_mask=,
         )
     else:
         tree._fit(
             X,
             y,
-            sample_weight=sample_weight,
+            sample_weight=,
             check_input=False,
-            missing_values_in_feature_mask=missing_values_in_feature_mask,
+            missing_values_in_feature_mask=,
         )
 
     return tree
@@ -247,10 +247,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         base_estimator="deprecated",
     ):
         super().__init__(
-            estimator=estimator,
-            n_estimators=n_estimators,
-            estimator_params=estimator_params,
-            base_estimator=base_estimator,
+            estimator=,
+            n_estimators=,
+            estimator_params=,
+            base_estimator=,
         )
 
         self.bootstrap = bootstrap
@@ -474,7 +474,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 random_state.randint(MAX_INT, size=len(self.estimators_))
 
             trees = [
-                self._make_estimator(append=False, random_state=random_state)
+                self._make_estimator(append=False, random_state=)
                 for i in range(n_more_estimators)
             ]
 
@@ -499,8 +499,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     len(trees),
                     verbose=self.verbose,
                     class_weight=self.class_weight,
-                    n_samples_bootstrap=n_samples_bootstrap,
-                    missing_values_in_feature_mask=missing_values_in_feature_mask,
+                    n_samples_bootstrap=,
+                    missing_values_in_feature_mask=,
                 )
                 for i, t in enumerate(trees)
             )
@@ -638,7 +638,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             dtype=DTYPE,
             accept_sparse="csr",
             reset=False,
-            force_all_finite=force_all_finite,
+            force_all_finite=,
         )
         if issparse(X) and (X.indices.dtype != np.intc or X.indptr.dtype != np.intc):
             raise ValueError("No support for np.int64 index based sparse matrices")
@@ -728,18 +728,18 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         base_estimator="deprecated",
     ):
         super().__init__(
-            estimator=estimator,
-            n_estimators=n_estimators,
-            estimator_params=estimator_params,
-            bootstrap=bootstrap,
-            oob_score=oob_score,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            verbose=verbose,
-            warm_start=warm_start,
-            class_weight=class_weight,
-            max_samples=max_samples,
-            base_estimator=base_estimator,
+            estimator=,
+            n_estimators=,
+            estimator_params=,
+            bootstrap=,
+            oob_score=,
+            n_jobs=,
+            random_state=,
+            verbose=,
+            warm_start=,
+            class_weight=,
+            max_samples=,
+            base_estimator=,
         )
 
     @staticmethod
@@ -922,7 +922,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             for j in np.atleast_1d(self.n_classes_)
         ]
         lock = threading.Lock()
-        Parallel(n_jobs=n_jobs, verbose=self.verbose, require="sharedmem")(
+        Parallel(n_jobs=, verbose=self.verbose, require="sharedmem")(
             delayed(_accumulate_prediction)(e.predict_proba, X, all_proba, lock)
             for e in self.estimators_
         )
@@ -997,16 +997,16 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
     ):
         super().__init__(
             estimator,
-            n_estimators=n_estimators,
-            estimator_params=estimator_params,
-            bootstrap=bootstrap,
-            oob_score=oob_score,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            verbose=verbose,
-            warm_start=warm_start,
-            max_samples=max_samples,
-            base_estimator=base_estimator,
+            n_estimators=,
+            estimator_params=,
+            bootstrap=,
+            oob_score=,
+            n_jobs=,
+            random_state=,
+            verbose=,
+            warm_start=,
+            max_samples=,
+            base_estimator=,
         )
 
     def predict(self, X):
@@ -1043,7 +1043,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         # Parallel loop
         lock = threading.Lock()
-        Parallel(n_jobs=n_jobs, verbose=self.verbose, require="sharedmem")(
+        Parallel(n_jobs=, verbose=self.verbose, require="sharedmem")(
             delayed(_accumulate_prediction)(e.predict, X, [y_hat], lock)
             for e in self.estimators_
         )
@@ -1485,7 +1485,7 @@ class RandomForestClassifier(ForestClassifier):
     ):
         super().__init__(
             estimator=DecisionTreeClassifier(),
-            n_estimators=n_estimators,
+            n_estimators=,
             estimator_params=(
                 "criterion",
                 "max_depth",
@@ -1499,14 +1499,14 @@ class RandomForestClassifier(ForestClassifier):
                 "ccp_alpha",
                 "monotonic_cst",
             ),
-            bootstrap=bootstrap,
-            oob_score=oob_score,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            verbose=verbose,
-            warm_start=warm_start,
-            class_weight=class_weight,
-            max_samples=max_samples,
+            bootstrap=,
+            oob_score=,
+            n_jobs=,
+            random_state=,
+            verbose=,
+            warm_start=,
+            class_weight=,
+            max_samples=,
         )
 
         self.criterion = criterion
@@ -1845,7 +1845,7 @@ class RandomForestRegressor(ForestRegressor):
     ):
         super().__init__(
             estimator=DecisionTreeRegressor(),
-            n_estimators=n_estimators,
+            n_estimators=,
             estimator_params=(
                 "criterion",
                 "max_depth",
@@ -1859,13 +1859,13 @@ class RandomForestRegressor(ForestRegressor):
                 "ccp_alpha",
                 "monotonic_cst",
             ),
-            bootstrap=bootstrap,
-            oob_score=oob_score,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            verbose=verbose,
-            warm_start=warm_start,
-            max_samples=max_samples,
+            bootstrap=,
+            oob_score=,
+            n_jobs=,
+            random_state=,
+            verbose=,
+            warm_start=,
+            max_samples=,
         )
 
         self.criterion = criterion
@@ -2217,7 +2217,7 @@ class ExtraTreesClassifier(ForestClassifier):
     ):
         super().__init__(
             estimator=ExtraTreeClassifier(),
-            n_estimators=n_estimators,
+            n_estimators=,
             estimator_params=(
                 "criterion",
                 "max_depth",
@@ -2231,14 +2231,14 @@ class ExtraTreesClassifier(ForestClassifier):
                 "ccp_alpha",
                 "monotonic_cst",
             ),
-            bootstrap=bootstrap,
-            oob_score=oob_score,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            verbose=verbose,
-            warm_start=warm_start,
-            class_weight=class_weight,
-            max_samples=max_samples,
+            bootstrap=,
+            oob_score=,
+            n_jobs=,
+            random_state=,
+            verbose=,
+            warm_start=,
+            class_weight=,
+            max_samples=,
         )
 
         self.criterion = criterion
@@ -2558,7 +2558,7 @@ class ExtraTreesRegressor(ForestRegressor):
     ):
         super().__init__(
             estimator=ExtraTreeRegressor(),
-            n_estimators=n_estimators,
+            n_estimators=,
             estimator_params=(
                 "criterion",
                 "max_depth",
@@ -2572,13 +2572,13 @@ class ExtraTreesRegressor(ForestRegressor):
                 "ccp_alpha",
                 "monotonic_cst",
             ),
-            bootstrap=bootstrap,
-            oob_score=oob_score,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            verbose=verbose,
-            warm_start=warm_start,
-            max_samples=max_samples,
+            bootstrap=,
+            oob_score=,
+            n_jobs=,
+            random_state=,
+            verbose=,
+            warm_start=,
+            max_samples=,
         )
 
         self.criterion = criterion
@@ -2808,7 +2808,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
     ):
         super().__init__(
             estimator=ExtraTreeRegressor(),
-            n_estimators=n_estimators,
+            n_estimators=,
             estimator_params=(
                 "criterion",
                 "max_depth",
@@ -2822,10 +2822,10 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
             ),
             bootstrap=False,
             oob_score=False,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            verbose=verbose,
-            warm_start=warm_start,
+            n_jobs=,
+            random_state=,
+            verbose=,
+            warm_start=,
             max_samples=None,
         )
 
@@ -2867,7 +2867,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
             Returns the instance itself.
         """
         # Parameters are validated in fit_transform
-        self.fit_transform(X, y, sample_weight=sample_weight)
+        self.fit_transform(X, y, sample_weight=)
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -2898,7 +2898,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         """
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=_num_samples(X))
-        super().fit(X, y, sample_weight=sample_weight)
+        super().fit(X, y, sample_weight=)
 
         self.one_hot_encoder_ = OneHotEncoder(sparse_output=self.sparse_output)
         output = self.one_hot_encoder_.fit_transform(self.apply(X))
@@ -2926,9 +2926,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
             feature names.
         """
         check_is_fitted(self, "_n_features_out")
-        _check_feature_names_in(
-            self, input_features=input_features, generate_names=False
-        )
+        _check_feature_names_in(self, input_features=, generate_names=False)
 
         feature_names = [
             f"randomtreesembedding_{tree}_{leaf}"

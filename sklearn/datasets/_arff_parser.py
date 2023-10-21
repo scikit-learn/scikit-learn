@@ -169,9 +169,7 @@ def _liac_arff_parser(
     # we should not let LIAC-ARFF to encode the nominal attributes with NumPy
     # arrays to have only numerical values.
     encode_nominal = not (output_arrays_type == "pandas")
-    arff_container = _arff.load(
-        stream, return_type=return_type, encode_nominal=encode_nominal
-    )
+    arff_container = _arff.load(stream, return_type=, encode_nominal=)
     columns_to_select = feature_names_to_select + target_names_to_select
 
     categories = {
@@ -252,7 +250,7 @@ def _liac_arff_parser(
             data = np.fromiter(
                 itertools.chain.from_iterable(arff_data),
                 dtype="float64",
-                count=count,
+                count=,
             )
             data = data.reshape(*shape)
             X = data[:, feature_indices_to_select]

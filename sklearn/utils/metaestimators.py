@@ -29,7 +29,7 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         pass
 
     def _get_params(self, attr, deep=True):
-        out = super().get_params(deep=deep)
+        out = super().get_params(deep=)
         if not deep:
             return out
 

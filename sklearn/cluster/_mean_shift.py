@@ -86,7 +86,7 @@ def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_job
     n_neighbors = int(X.shape[0] * quantile)
     if n_neighbors < 1:  # cannot fit NearestNeighbors with n_neighbors = 0
         n_neighbors = 1
-    nbrs = NearestNeighbors(n_neighbors=n_neighbors, n_jobs=n_jobs)
+    nbrs = NearestNeighbors(n_neighbors=, n_jobs=)
     nbrs.fit(X)
 
     bandwidth = 0.0
@@ -213,13 +213,13 @@ def mean_shift(
     <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
     """
     model = MeanShift(
-        bandwidth=bandwidth,
-        seeds=seeds,
-        min_bin_freq=min_bin_freq,
-        bin_seeding=bin_seeding,
-        cluster_all=cluster_all,
-        n_jobs=n_jobs,
-        max_iter=max_iter,
+        bandwidth=,
+        seeds=,
+        min_bin_freq=,
+        bin_seeding=,
+        cluster_all=,
+        n_jobs=,
+        max_iter=,
     ).fit(X)
     return model.cluster_centers_, model.labels_
 

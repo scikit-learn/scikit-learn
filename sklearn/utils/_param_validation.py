@@ -392,7 +392,7 @@ class StrOptions(Options):
     """
 
     def __init__(self, options, *, deprecated=None):
-        super().__init__(type=str, options=options, deprecated=deprecated)
+        super().__init__(type=str, options=, deprecated=)
 
 
 class Interval(_Constraint):

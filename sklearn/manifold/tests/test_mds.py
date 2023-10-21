@@ -82,9 +82,9 @@ def test_normalize_metric_warning():
 def test_normalized_stress_default_change(metric):
     msg = "The default value of `normalized_stress` will change"
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
-    est = mds.MDS(metric=metric)
+    est = mds.MDS(metric=)
     with pytest.warns(FutureWarning, match=msg):
-        mds.smacof(sim, metric=metric)
+        mds.smacof(sim, metric=)
     with pytest.warns(FutureWarning, match=msg):
         est.fit(sim)
 
@@ -98,9 +98,9 @@ def test_normalized_stress_auto(metric, monkeypatch):
     mock = Mock(side_effect=mds._smacof_single)
     monkeypatch.setattr("sklearn.manifold._mds._smacof_single", mock)
 
-    est = mds.MDS(metric=metric, normalized_stress="auto", random_state=rng)
+    est = mds.MDS(metric=, normalized_stress="auto", random_state=rng)
     est.fit_transform(X)
     assert mock.call_args[1]["normalized_stress"] != metric
 
-    mds.smacof(dist, metric=metric, normalized_stress="auto", random_state=rng)
+    mds.smacof(dist, metric=, normalized_stress="auto", random_state=rng)
     assert mock.call_args[1]["normalized_stress"] != metric

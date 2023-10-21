@@ -427,16 +427,16 @@ def k_means(
         Returned only if `return_n_iter` is set to True.
     """
     est = KMeans(
-        n_clusters=n_clusters,
-        init=init,
-        n_init=n_init,
-        max_iter=max_iter,
-        verbose=verbose,
-        tol=tol,
-        random_state=random_state,
-        copy_x=copy_x,
-        algorithm=algorithm,
-    ).fit(X, sample_weight=sample_weight)
+        n_clusters=,
+        init=,
+        n_init=,
+        max_iter=,
+        verbose=,
+        tol=,
+        random_state=,
+        copy_x=,
+        algorithm=,
+    ).fit(X, sample_weight=)
     if return_n_iter:
         return est.cluster_centers_, est.labels_, est.inertia_, est.n_iter_
     else:
@@ -532,7 +532,7 @@ def _kmeans_single_elkan(
         labels,
         upper_bounds,
         lower_bounds,
-        n_threads=n_threads,
+        n_threads=,
     )
 
     strict_convergence = False
@@ -799,9 +799,9 @@ def _labels_inertia(X, sample_weight, centers, n_threads=1, return_inertia=True)
         centers,
         centers_new=None,
         weight_in_clusters=None,
-        labels=labels,
-        center_shift=center_shift,
-        n_threads=n_threads,
+        labels=,
+        center_shift=,
+        n_threads=,
         update_centers=False,
     )
 
@@ -1019,9 +1019,9 @@ class _BaseKMeans(
             centers, _ = _kmeans_plusplus(
                 X,
                 n_clusters,
-                random_state=random_state,
-                x_squared_norms=x_squared_norms,
-                sample_weight=sample_weight,
+                random_state=,
+                x_squared_norms=,
+                sample_weight=,
             )
         elif isinstance(init, str) and init == "random":
             seeds = random_state.choice(
@@ -1034,7 +1034,7 @@ class _BaseKMeans(
         elif _is_arraylike_not_scalar(self.init):
             centers = init
         elif callable(init):
-            centers = init(X, n_clusters, random_state=random_state)
+            centers = init(X, n_clusters, random_state=)
             centers = check_array(centers, dtype=X.dtype, copy=False, order="C")
             self._validate_center_shape(X, centers)
 
@@ -1066,7 +1066,7 @@ class _BaseKMeans(
         labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
-        return self.fit(X, sample_weight=sample_weight).labels_
+        return self.fit(X, sample_weight=).labels_
 
     def predict(self, X, sample_weight="deprecated"):
         """Predict the closest cluster each sample in X belongs to.
@@ -1140,7 +1140,7 @@ class _BaseKMeans(
         X_new : ndarray of shape (n_samples, n_clusters)
             X transformed in the new space.
         """
-        return self.fit(X, sample_weight=sample_weight)._transform(X)
+        return self.fit(X, sample_weight=)._transform(X)
 
     def transform(self, X):
         """Transform X to a cluster-distance space.
@@ -1400,13 +1400,13 @@ class KMeans(_BaseKMeans):
         algorithm="lloyd",
     ):
         super().__init__(
-            n_clusters=n_clusters,
-            init=init,
-            n_init=n_init,
-            max_iter=max_iter,
-            tol=tol,
-            verbose=verbose,
-            random_state=random_state,
+            n_clusters=,
+            init=,
+            n_init=,
+            max_iter=,
+            tol=,
+            verbose=,
+            random_state=,
         )
 
         self.copy_x = copy_x
@@ -1518,10 +1518,10 @@ class KMeans(_BaseKMeans):
             # Initialize centers
             centers_init = self._init_centroids(
                 X,
-                x_squared_norms=x_squared_norms,
-                init=init,
-                random_state=random_state,
-                sample_weight=sample_weight,
+                x_squared_norms=,
+                init=,
+                random_state=,
+                sample_weight=,
             )
             if self.verbose:
                 print("Initialization complete")
@@ -1641,7 +1641,7 @@ def _mini_batch_step(
     # Perform label assignment to nearest centers
     # For better efficiency, it's better to run _mini_batch_step in a
     # threadpool_limit context than using _labels_inertia_threadpool_limit here
-    labels, inertia = _labels_inertia(X, sample_weight, centers, n_threads=n_threads)
+    labels, inertia = _labels_inertia(X, sample_weight, centers, n_threads=)
 
     # Update centers according to the labels
     if sp.issparse(X):
@@ -1915,13 +1915,13 @@ class MiniBatchKMeans(_BaseKMeans):
         reassignment_ratio=0.01,
     ):
         super().__init__(
-            n_clusters=n_clusters,
-            init=init,
-            max_iter=max_iter,
-            verbose=verbose,
-            random_state=random_state,
-            tol=tol,
-            n_init=n_init,
+            n_clusters=,
+            init=,
+            max_iter=,
+            verbose=,
+            random_state=,
+            tol=,
+            n_init=,
         )
 
         self.max_no_improvement = max_no_improvement
@@ -2121,11 +2121,11 @@ class MiniBatchKMeans(_BaseKMeans):
             # expect n_samples to be very large when using MiniBatchKMeans.
             cluster_centers = self._init_centroids(
                 X,
-                x_squared_norms=x_squared_norms,
-                init=init,
-                random_state=random_state,
+                x_squared_norms=,
+                init=,
+                random_state=,
                 init_size=self._init_size,
-                sample_weight=sample_weight,
+                sample_weight=,
             )
 
             # Compute inertia on a validation set.
@@ -2168,10 +2168,10 @@ class MiniBatchKMeans(_BaseKMeans):
                 batch_inertia = _mini_batch_step(
                     X=X[minibatch_indices],
                     sample_weight=sample_weight[minibatch_indices],
-                    centers=centers,
-                    centers_new=centers_new,
+                    centers=,
+                    centers_new=,
                     weight_sums=self._counts,
-                    random_state=random_state,
+                    random_state=,
                     random_reassign=self._random_reassign(),
                     reassignment_ratio=self.reassignment_ratio,
                     verbose=self.verbose,
@@ -2271,11 +2271,11 @@ class MiniBatchKMeans(_BaseKMeans):
             # initialize the cluster centers
             self.cluster_centers_ = self._init_centroids(
                 X,
-                x_squared_norms=x_squared_norms,
-                init=init,
+                x_squared_norms=,
+                init=,
                 random_state=self._random_state,
                 init_size=self._init_size,
-                sample_weight=sample_weight,
+                sample_weight=,
             )
 
             # Initialize counts
@@ -2287,7 +2287,7 @@ class MiniBatchKMeans(_BaseKMeans):
         with threadpool_limits(limits=1, user_api="blas"):
             _mini_batch_step(
                 X,
-                sample_weight=sample_weight,
+                sample_weight=,
                 centers=self.cluster_centers_,
                 centers_new=self.cluster_centers_,
                 weight_sums=self._counts,

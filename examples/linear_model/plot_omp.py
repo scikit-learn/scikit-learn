@@ -24,9 +24,9 @@ n_nonzero_coefs = 17
 
 y, X, w = make_sparse_coded_signal(
     n_samples=1,
-    n_components=n_components,
-    n_features=n_features,
-    n_nonzero_coefs=n_nonzero_coefs,
+    n_components=,
+    n_features=,
+    n_nonzero_coefs=,
     random_state=0,
 )
 X = X.T
@@ -44,7 +44,7 @@ plt.title("Sparse signal")
 plt.stem(idx, w[idx])
 
 # plot the noise-free reconstruction
-omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
+omp = OrthogonalMatchingPursuit(n_nonzero_coefs=)
 omp.fit(X, y)
 coef = omp.coef_
 (idx_r,) = coef.nonzero()

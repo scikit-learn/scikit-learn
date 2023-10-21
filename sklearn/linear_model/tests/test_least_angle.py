@@ -56,7 +56,7 @@ def test_assure_warning_when_normalize(LeastAngleModel, normalize, n_warnings):
     X[X < 0.1] = 0.0
     y = rng.rand(n_samples)
 
-    model = LeastAngleModel(normalize=normalize)
+    model = LeastAngleModel(normalize=)
     with warnings.catch_warnings(record=True) as rec:
         warnings.simplefilter("always", FutureWarning)
         model.fit(X, y)
@@ -123,9 +123,9 @@ def _assert_same_lars_path_result(output1, output2):
 def test_lars_path_gram_equivalent(method, return_path):
     _assert_same_lars_path_result(
         linear_model.lars_path_gram(
-            Xy=Xy, Gram=G, n_samples=n_samples, method=method, return_path=return_path
+            Xy=, Gram=G, n_samples=, method=, return_path=
         ),
-        linear_model.lars_path(X, y, Gram=G, method=method, return_path=return_path),
+        linear_model.lars_path(X, y, Gram=G, method=, return_path=),
     )
 
 
@@ -133,7 +133,7 @@ def test_x_none_gram_none_raises_value_error():
     # Test that lars_path with no X and Gram raises exception
     Xy = np.dot(X.T, y)
     with pytest.raises(ValueError, match="X and Gram cannot both be unspecified"):
-        linear_model.lars_path(None, y, Gram=None, Xy=Xy)
+        linear_model.lars_path(None, y, Gram=None, Xy=)
 
 
 def test_all_precomputed():
@@ -141,8 +141,8 @@ def test_all_precomputed():
     G = np.dot(X.T, X)
     Xy = np.dot(X.T, y)
     for method in "lar", "lasso":
-        output = linear_model.lars_path(X, y, method=method)
-        output_pre = linear_model.lars_path(X, y, Gram=G, Xy=Xy, method=method)
+        output = linear_model.lars_path(X, y, method=)
+        output_pre = linear_model.lars_path(X, y, Gram=G, Xy=, method=)
         for expected, got in zip(output, output_pre):
             assert_array_almost_equal(expected, got)
 
@@ -227,10 +227,10 @@ def test_no_path_all_precomputed():
     G = np.dot(X.T, X)
     Xy = np.dot(X.T, y)
     alphas_, _, coef_path_ = linear_model.lars_path(
-        X, y, method="lasso", Xy=Xy, Gram=G, alpha_min=0.9
+        X, y, method="lasso", Xy=, Gram=G, alpha_min=0.9
     )
     alpha_, _, coef = linear_model.lars_path(
-        X, y, method="lasso", Gram=G, Xy=Xy, alpha_min=0.9, return_path=False
+        X, y, method="lasso", Gram=G, Xy=, alpha_min=0.9, return_path=False
     )
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
@@ -248,7 +248,7 @@ def test_lars_precompute(classifier):
     clf = classifier(precompute=G)
     output_1 = ignore_warnings(clf.fit)(X, y).coef_
     for precompute in [True, False, "auto", None]:
-        clf = classifier(precompute=precompute)
+        clf = classifier(precompute=)
         output_2 = clf.fit(X, y).coef_
         assert_array_almost_equal(output_1, output_2, decimal=8)
 
@@ -299,8 +299,8 @@ def test_lasso_lars_vs_lasso_cd():
 
     # similar test, with the classifiers
     for alpha in np.linspace(1e-2, 1 - 1e-2, 20):
-        clf1 = linear_model.LassoLars(alpha=alpha).fit(X, y)
-        clf2 = linear_model.Lasso(alpha=alpha, tol=1e-8).fit(X, y)
+        clf1 = linear_model.LassoLars(alpha=).fit(X, y)
+        clf2 = linear_model.Lasso(alpha=, tol=1e-8).fit(X, y)
         err = linalg.norm(clf1.coef_ - clf2.coef_)
         assert err < 1e-3
 
@@ -330,7 +330,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping():
 
     for alpha_min in alphas_min:
         alphas, _, lasso_path = linear_model.lars_path(
-            X, y, method="lasso", alpha_min=alpha_min
+            X, y, method="lasso", alpha_min=
         )
         lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
         lasso_cd.alpha = alphas[-1]
@@ -344,7 +344,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping():
 
     for alpha_min in alphas_min:
         alphas, _, lasso_path = linear_model.lars_path(
-            X, y, method="lasso", alpha_min=alpha_min
+            X, y, method="lasso", alpha_min=
         )
         lasso_cd = linear_model.Lasso(tol=1e-8)
         lasso_cd.alpha = alphas[-1]
@@ -410,14 +410,14 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
             y - np.dot(X, coef)
         ) ** 2 + alpha * linalg.norm(coef, 1)
 
-    lars = linear_model.LassoLars(alpha=alpha)
+    lars = linear_model.LassoLars(alpha=)
     warning_message = "Regressors in active set degenerate."
     with pytest.warns(ConvergenceWarning, match=warning_message):
         lars.fit(X, y)
     lars_coef_ = lars.coef_
     lars_obj = objective_function(lars_coef_)
 
-    coord_descent = linear_model.Lasso(alpha=alpha, tol=1e-4)
+    coord_descent = linear_model.Lasso(alpha=, tol=1e-4)
     cd_coef_ = coord_descent.fit(X, y).coef_
     cd_obj = objective_function(cd_coef_)
 
@@ -437,7 +437,7 @@ def test_lars_add_features():
 
 @filterwarnings_normalize
 def test_lars_n_nonzero_coefs(verbose=False):
-    lars = linear_model.Lars(n_nonzero_coefs=6, verbose=verbose)
+    lars = linear_model.Lars(n_nonzero_coefs=6, verbose=)
     lars.fit(X, y)
     assert len(lars.coef_.nonzero()[0]) == 6
     # The path should be of length 6 + 1 in a Lars going down to 6
@@ -565,12 +565,12 @@ def test_lars_path_positive_constraint():
 
     method = "lasso"
     _, _, coefs = linear_model.lars_path(
-        X, y, return_path=True, method=method, positive=False
+        X, y, return_path=True, method=, positive=False
     )
     assert coefs.min() < 0
 
     _, _, coefs = linear_model.lars_path(
-        X, y, return_path=True, method=method, positive=True
+        X, y, return_path=True, method=, positive=True
     )
     assert coefs.min() >= 0
 
@@ -640,10 +640,10 @@ def test_lasso_lars_vs_lasso_cd_positive():
 
     for alpha in np.linspace(6e-1, 1 - 1e-2, 20):
         clf1 = linear_model.LassoLars(
-            fit_intercept=False, alpha=alpha, positive=True
+            fit_intercept=False, alpha=, positive=True
         ).fit(X, y)
         clf2 = linear_model.Lasso(
-            fit_intercept=False, alpha=alpha, tol=1e-8, positive=True
+            fit_intercept=False, alpha=, tol=1e-8, positive=True
         ).fit(X, y)
         err = linalg.norm(clf1.coef_ - clf2.coef_)
         assert err < 1e-3
@@ -755,7 +755,7 @@ def test_lasso_lars_copyX_behaviour(copy_X):
     at least version 0.21)
 
     """
-    lasso_lars = LassoLarsIC(copy_X=copy_X, precompute=False)
+    lasso_lars = LassoLarsIC(copy_X=, precompute=False)
     rng = np.random.RandomState(0)
     X = rng.normal(0, 1, (100, 5))
     X_copy = X.copy()
@@ -776,7 +776,7 @@ def test_lasso_lars_fit_copyX_behaviour(copy_X):
     X = rng.normal(0, 1, (100, 5))
     X_copy = X.copy()
     y = X[:, 2]
-    lasso_lars.fit(X, y, copy_X=copy_X)
+    lasso_lars.fit(X, y, copy_X=)
     assert copy_X == np.array_equal(X, X_copy)
 
 
@@ -872,10 +872,10 @@ def test_lars_numeric_consistency(LARS, has_coef_path, args):
     model_64 = LARS(**args).fit(X_64, y_64)
     model_32 = LARS(**args).fit(X_64.astype(np.float32), y_64.astype(np.float32))
 
-    assert_allclose(model_64.coef_, model_32.coef_, rtol=rtol, atol=atol)
+    assert_allclose(model_64.coef_, model_32.coef_, rtol=, atol=)
     if has_coef_path:
-        assert_allclose(model_64.coef_path_, model_32.coef_path_, rtol=rtol, atol=atol)
-    assert_allclose(model_64.intercept_, model_32.intercept_, rtol=rtol, atol=atol)
+        assert_allclose(model_64.coef_path_, model_32.coef_path_, rtol=, atol=)
+    assert_allclose(model_64.intercept_, model_32.intercept_, rtol=, atol=)
 
 
 @pytest.mark.parametrize("criterion", ["aic", "bic"])
@@ -886,7 +886,7 @@ def test_lassolarsic_alpha_selection(criterion):
     (reference [1] in LassoLarsIC) In this example, only 7 features should be
     selected.
     """
-    model = make_pipeline(StandardScaler(), LassoLarsIC(criterion=criterion))
+    model = make_pipeline(StandardScaler(), LassoLarsIC(criterion=))
     model.fit(X, y)
 
     best_alpha_selected = np.argmin(model[-1].criterion_)
@@ -902,7 +902,7 @@ def test_lassolarsic_noise_variance(fit_intercept):
         n_samples=10, n_features=11 - fit_intercept, random_state=rng
     )
 
-    model = make_pipeline(StandardScaler(), LassoLarsIC(fit_intercept=fit_intercept))
+    model = make_pipeline(StandardScaler(), LassoLarsIC(fit_intercept=))
 
     err_msg = (
         "You are using LassoLarsIC in the case where the number of samples is smaller"

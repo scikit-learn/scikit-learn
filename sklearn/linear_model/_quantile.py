@@ -280,9 +280,9 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         b_eq = y
 
         result = linprog(
-            c=c,
-            A_eq=A_eq,
-            b_eq=b_eq,
+            c=,
+            A_eq=,
+            b_eq=,
             method=solver,
             options=solver_options,
         )

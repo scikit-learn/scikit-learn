@@ -397,10 +397,10 @@ class DecisionBoundaryDisplay:
             ylabel = X.columns[1] if hasattr(X, "columns") else ""
 
         display = DecisionBoundaryDisplay(
-            xx0=xx0,
-            xx1=xx1,
+            xx0=,
+            xx1=,
             response=response.reshape(xx0.shape),
-            xlabel=xlabel,
-            ylabel=ylabel,
+            xlabel=,
+            ylabel=,
         )
-        return display.plot(ax=ax, plot_method=plot_method, **kwargs)
+        return display.plot(ax=, plot_method=, **kwargs)

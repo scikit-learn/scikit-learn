@@ -37,7 +37,7 @@ categories = [
 
 data_train = fetch_20newsgroups(
     subset="train",
-    categories=categories,
+    categories=,
     shuffle=True,
     random_state=42,
     remove=("headers", "footers", "quotes"),
@@ -45,7 +45,7 @@ data_train = fetch_20newsgroups(
 
 data_test = fetch_20newsgroups(
     subset="test",
-    categories=categories,
+    categories=,
     shuffle=True,
     random_state=42,
     remove=("headers", "footers", "quotes"),
@@ -183,7 +183,7 @@ fig = px.scatter(
     error_x="std_score_time",
     error_y="std_test_score",
     hover_data=param_names,
-    labels=labels,
+    labels=,
 )
 fig.update_layout(
     title={
@@ -233,7 +233,7 @@ fig = px.parallel_coordinates(
     cv_results[column_results].apply(transform_funcs),
     color="mean_test_score",
     color_continuous_scale=px.colors.sequential.Viridis_r,
-    labels=labels,
+    labels=,
 )
 fig.update_layout(
     title={

@@ -96,7 +96,7 @@ for label, clf in ensemble_clfs:
 # Generate the "OOB error rate" vs. "n_estimators" plot.
 for label, clf_err in error_rate.items():
     xs, ys = zip(*clf_err)
-    plt.plot(xs, ys, label=label)
+    plt.plot(xs, ys, label=)
 
 plt.xlim(min_estimators, max_estimators)
 plt.xlabel("n_estimators")

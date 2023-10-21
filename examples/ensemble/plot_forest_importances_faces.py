@@ -43,7 +43,7 @@ y = y[mask]
 # A random forest classifier will be fitted to compute the feature importances.
 from sklearn.ensemble import RandomForestClassifier
 
-forest = RandomForestClassifier(n_estimators=750, n_jobs=n_jobs, random_state=42)
+forest = RandomForestClassifier(n_estimators=750, n_jobs=, random_state=42)
 
 forest.fit(X, y)
 

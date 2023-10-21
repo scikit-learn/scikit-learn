@@ -59,12 +59,12 @@ def test_same_predictions_regression(
     #   iterations.
     pytest.importorskip("lightgbm")
 
-    rng = np.random.RandomState(seed=seed)
+    rng = np.random.RandomState(seed=)
     max_iter = 1
     max_bins = 255
 
     X, y = make_regression(
-        n_samples=n_samples, n_features=5, n_informative=5, random_state=0
+        n_samples=, n_features=5, n_informative=5, random_state=0
     )
 
     if loss in ("gamma", "poisson"):
@@ -79,13 +79,13 @@ def test_same_predictions_regression(
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
     est_sklearn = HistGradientBoostingRegressor(
-        loss=loss,
-        max_iter=max_iter,
-        max_bins=max_bins,
+        loss=,
+        max_iter=,
+        max_bins=,
         learning_rate=1,
         early_stopping=False,
-        min_samples_leaf=min_samples_leaf,
-        max_leaf_nodes=max_leaf_nodes,
+        min_samples_leaf=,
+        max_leaf_nodes=,
     )
     est_lightgbm = get_equivalent_estimator(est_sklearn, lib="lightgbm")
     est_lightgbm.set_params(min_sum_hessian_in_leaf=0)
@@ -133,14 +133,14 @@ def test_same_predictions_classification(
     # Same as test_same_predictions_regression but for classification
     pytest.importorskip("lightgbm")
 
-    rng = np.random.RandomState(seed=seed)
+    rng = np.random.RandomState(seed=)
     max_iter = 1
     n_classes = 2
     max_bins = 255
 
     X, y = make_classification(
-        n_samples=n_samples,
-        n_classes=n_classes,
+        n_samples=,
+        n_classes=,
         n_features=5,
         n_informative=5,
         n_redundant=0,
@@ -156,15 +156,15 @@ def test_same_predictions_classification(
 
     est_sklearn = HistGradientBoostingClassifier(
         loss="log_loss",
-        max_iter=max_iter,
-        max_bins=max_bins,
+        max_iter=,
+        max_bins=,
         learning_rate=1,
         early_stopping=False,
-        min_samples_leaf=min_samples_leaf,
-        max_leaf_nodes=max_leaf_nodes,
+        min_samples_leaf=,
+        max_leaf_nodes=,
     )
     est_lightgbm = get_equivalent_estimator(
-        est_sklearn, lib="lightgbm", n_classes=n_classes
+        est_sklearn, lib="lightgbm", n_classes=
     )
 
     est_lightgbm.fit(X_train, y_train)
@@ -206,15 +206,15 @@ def test_same_predictions_multiclass_classification(
     # Same as test_same_predictions_regression but for classification
     pytest.importorskip("lightgbm")
 
-    rng = np.random.RandomState(seed=seed)
+    rng = np.random.RandomState(seed=)
     n_classes = 3
     max_iter = 1
     max_bins = 255
     lr = 1
 
     X, y = make_classification(
-        n_samples=n_samples,
-        n_classes=n_classes,
+        n_samples=,
+        n_classes=,
         n_features=5,
         n_informative=5,
         n_redundant=0,
@@ -231,15 +231,15 @@ def test_same_predictions_multiclass_classification(
 
     est_sklearn = HistGradientBoostingClassifier(
         loss="log_loss",
-        max_iter=max_iter,
-        max_bins=max_bins,
+        max_iter=,
+        max_bins=,
         learning_rate=lr,
         early_stopping=False,
-        min_samples_leaf=min_samples_leaf,
-        max_leaf_nodes=max_leaf_nodes,
+        min_samples_leaf=,
+        max_leaf_nodes=,
     )
     est_lightgbm = get_equivalent_estimator(
-        est_sklearn, lib="lightgbm", n_classes=n_classes
+        est_sklearn, lib="lightgbm", n_classes=
     )
 
     est_lightgbm.fit(X_train, y_train)

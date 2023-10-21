@@ -53,14 +53,14 @@ def test_classification(base_estimator, selection_crit):
     threshold = 0.75
     max_iter = 10
     st = SelfTrainingClassifier(
-        base_estimator, max_iter=max_iter, threshold=threshold, criterion=selection_crit
+        base_estimator, max_iter=, threshold=, criterion=selection_crit
     )
     st.fit(X_train, y_train_missing_labels)
     pred = st.predict(X_test)
     proba = st.predict_proba(X_test)
 
     st_string = SelfTrainingClassifier(
-        base_estimator, max_iter=max_iter, criterion=selection_crit, threshold=threshold
+        base_estimator, max_iter=, criterion=selection_crit, threshold=
     )
     st_string.fit(X_train, y_train_missing_strings)
     pred_string = st_string.predict(X_test)
@@ -173,7 +173,7 @@ def test_prefitted_throws_error():
 def test_labeled_iter(max_iter):
     # Check that the amount of datapoints labeled in iteration 0 is equal to
     # the amount of labeled datapoints we passed.
-    st = SelfTrainingClassifier(KNeighborsClassifier(), max_iter=max_iter)
+    st = SelfTrainingClassifier(KNeighborsClassifier(), max_iter=)
 
     st.fit(X_train, y_train_missing_labels)
     amount_iter_0 = len(st.labeled_iter_[st.labeled_iter_ == 0])
@@ -223,7 +223,7 @@ def test_strings_dtype():
 
 @pytest.mark.parametrize("verbose", [True, False])
 def test_verbose(capsys, verbose):
-    clf = SelfTrainingClassifier(KNeighborsClassifier(), verbose=verbose)
+    clf = SelfTrainingClassifier(KNeighborsClassifier(), verbose=)
     clf.fit(X_train, y_train_missing_labels)
 
     captured = capsys.readouterr()
@@ -296,7 +296,7 @@ def test_base_estimator_meta_estimator():
     )
 
     assert hasattr(base_estimator, "predict_proba")
-    clf = SelfTrainingClassifier(base_estimator=base_estimator)
+    clf = SelfTrainingClassifier(base_estimator=)
     clf.fit(X_train, y_train_missing_labels)
     clf.predict_proba(X_test)
 
@@ -310,7 +310,7 @@ def test_base_estimator_meta_estimator():
     )
 
     assert not hasattr(base_estimator, "predict_proba")
-    clf = SelfTrainingClassifier(base_estimator=base_estimator)
+    clf = SelfTrainingClassifier(base_estimator=)
     with pytest.raises(AttributeError):
         clf.fit(X_train, y_train_missing_labels)
 

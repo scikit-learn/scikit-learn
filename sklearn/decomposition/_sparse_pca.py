@@ -291,15 +291,15 @@ class SparsePCA(_BaseSparsePCA):
         random_state=None,
     ):
         super().__init__(
-            n_components=n_components,
-            alpha=alpha,
-            ridge_alpha=ridge_alpha,
-            max_iter=max_iter,
-            tol=tol,
-            method=method,
-            n_jobs=n_jobs,
-            verbose=verbose,
-            random_state=random_state,
+            n_components=,
+            alpha=,
+            ridge_alpha=,
+            max_iter=,
+            tol=,
+            method=,
+            n_jobs=,
+            verbose=,
+            random_state=,
         )
         self.U_init = U_init
         self.V_init = V_init
@@ -318,9 +318,9 @@ class SparsePCA(_BaseSparsePCA):
             method=self.method,
             n_jobs=self.n_jobs,
             verbose=self.verbose,
-            random_state=random_state,
-            code_init=code_init,
-            dict_init=dict_init,
+            random_state=,
+            code_init=,
+            dict_init=,
             return_n_iter=True,
         )
         # flip eigenvectors' sign to enforce deterministic output
@@ -509,15 +509,15 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
         max_no_improvement=10,
     ):
         super().__init__(
-            n_components=n_components,
-            alpha=alpha,
-            ridge_alpha=ridge_alpha,
-            max_iter=max_iter,
-            tol=tol,
-            method=method,
-            n_jobs=n_jobs,
-            verbose=verbose,
-            random_state=random_state,
+            n_components=,
+            alpha=,
+            ridge_alpha=,
+            max_iter=,
+            tol=,
+            method=,
+            n_jobs=,
+            verbose=,
+            random_state=,
         )
         self.n_iter = n_iter
         self.callback = callback
@@ -530,7 +530,7 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
 
         transform_algorithm = "lasso_" + self.method
         est = MiniBatchDictionaryLearning(
-            n_components=n_components,
+            n_components=,
             alpha=self.alpha,
             n_iter=self.n_iter,
             max_iter=self.max_iter,
@@ -539,8 +539,8 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
             shuffle=self.shuffle,
             n_jobs=self.n_jobs,
             fit_algorithm=self.method,
-            random_state=random_state,
-            transform_algorithm=transform_algorithm,
+            random_state=,
+            transform_algorithm=,
             transform_alpha=self.alpha,
             verbose=self.verbose,
             callback=self.callback,

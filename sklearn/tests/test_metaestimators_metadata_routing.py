@@ -428,7 +428,7 @@ def test_default_request(metaestimator):
         exclude = {"splitter": ["split"]}
     else:
         exclude = None
-    assert_request_is_empty(instance.get_metadata_routing(), exclude=exclude)
+    assert_request_is_empty(instance.get_metadata_routing(), exclude=)
     assert isinstance(instance.get_metadata_routing(), MetadataRouter)
 
 

@@ -91,10 +91,10 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         base_estimator="deprecated",
     ):
         super().__init__(
-            estimator=estimator,
-            n_estimators=n_estimators,
-            estimator_params=estimator_params,
-            base_estimator=base_estimator,
+            estimator=,
+            n_estimators=,
+            estimator_params=,
+            base_estimator=,
         )
 
         self.learning_rate = learning_rate
@@ -136,7 +136,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
+        _raise_for_unsupported_routing(self, "fit", sample_weight=)
         X, y = self._validate_data(
             X,
             y,
@@ -277,9 +277,9 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         for y_pred in self.staged_predict(X):
             if is_classifier(self):
-                yield accuracy_score(y, y_pred, sample_weight=sample_weight)
+                yield accuracy_score(y, y_pred, sample_weight=)
             else:
-                yield r2_score(y, y_pred, sample_weight=sample_weight)
+                yield r2_score(y, y_pred, sample_weight=)
 
     @property
     def feature_importances_(self):
@@ -526,11 +526,11 @@ class AdaBoostClassifier(
         base_estimator="deprecated",
     ):
         super().__init__(
-            estimator=estimator,
-            n_estimators=n_estimators,
-            learning_rate=learning_rate,
-            random_state=random_state,
-            base_estimator=base_estimator,
+            estimator=,
+            n_estimators=,
+            learning_rate=,
+            random_state=,
+            base_estimator=,
         )
 
         self.algorithm = algorithm
@@ -619,9 +619,9 @@ class AdaBoostClassifier(
     # longer, because the SAMME.R algorithm will be deprecated in 1.6.
     def _boost_real(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost using the SAMME.R real algorithm."""
-        estimator = self._make_estimator(random_state=random_state)
+        estimator = self._make_estimator(random_state=)
 
-        estimator.fit(X, y, sample_weight=sample_weight)
+        estimator.fit(X, y, sample_weight=)
 
         y_predict_proba = estimator.predict_proba(X)
 
@@ -678,9 +678,9 @@ class AdaBoostClassifier(
 
     def _boost_discrete(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost using the SAMME discrete algorithm."""
-        estimator = self._make_estimator(random_state=random_state)
+        estimator = self._make_estimator(random_state=)
 
-        estimator.fit(X, y, sample_weight=sample_weight)
+        estimator.fit(X, y, sample_weight=)
 
         y_predict = estimator.predict(X)
 
@@ -1134,11 +1134,11 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
         base_estimator="deprecated",
     ):
         super().__init__(
-            estimator=estimator,
-            n_estimators=n_estimators,
-            learning_rate=learning_rate,
-            random_state=random_state,
-            base_estimator=base_estimator,
+            estimator=,
+            n_estimators=,
+            learning_rate=,
+            random_state=,
+            base_estimator=,
         )
 
         self.loss = loss
@@ -1190,7 +1190,7 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
             The regression error for the current boost.
             If None then boosting has terminated early.
         """
-        estimator = self._make_estimator(random_state=random_state)
+        estimator = self._make_estimator(random_state=)
 
         # Weighted sampling of the training set with replacement
         bootstrap_idx = random_state.choice(

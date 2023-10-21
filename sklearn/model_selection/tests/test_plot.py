@@ -50,7 +50,7 @@ def test_learning_curve_display_default_usage(pyplot, data):
 
     train_sizes = [0.3, 0.6, 0.9]
     display = LearningCurveDisplay.from_estimator(
-        estimator, X, y, train_sizes=train_sizes
+        estimator, X, y, train_sizes=
     )
 
     import matplotlib as mpl
@@ -74,7 +74,7 @@ def test_learning_curve_display_default_usage(pyplot, data):
     assert legend_labels == ["Train", "Test"]
 
     train_sizes_abs, train_scores, test_scores = learning_curve(
-        estimator, X, y, train_sizes=train_sizes
+        estimator, X, y, train_sizes=
     )
 
     assert_array_equal(display.train_sizes, train_sizes_abs)
@@ -89,7 +89,7 @@ def test_validation_curve_display_default_usage(pyplot, data):
 
     param_name, param_range = "max_depth", [1, 3, 5]
     display = ValidationCurveDisplay.from_estimator(
-        estimator, X, y, param_name=param_name, param_range=param_range
+        estimator, X, y, param_name=, param_range=
     )
 
     import matplotlib as mpl
@@ -113,7 +113,7 @@ def test_validation_curve_display_default_usage(pyplot, data):
     assert legend_labels == ["Train", "Test"]
 
     train_scores, test_scores = validation_curve(
-        estimator, X, y, param_name=param_name, param_range=param_range
+        estimator, X, y, param_name=, param_range=
     )
 
     assert_array_equal(display.param_range, param_range)
@@ -137,7 +137,7 @@ def test_curve_display_negate_score(pyplot, data, CurveDisplay, specific_params)
 
     negate_score = False
     display = CurveDisplay.from_estimator(
-        estimator, X, y, **specific_params, negate_score=negate_score
+        estimator, X, y, **specific_params, negate_score=
     )
 
     positive_scores = display.lines_[0].get_data()[1]
@@ -146,7 +146,7 @@ def test_curve_display_negate_score(pyplot, data, CurveDisplay, specific_params)
 
     negate_score = True
     display = CurveDisplay.from_estimator(
-        estimator, X, y, **specific_params, negate_score=negate_score
+        estimator, X, y, **specific_params, negate_score=
     )
 
     negative_scores = display.lines_[0].get_data()[1]
@@ -156,7 +156,7 @@ def test_curve_display_negate_score(pyplot, data, CurveDisplay, specific_params)
 
     negate_score = False
     display = CurveDisplay.from_estimator(
-        estimator, X, y, **specific_params, negate_score=negate_score
+        estimator, X, y, **specific_params, negate_score=
     )
     assert display.ax_.get_ylabel() == "Score"
     display.plot(negate_score=not negate_score)
@@ -182,7 +182,7 @@ def test_curve_display_score_name(
     estimator = DecisionTreeClassifier(random_state=0)
 
     display = CurveDisplay.from_estimator(
-        estimator, X, y, **specific_params, score_name=score_name
+        estimator, X, y, **specific_params, score_name=
     )
 
     assert display.ax_.get_ylabel() == ylabel
@@ -190,7 +190,7 @@ def test_curve_display_score_name(
     estimator = DecisionTreeClassifier(max_depth=1, random_state=0)
 
     display = CurveDisplay.from_estimator(
-        estimator, X, y, **specific_params, score_name=score_name
+        estimator, X, y, **specific_params, score_name=
     )
 
     assert display.score_name == ylabel
@@ -204,7 +204,7 @@ def test_learning_curve_display_score_type(pyplot, data, std_display_style):
 
     train_sizes = [0.3, 0.6, 0.9]
     train_sizes_abs, train_scores, test_scores = learning_curve(
-        estimator, X, y, train_sizes=train_sizes
+        estimator, X, y, train_sizes=
     )
 
     score_type = "train"
@@ -212,9 +212,9 @@ def test_learning_curve_display_score_type(pyplot, data, std_display_style):
         estimator,
         X,
         y,
-        train_sizes=train_sizes,
-        score_type=score_type,
-        std_display_style=std_display_style,
+        train_sizes=,
+        score_type=,
+        std_display_style=,
     )
 
     _, legend_label = display.ax_.get_legend_handles_labels()
@@ -237,9 +237,9 @@ def test_learning_curve_display_score_type(pyplot, data, std_display_style):
         estimator,
         X,
         y,
-        train_sizes=train_sizes,
-        score_type=score_type,
-        std_display_style=std_display_style,
+        train_sizes=,
+        score_type=,
+        std_display_style=,
     )
 
     _, legend_label = display.ax_.get_legend_handles_labels()
@@ -262,9 +262,9 @@ def test_learning_curve_display_score_type(pyplot, data, std_display_style):
         estimator,
         X,
         y,
-        train_sizes=train_sizes,
-        score_type=score_type,
-        std_display_style=std_display_style,
+        train_sizes=,
+        score_type=,
+        std_display_style=,
     )
 
     _, legend_label = display.ax_.get_legend_handles_labels()
@@ -295,7 +295,7 @@ def test_validation_curve_display_score_type(pyplot, data, std_display_style):
 
     param_name, param_range = "max_depth", [1, 3, 5]
     train_scores, test_scores = validation_curve(
-        estimator, X, y, param_name=param_name, param_range=param_range
+        estimator, X, y, param_name=, param_range=
     )
 
     score_type = "train"
@@ -303,10 +303,10 @@ def test_validation_curve_display_score_type(pyplot, data, std_display_style):
         estimator,
         X,
         y,
-        param_name=param_name,
-        param_range=param_range,
-        score_type=score_type,
-        std_display_style=std_display_style,
+        param_name=,
+        param_range=,
+        score_type=,
+        std_display_style=,
     )
 
     _, legend_label = display.ax_.get_legend_handles_labels()
@@ -329,10 +329,10 @@ def test_validation_curve_display_score_type(pyplot, data, std_display_style):
         estimator,
         X,
         y,
-        param_name=param_name,
-        param_range=param_range,
-        score_type=score_type,
-        std_display_style=std_display_style,
+        param_name=,
+        param_range=,
+        score_type=,
+        std_display_style=,
     )
 
     _, legend_label = display.ax_.get_legend_handles_labels()
@@ -355,10 +355,10 @@ def test_validation_curve_display_score_type(pyplot, data, std_display_style):
         estimator,
         X,
         y,
-        param_name=param_name,
-        param_range=param_range,
-        score_type=score_type,
-        std_display_style=std_display_style,
+        param_name=,
+        param_range=,
+        score_type=,
+        std_display_style=,
     )
 
     _, legend_label = display.ax_.get_legend_handles_labels()
@@ -432,7 +432,7 @@ def test_curve_display_std_display_style(pyplot, data, CurveDisplay, specific_pa
         X,
         y,
         **specific_params,
-        std_display_style=std_display_style,
+        std_display_style=,
     )
 
     assert len(display.lines_) == 2
@@ -449,7 +449,7 @@ def test_curve_display_std_display_style(pyplot, data, CurveDisplay, specific_pa
         X,
         y,
         **specific_params,
-        std_display_style=std_display_style,
+        std_display_style=,
     )
 
     assert len(display.lines_) == 2
@@ -468,7 +468,7 @@ def test_curve_display_std_display_style(pyplot, data, CurveDisplay, specific_pa
         X,
         y,
         **specific_params,
-        std_display_style=std_display_style,
+        std_display_style=,
     )
 
     assert display.lines_ is None
@@ -501,9 +501,9 @@ def test_curve_display_plot_kwargs(pyplot, data, CurveDisplay, specific_params):
         X,
         y,
         **specific_params,
-        std_display_style=std_display_style,
-        line_kw=line_kw,
-        fill_between_kw=fill_between_kw,
+        std_display_style=,
+        line_kw=,
+        fill_between_kw=,
     )
 
     assert display.lines_[0].get_color() == "red"
@@ -519,8 +519,8 @@ def test_curve_display_plot_kwargs(pyplot, data, CurveDisplay, specific_params):
         X,
         y,
         **specific_params,
-        std_display_style=std_display_style,
-        errorbar_kw=errorbar_kw,
+        std_display_style=,
+        errorbar_kw=,
     )
 
     assert display.errorbar_[0].lines[0].get_color() == "red"
@@ -565,8 +565,8 @@ def test_validation_curve_xscale_from_param_range_provided_as_a_list(
         estimator,
         X,
         y,
-        param_name=param_name,
-        param_range=param_range,
+        param_name=,
+        param_range=,
     )
 
     assert display.ax_.get_xscale() == xscale

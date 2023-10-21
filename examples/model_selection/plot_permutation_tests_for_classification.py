@@ -65,11 +65,11 @@ clf = SVC(kernel="linear", random_state=7)
 cv = StratifiedKFold(2, shuffle=True, random_state=0)
 
 score_iris, perm_scores_iris, pvalue_iris = permutation_test_score(
-    clf, X, y, scoring="accuracy", cv=cv, n_permutations=1000
+    clf, X, y, scoring="accuracy", cv=, n_permutations=1000
 )
 
 score_rand, perm_scores_rand, pvalue_rand = permutation_test_score(
-    clf, X_rand, y, scoring="accuracy", cv=cv, n_permutations=1000
+    clf, X_rand, y, scoring="accuracy", cv=, n_permutations=1000
 )
 
 # %%

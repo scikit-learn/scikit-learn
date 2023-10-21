@@ -208,11 +208,11 @@ def test_ignore_warning():
     warning_class = UserWarning
     match = "'obj' should be a callable.+you should use 'category=UserWarning'"
 
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(ValueError, match=):
         silence_warnings_func = ignore_warnings(warning_class)(_warning_function)
         silence_warnings_func()
 
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(ValueError, match=):
 
         @ignore_warnings(warning_class)
         def test():
@@ -600,8 +600,8 @@ def test_tempmemmap(monkeypatch):
     assert registration_counter.nb_calls == 1
 
     mmap_mode = "r+"
-    with TempMemmap(input_array, mmap_mode=mmap_mode) as data:
-        check_memmap(input_array, data, mmap_mode=mmap_mode)
+    with TempMemmap(input_array, mmap_mode=) as data:
+        check_memmap(input_array, data, mmap_mode=)
         temp_folder = os.path.dirname(data.filename)
     if os.name != "nt":
         assert not os.path.exists(temp_folder)
@@ -615,24 +615,24 @@ def test_create_memmap_backed_data(monkeypatch, aligned):
     monkeypatch.setattr(atexit, "register", registration_counter)
 
     input_array = np.ones(3)
-    data = create_memmap_backed_data(input_array, aligned=aligned)
+    data = create_memmap_backed_data(input_array, aligned=)
     check_memmap(input_array, data)
     assert registration_counter.nb_calls == 1
 
     data, folder = create_memmap_backed_data(
-        input_array, return_folder=True, aligned=aligned
+        input_array, return_folder=True, aligned=
     )
     check_memmap(input_array, data)
     assert folder == os.path.dirname(data.filename)
     assert registration_counter.nb_calls == 2
 
     mmap_mode = "r+"
-    data = create_memmap_backed_data(input_array, mmap_mode=mmap_mode, aligned=aligned)
+    data = create_memmap_backed_data(input_array, mmap_mode=, aligned=)
     check_memmap(input_array, data, mmap_mode)
     assert registration_counter.nb_calls == 3
 
     input_list = [input_array, input_array + 1, input_array + 2]
-    mmap_data_list = create_memmap_backed_data(input_list, aligned=aligned)
+    mmap_data_list = create_memmap_backed_data(input_list, aligned=)
     for input_array, data in zip(input_list, mmap_data_list):
         check_memmap(input_array, data)
     assert registration_counter.nb_calls == 4
@@ -690,7 +690,7 @@ def test_convert_container(
     container_converted = _convert_container(
         container,
         constructor_name,
-        dtype=dtype,
+        dtype=,
     )
     assert isinstance(container_converted, container_type)
 
@@ -719,7 +719,7 @@ def test_convert_container_raise_when_sparray_not_available(constructor_name, dt
         ValueError,
         match=f"only available with scipy>=1.8.0, got {sp_version}",
     ):
-        _convert_container(container, constructor_name, dtype=dtype)
+        _convert_container(container, constructor_name, dtype=)
 
 
 def test_raises():

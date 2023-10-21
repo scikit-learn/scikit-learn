@@ -259,7 +259,7 @@ class BadBalancedWeightsClassifier(BaseBadClassifier):
 
         label_encoder = LabelEncoder().fit(y)
         classes = label_encoder.classes_
-        class_weight = compute_class_weight(self.class_weight, classes=classes, y=y)
+        class_weight = compute_class_weight(self.class_weight, classes=, y=)
 
         # Intentionally modify the balanced class_weight
         # to simulate a bug and raise an exception
@@ -424,7 +424,7 @@ class UntaggedBinaryClassifier(SGDClassifier):
         return self
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
-        super().partial_fit(X=X, y=y, classes=classes, sample_weight=sample_weight)
+        super().partial_fit(X=, y=, classes=, sample_weight=)
         if len(self.classes_) > 2:
             raise ValueError("Only 2 classes are supported")
         return self
@@ -480,7 +480,7 @@ class PartialFitChecksName(BaseEstimator):
 
     def partial_fit(self, X, y):
         reset = not hasattr(self, "_fitted")
-        self._validate_data(X, y, reset=reset)
+        self._validate_data(X, y, reset=)
         self._fitted = True
         return self
 
@@ -619,14 +619,14 @@ def test_check_estimator():
     msg = (
         "{method} of {name} is not invariant when applied to a dataset"
         "with different sample order."
-    ).format(method=method, name=name)
+    ).format(method=, name=)
     with raises(AssertionError, match=msg):
         check_estimator(NotInvariantSampleOrder())
     # check for invariant method
     name = NotInvariantPredict.__name__
     method = "predict"
     msg = ("{method} of {name} is not invariant when applied to a subset.").format(
-        method=method, name=name
+        method=, name=
     )
     with raises(AssertionError, match=msg):
         check_estimator(NotInvariantPredict())
@@ -859,7 +859,7 @@ class _BaseMultiLabelClassifierMock(ClassifierMixin, BaseEstimator):
 def test_check_classifiers_multilabel_output_format_predict():
     n_samples, test_size, n_outputs = 100, 25, 5
     _, y = make_multilabel_classification(
-        n_samples=n_samples,
+        n_samples=,
         n_features=2,
         n_classes=n_outputs,
         n_labels=3,
@@ -902,7 +902,7 @@ def test_check_classifiers_multilabel_output_format_predict():
 def test_check_classifiers_multilabel_output_format_predict_proba():
     n_samples, test_size, n_outputs = 100, 25, 5
     _, y = make_multilabel_classification(
-        n_samples=n_samples,
+        n_samples=,
         n_features=2,
         n_classes=n_outputs,
         n_labels=3,
@@ -943,7 +943,7 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
         )
     # 2.2. array of inconsistent shape
     response_output = [np.ones_like(y_test) for _ in range(n_outputs)]
-    clf = MultiLabelClassifierPredictProba(response_output=response_output)
+    clf = MultiLabelClassifierPredictProba(response_output=)
     err_msg = (
         r"When MultiLabelClassifierPredictProba.predict_proba returns a list, "
         r"this list should contain NumPy arrays of shape \(n_samples, 2\). Got "
@@ -958,7 +958,7 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
     response_output = [
         np.ones(shape=(y_test.shape[0], 2), dtype=np.int64) for _ in range(n_outputs)
     ]
-    clf = MultiLabelClassifierPredictProba(response_output=response_output)
+    clf = MultiLabelClassifierPredictProba(response_output=)
     err_msg = (
         "When MultiLabelClassifierPredictProba.predict_proba returns a list, "
         "it should contain NumPy arrays with floating dtype."
@@ -972,7 +972,7 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
     response_output = [
         np.ones(shape=(y_test.shape[0], 2), dtype=np.float64) for _ in range(n_outputs)
     ]
-    clf = MultiLabelClassifierPredictProba(response_output=response_output)
+    clf = MultiLabelClassifierPredictProba(response_output=)
     err_msg = (
         r"When MultiLabelClassifierPredictProba.predict_proba returns a list, "
         r"each NumPy array should contain probabilities for each class and "
@@ -998,7 +998,7 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
         )
     # 3.2. array of inconsistent dtype
     response_output = np.zeros_like(y_test, dtype=np.int64)
-    clf = MultiLabelClassifierPredictProba(response_output=response_output)
+    clf = MultiLabelClassifierPredictProba(response_output=)
     err_msg = (
         r"When MultiLabelClassifierPredictProba.predict_proba returns a NumPy "
         r"array, the expected data type is floating."
@@ -1025,7 +1025,7 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
 def test_check_classifiers_multilabel_output_format_decision_function():
     n_samples, test_size, n_outputs = 100, 25, 5
     _, y = make_multilabel_classification(
-        n_samples=n_samples,
+        n_samples=,
         n_features=2,
         n_classes=n_outputs,
         n_labels=3,

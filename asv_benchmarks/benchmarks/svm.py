@@ -21,7 +21,7 @@ class SVCBenchmark(Predictor, Estimator, Benchmark):
         (kernel,) = params
 
         estimator = SVC(
-            max_iter=100, tol=1e-16, kernel=kernel, random_state=0, gamma="scale"
+            max_iter=100, tol=1e-16, kernel=, random_state=0, gamma="scale"
         )
 
         return estimator

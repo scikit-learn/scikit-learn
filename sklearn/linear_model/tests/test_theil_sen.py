@@ -228,7 +228,7 @@ def test_calc_breakdown_point():
 def test_checksubparams_invalid_input(param, ExceptionCls, match):
     X, y, w, c = gen_toy_problem_1d()
     theil_sen = TheilSenRegressor(**param, random_state=0)
-    with pytest.raises(ExceptionCls, match=match):
+    with pytest.raises(ExceptionCls, match=):
         theil_sen.fit(X, y)
 
 

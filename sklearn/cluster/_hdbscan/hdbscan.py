@@ -235,7 +235,7 @@ def _hdbscan_brute(
         distance_matrix = X.copy() if copy else X
     else:
         distance_matrix = pairwise_distances(
-            X, metric=metric, n_jobs=n_jobs, **metric_params
+            X, metric=, n_jobs=, **metric_params
         )
     distance_matrix /= alpha
 
@@ -248,9 +248,9 @@ def _hdbscan_brute(
     # Note that `distance_matrix` is manipulated in-place, however we do not
     # need it for anything else past this point, hence the operation is safe.
     mutual_reachability_ = mutual_reachability_graph(
-        distance_matrix, min_samples=min_samples, max_distance=max_distance
+        distance_matrix, min_samples=, max_distance=
     )
-    min_spanning_tree = _brute_mst(mutual_reachability_, min_samples=min_samples)
+    min_spanning_tree = _brute_mst(mutual_reachability_, min_samples=)
     # Warn if the MST couldn't be constructed around the missing distances
     if np.isinf(min_spanning_tree["distance"]).any():
         warn(
@@ -331,10 +331,10 @@ def _hdbscan_prims(
     nbrs = NearestNeighbors(
         n_neighbors=min_samples,
         algorithm=algo,
-        leaf_size=leaf_size,
-        metric=metric,
-        metric_params=metric_params,
-        n_jobs=n_jobs,
+        leaf_size=,
+        metric=,
+        metric_params=,
+        n_jobs=,
         p=None,
     ).fit(X)
 
@@ -791,7 +791,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
         mst_func = None
         kwargs = dict(
-            X=X,
+            X=,
             min_samples=self._min_samples,
             alpha=self.alpha,
             metric=self.metric,

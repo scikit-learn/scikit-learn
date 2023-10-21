@@ -1177,7 +1177,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             **fit_params,
         )
 
-        y = self._validate_data(X="no_validation", y=y)
+        y = self._validate_data(X="no_validation", y=)
 
         random_state = check_random_state(self.random_state)
         check_classification_targets(y)

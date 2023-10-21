@@ -197,21 +197,21 @@ def lars_path(
             "Use lars_path_gram to avoid passing X and y."
         )
     return _lars_path_solver(
-        X=X,
-        y=y,
-        Xy=Xy,
-        Gram=Gram,
+        X=,
+        y=,
+        Xy=,
+        Gram=,
         n_samples=None,
-        max_iter=max_iter,
-        alpha_min=alpha_min,
-        method=method,
-        copy_X=copy_X,
-        eps=eps,
-        copy_Gram=copy_Gram,
-        verbose=verbose,
-        return_path=return_path,
-        return_n_iter=return_n_iter,
-        positive=positive,
+        max_iter=,
+        alpha_min=,
+        method=,
+        copy_X=,
+        eps=,
+        copy_Gram=,
+        verbose=,
+        return_path=,
+        return_n_iter=,
+        positive=,
     )
 
 
@@ -356,19 +356,19 @@ def lars_path_gram(
     return _lars_path_solver(
         X=None,
         y=None,
-        Xy=Xy,
-        Gram=Gram,
-        n_samples=n_samples,
-        max_iter=max_iter,
-        alpha_min=alpha_min,
-        method=method,
-        copy_X=copy_X,
-        eps=eps,
-        copy_Gram=copy_Gram,
-        verbose=verbose,
-        return_path=return_path,
-        return_n_iter=return_n_iter,
-        positive=positive,
+        Xy=,
+        Gram=,
+        n_samples=,
+        max_iter=,
+        alpha_min=,
+        method=,
+        copy_X=,
+        eps=,
+        copy_Gram=,
+        verbose=,
+        return_path=,
+        return_n_iter=,
+        positive=,
     )
 
 
@@ -1085,14 +1085,14 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
                 alphas, active, coef_path, n_iter_ = lars_path(
                     X,
                     y[:, k],
-                    Gram=Gram,
+                    Gram=,
                     Xy=this_Xy,
                     copy_X=self.copy_X,
                     copy_Gram=True,
                     alpha_min=alpha,
                     method=self.method,
                     verbose=max(0, self.verbose - 1),
-                    max_iter=max_iter,
+                    max_iter=,
                     eps=self.eps,
                     return_path=True,
                     return_n_iter=True,
@@ -1116,14 +1116,14 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
                 alphas, _, self.coef_[k], n_iter_ = lars_path(
                     X,
                     y[:, k],
-                    Gram=Gram,
+                    Gram=,
                     Xy=this_Xy,
                     copy_X=self.copy_X,
                     copy_Gram=True,
                     alpha_min=alpha,
                     method=self.method,
                     verbose=max(0, self.verbose - 1),
-                    max_iter=max_iter,
+                    max_iter=,
                     eps=self.eps,
                     return_path=False,
                     return_n_iter=True,
@@ -1182,11 +1182,11 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self._fit(
             X,
             y,
-            max_iter=max_iter,
-            alpha=alpha,
+            max_iter=,
+            alpha=,
             fit_path=self.fit_path,
             normalize=_normalize,
-            Xy=Xy,
+            Xy=,
         )
 
         return self
@@ -1520,14 +1520,14 @@ def _lars_path_residues(
     alphas, active, coefs = lars_path(
         X_train,
         y_train,
-        Gram=Gram,
+        Gram=,
         copy_X=False,
         copy_Gram=False,
-        method=method,
+        method=,
         verbose=max(0, verbose - 1),
-        max_iter=max_iter,
-        eps=eps,
-        positive=positive,
+        max_iter=,
+        eps=,
+        positive=,
     )
     if normalize:
         coefs[nonzeros] /= norms[nonzeros][:, np.newaxis]
@@ -1718,13 +1718,13 @@ class LarsCV(Lars):
         self.max_n_alphas = max_n_alphas
         self.n_jobs = n_jobs
         super().__init__(
-            fit_intercept=fit_intercept,
-            verbose=verbose,
-            normalize=normalize,
-            precompute=precompute,
+            fit_intercept=,
+            verbose=,
+            normalize=,
+            precompute=,
             n_nonzero_coefs=500,
-            eps=eps,
-            copy_X=copy_X,
+            eps=,
+            copy_X=,
             fit_path=True,
         )
 
@@ -1792,7 +1792,7 @@ class LarsCV(Lars):
                 y[train],
                 X[test],
                 y[test],
-                Gram=Gram,
+                Gram=,
                 copy=False,
                 method=self.method,
                 verbose=max(0, self.verbose - 1),
@@ -2331,8 +2331,8 @@ class LassoLarsIC(LassoLars):
         alphas_, _, coef_path_, self.n_iter_ = lars_path(
             X,
             y,
-            Gram=Gram,
-            copy_X=copy_X,
+            Gram=,
+            copy_X=,
             copy_Gram=True,
             alpha_min=0.0,
             method="lasso",
@@ -2417,7 +2417,7 @@ class LassoLarsIC(LassoLars):
                 "constructor."
             )
         # X and y are already centered and we don't need to fit with an intercept
-        ols_model = LinearRegression(positive=positive, fit_intercept=False)
+        ols_model = LinearRegression(positive=, fit_intercept=False)
         y_pred = ols_model.fit(X, y).predict(X)
         return np.sum((y - y_pred) ** 2) / (
             X.shape[0] - X.shape[1] - self.fit_intercept

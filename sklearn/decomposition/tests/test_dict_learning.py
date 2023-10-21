@@ -44,7 +44,7 @@ def test_sparse_encode_shapes_omp():
         X_ = rng.randn(n_samples, n_features)
         dictionary = rng.randn(n_components, n_features)
         for algorithm, n_jobs in itertools.product(algorithms, [1, 2]):
-            code = sparse_encode(X_, dictionary, algorithm=algorithm, n_jobs=n_jobs)
+            code = sparse_encode(X_, dictionary, algorithm=, n_jobs=)
             assert code.shape == (n_samples, n_components)
 
 
@@ -93,9 +93,7 @@ def test_max_iter():
     # Compute a wavelet dictionary
     D_multi = np.r_[
         tuple(
-            ricker_matrix(
-                width=w, resolution=resolution, n_components=n_components // 5
-            )
+            ricker_matrix(width=w, resolution=, n_components=n_components // 5)
             for w in (10, 50, 100, 500, 1000)
         )
     ]
@@ -109,7 +107,7 @@ def test_max_iter():
     # check that the underlying model fails to converge
     with pytest.warns(ConvergenceWarning):
         model = SparseCoder(
-            D_multi, transform_algorithm=transform_algorithm, transform_max_iter=1
+            D_multi, transform_algorithm=, transform_max_iter=1
         )
         model.fit_transform(X)
 
@@ -117,7 +115,7 @@ def test_max_iter():
     with warnings.catch_warnings():
         warnings.simplefilter("error", ConvergenceWarning)
         model = SparseCoder(
-            D_multi, transform_algorithm=transform_algorithm, transform_max_iter=2000
+            D_multi, transform_algorithm=, transform_max_iter=2000
         )
         model.fit_transform(X)
 
@@ -127,7 +125,7 @@ def test_dict_learning_lars_positive_parameter():
     alpha = 1
     err_msg = "Positive constraint not supported for 'lars' coding method."
     with pytest.raises(ValueError, match=err_msg):
-        dict_learning(X, n_components, alpha=alpha, positive_code=True)
+        dict_learning(X, n_components, alpha=, positive_code=True)
 
 
 @pytest.mark.parametrize(
@@ -144,10 +142,10 @@ def test_dict_learning_positivity(transform_algorithm, positive_code, positive_d
     n_components = 5
     dico = DictionaryLearning(
         n_components,
-        transform_algorithm=transform_algorithm,
+        transform_algorithm=,
         random_state=0,
-        positive_code=positive_code,
-        positive_dict=positive_dict,
+        positive_code=,
+        positive_dict=,
         fit_algorithm="cd",
     ).fit(X)
 
@@ -169,7 +167,7 @@ def test_dict_learning_lars_dict_positivity(positive_dict):
         n_components,
         transform_algorithm="lars",
         random_state=0,
-        positive_dict=positive_dict,
+        positive_dict=,
         fit_algorithm="cd",
     ).fit(X)
 
@@ -282,7 +280,7 @@ def test_dict_learning_online_shapes():
 
     code, dictionary = dict_learning_online(
         X,
-        n_components=n_components,
+        n_components=,
         batch_size=4,
         max_iter=10,
         method="cd",
@@ -295,7 +293,7 @@ def test_dict_learning_online_shapes():
 
     dictionary = dict_learning_online(
         X,
-        n_components=n_components,
+        n_components=,
         batch_size=4,
         max_iter=10,
         method="cd",
@@ -329,10 +327,10 @@ def test_minibatch_dictionary_learning_positivity(
         n_components,
         batch_size=4,
         max_iter=10,
-        transform_algorithm=transform_algorithm,
+        transform_algorithm=,
         random_state=0,
-        positive_code=positive_code,
-        positive_dict=positive_dict,
+        positive_code=,
+        positive_dict=,
         fit_algorithm="cd",
     ).fit(X)
 
@@ -357,7 +355,7 @@ def test_minibatch_dictionary_learning_lars(positive_dict):
         max_iter=10,
         transform_algorithm="lars",
         random_state=0,
-        positive_dict=positive_dict,
+        positive_dict=,
         fit_algorithm="cd",
     ).fit(X)
 
@@ -375,13 +373,13 @@ def test_dict_learning_online_positivity(positive_code, positive_dict):
 
     code, dictionary = dict_learning_online(
         X,
-        n_components=n_components,
+        n_components=,
         batch_size=4,
         method="cd",
         alpha=1,
         random_state=rng,
-        positive_dict=positive_dict,
-        positive_code=positive_code,
+        positive_dict=,
+        positive_code=,
     )
     if positive_dict:
         assert (dictionary >= 0).all()
@@ -426,7 +424,7 @@ def test_dict_learning_online_verbosity():
         # function API verbosity
         dict_learning_online(
             X,
-            n_components=n_components,
+            n_components=,
             batch_size=4,
             alpha=1,
             verbose=1,
@@ -434,7 +432,7 @@ def test_dict_learning_online_verbosity():
         )
         dict_learning_online(
             X,
-            n_components=n_components,
+            n_components=,
             batch_size=4,
             alpha=1,
             verbose=2,
@@ -535,7 +533,7 @@ def test_sparse_encode_positivity(algo, positive):
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V**2, axis=1)[:, np.newaxis]
-    code = sparse_encode(X, V, algorithm=algo, positive=positive)
+    code = sparse_encode(X, V, algorithm=algo, positive=)
     if positive:
         assert (code >= 0).all()
     else:
@@ -736,7 +734,7 @@ def test_sparse_encode_dtype_match(data_type, algorithm):
     rng = np.random.RandomState(0)
     dictionary = rng.randn(n_components, n_features)
     code = sparse_encode(
-        X.astype(data_type), dictionary.astype(data_type), algorithm=algorithm
+        X.astype(data_type), dictionary.astype(data_type), algorithm=
     )
     assert code.dtype == data_type
 
@@ -751,12 +749,12 @@ def test_sparse_encode_numerical_consistency(algorithm):
     rng = np.random.RandomState(0)
     dictionary = rng.randn(n_components, n_features)
     code_32 = sparse_encode(
-        X.astype(np.float32), dictionary.astype(np.float32), algorithm=algorithm
+        X.astype(np.float32), dictionary.astype(np.float32), algorithm=
     )
     code_64 = sparse_encode(
-        X.astype(np.float64), dictionary.astype(np.float64), algorithm=algorithm
+        X.astype(np.float64), dictionary.astype(np.float64), algorithm=
     )
-    assert_allclose(code_32, code_64, rtol=rtol)
+    assert_allclose(code_32, code_64, rtol=)
 
 
 @pytest.mark.parametrize(
@@ -770,9 +768,7 @@ def test_sparse_coder_dtype_match(data_type, transform_algorithm):
     n_components = 6
     rng = np.random.RandomState(0)
     dictionary = rng.randn(n_components, n_features)
-    coder = SparseCoder(
-        dictionary.astype(data_type), transform_algorithm=transform_algorithm
-    )
+    coder = SparseCoder(dictionary.astype(data_type), transform_algorithm=)
     code = coder.transform(X.astype(data_type))
     assert code.dtype == data_type
 
@@ -799,8 +795,8 @@ def test_dictionary_learning_dtype_match(
     # Verify preserving dtype for fit and transform in dictionary learning class
     dict_learner = DictionaryLearning(
         n_components=8,
-        fit_algorithm=fit_algorithm,
-        transform_algorithm=transform_algorithm,
+        fit_algorithm=,
+        transform_algorithm=,
         random_state=0,
     )
     dict_learner.fit(X.astype(data_type))
@@ -831,8 +827,8 @@ def test_minibatch_dictionary_learning_dtype_match(
     dict_learner = MiniBatchDictionaryLearning(
         n_components=8,
         batch_size=10,
-        fit_algorithm=fit_algorithm,
-        transform_algorithm=transform_algorithm,
+        fit_algorithm=,
+        transform_algorithm=,
         max_iter=100,
         tol=1e-1,
         random_state=0,
@@ -861,10 +857,10 @@ def test_dict_learning_dtype_match(data_type, expected_type, method):
     n_components = 8
     code, dictionary, _ = dict_learning(
         X.astype(data_type),
-        n_components=n_components,
+        n_components=,
         alpha=1,
         random_state=rng,
-        method=method,
+        method=,
     )
     assert code.dtype == expected_type
     assert dictionary.dtype == expected_type
@@ -879,17 +875,17 @@ def test_dict_learning_numerical_consistency(method):
 
     U_64, V_64, _ = dict_learning(
         X.astype(np.float64),
-        n_components=n_components,
-        alpha=alpha,
+        n_components=,
+        alpha=,
         random_state=0,
-        method=method,
+        method=,
     )
     U_32, V_32, _ = dict_learning(
         X.astype(np.float32),
-        n_components=n_components,
-        alpha=alpha,
+        n_components=,
+        alpha=,
         random_state=0,
-        method=method,
+        method=,
     )
 
     # Optimal solution (U*, V*) is not unique.
@@ -898,9 +894,9 @@ def test_dict_learning_numerical_consistency(method):
     # as long as holding UV.
     # So here UV, ||U||_1,1 and sum(||V_k||_2^2) are verified
     # instead of comparing directly U and V.
-    assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol)
-    assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol)
-    assert_allclose(np.sum(V_64**2), np.sum(V_32**2), rtol=rtol)
+    assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=)
+    assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=)
+    assert_allclose(np.sum(V_64**2), np.sum(V_32**2), rtol=)
     # verify an obtained solution is not degenerate
     assert np.mean(U_64 != 0.0) > 0.05
     assert np.count_nonzero(U_64 != 0.0) == np.count_nonzero(U_32 != 0.0)
@@ -922,11 +918,11 @@ def test_dict_learning_online_dtype_match(data_type, expected_type, method):
     n_components = 8
     code, dictionary = dict_learning_online(
         X.astype(data_type),
-        n_components=n_components,
+        n_components=,
         alpha=1,
         batch_size=10,
         random_state=rng,
-        method=method,
+        method=,
     )
     assert code.dtype == expected_type
     assert dictionary.dtype == expected_type
@@ -941,19 +937,19 @@ def test_dict_learning_online_numerical_consistency(method):
 
     U_64, V_64 = dict_learning_online(
         X.astype(np.float64),
-        n_components=n_components,
-        alpha=alpha,
+        n_components=,
+        alpha=,
         batch_size=10,
         random_state=0,
-        method=method,
+        method=,
     )
     U_32, V_32 = dict_learning_online(
         X.astype(np.float32),
-        n_components=n_components,
-        alpha=alpha,
+        n_components=,
+        alpha=,
         batch_size=10,
         random_state=0,
-        method=method,
+        method=,
     )
 
     # Optimal solution (U*, V*) is not unique.
@@ -962,9 +958,9 @@ def test_dict_learning_online_numerical_consistency(method):
     # as long as holding UV.
     # So here UV, ||U||_1,1 and sum(||V_k||_2) are verified
     # instead of comparing directly U and V.
-    assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol)
-    assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol)
-    assert_allclose(np.sum(V_64**2), np.sum(V_32**2), rtol=rtol)
+    assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=)
+    assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=)
+    assert_allclose(np.sum(V_64**2), np.sum(V_32**2), rtol=)
     # verify an obtained solution is not degenerate
     assert np.mean(U_64 != 0.0) > 0.05
     assert np.count_nonzero(U_64 != 0.0) == np.count_nonzero(U_32 != 0.0)

@@ -32,7 +32,7 @@ def test_regression_dataset(n_bins):
     )
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-    mapper = _BinMapper(n_bins=n_bins, random_state=42)
+    mapper = _BinMapper(n_bins=, random_state=42)
     X_train_binned = mapper.fit_transform(X_train)
 
     # Init gradients and hessians to that of least squares loss
@@ -45,9 +45,9 @@ def test_regression_dataset(n_bins):
         X_train_binned,
         gradients,
         hessians,
-        min_samples_leaf=min_samples_leaf,
-        max_leaf_nodes=max_leaf_nodes,
-        n_bins=n_bins,
+        min_samples_leaf=,
+        max_leaf_nodes=,
+        n_bins=,
         n_bins_non_missing=mapper.n_bins_non_missing_,
     )
     grower.grow()
@@ -155,7 +155,7 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
 
     # Check binned data gives correct predictions
     prediction_binned = predictor.predict_binned(
-        X_binned, missing_values_bin_idx=6, n_threads=n_threads
+        X_binned, missing_values_bin_idx=6, n_threads=
     )
     assert_allclose(prediction_binned, expected_predictions)
 
@@ -173,7 +173,7 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     # Check missing goes left because missing_values_bin_idx=6
     X_binned_missing = np.array([[6]], dtype=X_BINNED_DTYPE).T
     predictions = predictor.predict_binned(
-        X_binned_missing, missing_values_bin_idx=6, n_threads=n_threads
+        X_binned_missing, missing_values_bin_idx=6, n_threads=
     )
     assert_allclose(predictions, [1])
 

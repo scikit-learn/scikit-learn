@@ -57,6 +57,6 @@ param_grid = dict(
     svm__C=[0.1, 1, 10],
 )
 
-grid_search = GridSearchCV(pipeline, param_grid=param_grid, verbose=10)
+grid_search = GridSearchCV(pipeline, param_grid=, verbose=10)
 grid_search.fit(X, y)
 print(grid_search.best_estimator_)

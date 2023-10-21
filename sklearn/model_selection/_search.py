@@ -809,7 +809,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             refit_metric = self.refit
             if convert_multimetric and isinstance(scorers, dict):
                 scorers = _MultimetricScorer(
-                    scorers=scorers, raise_exc=(self.error_score == "raise")
+                    scorers=, raise_exc=(self.error_score == "raise")
                 )
 
         return scorers, refit_metric
@@ -872,7 +872,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         scorers, refit_metric = self._get_scorers(convert_multimetric=False)
 
         X, y = indexable(X, y)
-        params = _check_method_params(X, params=params)
+        params = _check_method_params(X, params=)
 
         routed_params = self._get_routed_params_for_fit(params)
 
@@ -918,9 +918,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         clone(base_estimator),
                         X,
                         y,
-                        train=train,
-                        test=test,
-                        parameters=parameters,
+                        train=,
+                        test=,
+                        parameters=,
                         split_progress=(split_idx, n_splits),
                         candidate_progress=(cand_idx, n_candidates),
                         **fit_and_score_kwargs,
@@ -1042,7 +1042,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     # Uses closure to alter the results
                     results["split%d_%s" % (split_idx, key_name)] = array[:, split_idx]
 
-            array_means = np.average(array, axis=1, weights=weights)
+            array_means = np.average(array, axis=1, weights=)
             results["mean_%s" % key_name] = array_means
 
             if key_name.startswith(("train_", "test_")) and np.any(
@@ -1059,7 +1059,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             # Weighted std is not directly available in numpy
             array_stds = np.sqrt(
                 np.average(
-                    (array - array_means[:, np.newaxis]) ** 2, axis=1, weights=weights
+                    (array - array_means[:, np.newaxis]) ** 2, axis=1, weights=
                 )
             )
             results["std_%s" % key_name] = array_stds
@@ -1149,7 +1149,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         scorer, _ = self._get_scorers(convert_multimetric=True)
         router.add(
-            scorer=scorer,
+            scorer=,
             method_mapping=MethodMapping()
             .add(caller="score", callee="score")
             .add(caller="fit", callee="score"),
@@ -1510,15 +1510,15 @@ class GridSearchCV(BaseSearchCV):
         return_train_score=False,
     ):
         super().__init__(
-            estimator=estimator,
-            scoring=scoring,
-            n_jobs=n_jobs,
-            refit=refit,
-            cv=cv,
-            verbose=verbose,
-            pre_dispatch=pre_dispatch,
-            error_score=error_score,
-            return_train_score=return_train_score,
+            estimator=,
+            scoring=,
+            n_jobs=,
+            refit=,
+            cv=,
+            verbose=,
+            pre_dispatch=,
+            error_score=,
+            return_train_score=,
         )
         self.param_grid = param_grid
 
@@ -1898,15 +1898,15 @@ class RandomizedSearchCV(BaseSearchCV):
         self.n_iter = n_iter
         self.random_state = random_state
         super().__init__(
-            estimator=estimator,
-            scoring=scoring,
-            n_jobs=n_jobs,
-            refit=refit,
-            cv=cv,
-            verbose=verbose,
-            pre_dispatch=pre_dispatch,
-            error_score=error_score,
-            return_train_score=return_train_score,
+            estimator=,
+            scoring=,
+            n_jobs=,
+            refit=,
+            cv=,
+            verbose=,
+            pre_dispatch=,
+            error_score=,
+            return_train_score=,
         )
 
     def _run_search(self, evaluate_candidates):

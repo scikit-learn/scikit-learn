@@ -259,9 +259,9 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
-        y = self._validate_data(y=y)
+        y = self._validate_data(y=)
         return self._partial_fit(
-            X, y, np.unique(y), _refit=True, sample_weight=sample_weight
+            X, y, np.unique(y), _refit=True, sample_weight=
         )
 
     def _check_X(self, X):
@@ -383,9 +383,7 @@ class GaussianNB(_BaseNB):
         self : object
             Returns the instance itself.
         """
-        return self._partial_fit(
-            X, y, classes, _refit=False, sample_weight=sample_weight
-        )
+        return self._partial_fit(X, y, classes, _refit=False, sample_weight=)
 
     def _partial_fit(self, X, y, classes=None, _refit=False, sample_weight=None):
         """Actual implementation of Gaussian NB fitting.
@@ -575,7 +573,7 @@ class _BaseDiscreteNB(_BaseNB):
 
     def _check_X_y(self, X, y, reset=True):
         """Validate X and y in fit methods."""
-        return self._validate_data(X, y, accept_sparse="csr", reset=reset)
+        return self._validate_data(X, y, accept_sparse="csr", reset=)
 
     def _update_class_log_prior(self, class_prior=None):
         """Update class log priors.
@@ -718,7 +716,7 @@ class _BaseDiscreteNB(_BaseNB):
         # to avoid computing the smooth log probas at each call to partial fit
         alpha = self._check_alpha()
         self._update_feature_log_prob(alpha)
-        self._update_class_log_prior(class_prior=class_prior)
+        self._update_class_log_prior(class_prior=)
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -772,7 +770,7 @@ class _BaseDiscreteNB(_BaseNB):
         self._count(X, Y)
         alpha = self._check_alpha()
         self._update_feature_log_prob(alpha)
-        self._update_class_log_prior(class_prior=class_prior)
+        self._update_class_log_prior(class_prior=)
         return self
 
     def _init_counters(self, n_classes, n_features):
@@ -879,12 +877,7 @@ class MultinomialNB(_BaseDiscreteNB):
     def __init__(
         self, *, alpha=1.0, force_alpha="warn", fit_prior=True, class_prior=None
     ):
-        super().__init__(
-            alpha=alpha,
-            fit_prior=fit_prior,
-            class_prior=class_prior,
-            force_alpha=force_alpha,
-        )
+        super().__init__(alpha=, fit_prior=, class_prior=, force_alpha=)
 
     def _more_tags(self):
         return {"requires_positive_X": True}
@@ -1024,12 +1017,7 @@ class ComplementNB(_BaseDiscreteNB):
         class_prior=None,
         norm=False,
     ):
-        super().__init__(
-            alpha=alpha,
-            force_alpha=force_alpha,
-            fit_prior=fit_prior,
-            class_prior=class_prior,
-        )
+        super().__init__(alpha=, force_alpha=, fit_prior=, class_prior=)
         self.norm = norm
 
     def _more_tags(self):
@@ -1178,12 +1166,7 @@ class BernoulliNB(_BaseDiscreteNB):
         fit_prior=True,
         class_prior=None,
     ):
-        super().__init__(
-            alpha=alpha,
-            fit_prior=fit_prior,
-            class_prior=class_prior,
-            force_alpha=force_alpha,
-        )
+        super().__init__(alpha=, fit_prior=, class_prior=, force_alpha=)
         self.binarize = binarize
 
     def _check_X(self, X):
@@ -1194,7 +1177,7 @@ class BernoulliNB(_BaseDiscreteNB):
         return X
 
     def _check_X_y(self, X, y, reset=True):
-        X, y = super()._check_X_y(X, y, reset=reset)
+        X, y = super()._check_X_y(X, y, reset=)
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
         return X, y
@@ -1355,12 +1338,7 @@ class CategoricalNB(_BaseDiscreteNB):
         class_prior=None,
         min_categories=None,
     ):
-        super().__init__(
-            alpha=alpha,
-            force_alpha=force_alpha,
-            fit_prior=fit_prior,
-            class_prior=class_prior,
-        )
+        super().__init__(alpha=, force_alpha=, fit_prior=, class_prior=)
         self.min_categories = min_categories
 
     def fit(self, X, y, sample_weight=None):
@@ -1388,7 +1366,7 @@ class CategoricalNB(_BaseDiscreteNB):
         self : object
             Returns the instance itself.
         """
-        return super().fit(X, y, sample_weight=sample_weight)
+        return super().fit(X, y, sample_weight=)
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
@@ -1432,7 +1410,7 @@ class CategoricalNB(_BaseDiscreteNB):
         self : object
             Returns the instance itself.
         """
-        return super().partial_fit(X, y, classes, sample_weight=sample_weight)
+        return super().partial_fit(X, y, classes, sample_weight=)
 
     def _more_tags(self):
         return {"requires_positive_X": True}
@@ -1447,7 +1425,7 @@ class CategoricalNB(_BaseDiscreteNB):
 
     def _check_X_y(self, X, y, reset=True):
         X, y = self._validate_data(
-            X, y, dtype="int", accept_sparse=False, force_all_finite=True, reset=reset
+            X, y, dtype="int", accept_sparse=False, force_all_finite=True, reset=
         )
         check_non_negative(X, "CategoricalNB (input X)")
         return X, y
@@ -1493,7 +1471,7 @@ class CategoricalNB(_BaseDiscreteNB):
                     weights = None
                 else:
                     weights = Y[mask, j]
-                counts = np.bincount(X_feature[mask], weights=weights)
+                counts = np.bincount(X_feature[mask], weights=)
                 indices = np.nonzero(counts)[0]
                 cat_count[j, indices] += counts[indices]
 

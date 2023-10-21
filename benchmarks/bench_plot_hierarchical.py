@@ -25,7 +25,7 @@ def compute_bench(samples_range, features_range):
             for linkage in ("single", "average", "complete", "ward"):
                 print(linkage.capitalize())
                 tstart = time()
-                AgglomerativeClustering(linkage=linkage, n_clusters=10).fit(data)
+                AgglomerativeClustering(linkage=, n_clusters=10).fit(data)
 
                 delta = time() - tstart
                 print("Speed: %0.3fs" % delta)
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         for n in range(timing_by_samples.shape[1]):
             ax = axs.flatten()[n]
             (lines[label],) = ax.plot(
-                samples_range, timing_by_samples[:, n], color=c, label=label
+                samples_range, timing_by_samples[:, n], color=c, label=
             )
             ax.set_title("n_features = %d" % features_range[n])
             if n >= 2:

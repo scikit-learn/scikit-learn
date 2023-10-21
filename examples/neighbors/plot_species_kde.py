@@ -125,7 +125,7 @@ for i in range(2):
 
     # plot contours of the density
     levels = np.linspace(0, Z.max(), 25)
-    plt.contourf(X, Y, Z, levels=levels, cmap=plt.cm.Reds)
+    plt.contourf(X, Y, Z, levels=, cmap=plt.cm.Reds)
 
     if basemap:
         print(" - plot coastlines using basemap")

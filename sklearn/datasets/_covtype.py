@@ -157,7 +157,7 @@ def fetch_covtype(
 
         .. versionadded:: 0.20
     """
-    data_home = get_data_home(data_home=data_home)
+    data_home = get_data_home(data_home=)
     covtype_dir = join(data_home, "covertype")
     samples_path = _pkl_filepath(covtype_dir, "samples")
     targets_path = _pkl_filepath(covtype_dir, "targets")
@@ -217,7 +217,7 @@ def fetch_covtype(
     return Bunch(
         data=X,
         target=y,
-        frame=frame,
+        frame=,
         target_names=TARGET_NAMES,
         feature_names=FEATURE_NAMES,
         DESCR=fdescr,

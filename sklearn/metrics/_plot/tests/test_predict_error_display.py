@@ -54,7 +54,7 @@ def test_prediction_error_display_raise_error(
             PredictionErrorDisplay.from_estimator(regressor, X, y, **params)
         else:
             y_pred = regressor.predict(X)
-            PredictionErrorDisplay.from_predictions(y_true=y, y_pred=y_pred, **params)
+            PredictionErrorDisplay.from_predictions(y_true=y, y_pred=, **params)
 
 
 def test_from_estimator_not_fitted(pyplot):
@@ -71,12 +71,12 @@ def test_prediction_error_display(pyplot, regressor_fitted, class_method, kind):
     """Check the default behaviour of the display."""
     if class_method == "from_estimator":
         display = PredictionErrorDisplay.from_estimator(
-            regressor_fitted, X, y, kind=kind
+            regressor_fitted, X, y, kind=
         )
     else:
         y_pred = regressor_fitted.predict(X)
         display = PredictionErrorDisplay.from_predictions(
-            y_true=y, y_pred=y_pred, kind=kind
+            y_true=y, y_pred=, kind=
         )
 
     if kind == "actual_vs_predicted":
@@ -103,12 +103,12 @@ def test_plot_prediction_error_subsample(
     """Check the behaviour of `subsample`."""
     if class_method == "from_estimator":
         display = PredictionErrorDisplay.from_estimator(
-            regressor_fitted, X, y, subsample=subsample
+            regressor_fitted, X, y, subsample=
         )
     else:
         y_pred = regressor_fitted.predict(X)
         display = PredictionErrorDisplay.from_predictions(
-            y_true=y, y_pred=y_pred, subsample=subsample
+            y_true=y, y_pred=, subsample=
         )
     assert len(display.scatter_.get_offsets()) == expected_size
 
@@ -118,11 +118,11 @@ def test_plot_prediction_error_ax(pyplot, regressor_fitted, class_method):
     """Check that we can pass an axis to the display."""
     _, ax = pyplot.subplots()
     if class_method == "from_estimator":
-        display = PredictionErrorDisplay.from_estimator(regressor_fitted, X, y, ax=ax)
+        display = PredictionErrorDisplay.from_estimator(regressor_fitted, X, y, ax=)
     else:
         y_pred = regressor_fitted.predict(X)
         display = PredictionErrorDisplay.from_predictions(
-            y_true=y, y_pred=y_pred, ax=ax
+            y_true=y, y_pred=, ax=
         )
     assert display.ax_ is ax
 
@@ -142,7 +142,7 @@ def test_prediction_error_custom_artist(pyplot, regressor_fitted, class_method):
     else:
         y_pred = regressor_fitted.predict(X)
         display = PredictionErrorDisplay.from_predictions(
-            y_true=y, y_pred=y_pred, **extra_params
+            y_true=y, y_pred=, **extra_params
         )
 
     assert display.line_.get_color() == "black"
@@ -153,7 +153,7 @@ def test_prediction_error_custom_artist(pyplot, regressor_fitted, class_method):
         display = PredictionErrorDisplay.from_estimator(regressor_fitted, X, y)
     else:
         y_pred = regressor_fitted.predict(X)
-        display = PredictionErrorDisplay.from_predictions(y_true=y, y_pred=y_pred)
+        display = PredictionErrorDisplay.from_predictions(y_true=y, y_pred=)
     pyplot.close("all")
 
     display.plot(**extra_params)

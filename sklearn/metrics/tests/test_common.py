@@ -1041,16 +1041,16 @@ def test_multilabel_representation_invariance(coo_container):
 
     _, y1 = make_multilabel_classification(
         n_features=1,
-        n_classes=n_classes,
+        n_classes=,
         random_state=0,
-        n_samples=n_samples,
+        n_samples=,
         allow_unlabeled=True,
     )
     _, y2 = make_multilabel_classification(
         n_features=1,
-        n_classes=n_classes,
+        n_classes=,
         random_state=1,
-        n_samples=n_samples,
+        n_samples=,
         allow_unlabeled=True,
     )
 
@@ -1197,17 +1197,17 @@ def test_normalize_option_multilabel_classification(name):
     # unlabelled entry
     _, y_true = make_multilabel_classification(
         n_features=1,
-        n_classes=n_classes,
+        n_classes=,
         random_state=0,
         allow_unlabeled=True,
-        n_samples=n_samples,
+        n_samples=,
     )
     _, y_pred = make_multilabel_classification(
         n_features=1,
-        n_classes=n_classes,
+        n_classes=,
         random_state=1,
         allow_unlabeled=True,
-        n_samples=n_samples,
+        n_samples=,
     )
 
     y_score = random_state.uniform(size=y_true.shape)
@@ -1265,7 +1265,7 @@ def _check_averaging(
 
     if np.sum(weights) != 0:
         weighted_measure = metric(y_true, y_pred, average="weighted")
-        assert_allclose(weighted_measure, np.average(label_measure, weights=weights))
+        assert_allclose(weighted_measure, np.average(label_measure, weights=))
     else:
         weighted_measure = metric(y_true, y_pred, average="weighted")
         assert_allclose(weighted_measure, 0)
@@ -1328,9 +1328,9 @@ def test_averaging_multilabel(name):
     n_samples, n_classes = 40, 5
     _, y = make_multilabel_classification(
         n_features=1,
-        n_classes=n_classes,
+        n_classes=,
         random_state=5,
-        n_samples=n_samples,
+        n_samples=,
         allow_unlabeled=False,
     )
     y_true = y[:20]
@@ -1403,7 +1403,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     )
 
     # check that the weighted and unweighted scores are unequal
-    weighted_score = metric(y1, y2, sample_weight=sample_weight)
+    weighted_score = metric(y1, y2, sample_weight=)
 
     # use context manager to supply custom error message
     with pytest.raises(AssertionError):
@@ -1595,7 +1595,7 @@ def test_no_averaging_labels():
 
             metric = ALL_METRICS[name]
 
-            score_labels = metric(y_true, y_pred, labels=labels, average=None)
+            score_labels = metric(y_true, y_pred, labels=, average=None)
             score = metric(y_true, y_pred, average=None)
             assert_array_equal(score_labels, score[inverse_labels])
 
@@ -1736,8 +1736,8 @@ def check_array_api_metric(
     metric, array_namespace, device, dtype, y_true_np, y_pred_np
 ):
     xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
-    y_true_xp = xp.asarray(y_true_np, device=device)
-    y_pred_xp = xp.asarray(y_pred_np, device=device)
+    y_true_xp = xp.asarray(y_true_np, device=)
+    y_pred_xp = xp.asarray(y_pred_np, device=)
 
     metric_np = metric(y_true_np, y_pred_np)
 

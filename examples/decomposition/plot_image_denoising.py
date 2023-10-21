@@ -170,7 +170,7 @@ for title, transform_algorithm, kwargs in transform_algorithms:
     print(title + "...")
     reconstructions[title] = raccoon_face.copy()
     t0 = time()
-    dico.set_params(transform_algorithm=transform_algorithm, **kwargs)
+    dico.set_params(transform_algorithm=, **kwargs)
     code = dico.transform(data)
     patches = np.dot(code, V)
 

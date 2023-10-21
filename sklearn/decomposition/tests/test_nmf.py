@@ -40,7 +40,7 @@ def test_initialize_nn_output():
     rng = np.random.mtrand.RandomState(42)
     data = np.abs(rng.randn(10, 10))
     for init in ("random", "nndsvd", "nndsvda", "nndsvdar"):
-        W, H = nmf._initialize_nmf(data, 10, init=init, random_state=0)
+        W, H = nmf._initialize_nmf(data, 10, init=, random_state=0)
         assert not ((W < 0).any() or (H < 0).any())
 
 
@@ -74,9 +74,9 @@ def test_parameter_checking():
             "n_components <= min(n_samples, n_features)".format(init)
         )
         with pytest.raises(ValueError, match=msg):
-            NMF(3, init=init).fit(A)
+            NMF(3, init=).fit(A)
         with pytest.raises(ValueError, match=msg):
-            MiniBatchNMF(3, init=init).fit(A)
+            MiniBatchNMF(3, init=).fit(A)
         with pytest.raises(ValueError, match=msg):
             nmf._initialize_nmf(A, 3, init)
 
@@ -121,9 +121,9 @@ def test_nmf_fit_nn_output(Estimator, solver, init, alpha_W, alpha_H):
     A = np.c_[5.0 - np.arange(1, 6), 5.0 + np.arange(1, 6)]
     model = Estimator(
         n_components=2,
-        init=init,
-        alpha_W=alpha_W,
-        alpha_H=alpha_H,
+        init=,
+        alpha_W=,
+        alpha_H=,
         random_state=0,
         **solver,
     )
@@ -171,10 +171,10 @@ def test_nmf_true_reconstruction():
     X = np.dot(W_true, H_true)
 
     model = NMF(
-        n_components=n_components,
+        n_components=,
         solver="mu",
-        beta_loss=beta_loss,
-        max_iter=max_iter,
+        beta_loss=,
+        max_iter=,
         random_state=0,
     )
     transf = model.fit_transform(X)
@@ -184,11 +184,11 @@ def test_nmf_true_reconstruction():
     assert_allclose(X, X_calc)
 
     mbmodel = MiniBatchNMF(
-        n_components=n_components,
-        beta_loss=beta_loss,
-        batch_size=batch_size,
+        n_components=,
+        beta_loss=,
+        batch_size=,
         random_state=0,
-        max_iter=max_iter,
+        max_iter=,
     )
     transf = mbmodel.fit_transform(X)
     X_calc = np.dot(transf, mbmodel.components_)
@@ -203,13 +203,7 @@ def test_nmf_transform(solver):
     # Test that NMF.transform returns close values
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
-    m = NMF(
-        solver=solver,
-        n_components=3,
-        init="random",
-        random_state=0,
-        tol=1e-6,
-    )
+    m = NMF(solver=, n_components=3, init="random", random_state=0, tol=1e-6)
     ft = m.fit_transform(A)
     t = m.transform(A)
     assert_allclose(ft, t, atol=1e-1)
@@ -245,7 +239,7 @@ def test_nmf_transform_custom_init(Estimator, solver):
     W_init = np.abs(avg * random_state.randn(6, n_components))
 
     m = Estimator(
-        n_components=n_components, init="custom", random_state=0, tol=1e-3, **solver
+        n_components=, init="custom", random_state=0, tol=1e-3, **solver
     )
     m.fit_transform(A, W=W_init, H=H_init)
     m.transform(A)
@@ -257,7 +251,7 @@ def test_nmf_inverse_transform(solver):
     random_state = np.random.RandomState(0)
     A = np.abs(random_state.randn(6, 4))
     m = NMF(
-        solver=solver,
+        solver=,
         n_components=4,
         init="random",
         random_state=0,
@@ -311,8 +305,8 @@ def test_nmf_sparse_input(Estimator, solver, sparse_container, alpha_W, alpha_H)
     est1 = Estimator(
         n_components=5,
         init="random",
-        alpha_W=alpha_W,
-        alpha_H=alpha_H,
+        alpha_W=,
+        alpha_H=,
         random_state=0,
         tol=0,
         max_iter=100,
@@ -363,33 +357,33 @@ def test_non_negative_factorization_consistency(init, solver, alpha_W, alpha_H):
 
     W_nmf, H, _ = non_negative_factorization(
         A,
-        init=init,
-        solver=solver,
-        max_iter=max_iter,
-        alpha_W=alpha_W,
-        alpha_H=alpha_H,
+        init=,
+        solver=,
+        max_iter=,
+        alpha_W=,
+        alpha_H=,
         random_state=1,
         tol=1e-2,
     )
     W_nmf_2, H, _ = non_negative_factorization(
         A,
-        H=H,
+        H=,
         update_H=False,
-        init=init,
-        solver=solver,
-        max_iter=max_iter,
-        alpha_W=alpha_W,
-        alpha_H=alpha_H,
+        init=,
+        solver=,
+        max_iter=,
+        alpha_W=,
+        alpha_H=,
         random_state=1,
         tol=1e-2,
     )
 
     model_class = NMF(
-        init=init,
-        solver=solver,
-        max_iter=max_iter,
-        alpha_W=alpha_W,
-        alpha_H=alpha_H,
+        init=,
+        solver=,
+        max_iter=,
+        alpha_W=,
+        alpha_H=,
         random_state=1,
         tol=1e-2,
     )
@@ -532,10 +526,10 @@ def test_nmf_multiplicative_update_sparse(csr_container):
             init="custom",
             update_H=True,
             solver="mu",
-            beta_loss=beta_loss,
+            beta_loss=,
             max_iter=n_iter,
             alpha_W=alpha,
-            l1_ratio=l1_ratio,
+            l1_ratio=,
             random_state=42,
         )
 
@@ -549,10 +543,10 @@ def test_nmf_multiplicative_update_sparse(csr_container):
             init="custom",
             update_H=True,
             solver="mu",
-            beta_loss=beta_loss,
+            beta_loss=,
             max_iter=n_iter,
             alpha_W=alpha,
-            l1_ratio=l1_ratio,
+            l1_ratio=,
             random_state=42,
         )
 
@@ -571,10 +565,10 @@ def test_nmf_multiplicative_update_sparse(csr_container):
             init="custom",
             update_H=True,
             solver="mu",
-            beta_loss=beta_loss,
+            beta_loss=,
             max_iter=n_iter,
             alpha_W=alpha,
-            l1_ratio=l1_ratio,
+            l1_ratio=,
             random_state=42,
         )
 
@@ -599,9 +593,9 @@ def test_nmf_negative_beta_loss(csr_container):
         W, H, _ = non_negative_factorization(
             X,
             init="random",
-            n_components=n_components,
+            n_components=,
             solver="mu",
-            beta_loss=beta_loss,
+            beta_loss=,
             random_state=0,
             max_iter=1000,
         )
@@ -628,7 +622,7 @@ def test_minibatch_nmf_negative_beta_loss(beta_loss):
     X = rng.normal(size=(6, 5))
     X[X < 0] = 0
 
-    nmf = MiniBatchNMF(beta_loss=beta_loss, random_state=0)
+    nmf = MiniBatchNMF(beta_loss=, random_state=0)
 
     msg = "When beta_loss <= 0 and X contains zeros, the solver may diverge."
     with pytest.raises(ValueError, match=msg):
@@ -650,16 +644,16 @@ def test_nmf_regularization(Estimator, solver):
     # L1 regularization should increase the number of zeros
     l1_ratio = 1.0
     regul = Estimator(
-        n_components=n_components,
+        n_components=,
         alpha_W=0.5,
-        l1_ratio=l1_ratio,
+        l1_ratio=,
         random_state=42,
         **solver,
     )
     model = Estimator(
-        n_components=n_components,
+        n_components=,
         alpha_W=0.0,
-        l1_ratio=l1_ratio,
+        l1_ratio=,
         random_state=42,
         **solver,
     )
@@ -683,16 +677,16 @@ def test_nmf_regularization(Estimator, solver):
     # of the matrices W and H
     l1_ratio = 0.0
     regul = Estimator(
-        n_components=n_components,
+        n_components=,
         alpha_W=0.5,
-        l1_ratio=l1_ratio,
+        l1_ratio=,
         random_state=42,
         **solver,
     )
     model = Estimator(
-        n_components=n_components,
+        n_components=,
         alpha_W=0.0,
-        l1_ratio=l1_ratio,
+        l1_ratio=,
         random_state=42,
         **solver,
     )
@@ -737,14 +731,14 @@ def test_nmf_decreasing(solver):
                 X,
                 W,
                 H,
-                beta_loss=beta_loss,
+                beta_loss=,
                 init="custom",
-                n_components=n_components,
+                n_components=,
                 max_iter=1,
                 alpha_W=alpha,
-                solver=solver,
-                tol=tol,
-                l1_ratio=l1_ratio,
+                solver=,
+                tol=,
+                l1_ratio=,
                 verbose=0,
                 random_state=0,
                 update_H=True,
@@ -840,10 +834,10 @@ def test_nmf_custom_init_dtype_error(Estimator):
     W = rng.random_sample((20, 15))
 
     with pytest.raises(TypeError, match="should have the same dtype as X"):
-        Estimator(init="custom").fit(X, H=H, W=W)
+        Estimator(init="custom").fit(X, H=, W=)
 
     with pytest.raises(TypeError, match="should have the same dtype as X"):
-        non_negative_factorization(X, H=H, update_H=False)
+        non_negative_factorization(X, H=, update_H=False)
 
 
 @pytest.mark.parametrize("beta_loss", [-0.5, 0, 0.5, 1, 1.5, 2, 2.5])
@@ -853,16 +847,10 @@ def test_nmf_minibatchnmf_equivalence(beta_loss):
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
 
-    nmf = NMF(
-        n_components=5,
-        beta_loss=beta_loss,
-        solver="mu",
-        random_state=0,
-        tol=0,
-    )
+    nmf = NMF(n_components=5, beta_loss=, solver="mu", random_state=0, tol=0)
     mbnmf = MiniBatchNMF(
         n_components=5,
-        beta_loss=beta_loss,
+        beta_loss=,
         random_state=0,
         tol=0,
         max_no_improvement=None,
@@ -884,26 +872,24 @@ def test_minibatch_nmf_partial_fit():
     max_iter = 2
 
     mbnmf1 = MiniBatchNMF(
-        n_components=n_components,
+        n_components=,
         init="custom",
         random_state=0,
-        max_iter=max_iter,
-        batch_size=batch_size,
+        max_iter=,
+        batch_size=,
         tol=0,
         max_no_improvement=None,
         fresh_restarts=False,
     )
-    mbnmf2 = MiniBatchNMF(n_components=n_components, init="custom", random_state=0)
+    mbnmf2 = MiniBatchNMF(n_components=, init="custom", random_state=0)
 
     # Force the same init of H (W is recomputed anyway) to be able to compare results.
-    W, H = nmf._initialize_nmf(
-        X, n_components=n_components, init="random", random_state=0
-    )
+    W, H = nmf._initialize_nmf(X, n_components=, init="random", random_state=0)
 
-    mbnmf1.fit(X, W=W, H=H)
+    mbnmf1.fit(X, W=, H=)
     for i in range(max_iter):
         for j in range(batch_size):
-            mbnmf2.partial_fit(X[j : j + batch_size], W=W[:batch_size], H=H)
+            mbnmf2.partial_fit(X[j : j + batch_size], W=W[:batch_size], H=)
 
     assert mbnmf1.n_steps_ == mbnmf2.n_steps_
     assert_allclose(mbnmf1.components_, mbnmf2.components_)
@@ -949,7 +935,7 @@ def test_NMF_inverse_transform_W_deprecation():
         est.inverse_transform()
 
     with pytest.raises(ValueError, match="Please provide only"):
-        est.inverse_transform(Xt=Xt, W=Xt)
+        est.inverse_transform(Xt=, W=Xt)
 
     with warnings.catch_warnings(record=True):
         warnings.simplefilter("error")
@@ -973,7 +959,7 @@ def test_nmf_n_components_auto(Estimator):
         random_state=0,
         tol=1e-6,
     )
-    est.fit_transform(X, W=W, H=H)
+    est.fit_transform(X, W=, H=)
     assert est._n_components == H.shape[0]
 
 
@@ -999,7 +985,7 @@ def test_nmf_n_components_default_value_warning():
     with pytest.warns(
         FutureWarning, match="The default value of `n_components` will change from"
     ):
-        non_negative_factorization(X, H=H)
+        non_negative_factorization(X, H=)
 
 
 def test_nmf_n_components_auto_no_h_update():
@@ -1056,7 +1042,7 @@ def test_nmf_custom_init_shape_error():
     nmf = NMF(n_components=2, init="custom", random_state=0)
 
     with pytest.raises(ValueError, match="Array with wrong first dimension passed"):
-        nmf.fit(X, H=H, W=rng.random_sample((5, 2)))
+        nmf.fit(X, H=, W=rng.random_sample((5, 2)))
 
     with pytest.raises(ValueError, match="Array with wrong second dimension passed"):
-        nmf.fit(X, H=H, W=rng.random_sample((6, 3)))
+        nmf.fit(X, H=, W=rng.random_sample((6, 3)))

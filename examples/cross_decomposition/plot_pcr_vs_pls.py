@@ -49,7 +49,7 @@ from sklearn.decomposition import PCA
 rng = np.random.RandomState(0)
 n_samples = 500
 cov = [[3, 3], [3, 4]]
-X = rng.multivariate_normal(mean=[0, 0], cov=cov, size=n_samples)
+X = rng.multivariate_normal(mean=[0, 0], cov=, size=n_samples)
 pca = PCA(n_components=2).fit(X)
 
 

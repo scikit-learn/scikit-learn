@@ -112,7 +112,7 @@ from sklearn.inspection import DecisionBoundaryDisplay
 
 def plot_training_data_with_decision_boundary(kernel):
     # Train the SVC
-    clf = svm.SVC(kernel=kernel, gamma=2).fit(X, y)
+    clf = svm.SVC(kernel=, gamma=2).fit(X, y)
 
     # Settings for plotting
     _, ax = plt.subplots(figsize=(4, 3))

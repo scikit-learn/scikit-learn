@@ -326,14 +326,14 @@ def test_grid_search_groups():
     ]
     error_msg = "The 'groups' parameter should not be None."
     for cv in group_cvs:
-        gs = GridSearchCV(clf, grid, cv=cv)
+        gs = GridSearchCV(clf, grid, cv=)
         with pytest.raises(ValueError, match=error_msg):
             gs.fit(X, y)
-        gs.fit(X, y, groups=groups)
+        gs.fit(X, y, groups=)
 
     non_group_cvs = [StratifiedKFold(), StratifiedShuffleSplit()]
     for cv in non_group_cvs:
-        gs = GridSearchCV(clf, grid, cv=cv)
+        gs = GridSearchCV(clf, grid, cv=)
         # Should not raise an error
         gs.fit(X, y)
 
@@ -412,7 +412,7 @@ def test_no_refit():
     for refit in [True, "recall", "accuracy"]:
         with pytest.raises(ValueError, match=error_msg):
             GridSearchCV(
-                clf, {}, refit=refit, scoring={"acc": "accuracy", "prec": "precision"}
+                clf, {}, refit=, scoring={"acc": "accuracy", "prec": "precision"}
             ).fit(X, y)
 
 
@@ -730,7 +730,7 @@ def test_refit_callable_multi_metric():
     clf = GridSearchCV(
         LinearSVC(dual="auto", random_state=42),
         {"C": [0.01, 0.1, 1]},
-        scoring=scoring,
+        scoring=,
         refit=refit_callable,
     )
     clf.fit(X, y)
@@ -751,11 +751,7 @@ def test_gridsearch_nd():
     def check_y(x):
         return x.shape[1:] == (7, 11)
 
-    clf = CheckingClassifier(
-        check_X=check_X,
-        check_y=check_y,
-        methods_to_check=["fit"],
-    )
+    clf = CheckingClassifier(check_X=, check_y=, methods_to_check=["fit"])
     grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]})
     grid_search.fit(X_4d, y_3d).score(X, y)
     assert hasattr(grid_search, "cv_results_")
@@ -771,7 +767,7 @@ def test_X_as_list():
         methods_to_check=["fit"],
     )
     cv = KFold(n_splits=3)
-    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=cv)
+    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=)
     grid_search.fit(X.tolist(), y).score(X, y)
     assert hasattr(grid_search, "cv_results_")
 
@@ -786,7 +782,7 @@ def test_y_as_list():
         methods_to_check=["fit"],
     )
     cv = KFold(n_splits=3)
-    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=cv)
+    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]}, cv=)
     grid_search.fit(X, y.tolist()).score(X, y)
     assert hasattr(grid_search, "cv_results_")
 
@@ -832,7 +828,7 @@ def test_unsupervised_grid_search():
     scoring = ["adjusted_rand_score", "fowlkes_mallows_score"]
     for refit in ["adjusted_rand_score", "fowlkes_mallows_score"]:
         grid_search = GridSearchCV(
-            km, param_grid=dict(n_clusters=[2, 3, 4]), scoring=scoring, refit=refit
+            km, param_grid=dict(n_clusters=[2, 3, 4]), scoring=, refit=
         )
         grid_search.fit(X, y)
         # Both ARI and FMS can find the right number :)
@@ -871,9 +867,7 @@ def test_gridsearch_no_predict():
 def test_param_sampler():
     # test basic properties of param sampler
     param_distributions = {"kernel": ["rbf", "linear"], "C": uniform(0, 1)}
-    sampler = ParameterSampler(
-        param_distributions=param_distributions, n_iter=10, random_state=0
-    )
+    sampler = ParameterSampler(param_distributions=, n_iter=10, random_state=0)
     samples = [x for x in sampler]
     assert len(samples) == 10
     for sample in samples:
@@ -882,15 +876,11 @@ def test_param_sampler():
 
     # test that repeated calls yield identical parameters
     param_distributions = {"C": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-    sampler = ParameterSampler(
-        param_distributions=param_distributions, n_iter=3, random_state=0
-    )
+    sampler = ParameterSampler(param_distributions=, n_iter=3, random_state=0)
     assert [x for x in sampler] == [x for x in sampler]
 
     param_distributions = {"C": uniform(0, 1)}
-    sampler = ParameterSampler(
-        param_distributions=param_distributions, n_iter=10, random_state=0
-    )
+    sampler = ParameterSampler(param_distributions=, n_iter=10, random_state=0)
     assert [x for x in sampler] == [x for x in sampler]
 
 
@@ -1152,7 +1142,7 @@ def test_grid_search_cv_results_multimetric():
         "recall",
     ):
         grid_search = GridSearchCV(
-            SVC(), cv=n_splits, param_grid=params, scoring=scoring, refit=False
+            SVC(), cv=n_splits, param_grid=params, scoring=, refit=False
         )
         grid_search.fit(X, y)
         grid_searches.append(grid_search)
@@ -1177,14 +1167,14 @@ def test_random_search_cv_results_multimetric():
                 refit = "accuracy" if isinstance(scoring, tuple) else refit
             else:
                 probability = False
-            clf = SVC(probability=probability, random_state=42)
+            clf = SVC(probability=, random_state=42)
             random_search = RandomizedSearchCV(
                 clf,
                 n_iter=n_search_iter,
                 cv=n_splits,
                 param_distributions=params,
-                scoring=scoring,
-                refit=refit,
+                scoring=,
+                refit=,
                 random_state=0,
             )
             random_search.fit(X, y)
@@ -1332,7 +1322,7 @@ def test_search_cv_results_rank_tie_breaking():
     # which would result in a tie of their mean cv-scores
     param_grid = {"C": [1, 1.001, 0.001]}
 
-    grid_search = GridSearchCV(SVC(), param_grid=param_grid, return_train_score=True)
+    grid_search = GridSearchCV(SVC(), param_grid=, return_train_score=True)
     random_search = RandomizedSearchCV(
         SVC(), n_iter=3, param_distributions=param_grid, return_train_score=True
     )
@@ -1366,11 +1356,7 @@ def test_search_cv_results_none_param():
     cv = KFold()
 
     for est in estimators:
-        grid_search = GridSearchCV(
-            est,
-            est_parameters,
-            cv=cv,
-        ).fit(X, y)
+        grid_search = GridSearchCV(est, est_parameters, cv=).fit(X, y)
         assert_array_equal(grid_search.cv_results_["param_random_state"], [0, None])
 
 
@@ -1432,10 +1418,10 @@ def test_grid_search_correct_score_results():
         )
         assert all(np.isin(expected_keys, result_keys))
 
-        cv = StratifiedKFold(n_splits=n_splits)
+        cv = StratifiedKFold(n_splits=)
         n_splits = grid_search.n_splits_
         for candidate_i, C in enumerate(Cs):
-            clf.set_params(C=C)
+            clf.set_params(C=)
             cv_scores = np.array(
                 [
                     grid_search.cv_results_["split%d_test_score" % s][candidate_i]
@@ -1485,7 +1471,7 @@ def test_grid_search_with_multioutput_data():
 
     # Test with grid search cv
     for est in estimators:
-        grid_search = GridSearchCV(est, est_parameters, cv=cv)
+        grid_search = GridSearchCV(est, est_parameters, cv=)
         grid_search.fit(X, y)
         res_params = grid_search.cv_results_["params"]
         for cand_i in range(len(res_params)):
@@ -1501,7 +1487,7 @@ def test_grid_search_with_multioutput_data():
 
     # Test with a randomized search
     for est in estimators:
-        random_search = RandomizedSearchCV(est, est_parameters, cv=cv, n_iter=3)
+        random_search = RandomizedSearchCV(est, est_parameters, cv=, n_iter=3)
         random_search.fit(X, y)
         res_params = random_search.cv_results_["params"]
         for cand_i in range(len(res_params)):
@@ -1731,7 +1717,7 @@ def test_stochastic_gradient_loss_param():
     X = np.arange(24).reshape(6, -1)
     y = [0, 0, 0, 1, 1, 1]
     clf = GridSearchCV(
-        estimator=SGDClassifier(loss="hinge"), param_grid=param_grid, cv=3
+        estimator=SGDClassifier(loss="hinge"), param_grid=, cv=3
     )
 
     # When the estimator is not fitted, `predict_proba` is not available as the
@@ -1747,7 +1733,7 @@ def test_stochastic_gradient_loss_param():
         "loss": ["hinge"],
     }
     clf = GridSearchCV(
-        estimator=SGDClassifier(loss="hinge"), param_grid=param_grid, cv=3
+        estimator=SGDClassifier(loss="hinge"), param_grid=, cv=3
     )
     assert not hasattr(clf, "predict_proba")
     clf.fit(X, y)
@@ -1767,12 +1753,12 @@ def test_grid_search_cv_splits_consistency():
     # Check if a one time iterable is accepted as a cv parameter.
     n_samples = 100
     n_splits = 5
-    X, y = make_classification(n_samples=n_samples, random_state=0)
+    X, y = make_classification(n_samples=, random_state=0)
 
     gs = GridSearchCV(
         LinearSVC(dual="auto", random_state=0),
         param_grid={"C": [0.1, 0.2, 0.3]},
-        cv=OneTimeSplitter(n_splits=n_splits, n_samples=n_samples),
+        cv=OneTimeSplitter(n_splits=, n_samples=),
         return_train_score=True,
     )
     gs.fit(X, y)
@@ -1780,20 +1766,20 @@ def test_grid_search_cv_splits_consistency():
     gs2 = GridSearchCV(
         LinearSVC(dual="auto", random_state=0),
         param_grid={"C": [0.1, 0.2, 0.3]},
-        cv=KFold(n_splits=n_splits),
+        cv=KFold(n_splits=),
         return_train_score=True,
     )
     gs2.fit(X, y)
 
     # Give generator as a cv parameter
     assert isinstance(
-        KFold(n_splits=n_splits, shuffle=True, random_state=0).split(X, y),
+        KFold(n_splits=, shuffle=True, random_state=0).split(X, y),
         GeneratorType,
     )
     gs3 = GridSearchCV(
         LinearSVC(dual="auto", random_state=0),
         param_grid={"C": [0.1, 0.2, 0.3]},
-        cv=KFold(n_splits=n_splits, shuffle=True, random_state=0).split(X, y),
+        cv=KFold(n_splits=, shuffle=True, random_state=0).split(X, y),
         return_train_score=True,
     )
     gs3.fit(X, y)
@@ -1801,7 +1787,7 @@ def test_grid_search_cv_splits_consistency():
     gs4 = GridSearchCV(
         LinearSVC(dual="auto", random_state=0),
         param_grid={"C": [0.1, 0.2, 0.3]},
-        cv=KFold(n_splits=n_splits, shuffle=True, random_state=0),
+        cv=KFold(n_splits=, shuffle=True, random_state=0),
         return_train_score=True,
     )
     gs4.fit(X, y)
@@ -1837,7 +1823,7 @@ def test_grid_search_cv_splits_consistency():
     gs = GridSearchCV(
         LinearSVC(dual="auto", random_state=0),
         param_grid={"C": [0.1, 0.1, 0.2, 0.2]},
-        cv=KFold(n_splits=n_splits, shuffle=True),
+        cv=KFold(n_splits=, shuffle=True),
         return_train_score=True,
     )
     gs.fit(X, y)
@@ -1955,7 +1941,7 @@ def test_empty_cv_iterator_error():
     # cv is empty now
 
     train_size = 100
-    ridge = RandomizedSearchCV(Ridge(), {"alpha": [1e-3, 1e-2, 1e-1]}, cv=cv, n_jobs=4)
+    ridge = RandomizedSearchCV(Ridge(), {"alpha": [1e-3, 1e-2, 1e-1]}, cv=, n_jobs=4)
 
     # assert that this raises an error
     with pytest.raises(
@@ -1980,7 +1966,7 @@ def test_random_search_bad_cv():
     cv = BrokenKFold(n_splits=3)
 
     train_size = 100
-    ridge = RandomizedSearchCV(Ridge(), {"alpha": [1e-3, 1e-2, 1e-1]}, cv=cv, n_jobs=4)
+    ridge = RandomizedSearchCV(Ridge(), {"alpha": [1e-3, 1e-2, 1e-1]}, cv=, n_jobs=4)
 
     # assert that this raises an error
     with pytest.raises(
@@ -2030,7 +2016,7 @@ def test_searchcv_raise_warning_with_non_finite_score(
         DecisionTreeClassifier(),
         scoring=FailingScorer(),
         cv=3,
-        return_train_score=return_train_score,
+        return_train_score=,
         **specialized_params,
     )
 
@@ -2210,7 +2196,7 @@ def test_n_features_in():
     # make sure grid search and random search delegate n_features_in to the
     # best estimator
     n_features = 4
-    X, y = make_classification(n_features=n_features)
+    X, y = make_classification(n_features=)
     gbdt = HistGradientBoostingClassifier()
     param_grid = {"max_iter": [3, 4]}
     gs = GridSearchCV(gbdt, param_grid)
@@ -2278,7 +2264,7 @@ def test_search_cv_pairwise_property_equivalence_of_precomputed():
     """
     n_samples = 50
     n_splits = 2
-    X, y = make_classification(n_samples=n_samples, random_state=0)
+    X, y = make_classification(n_samples=, random_state=0)
     grid_params = {"n_neighbors": [10]}
 
     # defaults to euclidean metric (minkowski p = 2)
@@ -2350,7 +2336,7 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
             scalar_param=None,
             callable_param=None,
         ):
-            super().fit(X, y, sample_weight=sample_weight)
+            super().fit(X, y, sample_weight=)
             assert scalar_param > 0
             assert callable(callable_param)
 
@@ -2425,7 +2411,7 @@ def test_search_cv_verbose_3(capsys, return_train_score):
         scoring="accuracy",
         verbose=3,
         cv=3,
-        return_train_score=return_train_score,
+        return_train_score=,
     ).fit(X, y)
     captured = capsys.readouterr().out
     if return_train_score:
@@ -2491,8 +2477,8 @@ def test_multi_metric_search_forwards_metadata(SearchCV, param_search):
         sample_weight="score_weights", metadata="score_metadata"
     )
     scoring = dict(my_scorer=scorer, accuracy="accuracy")
-    SearchCV(est, refit="accuracy", cv=2, scoring=scoring, **param_grid_search).fit(
-        X, y, score_weights=score_weights, score_metadata=score_metadata
+    SearchCV(est, refit="accuracy", cv=2, scoring=, **param_grid_search).fit(
+        X, y, score_weights=, score_metadata=
     )
     assert len(scorer_registry)
     for _scorer in scorer_registry:

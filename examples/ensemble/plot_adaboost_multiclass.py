@@ -79,7 +79,7 @@ n_estimators = 300
 
 adaboost_clf = AdaBoostClassifier(
     estimator=weak_learner,
-    n_estimators=n_estimators,
+    n_estimators=,
     algorithm="SAMME",
     random_state=42,
 ).fit(X_train, y_train)

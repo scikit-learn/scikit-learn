@@ -41,9 +41,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         """
         if not (hasattr(X, "iloc") and getattr(X, "ndim", 0) == 2):
             # if not a dataframe, do normal check_array validation
-            X_temp = check_array(X, dtype=None, force_all_finite=force_all_finite)
+            X_temp = check_array(X, dtype=None, force_all_finite=)
             if not hasattr(X, "dtype") and np.issubdtype(X_temp.dtype, np.str_):
-                X = check_array(X, dtype=object, force_all_finite=force_all_finite)
+                X = check_array(X, dtype=object, force_all_finite=)
             else:
                 X = X_temp
             needs_validation = False
@@ -75,9 +75,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         self._check_infrequent_enabled()
         self._check_n_features(X, reset=True)
         self._check_feature_names(X, reset=True)
-        X_list, n_samples, n_features = self._check_X(
-            X, force_all_finite=force_all_finite
-        )
+        X_list, n_samples, n_features = self._check_X(X, force_all_finite=)
         self.n_features_in_ = n_features
 
         if self.categories != "auto":
@@ -177,9 +175,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         warn_on_unknown=False,
         ignore_category_indices=None,
     ):
-        X_list, n_samples, n_features = self._check_X(
-            X, force_all_finite=force_all_finite
-        )
+        X_list, n_samples, n_features = self._check_X(X, force_all_finite=)
         self._check_feature_names(X, reset=False)
         self._check_n_features(X, reset=False)
 
@@ -1033,7 +1029,7 @@ class OneHotEncoder(_BaseEncoder):
             X,
             handle_unknown=self.handle_unknown,
             force_all_finite="allow-nan",
-            warn_on_unknown=warn_on_unknown,
+            warn_on_unknown=,
         )
 
         n_samples, n_features = X_int.shape

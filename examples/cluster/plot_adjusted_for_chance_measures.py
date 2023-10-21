@@ -92,11 +92,11 @@ def fixed_classes_uniform_labelings_scores(
     score_func, n_samples, n_clusters_range, n_classes, n_runs=5
 ):
     scores = np.zeros((len(n_clusters_range), n_runs))
-    labels_a = random_labels(n_samples=n_samples, n_classes=n_classes)
+    labels_a = random_labels(n_samples=, n_classes=)
 
     for i, n_clusters in enumerate(n_clusters_range):
         for j in range(n_runs):
-            labels_b = random_labels(n_samples=n_samples, n_classes=n_clusters)
+            labels_b = random_labels(n_samples=, n_classes=n_clusters)
             scores[i, j] = score_func(labels_a, labels_b)
     return scores
 
@@ -120,7 +120,7 @@ plt.figure(1)
 
 for marker, (score_name, score_func) in zip("d^vx.,", score_funcs):
     scores = fixed_classes_uniform_labelings_scores(
-        score_func, n_samples, n_clusters_range, n_classes=n_classes
+        score_func, n_samples, n_clusters_range, n_classes=
     )
     plots.append(
         plt.errorbar(
@@ -129,7 +129,7 @@ for marker, (score_name, score_func) in zip("d^vx.,", score_funcs):
             scores.std(axis=1),
             alpha=0.8,
             linewidth=1,
-            marker=marker,
+            marker=,
         )[0]
     )
     names.append(score_name)
@@ -167,8 +167,8 @@ def uniform_labelings_scores(score_func, n_samples, n_clusters_range, n_runs=5):
 
     for i, n_clusters in enumerate(n_clusters_range):
         for j in range(n_runs):
-            labels_a = random_labels(n_samples=n_samples, n_classes=n_clusters)
-            labels_b = random_labels(n_samples=n_samples, n_classes=n_clusters)
+            labels_a = random_labels(n_samples=, n_classes=n_clusters)
+            labels_b = random_labels(n_samples=, n_classes=n_clusters)
             scores[i, j] = score_func(labels_a, labels_b)
     return scores
 
@@ -194,7 +194,7 @@ for marker, (score_name, score_func) in zip("d^vx.,", score_funcs):
             scores.std(axis=1),
             alpha=0.8,
             linewidth=2,
-            marker=marker,
+            marker=,
         )[0]
     )
     names.append(score_name)

@@ -305,9 +305,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 init = (uniform_edges[1:] + uniform_edges[:-1])[:, None] * 0.5
 
                 # 1D k-means procedure
-                km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
+                km = KMeans(n_clusters=n_bins[jj], init=, n_init=1)
                 centers = km.fit(
-                    column[:, None], sample_weight=sample_weight
+                    column[:, None], sample_weight=
                 ).cluster_centers_[:, 0]
                 # Must sort, centers may be unsorted even with sorted init
                 centers.sort()
@@ -385,7 +385,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         # check input and attribute dtypes
         dtype = (np.float64, np.float32) if self.dtype is None else self.dtype
-        Xt = self._validate_data(X, copy=True, dtype=dtype, reset=False)
+        Xt = self._validate_data(X, copy=True, dtype=, reset=False)
 
         bin_edges = self.bin_edges_
         for jj in range(Xt.shape[1]):

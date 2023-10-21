@@ -79,19 +79,19 @@ est = HistGradientBoostingClassifier(
     loss="log_loss",
     learning_rate=lr,
     max_iter=n_trees,
-    max_bins=max_bins,
+    max_bins=,
     max_leaf_nodes=n_leaf_nodes,
     categorical_features=is_categorical,
     early_stopping=False,
     random_state=0,
-    verbose=verbose,
+    verbose=,
 )
 
 fit(est, X_train, y_train, "sklearn")
 predict(est, X_test, y_test)
 
 if args.lightgbm:
-    est = get_equivalent_estimator(est, lib="lightgbm", n_classes=n_classes)
+    est = get_equivalent_estimator(est, lib="lightgbm", n_classes=)
     est.set_params(max_cat_to_onehot=1)  # dont use OHE
     categorical_features = [
         f_idx for (f_idx, is_cat) in enumerate(is_categorical) if is_cat

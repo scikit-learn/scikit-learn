@@ -19,8 +19,8 @@ def test_three_clusters(bisecting_strategy, init):
     bisect_means = BisectingKMeans(
         n_clusters=3,
         random_state=0,
-        bisecting_strategy=bisecting_strategy,
-        init=init,
+        bisecting_strategy=,
+        init=,
     )
     bisect_means.fit(X)
 
@@ -65,7 +65,7 @@ def test_n_clusters(n_clusters):
     rng = np.random.RandomState(0)
     X = rng.rand(10, 2)
 
-    bisect_means = BisectingKMeans(n_clusters=n_clusters, random_state=0)
+    bisect_means = BisectingKMeans(n_clusters=, random_state=0)
     bisect_means.fit(X)
 
     assert_array_equal(np.unique(bisect_means.labels_), np.arange(n_clusters))
@@ -141,7 +141,7 @@ def test_no_crash_on_empty_bisections(algorithm):
     # https://github.com/scikit-learn/scikit-learn/issues/27081
     rng = np.random.RandomState(0)
     X_train = rng.rand(3000, 10)
-    bkm = BisectingKMeans(n_clusters=10, algorithm=algorithm).fit(X_train)
+    bkm = BisectingKMeans(n_clusters=10, algorithm=).fit(X_train)
 
     # predict on scaled data to trigger pathologic case
     # where the inner mask leads to empty bisections.

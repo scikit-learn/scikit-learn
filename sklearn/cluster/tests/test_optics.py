@@ -164,10 +164,10 @@ def test_correct_number_of_clusters(metric, is_sparse):
     # in 'auto' mode
 
     n_clusters = 3
-    X = generate_clustered_data(n_clusters=n_clusters)
+    X = generate_clustered_data(n_clusters=)
     # Parameters chosen specifically for this task.
     # Compute OPTICS
-    clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4, xi=0.1, metric=metric)
+    clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4, xi=0.1, metric=)
     clust.fit(sparse.csr_matrix(X) if is_sparse else X)
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(clust.labels_)) - int(-1 in clust.labels_)
@@ -206,7 +206,7 @@ def test_bad_extract():
     msg = "Specify an epsilon smaller than 0.15. Got 0.3."
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(
-        n_samples=750, centers=centers, cluster_std=0.4, random_state=0
+        n_samples=750, centers=, cluster_std=0.4, random_state=0
     )
 
     # Compute OPTICS
@@ -219,7 +219,7 @@ def test_bad_reachability():
     msg = "All reachability values are inf. Set a larger max_eps."
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(
-        n_samples=750, centers=centers, cluster_std=0.4, random_state=0
+        n_samples=750, centers=, cluster_std=0.4, random_state=0
     )
 
     with pytest.warns(UserWarning, match=msg):
@@ -277,7 +277,7 @@ def test_close_extract():
 
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(
-        n_samples=750, centers=centers, cluster_std=0.4, random_state=0
+        n_samples=750, centers=, cluster_std=0.4, random_state=0
     )
 
     # Compute OPTICS
@@ -297,19 +297,17 @@ def test_dbscan_optics_parity(eps, min_samples, metric, is_sparse, global_dtype)
 
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(
-        n_samples=150, centers=centers, cluster_std=0.4, random_state=0
+        n_samples=150, centers=, cluster_std=0.4, random_state=0
     )
     X = sparse.csr_matrix(X) if is_sparse else X
 
     X = X.astype(global_dtype, copy=False)
 
     # calculate optics with dbscan extract at 0.3 epsilon
-    op = OPTICS(
-        min_samples=min_samples, cluster_method="dbscan", eps=eps, metric=metric
-    ).fit(X)
+    op = OPTICS(min_samples=, cluster_method="dbscan", eps=, metric=).fit(X)
 
     # calculate dbscan labels
-    db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
+    db = DBSCAN(eps=, min_samples=).fit(X)
 
     contingency = contingency_matrix(db.labels_, op.labels_)
     agree = min(
@@ -347,7 +345,7 @@ def test_min_samples_edge_case(global_dtype):
 @pytest.mark.parametrize("min_cluster_size", range(2, X.shape[0] // 10, 23))
 def test_min_cluster_size(min_cluster_size, global_dtype):
     redX = X[::2].astype(global_dtype, copy=False)  # reduce for speed
-    clust = OPTICS(min_samples=9, min_cluster_size=min_cluster_size).fit(redX)
+    clust = OPTICS(min_samples=9, min_cluster_size=).fit(redX)
     cluster_sizes = np.bincount(clust.labels_[clust.labels_ != -1])
     if cluster_sizes.size:
         assert min(cluster_sizes) >= min_cluster_size

@@ -127,7 +127,7 @@ def test_display_curve_error_no_response(
     clf = MyClassifier().fit(X, y)
 
     with pytest.raises(AttributeError, match=msg):
-        Display.from_estimator(clf, X, y, response_method=response_method)
+        Display.from_estimator(clf, X, y, response_method=)
 
 
 @pytest.mark.parametrize(

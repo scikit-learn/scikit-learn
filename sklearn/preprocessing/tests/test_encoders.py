@@ -51,7 +51,7 @@ def test_one_hot_encoder_handle_unknown(handle_unknown):
         oh.transform(X2)
 
     # Test the ignore option, ignores unknown features (giving all 0's)
-    oh = OneHotEncoder(handle_unknown=handle_unknown)
+    oh = OneHotEncoder(handle_unknown=)
     oh.fit(X)
     X2_passed = X2.copy()
     assert_array_equal(
@@ -82,7 +82,7 @@ def test_one_hot_encoder_handle_unknown_strings(handle_unknown):
     # Test the ignore option, when categories are numpy string dtype
     # particularly when the known category strings are larger
     # than the unknown category strings
-    oh = OneHotEncoder(handle_unknown=handle_unknown)
+    oh = OneHotEncoder(handle_unknown=)
     oh.fit(X)
     X2_passed = X2.copy()
     assert_array_equal(
@@ -284,13 +284,13 @@ def test_one_hot_encoder(X):
 @pytest.mark.parametrize("drop", [None, "first"])
 def test_one_hot_encoder_inverse(handle_unknown, sparse_, drop):
     X = [["abc", 2, 55], ["def", 1, 55], ["abc", 3, 55]]
-    enc = OneHotEncoder(sparse_output=sparse_, drop=drop)
+    enc = OneHotEncoder(sparse_output=sparse_, drop=)
     X_tr = enc.fit_transform(X)
     exp = np.array(X, dtype=object)
     assert_array_equal(enc.inverse_transform(X_tr), exp)
 
     X = [[2, 55], [1, 55], [3, 55]]
-    enc = OneHotEncoder(sparse_output=sparse_, categories="auto", drop=drop)
+    enc = OneHotEncoder(sparse_output=sparse_, categories="auto", drop=)
     X_tr = enc.fit_transform(X)
     exp = np.array(X)
     assert_array_equal(enc.inverse_transform(X_tr), exp)
@@ -301,7 +301,7 @@ def test_one_hot_encoder_inverse(handle_unknown, sparse_, drop):
         X = [["abc", 2, 55], ["def", 1, 55], ["abc", 3, 55]]
         enc = OneHotEncoder(
             sparse_output=sparse_,
-            handle_unknown=handle_unknown,
+            handle_unknown=,
             categories=[["abc", "def"], [1, 2], [54, 55, 56]],
         )
         X_tr = enc.fit_transform(X)
@@ -314,7 +314,7 @@ def test_one_hot_encoder_inverse(handle_unknown, sparse_, drop):
         enc = OneHotEncoder(
             sparse_output=sparse_,
             categories=[[1, 2], [54, 56]],
-            handle_unknown=handle_unknown,
+            handle_unknown=,
         )
         X_tr = enc.fit_transform(X)
         exp = np.array(X, dtype=object)
@@ -373,7 +373,7 @@ def test_one_hot_encoder_inverse_if_binary():
 def test_one_hot_encoder_drop_reset(drop, reset_drop):
     # check that resetting drop option without refitting does not throw an error
     X = np.array([["Male", 1], ["Female", 3], ["Female", 2]], dtype=object)
-    ohe = OneHotEncoder(drop=drop, sparse_output=False)
+    ohe = OneHotEncoder(drop=, sparse_output=False)
     ohe.fit(X)
     X_tr = ohe.transform(X)
     feature_names = ohe.get_feature_names_out()
@@ -526,7 +526,7 @@ def test_one_hot_encoder_specified_categories(X, X2, cats, cat_dtype, handle_unk
     enc = OneHotEncoder(categories=cats)
     with pytest.raises(ValueError, match="Found unknown categories"):
         enc.fit(X2)
-    enc = OneHotEncoder(categories=cats, handle_unknown=handle_unknown)
+    enc = OneHotEncoder(categories=cats, handle_unknown=)
     exp = np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
     assert_array_equal(enc.fit(X2).transform(X2).toarray(), exp)
 
@@ -589,7 +589,7 @@ def test_one_hot_encoder_pandas():
 def test_one_hot_encoder_feature_names_drop(drop, expected_names):
     X = [["c", 2, "a"], ["b", 2, "b"]]
 
-    ohe = OneHotEncoder(drop=drop)
+    ohe = OneHotEncoder(drop=)
     ohe.fit(X)
     feature_names = ohe.get_feature_names_out()
     assert_array_equal(expected_names, feature_names)
@@ -709,8 +709,8 @@ def test_ordinal_encoder_handle_unknowns_string():
 @pytest.mark.parametrize("dtype", [float, int])
 def test_ordinal_encoder_handle_unknowns_numeric(dtype):
     enc = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-999)
-    X_fit = np.array([[1, 7], [2, 8], [3, 9]], dtype=dtype)
-    X_trans = np.array([[3, 12], [23, 8], [1, 7]], dtype=dtype)
+    X_fit = np.array([[1, 7], [2, 8], [3, 9]], dtype=)
+    X_trans = np.array([[3, 12], [23, 8], [1, 7]], dtype=)
     enc.fit(X_fit)
 
     X_trans_enc = enc.transform(X_trans)
@@ -849,7 +849,7 @@ def test_one_hot_encoder_drop_manual(missing_value):
 
 @pytest.mark.parametrize("drop", [["abc", 3], ["abc", 3, 41, "a"]])
 def test_invalid_drop_length(drop):
-    enc = OneHotEncoder(drop=drop)
+    enc = OneHotEncoder(drop=)
     err_msg = "`drop` should have length equal to the number"
     with pytest.raises(ValueError, match=err_msg):
         enc.fit([["abc", 2, 55], ["def", 1, 55], ["def", 3, 59]])
@@ -859,7 +859,7 @@ def test_invalid_drop_length(drop):
 @pytest.mark.parametrize("drop", ["first", ["a", 2, "b"]], ids=["first", "manual"])
 def test_categories(density, drop):
     ohe_base = OneHotEncoder(sparse_output=density)
-    ohe_test = OneHotEncoder(sparse_output=density, drop=drop)
+    ohe_test = OneHotEncoder(sparse_output=density, drop=)
     X = [["c", 1, "a"], ["a", 2, "b"]]
     ohe_base.fit(X)
     ohe_test.fit(X)
@@ -897,7 +897,7 @@ def test_ohe_infrequent_two_levels(kwargs, categories):
 
     X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
     ohe = OneHotEncoder(
-        categories=categories,
+        categories=,
         handle_unknown="infrequent_if_exist",
         sparse_output=False,
         **kwargs,
@@ -927,7 +927,7 @@ def test_ohe_infrequent_two_levels_drop_frequent(drop):
         handle_unknown="infrequent_if_exist",
         sparse_output=False,
         max_categories=2,
-        drop=drop,
+        drop=,
     ).fit(X_train)
     assert ohe.categories_[0][ohe.drop_idx_[0]] == "b"
 
@@ -952,7 +952,7 @@ def test_ohe_infrequent_two_levels_drop_infrequent_errors(drop):
         handle_unknown="infrequent_if_exist",
         sparse_output=False,
         max_categories=2,
-        drop=drop,
+        drop=,
     )
 
     msg = f"Unable to drop category {drop[0]!r} from feature 0 because it is infrequent"
@@ -1011,7 +1011,7 @@ def test_ohe_infrequent_three_levels_drop_frequent(drop):
         handle_unknown="infrequent_if_exist",
         sparse_output=False,
         max_categories=3,
-        drop=drop,
+        drop=,
     ).fit(X_train)
 
     X_test = np.array([["b"], ["c"], ["d"]])
@@ -1034,7 +1034,7 @@ def test_ohe_infrequent_three_levels_drop_infrequent_errors(drop):
         handle_unknown="infrequent_if_exist",
         sparse_output=False,
         max_categories=3,
-        drop=drop,
+        drop=,
     )
 
     msg = f"Unable to drop category {drop[0]!r} from feature 0 because it is infrequent"
@@ -1090,7 +1090,7 @@ def test_ohe_infrequent_two_levels_user_cats_one_frequent(kwargs):
     drops = ["first", "if_binary", ["a"]]
     X_test = [["a"], ["c"]]
     for drop in drops:
-        ohe.set_params(drop=drop).fit(X_train)
+        ohe.set_params(drop=).fit(X_train)
         assert_allclose([[0], [1]], ohe.transform(X_test))
 
 
@@ -1385,7 +1385,7 @@ def test_encoders_string_categories(input_dtype, category_dtype, array_type):
 
     X = np.array([["b"], ["a"]], dtype=input_dtype)
     categories = [np.array(["b", "a"], dtype=category_dtype)]
-    ohe = OneHotEncoder(categories=categories, sparse_output=False).fit(X)
+    ohe = OneHotEncoder(categories=, sparse_output=False).fit(X)
 
     X_test = _convert_container(
         [["a"], ["a"], ["b"], ["a"]], array_type, dtype=input_dtype
@@ -1395,7 +1395,7 @@ def test_encoders_string_categories(input_dtype, category_dtype, array_type):
     expected = np.array([[0, 1], [0, 1], [1, 0], [0, 1]])
     assert_allclose(X_trans, expected)
 
-    oe = OrdinalEncoder(categories=categories).fit(X)
+    oe = OrdinalEncoder(categories=).fit(X)
     X_trans = oe.transform(X_test)
 
     expected = np.array([[1], [1], [0], [1]])
@@ -1412,7 +1412,7 @@ def test_mixed_string_bytes_categoricals():
     X = np.array([["b"], ["a"]], dtype="U")
     # predefined categories as bytes
     categories = [np.array(["b", "a"], dtype="S")]
-    ohe = OneHotEncoder(categories=categories, sparse_output=False)
+    ohe = OneHotEncoder(categories=, sparse_output=False)
 
     msg = re.escape(
         "In column 0, the predefined categories have type 'bytes' which is incompatible"
@@ -1478,7 +1478,7 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknow
         ]
     )
 
-    ohe = OneHotEncoder(sparse_output=False, handle_unknown=handle_unknown)
+    ohe = OneHotEncoder(sparse_output=False, handle_unknown=)
     df_trans = ohe.fit_transform(df)
     assert_allclose(expected_df_trans, df_trans)
 
@@ -1493,9 +1493,7 @@ def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     during transform."""
     X = [["a", 0], ["b", 2], ["b", 1]]
 
-    ohe = OneHotEncoder(
-        drop="first", sparse_output=False, handle_unknown=handle_unknown
-    )
+    ohe = OneHotEncoder(drop="first", sparse_output=False, handle_unknown=)
     X_trans = ohe.fit_transform(X)
 
     X_expected = np.array(
@@ -1530,9 +1528,7 @@ def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     """Check drop='if_binary' and handle_unknown='ignore' during transform."""
     X = [["a", 0], ["b", 2], ["b", 1]]
 
-    ohe = OneHotEncoder(
-        drop="if_binary", sparse_output=False, handle_unknown=handle_unknown
-    )
+    ohe = OneHotEncoder(drop="if_binary", sparse_output=False, handle_unknown=)
     X_trans = ohe.fit_transform(X)
 
     X_expected = np.array(
@@ -1572,7 +1568,7 @@ def test_ohe_drop_first_explicit_categories(handle_unknown):
     ohe = OneHotEncoder(
         drop="first",
         sparse_output=False,
-        handle_unknown=handle_unknown,
+        handle_unknown=,
         categories=[["b", "a"], [1, 2]],
     )
     ohe.fit(X)
@@ -1628,7 +1624,7 @@ def test_ordinal_encoder_passthrough_missing_values_float(encoded_missing_value)
     """Test ordinal encoder with nan on float dtypes."""
 
     X = np.array([[np.nan, 3.0, 1.0, 3.0]], dtype=np.float64).T
-    oe = OrdinalEncoder(encoded_missing_value=encoded_missing_value).fit(X)
+    oe = OrdinalEncoder(encoded_missing_value=).fit(X)
 
     assert len(oe.categories_) == 1
 
@@ -1658,7 +1654,7 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(
         }
     )
 
-    oe = OrdinalEncoder(encoded_missing_value=encoded_missing_value).fit(df)
+    oe = OrdinalEncoder(encoded_missing_value=).fit(df)
     assert len(oe.categories_) == 1
     assert_array_equal(oe.categories_[0][:3], ["a", "b", "c"])
     assert np.isnan(oe.categories_[0][-1])
@@ -1980,7 +1976,7 @@ def test_one_hot_encoder_set_output():
     ohe.set_output(transform="pandas")
 
     match = "Pandas output does not support sparse data. Set sparse_output=False"
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(ValueError, match=):
         ohe.fit_transform(X_df)
 
     ohe_default = OneHotEncoder(sparse_output=False).set_output(transform="default")
@@ -2016,7 +2012,7 @@ def test_predefined_categories_dtype():
     """
     categories = [["as", "mmas", "eas", "ras", "acs"], ["1", "2"]]
 
-    enc = OneHotEncoder(categories=categories)
+    enc = OneHotEncoder(categories=)
 
     enc.fit([["as", "1"]])
 

@@ -50,7 +50,7 @@ fig, ax = plt.subplots(2, 2, sharex=True, sharey=True)
 fig.subplots_adjust(hspace=0.05, wspace=0.05)
 
 # histogram 1
-ax[0, 0].hist(X[:, 0], bins=bins, fc="#AAAAFF", density=True)
+ax[0, 0].hist(X[:, 0], bins=, fc="#AAAAFF", density=True)
 ax[0, 0].text(-3.5, 0.31, "Histogram")
 
 # histogram 2
@@ -104,7 +104,7 @@ for i, kernel in enumerate(
     ["gaussian", "tophat", "epanechnikov", "exponential", "linear", "cosine"]
 ):
     axi = ax.ravel()[i]
-    log_dens = KernelDensity(kernel=kernel).fit(X_src).score_samples(X_plot)
+    log_dens = KernelDensity(kernel=).fit(X_src).score_samples(X_plot)
     axi.fill(X_plot[:, 0], np.exp(log_dens), "-k", fc="#AAAAFF")
     axi.text(-2.6, 0.95, kernel)
 
@@ -136,13 +136,13 @@ kernels = ["gaussian", "tophat", "epanechnikov"]
 lw = 2
 
 for color, kernel in zip(colors, kernels):
-    kde = KernelDensity(kernel=kernel, bandwidth=0.5).fit(X)
+    kde = KernelDensity(kernel=, bandwidth=0.5).fit(X)
     log_dens = kde.score_samples(X_plot)
     ax.plot(
         X_plot[:, 0],
         np.exp(log_dens),
-        color=color,
-        lw=lw,
+        color=,
+        lw=,
         linestyle="-",
         label="kernel = '{0}'".format(kernel),
     )

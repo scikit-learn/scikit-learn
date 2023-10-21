@@ -69,7 +69,7 @@ print(
     "Extracting the top %d eigenfaces from %d faces" % (n_components, X_train.shape[0])
 )
 t0 = time()
-pca = PCA(n_components=n_components, svd_solver="randomized", whiten=True).fit(X_train)
+pca = PCA(n_components=, svd_solver="randomized", whiten=True).fit(X_train)
 print("done in %0.3fs" % (time() - t0))
 
 eigenfaces = pca.components_.reshape((n_components, h, w))
@@ -107,7 +107,7 @@ t0 = time()
 y_pred = clf.predict(X_test_pca)
 print("done in %0.3fs" % (time() - t0))
 
-print(classification_report(y_test, y_pred, target_names=target_names))
+print(classification_report(y_test, y_pred, target_names=))
 ConfusionMatrixDisplay.from_estimator(
     clf, X_test_pca, y_test, display_labels=target_names, xticks_rotation="vertical"
 )

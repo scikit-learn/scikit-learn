@@ -51,7 +51,7 @@ def test_make_classification():
         hypercube=False,
         shift=None,
         scale=None,
-        weights=weights,
+        weights=,
         random_state=0,
     )
 
@@ -97,7 +97,7 @@ def test_make_classification_informative_features():
     class_sep = 1e6
     make = partial(
         make_classification,
-        class_sep=class_sep,
+        class_sep=,
         n_redundant=0,
         n_repeated=0,
         flip_y=0,
@@ -121,13 +121,13 @@ def test_make_classification_informative_features():
 
         for hypercube in (False, True):
             X, y = make(
-                n_samples=n_samples,
-                n_classes=n_classes,
-                weights=weights,
+                n_samples=,
+                n_classes=,
+                weights=,
                 n_features=n_informative,
-                n_informative=n_informative,
-                n_clusters_per_class=n_clusters_per_class,
-                hypercube=hypercube,
+                n_informative=,
+                n_clusters_per_class=,
+                hypercube=,
                 random_state=0,
             )
 
@@ -213,7 +213,7 @@ def test_make_classification_informative_features():
 )
 def test_make_classification_weights_type(weights, err_type, err_msg):
     with pytest.raises(err_type, match=err_msg):
-        make_classification(weights=weights)
+        make_classification(weights=)
 
 
 @pytest.mark.parametrize("kwargs", [{}, {"n_classes": 3, "n_informative": 3}])
@@ -232,7 +232,7 @@ def test_make_multilabel_classification_return_sequences():
             n_classes=3,
             random_state=0,
             return_indicator=False,
-            allow_unlabeled=allow_unlabeled,
+            allow_unlabeled=,
         )
         assert X.shape == (100, 20), "X shape mismatch"
         if not allow_unlabeled:
@@ -248,7 +248,7 @@ def test_make_multilabel_classification_return_indicator():
             n_features=20,
             n_classes=3,
             random_state=0,
-            allow_unlabeled=allow_unlabeled,
+            allow_unlabeled=,
         )
         assert X.shape == (25, 20), "X shape mismatch"
         assert Y.shape == (25, 3), "Y shape mismatch"
@@ -260,7 +260,7 @@ def test_make_multilabel_classification_return_indicator():
         n_features=20,
         n_classes=3,
         random_state=0,
-        allow_unlabeled=allow_unlabeled,
+        allow_unlabeled=,
         return_distributions=True,
     )
 
@@ -280,7 +280,7 @@ def test_make_multilabel_classification_return_indicator_sparse():
             n_classes=3,
             random_state=0,
             return_indicator="sparse",
-            allow_unlabeled=allow_unlabeled,
+            allow_unlabeled=,
         )
         assert X.shape == (25, 20), "X shape mismatch"
         assert Y.shape == (25, 3), "Y shape mismatch"
@@ -359,7 +359,7 @@ def test_make_blobs():
 
 def test_make_blobs_n_samples_list():
     n_samples = [50, 30, 20]
-    X, y = make_blobs(n_samples=n_samples, n_features=2, random_state=0)
+    X, y = make_blobs(n_samples=, n_features=2, random_state=0)
 
     assert X.shape == (sum(n_samples), 2), "X shape mismatch"
     assert all(
@@ -372,7 +372,7 @@ def test_make_blobs_n_samples_list_with_centers():
     centers = np.array([[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]])
     cluster_stds = np.array([0.05, 0.2, 0.4])
     X, y = make_blobs(
-        n_samples=n_samples, centers=centers, cluster_std=cluster_stds, random_state=0
+        n_samples=, centers=, cluster_std=cluster_stds, random_state=0
     )
 
     assert X.shape == (sum(n_samples), 2), "X shape mismatch"
@@ -388,7 +388,7 @@ def test_make_blobs_n_samples_list_with_centers():
 )
 def test_make_blobs_n_samples_centers_none(n_samples):
     centers = None
-    X, y = make_blobs(n_samples=n_samples, centers=centers, random_state=0)
+    X, y = make_blobs(n_samples=, centers=, random_state=0)
 
     assert X.shape == (sum(n_samples), 2), "X shape mismatch"
     assert all(
@@ -400,7 +400,7 @@ def test_make_blobs_return_centers():
     n_samples = [10, 20]
     n_features = 3
     X, y, centers = make_blobs(
-        n_samples=n_samples, n_features=n_features, return_centers=True, random_state=0
+        n_samples=, n_features=, return_centers=True, random_state=0
     )
 
     assert centers.shape == (len(n_samples), n_features)
@@ -421,7 +421,7 @@ def test_make_blobs_error():
         f"Got centers = {centers} and cluster_std = {cluster_stds[:-1]}"
     )
     with pytest.raises(ValueError, match=wrong_std_msg):
-        make_blobs(n_samples, centers=centers, cluster_std=cluster_stds[:-1])
+        make_blobs(n_samples, centers=, cluster_std=cluster_stds[:-1])
     wrong_type_msg = "Parameter `centers` must be array-like. Got {!r} instead".format(
         3
     )
@@ -561,9 +561,9 @@ def test_make_spd_matrix():
 def test_make_sparse_spd_matrix(norm_diag, sparse_format, global_random_seed):
     dim = 5
     X = make_sparse_spd_matrix(
-        dim=dim,
-        norm_diag=norm_diag,
-        sparse_format=sparse_format,
+        dim=,
+        norm_diag=,
+        sparse_format=,
         random_state=global_random_seed,
     )
 
@@ -590,7 +590,7 @@ def test_make_sparse_spd_matrix(norm_diag, sparse_format, global_random_seed):
 
 @pytest.mark.parametrize("hole", [False, True])
 def test_make_swiss_roll(hole):
-    X, t = make_swiss_roll(n_samples=5, noise=0.0, random_state=0, hole=hole)
+    X, t = make_swiss_roll(n_samples=5, noise=0.0, random_state=0, hole=)
 
     assert X.shape == (5, 3)
     assert t.shape == (5,)
@@ -685,7 +685,7 @@ def test_make_circles():
     for n_samples, n_outer, n_inner in [(7, 3, 4), (8, 4, 4)]:
         # Testing odd and even case, because in the past make_circles always
         # created an even number of samples.
-        X, y = make_circles(n_samples, shuffle=False, noise=None, factor=factor)
+        X, y = make_circles(n_samples, shuffle=False, noise=None, factor=)
         assert X.shape == (n_samples, 2), "X shape mismatch"
         assert y.shape == (n_samples,), "y shape mismatch"
         center = [0.0, 0.0]

@@ -76,7 +76,7 @@ data, data_csr = make_sparse_random_data(n_samples, n_features, n_nonzeros)
 )
 def test_invalid_jl_domain(n_samples, eps):
     with pytest.raises(ValueError):
-        johnson_lindenstrauss_min_dim(n_samples, eps=eps)
+        johnson_lindenstrauss_min_dim(n_samples, eps=)
 
 
 def test_input_size_jl_min_dim():
@@ -122,7 +122,7 @@ def check_input_with_sparse_random_matrix(random_matrix):
 
     for density in [-1.0, 0.0, 1.1]:
         with pytest.raises(ValueError):
-            random_matrix(n_components, n_features, density=density)
+            random_matrix(n_components, n_features, density=)
 
 
 @pytest.mark.parametrize("random_matrix", all_random_matrix)
@@ -165,7 +165,7 @@ def test_sparse_random_matrix():
         s = 1 / density
 
         A = _sparse_random_matrix(
-            n_components, n_features, density=density, random_state=0
+            n_components, n_features, density=, random_state=0
         )
         A = densify(A)
 
@@ -218,7 +218,7 @@ def test_random_projection_transformer_invalid_input():
     fit_data = [[0, 1, 2]]
     for RandomProjection in all_RandomProjection:
         with pytest.raises(ValueError):
-            RandomProjection(n_components=n_components).fit(fit_data)
+            RandomProjection(n_components=).fit(fit_data)
 
 
 def test_try_to_transform_before_fit():
@@ -253,7 +253,7 @@ def test_random_projection_embedding_quality():
     original_distances = original_distances[non_identical]
 
     for RandomProjection in all_RandomProjection:
-        rp = RandomProjection(n_components="auto", eps=eps, random_state=0)
+        rp = RandomProjection(n_components="auto", eps=, random_state=0)
         projected = rp.fit_transform(data)
 
         projected_distances = euclidean_distances(projected, squared=True)
@@ -393,8 +393,8 @@ def test_inverse_transform(
     n_components = 10
 
     random_projection = random_projection_cls(
-        n_components=n_components,
-        compute_inverse_components=compute_inverse_components,
+        n_components=,
+        compute_inverse_components=,
         random_state=global_random_seed,
     )
 
@@ -465,6 +465,6 @@ def test_random_projection_numerical_consistency(random_projection_cls):
     projection_32 = rp_32.fit_transform(X.astype(np.float32))
     projection_64 = rp_64.fit_transform(X.astype(np.float64))
 
-    assert_allclose(projection_64, projection_32, atol=atol)
+    assert_allclose(projection_64, projection_32, atol=)
 
     assert_allclose_dense_sparse(rp_32.components_, rp_64.components_)

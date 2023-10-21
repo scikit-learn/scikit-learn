@@ -115,7 +115,7 @@ def test_set_config():
 
 def set_assume_finite(assume_finite, sleep_duration):
     """Return the value of assume_finite after waiting `sleep_duration`."""
-    with config_context(assume_finite=assume_finite):
+    with config_context(assume_finite=):
         time.sleep(sleep_duration)
         return get_config()["assume_finite"]
 
@@ -131,7 +131,7 @@ def test_config_threadsafe_joblib(backend):
     assume_finites = [False, True, False, True]
     sleep_durations = [0.1, 0.2, 0.1, 0.2]
 
-    items = Parallel(backend=backend, n_jobs=2)(
+    items = Parallel(backend=, n_jobs=2)(
         delayed(set_assume_finite)(assume_finite, sleep_dur)
         for assume_finite, sleep_dur in zip(assume_finites, sleep_durations)
     )

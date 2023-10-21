@@ -402,7 +402,7 @@ def test_countvectorizer_custom_token_pattern():
         "Is this the 4th document?",
     ]
     token_pattern = r"[0-9]{1,3}(?:st|nd|rd|th)\s\b(\w{2,})\b"
-    vectorizer = CountVectorizer(token_pattern=token_pattern)
+    vectorizer = CountVectorizer(token_pattern=)
     vectorizer.fit_transform(corpus)
     expected = ["document", "one", "sample"]
     feature_names_out = vectorizer.get_feature_names_out()
@@ -423,7 +423,7 @@ def test_countvectorizer_custom_token_pattern_with_several_group():
 
     token_pattern = r"([0-9]{1,3}(?:st|nd|rd|th))\s\b(\w{2,})\b"
     err_msg = "More than 1 capturing group in token pattern"
-    vectorizer = CountVectorizer(token_pattern=token_pattern)
+    vectorizer = CountVectorizer(token_pattern=)
     with pytest.raises(ValueError, match=err_msg):
         vectorizer.fit(corpus)
 
@@ -439,7 +439,7 @@ def test_countvectorizer_uppercase_in_vocab():
         " be matched with any documents"
     )
 
-    vectorizer = CountVectorizer(lowercase=True, vocabulary=vocabulary)
+    vectorizer = CountVectorizer(lowercase=True, vocabulary=)
 
     with pytest.warns(UserWarning, match=message):
         vectorizer.fit(vocabulary)
@@ -617,9 +617,7 @@ def test_vectorizer():
 
 def test_tfidf_vectorizer_setters():
     norm, use_idf, smooth_idf, sublinear_tf = "l2", False, False, False
-    tv = TfidfVectorizer(
-        norm=norm, use_idf=use_idf, smooth_idf=smooth_idf, sublinear_tf=sublinear_tf
-    )
+    tv = TfidfVectorizer(norm=, use_idf=, smooth_idf=, sublinear_tf=)
     tv.fit(JUNK_FOOD_DOCS)
     assert tv._tfidf.norm == norm
     assert tv._tfidf.use_idf == use_idf
@@ -1041,7 +1039,7 @@ def test_vectorizer_unicode():
 def test_tfidf_vectorizer_with_fixed_vocabulary():
     # non regression smoke test for inheritance issues
     vocabulary = ["pizza", "celeri"]
-    vect = TfidfVectorizer(vocabulary=vocabulary)
+    vect = TfidfVectorizer(vocabulary=)
     X_1 = vect.fit_transform(ALL_FOOD_DOCS)
     X_2 = vect.transform(ALL_FOOD_DOCS)
     assert_array_almost_equal(X_1.toarray(), X_2.toarray())
@@ -1484,7 +1482,7 @@ def test_callable_analyzer_error(Estimator, input_type, err_type, err_msg):
 def test_callable_analyzer_change_behavior(Estimator, analyzer, input_type):
     data = ["this is text, not file or filename"]
     with pytest.raises((FileNotFoundError, AttributeError)):
-        Estimator(analyzer=analyzer, input=input_type).fit_transform(data)
+        Estimator(analyzer=, input=input_type).fit_transform(data)
 
 
 @pytest.mark.parametrize(
@@ -1502,7 +1500,7 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
     f.write("sample content\n")
 
     with pytest.raises(Exception, match="testing"):
-        Estimator(analyzer=analyzer, input="file").fit_transform([f])
+        Estimator(analyzer=, input="file").fit_transform([f])
 
 
 @pytest.mark.parametrize(
@@ -1598,12 +1596,12 @@ def test_unused_parameters_warn(
     # setting parameter and checking for corresponding warning messages
     vect = Vectorizer()
     vect.set_params(
-        stop_words=stop_words,
-        tokenizer=tokenizer,
-        preprocessor=preprocessor,
-        ngram_range=ngram_range,
-        token_pattern=token_pattern,
-        analyzer=analyzer,
+        stop_words=,
+        tokenizer=,
+        preprocessor=,
+        ngram_range=,
+        token_pattern=,
+        analyzer=,
     )
     msg = "The parameter %s will not be used since %s %s" % (
         unused_name,

@@ -59,7 +59,7 @@ def test_confusion_matrix_display_custom_labels(
     """Check the resulting plot when labels are given."""
     n_classes = 5
     X, y = make_classification(
-        n_samples=100, n_informative=5, n_classes=n_classes, random_state=0
+        n_samples=100, n_informative=5, n_classes=, random_state=0
     )
     classifier = SVC().fit(X, y)
     y_pred = classifier.predict(X)
@@ -71,7 +71,7 @@ def test_confusion_matrix_display_custom_labels(
     labels = [2, 1, 0, 3, 4] if with_labels else None
     display_labels = ["b", "d", "a", "e", "f"] if with_display_labels else None
 
-    cm = confusion_matrix(y, y_pred, labels=labels)
+    cm = confusion_matrix(y, y_pred, labels=)
     common_kwargs = {
         "ax": ax,
         "display_labels": display_labels,
@@ -112,7 +112,7 @@ def test_confusion_matrix_display_plotting(
     """Check the overall plotting rendering."""
     n_classes = 5
     X, y = make_classification(
-        n_samples=100, n_informative=5, n_classes=n_classes, random_state=0
+        n_samples=100, n_informative=5, n_classes=, random_state=0
     )
     classifier = SVC().fit(X, y)
     y_pred = classifier.predict(X)
@@ -185,7 +185,7 @@ def test_confusion_matrix_display(pyplot, constructor_name):
     methods."""
     n_classes = 5
     X, y = make_classification(
-        n_samples=100, n_informative=5, n_classes=n_classes, random_state=0
+        n_samples=100, n_informative=5, n_classes=, random_state=0
     )
     classifier = SVC().fit(X, y)
     y_pred = classifier.predict(X)
@@ -283,7 +283,7 @@ def test_confusion_matrix_pipeline(pyplot, clf):
     """Check the behaviour of the plotting with more complex pipeline."""
     n_classes = 5
     X, y = make_classification(
-        n_samples=100, n_informative=5, n_classes=n_classes, random_state=0
+        n_samples=100, n_informative=5, n_classes=, random_state=0
     )
     with pytest.raises(NotFittedError):
         ConfusionMatrixDisplay.from_estimator(clf, X, y)
@@ -306,7 +306,7 @@ def test_confusion_matrix_with_unknown_labels(pyplot, constructor_name):
     """
     n_classes = 5
     X, y = make_classification(
-        n_samples=100, n_informative=5, n_classes=n_classes, random_state=0
+        n_samples=100, n_informative=5, n_classes=, random_state=0
     )
     classifier = SVC().fit(X, y)
     y_pred = classifier.predict(X)

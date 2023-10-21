@@ -330,10 +330,10 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             X,
             y,
             svm_type=solver_type,
-            sample_weight=sample_weight,
+            sample_weight=,
             # TODO(1.4): Replace "_class_weight" with "class_weight_"
             class_weight=getattr(self, "_class_weight", np.empty(0)),
-            kernel=kernel,
+            kernel=,
             C=self.C,
             nu=self.nu,
             probability=self.probability,
@@ -345,7 +345,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             gamma=self._gamma,
             epsilon=self.epsilon,
             max_iter=self.max_iter,
-            random_seed=random_seed,
+            random_seed=,
         )
 
         self._warn_from_fit_status()
@@ -458,8 +458,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._intercept_,
             self._probA,
             self._probB,
-            svm_type=svm_type,
-            kernel=kernel,
+            svm_type=,
+            kernel=,
             degree=self.degree,
             coef0=self.coef0,
             gamma=self._gamma,
@@ -561,7 +561,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._probA,
             self._probB,
             svm_type=LIBSVM_IMPL.index(self._impl),
-            kernel=kernel,
+            kernel=,
             degree=self.degree,
             cache_size=self.cache_size,
             coef0=self.coef0,
@@ -721,21 +721,21 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         self.decision_function_shape = decision_function_shape
         self.break_ties = break_ties
         super().__init__(
-            kernel=kernel,
-            degree=degree,
-            gamma=gamma,
-            coef0=coef0,
-            tol=tol,
-            C=C,
-            nu=nu,
+            kernel=,
+            degree=,
+            gamma=,
+            coef0=,
+            tol=,
+            C=,
+            nu=,
             epsilon=0.0,
-            shrinking=shrinking,
-            probability=probability,
-            cache_size=cache_size,
-            class_weight=class_weight,
-            verbose=verbose,
-            max_iter=max_iter,
-            random_state=random_state,
+            shrinking=,
+            probability=,
+            cache_size=,
+            class_weight=,
+            verbose=,
+            max_iter=,
+            random_state=,
         )
 
     def _validate_targets(self, y):
@@ -915,8 +915,8 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             self._intercept_,
             self._probA,
             self._probB,
-            svm_type=svm_type,
-            kernel=kernel,
+            svm_type=,
+            kernel=,
             degree=self.degree,
             cache_size=self.cache_size,
             coef0=self.coef0,
@@ -1191,7 +1191,7 @@ def _fit_liblinear(
                 % classes_[0]
             )
 
-        class_weight_ = compute_class_weight(class_weight, classes=classes_, y=y)
+        class_weight_ = compute_class_weight(class_weight, classes=classes_, y=)
     else:
         class_weight_ = np.empty(0, dtype=np.float64)
         y_ind = y

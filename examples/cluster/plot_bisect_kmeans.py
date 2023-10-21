@@ -25,7 +25,7 @@ print(__doc__)
 n_samples = 10000
 random_state = 0
 
-X, _ = make_blobs(n_samples=n_samples, centers=2, random_state=random_state)
+X, _ = make_blobs(n_samples=, centers=2, random_state=)
 
 # Number of cluster centers for KMeans and BisectingKMeans
 n_clusters_list = [4, 8, 16]
@@ -45,7 +45,7 @@ axs = axs.T
 
 for i, (algorithm_name, Algorithm) in enumerate(clustering_algorithms.items()):
     for j, n_clusters in enumerate(n_clusters_list):
-        algo = Algorithm(n_clusters=n_clusters, random_state=random_state, n_init=3)
+        algo = Algorithm(n_clusters=, random_state=, n_init=3)
         algo.fit(X)
         centers = algo.cluster_centers_
 

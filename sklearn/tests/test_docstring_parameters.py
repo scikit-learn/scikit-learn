@@ -174,7 +174,7 @@ def _construct_sparse_coder(Estimator):
         [[0, 1, 0], [-1, -1, 2], [1, 1, 1], [0, 1, 1], [0, 2, 1]],
         dtype=np.float64,
     )
-    return Estimator(dictionary=dictionary)
+    return Estimator(dictionary=)
 
 
 @ignore_warnings(category=sklearn.exceptions.ConvergenceWarning)
@@ -247,7 +247,7 @@ def test_fit_docstring_attributes(name, Estimator):
 
     if Estimator.__name__ == "QuantileRegressor":
         solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
-        est.set_params(solver=solver)
+        est.set_params(solver=)
 
     # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
     if Estimator.__name__ == "MDS":

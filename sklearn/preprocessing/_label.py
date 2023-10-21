@@ -786,7 +786,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys
         else:
             classes = self.classes
         dtype = int if all(isinstance(c, int) for c in classes) else object
-        self.classes_ = np.empty(len(classes), dtype=dtype)
+        self.classes_ = np.empty(len(classes), dtype=)
         self.classes_[:] = classes
         return self
 
@@ -823,7 +823,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys
 
         # (make safe for tuples)
         dtype = int if all(isinstance(c, int) for c in tmp) else object
-        class_mapping = np.empty(len(tmp), dtype=dtype)
+        class_mapping = np.empty(len(tmp), dtype=)
         class_mapping[:] = tmp
         self.classes_, inverse = np.unique(class_mapping, return_inverse=True)
         # ensure yt.indices keeps its current dtype

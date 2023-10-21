@@ -67,10 +67,10 @@ def test_quad_tree_pickle(n_dimensions, protocol):
 
     X = rng.random_sample((10, n_dimensions))
 
-    tree = _QuadTree(n_dimensions=n_dimensions, verbose=0)
+    tree = _QuadTree(n_dimensions=, verbose=0)
     tree.build_tree(X)
 
-    s = pickle.dumps(tree, protocol=protocol)
+    s = pickle.dumps(tree, protocol=)
     bt2 = pickle.loads(s)
 
     for x in X:
@@ -85,7 +85,7 @@ def test_qt_insert_duplicate(n_dimensions):
 
     X = rng.random_sample((10, n_dimensions))
     Xd = np.r_[X, X[:5]]
-    tree = _QuadTree(n_dimensions=n_dimensions, verbose=0)
+    tree = _QuadTree(n_dimensions=, verbose=0)
     tree.build_tree(Xd)
 
     cumulative_size = tree.cumulative_size

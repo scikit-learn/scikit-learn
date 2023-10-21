@@ -73,7 +73,7 @@ def clone(estimator, *, safe=True):
     """
     if hasattr(estimator, "__sklearn_clone__") and not inspect.isclass(estimator):
         return estimator.__sklearn_clone__()
-    return _clone_parametrized(estimator, safe=safe)
+    return _clone_parametrized(estimator, safe=)
 
 
 def _clone_parametrized(estimator, *, safe=True):
@@ -81,9 +81,9 @@ def _clone_parametrized(estimator, *, safe=True):
 
     estimator_type = type(estimator)
     if estimator_type is dict:
-        return {k: clone(v, safe=safe) for k, v in estimator.items()}
+        return {k: clone(v, safe=) for k, v in estimator.items()}
     elif estimator_type in (list, tuple, set, frozenset):
-        return estimator_type([clone(e, safe=safe) for e in estimator])
+        return estimator_type([clone(e, safe=) for e in estimator])
     elif not hasattr(estimator, "get_params") or isinstance(estimator, type):
         if not safe:
             return copy.deepcopy(estimator)
@@ -577,7 +577,7 @@ class BaseEstimator(_MetadataRequester):
             The validated input. A tuple is returned if both `X` and `y` are
             validated.
         """
-        self._check_feature_names(X, reset=reset)
+        self._check_feature_names(X, reset=)
 
         if y is None and self._get_tags()["requires_y"]:
             raise ValueError(
@@ -623,7 +623,7 @@ class BaseEstimator(_MetadataRequester):
             out = X, y
 
         if not no_val_X and check_params.get("ensure_2d", True):
-            self._check_n_features(X, reset=reset)
+            self._check_n_features(X, reset=)
 
         return out
 
@@ -703,7 +703,7 @@ class ClassifierMixin:
         """
         from .metrics import accuracy_score
 
-        return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
+        return accuracy_score(y, self.predict(X), sample_weight=)
 
     def _more_tags(self):
         return {"requires_y": True}
@@ -758,7 +758,7 @@ class RegressorMixin:
         from .metrics import r2_score
 
         y_pred = self.predict(X)
-        return r2_score(y, y_pred, sample_weight=sample_weight)
+        return r2_score(y, y_pred, sample_weight=)
 
     def _more_tags(self):
         return {"requires_y": True}
@@ -1014,7 +1014,7 @@ class ClassNamePrefixFeaturesOutMixin:
         """
         check_is_fitted(self, "_n_features_out")
         return _generate_get_feature_names_out(
-            self, self._n_features_out, input_features=input_features
+            self, self._n_features_out, input_features=
         )
 
 

@@ -41,7 +41,7 @@ def bench_one(name, clf_type, clf_params, n_iter):
     try:
         clf.set_params(max_iter=n_iter, random_state=42)
     except Exception:
-        clf.set_params(n_iter=n_iter, random_state=42)
+        clf.set_params(n_iter=, random_state=42)
 
     st = time.time()
     clf.fit(X, y)
@@ -179,10 +179,10 @@ clfs = [
     (
         "LR-liblinear",
         LogisticRegression(
-            C=C,
-            tol=tol,
+            C=,
+            tol=,
             solver="liblinear",
-            fit_intercept=fit_intercept,
+            fit_intercept=,
             intercept_scaling=1,
         ),
         liblinear_iter_range,
@@ -194,11 +194,11 @@ clfs = [
     (
         "LR-liblinear-dual",
         LogisticRegression(
-            C=C,
-            tol=tol,
+            C=,
+            tol=,
             dual=True,
             solver="liblinear",
-            fit_intercept=fit_intercept,
+            fit_intercept=,
             intercept_scaling=1,
         ),
         liblinear_dual_iter_range,
@@ -209,7 +209,7 @@ clfs = [
     ),
     (
         "LR-SAG",
-        LogisticRegression(C=C, tol=tol, solver="sag", fit_intercept=fit_intercept),
+        LogisticRegression(C=, tol=, solver="sag", fit_intercept=),
         sag_iter_range,
         [],
         [],
@@ -218,9 +218,7 @@ clfs = [
     ),
     (
         "LR-newton-cg",
-        LogisticRegression(
-            C=C, tol=tol, solver="newton-cg", fit_intercept=fit_intercept
-        ),
+        LogisticRegression(C=, tol=, solver="newton-cg", fit_intercept=),
         newton_iter_range,
         [],
         [],
@@ -229,7 +227,7 @@ clfs = [
     ),
     (
         "LR-lbfgs",
-        LogisticRegression(C=C, tol=tol, solver="lbfgs", fit_intercept=fit_intercept),
+        LogisticRegression(C=, tol=, solver="lbfgs", fit_intercept=),
         lbfgs_iter_range,
         [],
         [],
@@ -242,7 +240,7 @@ clfs = [
             alpha=1.0 / C / n_samples,
             penalty="l2",
             loss="log_loss",
-            fit_intercept=fit_intercept,
+            fit_intercept=,
             verbose=0,
         ),
         sgd_iter_range,
@@ -264,7 +262,7 @@ if lightning_clf is not None and not fit_intercept:
         (
             "Lightning-SVRG",
             lightning_clf.SVRGClassifier(
-                alpha=alpha, eta=step_size, tol=tol, loss="log"
+                alpha=, eta=step_size, tol=, loss="log"
             ),
             sag_iter_range,
             [],
@@ -277,7 +275,7 @@ if lightning_clf is not None and not fit_intercept:
         (
             "Lightning-SAG",
             lightning_clf.SAGClassifier(
-                alpha=alpha, eta=step_size, tol=tol, loss="log"
+                alpha=, eta=step_size, tol=, loss="log"
             ),
             sag_iter_range,
             [],

@@ -139,10 +139,10 @@ def test_branching_factor(global_random_seed, global_dtype):
     branching_factor = 9
 
     # Purposefully set a low threshold to maximize the subclusters.
-    brc = Birch(n_clusters=None, branching_factor=branching_factor, threshold=0.01)
+    brc = Birch(n_clusters=None, branching_factor=, threshold=0.01)
     brc.fit(X)
     check_branching_factor(brc.root_, branching_factor)
-    brc = Birch(n_clusters=3, branching_factor=branching_factor, threshold=0.01)
+    brc = Birch(n_clusters=3, branching_factor=, threshold=0.01)
     brc.fit(X)
     check_branching_factor(brc.root_, branching_factor)
 
@@ -175,7 +175,7 @@ def test_birch_n_clusters_long_int():
     # coming from np.arange. #16484
     X, _ = make_blobs(random_state=0)
     n_clusters = np.int64(5)
-    Birch(n_clusters=n_clusters).fit(X)
+    Birch(n_clusters=).fit(X)
 
 
 def test_feature_names_out():

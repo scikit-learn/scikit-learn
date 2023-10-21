@@ -84,7 +84,7 @@ def _random_choice_csc(n_samples, classes, class_probability=None, random_state=
             p_nonzero = 1 - class_prob_j[index_class_0]
             nnz = int(n_samples * p_nonzero)
             ind_sample = sample_without_replacement(
-                n_population=n_samples, n_samples=nnz, random_state=random_state
+                n_population=n_samples, n_samples=nnz, random_state=
             )
             indices.extend(ind_sample)
 

@@ -311,7 +311,7 @@ def spectral_embedding(
             laplacian *= -1
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             _, diffusion_map = eigsh(
-                laplacian, k=n_components, sigma=1.0, which="LM", tol=tol, v0=v0
+                laplacian, k=n_components, sigma=1.0, which="LM", tol=, v0=
             )
             embedding = diffusion_map.T[n_components::-1]
             if norm_laplacian:
@@ -355,7 +355,7 @@ def spectral_embedding(
         X = X.astype(laplacian.dtype)
 
         tol = None if eigen_tol == "auto" else eigen_tol
-        _, diffusion_map = lobpcg(laplacian, X, M=M, tol=tol, largest=False)
+        _, diffusion_map = lobpcg(laplacian, X, M=, tol=, largest=False)
         embedding = diffusion_map.T
         if norm_laplacian:
             # recover u = D^-1/2 x from the eigenvector output x
@@ -390,7 +390,7 @@ def spectral_embedding(
             X = X.astype(laplacian.dtype)
             tol = None if eigen_tol == "auto" else eigen_tol
             _, diffusion_map = lobpcg(
-                laplacian, X, tol=tol, largest=False, maxiter=2000
+                laplacian, X, tol=, largest=False, maxiter=2000
             )
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
@@ -619,7 +619,7 @@ class SpectralEmbedding(BaseEstimator):
             estimator = NearestNeighbors(
                 n_neighbors=self.n_neighbors, n_jobs=self.n_jobs, metric="precomputed"
             ).fit(X)
-            connectivity = estimator.kneighbors_graph(X=X, mode="connectivity")
+            connectivity = estimator.kneighbors_graph(X=, mode="connectivity")
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
             return self.affinity_matrix_
         if self.affinity == "nearest_neighbors":
@@ -684,7 +684,7 @@ class SpectralEmbedding(BaseEstimator):
             n_components=self.n_components,
             eigen_solver=self.eigen_solver,
             eigen_tol=self.eigen_tol,
-            random_state=random_state,
+            random_state=,
         )
         return self
 

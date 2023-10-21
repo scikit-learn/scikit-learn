@@ -36,7 +36,7 @@ for shrinkage in [None, 0.2]:
 
     _, ax = plt.subplots()
     DecisionBoundaryDisplay.from_estimator(
-        clf, X, cmap=cmap_light, ax=ax, response_method="predict"
+        clf, X, cmap=cmap_light, ax=, response_method="predict"
     )
 
     # Plot also the training points

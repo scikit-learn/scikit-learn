@@ -60,8 +60,8 @@ n_samples_range = np.logspace(1, 9, 9)
 
 plt.figure()
 for eps, color in zip(eps_range, colors):
-    min_n_components = johnson_lindenstrauss_min_dim(n_samples_range, eps=eps)
-    plt.loglog(n_samples_range, min_n_components, color=color)
+    min_n_components = johnson_lindenstrauss_min_dim(n_samples_range, eps=)
+    plt.loglog(n_samples_range, min_n_components, color=)
 
 plt.legend([f"eps = {eps:0.1f}" for eps in eps_range], loc="lower right")
 plt.xlabel("Number of observations to eps-embed")
@@ -85,7 +85,7 @@ colors = plt.cm.Blues(np.linspace(0.3, 1.0, len(n_samples_range)))
 plt.figure()
 for n_samples, color in zip(n_samples_range, colors):
     min_n_components = johnson_lindenstrauss_min_dim(n_samples, eps=eps_range)
-    plt.semilogy(eps_range, min_n_components, color=color)
+    plt.semilogy(eps_range, min_n_components, color=)
 
 plt.legend([f"n_samples = {n}" for n in n_samples_range], loc="upper right")
 plt.xlabel("Distortion eps")
@@ -141,7 +141,7 @@ dists = dists[nonzero]
 
 for n_components in n_components_range:
     t0 = time()
-    rp = SparseRandomProjection(n_components=n_components)
+    rp = SparseRandomProjection(n_components=)
     projected_data = rp.fit_transform(data)
     print(
         f"Projected {n_samples} samples from {n_features} to {n_components} in "

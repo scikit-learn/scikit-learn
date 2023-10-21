@@ -64,7 +64,7 @@ def _linkcode_resolve(domain, info, package, url_fmt, revision):
         lineno = inspect.getsourcelines(obj)[1]
     except Exception:
         lineno = ""
-    return url_fmt.format(revision=revision, package=package, path=fn, lineno=lineno)
+    return url_fmt.format(revision=, package=, path=fn, lineno=)
 
 
 def make_linkcode_resolve(package, url_fmt):
@@ -79,6 +79,4 @@ def make_linkcode_resolve(package, url_fmt):
                                    '{path}#L{lineno}')
     """
     revision = _get_git_revision()
-    return partial(
-        _linkcode_resolve, revision=revision, package=package, url_fmt=url_fmt
-    )
+    return partial(_linkcode_resolve, revision=, package=, url_fmt=)

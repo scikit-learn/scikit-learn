@@ -72,7 +72,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         raise ValueError("{0} format is not supported".format(y_type))
 
     if y_type == "binary":
-        return binary_metric(y_true, y_score, sample_weight=sample_weight)
+        return binary_metric(y_true, y_score, sample_weight=)
 
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = check_array(y_true)

@@ -100,8 +100,8 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         correct keyword.
     """
     check_consistent_length(y_true, y_pred)
-    y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
-    y_pred = check_array(y_pred, ensure_2d=False, dtype=dtype)
+    y_true = check_array(y_true, ensure_2d=False, dtype=)
+    y_pred = check_array(y_pred, ensure_2d=False, dtype=)
 
     if y_true.ndim == 1:
         y_true = y_true.reshape((-1, 1))
@@ -491,7 +491,7 @@ def mean_squared_error(
         )
         if not squared:
             return root_mean_squared_error(
-                y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
+                y_true, y_pred, sample_weight=, multioutput=
             )
 
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
@@ -570,7 +570,7 @@ def root_mean_squared_error(
     """
     output_errors = np.sqrt(
         mean_squared_error(
-            y_true, y_pred, sample_weight=sample_weight, multioutput="raw_values"
+            y_true, y_pred, sample_weight=, multioutput="raw_values"
         )
     )
 
@@ -674,7 +674,7 @@ def mean_squared_log_error(
         )
         if not squared:
             return root_mean_squared_log_error(
-                y_true, y_pred, sample_weight=sample_weight, multioutput=multioutput
+                y_true, y_pred, sample_weight=, multioutput=
             )
 
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
@@ -691,8 +691,8 @@ def mean_squared_log_error(
     return mean_squared_error(
         np.log1p(y_true),
         np.log1p(y_pred),
-        sample_weight=sample_weight,
-        multioutput=multioutput,
+        sample_weight=,
+        multioutput=,
     )
 
 
@@ -764,8 +764,8 @@ def root_mean_squared_log_error(
     return root_mean_squared_error(
         np.log1p(y_true),
         np.log1p(y_pred),
-        sample_weight=sample_weight,
-        multioutput=multioutput,
+        sample_weight=,
+        multioutput=,
     )
 
 
@@ -842,7 +842,7 @@ def median_absolute_error(
     else:
         sample_weight = _check_sample_weight(sample_weight, y_pred)
         output_errors = _weighted_percentile(
-            np.abs(y_pred - y_true), sample_weight=sample_weight
+            np.abs(y_pred - y_true), sample_weight=
         )
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
@@ -1028,11 +1028,11 @@ def explained_variance_score(
     denominator = np.average((y_true - y_true_avg) ** 2, weights=sample_weight, axis=0)
 
     return _assemble_r2_explained_variance(
-        numerator=numerator,
-        denominator=denominator,
+        numerator=,
+        denominator=,
         n_outputs=y_true.shape[1],
-        multioutput=multioutput,
-        force_finite=force_finite,
+        multioutput=,
+        force_finite=,
     )
 
 
@@ -1199,11 +1199,11 @@ def r2_score(
     ).sum(axis=0, dtype=np.float64)
 
     return _assemble_r2_explained_variance(
-        numerator=numerator,
-        denominator=denominator,
+        numerator=,
+        denominator=,
         n_outputs=y_true.shape[1],
-        multioutput=multioutput,
-        force_finite=force_finite,
+        multioutput=,
+        force_finite=,
     )
 
 
@@ -1367,9 +1367,7 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
         # Unreachable statement
         raise ValueError
 
-    return _mean_tweedie_deviance(
-        y_true, y_pred, sample_weight=sample_weight, power=power
-    )
+    return _mean_tweedie_deviance(y_true, y_pred, sample_weight=, power=)
 
 
 @validate_params(
@@ -1412,7 +1410,7 @@ def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     >>> mean_poisson_deviance(y_true, y_pred)
     1.4260...
     """
-    return mean_tweedie_deviance(y_true, y_pred, sample_weight=sample_weight, power=1)
+    return mean_tweedie_deviance(y_true, y_pred, sample_weight=, power=1)
 
 
 @validate_params(
@@ -1456,7 +1454,7 @@ def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     >>> mean_gamma_deviance(y_true, y_pred)
     1.0568...
     """
-    return mean_tweedie_deviance(y_true, y_pred, sample_weight=sample_weight, power=2)
+    return mean_tweedie_deviance(y_true, y_pred, sample_weight=, power=2)
 
 
 @validate_params(
@@ -1559,14 +1557,10 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
         return float("nan")
 
     y_true, y_pred = np.squeeze(y_true), np.squeeze(y_pred)
-    numerator = mean_tweedie_deviance(
-        y_true, y_pred, sample_weight=sample_weight, power=power
-    )
+    numerator = mean_tweedie_deviance(y_true, y_pred, sample_weight=, power=)
 
     y_avg = np.average(y_true, weights=sample_weight)
-    denominator = _mean_tweedie_deviance(
-        y_true, y_avg, sample_weight=sample_weight, power=power
-    )
+    denominator = _mean_tweedie_deviance(y_true, y_avg, sample_weight=, power=)
 
     return 1 - numerator / denominator
 
@@ -1676,8 +1670,8 @@ def d2_pinball_score(
     numerator = mean_pinball_loss(
         y_true,
         y_pred,
-        sample_weight=sample_weight,
-        alpha=alpha,
+        sample_weight=,
+        alpha=,
         multioutput="raw_values",
     )
 
@@ -1689,7 +1683,7 @@ def d2_pinball_score(
         sample_weight = _check_sample_weight(sample_weight, y_true)
         y_quantile = np.tile(
             _weighted_percentile(
-                y_true, sample_weight=sample_weight, percentile=alpha * 100
+                y_true, sample_weight=, percentile=alpha * 100
             ),
             (len(y_true), 1),
         )
@@ -1697,8 +1691,8 @@ def d2_pinball_score(
     denominator = mean_pinball_loss(
         y_true,
         y_quantile,
-        sample_weight=sample_weight,
-        alpha=alpha,
+        sample_weight=,
+        alpha=,
         multioutput="raw_values",
     )
 
@@ -1819,5 +1813,5 @@ def d2_absolute_error_score(
     -1.0
     """
     return d2_pinball_score(
-        y_true, y_pred, sample_weight=sample_weight, alpha=0.5, multioutput=multioutput
+        y_true, y_pred, sample_weight=, alpha=0.5, multioutput=
     )

@@ -338,7 +338,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             self.random_state,
             self.multi_class,
             self.loss,
-            sample_weight=sample_weight,
+            sample_weight=,
         )
         # Backward compatibility: _fit_liblinear is used both by LinearSVC/R
         # and LogisticRegression but LogisticRegression sets a structured
@@ -602,7 +602,7 @@ class LinearSVR(RegressorMixin, LinearModel):
             self.random_state,
             loss=self.loss,
             epsilon=self.epsilon,
-            sample_weight=sample_weight,
+            sample_weight=,
         )
         self.coef_ = self.coef_.ravel()
         # Backward compatibility: _fit_liblinear is used both by LinearSVC/R
@@ -871,22 +871,22 @@ class SVC(BaseSVC):
         random_state=None,
     ):
         super().__init__(
-            kernel=kernel,
-            degree=degree,
-            gamma=gamma,
-            coef0=coef0,
-            tol=tol,
-            C=C,
+            kernel=,
+            degree=,
+            gamma=,
+            coef0=,
+            tol=,
+            C=,
             nu=0.0,
-            shrinking=shrinking,
-            probability=probability,
-            cache_size=cache_size,
-            class_weight=class_weight,
-            verbose=verbose,
-            max_iter=max_iter,
-            decision_function_shape=decision_function_shape,
-            break_ties=break_ties,
-            random_state=random_state,
+            shrinking=,
+            probability=,
+            cache_size=,
+            class_weight=,
+            verbose=,
+            max_iter=,
+            decision_function_shape=,
+            break_ties=,
+            random_state=,
         )
 
     def _more_tags(self):
@@ -1141,22 +1141,22 @@ class NuSVC(BaseSVC):
         random_state=None,
     ):
         super().__init__(
-            kernel=kernel,
-            degree=degree,
-            gamma=gamma,
-            coef0=coef0,
-            tol=tol,
+            kernel=,
+            degree=,
+            gamma=,
+            coef0=,
+            tol=,
             C=0.0,
-            nu=nu,
-            shrinking=shrinking,
-            probability=probability,
-            cache_size=cache_size,
-            class_weight=class_weight,
-            verbose=verbose,
-            max_iter=max_iter,
-            decision_function_shape=decision_function_shape,
-            break_ties=break_ties,
-            random_state=random_state,
+            nu=,
+            shrinking=,
+            probability=,
+            cache_size=,
+            class_weight=,
+            verbose=,
+            max_iter=,
+            decision_function_shape=,
+            break_ties=,
+            random_state=,
         )
 
     def _more_tags(self):
@@ -1355,20 +1355,20 @@ class SVR(RegressorMixin, BaseLibSVM):
         max_iter=-1,
     ):
         super().__init__(
-            kernel=kernel,
-            degree=degree,
-            gamma=gamma,
-            coef0=coef0,
-            tol=tol,
-            C=C,
+            kernel=,
+            degree=,
+            gamma=,
+            coef0=,
+            tol=,
+            C=,
             nu=0.0,
-            epsilon=epsilon,
-            verbose=verbose,
-            shrinking=shrinking,
+            epsilon=,
+            verbose=,
+            shrinking=,
             probability=False,
-            cache_size=cache_size,
+            cache_size=,
             class_weight=None,
-            max_iter=max_iter,
+            max_iter=,
             random_state=None,
         )
 
@@ -1563,20 +1563,20 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         max_iter=-1,
     ):
         super().__init__(
-            kernel=kernel,
-            degree=degree,
-            gamma=gamma,
-            coef0=coef0,
-            tol=tol,
-            C=C,
-            nu=nu,
+            kernel=,
+            degree=,
+            gamma=,
+            coef0=,
+            tol=,
+            C=,
+            nu=,
             epsilon=0.0,
-            shrinking=shrinking,
+            shrinking=,
             probability=False,
-            cache_size=cache_size,
+            cache_size=,
             class_weight=None,
-            verbose=verbose,
-            max_iter=max_iter,
+            verbose=,
+            max_iter=,
             random_state=None,
         )
 
@@ -1811,7 +1811,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         -----
         If X is not a C-ordered contiguous array it is copied.
         """
-        super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight)
+        super().fit(X, np.ones(_num_samples(X)), sample_weight=)
         self.offset_ = -self._intercept_
         return self
 

@@ -14,7 +14,7 @@ densities = np.array([0.01, 0.1, 1.0])
 csr_times = {d: np.zeros(len(dimensionalities)) for d in densities}
 dense_times = {d: np.zeros(len(dimensionalities)) for d in densities}
 transform = PolynomialFeatures(
-    degree=degree, include_bias=False, interaction_only=False
+    degree=, include_bias=False, interaction_only=False
 )
 
 for trial in range(trials):

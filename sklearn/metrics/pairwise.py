@@ -154,28 +154,28 @@ def check_pairwise_arrays(
     if Y is X or Y is None:
         X = Y = check_array(
             X,
-            accept_sparse=accept_sparse,
-            dtype=dtype,
-            copy=copy,
-            force_all_finite=force_all_finite,
-            estimator=estimator,
+            accept_sparse=,
+            dtype=,
+            copy=,
+            force_all_finite=,
+            estimator=,
         )
     else:
         X = check_array(
             X,
-            accept_sparse=accept_sparse,
-            dtype=dtype,
-            copy=copy,
-            force_all_finite=force_all_finite,
-            estimator=estimator,
+            accept_sparse=,
+            dtype=,
+            copy=,
+            force_all_finite=,
+            estimator=,
         )
         Y = check_array(
             Y,
-            accept_sparse=accept_sparse,
-            dtype=dtype,
-            copy=copy,
-            force_all_finite=force_all_finite,
-            estimator=estimator,
+            accept_sparse=,
+            dtype=,
+            copy=,
+            force_all_finite=,
+            estimator=,
         )
 
     if precomputed:
@@ -488,7 +488,7 @@ def nan_euclidean_distances(
 
     force_all_finite = "allow-nan" if is_scalar_nan(missing_values) else True
     X, Y = check_pairwise_arrays(
-        X, Y, accept_sparse=False, force_all_finite=force_all_finite, copy=copy
+        X, Y, accept_sparse=False, force_all_finite=, copy=
     )
     # Get missing mask for X
     missing_X = _get_mask(X, missing_values)
@@ -763,11 +763,11 @@ def pairwise_distances_argmin_min(
             metric_kwargs = {}
 
         values, indices = ArgKmin.compute(
-            X=X,
-            Y=Y,
+            X=,
+            Y=,
             k=1,
-            metric=metric,
-            metric_kwargs=metric_kwargs,
+            metric=,
+            metric_kwargs=,
             strategy="auto",
             return_distance=True,
         )
@@ -786,7 +786,7 @@ def pairwise_distances_argmin_min(
         with config_context(assume_finite=True):
             indices, values = zip(
                 *pairwise_distances_chunked(
-                    X, Y, reduce_func=_argmin_min_reduce, metric=metric, **metric_kwargs
+                    X, Y, reduce_func=_argmin_min_reduce, metric=, **metric_kwargs
                 )
             )
         indices = np.concatenate(indices)
@@ -898,11 +898,11 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
             metric_kwargs = {}
 
         indices = ArgKmin.compute(
-            X=X,
-            Y=Y,
+            X=,
+            Y=,
             k=1,
-            metric=metric,
-            metric_kwargs=metric_kwargs,
+            metric=,
+            metric_kwargs=,
             strategy="auto",
             return_distance=False,
         )
@@ -923,7 +923,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
                     # This returns a np.ndarray generator whose arrays we need
                     # to flatten into one.
                     pairwise_distances_chunked(
-                        X, Y, reduce_func=_argmin_reduce, metric=metric, **metric_kwargs
+                        X, Y, reduce_func=_argmin_reduce, metric=, **metric_kwargs
                     )
                 )
             )
@@ -1355,7 +1355,7 @@ def linear_kernel(X, Y=None, dense_output=True):
         The Gram matrix of the linear kernel, i.e. `X @ Y.T`.
     """
     X, Y = check_pairwise_arrays(X, Y)
-    return safe_sparse_dot(X, Y.T, dense_output=dense_output)
+    return safe_sparse_dot(X, Y.T, dense_output=)
 
 
 @validate_params(
@@ -1611,7 +1611,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
     else:
         Y_normalized = normalize(Y, copy=True)
 
-    K = safe_sparse_dot(X_normalized, Y_normalized.T, dense_output=dense_output)
+    K = safe_sparse_dot(X_normalized, Y_normalized.T, dense_output=)
 
     return K
 
@@ -1803,8 +1803,8 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
     # enforce a threading backend to prevent data communication overhead
     fd = delayed(_dist_wrapper)
-    ret = np.empty((X.shape[0], Y.shape[0]), dtype=dtype, order="F")
-    Parallel(backend="threading", n_jobs=n_jobs)(
+    ret = np.empty((X.shape[0], Y.shape[0]), dtype=, order="F")
+    Parallel(backend="threading", n_jobs=)(
         fd(func, ret, s, X, Y[s], **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
     )
@@ -1819,7 +1819,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
 def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}."""
-    X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
+    X, Y = check_pairwise_arrays(X, Y, force_all_finite=)
 
     if X is Y:
         # Only calculate metric for upper triangle
@@ -2059,12 +2059,12 @@ def pairwise_distances_chunked(
         chunk_n_rows = get_chunk_n_rows(
             row_bytes=8 * _num_samples(Y),
             max_n_rows=n_samples_X,
-            working_memory=working_memory,
+            working_memory=,
         )
         slices = gen_batches(n_samples_X, chunk_n_rows)
 
     # precompute data-derived metric params
-    params = _precompute_metric_params(X, Y, metric=metric, **kwds)
+    params = _precompute_metric_params(X, Y, metric=, **kwds)
     kwds.update(**params)
 
     for sl in slices:
@@ -2072,7 +2072,7 @@ def pairwise_distances_chunked(
             X_chunk = X  # enable optimised paths for X is Y
         else:
             X_chunk = X[sl]
-        D_chunk = pairwise_distances(X_chunk, Y, metric=metric, n_jobs=n_jobs, **kwds)
+        D_chunk = pairwise_distances(X_chunk, Y, metric=, n_jobs=, **kwds)
         if (X is Y or Y is None) and PAIRWISE_DISTANCE_FUNCTIONS.get(
             metric, None
         ) is euclidean_distances:
@@ -2212,22 +2212,18 @@ def pairwise_distances(
         corresponding elements of two arrays.
     """
     if metric == "precomputed":
-        X, _ = check_pairwise_arrays(
-            X, Y, precomputed=True, force_all_finite=force_all_finite
-        )
+        X, _ = check_pairwise_arrays(X, Y, precomputed=True, force_all_finite=)
 
         whom = (
             "`pairwise_distances`. Precomputed distance "
             " need to have non-negative values."
         )
-        check_non_negative(X, whom=whom)
+        check_non_negative(X, whom=)
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):
-        func = partial(
-            _pairwise_callable, metric=metric, force_all_finite=force_all_finite, **kwds
-        )
+        func = partial(_pairwise_callable, metric=, force_all_finite=, **kwds)
     else:
         if issparse(X) or issparse(Y):
             raise TypeError("scipy distance metrics do not support sparse matrices.")
@@ -2238,17 +2234,15 @@ def pairwise_distances(
             msg = "Data was converted to boolean for metric %s" % metric
             warnings.warn(msg, DataConversionWarning)
 
-        X, Y = check_pairwise_arrays(
-            X, Y, dtype=dtype, force_all_finite=force_all_finite
-        )
+        X, Y = check_pairwise_arrays(X, Y, dtype=, force_all_finite=)
 
         # precompute data-derived metric params
-        params = _precompute_metric_params(X, Y, metric=metric, **kwds)
+        params = _precompute_metric_params(X, Y, metric=, **kwds)
         kwds.update(**params)
 
         if effective_n_jobs(n_jobs) == 1 and X is Y:
-            return distance.squareform(distance.pdist(X, metric=metric, **kwds))
-        func = partial(distance.cdist, metric=metric, **kwds)
+            return distance.squareform(distance.pdist(X, metric=, **kwds))
+        func = partial(distance.cdist, metric=, **kwds)
 
     return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
 
@@ -2430,6 +2424,6 @@ def pairwise_kernels(
             kwds = {k: kwds[k] for k in kwds if k in KERNEL_PARAMS[metric]}
         func = PAIRWISE_KERNEL_FUNCTIONS[metric]
     elif callable(metric):
-        func = partial(_pairwise_callable, metric=metric, **kwds)
+        func = partial(_pairwise_callable, metric=, **kwds)
 
     return _parallel_pairwise(X, Y, func, n_jobs, **kwds)

@@ -233,7 +233,7 @@ def test_fetch_lfw_people_internal_cropping():
         min_faces_per_person=3,
         download_if_missing=False,
         resize=None,
-        slice_=slice_,
+        slice_=,
     )
     assert lfw.images[0].shape == (
         slice_[0].stop - slice_[0].start,

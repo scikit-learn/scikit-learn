@@ -43,7 +43,7 @@ no_weights = ax.contour(xx, yy, Z, levels=[0], linestyles=["solid"])
 
 # fit the weighted model
 clf = linear_model.SGDClassifier(alpha=0.01, max_iter=100)
-clf.fit(X, y, sample_weight=sample_weight)
+clf.fit(X, y, sample_weight=)
 Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
 samples_weights = ax.contour(xx, yy, Z, levels=[0], linestyles=["dashed"])

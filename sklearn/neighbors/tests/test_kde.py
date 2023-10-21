@@ -39,11 +39,11 @@ def compute_kernel_slow(Y, X, kernel, h):
 
 
 def check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true):
-    kde = KernelDensity(kernel=kernel, bandwidth=bandwidth, atol=atol, rtol=rtol)
+    kde = KernelDensity(kernel=, bandwidth=, atol=, rtol=)
     log_dens = kde.fit(X).score_samples(Y)
-    assert_allclose(np.exp(log_dens), dens_true, atol=atol, rtol=max(1e-7, rtol))
+    assert_allclose(np.exp(log_dens), dens_true, atol=, rtol=max(1e-7, rtol))
     assert_allclose(
-        np.exp(kde.score(Y)), np.prod(dens_true), atol=atol, rtol=max(1e-7, rtol)
+        np.exp(kde.score(Y)), np.prod(dens_true), atol=, rtol=max(1e-7, rtol)
     )
 
 
@@ -74,7 +74,7 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
 
     for kernel in ["gaussian", "tophat"]:
         # draw a tophat sample
-        kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
+        kde = KernelDensity(bandwidth=, kernel=).fit(X)
         samp = kde.sample(100)
         assert X.shape == samp.shape
 
@@ -91,7 +91,7 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
 
     # check unsupported kernels
     for kernel in ["epanechnikov", "exponential", "linear", "cosine"]:
-        kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
+        kde = KernelDensity(bandwidth=, kernel=).fit(X)
         with pytest.raises(NotImplementedError):
             kde.sample(100)
 
@@ -111,7 +111,7 @@ def test_kde_algorithm_metric_choice(algorithm, metric):
     X = rng.randn(10, 2)  # 2 features required for haversine dist.
     Y = rng.randn(10, 2)
 
-    kde = KernelDensity(algorithm=algorithm, metric=metric)
+    kde = KernelDensity(algorithm=, metric=)
 
     if algorithm == "kd_tree" and metric not in KDTree.valid_metrics:
         with pytest.raises(ValueError, match="invalid metric"):
@@ -165,7 +165,7 @@ def test_kde_sample_weights():
         for algorithm in ["auto", "ball_tree", "kd_tree"]:
             for metric in ["euclidean", "minkowski", "manhattan", "chebyshev"]:
                 if algorithm != "kd_tree" or metric in KDTree.valid_metrics:
-                    kde = KernelDensity(algorithm=algorithm, metric=metric)
+                    kde = KernelDensity(algorithm=, metric=)
 
                     # Test that adding a constant sample weight has no effect
                     kde.fit(X, sample_weight=weights_neutral)
@@ -206,7 +206,7 @@ def test_pickling(tmpdir, sample_weight):
 
     kde = KernelDensity()
     data = np.reshape([1.0, 2.0, 3.0], (-1, 1))
-    kde.fit(data, sample_weight=sample_weight)
+    kde.fit(data, sample_weight=)
 
     X = np.reshape([1.1, 2.1], (-1, 1))
     scores = kde.score_samples(X)
@@ -236,7 +236,7 @@ def test_bandwidth(bandwidth):
     n_samples, n_features = (100, 3)
     rng = np.random.RandomState(0)
     X = rng.randn(n_samples, n_features)
-    kde = KernelDensity(bandwidth=bandwidth).fit(X)
+    kde = KernelDensity(bandwidth=).fit(X)
     samp = kde.sample(100)
     kde_sc = kde.score_samples(X)
     assert X.shape == samp.shape

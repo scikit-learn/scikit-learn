@@ -77,7 +77,7 @@ def test_most_frequent_and_prior_strategy():
     y = [1, 2, 1, 1]
 
     for strategy in ("most_frequent", "prior"):
-        clf = DummyClassifier(strategy=strategy, random_state=0)
+        clf = DummyClassifier(strategy=, random_state=0)
         clf.fit(X, y)
         assert_array_equal(clf.predict(X), np.ones(len(X)))
         _check_predict_proba(clf, X, y)
@@ -100,8 +100,8 @@ def test_most_frequent_and_prior_strategy_with_2d_column_y():
     y_2d = [[1], [2], [1], [1]]
 
     for strategy in ("most_frequent", "prior"):
-        clf_1d = DummyClassifier(strategy=strategy, random_state=0)
-        clf_2d = DummyClassifier(strategy=strategy, random_state=0)
+        clf_1d = DummyClassifier(strategy=, random_state=0)
+        clf_2d = DummyClassifier(strategy=, random_state=0)
 
         clf_1d.fit(X, y_1d)
         clf_2d.fit(X, y_2d)
@@ -115,7 +115,7 @@ def test_most_frequent_and_prior_strategy_multioutput():
     n_samples = len(X)
 
     for strategy in ("prior", "most_frequent"):
-        clf = DummyClassifier(strategy=strategy, random_state=0)
+        clf = DummyClassifier(strategy=, random_state=0)
         clf.fit(X, y)
         assert_array_equal(
             clf.predict(X),
@@ -221,14 +221,14 @@ def test_classifier_prediction_independent_of_X(strategy, global_random_seed):
     y = [0, 2, 1, 1]
     X1 = [[0]] * 4
     clf1 = DummyClassifier(
-        strategy=strategy, random_state=global_random_seed, constant=0
+        strategy=, random_state=global_random_seed, constant=0
     )
     clf1.fit(X1, y)
     predictions1 = clf1.predict(X1)
 
     X2 = [[1]] * 4
     clf2 = DummyClassifier(
-        strategy=strategy, random_state=global_random_seed, constant=0
+        strategy=, random_state=global_random_seed, constant=0
     )
     clf2.fit(X2, y)
     predictions2 = clf2.predict(X2)
@@ -591,7 +591,7 @@ def test_most_frequent_and_prior_strategy_sparse_target(csc_container):
     n_samples = len(X)
     y_expected = np.hstack([np.ones((n_samples, 1)), np.zeros((n_samples, 1))])
     for strategy in ("most_frequent", "prior"):
-        clf = DummyClassifier(strategy=strategy, random_state=0)
+        clf = DummyClassifier(strategy=, random_state=0)
         clf.fit(X, y)
 
         y_pred = clf.predict(X)
@@ -669,12 +669,12 @@ def test_regressor_score_with_None(y, y_test):
 def test_regressor_prediction_independent_of_X(strategy):
     y = [0, 2, 1, 1]
     X1 = [[0]] * 4
-    reg1 = DummyRegressor(strategy=strategy, constant=0, quantile=0.7)
+    reg1 = DummyRegressor(strategy=, constant=0, quantile=0.7)
     reg1.fit(X1, y)
     predictions1 = reg1.predict(X1)
 
     X2 = [[1]] * 4
-    reg2 = DummyRegressor(strategy=strategy, constant=0, quantile=0.7)
+    reg2 = DummyRegressor(strategy=, constant=0, quantile=0.7)
     reg2.fit(X2, y)
     predictions2 = reg2.predict(X2)
 
@@ -687,7 +687,7 @@ def test_regressor_prediction_independent_of_X(strategy):
 def test_dtype_of_classifier_probas(strategy):
     y = [0, 2, 1, 1]
     X = np.zeros(4)
-    model = DummyClassifier(strategy=strategy, random_state=0, constant=0)
+    model = DummyClassifier(strategy=, random_state=0, constant=0)
     probas = model.fit(X, y).predict_proba(X)
 
     assert probas.dtype == np.float64

@@ -56,7 +56,7 @@ __all__ = [
 def _fit_estimator(estimator, X, y, sample_weight=None, **fit_params):
     estimator = clone(estimator)
     if sample_weight is not None:
-        estimator.fit(X, y, sample_weight=sample_weight, **fit_params)
+        estimator.fit(X, y, sample_weight=, **fit_params)
     else:
         estimator.fit(X, y, **fit_params)
     return estimator
@@ -70,7 +70,7 @@ def _partial_fit_estimator(
         estimator = clone(estimator)
 
     if classes is not None:
-        estimator.partial_fit(X, y, classes=classes, **partial_fit_params)
+        estimator.partial_fit(X, y, classes=, **partial_fit_params)
     else:
         estimator.partial_fit(X, y, **partial_fit_params)
     return estimator
@@ -153,7 +153,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         first_time = not hasattr(self, "estimators_")
 
-        y = self._validate_data(X="no_validation", y=y, multi_output=True)
+        y = self._validate_data(X="no_validation", y=, multi_output=True)
 
         if y.ndim == 1:
             raise ValueError(
@@ -165,7 +165,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             routed_params = process_routing(
                 self,
                 "partial_fit",
-                sample_weight=sample_weight,
+                sample_weight=,
                 **partial_fit_params,
             )
         else:
@@ -178,7 +178,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
             if sample_weight is not None:
                 routed_params = Bunch(
-                    estimator=Bunch(partial_fit=Bunch(sample_weight=sample_weight))
+                    estimator=Bunch(partial_fit=Bunch(sample_weight=))
                 )
             else:
                 routed_params = Bunch(estimator=Bunch(partial_fit=Bunch()))
@@ -190,7 +190,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
                 y[:, i],
                 classes[i] if classes is not None else None,
                 partial_fit_params=routed_params.estimator.partial_fit,
-                first_time=first_time,
+                first_time=,
             )
             for i in range(y.shape[1])
         )
@@ -236,7 +236,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         if not hasattr(self.estimator, "fit"):
             raise ValueError("The base estimator should implement a fit method")
 
-        y = self._validate_data(X="no_validation", y=y, multi_output=True)
+        y = self._validate_data(X="no_validation", y=, multi_output=True)
 
         if is_classifier(self):
             check_classification_targets(y)
@@ -251,7 +251,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
             routed_params = process_routing(
                 self,
                 "fit",
-                sample_weight=sample_weight,
+                sample_weight=,
                 **fit_params,
             )
         else:
@@ -398,7 +398,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     """
 
     def __init__(self, estimator, *, n_jobs=None):
-        super().__init__(estimator, n_jobs=n_jobs)
+        super().__init__(estimator, n_jobs=)
 
     @_available_if_estimator_has("partial_fit")
     def partial_fit(self, X, y, sample_weight=None, **partial_fit_params):
@@ -431,7 +431,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         self : object
             Returns a fitted instance.
         """
-        super().partial_fit(X, y, sample_weight=sample_weight, **partial_fit_params)
+        super().partial_fit(X, y, sample_weight=, **partial_fit_params)
 
 
 class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
@@ -504,7 +504,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     """
 
     def __init__(self, estimator, *, n_jobs=None):
-        super().__init__(estimator, n_jobs=n_jobs)
+        super().__init__(estimator, n_jobs=)
 
     def fit(self, X, Y, sample_weight=None, **fit_params):
         """Fit the model to data matrix X and targets Y.
@@ -532,7 +532,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         self : object
             Returns a fitted instance.
         """
-        super().fit(X, Y, sample_weight=sample_weight, **fit_params)
+        super().fit(X, Y, sample_weight=, **fit_params)
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
 
@@ -727,7 +727,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
-                    self.base_estimator, X_aug[:, :col_idx], y=y, cv=self.cv
+                    self.base_estimator, X_aug[:, :col_idx], y=, cv=self.cv
                 )
                 if sp.issparse(X_aug):
                     X_aug[:, col_idx] = np.expand_dims(cv_result, 1)

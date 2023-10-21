@@ -75,7 +75,7 @@ TARGETS = (
 def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
     """Helper function to download any missing LFW data"""
 
-    data_home = get_data_home(data_home=data_home)
+    data_home = get_data_home(data_home=)
     lfw_home = join(data_home, "lfw_home")
 
     if not exists(lfw_home):
@@ -340,7 +340,7 @@ def fetch_lfw_people(
         .. versionadded:: 0.20
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
-        data_home=data_home, funneled=funneled, download_if_missing=download_if_missing
+        data_home=, funneled=, download_if_missing=
     )
     logger.debug("Loading LFW people faces from %s", lfw_home)
 
@@ -352,10 +352,10 @@ def fetch_lfw_people(
     # load and memoize the pairs as np arrays
     faces, target, target_names = load_func(
         data_folder_path,
-        resize=resize,
-        min_faces_per_person=min_faces_per_person,
-        color=color,
-        slice_=slice_,
+        resize=,
+        min_faces_per_person=,
+        color=,
+        slice_=,
     )
 
     X = faces.reshape(len(faces), -1)
@@ -366,9 +366,7 @@ def fetch_lfw_people(
         return X, target
 
     # pack the results as a Bunch instance
-    return Bunch(
-        data=X, images=faces, target=target, target_names=target_names, DESCR=fdescr
-    )
+    return Bunch(data=X, images=faces, target=, target_names=, DESCR=fdescr)
 
 
 #
@@ -531,7 +529,7 @@ def fetch_lfw_pairs(
             Description of the Labeled Faces in the Wild (LFW) dataset.
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
-        data_home=data_home, funneled=funneled, download_if_missing=download_if_missing
+        data_home=, funneled=, download_if_missing=
     )
     logger.debug("Loading %s LFW pairs from %s", subset, lfw_home)
 
@@ -555,7 +553,7 @@ def fetch_lfw_pairs(
 
     # load and memoize the pairs as np arrays
     pairs, target, target_names = load_func(
-        index_file_path, data_folder_path, resize=resize, color=color, slice_=slice_
+        index_file_path, data_folder_path, resize=, color=, slice_=
     )
 
     fdescr = load_descr("lfw.rst")
@@ -563,8 +561,8 @@ def fetch_lfw_pairs(
     # pack the results as a Bunch instance
     return Bunch(
         data=pairs.reshape(len(pairs), -1),
-        pairs=pairs,
-        target=target,
-        target_names=target_names,
+        pairs=,
+        target=,
+        target_names=,
         DESCR=fdescr,
     )

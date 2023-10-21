@@ -19,7 +19,7 @@ from sklearn.datasets import make_blobs
 # --------------------
 centers = [[1, 1], [-1, -1], [1, -1]]
 X, labels_true = make_blobs(
-    n_samples=300, centers=centers, cluster_std=0.5, random_state=0
+    n_samples=300, centers=, cluster_std=0.5, random_state=0
 )
 
 # %%

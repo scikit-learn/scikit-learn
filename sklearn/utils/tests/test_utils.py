@@ -169,7 +169,7 @@ def test_resample_stratify_sparse_error(csr_container):
     y = rng.randint(0, 2, size=n_samples)
     stratify = csr_container(y)
     with pytest.raises(TypeError, match="A sparse matrix was passed"):
-        X, y = resample(X, y, n_samples=50, random_state=rng, stratify=stratify)
+        X, y = resample(X, y, n_samples=50, random_state=rng, stratify=)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -325,7 +325,7 @@ def test_safe_indexing_2d_read_only_axis_1(
     if indices_read_only:
         indices.setflags(write=False)
     indices = _convert_container(indices, indices_type)
-    subset = _safe_indexing(array, indices, axis=axis)
+    subset = _safe_indexing(array, indices, axis=)
     assert_allclose_dense_sparse(subset, _convert_container(expected_array, array_type))
 
 
@@ -353,7 +353,7 @@ def test_safe_indexing_2d_mask(array_type, indices_type, axis, expected_subset):
     indices = [False, True, True]
     indices = _convert_container(indices, indices_type)
 
-    subset = _safe_indexing(array, indices, axis=axis)
+    subset = _safe_indexing(array, indices, axis=)
     assert_allclose_dense_sparse(
         subset, _convert_container(expected_subset, array_type)
     )
@@ -430,7 +430,7 @@ def test_safe_indexing_pandas_no_matching_cols_error():
 @pytest.mark.parametrize("axis", [None, 3])
 def test_safe_indexing_error_axis(axis):
     with pytest.raises(ValueError, match="'axis' should be either 0"):
-        _safe_indexing(X_toy, [0, 1], axis=axis)
+        _safe_indexing(X_toy, [0, 1], axis=)
 
 
 @pytest.mark.parametrize("X_constructor", ["array", "series"])
@@ -498,7 +498,7 @@ def test_get_column_indices_pandas_nonunique_columns_error(key):
     pd = pytest.importorskip("pandas")
     toy = np.zeros((1, 5), dtype=int)
     columns = ["col1", "col1", "col2", "col3", "col2"]
-    X = pd.DataFrame(toy, columns=columns)
+    X = pd.DataFrame(toy, columns=)
 
     err_msg = "Selected columns, {}, are not unique in dataframe".format(key)
     with pytest.raises(ValueError) as exc_info:
@@ -564,18 +564,14 @@ def test_gen_even_slices():
 def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected):
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
-        actual = get_chunk_n_rows(
-            row_bytes=row_bytes,
-            max_n_rows=max_n_rows,
-            working_memory=working_memory,
-        )
+        actual = get_chunk_n_rows(row_bytes=, max_n_rows=, working_memory=)
 
     assert actual == expected
     assert type(actual) is type(expected)
-    with config_context(working_memory=working_memory):
+    with config_context(working_memory=):
         with warnings.catch_warnings():
             warnings.simplefilter("error", UserWarning)
-            actual = get_chunk_n_rows(row_bytes=row_bytes, max_n_rows=max_n_rows)
+            actual = get_chunk_n_rows(row_bytes=, max_n_rows=)
         assert actual == expected
         assert type(actual) is type(expected)
 
@@ -591,18 +587,14 @@ def test_get_chunk_n_rows_warns():
         "Could not adhere to working_memory config. Currently 1MiB, 2MiB required."
     )
     with pytest.warns(UserWarning, match=warn_msg):
-        actual = get_chunk_n_rows(
-            row_bytes=row_bytes,
-            max_n_rows=max_n_rows,
-            working_memory=working_memory,
-        )
+        actual = get_chunk_n_rows(row_bytes=, max_n_rows=, working_memory=)
 
     assert actual == expected
     assert type(actual) is type(expected)
 
-    with config_context(working_memory=working_memory):
+    with config_context(working_memory=):
         with pytest.warns(UserWarning, match=warn_msg):
-            actual = get_chunk_n_rows(row_bytes=row_bytes, max_n_rows=max_n_rows)
+            actual = get_chunk_n_rows(row_bytes=, max_n_rows=)
         assert actual == expected
         assert type(actual) is type(expected)
 
@@ -740,7 +732,7 @@ def test_safe_assign(array_type):
     row_indexer = [1, 2]
     values = rng.randn(len(row_indexer), X_array.shape[1])
     X = _convert_container(X_array, array_type)
-    _safe_assign(X, values, row_indexer=row_indexer)
+    _safe_assign(X, values, row_indexer=)
 
     assigned_portion = _safe_indexing(X, row_indexer, axis=0)
     assert_allclose_dense_sparse(
@@ -750,7 +742,7 @@ def test_safe_assign(array_type):
     column_indexer = [1, 2]
     values = rng.randn(X_array.shape[0], len(column_indexer))
     X = _convert_container(X_array, array_type)
-    _safe_assign(X, values, column_indexer=column_indexer)
+    _safe_assign(X, values, column_indexer=)
 
     assigned_portion = _safe_indexing(X, column_indexer, axis=1)
     assert_allclose_dense_sparse(
@@ -760,6 +752,6 @@ def test_safe_assign(array_type):
     row_indexer, column_indexer = None, None
     values = rng.randn(*X.shape)
     X = _convert_container(X_array, array_type)
-    _safe_assign(X, values, column_indexer=column_indexer)
+    _safe_assign(X, values, column_indexer=)
 
     assert_allclose_dense_sparse(X, _convert_container(values, array_type))

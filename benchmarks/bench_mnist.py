@@ -61,7 +61,7 @@ def load_data(dtype=np.float32, order="F"):
     # Load dataset
     print("Loading dataset...")
     data = fetch_openml("mnist_784", as_frame=True, parser="pandas")
-    X = check_array(data["data"], dtype=dtype, order=order)
+    X = check_array(data["data"], dtype=, order=)
     y = data["target"]
 
     # Normalize features

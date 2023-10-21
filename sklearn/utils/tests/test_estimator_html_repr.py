@@ -35,7 +35,7 @@ def test_write_label_html(checked):
     tool_tip = "hello-world"
 
     with closing(StringIO()) as out:
-        _write_label_html(out, name, tool_tip, checked=checked)
+        _write_label_html(out, name, tool_tip, checked=)
         html_label = out.getvalue()
         assert "LogisticRegression</label>" in html_label
         assert html_label.startswith('<div class="sk-label-container">')
@@ -207,7 +207,7 @@ def test_stacking_classifier(final_estimator):
         ("mlp", MLPClassifier(alpha=0.001)),
         ("tree", DecisionTreeClassifier()),
     ]
-    clf = StackingClassifier(estimators=estimators, final_estimator=final_estimator)
+    clf = StackingClassifier(estimators=, final_estimator=)
 
     html_output = estimator_html_repr(clf)
 
@@ -223,7 +223,7 @@ def test_stacking_classifier(final_estimator):
 @pytest.mark.parametrize("final_estimator", [None, LinearSVR()])
 def test_stacking_regressor(final_estimator):
     reg = StackingRegressor(
-        estimators=[("svr", LinearSVR())], final_estimator=final_estimator
+        estimators=[("svr", LinearSVR())], final_estimator=
     )
     html_output = estimator_html_repr(reg)
 
@@ -268,10 +268,7 @@ def test_duck_typing_nested_estimator():
     kernel_ridge = KernelRidge(kernel=ExpSineSquared())
     param_distributions = {"alpha": [1, 2]}
 
-    kernel_ridge_tuned = RandomizedSearchCV(
-        kernel_ridge,
-        param_distributions=param_distributions,
-    )
+    kernel_ridge_tuned = RandomizedSearchCV(kernel_ridge, param_distributions=)
     html_output = estimator_html_repr(kernel_ridge_tuned)
     assert "estimator: KernelRidge</label>" in html_output
 
@@ -280,7 +277,7 @@ def test_duck_typing_nested_estimator():
 def test_one_estimator_print_change_only(print_changed_only):
     pca = PCA(n_components=10)
 
-    with config_context(print_changed_only=print_changed_only):
+    with config_context(print_changed_only=):
         pca_repr = html.escape(str(pca))
         html_output = estimator_html_repr(pca)
         assert pca_repr in html_output

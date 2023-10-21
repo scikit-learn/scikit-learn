@@ -30,7 +30,7 @@ titles = ("break_ties = False", "break_ties = True")
 
 for break_ties, title, ax in zip((False, True), titles, sub.flatten()):
     svm = SVC(
-        kernel="linear", C=1, break_ties=break_ties, decision_function_shape="ovr"
+        kernel="linear", C=1, break_ties=, decision_function_shape="ovr"
     ).fit(X, y)
 
     xlim = [X[:, 0].min(), X[:, 0].max()]

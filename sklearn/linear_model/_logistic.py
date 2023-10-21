@@ -314,7 +314,7 @@ def _logistic_regression_path(
     if isinstance(class_weight, dict) or (
         multi_class == "multinomial" and class_weight is not None
     ):
-        class_weight_ = compute_class_weight(class_weight, classes=classes, y=y)
+        class_weight_ = compute_class_weight(class_weight, classes=, y=)
         sample_weight *= class_weight_[le.fit_transform(y)]
 
     # For doing a ovr, we need to mask the labels first. For the
@@ -419,7 +419,7 @@ def _logistic_regression_path(
             w0 = w0.ravel(order="F")
             loss = LinearModelLoss(
                 base_loss=HalfMultinomialLoss(n_classes=classes.size),
-                fit_intercept=fit_intercept,
+                fit_intercept=,
             )
         target = Y_multi
         if solver in "lbfgs":
@@ -433,19 +433,19 @@ def _logistic_regression_path(
         target = y_bin
         if solver == "lbfgs":
             loss = LinearModelLoss(
-                base_loss=HalfBinomialLoss(), fit_intercept=fit_intercept
+                base_loss=HalfBinomialLoss(), fit_intercept=
             )
             func = loss.loss_gradient
         elif solver == "newton-cg":
             loss = LinearModelLoss(
-                base_loss=HalfBinomialLoss(), fit_intercept=fit_intercept
+                base_loss=HalfBinomialLoss(), fit_intercept=
             )
             func = loss.loss
             grad = loss.gradient
             hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
         elif solver == "newton-cholesky":
             loss = LinearModelLoss(
-                base_loss=HalfBinomialLoss(), fit_intercept=fit_intercept
+                base_loss=HalfBinomialLoss(), fit_intercept=
             )
         warm_start_sag = {"coef": np.expand_dims(w0, axis=1)}
 
@@ -482,20 +482,20 @@ def _logistic_regression_path(
             l2_reg_strength = 1.0 / (C * sw_sum)
             args = (X, target, sample_weight, l2_reg_strength, n_threads)
             w0, n_iter_i = _newton_cg(
-                hess, func, grad, w0, args=args, maxiter=max_iter, tol=tol
+                hess, func, grad, w0, args=, maxiter=max_iter, tol=
             )
         elif solver == "newton-cholesky":
             l2_reg_strength = 1.0 / (C * sw_sum)
             sol = NewtonCholeskySolver(
                 coef=w0,
                 linear_loss=loss,
-                l2_reg_strength=l2_reg_strength,
-                tol=tol,
-                max_iter=max_iter,
-                n_threads=n_threads,
-                verbose=verbose,
+                l2_reg_strength=,
+                tol=,
+                max_iter=,
+                n_threads=,
+                verbose=,
             )
-            w0 = sol.solve(X=X, y=target, sample_weight=sample_weight)
+            w0 = sol.solve(X=, y=target, sample_weight=)
             n_iter_i = sol.iteration
         elif solver == "liblinear":
             (
@@ -515,7 +515,7 @@ def _logistic_regression_path(
                 max_iter,
                 tol,
                 random_state,
-                sample_weight=sample_weight,
+                sample_weight=,
             )
             if fit_intercept:
                 w0 = np.concatenate([coef_.ravel(), intercept_])
@@ -749,26 +749,26 @@ def _log_reg_scoring_path(
     coefs, Cs, n_iter = _logistic_regression_path(
         X_train,
         y_train,
-        Cs=Cs,
-        l1_ratio=l1_ratio,
-        fit_intercept=fit_intercept,
-        solver=solver,
-        max_iter=max_iter,
-        class_weight=class_weight,
-        pos_class=pos_class,
-        multi_class=multi_class,
-        tol=tol,
-        verbose=verbose,
-        dual=dual,
-        penalty=penalty,
-        intercept_scaling=intercept_scaling,
-        random_state=random_state,
+        Cs=,
+        l1_ratio=,
+        fit_intercept=,
+        solver=,
+        max_iter=,
+        class_weight=,
+        pos_class=,
+        multi_class=,
+        tol=,
+        verbose=,
+        dual=,
+        penalty=,
+        intercept_scaling=,
+        random_state=,
         check_input=False,
-        max_squared_sum=max_squared_sum,
-        sample_weight=sample_weight,
+        max_squared_sum=,
+        sample_weight=,
     )
 
-    log_reg = LogisticRegression(solver=solver, multi_class=multi_class)
+    log_reg = LogisticRegression(solver=, multi_class=)
 
     # The score method of Logistic Regression has a classes_ attribute.
     if multi_class == "ovr":
@@ -802,7 +802,7 @@ def _log_reg_scoring_path(
             scores.append(log_reg.score(X_test, y_test))
         else:
             score_params = score_params or {}
-            score_params = _check_method_params(X=X, params=score_params, indices=test)
+            score_params = _check_method_params(X=, params=score_params, indices=test)
             scores.append(scoring(log_reg, X_test, y_test, **score_params))
 
     return coefs, Cs, np.array(scores), n_iter
@@ -1257,7 +1257,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 self.max_iter,
                 self.tol,
                 self.random_state,
-                sample_weight=sample_weight,
+                sample_weight=,
             )
             return self
 
@@ -1319,7 +1319,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         else:
             n_threads = 1
 
-        fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer=prefer)(
+        fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer=)(
             path_func(
                 X,
                 y,
@@ -1329,17 +1329,17 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 fit_intercept=self.fit_intercept,
                 tol=self.tol,
                 verbose=self.verbose,
-                solver=solver,
-                multi_class=multi_class,
+                solver=,
+                multi_class=,
                 max_iter=self.max_iter,
                 class_weight=self.class_weight,
                 check_input=False,
                 random_state=self.random_state,
                 coef=warm_start_coef_,
-                penalty=penalty,
-                max_squared_sum=max_squared_sum,
-                sample_weight=sample_weight,
-                n_threads=n_threads,
+                penalty=,
+                max_squared_sum=,
+                sample_weight=,
+                n_threads=,
             )
             for class_, warm_start_coef_ in zip(classes_, warm_start_coef)
         )
@@ -1861,7 +1861,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             routed_params = process_routing(
                 self,
                 "fit",
-                sample_weight=sample_weight,
+                sample_weight=,
                 **params,
             )
         else:
@@ -1904,7 +1904,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         # compute the class weights for the entire dataset y
         if class_weight == "balanced":
             class_weight = compute_class_weight(
-                class_weight, classes=np.arange(len(self.classes_)), y=y
+                class_weight, classes=np.arange(len(self.classes_)), y=
             )
             class_weight = dict(enumerate(class_weight))
 
@@ -1917,7 +1917,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         else:
             prefer = "processes"
 
-        fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer=prefer)(
+        fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer=)(
             path_func(
                 X,
                 y,
@@ -1928,18 +1928,18 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 fit_intercept=self.fit_intercept,
                 penalty=self.penalty,
                 dual=self.dual,
-                solver=solver,
+                solver=,
                 tol=self.tol,
                 max_iter=self.max_iter,
                 verbose=self.verbose,
-                class_weight=class_weight,
+                class_weight=,
                 scoring=self.scoring,
-                multi_class=multi_class,
+                multi_class=,
                 intercept_scaling=self.intercept_scaling,
                 random_state=self.random_state,
-                max_squared_sum=max_squared_sum,
-                sample_weight=sample_weight,
-                l1_ratio=l1_ratio,
+                max_squared_sum=,
+                sample_weight=,
+                l1_ratio=,
                 score_params=routed_params.scorer.score,
             )
             for label in iter_encoded_labels
@@ -2030,19 +2030,19 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                     y,
                     pos_class=encoded_label,
                     Cs=[C_],
-                    solver=solver,
+                    solver=,
                     fit_intercept=self.fit_intercept,
                     coef=coef_init,
                     max_iter=self.max_iter,
                     tol=self.tol,
                     penalty=self.penalty,
-                    class_weight=class_weight,
-                    multi_class=multi_class,
+                    class_weight=,
+                    multi_class=,
                     verbose=max(0, self.verbose - 1),
                     random_state=self.random_state,
                     check_input=False,
-                    max_squared_sum=max_squared_sum,
-                    sample_weight=sample_weight,
+                    max_squared_sum=,
+                    sample_weight=,
                     l1_ratio=l1_ratio_,
                 )
                 w = w[0]
@@ -2152,7 +2152,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             routed_params = process_routing(
                 self,
                 "score",
-                sample_weight=sample_weight,
+                sample_weight=,
                 **score_params,
             )
         else:

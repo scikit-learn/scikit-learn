@@ -29,7 +29,7 @@ np.random.seed(0)
 batch_size = 45
 centers = [[1, 1], [-1, -1], [1, -1]]
 n_clusters = len(centers)
-X, labels_true = make_blobs(n_samples=3000, centers=centers, cluster_std=0.7)
+X, labels_true = make_blobs(n_samples=3000, centers=, cluster_std=0.7)
 
 # %%
 # Compute clustering with KMeans
@@ -53,7 +53,7 @@ from sklearn.cluster import MiniBatchKMeans
 mbk = MiniBatchKMeans(
     init="k-means++",
     n_clusters=3,
-    batch_size=batch_size,
+    batch_size=,
     n_init=10,
     max_no_improvement=10,
     verbose=0,

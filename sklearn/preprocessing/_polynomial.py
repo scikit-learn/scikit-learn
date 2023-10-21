@@ -359,7 +359,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             )
 
         self.n_output_features_ = self._num_combinations(
-            n_features=n_features,
+            n_features=,
             min_degree=self._min_degree,
             max_degree=self._max_degree,
             interaction_only=self.interaction_only,
@@ -389,7 +389,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         # We also record the number of output features for
         # _max_degree = 0
         self._n_out_full = self._num_combinations(
-            n_features=n_features,
+            n_features=,
             min_degree=0,
             max_degree=self._max_degree,
             interaction_only=self.interaction_only,
@@ -449,11 +449,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             cumulative_size = sum(mat.shape[1] for mat in to_stack)
             for deg in range(max(2, self._min_degree), self._max_degree + 1):
                 expanded = _create_expansion(
-                    X=X,
+                    X=,
                     interaction_only=self.interaction_only,
-                    deg=deg,
-                    n_features=n_features,
-                    cumulative_size=cumulative_size,
+                    deg=,
+                    n_features=,
+                    cumulative_size=,
                 )
                 if expanded is not None:
                     to_stack.append(expanded)
@@ -484,7 +484,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             return self.transform(X.tocsr()).tocsc()
         elif sparse.issparse(X):
             combinations = self._combinations(
-                n_features=n_features,
+                n_features=,
                 min_degree=self._min_degree,
                 max_degree=self._max_degree,
                 interaction_only=self.interaction_only,
@@ -840,7 +840,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         if isinstance(self.knots, str):
             base_knots = self._get_base_knot_positions(
-                X, n_knots=self.n_knots, knots=self.knots, sample_weight=sample_weight
+                X, n_knots=self.n_knots, knots=self.knots, sample_weight=
             )
         else:
             base_knots = check_array(self.knots, dtype=np.float64)
@@ -929,7 +929,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         bsplines = [
             BSpline.construct_fast(
-                knots[:, i], coef, self.degree, extrapolate=extrapolate
+                knots[:, i], coef, self.degree, extrapolate=
             )
             for i in range(n_features)
         ]
@@ -983,7 +983,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         if use_sparse:
             output_list = []
         else:
-            XBS = np.zeros((n_samples, n_out), dtype=dtype, order=self.order)
+            XBS = np.zeros((n_samples, n_out), dtype=, order=self.order)
 
         for i in range(n_features):
             spl = self.bsplines_[i]

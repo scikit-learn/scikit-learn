@@ -162,9 +162,9 @@ def test_ordering():
     X = np.ones((10, 5))
     for A in X, X.T:
         for copy in (True, False):
-            B = check_array(A, order="C", copy=copy)
+            B = check_array(A, order="C", copy=)
             assert B.flags["C_CONTIGUOUS"]
-            B = check_array(A, order="F", copy=copy)
+            B = check_array(A, order="F", copy=)
             assert B.flags["F_CONTIGUOUS"]
             if copy:
                 assert A is not B
@@ -181,7 +181,7 @@ def test_ordering():
 def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
     X = retype(np.arange(4).reshape(2, 2).astype(float))
     X[0, 0] = value
-    X_checked = check_array(X, force_all_finite=force_all_finite, accept_sparse=True)
+    X_checked = check_array(X, force_all_finite=, accept_sparse=True)
     assert_allclose_dense_sparse(X, X_checked)
 
 
@@ -211,12 +211,7 @@ def test_check_array_force_all_finiteinvalid(
     X = retype(np.arange(4).reshape(2, 2).astype(np.float64))
     X[0, 0] = value
     with pytest.raises(ValueError, match=match_msg):
-        check_array(
-            X,
-            input_name=input_name,
-            force_all_finite=force_all_finite,
-            accept_sparse=True,
-        )
+        check_array(X, input_name=, force_all_finite=, accept_sparse=True)
 
 
 @pytest.mark.parametrize("input_name", ["X", "y", "sample_weight"])
@@ -241,12 +236,7 @@ def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
     )
 
     with pytest.raises(ValueError, match=f"Input {input_name} contains NaN") as ctx:
-        check_array(
-            data,
-            estimator=estimator,
-            input_name=input_name,
-            accept_sparse=True,
-        )
+        check_array(data, estimator=, input_name=, accept_sparse=True)
 
     if input_name == "X":
         assert extended_msg in ctx.value.args[0]
@@ -299,7 +289,7 @@ def test_check_array_force_all_finite_object_unsafe_casting(
     # casting a float array containing NaN or inf to int dtype should
     # raise an error irrespective of the force_all_finite parameter.
     with pytest.raises(ValueError, match=err_msg):
-        check_array(X, dtype=int, force_all_finite=force_all_finite)
+        check_array(X, dtype=int, force_all_finite=)
 
 
 @ignore_warnings
@@ -339,7 +329,7 @@ def test_check_array():
     copys = [True, False]
 
     for X, dtype, order, copy in product(Xs, dtypes, orders, copys):
-        X_checked = check_array(X, dtype=dtype, order=order, copy=copy)
+        X_checked = check_array(X, dtype=, order=, copy=)
         if dtype is not None:
             assert X_checked.dtype == dtype
         else:
@@ -383,7 +373,7 @@ def test_check_array():
     for X, dtype, accept_sparse, copy in product(
         Xs, non_object_dtypes, accept_sparses, copys
     ):
-        X_checked = check_array(X, dtype=dtype, accept_sparse=accept_sparse, copy=copy)
+        X_checked = check_array(X, dtype=, accept_sparse=, copy=)
         if dtype is not None:
             assert X_checked.dtype == dtype
         else:
@@ -461,11 +451,11 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
     X = pd.DataFrame(X_np, dtype=pd_dtype, columns=["a", "b", "c"])
     # column c has no nans
     X["c"] = X["c"].astype("float")
-    X_checked = check_array(X, force_all_finite="allow-nan", dtype=dtype)
+    X_checked = check_array(X, force_all_finite="allow-nan", dtype=)
     assert_allclose(X_checked, X_np)
     assert X_checked.dtype == expected_dtype
 
-    X_checked = check_array(X, force_all_finite=False, dtype=dtype)
+    X_checked = check_array(X, force_all_finite=False, dtype=)
     assert_allclose(X_checked, X_np)
     assert X_checked.dtype == expected_dtype
 
@@ -843,13 +833,13 @@ def test_check_is_fitted():
     # NotFittedError is a subclass of both ValueError and AttributeError
     msg = "Random message %(name)s, %(name)s"
     match = "Random message ARDRegression, ARDRegression"
-    with pytest.raises(ValueError, match=match):
-        check_is_fitted(ard, msg=msg)
+    with pytest.raises(ValueError, match=):
+        check_is_fitted(ard, msg=)
 
     msg = "Another message %(name)s, %(name)s"
     match = "Another message SVR, SVR"
-    with pytest.raises(AttributeError, match=match):
-        check_is_fitted(svr, msg=msg)
+    with pytest.raises(AttributeError, match=):
+        check_is_fitted(svr, msg=)
 
     ard.fit(*make_blobs())
     svr.fit(*make_blobs())
@@ -995,7 +985,7 @@ def test_check_dataframe_mixed_float_dtypes(dtype, bool_dtype):
         columns=["int", "float", "bool"],
     )
 
-    array = check_array(df, dtype=dtype)
+    array = check_array(df, dtype=)
     assert array.dtype == np.float64
     expected_array = np.array(
         [[1.0, 0.0, 1.0], [2.0, 0.1, 0.0], [3.0, 2.1, 1.0]], dtype=float
@@ -1071,7 +1061,7 @@ def test_check_memory():
 def test_check_array_memmap(copy):
     X = np.ones((4, 4))
     with TempMemmap(X, mmap_mode="r") as X_memmap:
-        X_checked = check_array(X_memmap, copy=copy)
+        X_checked = check_array(X_memmap, copy=)
         assert np.may_share_memory(X_memmap, X_checked) == (not copy)
         assert X_checked.flags["WRITEABLE"] == copy
 
@@ -1273,10 +1263,10 @@ def test_check_scalar_invalid(
         check_scalar(
             x,
             target_name,
-            target_type=target_type,
-            min_val=min_val,
-            max_val=max_val,
-            include_boundaries=include_boundaries,
+            target_type=,
+            min_val=,
+            max_val=,
+            include_boundaries=,
         )
     assert str(raised_error.value) == str(err_msg)
     assert type(raised_error.value) == type(err_msg)
@@ -1331,14 +1321,10 @@ def test_check_psd_eigenvalues_valid(
     if w_type is None:
         with warnings.catch_warnings():
             warnings.simplefilter("error", PositiveSpectrumWarning)
-            lambdas_fixed = _check_psd_eigenvalues(
-                lambdas, enable_warnings=enable_warnings
-            )
+            lambdas_fixed = _check_psd_eigenvalues(lambdas, enable_warnings=)
     else:
         with pytest.warns(w_type, match=w_msg):
-            lambdas_fixed = _check_psd_eigenvalues(
-                lambdas, enable_warnings=enable_warnings
-            )
+            lambdas_fixed = _check_psd_eigenvalues(lambdas, enable_warnings=)
 
     assert_allclose(expected_lambdas, lambdas_fixed)
 
@@ -1527,7 +1513,7 @@ def test_check_method_params(indices):
         "scalar-str": "xxx",
         "None": None,
     }
-    result = _check_method_params(X, params=_params, indices=indices)
+    result = _check_method_params(X, params=_params, indices=)
     indices_ = indices if indices is not None else list(range(X.shape[0]))
 
     for key in ["sparse-row", "scalar-int", "scalar-str", "None"]:
@@ -1705,7 +1691,7 @@ def test_get_feature_names_pandas():
     """Get feature names with pandas dataframes."""
     pd = pytest.importorskip("pandas")
     columns = [f"col_{i}" for i in range(3)]
-    X = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=columns)
+    X = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=)
     feature_names = _get_feature_names(X)
 
     assert_array_equal(feature_names, columns)
@@ -1720,7 +1706,7 @@ def test_get_feature_names_dataframe_protocol(constructor_name, minversion):
     data = [[1, 4, 2], [3, 3, 6]]
     columns = ["col_0", "col_1", "col_2"]
     df = _convert_container(
-        data, constructor_name, columns_name=columns, minversion=minversion
+        data, constructor_name, columns_name=columns, minversion=
     )
     feature_names = _get_feature_names(df)
 
@@ -1735,7 +1721,7 @@ def test_is_pandas_df_other_libraries(constructor_name, minversion):
     df = _convert_container(
         [[1, 4, 2], [3, 3, 6]],
         constructor_name,
-        minversion=minversion,
+        minversion=,
     )
     if constructor_name in ("pyarrow", "polars"):
         assert not _is_pandas_df(df)

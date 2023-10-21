@@ -58,15 +58,15 @@ def _split_node(node, threshold, branching_factor):
     new_subcluster1 = _CFSubcluster()
     new_subcluster2 = _CFSubcluster()
     new_node1 = _CFNode(
-        threshold=threshold,
-        branching_factor=branching_factor,
+        threshold=,
+        branching_factor=,
         is_leaf=node.is_leaf,
         n_features=node.n_features,
         dtype=node.init_centroids_.dtype,
     )
     new_node2 = _CFNode(
-        threshold=threshold,
-        branching_factor=branching_factor,
+        threshold=,
+        branching_factor=,
         is_leaf=node.is_leaf,
         n_features=node.n_features,
         dtype=node.init_centroids_.dtype,
@@ -165,7 +165,7 @@ class _CFNode:
         # The list of subclusters, centroids and squared norms
         # to manipulate throughout.
         self.subclusters_ = []
-        self.init_centroids_ = np.zeros((branching_factor + 1, n_features), dtype=dtype)
+        self.init_centroids_ = np.zeros((branching_factor + 1, n_features), dtype=)
         self.init_sq_norm_ = np.zeros((branching_factor + 1), dtype)
         self.squared_norm_ = []
         self.prev_leaf_ = None
@@ -544,19 +544,19 @@ class Birch(
         if first_call:
             # The first root is the leaf. Manipulate this object throughout.
             self.root_ = _CFNode(
-                threshold=threshold,
-                branching_factor=branching_factor,
+                threshold=,
+                branching_factor=,
                 is_leaf=True,
-                n_features=n_features,
+                n_features=,
                 dtype=X.dtype,
             )
 
             # To enable getting back subclusters.
             self.dummy_leaf_ = _CFNode(
-                threshold=threshold,
-                branching_factor=branching_factor,
+                threshold=,
+                branching_factor=,
                 is_leaf=True,
-                n_features=n_features,
+                n_features=,
                 dtype=X.dtype,
             )
             self.dummy_leaf_.next_leaf_ = self.root_
@@ -578,10 +578,10 @@ class Birch(
                 )
                 del self.root_
                 self.root_ = _CFNode(
-                    threshold=threshold,
-                    branching_factor=branching_factor,
+                    threshold=,
+                    branching_factor=,
                     is_leaf=False,
-                    n_features=n_features,
+                    n_features=,
                     dtype=X.dtype,
                 )
                 self.root_.append_subcluster(new_subcluster1)

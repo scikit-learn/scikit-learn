@@ -208,7 +208,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     X = check_array(
         X,
         accept_sparse="csc",
-        copy=copy,
+        copy=,
         ensure_2d=False,
         estimator="the scale function",
         dtype=FLOAT_DTYPES,
@@ -654,7 +654,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     if original_ndim == 1:
         X = X.reshape(X.shape[0], 1)
 
-    s = MinMaxScaler(feature_range=feature_range, copy=copy)
+    s = MinMaxScaler(feature_range=, copy=)
     if axis == 0:
         X = s.fit_transform(X)
     else:
@@ -905,7 +905,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         # incr_mean_variance_axis and _incremental_variance_axis
         dtype = np.int64 if sample_weight is None else X.dtype
         if not hasattr(self, "n_samples_seen_"):
-            self.n_samples_seen_ = np.zeros(n_features, dtype=dtype)
+            self.n_samples_seen_ = np.zeros(n_features, dtype=)
         elif np.size(self.n_samples_seen_) == 1:
             self.n_samples_seen_ = np.repeat(self.n_samples_seen_, X.shape[1])
             self.n_samples_seen_ = self.n_samples_seen_.astype(dtype, copy=False)
@@ -974,7 +974,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                     self.mean_,
                     self.var_,
                     self.n_samples_seen_,
-                    sample_weight=sample_weight,
+                    sample_weight=,
                 )
 
         # for backward-compatibility, reduce n_samples_seen_ to an integer
@@ -990,7 +990,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                 self.var_, self.mean_, self.n_samples_seen_
             )
             self.scale_ = _handle_zeros_in_scale(
-                np.sqrt(self.var_), copy=False, constant_mask=constant_mask
+                np.sqrt(self.var_), copy=False, constant_mask=
             )
         else:
             self.scale_ = None
@@ -1019,7 +1019,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             reset=False,
             accept_sparse="csr",
-            copy=copy,
+            copy=,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -1060,7 +1060,7 @@ class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X = check_array(
             X,
             accept_sparse="csr",
-            copy=copy,
+            copy=,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -1386,7 +1386,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
     if original_ndim == 1:
         X = X.reshape(X.shape[0], 1)
 
-    s = MaxAbsScaler(copy=copy)
+    s = MaxAbsScaler(copy=)
     if axis == 0:
         X = s.fit_transform(X)
     else:
@@ -1778,11 +1778,11 @@ def robust_scale(
         X = X.reshape(X.shape[0], 1)
 
     s = RobustScaler(
-        with_centering=with_centering,
-        with_scaling=with_scaling,
-        quantile_range=quantile_range,
-        unit_variance=unit_variance,
-        copy=copy,
+        with_centering=,
+        with_scaling=,
+        quantile_range=,
+        unit_variance=,
+        copy=,
     )
     if axis == 0:
         X = s.fit_transform(X)
@@ -1861,7 +1861,7 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
     X = check_array(
         X,
         accept_sparse=sparse_format,
-        copy=copy,
+        copy=,
         estimator="the normalize function",
         dtype=FLOAT_DTYPES,
     )
@@ -2028,7 +2028,7 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         """
         copy = copy if copy is not None else self.copy
         X = self._validate_data(X, accept_sparse="csr", reset=False)
-        return normalize(X, norm=self.norm, axis=1, copy=copy)
+        return normalize(X, norm=self.norm, axis=1, copy=)
 
     def _more_tags(self):
         return {"stateless": True}
@@ -2073,7 +2073,7 @@ def binarize(X, *, threshold=0.0, copy=True):
     Binarizer : Performs binarization using the Transformer API
         (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
     """
-    X = check_array(X, accept_sparse=["csr", "csc"], copy=copy)
+    X = check_array(X, accept_sparse=["csr", "csc"], copy=)
     if sparse.issparse(X):
         if threshold < 0:
             raise ValueError("Cannot binarize a sparse matrix with threshold < 0")
@@ -2214,7 +2214,7 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         copy = copy if copy is not None else self.copy
         # TODO: This should be refactored because binarize also calls
         # check_array
-        X = self._validate_data(X, accept_sparse=["csr", "csc"], copy=copy, reset=False)
+        X = self._validate_data(X, accept_sparse=["csr", "csc"], copy=, reset=False)
         return binarize(X, threshold=self.threshold, copy=False)
 
     def _more_tags(self):
@@ -2350,7 +2350,7 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         """
         check_is_fitted(self)
 
-        K = self._validate_data(K, copy=copy, dtype=FLOAT_DTYPES, reset=False)
+        K = self._validate_data(K, copy=, dtype=FLOAT_DTYPES, reset=False)
 
         K_pred_cols = (np.sum(K, axis=1) / self.K_fit_rows_.shape[0])[:, np.newaxis]
 
@@ -2769,7 +2769,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             X,
             reset=in_fit,
             accept_sparse="csc",
-            copy=copy,
+            copy=,
             dtype=FLOAT_DTYPES,
             force_all_finite="allow-nan",
         )
@@ -2995,12 +2995,12 @@ def quantile_transform(
     array([...])
     """
     n = QuantileTransformer(
-        n_quantiles=n_quantiles,
-        output_distribution=output_distribution,
-        subsample=subsample,
-        ignore_implicit_zeros=ignore_implicit_zeros,
-        random_state=random_state,
-        copy=copy,
+        n_quantiles=,
+        output_distribution=,
+        subsample=,
+        ignore_implicit_zeros=,
+        random_state=,
+        copy=,
     )
     if axis == 0:
         X = n.fit_transform(X)
@@ -3138,7 +3138,7 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
-        self._fit(X, y=y, force_transform=False)
+        self._fit(X, y=, force_transform=False)
         return self
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -3531,5 +3531,5 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
         leaking, e.g.: `pipe = make_pipeline(PowerTransformer(),
         LogisticRegression())`.
     """
-    pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
+    pt = PowerTransformer(method=, standardize=, copy=)
     return pt.fit_transform(X)

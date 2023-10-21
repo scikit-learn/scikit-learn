@@ -146,11 +146,7 @@ class KNNImputer(_BaseImputer):
         add_indicator=False,
         keep_empty_features=False,
     ):
-        super().__init__(
-            missing_values=missing_values,
-            add_indicator=add_indicator,
-            keep_empty_features=keep_empty_features,
-        )
+        super().__init__(missing_values=, add_indicator=, keep_empty_features=)
         self.n_neighbors = n_neighbors
         self.weights = weights
         self.metric = metric
@@ -231,7 +227,7 @@ class KNNImputer(_BaseImputer):
             X,
             accept_sparse=False,
             dtype=FLOAT_DTYPES,
-            force_all_finite=force_all_finite,
+            force_all_finite=,
             copy=self.copy,
         )
 
@@ -267,7 +263,7 @@ class KNNImputer(_BaseImputer):
             X,
             accept_sparse=False,
             dtype=FLOAT_DTYPES,
-            force_all_finite=force_all_finite,
+            force_all_finite=,
             copy=self.copy,
             reset=False,
         )
@@ -360,7 +356,7 @@ class KNNImputer(_BaseImputer):
             self._fit_X,
             metric=self.metric,
             missing_values=self.missing_values,
-            force_all_finite=force_all_finite,
+            force_all_finite=,
             reduce_func=process_chunk,
         )
         for chunk in gen:

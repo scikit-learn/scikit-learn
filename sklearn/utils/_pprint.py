@@ -175,7 +175,7 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
         indent_at_name=True,
         n_max_elements_to_show=None,
     ):
-        super().__init__(indent, width, depth, stream, compact=compact)
+        super().__init__(indent, width, depth, stream, compact=)
         self._indent_at_name = indent_at_name
         if self._indent_at_name:
             self._indent_per_level = 1  # ignore indent param
@@ -379,10 +379,10 @@ def _safe_repr(object, context, maxlevels, level, changed_only=False):
         items = sorted(object.items(), key=pprint._safe_tuple)
         for k, v in items:
             krepr, kreadable, krecur = saferepr(
-                k, context, maxlevels, level, changed_only=changed_only
+                k, context, maxlevels, level, changed_only=
             )
             vrepr, vreadable, vrecur = saferepr(
-                v, context, maxlevels, level, changed_only=changed_only
+                v, context, maxlevels, level, changed_only=
             )
             append("%s: %s" % (krepr, vrepr))
             readable = readable and kreadable and vreadable
@@ -417,7 +417,7 @@ def _safe_repr(object, context, maxlevels, level, changed_only=False):
         level += 1
         for o in object:
             orepr, oreadable, orecur = _safe_repr(
-                o, context, maxlevels, level, changed_only=changed_only
+                o, context, maxlevels, level, changed_only=
             )
             append(orepr)
             if not oreadable:
@@ -447,10 +447,10 @@ def _safe_repr(object, context, maxlevels, level, changed_only=False):
         items = sorted(params.items(), key=pprint._safe_tuple)
         for k, v in items:
             krepr, kreadable, krecur = saferepr(
-                k, context, maxlevels, level, changed_only=changed_only
+                k, context, maxlevels, level, changed_only=
             )
             vrepr, vreadable, vrecur = saferepr(
-                v, context, maxlevels, level, changed_only=changed_only
+                v, context, maxlevels, level, changed_only=
             )
             append("%s=%s" % (krepr.strip("'"), vrepr))
             readable = readable and kreadable and vreadable

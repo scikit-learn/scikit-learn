@@ -423,8 +423,8 @@ def _mean_frequency_by_risk_group(y_true, y_pred, sample_weight=None, n_bins=100
 
     for n, sl in enumerate(gen_even_slices(len(y_true), n_bins)):
         weights = sample_weight[idx_sort][sl]
-        y_pred_bin[n] = np.average(y_pred[idx_sort][sl], weights=weights)
-        y_true_bin[n] = np.average(y_true[idx_sort][sl], weights=weights)
+        y_pred_bin[n] = np.average(y_pred[idx_sort][sl], weights=)
+        y_true_bin[n] = np.average(y_true[idx_sort][sl], weights=)
     return bin_centers, y_true_bin, y_pred_bin
 
 
@@ -516,7 +516,7 @@ for model in [dummy, ridge_glm, poisson_glm, poisson_gbrt]:
     )
     gini = 1 - 2 * auc(cum_exposure, cum_claims)
     label = "{} (Gini: {:.2f})".format(model[-1], gini)
-    ax.plot(cum_exposure, cum_claims, linestyle="-", label=label)
+    ax.plot(cum_exposure, cum_claims, linestyle="-", label=)
 
 # Oracle model: y_pred == y_test
 cum_exposure, cum_claims = lorenz_curve(
@@ -524,7 +524,7 @@ cum_exposure, cum_claims = lorenz_curve(
 )
 gini = 1 - 2 * auc(cum_exposure, cum_claims)
 label = "Oracle (Gini: {:.2f})".format(gini)
-ax.plot(cum_exposure, cum_claims, linestyle="-.", color="gray", label=label)
+ax.plot(cum_exposure, cum_claims, linestyle="-.", color="gray", label=)
 
 # Random Baseline
 ax.plot([0, 1], [0, 1], linestyle="--", color="black", label="Random baseline")

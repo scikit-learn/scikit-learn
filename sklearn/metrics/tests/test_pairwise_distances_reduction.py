@@ -90,7 +90,7 @@ def assert_same_distances_for_common_neighbors(
         dist_a = indices_to_dist_a[idx]
         dist_b = indices_to_dist_b[idx]
         try:
-            assert_allclose(dist_a, dist_b, rtol=rtol, atol=atol)
+            assert_allclose(dist_a, dist_b, rtol=, atol=)
         except AssertionError as e:
             # Wrap exception to provide more context while also including
             # the original exception with the computed absolute and
@@ -235,7 +235,7 @@ def _non_trivial_radius(
     if precomputed_dists is None:
         assert X is not None
         assert Y is not None
-        sampled_dists = pairwise_distances(X, Y, metric=metric, **metric_kwargs)
+        sampled_dists = pairwise_distances(X, Y, metric=, **metric_kwargs)
     else:
         sampled_dists = precomputed_dists[:n_subsampled_queries].copy()
     sampled_dists.sort(axis=1)
@@ -351,7 +351,7 @@ ASSERT_RESULT = {
 def test_assert_compatible_argkmin_results():
     atol = 1e-7
     rtol = 0.0
-    tols = dict(atol=atol, rtol=rtol)
+    tols = dict(atol=, rtol=)
 
     eps = atol / 3
     _1m = 1.0 - eps
@@ -491,7 +491,7 @@ def test_assert_compatible_argkmin_results():
 def test_assert_compatible_radius_results(check_sorted):
     atol = 1e-7
     rtol = 0.0
-    tols = dict(atol=atol, rtol=rtol)
+    tols = dict(atol=, rtol=)
 
     eps = atol / 3
     _1m = 1.0 - eps
@@ -516,7 +516,7 @@ def test_assert_compatible_radius_results(check_sorted):
         ref_indices,
         ref_indices,
         radius=7.0,
-        check_sorted=check_sorted,
+        check_sorted=,
         **tols,
     )
 
@@ -527,7 +527,7 @@ def test_assert_compatible_radius_results(check_sorted):
         np.array([np.array([1, 2, 3, 4, 5])]),
         np.array([np.array([1, 2, 4, 5, 3])]),
         radius=7.0,
-        check_sorted=check_sorted,
+        check_sorted=,
         **tols,
     )
     assert_compatible_radius_results(
@@ -536,7 +536,7 @@ def test_assert_compatible_radius_results(check_sorted):
         np.array([np.array([6, 7, 8, 9, 10])]),
         np.array([np.array([6, 9, 7, 8, 10])]),
         radius=7.0,
-        check_sorted=check_sorted,
+        check_sorted=,
         **tols,
     )
 
@@ -552,7 +552,7 @@ def test_assert_compatible_radius_results(check_sorted):
             np.array([np.array([1, 2, 3, 4, 5])]),
             np.array([np.array([2, 1, 3, 4, 5])]),
             radius=7.0,
-            check_sorted=check_sorted,
+            check_sorted=,
             **tols,
         )
 
@@ -564,7 +564,7 @@ def test_assert_compatible_radius_results(check_sorted):
         np.array([np.array([1, 2, 3, 4, 5, 7])]),
         np.array([np.array([1, 2, 3, 6])]),
         radius=_6_1p,
-        check_sorted=check_sorted,
+        check_sorted=,
         **tols,
     )
 
@@ -581,7 +581,7 @@ def test_assert_compatible_radius_results(check_sorted):
             np.array([np.array([1, 2, 3])]),
             np.array([np.array([1, 2])]),
             radius=6.1,
-            check_sorted=check_sorted,
+            check_sorted=,
             **tols,
         )
     msg = re.escape(
@@ -595,7 +595,7 @@ def test_assert_compatible_radius_results(check_sorted):
             np.array([np.array([1, 2, 3])]),
             np.array([np.array([1, 4, 3])]),
             radius=6.1,
-            check_sorted=check_sorted,
+            check_sorted=,
             **tols,
         )
 
@@ -611,7 +611,7 @@ def test_assert_compatible_radius_results(check_sorted):
             np.array([np.array([1, 2, 3, 4, 5])]),
             np.array([np.array([2, 1, 4, 5, 3])]),
             radius=6.1,
-            check_sorted=check_sorted,
+            check_sorted=,
             **tols,
         )
     with pytest.raises(AssertionError, match=msg):
@@ -621,7 +621,7 @@ def test_assert_compatible_radius_results(check_sorted):
             np.array([np.array([1, 2, 3, 4, 5])]),
             np.array([np.array([2, 1, 4, 5, 3])]),
             radius=6.1,
-            check_sorted=check_sorted,
+            check_sorted=,
             **tols,
         )
 
@@ -728,31 +728,31 @@ def test_argkmin_factory_method_wrong_usages():
         "got: X.dtype=float32 and Y.dtype=float64"
     )
     with pytest.raises(ValueError, match=msg):
-        ArgKmin.compute(X=X.astype(np.float32), Y=Y, k=k, metric=metric)
+        ArgKmin.compute(X=X.astype(np.float32), Y=, k=, metric=)
 
     msg = (
         "Only float64 or float32 datasets pairs are supported at this time, "
         "got: X.dtype=float64 and Y.dtype=int32"
     )
     with pytest.raises(ValueError, match=msg):
-        ArgKmin.compute(X=X, Y=Y.astype(np.int32), k=k, metric=metric)
+        ArgKmin.compute(X=, Y=Y.astype(np.int32), k=, metric=)
 
     with pytest.raises(ValueError, match="k == -1, must be >= 1."):
-        ArgKmin.compute(X=X, Y=Y, k=-1, metric=metric)
+        ArgKmin.compute(X=, Y=, k=-1, metric=)
 
     with pytest.raises(ValueError, match="k == 0, must be >= 1."):
-        ArgKmin.compute(X=X, Y=Y, k=0, metric=metric)
+        ArgKmin.compute(X=, Y=, k=0, metric=)
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
-        ArgKmin.compute(X=X, Y=Y, k=k, metric="wrong metric")
+        ArgKmin.compute(X=, Y=, k=, metric="wrong metric")
 
     with pytest.raises(
         ValueError, match=r"Buffer has wrong number of dimensions \(expected 2, got 1\)"
     ):
-        ArgKmin.compute(X=np.array([1.0, 2.0]), Y=Y, k=k, metric=metric)
+        ArgKmin.compute(X=np.array([1.0, 2.0]), Y=, k=, metric=)
 
     with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
-        ArgKmin.compute(X=np.asfortranarray(X), Y=Y, k=k, metric=metric)
+        ArgKmin.compute(X=np.asfortranarray(X), Y=, k=, metric=)
 
     # A UserWarning must be raised in this case.
     unused_metric_kwargs = {"p": 3}
@@ -761,7 +761,7 @@ def test_argkmin_factory_method_wrong_usages():
 
     with pytest.warns(UserWarning, match=message):
         ArgKmin.compute(
-            X=X, Y=Y, k=k, metric=metric, metric_kwargs=unused_metric_kwargs
+            X=, Y=, k=, metric=, metric_kwargs=unused_metric_kwargs
         )
 
     # A UserWarning must be raised in this case.
@@ -773,7 +773,7 @@ def test_argkmin_factory_method_wrong_usages():
     message = r"Some metric_kwargs have been passed \({'p': 3, 'Y_norm_squared'"
 
     with pytest.warns(UserWarning, match=message):
-        ArgKmin.compute(X=X, Y=Y, k=k, metric=metric, metric_kwargs=metric_kwargs)
+        ArgKmin.compute(X=, Y=, k=, metric=, metric_kwargs=)
 
     # No user warning must be raised in this case.
     metric_kwargs = {
@@ -781,7 +781,7 @@ def test_argkmin_factory_method_wrong_usages():
     }
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=UserWarning)
-        ArgKmin.compute(X=X, Y=Y, k=k, metric=metric, metric_kwargs=metric_kwargs)
+        ArgKmin.compute(X=, Y=, k=, metric=, metric_kwargs=)
 
     # No user warning must be raised in this case.
     metric_kwargs = {
@@ -790,7 +790,7 @@ def test_argkmin_factory_method_wrong_usages():
     }
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=UserWarning)
-        ArgKmin.compute(X=X, Y=Y, k=k, metric=metric, metric_kwargs=metric_kwargs)
+        ArgKmin.compute(X=, Y=, k=, metric=, metric_kwargs=)
 
 
 def test_argkmin_classmode_factory_method_wrong_usages():
@@ -811,12 +811,12 @@ def test_argkmin_classmode_factory_method_wrong_usages():
     with pytest.raises(ValueError, match=msg):
         ArgKminClassMode.compute(
             X=X.astype(np.float32),
-            Y=Y,
-            k=k,
-            metric=metric,
-            weights=weights,
-            Y_labels=Y_labels,
-            unique_Y_labels=unique_Y_labels,
+            Y=,
+            k=,
+            metric=,
+            weights=,
+            Y_labels=,
+            unique_Y_labels=,
         )
 
     msg = (
@@ -825,46 +825,46 @@ def test_argkmin_classmode_factory_method_wrong_usages():
     )
     with pytest.raises(ValueError, match=msg):
         ArgKminClassMode.compute(
-            X=X,
+            X=,
             Y=Y.astype(np.int32),
-            k=k,
-            metric=metric,
-            weights=weights,
-            Y_labels=Y_labels,
-            unique_Y_labels=unique_Y_labels,
+            k=,
+            metric=,
+            weights=,
+            Y_labels=,
+            unique_Y_labels=,
         )
 
     with pytest.raises(ValueError, match="k == -1, must be >= 1."):
         ArgKminClassMode.compute(
-            X=X,
-            Y=Y,
+            X=,
+            Y=,
             k=-1,
-            metric=metric,
-            weights=weights,
-            Y_labels=Y_labels,
-            unique_Y_labels=unique_Y_labels,
+            metric=,
+            weights=,
+            Y_labels=,
+            unique_Y_labels=,
         )
 
     with pytest.raises(ValueError, match="k == 0, must be >= 1."):
         ArgKminClassMode.compute(
-            X=X,
-            Y=Y,
+            X=,
+            Y=,
             k=0,
-            metric=metric,
-            weights=weights,
-            Y_labels=Y_labels,
-            unique_Y_labels=unique_Y_labels,
+            metric=,
+            weights=,
+            Y_labels=,
+            unique_Y_labels=,
         )
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
         ArgKminClassMode.compute(
-            X=X,
-            Y=Y,
-            k=k,
+            X=,
+            Y=,
+            k=,
             metric="wrong metric",
-            weights=weights,
-            Y_labels=Y_labels,
-            unique_Y_labels=unique_Y_labels,
+            weights=,
+            Y_labels=,
+            unique_Y_labels=,
         )
 
     with pytest.raises(
@@ -872,23 +872,23 @@ def test_argkmin_classmode_factory_method_wrong_usages():
     ):
         ArgKminClassMode.compute(
             X=np.array([1.0, 2.0]),
-            Y=Y,
-            k=k,
-            metric=metric,
-            weights=weights,
-            Y_labels=Y_labels,
-            unique_Y_labels=unique_Y_labels,
+            Y=,
+            k=,
+            metric=,
+            weights=,
+            Y_labels=,
+            unique_Y_labels=,
         )
 
     with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
         ArgKminClassMode.compute(
             X=np.asfortranarray(X),
-            Y=Y,
-            k=k,
-            metric=metric,
-            weights=weights,
-            Y_labels=Y_labels,
-            unique_Y_labels=unique_Y_labels,
+            Y=,
+            k=,
+            metric=,
+            weights=,
+            Y_labels=,
+            unique_Y_labels=,
         )
 
     non_existent_weights_strategy = "non_existent_weights_strategy"
@@ -898,13 +898,13 @@ def test_argkmin_classmode_factory_method_wrong_usages():
     )
     with pytest.raises(ValueError, match=message):
         ArgKminClassMode.compute(
-            X=X,
-            Y=Y,
-            k=k,
-            metric=metric,
+            X=,
+            Y=,
+            k=,
+            metric=,
             weights=non_existent_weights_strategy,
-            Y_labels=Y_labels,
-            unique_Y_labels=unique_Y_labels,
+            Y_labels=,
+            unique_Y_labels=,
         )
 
     # TODO: introduce assertions on UserWarnings once the Euclidean specialisation
@@ -926,9 +926,7 @@ def test_radius_neighbors_factory_method_wrong_usages():
         ValueError,
         match=msg,
     ):
-        RadiusNeighbors.compute(
-            X=X.astype(np.float32), Y=Y, radius=radius, metric=metric
-        )
+        RadiusNeighbors.compute(X=X.astype(np.float32), Y=, radius=, metric=)
 
     msg = (
         "Only float64 or float32 datasets pairs are supported at this time, "
@@ -938,25 +936,21 @@ def test_radius_neighbors_factory_method_wrong_usages():
         ValueError,
         match=msg,
     ):
-        RadiusNeighbors.compute(X=X, Y=Y.astype(np.int32), radius=radius, metric=metric)
+        RadiusNeighbors.compute(X=, Y=Y.astype(np.int32), radius=, metric=)
 
     with pytest.raises(ValueError, match="radius == -1.0, must be >= 0."):
-        RadiusNeighbors.compute(X=X, Y=Y, radius=-1, metric=metric)
+        RadiusNeighbors.compute(X=, Y=, radius=-1, metric=)
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
-        RadiusNeighbors.compute(X=X, Y=Y, radius=radius, metric="wrong metric")
+        RadiusNeighbors.compute(X=, Y=, radius=, metric="wrong metric")
 
     with pytest.raises(
         ValueError, match=r"Buffer has wrong number of dimensions \(expected 2, got 1\)"
     ):
-        RadiusNeighbors.compute(
-            X=np.array([1.0, 2.0]), Y=Y, radius=radius, metric=metric
-        )
+        RadiusNeighbors.compute(X=np.array([1.0, 2.0]), Y=, radius=, metric=)
 
     with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
-        RadiusNeighbors.compute(
-            X=np.asfortranarray(X), Y=Y, radius=radius, metric=metric
-        )
+        RadiusNeighbors.compute(X=np.asfortranarray(X), Y=, radius=, metric=)
 
     unused_metric_kwargs = {"p": 3}
 
@@ -965,7 +959,7 @@ def test_radius_neighbors_factory_method_wrong_usages():
 
     with pytest.warns(UserWarning, match=message):
         RadiusNeighbors.compute(
-            X=X, Y=Y, radius=radius, metric=metric, metric_kwargs=unused_metric_kwargs
+            X=, Y=, radius=, metric=, metric_kwargs=unused_metric_kwargs
         )
 
     # A UserWarning must be raised in this case.
@@ -977,9 +971,7 @@ def test_radius_neighbors_factory_method_wrong_usages():
     message = r"Some metric_kwargs have been passed \({'p': 3, 'Y_norm_squared'"
 
     with pytest.warns(UserWarning, match=message):
-        RadiusNeighbors.compute(
-            X=X, Y=Y, radius=radius, metric=metric, metric_kwargs=metric_kwargs
-        )
+        RadiusNeighbors.compute(X=, Y=, radius=, metric=, metric_kwargs=)
 
     # No user warning must be raised in this case.
     metric_kwargs = {
@@ -988,9 +980,7 @@ def test_radius_neighbors_factory_method_wrong_usages():
     }
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=UserWarning)
-        RadiusNeighbors.compute(
-            X=X, Y=Y, radius=radius, metric=metric, metric_kwargs=metric_kwargs
-        )
+        RadiusNeighbors.compute(X=, Y=, radius=, metric=, metric_kwargs=)
 
     # No user warning must be raised in this case.
     metric_kwargs = {
@@ -998,9 +988,7 @@ def test_radius_neighbors_factory_method_wrong_usages():
     }
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=UserWarning)
-        RadiusNeighbors.compute(
-            X=X, Y=Y, radius=radius, metric=metric, metric_kwargs=metric_kwargs
-        )
+        RadiusNeighbors.compute(X=, Y=, radius=, metric=, metric_kwargs=)
 
 
 def test_radius_neighbors_classmode_factory_method_wrong_usages():
@@ -1020,12 +1008,12 @@ def test_radius_neighbors_classmode_factory_method_wrong_usages():
     with pytest.raises(ValueError, match=msg):
         RadiusNeighborsClassMode.compute(
             X=X.astype(np.float32),
-            Y=Y,
-            radius=radius,
-            metric=metric,
-            weights=weights,
-            Y_labels=Y_labels,
-            unique_Y_labels=unique_Y_labels,
+            Y=,
+            radius=,
+            metric=,
+            weights=,
+            Y_labels=,
+            unique_Y_labels=,
             outlier_label=None,
         )
 
@@ -1035,37 +1023,37 @@ def test_radius_neighbors_classmode_factory_method_wrong_usages():
     )
     with pytest.raises(ValueError, match=msg):
         RadiusNeighborsClassMode.compute(
-            X=X,
+            X=,
             Y=Y.astype(np.int32),
-            radius=radius,
-            metric=metric,
-            weights=weights,
-            Y_labels=Y_labels,
-            unique_Y_labels=unique_Y_labels,
+            radius=,
+            metric=,
+            weights=,
+            Y_labels=,
+            unique_Y_labels=,
             outlier_label=None,
         )
 
     with pytest.raises(ValueError, match="radius == -1.0, must be >= 0."):
         RadiusNeighborsClassMode.compute(
-            X=X,
-            Y=Y,
+            X=,
+            Y=,
             radius=-1,
-            metric=metric,
-            weights=weights,
-            Y_labels=Y_labels,
-            unique_Y_labels=unique_Y_labels,
+            metric=,
+            weights=,
+            Y_labels=,
+            unique_Y_labels=,
             outlier_label=None,
         )
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
         RadiusNeighborsClassMode.compute(
-            X=X,
-            Y=Y,
+            X=,
+            Y=,
             radius=-1,
             metric="wrong_metric",
-            weights=weights,
-            Y_labels=Y_labels,
-            unique_Y_labels=unique_Y_labels,
+            weights=,
+            Y_labels=,
+            unique_Y_labels=,
             outlier_label=None,
         )
 
@@ -1074,24 +1062,24 @@ def test_radius_neighbors_classmode_factory_method_wrong_usages():
     ):
         RadiusNeighborsClassMode.compute(
             X=np.array([1.0, 2.0]),
-            Y=Y,
-            radius=radius,
-            metric=metric,
-            weights=weights,
-            Y_labels=Y_labels,
-            unique_Y_labels=unique_Y_labels,
+            Y=,
+            radius=,
+            metric=,
+            weights=,
+            Y_labels=,
+            unique_Y_labels=,
             outlier_label=None,
         )
 
     with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
         RadiusNeighborsClassMode.compute(
             X=np.asfortranarray(X),
-            Y=Y,
-            radius=radius,
-            metric=metric,
-            weights=weights,
-            Y_labels=Y_labels,
-            unique_Y_labels=unique_Y_labels,
+            Y=,
+            radius=,
+            metric=,
+            weights=,
+            Y_labels=,
+            unique_Y_labels=,
             outlier_label=None,
         )
 
@@ -1102,13 +1090,13 @@ def test_radius_neighbors_classmode_factory_method_wrong_usages():
     )
     with pytest.raises(ValueError, match=msg):
         RadiusNeighborsClassMode.compute(
-            X=X,
-            Y=Y,
-            radius=radius,
+            X=,
+            Y=,
+            radius=,
             metric="wrong_metric",
             weights=non_existent_weights_strategy,
-            Y_labels=Y_labels,
-            unique_Y_labels=unique_Y_labels,
+            Y_labels=,
+            unique_Y_labels=,
             outlier_label=None,
         )
 
@@ -1133,7 +1121,7 @@ def test_chunk_size_agnosticism(
         check_parameters = {}
         compute_parameters = {}
     else:
-        radius = _non_trivial_radius(X=X, Y=Y, metric="euclidean")
+        radius = _non_trivial_radius(X=, Y=, metric="euclidean")
         parameter = radius
         check_parameters = {"radius": radius}
         compute_parameters = {"sort_results": True}
@@ -1183,7 +1171,7 @@ def test_n_threads_agnosticism(
         check_parameters = {}
         compute_parameters = {}
     else:
-        radius = _non_trivial_radius(X=X, Y=Y, metric="euclidean")
+        radius = _non_trivial_radius(X=, Y=, metric="euclidean")
         parameter = radius
         check_parameters = {"radius": radius}
         compute_parameters = {"sort_results": True}
@@ -1246,7 +1234,7 @@ def test_format_agnosticism(
     else:
         # Adjusting the radius to ensure that the expected results is neither
         # trivially empty nor too large.
-        radius = _non_trivial_radius(X=X, Y=Y, metric="euclidean")
+        radius = _non_trivial_radius(X=, Y=, metric="euclidean")
         parameter = radius
         check_parameters = {"radius": radius}
         compute_parameters = {"sort_results": True}
@@ -1315,7 +1303,7 @@ def test_strategies_consistency(
         check_parameters = {}
         compute_parameters = {}
     else:
-        radius = _non_trivial_radius(X=X, Y=Y, metric=metric)
+        radius = _non_trivial_radius(X=, Y=, metric=)
         parameter = radius
         check_parameters = {"radius": radius}
         compute_parameters = {"sort_results": True}
@@ -1324,7 +1312,7 @@ def test_strategies_consistency(
         X,
         Y,
         parameter,
-        metric=metric,
+        metric=,
         # Taking the first
         metric_kwargs=_get_metric_params_list(
             metric, n_features, seed=global_random_seed
@@ -1340,7 +1328,7 @@ def test_strategies_consistency(
         X,
         Y,
         parameter,
-        metric=metric,
+        metric=,
         # Taking the first
         metric_kwargs=_get_metric_params_list(
             metric, n_features, seed=global_random_seed
@@ -1396,7 +1384,7 @@ def test_pairwise_distances_argkmin(
         # Compare to scikit-learn GEMM optimized implementation
         dist_matrix = euclidean_distances(X, Y)
     else:
-        dist_matrix = cdist(X, Y, metric=metric, **metric_kwargs)
+        dist_matrix = cdist(X, Y, metric=, **metric_kwargs)
     # Taking argkmin (indices of the k smallest values)
     argkmin_indices_ref = np.argsort(dist_matrix, axis=1)[:, :k]
     # Getting the associated distances
@@ -1411,12 +1399,12 @@ def test_pairwise_distances_argkmin(
             _X,
             _Y,
             k,
-            metric=metric,
-            metric_kwargs=metric_kwargs,
+            metric=,
+            metric_kwargs=,
             return_distance=True,
             # So as to have more than a chunk, forcing parallelism.
             chunk_size=n_samples // 4,
-            strategy=strategy,
+            strategy=,
         )
 
         ASSERT_RESULT[(ArgKmin, dtype)](
@@ -1454,7 +1442,7 @@ def test_pairwise_distances_radius_neighbors(
         # Compare to scikit-learn GEMM optimized implementation
         dist_matrix = euclidean_distances(X, Y)
     else:
-        dist_matrix = cdist(X, Y, metric=metric, **metric_kwargs)
+        dist_matrix = cdist(X, Y, metric=, **metric_kwargs)
 
     radius = _non_trivial_radius(precomputed_dists=dist_matrix)
 
@@ -1476,12 +1464,12 @@ def test_pairwise_distances_radius_neighbors(
         X,
         Y,
         radius,
-        metric=metric,
-        metric_kwargs=metric_kwargs,
+        metric=,
+        metric_kwargs=,
         return_distance=True,
         # So as to have more than a chunk, forcing parallelism.
         chunk_size=n_samples // 4,
-        strategy=strategy,
+        strategy=,
         sort_results=True,
     )
 
@@ -1523,7 +1511,7 @@ def test_memmap_backed_data(
         X,
         Y,
         parameter,
-        metric=metric,
+        metric=,
         return_distance=True,
         **compute_parameters,
     )
@@ -1532,7 +1520,7 @@ def test_memmap_backed_data(
         X_mm,
         Y_mm,
         parameter,
-        metric=metric,
+        metric=,
         return_distance=True,
         **compute_parameters,
     )
@@ -1559,16 +1547,16 @@ def test_sqeuclidean_row_norms(
     X_csr = csr_container(X)
 
     sq_row_norm_reference = np.linalg.norm(X, axis=1) ** 2
-    sq_row_norm = sqeuclidean_row_norms(X, num_threads=num_threads)
+    sq_row_norm = sqeuclidean_row_norms(X, num_threads=)
 
-    sq_row_norm_csr = sqeuclidean_row_norms(X_csr, num_threads=num_threads)
+    sq_row_norm_csr = sqeuclidean_row_norms(X_csr, num_threads=)
 
     assert_allclose(sq_row_norm_reference, sq_row_norm)
     assert_allclose(sq_row_norm_reference, sq_row_norm_csr)
 
     with pytest.raises(ValueError):
         X = np.asfortranarray(X)
-        sqeuclidean_row_norms(X, num_threads=num_threads)
+        sqeuclidean_row_norms(X, num_threads=)
 
 
 def test_argkmin_classmode_strategy_consistent():
@@ -1582,23 +1570,23 @@ def test_argkmin_classmode_strategy_consistent():
     Y_labels = rng.randint(low=0, high=10, size=100)
     unique_Y_labels = np.unique(Y_labels)
     results_X = ArgKminClassMode.compute(
-        X=X,
-        Y=Y,
-        k=k,
-        metric=metric,
-        weights=weights,
-        Y_labels=Y_labels,
-        unique_Y_labels=unique_Y_labels,
+        X=,
+        Y=,
+        k=,
+        metric=,
+        weights=,
+        Y_labels=,
+        unique_Y_labels=,
         strategy="parallel_on_X",
     )
     results_Y = ArgKminClassMode.compute(
-        X=X,
-        Y=Y,
-        k=k,
-        metric=metric,
-        weights=weights,
-        Y_labels=Y_labels,
-        unique_Y_labels=unique_Y_labels,
+        X=,
+        Y=,
+        k=,
+        metric=,
+        weights=,
+        Y_labels=,
+        unique_Y_labels=,
         strategy="parallel_on_Y",
     )
     assert_array_equal(results_X, results_Y)
@@ -1616,25 +1604,25 @@ def test_radius_neighbors_classmode_strategy_consistent(outlier_label):
     Y_labels = rng.randint(low=0, high=10, size=100)
     unique_Y_labels = np.unique(Y_labels)
     results_X = RadiusNeighborsClassMode.compute(
-        X=X,
-        Y=Y,
-        radius=radius,
-        metric=metric,
-        weights=weights,
-        Y_labels=Y_labels,
-        unique_Y_labels=unique_Y_labels,
-        outlier_label=outlier_label,
+        X=,
+        Y=,
+        radius=,
+        metric=,
+        weights=,
+        Y_labels=,
+        unique_Y_labels=,
+        outlier_label=,
         strategy="parallel_on_X",
     )
     results_Y = RadiusNeighborsClassMode.compute(
-        X=X,
-        Y=Y,
-        radius=radius,
-        metric=metric,
-        weights=weights,
-        Y_labels=Y_labels,
-        unique_Y_labels=unique_Y_labels,
-        outlier_label=outlier_label,
+        X=,
+        Y=,
+        radius=,
+        metric=,
+        weights=,
+        Y_labels=,
+        unique_Y_labels=,
+        outlier_label=,
         strategy="parallel_on_Y",
     )
     assert_allclose(results_X, results_Y)

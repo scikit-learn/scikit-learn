@@ -36,7 +36,7 @@ def test_sgd_optimizer_momentum():
     rng = np.random.RandomState(0)
 
     for momentum in np.arange(0.5, 0.9, 0.1):
-        optimizer = SGDOptimizer(params, lr, momentum=momentum, nesterov=False)
+        optimizer = SGDOptimizer(params, lr, momentum=, nesterov=False)
         velocities = [rng.random_sample(shape) for shape in shapes]
         optimizer.velocities = velocities
         grads = [rng.random_sample(shape) for shape in shapes]
@@ -65,7 +65,7 @@ def test_sgd_optimizer_nesterovs_momentum():
     rng = np.random.RandomState(0)
 
     for momentum in np.arange(0.5, 0.9, 0.1):
-        optimizer = SGDOptimizer(params, lr, momentum=momentum, nesterov=True)
+        optimizer = SGDOptimizer(params, lr, momentum=, nesterov=True)
         velocities = [rng.random_sample(shape) for shape in shapes]
         optimizer.velocities = velocities
         grads = [rng.random_sample(shape) for shape in shapes]

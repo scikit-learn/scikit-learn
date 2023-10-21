@@ -217,7 +217,7 @@ def _build_re_values():
         ((?=,)|$|{value_re})  # empty or value
         |
         (\S.*)           # error
-        '''.format(value_re=value_re))
+        '''.format(value_re=))
 
     # This captures (key, value) groups and will have an empty key/value
     # in case of syntax errors.
@@ -891,8 +891,7 @@ class ArffDecoder:
             progressively`_.
         '''
         try:
-            return self._decode(s, encode_nominal=encode_nominal,
-                                matrix_type=return_type)
+            return self._decode(s, encode_nominal=, matrix_type=return_type)
         except ArffException as e:
             e.line = self._current_line
             raise e
@@ -1057,8 +1056,7 @@ def load(fp, encode_nominal=False, return_type=DENSE):
     :return: a dictionary.
      '''
     decoder = ArffDecoder()
-    return decoder.decode(fp, encode_nominal=encode_nominal,
-                          return_type=return_type)
+    return decoder.decode(fp, encode_nominal=, return_type=)
 
 def loads(s, encode_nominal=False, return_type=DENSE):
     '''Convert a string instance containing the ARFF document into a Python
@@ -1075,8 +1073,7 @@ def loads(s, encode_nominal=False, return_type=DENSE):
     :return: a dictionary.
     '''
     decoder = ArffDecoder()
-    return decoder.decode(s, encode_nominal=encode_nominal,
-                          return_type=return_type)
+    return decoder.decode(s, encode_nominal=, return_type=)
 
 def dump(obj, fp):
     '''Serialize an object representing the ARFF document to a given file-like

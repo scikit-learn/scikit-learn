@@ -194,7 +194,7 @@ def pytest_collection_modifyitems(config, items):
             item.dtest.globs = {}
 
     if skip_doctests:
-        skip_marker = pytest.mark.skip(reason=reason)
+        skip_marker = pytest.mark.skip(reason=)
 
         for item in items:
             if isinstance(item, DoctestItem):

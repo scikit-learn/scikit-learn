@@ -89,7 +89,7 @@ def create_or_update_issue(body=""):
     if issue is None:
         # Create new issue
         header = f"**CI failed on {link}** ({date_str})"
-        issue = issue_repo.create_issue(title=title, body=f"{header}\n{body}")
+        issue = issue_repo.create_issue(title=, body=f"{header}\n{body}")
         print(f"Created issue in {args.issue_repo}#{issue.number}")
         sys.exit()
     else:

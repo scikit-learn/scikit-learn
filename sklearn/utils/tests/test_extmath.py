@@ -82,7 +82,7 @@ def test_uniform_weights():
 
     for axis in (None, 0, 1):
         mode, score = _mode(x, axis)
-        mode2, score2 = weighted_mode(x, weights, axis=axis)
+        mode2, score2 = weighted_mode(x, weights, axis=)
 
         assert_array_equal(mode, mode2)
         assert_array_equal(score, score2)
@@ -119,8 +119,8 @@ def test_randomized_svd_low_rank_all_dtypes(dtype):
     # generate a matrix X of approximate effective rank `rank` and no noise
     # component (very structured signal):
     X = make_low_rank_matrix(
-        n_samples=n_samples,
-        n_features=n_features,
+        n_samples=,
+        n_features=,
         effective_rank=rank,
         tail_strength=0.0,
         random_state=0,
@@ -159,11 +159,11 @@ def test_randomized_svd_low_rank_all_dtypes(dtype):
 
         # ensure that the singular values of both methods are equal up to the
         # real rank of the matrix
-        assert_almost_equal(s[:k], sa, decimal=decimal)
+        assert_almost_equal(s[:k], sa, decimal=)
 
         # check the singular vectors too (while not checking the sign)
         assert_almost_equal(
-            np.dot(U[:, :k], Vt[:k, :]), np.dot(Ua, Va), decimal=decimal
+            np.dot(U[:, :k], Vt[:k, :]), np.dot(Ua, Va), decimal=
         )
 
         # check the sparse matrix representation
@@ -183,7 +183,7 @@ def test_randomized_svd_low_rank_all_dtypes(dtype):
                 assert sa.dtype.kind == "f"
                 assert Va.dtype.kind == "f"
 
-            assert_almost_equal(s[:rank], sa[:rank], decimal=decimal)
+            assert_almost_equal(s[:rank], sa[:rank], decimal=)
 
 
 @pytest.mark.parametrize("dtype", (np.int32, np.int64, np.float32, np.float64))
@@ -191,7 +191,7 @@ def test_randomized_eigsh(dtype):
     """Test that `_randomized_eigsh` returns the appropriate components"""
 
     rng = np.random.RandomState(42)
-    X = np.diag(np.array([1.0, -2.0, 0.0, 3.0], dtype=dtype))
+    X = np.diag(np.array([1.0, -2.0, 0.0, 3.0], dtype=))
     # random rotation that preserves the eigenvalues of X
     rand_rot = np.linalg.qr(rng.normal(size=X.shape))[0]
     X = rand_rot @ X @ rand_rot.T
@@ -269,7 +269,7 @@ def test_randomized_eigsh_compared_to_others(k):
         v0 = _init_arpack_v0(n_features, random_state=0)
         # "LA" largest algebraic <=> selection="value" in randomized_eigsh
         eigvals_arpack, eigvecs_arpack = eigsh(
-            X, k, which="LA", tol=0, maxiter=None, v0=v0
+            X, k, which="LA", tol=0, maxiter=None, v0=
         )
         indices = eigvals_arpack.argsort()[::-1]
         # eigenvalues
@@ -334,7 +334,7 @@ def test_row_norms(dtype, csr_container):
     assert_array_almost_equal(np.sqrt(sq_norm), row_norms(X), precision)
 
     for csr_index_dtype in [np.int32, np.int64]:
-        Xcsr = csr_container(X, dtype=dtype)
+        Xcsr = csr_container(X, dtype=)
         # csr_matrix will use int32 indices by default,
         # up-casting those to int64 when necessary
         if csr_index_dtype is np.int64:
@@ -356,8 +356,8 @@ def test_randomized_svd_low_rank_with_noise():
     # generate a matrix X wity structure approximate rank `rank` and an
     # important noisy component
     X = make_low_rank_matrix(
-        n_samples=n_samples,
-        n_features=n_features,
+        n_samples=,
+        n_features=,
         effective_rank=rank,
         tail_strength=0.1,
         random_state=0,
@@ -397,8 +397,8 @@ def test_randomized_svd_infinite_rank():
     # let us try again without 'low_rank component': just regularly but slowly
     # decreasing singular values: the rank of the data matrix is infinite
     X = make_low_rank_matrix(
-        n_samples=n_samples,
-        n_features=n_features,
+        n_samples=,
+        n_features=,
         effective_rank=rank,
         tail_strength=1.0,
         random_state=0,
@@ -436,8 +436,8 @@ def test_randomized_svd_transpose_consistency():
     k = 10
 
     X = make_low_rank_matrix(
-        n_samples=n_samples,
-        n_features=n_features,
+        n_samples=,
+        n_features=,
         effective_rank=rank,
         tail_strength=0.5,
         random_state=0,
@@ -713,7 +713,7 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
     mult = 10
     X = rng.rand(1000, 20).astype(dtype) * mult
     sample_weight = rng.rand(X.shape[0]) * mult
-    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
+    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=)
 
     expected_mean = np.average(X, weights=sample_weight, axis=0)
     expected_var = (
@@ -751,7 +751,7 @@ def test_incremental_weighted_mean_and_variance(
     weight = rng.normal(loc=weight_loc, scale=weight_scale, size=size[0])
 
     # Compare to weighted average: np.average
-    X = rng.normal(loc=mean, scale=var, size=size)
+    X = rng.normal(loc=mean, scale=var, size=)
     expected_mean = _safe_accumulator_op(np.average, X, weights=weight, axis=0)
     expected_var = _safe_accumulator_op(
         np.average, (X - expected_mean) ** 2, weights=weight, axis=0
@@ -759,7 +759,7 @@ def test_incremental_weighted_mean_and_variance(
     _assert(X, weight, expected_mean, expected_var)
 
     # Compare to unweighted mean: np.mean
-    X = rng.normal(loc=mean, scale=var, size=size)
+    X = rng.normal(loc=mean, scale=var, size=)
     ones_weight = np.ones(size[0])
     expected_mean = _safe_accumulator_op(np.mean, X, axis=0)
     expected_var = _safe_accumulator_op(np.var, X, axis=0)
@@ -1069,7 +1069,7 @@ def test_safe_sparse_dot_dense_output(dense_output):
     B = sparse.random(10, 20, density=0.1, random_state=rng)
 
     expected = A.dot(B)
-    actual = safe_sparse_dot(A, B, dense_output=dense_output)
+    actual = safe_sparse_dot(A, B, dense_output=)
 
     assert sparse.issparse(actual) == (not dense_output)
 

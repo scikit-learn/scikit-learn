@@ -331,7 +331,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
             )
             warnings.warn(msg, DataConversionWarning)
 
-        X = self._validate_data(X, dtype=dtype, accept_sparse="csr")
+        X = self._validate_data(X, dtype=, accept_sparse="csr")
         if self.metric == "precomputed" and issparse(X):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", SparseEfficiencyWarning)
@@ -346,7 +346,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
             self.reachability_,
             self.predecessor_,
         ) = memory.cache(compute_optics_graph)(
-            X=X,
+            X=,
             min_samples=self.min_samples,
             algorithm=self.algorithm,
             leaf_size=self.leaf_size,
@@ -384,7 +384,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
                 reachability=self.reachability_,
                 core_distances=self.core_distances_,
                 ordering=self.ordering_,
-                eps=eps,
+                eps=,
             )
 
         self.labels_ = labels_
@@ -428,7 +428,7 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
     core_distances.fill(np.nan)
 
     chunk_n_rows = get_chunk_n_rows(
-        row_bytes=16 * min_samples, max_n_rows=n_samples, working_memory=working_memory
+        row_bytes=16 * min_samples, max_n_rows=n_samples, working_memory=
     )
     slices = gen_batches(n_samples, chunk_n_rows)
     for sl in slices:
@@ -576,12 +576,12 @@ def compute_optics_graph(
 
     nbrs = NearestNeighbors(
         n_neighbors=min_samples,
-        algorithm=algorithm,
-        leaf_size=leaf_size,
-        metric=metric,
-        metric_params=metric_params,
-        p=p,
-        n_jobs=n_jobs,
+        algorithm=,
+        leaf_size=,
+        metric=,
+        metric_params=,
+        p=,
+        n_jobs=,
     )
 
     nbrs.fit(X)
@@ -589,7 +589,7 @@ def compute_optics_graph(
     # the original OPTICS that only used epsilon range queries.
     # TODO: handle working_memory somehow?
     core_distances_ = _compute_core_distances_(
-        X=X, neighbors=nbrs, min_samples=min_samples, working_memory=None
+        X=, neighbors=nbrs, min_samples=, working_memory=None
     )
     # OPTICS puts an upper limit on these, use inf for undefined.
     core_distances_[core_distances_ > max_eps] = np.inf
@@ -615,17 +615,17 @@ def compute_optics_graph(
         ordering[ordering_idx] = point
         if core_distances_[point] != np.inf:
             _set_reach_dist(
-                core_distances_=core_distances_,
-                reachability_=reachability_,
-                predecessor_=predecessor_,
+                core_distances_=,
+                reachability_=,
+                predecessor_=,
                 point_index=point,
-                processed=processed,
-                X=X,
-                nbrs=nbrs,
-                metric=metric,
-                metric_params=metric_params,
-                p=p,
-                max_eps=max_eps,
+                processed=,
+                X=,
+                nbrs=,
+                metric=,
+                metric_params=,
+                p=,
+                max_eps=,
             )
     if np.all(np.isinf(reachability_)):
         warnings.warn(

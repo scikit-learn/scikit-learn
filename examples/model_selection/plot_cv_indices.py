@@ -101,7 +101,7 @@ def plot_cv_indices(cv, X, y, group, ax, n_splits, lw=10):
     """Create a sample plot for indices of a cross-validation object."""
 
     # Generate the training/testing visualizations for each CV split
-    for ii, (tr, tt) in enumerate(cv.split(X=X, y=y, groups=group)):
+    for ii, (tr, tt) in enumerate(cv.split(X=, y=, groups=group)):
         # Fill in indices with the training/test groups
         indices = np.array([np.nan] * len(X))
         indices[tt] = 1
@@ -113,7 +113,7 @@ def plot_cv_indices(cv, X, y, group, ax, n_splits, lw=10):
             [ii + 0.5] * len(indices),
             c=indices,
             marker="_",
-            lw=lw,
+            lw=,
             cmap=cmap_cv,
             vmin=-0.2,
             vmax=1.2,
@@ -121,18 +121,18 @@ def plot_cv_indices(cv, X, y, group, ax, n_splits, lw=10):
 
     # Plot the data classes and groups at the end
     ax.scatter(
-        range(len(X)), [ii + 1.5] * len(X), c=y, marker="_", lw=lw, cmap=cmap_data
+        range(len(X)), [ii + 1.5] * len(X), c=y, marker="_", lw=, cmap=cmap_data
     )
 
     ax.scatter(
-        range(len(X)), [ii + 2.5] * len(X), c=group, marker="_", lw=lw, cmap=cmap_data
+        range(len(X)), [ii + 2.5] * len(X), c=group, marker="_", lw=, cmap=cmap_data
     )
 
     # Formatting
     yticklabels = list(range(n_splits)) + ["class", "group"]
     ax.set(
         yticks=np.arange(n_splits + 2) + 0.5,
-        yticklabels=yticklabels,
+        yticklabels=,
         xlabel="Sample index",
         ylabel="CV iteration",
         ylim=[n_splits + 2.2, -0.2],
@@ -199,7 +199,7 @@ cvs = [
 
 
 for cv in cvs:
-    this_cv = cv(n_splits=n_splits)
+    this_cv = cv(n_splits=)
     fig, ax = plt.subplots(figsize=(6, 3))
     plot_cv_indices(this_cv, X, y, groups, ax, n_splits)
 

@@ -164,18 +164,18 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             estimator,
             X,
             y,
-            response_method=response_method,
-            pos_label=pos_label,
-            name=name,
+            response_method=,
+            pos_label=,
+            name=,
         )
 
         return cls.from_predictions(
             y_true=y,
-            y_pred=y_pred,
-            sample_weight=sample_weight,
-            name=name,
-            ax=ax,
-            pos_label=pos_label,
+            y_pred=,
+            sample_weight=,
+            name=,
+            ax=,
+            pos_label=,
             **kwargs,
         )
 
@@ -255,24 +255,19 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> plt.show()
         """
         pos_label_validated, name = cls._validate_from_predictions_params(
-            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+            y_true, y_pred, sample_weight=, pos_label=, name=
         )
 
-        fpr, fnr, _ = det_curve(
-            y_true,
-            y_pred,
-            pos_label=pos_label,
-            sample_weight=sample_weight,
-        )
+        fpr, fnr, _ = det_curve(y_true, y_pred, pos_label=, sample_weight=)
 
         viz = DetCurveDisplay(
-            fpr=fpr,
-            fnr=fnr,
+            fpr=,
+            fnr=,
             estimator_name=name,
             pos_label=pos_label_validated,
         )
 
-        return viz.plot(ax=ax, name=name, **kwargs)
+        return viz.plot(ax=, name=, **kwargs)
 
     def plot(self, ax=None, *, name=None, **kwargs):
         """Plot visualization.
@@ -295,7 +290,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         display : :class:`~sklearn.metrics.DetCurveDisplay`
             Object that stores computed values.
         """
-        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=, name=)
 
         line_kwargs = {} if name is None else {"label": name}
         line_kwargs.update(**kwargs)
@@ -311,7 +306,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         xlabel = "False Positive Rate" + info_pos_label
         ylabel = "False Negative Rate" + info_pos_label
-        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(xlabel=, ylabel=)
 
         if "label" in line_kwargs:
             self.ax_.legend(loc="lower right")

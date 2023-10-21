@@ -58,7 +58,7 @@ def make_ellipses(gmm, ax):
         angle = 180 * angle / np.pi  # convert to degrees
         v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
         ell = mpl.patches.Ellipse(
-            gmm.means_[n, :2], v[0], v[1], angle=180 + angle, color=color
+            gmm.means_[n, :2], v[0], v[1], angle=180 + angle, color=
         )
         ell.set_clip_box(ax.bbox)
         ell.set_alpha(0.5)
@@ -114,12 +114,12 @@ for index, (name, estimator) in enumerate(estimators.items()):
     for n, color in enumerate(colors):
         data = iris.data[iris.target == n]
         plt.scatter(
-            data[:, 0], data[:, 1], s=0.8, color=color, label=iris.target_names[n]
+            data[:, 0], data[:, 1], s=0.8, color=, label=iris.target_names[n]
         )
     # Plot the test data with crosses
     for n, color in enumerate(colors):
         data = X_test[y_test == n]
-        plt.scatter(data[:, 0], data[:, 1], marker="x", color=color)
+        plt.scatter(data[:, 0], data[:, 1], marker="x", color=)
 
     y_train_pred = estimator.predict(X_train)
     train_accuracy = np.mean(y_train_pred.ravel() == y_train.ravel()) * 100

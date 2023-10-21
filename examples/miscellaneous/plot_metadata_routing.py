@@ -89,13 +89,13 @@ def print_routing(obj):
 
 class ExampleClassifier(ClassifierMixin, BaseEstimator):
     def fit(self, X, y, sample_weight=None):
-        check_metadata(self, sample_weight=sample_weight)
+        check_metadata(self, sample_weight=)
         # all classifiers need to expose a classes_ attribute once they're fit.
         self.classes_ = np.array([0, 1])
         return self
 
     def predict(self, X, groups=None):
-        check_metadata(self, groups=groups)
+        check_metadata(self, groups=)
         # return a constant value of 1, not a very smart classifier!
         return np.ones(len(X))
 
@@ -332,7 +332,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
         if self.estimator is None:
             raise ValueError("estimator cannot be None!")
 
-        check_metadata(self, sample_weight=sample_weight)
+        check_metadata(self, sample_weight=)
 
         if sample_weight is not None:
             fit_params["sample_weight"] = sample_weight
@@ -485,11 +485,11 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
 
 class ExampleTransformer(TransformerMixin, BaseEstimator):
     def fit(self, X, y, sample_weight=None):
-        check_metadata(self, sample_weight=sample_weight)
+        check_metadata(self, sample_weight=)
         return self
 
     def transform(self, X, groups=None):
-        check_metadata(self, groups=groups)
+        check_metadata(self, groups=)
         return X
 
     def fit_transform(self, X, y, sample_weight=None, groups=None):
@@ -572,8 +572,8 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
         self.estimator = estimator
 
     def fit(self, X, y, sample_weight=None, **fit_params):
-        params = process_routing(self, "fit", sample_weight=sample_weight, **fit_params)
-        check_metadata(self, sample_weight=sample_weight)
+        params = process_routing(self, "fit", sample_weight=, **fit_params)
+        check_metadata(self, sample_weight=)
         self.estimator_ = clone(self.estimator).fit(X, y, **params.estimator.fit)
 
     def get_metadata_routing(self):
@@ -607,7 +607,7 @@ class ExampleRegressor(RegressorMixin, BaseEstimator):
     __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
 
     def fit(self, X, y, sample_weight=None):
-        check_metadata(self, sample_weight=sample_weight)
+        check_metadata(self, sample_weight=)
         return self
 
     def predict(self, X):

@@ -58,7 +58,7 @@ for title, normalize in titles_options:
         y_test,
         display_labels=class_names,
         cmap=plt.cm.Blues,
-        normalize=normalize,
+        normalize=,
     )
     disp.ax_.set_title(title)
 

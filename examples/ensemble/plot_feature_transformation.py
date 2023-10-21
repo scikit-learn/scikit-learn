@@ -62,12 +62,12 @@ max_depth = 3
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 
 random_forest = RandomForestClassifier(
-    n_estimators=n_estimators, max_depth=max_depth, random_state=10
+    n_estimators=, max_depth=, random_state=10
 )
 random_forest.fit(X_train_ensemble, y_train_ensemble)
 
 gradient_boosting = GradientBoostingClassifier(
-    n_estimators=n_estimators, max_depth=max_depth, random_state=10
+    n_estimators=, max_depth=, random_state=10
 )
 _ = gradient_boosting.fit(X_train_ensemble, y_train_ensemble)
 
@@ -83,7 +83,7 @@ _ = gradient_boosting.fit(X_train_ensemble, y_train_ensemble)
 from sklearn.ensemble import RandomTreesEmbedding
 
 random_tree_embedding = RandomTreesEmbedding(
-    n_estimators=n_estimators, max_depth=max_depth, random_state=0
+    n_estimators=, max_depth=, random_state=0
 )
 
 # %%
@@ -158,14 +158,14 @@ models = [
 model_displays = {}
 for name, pipeline in models:
     model_displays[name] = RocCurveDisplay.from_estimator(
-        pipeline, X_test, y_test, ax=ax, name=name
+        pipeline, X_test, y_test, ax=, name=
     )
 _ = ax.set_title("ROC curve")
 
 # %%
 _, ax = plt.subplots()
 for name, pipeline in models:
-    model_displays[name].plot(ax=ax)
+    model_displays[name].plot(ax=)
 
 ax.set_xlim(0, 0.2)
 ax.set_ylim(0.8, 1)

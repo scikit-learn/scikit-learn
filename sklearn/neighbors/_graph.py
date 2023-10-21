@@ -135,17 +135,17 @@ def kneighbors_graph(
     """
     if not isinstance(X, KNeighborsMixin):
         X = NearestNeighbors(
-            n_neighbors=n_neighbors,
-            metric=metric,
-            p=p,
-            metric_params=metric_params,
-            n_jobs=n_jobs,
+            n_neighbors=,
+            metric=,
+            p=,
+            metric_params=,
+            n_jobs=,
         ).fit(X)
     else:
         _check_params(X, metric, p, metric_params)
 
     query = _query_include_self(X._fit_X, include_self, mode)
-    return X.kneighbors_graph(X=query, n_neighbors=n_neighbors, mode=mode)
+    return X.kneighbors_graph(X=query, n_neighbors=, mode=)
 
 
 @validate_params(
@@ -243,11 +243,11 @@ def radius_neighbors_graph(
     """
     if not isinstance(X, RadiusNeighborsMixin):
         X = NearestNeighbors(
-            radius=radius,
-            metric=metric,
-            p=p,
-            metric_params=metric_params,
-            n_jobs=n_jobs,
+            radius=,
+            metric=,
+            p=,
+            metric_params=,
+            n_jobs=,
         ).fit(X)
     else:
         _check_params(X, metric, p, metric_params)
@@ -394,14 +394,14 @@ class KNeighborsTransformer(
         n_jobs=None,
     ):
         super(KNeighborsTransformer, self).__init__(
-            n_neighbors=n_neighbors,
+            n_neighbors=,
             radius=None,
-            algorithm=algorithm,
-            leaf_size=leaf_size,
-            metric=metric,
-            p=p,
-            metric_params=metric_params,
-            n_jobs=n_jobs,
+            algorithm=,
+            leaf_size=,
+            metric=,
+            p=,
+            metric_params=,
+            n_jobs=,
         )
         self.mode = mode
 
@@ -627,13 +627,13 @@ class RadiusNeighborsTransformer(
     ):
         super(RadiusNeighborsTransformer, self).__init__(
             n_neighbors=None,
-            radius=radius,
-            algorithm=algorithm,
-            leaf_size=leaf_size,
-            metric=metric,
-            p=p,
-            metric_params=metric_params,
-            n_jobs=n_jobs,
+            radius=,
+            algorithm=,
+            leaf_size=,
+            metric=,
+            p=,
+            metric_params=,
+            n_jobs=,
         )
         self.mode = mode
 

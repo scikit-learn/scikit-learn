@@ -73,7 +73,7 @@ def load_mnist(n_samples=None, class_0="0", class_1="8"):
 @ignore_warnings(category=ConvergenceWarning)
 def fit_and_score(estimator, max_iter, X_train, X_test, y_train, y_test):
     """Fit the estimator on the train set and score it on both sets"""
-    estimator.set_params(max_iter=max_iter)
+    estimator.set_params(max_iter=)
     estimator.set_params(random_state=0)
 
     start = time.time()
@@ -127,7 +127,7 @@ columns = [
     "Train score",
     "Test score",
 ]
-results_df = pd.DataFrame(results, columns=columns)
+results_df = pd.DataFrame(results, columns=)
 
 # Define what to plot
 lines = "Stopping criterion"
@@ -138,7 +138,7 @@ styles = ["-.", "--", "-"]
 fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(12, 4))
 for ax, y_axis in zip(axes, ["Train score", "Test score"]):
     for style, (criterion, group_df) in zip(styles, results_df.groupby(lines)):
-        group_df.plot(x=x_axis, y=y_axis, label=criterion, ax=ax, style=style)
+        group_df.plot(x=x_axis, y=y_axis, label=criterion, ax=, style=)
     ax.set_title(y_axis)
     ax.legend(title=lines)
 fig.tight_layout()
@@ -147,7 +147,7 @@ fig.tight_layout()
 fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
 for ax, y_axis in zip(axes, ["n_iter_", "Fit time (sec)"]):
     for style, (criterion, group_df) in zip(styles, results_df.groupby(lines)):
-        group_df.plot(x=x_axis, y=y_axis, label=criterion, ax=ax, style=style)
+        group_df.plot(x=x_axis, y=y_axis, label=criterion, ax=, style=)
     ax.set_title(y_axis)
     ax.legend(title=lines)
 fig.tight_layout()

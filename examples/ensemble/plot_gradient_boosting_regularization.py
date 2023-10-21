@@ -80,8 +80,8 @@ for label, color, setting in [
         (np.arange(test_deviance.shape[0]) + 1)[::5],
         test_deviance[::5],
         "-",
-        color=color,
-        label=label,
+        color=,
+        label=,
     )
 
 plt.legend(loc="upper right")

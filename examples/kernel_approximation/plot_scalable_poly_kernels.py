@@ -125,7 +125,7 @@ for n_components in N_COMPONENTS:
     ps_lsvm_score = 0
     for _ in range(n_runs):
         pipeline = make_pipeline(
-            PolynomialCountSketch(n_components=n_components, degree=4),
+            PolynomialCountSketch(n_components=, degree=4),
             LinearSVC(dual="auto"),
         )
 

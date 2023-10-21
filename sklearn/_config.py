@@ -337,16 +337,16 @@ def config_context(
     """
     old_config = get_config()
     set_config(
-        assume_finite=assume_finite,
-        working_memory=working_memory,
-        print_changed_only=print_changed_only,
-        display=display,
-        pairwise_dist_chunk_size=pairwise_dist_chunk_size,
-        enable_cython_pairwise_dist=enable_cython_pairwise_dist,
-        array_api_dispatch=array_api_dispatch,
-        transform_output=transform_output,
-        enable_metadata_routing=enable_metadata_routing,
-        skip_parameter_validation=skip_parameter_validation,
+        assume_finite=,
+        working_memory=,
+        print_changed_only=,
+        display=,
+        pairwise_dist_chunk_size=,
+        enable_cython_pairwise_dist=,
+        array_api_dispatch=,
+        transform_output=,
+        enable_metadata_routing=,
+        skip_parameter_validation=,
     )
 
     try:

@@ -22,12 +22,12 @@ from sklearn.isotonic import isotonic_regression
 
 
 def generate_perturbed_logarithm_dataset(size):
-    return np.random.randint(-50, 50, size=size) + 50.0 * np.log(1 + np.arange(size))
+    return np.random.randint(-50, 50, size=) + 50.0 * np.log(1 + np.arange(size))
 
 
 def generate_logistic_dataset(size):
-    X = np.sort(np.random.normal(size=size))
-    return np.random.random(size=size) < expit(X)
+    X = np.sort(np.random.normal(size=))
+    return np.random.random(size=) < expit(X)
 
 
 def generate_pathological_dataset(size):

@@ -19,9 +19,7 @@ from sklearn.utils.fixes import CSR_CONTAINERS
 def make_regression_with_outliers(n_samples=50, n_features=20):
     rng = np.random.RandomState(0)
     # Generate data with outliers by replacing 10% of the samples with noise.
-    X, y = make_regression(
-        n_samples=n_samples, n_features=n_features, random_state=0, noise=0.05
-    )
+    X, y = make_regression(n_samples=, n_features=, random_state=0, noise=0.05)
 
     # Replace 10% of the sample with noise.
     num_noise = int(0.1 * n_samples)
@@ -101,7 +99,7 @@ def test_huber_sample_weights(csr_container):
     sample_weight = np.ones(X.shape[0])
     sample_weight[1] = 3
     sample_weight[3] = 2
-    huber.fit(X, y, sample_weight=sample_weight)
+    huber.fit(X, y, sample_weight=)
 
     assert_array_almost_equal(huber.coef_ / scale, huber_coef / scale)
     assert_array_almost_equal(huber.intercept_ / scale, huber_intercept / scale)
@@ -109,7 +107,7 @@ def test_huber_sample_weights(csr_container):
     # Test sparse implementation with sample weights.
     X_csr = csr_container(X)
     huber_sparse = HuberRegressor()
-    huber_sparse.fit(X_csr, y, sample_weight=sample_weight)
+    huber_sparse.fit(X_csr, y, sample_weight=)
     assert_array_almost_equal(huber_sparse.coef_ / scale, huber_coef / scale)
 
 

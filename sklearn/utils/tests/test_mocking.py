@@ -148,7 +148,7 @@ def test_checking_classifier_fit_params(iris):
 
     msg = f"sample_weight.shape == ({len(X) // 2},), expected ({len(X)},)!"
     with pytest.raises(ValueError) as exc:
-        clf.fit(X, y, sample_weight=sample_weight)
+        clf.fit(X, y, sample_weight=)
     assert exc.value.args[0] == msg
 
 
@@ -171,10 +171,7 @@ def test_checking_classifier_methods_to_check(iris, methods_to_check, predict_me
     # check that methods_to_check allows to bypass checks
     X, y = iris
 
-    clf = CheckingClassifier(
-        check_X=sparse.issparse,
-        methods_to_check=methods_to_check,
-    )
+    clf = CheckingClassifier(check_X=sparse.issparse, methods_to_check=)
 
     clf.fit(X, y)
     if predict_method in methods_to_check:
@@ -195,7 +192,7 @@ def test_checking_classifier_methods_to_check(iris, methods_to_check, predict_me
 )
 def test_mock_estimator_on_off_prediction(iris, response_methods):
     X, y = iris
-    estimator = _MockEstimatorOnOffPrediction(response_methods=response_methods)
+    estimator = _MockEstimatorOnOffPrediction(response_methods=)
 
     estimator.fit(X, y)
     assert hasattr(estimator, "classes_")

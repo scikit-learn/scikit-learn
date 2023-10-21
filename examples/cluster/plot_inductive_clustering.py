@@ -74,7 +74,7 @@ class InductiveClusterer(BaseEstimator):
 
 
 def plot_scatter(X, color, alpha=0.5):
-    return plt.scatter(X[:, 0], X[:, 1], c=color, alpha=alpha, edgecolor="k")
+    return plt.scatter(X[:, 0], X[:, 1], c=color, alpha=, edgecolor="k")
 
 
 # Generate some training data from clustering
@@ -122,7 +122,7 @@ plot_scatter(X_new, probable_clusters)
 
 # Plotting decision regions
 DecisionBoundaryDisplay.from_estimator(
-    inductive_learner, X, response_method="predict", alpha=0.4, ax=ax
+    inductive_learner, X, response_method="predict", alpha=0.4, ax=
 )
 plt.title("Classify unknown instances")
 

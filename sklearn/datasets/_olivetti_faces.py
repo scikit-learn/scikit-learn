@@ -113,7 +113,7 @@ def fetch_olivetti_faces(
 
         .. versionadded:: 0.22
     """
-    data_home = get_data_home(data_home=data_home)
+    data_home = get_data_home(data_home=)
     if not exists(data_home):
         makedirs(data_home)
     filepath = _pkl_filepath(data_home, "olivetti.pkz")
@@ -153,4 +153,4 @@ def fetch_olivetti_faces(
     if return_X_y:
         return faces_vectorized, target
 
-    return Bunch(data=faces_vectorized, images=faces, target=target, DESCR=fdescr)
+    return Bunch(data=faces_vectorized, images=faces, target=, DESCR=fdescr)

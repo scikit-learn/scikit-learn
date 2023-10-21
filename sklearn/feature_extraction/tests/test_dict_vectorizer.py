@@ -20,7 +20,7 @@ from sklearn.feature_selection import SelectKBest, chi2
 def test_dictvectorizer(sparse, dtype, sort, iterable):
     D = [{"foo": 1, "bar": 3}, {"bar": 4, "baz": 2}, {"bar": 1, "quux": 1, "quuux": 2}]
 
-    v = DictVectorizer(sparse=sparse, dtype=dtype, sort=sort)
+    v = DictVectorizer(sparse=, dtype=, sort=)
     X = v.fit_transform(iter(D) if iterable else D)
 
     assert sp.issparse(X) == sparse
@@ -51,7 +51,7 @@ def test_feature_selection():
         X = v.transform([d1, d2])
         sel = SelectKBest(chi2, k=2).fit(X, [0, 1])
 
-        v.restrict(sel.get_support(indices=indices), indices=indices)
+        v.restrict(sel.get_support(indices=), indices=)
         assert_array_equal(v.get_feature_names_out(), ["useful1", "useful2"])
 
 
@@ -130,7 +130,7 @@ def test_mapping_error():
 def test_unseen_or_no_features():
     D = [{"camelot": 0, "spamalot": 1}]
     for sparse in [True, False]:
-        v = DictVectorizer(sparse=sparse).fit(D)
+        v = DictVectorizer(sparse=).fit(D)
 
         X = v.transform({"push the pram a lot": 2})
         if sparse:
