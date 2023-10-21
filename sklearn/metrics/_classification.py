@@ -1577,7 +1577,7 @@ def precision_recall_fscore_support(
 
     The support is the number of occurrences of each class in ``y_true``.
 
-    If ``pos_label is None`` and in binary classification, this function
+    If ``labels=None`` and not binary classification, this function
     returns the average precision, recall and F-measure if ``average``
     is one of ``'micro'``, ``'macro'``, ``'weighted'`` or ``'samples'``.
 
