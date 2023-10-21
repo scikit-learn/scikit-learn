@@ -1605,6 +1605,8 @@ def precision_recall_fscore_support(
 
     pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
+        To obtain an average score for binary data, set ``labels`` equal to both
+        binary labels and ``average != 'binary'``.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
