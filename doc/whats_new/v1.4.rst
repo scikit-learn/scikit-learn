@@ -280,6 +280,13 @@ Changelog
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
   <StefanieSenger>`.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| :class:`feature_selection.RFE` and :class:`feature_selection.RFECV` do
+  not check for nans during input validation.
+  :pr:`21807` by `Thomas Fan`_.
+
 :mod:`sklearn.inspection`
 .........................
 
