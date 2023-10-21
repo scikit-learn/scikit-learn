@@ -85,6 +85,8 @@ def _write_label_html(
     is_fitted_icon="",
 ):
     """Write labeled html with or without a dropdown with named details"""
+    # we need to add some padding to the left of the label to be sure it is centered
+    padding_label = "&nbsp;" if is_fitted_icon else ""  # add padding for the "i" char
 
     # If the estimator is fitted, add `fitted` to the class to change colors.
     if is_fitted:
@@ -113,6 +115,7 @@ def _write_label_html(
                 f'<a class="sk-estimator-doc-link {fitted_str}" target="_blank"'
                 f' href="{doc_link}">?{doc_label}</a>'
             )
+            padding_label += "&nbsp;"  # add additional padding for the "?" char
         else:  # no doc_link, add no link to the documentation
             doc_link = ""
 
@@ -121,7 +124,7 @@ def _write_label_html(
             '<input class="sk-toggleable__control sk-hidden--visually"'
             f' id="{est_id}" '
             f'type="checkbox" {checked_str}><label for="{est_id}" '
-            f'class="{label_class} {fitted_str}">{name}'
+            f'class="{label_class} {fitted_str}">{padding_label}{name}'
             f"{doc_link}{is_fitted_icon}</label><div "
             f'class="sk-toggleable__content {fitted_str}">'
             f"<pre>{name_details}</pre></div> "
@@ -338,8 +341,20 @@ def estimator_html_repr(estimator):
 class _HTMLDocumentationLinkMixin:
     """Mixin class allowing to generate a link to the API documentation.
 
-    The minimum implementation would be to set `_doc_link` and
-    `_doc_link_module` for their estimator instance
+    This mixin relies on two attributes:
+    - `_doc_link_module`: it corresponds to the root module (e.g. `sklearn`). Using this
+      mixin, the default value is `sklearn`.
+    - `_doc_link`: it corresponds to the template used to generate the link to the API
+      documentation. Using this mixin, the default value is
+      `"https://scikit-learn.org/{version_url}/modules/generated/
+      {estimator_module}.{estimator_name}.html"`.
+
+    The method :meth:`_get_doc_link` generates the link to the API documentation for a
+    given estimator.
+
+    This useful provides all the necessary states for
+    :func:`sklearn.utils.estimator_html_repr` to generate a link to the API
+    documentation for the estimator HTML diagram.
     """
 
     @property
@@ -376,18 +391,20 @@ class _HTMLDocumentationLinkMixin:
         This method generates the link to the estimator's documentation page
         by using the template defined by the attribute `_doc_link`.
 
-        To override the link, redefine `_doc_link`.
-        To override the behavior, redefine this method.
-
-        Valid template arguments:
-        - `{estimator_module}` the module that contains the class
-        - `{estimator_name}` the name of the class
+        Parameters
+        ----------
+        url_generator_func : callable, default=None
+            If `None`, we expect `_doc_link` template to have two arguments:
+            `estimator_module` and `estimator_name`. If a callable is passed, it should
+            take an estimator instance as input and return a tuple of values requested
+            by the `_doc_link` template.
 
         Returns
         -------
         url : str
-            The URL to the API documentation for this estimator.
-            Empty if the module is not supported (`self._doc_link_module`).
+            The URL to the API documentation for this estimator. If the estimator does
+            not belong to module `_doc_link_module`, the empty string (i.e. `""`) is
+            returned.
         """
         if self.__class__.__module__.split(".")[0] != self._doc_link_module:
             return ""

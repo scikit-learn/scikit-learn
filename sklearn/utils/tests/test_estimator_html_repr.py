@@ -240,7 +240,7 @@ def test_stacking_regressor(final_estimator):
     p = (
         r'<label for="sk-estimator-id-[0-9]*"'
         r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow ">'
-        r"LinearSVR"
+        r"&nbsp;LinearSVR"
     )
     re_compiled = re.compile(p)
     assert re_compiled.search(html_output)
@@ -249,7 +249,7 @@ def test_stacking_regressor(final_estimator):
         p = (
             r'<label for="sk-estimator-id-[0-9]*"'
             r' class="sk-toggleable__label (fitted)? sk-toggleable__label-arrow ">'
-            r"RidgeCV"
+            r"&nbsp;RidgeCV"
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_output)
@@ -282,7 +282,7 @@ def test_ovo_classifier_duck_typing_meta():
         # regex to match the start of the tag
         p = (
             r'<label for="sk-estimator-id-[0-9]*" '
-            r'class="sk-toggleable__label  sk-toggleable__label-arrow ">LinearSVC'
+            r'class="sk-toggleable__label  sk-toggleable__label-arrow ">&nbsp;LinearSVC'
         )
         re_compiled = re.compile(p)
         assert re_compiled.search(html_output)
@@ -331,7 +331,7 @@ def test_show_arrow_pipeline():
 
     html_output = estimator_html_repr(pipe)
     assert (
-        'class="sk-toggleable__label  sk-toggleable__label-arrow ">Pipeline'
+        'class="sk-toggleable__label  sk-toggleable__label-arrow ">&nbsp;&nbsp;Pipeline'
         in html_output
     )
 
