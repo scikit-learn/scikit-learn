@@ -410,25 +410,6 @@ inside the** ``__init__`` **method**. All and only the public attributes set by
 fit have a trailing ``_``. As a result the existence of parameters with
 trailing ``_`` is used to check if the estimator has been fitted.
 
-Links to the documentation
---------------------------
-
-Estimators include a method ``_get_url_link``, which is used to get the URL of the
-documentation of the estimator. This function is used to prepare the html representation
-of the estimator, e.g., when using the ``display`` function in a Jupyter notebook.
-
-By default, the function returns an empty string if the estimator is not a part of the
-scikit-learn library. This check is performed by evaluating whether the estimator module
-is the same as the value in the attribute ``estimator._doc_link_module``, set to
-``sklearn`` by default. If an estimator is instantiated without changing the value of
-``estimator._doc_link_module``, then an empty string is returned.
-
-It is possible to provide a custom link for the documentation of a new estimator by
-overriding the values of ``_doc_link_module`` and ``_doc_link`` so that
-``_doc_link_module`` is the same as the name of the module under development, and
-``_doc_link`` is a suitable template for finding the online documentation.
-
-
 .. _cloning:
 
 Cloning
@@ -741,6 +722,40 @@ method taking no input and returning a boolean. If this method exists,
 
 See :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
 for an example on how to use the API.
+
+Developer API for HTML representation
+=====================================
+
+.. warning::
+
+    The HTML representation API is experimental and the API is subject to change.
+
+Estimators inheriting from :class:`~sklearn.base.BaseEstimator` gain a functionality
+allowing to display an HTML representation of estimators in interactive programming
+environments such as Jupyter notebooks. For instance, we can display this HTML
+diagram::
+
+    from sklearn.base import BaseEstimator
+
+    BaseEstimator()
+
+The raw HTML representation can be obtained by invoking the function
+:func:`~sklearn.utils.estimator_html_repr` on an estimator instance. This representation
+is not intended to be tweak. The only supported use case is to properly redirect the
+user to the online documentation of the estimator when clicking on the "?" icon. While
+the defaults are suitable for scikit-learn, it is possible to customize the estimator
+such that it redirects to the intended webpage.
+
+It boils down to overriding the following attributes: (i) `_doc_link_module`, (ii)
+`_doc_link_template`, and potentially (iii) `_url_param_generator`. `_doc_link_module`
+corresponds to a string to only generate diagram for a specific library. For instance,
+by default it is set to `"sklearn"`. `_doc_link_template` corresponds to a string
+that is the URL template of the documentation. When using sphinx, we generally expect
+to inject two positional parameters: the first one being the module name, and the second
+one being the class name. If for your use case, the previous template is not suitable,
+then you can override both `_doc_link_template` and and `_url_param_generator`. The
+latter should return a Python dictionary containing the keys/values to be injected in
+the template `_doc_link_template`.
 
 .. _coding-guidelines:
 

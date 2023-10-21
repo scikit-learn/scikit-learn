@@ -380,7 +380,7 @@ def test_html_documentation_link_mixin_sklearn(mock_version):
         else:
             version = "dev"
         assert (
-            mixin._doc_link
+            mixin._doc_link_template
             == f"https://scikit-learn.org/{version}/modules/generated/"
             "{estimator_module}.{estimator_name}.html"
         )
@@ -402,14 +402,18 @@ def test_html_documentation_link_mixin_get_doc_link():
 
     # if we set `_doc_link`, then we expect to infer a module and name for the estimator
     mixin._doc_link_module = "sklearn"
-    mixin._doc_link = "https://website.com/{estimator_module}.{estimator_name}.html"
+    mixin._doc_link_template = (
+        "https://website.com/{estimator_module}.{estimator_name}.html"
+    )
     assert (
         mixin._get_doc_link()
         == "https://website.com/sklearn.utils._HTMLDocumentationLinkMixin.html"
     )
 
     # we can bypass the generation by providing our own callable
-    mixin._doc_link = "https://website.com/{my_own_variable}.{another_variable}.html"
+    mixin._doc_link_template = (
+        "https://website.com/{my_own_variable}.{another_variable}.html"
+    )
 
     def url_param_generator(estimator):
         return {
@@ -417,7 +421,6 @@ def test_html_documentation_link_mixin_get_doc_link():
             "another_variable": "value_2",
         }
 
-    assert (
-        mixin._get_doc_link(url_param_generator=url_param_generator)
-        == "https://website.com/value_1.value_2.html"
-    )
+    mixin._url_param_generator = url_param_generator
+
+    assert mixin._get_doc_link() == "https://website.com/value_1.value_2.html"

@@ -107,7 +107,8 @@ def _write_label_html(
         unfold the content.
     doc_link : str, default=""
         The link to the documentation for the estimator. If an empty string, no link is
-        added to the diagram.
+        added to the diagram. This can be generated for an estimator if it uses the
+        `_HTMLDocumentationLinkMixin`.
     is_fitted_css_class : {"", "fitted"}
         The CSS class to indicate whether or not the estimator is fitted or not. The
         empty string means that the estimator is not fitted and "fitted" means that the
@@ -134,7 +135,7 @@ def _write_label_html(
         checked_str = "checked" if checked else ""
         est_id = _ESTIMATOR_ID_COUNTER.get_id()
 
-        if doc_link:  # if the doc_link is valid, use it
+        if doc_link:
             doc_label = "<span>Online documentation</span>"
             if name is not None:
                 doc_label = f"<span>Documentation for {name}</span>"
@@ -143,8 +144,6 @@ def _write_label_html(
                 f' target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
             padding_label += "&nbsp;"  # add additional padding for the "?" char
-        else:  # no doc_link, add no link to the documentation
-            doc_link = ""
 
         fmt_str = (
             '<input class="sk-toggleable__control sk-hidden--visually"'
@@ -237,7 +236,9 @@ def _write_estimator_html(
         estimator is fitted.
     is_fitted_icon : str, default=""
         The HTML representation to show the fitted information in the diagram. An empty
-        string means that no information is shown.
+        string means that no information is shown. If the estimator to be shown is not
+        the first estimator (i.e. `first_call=False`), `is_fitted_icon` is always an
+        empty string.
     first_call : bool, default=False
         Whether this is the first time this function is called.
     """
@@ -309,6 +310,7 @@ def _write_estimator_html(
 
 
 with open(Path(__file__).with_suffix(".css"), "r") as style_file:
+    # use the style defined in the css file
     _STYLE = style_file.read()
 
 
@@ -335,7 +337,7 @@ def estimator_html_repr(estimator):
         is_fitted_css_class = ""
     else:
         try:
-            check_is_fitted(estimator)  # check if the estimator is fitted
+            check_is_fitted(estimator)
             status_label = "<span>Estimator is fitted</span>"
             is_fitted_css_class = "fitted"
         except NotFittedError:
@@ -349,10 +351,7 @@ def estimator_html_repr(estimator):
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
         style_template = Template(_STYLE)
-
-        style_with_id = style_template.substitute(
-            id=container_id,
-        )
+        style_with_id = style_template.substitute(id=container_id)
         estimator_str = str(estimator)
 
         # The fallback message is shown by default and loading the CSS sets
@@ -399,13 +398,15 @@ def estimator_html_repr(estimator):
 class _HTMLDocumentationLinkMixin:
     """Mixin class allowing to generate a link to the API documentation.
 
-    This mixin relies on two attributes:
+    This mixin relies on three attributes:
     - `_doc_link_module`: it corresponds to the root module (e.g. `sklearn`). Using this
       mixin, the default value is `sklearn`.
-    - `_doc_link`: it corresponds to the template used to generate the link to the API
-      documentation. Using this mixin, the default value is
+    - `_doc_link_template`: it corresponds to the template used to generate the
+      link to the API documentation. Using this mixin, the default value is
       `"https://scikit-learn.org/{version_url}/modules/generated/
       {estimator_module}.{estimator_name}.html"`.
+    - `_url_param_generator`: it corresponds to a function that generates the parameters
+      to be used in the template when the estimator module and name are not sufficient.
 
     The method :meth:`_get_doc_link` generates the link to the API documentation for a
     given estimator.
@@ -413,6 +414,19 @@ class _HTMLDocumentationLinkMixin:
     This useful provides all the necessary states for
     :func:`sklearn.utils.estimator_html_repr` to generate a link to the API
     documentation for the estimator HTML diagram.
+
+    Examples
+    --------
+    If the default values for `_doc_link_module`, `_doc_link_template` are not suitable,
+    then you can override them:
+    >>> from sklearn.base import BaseEstimator
+    >>> estimator = BaseEstimator()
+    >>> estimator._doc_link_template = "https://website.com/{single_param}.html"
+    >>> def url_param_generator(estimator):
+    ...     return {"single_param": estimator.__class__.__name__}
+    >>> estimator._url_param_generator = url_param_generator
+    >>> estimator._get_doc_link()
+    'https://website.com/BaseEstimator.html'
     """
 
     @property
@@ -424,7 +438,7 @@ class _HTMLDocumentationLinkMixin:
         setattr(self, "__doc_link_module", value)
 
     @property
-    def _doc_link(self):
+    def _doc_link_template(self):
         sklearn_version = parse_version(__version__)
         if sklearn_version.dev is None:
             version_url = f"{sklearn_version.major}.{sklearn_version.minor}"
@@ -432,31 +446,30 @@ class _HTMLDocumentationLinkMixin:
             version_url = "dev"
         return getattr(
             self,
-            "__doc_link",
+            "__doc_link_template",
             (
                 f"https://scikit-learn.org/{version_url}/modules/generated/"
                 "{estimator_module}.{estimator_name}.html"
             ),
         )
 
-    @_doc_link.setter
-    def _doc_link(self, value):
-        setattr(self, "__doc_link", value)
+    @_doc_link_template.setter
+    def _doc_link_template(self, value):
+        setattr(self, "__doc_link_template", value)
 
-    def _get_doc_link(self, url_param_generator=None):
+    @property
+    def _url_param_generator(self):
+        return getattr(self, "__url_param_generator", None)
+
+    @_url_param_generator.setter
+    def _url_param_generator(self, value):
+        setattr(self, "__url_param_generator", value)
+
+    def _get_doc_link(self):
         """Generates a link to the API documentation for a given estimator.
 
         This method generates the link to the estimator's documentation page
-        by using the template defined by the attribute `_doc_link`.
-
-        Parameters
-        ----------
-        url_param_generator : callable, default=None
-            If `None`, we expect `_doc_link` template to have two arguments:
-            `estimator_module` and `estimator_name`. If a callable is passed, it should
-            take an estimator instance as input and return a dictionary where the keys
-            are defined in the template `_doc_link` and the values are the values to
-            inject in the template.
+        by using the template defined by the attribute `_doc_link_template`.
 
         Returns
         -------
@@ -468,7 +481,7 @@ class _HTMLDocumentationLinkMixin:
         if self.__class__.__module__.split(".")[0] != self._doc_link_module:
             return ""
 
-        if url_param_generator is None:
+        if self._url_param_generator is None:
             estimator_name = self.__class__.__name__
             estimator_module = ".".join(
                 [
@@ -477,7 +490,7 @@ class _HTMLDocumentationLinkMixin:
                     if not _.startswith("_")
                 ]
             )
-            return self._doc_link.format(
+            return self._doc_link_template.format(
                 estimator_module=estimator_module, estimator_name=estimator_name
             )
-        return self._doc_link.format(**url_param_generator(self))
+        return self._doc_link_template.format(**self._url_param_generator(self))
