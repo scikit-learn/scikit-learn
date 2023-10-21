@@ -2,6 +2,7 @@ import html
 import re
 from contextlib import closing
 from io import StringIO
+from unittest.mock import patch
 
 import pytest
 
@@ -24,9 +25,11 @@ from sklearn.svm import LinearSVC, LinearSVR
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._estimator_html_repr import (
     _get_visual_block,
+    _HTMLDocumentationLinkMixin,
     _write_label_html,
     estimator_html_repr,
 )
+from sklearn.utils.fixes import parse_version
 
 
 @pytest.mark.parametrize("checked", [True, False])
@@ -371,3 +374,65 @@ def test_different_colors_if_fitted():
     fitted_estimator_html = estimator_html_repr(fitted_estimator)
     not_fitted_estimator_html = estimator_html_repr(not_fitted_estimator)
     assert fitted_estimator_html != not_fitted_estimator_html
+
+
+@pytest.mark.parametrize("mock_version", ["1.3.0.dev0", "1.3.0"])
+def test_html_documentation_link_mixin_sklearn(mock_version):
+    """Check the behaviour of the `_HTMLDocumentationLinkMixin` class for scikit-learn
+    default.
+    """
+
+    # mock the `__version__` where the mixin is located
+    with patch("sklearn.utils._estimator_html_repr.__version__", mock_version):
+        mixin = _HTMLDocumentationLinkMixin()
+
+        assert mixin._doc_link_module == "sklearn"
+        sklearn_version = parse_version(mock_version)
+        # we need to parse the version manually to be sure that this test is passing in
+        # other branches than `main` (that is "dev").
+        if sklearn_version.dev is None:
+            version = f"{sklearn_version.major}.{sklearn_version.minor}"
+        else:
+            version = "dev"
+        assert (
+            mixin._doc_link
+            == f"https://scikit-learn.org/{version}/modules/generated/"
+            "{estimator_module}.{estimator_name}.html"
+        )
+        assert (
+            mixin._get_doc_link()
+            == f"https://scikit-learn.org/{version}/modules/generated/"
+            "sklearn.utils._HTMLDocumentationLinkMixin.html"
+        )
+
+
+def test_html_documentation_link_mixin_get_doc_link():
+    """Check the behaviour of the `_get_doc_link` with various parameter."""
+    mixin = _HTMLDocumentationLinkMixin()
+
+    # if the `_doc_link_module` does not refer to the root module of the estimator
+    # (here the mixin), then we should return an empty string.
+    mixin._doc_link_module = "xxx"
+    assert mixin._get_doc_link() == ""
+
+    # if we set `_doc_link`, then we expect to infer a module and name for the estimator
+    mixin._doc_link_module = "sklearn"
+    mixin._doc_link = "https://website.com/{estimator_module}.{estimator_name}.html"
+    assert (
+        mixin._get_doc_link()
+        == "https://website.com/sklearn.utils._HTMLDocumentationLinkMixin.html"
+    )
+
+    # we can bypass the generation by providing our own callable
+    mixin._doc_link = "https://website.com/{my_own_variable}.{another_variable}.html"
+
+    def url_param_generator(estimator):
+        return {
+            "my_own_variable": "value_1",
+            "another_variable": "value_2",
+        }
+
+    assert (
+        mixin._get_doc_link(url_param_generator=url_param_generator)
+        == "https://website.com/value_1.value_2.html"
+    )

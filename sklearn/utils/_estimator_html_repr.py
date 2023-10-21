@@ -363,7 +363,7 @@ class _HTMLDocumentationLinkMixin:
 
     @_doc_link_module.setter
     def _doc_link_module(self, value):
-        self.__doc_link_module = value
+        setattr(self, "__doc_link_module", value)
 
     @property
     def _doc_link(self):
@@ -383,9 +383,9 @@ class _HTMLDocumentationLinkMixin:
 
     @_doc_link.setter
     def _doc_link(self, value):
-        self.__doc_link = value
+        setattr(self, "__doc_link", value)
 
-    def _get_doc_link(self, url_generator_func=None):
+    def _get_doc_link(self, url_param_generator=None):
         """Generates a link to the API documentation for a given estimator.
 
         This method generates the link to the estimator's documentation page
@@ -393,11 +393,12 @@ class _HTMLDocumentationLinkMixin:
 
         Parameters
         ----------
-        url_generator_func : callable, default=None
+        url_param_generator : callable, default=None
             If `None`, we expect `_doc_link` template to have two arguments:
             `estimator_module` and `estimator_name`. If a callable is passed, it should
-            take an estimator instance as input and return a tuple of values requested
-            by the `_doc_link` template.
+            take an estimator instance as input and return a dictionary where the keys
+            are defined in the template `_doc_link` and the values are the values to
+            inject in the template.
 
         Returns
         -------
@@ -409,7 +410,7 @@ class _HTMLDocumentationLinkMixin:
         if self.__class__.__module__.split(".")[0] != self._doc_link_module:
             return ""
 
-        if url_generator_func is None:
+        if url_param_generator is None:
             estimator_name = self.__class__.__name__
             estimator_module = ".".join(
                 [
@@ -421,4 +422,4 @@ class _HTMLDocumentationLinkMixin:
             return self._doc_link.format(
                 estimator_module=estimator_module, estimator_name=estimator_name
             )
-        return self._doc_link.format(*url_generator_func(self))
+        return self._doc_link.format(**url_param_generator(self))
