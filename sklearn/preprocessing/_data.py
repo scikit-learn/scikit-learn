@@ -2487,10 +2487,11 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         matrix are discarded to compute the quantile statistics. If False,
         these entries are treated as zeros.
 
-    subsample : int, default=10_000
+    subsample : int or None, default=10_000
         Maximum number of samples used to estimate the quantiles for
         computational efficiency. Note that the subsampling procedure may
         differ for value-identical sparse and dense matrices.
+        Disable subsampling by setting `subsample=None`.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for subsampling and smoothing
@@ -2556,7 +2557,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         "n_quantiles": [Interval(Integral, 1, None, closed="left")],
         "output_distribution": [StrOptions({"uniform", "normal"})],
         "ignore_implicit_zeros": ["boolean"],
-        "subsample": [Interval(Integral, 1, None, closed="left")],
+        "subsample": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
         "copy": ["boolean"],
     }
@@ -2675,6 +2676,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self : object
            Fitted transformer.
         """
+        if self.subsample is None:
+            self.subsample = np.iinfo(int).max
         if self.n_quantiles > self.subsample:
             raise ValueError(
                 "The number of quantiles cannot be greater than"
@@ -2932,10 +2935,11 @@ def quantile_transform(
         matrix are discarded to compute the quantile statistics. If False,
         these entries are treated as zeros.
 
-    subsample : int, default=1e5
+    subsample : int or None, default=1e5
         Maximum number of samples used to estimate the quantiles for
         computational efficiency. Note that the subsampling procedure may
         differ for value-identical sparse and dense matrices.
+        Disable subsampling by setting `subsample=None`.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for subsampling and smoothing
