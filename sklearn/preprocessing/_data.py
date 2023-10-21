@@ -2598,7 +2598,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         self.quantiles_ = []
         for col in X.T:
-            if self.subsample < n_samples:
+            if self.subsample is not None and self.subsample < n_samples:
                 subsample_idx = random_state.choice(
                     n_samples, size=self.subsample, replace=False
                 )
@@ -2627,7 +2627,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self.quantiles_ = []
         for feature_idx in range(n_features):
             column_nnz_data = X.data[X.indptr[feature_idx] : X.indptr[feature_idx + 1]]
-            if len(column_nnz_data) > self.subsample:
+            if self.subsample is not None and len(column_nnz_data) > self.subsample:
                 column_subsample = self.subsample * len(column_nnz_data) // n_samples
                 if self.ignore_implicit_zeros:
                     column_data = np.zeros(shape=column_subsample, dtype=X.dtype)
@@ -2676,9 +2676,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self : object
            Fitted transformer.
         """
-        if self.subsample is None:
-            self.subsample = np.iinfo(int).max
-        if self.n_quantiles > self.subsample:
+        if self.subsample is not None and self.n_quantiles > self.subsample:
             raise ValueError(
                 "The number of quantiles cannot be greater than"
                 " the number of samples used. Got {} quantiles"
