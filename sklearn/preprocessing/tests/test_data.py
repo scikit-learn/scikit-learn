@@ -1367,16 +1367,20 @@ def test_quantile_transform_subsampling():
     # linspace CDF
     assert len(np.unique(inf_norm_arr)) == len(inf_norm_arr)
 
-    # check subsampling disabled
-    # without sub-sampling the procedure should be deterministic, we make use of this by
-    # running the transformer twice with different random states and testing for
-    # approximately equal quantiles. To increase detection rate we add a number of
-    # tail values from the distribution which will influence quantiles
+
+def test_quantile_transform_subsampling_disabled():
+    """Test correct handling of ``subsampling=None``.
+
+    Without sub-sampling the procedure should be deterministic, we make use of this by
+    running the transformer twice with different random states and testing for
+    approximately equal quantiles. To increase detection rate we add 6
+    tail values for each marginal from the distribution.
+    The probability of all tail values being sampled with a 2/3 sub-sampling rate is
+    less than 1 percent.
+    """
     n_quantiles = 1000
     # n_samples should larger than the default subsampling value 1e4
     n_samples = 15000
-    # 6 values for each marginal implies P < 0.01 of all values being included in the
-    # sample with 2/3 sub-sampling rate
     n_tail_values = 6
     n_norm_sample = n_samples - n_tail_values
     X = np.empty((n_samples, 2))
@@ -1391,7 +1395,6 @@ def test_quantile_transform_subsampling():
     # check param handling
     assert transformer_s0.subsample is None
     transformer_s0.fit(X)
-    assert transformer_s0.subsample == np.iinfo(int).max
     # check the whole sample is included
     ref_quantiles = np.nanpercentile(X, transformer_s0.references_ * 100, axis=0)
     assert np.allclose(ref_quantiles, transformer_s0.quantiles_)
