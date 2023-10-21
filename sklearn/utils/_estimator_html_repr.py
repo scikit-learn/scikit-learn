@@ -81,28 +81,55 @@ def _write_label_html(
     inner_class="sk-label",
     checked=False,
     doc_link="",
-    is_fitted=False,
+    is_fitted_css_class="",
     is_fitted_icon="",
 ):
-    """Write labeled html with or without a dropdown with named details"""
+    """Write labeled html with or without a dropdown with named details.
+
+    Parameters
+    ----------
+    out : file-like object
+        The file to write the HTML representation to.
+    name : str
+        The label for the estimator. It corresponds either to the estimator class name
+        for simple estimator or in the case of `Pipeline` and `ColumnTransformer`, it
+        corresponds to the name of the step.
+    name_details : str
+        The details to show as content in the dropdown part of the toggleable label.
+        It can contain information as non-default parameters or column information for
+        `ColumnTransformer`.
+    outer_class : {"sk-label-container", "sk-item"}, default="sk-label-container"
+        The CSS class for the outer container.
+    inner_class : {"sk-label", "sk-estimator"}, default="sk-label"
+        The CSS class for the inner container.
+    checked : bool, default=False
+        Whether the dropdown is checked or not. With a single estimator, we intend to
+        unfold the content.
+    doc_link : str, default=""
+        The link to the documentation for the estimator. If an empty string, no link is
+        added to the diagram.
+    is_fitted_css_class : {"", "fitted"}
+        The CSS class to indicate whether or not the estimator is fitted or not. The
+        empty string means that the estimator is not fitted and "fitted" means that the
+        estimator is fitted.
+    is_fitted_icon : str, default=""
+        The HTML representation to show the fitted information in the diagram. An empty
+        string means that no information is shown.
+    """
     # we need to add some padding to the left of the label to be sure it is centered
     padding_label = "&nbsp;" if is_fitted_icon else ""  # add padding for the "i" char
 
-    # If the estimator is fitted, add `fitted` to the class to change colors.
-    if is_fitted:
-        fitted_str = "fitted"
-    else:  # Estimator is not fitted, use default colors
-        fitted_str = ""
-
     out.write(
         f'<div class="{outer_class}"><div'
-        f' class="{inner_class} {fitted_str} sk-toggleable">'
+        f' class="{inner_class} {is_fitted_css_class} sk-toggleable">'
     )
     name = html.escape(name)
 
     if name_details is not None:
         name_details = html.escape(str(name_details))
-        label_class = f"sk-toggleable__label {fitted_str} sk-toggleable__label-arrow"
+        label_class = (
+            f"sk-toggleable__label {is_fitted_css_class} sk-toggleable__label-arrow"
+        )
 
         checked_str = "checked" if checked else ""
         est_id = _ESTIMATOR_ID_COUNTER.get_id()
@@ -112,21 +139,20 @@ def _write_label_html(
             if name is not None:
                 doc_label = f"<span>Documentation for {name}</span>"
             doc_link = (
-                f'<a class="sk-estimator-doc-link {fitted_str}" target="_blank"'
-                f' href="{doc_link}">?{doc_label}</a>'
+                f'<a class="sk-estimator-doc-link {is_fitted_css_class}"'
+                f' target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
             padding_label += "&nbsp;"  # add additional padding for the "?" char
         else:  # no doc_link, add no link to the documentation
             doc_link = ""
 
-        # FIXME: the name is not centered because of "i" and "?"
         fmt_str = (
             '<input class="sk-toggleable__control sk-hidden--visually"'
             f' id="{est_id}" '
             f'type="checkbox" {checked_str}><label for="{est_id}" '
-            f'class="{label_class} {fitted_str}">{padding_label}{name}'
+            f'class="{label_class} {is_fitted_css_class}">{padding_label}{name}'
             f"{doc_link}{is_fitted_icon}</label><div "
-            f'class="sk-toggleable__content {fitted_str}">'
+            f'class="sk-toggleable__content {is_fitted_css_class}">'
             f"<pre>{name_details}</pre></div> "
         )
         out.write(fmt_str)
@@ -183,13 +209,38 @@ def _write_estimator_html(
     estimator,
     estimator_label,
     estimator_label_details,
-    is_fitted,
+    is_fitted_css_class,
     is_fitted_icon="",
     first_call=False,
 ):
-    """Write estimator to html in serial, parallel, or by itself (single)."""
-    # Delayed to avoid circular import
+    """Write estimator to html in serial, parallel, or by itself (single).
 
+    For multiple estimators, this function is called recursively.
+
+    Parameters
+    ----------
+    out : file-like object
+        The file to write the HTML representation to.
+    estimator : estimator object
+        The estimator to visualize.
+    estimator_label : str
+        The label for the estimator. It corresponds either to the estimator class name
+        for simple estimator or in the case of `Pipeline` and `ColumnTransformer`, it
+        corresponds to the name of the step.
+    estimator_label_details : str
+        The details to show as content in the dropdown part of the toggleable label.
+        It can contain information as non-default parameters or column information for
+        `ColumnTransformer`.
+    is_fitted_css_class : {"", "fitted"}
+        The CSS class to indicate whether or not the estimator is fitted or not. The
+        empty string means that the estimator is not fitted and "fitted" means that the
+        estimator is fitted.
+    is_fitted_icon : str, default=""
+        The HTML representation to show the fitted information in the diagram. An empty
+        string means that no information is shown.
+    first_call : bool, default=False
+        Whether this is the first time this function is called.
+    """
     if first_call:
         est_block = _get_visual_block(estimator)
     else:
@@ -212,7 +263,7 @@ def _write_estimator_html(
                 estimator_label,
                 estimator_label_details,
                 doc_link=doc_link,
-                is_fitted=is_fitted,
+                is_fitted_css_class=is_fitted_css_class,
                 is_fitted_icon=is_fitted_icon,
             )
 
@@ -222,13 +273,23 @@ def _write_estimator_html(
 
         for est, name, name_details in est_infos:
             if kind == "serial":
-                _write_estimator_html(out, est, name, name_details, is_fitted=is_fitted)
+                _write_estimator_html(
+                    out,
+                    est,
+                    name,
+                    name_details,
+                    is_fitted_css_class=is_fitted_css_class,
+                )
             else:  # parallel
                 out.write('<div class="sk-parallel-item">')
                 # wrap element in a serial visualblock
                 serial_block = _VisualBlock("serial", [est], dash_wrapped=False)
                 _write_estimator_html(
-                    out, serial_block, name, name_details, is_fitted=is_fitted
+                    out,
+                    serial_block,
+                    name,
+                    name_details,
+                    is_fitted_css_class=is_fitted_css_class,
                 )
                 out.write("</div>")  # sk-parallel-item
 
@@ -242,7 +303,8 @@ def _write_estimator_html(
             inner_class="sk-estimator",
             checked=first_call,
             doc_link=doc_link,
-            is_fitted=is_fitted,
+            is_fitted_css_class=is_fitted_css_class,
+            is_fitted_icon=is_fitted_icon,
         )
 
 
@@ -269,24 +331,20 @@ def estimator_html_repr(estimator):
     from sklearn.utils.validation import check_is_fitted
 
     if not hasattr(estimator, "fit"):
-        # The estimator has no fit method, it's considered unfitted.
-        is_fitted = False
         status_label = "<span>Estimator is not fitted</span>"
-        fitted_str = ""
+        is_fitted_css_class = ""
     else:
-        # The estimator has a proper fit method, so we can check if it's fitted.
         try:
             check_is_fitted(estimator)  # check if the estimator is fitted
-            is_fitted = True
             status_label = "<span>Estimator is fitted</span>"
-            fitted_str = "fitted"  # `fitted_str` specifies the css class to use
-        except NotFittedError:  # estimator is not fitted
-            is_fitted = False
+            is_fitted_css_class = "fitted"
+        except NotFittedError:
             status_label = "<span>Estimator is not fitted</span>"
-            fitted_str = ""
+            is_fitted_css_class = ""
 
     is_fitted_icon = (
-        f'<span class="sk-estimator-doc-link {fitted_str}">i{status_label}</span>'
+        f'<span class="sk-estimator-doc-link {is_fitted_css_class}">'
+        f"i{status_label}</span>"
     )
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
@@ -329,7 +387,7 @@ def estimator_html_repr(estimator):
             estimator.__class__.__name__,
             estimator_str,
             first_call=True,
-            is_fitted=is_fitted,
+            is_fitted_css_class=is_fitted_css_class,
             is_fitted_icon=is_fitted_icon,
         )
         out.write("</div></div>")
