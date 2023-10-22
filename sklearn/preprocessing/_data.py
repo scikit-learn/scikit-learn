@@ -2033,7 +2033,7 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
     def _more_tags(self):
-        return {"stateless": True}
+        return {"stateless": True, "array_api_support": True}
 
 
 @validate_params(
