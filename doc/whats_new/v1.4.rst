@@ -464,6 +464,13 @@ Changelog
   Use `-np.logaddexp(0, -x)` instead.
   :pr:`27544` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Fix| :func:`~utils.estimator_checks.check_estimators_pickle` with
+  `readonly_memmap=True` now relies on joblib's own capability to allocate
+  aligned memory mapped arrays when loading a serialized estimator instead of
+  calling a dedicated private function that would crash when OpenBLAS
+  misdetects the CPU architecture.
+  :pr:`27614` by :user:`Olivier Grisel <ogrisel>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
