@@ -2376,7 +2376,7 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         return self.n_features_in_
 
     def _more_tags(self):
-        return {"pairwise": True}
+        return {"pairwise": True, "array_api_support": True}
 
 
 @validate_params(
