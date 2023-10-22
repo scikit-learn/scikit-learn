@@ -23,7 +23,7 @@ import sys
 import tempfile
 import unittest
 import warnings
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
 from functools import wraps
 from inspect import signature
 from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
@@ -49,7 +49,7 @@ from sklearn.utils import (
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils._array_api import _check_array_api_dispatch
-from sklearn.utils.fixes import parse_version, sp_version, threadpool_info
+from sklearn.utils.fixes import parse_version, sp_version
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -448,73 +448,19 @@ class TempMemmap:
         _delete_folder(self.temp_folder)
 
 
-def _create_memmap_backed_array(array, filename, mmap_mode):
-    # https://numpy.org/doc/stable/reference/generated/numpy.memmap.html
-    fp = np.memmap(filename, dtype=array.dtype, mode="w+", shape=array.shape)
-    fp[:] = array[:]  # write array to memmap array
-    fp.flush()
-    memmap_backed_array = np.memmap(
-        filename, dtype=array.dtype, mode=mmap_mode, shape=array.shape
-    )
-    return memmap_backed_array
-
-
-def _create_aligned_memmap_backed_arrays(data, mmap_mode, folder):
-    if isinstance(data, np.ndarray):
-        filename = op.join(folder, "data.dat")
-        return _create_memmap_backed_array(data, filename, mmap_mode)
-
-    if isinstance(data, Sequence) and all(
-        isinstance(each, np.ndarray) for each in data
-    ):
-        return [
-            _create_memmap_backed_array(
-                array, op.join(folder, f"data{index}.dat"), mmap_mode
-            )
-            for index, array in enumerate(data)
-        ]
-
-    raise ValueError(
-        "When creating aligned memmap-backed arrays, input must be a single array or a"
-        " sequence of arrays"
-    )
-
-
-def create_memmap_backed_data(data, mmap_mode="r", return_folder=False, aligned=False):
+def create_memmap_backed_data(data, mmap_mode="r", return_folder=False):
     """
     Parameters
     ----------
     data
     mmap_mode : str, default='r'
     return_folder :  bool, default=False
-    aligned : bool, default=False
-        If True, if input is a single numpy array and if the input array is aligned,
-        the memory mapped array will also be aligned. This is a workaround for
-        https://github.com/joblib/joblib/issues/563.
     """
     temp_folder = tempfile.mkdtemp(prefix="sklearn_testing_")
     atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
-    # OpenBLAS is known to segfault with unaligned data on the Prescott
-    # architecture so force aligned=True on Prescott. For more details, see:
-    # https://github.com/scipy/scipy/issues/14886
-    has_prescott_openblas = any(
-        True
-        for info in threadpool_info()
-        if info["internal_api"] == "openblas"
-        # Prudently assume Prescott might be the architecture if it is unknown.
-        and info.get("architecture", "prescott").lower() == "prescott"
-    )
-    if has_prescott_openblas:
-        aligned = True
-
-    if aligned:
-        memmap_backed_data = _create_aligned_memmap_backed_arrays(
-            data, mmap_mode, temp_folder
-        )
-    else:
-        filename = op.join(temp_folder, "data.pkl")
-        joblib.dump(data, filename)
-        memmap_backed_data = joblib.load(filename, mmap_mode=mmap_mode)
+    filename = op.join(temp_folder, "data.pkl")
+    joblib.dump(data, filename)
+    memmap_backed_data = joblib.load(filename, mmap_mode=mmap_mode)
     result = (
         memmap_backed_data if not return_folder else (memmap_backed_data, temp_folder)
     )
