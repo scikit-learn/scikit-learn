@@ -1644,7 +1644,7 @@ def d2_pinball_score(
     ----------
     .. [1] Eq. (7) of `Koenker, Roger; Machado, José A. F. (1999).
            "Goodness of Fit and Related Inference Processes for Quantile Regression"
-           <http://dx.doi.org/10.1080/01621459.1999.10473882>`_
+           <https://doi.org/10.1080/01621459.1999.10473882>`_
     .. [2] Eq. (3.11) of Hastie, Trevor J., Robert Tibshirani and Martin J.
            Wainwright. "Statistical Learning with Sparsity: The Lasso and
            Generalizations." (2015). https://hastie.su.domains/StatLearnSparsity/
