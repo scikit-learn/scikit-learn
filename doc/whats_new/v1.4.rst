@@ -233,10 +233,6 @@ Changelog
   which returns a dense numpy ndarray as before.
   :pr:`27438` by :user:`Yao Xiao <Charlie-XIAO>`.
 
-- |Fix| All dataset fetchers now accept `data_home` as any object that implements
-  the :class:`os.PathLike` interface, for instance, :class:`pathlib.Path`.
-  :pr:`27468` by :user:`Yao Xiao <Charlie-XIAO>`.
-
 :mod:`sklearn.decomposition`
 ............................
 
@@ -283,6 +279,13 @@ Changelog
 - |API| In :class:`ensemble.AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
   <StefanieSenger>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| :class:`feature_selection.RFE` and :class:`feature_selection.RFECV` do
+  not check for nans during input validation.
+  :pr:`21807` by `Thomas Fan`_.
 
 :mod:`sklearn.inspection`
 .........................
@@ -365,6 +368,19 @@ Changelog
   (e.g. :func:`~model_selection.cross_val_score`) where the singleton for `np.nan`
   will be different in the sub-processes.
   :pr:`27573` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :func:`metrics.make_scorer` now raises an error when using a regressor on a
+  scorer requesting a non-thresholded decision function (from `decision_function` or
+  `predict_proba`). Such scorer are specific to classification.
+  :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| Deprecated `needs_threshold` and `needs_proba` from :func:`metrics.make_scorer`.
+  These parameters will be removed in version 1.6. Instead, use `response_method` that
+  accepts `"predict"`, `"predict_proba"` or `"decision_function"` or a list of such
+  values. `needs_proba=True` is equivalent to `response_method="predict_proba"` and
+  `needs_threshold=True` is equivalent to
+  `response_method=("decision_function", "predict_proba")`.
+  :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |API| The `squared` parameter of :func:`metrics.mean_squared_error` and
   :func:`metrics.mean_squared_log_error` is deprecated and will be removed in 1.6.
@@ -459,6 +475,13 @@ Changelog
 - |API| :func:`sklearn.extmath.log_logistic` is deprecated and will be removed in 1.6.
   Use `-np.logaddexp(0, -x)` instead.
   :pr:`27544` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Fix| :func:`~utils.estimator_checks.check_estimators_pickle` with
+  `readonly_memmap=True` now relies on joblib's own capability to allocate
+  aligned memory mapped arrays when loading a serialized estimator instead of
+  calling a dedicated private function that would crash when OpenBLAS
+  misdetects the CPU architecture.
+  :pr:`27614` by :user:`Olivier Grisel <ogrisel>`.
 
 Code and Documentation Contributors
 -----------------------------------
