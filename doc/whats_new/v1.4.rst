@@ -363,11 +363,6 @@ Changelog
   :pr:`27577` by :user:`Omar Salman <OmarManzoor>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| :func:`metrics.make_scorer` now raises an error when using a regressor on a
-  scorer requesting a non-thresholded decision function (from `decision_function` or
-  `predict_proba`). Such scorer are specific to classification.
-  :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
-
 - |API| Deprecated `needs_threshold` and `needs_proba` from :func:`metrics.make_scorer`.
   These parameters will be removed in version 1.6. Instead, use `response_method` that
   accepts `"predict"`, `"predict_proba"` or `"decision_function"` or a list of such
@@ -381,6 +376,11 @@ Changelog
   Use the new functions :func:`metrics.root_mean_squared_error` and
   :func:`metrics.root_mean_squared_log_error` instead.
   :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.
+
+- |Fix| :func:`metrics.make_scorer` now raises an error when using a regressor on a
+  scorer requesting a non-thresholded decision function (from `decision_function` or
+  `predict_proba`). Such scorer are specific to classification.
+  :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
