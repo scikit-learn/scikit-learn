@@ -233,10 +233,6 @@ Changelog
   which returns a dense numpy ndarray as before.
   :pr:`27438` by :user:`Yao Xiao <Charlie-XIAO>`.
 
-- |Fix| All dataset fetchers now accept `data_home` as any object that implements
-  the :class:`os.PathLike` interface, for instance, :class:`pathlib.Path`.
-  :pr:`27468` by :user:`Yao Xiao <Charlie-XIAO>`.
-
 :mod:`sklearn.decomposition`
 ............................
 
@@ -283,6 +279,27 @@ Changelog
 - |API| In :class:`ensemble.AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
   <StefanieSenger>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| :class:`feature_selection.RFE` and :class:`feature_selection.RFECV` do
+  not check for nans during input validation.
+  :pr:`21807` by `Thomas Fan`_.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Enhancement| :class:`inspection.DecisionBoundaryDisplay` now accepts a parameter
+  `class_of_interest` to select the class of interest when plotting the response
+  provided by `response_method="predict_proba"` or
+  `response_method="decision_function"`. It allows to plot the decision boundary for
+  both binary and multiclass classifiers.
+  :pr:`27291` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| :class:`inspection.DecisionBoundaryDisplay` raise an `AttributeError` instead
+  of a `ValueError` when an estimator does not implement the requested response method.
+  :pr:`27291` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -340,11 +357,24 @@ Changelog
   :func:`sklearn.metrics.zero_one_loss` now support Array API compatible inputs.
   :pr:`27137` by :user:`Edoardo Abati <EdAbati>`.
 
+- |API| Deprecated `needs_threshold` and `needs_proba` from :func:`metrics.make_scorer`.
+  These parameters will be removed in version 1.6. Instead, use `response_method` that
+  accepts `"predict"`, `"predict_proba"` or `"decision_function"` or a list of such
+  values. `needs_proba=True` is equivalent to `response_method="predict_proba"` and
+  `needs_threshold=True` is equivalent to
+  `response_method=("decision_function", "predict_proba")`.
+  :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |API| The `squared` parameter of :func:`metrics.mean_squared_error` and
   :func:`metrics.mean_squared_log_error` is deprecated and will be removed in 1.6.
   Use the new functions :func:`metrics.root_mean_squared_error` and
   :func:`metrics.root_mean_squared_log_error` instead.
   :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.
+
+- |Fix| :func:`metrics.make_scorer` now raises an error when using a regressor on a
+  scorer requesting a non-thresholded decision function (from `decision_function` or
+  `predict_proba`). Such scorer are specific to classification.
+  :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -440,6 +470,13 @@ Changelog
 - |API| :func:`sklearn.extmath.log_logistic` is deprecated and will be removed in 1.6.
   Use `-np.logaddexp(0, -x)` instead.
   :pr:`27544` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Fix| :func:`~utils.estimator_checks.check_estimators_pickle` with
+  `readonly_memmap=True` now relies on joblib's own capability to allocate
+  aligned memory mapped arrays when loading a serialized estimator instead of
+  calling a dedicated private function that would crash when OpenBLAS
+  misdetects the CPU architecture.
+  :pr:`27614` by :user:`Olivier Grisel <ogrisel>`.
 
 Code and Documentation Contributors
 -----------------------------------
