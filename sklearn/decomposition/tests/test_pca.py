@@ -699,8 +699,8 @@ def test_variance_correctness(copy):
     np.testing.assert_allclose(pca_var, true_var)
 
 
-def check_array_api_get_precision(name, estimator, array_namepsace, device, dtype):
-    xp, device, dtype = _array_api_for_tests(array_namepsace, device, dtype)
+def check_array_api_get_precision(name, estimator, array_namespace, device, dtype):
+    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
     iris_np = iris.data.astype(dtype)
     iris_xp = xp.asarray(iris_np, device=device)
 
@@ -731,7 +731,7 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
 
 
 @pytest.mark.parametrize(
-    "array_namepsace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "check",
@@ -752,9 +752,9 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
     ],
     ids=_get_check_estimator_ids,
 )
-def test_pca_array_api_compliance(estimator, check, array_namepsace, device, dtype):
+def test_pca_array_api_compliance(estimator, check, array_namespace, device, dtype):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namepsace, device=device, dtype=dtype)
+    check(name, estimator, array_namespace, device=device, dtype=dtype)
 
 
 def test_array_api_error_and_warnings_on_unsupported_params():
