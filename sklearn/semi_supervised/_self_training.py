@@ -145,9 +145,8 @@ class SelfTrainingClassifier(
     SelfTrainingClassifier(...)
 
     For a more detailed example of usage, see:
-    :ref:`sphx_glr_auto_examples_semi_supervised_\
-    plot_self_training_varying_threshold.py`
-    """
+    :ref:`sphx_glr_auto_examples_semi_supervised_plot_self_training_varying_threshold.py`
+    """ # noqa
 
     _estimator_type = "classifier"
 
