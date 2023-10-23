@@ -77,9 +77,11 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         return np.asarray([est.predict(X) for est in self.estimators_]).T
 
     @abstractmethod
-    def fit(self, X, y, fit_params):
+    def fit(self, X, y, sample_weight, fit_params):
         """Get common fit operations."""
         names, clfs = self._validate_estimators()
+        if sample_weight is not None:
+            fit_params["sample_weight"] = sample_weight
 
         if self.weights is not None and len(self.weights) != len(self.estimators):
             raise ValueError(
@@ -87,16 +89,25 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                 f" {len(self.weights)} weights, {len(self.estimators)} estimators"
             )
 
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **fit_params)
+        else:
+            routed_params = Bunch()
+            for name in names:
+                routed_params[name] = Bunch(fit={})
+                if sample_weight is not None:
+                    routed_params[name].fit["sample_weight"] = sample_weight
+
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_single_estimator)(
                 clone(clf),
                 X,
                 y,
-                fit_params=fit_params[list(fit_params.keys())[idx]]["fit"],
+                fit_params=routed_params[name]["fit"],
                 message_clsname="Voting",
-                message=self._log_message(names[idx], idx + 1, len(clfs)),
+                message=self._log_message(name, idx + 1, len(clfs)),
             )
-            for idx, clf in enumerate(clfs)
+            for idx, (name, clf) in enumerate(zip(names, clfs))
             if clf != "drop"
         )
 
@@ -391,17 +402,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self.classes_ = self.le_.classes_
         transformed_y = self.le_.transform(y)
 
-        if _routing_enabled():
-            routed_params = process_routing(
-                self, "fit", sample_weight=sample_weight, **fit_params
-            )
-        else:
-            routed_params = Bunch()
-            routed_params.estimator = Bunch(fit={})
-            if sample_weight is not None:
-                routed_params.estimator.fit["sample_weight"] = sample_weight
-
-        return super().fit(X, transformed_y, routed_params)
+        return super().fit(X, transformed_y, sample_weight, fit_params)
 
     def predict(self, X):
         """Predict class labels for X.

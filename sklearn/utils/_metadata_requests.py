@@ -858,11 +858,6 @@ class MetadataRouter:
             method_mapping = deepcopy(method_mapping)
 
         for name, obj in objs.items():
-            print(f"objs: {objs}")
-            """# estimators that take lists of sub-estimators, have them as (name,
-            # est) tuples
-            if isinstance(obj, tuple):
-                obj = obj[1]"""
             self._route_mappings[name] = RouterMappingPair(
                 mapping=method_mapping, router=get_routing_for_object(obj)
             )
