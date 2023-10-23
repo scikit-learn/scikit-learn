@@ -2,7 +2,7 @@ from functools import partial
 
 import numpy
 import pytest
-from numpy.testing import assert_allclose, assert_array_equal
+from numpy.testing import assert_array_equal
 
 from sklearn._config import config_context
 from sklearn.base import BaseEstimator
@@ -16,11 +16,13 @@ from sklearn.utils._array_api import (
     _nanmin,
     _NumPyAPIWrapper,
     _weighted_sum,
+    device as _get_device,
     get_namespace,
     supported_float_dtypes,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import (
+    assert_allclose,
     _array_api_for_tests,
     skip_if_array_api_compat_not_configured,
 )
@@ -201,9 +203,8 @@ def test_weighted_sum(
     assert_allclose(result, expected, atol=_atol_for_type(dtype))
 
 
-@skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize(
-    "library", ["numpy", "numpy.array_api", "cupy", "cupy.array_api", "torch"]
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "X,reduction,expected",
@@ -236,17 +237,21 @@ def test_weighted_sum(
         ),
     ],
 )
-def test_nan_reductions(library, X, reduction, expected):
+def test_nan_reductions(array_namespace, device, dtype, X, reduction, expected):
     """Check NaN reductions like _nanmin and _nanmax"""
-    xp = pytest.importorskip(library)
+    if array_namespace in ("cupy", "cupy.array_api") and not numpy.isfinite(expected).all():
+        pytest.xfail("cupy returns very large/small float values instead of +/-inf")
 
-    if isinstance(expected, list):
-        expected = xp.asarray(expected)
+    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
+    X_np = numpy.asarray(X, dtype=dtype)
+    X = xp.asarray(X_np, device=device)
 
     with config_context(array_api_dispatch=True):
-        result = reduction(xp.asarray(X))
+        result = reduction(X)
+        assert _get_device(result) == _get_device(X)
+        result_np = _convert_to_numpy(result, xp=xp)
 
-    assert_allclose(result, expected)
+    assert_allclose(result_np, expected, atol=_atol_for_type(dtype))
 
 
 @skip_if_array_api_compat_not_configured
