@@ -1270,10 +1270,10 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
     "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
-    "shuffle,stratify",
+    "shuffle, stratify",
     (
         (True, None),
-        (True, np.hstack((np.ones(6), np.zeros(4)))),
+        (True, np.concatenate((np.ones(6), np.zeros(4)))),
         # stratification only works with shuffling
         (False, None),
     ),
@@ -1291,7 +1291,7 @@ def test_array_api_train_test_split(shuffle, stratify, array_namespace, device, 
     y_xp = xp.asarray(y_np, device=device)
 
     X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
-        X_np, y, random_state=0, shuffle=shuffle, stratify=stratify
+        X_np, y_np, random_state=0, shuffle=shuffle, stratify=stratify
     )
     with config_context(array_api_dispatch=True):
         if stratify is not None:
@@ -1320,14 +1320,16 @@ def test_array_api_train_test_split(shuffle, stratify, array_namespace, device, 
     assert X_test_xp.dtype == X_xp.dtype
     assert y_test_xp.dtype == y_xp.dtype
 
-    assert_allclose(
-        _convert_to_numpy(X_train_xp, xp=xp),
-        X_train_np,
-    )
-    assert_allclose(
-        _convert_to_numpy(X_test_xp, xp=xp),
-        X_test_np,
-    )
+    for (data_xp, data_np) in [
+        (X_train_xp, X_train_np),
+        (X_test_xp, X_test_np),
+        (y_train_xp, y_train_np),
+        (y_test_xp, y_test_np),
+    ]:
+        assert_allclose(
+            _convert_to_numpy(data_xp, xp=xp),
+            data_np,
+        )
 
 
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
