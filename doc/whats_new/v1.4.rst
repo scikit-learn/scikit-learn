@@ -363,12 +363,6 @@ Changelog
   :pr:`27577` by :user:`Omar Salman <OmarManzoor>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Fixes a bug for metrics using `zero_division=np.nan`
-  (e.g. :func:`~metrics.precision_score`) within a paralell loop
-  (e.g. :func:`~model_selection.cross_val_score`) where the singleton for `np.nan`
-  will be different in the sub-processes.
-  :pr:`27573` by :user:`Guillaume Lemaitre <glemaitre>`.
-
 - |Fix| :func:`metrics.make_scorer` now raises an error when using a regressor on a
   scorer requesting a non-thresholded decision function (from `decision_function` or
   `predict_proba`). Such scorer are specific to classification.
