@@ -92,18 +92,18 @@ def _write_label_html(
         The file to write the HTML representation to.
     name : str
         The label for the estimator. It corresponds either to the estimator class name
-        for a simple estimator or in the case of a `Pipeline` and `ColumnTransformer`, it
-        corresponds to the name of the step.
+        for a simple estimator or in the case of a `Pipeline` and `ColumnTransformer`,
+        it corresponds to the name of the step.
     name_details : str
-        The details to show as content in the dropdown part of the toggleable label.
-        It can contain information such as non-default parameters or column information for
+        The details to show as content in the dropdown part of the toggleable label. It
+        can contain information such as non-default parameters or column information for
         `ColumnTransformer`.
     outer_class : {"sk-label-container", "sk-item"}, default="sk-label-container"
         The CSS class for the outer container.
     inner_class : {"sk-label", "sk-estimator"}, default="sk-label"
         The CSS class for the inner container.
     checked : bool, default=False
-        Whether the dropdown is checked or not. With a single estimator, we intend to
+        Whether the dropdown is folded or not. With a single estimator, we intend to
         unfold the content.
     doc_link : str, default=""
         The link to the documentation for the estimator. If an empty string, no link is
@@ -341,7 +341,7 @@ def estimator_html_repr(estimator):
             status_label = "<span>Fitted</span>"
             is_fitted_css_class = "fitted"
         except NotFittedError:
-            status_label = "<span>Estimator is not fitted</span>"
+            status_label = "<span>Not fitted</span>"
             is_fitted_css_class = ""
 
     is_fitted_icon = (
@@ -405,8 +405,9 @@ class _HTMLDocumentationLinkMixin:
       link to the API documentation. Using this mixin, the default value is
       `"https://scikit-learn.org/{version_url}/modules/generated/
       {estimator_module}.{estimator_name}.html"`.
-    - `_url_param_generator`: it corresponds to a function that generates the parameters
-      to be used in the template when the estimator module and name are not sufficient.
+    - `_doc_link_url_param_generator`: it corresponds to a function that generates the
+      parameters to be used in the template when the estimator module and name are not
+      sufficient.
 
     The method :meth:`_get_doc_link` generates the link to the API documentation for a
     given estimator.
@@ -424,18 +425,13 @@ class _HTMLDocumentationLinkMixin:
     >>> estimator._doc_link_template = "https://website.com/{single_param}.html"
     >>> def url_param_generator(estimator):
     ...     return {"single_param": estimator.__class__.__name__}
-    >>> estimator._url_param_generator = url_param_generator
+    >>> estimator._doc_link_url_param_generator = url_param_generator
     >>> estimator._get_doc_link()
     'https://website.com/BaseEstimator.html'
     """
 
-    @property
-    def _doc_link_module(self):
-        return getattr(self, "__doc_link_module", "sklearn")
-
-    @_doc_link_module.setter
-    def _doc_link_module(self, value):
-        setattr(self, "__doc_link_module", value)
+    _doc_link_module = "sklearn"
+    _doc_link_url_param_generator = None
 
     @property
     def _doc_link_template(self):
@@ -457,14 +453,6 @@ class _HTMLDocumentationLinkMixin:
     def _doc_link_template(self, value):
         setattr(self, "__doc_link_template", value)
 
-    @property
-    def _url_param_generator(self):
-        return getattr(self, "__url_param_generator", None)
-
-    @_url_param_generator.setter
-    def _url_param_generator(self, value):
-        setattr(self, "__url_param_generator", value)
-
     def _get_doc_link(self):
         """Generates a link to the API documentation for a given estimator.
 
@@ -481,7 +469,7 @@ class _HTMLDocumentationLinkMixin:
         if self.__class__.__module__.split(".")[0] != self._doc_link_module:
             return ""
 
-        if self._url_param_generator is None:
+        if self._doc_link_url_param_generator is None:
             estimator_name = self.__class__.__name__
             estimator_module = ".".join(
                 [
@@ -493,4 +481,6 @@ class _HTMLDocumentationLinkMixin:
             return self._doc_link_template.format(
                 estimator_module=estimator_module, estimator_name=estimator_name
             )
-        return self._doc_link_template.format(**self._url_param_generator(self))
+        return self._doc_link_template.format(
+            **self._doc_link_url_param_generator(self)
+        )

@@ -375,9 +375,9 @@ def test_estimator_html_repr_unfitted_vs_fitted():
 
     X, y = load_iris(return_X_y=True)
     estimator = MyEstimator()
-    assert "<span>Estimator is not fitted</span>" in estimator_html_repr(estimator)
+    assert "<span>Not fitted</span>" in estimator_html_repr(estimator)
     estimator.fit(X, y)
-    assert "<span>Estimator is fitted</span>" in estimator_html_repr(estimator)
+    assert "<span>Fitted</span>" in estimator_html_repr(estimator)
 
 
 @pytest.mark.parametrize(
@@ -393,17 +393,11 @@ def test_estimator_html_repr_unfitted_vs_fitted():
 )
 def test_estimator_html_repr_fitted_icon(estimator):
     """Check that we are showing the fitted status icon only once."""
-    pattern = (
-        '<span class="sk-estimator-doc-link ">i<span>Estimator is not fitted</span>'
-        "</span>"
-    )
+    pattern = '<span class="sk-estimator-doc-link ">i<span>Not fitted</span></span>'
     assert estimator_html_repr(estimator).count(pattern) == 1
     X, y = load_iris(return_X_y=True)
     estimator.fit(X, y)
-    pattern = (
-        '<span class="sk-estimator-doc-link fitted">i<span>Estimator is fitted</span>'
-        "</span>"
-    )
+    pattern = '<span class="sk-estimator-doc-link fitted">i<span>Fitted</span></span>'
     assert estimator_html_repr(estimator).count(pattern) == 1
 
 
@@ -467,6 +461,6 @@ def test_html_documentation_link_mixin_get_doc_link():
             "another_variable": "value_2",
         }
 
-    mixin._url_param_generator = url_param_generator
+    mixin._doc_link_url_param_generator = url_param_generator
 
     assert mixin._get_doc_link() == "https://website.com/value_1.value_2.html"

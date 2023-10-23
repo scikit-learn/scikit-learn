@@ -739,23 +739,23 @@ diagram::
 
     BaseEstimator()
 
-The raw HTML representation can be obtained by invoking the function
-:func:`~sklearn.utils.estimator_html_repr` on an estimator instance. This representation
-is not intended to be tweaked. The only supported use case is to properly redirect the
-user to the online documentation of the estimator when clicking on the "?" icon. While
-the defaults are suitable for scikit-learn, it is possible to customize the estimator
-such that it redirects to the intended webpage.
+The raw HTML representation is obtained by invoking the function
+:func:`~sklearn.utils.estimator_html_repr` on an estimator instance.
 
-It boils down to overriding the following attributes: (i) `_doc_link_module`, (ii)
-`_doc_link_template`, and potentially (iii) `_url_param_generator`. `_doc_link_module`
-corresponds to a string to only generate diagram for a specific library. For instance,
-by default it is set to `"sklearn"`. `_doc_link_template` corresponds to a string
-that is the URL template of the documentation. When using sphinx, we generally expect
-to inject two positional parameters: the first one being the module name, and the second
-one being the class name. If for your use case, the previous template is not suitable,
-then you can override both `_doc_link_template` and and `_url_param_generator`. The
-latter should return a Python dictionary containing the keys/values to be injected in
-the template `_doc_link_template`.
+To customize the URL linking to an estimator's documentation (i.e. when clicking on the
+"?" icon), override the `_doc_link_module` and `_doc_link_template` attributes. In
+addition, you can provide a `_doc_link_url_param_generator` method. Set
+`_doc_link_module` to the name of the (top level) module that contains your estimator.
+If the value does not match the top level module name, the HTML representation will not
+contain a link to the documentation. For scikit-learn estimators this is set to
+`"sklearn"`.
+
+The `_doc_link_template` is used to construct the final URL. By default, it can contain
+two variables: `estimator_module` (the full name of the module containing the estimator)
+and `estimator_name` (the class name of the estimator). If you need more variables you
+should implement the `_doc_link_url_param_generator` method which should return a
+dictionary of the variables and their values. This dictionary will be used to render the
+`_doc_link_template`.
 
 .. _coding-guidelines:
 
