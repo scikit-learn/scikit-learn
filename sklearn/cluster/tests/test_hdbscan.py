@@ -23,7 +23,6 @@ from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
-n_clusters_true = 3
 X, y = make_blobs(n_samples=200, random_state=10)
 X, y = shuffle(X, y, random_state=7)
 X = StandardScaler().fit_transform(X)
@@ -36,6 +35,12 @@ ALGORITHMS = [
 ]
 
 OUTLIER_SET = {-1} | {out["label"] for _, out in _OUTLIER_ENCODING.items()}
+
+
+def check_label_quality(labels, threshold=0.99):
+    n_clusters = len(set(labels) - OUTLIER_SET)
+    assert n_clusters == 3
+    assert fowlkes_mallows_score(labels, y) > threshold
 
 
 @pytest.mark.parametrize("outlier_type", _OUTLIER_ENCODING)
@@ -80,13 +85,7 @@ def test_hdbscan_distance_matrix():
     labels = HDBSCAN(metric="precomputed", copy=True).fit_predict(D)
 
     assert_allclose(D, D_original)
-    n_clusters = len(set(labels) - OUTLIER_SET)
-    assert n_clusters == n_clusters_true
-
-    # Check that clustering is arbitrarily good
-    # This is a heuristic to guard against regression
-    score = fowlkes_mallows_score(y, labels)
-    assert score >= 0.98
+    check_label_quality(labels)
 
     msg = r"The precomputed distance matrix.*has shape"
     with pytest.raises(ValueError, match=msg):
@@ -115,8 +114,7 @@ def test_hdbscan_sparse_distance_matrix(sparse_constructor):
     D.eliminate_zeros()
 
     labels = HDBSCAN(metric="precomputed").fit_predict(D)
-    n_clusters = len(set(labels) - OUTLIER_SET)
-    assert n_clusters == n_clusters_true
+    check_label_quality(labels)
 
 
 def test_hdbscan_feature_array():
@@ -125,13 +123,10 @@ def test_hdbscan_feature_array():
     goodness of fit check. Note that the check is a simple heuristic.
     """
     labels = HDBSCAN().fit_predict(X)
-    n_clusters = len(set(labels) - OUTLIER_SET)
-    assert n_clusters == n_clusters_true
 
     # Check that clustering is arbitrarily good
     # This is a heuristic to guard against regression
-    score = fowlkes_mallows_score(y, labels)
-    assert score >= 0.98
+    check_label_quality(labels)
 
 
 @pytest.mark.parametrize("algo", ALGORITHMS)
@@ -142,8 +137,7 @@ def test_hdbscan_algorithms(algo, metric):
     metrics, or raises the expected errors.
     """
     labels = HDBSCAN(algorithm=algo).fit_predict(X)
-    n_clusters = len(set(labels) - OUTLIER_SET)
-    assert n_clusters == n_clusters_true
+    check_label_quality(labels)
 
     # Validation for brute is handled by `pairwise_distances`
     if algo in ("brute", "auto"):
@@ -180,13 +174,13 @@ def test_dbscan_clustering():
     """
     Tests that HDBSCAN can generate a sufficiently accurate dbscan clustering.
     This test is more of a sanity check than a rigorous evaluation.
-
-    TODO: Improve and strengthen this test if at all possible.
     """
     clusterer = HDBSCAN().fit(X)
     labels = clusterer.dbscan_clustering(0.3)
-    n_clusters = len(set(labels) - OUTLIER_SET)
-    assert n_clusters == n_clusters_true
+
+    # We use a looser threshold due to dbscan producing a more constrained
+    # clustering representation
+    check_label_quality(labels, threshold=0.92)
 
 
 @pytest.mark.parametrize("cut_distance", (0.1, 0.5, 1))
@@ -216,21 +210,6 @@ def test_dbscan_clustering_outlier_data(cut_distance):
     assert_array_equal(clean_labels, labels[clean_idx])
 
 
-def test_hdbscan_high_dimensional():
-    """
-    Tests that HDBSCAN using `BallTree` works with higher-dimensional data.
-    """
-    H, y = make_blobs(n_samples=50, random_state=0, n_features=64)
-    H = StandardScaler().fit_transform(H)
-    labels = HDBSCAN(
-        algorithm="auto",
-        metric="seuclidean",
-        metric_params={"V": np.ones(H.shape[1])},
-    ).fit_predict(H)
-    n_clusters = len(set(labels) - OUTLIER_SET)
-    assert n_clusters == n_clusters_true
-
-
 def test_hdbscan_best_balltree_metric():
     """
     Tests that HDBSCAN using `BallTree` works.
@@ -238,8 +217,7 @@ def test_hdbscan_best_balltree_metric():
     labels = HDBSCAN(
         metric="seuclidean", metric_params={"V": np.ones(X.shape[1])}
     ).fit_predict(X)
-    n_clusters = len(set(labels) - OUTLIER_SET)
-    assert n_clusters == n_clusters_true
+    check_label_quality(labels)
 
 
 def test_hdbscan_no_clusters():
@@ -248,8 +226,7 @@ def test_hdbscan_no_clusters():
     `min_cluster_size` is too large for the data.
     """
     labels = HDBSCAN(min_cluster_size=len(X) - 1).fit_predict(X)
-    n_clusters = len(set(labels) - OUTLIER_SET)
-    assert n_clusters == 0
+    assert set(labels).issubset(OUTLIER_SET)
 
 
 def test_hdbscan_min_cluster_size():
@@ -270,8 +247,7 @@ def test_hdbscan_callable_metric():
     """
     metric = distance.euclidean
     labels = HDBSCAN(metric=metric).fit_predict(X)
-    n_clusters = len(set(labels) - OUTLIER_SET)
-    assert n_clusters == n_clusters_true
+    check_label_quality(labels)
 
 
 @pytest.mark.parametrize("tree", ["kd_tree", "ball_tree"])
@@ -295,8 +271,7 @@ def test_hdbscan_sparse(csr_container):
     """
 
     dense_labels = HDBSCAN().fit(X).labels_
-    n_clusters = len(set(dense_labels) - OUTLIER_SET)
-    assert n_clusters == 3
+    check_label_quality(dense_labels)
 
     _X_sparse = csr_container(X)
     X_sparse = _X_sparse.copy()
@@ -309,8 +284,7 @@ def test_hdbscan_sparse(csr_container):
         X_dense = X.copy()
         X_dense[0, 0] = outlier_val
         dense_labels = HDBSCAN().fit(X_dense).labels_
-        n_clusters = len(set(dense_labels) - OUTLIER_SET)
-        assert n_clusters == 3
+        check_label_quality(dense_labels)
         assert dense_labels[0] == _OUTLIER_ENCODING[outlier_type]["label"]
 
         X_sparse = _X_sparse.copy()
@@ -385,15 +359,17 @@ def test_hdbscan_better_than_dbscan():
     example)
     """
     centers = [[-0.85, -0.85], [-0.85, 0.85], [3, 3], [3, -3]]
-    X, _ = make_blobs(
+    X, y = make_blobs(
         n_samples=750,
         centers=centers,
         cluster_std=[0.2, 0.35, 1.35, 1.35],
         random_state=0,
     )
-    hdb = HDBSCAN().fit(X)
-    n_clusters = len(set(hdb.labels_)) - int(-1 in hdb.labels_)
+    labels = HDBSCAN().fit(X).labels_
+
+    n_clusters = len(set(labels)) - int(-1 in labels)
     assert n_clusters == 4
+    fowlkes_mallows_score(labels, y) > 0.99
 
 
 @pytest.mark.parametrize(

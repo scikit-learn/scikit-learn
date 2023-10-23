@@ -129,7 +129,7 @@ Issue: You're welcome to update the docs
 Issue: Self-contained example for bug
     ::
 
-        Please provide [self-contained example code](https://stackoverflow.com/help/mcve), including imports and data (if possible), so that other contributors can just run it and reproduce your issue. Ideally your example code should be minimal.
+        Please provide [self-contained example code](https://scikit-learn.org/dev/developers/minimal_reproducer.html), including imports and data (if possible), so that other contributors can just run it and reproduce your issue. Ideally your example code should be minimal.
 
 Issue: Software versions
     ::
