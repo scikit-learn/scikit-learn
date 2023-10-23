@@ -586,6 +586,11 @@ cdef class ClassificationCriterion(Criterion):
         elif dest[0] > upper_bound:
             dest[0] = upper_bound
 
+        if dest[0] < 0.:
+            dest[0] = 0
+        elif dest[0] > 1.:
+            dest[0] = 1.
+
         # Class proportions for binary classification must sum to 1.
         dest[1] = 1 - dest[0]
 
