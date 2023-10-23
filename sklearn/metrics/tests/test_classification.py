@@ -2815,23 +2815,22 @@ def test_classification_metric_pos_label_types(metric, classes):
     assert not np.any(np.isnan(result))
 
 
-def test_f1_for_small_binary_inputs_with_zero_division():
-    """Non-regression test for gh-26965"""
-    y_true = np.array([0, 1])
-    y_pred = np.array([1, 0])
-    assert f1_score(y_true, y_pred, zero_division=1) == 0.0
+@pytest.mark.parametrize(
+    "y_true, y_pred, expected_score",
+    [
+        (np.array([0, 1]), np.array([1, 0]), 0.0),
+        (np.array([0, 1]), np.array([0, 1]), 1.0),
+        (np.array([0, 1]), np.array([0, 0]), 0.0),
+        (np.array([0, 0]), np.array([0, 0]), 1.0),
+    ],
+)
+def test_f1_for_small_binary_inputs_with_zero_division(y_true, y_pred, expected_score):
+    """Check the behaviour of `zero_division` for f1-score.
 
-    y_true = np.array([0, 1])
-    y_pred = np.array([0, 1])
-    assert f1_score(y_true, y_pred, zero_division=1) == 1.0
-
-    y_true = np.array([0, 1])
-    y_pred = np.array([0, 0])
-    assert f1_score(y_true, y_pred, zero_division=1) == 0.0
-
-    y_true = np.array([0, 0])
-    y_pred = np.array([0, 0])
-    assert f1_score(y_true, y_pred, zero_division=1) == 1.0
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/26965
+    """
+    assert f1_score(y_true, y_pred, zero_division=1.0) == pytest.approx(expected_score)
 
 
 @pytest.mark.parametrize(
