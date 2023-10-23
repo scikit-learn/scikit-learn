@@ -22,7 +22,7 @@ power iteration method:
 
     https://en.wikipedia.org/wiki/Power_iteration
 
-Here the computation is achieved thanks to Martinson's Randomized SVD
+Here the computation is achieved thanks to Martinsson's Randomized SVD
 algorithm implemented in scikit-learn.
 
 The graph data is fetched from the DBpedia dumps. DBpedia is an extraction

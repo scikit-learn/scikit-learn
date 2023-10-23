@@ -129,7 +129,7 @@ for color, (name, estimator) in zip(colors, estimators.items()):
 ax.scatter(X[:, 0], X[:, 1], color="black")
 ax.legend(handles=legend_lines, loc="upper center")
 ax.set(
-    xlabel="flavonoids",
+    xlabel="flavanoids",
     ylabel="color_intensity",
     title="Outlier detection on a real data set (wine recognition)",
 )
