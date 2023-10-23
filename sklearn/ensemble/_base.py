@@ -27,7 +27,7 @@ def _fit_single_estimator(
             estimator.fit(X, y, sample_weight=fit_params["sample_weight"])
     else:
         with _print_elapsed_time(message_clsname, message):
-            return estimator.fit(X, y, **fit_params)
+            estimator.fit(X, y, **fit_params)
     return estimator
 
 
