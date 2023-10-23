@@ -730,8 +730,8 @@ Developer API for HTML representation
 
     The HTML representation API is experimental and the API is subject to change.
 
-Estimators inheriting from :class:`~sklearn.base.BaseEstimator` gain a functionality
-allowing to display an HTML representation of estimators in interactive programming
+Estimators inheriting from :class:`~sklearn.base.BaseEstimator` display
+a HTML representation of themselves in interactive programming
 environments such as Jupyter notebooks. For instance, we can display this HTML
 diagram::
 
@@ -741,7 +741,7 @@ diagram::
 
 The raw HTML representation can be obtained by invoking the function
 :func:`~sklearn.utils.estimator_html_repr` on an estimator instance. This representation
-is not intended to be tweak. The only supported use case is to properly redirect the
+is not intended to be tweaked. The only supported use case is to properly redirect the
 user to the online documentation of the estimator when clicking on the "?" icon. While
 the defaults are suitable for scikit-learn, it is possible to customize the estimator
 such that it redirects to the intended webpage.

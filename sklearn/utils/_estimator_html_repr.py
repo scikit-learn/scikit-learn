@@ -92,11 +92,11 @@ def _write_label_html(
         The file to write the HTML representation to.
     name : str
         The label for the estimator. It corresponds either to the estimator class name
-        for simple estimator or in the case of `Pipeline` and `ColumnTransformer`, it
+        for a simple estimator or in the case of a `Pipeline` and `ColumnTransformer`, it
         corresponds to the name of the step.
     name_details : str
         The details to show as content in the dropdown part of the toggleable label.
-        It can contain information as non-default parameters or column information for
+        It can contain information such as non-default parameters or column information for
         `ColumnTransformer`.
     outer_class : {"sk-label-container", "sk-item"}, default="sk-label-container"
         The CSS class for the outer container.
@@ -110,7 +110,7 @@ def _write_label_html(
         added to the diagram. This can be generated for an estimator if it uses the
         `_HTMLDocumentationLinkMixin`.
     is_fitted_css_class : {"", "fitted"}
-        The CSS class to indicate whether or not the estimator is fitted or not. The
+        The CSS class to indicate whether or not the estimator is fitted. The
         empty string means that the estimator is not fitted and "fitted" means that the
         estimator is fitted.
     is_fitted_icon : str, default=""
@@ -333,12 +333,12 @@ def estimator_html_repr(estimator):
     from sklearn.utils.validation import check_is_fitted
 
     if not hasattr(estimator, "fit"):
-        status_label = "<span>Estimator is not fitted</span>"
+        status_label = "<span>Not fitted</span>"
         is_fitted_css_class = ""
     else:
         try:
             check_is_fitted(estimator)
-            status_label = "<span>Estimator is fitted</span>"
+            status_label = "<span>Fitted</span>"
             is_fitted_css_class = "fitted"
         except NotFittedError:
             status_label = "<span>Estimator is not fitted</span>"
