@@ -156,7 +156,7 @@ def _get_response_values(
 
     pos_label : int, float, bool or str, default=None
         The class considered as the positive class when computing
-        the metrics. By default, `estimators.classes_[1]` is
+        the metrics. If `None` and target is 'binary', `estimators.classes_[1]` is
         considered as the positive class.
 
     return_response_method_used : bool, default=False
@@ -174,7 +174,8 @@ def _get_response_values(
 
     pos_label : int, float, bool, str or None
         The class considered as the positive class when computing
-        the metrics. Returns `None` if `estimator` is a regressor.
+        the metrics. Returns `None` if `estimator` is a regressor or an outlier
+        detector.
 
     response_method_used : str
         The response method used to compute the response values. Only returned
