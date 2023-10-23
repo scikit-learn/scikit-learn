@@ -145,7 +145,7 @@ class SelfTrainingClassifier(
     SelfTrainingClassifier(...)
 
     For a more detailed example of usage, see:
-    :ref:`sphx_glr_auto_examples_semi_supervised_
+    :ref:`sphx_glr_auto_examples_semi_supervised_\
     plot_self_training_varying_threshold.py`
     """
 
