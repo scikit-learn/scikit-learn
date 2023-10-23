@@ -1449,21 +1449,8 @@ def _prf_divide(
         return result
 
     # build appropriate warning
-    # E.g. "Precision and F-score are ill-defined and being set to 0.0 in
-    # labels with no predicted samples. Use ``zero_division`` parameter to
-    # control this behavior."
-
-    if metric in warn_for and "f-score" in warn_for and metric != "f-score":
-        msg_start = "{0} and F-score are".format(metric.title())
-    elif "f-score" in warn_for:
-        msg_start = "F-score is"
-    elif metric in warn_for:
-        msg_start = "{0} is".format(metric.title())
-
-    else:
-        return result
-
-    _warn_prf(average, modifier, msg_start, len(result))
+    if metric in warn_for:
+        _warn_prf(average, modifier, f"{metric.capitalize()} is", len(result))
 
     return result
 
