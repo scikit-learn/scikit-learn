@@ -16,7 +16,7 @@ jobs:
         include:
           - name: main
             update_script_args: "--skip-build 'scipy-dev|^py39_conda_forge$|pypy'"
-            additional_commit_message: ""
+            additional_commit_message: "[doc build]"
           - name: scipy-dev
             update_script_args: "--select-build scipy_dev"
             additional_commit_message: "[scipy-dev]"
