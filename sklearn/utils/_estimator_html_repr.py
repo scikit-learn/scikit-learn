@@ -141,7 +141,7 @@ def _write_label_html(
                 doc_label = f"<span>Documentation for {name}</span>"
             doc_link = (
                 f'<a class="sk-estimator-doc-link {is_fitted_css_class}"'
-                f' target="_blank" href="{doc_link}">?{doc_label}</a>'
+                f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
             padding_label += "&nbsp;"  # add additional padding for the "?" char
 
