@@ -849,9 +849,9 @@ def test_euclidean_distances_with_norms(global_dtype, y_array_constr):
 
 
 @pytest.mark.parametrize("symmetric", [True, False])
-def test_euclidean_distances_float32_norms(symmetric):
-    # non-regression test for #27621 (error when X, Y are float64 but norms are float32)
-    rng = np.random.RandomState(0)
+def test_euclidean_distances_float32_norms(global_random_seed, symmetric):
+    # Non-regression test for #27621
+    rng = np.random.RandomState(global_random_seed)
     X = rng.random_sample((10, 10))
     Y = X if symmetric else rng.random_sample((20, 10))
     X_norm_sq = (X.astype(np.float32) ** 2).sum(axis=1).reshape(1, -1)
