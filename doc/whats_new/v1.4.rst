@@ -278,7 +278,7 @@ Changelog
 
 - |Fix| Fixes :class:`ensemble.IsolationForest` when the input is a sparse matrix and
   `contamination` is set to a float value.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`27645` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |API| In :class:`ensemble.AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
