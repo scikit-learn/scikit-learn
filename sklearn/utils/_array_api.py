@@ -463,14 +463,19 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         return float(numpy.average(sample_score_np, weights=sample_weight_np))
 
     if not xp.isdtype(sample_score.dtype, "real floating"):
-        # We move to cpu device ahead of time since certain devices may not support
-        # float64, but we want the same precision for all devices and namespaces.
-        sample_score = xp.astype(xp.asarray(sample_score, device="cpu"), xp.float64)
+        # We convert to NumPy on CPU ahead of time since certain devices (e.g.
+        # MPS for PyTorch on macOS) may not support float64, but we want the
+        # same precision for all devices and namespaces. Furthermore, some
+        # (other) namespaces (such as CuPy) do not support moving to "cpu"
+        # device, hence there is no generic way to deal with this situation
+        # besides converting to NumPy.
+        sample_score = _convert_to_numpy(sample_score, xp).astype(numpy.float64)
+        if sample_weight is not None:
+            sample_weight = _convert_to_numpy(sample_weight, xp).astype(numpy.float64)
+        xp, _ = get_namespace(sample_score)
 
-    if sample_weight is not None:
+    elif sample_weight is not None:
         sample_weight = xp.asarray(sample_weight, dtype=sample_score.dtype)
-        if not xp.isdtype(sample_weight.dtype, "real floating"):
-            sample_weight = xp.astype(sample_weight, xp.float64)
 
     if normalize:
         if sample_weight is not None:
