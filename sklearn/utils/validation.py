@@ -841,9 +841,6 @@ def check_array(
         # Since we converted here, we do not need to convert again later
         dtype = None
 
-    if dtype is not None and _is_numpy_namespace(xp):
-        dtype = np.dtype(dtype)
-
     if force_all_finite not in (True, False, "allow-nan"):
         raise ValueError(
             'force_all_finite should be a bool or "allow-nan". Got {!r} instead'.format(

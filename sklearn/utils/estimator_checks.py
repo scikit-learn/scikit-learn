@@ -2070,7 +2070,7 @@ def check_estimators_pickle(name, estimator_orig, readonly_memmap=False):
     if readonly_memmap:
         unpickled_estimator = create_memmap_backed_data(estimator)
     else:
-        # pickle and unpickle!
+        # No need to touch the file system in that case.
         pickled_estimator = pickle.dumps(estimator)
         module_name = estimator.__module__
         if module_name.startswith("sklearn.") and not (
