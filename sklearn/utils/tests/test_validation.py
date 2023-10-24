@@ -2004,7 +2004,7 @@ def test_smallest_admissible_index_dtype_max_val(params, expected_dtype):
     """Check the behaviour of `smallest_admissible_index_dtype` depending only on the
     `max_val` parameter.
     """
-    assert np.dtype(_smallest_admissible_index_dtype(**params)) == expected_dtype
+    assert _smallest_admissible_index_dtype(**params) == expected_dtype
 
 
 @pytest.mark.parametrize(
@@ -2053,7 +2053,7 @@ def test_smallest_admissible_index_dtype_without_checking_contents(
     """Check the behaviour of `smallest_admissible_index_dtype` using the passed
     arrays but without checking the contents of the arrays.
     """
-    assert np.dtype(_smallest_admissible_index_dtype(**params)) == expected_dtype
+    assert _smallest_admissible_index_dtype(**params) == expected_dtype
 
 
 @pytest.mark.parametrize(
@@ -2108,7 +2108,7 @@ def test_smallest_admissible_index_dtype_by_checking_contents(params, expected_d
     """Check the behaviour of `smallest_admissible_index_dtype` using the dtype of the
     arrays but as well the contents.
     """
-    assert np.dtype(_smallest_admissible_index_dtype(**params)) == expected_dtype
+    assert _smallest_admissible_index_dtype(**params) == expected_dtype
 
 
 @pytest.mark.parametrize(

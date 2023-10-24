@@ -662,16 +662,19 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
                 "integral values."
             )
         if not np.can_cast(arr.dtype, np.int32):
-            if check_contents:
-                if arr.size == 0:
-                    # a bigger type not needed
-                    continue
-                else:
-                    maxval = arr.max()
-                    minval = arr.min()
-                    if minval < int32min or maxval > int32max:
-                        # a big index type is actually needed
-                        return np.int64
+            if not check_contents:
+                # when `check_contents` is False, we stay on the safe side and return
+                # np.int64.
+                return np.int64
+            if arr.size == 0:
+                # a bigger type not needed yet, let's look at the next array
+                continue
+            else:
+                maxval = arr.max()
+                minval = arr.min()
+                if minval < int32min or maxval > int32max:
+                    # a big index type is actually needed
+                    return np.int64
 
     return np.int32
 
