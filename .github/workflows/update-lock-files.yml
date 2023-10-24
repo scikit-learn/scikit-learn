@@ -43,6 +43,7 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
+          push-to-fork: test-lesteve/scikit-learn
           commit-message: Update CI lock files ${{ matrix.additional_commit_message }}
           committer: "Lock file bot <noreply@github.com>"
           author: "Lock file bot <noreply@github.com>"
