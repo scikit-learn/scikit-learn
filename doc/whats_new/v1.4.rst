@@ -418,6 +418,7 @@ Changelog
 
   - :class:`preprocessing.MinMaxScaler` :pr:`26243` by `Tim Head`_
   - :class:`preprocessing.MaxAbsScaler` :pr:`27110` by :user:`Edoardo Abati <EdAbati>`
+  - :class:`preprocessing.KernelCenterer` :pr:`27556` by :user:`Edoardo Abati <EdAbati>`
   - :class:`preprocessing.Normalizer` :pr:`27558` by :user:`Edoardo Abati <EdAbati>`
 
 - |Efficiency| :class:`preprocessing.OrdinalEncoder` avoids calculating
@@ -465,6 +466,13 @@ Changelog
 - |API| :func:`sklearn.extmath.log_logistic` is deprecated and will be removed in 1.6.
   Use `-np.logaddexp(0, -x)` instead.
   :pr:`27544` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Fix| :func:`~utils.estimator_checks.check_estimators_pickle` with
+  `readonly_memmap=True` now relies on joblib's own capability to allocate
+  aligned memory mapped arrays when loading a serialized estimator instead of
+  calling a dedicated private function that would crash when OpenBLAS
+  misdetects the CPU architecture.
+  :pr:`27614` by :user:`Olivier Grisel <ogrisel>`.
 
 Code and Documentation Contributors
 -----------------------------------

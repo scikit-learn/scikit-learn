@@ -694,6 +694,7 @@ def test_standard_check_array_of_inverse_transform():
     [
         MaxAbsScaler(),
         MinMaxScaler(),
+        KernelCenterer(),
         Normalizer(norm="l1"),
         Normalizer(norm="l2"),
         Normalizer(norm="max"),
