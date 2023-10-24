@@ -55,8 +55,6 @@ jobs:
 
             ### Note
             If the CI tasks fail, create a new branch based on this PR and add the required fixes to that branch.
-          labels: |
-            Lock files
 
       - name: Check Pull Request
         if: steps.cpr.outputs.pull-request-number != ''
