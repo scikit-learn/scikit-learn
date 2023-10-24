@@ -687,6 +687,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             if not self.bootstrap:
                 yield np.arange(self._n_samples, dtype=np.int32)
             else:
+                # tree.random_state is actually an immutable integer seed rather
+                # than a mutable RandomState instance, so it's safe to use it
+                # repeatedly when calling this property.
                 seed = tree.random_state
                 # Operations accessing random_state must be performed identically
                 # to those in `_parallel_build_trees()`
@@ -698,8 +701,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
     @property
     def estimators_samples_(self):
-        """
-        The subset of drawn samples for each base estimator.
+        """The subset of drawn samples for each base estimator.
 
         Returns a dynamically generated list of indices identifying
         the samples used for fitting each member of the ensemble, i.e.,
