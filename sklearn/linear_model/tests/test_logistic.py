@@ -752,7 +752,8 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
         tol=1e-8,
     )
     clf_lbfgs = LogisticRegressionCV(solver="lbfgs", **params)
-    clf_lbfgs.fit(X, y)
+    with ignore_warnings(category=ConvergenceWarning):
+        clf_lbfgs.fit(X, y)
 
     for solver in set(SOLVERS) - set(["lbfgs"]):
         clf = LogisticRegressionCV(solver=solver, **params)
