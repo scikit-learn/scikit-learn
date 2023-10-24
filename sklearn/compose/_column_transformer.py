@@ -6,6 +6,7 @@ different columns.
 # Author: Andreas Mueller
 #         Joris Van den Bossche
 # License: BSD
+import warnings
 from collections import Counter
 from itertools import chain
 from numbers import Integral, Real
@@ -16,7 +17,13 @@ from scipy import sparse
 from ..base import TransformerMixin, _fit_context, clone
 from ..pipeline import _fit_transform_one, _name_estimators, _transform_one
 from ..preprocessing import FunctionTransformer
-from ..utils import Bunch, _get_column_indices, _safe_indexing, check_pandas_support
+from ..utils import (
+    Bunch,
+    _determine_key_type,
+    _get_column_indices,
+    _safe_indexing,
+    check_pandas_support,
+)
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._metadata_requests import METHODS
 from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
@@ -134,6 +141,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         .. versionadded:: 1.0
 
+    force_int_remainder_cols : bool, default=True
+        Force the columns of the last entry of `transformers_`, which
+        corresponds to the "remainder" transformer, to always be stored as
+        indices (int) rather than column names (str). See description of the
+        `transformers_` attribute for details.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
     transformers_ : list
@@ -147,6 +162,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         ``remainder`` parameter. If there are remaining columns, then
         ``len(transformers_)==len(transformers)+1``, otherwise
         ``len(transformers_)==len(transformers)``.
+        If there are remaining columns and `force_int_remainder_cols` is True,
+        the remaining columns are always represented by their (positional, int)
+        indices in the input `X`. If `force_int_remainder_cols` is False, the
+        format attempts to match that of the other transformers: if all columns
+        were provided as column names (str), the remaining columns are stored
+        as column names; if all columns were provided as mask arrays (bool), so
+        are the remaining columns; in all other cases the remaining columns are
+        stored as indices (int).
 
     named_transformers_ : :class:`~sklearn.utils.Bunch`
         Read-only attribute to access any transformer by given name.
@@ -259,6 +282,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         transformer_weights=None,
         verbose=False,
         verbose_feature_names_out=True,
+        force_int_remainder_cols=True,
     ):
         self.transformers = transformers
         self.remainder = remainder
@@ -267,6 +291,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self.transformer_weights = transformer_weights
         self.verbose = verbose
         self.verbose_feature_names_out = verbose_feature_names_out
+        self.force_int_remainder_cols = force_int_remainder_cols
 
     @property
     def _transformers(self):
@@ -494,8 +519,35 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self._n_features = X.shape[1]
         cols = set(chain(*self._transformer_to_input_indices.values()))
         remaining = sorted(set(range(self._n_features)) - cols)
-        self._remainder = ("remainder", self.remainder, remaining)
         self._transformer_to_input_indices["remainder"] = remaining
+        remainder_cols = self._get_remainder_cols(remaining)
+        self._remainder = ("remainder", self.remainder, remainder_cols)
+
+    def _get_remainder_cols(self, indices):
+        if self.force_int_remainder_cols:
+            warnings.warn(
+                (
+                    "The format of the columns of the remainder transformer in"
+                    f" {self.__class__.__name__}.transformers_ will change in a future"
+                    " version, to match the format of the other transformers. To use"
+                    " the new behavior now and suppress this warning, use"
+                    " force_int_remainder_cols=False."
+                ),
+                category=FutureWarning,
+            )
+            return indices
+        dtype = "int"
+        try:
+            all_dtypes = {_determine_key_type(c) for (*_, c) in self.transformers}
+            if len(all_dtypes) == 1:
+                dtype = list(all_dtypes)[0]
+        except ValueError:
+            pass
+        if dtype == "str":
+            return list(self.feature_names_in_[indices])
+        if dtype == "bool":
+            return [i in indices for i in range(self.n_features_in_)]
+        return indices
 
     @property
     def named_transformers_(self):
