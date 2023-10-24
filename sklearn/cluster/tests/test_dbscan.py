@@ -123,6 +123,20 @@ def test_dbscan_input_not_modified(metric, csr_container):
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_dbscan_input_not_modified_precomputed_sparse_nodiag(csr_container):
+    # test that the input is not modified by dbscan when the
+    # precomputed sparse matrix has no diagonal
+    # elements
+    X = np.random.RandomState(0).rand(10, 10)
+    np.fill_diagonal(X, 0)
+    X = csr_container(X)
+    X_copy = X.copy()
+    dbscan(X, metric="precomputed")
+    assert X.nnz == X_copy.nnz
+    assert_array_equal(X.toarray(), X_copy.toarray())
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_dbscan_no_core_samples(csr_container):
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
