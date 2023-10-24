@@ -752,6 +752,14 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
         tol=1e-8,
     )
     clf_lbfgs = LogisticRegressionCV(solver="lbfgs", **params)
+
+    # XXX: lbfgs' line search can fail and cause a ConvergenceWarning for some
+    # 10% of the random seeds, but only on specific platforms (in particular
+    # when using Atlas BLAS/LAPACK implementation). Doubling the maxls internal
+    # parameter of the solver does not help. However this lack of proper
+    # convergence does not seem to prevent the assertion to pass, so we ignore
+    # the warning for now.
+    # See: https://github.com/scikit-learn/scikit-learn/pull/27649
     with ignore_warnings(category=ConvergenceWarning):
         clf_lbfgs.fit(X, y)
 
