@@ -20,11 +20,20 @@ def _fit_single_estimator(
     estimator, X, y, fit_params, message_clsname=None, message=None
 ):
     """Private function used to fit an estimator within a job."""
-    # TODO(SLEP6): remove special check for sample_weight when metadata routing
-    # can't be disabled.
+    # TODO(SLEP6): remove if condition for unrouted sample_weight when metadata
+    # routing can't be disabled.
     if not _routing_enabled() and "sample_weight" in fit_params:
-        with _print_elapsed_time(message_clsname, message):
-            estimator.fit(X, y, sample_weight=fit_params["sample_weight"])
+        try:
+            with _print_elapsed_time(message_clsname, message):
+                estimator.fit(X, y, sample_weight=fit_params["sample_weight"])
+        except TypeError as exc:
+            if "unexpected keyword argument 'sample_weight'" in str(exc):
+                raise TypeError(
+                    "Underlying estimator {} does not support sample weights.".format(
+                        estimator.__class__.__name__
+                    )
+                ) from exc
+            raise
     else:
         with _print_elapsed_time(message_clsname, message):
             estimator.fit(X, y, **fit_params)

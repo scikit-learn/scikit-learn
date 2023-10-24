@@ -75,7 +75,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         return np.asarray([est.predict(X) for est in self.estimators_]).T
 
     @abstractmethod
-    def fit(self, X, y, fit_params):
+    def fit(self, X, y, **fit_params):
         """Get common fit operations."""
         names, clfs = self._validate_estimators()
 
@@ -403,7 +403,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         if sample_weight is not None:
             fit_params["sample_weight"] = sample_weight
 
-        return super().fit(X, transformed_y, fit_params)
+        return super().fit(X, transformed_y, **fit_params)
 
     def predict(self, X):
         """Predict class labels for X.
@@ -673,7 +673,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         y = column_or_1d(y, warn=True)
         if sample_weight is not None:
             fit_params["sample_weight"] = sample_weight
-        return super().fit(X, y, fit_params)
+        return super().fit(X, y, **fit_params)
 
     def predict(self, X):
         """Predict regression target for X.
