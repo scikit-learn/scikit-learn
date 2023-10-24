@@ -2006,10 +2006,11 @@ def test_smallest_admissible_index_dtype_max_val(params, expected_dtype):
 @pytest.mark.parametrize(
     "params, expected_dtype",
     [
-        # arrays dtype is 64 bits and cannot be casted down without
+        # Arrays dtype is int64 and thus should not be downcasted to int32 without
         # checking the content of providing maxval.
         ({"arrays": np.array([1, 2], dtype=np.int64)}, np.dtype("int64")),
-        # one of the array is 64 bits and cannot be casted down
+        # One of the array is int64 and should not be downcasted to int32
+        # for the same reasons.
         (
             {
                 "arrays": (
@@ -2019,7 +2020,7 @@ def test_smallest_admissible_index_dtype_max_val(params, expected_dtype):
             },
             np.dtype("int64"),
         ),
-        # Both arrays are 32 bits and we can keep this dtype
+        # Both arrays are already int32: we can just keep this dtype.
         (
             {
                 "arrays": (
@@ -2029,10 +2030,10 @@ def test_smallest_admissible_index_dtype_max_val(params, expected_dtype):
             },
             np.dtype("int32"),
         ),
-        # Arrays should be casted to at least 32 bits
+        # Arrays should be upcasted to at least int32 precision.
         ({"arrays": np.array([1, 2], dtype=np.int8)}, np.dtype("int32")),
-        # Check that `maxval` takes precedence over the arrays and thus upcast to 64
-        # bits
+        # Check that `maxval` takes precedence over the arrays and thus upcast to
+        # int64.
         (
             {
                 "arrays": np.array([1, 2], dtype=np.int32),
@@ -2119,7 +2120,7 @@ def test_smallest_admissible_index_dtype_by_checking_contents(params, expected_d
             ValueError,
             "Array dtype float64 is not supported",
         ),
-        ({"arrays": [1, 2]}, ValueError, "Arrays should be of type np.ndarray"),
+        ({"arrays": [1, 2]}, TypeError, "Arrays should be of type np.ndarray"),
     ],
 )
 def test_smallest_admissible_index_dtype_error(params, err_type, err_msg):

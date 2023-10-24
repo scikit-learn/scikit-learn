@@ -640,7 +640,6 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
     int32min = np.int32(np.iinfo(np.int32).min)
     int32max = np.int32(np.iinfo(np.int32).max)
 
-    dtype = np.int32
     if maxval is not None:
         if maxval > np.iinfo(np.int64).max:
             raise ValueError(
@@ -654,7 +653,7 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
 
     for arr in arrays:
         if not isinstance(arr, np.ndarray):
-            raise ValueError(
+            raise TypeError(
                 f"Arrays should be of type np.ndarray, got {type(arr)} instead."
             )
         if not np.issubdtype(arr.dtype, np.integer):
@@ -670,14 +669,11 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
                 else:
                     maxval = arr.max()
                     minval = arr.min()
-                    if minval >= int32min and maxval <= int32max:
-                        # a bigger type not needed
-                        continue
+                    if minval < int32min or maxval > int32max:
+                        # a big index type is actually needed
+                        return np.int64
 
-            dtype = np.int64
-            break
-
-    return dtype
+    return np.int32
 
 
 def _ensure_no_complex_data(array):
