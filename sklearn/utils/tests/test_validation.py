@@ -1995,9 +1995,9 @@ def test_check_array_dia_to_int32_indexed_csr_csc_coo(sparse_container, output_f
 @pytest.mark.parametrize(
     "params, expected_dtype",
     [
-        ({}, np.dtype("int32")),  # default behaviour
-        ({"maxval": np.iinfo(np.int32).max}, np.dtype("int32")),
-        ({"maxval": np.iinfo(np.int32).max + 1}, np.dtype("int64")),
+        ({}, np.int32),  # default behaviour
+        ({"maxval": np.iinfo(np.int32).max}, np.int32),
+        ({"maxval": np.iinfo(np.int32).max + 1}, np.int64),
     ],
 )
 def test_smallest_admissible_index_dtype_max_val(params, expected_dtype):
@@ -2012,7 +2012,7 @@ def test_smallest_admissible_index_dtype_max_val(params, expected_dtype):
     [
         # Arrays dtype is int64 and thus should not be downcasted to int32 without
         # checking the content of providing maxval.
-        ({"arrays": np.array([1, 2], dtype=np.int64)}, np.dtype("int64")),
+        ({"arrays": np.array([1, 2], dtype=np.int64)}, np.int64),
         # One of the array is int64 and should not be downcasted to int32
         # for the same reasons.
         (
@@ -2022,7 +2022,7 @@ def test_smallest_admissible_index_dtype_max_val(params, expected_dtype):
                     np.array([1, 2], dtype=np.int64),
                 )
             },
-            np.dtype("int64"),
+            np.int64,
         ),
         # Both arrays are already int32: we can just keep this dtype.
         (
@@ -2032,10 +2032,10 @@ def test_smallest_admissible_index_dtype_max_val(params, expected_dtype):
                     np.array([1, 2], dtype=np.int32),
                 )
             },
-            np.dtype("int32"),
+            np.int32,
         ),
         # Arrays should be upcasted to at least int32 precision.
-        ({"arrays": np.array([1, 2], dtype=np.int8)}, np.dtype("int32")),
+        ({"arrays": np.array([1, 2], dtype=np.int8)}, np.int32),
         # Check that `maxval` takes precedence over the arrays and thus upcast to
         # int64.
         (
@@ -2043,7 +2043,7 @@ def test_smallest_admissible_index_dtype_max_val(params, expected_dtype):
                 "arrays": np.array([1, 2], dtype=np.int32),
                 "maxval": np.iinfo(np.int32).max + 1,
             },
-            np.dtype("int64"),
+            np.int64,
         ),
     ],
 )
@@ -2065,13 +2065,13 @@ def test_smallest_admissible_index_dtype_without_checking_contents(
                 "arrays": (np.array([], dtype=np.int64), np.array([], dtype=np.int64)),
                 "check_contents": True,
             },
-            np.dtype("int32"),
+            np.int32,
         ),
         # arrays respecting np.iinfo(np.int32).min < x < np.iinfo(np.int32).max should
         # be converted to int32,
         (
             {"arrays": np.array([1], dtype=np.int64), "check_contents": True},
-            np.dtype("int32"),
+            np.int32,
         ),
         # otherwise, it should be converted to int64. We need to create a uint32
         # arrays to accomodate a value > np.iinfo(np.int32).max
@@ -2080,7 +2080,7 @@ def test_smallest_admissible_index_dtype_without_checking_contents(
                 "arrays": np.array([np.iinfo(np.int32).max + 1], dtype=np.uint32),
                 "check_contents": True,
             },
-            np.dtype("int64"),
+            np.int64,
         ),
         # maxval should take precedence over the arrays contents and thus upcast to
         # int64.
@@ -2090,7 +2090,7 @@ def test_smallest_admissible_index_dtype_without_checking_contents(
                 "check_contents": True,
                 "maxval": np.iinfo(np.int32).max + 1,
             },
-            np.dtype("int64"),
+            np.int64,
         ),
         # when maxval is small, but check_contents is True and the contents
         # require np.int64, we still require np.int64 indexing in the end.
@@ -2100,7 +2100,7 @@ def test_smallest_admissible_index_dtype_without_checking_contents(
                 "check_contents": True,
                 "maxval": 1,
             },
-            np.dtype("int64"),
+            np.int64,
         ),
     ],
 )
