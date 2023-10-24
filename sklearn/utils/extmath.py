@@ -83,7 +83,9 @@ def row_norms(X, squared=False):
     else:
         xp, _ = get_namespace(X)
         if _is_numpy_namespace(xp):
+            X = np.asarray(X)
             norms = np.einsum("ij,ij->i", X, X)
+            norms = xp.asarray(norms)
         else:
             norms = xp.sum(xp.multiply(X, X), axis=1)
         if not squared:
