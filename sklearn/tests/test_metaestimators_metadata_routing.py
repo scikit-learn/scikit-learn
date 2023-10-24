@@ -387,12 +387,12 @@ def get_init_args(metaestimator_info):
         # if meta-classifier takes a list of (name, est) tuples for its
         # `estimators` param, then we need to re-create that
         if isinstance(metaestimator_info["estimator"], list):
-            estimators = []
-            names = []
-            for estimator_tuple in metaestimator_info["estimator"]:
-                estimators.append(estimator_tuple[1](estimator_registry))
-                names.append(estimator_tuple[0])
-            estimators = list(zip(names, estimators))
+            names = [name for name, _ in metaestimator_info["estimator"]]
+            estimator_instances = [
+                estimator(estimator_registry)
+                for _, estimator in metaestimator_info["estimator"]
+            ]
+            estimators = list(zip(names, estimator_instances))
             kwargs[estimator_name] = estimators
         else:
             estimator = metaestimator_info["estimator"](estimator_registry)
