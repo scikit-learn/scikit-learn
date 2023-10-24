@@ -12,6 +12,30 @@ Version 1.3.2
 Changelog
 ---------
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| All dataset fetchers now accept `data_home` as any object that implements
+  the :class:`os.PathLike` interface, for instance, :class:`pathlib.Path`.
+  :pr:`27468` by :user:`Yao Xiao <Charlie-XIAO>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixes a bug in :class:`decomposition.KernelPCA` by forcing the output of
+  the internal :class:`preprocessing.KernelCenterer` to be a default array. When the
+  arpack solver is used, it expects an array with a `dtype` attribute.
+  :pr:`27583` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixes a bug for metrics using `zero_division=np.nan`
+  (e.g. :func:`~metrics.precision_score`) within a paralell loop
+  (e.g. :func:`~model_selection.cross_val_score`) where the singleton for `np.nan`
+  will be different in the sub-processes.
+  :pr:`27573` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.tree`
 ...................
 
