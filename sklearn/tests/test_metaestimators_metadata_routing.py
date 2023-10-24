@@ -484,20 +484,29 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                 scorer.set_score_request(**{key: True})
             val = {"sample_weight": sample_weight, "metadata": metadata}[key]
             method_kwargs = {key: val}
+            instance = cls(**kwargs)
             # if the meta-estimator defines `estimators` as a list of (name,
             # est) tuples, we need to extract the estimators first:
             if "estimators" in kwargs:
                 for est_tuple in kwargs["estimators"]:
                     estimator = est_tuple[1]
-            msg = (
-                f"[{key}] are passed but are not explicitly set as requested or not"
-                f" for {estimator.__class__.__name__}.{method_name}"
-            )
+                msg = (
+                    f"[{key}] are passed but are not explicitly set as requested or not"
+                    f" for {estimator.__class__.__name__}.{method_name}"
+                )
 
-            instance = cls(**kwargs)
-            with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
-                method = getattr(instance, method_name)
-                method(X, y, **method_kwargs)
+                with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
+                    method = getattr(instance, method_name)
+                    method(X, y, **method_kwargs)
+            else:
+                msg = (
+                    f"[{key}] are passed but are not explicitly set as requested or not"
+                    f" for {estimator.__class__.__name__}.{method_name}"
+                )
+
+                with pytest.raises(UnsetMetadataPassedError, match=re.escape(msg)):
+                    method = getattr(instance, method_name)
+                    method(X, y, **method_kwargs)
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
@@ -532,6 +541,8 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
                 set_request(scorer, "score")
             if cv:
                 cv.set_split_request(groups=True, metadata=True)
+            # if the meta-estimator defines `estimators` as a list of (name,
+            # est) tuples, we need to set the routing request for each
             if isinstance(metaestimator["estimator"], list):
                 for estimator in kwargs["estimators"]:
                     set_request(estimator[1], method_name)
