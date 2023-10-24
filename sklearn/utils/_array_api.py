@@ -9,6 +9,19 @@ import scipy.special as special
 from .._config import get_config
 from .fixes import parse_version
 
+ARRAY_NAMESPACES = [
+    # The following is used to test the array_api_compat wrapper when
+    # array_api_dispatch is enabled: in particular, the arrays used in the
+    # tests are regular numpy arrays without any "device" attribute.
+    "numpy",
+    # Stricter NumPy-based Array API implementation. The
+    # numpy.array_api.Array instances always a dummy "device" attribute.
+    "numpy.array_api",
+    "cupy",
+    "cupy.array_api",
+    "torch",
+]
+
 
 def yield_namespace_device_dtype_combinations():
     """Yield supported namespace, device, dtype tuples for testing.
@@ -28,18 +41,7 @@ def yield_namespace_device_dtype_combinations():
         The name of the data type to use for arrays. Can be None to indicate
         that the default value should be used.
     """
-    for array_namespace in [
-        # The following is used to test the array_api_compat wrapper when
-        # array_api_dispatch is enabled: in particular, the arrays used in the
-        # tests are regular numpy arrays without any "device" attribute.
-        "numpy",
-        # Stricter NumPy-based Array API implementation. The
-        # numpy.array_api.Array instances always a dummy "device" attribute.
-        "numpy.array_api",
-        "cupy",
-        "cupy.array_api",
-        "torch",
-    ]:
+    for array_namespace in ARRAY_NAMESPACES:
         if array_namespace == "torch":
             for device, dtype in itertools.product(
                 ("cpu", "cuda"), ("float64", "float32")
@@ -48,6 +50,43 @@ def yield_namespace_device_dtype_combinations():
             yield array_namespace, "mps", "float32"
         else:
             yield array_namespace, None, None
+
+
+def yield_namespace_device_int_dtype_combinations():
+    """Yield supported namespace, device, int dtype tuples for testing.
+
+    Use this to test that an estimator works with all combinations.
+
+    Returns
+    -------
+    array_namespace : str
+        The name of the Array API namespace.
+
+    device : str
+        The name of the device on which to allocate the arrays. Can be None to
+        indicate that the default value should be used.
+
+    dtype : str
+        The name of the int data type to use for arrays. Can be None to
+        indicate that the default value should be used.
+    """
+    for array_namespace in ARRAY_NAMESPACES:
+        if array_namespace == "torch":
+            for device, dtype in itertools.product(
+                ("cpu", "cuda", "mps"), ("int16", "int32", "int64", "uint8")
+            ):
+                yield array_namespace, device, dtype
+        else:
+            for dtype in (
+                "int16",
+                "int32",
+                "int64",
+                "uint8",
+                "uint16",
+                "uint32",
+                "uint64",
+            ):
+                yield array_namespace, None, dtype
 
 
 def _check_array_api_dispatch(array_api_dispatch):
@@ -232,6 +271,18 @@ class _ArrayAPIWrapper:
     def isdtype(self, dtype, kind):
         return isdtype(dtype, kind, xp=self._namespace)
 
+    def searchsorted(self, a, v, *, side="left", sorter=None):
+        # Temporary workaround needed as long as searchsorted is not part
+        # of the Array API spec:
+        # https://github.com/data-apis/array-api/issues/688
+        if hasattr(self._namespace, "searchsorted"):
+            return self._namespace.searchsorted(a, v, side=side, sorter=sorter)
+
+        a = _convert_to_numpy(a, xp=self._namespace)
+        v = _convert_to_numpy(v, xp=self._namespace)
+        indices = numpy.searchsorted(a, v, side=side, sorter=sorter)
+        return self._namespace.asarray(indices, device=device(a))
+
 
 def _check_device_cpu(device):  # noqa
     if device not in {"cpu", None}:
@@ -329,6 +380,11 @@ class _NumPyAPIWrapper:
 
     def unique_values(self, x):
         return numpy.unique(x)
+
+    def unique_all(self, x):
+        return numpy.unique(
+            x, return_index=True, return_inverse=True, return_counts=True
+        )
 
     def concat(self, arrays, *, axis=None):
         return numpy.concatenate(arrays, axis=axis)
@@ -595,3 +651,101 @@ def _estimator_with_converted_arrays(estimator, converter):
 def _atol_for_type(dtype):
     """Return the absolute tolerance for a given dtype."""
     return numpy.finfo(dtype).eps * 100
+
+
+def _setdiff1d(ar1, ar2, xp, assume_unique=False):
+    """Find the set difference of two arrays.
+
+    Return the unique values in `ar1` that are not in `ar2`.
+    """
+    if _is_numpy_namespace(xp):
+        return xp.asarray(
+            numpy.setdiff1d(
+                ar1=ar1,
+                ar2=ar2,
+                assume_unique=assume_unique,
+            )
+        )
+
+    if assume_unique:
+        ar1 = xp.reshape(ar1, (-1,))
+    else:
+        ar1 = xp.unique_values(ar1)
+        ar2 = xp.unique_values(ar2)
+    return ar1[_in1d(ar1=ar1, ar2=ar2, xp=xp, assume_unique=True, invert=True)]
+
+
+def _isin(element, test_elements, xp, assume_unique=False, invert=False):
+    """Calculates ``element in test_elements``, broadcasting over `element`
+    only.
+
+    Returns a boolean array of the same shape as `element` that is True
+    where an element of `element` is in `test_elements` and False otherwise.
+    """
+    if _is_numpy_namespace(xp):
+        return xp.asarray(
+            numpy.isin(
+                element=element,
+                test_elements=test_elements,
+                assume_unique=assume_unique,
+                invert=invert,
+            )
+        )
+
+    original_element_shape = element.shape
+    element = xp.reshape(element, (-1,))
+    test_elements = xp.reshape(test_elements, (-1,))
+    return xp.reshape(
+        _in1d(
+            ar1=element,
+            ar2=test_elements,
+            xp=xp,
+            assume_unique=assume_unique,
+            invert=invert,
+        ),
+        original_element_shape,
+    )
+
+
+# Note: This is a helper for the functions `_isin` and
+# `_setdiff1d`. It is not meant to be called directly.
+def _in1d(ar1, ar2, xp, assume_unique=False, invert=False):
+    """Checks whether each element of an array is also present in a
+    second array.
+
+    Returns a boolean array the same length as `ar1` that is True
+    where an element of `ar1` is in `ar2` and False otherwise
+    """
+
+    # This code is run to make the code significantly faster
+    if ar2.shape[0] < 10 * ar1.shape[0] ** 0.145:
+        if invert:
+            mask = xp.ones(ar1.shape[0], dtype=xp.bool)
+            for a in ar2:
+                mask &= ar1 != a
+        else:
+            mask = xp.zeros(ar1.shape[0], dtype=xp.bool)
+            for a in ar2:
+                mask |= ar1 == a
+        return mask
+
+    if not assume_unique:
+        ar1, rev_idx = xp.unique_inverse(ar1)
+        ar2 = xp.unique_values(ar2)
+
+    ar = xp.concat((ar1, ar2))
+    # We need this to be a stable sort.
+    order = ar.argsort(stable=True)
+    sar = ar[order]
+    if invert:
+        bool_ar = sar[1:] != sar[:-1]
+    else:
+        bool_ar = sar[1:] == sar[:-1]
+    flag = xp.concat((bool_ar, xp.asarray([invert])))
+    ret = xp.empty(ar.shape, dtype=xp.bool)
+    ret[order] = flag
+
+    if assume_unique:
+        return ret[: len(ar1)]
+    else:
+        return ret[rev_idx]
