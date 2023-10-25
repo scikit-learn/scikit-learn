@@ -45,6 +45,13 @@ Changes impacting all modules
   to work with our estimators and functions.
   :pr:`26464` by `Thomas Fan`_.
 
+- |Enhancement| The HTML representation of estimators now includes a link to the
+  documentation and is color-coded to denote whether the estimator is fitted or
+  not (unfitted estimators are orange, fitted estimators are blue).
+  :pr:`26616` by :user:`Riccardo Cappuzzo <rcap107>`,
+  :user:`Ines Ibnukhsein <Ines1999>`, :user:`Gael Varoquaux <GaelVaroquaux>`, and
+  :user:`Lilian Boulard <LilianBoulard>`.
+
 - |Fix| Fixed a bug in most estimators and functions where setting a parameter to
   a large integer would cause a `TypeError`.
   :pr:`26648` by :user:`Naoise Holohan <naoise-h>`.
