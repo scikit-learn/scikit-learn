@@ -22,7 +22,6 @@ from sklearn.metrics import get_scorer_names
 
 from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
 from ..base import _fit_context
-from ..callback._base import _eval_callbacks_on_fit_iter_end
 from ..metrics import get_scorer
 from ..model_selection import check_cv
 from ..preprocessing import LabelBinarizer, LabelEncoder
@@ -128,8 +127,6 @@ def _logistic_regression_path(
     sample_weight=None,
     l1_ratio=None,
     n_threads=1,
-    estimator=None,
-    parent_node=None,
 ):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
@@ -455,19 +452,11 @@ def _logistic_regression_path(
     coefs = list()
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     for i, C in enumerate(Cs):
-        # Distinguish between LogReg and LogRegCV
-        node = (
-            None
-            if parent_node is None
-            else parent_node if len(Cs) == 1 else parent_node.children
-        )
-
         if solver == "lbfgs":
             l2_reg_strength = 1.0 / (C * sw_sum)
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)
             ]
-            children = iter(node.children) if node is not None else None
             opt_res = optimize.minimize(
                 func,
                 w0,
@@ -481,10 +470,6 @@ def _logistic_regression_path(
                     "gtol": tol,
                     "ftol": 64 * np.finfo(float).eps,
                 },
-                callback=lambda xk: _eval_callbacks_on_fit_iter_end(
-                    estimator=estimator,
-                    node=next(children) if children is not None else None,
-                ),
             )
             n_iter_i = _check_optimize_result(
                 solver,
@@ -497,15 +482,7 @@ def _logistic_regression_path(
             l2_reg_strength = 1.0 / (C * sw_sum)
             args = (X, target, sample_weight, l2_reg_strength, n_threads)
             w0, n_iter_i = _newton_cg(
-                hess,
-                func,
-                grad,
-                w0,
-                args=args,
-                maxiter=max_iter,
-                tol=tol,
-                estimator=estimator,
-                parent_node=node,
+                hess, func, grad, w0, args=args, maxiter=max_iter, tol=tol
             )
         elif solver == "newton-cholesky":
             l2_reg_strength = 1.0 / (C * sw_sum)
@@ -580,8 +557,6 @@ def _logistic_regression_path(
                 max_squared_sum,
                 warm_start_sag,
                 is_saga=(solver == "saga"),
-                estimator=estimator,
-                parent_node=node,
             )
 
         else:
@@ -602,19 +577,7 @@ def _logistic_regression_path(
         else:
             coefs.append(w0.copy())
 
-        if len(Cs) > 1:
-            _eval_callbacks_on_fit_iter_end(
-                estimator=estimator,
-                node=node,
-            )
-
         n_iter[i] = n_iter_i
-
-    if multi_class == "ovr":
-        _eval_callbacks_on_fit_iter_end(
-            estimator=estimator,
-            node=parent_node,
-        )
 
     return np.array(coefs), np.array(Cs), n_iter
 
@@ -1333,24 +1296,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if warm_start_coef is None:
             warm_start_coef = [None] * n_classes
 
-        if len(classes_) == 1:
-            levels = [
-                {"descr": "fit", "max_iter": self.max_iter},
-                {"descr": "iter", "max_iter": None},
-            ]
-        else:
-            levels = [
-                {"descr": "fit", "max_iter": len(classes_)},
-                {"descr": "class", "max_iter": self.max_iter},
-                {"descr": "iter", "max_iter": None},
-            ]
-        root, X, y, X_val, y_val = self._eval_callbacks_on_fit_begin(
-            levels=levels, X=X, y=y
-        )
-
-        # distinguish between multinomial and ovr
-        nodes = [root] if len(classes_) == 1 else root.children
-
         path_func = delayed(_logistic_regression_path)
 
         # The SAG solver releases the GIL so it's more efficient to use
@@ -1395,10 +1340,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 max_squared_sum=max_squared_sum,
                 sample_weight=sample_weight,
                 n_threads=n_threads,
-                estimator=self,
-                parent_node=node,
             )
-            for class_, warm_start_coef_, node in zip(classes_, warm_start_coef, nodes)
+            for class_, warm_start_coef_ in zip(classes_, warm_start_coef)
         )
 
         fold_coefs_, _, n_iter_ = zip(*fold_coefs_)

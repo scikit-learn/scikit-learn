@@ -18,7 +18,6 @@ import warnings
 import numpy as np
 import scipy
 
-from ..callback._base import _eval_callbacks_on_fit_iter_end
 from ..exceptions import ConvergenceWarning
 from .fixes import line_search_wolfe1, line_search_wolfe2
 
@@ -157,8 +156,6 @@ def _newton_cg(
     maxinner=200,
     line_search=True,
     warn=True,
-    estimator=None,
-    parent_node=None,
 ):
     """
     Minimization of scalar function of one or more variables using the
@@ -220,17 +217,7 @@ def _newton_cg(
         fgrad, fhess_p = grad_hess(xk, *args)
 
         absgrad = np.abs(fgrad)
-        max_absgrad = np.max(absgrad)
-
-        if _eval_callbacks_on_fit_iter_end(
-            estimator=estimator,
-            node=None if parent_node is None else parent_node.children[k],
-            stopping_criterion=lambda: max_absgrad,
-            tol=tol,
-        ):
-            break
-
-        if max_absgrad <= tol:
+        if np.max(absgrad) <= tol:
             break
 
         maggrad = np.sum(absgrad)

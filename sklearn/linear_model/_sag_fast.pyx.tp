@@ -34,7 +34,6 @@ from ._sgd_fast cimport LossFunction
 from ._sgd_fast cimport Log, SquaredLoss
 
 from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
-from ..callback._base import _eval_callbacks_on_fit_iter_end
 
 from libc.stdio cimport printf
 
@@ -218,9 +217,7 @@ def sag{{name_suffix}}(
     {{c_type}}[::1] intercept_sum_gradient_init,
     double intercept_decay,
     bint saga,
-    bint verbose,
-    estimator,
-    parent_node,
+    bint verbose
 ):
     """Stochastic Average Gradient (SAG) and SAGA solvers.
 
@@ -541,22 +538,6 @@ def sag{{name_suffix}}(
                 max_weight = fmax{{name_suffix}}(max_weight, fabs(weights[idx]))
                 max_change = fmax{{name_suffix}}(max_change, fabs(weights[idx] - previous_weights[idx]))
                 previous_weights[idx] = weights[idx]
-
-            with gil:
-                if _eval_callbacks_on_fit_iter_end(
-                    estimator=estimator,
-                    node=parent_node.children[n_iter] if parent_node is not None else None,
-                    stopping_criterion = (
-                        lambda: max_change / max_weight
-                        if max_weight != 0
-                        else 0
-                        if max_weight == max_change == 0
-                        else np.inf
-                    ),
-                    tol=tol,
-                ):
-                    break
-
             if ((max_weight != 0 and max_change / max_weight <= tol)
                 or max_weight == 0 and max_change == 0):
                 if verbose:

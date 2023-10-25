@@ -10,7 +10,6 @@ import itertools
 import time
 import warnings
 from abc import ABC
-from functools import partial
 from math import sqrt
 from numbers import Integral, Real
 
@@ -25,7 +24,6 @@ from ..base import (
     TransformerMixin,
     _fit_context,
 )
-from ..callback._base import _eval_callbacks_on_fit_iter_end
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state, gen_batches, metadata_routing
 from ..utils._param_validation import (
@@ -410,7 +408,6 @@ def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle, random_state):
 
 def _fit_coordinate_descent(
     X,
-    X_val,
     W,
     H,
     tol=1e-4,
@@ -423,8 +420,6 @@ def _fit_coordinate_descent(
     verbose=0,
     shuffle=False,
     random_state=None,
-    estimator=None,
-    parent_node=None,
 ):
     """Compute Non-negative Matrix Factorization (NMF) with Coordinate Descent
 
@@ -436,9 +431,6 @@ def _fit_coordinate_descent(
     ----------
     X : array-like of shape (n_samples, n_features)
         Constant matrix.
-
-    X_val : array-like of shape (n_samples_val, n_features)
-        Constant validation matrix.
 
     W : array-like of shape (n_samples, n_components)
         Initial guess for the solution.
@@ -480,12 +472,6 @@ def _fit_coordinate_descent(
         results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    estimator : estimator instance, default=None
-        The estimator calling this function. Used by callbacks.
-
-    parent_node : ComputationNode instance, default=None
-        The parent node of the current node. Used by callbacks.
-
     Returns
     -------
     W : ndarray of shape (n_samples, n_components)
@@ -507,8 +493,6 @@ def _fit_coordinate_descent(
     # so W and Ht are both in C order in memory
     Ht = check_array(H.T, order="C")
     X = check_array(X, accept_sparse="csr")
-    if X_val is not None:
-        X_val = check_array(X_val, accept_sparse="csr")
 
     rng = check_random_state(random_state)
 
@@ -529,25 +513,6 @@ def _fit_coordinate_descent(
             violation_init = violation
 
         if violation_init == 0:
-            break
-
-        if _eval_callbacks_on_fit_iter_end(
-            estimator=estimator,
-            node=parent_node.children[n_iter - 1] if parent_node is not None else None,
-            stopping_criterion=lambda: violation / violation_init,
-            tol=tol,
-            fit_state={"H": Ht.T, "W": W},
-            from_reconstruction_attributes=partial(
-                estimator._from_reconstruction_attributes,
-                reconstruction_attributes=lambda: {
-                    "n_components_": Ht.T.shape[0],
-                    "components_": H,
-                    "n_iter_": n_iter,
-                    "reconstruction_err_": _beta_divergence(X, W, Ht.T, 2, True),
-                },
-            ),
-            data={"X": X, "y": None, "X_val": X_val, "y_val": None},
-        ):
             break
 
         if verbose:
@@ -768,7 +733,6 @@ def _multiplicative_update_h(
 
 def _fit_multiplicative_update(
     X,
-    X_val,
     W,
     H,
     beta_loss="frobenius",
@@ -780,8 +744,6 @@ def _fit_multiplicative_update(
     l2_reg_H=0,
     update_H=True,
     verbose=0,
-    estimator=None,
-    parent_node=None,
 ):
     """Compute Non-negative Matrix Factorization with Multiplicative Update.
 
@@ -793,9 +755,6 @@ def _fit_multiplicative_update(
     ----------
     X : array-like of shape (n_samples, n_features)
         Constant input matrix.
-
-    X_val : array-like of shape (n_samples_val, n_features)
-        Constant validation matrix.
 
     W : array-like of shape (n_samples, n_components)
         Initial guess for the solution.
@@ -836,12 +795,6 @@ def _fit_multiplicative_update(
 
     verbose : int, default=0
         The verbosity level.
-
-    estimator : estimator instance, default=None
-        The estimator calling this function. Used by callbacks.
-
-    parent_node : ComputationNode instance, default=None
-        The parent node of the current node. Used by callbacks.
 
     Returns
     -------
@@ -917,31 +870,6 @@ def _fit_multiplicative_update(
             # necessary for stability with beta_loss < 1
             if beta_loss <= 1:
                 H[H < np.finfo(np.float64).eps] = 0.0
-
-        if _eval_callbacks_on_fit_iter_end(
-            estimator=estimator,
-            node=parent_node.children[n_iter - 1] if parent_node is not None else None,
-            stopping_criterion=lambda: (
-                (
-                    previous_error
-                    - _beta_divergence(X, W, H, beta_loss, square_root=True)
-                )
-                / error_at_init
-            ),
-            tol=tol,
-            fit_state={"H": H, "W": W},
-            from_reconstruction_attributes=partial(
-                estimator._from_reconstruction_attributes,
-                reconstruction_attributes=lambda: {
-                    "n_components_": H.shape[0],
-                    "components_": H,
-                    "n_iter_": n_iter,
-                    "reconstruction_err_": _beta_divergence(X, W, H, beta_loss, True),
-                },
-            ),
-            data={"X": X, "y": None, "X_val": X_val, "y_val": None},
-        ):
-            break
 
         # test convergence criterion every 10 iterations
         if tol > 0 and n_iter % 10 == 0:
@@ -1421,28 +1349,6 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
         check_is_fitted(self)
         return Xt @ self.components_
 
-    def objective_function(self, X, y=None, *, W=None, H=None, normalize=False):
-        if W is None:
-            W = self.transform(X)
-        if H is None:
-            H = self.components_
-
-        data_fit = _beta_divergence(X, W, H, self._beta_loss)
-
-        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._compute_regularization(X)
-        penalization = (
-            l1_reg_W * W.sum()
-            + l1_reg_H * H.sum()
-            + l2_reg_W * (W**2).sum()
-            + l2_reg_H * (H**2).sum()
-        )
-
-        if normalize:
-            data_fit /= X.shape[0]
-            penalization /= X.shape[0]
-
-        return data_fit + penalization, data_fit, penalization
-
     @property
     def _n_features_out(self):
         """Number of transformed output features."""
@@ -1756,28 +1662,20 @@ class NMF(_BaseNMF):
             X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32]
         )
 
-        root, X, _, X_val, _ = self._eval_callbacks_on_fit_begin(
-            levels=[
-                {"descr": "fit", "max_iter": self.max_iter},
-                {"descr": "iter", "max_iter": None},
-            ],
-            X=X,
-        )
-
-        W, H, n_iter = self._fit_transform(X, X_val, W=W, H=H, parent_node=root)
+        with config_context(assume_finite=True):
+            W, H, n_iter = self._fit_transform(X, W=W, H=H)
 
         self.reconstruction_err_ = _beta_divergence(
             X, W, H, self._beta_loss, square_root=True
         )
+
         self.n_components_ = H.shape[0]
         self.components_ = H
         self.n_iter_ = n_iter
 
         return W
 
-    def _fit_transform(
-        self, X, X_val=None, W=None, H=None, update_H=True, parent_node=None
-    ):
+    def _fit_transform(self, X, y=None, W=None, H=None, update_H=True):
         """Learn a NMF model for the data X and returns the transformed data.
 
         Parameters
@@ -1837,7 +1735,6 @@ class NMF(_BaseNMF):
         if self.solver == "cd":
             W, H, n_iter = _fit_coordinate_descent(
                 X,
-                X_val,
                 W,
                 H,
                 self.tol,
@@ -1850,13 +1747,10 @@ class NMF(_BaseNMF):
                 verbose=self.verbose,
                 shuffle=self.shuffle,
                 random_state=self.random_state,
-                estimator=self,
-                parent_node=parent_node,
             )
         elif self.solver == "mu":
             W, H, n_iter, *_ = _fit_multiplicative_update(
                 X,
-                X_val,
                 W,
                 H,
                 self._beta_loss,
@@ -1866,10 +1760,8 @@ class NMF(_BaseNMF):
                 l1_reg_H,
                 l2_reg_W,
                 l2_reg_H,
-                update_H=update_H,
-                verbose=self.verbose,
-                estimator=self,
-                parent_node=parent_node,
+                update_H,
+                self.verbose,
             )
         else:
             raise ValueError("Invalid solver parameter '%s'." % self.solver)
@@ -2549,8 +2441,3 @@ class MiniBatchNMF(_BaseNMF):
         self.n_steps_ += 1
 
         return self
-
-    @property
-    def _n_features_out(self):
-        """Number of transformed output features."""
-        return self.components_.shape[0]

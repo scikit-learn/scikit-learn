@@ -1,7 +1,5 @@
-import pickle
 import re
 import sys
-import tempfile
 import warnings
 from io import StringIO
 
@@ -10,7 +8,6 @@ import pytest
 from scipy import linalg
 
 from sklearn.base import clone
-from sklearn.callback import Snapshot
 from sklearn.decomposition import NMF, MiniBatchNMF, non_negative_factorization
 from sklearn.decomposition import _nmf as nmf  # For testing internals
 from sklearn.exceptions import ConvergenceWarning
@@ -1063,30 +1060,3 @@ def test_nmf_custom_init_shape_error():
 
     with pytest.raises(ValueError, match="Array with wrong second dimension passed"):
         nmf.fit(X, H=H, W=rng.random_sample((6, 3)))
-
-
-@pytest.mark.parametrize("solver, beta_loss", [("mu", 0), ("mu", 2), ("cd", 2)])
-def test_nmf_callback_reconstruction_attributes(solver, beta_loss):
-    # Check that the reconstruction attributes passed to the callback allow to make
-    # a new estimator as if the fit ended when the callback is called.
-    X = np.random.RandomState(0).random_sample((100, 20))
-
-    nmf = NMF(n_components=5, solver=solver, beta_loss=beta_loss, random_state=0)
-    nmf.fit(X)
-
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        callback = Snapshot(base_dir=tmp_dir)
-        nmf._set_callbacks(callback)
-        nmf.fit(X)
-
-        # load model from last iteration
-        snapshot_dir = next(callback.base_dir.iterdir())
-        snapshot = sorted(snapshot_dir.iterdir())[-1]
-        with open(snapshot, "rb") as f:
-            loaded_nmf = pickle.load(f)
-
-    # The model saved during the last iteration is the same as the original model
-    assert nmf.n_iter_ == loaded_nmf.n_iter_
-    assert_allclose(nmf.components_, loaded_nmf.components_)
-    assert_allclose(nmf.reconstruction_err_, loaded_nmf.reconstruction_err_)
-    assert_allclose(nmf.transform(X), loaded_nmf.transform(X))

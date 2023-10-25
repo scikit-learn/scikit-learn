@@ -768,28 +768,6 @@ class BaseEstimator(_MetadataRequester):
             if not callback._is_propagated(estimator=self):
                 callback.on_fit_end()
 
-    def _from_reconstruction_attributes(self, *, reconstruction_attributes):
-        """Return an as if fitted copy of this estimator
-
-        Parameters
-        ----------
-        reconstruction_attributes : callable
-            A callable that has no arguments and returns the necessary fitted attributes
-            to create a working fitted estimator from this instance.
-
-            Using a callable allows lazy evaluation of the potentially costly
-            reconstruction attributes.
-
-        Returns
-        -------
-        fitted_estimator : estimator instance
-            The fitted copy of this estimator.
-        """
-        new_estimator = copy.copy(self)  # XXX deepcopy ?
-        for key, val in reconstruction_attributes().items():
-            setattr(new_estimator, key, val)
-        return new_estimator
-
     @property
     def _repr_html_(self):
         """HTML representation of estimator.

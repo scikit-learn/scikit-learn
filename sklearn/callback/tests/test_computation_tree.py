@@ -1,8 +1,9 @@
 # License: BSD 3 clause
+# Authors: the scikit-learn developers
 
 import numpy as np
 
-from sklearn.callback import ComputationTree
+from sklearn.callback import ComputationNode, build_computation_tree
 
 levels = [
     {"descr": "level0", "max_iter": 3},
@@ -14,17 +15,15 @@ levels = [
 
 def test_computation_tree():
     """Check the construction of the computation tree"""
-    computation_tree = ComputationTree(estimator_name="estimator", levels=levels)
-    assert computation_tree.estimator_name == "estimator"
+    computation_tree = build_computation_tree(estimator_name="estimator", levels=levels)
+    assert computation_tree.estimator_name == ("estimator",)
+    assert computation_tree.parent is None
+    assert computation_tree.idx == 0
 
-    root = computation_tree.root
-    assert root.parent is None
-    assert root.idx == 0
+    assert len(computation_tree.children) == computation_tree.max_iter == 3
+    assert [node.idx for node in computation_tree.children] == list(range(3))
 
-    assert len(root.children) == root.max_iter == 3
-    assert [node.idx for node in root.children] == list(range(3))
-
-    for node1 in root.children:
+    for node1 in computation_tree.children:
         assert len(node1.children) == 5
         assert [n.idx for n in node1.children] == list(range(5))
 
@@ -40,68 +39,31 @@ def test_n_nodes():
     """Check that the number of node in a comutation tree corresponds to what we expect
     from the level descriptions
     """
-    computation_tree = ComputationTree(estimator_name="", levels=levels)
+    computation_tree = build_computation_tree(estimator_name="", levels=levels)
 
     max_iter_per_level = [level["max_iter"] for level in levels[:-1]]
     expected_n_nodes = 1 + np.sum(np.cumprod(max_iter_per_level))
 
-    assert computation_tree.n_nodes == expected_n_nodes
-    assert len(computation_tree.iterate(include_leaves=True)) == expected_n_nodes
-    assert computation_tree._tree_status.shape == (expected_n_nodes,)
+    actual_n_nodes = sum(1 for _ in computation_tree)
+
+    assert actual_n_nodes == expected_n_nodes
 
 
-def test_tree_status_idx():
-    """Check that each node has a unique index in the _tree_status array and that their
-    order corresponds to the order given by a depth first search.
-    """
-    computation_tree = ComputationTree(estimator_name="", levels=levels)
+def test_path():
+    """Check that the path from the root to a node is correct"""
+    computation_tree = build_computation_tree(estimator_name="", levels=levels)
 
-    indexes = [
-        node.tree_status_idx for node in computation_tree.iterate(include_leaves=True)
-    ]
-    assert indexes == list(range(computation_tree.n_nodes))
-
-
-def test_get_ancestors():
-    """Check the ancestor search and its propagation to parent trees"""
-    parent_levels = [
-        {"descr": "parent_level0", "max_iter": 2},
-        {"descr": "parent_level1", "max_iter": 4},
-        {"descr": "parent_level2", "max_iter": None},
-    ]
-
-    parent_computation_tree = ComputationTree(
-        estimator_name="parent_estimator", levels=parent_levels
-    )
-    parent_node = parent_computation_tree.root.children[0].children[2]
-    # indices of each node (in its parent children) in this chain are 0, 0, 2.
-    # (root is always 0).
-    expected_parent_indices = [2, 0, 0]
-
-    computation_tree = ComputationTree(
-        estimator_name="estimator", levels=levels, parent_node=parent_node
-    )
-    node = computation_tree.root.children[1].children[3].children[5]
-    expected_node_indices = [5, 3, 1, 0]
-
-    ancestors = node.get_ancestors(include_ancestor_trees=False)
-    assert ancestors == [
+    assert computation_tree.path == [computation_tree]
+    
+    node = computation_tree.children[1].children[2].children[3]
+    expected_path = [
+        computation_tree,
+        computation_tree.children[1],
+        computation_tree.children[1].children[2],
         node,
-        node.parent,
-        node.parent.parent,
-        node.parent.parent.parent,
     ]
-    assert [n.idx for n in ancestors] == expected_node_indices
-    assert computation_tree.root in ancestors
+    assert node.path == expected_path
 
-    ancestors = node.get_ancestors(include_ancestor_trees=True)
-    assert ancestors == [
-        node,
-        node.parent,
-        node.parent.parent,
-        node.parent.parent.parent,
-        parent_node,
-        parent_node.parent,
-        parent_node.parent.parent,
-    ]
-    assert [n.idx for n in ancestors] == expected_node_indices + expected_parent_indices
+    assert all(node.depth == i for i, node in enumerate(expected_path))
+
+

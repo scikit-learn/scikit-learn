@@ -25,7 +25,6 @@ import scipy.sparse as sp
 from joblib import logger
 
 from ..base import clone, is_classifier
-from ..callback._base import _eval_callbacks_on_fit_iter_end
 from ..exceptions import FitFailedWarning, UnsetMetadataPassedError
 from ..metrics import check_scoring, get_scorer_names
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
@@ -749,8 +748,6 @@ def _fit_and_score(
     split_progress=None,
     candidate_progress=None,
     error_score=np.nan,
-    caller=None,
-    node=None,
 ):
     """Fit estimator and compute scores for a given dataset split.
 
@@ -880,9 +877,6 @@ def _fit_and_score(
         # ref: https://github.com/scikit-learn/scikit-learn/pull/26786
         estimator = estimator.set_params(**clone(parameters, safe=False))
 
-    if caller is not None:
-        caller._propagate_callbacks(estimator, parent_node=node)
-
     start_time = time.time()
 
     X_train, y_train = _safe_split(estimator, X, y, train)
@@ -948,8 +942,6 @@ def _fit_and_score(
         end_msg += "." * (80 - len(end_msg) - len(result_msg))
         end_msg += result_msg
         print(end_msg)
-
-    _eval_callbacks_on_fit_iter_end(estimator=caller, node=node)
 
     result["test_scores"] = test_scores
     if return_train_score:

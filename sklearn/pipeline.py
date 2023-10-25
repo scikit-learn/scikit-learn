@@ -16,14 +16,9 @@ import numpy as np
 from scipy import sparse
 
 from .base import TransformerMixin, _fit_context, clone
-from .callback._base import _eval_callbacks_on_fit_iter_end
 from .exceptions import NotFittedError
 from .preprocessing import FunctionTransformer
-from .utils import (
-    Bunch,
-    _print_elapsed_time,
-    check_pandas_support,
-)
+from .utils import Bunch, _print_elapsed_time, check_pandas_support
 from .utils._estimator_html_repr import _VisualBlock
 from .utils._metadata_requests import METHODS
 from .utils._param_validation import HasMethods, Hidden
@@ -387,23 +382,12 @@ class Pipeline(_BaseComposition):
         # Setup the memory
         memory = check_memory(self.memory)
 
-        root, *_ = self._eval_callbacks_on_fit_begin(
-            levels=[
-                {"descr": "fit", "max_iter": len(self.steps)},
-                {"descr": "step", "max_iter": None},
-            ],
-            X=X,
-            y=y,
-        )
-
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
         for step_idx, name, transformer in self._iter(
             with_final=False, filter_passthrough=False
         ):
-            node = root.children[step_idx]
             if transformer is None or transformer == "passthrough":
-                _eval_callbacks_on_fit_iter_end(estimator=self, node=node)
                 with _print_elapsed_time("Pipeline", self._log_message(step_idx)):
                     continue
 
@@ -413,9 +397,6 @@ class Pipeline(_BaseComposition):
                 cloned_transformer = transformer
             else:
                 cloned_transformer = clone(transformer)
-
-            self._propagate_callbacks(cloned_transformer, parent_node=node)
-
             # Fit or load from cache the current transformer
             X, fitted_transformer = fit_transform_one_cached(
                 cloned_transformer,
@@ -430,9 +411,6 @@ class Pipeline(_BaseComposition):
             # transformer. This is necessary when loading the transformer
             # from the cache.
             self.steps[step_idx] = (name, fitted_transformer)
-
-            _eval_callbacks_on_fit_iter_end(estimator=self, node=node)
-
         return X
 
     @_fit_context(
@@ -486,13 +464,8 @@ class Pipeline(_BaseComposition):
         Xt = self._fit(X, y, routed_params)
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             if self._final_estimator != "passthrough":
-                node = self._computation_tree.root.children[-1]
-                self._propagate_callbacks(self._final_estimator, parent_node=node)
-
                 last_step_params = routed_params[self.steps[-1][0]]
                 self._final_estimator.fit(Xt, y, **last_step_params["fit"])
-
-                _eval_callbacks_on_fit_iter_end(estimator=self, node=node)
 
         return self
 
