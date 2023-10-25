@@ -180,7 +180,7 @@ Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
    :width: 70pt
    :target: https://www.dataiku.com/
 
-.. |dataiku| image:: images/huggingface_logo-noborder.png
+.. |hf| image:: images/huggingface_logo-noborder.png
    :width: 70pt
    :target: https://huggingface.co
 
@@ -228,7 +228,7 @@ Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`NVidia <https://nvidia.com>`_ funds Tim Head in 2022, 2023
+`NVidia <https://nvidia.com>`_ funds Tim Head since 2022
 and is part of the scikit-learn consortium at Inria.
 
 .. raw:: html
@@ -255,8 +255,8 @@ and is part of the scikit-learn consortium at Inria.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Hugging Face <https://huggingface.co/>`_ funded Adrin Jalali since 2022
-and is part of the scikit-learn consortium at Inria.
+`Hugging Face <https://huggingface.co/>`_ funded Adrin Jalali in 2022,
+2023 and is part of the scikit-learn consortium at Inria.
 
 .. raw:: html
 
@@ -611,9 +611,7 @@ the past:
    :target: https://aphp.fr/
 
 
-.. centered::
-
-  |bcg| |msn| |fujitsu| |aphp|
+|bcg| |msn| |fujitsu| |aphp|
 
 
 Sprints
