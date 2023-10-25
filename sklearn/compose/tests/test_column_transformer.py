@@ -758,6 +758,7 @@ def test_column_transformer_get_set_params():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
+        "force_int_remainder_cols": True,
     }
 
     assert ct.get_params() == exp
@@ -779,6 +780,7 @@ def test_column_transformer_get_set_params():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
+        "force_int_remainder_cols": True,
     }
 
     assert ct.get_params() == exp
@@ -1070,6 +1072,7 @@ def test_column_transformer_get_set_params_with_remainder():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
+        "force_int_remainder_cols": True,
     }
 
     assert ct.get_params() == exp
@@ -1090,6 +1093,7 @@ def test_column_transformer_get_set_params_with_remainder():
         "transformer_weights": None,
         "verbose_feature_names_out": True,
         "verbose": False,
+        "force_int_remainder_cols": True,
     }
     assert ct.get_params() == exp
 

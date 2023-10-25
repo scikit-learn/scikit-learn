@@ -270,6 +270,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         "transformer_weights": [dict, None],
         "verbose": ["verbose"],
         "verbose_feature_names_out": ["boolean"],
+        "force_int_remainder_cols": ["boolean"],
     }
 
     def __init__(
