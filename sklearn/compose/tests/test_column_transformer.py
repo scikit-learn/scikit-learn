@@ -913,6 +913,9 @@ def test_column_transformer_remainder():
 
 @pytest.mark.parametrize("force_int", [False, True])
 def test_column_transformer_remainder_dtypes(force_int):
+    warning_type = FutureWarning
+    warning_pattern = "force_int_remainder_cols=False"
+
     X = np.ones((1, 3))
 
     # if inputs mix formats always store remainder columns as indices
@@ -953,7 +956,12 @@ def test_column_transformer_remainder_dtypes(force_int):
         force_int_remainder_cols=force_int,
     )
     ct.fit(X)
-    assert ct.transformers_[-1][-1][0] == 2 if force_int else [False, False, True]
+    if force_int:
+        with pytest.warns(warning_type, match=warning_pattern):
+            col = ct.transformers_[-1][-1][0]
+    else:
+        col = ct.transformers_[-1][-1][0]
+    assert col == 2 if force_int else [False, False, True]
 
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame(X, columns=["A", "B", "C"])
@@ -966,7 +974,12 @@ def test_column_transformer_remainder_dtypes(force_int):
         force_int_remainder_cols=force_int,
     )
     ct.fit(X)
-    assert ct.transformers_[-1][-1][0] == 2 if force_int else ["C"]
+    if force_int:
+        with pytest.warns(warning_type, match=warning_pattern):
+            col = ct.transformers_[-1][-1][0]
+    else:
+        col = ct.transformers_[-1][-1][0]
+    assert col == 2 if force_int else ["C"]
 
 
 @pytest.mark.parametrize(
@@ -977,13 +990,17 @@ def test_column_transformer_remainder_numpy(key):
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_res_both = X_array
 
-    ct = ColumnTransformer([("trans1", Trans(), key)], remainder="passthrough")
+    ct = ColumnTransformer(
+        [("trans1", Trans(), key)],
+        remainder="passthrough",
+        force_int_remainder_cols=False,
+    )
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
     assert isinstance(ct.transformers_[-1][1], FunctionTransformer)
-    assert_array_equal(ct.transformers_[-1][2], [1])
+    assert list(ct.transformers_[-1][2]) in [[1], [False, True]]
 
 
 @pytest.mark.parametrize(
@@ -1010,13 +1027,17 @@ def test_column_transformer_remainder_pandas(key):
     X_df = pd.DataFrame(X_array, columns=["first", "second"])
     X_res_both = X_array
 
-    ct = ColumnTransformer([("trans1", Trans(), key)], remainder="passthrough")
+    ct = ColumnTransformer(
+        [("trans1", Trans(), key)],
+        remainder="passthrough",
+        force_int_remainder_cols=False,
+    )
     assert_array_equal(ct.fit_transform(X_df), X_res_both)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
     assert isinstance(ct.transformers_[-1][1], FunctionTransformer)
-    assert_array_equal(ct.transformers_[-1][2], [1])
+    assert list(ct.transformers_[-1][2]) in [[1], ["second"], [False, True]]
 
 
 @pytest.mark.parametrize(
@@ -1029,14 +1050,18 @@ def test_column_transformer_remainder_transformer(key):
     # second and third columns are doubled when remainder = DoubleTrans
     X_res_both[:, 1:3] *= 2
 
-    ct = ColumnTransformer([("trans1", Trans(), key)], remainder=DoubleTrans())
+    ct = ColumnTransformer(
+        [("trans1", Trans(), key)],
+        remainder=DoubleTrans(),
+        force_int_remainder_cols=False,
+    )
 
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
     assert isinstance(ct.transformers_[-1][1], DoubleTrans)
-    assert_array_equal(ct.transformers_[-1][2], [1, 2])
+    assert list(ct.transformers_[-1][2]) in [[1, 2], [False, True, True]]
 
 
 def test_column_transformer_no_remaining_remainder_transformer():
@@ -1509,7 +1534,9 @@ def test_sk_visual_block_remainder_fitted_pandas(remainder):
     pd = pytest.importorskip("pandas")
     ohe = OneHotEncoder()
     ct = ColumnTransformer(
-        transformers=[("ohe", ohe, ["col1", "col2"])], remainder=remainder
+        transformers=[("ohe", ohe, ["col1", "col2"])],
+        remainder=remainder,
+        force_int_remainder_cols=False,
     )
     df = pd.DataFrame(
         {
