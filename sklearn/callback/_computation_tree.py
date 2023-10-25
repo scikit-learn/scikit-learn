@@ -69,7 +69,7 @@ class ComputationNode:
 
 def build_computation_tree(estimator_name, levels, parent=None, idx=0):
     """Build the computation tree from the description of the levels.
-    
+
     Parameters
     ----------
     estimator_name : str
