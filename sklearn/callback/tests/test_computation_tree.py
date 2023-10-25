@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from sklearn.callback import ComputationNode, build_computation_tree
+from sklearn.callback import build_computation_tree
 
 levels = [
     {"descr": "level0", "max_iter": 3},
@@ -54,7 +54,7 @@ def test_path():
     computation_tree = build_computation_tree(estimator_name="", levels=levels)
 
     assert computation_tree.path == [computation_tree]
-    
+
     node = computation_tree.children[1].children[2].children[3]
     expected_path = [
         computation_tree,
@@ -65,5 +65,3 @@ def test_path():
     assert node.path == expected_path
 
     assert all(node.depth == i for i, node in enumerate(expected_path))
-
-

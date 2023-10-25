@@ -43,7 +43,7 @@ class ProgressBar(BaseCallback):
 # insert tasks between existing tasks.
 
 try:
-    from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn
+    from rich.progress import BarColumn, Progress, TextColumn, TimeRemainingColumn
     from rich.style import Style
 
     class _Progress(Progress):
@@ -88,8 +88,7 @@ class _RichProgressMonitor(Thread):
         self.root_task = None
 
         with self.progress_ctx:
-            while node:= self.queue.get():
-
+            while node := self.queue.get():
                 self._update_task_tree(node)
                 self._update_tasks()
                 self.progress_ctx.refresh()
@@ -99,13 +98,14 @@ class _RichProgressMonitor(Thread):
         curr_task, parent_task = None, None
 
         for curr_node in node.path:
-
             if curr_node.parent is None:  # root node
                 if self.root_task is None:
                     self.root_task = TaskNode(curr_node, progress_ctx=self.progress_ctx)
                 curr_task = self.root_task
             elif curr_node.idx not in parent_task.children:
-                curr_task = TaskNode(curr_node, progress_ctx=self.progress_ctx, parent=parent_task)
+                curr_task = TaskNode(
+                    curr_node, progress_ctx=self.progress_ctx, parent=parent_task
+                )
                 parent_task.children[curr_node.idx] = curr_task
             else:  # task already exists
                 curr_task = parent_task.children[curr_node.idx]
@@ -141,18 +141,19 @@ class _RichProgressMonitor(Thread):
 
 class TaskNode:
     """A node in the tree of rich tasks
-    
+
     Parameters
     ----------
     node : ComputationNode instance
         The computation node this task corresponds to.
-    
+
     progress_ctx : rich.Progress instance
         The progress context to which this task belongs.
 
     parent : TaskNode instance
         The parent of this task.
     """
+
     def __init__(self, node, progress_ctx, parent=None):
         self.node_idx = node.idx
         self.parent = parent

@@ -52,13 +52,13 @@ class BaseCallback(ABC):
 
         Parameters
         ----------
-        estimator: estimator instance
+        estimator : estimator instance
             The estimator the callback is set on.
 
-        X: ndarray or sparse matrix, default=None
+        X : ndarray or sparse matrix, default=None
             The training data.
 
-        y: ndarray or sparse matrix, default=None
+        y : ndarray or sparse matrix, default=None
             The target.
         """
         pass
@@ -81,7 +81,7 @@ class BaseCallback(ABC):
         node : ComputationNode instance
             The caller computation node.
 
-        kwargs : dict
+        **kwargs : dict
             arguments passed to the callback. Possible keys are
 
             - stopping_criterion: float

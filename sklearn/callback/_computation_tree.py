@@ -10,14 +10,17 @@ class ComputationNode:
     estimator_name : str
         The name of the estimator this computation node belongs to.
 
-    parent : ComputationNode instance, default=None
-        The parent node. None means this is the root.
+    description : str, default=None
+        A description of this computation node. None means it's a leaf.
 
     max_iter : int, default=None
         The number of its children. None means it's a leaf.
 
-    description : str, default=None
-        A description of this computation node. None means it's a leaf.
+    idx : int, default=0
+        The index of this node among its siblings.
+
+    parent : ComputationNode instance, default=None
+        The parent node. None means this is the root.
 
     Attributes
     ----------
@@ -51,7 +54,7 @@ class ComputationNode:
     def depth(self):
         """The depth of this node in the computation tree"""
         return 0 if self.parent is None else self.parent.depth + 1
-    
+
     @property
     def path(self):
         """List of all the nodes in the path from the root to this node"""
@@ -65,7 +68,32 @@ class ComputationNode:
 
 
 def build_computation_tree(estimator_name, levels, parent=None, idx=0):
-    """Build the computation tree from the description of the levels"""
+    """Build the computation tree from the description of the levels.
+    
+    Parameters
+    ----------
+    estimator_name : str
+        The name of the estimator this computation tree belongs to.
+
+    levels : list of dict
+        The description of the levels of the computation tree. Each dict must have
+        the following keys:
+            - descr: str
+                A description of the level
+            - max_iter: int or None
+                The number of its children. None means it's a leaf.
+
+    parent : ComputationNode instance, default=None
+        The parent node. None means this is the root.
+
+    idx : int, default=0
+        The index of this node among its siblings.
+
+    Returns
+    -------
+    computation_tree : ComputationNode instance
+        The root of the computation tree.
+    """
     this_level = levels[0]
 
     node = ComputationNode(
@@ -77,7 +105,7 @@ def build_computation_tree(estimator_name, levels, parent=None, idx=0):
     )
 
     if parent is not None and parent.max_iter is None:
-        # parent node is a leaf of the computation tree of an outer estimator. It means
+        # parent node is a leaf of the computation tree of an outer estimator. It means
         # that this node is the root of the computation tree of this estimator. They
         # both correspond the same computation step, so we merge both nodes.
         node.description = parent.description + node.description

@@ -6,7 +6,6 @@
 import copy
 import functools
 import inspect
-import pickle
 import platform
 import re
 import warnings
