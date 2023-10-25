@@ -315,16 +315,15 @@ def test_is_multilabel(array_namespace, device, dtype):
             if issparse(example):
                 example = example.toarray()
             if use_array_api:
-                if (
+                if not (
                     hasattr(example, "__array__")
                     and np.asarray(example).dtype.kind in "biuf"
                 ):
-                    if np.asarray(example).dtype.kind == "f":
-                        example = np.asarray(example, dtype=dtype)
-                    else:
-                        example = np.asarray(example)
-                else:
                     continue
+                if np.asarray(example).dtype.kind == "f":
+                    example = np.asarray(example, dtype=dtype)
+                else:
+                    example = np.asarray(example)
                 example = xp.asarray(example, device=device)
 
             assert dense_exp == is_multilabel(
