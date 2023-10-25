@@ -314,11 +314,6 @@ conda_build_metadata_list = [
         "pip_dependencies": ["jupyterlite-sphinx", "jupyterlite-pyodide-kernel"],
         "package_constraints": {
             "python": "3.9",
-            # XXX: sphinx > 6.0 does not correctly generate searchindex.js
-            "sphinx": "6.0.0",
-            # seaborn 0.12.2 raises deprecation warnings appearing in the documentation
-            # We should remove this constraint when seaborn 0.13 is released
-            "pandas": "<2.1",
         },
     },
     {
