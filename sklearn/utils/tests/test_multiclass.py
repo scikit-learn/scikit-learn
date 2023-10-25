@@ -270,15 +270,7 @@ def test_unique_labels_mixed_types():
         unique_labels([["1", "2"], [2, 3]])
 
 
-@pytest.mark.parametrize(
-    "array_namespace, device, dtype",
-    [(None, None, None)] + list(yield_namespace_device_dtype_combinations()),
-)
-def test_is_multilabel(array_namespace, device, dtype):
-    use_array_api = array_namespace is not None
-    if use_array_api:
-        xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
-
+def test_is_multilabel():
     for group, group_examples in EXAMPLES.items():
         dense_exp = group == "multilabel-indicator"
 
@@ -287,14 +279,11 @@ def test_is_multilabel(array_namespace, device, dtype):
             # multilabel-indicators
             sparse_exp = dense_exp and issparse(example)
 
-            if not use_array_api and (
-                issparse(example)
-                or (
-                    hasattr(example, "__array__")
-                    and np.asarray(example).ndim == 2
-                    and np.asarray(example).dtype.kind in "biuf"
-                    and np.asarray(example).shape[1] > 0
-                )
+            if issparse(example) or (
+                hasattr(example, "__array__")
+                and np.asarray(example).ndim == 2
+                and np.asarray(example).dtype.kind in "biuf"
+                and np.asarray(example).shape[1] > 0
             ):
                 examples_sparse = [
                     sparse_container(example)
@@ -314,17 +303,35 @@ def test_is_multilabel(array_namespace, device, dtype):
             # Densify sparse examples before testing
             if issparse(example):
                 example = example.toarray()
-            if use_array_api:
-                if not (
-                    hasattr(example, "__array__")
-                    and np.asarray(example).dtype.kind in "biuf"
-                ):
-                    continue
-                if np.asarray(example).dtype.kind == "f":
-                    example = np.asarray(example, dtype=dtype)
-                else:
-                    example = np.asarray(example)
-                example = xp.asarray(example, device=device)
+
+            assert dense_exp == is_multilabel(
+                example
+            ), f"is_multilabel({example!r}) should be {dense_exp}"
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device, dtype",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_is_multilabel_array_api_compliance(array_namespace, device, dtype):
+    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
+
+    for group, group_examples in EXAMPLES.items():
+        dense_exp = group == "multilabel-indicator"
+        for example in group_examples:
+            if not (
+                hasattr(example, "__array__")
+                and np.asarray(example).dtype.kind in "biuf"
+            ):
+                continue
+            # Densify sparse examples before testing
+            if issparse(example):
+                example = example.toarray()
+            if np.asarray(example).dtype.kind == "f":
+                example = np.asarray(example, dtype=dtype)
+            else:
+                example = np.asarray(example)
+            example = xp.asarray(example, device=device)
 
             assert dense_exp == is_multilabel(
                 example
