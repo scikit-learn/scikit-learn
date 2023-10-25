@@ -995,21 +995,28 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        check_consistent_length(X, Y)
+
+        if Y is not None:
+            warnings.warn(
+                "The use of Y as a parameter is currently being deprecated in favour"
+                " of y."
+            )
+            y = Y
+        check_consistent_length(X, y)
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
         )
         y = check_array(
-            Y, input_name="y", dtype=np.float64, copy=self.copy, ensure_2d=False
+            y, input_name="y", dtype=np.float64, copy=self.copy, ensure_2d=False
         )
         if y.ndim == 1:
-            Y = Y.reshape(-1, 1)
+            y = y.reshape(-1, 1)
 
         # we'll compute the SVD of the cross-covariance matrix = X.T.dot(Y)
         # This matrix rank is at most min(n_samples, n_features, n_targets) so
         # n_components cannot be bigger than that.
         n_components = self.n_components
-        rank_upper_bound = min(X.shape[0], X.shape[1], Y.shape[1])
+        rank_upper_bound = min(X.shape[0], X.shape[1], y.shape[1])
         if n_components > rank_upper_bound:
             raise ValueError(
                 f"`n_components` upper bound is {rank_upper_bound}. "
