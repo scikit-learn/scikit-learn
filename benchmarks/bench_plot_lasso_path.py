@@ -2,16 +2,15 @@
 
 The input data is mostly low rank but is a fat infinite tail.
 """
-from collections import defaultdict
 import gc
 import sys
+from collections import defaultdict
 from time import time
 
 import numpy as np
 
-from sklearn.linear_model import lars_path, lars_path_gram
-from sklearn.linear_model import lasso_path
 from sklearn.datasets import make_regression
+from sklearn.linear_model import lars_path, lars_path_gram, lasso_path
 
 
 def compute_bench(samples_range, features_range):

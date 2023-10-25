@@ -1,19 +1,17 @@
-from abc import ABC
-from abc import abstractmethod
-from collections.abc import Iterable
 import functools
 import math
-from inspect import signature
-from numbers import Integral
-from numbers import Real
 import operator
 import re
 import warnings
+from abc import ABC, abstractmethod
+from collections.abc import Iterable
+from inspect import signature
+from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import issparse
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 
+from .._config import config_context, get_config
 from .validation import _is_arraylike_not_scalar
 
 
@@ -48,6 +46,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         - the string "boolean"
         - the string "verbose"
         - the string "cv_object"
+        - the string "nan"
         - a MissingValues object representing markers for missing values
         - a HasMethods object, representing method(s) an object must have
         - a Hidden object, representing a constraint not meant to be exposed to the user
@@ -139,10 +138,12 @@ def make_constraint(constraint):
         constraint = make_constraint(constraint.constraint)
         constraint.hidden = True
         return constraint
+    if isinstance(constraint, str) and constraint == "nan":
+        return _NanConstraint()
     raise ValueError(f"Unknown constraint type: {constraint}")
 
 
-def validate_params(parameter_constraints):
+def validate_params(parameter_constraints, *, prefer_skip_nested_validation):
     """Decorator to validate types and values of functions and methods.
 
     Parameters
@@ -153,6 +154,19 @@ def validate_params(parameter_constraints):
 
         Note that the *args and **kwargs parameters are not validated and must not be
         present in the parameter_constraints dictionary.
+
+    prefer_skip_nested_validation : bool
+        If True, the validation of parameters of inner estimators or functions
+        called by the decorated function will be skipped.
+
+        This is useful to avoid validating many times the parameters passed by the
+        user from the public facing API. It's also useful to avoid validating
+        parameters that we pass internally to inner functions that are guaranteed to
+        be valid by the test suite.
+
+        It should be set to True for most functions, except for those that receive
+        non-validated objects as parameters or that are just wrappers around classes
+        because they only perform a partial validation.
 
     Returns
     -------
@@ -168,6 +182,10 @@ def validate_params(parameter_constraints):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            global_skip_validation = get_config()["skip_parameter_validation"]
+            if global_skip_validation:
+                return func(*args, **kwargs)
+
             func_sig = signature(func)
 
             # Map *args/**kwargs to the function signature
@@ -188,7 +206,12 @@ def validate_params(parameter_constraints):
             )
 
             try:
-                return func(*args, **kwargs)
+                with config_context(
+                    skip_parameter_validation=(
+                        prefer_skip_nested_validation or global_skip_validation
+                    )
+                ):
+                    return func(*args, **kwargs)
             except InvalidParameterError as e:
                 # When the function is just a wrapper around an estimator, we allow
                 # the function to delegate validation to the estimator, but we replace
@@ -291,7 +314,9 @@ class _NanConstraint(_Constraint):
     """Constraint representing the indicator `np.nan`."""
 
     def is_satisfied_by(self, val):
-        return isinstance(val, Real) and math.isnan(val)
+        return (
+            not isinstance(val, Integral) and isinstance(val, Real) and math.isnan(val)
+        )
 
     def __str__(self):
         return "numpy.nan"
@@ -455,7 +480,7 @@ class Interval(_Constraint):
             )
 
     def __contains__(self, val):
-        if np.isnan(val):
+        if not isinstance(val, Integral) and np.isnan(val):
             return False
 
         left_cmp = operator.lt if self.closed in ("left", "both") else operator.le
@@ -667,7 +692,10 @@ class HasMethods(_Constraint):
         The method(s) that the object is expected to expose.
     """
 
-    @validate_params({"methods": [str, list]})
+    @validate_params(
+        {"methods": [str, list]},
+        prefer_skip_nested_validation=True,
+    )
     def __init__(self, methods):
         super().__init__()
         if isinstance(methods, str):

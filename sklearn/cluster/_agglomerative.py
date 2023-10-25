@@ -15,21 +15,25 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
-from ..base import BaseEstimator, ClusterMixin, ClassNamePrefixFeaturesOutMixin
-from ..metrics.pairwise import paired_distances
-from ..metrics.pairwise import _VALID_METRICS
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    ClusterMixin,
+    _fit_context,
+)
 from ..metrics import DistanceMetric
-from ..metrics._dist_metrics import METRIC_MAPPING
+from ..metrics._dist_metrics import METRIC_MAPPING64
+from ..metrics.pairwise import _VALID_METRICS, paired_distances
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
-from ..utils.graph import _fix_connected_components
 from ..utils._param_validation import (
+    HasMethods,
     Hidden,
     Interval,
     StrOptions,
-    HasMethods,
     validate_params,
 )
+from ..utils.graph import _fix_connected_components
 from ..utils.validation import check_memory
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
@@ -86,11 +90,12 @@ def _fix_connectivity(X, connectivity, affinity):
     connectivity = connectivity + connectivity.T
 
     # Convert connectivity matrix to LIL
-    if not sparse.isspmatrix_lil(connectivity):
-        if not sparse.isspmatrix(connectivity):
-            connectivity = sparse.lil_matrix(connectivity)
-        else:
-            connectivity = connectivity.tolil()
+    if not sparse.issparse(connectivity):
+        connectivity = sparse.lil_matrix(connectivity)
+
+    # `connectivity` is a sparse matrix at this point
+    if connectivity.format != "lil":
+        connectivity = connectivity.tolil()
 
     # Compute the number of nodes
     n_connected_components, labels = connected_components(connectivity)
@@ -181,7 +186,8 @@ def _single_linkage_tree(
         "connectivity": ["array-like", "sparse matrix", None],
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "return_distance": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     """Ward clustering based on a Feature matrix.
@@ -543,7 +549,7 @@ def linkage_tree(
             linkage == "single"
             and affinity != "precomputed"
             and not callable(affinity)
-            and affinity in METRIC_MAPPING
+            and affinity in METRIC_MAPPING64
         ):
             # We need the fast cythonized metric from neighbors
             dist_metric = DistanceMetric.get_metric(affinity)
@@ -950,6 +956,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self.metric = metric
         self.compute_distances = compute_distances
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the hierarchical clustering from features, or distance matrix.
 
@@ -968,7 +975,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self : object
             Returns the fitted instance.
         """
-        self._validate_params()
         X = self._validate_data(X, ensure_min_samples=2)
         return self._fit(X)
 
@@ -1324,6 +1330,7 @@ class FeatureAgglomeration(
         )
         self.pooling_func = pooling_func
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the hierarchical clustering on the data.
 
@@ -1340,7 +1347,6 @@ class FeatureAgglomeration(
         self : object
             Returns the transformer.
         """
-        self._validate_params()
         X = self._validate_data(X, ensure_min_features=2)
         super()._fit(X.T)
         self._n_features_out = self.n_clusters_

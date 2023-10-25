@@ -12,6 +12,7 @@ Machine Intelligence. 2002. pp. 603-619.
 """
 
 import numpy as np
+
 from sklearn.cluster import MeanShift, estimate_bandwidth
 from sklearn.datasets import make_blobs
 

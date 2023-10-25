@@ -1,8 +1,8 @@
 """Global configuration state and functions for management
 """
 import os
-from contextlib import contextmanager as contextmanager
 import threading
+from contextlib import contextmanager as contextmanager
 
 _global_config = {
     "assume_finite": bool(os.environ.get("SKLEARN_ASSUME_FINITE", False)),
@@ -15,6 +15,8 @@ _global_config = {
     "enable_cython_pairwise_dist": True,
     "array_api_dispatch": False,
     "transform_output": "default",
+    "enable_metadata_routing": False,
+    "skip_parameter_validation": False,
 }
 _threadlocal = threading.local()
 
@@ -54,8 +56,10 @@ def set_config(
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
     transform_output=None,
+    enable_metadata_routing=None,
+    skip_parameter_validation=None,
 ):
-    """Set global scikit-learn configuration
+    """Set global scikit-learn configuration.
 
     .. versionadded:: 0.19
 
@@ -134,6 +138,29 @@ def set_config(
 
         .. versionadded:: 1.2
 
+    enable_metadata_routing : bool, default=None
+        Enable metadata routing. By default this feature is disabled.
+
+        Refer to :ref:`metadata routing user guide <metadata_routing>` for more
+        details.
+
+        - `True`: Metadata routing is enabled
+        - `False`: Metadata routing is disabled, use the old syntax.
+        - `None`: Configuration is unchanged
+
+        .. versionadded:: 1.3
+
+    skip_parameter_validation : bool, default=None
+        If `True`, disable the validation of the hyper-parameters' types and values in
+        the fit method of estimators and for arguments passed to public helper
+        functions. It can save time in some situations but can lead to low level
+        crashes and exceptions with confusing error messages.
+
+        Note that for data parameters, such as `X` and `y`, only type validation is
+        skipped but validation with `check_array` will continue to run.
+
+        .. versionadded:: 1.3
+
     See Also
     --------
     config_context : Context manager for global scikit-learn configuration.
@@ -154,9 +181,16 @@ def set_config(
     if enable_cython_pairwise_dist is not None:
         local_config["enable_cython_pairwise_dist"] = enable_cython_pairwise_dist
     if array_api_dispatch is not None:
+        from .utils._array_api import _check_array_api_dispatch
+
+        _check_array_api_dispatch(array_api_dispatch)
         local_config["array_api_dispatch"] = array_api_dispatch
     if transform_output is not None:
         local_config["transform_output"] = transform_output
+    if enable_metadata_routing is not None:
+        local_config["enable_metadata_routing"] = enable_metadata_routing
+    if skip_parameter_validation is not None:
+        local_config["skip_parameter_validation"] = skip_parameter_validation
 
 
 @contextmanager
@@ -170,6 +204,8 @@ def config_context(
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
     transform_output=None,
+    enable_metadata_routing=None,
+    skip_parameter_validation=None,
 ):
     """Context manager for global scikit-learn configuration.
 
@@ -249,6 +285,29 @@ def config_context(
 
         .. versionadded:: 1.2
 
+    enable_metadata_routing : bool, default=None
+        Enable metadata routing. By default this feature is disabled.
+
+        Refer to :ref:`metadata routing user guide <metadata_routing>` for more
+        details.
+
+        - `True`: Metadata routing is enabled
+        - `False`: Metadata routing is disabled, use the old syntax.
+        - `None`: Configuration is unchanged
+
+        .. versionadded:: 1.3
+
+    skip_parameter_validation : bool, default=None
+        If `True`, disable the validation of the hyper-parameters' types and values in
+        the fit method of estimators and for arguments passed to public helper
+        functions. It can save time in some situations but can lead to low level
+        crashes and exceptions with confusing error messages.
+
+        Note that for data parameters, such as `X` and `y`, only type validation is
+        skipped but validation with `check_array` will continue to run.
+
+        .. versionadded:: 1.3
+
     Yields
     ------
     None.
@@ -286,6 +345,8 @@ def config_context(
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
         array_api_dispatch=array_api_dispatch,
         transform_output=transform_output,
+        enable_metadata_routing=enable_metadata_routing,
+        skip_parameter_validation=skip_parameter_validation,
     )
 
     try:

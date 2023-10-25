@@ -1,5 +1,10 @@
-import pkgutil
+"""
+The :mod:`sklearn.utils.discovery` module includes utilities to discover
+objects (i.e. estimators, displays, functions) from the `sklearn` package.
+"""
+
 import inspect
+import pkgutil
 from importlib import import_module
 from operator import itemgetter
 from pathlib import Path
@@ -38,15 +43,15 @@ def all_estimators(type_filter=None):
         and ``class`` is the actual type of the class.
     """
     # lazy import to avoid circular imports from sklearn.base
-    from . import IS_PYPY
-    from ._testing import ignore_warnings
     from ..base import (
         BaseEstimator,
         ClassifierMixin,
+        ClusterMixin,
         RegressorMixin,
         TransformerMixin,
-        ClusterMixin,
     )
+    from . import IS_PYPY
+    from ._testing import ignore_warnings
 
     def is_abstract(c):
         if not (hasattr(c, "__abstractmethods__")):
