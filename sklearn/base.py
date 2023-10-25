@@ -11,15 +11,12 @@ import platform
 import re
 import warnings
 from collections import defaultdict
-from functools import partial
-from shutil import rmtree
 
 import numpy as np
 
 from . import __version__
 from ._config import config_context, get_config
-from .callback import BaseCallback, ComputationTree
-from .callback._base import CallbackContext
+from .callback import BaseCallback, build_computation_tree
 from .exceptions import InconsistentVersionWarning
 from .utils import _IS_32BIT
 from .utils._estimator_html_repr import estimator_html_repr
@@ -713,7 +710,7 @@ class BaseEstimator(_MetadataRequester):
         if not propagated_callbacks:
             return
 
-        sub_estimator._parent_ct_node = parent_node
+        sub_estimator._parent_node = parent_node
 
         sub_estimator._set_callbacks(
             getattr(sub_estimator, "_callbacks", []) + propagated_callbacks
@@ -743,41 +740,14 @@ class BaseEstimator(_MetadataRequester):
         root : ComputationNode instance
             The root of the computation tree.
         """
-        self._computation_tree = ComputationTree(
+        self._computation_tree = build_computation_tree(
             estimator_name=self.__class__.__name__,
             levels=levels,
-            parent_node=getattr(self, "_parent_ct_node", None),
+            parent=getattr(self, "_parent_node", None),
         )
 
         if not hasattr(self, "_callbacks"):
-            return self._computation_tree.root, None, None, None, None
-
-        X_val, y_val = None, None
-
-        if any(callback.request_validation_split for callback in self._callbacks):
-            splitter = next(
-                callback.validation_split
-                for callback in self._callbacks
-                if hasattr(callback, "validation_split")
-            )
-
-            train, val = next(splitter.split(X))
-            if X is not None:
-                X, X_val = X[train], X[val]
-            if y is not None:
-                y, y_val = y[train], y[val]
-
-        #
-        CallbackContext(
-            self._callbacks,
-            finalizer=partial(rmtree, ignore_errors=True),
-            finalizer_args=self._computation_tree.tree_dir,
-        )
-
-        #
-        file_path = self._computation_tree.tree_dir / "computation_tree.pkl"
-        with open(file_path, "wb") as f:
-            pickle.dump(self._computation_tree, f)
+            return self._computation_tree
 
         # Only call the on_fit_begin method of callbacks that are not
         # propagated from a meta-estimator.
@@ -785,17 +755,12 @@ class BaseEstimator(_MetadataRequester):
             if not callback._is_propagated(estimator=self):
                 callback.on_fit_begin(estimator=self, X=X, y=y)
 
-        return self._computation_tree.root, X, y, X_val, y_val
+        return self._computation_tree
 
     def _eval_callbacks_on_fit_end(self):
         """Evaluate the on_fit_end method of the callbacks"""
-        if not hasattr(self, "_callbacks"):
+        if not hasattr(self, "_callbacks") or not hasattr(self, "_computation_tree"):
             return
-
-        if not hasattr(self, "_computation_tree"):
-            return
-
-        self._computation_tree._tree_status[0] = True
 
         # Only call the on_fit_end method of callbacks that are not
         # propagated from a meta-estimator.

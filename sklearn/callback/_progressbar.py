@@ -1,91 +1,38 @@
 # License: BSD 3 clause
+# Authors: the scikit-learn developers
 
 import importlib
-from threading import Event, Thread
+from multiprocessing import Manager
+from threading import Thread
 
-from . import BaseCallback, load_computation_tree
-
-
-def _check_backend_support(backend, caller_name):
-    """Raise ImportError with detailed error message if backend is not installed.
-
-    Parameters
-    ----------
-    backend : {"rich", "tqdm"}
-        The requested backend.
-
-    caller_name : str
-        The name of the caller that requires the backend.
-    """
-    try:
-        importlib.import_module(backend)  # noqa
-    except ImportError as e:
-        raise ImportError(f"{caller_name} requires {backend} installed.") from e
+from . import BaseCallback
 
 
 class ProgressBar(BaseCallback):
-    """Callback that displays progress bars for each iterative steps of the estimator
-
-    Parameters
-    ----------
-    backend: {"rich", "tqdm"}, default="rich"
-        The backend for the progress bars display.
-
-    max_depth_show : int, default=None
-        The maximum nested level of progress bars to display.
-
-    max_depth_keep : int, default=None
-        The maximum nested level of progress bars to keep displayed when they are
-        finished.
-    """
+    """Callback that displays progress bars for each iterative steps of an estimator"""
 
     auto_propagate = True
 
-    def __init__(self, backend="rich", max_depth_show=None, max_depth_keep=None):
-        if backend not in ("rich", "tqdm"):
-            raise ValueError(
-                f"backend should be 'rich' or 'tqdm', got {self.backend} instead."
-            )
-        _check_backend_support(backend, caller_name="Progressbar")
-        self.backend = backend
-
-        if max_depth_show is not None and max_depth_show < 0:
-            raise ValueError("max_depth_show should be >= 0.")
-        self.max_depth_show = max_depth_show
-
-        if max_depth_keep is not None and max_depth_keep < 0:
-            raise ValueError("max_depth_keep should be >= 0.")
-        self.max_depth_keep = max_depth_keep
+    def __init__(self):
+        try:
+            importlib.import_module("rich")  # noqa
+        except ImportError as e:
+            raise ImportError("ProgressBar requires rich installed.") from e
 
     def on_fit_begin(self, estimator, X=None, y=None):
-        self._stop_event = Event()
-
-        if self.backend == "rich":
-            self.progress_monitor = _RichProgressMonitor(
-                estimator=estimator,
-                event=self._stop_event,
-                max_depth_show=self.max_depth_show,
-                max_depth_keep=self.max_depth_keep,
-            )
-        elif self.backend == "tqdm":
-            self.progress_monitor = _TqdmProgressMonitor(
-                estimator=estimator,
-                event=self._stop_event,
-            )
-
+        self._queue = Manager().Queue()
+        self.progress_monitor = _RichProgressMonitor(queue=self._queue)
         self.progress_monitor.start()
 
     def on_fit_iter_end(self, *, estimator, node, **kwargs):
-        pass
+        self._queue.put(node)
 
     def on_fit_end(self):
-        self._stop_event.set()
+        self._queue.put(None)
         self.progress_monitor.join()
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        if "_stop_event" in state:
-            del state["_stop_event"]
         if "progress_monitor" in state:
             del state["progress_monitor"]
         return state
@@ -96,7 +43,8 @@ class ProgressBar(BaseCallback):
 # insert tasks between existing tasks.
 
 try:
-    from rich.progress import Progress
+    from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn
+    from rich.style import Style
 
     class _Progress(Progress):
         def get_renderables(self):
@@ -111,42 +59,20 @@ class _RichProgressMonitor(Thread):
     """Thread monitoring the progress of an estimator with rich based display
 
     The display is a list of nested rich tasks using rich.Progress. There is one for
-    each node in the computation tree of the estimator and in the computation trees of
-    estimators used in the estimator.
+    each non-leaf node in the computation tree of the estimator.
 
     Parameters
     ----------
-    estimator : estimator instance
-        The estimator to monitor
-
-    event : threading.Event instance
-        This thread will run until event is set.
-
-    max_depth_show : int, default=None
-        The maximum nested level of progress bars to display.
-
-    max_depth_keep : int, default=None
-        The maximum nested level of progress bars to keep displayed when they are
-        finished.
+    queue : multiprocessing.Manager.Queue instance
+        This thread will run until the queue is empty.
     """
 
-    def __init__(self, estimator, event, max_depth_show=None, max_depth_keep=None):
+    def __init__(self, *, queue):
         Thread.__init__(self)
-        self.computation_tree = estimator._computation_tree
-        self.event = event
-        self.max_depth_show = max_depth_show
-        self.max_depth_keep = max_depth_keep
-
-        # _computation_trees is a dict `directory: tuple` where
-        # - tuple[0] is the computation tree of the directory
-        # - tuple[1] is a dict `node.tree_status_idx: task_id`
-        self._computation_trees = {}
+        self.queue = queue
 
     def run(self):
-        from rich.progress import BarColumn, TextColumn, TimeRemainingColumn
-        from rich.style import Style
-
-        with _Progress(
+        self.progress_ctx = _Progress(
             TextColumn("[progress.description]{task.description}"),
             BarColumn(
                 complete_style=Style(color="dark_orange"),
@@ -155,155 +81,104 @@ class _RichProgressMonitor(Thread):
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
             TimeRemainingColumn(),
             auto_refresh=False,
-        ) as progress_ctx:
-            self._progress_ctx = progress_ctx
+        )
 
-            while not self.event.wait(0.05):
-                self._recursive_update_tasks()
-                self._progress_ctx.refresh()
+        # Holds the root of the tree of rich tasks (i.e. progress bars) that will be
+        # created dynamically as the computation tree of the estimator is traversed.
+        self.root_task = None
 
-            self._recursive_update_tasks()
-            self._progress_ctx.refresh()
+        with self.progress_ctx:
+            while node:= self.queue.get():
 
-    def _recursive_update_tasks(self, this_dir=None, depth=0):
-        """Recursively loop through directories and init or update tasks
+                self._update_task_tree(node)
+                self._update_tasks()
+                self.progress_ctx.refresh()
 
-        Parameters
-        ----------
-        this_dir : pathlib.Path instance
-            The directory to
+    def _update_task_tree(self, node):
+        """Update the tree of tasks from a new node"""
+        curr_task, parent_task = None, None
 
-        depth : int
-            The current depth
-        """
-        if self.max_depth_show is not None and depth > self.max_depth_show:
-            # Fast exit if this dir is deeper than what we want to show anyway
-            return
+        for curr_node in node.path:
 
-        if this_dir is None:
-            this_dir = self.computation_tree.tree_dir
-            # _ordered_tasks holds the list of the tasks in the order we want them to
-            # be displayed.
-            self._progress_ctx._ordered_tasks = []
+            if curr_node.parent is None:  # root node
+                if self.root_task is None:
+                    self.root_task = TaskNode(curr_node, progress_ctx=self.progress_ctx)
+                curr_task = self.root_task
+            elif curr_node.idx not in parent_task.children:
+                curr_task = TaskNode(curr_node, progress_ctx=self.progress_ctx, parent=parent_task)
+                parent_task.children[curr_node.idx] = curr_task
+            else:  # task already exists
+                curr_task = parent_task.children[curr_node.idx]
+            parent_task = curr_task
 
-        if this_dir not in self._computation_trees:
-            # First time we discover this directory -> store the computation tree
-            # If the computation tree is not readable yet, skip and try again next time
-            computation_tree = load_computation_tree(this_dir)
-            if computation_tree is None:
-                return
+        # Mark the deepest task as finished (this is the one corresponding the
+        # computation node that we just get from the queue).
+        curr_task.finished = True
 
-            self._computation_trees[this_dir] = (computation_tree, {})
+    def _update_tasks(self):
+        """Loop through the tasks in their display oder and update their progress"""
+        self.progress_ctx._ordered_tasks = []
 
-        computation_tree, task_ids = self._computation_trees[this_dir]
+        for task_node in self.root_task:
+            task = self.progress_ctx.tasks[task_node.task_id]
 
-        for node in computation_tree.iterate(include_leaves=True):
-            if node.children:
-                # node is not a leaf, create or update its task
-                if node.tree_status_idx not in task_ids:
-                    visible = True
-                    if (
-                        self.max_depth_show is not None
-                        and depth + node.depth > self.max_depth_show
-                    ):
-                        # If this node is deeper than what we want to show, we create
-                        # the task anyway but make it not visible
-                        visible = False
-
-                    task_ids[node.tree_status_idx] = self._progress_ctx.add_task(
-                        self._format_task_description(node, computation_tree, depth),
-                        total=node.max_iter,
-                        visible=visible,
-                    )
-
-                task_id = task_ids[node.tree_status_idx]
-                task = self._progress_ctx.tasks[task_id]
-                self._progress_ctx._ordered_tasks.append(task)
-
-                parent_task = self._get_parent_task(node, computation_tree, task_ids)
-                if parent_task is not None and parent_task.finished:
-                    # If the task of the parent node is finished, make this task
-                    # finished. It can happen if some computations are stopped
-                    # before reaching max_iter.
-                    visible = True
-                    if (
-                        self.max_depth_keep is not None
-                        and depth + node.depth > self.max_depth_keep
-                    ):
-                        # If this node is deeper than what we want to keep in the output
-                        # make it not visible
-                        visible = False
-                    self._progress_ctx.update(
-                        task_id, completed=node.max_iter, visible=visible, refresh=False
-                    )
-                else:
-                    node_progress = computation_tree.get_progress(node)
-                    if node_progress != task.completed:
-                        self._progress_ctx.update(
-                            task_id, completed=node_progress, refresh=False
-                        )
+            if task_node.parent is not None and task_node.parent.finished:
+                # If the parent task is finished, then mark the current task as
+                # finished. It can happen if an estimator doesn't reach its max number
+                # of iterations (e.g. early stopping).
+                completed = task.total
             else:
-                # node is a leaf, look for tasks of its sub computation tree before
-                # going to the next node
-                child_dir = computation_tree.get_child_computation_tree_dir(node)
-                # child_dir = this_dir / str(node.tree_status_idx)
-                if child_dir.exists():
-                    self._recursive_update_tasks(
-                        child_dir, depth + computation_tree.depth
-                    )
+                completed = sum(t.finished for t in task_node.children.values())
 
-    def _format_task_description(self, node, computation_tree, depth):
+            if completed == task.total:
+                task_node.finished = True
+
+            self.progress_ctx.update(
+                task_node.task_id, completed=completed, refresh=False
+            )
+            self.progress_ctx._ordered_tasks.append(task)
+
+
+class TaskNode:
+    """A node in the tree of rich tasks
+    
+    Parameters
+    ----------
+    node : ComputationNode instance
+        The computation node this task corresponds to.
+    
+    progress_ctx : rich.Progress instance
+        The progress context to which this task belongs.
+
+    parent : TaskNode instance
+        The parent of this task.
+    """
+    def __init__(self, node, progress_ctx, parent=None):
+        self.node_idx = node.idx
+        self.parent = parent
+        self.children = {}
+        self.finished = False
+
+        if node.max_iter is not None:
+            description = self._format_task_description(node)
+            self.task_id = progress_ctx.add_task(description, total=node.max_iter)
+
+    def _format_task_description(self, node):
         """Return a formatted description for the task of the node"""
         colors = ["red", "green", "blue", "yellow"]
 
-        indent = f"{'  ' * (depth + node.depth)}"
-        style = f"[{colors[(depth + node.depth)%len(colors)]}]"
+        indent = f"{'  ' * (node.depth)}"
+        style = f"[{colors[(node.depth)%len(colors)]}]"
 
-        description = f"{computation_tree.estimator_name} - {node.description}"
-        if node.parent is None and computation_tree.parent_node is not None:
-            description = (
-                f"{computation_tree.parent_node.description} "
-                f"{computation_tree.parent_node.idx} |"
-                f" {description}"
-            )
-        if node.parent is not None:
-            description = f"{description} {node.idx}"
+        description = f"{node.estimator_name[0]} - {node.description[0]} #{node.idx}"
+        if len(node.estimator_name) == 2:
+            description += f" | {node.estimator_name[1]} - {node.description[1]}"
 
         return f"{style}{indent}{description}"
 
-    def _get_parent_task(self, node, computation_tree, task_ids):
-        """Get the task of the parent node"""
-        if node.parent is not None:
-            # node is not the root, return the task of its parent
-            task_id = task_ids[node.parent.tree_status_idx]
-            return self._progress_ctx.tasks[task_id]
-        if computation_tree.parent_node is not None:
-            # node is the root, return the task of the parent of the parent_node of
-            # its computation tree
-            parent_dir = computation_tree.parent_node.computation_tree.tree_dir
-            _, parent_tree_task_ids = self._computation_trees[parent_dir]
-            task_id = parent_tree_task_ids[
-                computation_tree.parent_node.parent.tree_status_idx
-            ]
-            return self._progress_ctx._tasks[task_id]
-        return
-
-
-class _TqdmProgressMonitor(Thread):
-    def __init__(self, estimator, event):
-        Thread.__init__(self)
-        self.computation_tree = estimator._computation_tree
-        self.event = event
-
-    def run(self):
-        from tqdm import tqdm
-
-        root = self.computation_tree.root
-
-        with tqdm(total=len(root.children)) as pbar:
-            while not self.event.wait(0.05):
-                node_progress = self.computation_tree.get_progress(root)
-                if node_progress != pbar.total:
-                    pbar.update(node_progress - pbar.n)
-
-            pbar.update(pbar.total - pbar.n)
+    def __iter__(self):
+        """Pre-order depth-first traversal, excluding leaves"""
+        if self.children:
+            yield self
+            for child in self.children.values():
+                yield from child

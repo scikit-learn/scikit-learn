@@ -1,6 +1,6 @@
 # License: BSD 3 clause
+# Authors: the scikit-learn developers
 
-import weakref
 from abc import ABC, abstractmethod
 
 
@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 def _eval_callbacks_on_fit_iter_end(**kwargs):
     """Evaluate the on_fit_iter_end method of the callbacks
 
-    This function should be called at the end of each computation node.
+    This function must be called at the end of each computation node.
 
     Parameters
     ----------
@@ -26,8 +26,6 @@ def _eval_callbacks_on_fit_iter_end(**kwargs):
 
     if not hasattr(estimator, "_callbacks") or node is None:
         return False
-
-    estimator._computation_tree._tree_status[node.tree_status_idx] = True
 
     # stopping_criterion and reconstruction_attributes can be costly to compute.
     # They are passed as lambdas for lazy evaluation. We only actually
@@ -56,9 +54,11 @@ class BaseCallback(ABC):
         ----------
         estimator: estimator instance
             The estimator the callback is set on.
+
         X: ndarray or sparse matrix, default=None
             The training data.
-        y: ndarray, default=None
+
+        y: ndarray or sparse matrix, default=None
             The target.
         """
         pass
@@ -103,11 +103,6 @@ class BaseCallback(ABC):
                 used by generic callbacks but by a callback designed for a specific
                 estimator instead.
 
-            - extra_verbose: dict
-                Model specific . This is not meant to be
-                used by generic callbacks but by a callback designed for a specific
-                estimator instead.
-
         Returns
         -------
         stop : bool or None
@@ -131,7 +126,7 @@ class BaseCallback(ABC):
         """Check if this callback attached to estimator has been propagated from a
         meta-estimator.
         """
-        return self.auto_propagate and hasattr(estimator, "_parent_ct_node")
+        return self.auto_propagate and hasattr(estimator, "_parent_node")
 
     @property
     def request_stopping_criterion(self):
@@ -140,20 +135,3 @@ class BaseCallback(ABC):
     @property
     def request_from_reconstruction_attributes(self):
         return False
-
-    @property
-    def request_validation_split(self):
-        return False
-
-    def _set_context(self, context):
-        if not hasattr(self, "_callback_contexts"):
-            self._callback_contexts = []
-
-        self._callback_contexts.append(context)
-
-
-class CallbackContext:
-    def __init__(self, callbacks, finalizer, finalizer_args):
-        for callback in callbacks:
-            callback._set_context(self)
-        weakref.finalize(self, finalizer, finalizer_args)

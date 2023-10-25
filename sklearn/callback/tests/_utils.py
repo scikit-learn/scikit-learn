@@ -1,4 +1,5 @@
-from functools import partial
+# License: BSD 3 clause
+# Authors: the scikit-learn developers
 
 from joblib.parallel import Parallel, delayed
 
@@ -41,7 +42,7 @@ class Estimator(BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y):
-        root, X, y, X_val, y_val = self._eval_callbacks_on_fit_begin(
+        root = self._eval_callbacks_on_fit_begin(
             levels=[
                 {"descr": "fit", "max_iter": self.max_iter},
                 {"descr": "iter", "max_iter": None},
@@ -54,20 +55,12 @@ class Estimator(BaseEstimator):
             if _eval_callbacks_on_fit_iter_end(
                 estimator=self,
                 node=root.children[i],
-                from_reconstruction_attributes=partial(
-                    self._from_reconstruction_attributes,
-                    reconstruction_attributes=lambda: {"n_iter_": i + 1},
-                ),
-                data={"X": X, "y": y, "X_val": X_val, "y_val": y_val},
             ):
                 break
 
         self.n_iter_ = i + 1
 
         return self
-
-    def objective_function(self, X, y=None, normalize=False):
-        return 0, 0, 0
 
 
 class MetaEstimator(BaseEstimator):
@@ -84,7 +77,7 @@ class MetaEstimator(BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=False)
     def fit(self, X, y):
-        root, X, y, _, _ = self._eval_callbacks_on_fit_begin(
+        root = self._eval_callbacks_on_fit_begin(
             levels=[
                 {"descr": "fit", "max_iter": self.n_outer},
                 {"descr": "outer", "max_iter": self.n_inner},
