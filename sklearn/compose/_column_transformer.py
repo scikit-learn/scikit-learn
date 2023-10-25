@@ -432,7 +432,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             - weight : the weight of the transformer
         """
         if fitted:
-            transformers = self.transformers_
+            transformers = _with_deactivated_dtype_warnings(self.transformers_)
         else:
             # interleave the validated column specifiers
             transformers = [
@@ -441,7 +441,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             ]
             # add transformer tuple for remainder
             if self._remainder[2]:
-                transformers = chain(transformers, [self._remainder])
+                transformers = chain(
+                    transformers, _with_deactivated_dtype_warnings([self._remainder])
+                )
         get_weight = (self.transformer_weights or {}).get
 
         for name, trans, columns in transformers:
@@ -697,7 +699,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         # sanity check that transformers is exhausted
         assert not list(fitted_transformers)
-        self.transformers_ = transformers_
+        self.transformers_ = _with_activated_dtype_warnings(transformers_)
 
     def _validate_output(self, result):
         """
@@ -1433,19 +1435,22 @@ class make_column_selector:
 class RemainderColsList(UserList):
     """A list that raises a warning whenever items are accessed."""
 
-    def __init__(self, columns, preferred_dtype="??"):
+    def __init__(
+        self, columns, preferred_dtype="??", warning_was_emitted=False, active=True
+    ):
         super().__init__(columns)
         self.preferred_dtype = preferred_dtype
-        self._warning_was_emitted = False
+        self.warning_was_emitted = warning_was_emitted
+        self.active = active
 
     def __getitem__(self, index):
         self._show_remainder_cols_warning()
         return super().__getitem__(index)
 
     def _show_remainder_cols_warning(self):
-        if self._warning_was_emitted:
+        if self.warning_was_emitted or not self.active:
             return
-        self._warning_was_emitted = True
+        self.warning_was_emitted = True
         preferred_dtype_description = {
             "str": "column names (of type str)",
             "bool": "a mask array (of type bool)",
@@ -1463,3 +1468,31 @@ class RemainderColsList(UserList):
             ),
             category=FutureWarning,
         )
+
+    def deactivated(self):
+        return RemainderColsList(
+            self.data, self.preferred_dtype, self.warning_was_emitted, False
+        )
+
+    def activated(self):
+        return RemainderColsList(
+            self.data, self.preferred_dtype, self.warning_was_emitted, True
+        )
+
+
+def _with_deactivated_dtype_warnings(transformers):
+    result = []
+    for name, trans, columns in transformers:
+        if isinstance(columns, RemainderColsList):
+            columns = columns.deactivated()
+        result.append((name, trans, columns))
+    return result
+
+
+def _with_activated_dtype_warnings(transformers):
+    result = []
+    for name, trans, columns in transformers:
+        if isinstance(columns, RemainderColsList):
+            columns = columns.activated()
+        result.append((name, trans, columns))
+    return result
