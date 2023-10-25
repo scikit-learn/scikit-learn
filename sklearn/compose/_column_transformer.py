@@ -7,7 +7,7 @@ different columns.
 #         Joris Van den Bossche
 # License: BSD
 import warnings
-from collections import Counter
+from collections import Counter, UserList
 from itertools import chain
 from numbers import Integral, Real
 
@@ -524,19 +524,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         remainder_cols = self._get_remainder_cols(remaining)
         self._remainder = ("remainder", self.remainder, remainder_cols)
 
-    def _get_remainder_cols(self, indices):
-        if self.force_int_remainder_cols:
-            warnings.warn(
-                (
-                    "The format of the columns of the remainder transformer in"
-                    f" {self.__class__.__name__}.transformers_ will change in a future"
-                    " version, to match the format of the other transformers. To use"
-                    " the new behavior now and suppress this warning, use"
-                    " force_int_remainder_cols=False."
-                ),
-                category=FutureWarning,
-            )
-            return indices
+    def _get_preferred_remainder_cols_dtype(self):
         dtype = "int"
         try:
             all_dtypes = {_determine_key_type(c) for (*_, c) in self.transformers}
@@ -544,9 +532,15 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 dtype = list(all_dtypes)[0]
         except ValueError:
             pass
-        if dtype == "str":
+        return dtype
+
+    def _get_remainder_cols(self, indices):
+        preferred_dtype = self._get_preferred_remainder_cols_dtype()
+        if self.force_int_remainder_cols and preferred_dtype != "int":
+            return RemainderColsList(indices, preferred_dtype)
+        if preferred_dtype == "str":
             return list(self.feature_names_in_[indices])
-        if dtype == "bool":
+        if preferred_dtype == "bool":
             return [i in indices for i in range(self.n_features_in_)]
         return indices
 
@@ -1067,9 +1061,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 output_samples = output.shape[0]
                 if any(_num_samples(X) != output_samples for X in Xs):
                     raise ValueError(
-                        "Concatenating DataFrames from the transformer's output lead to"
-                        " an inconsistent number of samples. The output may have Pandas"
-                        " Indexes that do not match."
+                        "Concatenating DataFrames from the transformer's output lead"
+                        " to an inconsistent number of samples. The output may have"
+                        " Pandas Indexes that do not match."
                     )
 
                 # If all transformers define `get_feature_names_out`, then transform
@@ -1434,3 +1428,38 @@ class make_column_selector:
         if self.pattern is not None:
             cols = cols[cols.str.contains(self.pattern, regex=True)]
         return cols.tolist()
+
+
+class RemainderColsList(UserList):
+    """A list that raises a warning whenever items are accessed."""
+
+    def __init__(self, columns, preferred_dtype="??"):
+        super().__init__(columns)
+        self.preferred_dtype = preferred_dtype
+        self._warning_was_emitted = False
+
+    def __getitem__(self, index):
+        self._show_remainder_cols_warning()
+        return super().__getitem__(index)
+
+    def _show_remainder_cols_warning(self):
+        if self._warning_was_emitted:
+            return
+        self._warning_was_emitted = True
+        preferred_dtype_description = {
+            "str": "column names (of type str)",
+            "bool": "a mask array (of type bool)",
+        }.get(self.preferred_dtype, self.preferred_dtype)
+        warnings.warn(
+            (
+                "The format of the columns of the 'remainder' transformer in"
+                " ColumTransformer.transformers_ will change in a future version, to"
+                " match the format of the other transformers.\n  At the moment the"
+                " remainder columns are stored as indices (of type int).  With the same"
+                " ColumnTransformer configuration, in the future they will be stored as"
+                f" {preferred_dtype_description}.\n  To use the new behavior now and"
+                " suppress this warning, use"
+                " ColumnTransformer(force_int_remainder_cols=False).\n"
+            ),
+            category=FutureWarning,
+        )

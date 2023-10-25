@@ -7,6 +7,7 @@ import platform
 import struct
 import timeit
 import warnings
+from collections import UserList
 from collections.abc import Sequence
 from contextlib import contextmanager, suppress
 from itertools import compress, islice
@@ -273,7 +274,7 @@ def _determine_key_type(key, accept_slice=True):
         if key_start_type is not None:
             return key_start_type
         return key_stop_type
-    if isinstance(key, (list, tuple)):
+    if isinstance(key, (list, tuple, UserList)):
         unique_key = set(key)
         key_type = {_determine_key_type(elt) for elt in unique_key}
         if not key_type:
