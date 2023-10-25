@@ -1,6 +1,7 @@
 """
 Test the ColumnTransformer.
 """
+
 import pickle
 import re
 
@@ -908,6 +909,64 @@ def test_column_transformer_remainder():
     # check default for make_column_transformer
     ct = make_column_transformer((Trans(), [0]))
     assert ct.remainder == "drop"
+
+
+@pytest.mark.parametrize("force_int", [False, True])
+def test_column_transformer_remainder_dtypes(force_int):
+    X = np.ones((1, 3))
+
+    # if inputs mix formats always store remainder columns as indices
+    ct = make_column_transformer(
+        (Trans(), [0]),
+        (Trans(), [False, True, False]),
+        remainder="passthrough",
+        force_int_remainder_cols=force_int,
+    )
+    ct.fit(X)
+    assert ct.transformers_[-1][-1][0] == 2
+
+    # if inputs are indices store remainder columns as indices
+    ct = make_column_transformer(
+        (Trans(), [0]),
+        (Trans(), [1]),
+        remainder="passthrough",
+        force_int_remainder_cols=force_int,
+    )
+    ct.fit(X)
+    assert ct.transformers_[-1][-1][0] == 2
+
+    # if inputs are callables store remainder columns as indices
+    ct = make_column_transformer(
+        (Trans(), lambda x: [0]),
+        (Trans(), lambda x: [1]),
+        remainder="passthrough",
+        force_int_remainder_cols=force_int,
+    )
+    ct.fit(X)
+    assert ct.transformers_[-1][-1][0] == 2
+
+    # if inputs are masks store remainder columns as masks
+    ct = make_column_transformer(
+        (Trans(), [True, False, False]),
+        (Trans(), [False, True, False]),
+        remainder="passthrough",
+        force_int_remainder_cols=force_int,
+    )
+    ct.fit(X)
+    assert ct.transformers_[-1][-1][0] == 2 if force_int else [False, False, True]
+
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame(X, columns=["A", "B", "C"])
+
+    # if inputs are column names store remainder columns as column names
+    ct = make_column_transformer(
+        (Trans(), ["A"]),
+        (Trans(), ["B"]),
+        remainder="passthrough",
+        force_int_remainder_cols=force_int,
+    )
+    ct.fit(X)
+    assert ct.transformers_[-1][-1][0] == 2 if force_int else ["C"]
 
 
 @pytest.mark.parametrize(

@@ -163,7 +163,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         ``len(transformers_)==len(transformers)+1``, otherwise
         ``len(transformers_)==len(transformers)``.
         If there are remaining columns and `force_int_remainder_cols` is True,
-        the remaining columns are always represented by their (positional, int)
+        the remaining columns are always represented by their positional
         indices in the input `X`. If `force_int_remainder_cols` is False, the
         format attempts to match that of the other transformers: if all columns
         were provided as column names (str), the remaining columns are stored
@@ -1229,6 +1229,7 @@ def make_column_transformer(
     n_jobs=None,
     verbose=False,
     verbose_feature_names_out=True,
+    force_int_remainder_cols=True,
 ):
     """Construct a ColumnTransformer from the given transformers.
 
@@ -1301,6 +1302,14 @@ def make_column_transformer(
 
         .. versionadded:: 1.0
 
+    force_int_remainder_cols : bool, default=True
+        Force the columns of the last entry of `transformers_`, which
+        corresponds to the "remainder" transformer, to always be stored as
+        indices (int) rather than column names (str). See description of the
+        :attr:`ColumnTransformer.transformers_` attribute for details.
+
+        .. versionadded:: 1.4
+
     Returns
     -------
     ct : ColumnTransformer
@@ -1334,6 +1343,7 @@ def make_column_transformer(
         sparse_threshold=sparse_threshold,
         verbose=verbose,
         verbose_feature_names_out=verbose_feature_names_out,
+        force_int_remainder_cols=force_int_remainder_cols,
     )
 
 
