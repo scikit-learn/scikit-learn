@@ -17,7 +17,7 @@ from . import __version__
 from ._config import config_context, get_config
 from .exceptions import InconsistentVersionWarning
 from .utils import _IS_32BIT
-from .utils._estimator_html_repr import estimator_html_repr
+from .utils._estimator_html_repr import _HTMLDocumentationLinkMixin, estimator_html_repr
 from .utils._metadata_requests import _MetadataRequester, _routing_enabled
 from .utils._param_validation import validate_parameter_constraints
 from .utils._set_output import _SetOutputMixin
@@ -134,7 +134,7 @@ def _clone_parametrized(estimator, *, safe=True):
     return new_object
 
 
-class BaseEstimator(_MetadataRequester):
+class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     """Base class for all estimators in scikit-learn.
 
     Notes
