@@ -212,7 +212,7 @@ class _PLS(
         self.copy = copy
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, Y):
+    def fit(self, X, y, Y=None):
         """Fit model to data.
 
         Parameters
@@ -221,7 +221,7 @@ class _PLS(
             Training vectors, where `n_samples` is the number of samples and
             `n_features` is the number of predictors.
 
-        Y : array-like of shape (n_samples,) or (n_samples, n_targets)
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target vectors, where `n_samples` is the number of samples and
             `n_targets` is the number of response variables.
 
@@ -230,22 +230,30 @@ class _PLS(
         self : object
             Fitted model.
         """
-        check_consistent_length(X, Y)
+        check_consistent_length(X, y)
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
         )
-        Y = check_array(
-            Y, input_name="Y", dtype=np.float64, copy=self.copy, ensure_2d=False
+
+        if Y is not None:
+            warnings.warn(
+                "The use of Y as a parameter is currently being deprecated in favour"
+                " of y."
+            )
+            y = Y
+
+        y = check_array(
+            y, input_name="y", dtype=np.float64, copy=self.copy, ensure_2d=False
         )
-        if Y.ndim == 1:
+        if y.ndim == 1:
             self._predict_1d = True
-            Y = Y.reshape(-1, 1)
+            y = y.reshape(-1, 1)
         else:
             self._predict_1d = False
 
         n = X.shape[0]
         p = X.shape[1]
-        q = Y.shape[1]
+        q = y.shape[1]
 
         n_components = self.n_components
         # With PLSRegression n_components is bounded by the rank of (X.T X) see
@@ -263,7 +271,7 @@ class _PLS(
 
         # Scale (in place)
         Xk, Yk, self._x_mean, self._y_mean, self._x_std, self._y_std = _center_scale_xy(
-            X, Y, self.scale
+            X, y, self.scale
         )
 
         self.x_weights_ = np.zeros((p, n_components))  # U
@@ -622,7 +630,7 @@ class PLSRegression(_PLS):
             copy=copy,
         )
 
-    def fit(self, X, Y):
+    def fit(self, X, y, Y=None):
         """Fit model to data.
 
         Parameters
@@ -631,7 +639,7 @@ class PLSRegression(_PLS):
             Training vectors, where `n_samples` is the number of samples and
             `n_features` is the number of predictors.
 
-        Y : array-like of shape (n_samples,) or (n_samples, n_targets)
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target vectors, where `n_samples` is the number of samples and
             `n_targets` is the number of response variables.
 
@@ -640,7 +648,14 @@ class PLSRegression(_PLS):
         self : object
             Fitted model.
         """
-        super().fit(X, Y)
+
+        if Y is not None:
+            warnings.warn(
+                "The use of Y as a parameter is currently being deprecated in favour"
+                " of  y."
+            )
+            y = Y
+        super().fit(X, y)
         # expose the fitted attributes `x_scores_` and `y_scores_`
         self.x_scores_ = self._x_scores
         self.y_scores_ = self._y_scores
@@ -964,7 +979,7 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self.copy = copy
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, Y):
+    def fit(self, X, y, Y=None):
         """Fit model to data.
 
         Parameters
@@ -972,7 +987,7 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             Training samples.
 
-        Y : array-like of shape (n_samples,) or (n_samples, n_targets)
+        y: array-like of shape (n_samples,) or (n_samples, n_targets)
             Targets.
 
         Returns
@@ -984,10 +999,10 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
         )
-        Y = check_array(
-            Y, input_name="Y", dtype=np.float64, copy=self.copy, ensure_2d=False
+        y = check_array(
+            Y, input_name="y", dtype=np.float64, copy=self.copy, ensure_2d=False
         )
-        if Y.ndim == 1:
+        if y.ndim == 1:
             Y = Y.reshape(-1, 1)
 
         # we'll compute the SVD of the cross-covariance matrix = X.T.dot(Y)
@@ -1001,8 +1016,8 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 f"Got {n_components} instead. Reduce `n_components`."
             )
 
-        X, Y, self._x_mean, self._y_mean, self._x_std, self._y_std = _center_scale_xy(
-            X, Y, self.scale
+        X, y, self._x_mean, self._y_mean, self._x_std, self._y_std = _center_scale_xy(
+            X, y, self.scale
         )
 
         # Compute SVD of cross-covariance matrix
