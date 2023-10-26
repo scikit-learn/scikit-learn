@@ -958,7 +958,6 @@ cdef class CyLossFunction:
         """
         self.loss(y_true, raw_prediction, sample_weight, loss_out, n_threads)
         self.gradient(y_true, raw_prediction, sample_weight, gradient_out, n_threads)
-        return np.asarray(loss_out), np.asarray(gradient_out)
 
     def gradient_hessian(
         self,
@@ -1045,8 +1044,6 @@ cdef class {{name}}(CyLossFunction):
             ):
                 loss_out[i] = sample_weight[i] * {{closs}}(y_true[i], raw_prediction[i]{{with_param}})
 
-        return np.asarray(loss_out)
-
     {{if closs_grad is not None}}
     def loss_gradient(
         self,
@@ -1077,7 +1074,6 @@ cdef class {{name}}(CyLossFunction):
                 loss_out[i] = sample_weight[i] * dbl2.val1
                 gradient_out[i] = sample_weight[i] * dbl2.val2
 
-        return np.asarray(loss_out), np.asarray(gradient_out)
     {{endif}}
 
     def gradient(
@@ -1102,8 +1098,6 @@ cdef class {{name}}(CyLossFunction):
                 n_samples, schedule='static', nogil=True, num_threads=n_threads
             ):
                 gradient_out[i] = sample_weight[i] * {{cgrad}}(y_true[i], raw_prediction[i]{{with_param}})
-
-        return np.asarray(gradient_out)
 
     def gradient_hessian(
         self,
@@ -1133,8 +1127,6 @@ cdef class {{name}}(CyLossFunction):
                 dbl2 = {{cgrad_hess}}(y_true[i], raw_prediction[i]{{with_param}})
                 gradient_out[i] = sample_weight[i] * dbl2.val1
                 hessian_out[i] = sample_weight[i] * dbl2.val2
-
-        return np.asarray(gradient_out), np.asarray(hessian_out)
 
 {{endfor}}
 
@@ -1216,8 +1208,6 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
 
                 free(p)
 
-        return np.asarray(loss_out)
-
     def loss_gradient(
         self,
         const floating_in[::1] y_true,           # IN
@@ -1278,8 +1268,6 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
 
                 free(p)
 
-        return np.asarray(loss_out), np.asarray(gradient_out)
-
     def gradient(
         self,
         const floating_in[::1] y_true,           # IN
@@ -1326,8 +1314,6 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
                         gradient_out[i, k] = (p[k] - (y_true[i] == k)) * sample_weight[i]
 
                 free(p)
-
-        return np.asarray(gradient_out)
 
     def gradient_hessian(
         self,
@@ -1381,9 +1367,6 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
 
                 free(p)
 
-        return np.asarray(gradient_out), np.asarray(hessian_out)
-
-
     # This method simplifies the implementation of hessp in linear models,
     # i.e. the matrix-vector product of the full hessian, not only of the
     # diagonal (in the classes) approximation as implemented above.
@@ -1434,5 +1417,3 @@ cdef class CyHalfMultinomialLoss(CyLossFunction):
                         gradient_out[i, k] = (proba_out[i, k] - (y_true[i] == k)) * sample_weight[i]
 
                 free(p)
-
-        return np.asarray(gradient_out), np.asarray(proba_out)
