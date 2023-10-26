@@ -162,14 +162,18 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         ``remainder`` parameter. If there are remaining columns, then
         ``len(transformers_)==len(transformers)+1``, otherwise
         ``len(transformers_)==len(transformers)``.
-        If there are remaining columns and `force_int_remainder_cols` is True,
-        the remaining columns are always represented by their positional
-        indices in the input `X`. If `force_int_remainder_cols` is False, the
-        format attempts to match that of the other transformers: if all columns
-        were provided as column names (str), the remaining columns are stored
-        as column names; if all columns were provided as mask arrays (bool), so
-        are the remaining columns; in all other cases the remaining columns are
-        stored as indices (int).
+
+        .. deprecated::
+
+            If there are remaining columns and `force_int_remainder_cols` is
+            True, the remaining columns are always represented by their
+            positional indices in the input `X`. If `force_int_remainder_cols`
+            is False, the format attempts to match that of the other
+            transformers: if all columns were provided as column names (str),
+            the remaining columns are stored as column names; if all columns
+            were provided as mask arrays (bool), so are the remaining columns;
+            in all other cases the remaining columns are stored as indices
+            (int).
 
     named_transformers_ : :class:`~sklearn.utils.Bunch`
         Read-only attribute to access any transformer by given name.
@@ -432,6 +436,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             - weight : the weight of the transformer
         """
         if fitted:
+            # We want the warning about the future change of the remainder
+            # columns dtype to be shown only when a user accesses them
+            # directly, not when they are used by the ColumnTransformer itself.
+            # We disable warnings here; they are enabled when setting
+            # self.transformers_.
             transformers = _with_disabled_dtype_warnings(self.transformers_)
         else:
             # interleave the validated column specifiers
@@ -526,23 +535,24 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         remainder_cols = self._get_remainder_cols(remaining)
         self._remainder = ("remainder", self.remainder, remainder_cols)
 
-    def _get_preferred_remainder_cols_dtype(self):
-        dtype = "int"
+    def _get_remainder_cols_dtype(self):
         try:
             all_dtypes = {_determine_key_type(c) for (*_, c) in self.transformers}
             if len(all_dtypes) == 1:
-                dtype = list(all_dtypes)[0]
+                return next(iter(all_dtypes))[0]
         except ValueError:
-            pass
-        return dtype
+            # _determine_key_type raises a ValueError if some transformer
+            # columns are Callables
+            return "int"
+        return "int"
 
     def _get_remainder_cols(self, indices):
-        preferred_dtype = self._get_preferred_remainder_cols_dtype()
-        if self.force_int_remainder_cols and preferred_dtype != "int":
-            return _RemainderColsList(indices, preferred_dtype)
-        if preferred_dtype == "str":
+        dtype = self._get_remainder_cols_dtype()
+        if self.force_int_remainder_cols and dtype != "int":
+            return _RemainderColsList(indices, dtype)
+        if dtype == "str":
             return list(self.feature_names_in_[indices])
-        if preferred_dtype == "bool":
+        if dtype == "bool":
             return [i in indices for i in range(self.n_features_in_)]
         return indices
 
@@ -1063,9 +1073,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 output_samples = output.shape[0]
                 if any(_num_samples(X) != output_samples for X in Xs):
                     raise ValueError(
-                        "Concatenating DataFrames from the transformer's output lead"
-                        " to an inconsistent number of samples. The output may have"
-                        " Pandas Indexes that do not match."
+                        "Concatenating DataFrames from the transformer's output lead to"
+                        " an inconsistent number of samples. The output may have Pandas"
+                        " Indexes that do not match."
                     )
 
                 # If all transformers define `get_feature_names_out`, then transform
@@ -1448,9 +1458,9 @@ class _RemainderColsList(UserList):
     columns : list of int
         The remainder columns.
 
-    preferred_dtype : {'str', 'bool'}
-        The dtype that would have been preferred based on the ColumnVectorizer
-        inputs, ie that will be used in a future release.
+    future_dtype : {'str', 'bool'}
+        The dtype that will be used by a ColumnTransformer with the same inputs
+        in a future release.
 
     warning_was_emitted : bool
        Whether the warning for that particular list was already shown, so we
