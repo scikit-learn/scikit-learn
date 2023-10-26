@@ -1433,7 +1433,35 @@ class make_column_selector:
 
 
 class _RemainderColsList(UserList):
-    """A list that raises a warning whenever items are accessed."""
+    """A list that raises a warning whenever items are accessed.
+
+    It is used to store the columns handled by the "remainder" entry of
+    ``ColumnTransformer.transformers_``, ie ``transformers_[-1][-1]``.
+
+    For some values of the ``ColumTransformer`` ``transformers`` parameter,
+    this list of indices will be replaced by either a list of column names or a
+    boolean mask; in those cases we emit a ``FutureWarning`` the first time an
+    element is accessed.
+
+    Parameters
+    ----------
+    columns : list of int
+        The remainder columns.
+
+    preferred_dtype : {'str', 'bool'}
+        The dtype that would have been preferred based on the ColumnVectorizer
+        inputs, ie that will be used in a future release.
+
+    warning_was_emitted : bool
+       Whether the warning for that particular list was already shown, so we
+       only emit it once.
+
+    active : bool
+        When False, the list never emits the warning nor updates
+        warning_was_emitted. This is used to obtain a quiet copy of the list
+        for use by the ColumnVectorizer itself, so that the warning is only
+        shown when a user accesses it directly.
+    """
 
     def __init__(
         self, columns, preferred_dtype="??", warning_was_emitted=False, active=True
@@ -1470,17 +1498,31 @@ class _RemainderColsList(UserList):
         )
 
     def deactivated(self):
+        """Return a shallow copy of the list with active=False.
+
+        Use to temporarily silence warnings when `transformers_` or
+        `_remainder` is used internally by the `ColumnVectorizer`.
+        """
         return _RemainderColsList(
             self.data, self.preferred_dtype, self.warning_was_emitted, False
         )
 
     def activated(self):
+        """Return a shallow copy of the list with active=True.
+
+        Use to enable warnings before storing the all the transformers in
+        `transformers_`.
+        """
         return _RemainderColsList(
             self.data, self.preferred_dtype, self.warning_was_emitted, True
         )
 
 
 def _with_deactivated_dtype_warnings(transformers):
+    """Obtain a shallow copy that does not emit warnings.
+
+    The remainder columns warning (if it exists) is deactivated.
+    """
     result = []
     for name, trans, columns in transformers:
         if isinstance(columns, _RemainderColsList):
@@ -1490,6 +1532,10 @@ def _with_deactivated_dtype_warnings(transformers):
 
 
 def _with_activated_dtype_warnings(transformers):
+    """Obtain a shallow copy with warnings enabled.
+
+    The remainder columns warning (if it exists) is activated.
+    """
     result = []
     for name, trans, columns in transformers:
         if isinstance(columns, _RemainderColsList):
