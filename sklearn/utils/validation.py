@@ -27,7 +27,7 @@ import scipy.sparse as sp
 from .. import get_config as _get_config
 from ..exceptions import DataConversionWarning, NotFittedError, PositiveSpectrumWarning
 from ..utils._array_api import _asarray_with_order, _is_numpy_namespace, get_namespace
-from ..utils.fixes import ComplexWarning
+from ..utils.fixes import ComplexWarning, _preserve_dia_indices_dtype
 from ._isfinite import FiniteStatus, cy_isfinite
 from .fixes import _object_dtype_isnan
 
@@ -577,106 +577,21 @@ def _ensure_sparse_format(
                 input_name=input_name,
             )
 
-    # With SciPy sparse arrays, conversion from DIA format to COO, CSR, or BSR triggers
-    # the use of `np.int64` indices even if the data is such that it could be more
-    # efficiently represented with `np.int32` indices.
-    # https://github.com/scipy/scipy/issues/19245
-    # Since not all scikit-learn algorithms support large indices, the following code
-    # downcasts to `np.int32` indices when it's safe to do so.
-    if (
-        sparse_container_type_name == "dia_array"
-        and changed_format
-        and accept_sparse[0] in ("csr", "coo")
-    ):
-        if accept_sparse[0] == "csr":
-            index_dtype = _smallest_admissible_index_dtype(
-                arrays=(sparse_container.indptr, sparse_container.indices),
-                maxval=max(sparse_container.nnz, sparse_container.shape[1]),
-                check_contents=True,
-            )
-            sparse_container.indices = sparse_container.indices.astype(
-                index_dtype, copy=False
-            )
-            sparse_container.indptr = sparse_container.indptr.astype(
-                index_dtype, copy=False
-            )
-        else:  # accept_sparse[0] == "coo"
-            index_dtype = _smallest_admissible_index_dtype(
-                maxval=max(sparse_container.shape)
-            )
-            sparse_container.row = sparse_container.row.astype(index_dtype, copy=False)
-            sparse_container.col = sparse_container.col.astype(index_dtype, copy=False)
+    # TODO: Remove when the minimum version of SciPy supported is 1.12
+    # With SciPy sparse arrays, conversion from DIA format to COO, CSR, or BSR
+    # triggers the use of `np.int64` indices even if the data is such that it could
+    # be more efficiently represented with `np.int32` indices.
+    # https://github.com/scipy/scipy/issues/19245 Since not all scikit-learn
+    # algorithms support large indices, the following code downcasts to `np.int32`
+    # indices when it's safe to do so.
+    if changed_format:
+        # accept_sparse is specified to a specific format and a conversion occurred
+        requested_sparse_format = accept_sparse[0]
+        _preserve_dia_indices_dtype(
+            sparse_container, sparse_container_type_name, requested_sparse_format
+        )
 
     return sparse_container
-
-
-def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=False):
-    """Based on input (integer) arrays `a`, determine a suitable index data
-    type that can hold the data in the arrays.
-
-    This function returns `np.int64` if it either required by `maxval` or based on the
-    largest precision of the dtype of the arrays passed as argument, or by the their
-    contents (when `check_contents is True`). If none of the condition requires
-    `np.int64` then this function returns `np.int32`.
-
-    Parameters
-    ----------
-    arrays : ndarray or tuple of ndarrays, default=()
-        Input arrays whose types/contents to check.
-
-    maxval : float, default=None
-        Maximum value needed.
-
-    check_contents : bool, default=False
-        Whether to check the values in the arrays and not just their types.
-        By default, check only the types.
-
-    Returns
-    -------
-    dtype : {np.int32, np.int64}
-        Suitable index data type (int32 or int64).
-    """
-
-    int32min = np.int32(np.iinfo(np.int32).min)
-    int32max = np.int32(np.iinfo(np.int32).max)
-
-    if maxval is not None:
-        if maxval > np.iinfo(np.int64).max:
-            raise ValueError(
-                f"maxval={maxval} is to large to be represented as np.int64."
-            )
-        if maxval > int32max:
-            return np.int64
-
-    if isinstance(arrays, np.ndarray):
-        arrays = (arrays,)
-
-    for arr in arrays:
-        if not isinstance(arr, np.ndarray):
-            raise TypeError(
-                f"Arrays should be of type np.ndarray, got {type(arr)} instead."
-            )
-        if not np.issubdtype(arr.dtype, np.integer):
-            raise ValueError(
-                f"Array dtype {arr.dtype} is not supported for index dtype. We expect "
-                "integral values."
-            )
-        if not np.can_cast(arr.dtype, np.int32):
-            if not check_contents:
-                # when `check_contents` is False, we stay on the safe side and return
-                # np.int64.
-                return np.int64
-            if arr.size == 0:
-                # a bigger type not needed yet, let's look at the next array
-                continue
-            else:
-                maxval = arr.max()
-                minval = arr.min()
-                if minval < int32min or maxval > int32max:
-                    # a big index type is actually needed
-                    return np.int64
-
-    return np.int32
 
 
 def _ensure_no_complex_data(array):
