@@ -306,7 +306,8 @@ and is part of the scikit-learn consortium at Inria.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Quansight Labs <https://labs.quansight.org>`_ funds Thomas J. Fan since 2021.
+`Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu and
+Meekail Zain since 2022 and funded Thomas J. Fan from 2021 to 2023.
 
 .. raw:: html
 
