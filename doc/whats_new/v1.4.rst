@@ -36,7 +36,7 @@ random sampling procedures.
       specified `tol`, for small values you will get more precise results.
 
 - |Fix| fixes a memory leak seen in PyPy for estimators using the Cython loss functions.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`27670` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changes impacting all modules
 -----------------------------
