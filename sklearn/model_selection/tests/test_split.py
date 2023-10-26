@@ -1273,7 +1273,10 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
     "shuffle, stratify",
     (
         (True, None),
-        (True, np.concatenate((np.ones(6), np.zeros(4)))),
+        (
+            True,
+            np.concatenate((np.ones(6, dtype=np.int32), np.zeros(4, dtype=np.int32))),
+        ),
         # stratification only works with shuffling
         (False, None),
     ),
@@ -1281,13 +1284,10 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
 def test_array_api_train_test_split(shuffle, stratify, array_namespace, device, dtype):
     xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
 
-    X = np.arange(100).reshape((10, 10))
-    y = np.arange(10)
+    X_np = np.arange(100).reshape((10, 10)).astype(dtype)
+    y_np = np.arange(10)
 
-    X_np = X.astype(dtype)
     X_xp = xp.asarray(X_np, device=device)
-
-    y_np = y.astype(dtype)
     y_xp = xp.asarray(y_np, device=device)
 
     X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
@@ -1320,7 +1320,7 @@ def test_array_api_train_test_split(shuffle, stratify, array_namespace, device, 
     assert X_test_xp.dtype == X_xp.dtype
     assert y_test_xp.dtype == y_xp.dtype
 
-    for (data_xp, data_np) in [
+    for data_xp, data_np in [
         (X_train_xp, X_train_np),
         (X_test_xp, X_test_np),
         (y_train_xp, y_train_np),
