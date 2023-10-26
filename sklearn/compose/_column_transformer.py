@@ -432,7 +432,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             - weight : the weight of the transformer
         """
         if fitted:
-            transformers = _with_deactivated_dtype_warnings(self.transformers_)
+            transformers = _with_disabled_dtype_warnings(self.transformers_)
         else:
             # interleave the validated column specifiers
             transformers = [
@@ -442,7 +442,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # add transformer tuple for remainder
             if self._remainder[2]:
                 transformers = chain(
-                    transformers, _with_deactivated_dtype_warnings([self._remainder])
+                    transformers, _with_disabled_dtype_warnings([self._remainder])
                 )
         get_weight = (self.transformer_weights or {}).get
 
@@ -699,7 +699,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         # sanity check that transformers is exhausted
         assert not list(fitted_transformers)
-        self.transformers_ = _with_activated_dtype_warnings(transformers_)
+        self.transformers_ = _with_enabled_dtype_warnings(transformers_)
 
     def _validate_output(self, result):
         """
@@ -1456,7 +1456,7 @@ class _RemainderColsList(UserList):
        Whether the warning for that particular list was already shown, so we
        only emit it once.
 
-    active : bool
+    is_enabled : bool
         When False, the list never emits the warning nor updates
         warning_was_emitted. This is used to obtain a quiet copy of the list
         for use by the ColumnVectorizer itself, so that the warning is only
@@ -1464,19 +1464,19 @@ class _RemainderColsList(UserList):
     """
 
     def __init__(
-        self, columns, preferred_dtype="??", warning_was_emitted=False, active=True
+        self, columns, preferred_dtype="??", warning_was_emitted=False, is_enabled=True
     ):
         super().__init__(columns)
         self.preferred_dtype = preferred_dtype
         self.warning_was_emitted = warning_was_emitted
-        self.active = active
+        self.is_enabled = is_enabled
 
     def __getitem__(self, index):
         self._show_remainder_cols_warning()
         return super().__getitem__(index)
 
     def _show_remainder_cols_warning(self):
-        if self.warning_was_emitted or not self.active:
+        if self.warning_was_emitted or not self.is_enabled:
             return
         self.warning_was_emitted = True
         preferred_dtype_description = {
@@ -1497,8 +1497,8 @@ class _RemainderColsList(UserList):
             category=FutureWarning,
         )
 
-    def deactivated(self):
-        """Return a shallow copy of the list with active=False.
+    def disabled(self):
+        """Return a shallow copy of the list with is_enabled=False.
 
         Use to temporarily silence warnings when `transformers_` or
         `_remainder` is used internally by the `ColumnVectorizer`.
@@ -1507,8 +1507,8 @@ class _RemainderColsList(UserList):
             self.data, self.preferred_dtype, self.warning_was_emitted, False
         )
 
-    def activated(self):
-        """Return a shallow copy of the list with active=True.
+    def enabled(self):
+        """Return a shallow copy of the list with is_enabled=True.
 
         Use to enable warnings before storing the all the transformers in
         `transformers_`.
@@ -1518,27 +1518,27 @@ class _RemainderColsList(UserList):
         )
 
 
-def _with_deactivated_dtype_warnings(transformers):
+def _with_disabled_dtype_warnings(transformers):
     """Obtain a shallow copy that does not emit warnings.
 
-    The remainder columns warning (if it exists) is deactivated.
+    The remainder columns warning (if it exists) is disabled.
     """
     result = []
     for name, trans, columns in transformers:
         if isinstance(columns, _RemainderColsList):
-            columns = columns.deactivated()
+            columns = columns.disabled()
         result.append((name, trans, columns))
     return result
 
 
-def _with_activated_dtype_warnings(transformers):
+def _with_enabled_dtype_warnings(transformers):
     """Obtain a shallow copy with warnings enabled.
 
-    The remainder columns warning (if it exists) is activated.
+    The remainder columns warning (if it exists) is enabled.
     """
     result = []
     for name, trans, columns in transformers:
         if isinstance(columns, _RemainderColsList):
-            columns = columns.activated()
+            columns = columns.enabled()
         result.append((name, trans, columns))
     return result
