@@ -1468,13 +1468,13 @@ class _RemainderColsList(UserList):
 
     is_enabled : bool
         When False, the list never emits the warning nor updates
-        warning_was_emitted. This is used to obtain a quiet copy of the list
-        for use by the ColumnVectorizer itself, so that the warning is only
+        `warning_was_emitted``. This is used to obtain a quiet copy of the list
+        for use by the `ColumnTransformer` itself, so that the warning is only
         shown when a user accesses it directly.
     """
 
     def __init__(
-        self, columns, preferred_dtype="??", warning_was_emitted=False, is_enabled=True
+        self, *, columns, preferred_dtype="??", warning_was_emitted=False, is_enabled=True
     ):
         super().__init__(columns)
         self.preferred_dtype = preferred_dtype
@@ -1496,7 +1496,7 @@ class _RemainderColsList(UserList):
         warnings.warn(
             (
                 "The format of the columns of the 'remainder' transformer in"
-                " ColumTransformer.transformers_ will change in a future version, to"
+                " ColumnTransformer.transformers_ will change in a future version, to"
                 " match the format of the other transformers.\n  At the moment the"
                 " remainder columns are stored as indices (of type int).  With the same"
                 " ColumnTransformer configuration, in the future they will be stored as"
@@ -1508,17 +1508,17 @@ class _RemainderColsList(UserList):
         )
 
     def disabled(self):
-        """Return a shallow copy of the list with is_enabled=False.
+        """Return a shallow copy of the list with `is_enabled=False`.
 
         Use to temporarily silence warnings when `transformers_` or
-        `_remainder` is used internally by the `ColumnVectorizer`.
+        `_remainder` is used internally by the `ColumnTransformer`.
         """
         return _RemainderColsList(
             self.data, self.preferred_dtype, self.warning_was_emitted, False
         )
 
     def enabled(self):
-        """Return a shallow copy of the list with is_enabled=True.
+        """Return a shallow copy of the list with `is_enabled=True`.
 
         Use to enable warnings before storing the all the transformers in
         `transformers_`.
