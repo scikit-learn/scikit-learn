@@ -1466,7 +1466,7 @@ class _RemainderColsList(UserList):
        Whether the warning for that particular list was already shown, so we
        only emit it once.
 
-    is_enabled : bool, default True
+    warning_enabled : bool, default True
         When False, the list never emits the warning nor updates
         `warning_was_emitted``. This is used to obtain a quiet copy of the list
         for use by the `ColumnTransformer` itself, so that the warning is only
@@ -1474,19 +1474,24 @@ class _RemainderColsList(UserList):
     """
 
     def __init__(
-        self, columns, *, future_dtype="??", warning_was_emitted=False, is_enabled=True
+        self,
+        columns,
+        *,
+        future_dtype="??",
+        warning_was_emitted=False,
+        warning_enabled=True,
     ):
         super().__init__(columns)
         self.future_dtype = future_dtype
         self.warning_was_emitted = warning_was_emitted
-        self.is_enabled = is_enabled
+        self.warning_enabled = warning_enabled
 
     def __getitem__(self, index):
         self._show_remainder_cols_warning()
         return super().__getitem__(index)
 
     def _show_remainder_cols_warning(self):
-        if self.warning_was_emitted or not self.is_enabled:
+        if self.warning_was_emitted or not self.warning_enabled:
             return
         self.warning_was_emitted = True
         future_dtype_description = {
@@ -1517,7 +1522,7 @@ class _RemainderColsList(UserList):
             self.data,
             future_dtype=self.future_dtype,
             warning_was_emitted=self.warning_was_emitted,
-            is_enabled=False,
+            warning_enabled=False,
         )
 
     def enabled(self):
@@ -1530,7 +1535,7 @@ class _RemainderColsList(UserList):
             self.data,
             future_dtype=self.future_dtype,
             warning_was_emitted=self.warning_was_emitted,
-            is_enabled=True,
+            warning_enabled=True,
         )
 
 
