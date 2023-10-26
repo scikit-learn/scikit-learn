@@ -539,7 +539,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         try:
             all_dtypes = {_determine_key_type(c) for (*_, c) in self.transformers}
             if len(all_dtypes) == 1:
-                return next(iter(all_dtypes))[0]
+                return next(iter(all_dtypes))
         except ValueError:
             # _determine_key_type raises a ValueError if some transformer
             # columns are Callables
@@ -549,7 +549,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def _get_remainder_cols(self, indices):
         dtype = self._get_remainder_cols_dtype()
         if self.force_int_remainder_cols and dtype != "int":
-            return _RemainderColsList(indices, dtype)
+            return _RemainderColsList(indices, future_dtype=dtype)
         if dtype == "str":
             return list(self.feature_names_in_[indices])
         if dtype == "bool":
@@ -1462,11 +1462,11 @@ class _RemainderColsList(UserList):
         The dtype that will be used by a ColumnTransformer with the same inputs
         in a future release.
 
-    warning_was_emitted : bool
+    warning_was_emitted : bool, default False
        Whether the warning for that particular list was already shown, so we
        only emit it once.
 
-    is_enabled : bool
+    is_enabled : bool, default True
         When False, the list never emits the warning nor updates
         `warning_was_emitted``. This is used to obtain a quiet copy of the list
         for use by the `ColumnTransformer` itself, so that the warning is only
@@ -1474,10 +1474,10 @@ class _RemainderColsList(UserList):
     """
 
     def __init__(
-        self, *, columns, preferred_dtype="??", warning_was_emitted=False, is_enabled=True
+        self, columns, *, future_dtype="??", warning_was_emitted=False, is_enabled=True
     ):
         super().__init__(columns)
-        self.preferred_dtype = preferred_dtype
+        self.future_dtype = future_dtype
         self.warning_was_emitted = warning_was_emitted
         self.is_enabled = is_enabled
 
@@ -1489,10 +1489,10 @@ class _RemainderColsList(UserList):
         if self.warning_was_emitted or not self.is_enabled:
             return
         self.warning_was_emitted = True
-        preferred_dtype_description = {
+        future_dtype_description = {
             "str": "column names (of type str)",
             "bool": "a mask array (of type bool)",
-        }.get(self.preferred_dtype, self.preferred_dtype)
+        }.get(self.future_dtype, self.future_dtype)
         warnings.warn(
             (
                 "The format of the columns of the 'remainder' transformer in"
@@ -1500,7 +1500,7 @@ class _RemainderColsList(UserList):
                 " match the format of the other transformers.\n  At the moment the"
                 " remainder columns are stored as indices (of type int).  With the same"
                 " ColumnTransformer configuration, in the future they will be stored as"
-                f" {preferred_dtype_description}.\n  To use the new behavior now and"
+                f" {future_dtype_description}.\n  To use the new behavior now and"
                 " suppress this warning, use"
                 " ColumnTransformer(force_int_remainder_cols=False).\n"
             ),
@@ -1514,7 +1514,10 @@ class _RemainderColsList(UserList):
         `_remainder` is used internally by the `ColumnTransformer`.
         """
         return _RemainderColsList(
-            self.data, self.preferred_dtype, self.warning_was_emitted, False
+            self.data,
+            future_dtype=self.future_dtype,
+            warning_was_emitted=self.warning_was_emitted,
+            is_enabled=False,
         )
 
     def enabled(self):
@@ -1524,7 +1527,10 @@ class _RemainderColsList(UserList):
         `transformers_`.
         """
         return _RemainderColsList(
-            self.data, self.preferred_dtype, self.warning_was_emitted, True
+            self.data,
+            future_dtype=self.future_dtype,
+            warning_was_emitted=self.warning_was_emitted,
+            is_enabled=True,
         )
 
 
