@@ -1045,7 +1045,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 output.columns = names_out
                 return output
 
-            return np.hstack(Xs)
+            return np.hstack(
+                [
+                    check_array(
+                        X, force_all_finite=False, accept_sparse=True, dtype=None
+                    )
+                    for X in Xs
+                ]
+            )
 
     def _sk_visual_block_(self):
         if isinstance(self.remainder, str) and self.remainder == "drop":

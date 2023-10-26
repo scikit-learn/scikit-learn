@@ -34,6 +34,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.validation import check_array
 
 
 class Trans(TransformerMixin, BaseEstimator):
@@ -2246,6 +2247,25 @@ def test_remainder_set_output():
     ct.set_output(transform="default")
     out = ct.fit_transform(df)
     assert isinstance(out, np.ndarray)
+
+
+def test_transform_pd_na():
+    """pd.Float64 with pd.NA input → np.float64 with np.nan output
+
+    Non-regression test for #27482"""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"A": [0.5]}).convert_dtypes()
+
+    transformer = make_column_transformer(("passthrough", ["A"]))
+    X_np = transformer.fit_transform(X)
+    assert X_np.dtype == np.float64
+
+    pd_transformer = make_column_transformer(("passthrough", ["A"]))
+    pd_transformer.set_output(transform="pandas")
+    X_pd = pd_transformer.fit_transform(X)
+    assert X_pd.dtypes.iloc[0] == pd.Float64Dtype()
+
+    assert_array_equal(X_np, check_array(X_pd))
 
 
 # Metadata Routing Tests
