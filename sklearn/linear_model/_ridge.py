@@ -2184,7 +2184,7 @@ class _BaseRidgeCV(LinearModel):
             will have the same weight.
 
         **params : dict, default=None
-            Parameters to be passed to GridSearchCV or the underlying scorer.
+            Extra parameters for the underlying scorer.
 
             .. versionadded:: 1.4
                 Only available if `enable_metadata_routing=True`,
@@ -2277,7 +2277,9 @@ class _BaseRidgeCV(LinearModel):
                 cv=cv,
                 scoring=self.scoring,
             )
-            gs.fit(X, y, sample_weight=sample_weight, **params)
+            if sample_weight is not None:
+                params["sample_weight"] = sample_weight
+            gs.fit(X, y, **params)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
             self.best_score_ = gs.best_score_
@@ -2304,9 +2306,13 @@ class _BaseRidgeCV(LinearModel):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
-            scorer=check_scoring(self, scoring=self.scoring, allow_none=True),
-            method_mapping=MethodMapping().add(callee="score", caller="fit"),
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add_self_request(self)
+            .add(
+                scorer=check_scoring(self, scoring=self.scoring, allow_none=True),
+                method_mapping=MethodMapping().add(callee="score", caller="fit"),
+            )
         )
         return router
 
