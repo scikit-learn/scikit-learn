@@ -539,7 +539,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     def _get_remainder_cols(self, indices):
         preferred_dtype = self._get_preferred_remainder_cols_dtype()
         if self.force_int_remainder_cols and preferred_dtype != "int":
-            return RemainderColsList(indices, preferred_dtype)
+            return _RemainderColsList(indices, preferred_dtype)
         if preferred_dtype == "str":
             return list(self.feature_names_in_[indices])
         if preferred_dtype == "bool":
@@ -1432,7 +1432,7 @@ class make_column_selector:
         return cols.tolist()
 
 
-class RemainderColsList(UserList):
+class _RemainderColsList(UserList):
     """A list that raises a warning whenever items are accessed."""
 
     def __init__(
@@ -1470,12 +1470,12 @@ class RemainderColsList(UserList):
         )
 
     def deactivated(self):
-        return RemainderColsList(
+        return _RemainderColsList(
             self.data, self.preferred_dtype, self.warning_was_emitted, False
         )
 
     def activated(self):
-        return RemainderColsList(
+        return _RemainderColsList(
             self.data, self.preferred_dtype, self.warning_was_emitted, True
         )
 
@@ -1483,7 +1483,7 @@ class RemainderColsList(UserList):
 def _with_deactivated_dtype_warnings(transformers):
     result = []
     for name, trans, columns in transformers:
-        if isinstance(columns, RemainderColsList):
+        if isinstance(columns, _RemainderColsList):
             columns = columns.deactivated()
         result.append((name, trans, columns))
     return result
@@ -1492,7 +1492,7 @@ def _with_deactivated_dtype_warnings(transformers):
 def _with_activated_dtype_warnings(transformers):
     result = []
     for name, trans, columns in transformers:
-        if isinstance(columns, RemainderColsList):
+        if isinstance(columns, _RemainderColsList):
             columns = columns.activated()
         result.append((name, trans, columns))
     return result
