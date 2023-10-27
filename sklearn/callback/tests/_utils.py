@@ -35,7 +35,7 @@ class NotValidCallback:
 
 
 class Estimator(BaseEstimator):
-    _parameter_constraints = {}
+    _parameter_constraints: dict = {}
 
     def __init__(self, max_iter=20):
         self.max_iter = max_iter
@@ -64,7 +64,7 @@ class Estimator(BaseEstimator):
 
 
 class MetaEstimator(BaseEstimator):
-    _parameter_constraints = {}
+    _parameter_constraints: dict = {}
 
     def __init__(
         self, estimator, n_outer=4, n_inner=3, n_jobs=None, prefer="processes"
