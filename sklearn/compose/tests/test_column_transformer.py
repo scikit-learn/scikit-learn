@@ -938,8 +938,10 @@ def test_column_transformer_remainder_dtypes(force_int):
         remainder="passthrough",
         force_int_remainder_cols=force_int,
     )
-    ct.fit(X)
-    assert ct.transformers_[-1][-1][0] == 2
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.fit_transform(X)
+        assert ct.transformers_[-1][-1][0] == 2
 
     # if inputs are indices store remainder columns as indices
     ct = make_column_transformer(
@@ -948,8 +950,10 @@ def test_column_transformer_remainder_dtypes(force_int):
         remainder="passthrough",
         force_int_remainder_cols=force_int,
     )
-    ct.fit(X)
-    assert ct.transformers_[-1][-1][0] == 2
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.fit_transform(X)
+        assert ct.transformers_[-1][-1][0] == 2
 
     # if inputs are callables store remainder columns as indices
     ct = make_column_transformer(
@@ -958,8 +962,10 @@ def test_column_transformer_remainder_dtypes(force_int):
         remainder="passthrough",
         force_int_remainder_cols=force_int,
     )
-    ct.fit(X)
-    assert ct.transformers_[-1][-1][0] == 2
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.fit_transform(X)
+        assert ct.transformers_[-1][-1][0] == 2
 
     # if inputs are masks store remainder columns as masks, unless
     # force_int_remainder_cols is True
@@ -969,14 +975,18 @@ def test_column_transformer_remainder_dtypes(force_int):
         remainder="passthrough",
         force_int_remainder_cols=force_int,
     )
-    ct.fit(X)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.fit_transform(X)
     if force_int:
         # If we forced using ints and we access the remainder columns a warning
         # is shown
         with pytest.warns(FutureWarning, match=warning_pattern):
             col = ct.transformers_[-1][-1][0]
     else:
-        col = ct.transformers_[-1][-1][0]
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            col = ct.transformers_[-1][-1][0]
     assert col == 2 if force_int else [False, False, True]
 
     pd = pytest.importorskip("pandas")
@@ -990,14 +1000,18 @@ def test_column_transformer_remainder_dtypes(force_int):
         remainder="passthrough",
         force_int_remainder_cols=force_int,
     )
-    ct.fit(X)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.fit_transform(X)
     if force_int:
         # If we forced using ints and we access the remainder columns a warning
         # is shown
         with pytest.warns(FutureWarning, match=warning_pattern):
             col = ct.transformers_[-1][-1][0]
     else:
-        col = ct.transformers_[-1][-1][0]
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            col = ct.transformers_[-1][-1][0]
     assert col == 2 if force_int else ["C"]
 
 
