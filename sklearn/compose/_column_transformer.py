@@ -1448,7 +1448,7 @@ class _RemainderColsList(UserList):
     It is used to store the columns handled by the "remainder" entry of
     ``ColumnTransformer.transformers_``, ie ``transformers_[-1][-1]``.
 
-    For some values of the ``ColumTransformer`` ``transformers`` parameter,
+    For some values of the ``ColumnTransformer`` ``transformers`` parameter,
     this list of indices will be replaced by either a list of column names or a
     boolean mask; in those cases we emit a ``FutureWarning`` the first time an
     element is accessed.
