@@ -4,6 +4,7 @@ Test the ColumnTransformer.
 import pickle
 import re
 import warnings
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
@@ -16,6 +17,7 @@ from sklearn.compose import (
     make_column_selector,
     make_column_transformer,
 )
+from sklearn.compose._column_transformer import _RemainderColsList
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.preprocessing import (
@@ -1016,19 +1018,12 @@ def test_column_transformer_remainder_dtypes(force_int):
 
 
 def test_remainder_list_repr():
-    class T(TransformerMixin, BaseEstimator):
-        def fit(self, X, y=None):
-            return self
-
-        def transform(self, X):
-            return X
-
-    x = np.ones((1, 3))
-    ct = ColumnTransformer([("d", "drop", [True, False, False])], remainder=T())
-    ct.fit(x)
-    assert "('remainder', T(), [1, 2])" in str(ct.transformers_)
-    with pytest.warns(FutureWarning):
-        ct.transformers_[-1][-1][0]
+    cols = _RemainderColsList([0, 1], warning_enabled=False)
+    assert str(cols) == "[0, 1]"
+    assert repr(cols) == "[0, 1]"
+    mock = Mock()
+    cols._repr_pretty_(mock, False)
+    mock.text.assert_called_once_with("[0, 1]")
 
 
 # TODO this should be updated when the default for force_int_remainder_cols

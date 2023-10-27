@@ -1519,6 +1519,10 @@ class _RemainderColsList(UserList):
             category=FutureWarning,
         )
 
+    def _repr_pretty_(self, printer, *_):
+        """Override display in ipython console, otherwise the class name is shown."""
+        printer.text(repr(self.data))
+
 
 def _with_dtype_warning_enabled_set_to(warning_enabled, transformers):
     result = []
