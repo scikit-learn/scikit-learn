@@ -270,13 +270,23 @@ METAESTIMATORS: list = [
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
-    {
+            {
         "metaestimator": LassoLarsCV,
         "X": X,
         "y": y,
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
+
+    {
+    "metaestimator": permutation_test_score,
+    "X": X,
+    "y": y,
+    "cv_name": "cv",
+    "cv_routing_methods": ["fit" , "score"]
+    }
+
+
 ]
 """List containing all metaestimators to be tested and their settings
 
