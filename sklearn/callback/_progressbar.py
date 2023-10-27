@@ -78,7 +78,7 @@ class _RichProgressMonitor(Thread):
                 complete_style=Style(color="dark_orange"),
                 finished_style=Style(color="cyan"),
             ),
-            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+            TextColumn("[bright_magenta]{task.percentage:>3.0f}%"),
             TimeRemainingColumn(),
             auto_refresh=False,
         )
@@ -166,12 +166,14 @@ class TaskNode:
 
     def _format_task_description(self, node):
         """Return a formatted description for the task of the node"""
-        colors = ["red", "green", "blue", "yellow"]
+        colors = ["bright_magenta", "cyan", "dark_orange"]
 
         indent = f"{'  ' * (node.depth)}"
         style = f"[{colors[(node.depth)%len(colors)]}]"
 
-        description = f"{node.estimator_name[0]} - {node.description[0]} #{node.idx}"
+        description = f"{node.estimator_name[0]} - {node.description[0]}"
+        if node.parent is not None:
+            description += f" #{node.idx}"
         if len(node.estimator_name) == 2:
             description += f" | {node.estimator_name[1]} - {node.description[1]}"
 

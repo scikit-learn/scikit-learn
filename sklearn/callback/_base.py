@@ -61,12 +61,10 @@ class BaseCallback(ABC):
         y : ndarray or sparse matrix, default=None
             The target.
         """
-        pass
 
     @abstractmethod
     def on_fit_end(self):
         """Method called at the end of the fit method of the estimator"""
-        pass
 
     @abstractmethod
     def on_fit_iter_end(self, estimator, node, **kwargs):
@@ -108,7 +106,6 @@ class BaseCallback(ABC):
         stop : bool or None
             Whether or not to stop the current level of iterations at this node.
         """
-        pass
 
     @property
     def auto_propagate(self):
