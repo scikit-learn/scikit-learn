@@ -147,7 +147,21 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         indices (int) rather than column names (str). See description of the
         `transformers_` attribute for details.
 
+        .. note::
+            If you do not access the list of columns for the remainder columns
+            in the `transformers_` fitted attribute, you do not need to set
+            this parameter.
+
         .. versionadded:: 1.4
+
+        .. versionchanged:: 1.6
+           The default value for `force_int_remainder_cols` will change from
+           `True` to `False` in version 1.6.
+
+        .. versionchanged:: 1.8
+           The parameter `force_int_remainder_cols` will be removed in version
+           1.8; and starting with version 1.8 the remainder columns will
+           never be forced to be `int`.
 
     Attributes
     ----------
@@ -163,17 +177,16 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         ``len(transformers_)==len(transformers)+1``, otherwise
         ``len(transformers_)==len(transformers)``.
 
-        .. deprecated::
-
+        .. versionchanged:: 1.4
             If there are remaining columns and `force_int_remainder_cols` is
             True, the remaining columns are always represented by their
-            positional indices in the input `X`. If `force_int_remainder_cols`
-            is False, the format attempts to match that of the other
-            transformers: if all columns were provided as column names (str),
-            the remaining columns are stored as column names; if all columns
-            were provided as mask arrays (bool), so are the remaining columns;
-            in all other cases the remaining columns are stored as indices
-            (int).
+            positional indices in the input `X` (as in older versions). If
+            `force_int_remainder_cols` is False, the format attempts to match
+            that of the other transformers: if all columns were provided as
+            column names (`str`), the remaining columns are stored as column
+            names; if all columns were provided as mask arrays (`bool`), so are
+            the remaining columns; in all other cases the remaining columns are
+            stored as indices (`int`).
 
     named_transformers_ : :class:`~sklearn.utils.Bunch`
         Read-only attribute to access any transformer by given name.
@@ -1314,7 +1327,21 @@ def make_column_transformer(
         indices (int) rather than column names (str). See description of the
         :attr:`ColumnTransformer.transformers_` attribute for details.
 
+        .. note::
+            If you do not access the list of columns for the remainder columns
+            in the :attr:`ColumnTransformer.transformers_` fitted attribute,
+            you do not need to set this parameter.
+
         .. versionadded:: 1.4
+
+        .. versionchanged:: 1.6
+           The default value for `force_int_remainder_cols` will change from
+           `True` to `False` in version 1.6.
+
+        .. versionchanged:: 1.8
+           The parameter `force_int_remainder_cols` will be removed in version
+           1.8; and starting with version 1.8 the remainder columns will
+           never be forced to be `int`.
 
     Returns
     -------
