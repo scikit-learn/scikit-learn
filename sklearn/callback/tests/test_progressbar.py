@@ -1,3 +1,6 @@
+# License: BSD 3 clause
+# Authors: the scikit-learn developers
+
 import re
 
 import pytest
