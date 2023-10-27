@@ -38,6 +38,7 @@ jobs:
           conda install -c conda-forge "$(get_dep conda-lock min)" -y
 
           python build_tools/update_environments_and_lock_files.py ${{ matrix.update_script_args }}
+
       - name: Create Pull Request
         id: cpr
         uses: peter-evans/create-pull-request@v5
@@ -61,7 +62,7 @@ jobs:
         run: |
           echo "### :rocket: Pull-Request Summary" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
-          echo "The following lock-files pull-request has been auto-generated:"
+          echo "The following lock files pull-request has been auto-generated:"
           echo "- **PR** #${{ steps.cpr.outputs.pull-request-number }}" >> ${GITHUB_STEP_SUMMARY}
           echo "- **URL** ${{ steps.cpr.outputs.pull-request-url }}" >> ${GITHUB_STEP_SUMMARY}
           echo "- **Operation** [${{ steps.cpr.outputs.pull-request-operation }}]" >> ${GITHUB_STEP_SUMMARY}
