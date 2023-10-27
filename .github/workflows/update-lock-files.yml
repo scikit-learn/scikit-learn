@@ -6,7 +6,7 @@ on:
 
 jobs:
   update_lock_files:
-    if: "github.repository == 'scikit-learn/scikit-learn' || github.event_name == 'workflow_dispatch'"
+    if: github.repository == 'scikit-learn/scikit-learn'
     runs-on: ubuntu-latest
 
     strategy:
@@ -43,7 +43,7 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
-          push-to-fork: test-lesteve/scikit-learn
+          push-to-fork: scikit-learn-bot/scikit-learn
           commit-message: Update CI lock files ${{ matrix.additional_commit_message }}
           committer: "Lock file bot <noreply@github.com>"
           author: "Lock file bot <noreply@github.com>"
