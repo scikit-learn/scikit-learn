@@ -340,7 +340,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
-         **partial_fit_params : dict
+        **fit_params : dict
             - If `enable_metadata_routing=False` (default):
 
                 Parameters directly passed to the `partial_fit` method of the
