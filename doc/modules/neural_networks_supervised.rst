@@ -29,51 +29,44 @@ between the input and the output layer, there can be one or more non-linear
 layers, called hidden layers. Figure 1 shows a one hidden layer MLP with scalar
 output.
 
-.. container:: dropdown
+.. figure:: ../images/multilayerperceptron_network.png
+   :align: center
+   :scale: 60%
 
-   .. topic:: Figure 1: One hidden layer MLP
+   **Figure 1 : One hidden layer MLP.**
 
-      .. figure:: ../images/multilayerperceptron_network.png
-         :align: center
-         :scale: 60%
+The leftmost layer, known as the input layer, consists of a set of neurons
+:math:`\{x_i | x_1, x_2, ..., x_m\}` representing the input features. Each
+neuron in the hidden layer transforms the values from the previous layer with
+a weighted linear summation :math:`w_1x_1 + w_2x_2 + ... + w_mx_m`, followed
+by a non-linear activation function :math:`g(\cdot):R \rightarrow R` - like
+the hyperbolic tan function. The output layer receives the values from the
+last hidden layer and transforms them into output values.
 
-         **Figure 1 : One hidden layer MLP.**
+The module contains the public attributes ``coefs_`` and ``intercepts_``.
+``coefs_`` is a list of weight matrices, where weight matrix at index
+:math:`i` represents the weights between layer :math:`i` and layer
+:math:`i+1`. ``intercepts_`` is a list of bias vectors, where the vector
+at index :math:`i` represents the bias values added to layer :math:`i+1`.
 
-      The leftmost layer, known as the input layer, consists of a set of neurons
-      :math:`\{x_i | x_1, x_2, ..., x_m\}` representing the input features. Each
-      neuron in the hidden layer transforms the values from the previous layer with
-      a weighted linear summation :math:`w_1x_1 + w_2x_2 + ... + w_mx_m`, followed
-      by a non-linear activation function :math:`g(\cdot):R \rightarrow R` - like
-      the hyperbolic tan function. The output layer receives the values from the
-      last hidden layer and transforms them into output values.
+The advantages of Multi-layer Perceptron are:
 
-.. container:: dropdown
+    + Capability to learn non-linear models.
 
-   .. topic:: Details about `coefs_` and `intercepts_`
-
-      The module contains the public attributes ``coefs_`` and ``intercepts_``.
-      ``coefs_`` is a list of weight matrices, where weight matrix at index
-      :math:`i` represents the weights between layer :math:`i` and layer
-      :math:`i+1`. ``intercepts_`` is a list of bias vectors, where the vector
-      at index :math:`i` represents the bias values added to layer :math:`i+1`.
-
-.. topic:: Advantages of Multi-layer Perceptron
-
-   The advantages of Multi-layer Perceptron are:
-
-   - Capability to learn non-linear models.
-   - Capability to learn models in real-time (on-line learning) using ``partial_fit``.
+    + Capability to learn models in real-time (on-line learning)
+      using ``partial_fit``.
 
 
-.. topic:: Disadvantages of Multi-layer Perceptron (MLP)
+The disadvantages of Multi-layer Perceptron (MLP) include:
 
-   The disadvantages of Multi-layer Perceptron (MLP) include:
+    + MLP with hidden layers have a non-convex loss function where there exists
+      more than one local minimum. Therefore different random weight
+      initializations can lead to different validation accuracy.
 
-   - MLP with hidden layers have a non-convex loss function where there exists more than one local minimum. Therefore different random weight initializations can lead to different validation accuracy.
+    + MLP requires tuning a number of hyperparameters such as the number of
+      hidden neurons, layers, and iterations.
 
-   - MLP requires tuning a number of hyperparameters such as the number of hidden neurons, layers, and iterations.
-
-   - MLP is sensitive to feature scaling.
+    + MLP is sensitive to feature scaling.
 
 Please see :ref:`Tips on Practical Use <mlp_tips>` section that addresses
 some of these disadvantages.
@@ -315,25 +308,38 @@ when the improvement in loss is below a certain, small number.
 
 .. _mlp_tips:
 
-.. container:: dropdown
+Tips on Practical Use
+=====================
 
-   .. topic:: Tips on Practical Use
+  * Multi-layer Perceptron is sensitive to feature scaling, so it
+    is highly recommended to scale your data. For example, scale each
+    attribute on the input vector X to [0, 1] or [-1, +1], or standardize
+    it to have mean 0 and variance 1. Note that you must apply the *same*
+    scaling to the test set for meaningful results.
+    You can use :class:`~sklearn.preprocessing.StandardScaler` for standardization.
 
-      - Multi-layer Perceptron is sensitive to feature scaling, so it is highly recommended to scale your data. For example, scale each attribute on the input vector X to [0, 1] or [-1, +1], or standardize it to have mean 0 and variance 1. Note that you must apply the *same* scaling to the test set for meaningful results. You can use :class:`~sklearn.preprocessing.StandardScaler` for standardization.
+      >>> from sklearn.preprocessing import StandardScaler  # doctest: +SKIP
+      >>> scaler = StandardScaler()  # doctest: +SKIP
+      >>> # Don't cheat - fit only on training data
+      >>> scaler.fit(X_train)  # doctest: +SKIP
+      >>> X_train = scaler.transform(X_train)  # doctest: +SKIP
+      >>> # apply same transformation to test data
+      >>> X_test = scaler.transform(X_test)  # doctest: +SKIP
 
-        >>> from sklearn.preprocessing import StandardScaler  # doctest: +SKIP
-        >>> scaler = StandardScaler()  # doctest: +SKIP
-        >>> # Don't cheat - fit only on training data
-        >>> scaler fit(X_train)  # doctest: +SKIP
-        >>> X_train = scaler.transform(X_train)  # doctest: +SKIP
-        >>> # apply the same transformation to the test data
-        >>> X_test = scaler.transform(X_test)  # doctest: +SKIP
+    An alternative and recommended approach is to use
+    :class:`~sklearn.preprocessing.StandardScaler` in a
+    :class:`~sklearn.pipeline.Pipeline`
 
-      - An alternative and recommended approach is to use :class:`~sklearn.preprocessing.StandardScaler` in a :class:`~sklearn.pipeline.Pipeline`.
+  * Finding a reasonable regularization parameter :math:`\alpha` is best done
+    using :class:`~sklearn.model_selection.GridSearchCV`, usually in the range
+    ``10.0 ** -np.arange(1, 7)``.
 
-      - Finding a reasonable regularization parameter :math:`\alpha` is best done using :class:`~sklearn.model_selection.GridSearchCV`, usually in the range ``10.0 ** -np.arange(1, 7)``.
-
-      - Empirically, we observed that `L-BFGS` converges faster and with better solutions on small datasets. For relatively large datasets, however, `Adam` is very robust. It usually converges quickly and gives pretty good performance. `SGD` with momentum or nesterov's momentum, on the other hand, can perform better than those two algorithms if the learning rate is correctly tuned.
+  * Empirically, we observed that `L-BFGS` converges faster and
+    with better solutions on small datasets. For relatively large
+    datasets, however, `Adam` is very robust. It usually converges
+    quickly and gives pretty good performance. `SGD` with momentum or
+    nesterov's momentum, on the other hand, can perform better than
+    those two algorithms if learning rate is correctly tuned.
 
 More control with warm_start
 ============================
@@ -367,3 +373,4 @@ or want to do additional monitoring, using ``warm_start=True`` and
     *  :arxiv:`"Adam: A method for stochastic optimization."
        <1412.6980>`
        Kingma, Diederik, and Jimmy Ba (2014)
+
