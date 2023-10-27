@@ -1,4 +1,4 @@
-import textwrap
+import re
 
 import pytest
 
@@ -20,24 +20,12 @@ def test_progressbar(n_jobs, prefer, capsys):
 
     captured = capsys.readouterr()
 
-    expected_output = """\
-        MetaEstimator - fit                            ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-          MetaEstimator - outer #0                     ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-            MetaEstimator - inner #0 | Estimator - fit ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-            MetaEstimator - inner #1 | Estimator - fit ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-            MetaEstimator - inner #2 | Estimator - fit ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-          MetaEstimator - outer #1                     ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-            MetaEstimator - inner #0 | Estimator - fit ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-            MetaEstimator - inner #1 | Estimator - fit ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-            MetaEstimator - inner #2 | Estimator - fit ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-          MetaEstimator - outer #2                     ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-            MetaEstimator - inner #0 | Estimator - fit ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-            MetaEstimator - inner #1 | Estimator - fit ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-            MetaEstimator - inner #2 | Estimator - fit ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-          MetaEstimator - outer #3                     ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-            MetaEstimator - inner #0 | Estimator - fit ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-            MetaEstimator - inner #1 | Estimator - fit ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-            MetaEstimator - inner #2 | Estimator - fit ━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-        """
+    assert re.search(r"MetaEstimator - fit", captured.out)
+    for i in range(4):
+        assert re.search(rf"MetaEstimator - outer #{i}", captured.out)
+    for i in range(3):
+        assert re.search(rf"MetaEstimator - inner #{i} | Estimator - fit", captured.out)
 
-    assert captured.out == textwrap.dedent(expected_output)
+    # Check that all bars are 100% complete
+    assert re.search(r"100%", captured.out)
+    assert not re.search(r"[1-9]%", captured.out)

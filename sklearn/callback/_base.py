@@ -30,13 +30,15 @@ def _eval_callbacks_on_fit_iter_end(**kwargs):
     # stopping_criterion and reconstruction_attributes can be costly to compute.
     # They are passed as lambdas for lazy evaluation. We only actually
     # compute them if a callback requests it.
-    if any(cb.request_stopping_criterion for cb in estimator._callbacks):
-        kwarg = kwargs.pop("stopping_criterion", lambda: None)()
-        kwargs["stopping_criterion"] = kwarg
+    # TODO: This is not used yet but will be necessary for next callbacks
+    #       Uncomment when needed
+    # if any(cb.request_stopping_criterion for cb in estimator._callbacks):
+    #     kwarg = kwargs.pop("stopping_criterion", lambda: None)()
+    #     kwargs["stopping_criterion"] = kwarg
 
-    if any(cb.request_from_reconstruction_attributes for cb in estimator._callbacks):
-        kwarg = kwargs.pop("from_reconstruction_attributes", lambda: None)()
-        kwargs["from_reconstruction_attributes"] = kwarg
+    # if any(cb.request_from_reconstruction_attributes for cb in estimator._callbacks):
+    #     kwarg = kwargs.pop("from_reconstruction_attributes", lambda: None)()
+    #     kwargs["from_reconstruction_attributes"] = kwarg
 
     return any(callback.on_fit_iter_end(**kwargs) for callback in estimator._callbacks)
 
@@ -125,10 +127,12 @@ class BaseCallback(ABC):
         """
         return self.auto_propagate and hasattr(estimator, "_parent_node")
 
-    @property
-    def request_stopping_criterion(self):
-        return False
+    # TODO: This is not used yet but will be necessary for next callbacks
+    #       Uncomment when needed
+    # @property
+    # def request_stopping_criterion(self):
+    #     return False
 
-    @property
-    def request_from_reconstruction_attributes(self):
-        return False
+    # @property
+    # def request_from_reconstruction_attributes(self):
+    #     return False
