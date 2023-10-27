@@ -356,30 +356,24 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     float32, norms needs to be recomputed on upcast chunks.
     TODO: use a float64 accumulator in row_norms to avoid the latter.
     """
-    if X_norm_squared is not None:
-        if X_norm_squared.dtype == np.float32:
-            XX = None
-        else:
-            XX = X_norm_squared.reshape(-1, 1)
-    elif X.dtype == np.float32:
-        XX = None
-    else:
+    if X_norm_squared is not None and X_norm_squared.dtype != np.float32:
+        XX = X_norm_squared.reshape(-1, 1)
+    elif X.dtype != np.float32:
         XX = row_norms(X, squared=True)[:, np.newaxis]
+    else:
+        XX = None
 
     if Y is X:
         YY = None if XX is None else XX.T
     else:
-        if Y_norm_squared is not None:
-            if Y_norm_squared.dtype == np.float32:
-                YY = None
-            else:
-                YY = Y_norm_squared.reshape(1, -1)
-        elif Y.dtype == np.float32:
-            YY = None
-        else:
+        if Y_norm_squared is not None and Y_norm_squared.dtype != np.float32:
+            YY = Y_norm_squared.reshape(1, -1)
+        elif Y.dtype != np.float32:
             YY = row_norms(Y, squared=True)[np.newaxis, :]
+        else:
+            YY = None
 
-    if X.dtype == np.float32:
+    if X.dtype == np.float32 or Y.dtype == np.float32:
         # To minimize precision issues with float32, we compute the distance
         # matrix on chunks of X and Y upcast to float64
         distances = _euclidean_distances_upcast(X, XX, Y, YY)
