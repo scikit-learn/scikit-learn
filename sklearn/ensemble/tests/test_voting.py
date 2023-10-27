@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from sklearn import datasets
-from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from sklearn.datasets import make_multilabel_classification
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import (
@@ -23,6 +23,12 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
+from sklearn.tests.metadata_routing_common import (
+    ConsumingClassifier,
+    ConsumingRegressor,
+    _Registry,
+    check_recorded_metadata,
+)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
     assert_almost_equal,
@@ -674,3 +680,97 @@ def test_get_features_names_out_classifier_error():
     )
     with pytest.raises(ValueError, match=msg):
         voting.get_feature_names_out()
+
+
+# Metadata Routing Tests
+# ======================
+
+
+@pytest.mark.parametrize("Estimator", [VotingClassifier, VotingRegressor])
+def test_routing_passed_metadata_not_supported(Estimator):
+    """Test that the right error message is raised when metadata is passed while
+    not supported when `enable_metadata_routing=False`."""
+
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+
+    if is_classifier(Estimator):
+        SubEst = ConsumingClassifier
+    else:
+        SubEst = ConsumingRegressor
+
+    with pytest.raises(
+        ValueError, match="is only supported if enable_metadata_routing=True"
+    ):
+        Estimator(["clf", SubEst()]).fit(X, y, sample_weight=[1, 1, 1], metadata="a")
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize("Estimator", [VotingClassifier, VotingRegressor])
+@pytest.mark.parametrize("prop", ["sample_weight", "metadata"])
+def test_metadata_routing_for_voting_estimators(Estimator, prop):
+    """Test that metadata is routed correctly for Voting*."""
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+    sample_weight, metadata = [1, 1, 1], "a"
+    registry = _Registry()
+
+    if is_classifier(Estimator):
+        SubEst = ConsumingClassifier
+    else:
+        SubEst = ConsumingRegressor
+
+    est = Estimator(
+        [
+            (
+                "sub_est1",
+                SubEst(registry=registry).set_fit_request(
+                    sample_weight=True, metadata=False
+                ),
+            ),
+            (
+                "sub_est2",
+                SubEst(registry=registry).set_fit_request(
+                    sample_weight=False, metadata=True
+                ),
+            ),
+        ]
+    )
+
+    est.fit(X, y, **{prop: sample_weight if prop == "sample_weight" else metadata})
+
+    assert len(registry)
+    for sub_est in registry:
+        check_recorded_metadata(
+            obj=sub_est,
+            method="fit",
+            **{prop: sample_weight if prop == "sample_weight" else metadata},
+        )
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize("Estimator", [VotingClassifier, VotingRegressor])
+def test_metadata_routing_error_for_voting_estimators(Estimator):
+    """Test that the right error is raised when metadata is not requested."""
+    X = np.array([[0, 1], [2, 2], [4, 6]])
+    y = [1, 2, 3]
+    sample_weight, metadata = [1, 1, 1], "a"
+
+    if is_classifier(Estimator):
+        SubEst = ConsumingClassifier
+    else:
+        SubEst = ConsumingRegressor
+
+    est = Estimator([("sub_est", SubEst())])
+
+    error_message = (
+        "[sample_weight, metadata] are passed but are not explicitly set as requested"
+        f" or not for {SubEst.__name__}.fit"
+    )
+
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        est.fit(X, y, sample_weight=sample_weight, metadata=metadata)
+
+
+# End of Metadata Routing Tests
+# =============================

@@ -54,6 +54,7 @@ def check_recorded_metadata(obj, method, split_params=tuple(), **kwargs):
     split_params : tuple, default=empty
         specifies any parameters which are to be checked as being a subset
         of the original values.
+    **kwargs : metadata to check
     """
     records = getattr(obj, "_records", dict()).get(method, dict())
     assert set(kwargs.keys()) == set(records.keys())
@@ -147,12 +148,11 @@ class ConsumingRegressor(RegressorMixin, BaseEstimator):
         return self
 
     def fit(self, X, y, sample_weight="default", metadata="default"):
-        if self.registry is not None:
-            self.registry.append(self)
-
         record_metadata_not_default(
             self, "fit", sample_weight=sample_weight, metadata=metadata
         )
+        if self.registry is not None and self._records.get("fit", {}):
+            self.registry.append(self)
         return self
 
     def predict(self, X, sample_weight="default", metadata="default"):
@@ -215,12 +215,12 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         return self
 
     def fit(self, X, y, sample_weight="default", metadata="default"):
-        if self.registry is not None:
-            self.registry.append(self)
-
         record_metadata_not_default(
             self, "fit", sample_weight=sample_weight, metadata=metadata
         )
+        if self.registry is not None and self._records.get("fit", {}):
+            self.registry.append(self)
+
         self.classes_ = np.unique(y)
         return self
 
