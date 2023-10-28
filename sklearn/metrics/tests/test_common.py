@@ -1733,16 +1733,18 @@ def test_metrics_pos_label_error_str(metric, y_pred_threshold, dtype_y_str):
 
 
 def check_array_api_metric(
-    metric, array_namespace, device, dtype, y_true_np, y_pred_np
+    metric, array_namespace, device, dtype, y_true_np, y_pred_np, sample_weight=None
 ):
     xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
     y_true_xp = xp.asarray(y_true_np, device=device)
     y_pred_xp = xp.asarray(y_pred_np, device=device)
 
-    metric_np = metric(y_true_np, y_pred_np)
+    metric_np = metric(y_true_np, y_pred_np, sample_weight=sample_weight)
 
     with config_context(array_api_dispatch=True):
-        metric_xp = metric(y_true_xp, y_pred_xp)
+        if sample_weight is not None:
+            sample_weight = xp.asarray(sample_weight, device=device)
+        metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
 
         assert_allclose(
             metric_xp,
@@ -1754,27 +1756,41 @@ def check_array_api_metric(
 def check_array_api_binary_classification_metric(
     metric, array_namespace, device, dtype
 ):
-    return check_array_api_metric(
-        metric,
-        array_namespace,
-        device,
-        dtype,
-        y_true_np=np.array([0, 0, 1, 1]),
-        y_pred_np=np.array([0, 1, 0, 1]),
+    y_true_np = np.array([0, 0, 1, 1])
+    y_pred_np = np.array([0, 1, 0, 1])
+    check_array_api_metric(
+        metric, array_namespace, device, dtype, y_true_np=y_true_np, y_pred_np=y_pred_np
     )
+    if "sample_weight" in signature(metric).parameters:
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype,
+            y_true_np=y_true_np,
+            y_pred_np=y_pred_np,
+            sample_weight=np.array([0.0, 0.1, 2.0, 1.0]),
+        )
 
 
 def check_array_api_multiclass_classification_metric(
     metric, array_namespace, device, dtype
 ):
-    return check_array_api_metric(
-        metric,
-        array_namespace,
-        device,
-        dtype,
-        y_true_np=np.array([0, 1, 2, 3]),
-        y_pred_np=np.array([0, 1, 0, 2]),
+    y_true_np = np.array([0, 1, 2, 3])
+    y_pred_np = np.array([0, 1, 0, 2])
+    check_array_api_metric(
+        metric, array_namespace, device, dtype, y_true_np=y_true_np, y_pred_np=y_pred_np
     )
+    if "sample_weight" in signature(metric).parameters:
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype,
+            y_true_np=y_true_np,
+            y_pred_np=y_pred_np,
+            sample_weight=np.array([0.0, 0.1, 2.0, 1.0]),
+        )
 
 
 metric_checkers = {
