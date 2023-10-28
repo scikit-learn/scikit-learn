@@ -38,7 +38,9 @@ Nystroem Method for Kernel Approximation
 The Nystroem method, as implemented in :class:`Nystroem` is a general method
 for reduced rank approximations of kernels. It achieves this by subsampling without replacement
 rows/columns of the data on which the kernel is evaluated.
-Computational complexity for this method is :math:`\mathcal{O}(n^2_{\text{components}} \cdot n_{\text{samples}})` [WS2001]_
+While the exact computational complexity is :math:\mathcal{O}(n^3_{\text{samples}}),
+one can set :math:n_{\text{components}} \ll n_{\text{samples}} without a significative decrease in performance 
+(:math:`\mathcal{O}(n^2_{\text{components}} \cdot n_{\text{samples}})`) [WS2001]_.
 
 For the dataset we can construct eigendecomposition of kernel matrix `K` and split it by sampled and unsampled data
 
@@ -50,32 +52,29 @@ For the dataset we can construct eigendecomposition of kernel matrix `K` and spl
 
 where:
 
-    * ``U`` is orthonormal
-    * ``Ʌ`` is diagonal matrix of eigenvalues
+    * :math:``U`` is orthonormal
+    * :math:``Ʌ`` is diagonal matrix of eigenvalues
     * :math:`U_1` is orthonormal matrix of samples that were chosen
     * :math:`U_2` is orthonormal matrix of samples that were not chosen
 
-We already know :math:`U_1 \Lambda U_1^T`, and can evaluate :math:`U_2 \Lambda U_1^T`.
+Since we already evaluated :math:`U_1 \Lambda U_1^T` by orthonormalization of matrix `K`, and can evaluate :math:`U_2 \Lambda U_1^T`.
 The only thing for us to find out is :math:`U_2 \Lambda U_2^T`.
 To do this we can try to express it from the already evaluated matricies
 
 .. math::
 
-         \begin{align}
-         U_2 \Lambda U_2^T
-         \\&= \left(K_{21} U_1 \Lambda^{-1}\right) \Lambda \left(K_{21} U_1 \Lambda^{-1}\right)^T
+         \begin{align} U_2 \Lambda U_2^T &= \left(K_{21} U_1 \Lambda^{-1}\right) \Lambda \left(K_{21} U_1 \Lambda^{-1}\right)^T
          \\&= K_{21} U_1 (\Lambda^{-1} \Lambda) \Lambda^{-1} U_1^T K_{21}^T
          \\&= K_{21} U_1 \Lambda^{-1} U_1^T K_{21}^T
          \\&= K_{21} K_{11}^{-1} K_{21}^T
          \\&= \left( K_{21} K_{11}^{-\frac12} \right) \left( K_{21} K_{11}^{-\frac12} \right)^T 
          .\end{align}
 
-We will need to calculate kernel from :math:`U_1` to :math:`U_2` (:math:`K_{21}`)
-and then normalize it by :math:`K_{11}^{-\frac12}`.
-During the ``fit`` method :class:`Nystroem` will evaluate basis (:math:`U_1`)
-and normalization constant (:math:`K_{11}^{-\frac12}`).
-During ``transform`` method kernel matrix between basis (``components_`` attribute) and new
-datapoints (``X``) will be evaluated. After that it will be multiplied it by the ``normalization_`` matrix.
+During ``fit``, the class :class:`Nystroem` evaluates the basis :math:`U_1`, and
+computes the normalization constant, :math:`K_{11}^{-\frac12}`. Later, during
+``transform``, the kernel matrix is determined between the basis (given by the
+components_ attribute) and the new datapoints, ``X``. This matrix is then
+multiplied by the ``normalization_`` matrix for the final result.
 
 By default :class:`Nystroem` uses the ``rbf`` kernel, but it can use any
 kernel function or a precomputed kernel matrix.
