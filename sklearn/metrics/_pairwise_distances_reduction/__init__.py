@@ -1,16 +1,8 @@
 # Pairwise Distances Reductions
 # =============================
 #
-#    Co-authors:
-#       Julien Jerphanion <git@jjerphan.xyz>
-#       Meekail Zain <meekail.zain@gmail>
-#       Omar Salman <omar.salman@arbisoft.com>
-#       Vincent Maladière <maladiere.vincent@gmail.com>
-#       Olivier Grisel <olivier.grisel@ensta.org>
-#       Thomas J. Fan <thomasjpfan@gmail>
-#       Christian Lorentzen <lorentzen.ch@gmail.com>
-#       Jérémie du Boisberranger <jeremie.du-boisberranger@inria.fr>
-#
+#   Authors: The scikit-learn developers.
+#   License: BSD 3 clause
 #
 # Overview
 # --------
