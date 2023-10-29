@@ -342,6 +342,11 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Fix| computing pairwise distances with :func:`euclidean_distances` no longer
+  raises an exception when `X` is provided as a `float64` array and
+  `X_norm_squared` as a `float32` array. :pr:`27624` by
+  :user:`Jérôme Dockès <jeromedockes>`.
+
 - |Efficiency| Computing pairwise distances via :class:`metrics.DistanceMetric`
   for CSR × CSR,  Dense × CSR, and CSR × Dense datasets is now 1.5x faster.
   :pr:`26765` by :user:`Meekail Zain <micky774>`
