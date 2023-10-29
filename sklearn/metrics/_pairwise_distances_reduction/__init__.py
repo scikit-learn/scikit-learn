@@ -68,8 +68,8 @@
 #                              x    |                     |    x
 #             +-----------⊳ ArgKmin{32,64}         RadiusNeighbors{32,64} ⊲-------+
 #             |                |    ∆                     ∆    |                   |
-#   ArgKminClassmode{32,64}    |    |                     |    |   RadiusNeighborsClassMode{32,64}
-#   =================================== Specializations ==========================================
+#   ArgKminClassmode{32,64}    |    |                     |    |   RadiusNeighborsClassMode{32,64}  # noqa: E501
+#   =================================== Specializations ==========================================  # noqa: E501
 #                              |    |                     |    |
 #                              |    |                     |    |
 #                              x    |                     |    x
