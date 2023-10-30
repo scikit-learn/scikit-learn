@@ -870,7 +870,9 @@ cdef class CyLossFunction:
         floating_out[::1] loss_out,             # OUT
         int n_threads=1
     ):
-        """Compute the pointwise loss value for each input.
+        """Compute the point-wise loss value for each input.
+
+        The point-wise loss is affected to `loss_out` without returning the array.
 
         Parameters
         ----------
@@ -884,11 +886,6 @@ cdef class CyLossFunction:
             A location into which the result is stored.
         n_threads : int
             Number of threads used by OpenMP (if any).
-
-        Returns
-        -------
-        loss : array of shape (n_samples,)
-            Element-wise loss function.
         """
         pass
 
@@ -902,6 +899,8 @@ cdef class CyLossFunction:
     ):
         """Compute gradient of loss w.r.t raw_prediction for each input.
 
+        The gradient is affected to `gradient_out` without returning the array.
+
         Parameters
         ----------
         y_true : array of shape (n_samples,)
@@ -914,11 +913,6 @@ cdef class CyLossFunction:
             A location into which the result is stored.
         n_threads : int
             Number of threads used by OpenMP (if any).
-
-        Returns
-        -------
-        gradient : array of shape (n_samples,)
-            Element-wise gradients.
         """
         pass
 
@@ -932,6 +926,9 @@ cdef class CyLossFunction:
         int n_threads=1
     ):
         """Compute loss and gradient of loss w.r.t raw_prediction.
+
+        The loss and gradient are affected to `loss_out` and `gradient_out` without
+        returning those arrays.
 
         Parameters
         ----------
@@ -947,14 +944,6 @@ cdef class CyLossFunction:
             A location into which the gradient is stored.
         n_threads : int
             Number of threads used by OpenMP (if any).
-
-        Returns
-        -------
-        loss : array of shape (n_samples,)
-            Element-wise loss function.
-
-        gradient : array of shape (n_samples,)
-            Element-wise gradients.
         """
         self.loss(y_true, raw_prediction, sample_weight, loss_out, n_threads)
         self.gradient(y_true, raw_prediction, sample_weight, gradient_out, n_threads)
@@ -970,6 +959,9 @@ cdef class CyLossFunction:
     ):
         """Compute gradient and hessian of loss w.r.t raw_prediction.
 
+        The gradient and hessian are affected to `gradient_out` and `hessian_out`
+        without returning these arrays.
+
         Parameters
         ----------
         y_true : array of shape (n_samples,)
@@ -984,14 +976,6 @@ cdef class CyLossFunction:
             A location into which the hessian is stored.
         n_threads : int
             Number of threads used by OpenMP (if any).
-
-        Returns
-        -------
-        gradient : array of shape (n_samples,)
-            Element-wise gradients.
-
-        hessian : array of shape (n_samples,)
-            Element-wise hessians.
         """
         pass
 
