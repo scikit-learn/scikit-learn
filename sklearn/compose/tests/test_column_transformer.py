@@ -2252,7 +2252,9 @@ def test_remainder_set_output():
 def test_transform_pd_na():
     """pd.Float64 with pd.NA input → np.float64 with np.nan output
 
-    Non-regression test for #27482"""
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27482
+    """
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame({"A": [0.5]}).convert_dtypes()
 
