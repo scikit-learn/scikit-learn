@@ -107,6 +107,10 @@ more details.
   ``**score_params`` which are passed to the underlying scorer.
   :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Feature| :class:`feature_selection.SelectFromModel` now supports metadata
+  routing in `fit` and `partial_fit`.
+  :pr:`27490` by :user:`Stefanie Senger <StefanieSenger>`.
+
 - |Feature| :class:`linear_model.OrthogonalMatchingPursuitCV` now supports
   metadata routing. Its `fit` now accepts ``**fit_params``, which are passed to
   the underlying splitter. :pr:`27500` by :user:`Stefanie Senger
@@ -130,8 +134,8 @@ and classes are impacted:
 
 **Functions:**
 
-- :func:`cluster.compute_optics_graph` in :pr:`27250` by
-  :user:`Yao Xiao <Charlie-XIAO>`;
+- :func:`cluster.compute_optics_graph` in :pr:`27104` by
+  :user:`Maren Westermann <marenwestermann>` and in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :func:`cluster.kmeans_plusplus` in :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`;
 - :func:`decomposition.non_negative_factorization` in :pr:`27100` by
   :user:`Isaac Virshup <ivirshup>`;
@@ -153,7 +157,8 @@ and classes are impacted:
 - :class:`cluster.HDBSCAN` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`cluster.KMeans` in :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`;
 - :class:`cluster.MiniBatchKMeans` in :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`;
-- :class:`cluster.OPTICS` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
+- :class:`cluster.OPTICS` in :pr:`27104` by
+  :user:`Maren Westermann <marenwestermann>` and in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`decomposition.NMF` in :pr:`27100` by :user:`Isaac Virshup <ivirshup>`;
 - :class:`decomposition.MiniBatchNMF` in :pr:`27100` by
   :user:`Isaac Virshup <ivirshup>`;
@@ -466,6 +471,13 @@ Changelog
   :class:`~utils.metadata_routing.MetadataRouter` now have a ``consumes`` method
   which can be used to check whether a given set of parameters would be consumed.
   :pr:`26831` by `Adrin Jalali`_.
+
+- |Enhancement| Make :func:`sklearn.utils.check_array` attempt to output
+  `int32`-indexed CSR and COO arrays when converting from DIA arrays if the number of
+  non-zero entries is small enough. This ensures that estimators implemented in Cython
+  and that do not accept `int64`-indexed sparse datastucture, now consistently
+  accept the same sparse input formats for SciPy sparse matrices and arrays.
+  :pr:`27372` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| :func:`sklearn.utils.check_array` should accept both matrix and array from
   the sparse SciPy module. The previous implementation would fail if `copy=True` by
