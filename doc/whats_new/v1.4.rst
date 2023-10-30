@@ -45,6 +45,13 @@ Changes impacting all modules
   to work with our estimators and functions.
   :pr:`26464` by `Thomas Fan`_.
 
+- |Enhancement| The HTML representation of estimators now includes a link to the
+  documentation and is color-coded to denote whether the estimator is fitted or
+  not (unfitted estimators are orange, fitted estimators are blue).
+  :pr:`26616` by :user:`Riccardo Cappuzzo <rcap107>`,
+  :user:`Ines Ibnukhsein <Ines1999>`, :user:`Gael Varoquaux <GaelVaroquaux>`, and
+  :user:`Lilian Boulard <LilianBoulard>`.
+
 - |Fix| Fixed a bug in most estimators and functions where setting a parameter to
   a large integer would cause a `TypeError`.
   :pr:`26648` by :user:`Naoise Holohan <naoise-h>`.
@@ -99,6 +106,10 @@ more details.
   scorer. :meth:`linear_model.LogisticRegressionCV.score` now accepts
   ``**score_params`` which are passed to the underlying scorer.
   :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
+
+- |Feature| :class:`feature_selection.SelectFromModel` now supports metadata
+  routing in `fit` and `partial_fit`.
+  :pr:`27490` by :user:`Stefanie Senger <StefanieSenger>`.
 
 - |Feature| :class:`linear_model.OrthogonalMatchingPursuitCV` now supports
   metadata routing. Its `fit` now accepts ``**fit_params``, which are passed to
@@ -233,10 +244,6 @@ Changelog
   which returns a dense numpy ndarray as before.
   :pr:`27438` by :user:`Yao Xiao <Charlie-XIAO>`.
 
-- |Fix| All dataset fetchers now accept `data_home` as any object that implements
-  the :class:`os.PathLike` interface, for instance, :class:`pathlib.Path`.
-  :pr:`27468` by :user:`Yao Xiao <Charlie-XIAO>`.
-
 :mod:`sklearn.decomposition`
 ............................
 
@@ -283,6 +290,13 @@ Changelog
 - |API| In :class:`ensemble.AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
   <StefanieSenger>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| :class:`feature_selection.RFE` and :class:`feature_selection.RFECV` do
+  not check for nans during input validation.
+  :pr:`21807` by `Thomas Fan`_.
 
 :mod:`sklearn.inspection`
 .........................
@@ -332,6 +346,11 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Fix| computing pairwise distances with :func:`euclidean_distances` no longer
+  raises an exception when `X` is provided as a `float64` array and
+  `X_norm_squared` as a `float32` array. :pr:`27624` by
+  :user:`Jérôme Dockès <jeromedockes>`.
+
 - |Efficiency| Computing pairwise distances via :class:`metrics.DistanceMetric`
   for CSR × CSR,  Dense × CSR, and CSR × Dense datasets is now 1.5x faster.
   :pr:`26765` by :user:`Meekail Zain <micky774>`
@@ -354,11 +373,24 @@ Changelog
   :func:`sklearn.metrics.zero_one_loss` now support Array API compatible inputs.
   :pr:`27137` by :user:`Edoardo Abati <EdAbati>`.
 
+- |API| Deprecated `needs_threshold` and `needs_proba` from :func:`metrics.make_scorer`.
+  These parameters will be removed in version 1.6. Instead, use `response_method` that
+  accepts `"predict"`, `"predict_proba"` or `"decision_function"` or a list of such
+  values. `needs_proba=True` is equivalent to `response_method="predict_proba"` and
+  `needs_threshold=True` is equivalent to
+  `response_method=("decision_function", "predict_proba")`.
+  :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |API| The `squared` parameter of :func:`metrics.mean_squared_error` and
   :func:`metrics.mean_squared_log_error` is deprecated and will be removed in 1.6.
   Use the new functions :func:`metrics.root_mean_squared_error` and
   :func:`metrics.root_mean_squared_log_error` instead.
   :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.
+
+- |Fix| :func:`metrics.make_scorer` now raises an error when using a regressor on a
+  scorer requesting a non-thresholded decision function (from `decision_function` or
+  `predict_proba`). Such scorer are specific to classification.
+  :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -394,13 +426,14 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |MajorFeature| :class:`preprocessing.MinMaxScaler` and
-  :class:`preprocessing.MaxAbsScaler` now
+- |MajorFeature| :class:`preprocessing.MinMaxScaler`, :class:`preprocessing.MaxAbsScaler`
+  and :class:`preprocessing.KernelCenterer` now
   support the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
   support is considered experimental and might evolve without being subject to
   our usual rolling deprecation cycle policy. See
   :ref:`array_api` for more details.
-  :pr:`26243` by `Tim Head`_ and :pr:`27110` by :user:`Edoardo Abati <EdAbati>`.
+  :pr:`26243` by `Tim Head`_, :pr:`27110` by :user:`Edoardo Abati <EdAbati>` and
+  :pr:`27556` by :user:`Edoardo Abati <EdAbati>`.
 
 - |Efficiency| :class:`preprocessing.OrdinalEncoder` avoids calculating
   missing indices twice to improve efficiency.
@@ -447,6 +480,13 @@ Changelog
 - |API| :func:`sklearn.extmath.log_logistic` is deprecated and will be removed in 1.6.
   Use `-np.logaddexp(0, -x)` instead.
   :pr:`27544` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Fix| :func:`~utils.estimator_checks.check_estimators_pickle` with
+  `readonly_memmap=True` now relies on joblib's own capability to allocate
+  aligned memory mapped arrays when loading a serialized estimator instead of
+  calling a dedicated private function that would crash when OpenBLAS
+  misdetects the CPU architecture.
+  :pr:`27614` by :user:`Olivier Grisel <ogrisel>`.
 
 Code and Documentation Contributors
 -----------------------------------
