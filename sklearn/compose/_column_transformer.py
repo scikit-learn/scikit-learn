@@ -454,7 +454,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # directly, not when they are used by the ColumnTransformer itself.
             # We disable warnings here; they are enabled when setting
             # self.transformers_.
-            transformers = _with_dtype_warnings_disabled(self.transformers_)
+            transformers = _with_dtype_warning_enabled_set_to(False, self.transformers_)
         else:
             # interleave the validated column specifiers
             transformers = [
@@ -464,7 +464,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # add transformer tuple for remainder
             if self._remainder[2]:
                 transformers = chain(
-                    transformers, _with_dtype_warnings_disabled([self._remainder])
+                    transformers,
+                    _with_dtype_warning_enabled_set_to(False, [self._remainder]),
                 )
         get_weight = (self.transformer_weights or {}).get
 
@@ -722,7 +723,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         # sanity check that transformers is exhausted
         assert not list(fitted_transformers)
-        self.transformers_ = _with_dtype_warnings_enabled(transformers_)
+        self.transformers_ = _with_dtype_warning_enabled_set_to(True, transformers_)
 
     def _validate_output(self, result):
         """
@@ -1563,19 +1564,3 @@ def _with_dtype_warning_enabled_set_to(warning_enabled, transformers):
             )
         result.append((name, trans, columns))
     return result
-
-
-def _with_dtype_warnings_disabled(transformers):
-    """Obtain a shallow copy that does not emit warnings.
-
-    The remainder columns warning (if it exists) is disabled.
-    """
-    return _with_dtype_warning_enabled_set_to(False, transformers)
-
-
-def _with_dtype_warnings_enabled(transformers):
-    """Obtain a shallow copy with warnings enabled.
-
-    The remainder columns warning (if it exists) is enabled.
-    """
-    return _with_dtype_warning_enabled_set_to(True, transformers)
