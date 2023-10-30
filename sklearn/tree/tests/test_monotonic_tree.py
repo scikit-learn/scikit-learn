@@ -79,8 +79,8 @@ def test_monotonic_constraints_classifications(
     est.fit(X_train, y_train)
     y = est.predict_proba(X_test)[:, 1]
 
-    assert np.all(est.predict_proba(X_test) >= 0.)
-    assert np.all(est.predict_proba(X_test) <= 1.)
+    assert np.all(est.predict_proba(X_test) >= 0.0)
+    assert np.all(est.predict_proba(X_test) <= 1.0)
 
     # Monotonic increase constraint, it applies to the positive class
     assert np.all(est.predict_proba(X_test_0incr)[:, 1] >= y)
