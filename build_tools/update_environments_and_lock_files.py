@@ -314,11 +314,6 @@ conda_build_metadata_list = [
         "pip_dependencies": ["jupyterlite-sphinx", "jupyterlite-pyodide-kernel"],
         "package_constraints": {
             "python": "3.9",
-            # XXX: sphinx > 6.0 does not correctly generate searchindex.js
-            "sphinx": "6.0.0",
-            # seaborn 0.12.2 raises deprecation warnings appearing in the documentation
-            # We should remove this constraint when seaborn 0.13 is released
-            "pandas": "<2.1",
         },
     },
     {
@@ -591,7 +586,15 @@ def check_conda_version():
 @click.option(
     "--select-build",
     default="",
-    help="Regex to restrict the builds we want to update environment and lock files",
+    help=(
+        "Regex to restrict the builds we want to update environment and lock files. By"
+        " default all the builds are selected."
+    ),
+)
+@click.option(
+    "--skip-build",
+    default=None,
+    help="Regex to skip some builds from the builds selected by --select-build",
 )
 @click.option(
     "-v",
@@ -605,7 +608,7 @@ def check_conda_version():
     is_flag=True,
     help="Print output of commands executed by the script",
 )
-def main(verbose, very_verbose, select_build):
+def main(verbose, very_verbose, select_build, skip_build):
     if verbose:
         logger.setLevel(logging.DEBUG)
     if very_verbose:
@@ -613,11 +616,19 @@ def main(verbose, very_verbose, select_build):
         handler.setLevel(TRACE)
     check_conda_lock_version()
     check_conda_version()
+
     filtered_conda_build_metadata_list = [
         each
         for each in conda_build_metadata_list
         if re.search(select_build, each["build_name"])
     ]
+    if skip_build is not None:
+        filtered_conda_build_metadata_list = [
+            each
+            for each in filtered_conda_build_metadata_list
+            if not re.search(skip_build, each["build_name"])
+        ]
+
     if filtered_conda_build_metadata_list:
         logger.info("# Writing conda environments")
         write_all_conda_environments(filtered_conda_build_metadata_list)
@@ -629,6 +640,13 @@ def main(verbose, very_verbose, select_build):
         for each in pip_build_metadata_list
         if re.search(select_build, each["build_name"])
     ]
+    if skip_build is not None:
+        filtered_pip_build_metadata_list = [
+            each
+            for each in filtered_pip_build_metadata_list
+            if not re.search(skip_build, each["build_name"])
+        ]
+
     if filtered_pip_build_metadata_list:
         logger.info("# Writing pip requirements")
         write_all_pip_requirements(filtered_pip_build_metadata_list)
