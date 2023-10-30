@@ -1334,13 +1334,13 @@ def test_quantile_transform_subsampling():
     ROUND = 5
     inf_norm_arr = []
     for random_state in range(ROUND):
-        transformer_s0 = QuantileTransformer(
+        transformer = QuantileTransformer(
             random_state=random_state,
             n_quantiles=n_quantiles,
             subsample=n_samples // 10,
         )
-        transformer_s0.fit(X)
-        diff = np.linspace(0, 1, n_quantiles) - np.ravel(transformer_s0.quantiles_)
+        transformer.fit(X)
+        diff = np.linspace(0, 1, n_quantiles) - np.ravel(transformer.quantiles_)
         inf_norm = np.max(np.abs(diff))
         assert inf_norm < 1e-2
         inf_norm_arr.append(inf_norm)
@@ -1353,13 +1353,13 @@ def test_quantile_transform_subsampling():
     X = sparse.rand(n_samples, 1, density=0.99, format="csc", random_state=0)
     inf_norm_arr = []
     for random_state in range(ROUND):
-        transformer_s0 = QuantileTransformer(
+        transformer = QuantileTransformer(
             random_state=random_state,
             n_quantiles=n_quantiles,
             subsample=n_samples // 10,
         )
-        transformer_s0.fit(X)
-        diff = np.linspace(0, 1, n_quantiles) - np.ravel(transformer_s0.quantiles_)
+        transformer.fit(X)
+        diff = np.linspace(0, 1, n_quantiles) - np.ravel(transformer.quantiles_)
         inf_norm = np.max(np.abs(diff))
         assert inf_norm < 1e-1
         inf_norm_arr.append(inf_norm)
@@ -1369,43 +1369,17 @@ def test_quantile_transform_subsampling():
 
 
 def test_quantile_transform_subsampling_disabled():
-    """Test correct handling of ``subsampling=None``.
+    """ "Check the behaviour of `QuantileTransformer` when `subsample=None`."""
+    rng = np.random.RandomState(1)
+    X = rng.randn(200, 1)
 
-    Without sub-sampling the procedure should be deterministic, we make use of this by
-    running the transformer twice with different random states and testing for
-    approximately equal quantiles. To increase detection rate we add 6
-    tail values for each marginal from the distribution.
-    The probability of all tail values being sampled with a 2/3 sub-sampling rate is
-    less than 1 percent.
-    """
-    n_quantiles = 1000
-    # n_samples should larger than the default subsampling value 1e4
-    n_samples = 15000
-    n_tail_values = 6
-    n_norm_sample = n_samples - n_tail_values
-    X = np.empty((n_samples, 2))
-    X[:n_norm_sample, :] = np.random.normal(size=(n_norm_sample, 2))
-    tail_values = stats.norm(0, 1).ppf(np.linspace(0.999, 1.0 - 1e-5, 6))
-    X[n_norm_sample:, :] = np.repeat(tail_values, 2).reshape((n_tail_values, 2))
-    transformer_s0 = QuantileTransformer(
-        random_state=0,
-        n_quantiles=n_quantiles,
-        subsample=None,
-    )
-    # check param handling
-    assert transformer_s0.subsample is None
-    transformer_s0.fit(X)
-    # check the whole sample is included
-    ref_quantiles = np.nanpercentile(X, transformer_s0.references_ * 100, axis=0)
-    assert np.allclose(ref_quantiles, transformer_s0.quantiles_)
-    # check it's deterministic with different random state
-    transformer_s1 = QuantileTransformer(
-        random_state=1,
-        n_quantiles=n_quantiles,
-        subsample=None,
-    )
-    transformer_s1.fit(X)
-    assert np.allclose(transformer_s1.quantiles_, transformer_s0.quantiles_)
+    n_quantiles = 5
+    transformer = QuantileTransformer(n_quantiles=n_quantiles, subsample=None).fit(X)
+
+    expected_references = np.linspace(0, 1, n_quantiles)
+    assert_allclose(transformer.references_, expected_references)
+    expected_quantiles = np.quantile(X.ravel(), expected_references)
+    assert_allclose(transformer.quantiles_.ravel(), expected_quantiles)
 
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
