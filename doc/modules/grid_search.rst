@@ -612,7 +612,7 @@ Here, ``<estimator>`` is the parameter name of the nested estimator,
 in this case ``estimator``.
 If the meta-estimator is constructed as a collection of estimators as in
 `pipeline.Pipeline`, then ``<estimator>`` refers to the name of the estimator,
-see :ref:`pipeline_nested_parameters`.  In practice, there can be several
+see :ref:`pipeline_nested_parameters`. In practice, there can be several
 levels of nesting::
 
   >>> from sklearn.pipeline import Pipeline
