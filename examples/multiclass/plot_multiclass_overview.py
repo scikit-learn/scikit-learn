@@ -69,13 +69,14 @@ y.value_counts().sort_index()
 #   We set it above one since we are not interested in compressing the class
 #   representation.
 import pandas as pd
-from sklearn.tree import DecisionTreeClassifier
+
+from sklearn.model_selection import RepeatedStratifiedKFold, cross_validate
 from sklearn.multiclass import (
     OneVsOneClassifier,
     OneVsRestClassifier,
     OutputCodeClassifier,
 )
-from sklearn.model_selection import cross_validate, RepeatedStratifiedKFold
+from sklearn.tree import DecisionTreeClassifier
 
 cv = RepeatedStratifiedKFold(n_splits=3, n_repeats=5, random_state=0)
 
