@@ -899,7 +899,7 @@ cdef class CyLossFunction:
     ):
         """Compute gradient of loss w.r.t raw_prediction for each input.
 
-        The gradient is affected to `gradient_out` without returning the array.
+        The gradient is written to `gradient_out` and not array is returned.
 
         Parameters
         ----------
@@ -927,8 +927,8 @@ cdef class CyLossFunction:
     ):
         """Compute loss and gradient of loss w.r.t raw_prediction.
 
-        The loss and gradient are affected to `loss_out` and `gradient_out` without
-        returning those arrays.
+        The loss and gradient are written to `loss_out` and `gradient_out` and no arrays
+        are returned.
 
         Parameters
         ----------
@@ -959,8 +959,8 @@ cdef class CyLossFunction:
     ):
         """Compute gradient and hessian of loss w.r.t raw_prediction.
 
-        The gradient and hessian are affected to `gradient_out` and `hessian_out`
-        without returning these arrays.
+        The gradient and hessian are written to `gradient_out` and `hessian_out` and no
+        arrays are returned.
 
         Parameters
         ----------
