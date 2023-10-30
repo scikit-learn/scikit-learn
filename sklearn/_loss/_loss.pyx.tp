@@ -872,7 +872,7 @@ cdef class CyLossFunction:
     ):
         """Compute the point-wise loss value for each input.
 
-        The point-wise loss is affected to `loss_out` without returning the array.
+        The point-wise loss is written to `loss_out` and no array is returned.
 
         Parameters
         ----------
