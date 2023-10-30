@@ -2263,9 +2263,9 @@ def test_transform_pd_na():
     pd_transformer = make_column_transformer(("passthrough", ["A"]))
     pd_transformer.set_output(transform="pandas")
     X_pd = pd_transformer.fit_transform(X)
-    assert X_pd.dtypes.iloc[0] == pd.Float64Dtype()
-
     assert_array_equal(X_np, check_array(X_pd))
+    if hasattr(pd, "Float64Dtype"):
+        assert X_pd.dtypes.iloc[0] == pd.Float64Dtype()
 
 
 # Metadata Routing Tests
