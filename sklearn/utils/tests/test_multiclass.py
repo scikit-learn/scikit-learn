@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from scipy.sparse import issparse
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
 from sklearn.utils._array_api import yield_namespace_device_dtype_combinations
@@ -333,9 +333,10 @@ def test_is_multilabel_array_api_compliance(array_namespace, device, dtype):
                 example = np.asarray(example)
             example = xp.asarray(example, device=device)
 
-            assert dense_exp == is_multilabel(
-                example
-            ), f"is_multilabel({example!r}) should be {dense_exp}"
+            with config_context(array_api_dispatch=True):
+                assert dense_exp == is_multilabel(
+                    example
+                ), f"is_multilabel({example!r}) should be {dense_exp}"
 
 
 def test_check_classification_targets():

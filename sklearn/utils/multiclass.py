@@ -120,7 +120,9 @@ def unique_labels(*ys):
 
 def _is_integral_float(y):
     xp, is_array_api_compliant = get_namespace(y)
-    return xp.isdtype(y.dtype, "real floating") and bool(xp.all(xp.astype(y, int) == y))
+    return xp.isdtype(y.dtype, "real floating") and bool(
+        xp.all(xp.astype((xp.astype(y, xp.int64)), y.dtype) == y)
+    )
 
 
 def is_multilabel(y):
@@ -190,7 +192,7 @@ def is_multilabel(y):
     else:
         labels = xp.unique_values(y)
 
-        return len(labels) < 3 and (
+        return labels.shape[0] < 3 and (
             xp.isdtype(y.dtype, ("bool", "signed integer", "unsigned integer"))
             or _is_integral_float(labels)
         )
