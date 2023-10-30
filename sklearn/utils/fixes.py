@@ -441,4 +441,4 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
 if sp_version < parse_version("1.12"):
     from ..externals._scipy.sparse.csgraph import laplacian  # type: ignore  # noqa
 else:
-    from scipy.sparse.csgraph import laplacian  # type: ignore  # noqa
+    from scipy.sparse.csgraph import laplacian  # type: ignore  # noqa  # pragma: no cover
