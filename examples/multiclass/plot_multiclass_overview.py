@@ -49,7 +49,7 @@ y.value_counts().sort_index()
 # with 3 splits and 5 repetitions.
 #
 # We compare the following strategies:
-
+#
 # * :class:~sklearn.tree.DecisionTreeClassifier can handle multiclass
 #   classification without needing any special adjustments. It works by breaking
 #   down the training data into smaller subsets and focusing on the most common
