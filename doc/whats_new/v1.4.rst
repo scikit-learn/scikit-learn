@@ -447,6 +447,9 @@ Changelog
 - |Enhancement| :class:`preprocessing.TargetEncoder` now supports `target_type`
   'multiclass'. :pr:`26674` by :user:`Lucy Liu <lucyleeow>`.
 
+- |Enhancement| :class:`preprocessing.QuantileTransformer` now supports disabling
+  subsampling explicitly :pr:`27636` by :user:`Ralph Urlus <rurlus>`.
+
 :mod:`sklearn.tree`
 ...................
 
