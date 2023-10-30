@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from sklearn import config_context
+from sklearn.base import is_classifier
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.covariance import GraphicalLassoCV
@@ -229,6 +230,15 @@ METAESTIMATORS: list = [
         "estimator_routing_methods": ["fit"],
     },
     {
+        "metaestimator": SelectFromModel,
+        "estimator_name": "estimator",
+        "estimator": ConsumingClassifier,
+        "X": X,
+        "y": y,
+        "estimator_routing_methods": ["fit", "partial_fit"],
+        "method_args": {"partial_fit": {"classes": classes}},
+    },
+    {
         "metaestimator": OrthogonalMatchingPursuitCV,
         "X": X,
         "y": y,
@@ -325,7 +335,6 @@ UNSUPPORTED_ESTIMATORS = [
     RFECV(ConsumingClassifier()),
     RidgeCV(),
     RidgeClassifierCV(),
-    SelectFromModel(ConsumingClassifier()),
     SelfTrainingClassifier(ConsumingClassifier()),
     SequentialFeatureSelector(ConsumingClassifier()),
     StackingClassifier(ConsumingClassifier()),
@@ -477,6 +486,8 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
         # e.g. call set_fit_request on estimator
         set_request_for_method = getattr(estimator, f"set_{method_name}_request")
         set_request_for_method(sample_weight=True, metadata=True)
+        if is_classifier(estimator) and method_name == "partial_fit":
+            set_request_for_method(classes=True)
 
     cls = metaestimator["metaestimator"]
     X = metaestimator["X"]
