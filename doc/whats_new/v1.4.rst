@@ -134,8 +134,8 @@ and classes are impacted:
 
 **Functions:**
 
-- :func:`cluster.compute_optics_graph` in :pr:`27250` by
-  :user:`Yao Xiao <Charlie-XIAO>`;
+- :func:`cluster.compute_optics_graph` in :pr:`27104` by
+  :user:`Maren Westermann <marenwestermann>` and in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :func:`cluster.kmeans_plusplus` in :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`;
 - :func:`decomposition.non_negative_factorization` in :pr:`27100` by
   :user:`Isaac Virshup <ivirshup>`;
@@ -157,7 +157,8 @@ and classes are impacted:
 - :class:`cluster.HDBSCAN` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`cluster.KMeans` in :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`;
 - :class:`cluster.MiniBatchKMeans` in :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`;
-- :class:`cluster.OPTICS` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
+- :class:`cluster.OPTICS` in :pr:`27104` by
+  :user:`Maren Westermann <marenwestermann>` and in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`decomposition.NMF` in :pr:`27100` by :user:`Isaac Virshup <ivirshup>`;
 - :class:`decomposition.MiniBatchNMF` in :pr:`27100` by
   :user:`Isaac Virshup <ivirshup>`;
