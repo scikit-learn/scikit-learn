@@ -529,7 +529,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                         left_child_min = max(record.middle_value, record.lower_bound)
                         right_child_max = min(record.middle_value, record.upper_bound)
 
-
                     # Decrement number of split nodes available
                     max_split_nodes -= 1
 

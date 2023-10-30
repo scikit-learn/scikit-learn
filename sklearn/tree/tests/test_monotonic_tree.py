@@ -29,10 +29,10 @@ TREE_BASED_REGRESSOR_CLASSES = TREE_REGRESSOR_CLASSES + [
 
 
 def missing_data_supported(TreeEstimator, criterion):
-    return (
-        TreeEstimator in [DecisionTreeRegressor, DecisionTreeClassifier] and
-        criterion in ["squared_error", "gini", "entropy", "log_loss"]
-    )
+    return TreeEstimator in [
+        DecisionTreeRegressor,
+        DecisionTreeClassifier,
+    ] and criterion in ["squared_error", "gini", "entropy", "log_loss"]
 
 
 @pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
@@ -306,7 +306,12 @@ def test_1d_opposite_monotonicity_cst_data(TreeRegressor):
 @pytest.mark.parametrize("depth_first_builder", (True, False))
 @pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
 def test_1d_tree_nodes_values(
-    TreeRegressor, with_missing, monotonic_sign, depth_first_builder, criterion, global_random_seed
+    TreeRegressor,
+    with_missing,
+    monotonic_sign,
+    depth_first_builder,
+    criterion,
+    global_random_seed,
 ):
     # Adaptation from test_nodes_values in test_monotonic_constraints.py
     # in sklearn.ensemble._hist_gradient_boosting
@@ -358,7 +363,9 @@ def test_1d_tree_nodes_values(
     assert_1d_reg_monotonic(clf, monotonic_sign, np.min(X), np.max(X), 100)
 
 
-def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst, with_missing=False):
+def assert_nd_reg_tree_children_monotonic_bounded(
+    tree_, monotonic_cst, with_missing=False
+):
     upper_bound = np.full(tree_.node_count, np.inf)
     lower_bound = np.full(tree_.node_count, -np.inf)
     for i in range(tree_.node_count):
@@ -470,7 +477,12 @@ def test_assert_nd_reg_tree_children_monotonic_bounded():
 @pytest.mark.parametrize("depth_first_builder", (True, False))
 @pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
 def test_nd_tree_nodes_values(
-    TreeRegressor, with_missing, monotonic_sign, depth_first_builder, criterion, global_random_seed
+    TreeRegressor,
+    with_missing,
+    monotonic_sign,
+    depth_first_builder,
+    criterion,
+    global_random_seed,
 ):
     # Build tree with several features, and make sure the nodes
     # values respect the monotonicity constraints.
@@ -521,4 +533,6 @@ def test_nd_tree_nodes_values(
             random_state=global_random_seed,
         )
     clf.fit(X, y)
-    assert_nd_reg_tree_children_monotonic_bounded(clf.tree_, monotonic_cst, with_missing=with_missing)
+    assert_nd_reg_tree_children_monotonic_bounded(
+        clf.tree_, monotonic_cst, with_missing=with_missing
+    )
