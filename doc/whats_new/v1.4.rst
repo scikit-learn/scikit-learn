@@ -227,6 +227,15 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
+- When transformers in the |API| |FIX| :class:`~compose.ColumnTransformer`
+  output arrays using pandas extension dtypes (eg `pd.Float64Dtype`), those are
+  replaced with numpy dtypes and `pd.NA` is replaced by `np.nan`. Such arrays
+  used to result in outputs of dtype `object` containing `pd.NA`, which could
+  break subsequent estimators in a pipeline. No transformation is applied when
+  the transformer outputs DataFrames (ie when calling
+  `ColumnTransformer.set_output(transform="pandas")`). :pr:`27671` by
+  :user:`Jérôme Dockès <jeromedockes>`.
+
 - |API| |FIX| :class:`~compose.ColumnTransformer` now replaces `"passthrough"`
   with a corresponding :class:`~preprocessing.FunctionTransformer` in the
   fitted ``transformers_`` attribute. :pr:`27204` by `Adrin Jalali`_.
