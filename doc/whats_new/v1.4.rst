@@ -107,6 +107,10 @@ more details.
   ``**score_params`` which are passed to the underlying scorer.
   :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Feature| :class:`feature_selection.SelectFromModel` now supports metadata
+  routing in `fit` and `partial_fit`.
+  :pr:`27490` by :user:`Stefanie Senger <StefanieSenger>`.
+
 - |Feature| :class:`linear_model.OrthogonalMatchingPursuitCV` now supports
   metadata routing. Its `fit` now accepts ``**fit_params``, which are passed to
   the underlying splitter. :pr:`27500` by :user:`Stefanie Senger
