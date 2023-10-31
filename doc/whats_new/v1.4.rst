@@ -35,9 +35,9 @@ random sampling procedures.
       solvers (when fit on the same data again). The amount of change depends on the
       specified `tol`, for small values you will get more precise results.
 
-- |Efficiency| :class:`preprocessing.QuantileTransformer` now uses safe_indexing to
-  perform subsampling and also remove the for-loop while computing quantiles. But it
-  will not get the same subsample examples with the same `random_state` as before.
+- |Efficiency| :class:`preprocessing.QuantileTransformer` now uses `resample` method to
+  perform subsampling and remove the for-loop while computing quantiles. For dense matrices,
+  it will not get the same subsample examples with the same `random_state` as before.
   :pr:`27344` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
 - |Fix| fixes a memory leak seen in PyPy for estimators using the Cython loss functions.
