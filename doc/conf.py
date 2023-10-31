@@ -710,6 +710,13 @@ warnings.filterwarnings(
 # warnings. Before updating the lock files, we need to fix them.
 for warning_type in (FutureWarning, DeprecationWarning, VisibleDeprecationWarning):
     warnings.filterwarnings("error", category=warning_type)
+# TODO: remove when pyamg > 5.0.1
+# Avoid a deprecation warning due pkg_resources deprecation in pyamg.
+warnings.filterwarnings(
+    "ignore",
+    message="pkg_resources is deprecated as an API",
+    category=DeprecationWarning,
+)
 
 # maps functions with a class name that is indistinguishable when case is
 # ignore to another filename
