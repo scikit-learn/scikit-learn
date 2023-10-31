@@ -19,11 +19,8 @@ from ...utils.fixes import threadpool_limits
 
 cnp.import_array()
 
-# TODO: change for `libcpp.algorithm.move` once Cython 3 is used
-# Introduction in Cython:
-# https://github.com/cython/cython/blob/05059e2a9b89bf6738a7750b905057e5b1e3fe2e/Cython/Includes/libcpp/algorithm.pxd#L47 #noqa
-cdef extern from "<algorithm>" namespace "std" nogil:
-    OutputIt move[InputIt, OutputIt](InputIt first, InputIt last, OutputIt d_first) except + #noqa
+ # Updated for Cython 3
+from libcpp.algorithm cimport move
 
 ######################
 
