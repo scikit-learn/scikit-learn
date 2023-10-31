@@ -541,14 +541,15 @@ def test_one_hot_encoder_unsorted_categories():
         enc.fit_transform(X)
 
 
-@pytest.mark.parametrize(
-    "encoder",
-    [OneHotEncoder, OrdinalEncoder],
-)
-def test_encoder_nan_ending_specified_categories(encoder):
-    """Test encoder for specified categories that nan is at the end."""
+@pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
+def test_encoder_nan_ending_specified_categories(Encoder):
+    """Test encoder for specified categories that nan is at the end.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27088
+    """
     cats = [np.array([0, np.nan, 1])]
-    enc = encoder(categories=cats)
+    enc = Encoder(categories=cats)
     X = np.array([[0, 1]], dtype=object).T
     with pytest.raises(ValueError, match="Nan should be the last element"):
         enc.fit(X)

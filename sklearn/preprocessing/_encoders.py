@@ -123,13 +123,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     )
                     raise ValueError(msg)
 
-                last_idx = len(cats) - 1
-                for idx, category in enumerate(cats):
-                    if is_scalar_nan(category) and idx != last_idx:
+                # `nan` can only be the last stated category
+                for category in cats[:-1]:
+                    if is_scalar_nan(category):
                         raise ValueError(
                             "Nan should be the last element in user"
-                            " provided categories, see categories {0}"
-                            " in column {1}".format(cats, i)
+                            f" provided categories, see categories {cats}"
+                            f" in column #{i}"
                         )
 
                 if Xi.dtype.kind not in "OUS":
