@@ -450,6 +450,10 @@ Changelog
 - |Enhancement| :class:`preprocessing.TargetEncoder` now supports `target_type`
   'multiclass'. :pr:`26674` by :user:`Lucy Liu <lucyleeow>`.
 
+- |Fix| :class:`preprocessing.OneHotEncoder` and :class:`preprocessing.OrdinalEncoder`
+  will raise an error if user provided categories contain duplicate elements.
+  :pr:`27328` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
 :mod:`sklearn.tree`
 ...................
 
