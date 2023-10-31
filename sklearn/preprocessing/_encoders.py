@@ -123,7 +123,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     )
                     raise ValueError(msg)
 
-                # `nan` can only be the last stated category
+                # `nan` must be the last stated category
                 for category in cats[:-1]:
                     if is_scalar_nan(category):
                         raise ValueError(
