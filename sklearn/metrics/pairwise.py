@@ -356,30 +356,24 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     float32, norms needs to be recomputed on upcast chunks.
     TODO: use a float64 accumulator in row_norms to avoid the latter.
     """
-    if X_norm_squared is not None:
-        if X_norm_squared.dtype == np.float32:
-            XX = None
-        else:
-            XX = X_norm_squared.reshape(-1, 1)
-    elif X.dtype == np.float32:
-        XX = None
-    else:
+    if X_norm_squared is not None and X_norm_squared.dtype != np.float32:
+        XX = X_norm_squared.reshape(-1, 1)
+    elif X.dtype != np.float32:
         XX = row_norms(X, squared=True)[:, np.newaxis]
+    else:
+        XX = None
 
     if Y is X:
         YY = None if XX is None else XX.T
     else:
-        if Y_norm_squared is not None:
-            if Y_norm_squared.dtype == np.float32:
-                YY = None
-            else:
-                YY = Y_norm_squared.reshape(1, -1)
-        elif Y.dtype == np.float32:
-            YY = None
-        else:
+        if Y_norm_squared is not None and Y_norm_squared.dtype != np.float32:
+            YY = Y_norm_squared.reshape(1, -1)
+        elif Y.dtype != np.float32:
             YY = row_norms(Y, squared=True)[np.newaxis, :]
+        else:
+            YY = None
 
-    if X.dtype == np.float32:
+    if X.dtype == np.float32 or Y.dtype == np.float32:
         # To minimize precision issues with float32, we compute the distance
         # matrix on chunks of X and Y upcast to float64
         distances = _euclidean_distances_upcast(X, XX, Y, YY)
@@ -1826,7 +1820,11 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
         out = np.zeros((X.shape[0], Y.shape[0]), dtype="float")
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
-            out[i, j] = metric(X[i], Y[j], **kwds)
+            # scipy has not yet implemented 1D sparse slices; once implemented this can
+            # be removed and `arr[ind]` can be simply used.
+            x = X[[i], :] if issparse(X) else X[i]
+            y = Y[[j], :] if issparse(Y) else Y[j]
+            out[i, j] = metric(x, y, **kwds)
 
         # Make symmetric
         # NB: out += out.T will produce incorrect results
@@ -1835,7 +1833,9 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
         # Calculate diagonal
         # NB: nonzero diagonals are allowed for both metrics and kernels
         for i in range(X.shape[0]):
-            x = X[i]
+            # scipy has not yet implemented 1D sparse slices; once implemented this can
+            # be removed and `arr[ind]` can be simply used.
+            x = X[[i], :] if issparse(X) else X[i]
             out[i, i] = metric(x, x, **kwds)
 
     else:
@@ -1843,7 +1843,11 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
         out = np.empty((X.shape[0], Y.shape[0]), dtype="float")
         iterator = itertools.product(range(X.shape[0]), range(Y.shape[0]))
         for i, j in iterator:
-            out[i, j] = metric(X[i], Y[j], **kwds)
+            # scipy has not yet implemented 1D sparse slices; once implemented this can
+            # be removed and `arr[ind]` can be simply used.
+            x = X[[i], :] if issparse(X) else X[i]
+            y = Y[[j], :] if issparse(Y) else Y[j]
+            out[i, j] = metric(x, y, **kwds)
 
     return out
 

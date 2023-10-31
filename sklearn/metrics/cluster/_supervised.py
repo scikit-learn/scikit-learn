@@ -207,9 +207,9 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     See Also
     --------
-    rand_score : Rand Score.
-    adjusted_rand_score : Adjusted Rand Score.
-    adjusted_mutual_info_score : Adjusted Mutual Information.
+    sklearn.metrics.rand_score : Rand Score.
+    sklearn.metrics.adjusted_rand_score : Adjusted Rand Score.
+    sklearn.metrics.adjusted_mutual_info_score : Adjusted Mutual Information.
 
     References
     ----------
@@ -1021,7 +1021,7 @@ def adjusted_mutual_info_score(
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
     normalizer = _generalized_average(h_true, h_pred, average_method)
     denominator = normalizer - emi
-    # Avoid 0.0 / 0.0 when expectation equals maximum, i.e a perfect match.
+    # Avoid 0.0 / 0.0 when expectation equals maximum, i.e. a perfect match.
     # normalizer should always be >= emi, but because of floating-point
     # representation, sometimes emi is slightly larger. Correct this
     # by preserving the sign.
@@ -1171,7 +1171,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     ``labels_pred``), ``FP`` is the number of **False Positive** (i.e. the
     number of pair of points that belongs in the same clusters in
     ``labels_true`` and not in ``labels_pred``) and ``FN`` is the number of
-    **False Negative** (i.e the number of pair of points that belongs in the
+    **False Negative** (i.e. the number of pair of points that belongs in the
     same clusters in ``labels_pred`` and not in ``labels_True``).
 
     The score ranges from 0 to 1. A high value indicates a good similarity
