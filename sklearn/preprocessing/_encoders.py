@@ -123,7 +123,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     )
                     raise ValueError(msg)
 
-                if cats.size != np.unique(cats).size:
+                if cats.size != len(set(cats)):
                     msg = (
                         f"In column {i}, the predefined categories"
                         " contain duplicate elements."
