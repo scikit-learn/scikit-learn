@@ -63,9 +63,10 @@ The following models now support metadata routing in one or more or their
 methods. Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
 more details.
 
-- |Feature| :class:`RidgeCV` and :class:`RidgeClassifierCV` now support
-  metadata routing in their `fit` method and route metadata to the underlying
-  GridSearchCV object or the underlying scorer.
+- |Feature| :class:`linear_model.RidgeCV` and
+  :class:`linear_model.RidgeClassifierCV` now support metadata routing in
+  their `fit` method and route metadata to the underlying
+  :class:`model_selection.GridSearchCV` object or the underlying scorer.
   :pr:`27560` by :user:`Omar Salman <OmarManzoor>`.
 
 - |Feature| :class:`LarsCV` and :class:`LassoLarsCV` now support metadata

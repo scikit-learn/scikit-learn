@@ -2225,12 +2225,14 @@ class _BaseRidgeCV(LinearModel):
                 self.alphas[0] = check_scalar_alpha(self.alphas[0], "alphas")
         alphas = np.asarray(self.alphas)
 
+        if sample_weight is not None:
+            params["sample_weight"] = sample_weight
+
         if cv is None:
             if _routing_enabled():
                 routed_params = process_routing(
                     self,
                     "fit",
-                    sample_weight=sample_weight,
                     **params,
                 )
             else:
@@ -2277,8 +2279,7 @@ class _BaseRidgeCV(LinearModel):
                 cv=cv,
                 scoring=self.scoring,
             )
-            if sample_weight is not None:
-                params["sample_weight"] = sample_weight
+
             gs.fit(X, y, **params)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
