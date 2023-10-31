@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import scipy.sparse
 
 from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import (
@@ -15,6 +14,7 @@ from sklearn.tree import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
+from sklearn.utils.fixes import CSC_CONTAINERS
 
 TREE_CLASSIFIER_CLASSES = [DecisionTreeClassifier, ExtraTreeClassifier]
 TREE_REGRESSOR_CLASSES = [DecisionTreeRegressor, ExtraTreeRegressor]
@@ -31,8 +31,13 @@ TREE_BASED_REGRESSOR_CLASSES = TREE_REGRESSOR_CLASSES + [
 @pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
 @pytest.mark.parametrize("depth_first_builder", (True, False))
 @pytest.mark.parametrize("sparse_splitter", (True, False))
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_monotonic_constraints_classifications(
-    TreeClassifier, depth_first_builder, sparse_splitter, global_random_seed
+    TreeClassifier,
+    depth_first_builder,
+    sparse_splitter,
+    global_random_seed,
+    csc_container,
 ):
     n_samples = 1000
     n_samples_train = 900
@@ -70,7 +75,7 @@ def test_monotonic_constraints_classifications(
     if hasattr(est, "n_estimators"):
         est.set_params(**{"n_estimators": 5})
     if sparse_splitter:
-        X_train = scipy.sparse.csc_matrix(X_train)
+        X_train = csc_container(X_train)
     est.fit(X_train, y_train)
     y = est.predict_proba(X_test)[:, 1]
 
@@ -87,8 +92,14 @@ def test_monotonic_constraints_classifications(
 @pytest.mark.parametrize("depth_first_builder", (True, False))
 @pytest.mark.parametrize("sparse_splitter", (True, False))
 @pytest.mark.parametrize("criterion", ("absolute_error", "squared_error"))
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_monotonic_constraints_regressions(
-    TreeRegressor, depth_first_builder, sparse_splitter, criterion, global_random_seed
+    TreeRegressor,
+    depth_first_builder,
+    sparse_splitter,
+    criterion,
+    global_random_seed,
+    csc_container,
 ):
     n_samples = 1000
     n_samples_train = 900
@@ -130,7 +141,7 @@ def test_monotonic_constraints_regressions(
     if hasattr(est, "n_estimators"):
         est.set_params(**{"n_estimators": 5})
     if sparse_splitter:
-        X_train = scipy.sparse.csc_matrix(X_train)
+        X_train = csc_container(X_train)
     est.fit(X_train, y_train)
     y = est.predict(X_test)
     # Monotonic increase constraint
