@@ -26,7 +26,11 @@ from ...utils._cython_blas cimport (
 from ...utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
 
 #Updated for Cython 3
-from libcpp.algorithm cimport fill
+if parse_version(Cython.__version__) < parse_version('3.0.0'):
+   cdef extern from "<algorithm>" namespace "std" nogil: 
+     void fill[Iter, T](Iter first, Iter last, const T& value) except + #noqa 
+else:
+     from libcpp.algorithm cimport fill
 
 import numpy as np
 from scipy.sparse import issparse, csr_matrix
