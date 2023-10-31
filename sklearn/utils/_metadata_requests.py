@@ -164,6 +164,54 @@ def _raise_for_params(params, owner, method):
         )
 
 
+def _raise_for_unsupported_routing(obj, method, **kwargs):
+    """Raise when metadata routing is enabled and metadata is passed.
+
+    This is used in meta-estimators which have not implemented metadata routing
+    to prevent silent bugs. There is no need to use this function if the
+    meta-estimator is not accepting any metadata, especially in `fit`, since
+    if a meta-estimator accepts any metadata, they would do that in `fit` as
+    well.
+
+    Parameters
+    ----------
+    obj : estimator
+        The estimator for which we're raising the error.
+
+    method : str
+        The method where the error is raised.
+
+    **kwargs : dict
+        The metadata passed to the method.
+    """
+    kwargs = {key: value for key, value in kwargs.items() if value is not None}
+    if _routing_enabled() and kwargs:
+        cls_name = obj.__class__.__name__
+        raise NotImplementedError(
+            f"{cls_name}.{method} cannot accept given metadata ({set(kwargs.keys())})"
+            f" since metadata routing is not yet implemented for {cls_name}."
+        )
+
+
+class _RoutingNotSupportedMixin:
+    """A mixin to be used to remove the default `get_metadata_routing`.
+
+    This is used in meta-estimators where metadata routing is not yet
+    implemented.
+
+    This also makes it clear in our rendered documentation that this method
+    cannot be used.
+    """
+
+    def get_metadata_routing(self):
+        """Raise `NotImplementedError`.
+
+        This estimator does not support metadata routing yet."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} has not implemented metadata routing yet."
+        )
+
+
 # Request values
 # ==============
 # Each request value needs to be one of the following values, or an alias.
@@ -369,7 +417,7 @@ class MethodMetadataRequest:
         Returns
         -------
         params : Bunch
-            A :class:`~utils.Bunch` of {prop: value} which can be given to the
+            A :class:`~sklearn.utils.Bunch` of {prop: value} which can be given to the
             corresponding method.
         """
         self._check_warnings(params=params)
@@ -561,7 +609,7 @@ class MetadataRequest:
         Returns
         -------
         params : Bunch
-            A :class:`~utils.Bunch` of {prop: value} which can be given to the
+            A :class:`~sklearn.utils.Bunch` of {prop: value} which can be given to the
             corresponding method.
         """
         return getattr(self, method)._route_params(params=params)
@@ -724,8 +772,8 @@ class MetadataRouter:
     RouteMappingPair(method_mapping, routing_info)}``, where ``method_mapping``
     is an instance of :class:`~sklearn.utils.metadata_routing.MethodMapping` and
     ``routing_info`` is either a
-    :class:`~utils.metadata_routing.MetadataRequest` or a
-    :class:`~utils.metadata_routing.MetadataRouter` instance.
+    :class:`~sklearn.utils.metadata_routing.MetadataRequest` or a
+    :class:`~sklearn.utils.metadata_routing.MetadataRouter` instance.
 
     .. versionadded:: 1.3
 
@@ -755,7 +803,7 @@ class MetadataRouter:
         This method is used if the router is also a consumer, and hence the
         router itself needs to be included in the routing. The passed object
         can be an estimator or a
-        :class:`~utils.metadata_routing.MetadataRequest`.
+        :class:`~sklearn.utils.metadata_routing.MetadataRequest`.
 
         A router should add itself using this method instead of `add` since it
         should be treated differently than the other objects to which metadata
@@ -962,7 +1010,7 @@ class MetadataRouter:
         Returns
         -------
         params : Bunch
-            A :class:`~utils.Bunch` of the form
+            A :class:`~sklearn.utils.Bunch` of the form
             ``{"object_name": {"method_name": {prop: value}}}`` which can be
             used to pass the required metadata to corresponding methods or
             corresponding child objects.
@@ -985,7 +1033,7 @@ class MetadataRouter:
     def validate_metadata(self, *, method, params):
         """Validate given metadata for a method.
 
-        This raises a ``ValueError`` if some of the passed metadata are not
+        This raises a ``TypeError`` if some of the passed metadata are not
         understood by child objects.
 
         Parameters
@@ -1010,8 +1058,8 @@ class MetadataRouter:
         extra_keys = set(params.keys()) - param_names - self_params
         if extra_keys:
             raise TypeError(
-                f"{method} got unexpected argument(s) {extra_keys}, which are "
-                "not requested metadata in any object."
+                f"{self.owner}.{method} got unexpected argument(s) {extra_keys}, which"
+                " are not requested metadata in any object."
             )
 
     def _serialize(self):
@@ -1450,6 +1498,10 @@ def process_routing(_obj, _method, /, **kwargs):
     a call to this function would be:
     ``process_routing(self, sample_weight=sample_weight, **fit_params)``.
 
+    Note that if routing is not enabled and ``kwargs`` is empty, then it
+    returns an empty routing where ``process_routing(...).ANYTHING.ANY_METHOD``
+    is always an empty dictionary.
+
     .. versionadded:: 1.3
 
     Parameters
@@ -1467,11 +1519,27 @@ def process_routing(_obj, _method, /, **kwargs):
     Returns
     -------
     routed_params : Bunch
-        A :class:`~utils.Bunch` of the form ``{"object_name": {"method_name":
+        A :class:`~sklearn.utils.Bunch` of the form ``{"object_name": {"method_name":
         {prop: value}}}`` which can be used to pass the required metadata to
         corresponding methods or corresponding child objects. The object names
         are those defined in `obj.get_metadata_routing()`.
     """
+    if not _routing_enabled() and not kwargs:
+        # If routing is not enabled and kwargs are empty, then we don't have to
+        # try doing any routing, we can simply return a structure which returns
+        # an empty dict on routed_params.ANYTHING.ANY_METHOD.
+        class EmptyRequest:
+            def get(self, name, default=None):
+                return default if default else {}
+
+            def __getitem__(self, name):
+                return Bunch(**{method: dict() for method in METHODS})
+
+            def __getattr__(self, name):
+                return Bunch(**{method: dict() for method in METHODS})
+
+        return EmptyRequest()
+
     if not (hasattr(_obj, "get_metadata_routing") or isinstance(_obj, MetadataRouter)):
         raise AttributeError(
             f"The given object ({repr(_obj.__class__.__name__)}) needs to either"
