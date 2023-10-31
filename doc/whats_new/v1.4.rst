@@ -45,6 +45,13 @@ Changes impacting all modules
   to work with our estimators and functions.
   :pr:`26464` by `Thomas Fan`_.
 
+- |Enhancement| The HTML representation of estimators now includes a link to the
+  documentation and is color-coded to denote whether the estimator is fitted or
+  not (unfitted estimators are orange, fitted estimators are blue).
+  :pr:`26616` by :user:`Riccardo Cappuzzo <rcap107>`,
+  :user:`Ines Ibnukhsein <Ines1999>`, :user:`Gael Varoquaux <GaelVaroquaux>`, and
+  :user:`Lilian Boulard <LilianBoulard>`.
+
 - |Fix| Fixed a bug in most estimators and functions where setting a parameter to
   a large integer would cause a `TypeError`.
   :pr:`26648` by :user:`Naoise Holohan <naoise-h>`.
@@ -100,6 +107,10 @@ more details.
   ``**score_params`` which are passed to the underlying scorer.
   :pr:`26525` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Feature| :class:`feature_selection.SelectFromModel` now supports metadata
+  routing in `fit` and `partial_fit`.
+  :pr:`27490` by :user:`Stefanie Senger <StefanieSenger>`.
+
 - |Feature| :class:`linear_model.OrthogonalMatchingPursuitCV` now supports
   metadata routing. Its `fit` now accepts ``**fit_params``, which are passed to
   the underlying splitter. :pr:`27500` by :user:`Stefanie Senger
@@ -123,8 +134,8 @@ and classes are impacted:
 
 **Functions:**
 
-- :func:`cluster.compute_optics_graph` in :pr:`27250` by
-  :user:`Yao Xiao <Charlie-XIAO>`;
+- :func:`cluster.compute_optics_graph` in :pr:`27104` by
+  :user:`Maren Westermann <marenwestermann>` and in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :func:`cluster.kmeans_plusplus` in :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`;
 - :func:`decomposition.non_negative_factorization` in :pr:`27100` by
   :user:`Isaac Virshup <ivirshup>`;
@@ -146,7 +157,8 @@ and classes are impacted:
 - :class:`cluster.HDBSCAN` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`cluster.KMeans` in :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`;
 - :class:`cluster.MiniBatchKMeans` in :pr:`27179` by :user:`Nurseit Kamchyev <Bncer>`;
-- :class:`cluster.OPTICS` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
+- :class:`cluster.OPTICS` in :pr:`27104` by
+  :user:`Maren Westermann <marenwestermann>` and in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`decomposition.NMF` in :pr:`27100` by :user:`Isaac Virshup <ivirshup>`;
 - :class:`decomposition.MiniBatchNMF` in :pr:`27100` by
   :user:`Isaac Virshup <ivirshup>`;
@@ -280,6 +292,13 @@ Changelog
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
   <StefanieSenger>`.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| :class:`feature_selection.RFE` and :class:`feature_selection.RFECV` do
+  not check for nans during input validation.
+  :pr:`21807` by `Thomas Fan`_.
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -327,6 +346,11 @@ Changelog
 
 :mod:`sklearn.metrics`
 ......................
+
+- |Fix| computing pairwise distances with :func:`euclidean_distances` no longer
+  raises an exception when `X` is provided as a `float64` array and
+  `X_norm_squared` as a `float32` array. :pr:`27624` by
+  :user:`Jérôme Dockès <jeromedockes>`.
 
 - |Efficiency| Computing pairwise distances via :class:`metrics.DistanceMetric`
   for CSR × CSR,  Dense × CSR, and CSR × Dense datasets is now 1.5x faster.
@@ -403,13 +427,14 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |MajorFeature| :class:`preprocessing.MinMaxScaler` and
-  :class:`preprocessing.MaxAbsScaler` now
+- |MajorFeature| :class:`preprocessing.MinMaxScaler`, :class:`preprocessing.MaxAbsScaler`
+  and :class:`preprocessing.KernelCenterer` now
   support the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
   support is considered experimental and might evolve without being subject to
   our usual rolling deprecation cycle policy. See
   :ref:`array_api` for more details.
-  :pr:`26243` by `Tim Head`_ and :pr:`27110` by :user:`Edoardo Abati <EdAbati>`.
+  :pr:`26243` by `Tim Head`_, :pr:`27110` by :user:`Edoardo Abati <EdAbati>` and
+  :pr:`27556` by :user:`Edoardo Abati <EdAbati>`.
 
 - |Efficiency| :class:`preprocessing.OrdinalEncoder` avoids calculating
   missing indices twice to improve efficiency.
@@ -447,6 +472,13 @@ Changelog
   which can be used to check whether a given set of parameters would be consumed.
   :pr:`26831` by `Adrin Jalali`_.
 
+- |Enhancement| Make :func:`sklearn.utils.check_array` attempt to output
+  `int32`-indexed CSR and COO arrays when converting from DIA arrays if the number of
+  non-zero entries is small enough. This ensures that estimators implemented in Cython
+  and that do not accept `int64`-indexed sparse datastucture, now consistently
+  accept the same sparse input formats for SciPy sparse matrices and arrays.
+  :pr:`27372` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Fix| :func:`sklearn.utils.check_array` should accept both matrix and array from
   the sparse SciPy module. The previous implementation would fail if `copy=True` by
   calling specific NumPy `np.may_share_memory` that does not work with SciPy sparse
@@ -456,6 +488,13 @@ Changelog
 - |API| :func:`sklearn.extmath.log_logistic` is deprecated and will be removed in 1.6.
   Use `-np.logaddexp(0, -x)` instead.
   :pr:`27544` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Fix| :func:`~utils.estimator_checks.check_estimators_pickle` with
+  `readonly_memmap=True` now relies on joblib's own capability to allocate
+  aligned memory mapped arrays when loading a serialized estimator instead of
+  calling a dedicated private function that would crash when OpenBLAS
+  misdetects the CPU architecture.
+  :pr:`27614` by :user:`Olivier Grisel <ogrisel>`.
 
 Code and Documentation Contributors
 -----------------------------------
