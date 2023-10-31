@@ -581,18 +581,14 @@ cdef class ClassificationCriterion(Criterion):
         - single-output trees and
         - binary classifications.
         """
-        if dest[0] < lower_bound:
-            dest[0] = lower_bound
-        elif dest[0] > upper_bound:
-            dest[0] = upper_bound
+        cdef float64_t total_weighted_count = dest[0] + dest[1]
+        if dest[0] < (lower_bound * total_weighted_count):
+            dest[0] = lower_bound * total_weighted_count
+        elif dest[0] > (upper_bound * total_weighted_count):
+            dest[0] = upper_bound * total_weighted_count
 
-        if dest[0] < 0.:
-            dest[0] = 0
-        elif dest[0] > 1.:
-            dest[0] = 1.
-
-        # Class proportions for binary classification must sum to 1.
-        dest[1] = 1 - dest[0]
+        # Values for binary classification must sum to total_weighted_count.
+        dest[1] = total_weighted_count - dest[0]
 
     cdef inline float64_t middle_value(self) noexcept nogil:
         """Compute the middle value of a split for monotonicity constraints as the simple average
