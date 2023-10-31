@@ -740,8 +740,10 @@ of ``learning_rate`` require larger numbers of weak learners to maintain
 a constant training error. Empirical evidence suggests that small
 values of ``learning_rate`` favor better test error. [HTF]_
 recommend to set the learning rate to a small constant
-(e.g. ``learning_rate <= 0.1``) and choose ``n_estimators`` by early
-stopping. For a more detailed discussion of the interaction between
+(e.g. ``learning_rate <= 0.1``) and choose ``n_estimators`` large enough
+that early stopping applies,
+see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`
+for a more detailed discussion of the interaction between
 ``learning_rate`` and ``n_estimators`` see [R2007]_.
 
 Subsampling
