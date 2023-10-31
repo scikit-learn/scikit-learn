@@ -899,7 +899,7 @@ cdef class CyLossFunction:
     ):
         """Compute gradient of loss w.r.t raw_prediction for each input.
 
-        The gradient is written to `gradient_out` and not array is returned.
+        The gradient is written to `gradient_out` and no array is returned.
 
         Parameters
         ----------
