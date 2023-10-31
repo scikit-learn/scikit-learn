@@ -85,8 +85,7 @@ def test_seq_dataset_basic_iteration(dataset, csr_container):
         xi_, yi, swi, idx = dataset._next_py()
         xi = csr_container(xi_, shape=(1, X64.shape[1]))
 
-        sparse_index = idx if csr_container is sp.csr_matrix else [idx]
-        assert_csr_equal_values(xi, X_csr64[sparse_index])
+        assert_csr_equal_values(xi, X_csr64[[idx]])
         assert yi == y64[idx]
         assert swi == sample_weight64[idx]
 
