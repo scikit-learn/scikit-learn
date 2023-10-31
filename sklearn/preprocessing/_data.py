@@ -613,8 +613,10 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
         otherwise (if 1) scale each sample.
 
     copy : bool, default=True
-        Set to False to perform inplace scaling and avoid a copy (if the input
-        is already a numpy array).
+        If False, try to avoid a copy and do inplace scaling instead.
+        This is not guaranteed to always work inplace; e.g. if the data is
+        not a NumPy array, is scipy.sparse CSR matrix, or is not of dtype
+        float, a copy may still be returned.
 
     Returns
     -------
@@ -633,16 +635,6 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
         :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking: `pipe = make_pipeline(MinMaxScaler(), LogisticRegression())`.
 
-    .. warning:: Forced copy when dtype of parameter X not float
-
-        When using :func:`~sklearn.preprocessing.minmax_scale` with parameter X
-        of dtype not float and parameter `copy=False` a copy of X will be
-        forced regardless. This is the result of applying
-        :func:`~sklearn.utils.validation.check_array` on X. Specifically if X
-        is not of dtype float because `check_array` is called with
-        dtype=FLOAT_DTYPES a dtype conversion of X is applied, triggering a copy.
-
-
     See Also
     --------
     MinMaxScaler : Performs scaling to a given range using the Transformer
@@ -659,19 +651,6 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     X = check_array(
         X, copy=False, ensure_2d=False, dtype=FLOAT_DTYPES, force_all_finite="allow-nan"
     )
-
-    if (
-        not X.dtype
-        == check_array(
-            X, copy=False, ensure_2d=False, force_all_finite="allow-nan"
-        ).dtype
-        and not copy
-    ):
-        warning_msg = (
-            "Calling :func:`~sklearn.preprocessing.minmax_scale` with `copy=False` and "
-            "`X not dtype float` leads to a forced copy. Defaulted to `copy=True`."
-        )
-        warnings.warn(warning_msg)
 
     original_ndim = X.ndim
 
