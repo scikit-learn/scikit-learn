@@ -10,7 +10,7 @@ from numbers import Integral
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import _safe_indexing
+from ..utils import resample
 from ..utils._param_validation import Hidden, Interval, Options, StrOptions
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
@@ -18,7 +18,6 @@ from ..utils.validation import (
     _check_sample_weight,
     check_array,
     check_is_fitted,
-    check_random_state,
 )
 from ._encoders import OneHotEncoder
 
@@ -259,9 +258,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if subsample == "warn":
             subsample = 200000 if self.strategy == "quantile" else None
         if subsample is not None and n_samples > subsample:
-            rng = check_random_state(self.random_state)
-            subsample_idx = rng.choice(n_samples, size=subsample, replace=False)
-            X = _safe_indexing(X, subsample_idx)
+            # Take a subsample of `X`
+            X = resample(
+                X, replace=False, n_samples=subsample, random_state=self.random_state
+            )
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)

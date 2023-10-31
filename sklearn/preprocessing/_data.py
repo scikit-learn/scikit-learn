@@ -22,7 +22,7 @@ from ..base import (
     TransformerMixin,
     _fit_context,
 )
-from ..utils import _array_api, _safe_indexing, check_array
+from ..utils import _array_api, check_array, resample
 from ..utils._array_api import get_namespace
 from ..utils._param_validation import Interval, Options, StrOptions, validate_params
 from ..utils.extmath import _incremental_mean_and_var, row_norms
@@ -2595,11 +2595,11 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         n_samples, n_features = X.shape
         references = self.references_ * 100
 
-        if self.subsample < n_samples:
-            subsample_idx = random_state.choice(
-                n_samples, size=self.subsample, replace=False
+        if self.subsample is not None and n_samples > self.subsample:
+            # Take a subsample of `X`
+            X = resample(
+                X, replace=False, n_samples=self.subsample, random_state=random_state
             )
-            X = _safe_indexing(X, subsample_idx)
 
         self.quantiles_ = np.nanpercentile(X, references, axis=0)
         # Due to floating-point precision error in `np.nanpercentile`,
