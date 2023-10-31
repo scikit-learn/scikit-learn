@@ -1,3 +1,8 @@
+"""
+The :mod:`sklearn.utils.discovery` module includes utilities to discover
+objects (i.e. estimators, displays, functions) from the `sklearn` package.
+"""
+
 import inspect
 import pkgutil
 from importlib import import_module
