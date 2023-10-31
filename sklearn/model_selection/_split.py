@@ -2470,6 +2470,14 @@ class _CVIterableWrapper(BaseCrossValidator):
             yield train, test
 
 
+@validate_params(
+        {
+            "cv":[Interval(numbers.Integral, 1, None, closed="left")],
+            "y": ["array-like", None],
+            "classifier": ["boolean"]
+    },
+    prefer_skip_nested_validation=True,
+)
 def check_cv(cv=5, y=None, *, classifier=False):
     """Input checker utility for building a cross-validator.
 
