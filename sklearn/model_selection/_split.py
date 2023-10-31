@@ -2471,10 +2471,10 @@ class _CVIterableWrapper(BaseCrossValidator):
 
 
 @validate_params(
-        {
-            "cv":[Interval(numbers.Integral, 1, None, closed="left")],
-            "y": ["array-like", None],
-            "classifier": ["boolean"]
+    {
+        "cv": [Interval(numbers.Integral, 1, None, closed="left")],
+        "y": ["array-like", None],
+        "classifier": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
