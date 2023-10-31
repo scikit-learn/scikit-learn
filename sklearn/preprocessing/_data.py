@@ -651,7 +651,6 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     X = check_array(
         X, copy=False, ensure_2d=False, dtype=FLOAT_DTYPES, force_all_finite="allow-nan"
     )
-
     original_ndim = X.ndim
 
     if original_ndim == 1:
