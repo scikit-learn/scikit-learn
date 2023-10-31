@@ -127,7 +127,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 if cats.size != n_unique_categories:
                     msg = (
                         f"In column {i}, the predefined categories"
-                        " have duplicate values."
+                        " contain duplicate elements."
                     )
                     raise ValueError(msg)
 

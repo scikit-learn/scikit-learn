@@ -1737,7 +1737,7 @@ def test_encoder_duplicate_specified_categories(Encoder):
     enc = Encoder(categories=cats)
     X = np.array([["a", "b"]], dtype=object).T
     with pytest.raises(
-        ValueError, match="the predefined categories have duplicate values"
+        ValueError, match="the predefined categories contain duplicate elements."
     ):
         enc.fit(X)
 
