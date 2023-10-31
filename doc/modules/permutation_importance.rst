@@ -11,12 +11,12 @@ contribution of each feature to a :term:`fitted` model's performance on a given
 tabular dataset. This technique is particularly useful for non-linear or opaque
 :term:`estimators`, and involves randomly shuffling the values of a single
 feature and observing the resulting degradation of the model's score [1]_. By
-breaking the relationship between the feature and the target, we determine
-how much the model relies on such particular feature. One key advantage of permutation
-feature importance is that it is model-agnostic, i.e. it can be applied to any
-fitted estimator. Moreover, it can be calculated multiple times with different
-permutations of the feature, providing a robust measure of feature importance
-for the specific trained model.
+breaking the relationship between the feature and the target, we determine how
+much the model relies on such particular feature. One key advantage of
+permutation feature importance is that it is model-agnostic, i.e. it can be
+applied to any fitted estimator. Moreover, it can be calculated multiple times
+with different permutations of the feature, providing a robust measure of
+feature importance for the specific trained model.
 
 The figure below shows the permutation feature importance of a
 :class:`~sklearn.ensemble.RandomForestClassifier` trained on an augmented
@@ -180,8 +180,8 @@ Misleading values on strongly correlated features
 
 When two features are correlated and one of the features is permuted, the model
 still has access to the latter through its correlated feature. This results in a
-lower reported importance value for both features, though they might *actually* be
-important.
+lower reported importance value for both features, though they might *actually*
+be important.
 
 The figure below shows the permutation feature importance of a
 :class:`~sklearn.ensemble.RandomForestClassifier` trained using the
