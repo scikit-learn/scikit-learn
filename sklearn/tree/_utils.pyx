@@ -22,22 +22,20 @@ from ..utils._random cimport our_rand_r
 # Helper functions
 # =============================================================================
 
-cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except * nogil:
+cdef int safe_realloc(realloc_ptr* p, size_t nelems) except -1 nogil:
     # sizeof(realloc_ptr[0]) would be more like idiomatic C, but causes Cython
     # 0.20.1 to crash.
     cdef size_t nbytes = nelems * sizeof(p[0][0])
     if nbytes / sizeof(p[0][0]) != nelems:
         # Overflow in the multiplication
-        with gil:
-            raise MemoryError("could not allocate (%d * %d) bytes"
-                              % (nelems, sizeof(p[0][0])))
+        raise MemoryError(f"could not allocate ({nelems} * {sizeof(p[0][0])}) bytes")
+
     cdef realloc_ptr tmp = <realloc_ptr>realloc(p[0], nbytes)
     if tmp == NULL:
-        with gil:
-            raise MemoryError("could not allocate %d bytes" % nbytes)
+        raise MemoryError(f"could not allocate {nbytes} bytes")
 
     p[0] = tmp
-    return tmp  # for convenience
+    return 0
 
 
 def _realloc_test():
@@ -63,14 +61,14 @@ cdef inline intp_t rand_int(intp_t low, intp_t high,
     return low + our_rand_r(random_state) % (high - low)
 
 
-cdef inline double rand_uniform(double low, double high,
-                                uint32_t* random_state) noexcept nogil:
-    """Generate a random double in [low; high)."""
-    return ((high - low) * <double> our_rand_r(random_state) /
-            <double> RAND_R_MAX) + low
+cdef inline float64_t rand_uniform(float64_t low, float64_t high,
+                                   uint32_t* random_state) noexcept nogil:
+    """Generate a random float64_t in [low; high)."""
+    return ((high - low) * <float64_t> our_rand_r(random_state) /
+            <float64_t> RAND_R_MAX) + low
 
 
-cdef inline double log(double x) noexcept nogil:
+cdef inline float64_t log(float64_t x) noexcept nogil:
     return ln(x) / ln(2.0)
 
 # =============================================================================
@@ -111,7 +109,7 @@ cdef class WeightedPQueue:
         or 0 otherwise.
         """
         self.array_ptr = 0
-        # Since safe_realloc can raise MemoryError, use `except *`
+        # Since safe_realloc can raise MemoryError, use `except -1`
         safe_realloc(&self.array_, self.capacity)
         return 0
 
@@ -372,7 +370,7 @@ cdef class WeightedMedianCalculator:
         left and moving to the right.
         """
         cdef int return_value
-        cdef double original_median = 0.0
+        cdef float64_t original_median = 0.0
 
         if self.size() != 0:
             original_median = self.get_median()
@@ -389,7 +387,7 @@ cdef class WeightedMedianCalculator:
 
     cdef int update_median_parameters_post_remove(
             self, float64_t data, float64_t weight,
-            double original_median) noexcept nogil:
+            float64_t original_median) noexcept nogil:
         """Update the parameters used in the median calculation,
         namely `k` and `sum_w_0_k` after a removal"""
         # reset parameters because it there are no elements

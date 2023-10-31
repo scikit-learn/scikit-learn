@@ -39,7 +39,7 @@ ctypedef fused realloc_ptr:
     (Cell*)
     (Node**)
 
-cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except * nogil
+cdef int safe_realloc(realloc_ptr* p, size_t nelems) except -1 nogil
 
 
 cdef cnp.ndarray sizet_ptr_to_ndarray(intp_t* data, intp_t size)
@@ -49,11 +49,11 @@ cdef intp_t rand_int(intp_t low, intp_t high,
                      uint32_t* random_state) noexcept nogil
 
 
-cdef double rand_uniform(double low, double high,
-                         uint32_t* random_state) noexcept nogil
+cdef float64_t rand_uniform(float64_t low, float64_t high,
+                            uint32_t* random_state) noexcept nogil
 
 
-cdef double log(double x) noexcept nogil
+cdef float64_t log(float64_t x) noexcept nogil
 
 # =============================================================================
 # WeightedPQueue data structure
