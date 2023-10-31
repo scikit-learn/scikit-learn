@@ -451,7 +451,8 @@ Changelog
   'multiclass'. :pr:`26674` by :user:`Lucy Liu <lucyleeow>`.
 
 - |Fix| :class:`preprocessing.OneHotEncoder` and :class:`preprocessing.OrdinalEncoder`
-  will raise an error if `nan` is not the last element in user provided categories.
+  raises an error when `nan` is a category and is not the last in the user's
+  provided categories.
   :pr:`27309` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
 :mod:`sklearn.tree`
