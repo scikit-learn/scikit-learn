@@ -35,7 +35,7 @@ random sampling procedures.
       solvers (when fit on the same data again). The amount of change depends on the
       specified `tol`, for small values you will get more precise results.
 
-- |Efficiency| :class:`preprocessing.QuantileTransformer` now uses `resample` method to
+- |Efficiency| :class:`preprocessing.QuantileTransformer` now uses `resample` function to
   perform subsampling and remove the for-loop while computing quantiles. For dense matrices,
   it will not get the same subsample examples with the same `random_state` as before.
   :pr:`27344` by :user:`Xuefeng Xu <xuefeng-xu>`.
