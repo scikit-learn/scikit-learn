@@ -1130,10 +1130,10 @@ def cosine_distances(X, Y=None):
     return S
 
 
-# TODO: Remove in 1.6
+# TODO(1.6): Remove in 1.6
 @deprecated(
     "The public function `sklearn.pairwise.paired_euclidean_distances` has been "
-    "deprecated and will be removed in 1.6."
+    "deprecated in 1.4 and will be removed in 1.6."
 )
 # Paired distances
 @validate_params(
@@ -1186,10 +1186,10 @@ def _paired_euclidean_distances(X, Y):
     return row_norms(X - Y)
 
 
-# TODO: Remove in 1.6
+# TODO(1.6): Remove in 1.6
 @deprecated(
     "The public function `sklearn.pairwise.paired_manhattan_distances` has been "
-    "deprecated and will be removed in 1.6."
+    "deprecated in 1.4 and will be removed in 1.6."
 )
 @validate_params(
     {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
@@ -1260,10 +1260,10 @@ def _paired_manhattan_distances(X, Y):
         return np.abs(diff).sum(axis=-1)
 
 
-# TODO: Remove in 1.6
+# TODO*1.6: Remove in 1.6
 @deprecated(
     "The public function `sklearn.pairwise.paired_cosine_distances` has been "
-    "deprecated and will be removed in 1.6."
+    "deprecated in 1.4 and will be removed in 1.6."
 )
 @validate_params(
     {"X": ["array-like", "sparse matrix"], "Y": ["array-like", "sparse matrix"]},
@@ -1328,7 +1328,7 @@ def _paired_cosine_distances(X, Y):
     return 0.5 * row_norms(normalize(X) - normalize(Y), squared=True)
 
 
-# TODO: Remove PAIRED_DISTANCES dictionary since pairwise_*_distance public
+# TODO(1.6): Remove PAIRED_DISTANCES dictionary since pairwise_*_distance public
 # functions are deprecated in 1.6
 PAIRED_DISTANCES = {
     "cosine": paired_cosine_distances,
@@ -1349,10 +1349,10 @@ _PAIRED_DISTANCES = {
 }
 
 
-# TODO: Remove in 1.6
+# TODO(1.6): Remove in 1.6
 @deprecated(
     "The public function `sklearn.pairwise.paired_distances` has been "
-    "deprecated and will be removed in 1.6."
+    "deprecated in 1.4 and will be removed in 1.6."
 )
 @validate_params(
     {

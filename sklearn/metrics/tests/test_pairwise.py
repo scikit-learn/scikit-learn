@@ -25,7 +25,7 @@ import pytest
 from sklearn import config_context
 from sklearn.exceptions import DataConversionWarning
 
-# TODO: Remove import for PAIRED_DISTANCES, paired_distances,
+# TODO(1.6): Remove import for PAIRED_DISTANCES, paired_distances,
 # paired_cosine_distances, paired_euclidean_distances, paired_manhattan_distances
 # since paired_*_distances public functions are deprecated in 1.6.
 from sklearn.metrics.pairwise import (
@@ -1645,7 +1645,7 @@ def test_sparse_manhattan_readonly_dataset(csr_container):
     )
 
 
-# TODO: Remove in 1.6
+# TODO(1.6): Remove in 1.6
 def test_paired_distances_deprecation():
     """Check that we issue the FutureWarning regarding the deprecation of
     paired_distances for gh-26982"""
@@ -1660,7 +1660,7 @@ def test_paired_distances_deprecation():
         paired_distances(X, Y)
 
 
-# TODO: Remove in 1.6
+# TODO(1.6): Remove in 1.6
 def test_paired_cosine_distances_deprecation():
     """Check that we issue the FutureWarning regarding the deprecation of
     paired_cosine_distances for gh-26982"""
@@ -1675,7 +1675,7 @@ def test_paired_cosine_distances_deprecation():
         paired_cosine_distances(X, Y)
 
 
-# TODO: Remove in 1.6
+# TODO(1.6): Remove in 1.6
 def test_paired_euclidean_distances_deprecation():
     """Check that we issue the FutureWarning regarding the deprecation of
     paired_euclidean_distances for gh-26982"""
@@ -1690,7 +1690,7 @@ def test_paired_euclidean_distances_deprecation():
         paired_euclidean_distances(X, Y)
 
 
-# TODO: Remove in 1.6
+# TODO(1.6): Remove in 1.6
 def test_paired_manhattan_distances_deprecation():
     """Check that we issue the FutureWarning regarding the deprecation of
     paired_manhattan_distances for gh-26982"""
