@@ -641,6 +641,7 @@ def test_confusion_matrix_single_label():
     with pytest.warns(UserWarning, match="A single label was found in"):
         confusion_matrix(y_pred, y_test)
 
+
 @pytest.mark.parametrize(
     "params, warn_msg",
     [
