@@ -385,8 +385,9 @@ def confusion_matrix(
     if cm.shape == (1, 1):
         warnings.warn(
             (
-                "Only one label was found in 'y_true' and 'y_pred', use the 'labels' "
-                "parameter to pass all known labels."
+                "A single label was found in 'y_true' and 'y_pred'. For the confusion "
+                "matrix to have the correct shape, use the 'labels' parameter to pass "
+                "all known labels."
             ),
             UserWarning,
         )
