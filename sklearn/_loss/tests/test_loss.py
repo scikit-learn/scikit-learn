@@ -383,34 +383,32 @@ def test_loss_same_as_C_functions(loss, sample_weight):
     out_g2 = np.empty_like(raw_prediction)
     out_h1 = np.empty_like(raw_prediction)
     out_h2 = np.empty_like(raw_prediction)
-    assert_allclose(
-        loss.loss(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            loss_out=out_l1,
-        ),
-        loss.closs.loss(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            loss_out=out_l2,
-        ),
+    loss.loss(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+        loss_out=out_l1,
     )
-    assert_allclose(
-        loss.gradient(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            gradient_out=out_g1,
-        ),
-        loss.closs.gradient(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            gradient_out=out_g2,
-        ),
+    loss.closs.loss(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+        loss_out=out_l2,
+    ),
+    assert_allclose(out_l1, out_l2)
+    loss.gradient(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+        gradient_out=out_g1,
     )
+    loss.closs.gradient(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+        gradient_out=out_g2,
+    )
+    assert_allclose(out_g1, out_g2)
     loss.closs.loss_gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,

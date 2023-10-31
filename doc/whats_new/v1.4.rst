@@ -40,6 +40,9 @@ random sampling procedures.
   will not get the same subsample examples with the same `random_state` as before.
   :pr:`27344` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
+- |Fix| fixes a memory leak seen in PyPy for estimators using the Cython loss functions.
+  :pr:`27670` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changes impacting all modules
 -----------------------------
 
