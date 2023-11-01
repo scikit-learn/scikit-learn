@@ -496,7 +496,9 @@ def generate_multilabel_dataset_with_correlations():
 def test_classifier_chain_fit_and_predict_with_linear_svc(chain_method):
     # Fit classifier chain and verify predict performance using LinearSVC
     X, Y = generate_multilabel_dataset_with_correlations()
-    classifier_chain = ClassifierChain(LinearSVC(dual="auto"), chain_method=chain_method)
+    classifier_chain = ClassifierChain(
+        LinearSVC(dual="auto"), chain_method=chain_method
+    )
     classifier_chain.fit(X, Y)
 
     Y_pred = classifier_chain.predict(X)
@@ -549,7 +551,10 @@ def test_classifier_chain_vs_independent_models():
     )
 
 
-@pytest.mark.parametrize("chain_method", ["predict", "predict_proba", "predict_log_proba", "decision_function"])
+@pytest.mark.parametrize(
+    "chain_method",
+    ["predict", "predict_proba", "predict_log_proba", "decision_function"],
+)
 def test_classifier_chain_fit_and_predict(chain_method):
     # Fit classifier chain and verify predict performance
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -634,14 +639,14 @@ def test_base_chain_crossval_fit_and_predict():
 
 
 @pytest.mark.parametrize(
-        "chain_type, chain_method",
-        [
-            ("classifier", "predict"),
-            ("classifier", "predict_proba"),
-            ("classifier", "predict_log_proba"),
-            ("classifier", "decision_function"),
-            ("regressor", ""),
-        ]
+    "chain_type, chain_method",
+    [
+        ("classifier", "predict"),
+        ("classifier", "predict_proba"),
+        ("classifier", "predict_log_proba"),
+        ("classifier", "decision_function"),
+        ("regressor", ""),
+    ],
 )
 def test_base_chain_crossval_fit_and_predict(chain_type, chain_method):
     # Fit chain with cross_val_predict and verify predict

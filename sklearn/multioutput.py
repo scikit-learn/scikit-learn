@@ -772,7 +772,11 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
-                    self.base_estimator, X_aug[:, :col_idx], y=y, cv=self.cv, method=self.chain_method_,
+                    self.base_estimator,
+                    X_aug[:, :col_idx],
+                    y=y,
+                    cv=self.cv,
+                    method=self.chain_method_,
                 )
                 if multi_output:
                     cv_result = cv_result[:, -1]
@@ -933,10 +937,23 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
     _parameter_constraints: dict = {
         **_BaseChain._parameter_constraints,
-        "chain_method": [StrOptions({"predict", "predict_proba", "predict_log_proba", "decision_function"})],
+        "chain_method": [
+            StrOptions(
+                {"predict", "predict_proba", "predict_log_proba", "decision_function"}
+            )
+        ],
     }
 
-    def __init__(self, base_estimator, *, order=None, cv=None, chain_method='predict', random_state=None, verbose=False):
+    def __init__(
+        self,
+        base_estimator,
+        *,
+        order=None,
+        cv=None,
+        chain_method="predict",
+        random_state=None,
+        verbose=False,
+    ):
         super().__init__(
             base_estimator,
             order=order,
