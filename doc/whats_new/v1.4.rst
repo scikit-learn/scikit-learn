@@ -395,6 +395,12 @@ Changelog
   object in the parameter grid if it's an estimator. :pr:`26786` by `Adrin
   Jalali`_.
 
+:mod:`sklearn.multioutput`
+..........................
+
+- |Enhancement| `chain_method` parameter added to
+  `:class:``multioutput.ClassifierChain`. by :user:`Lucy Liu <lucyleeow>`
+
 :mod:`sklearn.neighbors`
 ........................
 
