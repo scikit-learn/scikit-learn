@@ -38,8 +38,8 @@ Nystroem Method for Kernel Approximation
 The Nystroem method, as implemented in :class:`Nystroem` is a general method
 for reduced rank approximations of kernels. It achieves this by subsampling without replacement
 rows/columns of the data on which the kernel is evaluated.
-While the exact computational complexity is :math:\mathcal{O}(n^3_{\text{samples}}),
-one can set :math:n_{\text{components}} \ll n_{\text{samples}} without a significative decrease in performance 
+While the exact computational complexity is :math:`\mathcal{O}(n^3_{\text{samples}})`,
+one can set :math:`n_{\text{components}} \ll n_{\text{samples}}` without a significative decrease in performance 
 (:math:`\mathcal{O}(n^2_{\text{components}} \cdot n_{\text{samples}})`) [WS2001]_.
 
 For the dataset we can construct eigendecomposition of kernel matrix `K` and split it by sampled and unsampled data
@@ -52,8 +52,8 @@ For the dataset we can construct eigendecomposition of kernel matrix `K` and spl
 
 where:
 
-    * :math:``U`` is orthonormal
-    * :math:``Ʌ`` is diagonal matrix of eigenvalues
+    * :math:`U` is orthonormal
+    * :math:`Ʌ` is diagonal matrix of eigenvalues
     * :math:`U_1` is orthonormal matrix of samples that were chosen
     * :math:`U_2` is orthonormal matrix of samples that were not chosen
 
