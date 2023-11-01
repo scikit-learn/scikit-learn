@@ -66,8 +66,8 @@ https://repo.anaconda.com/pkgs/main/osx-64/numpy-base-1.24.3-py311h53bf9ac_1.con
 https://repo.anaconda.com/pkgs/main/osx-64/pillow-10.0.1-py311h7d39338_0.conda#0caf29bc5e73a3f5ca2f299c0b50a404
 https://repo.anaconda.com/pkgs/main/osx-64/pytest-7.4.0-py311hecd8cb5_0.conda#8c5496a4a1f36160ac5556495faa4a24
 https://repo.anaconda.com/pkgs/main/noarch/python-dateutil-2.8.2-pyhd3eb1b0_0.conda#211ee00320b08a1ac9fea6677649f6c9
-https://repo.anaconda.com/pkgs/main/osx-64/pytest-cov-4.1.0-py311hecd8cb5_0.conda#61d021237f3fce3f15344ddfb8ca2fea
-https://repo.anaconda.com/pkgs/main/noarch/pytest-forked-1.3.0-pyhd3eb1b0_0.tar.bz2#07970bffdc78f417d7f8f1c7e620f5c4
+https://repo.anaconda.com/pkgs/main/osx-64/pytest-cov-4.1.0-py311hecd8cb5_1.conda#b1e41a8eda3f119b39b13f3a4d0c5bf5
+https://repo.anaconda.com/pkgs/main/osx-64/pytest-forked-1.6.0-py311hecd8cb5_0.conda#b1154a9887bee381b3405ec37f8b13f3
 https://repo.anaconda.com/pkgs/main/noarch/pytest-xdist-2.5.0-pyhd3eb1b0_0.conda#d15cdc4207bcf8ca920822597f1d138d
 https://repo.anaconda.com/pkgs/main/osx-64/bottleneck-1.3.5-py311hb9e55a9_0.conda#5aa1b58b421d4608b16184f8468253ef
 https://repo.anaconda.com/pkgs/main/osx-64/contourpy-1.0.5-py311ha357a0b_0.conda#a130f83ba4b5d008e0c134c73e10b8fb
