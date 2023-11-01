@@ -451,7 +451,7 @@ Changelog
   'multiclass'. :pr:`26674` by :user:`Lucy Liu <lucyleeow>`.
 
 - |Fix| :class:`preprocessing.OneHotEncoder` and :class:`preprocessing.OrdinalEncoder`
-  raises an error if a user provides duplicated categories.
+  raise an exception if the user provided categories contain duplicates.
   :pr:`27328` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
 :mod:`sklearn.tree`
