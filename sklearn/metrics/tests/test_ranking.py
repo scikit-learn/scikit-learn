@@ -4,7 +4,6 @@ import warnings
 import numpy as np
 import pytest
 from scipy import stats
-from scipy.sparse import csr_matrix
 
 from sklearn import datasets, svm
 from sklearn.datasets import make_multilabel_classification
@@ -36,6 +35,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
 )
 from sklearn.utils.extmath import softmax
+from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import (
     check_array,
     check_consistent_length,
@@ -1762,10 +1762,12 @@ def test_label_ranking_loss():
         (0 + 2 / 2 + 1 / 2) / 3.0,
     )
 
-    # Sparse csr matrices
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_label_ranking_loss_sparse(csr_container):
     assert_almost_equal(
         label_ranking_loss(
-            csr_matrix(np.array([[0, 1, 0], [1, 1, 0]])), [[0.1, 10, -3], [3, 1, 3]]
+            csr_container(np.array([[0, 1, 0], [1, 1, 0]])), [[0.1, 10, -3], [3, 1, 3]]
         ),
         (0 + 2 / 2) / 2.0,
     )
@@ -2193,10 +2195,13 @@ def test_top_k_accuracy_score_error(y_true, y_score, labels, msg):
         top_k_accuracy_score(y_true, y_score, k=2, labels=labels)
 
 
-def test_label_ranking_avg_precision_score_should_allow_csr_matrix_for_y_true_input():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_label_ranking_avg_precision_score_should_allow_csr_matrix_for_y_true_input(
+    csr_container,
+):
     # Test that label_ranking_avg_precision_score accept sparse y_true.
     # Non-regression test for #22575
-    y_true = csr_matrix([[1, 0, 0], [0, 0, 1]])
+    y_true = csr_container([[1, 0, 0], [0, 0, 1]])
     y_score = np.array([[0.5, 0.9, 0.6], [0, 0, 1]])
     result = label_ranking_average_precision_score(y_true, y_score)
     assert result == pytest.approx(2 / 3)
