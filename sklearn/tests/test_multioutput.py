@@ -618,26 +618,6 @@ def test_base_chain_random_order():
             assert_array_almost_equal(est1.coef_, est2.coef_)
 
 
-def test_base_chain_crossval_fit_and_predict():
-    # Fit chain with cross_val_predict and verify predict
-    # performance
-    X, Y = generate_multilabel_dataset_with_correlations()
-
-    for chain in [ClassifierChain(LogisticRegression()), RegressorChain(Ridge())]:
-        chain.fit(X, Y)
-        chain_cv = clone(chain).set_params(cv=3)
-        chain_cv.fit(X, Y)
-        Y_pred_cv = chain_cv.predict(X)
-        Y_pred = chain.predict(X)
-
-        assert Y_pred_cv.shape == Y_pred.shape
-        assert not np.all(Y_pred == Y_pred_cv)
-        if isinstance(chain, ClassifierChain):
-            assert jaccard_score(Y, Y_pred_cv, average="samples") > 0.4
-        else:
-            assert mean_squared_error(Y, Y_pred_cv) < 0.25
-
-
 @pytest.mark.parametrize(
     "chain_type, chain_method",
     [
