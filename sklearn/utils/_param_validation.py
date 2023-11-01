@@ -46,6 +46,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         - the string "boolean"
         - the string "verbose"
         - the string "cv_object"
+        - the string "nan"
         - a MissingValues object representing markers for missing values
         - a HasMethods object, representing method(s) an object must have
         - a Hidden object, representing a constraint not meant to be exposed to the user
@@ -137,6 +138,8 @@ def make_constraint(constraint):
         constraint = make_constraint(constraint.constraint)
         constraint.hidden = True
         return constraint
+    if isinstance(constraint, str) and constraint == "nan":
+        return _NanConstraint()
     raise ValueError(f"Unknown constraint type: {constraint}")
 
 
@@ -311,7 +314,9 @@ class _NanConstraint(_Constraint):
     """Constraint representing the indicator `np.nan`."""
 
     def is_satisfied_by(self, val):
-        return isinstance(val, Real) and math.isnan(val)
+        return (
+            not isinstance(val, Integral) and isinstance(val, Real) and math.isnan(val)
+        )
 
     def __str__(self):
         return "numpy.nan"
@@ -475,7 +480,7 @@ class Interval(_Constraint):
             )
 
     def __contains__(self, val):
-        if np.isnan(val):
+        if not isinstance(val, Integral) and np.isnan(val):
             return False
 
         left_cmp = operator.lt if self.closed in ("left", "both") else operator.le
