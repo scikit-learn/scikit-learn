@@ -35,6 +35,9 @@ random sampling procedures.
       solvers (when fit on the same data again). The amount of change depends on the
       specified `tol`, for small values you will get more precise results.
 
+- |Fix| fixes a memory leak seen in PyPy for estimators using the Cython loss functions.
+  :pr:`27670` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changes impacting all modules
 -----------------------------
 
