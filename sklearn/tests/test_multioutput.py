@@ -497,7 +497,7 @@ def test_classifier_chain_fit_and_predict_with_linear_svc(chain_method):
     # Fit classifier chain and verify predict performance using LinearSVC
     X, Y = generate_multilabel_dataset_with_correlations()
     classifier_chain = ClassifierChain(
-        LinearSVC(dual="auto"), chain_method=chain_method
+        LinearSVC(dual="auto"), chain_method=chain_method,
     )
     classifier_chain.fit(X, Y)
 
