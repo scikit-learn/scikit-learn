@@ -293,7 +293,7 @@ Changelog
 
 - |Fix| Fixes error message raised by :class:`ensemble.VotingClassifier` when the
   target is multilabel or multiclass-multioutput in a DataFrame format.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`27702` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |API| In :class:`ensemble.AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
