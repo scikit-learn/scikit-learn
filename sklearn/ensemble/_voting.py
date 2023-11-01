@@ -35,7 +35,7 @@ from ..utils.metadata_routing import (
     _RoutingNotSupportedMixin,
 )
 from ..utils.metaestimators import available_if
-from ..utils.multiclass import check_classification_targets
+from ..utils.multiclass import type_of_target
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import _check_feature_names_in, check_is_fitted, column_or_1d
 from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
@@ -341,10 +341,12 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
             Returns the instance itself.
         """
         _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
-        check_classification_targets(y)
-        if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
+        y_type = type_of_target(y)
+        if y_type not in ("binary", "multiclass"):
             raise NotImplementedError(
-                "Multilabel and multi-output classification is not supported."
+                f"{self.__class__.__name__} only supports binary or multiclass "
+                "classification. Multilabel and multi-output classification are not "
+                "supported."
             )
 
         self.le_ = LabelEncoder().fit(y)
