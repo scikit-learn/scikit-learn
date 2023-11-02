@@ -450,6 +450,14 @@ Changelog
 - |Enhancement| :class:`preprocessing.TargetEncoder` now supports `target_type`
   'multiclass'. :pr:`26674` by :user:`Lucy Liu <lucyleeow>`.
 
+- |Fix| :class:`preprocessing.OneHotEncoder` and :class:`preprocessing.OrdinalEncoder`
+  raise an exception when `nan` is a category and is not the last in the user's
+  provided categories. :pr:`27309` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
+- |Fix| :class:`preprocessing.OneHotEncoder` and :class:`preprocessing.OrdinalEncoder`
+  raise an exception if the user provided categories contain duplicates.
+  :pr:`27328` by :user:`Xuefeng Xu <xuefeng-xu>`.
+
 :mod:`sklearn.tree`
 ...................
 
