@@ -34,6 +34,7 @@ from sklearn.linear_model import (
     RidgeClassifier,
 )
 from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
+from sklearn.multioutput import MultiOutputRegressor
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import scale
@@ -859,3 +860,87 @@ def test_stacking_classifier_base_regressor():
     clf.predict(X_test)
     clf.predict_proba(X_test)
     assert clf.score(X_test, y_test) > 0.8
+
+
+def test_stacking_regressor_multioutput():
+    """Check that a stacking regressor with multioutput works"""
+    cv = 2
+    acceptable_relative_tolerance = 1e-10
+    acceptable_aboslute_tolerance = 1e-10
+
+    X_train = np.hstack([np.arange(5)] * cv).reshape(-1, 1)
+    y_train = np.hstack([2 * X_train + 1, 3 * X_train - 2])
+    assert y_train.ndim > 1
+
+    estimator1 = LinearRegression(fit_intercept=True)
+    estimator2 = MultiOutputRegressor(DummyRegressor(strategy="constant", constant=0))
+    final_estimator = LinearRegression(fit_intercept=False, positive=True)
+
+    reg = StackingRegressor(
+        estimators=[("lr", estimator1), ("dr", estimator2)],
+        final_estimator=final_estimator,
+        cv=KFold(n_splits=cv, shuffle=False),
+        passthrough=False,
+    )
+
+    reg.fit(X_train, y_train)
+    # predict
+    y_pred = reg.predict(X_train)
+    # NOTE: In this case the estimator can predict almost exactly the target
+    assert_allclose(
+        y_pred,
+        y_train,
+        rtol=acceptable_relative_tolerance,
+        atol=acceptable_aboslute_tolerance,
+    )
+    # transform
+    X_trans = reg.transform(X_train)
+    # NOTE: The result of transform is the horizontal stack of the predictions
+    assert_allclose(
+        X_trans,
+        np.hstack([y_train, np.zeros(y_train.shape)]),
+        rtol=acceptable_relative_tolerance,
+        atol=acceptable_aboslute_tolerance,
+    )
+
+
+def test_stacking_regressor_multioutput_with_passthrough():
+    """Check that a stacking regressor with multioutput works"""
+    cv = 2
+    acceptable_relative_tolerance = 1e-10
+    acceptable_aboslute_tolerance = 1e-10
+
+    X_train = np.hstack([np.arange(5)] * cv).reshape(-1, 1)
+    y_train = np.hstack([2 * X_train + 1, 3 * X_train - 2])
+    assert y_train.ndim > 1
+
+    estimator1 = LinearRegression(fit_intercept=True)
+    estimator2 = MultiOutputRegressor(DummyRegressor(strategy="constant", constant=0))
+    final_estimator = LinearRegression(fit_intercept=False, positive=True)
+
+    reg = StackingRegressor(
+        estimators=[("lr", estimator1), ("dr", estimator2)],
+        final_estimator=final_estimator,
+        cv=KFold(n_splits=cv, shuffle=False),
+        passthrough=True,
+    )
+
+    reg.fit(X_train, y_train)
+    # predict
+    y_pred = reg.predict(X_train)
+    # NOTE: In this case, the estimator can predict almost exactly the target
+    assert_allclose(
+        y_pred,
+        y_train,
+        rtol=acceptable_relative_tolerance,
+        atol=acceptable_aboslute_tolerance,
+    )
+    # transform
+    X_trans = reg.transform(X_train)
+    # NOTE: X_trans should be the horizontal stack of the predictions and X_train
+    assert_allclose(
+        X_trans,
+        np.hstack([y_train, np.zeros(y_train.shape), X_train]),
+        rtol=acceptable_relative_tolerance,
+        atol=acceptable_aboslute_tolerance,
+    )
