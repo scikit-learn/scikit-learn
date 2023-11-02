@@ -751,7 +751,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         if hasattr(self, "chain_method"):
             chain_method = _check_response_method(
-                self.base_estimator, self.chain_method,
+                self.base_estimator,
+                self.chain_method,
             ).__name__
             self.chain_method_ = chain_method
         else:
