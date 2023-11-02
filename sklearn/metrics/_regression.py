@@ -34,6 +34,7 @@ import numpy as np
 from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
+from ..utils._array_api import _average, get_namespace
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import (
@@ -99,15 +100,16 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
     """
+    xp, _ = get_namespace(y_true, y_pred)
     check_consistent_length(y_true, y_pred)
     y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
     y_pred = check_array(y_pred, ensure_2d=False, dtype=dtype)
 
     if y_true.ndim == 1:
-        y_true = y_true.reshape((-1, 1))
+        y_true = xp.reshape(y_true, (-1, 1))
 
     if y_pred.ndim == 1:
-        y_pred = y_pred.reshape((-1, 1))
+        y_pred = xp.reshape(y_pred, (-1, 1))
 
     if y_true.shape[1] != y_pred.shape[1]:
         raise ValueError(
@@ -204,11 +206,12 @@ def mean_absolute_error(
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     0.85...
     """
+    xp, _ = get_namespace(y_true, y_pred)
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput
     )
     check_consistent_length(y_true, y_pred, sample_weight)
-    output_errors = np.average(np.abs(y_pred - y_true), weights=sample_weight, axis=0)
+    output_errors = _average(xp.abs(y_pred - y_true), weights=sample_weight, axis=0)
     if isinstance(multioutput, str):
         if multioutput == "raw_values":
             return output_errors
@@ -216,7 +219,7 @@ def mean_absolute_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    return _average(output_errors, weights=multioutput)
 
 
 @validate_params(

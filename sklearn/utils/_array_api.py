@@ -595,3 +595,52 @@ def _estimator_with_converted_arrays(estimator, converter):
 def _atol_for_type(dtype):
     """Return the absolute tolerance for a given dtype."""
     return numpy.finfo(dtype).eps * 100
+
+
+def _average(X, axis=None, weights=None):
+    """Compute the weighted average along the specified axis.
+
+    This function is a port of numpy.average that supports the Array API.
+
+    Please see the original documentation for more details:
+    https://numpy.org/doc/stable/reference/generated/numpy.average.html
+
+    Parameters
+    ----------
+    X : array object
+        Array containing data to be averaged.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which to average `X`.
+    weights : array_like, optional
+        An array of weights associated with the values in `X`. Each value in
+        `X` contributes to the average according to its associated weight.
+
+    Returns
+    -------
+    retval : array object
+        Return the average along the specified axis.
+    """
+    xp, _ = get_namespace(X)
+
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.average(X, axis=axis, weights=weights))
+
+    if weights is None:
+        return xp.mean(X, axis=axis)
+
+    weights = xp.asarray(weights, device=device(X))
+    if X.shape != weights.shape:
+        if axis is None:
+            raise TypeError(
+                "Axis must be specified when shapes of a and weights differ."
+            )
+        if weights.ndim != 1:
+            raise TypeError("1D weights expected when shapes of a and weights differ.")
+        if weights.shape[0] != X.shape[axis]:
+            raise ValueError("Length of weights not compatible with specified axis.")
+        weights = xp.broadcast_to(weights, (X.ndim - 1) * (1,) + weights.shape)
+        weights = xp.swapaxes(weights, -1, axis)
+    weights_sum = xp.sum(weights, axis=axis)
+    if xp.any(weights_sum == 0):
+        raise ZeroDivisionError("Weights sum to zero, can't be normalized")
+    return xp.sum(xp.multiply(X, weights), axis=axis) / xp.sum(weights, axis=axis)

@@ -10,6 +10,7 @@ from sklearn.utils._array_api import (
     _ArrayAPIWrapper,
     _asarray_with_order,
     _atol_for_type,
+    _average,
     _convert_to_numpy,
     _estimator_with_converted_arrays,
     _nanmax,
@@ -371,3 +372,34 @@ def test_get_namespace_array_api_isdtype(wrapper):
 
     with pytest.raises(ValueError, match="Unrecognized data type"):
         assert xp.isdtype(xp.int16, "unknown")
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "library", ["numpy", "numpy.array_api", "cupy", "cupy.array_api", "torch"]
+)
+@pytest.mark.parametrize(
+    "X,weights,axis,expected",
+    [
+        [[0.0, 1.0, 2.0, 3.0], None, 0, 1.5],
+        [[0.0, 1.0, 2.0, 3.0], [0.0, 1.0, 1.0, 2.0], 0, 2.25],
+        [[[0.0, 1.0, 2.0, 3.0], [4.0, 5.0, 6.0, 7.0]], None, None, 3.5],
+        [[[0.0, 1.0, 2.0, 3.0], [4.0, 5.0, 6.0, 7.0]], None, 1, [1.5, 5.5]],
+        [
+            [[0.0, 1.0, 2.0, 3.0], [4.0, 5.0, 6.0, 7.0]],
+            [0.0, 1.0, 1.0, 2.0],
+            1,
+            [2.25, 6.25],
+        ],
+    ],
+)
+def test__average(library, X, axis, weights, expected):
+    xp = pytest.importorskip(library)
+
+    if isinstance(expected, list):
+        expected = xp.asarray(expected)
+
+    with config_context(array_api_dispatch=True):
+        result = _average(xp.asarray(X), axis=axis, weights=weights)
+
+    assert_allclose(result, expected)
