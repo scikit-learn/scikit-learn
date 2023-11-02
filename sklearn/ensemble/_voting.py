@@ -30,6 +30,8 @@ from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils._param_validation import StrOptions
+from ..utils._response import _get_response_values
+from ..utils._tags import _safe_tags
 from ..utils.metadata_routing import (
     _raise_for_unsupported_routing,
     _RoutingNotSupportedMixin,
@@ -39,6 +41,7 @@ from ..utils.multiclass import type_of_target
 from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
     _check_feature_names_in,
+    check_array,
     check_is_fitted,
     column_or_1d,
 )
@@ -73,7 +76,12 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
     def _predict(self, X):
         """Collect results from clf.predict calls."""
-        return np.asarray([est.predict(X) for est in self.estimators_]).T
+        return np.asarray(
+            [
+                _get_response_values(est, X, response_method="predict")[0]
+                for est in self.estimators_
+            ]
+        )
 
     @abstractmethod
     def fit(self, X, y, sample_weight=None):
@@ -353,18 +361,32 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
                 "classifier, which expects discrete classes on a "
                 "regression target with continuous values."
             )
-        elif y_type not in ("binary", "multiclass"):
+        elif y_type not in ("binary", "multiclass", "multilabel-indicator"):
             # raise a NotImplementedError for backward compatibility for non-supported
             # classification tasks
             raise NotImplementedError(
-                f"{self.__class__.__name__} only supports binary or multiclass "
-                "classification. Multilabel and multi-output classification are not "
+                f"{self.__class__.__name__} only supports binary, multiclass, or"
+                "multilabel classification. Multi-output classification are not "
                 "supported."
             )
 
-        self.le_ = LabelEncoder().fit(y)
-        self.classes_ = self.le_.classes_
-        transformed_y = self.le_.transform(y)
+        if y_type in ("binary", "multiclass"):
+            self.le_ = LabelEncoder().fit(y)
+            self.classes_ = self.le_.classes_
+            transformed_y = self.le_.transform(y)
+        else:
+            self.le_ = None
+            transformed_y = check_array(
+                y,
+                accept_sparse=True,
+                force_all_finite=False,  # already validated by type_of_target
+                ensure_2d=True,
+                ensure_min_samples=0,
+                ensure_min_features=0,
+                dtype=None,
+            )
+            # Use the same representation than other multilabel classifiers
+            self.classes_ = [np.array([0, 1]) for _ in range(transformed_y.shape[1])]
 
         return super().fit(X, transformed_y, sample_weight)
 
@@ -378,28 +400,40 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
 
         Returns
         -------
-        maj : array-like of shape (n_samples,)
+        y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Predicted class labels.
         """
         check_is_fitted(self)
         if self.voting == "soft":
-            maj = np.argmax(self.predict_proba(X), axis=1)
+            predictions = self.predict_proba(X)
+            if self.le_ is None:  # "multilabel-indicator"
+                # Probabilities represents only the positive class. Therefore, we
+                # compare to a 0.5 threshold.
+                y_pred = (predictions > 0.5).astype(np.int64)
+            else:
+                y_pred = np.argmax(predictions, axis=1)
 
         else:  # 'hard' voting
             predictions = self._predict(X)
-            maj = np.apply_along_axis(
+            y_pred = np.apply_along_axis(
                 lambda x: np.argmax(np.bincount(x, weights=self._weights_not_none)),
-                axis=1,
+                axis=0,
                 arr=predictions,
             )
 
-        maj = self.le_.inverse_transform(maj)
+        if y_pred.ndim == 1:  # ("binary", "multiclass")
+            y_pred = self.le_.inverse_transform(y_pred)
 
-        return maj
+        return y_pred
 
     def _collect_probas(self, X):
         """Collect results from clf.predict calls."""
-        return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
+        return np.asarray(
+            [
+                _get_response_values(est, X, response_method="predict_proba")[0]
+                for est in self.estimators_
+            ]
+        )
 
     def _check_voting(self):
         if self.voting == "hard":
@@ -419,14 +453,16 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
 
         Returns
         -------
-        avg : array-like of shape (n_samples, n_classes)
+        y_prob : array-like of shape (n_samples, n_classes)
             Weighted average probability for each class per sample.
         """
         check_is_fitted(self)
-        avg = np.average(
+        y_prob = np.average(
             self._collect_probas(X), axis=0, weights=self._weights_not_none
         )
-        return avg
+        if y_prob.ndim == 1:  # "binary" case
+            y_prob = np.hstack([1 - y_prob[:, None], y_prob[:, None]])
+        return y_prob
 
     def transform(self, X):
         """Return class labels or probabilities for X for each estimator.
@@ -453,12 +489,21 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
 
         if self.voting == "soft":
             probas = self._collect_probas(X)
+            if probas.ndim == 2:  # "binary case"
+                # TODO: This is not good because we accumulate anti-correlated features
+                # during transform.
+                probas = np.asarray(
+                    [
+                        np.hstack([1 - proba[:, None], proba[:, None]])
+                        for proba in probas
+                    ]
+                )
             if not self.flatten_transform:
                 return probas
             return np.hstack(probas)
 
         else:
-            return self._predict(X)
+            return self._predict(X).T
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -496,6 +541,19 @@ class VotingClassifier(_RoutingNotSupportedMixin, ClassifierMixin, _BaseVoting):
             f"{class_name}_{name}{i}" for name in active_names for i in range(n_classes)
         ]
         return np.asarray(names_out, dtype=object)
+
+    def _more_tags(self):
+        try:
+            allow_nan = all(
+                _safe_tags(est[1], key="allow_nan") for est in self.estimators
+            )
+        except Exception:
+            # In case `estimator` was not set to a list of tuples as expected
+            allow_nan = False
+        return {
+            "multilabel": True,
+            "allow_nan": allow_nan,
+        }
 
 
 class VotingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseVoting):
@@ -642,7 +700,7 @@ class VotingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseVoting):
             The predicted values.
         """
         check_is_fitted(self)
-        return np.average(self._predict(X), axis=1, weights=self._weights_not_none)
+        return np.average(self._predict(X), axis=0, weights=self._weights_not_none)
 
     def transform(self, X):
         """Return predictions for X for each estimator.
@@ -658,7 +716,7 @@ class VotingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseVoting):
             Values predicted by each regressor.
         """
         check_is_fitted(self)
-        return self._predict(X)
+        return self._predict(X).T
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.

@@ -249,8 +249,8 @@ def test_predict_proba_on_toy_problem():
 
 
 @pytest.mark.parametrize("container_type", ["list", "array", "dataframe"])
-def test_multilabel(container_type):
-    """Check if error is raised for multilabel classification."""
+def test_voting_classifier_support_multilabel(container_type):
+    """Check support for multilabel classification."""
     X, y = make_multilabel_classification(
         n_classes=2, n_labels=1, allow_unlabeled=False, random_state=123
     )
@@ -258,9 +258,25 @@ def test_multilabel(container_type):
     clf = OneVsRestClassifier(SVC(kernel="linear"))
 
     eclf = VotingClassifier(estimators=[("ovr", clf)], voting="hard")
-    err_msg = "only supports binary or multiclass classification"
-    with pytest.raises(NotImplementedError, match=err_msg):
-        eclf.fit(X, y)
+    eclf.fit(X, y)
+
+    assert eclf.le_ is None
+    assert isinstance(eclf.classes_, list)
+    assert len(eclf.classes_) == np.shape(y)[1]
+    for labels in eclf.classes_:
+        assert isinstance(labels, np.ndarray)
+        assert_array_equal(labels, np.array([0, 1]))
+
+    y_pred = eclf.predict(X)
+    assert isinstance(y_pred, np.ndarray)
+    assert y_pred.shape == np.shape(y)
+
+    eclf = VotingClassifier(
+        estimators=[("clf", RandomForestClassifier(random_state=0))],
+        voting="soft",
+    ).fit(X, y)
+    print(eclf.predict_proba(X).shape)
+    print(eclf.predict(X))
 
 
 def test_gridsearch():
