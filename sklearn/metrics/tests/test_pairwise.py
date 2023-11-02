@@ -1696,7 +1696,7 @@ def test_pairwise_distances_raises_error_for_incompatible_length():
     """Check that we raise an error if `X` and `Y` do not have compatible length."""
 
     def dummy_string_similarity(x, y):
-        return np.abs(len(x) - len(y))
+        return np.abs(len(x) - len(y))  # pragma: no cover
 
     X = ["a"]
     Y = ["a", "a"]
