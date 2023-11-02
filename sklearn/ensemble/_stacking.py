@@ -944,7 +944,7 @@ class StackingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseStacking
             Training vectors, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
-        y : array-like of shape (n_samples,)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -977,8 +977,10 @@ class StackingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseStacking
 
         Returns
         -------
-        y_preds : ndarray of shape (n_samples, n_estimators)
+        y_preds : ndarray of shape
+            (n_samples, n_estimators) or (n_samples, n_estimators x n_outputs).
             Prediction outputs for each estimator.
+            If passthrough=True, the number of columns increases by n_features.
         """
         return self._transform(X)
 
@@ -991,7 +993,7 @@ class StackingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseStacking
             Training vectors, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
-        y : array-like of shape (n_samples,)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -1001,8 +1003,10 @@ class StackingRegressor(_RoutingNotSupportedMixin, RegressorMixin, _BaseStacking
 
         Returns
         -------
-        y_preds : ndarray of shape (n_samples, n_estimators)
+        y_preds : ndarray of shape
+            (n_samples, n_estimators) or (n_samples, n_estimators x n_outputs).
             Prediction outputs for each estimator.
+            If passthrough=True, the number of columns increases by n_features.
         """
         return super().fit_transform(X, y, sample_weight=sample_weight)
 
