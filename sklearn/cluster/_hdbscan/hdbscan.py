@@ -197,7 +197,7 @@ def _hdbscan_brute(
         The number of jobs to use for computing the pairwise distances. This
         works by breaking down the pairwise matrix into n_jobs even slices and
         computing them in parallel. This parameter is passed directly to
-        :func:`~sklearn.metrics.pairwise.pairwise_distances`.
+        :func:`~sklearn.metrics.pairwise_distances`.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -296,14 +296,14 @@ def _hdbscan_prims(
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. `metric` must be one of the options allowed by
-        :func:`~sklearn.metrics.pairwise.pairwise_distances` for its metric
+        :func:`~sklearn.metrics.pairwise_distances` for its metric
         parameter.
 
     n_jobs : int, default=None
         The number of jobs to use for computing the pairwise distances. This
         works by breaking down the pairwise matrix into n_jobs even slices and
         computing them in parallel. This parameter is passed directly to
-        :func:`~sklearn.metrics.pairwise.pairwise_distances`.
+        :func:`~sklearn.metrics.pairwise_distances`.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -449,7 +449,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         feature array.
 
         - If metric is a string or callable, it must be one of
-          the options allowed by :func:`~sklearn.metrics.pairwise.pairwise_distances`
+          the options allowed by :func:`~sklearn.metrics.pairwise_distances`
           for its metric parameter.
 
         - If metric is "precomputed", X is assumed to be a distance matrix and
