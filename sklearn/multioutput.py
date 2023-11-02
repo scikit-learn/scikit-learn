@@ -33,6 +33,8 @@ from .base import (
 from .model_selection import cross_val_predict
 from .utils import Bunch, _print_elapsed_time, check_random_state
 from .utils._param_validation import HasMethods, StrOptions
+from .utils._response import _get_response_values
+from .utils.validation import _check_response_method
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -649,14 +651,14 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         return f"({estimator_idx} of {n_estimators}) {processing_msg}"
 
     def _get_chain_method(self):
-        # Different chain methods allowed in `ClassifierChain` only
         try:
-            chain_method = self.chain_method_
+            chain_method = self.chain_method
+        # `RegressorChain` does not have a `chain_method` parameter
         except AttributeError:
             chain_method = "predict"
-        return chain_method
+        return _check_response_method(self.base_estimator, chain_method)
 
-    def _get_Y_output(self, X, *, output_method="predict"):
+    def _get_predictions(self, X, *, output_method):
         """Get predictions for each model in the chain."""
         check_is_fitted(self)
         X = self._validate_data(X, accept_sparse=True, reset=False)
@@ -664,10 +666,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         Y_feature_chain = np.zeros((X.shape[0], len(self.estimators_)))
 
         chain_method = self._get_chain_method()
-        # proba methods produce 2d output (decision_function 1d for binary targets)
-        is_feature_multi = chain_method in ["predict_proba", "predict_log_proba"]
-        is_output_multi = output_method == "predict_proba"
-
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_feature_chain[:, :chain_idx]
             if sp.issparse(X):
@@ -675,16 +673,18 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             else:
                 X_aug = np.hstack((X, previous_predictions))
 
-            feature_func = getattr(estimator, chain_method)
-            feature_predictions = feature_func(X_aug)
-            if is_feature_multi:
-                feature_predictions = feature_predictions[:, 1]
+            feature_predictions, _ = _get_response_values(
+                estimator,
+                X_aug,
+                response_method=chain_method,
+            )
             Y_feature_chain[:, chain_idx] = feature_predictions
 
-            output_func = getattr(estimator, output_method)
-            output_predictions = output_func(X_aug)
-            if is_output_multi:
-                output_predictions = output_predictions[:, 1]
+            output_predictions, _ = _get_response_values(
+                estimator,
+                X_aug,
+                response_method=output_method,
+            )
             Y_output_chain[:, chain_idx] = output_predictions
 
         inv_order = np.empty_like(self.order_)
@@ -756,9 +756,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             routed_params = Bunch(estimator=Bunch(fit=fit_params))
 
         chain_method = self._get_chain_method()
-        # proba methods produce 2d output (decision_function 1d for binary targets)
-        is_multi = chain_method in ["predict_proba", "predict_log_proba"]
-
         for chain_idx, estimator in enumerate(self.estimators_):
             message = self._log_message(
                 estimator_idx=chain_idx + 1,
@@ -782,7 +779,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
                     cv=self.cv,
                     method=chain_method,
                 )
-                if is_multi:
+                if cv_result.ndim > 1:
                     cv_result = cv_result[:, 1]
                 if sp.issparse(X_aug):
                     X_aug[:, col_idx] = np.expand_dims(cv_result, 1)
@@ -804,7 +801,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         Y_pred : array-like of shape (n_samples, n_classes)
             The predicted values.
         """
-        return self._get_Y_output(X)
+        return self._get_predictions(X)
 
 
 class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
@@ -856,10 +853,15 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         - An iterable yielding (train, test) splits as arrays of indices.
 
     chain_method : {'predict', 'predict_proba', 'predict_log_proba', \
-        'decision_function'}, default='predict'
+        'decision_function'} or list of such str's, default='predict'
 
         Prediction method to be used by estimators in the chain for
         the 'prediction' features of previous estimators in the chain.
+
+        - if `str`, name of the method;
+        - if a list of `str`, provides the method names in order of
+          preference. The method used corresponds to the first method in
+          the list that is implemented by `base_estimator`.
 
         .. versionadded:: 1.4
 
@@ -890,7 +892,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         The order of labels in the classifier chain.
 
     chain_method_ : str
-        Prediction method to be used by estimators in the chain for the 'prediction'
+        Prediction method used by estimators in the chain for the 'prediction'
         features.
 
     n_features_in_ : int
@@ -943,9 +945,11 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     _parameter_constraints: dict = {
         **_BaseChain._parameter_constraints,
         "chain_method": [
+            list,
+            tuple,
             StrOptions(
                 {"predict", "predict_proba", "predict_log_proba", "decision_function"}
-            )
+            ),
         ],
     }
 
@@ -998,11 +1002,11 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         """
         _raise_for_params(fit_params, self, "fit")
 
-        self.chain_method_ = self.chain_method
         super().fit(X, Y, **fit_params)
         self.classes_ = [
             estimator.classes_ for chain_idx, estimator in enumerate(self.estimators_)
         ]
+        self.chain_method_ = self._get_chain_method()
         return self
 
     @_available_if_base_estimator_has("predict_proba")
@@ -1019,7 +1023,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Y_prob : array-like of shape (n_samples, n_classes)
             The predicted probabilities.
         """
-        return self._get_Y_output(X, output_method="predict_proba")
+        return self._get_predictions(X, output_method="predict_proba")
 
     @_available_if_base_estimator_has("decision_function")
     def decision_function(self, X):
@@ -1036,7 +1040,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
             Returns the decision function of the sample for each model
             in the chain.
         """
-        return self._get_Y_output(X, output_method="decision_function")
+        return self._get_predictions(X, output_method="decision_function")
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
