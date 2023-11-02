@@ -656,7 +656,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         # `RegressorChain` does not have a `chain_method` parameter
         except AttributeError:
             chain_method = "predict"
-        return _check_response_method(self.base_estimator, chain_method)
+        method = _check_response_method(self.base_estimator, chain_method)
+        return method.__name__
 
     def _get_predictions(self, X, *, output_method):
         """Get predictions for each model in the chain."""
@@ -801,7 +802,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         Y_pred : array-like of shape (n_samples, n_classes)
             The predicted values.
         """
-        return self._get_predictions(X)
+        return self._get_predictions(X, output_method="predict")
 
 
 class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
