@@ -1,3 +1,8 @@
+"""
+The :mod:`sklearn.utils.sparsefuncs_fast` module includes a collection of utilities to
+work with sparse matrices and arrays written in Cython.
+"""
+
 # Authors: Mathieu Blondel
 #          Olivier Grisel
 #          Peter Prettenhofer
@@ -7,18 +12,23 @@
 # License: BSD 3 clause
 
 from libc.math cimport fabs, sqrt, isnan
+from libc.stdint cimport intptr_t
 
 cimport numpy as cnp
 import numpy as np
 from cython cimport floating
+from ..utils._typedefs cimport float64_t, int32_t, intp_t, uint64_t
 
 cnp.import_array()
 
-ctypedef fused integral:
-    int
-    long long
 
-ctypedef cnp.float64_t DOUBLE
+# This `integral` fused type is defined to be used over `cython.integral`
+# to only generate implementations for `int{32,64}_t`.
+# TODO: use `{int,float}{32,64}_t` when cython#5230 is resolved:
+# https://github.com/cython/cython/issues/5230
+ctypedef fused integral:
+    int  # int32_t
+    long long  # int64_t
 
 
 def csr_row_norms(X):
@@ -95,8 +105,8 @@ def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
 
 def _csr_mean_variance_axis0(
     const floating[::1] X_data,
-    unsigned long long n_samples,
-    unsigned long long n_features,
+    uint64_t n_samples,
+    uint64_t n_features,
     const integral[:] X_indices,
     const integral[:] X_indptr,
     const floating[:] weights,
@@ -104,31 +114,31 @@ def _csr_mean_variance_axis0(
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
-        cnp.intp_t row_ind
-        unsigned long long feature_idx
+        intp_t row_ind
+        uint64_t feature_idx
         integral i, col_ind
-        cnp.float64_t diff
+        float64_t diff
         # means[j] contains the mean of feature j
-        cnp.float64_t[::1] means = np.zeros(n_features)
+        float64_t[::1] means = np.zeros(n_features)
         # variances[j] contains the variance of feature j
-        cnp.float64_t[::1] variances = np.zeros(n_features)
+        float64_t[::1] variances = np.zeros(n_features)
 
-        cnp.float64_t[::1] sum_weights = np.full(
+        float64_t[::1] sum_weights = np.full(
             fill_value=np.sum(weights, dtype=np.float64), shape=n_features
         )
-        cnp.float64_t[::1] sum_weights_nz = np.zeros(shape=n_features)
-        cnp.float64_t[::1] correction = np.zeros(shape=n_features)
+        float64_t[::1] sum_weights_nz = np.zeros(shape=n_features)
+        float64_t[::1] correction = np.zeros(shape=n_features)
 
-        cnp.uint64_t[::1] counts = np.full(
+        uint64_t[::1] counts = np.full(
             fill_value=weights.shape[0], shape=n_features, dtype=np.uint64
         )
-        cnp.uint64_t[::1] counts_nz = np.zeros(shape=n_features, dtype=np.uint64)
+        uint64_t[::1] counts_nz = np.zeros(shape=n_features, dtype=np.uint64)
 
     for row_ind in range(len(X_indptr) - 1):
         for i in range(X_indptr[row_ind], X_indptr[row_ind + 1]):
             col_ind = X_indices[i]
             if not isnan(X_data[i]):
-                means[col_ind] += <cnp.float64_t>(X_data[i]) * weights[row_ind]
+                means[col_ind] += <float64_t>(X_data[i]) * weights[row_ind]
                 # sum of weights where X[:, col_ind] is non-zero
                 sum_weights_nz[col_ind] += weights[row_ind]
                 # number of non-zero elements of X[:, col_ind]
@@ -229,8 +239,8 @@ def csc_mean_variance_axis0(X, weights=None, return_sum_weights=False):
 
 def _csc_mean_variance_axis0(
     const floating[::1] X_data,
-    unsigned long long n_samples,
-    unsigned long long n_features,
+    uint64_t n_samples,
+    uint64_t n_features,
     const integral[:] X_indices,
     const integral[:] X_indptr,
     const floating[:] weights,
@@ -239,29 +249,29 @@ def _csc_mean_variance_axis0(
     # cannot be declared directly and can only be passed as function arguments
     cdef:
         integral i, row_ind
-        unsigned long long feature_idx, col_ind
-        cnp.float64_t diff
+        uint64_t feature_idx, col_ind
+        float64_t diff
         # means[j] contains the mean of feature j
-        cnp.float64_t[::1] means = np.zeros(n_features)
+        float64_t[::1] means = np.zeros(n_features)
         # variances[j] contains the variance of feature j
-        cnp.float64_t[::1] variances = np.zeros(n_features)
+        float64_t[::1] variances = np.zeros(n_features)
 
-        cnp.float64_t[::1] sum_weights = np.full(
+        float64_t[::1] sum_weights = np.full(
             fill_value=np.sum(weights, dtype=np.float64), shape=n_features
         )
-        cnp.float64_t[::1] sum_weights_nz = np.zeros(shape=n_features)
-        cnp.float64_t[::1] correction = np.zeros(shape=n_features)
+        float64_t[::1] sum_weights_nz = np.zeros(shape=n_features)
+        float64_t[::1] correction = np.zeros(shape=n_features)
 
-        cnp.uint64_t[::1] counts = np.full(
+        uint64_t[::1] counts = np.full(
             fill_value=weights.shape[0], shape=n_features, dtype=np.uint64
         )
-        cnp.uint64_t[::1] counts_nz = np.zeros(shape=n_features, dtype=np.uint64)
+        uint64_t[::1] counts_nz = np.zeros(shape=n_features, dtype=np.uint64)
 
     for col_ind in range(n_features):
         for i in range(X_indptr[col_ind], X_indptr[col_ind + 1]):
             row_ind = X_indices[i]
             if not isnan(X_data[i]):
-                means[col_ind] += <cnp.float64_t>(X_data[i]) * weights[row_ind]
+                means[col_ind] += <float64_t>(X_data[i]) * weights[row_ind]
                 # sum of weights where X[:, col_ind] is non-zero
                 sum_weights_nz[col_ind] += weights[row_ind]
                 # number of non-zero elements of X[:, col_ind]
@@ -387,9 +397,9 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights=None):
 def _incr_mean_variance_axis0(
     const floating[:] X_data,
     floating n_samples,
-    unsigned long long n_features,
+    uint64_t n_features,
     const int[:] X_indices,
-    # X_indptr might be either in32 or int64
+    # X_indptr might be either int32 or int64
     const integral[:] X_indptr,
     str X_format,
     floating[:] last_mean,
@@ -401,7 +411,7 @@ def _incr_mean_variance_axis0(
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
-        unsigned long long i
+        uint64_t i
 
         # last = stats until now
         # new = the current increment
@@ -493,13 +503,13 @@ def _inplace_csr_row_normalize_l1(
     const integral[:] X_indptr,
 ):
     cdef:
-        unsigned long long n_samples = shape[0]
+        uint64_t n_samples = shape[0]
 
         # the column indices for row i are stored in:
         #    indices[indptr[i]:indices[i+1]]
         # and their corresponding values are stored in:
         #    data[indptr[i]:indptr[i+1]]
-        unsigned long long i
+        uint64_t i
         integral j
         double sum_
 
@@ -530,8 +540,8 @@ def _inplace_csr_row_normalize_l2(
     const integral[:] X_indptr,
 ):
     cdef:
-        unsigned long long n_samples = shape[0]
-        unsigned long long i
+        uint64_t n_samples = shape[0]
+        uint64_t i
         integral j
         double sum_
 
@@ -554,8 +564,8 @@ def _inplace_csr_row_normalize_l2(
 
 def assign_rows_csr(
     X,
-    const cnp.npy_intp[:] X_rows,
-    const cnp.npy_intp[:] out_rows,
+    const intptr_t[:] X_rows,
+    const intptr_t[:] out_rows,
     floating[:, ::1] out,
 ):
     """Densify selected rows of a CSR matrix into a preallocated array.
@@ -571,12 +581,13 @@ def assign_rows_csr(
     out : array, shape=(arbitrary, n_features)
     """
     cdef:
-        # npy_intp (np.intp in Python) is what np.where returns,
+        # intptr_t (npy_intp, np.intp in Python) is what np.where returns,
         # but int is what scipy.sparse uses.
-        int i, ind, j, k
-        cnp.npy_intp rX
+        intp_t i, ind, j, k
+        intptr_t rX
         const floating[:] data = X.data
-        const int[:] indices = X.indices, indptr = X.indptr
+        const int32_t[:] indices = X.indices
+        const int32_t[:] indptr = X.indptr
 
     if X_rows.shape[0] != out_rows.shape[0]:
         raise ValueError("cannot assign %d rows to %d"

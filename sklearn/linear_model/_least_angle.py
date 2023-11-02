@@ -22,7 +22,19 @@ from ..exceptions import ConvergenceWarning
 from ..model_selection import check_cv
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
-from ..utils import arrayfuncs, as_float_array, check_random_state  # type: ignore
+from ..utils import (  # type: ignore
+    Bunch,
+    arrayfuncs,
+    as_float_array,
+    check_random_state,
+)
+from ..utils._metadata_requests import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.parallel import Parallel, delayed
 from ._base import LinearModel, LinearRegression, _deprecate_normalize, _preprocess_data
@@ -673,12 +685,6 @@ def _lars_path_solver(
                 # The system is becoming too ill-conditioned.
                 # We have degenerate vectors in our active set.
                 # We'll 'drop for good' the last regressor added.
-
-                # Note: this case is very rare. It is no longer triggered by
-                # the test suite. The `equality_tolerance` margin added in 0.16
-                # to get early stopping to work consistently on all versions of
-                # Python including 32 bit Python under Windows seems to make it
-                # very difficult to trigger the 'drop for good' strategy.
                 warnings.warn(
                     "Regressors in active set degenerate. "
                     "Dropping a regressor, after %i iterations, "
@@ -686,7 +692,7 @@ def _lars_path_solver(
                     "with an active set of %i regressors, and "
                     "the smallest cholesky pivot element being %.3e."
                     " Reduce max_iter or increase eps parameters."
-                    % (n_iter, alpha, n_active, diag),
+                    % (n_iter, alpha.item(), n_active, diag),
                     ConvergenceWarning,
                 )
 
@@ -714,7 +720,7 @@ def _lars_path_solver(
                 "are small and the current value of alpha is no "
                 "longer well controlled. %i iterations, alpha=%.3e, "
                 "previous alpha=%.3e, with an active set of %i "
-                "regressors." % (n_iter, alpha, prev_alpha, n_active),
+                "regressors." % (n_iter, alpha.item(), prev_alpha.item(), n_active),
                 ConvergenceWarning,
             )
             break
@@ -1726,7 +1732,7 @@ class LarsCV(Lars):
         return {"multioutput": False}
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y):
+    def fit(self, X, y, **params):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -1737,11 +1743,23 @@ class LarsCV(Lars):
         y : array-like of shape (n_samples,)
             Target values.
 
+        **params : dict, default=None
+            Parameters to be passed to the CV splitter.
+
+            .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Returns an instance of self.
         """
+        _raise_for_params(params, self, "fit")
+
         _normalize = _deprecate_normalize(
             self.normalize, estimator_name=self.__class__.__name__
         )
@@ -1752,6 +1770,11 @@ class LarsCV(Lars):
 
         # init cross-validation generator
         cv = check_cv(self.cv, classifier=False)
+
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **params)
+        else:
+            routed_params = Bunch(splitter=Bunch(split={}))
 
         # As we use cross-validation, the Gram matrix is not precomputed here
         Gram = self.precompute
@@ -1779,7 +1802,7 @@ class LarsCV(Lars):
                 eps=self.eps,
                 positive=self.positive,
             )
-            for train, test in cv.split(X, y)
+            for train, test in cv.split(X, y, **routed_params.splitter.split)
         )
         all_alphas = np.concatenate(list(zip(*cv_paths))[0])
         # Unique also sorts
@@ -1827,6 +1850,26 @@ class LarsCV(Lars):
             normalize=_normalize,
         )
         return self
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.4
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            splitter=check_cv(self.cv),
+            method_mapping=MethodMapping().add(callee="split", caller="fit"),
+        )
+        return router
 
 
 class LassoLarsCV(LarsCV):
