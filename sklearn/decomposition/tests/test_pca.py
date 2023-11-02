@@ -33,7 +33,7 @@ SPARSE_M, SPARSE_N = 1000, 300  # arbitrary
 SPARSE_MAX_COMPONENTS = min(SPARSE_M, SPARSE_N)
 
 
-def _check_fitted_pca_close(pca1: PCA, pca2: PCA, rtol: float):
+def _check_fitted_pca_close(pca1, pca2, rtol):
     assert_allclose(pca1.components_, pca2.components_, rtol=rtol)
     assert_allclose(pca1.explained_variance_, pca2.explained_variance_, rtol=rtol)
     assert_allclose(pca1.singular_values_, pca2.singular_values_, rtol=rtol)
