@@ -291,6 +291,12 @@ Changelog
   :class:`ensemble.GradientBoostingRegressor` when trained on sparse data.
   :pr:`26957` by `Thomas Fan`_.
 
+- |Fix| Changes estimator tags to acknowledge that
+  :class:`ensemble.VotingClassifier`, :class:`ensemble.VotingRegressor`,
+  :class:`ensemble.StackingClassifier`, :class:`ensemble.StackingRegressor`,
+  support missing values if all `estimators` support missing values.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |API| In :class:`ensemble.AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
   <StefanieSenger>`.
