@@ -18,8 +18,8 @@ the model, allowing us to rank features by their importance.
 # Dataset
 # -------
 #
-# We will start by loading the handwritten digits dataset. This dataset consists of 8x8
-# pixel images of handwritten digits. Each pixel will be treated as a feature and we
+# We start by loading the handwritten digits dataset. This dataset consists of 8x8
+# pixel images of handwritten digits. Each pixel is treated as a feature and we
 # aim to determine which pixels are most relevant for the digit classification task.
 
 # %%
@@ -118,8 +118,7 @@ print(f"Optimal number of features: {optimal_num_features}")
 # observe if there's any significant change in accuracy, ideally aiming for improvement.
 
 # %%
-best_pipeline.fit(X_train, y_train)
-y_pred_rfe = best_pipeline.predict(X_test)
+y_pred_rfe = grid_search.predict(X_test)
 
 # Get accuracy of model using selected features
 accuracy_selected_features = accuracy_score(y_test, y_pred_rfe)
