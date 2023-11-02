@@ -1003,9 +1003,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         _raise_for_params(fit_params, self, "fit")
 
         super().fit(X, Y, **fit_params)
-        self.classes_ = [
-            estimator.classes_ for chain_idx, estimator in enumerate(self.estimators_)
-        ]
+        self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         self.chain_method_ = self._get_chain_method()
         return self
 
