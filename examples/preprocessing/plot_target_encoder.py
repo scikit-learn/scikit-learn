@@ -12,7 +12,7 @@ for handling categorical features: :class:`TargetEncoder`,
 
 .. note::
     `fit(X, y).transform(X)` does not equal `fit_transform(X, y)` because a
-    cross-validation scheme is used in `fit_transform` for encoding. See the
+    cross fitting scheme is used in `fit_transform` for encoding. See the
     :ref:`User Guide <target_encoder>`. for details.
 """
 

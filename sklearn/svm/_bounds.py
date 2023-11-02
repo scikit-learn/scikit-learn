@@ -19,7 +19,8 @@ from ..utils.validation import check_array, check_consistent_length
         "loss": [StrOptions({"squared_hinge", "log"})],
         "fit_intercept": ["boolean"],
         "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def l1_min_c(X, y, *, loss="squared_hinge", fit_intercept=True, intercept_scaling=1.0):
     """Return the lowest bound for C.

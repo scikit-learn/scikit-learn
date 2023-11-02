@@ -167,7 +167,8 @@ def _cube(x, fun_args):
         "return_X_mean": ["boolean"],
         "compute_sources": ["boolean"],
         "return_n_iter": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def fastica(
     X,

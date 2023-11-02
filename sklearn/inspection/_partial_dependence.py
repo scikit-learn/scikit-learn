@@ -367,7 +367,8 @@ def _partial_dependence_brute(
         "grid_resolution": [Interval(Integral, 1, None, closed="left")],
         "method": [StrOptions({"auto", "recursion", "brute"})],
         "kind": [StrOptions({"average", "individual", "both"})],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def partial_dependence(
     estimator,

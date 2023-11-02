@@ -36,7 +36,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
         X,
         Y,
         intp_t k,
-        str metric="euclidean",
+        metric="euclidean",
         chunk_size=None,
         dict metric_kwargs=None,
         str strategy=None,

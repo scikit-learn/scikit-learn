@@ -316,7 +316,7 @@ Tips on Practical Use
     attribute on the input vector X to [0, 1] or [-1, +1], or standardize
     it to have mean 0 and variance 1. Note that you must apply the *same*
     scaling to the test set for meaningful results.
-    You can use :class:`StandardScaler` for standardization.
+    You can use :class:`~sklearn.preprocessing.StandardScaler` for standardization.
 
       >>> from sklearn.preprocessing import StandardScaler  # doctest: +SKIP
       >>> scaler = StandardScaler()  # doctest: +SKIP
@@ -326,12 +326,13 @@ Tips on Practical Use
       >>> # apply same transformation to test data
       >>> X_test = scaler.transform(X_test)  # doctest: +SKIP
 
-    An alternative and recommended approach is to use :class:`StandardScaler`
-    in a :class:`Pipeline`
+    An alternative and recommended approach is to use
+    :class:`~sklearn.preprocessing.StandardScaler` in a
+    :class:`~sklearn.pipeline.Pipeline`
 
-  * Finding a reasonable regularization parameter :math:`\alpha` is
-    best done using :class:`GridSearchCV`, usually in the
-    range ``10.0 ** -np.arange(1, 7)``.
+  * Finding a reasonable regularization parameter :math:`\alpha` is best done
+    using :class:`~sklearn.model_selection.GridSearchCV`, usually in the range
+    ``10.0 ** -np.arange(1, 7)``.
 
   * Empirically, we observed that `L-BFGS` converges faster and
     with better solutions on small datasets. For relatively large

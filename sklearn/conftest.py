@@ -12,6 +12,7 @@ import pytest
 from _pytest.doctest import DoctestItem
 from threadpoolctl import threadpool_limits
 
+from sklearn import config_context
 from sklearn._min_dependencies import PYTEST_MIN_VERSION
 from sklearn.datasets import (
     fetch_20newsgroups,
@@ -24,7 +25,7 @@ from sklearn.datasets import (
 )
 from sklearn.tests import random_seed
 from sklearn.utils import _IS_32BIT
-from sklearn.utils.fixes import parse_version, sp_version
+from sklearn.utils.fixes import np_base_version, parse_version, sp_version
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError(
@@ -33,6 +34,13 @@ if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     )
 
 scipy_datasets_require_network = sp_version >= parse_version("1.10")
+
+
+@pytest.fixture
+def enable_slep006():
+    """Enable SLEP006 for all tests."""
+    with config_context(enable_metadata_routing=True):
+        yield
 
 
 def raccoon_face_or_skip():
@@ -177,6 +185,10 @@ def pytest_collection_modifyitems(config, items):
             "doctests are not run for Windows because numpy arrays "
             "repr is inconsistent across platforms."
         )
+        skip_doctests = True
+
+    if np_base_version >= parse_version("2"):
+        reason = "Due to NEP 51 numpy scalar repr has changed in numpy 2"
         skip_doctests = True
 
     # Normally doctest has the entire module's scope. Here we set globs to an empty dict

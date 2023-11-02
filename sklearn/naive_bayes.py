@@ -467,7 +467,7 @@ class GaussianNB(_BaseNB):
         classes = self.classes_
 
         unique_y = np.unique(y)
-        unique_y_in_classes = np.in1d(unique_y, classes)
+        unique_y_in_classes = np.isin(unique_y, classes)
 
         if not np.all(unique_y_in_classes):
             raise ValueError(

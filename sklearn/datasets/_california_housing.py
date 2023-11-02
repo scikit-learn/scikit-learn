@@ -23,7 +23,7 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 
 import logging
 import tarfile
-from os import makedirs, remove
+from os import PathLike, makedirs, remove
 from os.path import exists
 
 import joblib
@@ -53,11 +53,12 @@ logger = logging.getLogger(__name__)
 
 @validate_params(
     {
-        "data_home": [str, None],
+        "data_home": [str, PathLike, None],
         "download_if_missing": ["boolean"],
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def fetch_california_housing(
     *, data_home=None, download_if_missing=True, return_X_y=False, as_frame=False
@@ -75,7 +76,7 @@ def fetch_california_housing(
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
