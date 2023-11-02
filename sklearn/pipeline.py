@@ -28,7 +28,9 @@ from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
+    _raise_for_unsupported_routing,
     _routing_enabled,
+    _RoutingNotSupportedMixin,
     process_routing,
 )
 from .utils.metaestimators import _BaseComposition, available_if
@@ -53,12 +55,15 @@ def _final_estimator_has(attr):
 
 class Pipeline(_BaseComposition):
     """
-    Pipeline of transforms with a final estimator.
+    A sequence of data transformers with an optional final predictor.
 
-    Sequentially apply a list of transforms and a final estimator.
+    `Pipeline` allows you to sequentially apply a list of transformers to
+    preprocess the data and, if desired, conclude the sequence with a final
+    :term:`predictor` for predictive modeling.
+
     Intermediate steps of the pipeline must be 'transforms', that is, they
     must implement `fit` and `transform` methods.
-    The final estimator only needs to implement `fit`.
+    The final :term:`estimator` only needs to implement `fit`.
     The transformers in the pipeline can be cached using ``memory`` argument.
 
     The purpose of the pipeline is to assemble several steps that can be
@@ -69,16 +74,23 @@ class Pipeline(_BaseComposition):
     to another estimator, or a transformer removed by setting it to
     `'passthrough'` or `None`.
 
+    For an example use case of `Pipeline` combined with
+    :class:`~sklearn.model_selection.GridSearchCV`, refer to
+    :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`. The
+    example :ref:`sphx_glr_auto_examples_compose_plot_digits_pipe.py` shows how
+    to grid search on a pipeline using `'__'` as a separator in the parameter names.
+
     Read more in the :ref:`User Guide <pipeline>`.
 
     .. versionadded:: 0.5
 
     Parameters
     ----------
-    steps : list of tuple
-        List of (name, transform) tuples (implementing `fit`/`transform`) that
-        are chained in sequential order. The last transform must be an
-        estimator.
+    steps : list of tuples
+        List of (name of step, estimator) tuples that are to be chained in
+        sequential order. To be compatible with the scikit-learn API, all steps
+        must define `fit`. All non-last steps must also define `transform`. See
+        :ref:`Combining Estimators <combining_estimators>` for more details.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. The last step
@@ -334,9 +346,7 @@ class Pipeline(_BaseComposition):
 
     def _check_method_params(self, method, props, **kwargs):
         if _routing_enabled():
-            routed_params = process_routing(
-                self, method=method, other_params=props, **kwargs
-            )
+            routed_params = process_routing(self, method, **props, **kwargs)
             return routed_params
         else:
             fit_params_steps = Bunch(
@@ -410,7 +420,7 @@ class Pipeline(_BaseComposition):
     def fit(self, X, y=None, **params):
         """Fit the model.
 
-        Fit all the transformers one after the other and transform the
+        Fit all the transformers one after the other and sequentially transform the
         data. Finally, fit the transformed data using the final estimator.
 
         Parameters
@@ -474,9 +484,9 @@ class Pipeline(_BaseComposition):
     def fit_transform(self, X, y=None, **params):
         """Fit the model and transform with the final estimator.
 
-        Fits all the transformers one after the other and transform the
-        data. Then uses `fit_transform` on transformed data with the final
-        estimator.
+        Fit all the transformers one after the other and sequentially transform
+        the data. Only valid if the final estimator either implements
+        `fit_transform` or `fit` and `transform`.
 
         Parameters
         ----------
@@ -586,7 +596,7 @@ class Pipeline(_BaseComposition):
             return self.steps[-1][1].predict(Xt, **params)
 
         # metadata routing enabled
-        routed_params = process_routing(self, "predict", other_params=params)
+        routed_params = process_routing(self, "predict", **params)
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt, **routed_params[name].transform)
         return self.steps[-1][1].predict(Xt, **routed_params[self.steps[-1][0]].predict)
@@ -706,7 +716,7 @@ class Pipeline(_BaseComposition):
             return self.steps[-1][1].predict_proba(Xt, **params)
 
         # metadata routing enabled
-        routed_params = process_routing(self, "predict_proba", other_params=params)
+        routed_params = process_routing(self, "predict_proba", **params)
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt, **routed_params[name].transform)
         return self.steps[-1][1].predict_proba(
@@ -747,7 +757,7 @@ class Pipeline(_BaseComposition):
 
         # not branching here since params is only available if
         # enable_metadata_routing=True
-        routed_params = process_routing(self, "decision_function", other_params=params)
+        routed_params = process_routing(self, "decision_function", **params)
 
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -833,7 +843,7 @@ class Pipeline(_BaseComposition):
             return self.steps[-1][1].predict_log_proba(Xt, **params)
 
         # metadata routing enabled
-        routed_params = process_routing(self, "predict_log_proba", other_params=params)
+        routed_params = process_routing(self, "predict_log_proba", **params)
         for _, name, transform in self._iter(with_final=False):
             Xt = transform.transform(Xt, **routed_params[name].transform)
         return self.steps[-1][1].predict_log_proba(
@@ -882,7 +892,7 @@ class Pipeline(_BaseComposition):
 
         # not branching here since params is only available if
         # enable_metadata_routing=True
-        routed_params = process_routing(self, "transform", other_params=params)
+        routed_params = process_routing(self, "transform", **params)
         Xt = X
         for _, name, transform in self._iter():
             Xt = transform.transform(Xt, **routed_params[name].transform)
@@ -925,7 +935,7 @@ class Pipeline(_BaseComposition):
 
         # we don't have to branch here, since params is only non-empty if
         # enable_metadata_routing=True.
-        routed_params = process_routing(self, "inverse_transform", other_params=params)
+        routed_params = process_routing(self, "inverse_transform", **params)
         reverse_iter = reversed(list(self._iter()))
         for _, name, transform in reverse_iter:
             Xt = transform.inverse_transform(
@@ -981,7 +991,7 @@ class Pipeline(_BaseComposition):
 
         # metadata routing is enabled.
         routed_params = process_routing(
-            self, "score", sample_weight=sample_weight, other_params=params
+            self, "score", sample_weight=sample_weight, **params
         )
 
         Xt = X
@@ -1102,13 +1112,13 @@ class Pipeline(_BaseComposition):
         Returns
         -------
         routing : MetadataRouter
-            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
         router = MetadataRouter(owner=self.__class__.__name__)
 
         # first we add all steps except the last one
-        for _, name, trans in self._iter(with_final=False):
+        for _, name, trans in self._iter(with_final=False, filter_passthrough=True):
             method_mapping = MethodMapping()
             # fit, fit_predict, and fit_transform call fit_transform if it
             # exists, or else fit and transform
@@ -1142,7 +1152,7 @@ class Pipeline(_BaseComposition):
             router.add(method_mapping=method_mapping, **{name: trans})
 
         final_name, final_est = self.steps[-1]
-        if not final_est:
+        if final_est is None or final_est == "passthrough":
             return router
 
         # then we add the last step
@@ -1241,8 +1251,29 @@ def make_pipeline(*steps, memory=None, verbose=False):
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
-def _transform_one(transformer, X, y, weight, **fit_params):
-    res = transformer.transform(X)
+def _transform_one(transformer, X, y, weight, params):
+    """Call transform and apply weight to output.
+
+    Parameters
+    ----------
+    transformer : estimator
+        Estimator to be used for transformation.
+
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Input data to be transformed.
+
+    y : ndarray of shape (n_samples,)
+        Ignored.
+
+    weight : float
+        Weight to be applied to the output of the transformation.
+
+    params : dict
+        Parameters to be passed to the transformer's ``transform`` method.
+
+        This should be of the form ``process_routing()["step_name"]``.
+    """
+    res = transformer.transform(X, **params.transform)
     # if we have a weight for this transformer, multiply output
     if weight is None:
         return res
@@ -1281,7 +1312,7 @@ def _fit_one(transformer, X, y, weight, message_clsname="", message=None, params
         return transformer.fit(X, y, **params["fit"])
 
 
-class FeatureUnion(TransformerMixin, _BaseComposition):
+class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
@@ -1372,6 +1403,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     >>> union.set_params(pca__n_components=1).fit_transform(X)
     array([[ 1.5       ,  3.0...],
            [-1.5       ,  5.7...]])
+
+    For a more detailed example of usage, see
+    :ref:`sphx_glr_auto_examples_compose_plot_feature_union.py`.
     """
 
     _required_parameters = ["transformer_list"]
@@ -1544,6 +1578,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self : object
             FeatureUnion class instance.
         """
+        _raise_for_unsupported_routing(self, "fit", **fit_params)
         transformers = self._parallel_func(X, y, fit_params, _fit_one)
         if not transformers:
             # All transformers are None
@@ -1625,8 +1660,11 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             The `hstack` of results of transformers. `sum_n_components` is the
             sum of `n_components` (output dimension) over transformers.
         """
+        # TODO(SLEP6): accept **params here in `transform` and route it to the
+        # underlying estimators.
+        params = Bunch(transform={})
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, X, None, weight)
+            delayed(_transform_one)(trans, X, None, weight, params)
             for name, trans, weight in self._iter()
         )
         if not Xs:

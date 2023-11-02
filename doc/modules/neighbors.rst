@@ -136,7 +136,7 @@ have the same interface; we'll show an example of using the KD Tree here:
 Refer to the :class:`KDTree` and :class:`BallTree` class documentation
 for more information on the options available for nearest neighbors searches,
 including specification of query strategies, distance metrics, etc. For a list
-of valid metrics use :meth:`KDTree.valid_metrics` and :meth:`BallTree.valid_metrics`:
+of valid metrics use `KDTree.valid_metrics` and `BallTree.valid_metrics`:
 
     >>> from sklearn.neighbors import KDTree, BallTree
     >>> KDTree.valid_metrics
@@ -188,13 +188,9 @@ distance can be supplied to compute the weights.
 
 .. |classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_classification_001.png
    :target: ../auto_examples/neighbors/plot_classification.html
-   :scale: 50
+   :scale: 75
 
-.. |classification_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_classification_002.png
-   :target: ../auto_examples/neighbors/plot_classification.html
-   :scale: 50
-
-.. centered:: |classification_1| |classification_2|
+.. centered:: |classification_1|
 
 .. topic:: Examples:
 
