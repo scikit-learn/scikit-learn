@@ -650,15 +650,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             return None
         return f"({estimator_idx} of {n_estimators}) {processing_msg}"
 
-    def _get_chain_method(self):
-        try:
-            chain_method = self.chain_method
-        # `RegressorChain` does not have a `chain_method` parameter
-        except AttributeError:
-            chain_method = "predict"
-        method = _check_response_method(self.base_estimator, chain_method)
-        return method.__name__
-
     def _get_predictions(self, X, *, output_method):
         """Get predictions for each model in the chain."""
         check_is_fitted(self)
@@ -666,7 +657,9 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         Y_output_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_feature_chain = np.zeros((X.shape[0], len(self.estimators_)))
 
-        chain_method = self._get_chain_method()
+        # `RegressorChain` does not have a `chain_method_` parameter so we
+        # default to "predict"
+        chain_method = getattr(self, "chain_method_", "predict")
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_feature_chain[:, :chain_idx]
             if sp.issparse(X):
@@ -756,7 +749,15 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         else:
             routed_params = Bunch(estimator=Bunch(fit=fit_params))
 
-        chain_method = self._get_chain_method()
+        if hasattr(self, "chain_method"):
+            chain_method = _check_response_method(
+                self.base_estimator, self.chain_method,
+            ).__name__
+            self.chain_method_ = chain_method
+        else:
+            # `RegressorChain` does not have a `chain_method` parameter
+            chain_method = "predict"
+
         for chain_idx, estimator in enumerate(self.estimators_):
             message = self._log_message(
                 estimator_idx=chain_idx + 1,
@@ -1005,7 +1006,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         super().fit(X, Y, **fit_params)
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
-        self.chain_method_ = self._get_chain_method()
         return self
 
     @_available_if_base_estimator_has("predict_proba")
