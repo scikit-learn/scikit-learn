@@ -882,7 +882,7 @@ def test_column_transformer_remainder():
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
-    assert ct.transformers_[-1][1] == "passthrough"
+    assert isinstance(ct.transformers_[-1][1], FunctionTransformer)
     assert_array_equal(ct.transformers_[-1][2], [1])
 
     # column order is not preserved (passed through added to end)
@@ -891,7 +891,7 @@ def test_column_transformer_remainder():
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both[:, ::-1])
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
-    assert ct.transformers_[-1][1] == "passthrough"
+    assert isinstance(ct.transformers_[-1][1], FunctionTransformer)
     assert_array_equal(ct.transformers_[-1][2], [0])
 
     # passthrough when all actual transformers are skipped
@@ -900,7 +900,7 @@ def test_column_transformer_remainder():
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_second)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
-    assert ct.transformers_[-1][1] == "passthrough"
+    assert isinstance(ct.transformers_[-1][1], FunctionTransformer)
     assert_array_equal(ct.transformers_[-1][2], [1])
 
     # check default for make_column_transformer
@@ -921,7 +921,7 @@ def test_column_transformer_remainder_numpy(key):
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
-    assert ct.transformers_[-1][1] == "passthrough"
+    assert isinstance(ct.transformers_[-1][1], FunctionTransformer)
     assert_array_equal(ct.transformers_[-1][2], [1])
 
 
@@ -954,7 +954,7 @@ def test_column_transformer_remainder_pandas(key):
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == "remainder"
-    assert ct.transformers_[-1][1] == "passthrough"
+    assert isinstance(ct.transformers_[-1][1], FunctionTransformer)
     assert_array_equal(ct.transformers_[-1][2], [1])
 
 

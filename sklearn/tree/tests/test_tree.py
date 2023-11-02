@@ -2083,7 +2083,7 @@ def test_different_endianness_pickle():
     score = clf.score(X, y)
 
     def reduce_ndarray(arr):
-        return arr.byteswap().newbyteorder().__reduce__()
+        return arr.byteswap().view(arr.dtype.newbyteorder()).__reduce__()
 
     def get_pickle_non_native_endianness():
         f = io.BytesIO()
@@ -2110,7 +2110,7 @@ def test_different_endianness_joblib_pickle():
     class NonNativeEndiannessNumpyPickler(NumpyPickler):
         def save(self, obj):
             if isinstance(obj, np.ndarray):
-                obj = obj.byteswap().newbyteorder()
+                obj = obj.byteswap().view(obj.dtype.newbyteorder())
             super().save(obj)
 
     def get_joblib_pickle_non_native_endianness():
@@ -2601,3 +2601,16 @@ def test_sample_weight_non_uniform(make_data, Tree):
     tree_samples_removed.fit(X[1::2, :], y[1::2])
 
     assert_allclose(tree_samples_removed.predict(X), tree_with_sw.predict(X))
+
+
+def test_deterministic_pickle():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/27268
+    # Uninitialised memory would lead to the two pickle strings being different.
+    tree1 = DecisionTreeClassifier(random_state=0).fit(iris.data, iris.target)
+    tree2 = DecisionTreeClassifier(random_state=0).fit(iris.data, iris.target)
+
+    pickle1 = pickle.dumps(tree1)
+    pickle2 = pickle.dumps(tree2)
+
+    assert pickle1 == pickle2
