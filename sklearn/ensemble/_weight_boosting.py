@@ -853,7 +853,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     def _compute_proba_from_decision(decision, n_classes):
         """Compute probabilities from the decision function.
 
-        This is based eq. (4) of [1] where:
+        This is based eq. (15) of [1] where:
             p(y=c|X) = exp((1 / K-1) f_c(X)) / sum_k(exp((1 / K-1) f_k(X)))
                      = softmax((1 / K-1) * f(X))
 
