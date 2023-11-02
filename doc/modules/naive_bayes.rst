@@ -69,11 +69,15 @@ On the flip side, although naive Bayes is known as a decent classifier,
 it is known to be a bad estimator, so the probability outputs from
 ``predict_proba`` are not to be taken too seriously.
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
- * H. Zhang (2004). `The optimality of Naive Bayes.
-   <https://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
-   Proc. FLAIRS.
+* H. Zhang (2004). `The optimality of Naive Bayes.
+  <https://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
+  Proc. FLAIRS.
+
+|details-end|
 
 .. _gaussian_naive_bayes:
 
@@ -180,12 +184,16 @@ match.
 
 |details-end|
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
- * Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
-   `Tackling the poor assumptions of naive bayes text classifiers.
-   <https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
-   In ICML (Vol. 3, pp. 616-623).
+* Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
+  `Tackling the poor assumptions of naive bayes text classifiers.
+  <https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
+  In ICML (Vol. 3, pp. 616-623).
+
+|details-end|
 
 .. _bernoulli_naive_bayes:
 
@@ -197,7 +205,7 @@ algorithms for data that is distributed according to multivariate Bernoulli
 distributions; i.e., there may be multiple features but each one is assumed
 to be a binary-valued (Bernoulli, boolean) variable.
 Therefore, this class requires samples to be represented as binary-valued
-feature vectors; if handed any other kind of data, a ``BernoulliNB`` instance
+feature vectors; if handed any other kind of data, a :class:`BernoulliNB` instance
 may binarize its input (depending on the ``binarize`` parameter).
 
 The decision rule for Bernoulli naive Bayes is based on
@@ -212,24 +220,28 @@ that is an indicator for class :math:`y`,
 where the multinomial variant would simply ignore a non-occurring feature.
 
 In the case of text classification, word occurrence vectors (rather than word
-count vectors) may be used to train and use this classifier. ``BernoulliNB``
+count vectors) may be used to train and use this classifier. :class:`BernoulliNB`
 might perform better on some datasets, especially those with shorter documents.
 It is advisable to evaluate both models, if time permits.
 
-.. topic:: References:
+|details-start|
+**References**
+|details-split|
 
- * C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
-   Information Retrieval. Cambridge University Press, pp. 234-265.
+* C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
+  Information Retrieval. Cambridge University Press, pp. 234-265.
 
- * A. McCallum and K. Nigam (1998).
-   `A comparison of event models for Naive Bayes text classification.
-   <https://citeseerx.ist.psu.edu/doc_view/pid/04ce064505b1635583fa0d9cc07cac7e9ea993cc>`_
-   Proc. AAAI/ICML-98 Workshop on Learning for Text Categorization, pp. 41-48.
+* A. McCallum and K. Nigam (1998).
+  `A comparison of event models for Naive Bayes text classification.
+  <https://citeseerx.ist.psu.edu/doc_view/pid/04ce064505b1635583fa0d9cc07cac7e9ea993cc>`_
+  Proc. AAAI/ICML-98 Workshop on Learning for Text Categorization, pp. 41-48.
 
- * V. Metsis, I. Androutsopoulos and G. Paliouras (2006).
-   `Spam filtering with Naive Bayes -- Which Naive Bayes?
-   <https://citeseerx.ist.psu.edu/doc_view/pid/8bd0934b366b539ec95e683ae39f8abb29ccc757>`_
-   3rd Conf. on Email and Anti-Spam (CEAS).
+* V. Metsis, I. Androutsopoulos and G. Paliouras (2006).
+  `Spam filtering with Naive Bayes -- Which Naive Bayes?
+  <https://citeseerx.ist.psu.edu/doc_view/pid/8bd0934b366b539ec95e683ae39f8abb29ccc757>`_
+  3rd Conf. on Email and Anti-Spam (CEAS).
+
+|details-end|
 
 .. _categorical_naive_bayes:
 
