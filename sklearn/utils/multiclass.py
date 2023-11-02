@@ -1,11 +1,11 @@
+"""
+The :mod:`sklearn.utils.multiclass` module includes utilities to handle
+multiclass/multioutput target in classifiers.
+"""
+
 # Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
 #
 # License: BSD 3 clause
-"""
-Multi-class / multi-label utility function
-==========================================
-
-"""
 import warnings
 from collections.abc import Sequence
 from itertools import chain
@@ -27,7 +27,8 @@ def _unique_multiclass(y):
 
 
 def _unique_indicator(y):
-    return np.arange(
+    xp, _ = get_namespace(y)
+    return xp.arange(
         check_array(y, input_name="y", accept_sparse=["csr", "csc", "coo"]).shape[1]
     )
 
