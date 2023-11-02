@@ -7,7 +7,6 @@ from itertools import product
 
 import numpy as np
 import pytest
-import scipy.sparse as sp
 from numpy.testing import assert_array_equal
 
 from sklearn.datasets import load_iris
@@ -93,7 +92,7 @@ def test_seq_dataset_basic_iteration(dataset, csr_container):
         xi_, yi, swi, idx = dataset._random_py()
         xi = csr_container(xi_, shape=(1, X64.shape[1]))
 
-        assert_csr_equal_values(xi, X_csr64[idx])
+        assert_csr_equal_values(xi, X_csr64[[idx]])
         assert yi == y64[idx]
         assert swi == sample_weight64[idx]
 
