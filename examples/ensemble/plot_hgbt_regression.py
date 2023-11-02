@@ -24,11 +24,11 @@ The top usability features of HGBT models are:
 This example aims at showcasing points 2-5 in a real life setting.
 """
 
-# %%
+
 # Author: Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-#
 # License: BSD 3 clause
-#
+
+# %%
 # Preparing the data
 # ==================
 # The `electricity dataset <http://www.openml.org/d/151>`_ consists of data
@@ -40,7 +40,7 @@ This example aims at showcasing points 2-5 in a real life setting.
 # The dataset (originally named ELEC2) contains 45,312 instances dated from 7
 # May 1996 to 5 December 1998. Each example of the dataset refers to a period of
 # 30 minutes, i.e. there are 48 instances for each time period of one day. Each
-# example on the dataset has 5 fields, the day of week, the time stamp, the New
+# example on the dataset has 5 fields: the day of week, the time stamp, the New
 # South Wales electricity demand, the Victoria electricity demand. It is
 # originally a classification task, but here we use it as a regression where the
 # target is the scheduled electricity transfer between states.
@@ -151,7 +151,7 @@ plt.ylabel("root mean squared error")
 _ = plt.title(f"Loss of hgbt with early stopping (n_iter={hgbt.n_iter_})")
 
 # %%
-# We can then overwrite the value for `max_iter` to a razonable value and avoid
+# We can then overwrite the value for `max_iter` to a reasonable value and avoid
 # the extra computational cost of the inner validation. In this case, rounding
 # up the number of iterations to 600 may account for variability of the training
 # set:
