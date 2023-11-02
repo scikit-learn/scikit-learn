@@ -1525,7 +1525,7 @@ class RandomForestRegressor(ForestRegressor):
     """
     A random forest regressor.
 
-    A random forest is a meta estimator that fits a number of classifying
+    A random forest is a meta estimator that fits a number of regressor
     decision trees on various sub-samples of the dataset and uses averaging
     to improve the predictive accuracy and control over-fitting.
     The sub-sample size is controlled with the `max_samples` parameter if
