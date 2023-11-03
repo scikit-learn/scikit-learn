@@ -1581,8 +1581,10 @@ def make_spd_matrix(n_dim, *, random_state=None):
             None,
         ],
         "random_state": ["random_state"],
-        "dim": [Interval(Integral, 1, None, closed="left"),
-                Hidden(StrOptions({"deprecated"}))],
+        "dim": [
+            Interval(Integral, 1, None, closed="left"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -1605,7 +1607,7 @@ def make_sparse_spd_matrix(
     ----------
     n_dim : int, default=1
         The size of the random matrix to generate.
-        
+
         .. versionchanged:: 1.3
             Renamed from ``dim`` to ``n_dim``.
 
@@ -1655,8 +1657,10 @@ def make_sparse_spd_matrix(
     # TODO: remove in 1.5
     if dim != "warn":
         warnings.warn(
-            "dim was deprecated in version 1.4 and will be removed in 1.5."
-            "Please use ``n_dim`` instead.",
+            (
+                "dim was deprecated in version 1.4 and will be removed in 1.5."
+                "Please use ``n_dim`` instead."
+            ),
             FutureWarning,
         )
         n_dim = dim
