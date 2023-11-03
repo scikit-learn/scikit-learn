@@ -123,6 +123,22 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     )
                     raise ValueError(msg)
 
+                # `nan` must be the last stated category
+                for category in cats[:-1]:
+                    if is_scalar_nan(category):
+                        raise ValueError(
+                            "Nan should be the last element in user"
+                            f" provided categories, see categories {cats}"
+                            f" in column #{i}"
+                        )
+
+                if cats.size != len(_unique(cats)):
+                    msg = (
+                        f"In column {i}, the predefined categories"
+                        " contain duplicate elements."
+                    )
+                    raise ValueError(msg)
+
                 if Xi.dtype.kind not in "OUS":
                     sorted_cats = np.sort(cats)
                     error_msg = (
@@ -130,9 +146,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     )
                     # if there are nans, nan should be the last element
                     stop_idx = -1 if np.isnan(sorted_cats[-1]) else None
-                    if np.any(sorted_cats[:stop_idx] != cats[:stop_idx]) or (
-                        np.isnan(sorted_cats[-1]) and not np.isnan(sorted_cats[-1])
-                    ):
+                    if np.any(sorted_cats[:stop_idx] != cats[:stop_idx]):
                         raise ValueError(error_msg)
 
                 if handle_unknown == "error":
@@ -450,7 +464,7 @@ class OneHotEncoder(_BaseEncoder):
     The features are encoded using a one-hot (aka 'one-of-K' or 'dummy')
     encoding scheme. This creates a binary column for each category and
     returns a sparse matrix or dense array (depending on the ``sparse_output``
-    parameter)
+    parameter).
 
     By default, the encoder derives the categories based on the unique values
     in each feature. Alternatively, you can also specify the `categories`
@@ -463,6 +477,8 @@ class OneHotEncoder(_BaseEncoder):
     instead.
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
+    For a comparison of different encoders, refer to:
+    :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`.
 
     Parameters
     ----------
@@ -520,12 +536,13 @@ class OneHotEncoder(_BaseEncoder):
            `sparse_output` instead.
 
     sparse_output : bool, default=True
-        Will return sparse matrix if set True else will return an array.
+        When ``True``, it returns a :class:`scipy.sparse.csr_matrix`,
+        i.e. a sparse matrix in "Compressed Sparse Row" (CSR) format.
 
         .. versionadded:: 1.2
            `sparse` was renamed to `sparse_output`
 
-    dtype : number type, default=float
+    dtype : number type, default=np.float64
         Desired dtype of output.
 
     handle_unknown : {'error', 'ignore', 'infrequent_if_exist'}, \
@@ -774,8 +791,8 @@ class OneHotEncoder(_BaseEncoder):
         if infrequent_indices is not None and drop_idx in infrequent_indices:
             categories = self.categories_[feature_idx]
             raise ValueError(
-                f"Unable to drop category {categories[drop_idx]!r} from feature"
-                f" {feature_idx} because it is infrequent"
+                f"Unable to drop category {categories[drop_idx].item()!r} from"
+                f" feature {feature_idx} because it is infrequent"
             )
         return default_to_infrequent[drop_idx]
 
@@ -993,8 +1010,12 @@ class OneHotEncoder(_BaseEncoder):
         """
         Transform X using one-hot encoding.
 
-        If there are infrequent categories for a feature, the infrequent
-        categories will be grouped into a single category.
+        If `sparse_output=True` (default), it returns an instance of
+        :class:`scipy.sparse._csr.csr_matrix` (CSR format).
+
+        If there are infrequent categories for a feature, set by specifying
+        `max_categories` or `min_frequency`, the infrequent categories are
+        grouped into a single category.
 
         Parameters
         ----------
@@ -1243,6 +1264,8 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     a single column of integers (0 to n_categories - 1) per feature.
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
+    For a comparison of different encoders, refer to:
+    :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`.
 
     .. versionadded:: 0.20
 
