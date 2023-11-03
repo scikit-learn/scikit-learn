@@ -23,7 +23,7 @@ import pytest
 from scipy.special import comb
 
 import sklearn
-from sklearn import datasets
+from sklearn import clone, datasets
 from sklearn.datasets import make_classification, make_hastie_10_2
 from sklearn.decomposition import TruncatedSVD
 from sklearn.dummy import DummyRegressor
@@ -46,6 +46,7 @@ from sklearn.svm import LinearSVC
 from sklearn.tree._classes import SPARSE_SPLITTERS
 from sklearn.utils._testing import (
     _convert_container,
+    assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
@@ -1695,12 +1696,8 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
     Tests consistency across fits and whether or not the seed for the random generator
     is set.
     """
-    # Check that format of estimators_samples_ is correct and that results
-    # generated at fit time can be identically reproduced at a later time
-    # using data saved in object attributes.
     X, y = make_hastie_10_2(n_samples=200, random_state=1)
 
-    # test both with bootstrap and w/o. No bootstrap requires max samples is not set.
     if bootstrap:
         max_samples = 0.5
     else:
@@ -1720,7 +1717,7 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
     assert_array_equal(estimators_samples, est.estimators_samples_)
     estimators = est.estimators_
 
-    assert isinstance(estimator_samples, list)
+    assert isinstance(estimators_samples, list)
     assert len(estimators_samples) == len(estimators)
     assert estimators_samples[0].dtype == np.int32
 
@@ -1741,6 +1738,7 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
     y_train = y[estimator_samples]
 
     orig_tree_values = estimator.tree_.value
+    estimator = clone(estimator)
     estimator.fit(X_train, y_train)
     new_tree_values = estimator.tree_.value
     assert_allclose(orig_tree_values, new_tree_values)
