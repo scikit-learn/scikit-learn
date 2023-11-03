@@ -421,7 +421,7 @@ Changelog
 ..........................
 
 - |Enhancement| Add method `predict_log_proba` to :class:`multioutput.ClassifierChain`.
-  :pr:`xxxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`27720` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.neighbors`
 ........................
