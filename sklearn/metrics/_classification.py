@@ -382,6 +382,16 @@ def confusion_matrix(
             cm = cm / cm.sum()
         cm = np.nan_to_num(cm)
 
+    if cm.shape == (1, 1):
+        warnings.warn(
+            (
+                "A single label was found in 'y_true' and 'y_pred'. For the confusion "
+                "matrix to have the correct shape, use the 'labels' parameter to pass "
+                "all known labels."
+            ),
+            UserWarning,
+        )
+
     return cm
 
 
@@ -1073,7 +1083,8 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         ],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Real, {0.0, 1.0, np.nan}),
+            Options(Real, {0.0, 1.0}),
+            "nan",
             StrOptions({"warn"}),
         ],
     },
@@ -1254,7 +1265,8 @@ def f1_score(
         ],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Real, {0.0, 1.0, np.nan}),
+            Options(Real, {0.0, 1.0}),
+            "nan",
             StrOptions({"warn"}),
         ],
     },
@@ -1536,7 +1548,8 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
         "warn_for": [list, tuple, set],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Real, {0.0, 1.0, np.nan}),
+            Options(Real, {0.0, 1.0}),
+            "nan",
             StrOptions({"warn"}),
         ],
     },
@@ -1973,7 +1986,8 @@ def class_likelihood_ratios(
         ],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Real, {0.0, 1.0, np.nan}),
+            Options(Real, {0.0, 1.0}),
+            "nan",
             StrOptions({"warn"}),
         ],
     },
@@ -2143,7 +2157,8 @@ def precision_score(
         ],
         "sample_weight": ["array-like", None],
         "zero_division": [
-            Options(Real, {0.0, 1.0, np.nan}),
+            Options(Real, {0.0, 1.0}),
+            "nan",
             StrOptions({"warn"}),
         ],
     },
@@ -2406,7 +2421,8 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
         "digits": [Interval(Integral, 0, None, closed="left")],
         "output_dict": ["boolean"],
         "zero_division": [
-            Options(Real, {0.0, 1.0, np.nan}),
+            Options(Real, {0.0, 1.0}),
+            "nan",
             StrOptions({"warn"}),
         ],
     },
