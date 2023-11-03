@@ -481,7 +481,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         .. versionchanged:: 1.1
            Added new labeling method 'cluster_qr'.
 
-    degree : float, default=3
+    degree : float, default=3.0
         Degree of the polynomial kernel. Ignored by other kernels.
 
     coef0 : float, default=1
@@ -629,7 +629,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         n_neighbors=10,
         eigen_tol="auto",
         assign_labels="kmeans",
-        degree=3,
+        degree=3.0,
         coef0=1,
         kernel_params=None,
         n_jobs=None,

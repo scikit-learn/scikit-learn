@@ -226,6 +226,12 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
+- |Fix| The `degree` parameter in the :class:`cluster.SpectralClustering`
+  constructor now accepts real values instead of only integral values in
+  accordance with the `degree` parameter of the
+  :class:`sklearn.metrics.pairwise.polynomial_kernel`. :pr:`27668` by
+  :user:`Nolan McMahon <NolantheNerd>`.
+
 - |API| : `kdtree` and `balltree` values are now deprecated and are renamed as
   `kd_tree` and `ball_tree` respectively for the `algorithm` parameter of
   :class:`cluster.HDBSCAN` ensuring consistency in naming convention.
@@ -263,6 +269,12 @@ Changelog
   :ref:`array_api` for more details.
   :pr:`26315` and :pr:`27098` by :user:`Mateusz Sokół <mtsokol>`,
   :user:`Olivier Grisel <ogrisel>` and :user:`Edoardo Abati <EdAbati>`.
+
+- |Fix| The `degree` parameter in the :class:`decomposition.KernelPCA`
+  constructor now accepts real values instead of only integral values in
+  accordance with the `degree` parameter of the
+  :class:`sklearn.metrics.pairwise.polynomial_kernel`. :pr:`27668` by
+  :user:`Nolan McMahon <NolantheNerd>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -315,6 +327,16 @@ Changelog
 - |API| :class:`inspection.DecisionBoundaryDisplay` raise an `AttributeError` instead
   of a `ValueError` when an estimator does not implement the requested response method.
   :pr:`27291` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.kernel_ridge`
+...........................
+
+- |Fix| The `degree` parameter in the :class:`kernel_ridge.KernelRidge`
+  constructor now accepts real values instead of only integral values in
+  accordance with the `degree` parameter of the
+  :class:`sklearn.metrics.pairwise.polynomial_kernel`. :pr:`27668` by
+  :user:`Nolan McMahon <NolantheNerd>`.
+
 
 :mod:`sklearn.linear_model`
 ...........................
