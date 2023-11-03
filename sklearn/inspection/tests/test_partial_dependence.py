@@ -272,7 +272,7 @@ def test_partial_dependence_helpers(est, method, target_feature):
     est.fit(X, y)
 
     # target feature will be set to .5 and then to 123
-    features = np.array([target_feature], dtype=np.int32)
+    features = np.array([target_feature], dtype=np.intp)
     grid = np.array([[0.5], [123]])
 
     if method == "brute":
@@ -356,7 +356,7 @@ def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
 
     grid = rng.randn(50).reshape(-1, 1)
     for f in range(n_features):
-        features = np.array([f], dtype=np.int32)
+        features = np.array([f], dtype=np.intp)
 
         pdp_forest = _partial_dependence_recursion(forest, grid, features)
         pdp_gbdt = _partial_dependence_recursion(gbdt, grid, features)
