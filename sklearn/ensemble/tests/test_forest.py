@@ -1714,28 +1714,25 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
     )
     est.fit(X, y)
 
-    # Get relevant attributes
     estimators_samples = est.estimators_samples_.copy()
 
     # Test repeated calls result in same set of indices
     assert_array_equal(estimators_samples, est.estimators_samples_)
     estimators = est.estimators_
 
-    # Test for correct formatting
+    assert isinstance(estimator_samples, list)
     assert len(estimators_samples) == len(estimators)
-    assert estimators_samples[0].dtype.kind == "i"
+    assert estimators_samples[0].dtype == np.int32
 
-    # each tree was fit on the entire dataset if not bootstrap
     for i in range(len(estimators)):
         if bootstrap:
             assert len(estimators_samples[i]) == len(X) // 2
 
-            # the bootstrap should sample multiple indices
+            # the bootstrap should be a resampling with replacement
             assert len(np.unique(estimators_samples[i])) < len(estimators_samples[i])
         else:
             assert len(set(estimators_samples[i])) == len(X)
 
-    # Re-fit single estimator to test for consistent sampling
     estimator_index = 0
     estimator_samples = estimators_samples[estimator_index]
     estimator = estimators[estimator_index]
@@ -1743,11 +1740,10 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
     X_train = X[estimator_samples]
     y_train = y[estimator_samples]
 
-    # the tree should not change
     orig_tree_values = estimator.tree_.value
     estimator.fit(X_train, y_train)
     new_tree_values = estimator.tree_.value
-    assert_array_almost_equal(orig_tree_values, new_tree_values)
+    assert_allclose(orig_tree_values, new_tree_values)
 
 
 @pytest.mark.parametrize(
