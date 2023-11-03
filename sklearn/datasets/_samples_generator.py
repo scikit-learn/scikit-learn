@@ -1655,7 +1655,7 @@ def make_sparse_spd_matrix(
     random_state = check_random_state(random_state)
 
     # TODO: remove in 1.5
-    if dim != "warn":
+    if dim != "deprecated":
         warnings.warn(
             (
                 "dim was deprecated in version 1.4 and will be removed in 1.5."
