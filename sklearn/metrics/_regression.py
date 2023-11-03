@@ -1472,7 +1472,8 @@ def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     prefer_skip_nested_validation=True,
 )
 def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
-    """D^2 regression score function, fraction of Tweedie deviance explained.
+    """
+    :math:`D^2` regression score function, fraction of Tweedie deviance explained.
 
     Best possible score is 1.0 and it can be negative (because the model can be
     arbitrarily worse). A model that always uses the empirical mean of `y_true` as
