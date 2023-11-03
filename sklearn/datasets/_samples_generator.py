@@ -1658,7 +1658,7 @@ def make_sparse_spd_matrix(
     if dim != "deprecated":
         warnings.warn(
             (
-                "dim was deprecated in version 1.4 and will be removed in 1.5."
+                "dim was deprecated in version 1.4 and will be removed in 1.6."
                 "Please use ``n_dim`` instead."
             ),
             FutureWarning,
