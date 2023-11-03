@@ -1597,7 +1597,7 @@ def make_sparse_spd_matrix(
     largest_coef=0.9,
     sparse_format=None,
     random_state=None,
-    dim="warn",
+    dim="deprecated",
 ):
     """Generate a sparse symmetric definite positive matrix.
 
