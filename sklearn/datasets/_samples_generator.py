@@ -1571,7 +1571,7 @@ def make_spd_matrix(n_dim, *, random_state=None):
 
 @validate_params(
     {
-        "dim": [Interval(Integral, 1, None, closed="left")],
+        "n_dim": [Interval(Integral, 1, None, closed="left")],
         "alpha": [Interval(Real, 0, 1, closed="both")],
         "norm_diag": ["boolean"],
         "smallest_coef": [Interval(Real, 0, 1, closed="both")],
@@ -1581,11 +1581,13 @@ def make_spd_matrix(n_dim, *, random_state=None):
             None,
         ],
         "random_state": ["random_state"],
+        "dim": [Interval(Integral, 1, None, closed="left"),
+                Hidden(StrOptions({"deprecated"}))],
     },
     prefer_skip_nested_validation=True,
 )
 def make_sparse_spd_matrix(
-    dim=1,
+    n_dim=1,
     *,
     alpha=0.95,
     norm_diag=False,
@@ -1593,6 +1595,7 @@ def make_sparse_spd_matrix(
     largest_coef=0.9,
     sparse_format=None,
     random_state=None,
+    dim="warn",
 ):
     """Generate a sparse symmetric definite positive matrix.
 
@@ -1600,8 +1603,11 @@ def make_sparse_spd_matrix(
 
     Parameters
     ----------
-    dim : int, default=1
+    n_dim : int, default=1
         The size of the random matrix to generate.
+        
+        .. versionchanged:: 1.3
+            Renamed from ``dim`` to ``n_dim``.
 
     alpha : float, default=0.95
         The probability that a coefficient is zero (see notes). Larger values
@@ -1646,10 +1652,19 @@ def make_sparse_spd_matrix(
     """
     random_state = check_random_state(random_state)
 
-    chol = -sp.eye(dim)
+    # TODO: remove in 1.5
+    if dim != "warn":
+        warnings.warn(
+            "dim was deprecated in version 1.4 and will be removed in 1.5."
+            "Please use ``n_dim`` instead.",
+            FutureWarning,
+        )
+        n_dim = dim
+
+    chol = -sp.eye(n_dim)
     aux = sp.random(
-        m=dim,
-        n=dim,
+        m=n_dim,
+        n=n_dim,
         density=1 - alpha,
         data_rvs=lambda x: random_state.uniform(
             low=smallest_coef, high=largest_coef, size=x
@@ -1661,7 +1676,7 @@ def make_sparse_spd_matrix(
 
     # Permute the lines: we don't want to have asymmetries in the final
     # SPD matrix
-    permutation = random_state.permutation(dim)
+    permutation = random_state.permutation(n_dim)
     aux = aux[permutation].T[permutation]
     chol += aux
     prec = chol.T @ chol

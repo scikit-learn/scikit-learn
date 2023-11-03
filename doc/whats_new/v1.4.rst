@@ -248,6 +248,9 @@ Changelog
   which returns a dense numpy ndarray as before.
   :pr:`27438` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+- |API| :func:`datasets.make_sparse_spd_matrix` deprecated the keyword argument ``dim``
+  in favor of ``n_dim``. ``dim`` will be removed in version 1.5. :pr:`` by :user:`Adam Li <adam2392>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
