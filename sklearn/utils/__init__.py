@@ -77,6 +77,7 @@ __all__ = [
 
 IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
+_IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 
 
 def _in_unstable_openblas_configuration():
@@ -188,7 +189,7 @@ def _array_indexing(array, key, key_dtype, axis):
         key = np.asarray(key)
     if isinstance(key, tuple):
         key = list(key)
-    return array[key] if axis == 0 else array[:, key]
+    return array[key, ...] if axis == 0 else array[:, key]
 
 
 def _pandas_indexing(X, key, key_dtype, axis):
@@ -405,7 +406,7 @@ def _get_column_indices(X, key):
     """Get feature column indices for input data X and key.
 
     For accepted values of `key`, see the docstring of
-    :func:`_safe_indexing_column`.
+    :func:`_safe_indexing`.
     """
     n_columns = X.shape[1]
 
@@ -1094,7 +1095,11 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-    return isinstance(x, numbers.Real) and math.isnan(x)
+    return (
+        not isinstance(x, numbers.Integral)
+        and isinstance(x, numbers.Real)
+        and math.isnan(x)
+    )
 
 
 def _approximate_mode(class_counts, n_draws, rng):

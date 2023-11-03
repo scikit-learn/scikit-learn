@@ -15,8 +15,15 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from ..base import MultiOutputMixin, RegressorMixin, _fit_context
 from ..model_selection import check_cv
-from ..utils import as_float_array, check_array
+from ..utils import Bunch, as_float_array, check_array
 from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
 from ..utils.parallel import Parallel, delayed
 from ._base import LinearModel, _deprecate_normalize, _pre_fit
 
@@ -332,7 +339,7 @@ def orthogonal_mp(
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
-        Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
+        Maximum squared norm of the residual. If not None, overrides n_nonzero_coefs.
 
     precompute : 'auto' or bool, default=False
         Whether to perform precomputations. Improves performance when n_targets
@@ -493,7 +500,8 @@ def orthogonal_mp_gram(
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
-        Maximum norm of the residual. If not `None`, overrides `n_nonzero_coefs`.
+        Maximum squared norm of the residual. If not `None`,
+        overrides `n_nonzero_coefs`.
 
     norms_squared : array-like of shape (n_targets,), default=None
         Squared L2 norms of the lines of `y`. Required if `tol` is not None.
@@ -625,7 +633,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
-        Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
+        Maximum squared norm of the residual. If not None, overrides n_nonzero_coefs.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -948,7 +956,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, :class:`KFold` is used.
+        For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1056,7 +1064,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self.verbose = verbose
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y):
+    def fit(self, X, y, **fit_params):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -1067,11 +1075,23 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         y : array-like of shape (n_samples,)
             Target values. Will be cast to X's dtype if necessary.
 
+        **fit_params : dict
+            Parameters to pass to the underlying splitter.
+
+            .. versionadded:: 1.4
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
+
         Returns
         -------
         self : object
             Returns an instance of self.
         """
+        _raise_for_params(fit_params, self, "fit")
+
         _normalize = _deprecate_normalize(
             self.normalize, estimator_name=self.__class__.__name__
         )
@@ -1079,6 +1099,12 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2)
         X = as_float_array(X, copy=False, force_all_finite=False)
         cv = check_cv(self.cv, classifier=False)
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **fit_params)
+        else:
+            # TODO(SLEP6): remove when metadata routing cannot be disabled.
+            routed_params = Bunch()
+            routed_params.splitter = Bunch(split={})
         max_iter = (
             min(max(int(0.1 * X.shape[1]), 5), X.shape[1])
             if not self.max_iter
@@ -1095,7 +1121,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
                 _normalize,
                 max_iter,
             )
-            for train, test in cv.split(X)
+            for train, test in cv.split(X, **routed_params.splitter.split)
         )
 
         min_early_stop = min(fold.shape[0] for fold in cv_paths)
@@ -1119,3 +1145,24 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self.intercept_ = omp.intercept_
         self.n_iter_ = omp.n_iter_
         return self
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.4
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            splitter=self.cv,
+            method_mapping=MethodMapping().add(callee="split", caller="fit"),
+        )
+        return router

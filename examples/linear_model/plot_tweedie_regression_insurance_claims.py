@@ -34,7 +34,7 @@ helper functions for loading the data and visualizing results.
 
 .. [1]  A. Noll, R. Salzmann and M.V. Wuthrich, Case Study: French Motor
     Third-Party Liability Claims (November 8, 2018). `doi:10.2139/ssrn.3164764
-    <http://dx.doi.org/10.2139/ssrn.3164764>`_
+    <https://doi.org/10.2139/ssrn.3164764>`_
 """
 
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
@@ -454,9 +454,9 @@ print(scores)
 # %%
 #
 # We conclude that the claim amount is very challenging to predict. Still, the
-# :class:`~sklearn.linear.GammaRegressor` is able to leverage some information
-# from the input features to slightly improve upon the mean baseline in terms
-# of D².
+# :class:`~sklearn.linear_model.GammaRegressor` is able to leverage some
+# information from the input features to slightly improve upon the mean
+# baseline in terms of D².
 #
 # Note that the resulting model is the average claim amount per claim. As such,
 # it is conditional on having at least one claim, and cannot be used to predict

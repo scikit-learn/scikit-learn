@@ -602,6 +602,9 @@ class HashingVectorizer(
 
     The hash function employed is the signed 32-bit version of Murmurhash3.
 
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
+
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
     Parameters
@@ -917,7 +920,7 @@ class HashingVectorizer(
 
 def _document_frequency(X):
     """Count the number of non-zero values for each feature in sparse X."""
-    if sp.isspmatrix_csr(X):
+    if sp.issparse(X) and X.format == "csr":
         return np.bincount(X.indices, minlength=X.shape[1])
     else:
         return np.diff(X.indptr)
@@ -932,6 +935,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     If you do not provide an a-priori dictionary and you do not use an analyzer
     that does some kind of feature selection then the number of features will
     be equal to the vocabulary size found by analyzing the data.
+
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
@@ -1545,7 +1551,7 @@ class TfidfTransformer(
           similarity between two vectors is their dot product when l2 norm has
           been applied.
         - 'l1': Sum of absolute values of vector elements is 1.
-          See :func:`preprocessing.normalize`.
+          See :func:`~sklearn.preprocessing.normalize`.
         - None: No normalization.
 
     use_idf : bool, default=True
@@ -1641,7 +1647,7 @@ class TfidfTransformer(
 
         Parameters
         ----------
-        X : sparse matrix of shape n_samples, n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             A matrix of term/token counts.
 
         y : None
@@ -1717,8 +1723,7 @@ class TfidfTransformer(
             # name:
             check_is_fitted(self, attributes=["idf_"], msg="idf vector is not fitted")
 
-            # *= doesn't work
-            X = X * self._idf_diag
+            X = X @ self._idf_diag
 
         if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
@@ -1754,6 +1759,12 @@ class TfidfVectorizer(CountVectorizer):
 
     Equivalent to :class:`CountVectorizer` followed by
     :class:`TfidfTransformer`.
+
+    For an example of usage, see
+    :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`.
+
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
@@ -1894,7 +1905,7 @@ class TfidfVectorizer(CountVectorizer):
           similarity between two vectors is their dot product when l2 norm has
           been applied.
         - 'l1': Sum of absolute values of vector elements is 1.
-          See :func:`preprocessing.normalize`.
+          See :func:`~sklearn.preprocessing.normalize`.
         - None: No normalization.
 
     use_idf : bool, default=True
