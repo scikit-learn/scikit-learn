@@ -1692,7 +1692,9 @@ def test_round_samples_to_one_when_samples_too_low(class_weight):
 def test_estimators_samples(ForestClass, bootstrap, seed):
     """Estimators_samples_ property should be consistent.
 
-    Tests consistency across fits and whether or not seed is set."""
+    Tests consistency across fits and whether or not the seed for the random generator
+    is set.
+    """
     # Check that format of estimators_samples_ is correct and that results
     # generated at fit time can be identically reproduced at a later time
     # using data saved in object attributes.

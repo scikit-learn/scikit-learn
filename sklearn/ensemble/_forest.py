@@ -693,11 +693,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 seed = tree.random_state
                 # Operations accessing random_state must be performed identically
                 # to those in `_parallel_build_trees()`
-                sample_indices = _generate_sample_indices(
+                yield _generate_sample_indices(
                     seed, self._n_samples, self._n_samples_bootstrap
                 )
-
-                yield sample_indices
 
     @property
     def estimators_samples_(self):
@@ -1444,6 +1442,8 @@ class RandomForestClassifier(ForestClassifier):
         The subset of drawn samples (i.e., the in-bag samples) for each base
         estimator. Each subset is defined by an array of the indices selected.
 
+        .. versionadded:: 1.4
+
     See Also
     --------
     sklearn.tree.DecisionTreeClassifier : A decision tree classifier.
@@ -1808,6 +1808,8 @@ class RandomForestRegressor(ForestRegressor):
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
         estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
 
     See Also
     --------
@@ -2195,6 +2197,8 @@ class ExtraTreesClassifier(ForestClassifier):
         The subset of drawn samples (i.e., the in-bag samples) for each base
         estimator. Each subset is defined by an array of the indices selected.
 
+        .. versionadded:: 1.4
+
     See Also
     --------
     ExtraTreesRegressor : An extra-trees regressor with random splits.
@@ -2545,6 +2549,8 @@ class ExtraTreesRegressor(ForestRegressor):
         The subset of drawn samples (i.e., the in-bag samples) for each base
         estimator. Each subset is defined by an array of the indices selected.
 
+        .. versionadded:: 1.4
+
     See Also
     --------
     ExtraTreesClassifier : An extra-trees classifier with random splits.
@@ -2795,6 +2801,8 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
         estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
 
     See Also
     --------
