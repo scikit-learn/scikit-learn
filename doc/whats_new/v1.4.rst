@@ -396,6 +396,9 @@ Changelog
   `predict_proba`). Such scorer are specific to classification.
   :pr:`26840` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :func:`metrics.confusion_matrix` now warns when only one label was
+  found in `y_true` and `y_pred`. :pr:`27650` by :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
