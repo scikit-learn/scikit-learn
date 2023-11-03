@@ -233,6 +233,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
     >>> clustering = OPTICS(min_samples=2).fit(X)
     >>> clustering.labels_
     array([0, 0, 0, 1, 1, 1])
+
+    For a more detailed example see
+    :ref:`sphx_glr_auto_examples_cluster_plot_optics.py`.
     """
 
     _parameter_constraints: dict = {
@@ -662,10 +665,10 @@ def _set_reach_dist(
 
     # Only compute distances to unprocessed neighbors:
     if metric == "precomputed":
-        dists = X[point_index, unproc]
-        if issparse(dists):
-            dists.sort_indices()
-            dists = dists.data
+        dists = X[[point_index], unproc]
+        if isinstance(dists, np.matrix):
+            dists = np.asarray(dists)
+        dists = dists.ravel()
     else:
         _params = dict() if metric_params is None else metric_params.copy()
         if metric == "minkowski" and "p" not in _params:

@@ -12,15 +12,16 @@ from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA
 from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
 from sklearn.utils._array_api import (
+    _atol_for_type,
     _convert_to_numpy,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 from sklearn.utils.estimator_checks import (
-    _array_api_for_tests,
     _get_check_estimator_ids,
     check_array_api_input_and_values,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
@@ -502,9 +503,10 @@ def test_pca_svd_solver_auto(data, n_components, expected_solver):
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_sparse_input(svd_solver):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_pca_sparse_input(svd_solver, csr_container):
     X = np.random.RandomState(0).rand(5, 4)
-    X = sp.sparse.csr_matrix(X)
+    X = csr_container(X)
     assert sp.sparse.issparse(X)
 
     pca = PCA(n_components=3, svd_solver=svd_solver)
@@ -697,8 +699,8 @@ def test_variance_correctness(copy):
     np.testing.assert_allclose(pca_var, true_var)
 
 
-def check_array_api_get_precision(name, estimator, array_namepsace, device, dtype):
-    xp, device, dtype = _array_api_for_tests(array_namepsace, device, dtype)
+def check_array_api_get_precision(name, estimator, array_namespace, device, dtype):
+    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
     iris_np = iris.data.astype(dtype)
     iris_xp = xp.asarray(iris_np, device=device)
 
@@ -715,7 +717,7 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
         assert_allclose(
             _convert_to_numpy(precision_xp, xp=xp),
             precision_np,
-            atol=np.finfo(dtype).eps * 100,
+            atol=_atol_for_type(dtype),
         )
         covariance_xp = estimator_xp.get_covariance()
         assert covariance_xp.shape == (4, 4)
@@ -724,12 +726,12 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
         assert_allclose(
             _convert_to_numpy(covariance_xp, xp=xp),
             covariance_np,
-            atol=np.finfo(dtype).eps * 100,
+            atol=_atol_for_type(dtype),
         )
 
 
 @pytest.mark.parametrize(
-    "array_namepsace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "check",
@@ -750,9 +752,9 @@ def check_array_api_get_precision(name, estimator, array_namepsace, device, dtyp
     ],
     ids=_get_check_estimator_ids,
 )
-def test_pca_array_api_compliance(estimator, check, array_namepsace, device, dtype):
+def test_pca_array_api_compliance(estimator, check, array_namespace, device, dtype):
     name = estimator.__class__.__name__
-    check(name, estimator, array_namepsace, device=device, dtype=dtype)
+    check(name, estimator, array_namespace, device=device, dtype=dtype)
 
 
 def test_array_api_error_and_warnings_on_unsupported_params():

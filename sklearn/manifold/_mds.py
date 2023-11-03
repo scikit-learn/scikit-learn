@@ -518,6 +518,9 @@ class MDS(BaseEstimator):
     >>> X_transformed = embedding.fit_transform(X[:100])
     >>> X_transformed.shape
     (100, 2)
+
+    For a more detailed example of usage, see:
+    :ref:`sphx_glr_auto_examples_manifold_plot_mds.py`
     """
 
     _parameter_constraints: dict = {

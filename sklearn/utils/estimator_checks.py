@@ -1,4 +1,8 @@
-import importlib
+"""
+The :mod:`sklearn.utils.estimator_checks` module includes various utilities to
+check the compatibility of estimators with the scikit-learn API.
+"""
+
 import pickle
 import re
 import warnings
@@ -67,6 +71,7 @@ from ._tags import (
 )
 from ._testing import (
     SkipTest,
+    _array_api_for_tests,
     _get_args,
     assert_allclose,
     assert_allclose_dense_sparse,
@@ -849,36 +854,6 @@ def _generate_sparse_matrix(X_csr):
         yield sparse_format + "_64", X
 
 
-def _array_api_for_tests(array_namespace, device, dtype):
-    try:
-        array_mod = importlib.import_module(array_namespace)
-    except ModuleNotFoundError:
-        raise SkipTest(
-            f"{array_namespace} is not installed: not checking array_api input"
-        )
-    try:
-        import array_api_compat  # noqa
-    except ImportError:
-        raise SkipTest(
-            "array_api_compat is not installed: not checking array_api input"
-        )
-
-    # First create an array using the chosen array module and then get the
-    # corresponding (compatibility wrapped) array namespace based on it.
-    # This is because `cupy` is not the same as the compatibility wrapped
-    # namespace of a CuPy array.
-    xp = array_api_compat.get_namespace(array_mod.asarray(1))
-
-    if array_namespace == "torch" and device == "cuda" and not xp.has_cuda:
-        raise SkipTest("PyTorch test requires cuda, which is not available")
-    elif array_namespace in {"cupy", "cupy.array_api"}:  # pragma: nocover
-        import cupy
-
-        if cupy.cuda.runtime.getDeviceCount() == 0:
-            raise SkipTest("CuPy test requires cuda, which is not available")
-    return xp, device, dtype
-
-
 def check_array_api_input(
     name,
     estimator_orig,
@@ -1350,7 +1325,10 @@ def check_dtype_object(name, estimator_orig):
 
     if "string" not in tags["X_types"]:
         X[0, 0] = {"foo": "bar"}
-        msg = "argument must be a string.* number"
+        # This error is raised by:
+        # - `np.asarray` in `check_array`
+        # - `_unique_python` for encoders
+        msg = "argument must be .* string.* number"
         with raises(TypeError, match=msg):
             estimator.fit(X, y)
     else:
@@ -1515,8 +1493,8 @@ def _apply_on_subsets(func, X):
         result_by_batch = list(map(lambda x: x[0], result_by_batch))
 
     if sparse.issparse(result_full):
-        result_full = result_full.A
-        result_by_batch = [x.A for x in result_by_batch]
+        result_full = result_full.toarray()
+        result_by_batch = [x.toarray() for x in result_by_batch]
 
     return np.ravel(result_full), np.ravel(result_by_batch)
 
@@ -2092,7 +2070,7 @@ def check_estimators_pickle(name, estimator_orig, readonly_memmap=False):
     if readonly_memmap:
         unpickled_estimator = create_memmap_backed_data(estimator)
     else:
-        # pickle and unpickle!
+        # No need to touch the file system in that case.
         pickled_estimator = pickle.dumps(estimator)
         module_name = estimator.__module__
         if module_name.startswith("sklearn.") and not (
@@ -2100,7 +2078,7 @@ def check_estimators_pickle(name, estimator_orig, readonly_memmap=False):
         ):
             # strict check for sklearn estimators that are not implemented in test
             # modules.
-            assert b"version" in pickled_estimator
+            assert b"_sklearn_version" in pickled_estimator
         unpickled_estimator = pickle.loads(pickled_estimator)
 
     result = dict()
@@ -3542,7 +3520,6 @@ def _enforce_estimator_tags_y(estimator, y):
         # Create strictly positive y. The minimal increment above 0 is 1, as
         # y could be of integer dtype.
         y += 1 + abs(y.min())
-    # Estimators with a `binary_only` tag only accept up to two unique y values
     if _safe_tags(estimator, key="binary_only") and y.size > 0:
         y = np.where(y == y.flat[0], y, y.flat[0] + 1)
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
@@ -3562,7 +3539,8 @@ def _enforce_estimator_tags_X(estimator, X, kernel=linear_kernel):
     if _safe_tags(estimator, key="requires_positive_X"):
         X = X - X.min()
     if "categorical" in _safe_tags(estimator, key="X_types"):
-        X = (X - X.min()).astype(np.int32)
+        dtype = np.float64 if _safe_tags(estimator, key="allow_nan") else np.int32
+        X = np.round((X - X.min())).astype(dtype)
 
     if estimator.__class__.__name__ == "SkewedChi2Sampler":
         # SkewedChi2Sampler requires X > -skewdness in transform
@@ -4584,7 +4562,11 @@ def check_set_output_transform_pandas(name, transformer_orig):
         outputs_pandas = _output_from_fit_transform(transformer_pandas, name, X, df, y)
     except ValueError as e:
         # transformer does not support sparse data
-        assert str(e) == "Pandas output does not support sparse data.", e
+        error_message = str(e)
+        assert (
+            "Pandas output does not support sparse data." in error_message
+            or "The transformer outputs a scipy sparse matrix." in error_message
+        ), e
         return
 
     for case in outputs_default:
@@ -4630,7 +4612,11 @@ def check_global_output_transform_pandas(name, transformer_orig):
             )
     except ValueError as e:
         # transformer does not support sparse data
-        assert str(e) == "Pandas output does not support sparse data.", e
+        error_message = str(e)
+        assert (
+            "Pandas output does not support sparse data." in error_message
+            or "The transformer outputs a scipy sparse matrix." in error_message
+        ), e
         return
 
     for case in outputs_default:
