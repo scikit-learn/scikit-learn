@@ -382,6 +382,16 @@ def confusion_matrix(
             cm = cm / cm.sum()
         cm = np.nan_to_num(cm)
 
+    if cm.shape == (1, 1):
+        warnings.warn(
+            (
+                "A single label was found in 'y_true' and 'y_pred'. For the confusion "
+                "matrix to have the correct shape, use the 'labels' parameter to pass "
+                "all known labels."
+            ),
+            UserWarning,
+        )
+
     return cm
 
 

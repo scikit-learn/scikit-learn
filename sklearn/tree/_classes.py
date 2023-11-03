@@ -379,12 +379,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.min_samples_split_ = min_samples_split
 
         if isinstance(self.max_features, str):
-            if self.max_features == "auto":
-                if is_classification:
-                    max_features = max(1, int(np.sqrt(self.n_features_in_)))
-                else:
-                    max_features = self.n_features_in_
-            elif self.max_features == "sqrt":
+            if self.max_features == "sqrt":
                 max_features = max(1, int(np.sqrt(self.n_features_in_)))
             elif self.max_features == "log2":
                 max_features = max(1, int(np.log2(self.n_features_in_)))
@@ -979,7 +974,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float or {"auto", "sqrt", "log2"}, default=None
+    max_features : int, float or {"sqrt", "log2"}, default=None
         The number of features to consider when looking for the best split:
 
             - If int, then consider `max_features` features at each split.
@@ -1532,7 +1527,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float or {"auto", "sqrt", "log2"}, default=None
+    max_features : int, float or {"sqrt", "log2"}, default=None
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1888,19 +1883,19 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, {"auto", "sqrt", "log2"} or None, default="sqrt"
+    max_features : int, float, {"sqrt", "log2"} or None, default="sqrt"
         The number of features to consider when looking for the best split:
 
-            - If int, then consider `max_features` features at each split.
-            - If float, then `max_features` is a fraction and
-              `max(1, int(max_features * n_features_in_))` features are considered at
-              each split.
-            - If "sqrt", then `max_features=sqrt(n_features)`.
-            - If "log2", then `max_features=log2(n_features)`.
-            - If None, then `max_features=n_features`.
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a fraction and
+          `max(1, int(max_features * n_features_in_))` features are considered at
+          each split.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
 
-            .. versionchanged:: 1.1
-                The default of `max_features` changed from `"auto"` to `"sqrt"`.
+        .. versionchanged:: 1.1
+            The default of `max_features` changed from `"auto"` to `"sqrt"`.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -2192,7 +2187,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, {"auto", "sqrt", "log2"} or None, default=1.0
+    max_features : int, float, {"sqrt", "log2"} or None, default=1.0
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
