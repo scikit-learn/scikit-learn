@@ -559,15 +559,15 @@ def test_make_spd_matrix():
     "sparse_format", [None, "bsr", "coo", "csc", "csr", "dia", "dok", "lil"]
 )
 def test_make_sparse_spd_matrix(norm_diag, sparse_format, global_random_seed):
-    dim = 5
+    n_dim = 5
     X = make_sparse_spd_matrix(
-        dim=dim,
+        n_dim=n_dim,
         norm_diag=norm_diag,
         sparse_format=sparse_format,
         random_state=global_random_seed,
     )
 
-    assert X.shape == (dim, dim), "X shape mismatch"
+    assert X.shape == (n_dim, n_dim), "X shape mismatch"
     if sparse_format is None:
         assert not sp.issparse(X)
         assert_allclose(X, X.T)
@@ -585,7 +585,7 @@ def test_make_sparse_spd_matrix(norm_diag, sparse_format, global_random_seed):
 
     if norm_diag:
         # Check that leading diagonal elements are 1
-        assert_array_almost_equal(Xarr.diagonal(), np.ones(dim))
+        assert_array_almost_equal(Xarr.diagonal(), np.ones(n_dim))
 
 
 @pytest.mark.parametrize("hole", [False, True])
