@@ -294,6 +294,12 @@ Changelog
 - |API| In :class:`ensemble.AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
   <StefanieSenger>`.
+- |Enhancement| A fitted property, ``estimators_samples_``, was added to all Forest methods,
+  including
+  :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`,
+  which allows to retrieve the training sample indices used for each tree estimator.
+  :pr:`26736` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.feature_selection`
 ................................
