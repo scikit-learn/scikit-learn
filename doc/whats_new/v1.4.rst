@@ -147,6 +147,7 @@ and classes are impacted:
 - :func:`feature_selection.r_regression` in :pr:`27239` by
   :user:`Yaroslav Korobko <Tialo>`;
 - :func:`manifold.trustworthiness` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
+- :func:`manifold.spectral_embedding` in :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :func:`metrics.pairwise_distances` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :func:`metrics.pairwise_distances_chunked` in :pr:`27250` by
   :user:`Yao Xiao <Charlie-XIAO>`;
@@ -168,6 +169,7 @@ and classes are impacted:
 - :class:`feature_extraction.text.TfidfTransformer` in :pr:`27219` by
   :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`cluster.Isomap` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
+- :func:`manifold.SpectralEmbedding` in :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`manifold.TSNE` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`impute.SimpleImputer` in :pr:`27277` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`impute.IterativeImputer` in :pr:`27277` by :user:`Yao Xiao <Charlie-XIAO>`;
@@ -238,6 +240,11 @@ Changelog
 - |API| |FIX| :class:`~compose.ColumnTransformer` now replaces `"passthrough"`
   with a corresponding :class:`~preprocessing.FunctionTransformer` in the
   fitted ``transformers_`` attribute. :pr:`27204` by `Adrin Jalali`_.
+
+- |Fix| :func:`cluster.spectral_clustering` and :class:`cluster.SpectralClustering`
+  now raise an explicit error message indicating that sparse matrices and arrays
+  with `np.int64` indices are not supported.
+  :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.datasets`
 .......................
