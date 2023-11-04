@@ -56,7 +56,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         Kernel coefficient for rbf, poly and sigmoid kernels. Ignored by other
         kernels. If ``gamma`` is ``None``, then it is set to ``1/n_features``.
 
-    degree : float, default=3.0
+    degree : float, default=3
         Degree for poly kernels. Ignored by other kernels.
 
     coef0 : float, default=1
