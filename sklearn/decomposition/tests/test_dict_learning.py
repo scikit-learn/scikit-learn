@@ -611,7 +611,6 @@ def test_sparse_coder_estimator_clone():
     np.testing.assert_allclose(cloned.dictionary, coder.dictionary)
     assert id(cloned.dictionary) != id(coder.dictionary)
     assert cloned.n_components_ == coder.n_components_
-    assert cloned.n_features_in_ == coder.n_features_in_
     data = np.random.rand(n_samples, n_features).astype(np.float32)
     np.testing.assert_allclose(cloned.transform(data), coder.transform(data))
 
@@ -653,7 +652,7 @@ def test_sparse_coder_common_transformer():
 
 def test_sparse_coder_n_features_in():
     d = np.array([[1, 2, 3], [1, 2, 3]])
-    sc = SparseCoder(d)
+    sc = SparseCoder(d).fit(d)
     assert sc.n_features_in_ == d.shape[1]
 
 
