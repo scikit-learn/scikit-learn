@@ -29,8 +29,10 @@ from sklearn.utils.estimator_checks import (
     check_transformer_data_not_an_array,
     check_transformer_general,
     check_transformers_unfitted,
+    parametrize_with_checks,
 )
 from sklearn.utils.parallel import Parallel
+from sklearn.utils.validation import _num_features
 
 rng_global = np.random.RandomState(0)
 n_samples, n_features = 10, 8
@@ -1024,3 +1026,58 @@ def test_minibatch_dictionary_learning_warns_and_ignore_n_iter():
     with pytest.warns(FutureWarning, match=warn_msg):
         model = MiniBatchDictionaryLearning(batch_size=256, n_iter=2, max_iter=2).fit(X)
     assert model.n_iter_ == 2
+
+
+class SparseCoderTest(SparseCoder):
+    """Inheriting from SparseCoder to pass the common test.
+
+    SparseCoder is annoying because the size of the dictionary depends on the
+    size of the input. Therefore, we need to set the dictionary during fit to be
+    able to pass the common tests.
+    """
+
+    # Helpers to set the dictionary based on the input data in fit/transform
+    def _set_dictionary_based_on_X(self, X):
+        rng = np.random.RandomState(42)
+        try:
+            n_features = _num_features(X)
+        except TypeError:
+            # The common tests are creating a non-supported X, we can defined an
+            # arbitrary number of features
+            n_features = 10
+        self._dictionary = rng.randn(2, n_features)
+
+    @property
+    def dictionary(self):
+        return self._dictionary
+
+    @dictionary.setter
+    def dictionary(self, value):
+        self._dictionary = value
+
+    # Override fit/transform to set the dictionary based on the input data
+    def fit(self, X, y=None):
+        self._set_dictionary_based_on_X(X)
+        return super().fit(X, y)
+
+    def transform(self, X, y=None):
+        self._set_dictionary_based_on_X(X)
+        return super().transform(X, y)
+
+    # The following tests are still failing but this is expected
+    def _more_tags(self):
+        return {
+            "_xfail_checks": {
+                "check_estimators_overwrite_params": (
+                    "This class set dictionary to run the common tests."
+                ),
+                "check_dict_unchanged": (
+                    "Dictionary is a NumPy array and make the comparison fail"
+                ),
+            }
+        }
+
+
+@parametrize_with_checks([SparseCoderTest(dictionary=np.ones((2, 2)))])
+def test_common_test_sparse_coder(estimator, check):
+    check(estimator)

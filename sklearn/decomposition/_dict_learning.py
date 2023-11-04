@@ -1476,6 +1476,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        X = self._validate_data(X, reset=True)
         return self
 
     def transform(self, X, y=None):
@@ -1503,18 +1504,14 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
     def _more_tags(self):
         return {
             "requires_fit": False,
-            "preserves_dtype": [np.float64, np.float32],
+            "preserves_dtype": [np.float64],
+            "stateless": True,
         }
 
     @property
     def n_components_(self):
         """Number of atoms."""
         return self.dictionary.shape[0]
-
-    @property
-    def n_features_in_(self):
-        """Number of features seen during `fit`."""
-        return self.dictionary.shape[1]
 
     @property
     def _n_features_out(self):
