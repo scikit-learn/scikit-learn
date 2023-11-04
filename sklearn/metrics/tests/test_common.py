@@ -789,7 +789,7 @@ def test_format_invariance_with_1d_vectors(name):
         if name not in (
             MULTIOUTPUT_METRICS | THRESHOLDED_MULTILABEL_METRICS | MULTILABELS_METRICS
         ):
-            with pytest.raises(ValueError):
+            with pytest.warns():
                 metric(y1_row, y2_row)
 
 
