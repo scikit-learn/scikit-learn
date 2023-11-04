@@ -52,25 +52,25 @@
 #                                              ∆
 #                                              |
 #                                              |
-#           +------------------+---------------+---------------+------------------------+
-#           |                  |                               |                        |
-#           |             (dispatcher)                    (dispatcher)                  |
-#           |               ArgKmin                      RadiusNeighbors                |
-#           |                  |                               |                        |
-#           |                  |                               |                        |
-#           |                  |     (float{32,64} implem.)    |                        |
-#           |                  | BaseDistancesReduction{32,64} |                        |
-#           |                  |               ∆               |                        |
-#     (dispatcher)             |               |               |                 (dispatcher)
-#   ArgKminClassMode           |               |               |            RadiusNeighborsClassMode
-#           |                  |    +----------+----------+    |                        |
-#           |                  |    |                     |    |                        |
-#           |                  |    |                     |    |                        |
-#           |                  x    |                     |    x                        |
-#           |     +-------⊳ ArgKmin{32,64}         RadiusNeighbors{32,64} ⊲-------+     |
-#           x     |            |    ∆                     ∆    |                  |     x
+#           +------------------+---------------+---------------+------------------+
+#           |                  |                               |                  |
+#           |             (dispatcher)                    (dispatcher)            |
+#           |               ArgKmin                      RadiusNeighbors          |
+#           |                  |                               |                  |
+#           |                  |                               |                  |
+#           |                  |     (float{32,64} implem.)    |                  |
+#           |                  | BaseDistancesReduction{32,64} |                  |
+#           |                  |               ∆               |                  |
+#      (dispatcher)            |               |               |             (dispatcher)
+#    ArgKminClassMode          |               |               |        RadiusNeighborsClassMode
+#           |                  |    +----------+----------+    |                  |
+#           |                  |    |                     |    |                  |
+#           |                  |    |                     |    |                  |
+#           |                  x    |                     |    x                  |
+#           |     +-------⊳ ArgKmin{32,64}         RadiusNeighbors{32,64} ⊲---+   |
+#           x     |            |    ∆                     ∆    |              |   x
 #   ArgKminClassMode{32,64}    |    |                     |    |   RadiusNeighborsClassMode{32,64}
-# ===================================== Specializations ==========================================
+# ===================================== Specializations ============================================
 #                              |    |                     |    |
 #                              |    |                     |    |
 #                              x    |                     |    x
