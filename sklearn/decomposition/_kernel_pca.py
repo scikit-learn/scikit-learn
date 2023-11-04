@@ -278,7 +278,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         *,
         kernel="linear",
         gamma=None,
-        degree=3.0,
+        degree=3,
         coef0=1,
         kernel_params=None,
         alpha=1.0,
