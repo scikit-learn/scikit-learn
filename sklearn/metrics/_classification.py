@@ -730,11 +730,11 @@ def jaccard_score(
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return the
     Jaccard similarity coefficient for `pos_label`. If `average` is not `'binary'`,
-    `pos_label` is ignored and scores for both classes are calculated, and averaged or
+    `pos_label` is ignored and scores for both classes are computed, then averaged or
     both returned (when `average=None`). Similarly, for :term:`multiclass` and
-    :term:`multilabel` targets, scores for all `labels` can be returned or use
-    `average` to specify the averaging technique to be used. Use `labels` specify the
-    labels to calculate scores for.
+    :term:`multilabel` targets, scores for all `labels` are either returned or
+    averaged depending on the `average` parameter. Use `labels` specify the set of
+    labels to calculate the score for.
 
     Read more in the :ref:`User Guide <jaccard_similarity_score>`.
 
@@ -1112,10 +1112,11 @@ def f1_score(
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     F1 score for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
-    and F1 score for both classes are calculated and averaged or both returned (when
+    and F1 score for both classes are computed, then averaged or both returned (when
     `average=None`). Similarly, for :term:`multiclass` and :term:`multilabel` targets,
-    F1 score for all `labels` can be returned or use `average` to specify the averaging
-    technique to be used. Use `labels` specify the labels to calculate F1 score for.
+    F1 score for all `labels` are either returned or averaged depending on the
+    `average` parameter. Use `labels` specify the set of labels to calculate F1 score
+    for.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
@@ -1302,10 +1303,10 @@ def fbeta_score(
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     F-beta score for `pos_label`. If `average` is not `'binary'`, `pos_label` is
-    ignored and F-beta score for both classes are calculated and averaged or both
+    ignored and F-beta score for both classes are computed, then averaged or both
     returned (when `average=None`). Similarly, for :term:`multiclass` and
-    :term:`multilabel` targets, F-beta score for all `labels` can be returned or use
-    `average` to specify the averaging technique to be used. Use `labels` specify the
+    :term:`multilabel` targets, F-beta score for all `labels` are either returned or
+    averaged depending on the `average` parameter. Use `labels` specify the set of
     labels to calculate F-beta score for.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
@@ -1603,10 +1604,10 @@ def precision_recall_fscore_support(
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     metrics for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
-    and metrics for both classes are calculated, and averaged or both returned (when
-    `average=None`).Similarly, for :term:`multiclass` and :term:`multilabel` targets,
-    metrics for all `labels` can be returned or use `average` to specify the averaging
-    technique to be used. Use `labels` specify the labels to calculate metrics for.
+    and metrics for both classes are computed, then averaged or both returned (when
+    `average=None`). Similarly, for :term:`multiclass` and :term:`multilabel` targets,
+    metrics for all `labels` are either returned or averaged depending on the `average`
+    parameter. Use `labels` specify the set of labels to calculate metrics for.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
@@ -2032,10 +2033,11 @@ def precision_score(
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     precision for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
-    and precision for both classes are calculated, and averaged or both returned (when
+    and precision for both classes are computed, then averaged or both returned (when
     `average=None`). Similarly, for :term:`multiclass` and :term:`multilabel` targets,
-    precision for all `labels` can be returned or use `average` to specify the averaging
-    technique to be used. Use `labels` specify the labels to calculate precision for.
+    precision for all `labels` are either returned or averaged depending on the
+    `average` parameter. Use `labels` specify the set of labels to calculate precision
+    for.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
@@ -2210,10 +2212,10 @@ def recall_score(
     and :term:`multilabel` data as a collection of binary problems, one for each
     label. For the :term:`binary` case, setting `average='binary'` will return
     recall for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
-    and recall for both classes are calculated, and averaged or both returned (when
+    and recall for both classes are computed then averaged or both returned (when
     `average=None`). Similarly, for :term:`multiclass` and :term:`multilabel` targets,
-    recall for all `labels` can be returned or use `average` to specify the averaging
-    technique to be used. Use `labels` specify the labels to calculate recall for.
+    recall for all `labels` are either returned or averaged depending on the `average`
+    parameter. Use `labels` specify the set of labels to calculate recall for.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
