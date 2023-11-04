@@ -629,7 +629,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         n_neighbors=10,
         eigen_tol="auto",
         assign_labels="kmeans",
-        degree=3.0,
+        degree=3,
         coef0=1,
         kernel_params=None,
         n_jobs=None,
