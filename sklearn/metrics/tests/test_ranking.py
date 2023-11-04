@@ -816,14 +816,16 @@ def test_auc_score_non_binary_class():
     y_pred = rng.rand(10)
     # y_true contains only one class value
     y_true = np.zeros(10, dtype="int")
-    err_msg = "Only one class present in y_true. ROC AUC score is not defined in that case."
-    with pytest.warns(UndefinedMetricWarning, match=err_msg):
+    err_msg = (
+        "Only one class present in y_true. ROC AUC score is not defined in that case."
+    )
+    with pytest.warns(UserWarning, match=err_msg):
         roc_auc_score(y_true, y_pred)
     y_true = np.ones(10, dtype="int")
-    with pytest.warns(UndefinedMetricWarning, match=err_msg):
+    with pytest.warns(UserWarning, match=err_msg):
         roc_auc_score(y_true, y_pred)
     y_true = np.full(10, -1, dtype="int")
-    with pytest.warns(UndefinedMetricWarning, match=err_msg):
+    with pytest.warns(UserWarning, match=err_msg):
         roc_auc_score(y_true, y_pred)
 
     with warnings.catch_warnings(record=True):
@@ -831,13 +833,13 @@ def test_auc_score_non_binary_class():
         y_pred = rng.rand(10)
         # y_true contains only one class value
         y_true = np.zeros(10, dtype="int")
-        with pytest.warns(UndefinedMetricWarning, match=err_msg):
+        with pytest.warns(UserWarning, match=err_msg):
             roc_auc_score(y_true, y_pred)
         y_true = np.ones(10, dtype="int")
-        with pytest.warns(UndefinedMetricWarning, match=err_msg):
+        with pytest.warns(UserWarning, match=err_msg):
             roc_auc_score(y_true, y_pred)
         y_true = np.full(10, -1, dtype="int")
-        with pytest.warns(UndefinedMetricWarning, match=err_msg):
+        with pytest.warns(UserWarning, match=err_msg):
             roc_auc_score(y_true, y_pred)
 
 
