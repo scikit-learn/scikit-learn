@@ -478,7 +478,7 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        U, S, Vt, X, x_is_centered, xp = self._fit(X)
+        U, S, _, X, x_is_centered, xp = self._fit(X)
         if U is not None:
             U = U[:, : self.n_components_]
 
@@ -534,7 +534,7 @@ class PCA(_BasePCA):
         if self._fit_svd_solver == "auto":
             # Tall and skinny problems are best handled by precomputing the
             # covariance matrix.
-            if X.shape[1] <= 1000 and X.shape[0] >= 10 * X.shape[1]:
+            if X.shape[1] <= 1_000 and X.shape[0] >= 10 * X.shape[1]:
                 self._fit_svd_solver = "covariance_eigh"
             # Small problem or n_components == 'mle', just call full PCA
             elif max(X.shape) <= 500 or n_components == "mle":
@@ -589,7 +589,7 @@ class PCA(_BasePCA):
         else:
             assert self._fit_svd_solver == "covariance_eigh"
             # In the following, we center the covariance matrix C a-posteriori
-            # (without centering the data X first) to avoid an unecessary copy
+            # (without centering the data X first) to avoid an unnecessary copy
             # of X. Note that the mean_ attribute is still needed to center
             # test data in the transform method.
             #
@@ -600,7 +600,7 @@ class PCA(_BasePCA):
             # Besides, using `numpy.cov`, as of numpy 1.26.0, would not be
             # memory efficient for our use case when `n_samples >> n_features`:
             # `numpy.cov` centers a copy of the data before computing the
-            # matrix product instead of substracting a small `(n_features,
+            # matrix product instead of subtracting a small `(n_features,
             # n_features)` square matrix, a posteriori, as we do below.
             x_is_centered = False
             C = X.T @ X
@@ -610,9 +610,9 @@ class PCA(_BasePCA):
                 * xp.reshape(self.mean_, (1, -1))
             )
             C /= n_samples - 1
-            eigenvals, Eigenvecs = xp.linalg.eigh(C)
+            eigenvals, eigenvecs = xp.linalg.eigh(C)
             eigenvals = xp.flip(eigenvals, axis=0)
-            Eigenvecs = xp.flip(Eigenvecs, axis=1)
+            eigenvecs = xp.flip(eigenvecs, axis=1)
 
             # The covariance matrix C is positive semi-definite by
             # construction. However, the eigenvalues returned by xp.linalg.eigh
@@ -624,7 +624,7 @@ class PCA(_BasePCA):
             # Re-construct synthetic SVD components to be consistent with the
             # other solvers.
             S = xp.sqrt(eigenvals * (n_samples - 1))
-            Vt = Eigenvecs.T
+            Vt = eigenvecs.T
             U = None
 
         # flip eigenvectors' sign to enforce deterministic output
