@@ -1571,7 +1571,7 @@ def make_spd_matrix(n_dim, *, random_state=None):
 
 @validate_params(
     {
-        "n_dim": [None, Interval(Integral, 1, None, closed="left")],
+        "n_dim": [Hidden(None), Interval(Integral, 1, None, closed="left")],
         "alpha": [Interval(Real, 0, 1, closed="both")],
         "norm_diag": ["boolean"],
         "smallest_coef": [Interval(Real, 0, 1, closed="both")],
@@ -1661,10 +1661,10 @@ def make_sparse_spd_matrix(
     random_state = check_random_state(random_state)
 
     # TODO(1.6): remove in 1.6
-    # Also make sure to change `n_dim` default back to 1
+    # Also make sure to change `n_dim` default back to 1 and deprecate None
     if n_dim is not None and dim != "deprecated":
         raise ValueError(
-            "Cannot specify both `dim` and `n_dim`. Please use `n_dim` only "
+            "`dim` and `n_dim` cannot be both specified. Please use `n_dim` only "
             "as `dim` is deprecated in v1.4 and will be removed in v1.6."
         )
 

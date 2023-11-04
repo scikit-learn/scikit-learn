@@ -597,7 +597,7 @@ def test_make_sparse_spd_matrix_deprecation_warning():
             dim=1,
         )
 
-    error_msg = "Cannot specify both `dim` and `n_dim`"
+    error_msg = "`dim` and `n_dim` cannot be both specified"
     with pytest.raises(ValueError, match=error_msg):
         make_sparse_spd_matrix(
             dim=1,
