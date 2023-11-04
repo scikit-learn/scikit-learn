@@ -308,7 +308,7 @@ Changelog
   that have a higher score than the `threshold` parameter. This filter works in an
   unsupervised setting and is available as a mode in
   :class:`feature_selection.GenericUnivariateSelect`.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`27722` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| :class:`feature_selection.SelectKBest`,
   :class:`feature_selection.SelectPercentile`, and
