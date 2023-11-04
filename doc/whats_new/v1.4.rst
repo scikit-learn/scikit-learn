@@ -241,9 +241,9 @@ Changelog
   with a corresponding :class:`~preprocessing.FunctionTransformer` in the
   fitted ``transformers_`` attribute. :pr:`27204` by `Adrin Jalali`_.
 
-- |Fix| raise an explicit error message that sparse matrices and arrays with `np.int64`
-  indices are not supported in :func:`cluster.spectral_clustering` and
-  :class:`cluster.SpectralClustering`.
+- |Fix| :func:`cluster.spectral_clustering` and :class:`cluster.SpectralClustering`
+  now raise an explicit error message indicating that sparse matrices and arrays
+  with `np.int64` indices are not supported.
   :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`.
 
 :mod:`sklearn.datasets`

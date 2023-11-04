@@ -1,8 +1,14 @@
 """
 This file is a copy of the scipy.sparse.csgraph._laplacian module from SciPy 1.12
 
+scipy.sparse.csgraph.laplacian supports sparse arrays only starting from Scipy 1.12,
+see https://github.com/scipy/scipy/pull/19156. This vendored file can be removed as
+soon as Scipy 1.12 becomes the minimum supported version.
+
 Laplacian of a compressed-sparse graph
 """
+
+# License: BSD 3 clause
 
 import numpy as np
 from scipy.sparse import issparse

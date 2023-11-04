@@ -26,6 +26,7 @@ from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import laplacian as csgraph_laplacian
+from ..utils.fixes import parse_version, sp_version
 
 
 def _graph_connected_component(graph, node_id):
@@ -88,8 +89,15 @@ def _graph_is_connected(graph):
         True means the graph is fully connected and False means not.
     """
     if sparse.issparse(graph):
-        # `connected_components` only works with 32-bits indices
-        graph = check_array(graph, accept_sparse=True, accept_large_sparse=False)
+        # Before Scipy 1.11.3, `connected_components` only supports 32-bit indices.
+        # PR: https://github.com/scipy/scipy/pull/18913
+        # First integration in 1.11.3: https://github.com/scipy/scipy/pull/19279
+        # TODO(jjerphan): Once SciPy 1.11.3 is the minimum supported version, use
+        # `accept_large_sparse=True`.
+        accept_large_sparse = sp_version >= parse_version("1.11.3")
+        graph = check_array(
+            graph, accept_sparse=True, accept_large_sparse=accept_large_sparse
+        )
         # sparse graph, find all the connected components
         n_connected_components, _ = connected_components(graph)
         return n_connected_components == 1

@@ -22,10 +22,10 @@ from sklearn.utils.fixes import (
     COO_CONTAINERS,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
+    parse_version,
+    sp_version,
 )
-from sklearn.utils.fixes import (
-    laplacian as csgraph_laplacian,
-)
+from sklearn.utils.fixes import laplacian as csgraph_laplacian
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa
@@ -302,13 +302,21 @@ def test_spectral_embedding_amg_solver(dtype, coo_container, seed=36):
     _assert_equal_with_sign_flipping(embed_amg, embed_arpack, 1e-5)
 
     # Check that passing a sparse matrix with `np.int64` indices dtype raises an error
+    # or is successful based on the version of SciPy which is installed.
     # Use a CSR matrix to avoid any conversion during the validation
     affinity = affinity.tocsr()
     affinity.indptr = affinity.indptr.astype(np.int64)
     affinity.indices = affinity.indices.astype(np.int64)
-    err_msg = "Only sparse matrices with 32-bit integer indices are accepted"
-    with pytest.raises(ValueError, match=err_msg):
+
+    # PR: https://github.com/scipy/scipy/pull/18913
+    # First integration in 1.11.3: https://github.com/scipy/scipy/pull/19279
+    scipy_graph_traversal_supports_int64_index = sp_version >= parse_version("1.11.3")
+    if scipy_graph_traversal_supports_int64_index:
         se_amg.fit_transform(affinity)
+    else:
+        err_msg = "Only sparse matrices with 32-bit integer indices are accepted"
+        with pytest.raises(ValueError, match=err_msg):
+            se_amg.fit_transform(affinity)
 
 
 # TODO: Remove filterwarnings when pyamg does replaces sp.rand call with
