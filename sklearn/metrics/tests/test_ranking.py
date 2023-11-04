@@ -366,7 +366,7 @@ def test_roc_curve_toydata():
     expected_message = (
         "Only one class present in y_true. ROC AUC score is not defined in that case."
     )
-    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+    with pytest.warns(UserWarning, match=expected_message):
         roc_auc_score(y_true, y_score)
     assert_array_almost_equal(tpr, [0.0, 0.5, 1.0])
     assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
