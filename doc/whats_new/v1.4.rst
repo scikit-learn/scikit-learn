@@ -308,7 +308,7 @@ Changelog
   :class:`feature_selection.SelectPercentile`, and
   :class:`feature_selection.GenericUnivariateSelect` now support unsupervised
   feature selection by providing a `score_func` taking `X` and `y=None`.
-  :pr:`xxx` by `Guillaume Lemaitre <glemaitre>.`
+  :pr:`27721` by `Guillaume Lemaitre <glemaitre>.`
 
 - |Fix| :class:`feature_selection.RFE` and :class:`feature_selection.RFECV` do
   not check for nans during input validation.
