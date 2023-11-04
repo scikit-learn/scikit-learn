@@ -843,14 +843,14 @@ def svd_flip(u, v, u_based_decision=True):
         Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
-        u can be None if u_based_decision is False.
+        u can be None if `u_based_decision` is False.
 
     v : ndarray
         Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`. The input v should
         really be called vt to be consistent with scipy's output.
-        v can be None if u_based_decision is True.
+        v can be None if `u_based_decision` is True.
 
     u_based_decision : bool, default=True
         If True, use the columns of u as the basis for sign flipping.

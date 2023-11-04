@@ -117,7 +117,7 @@ def test_initialization():
     model.fit(rng.randn(5, 4))
 
     expected_components = V_init / np.linalg.norm(V_init, axis=1, keepdims=True)
-    expected_components = svd_flip(expected_components.T, None)[0].T
+    expected_components = svd_flip(u=expected_components.T, v=None)[0].T
     assert_allclose(model.components_, expected_components)
 
 
