@@ -457,7 +457,7 @@ Tips on Practical Use
 
     The underlying :class:`LinearSVC` implementation uses a random number
     generator to select features when fitting the model with a dual coordinate
-    descent (i.e when ``dual`` is set to ``True``). It is thus not uncommon
+    descent (i.e. when ``dual`` is set to ``True``). It is thus not uncommon
     to have slightly different results for the same input data. If that
     happens, try with a smaller `tol` parameter. This randomness can also be
     controlled with the ``random_state`` parameter. When ``dual`` is
@@ -540,7 +540,7 @@ classifiers, except that:
 
 |details-start|
 **Using Python functions as kernels**
-|details-split|  
+|details-split|
 
 You can use your own defined kernels by passing a function to the
 ``kernel`` parameter.
@@ -558,13 +558,13 @@ instance that will use that kernel::
     ...     return np.dot(X, Y.T)
     ...
     >>> clf = svm.SVC(kernel=my_kernel)
-  
+
 |details-end|
 
 
 |details-start|
 **Using the Gram matrix**
-|details-split|  
+|details-split|
 
 You can pass pre-computed kernels by using the ``kernel='precomputed'``
 option. You should then pass Gram matrix instead of X to the `fit` and

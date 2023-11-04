@@ -115,8 +115,8 @@ def test_additive_chi2_sampler(csr_container):
     X_sp_trans = transform.fit_transform(csr_container(X))
     Y_sp_trans = transform.transform(csr_container(Y))
 
-    assert_array_equal(X_trans, X_sp_trans.A)
-    assert_array_equal(Y_trans, Y_sp_trans.A)
+    assert_array_equal(X_trans, X_sp_trans.toarray())
+    assert_array_equal(Y_trans, Y_sp_trans.toarray())
 
     # test error is raised on negative input
     Y_neg = Y.copy()
@@ -141,7 +141,7 @@ def test_additive_chi2_sampler_sample_steps(method, sample_steps):
         sample_interval=sample_interval,
     )
     getattr(transformer, method)(X)
-    transformer.sample_interval == sample_interval
+    assert transformer.sample_interval == sample_interval
 
 
 # TODO(1.5): remove
