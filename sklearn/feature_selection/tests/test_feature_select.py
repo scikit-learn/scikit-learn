@@ -17,6 +17,7 @@ from sklearn.feature_selection import (
     SelectFwe,
     SelectKBest,
     SelectPercentile,
+    SelectThreshold,
     chi2,
     f_classif,
     f_oneway,
@@ -994,8 +995,10 @@ def test_dataframe_output_dtypes():
     [
         SelectKBest(k=4),
         SelectPercentile(percentile=80),
+        SelectThreshold(threshold=0.5),
         GenericUnivariateSelect(mode="k_best", param=4),
         GenericUnivariateSelect(mode="percentile", param=80),
+        GenericUnivariateSelect(mode="threshold", param=0.5),
     ],
 )
 def test_unsupervised_filter(selector):
@@ -1014,3 +1017,25 @@ def test_unsupervised_filter(selector):
     assert_allclose(X_trans, X[:, :4])
     X_trans = selector.fit_transform(X)
     assert_allclose(X_trans, X[:, :4])
+
+
+def test_select_threshold():
+    """Check the behaviour of `SelectThreshold`."""
+    X, y = make_classification(
+        n_samples=1_000,
+        n_features=4,
+        shuffle=False,
+        n_redundant=0,
+        n_clusters_per_class=1,
+        class_sep=1_000,  # make sure to be robust to random seed
+        flip_y=0,
+        hypercube=False,
+        random_state=0,
+    )
+    selector = SelectThreshold(score_func=mutual_info_classif, threshold=0.5).fit(X, y)
+    assert isinstance(selector.scores_, np.ndarray)
+    assert np.logical_and(selector.scores_ >= 0, selector.scores_ <= 1).all()
+    X_trans = selector.transform(X)
+    assert_allclose(X_trans, X[:, :2])
+    X_trans = selector.fit_transform(X, y)
+    assert_allclose(X_trans, X[:, :2])

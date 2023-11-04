@@ -573,6 +573,7 @@ class SelectPercentile(_BaseFilter):
     f_regression : F-value between label/feature for regression tasks.
     mutual_info_regression : Mutual information for a continuous target.
     SelectKBest : Select features based on the k highest scores.
+    SelectThreshold : Select features if scores are above a given threshold.
     SelectFpr : Select features based on a false positive rate test.
     SelectFdr : Select features based on an estimated false discovery rate.
     SelectFwe : Select features based on family-wise error rate.
@@ -678,6 +679,7 @@ class SelectKBest(_BaseFilter):
     mutual_info_regression: Mutual information for a continuous target.
     SelectPercentile: Select features based on percentile of the highest
         scores.
+    SelectThreshold : Select features if scores are above a given threshold.
     SelectFpr : Select features based on a false positive rate test.
     SelectFdr : Select features based on an estimated false discovery rate.
     SelectFwe : Select features based on family-wise error rate.
@@ -788,6 +790,7 @@ class SelectFpr(_BaseFilter):
     SelectPercentile : Select features based on percentile of the highest
         scores.
     SelectKBest : Select features based on the k highest scores.
+    SelectThreshold : Select features if scores are above a given threshold.
     SelectFdr : Select features based on an estimated false discovery rate.
     SelectFwe : Select features based on family-wise error rate.
     GenericUnivariateSelect : Univariate feature selector with configurable
@@ -868,6 +871,7 @@ class SelectFdr(_BaseFilter):
     SelectPercentile : Select features based on percentile of the highest
         scores.
     SelectKBest : Select features based on the k highest scores.
+    SelectThreshold : Select features if scores are above a given threshold.
     SelectFpr : Select features based on a false positive rate test.
     SelectFwe : Select features based on family-wise error rate.
     GenericUnivariateSelect : Univariate feature selector with configurable
@@ -954,6 +958,7 @@ class SelectFwe(_BaseFilter):
     SelectPercentile : Select features based on percentile of the highest
         scores.
     SelectKBest : Select features based on the k highest scores.
+    SelectThreshold : Select features if scores are above a given threshold.
     SelectFpr : Select features based on a false positive rate test.
     SelectFdr : Select features based on an estimated false discovery rate.
     GenericUnivariateSelect : Univariate feature selector with configurable
@@ -986,6 +991,93 @@ class SelectFwe(_BaseFilter):
         return self.pvalues_ < self.alpha / len(self.pvalues_)
 
 
+class SelectThreshold(_BaseFilter):
+    """Select features by keeping the ones having a score higher than a threshold.
+
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
+
+    .. versionadded:: 1.4
+
+    Parameters
+    ----------
+    score_func : callable, default=f_classif
+        Function taking two arrays `X` and `y`, and returning a pair of arrays
+        (scores, pvalues) or a single array with scores.
+        Default is :func:`f_classif` (see below "See Also"). The default function only
+        works with classification tasks. In an unsupervised setting, you can set
+        `y=None` in the signature of `score_func`.
+
+    threshold : float, default=0.5
+        Score threshold above which a feature is selected
+
+    Attributes
+    ----------
+    scores_ : array-like of shape (n_features,)
+        Scores of features.
+
+    pvalues_ : array-like of shape (n_features,)
+        p-values of feature scores, None if `score_func` returned only scores.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+    See Also
+    --------
+    f_classif: ANOVA F-value between label/feature for classification tasks.
+    mutual_info_classif: Mutual information for a discrete target.
+    chi2: Chi-squared stats of non-negative features for classification tasks.
+    f_regression: F-value between label/feature for regression tasks.
+    mutual_info_regression: Mutual information for a continuous target.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
+    SelectFpr : Select features based on a false positive rate test.
+    SelectFdr : Select features based on an estimated false discovery rate.
+    SelectFwe : Select features based on family-wise error rate.
+    GenericUnivariateSelect : Univariate feature selector with configurable
+        mode.
+
+    Notes
+    -----
+    Ties between features with equal scores will be broken in an unspecified
+    way.
+
+    This filter supports unsupervised feature selection that only request `X` for
+    computing the scores.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.feature_selection import SelectThreshold, chi2
+    >>> X, y = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> X_new = SelectThreshold(chi2, threshold=2_000).fit_transform(X, y)
+    >>> X_new.shape
+    (1797, 36)
+    """
+
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
+        "threshold": [Real],
+    }
+
+    def __init__(self, score_func=f_classif, *, threshold=0.5):
+        super().__init__(score_func=score_func)
+        self.threshold = threshold
+
+    def _get_support_mask(self):
+        check_is_fitted(self)
+
+        return self.scores_ > self.threshold
+
+    def _more_tags(self):
+        return {"requires_y": False}
+
+
 ######################################################################
 # Generic filter
 ######################################################################
@@ -1002,12 +1094,14 @@ class GenericUnivariateSelect(_BaseFilter):
     ----------
     score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
-        (scores, pvalues). For modes 'percentile' or 'kbest' it can return
+        (scores, pvalues). For modes 'percentile', 'kbest', or 'threshold, it can return
         a single array scores.
 
-    mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}, default='percentile'
-        Feature selection mode. Note that the `'percentile'` and `'kbest'`
-        modes are supporting unsupervised feature selection (when `y` is `None`).
+    mode : {'percentile', 'k_best', 'threshold', 'fpr', 'fdr', 'fwe'}, \
+            default='percentile'
+        Feature selection mode. Note that the `'percentile'`, `'kbest'`, and
+        `'threshold'` modes are supporting unsupervised feature selection
+        (when `y` is `None`).
 
     param : "all", float or int, default=1e-5
         Parameter of the corresponding mode.
@@ -1041,6 +1135,7 @@ class GenericUnivariateSelect(_BaseFilter):
     SelectPercentile : Select features based on percentile of the highest
         scores.
     SelectKBest : Select features based on the k highest scores.
+    SelectThreshold : Select features if scores are above a given threshold.
     SelectFpr : Select features based on a false positive rate test.
     SelectFdr : Select features based on an estimated false discovery rate.
     SelectFwe : Select features based on family-wise error rate.
@@ -1061,6 +1156,7 @@ class GenericUnivariateSelect(_BaseFilter):
     _selection_modes: dict = {
         "percentile": SelectPercentile,
         "k_best": SelectKBest,
+        "threshold": SelectThreshold,
         "fpr": SelectFpr,
         "fdr": SelectFdr,
         "fwe": SelectFwe,

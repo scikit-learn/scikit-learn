@@ -304,11 +304,17 @@ Changelog
 :mod:`sklearn.feature_selection`
 ................................
 
+- |Feature| :class:`feature_selection.SelectThreshold` is introduced to select features
+  that have a higher score than the `threshold` parameter. This filter works in an
+  unsupervised setting and is available as a mode in
+  :class:`feature_selection.GenericUnivariateSelect`.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Enhancement| :class:`feature_selection.SelectKBest`,
   :class:`feature_selection.SelectPercentile`, and
   :class:`feature_selection.GenericUnivariateSelect` now support unsupervised
   feature selection by providing a `score_func` taking `X` and `y=None`.
-  :pr:`27721` by `Guillaume Lemaitre <glemaitre>.`
+  :pr:`27721` by :user:`Guillaume Lemaitre <glemaitre>.`
 
 - |Fix| :class:`feature_selection.RFE` and :class:`feature_selection.RFECV` do
   not check for nans during input validation.
