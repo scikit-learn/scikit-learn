@@ -38,7 +38,7 @@ X.head()
 
 # %%
 # Scikit-learn provides an estimator called
-# :class:`~sklearn.linear_model.LinearLarsIC` that uses either Akaike's
+# :class:`~sklearn.linear_model.LassoLarsIC` that uses either Akaike's
 # information criterion (AIC) or the Bayesian information criterion (BIC) to
 # select the best model. Before fitting
 # this model, we will scale the dataset.

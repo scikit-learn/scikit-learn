@@ -76,7 +76,7 @@ def _mask_edges_weights(mask, edges, weights=None):
     """Apply a mask to edges (weighted or not)"""
     inds = np.arange(mask.size)
     inds = inds[mask.ravel()]
-    ind_mask = np.logical_and(np.in1d(edges[0], inds), np.in1d(edges[1], inds))
+    ind_mask = np.logical_and(np.isin(edges[0], inds), np.isin(edges[1], inds))
     edges = edges[:, ind_mask]
     if weights is not None:
         weights = weights[ind_mask]
@@ -261,9 +261,9 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
     p_w : int
         The width of a patch
     max_patches : int or float, default=None
-        The maximum number of patches to extract. If max_patches is a float
+        The maximum number of patches to extract. If `max_patches` is a float
         between 0 and 1, it is taken to be a proportion of the total number
-        of patches.
+        of patches. If `max_patches` is None, all possible patches are extracted.
     """
     n_h = i_h - p_h + 1
     n_w = i_w - p_w + 1

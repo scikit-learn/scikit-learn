@@ -10,6 +10,7 @@
 import itertools
 import warnings
 from functools import partial
+from numbers import Integral, Real
 
 import numpy as np
 from joblib import effective_n_jobs
@@ -29,11 +30,9 @@ from ..utils import (
 from ..utils._mask import _get_mask
 from ..utils._param_validation import (
     Hidden,
-    Integral,
     Interval,
     MissingValues,
     Options,
-    Real,
     StrOptions,
     validate_params,
 )
@@ -231,6 +230,16 @@ def check_paired_arrays(X, Y):
 
 
 # Pairwise distances
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+        "Y_norm_squared": ["array-like", None],
+        "squared": ["boolean"],
+        "X_norm_squared": ["array-like", None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def euclidean_distances(
     X, Y=None, *, Y_norm_squared=None, squared=False, X_norm_squared=None
 ):
@@ -347,30 +356,24 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     float32, norms needs to be recomputed on upcast chunks.
     TODO: use a float64 accumulator in row_norms to avoid the latter.
     """
-    if X_norm_squared is not None:
-        if X_norm_squared.dtype == np.float32:
-            XX = None
-        else:
-            XX = X_norm_squared.reshape(-1, 1)
-    elif X.dtype == np.float32:
-        XX = None
-    else:
+    if X_norm_squared is not None and X_norm_squared.dtype != np.float32:
+        XX = X_norm_squared.reshape(-1, 1)
+    elif X.dtype != np.float32:
         XX = row_norms(X, squared=True)[:, np.newaxis]
+    else:
+        XX = None
 
     if Y is X:
         YY = None if XX is None else XX.T
     else:
-        if Y_norm_squared is not None:
-            if Y_norm_squared.dtype == np.float32:
-                YY = None
-            else:
-                YY = Y_norm_squared.reshape(1, -1)
-        elif Y.dtype == np.float32:
-            YY = None
-        else:
+        if Y_norm_squared is not None and Y_norm_squared.dtype != np.float32:
+            YY = Y_norm_squared.reshape(1, -1)
+        elif Y.dtype != np.float32:
             YY = row_norms(Y, squared=True)[np.newaxis, :]
+        else:
+            YY = None
 
-    if X.dtype == np.float32:
+    if X.dtype == np.float32 or Y.dtype == np.float32:
         # To minimize precision issues with float32, we compute the distance
         # matrix on chunks of X and Y upcast to float64
         distances = _euclidean_distances_upcast(X, XX, Y, YY)
@@ -648,6 +651,19 @@ if sp_base_version < parse_version("1.9"):
 _NAN_METRICS = ["nan_euclidean"]
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix"],
+        "axis": [Options(Integral, {0, 1})],
+        "metric": [
+            StrOptions(set(_VALID_METRICS).union(ArgKmin.valid_metrics())),
+            callable,
+        ],
+        "metric_kwargs": [dict, None],
+    },
+    prefer_skip_nested_validation=False,  # metric is not validated yet
+)
 def pairwise_distances_argmin_min(
     X, Y, *, axis=1, metric="euclidean", metric_kwargs=None
 ):
@@ -1274,7 +1290,8 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
 
     See Also
     --------
-    pairwise_distances : Computes the distance between every pair of samples.
+    sklearn.metrics.pairwise_distances : Computes the distance between every pair of
+        samples.
 
     Examples
     --------
@@ -1656,6 +1673,14 @@ def additive_chi2_kernel(X, Y=None):
     return result
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "Y": ["array-like", None],
+        "gamma": [Interval(Real, 0, None, closed="neither"), Hidden(np.ndarray)],
+    },
+    prefer_skip_nested_validation=True,
+)
 def chi2_kernel(X, Y=None, gamma=1.0):
     """Compute the exponential chi-squared kernel between X and Y.
 
@@ -1676,7 +1701,7 @@ def chi2_kernel(X, Y=None, gamma=1.0):
     X : array-like of shape (n_samples_X, n_features)
         A feature array.
 
-    Y : ndarray of shape (n_samples_Y, n_features), default=None
+    Y : array-like of shape (n_samples_Y, n_features), default=None
         An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=1
@@ -1795,7 +1820,11 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
         out = np.zeros((X.shape[0], Y.shape[0]), dtype="float")
         iterator = itertools.combinations(range(X.shape[0]), 2)
         for i, j in iterator:
-            out[i, j] = metric(X[i], Y[j], **kwds)
+            # scipy has not yet implemented 1D sparse slices; once implemented this can
+            # be removed and `arr[ind]` can be simply used.
+            x = X[[i], :] if issparse(X) else X[i]
+            y = Y[[j], :] if issparse(Y) else Y[j]
+            out[i, j] = metric(x, y, **kwds)
 
         # Make symmetric
         # NB: out += out.T will produce incorrect results
@@ -1804,7 +1833,9 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
         # Calculate diagonal
         # NB: nonzero diagonals are allowed for both metrics and kernels
         for i in range(X.shape[0]):
-            x = X[i]
+            # scipy has not yet implemented 1D sparse slices; once implemented this can
+            # be removed and `arr[ind]` can be simply used.
+            x = X[[i], :] if issparse(X) else X[i]
             out[i, i] = metric(x, x, **kwds)
 
     else:
@@ -1812,7 +1843,11 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
         out = np.empty((X.shape[0], Y.shape[0]), dtype="float")
         iterator = itertools.product(range(X.shape[0]), range(Y.shape[0]))
         for i, j in iterator:
-            out[i, j] = metric(X[i], Y[j], **kwds)
+            # scipy has not yet implemented 1D sparse slices; once implemented this can
+            # be removed and `arr[ind]` can be simply used.
+            x = X[[i], :] if issparse(X) else X[i]
+            y = Y[[j], :] if issparse(Y) else Y[j]
+            out[i, j] = metric(x, y, **kwds)
 
     return out
 
@@ -1861,6 +1896,17 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
     return {}
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+        "reduce_func": [callable, None],
+        "metric": [StrOptions({"precomputed"}.union(_VALID_METRICS)), callable],
+        "n_jobs": [Integral, None],
+        "working_memory": [Interval(Real, 0, None, closed="left"), None],
+    },
+    prefer_skip_nested_validation=False,  # metric is not validated yet
+)
 def pairwise_distances_chunked(
     X,
     Y=None,
@@ -1881,13 +1927,13 @@ def pairwise_distances_chunked(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples_X, n_samples_X) or \
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_samples_X) or \
             (n_samples_X, n_features)
         Array of pairwise distances between samples, or a feature array.
         The shape the array should be (n_samples_X, n_samples_X) if
         metric='precomputed' and (n_samples_X, n_features) otherwise.
 
-    Y : ndarray of shape (n_samples_Y, n_features), default=None
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), default=None
         An optional second feature array. Only allowed if
         metric != "precomputed".
 
@@ -1924,7 +1970,7 @@ def pairwise_distances_chunked(
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    working_memory : int, default=None
+    working_memory : float, default=None
         The sought maximum memory for temporary distance matrix chunks.
         When None (default), the value of
         ``sklearn.get_config()['working_memory']`` is used.
@@ -2034,6 +2080,16 @@ def pairwise_distances_chunked(
         yield D_chunk
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "n_jobs": [Integral, None],
+        "force_all_finite": ["boolean", StrOptions({"allow-nan"})],
+    },
+    prefer_skip_nested_validation=True,
+)
 def pairwise_distances(
     X, Y=None, metric="euclidean", *, n_jobs=None, force_all_finite=True, **kwds
 ):
@@ -2081,13 +2137,13 @@ def pairwise_distances(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples_X, n_samples_X) or \
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_samples_X) or \
             (n_samples_X, n_features)
         Array of pairwise distances between samples, or a feature array.
         The shape of the array should be (n_samples_X, n_samples_X) if
         metric == "precomputed" and (n_samples_X, n_features) otherwise.
 
-    Y : ndarray of shape (n_samples_Y, n_features), default=None
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), default=None
         An optional second feature array. Only allowed if
         metric != "precomputed".
 
@@ -2146,19 +2202,9 @@ def pairwise_distances(
     pairwise_distances_chunked : Performs the same calculation as this
         function, but returns a generator of chunks of the distance matrix, in
         order to limit memory usage.
-    paired_distances : Computes the distances between corresponding elements
-        of two arrays.
+    sklearn.metrics.pairwise.paired_distances : Computes the distances between
+        corresponding elements of two arrays.
     """
-    if (
-        metric not in _VALID_METRICS
-        and not callable(metric)
-        and metric != "precomputed"
-    ):
-        raise ValueError(
-            "Unknown metric %s. Valid metrics are %s, or 'precomputed', or a callable"
-            % (metric, _VALID_METRICS)
-        )
-
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(
             X, Y, precomputed=True, force_all_finite=force_all_finite
@@ -2260,7 +2306,7 @@ def kernel_metrics():
 
     Returns
     -------
-    kernal_metrics : dict
+    kernel_metrics : dict
         Returns valid metrics for pairwise_kernels.
     """
     return PAIRWISE_KERNEL_FUNCTIONS
@@ -2279,6 +2325,19 @@ KERNEL_PARAMS = {
 }
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "Y": ["array-like", "sparse matrix", None],
+        "metric": [
+            StrOptions(set(PAIRWISE_KERNEL_FUNCTIONS) | {"precomputed"}),
+            callable,
+        ],
+        "filter_params": ["boolean"],
+        "n_jobs": [Integral, None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def pairwise_kernels(
     X, Y=None, metric="linear", *, filter_params=False, n_jobs=None, **kwds
 ):
@@ -2303,18 +2362,19 @@ def pairwise_kernels(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples_X, n_samples_X) or (n_samples_X, n_features)
+    X : {array-like, sparse matrix}  of shape (n_samples_X, n_samples_X) or \
+            (n_samples_X, n_features)
         Array of pairwise kernels between samples, or a feature array.
         The shape of the array should be (n_samples_X, n_samples_X) if
         metric == "precomputed" and (n_samples_X, n_features) otherwise.
 
-    Y : ndarray of shape (n_samples_Y, n_features), default=None
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), default=None
         A second feature array only if X has shape (n_samples_X, n_features).
 
     metric : str or callable, default="linear"
         The metric to use when calculating kernel between instances in a
         feature array. If metric is a string, it must be one of the metrics
-        in pairwise.PAIRWISE_KERNEL_FUNCTIONS.
+        in ``pairwise.PAIRWISE_KERNEL_FUNCTIONS``.
         If metric is "precomputed", X is assumed to be a kernel matrix.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
@@ -2365,7 +2425,5 @@ def pairwise_kernels(
         func = PAIRWISE_KERNEL_FUNCTIONS[metric]
     elif callable(metric):
         func = partial(_pairwise_callable, metric=metric, **kwds)
-    else:
-        raise ValueError("Unknown kernel %r" % metric)
 
     return _parallel_pairwise(X, Y, func, n_jobs, **kwds)

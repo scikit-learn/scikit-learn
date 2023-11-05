@@ -58,16 +58,23 @@ extensions = [
     "sphinx_issues",
     "add_toctree_functions",
     "sphinx-prompt",
+    "sphinx_copybutton",
     "sphinxext.opengraph",
     "doi_role",
     "allow_nan_estimators",
     "matplotlib.sphinxext.plot_directive",
 ]
 
+# Specify how to identify the prompt when copying code snippets
+copybutton_prompt_text = r">>> |\.\.\. "
+copybutton_prompt_is_regexp = True
+copybutton_exclude = "style"
+
 try:
     import jupyterlite_sphinx  # noqa: F401
 
     extensions.append("jupyterlite_sphinx")
+    with_jupyterlite = True
 except ImportError:
     # In some cases we don't want to require jupyterlite_sphinx to be installed,
     # e.g. the doc-min-dependencies build
@@ -75,6 +82,7 @@ except ImportError:
         "jupyterlite_sphinx is not installed, you need to install it "
         "if you want JupyterLite links to appear in each example"
     )
+    with_jupyterlite = False
 
 # Produce `plot::` directives for examples that contain `import matplotlib` or
 # `from matplotlib import`.
@@ -292,6 +300,9 @@ redirects = {
     "auto_examples/decomposition/plot_beta_divergence": (
         "auto_examples/applications/plot_topics_extraction_with_nmf_lda"
     ),
+    "auto_examples/ensemble/plot_adaboost_hastie_10_2": (
+        "auto_examples/ensemble/plot_adaboost_multiclass"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
@@ -301,15 +312,18 @@ for old_link in redirects:
 html_show_search_summary = False
 
 
+# The "summary-anchor" IDs will be overwritten via JavaScript to be unique.
+# See `doc/theme/scikit-learn-modern/static/js/details-permalink.js`.
 rst_prolog = """
 .. |details-start| raw:: html
 
-    <details>
+    <details id="summary-anchor">
     <summary class="btn btn-light">
 
 .. |details-split| raw:: html
 
     <span class="tooltiptext">Click for more details</span>
+    <a class="headerlink" href="#summary-anchor" title="Permalink to this heading">¶</a>
     </summary>
     <div class="card">
 
@@ -521,13 +535,16 @@ sphinx_gallery_conf = {
         "dependencies": "./binder/requirements.txt",
         "use_jupyter_lab": True,
     },
-    "jupyterlite": {"notebook_modification_function": notebook_modification_function},
     # avoid generating too many cross links
     "inspect_global_variables": False,
     "remove_config_comments": True,
     "plot_gallery": "True",
     "reset_modules": ("matplotlib", "seaborn", reset_sklearn_config),
 }
+if with_jupyterlite:
+    sphinx_gallery_conf["jupyterlite"] = {
+        "notebook_modification_function": notebook_modification_function
+    }
 
 
 # The following dictionary contains the information used to create the
@@ -686,7 +703,6 @@ warnings.filterwarnings(
         " non-GUI backend, so cannot show the figure."
     ),
 )
-
 
 # maps functions with a class name that is indistinguishable when case is
 # ignore to another filename

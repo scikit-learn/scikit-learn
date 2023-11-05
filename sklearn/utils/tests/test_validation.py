@@ -49,12 +49,19 @@ from sklearn.utils._testing import (
     skip_if_array_api_compat_not_configured,
 )
 from sklearn.utils.estimator_checks import _NotAnArray
-from sklearn.utils.fixes import parse_version
+from sklearn.utils.fixes import (
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    DIA_CONTAINERS,
+    DOK_CONTAINERS,
+    parse_version,
+)
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _allclose_dense_sparse,
     _check_feature_names_in,
-    _check_fit_params,
+    _check_method_params,
     _check_psd_eigenvalues,
     _check_response_method,
     _check_sample_weight,
@@ -356,13 +363,20 @@ def test_check_array():
                 assert X is X_checked
 
     # allowed sparse != None
-    X_csc = sp.csc_matrix(X_C)
-    X_coo = X_csc.tocoo()
-    X_dok = X_csc.todok()
-    X_int = X_csc.astype(int)
-    X_float = X_csc.astype(float)
 
-    Xs = [X_csc, X_coo, X_dok, X_int, X_float]
+    # try different type of sparse format
+    Xs = []
+    Xs.extend(
+        [
+            sparse_container(X_C)
+            for sparse_container in CSR_CONTAINERS
+            + CSC_CONTAINERS
+            + COO_CONTAINERS
+            + DOK_CONTAINERS
+        ]
+    )
+    Xs.extend([Xs[0].astype(np.int64), Xs[0].astype(np.float64)])
+
     accept_sparses = [["csr", "coo"], ["coo", "dok"]]
     # scipy sparse matrices do not support the object dtype so
     # this dtype is skipped in this loop
@@ -1503,9 +1517,9 @@ def test_deprecate_positional_args_warns_for_class():
 
 
 @pytest.mark.parametrize("indices", [None, [1, 3]])
-def test_check_fit_params(indices):
+def test_check_method_params(indices):
     X = np.random.randn(4, 2)
-    fit_params = {
+    _params = {
         "list": [1, 2, 3, 4],
         "array": np.array([1, 2, 3, 4]),
         "sparse-col": sp.csc_matrix([1, 2, 3, 4]).T,
@@ -1514,16 +1528,16 @@ def test_check_fit_params(indices):
         "scalar-str": "xxx",
         "None": None,
     }
-    result = _check_fit_params(X, fit_params, indices)
+    result = _check_method_params(X, params=_params, indices=indices)
     indices_ = indices if indices is not None else list(range(X.shape[0]))
 
     for key in ["sparse-row", "scalar-int", "scalar-str", "None"]:
-        assert result[key] is fit_params[key]
+        assert result[key] is _params[key]
 
-    assert result["list"] == _safe_indexing(fit_params["list"], indices_)
-    assert_array_equal(result["array"], _safe_indexing(fit_params["array"], indices_))
+    assert result["list"] == _safe_indexing(_params["list"], indices_)
+    assert_array_equal(result["array"], _safe_indexing(_params["array"], indices_))
     assert_allclose_dense_sparse(
-        result["sparse-col"], _safe_indexing(fit_params["sparse-col"], indices_)
+        result["sparse-col"], _safe_indexing(_params["sparse-col"], indices_)
     )
 
 
@@ -1586,7 +1600,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
 @pytest.mark.parametrize(
     "ntype1, ntype2, expected_subtype",
     [
-        ("longfloat", "longdouble", np.floating),
+        ("double", "longdouble", np.floating),
         ("float16", "half", np.floating),
         ("single", "float32", np.floating),
         ("double", "float64", np.floating),
@@ -1948,3 +1962,30 @@ def test_check_array_multiple_extensions(
     X_regular_checked = check_array(X_regular, dtype=None)
     X_extension_checked = check_array(X_extension, dtype=None)
     assert_array_equal(X_regular_checked, X_extension_checked)
+
+
+@pytest.mark.parametrize(
+    "sparse_container",
+    CSR_CONTAINERS + CSC_CONTAINERS + COO_CONTAINERS + DIA_CONTAINERS,
+)
+@pytest.mark.parametrize("output_format", ["csr", "csc", "coo"])
+def test_check_array_dia_to_int32_indexed_csr_csc_coo(sparse_container, output_format):
+    """Check the consistency of the indices dtype with sparse matrices/arrays."""
+    X = sparse_container([[0, 1], [1, 0]], dtype=np.float64)
+
+    # Explicitely set the dtype of the indexing arrays
+    if hasattr(X, "offsets"):  # DIA matrix
+        X.offsets = X.offsets.astype(np.int32)
+    elif hasattr(X, "row") and hasattr(X, "col"):  # COO matrix
+        X.row = X.row.astype(np.int32)
+    elif hasattr(X, "indices") and hasattr(X, "indptr"):  # CSR or CSC matrix
+        X.indices = X.indices.astype(np.int32)
+        X.indptr = X.indptr.astype(np.int32)
+
+    X_checked = check_array(X, accept_sparse=output_format)
+    if output_format == "coo":
+        assert X_checked.row.dtype == np.int32
+        assert X_checked.col.dtype == np.int32
+    else:  # output_format in ["csr", "csc"]
+        assert X_checked.indices.dtype == np.int32
+        assert X_checked.indptr.dtype == np.int32

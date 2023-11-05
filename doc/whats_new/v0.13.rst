@@ -14,7 +14,7 @@ The 0.13.1 release only fixes some bugs and does not add any new functionality.
 Changelog
 ---------
 
-- Fixed a testing error caused by the function :func:`cross_validation.train_test_split` being
+- Fixed a testing error caused by the function `cross_validation.train_test_split` being
   interpreted as a test by `Yaroslav Halchenko`_.
 
 - Fixed a bug in the reassignment of small clusters in the :class:`cluster.MiniBatchKMeans`
@@ -128,7 +128,7 @@ Changelog
   trees, by `Peter Prettenhofer`_  and `Gilles Louppe`_.
 
 - Partial dependence plots for :ref:`gradient_boosting` in
-  :func:`ensemble.partial_dependence.partial_dependence` by `Peter
+  `ensemble.partial_dependence.partial_dependence` by `Peter
   Prettenhofer`_. See :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py` for an
   example.
 
@@ -161,7 +161,7 @@ Changelog
 - Faster and more robust :func:`metrics.confusion_matrix` and
   :ref:`clustering_evaluation` by Wei Li.
 
-- :func:`cross_validation.cross_val_score` now works with precomputed kernels
+- `cross_validation.cross_val_score` now works with precomputed kernels
   and affinity matrices, by `Andreas Müller`_.
 
 - LARS algorithm made more numerically stable with heuristics to drop
@@ -171,7 +171,7 @@ Changelog
 - Faster implementation of :func:`metrics.precision_recall_curve` by
   Conrad Lee.
 
-- New kernel :class:`metrics.chi2_kernel` by `Andreas Müller`_, often used
+- New kernel `metrics.chi2_kernel` by `Andreas Müller`_, often used
   in computer vision applications.
 
 - Fix of longstanding bug in :class:`naive_bayes.BernoulliNB` fixed by
@@ -184,7 +184,7 @@ Changelog
   :class:`ensemble.GradientBoostingRegressor` and
   :class:`ensemble.GradientBoostingClassifier` use the estimator
   :class:`tree.DecisionTreeRegressor` instead of the
-  :class:`tree._tree.Tree` data structure by `Arnaud Joly`_.
+  `tree._tree.Tree` data structure by `Arnaud Joly`_.
 
 - Fixed a floating point exception in the :ref:`decision trees <tree>`
   module, by Seberg.
@@ -209,7 +209,7 @@ Changelog
 - Fixed a bug in :class:`sklearn.svm.SVC` when using csr-matrices with
   unsorted indices by Xinfan Meng and `Andreas Müller`_.
 
-- :class:`MiniBatchKMeans`: Add random reassignment of cluster centers
+- :class:`cluster.MiniBatchKMeans`: Add random reassignment of cluster centers
   with little observations attached to them, by `Gael Varoquaux`_.
 
 
@@ -221,18 +221,18 @@ API changes summary
   :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`.
 
 - Renamed all occurrences of ``max_iters`` to ``max_iter`` for consistency.
-  This applies to :class:`semi_supervised.LabelPropagation` and
-  :class:`semi_supervised.label_propagation.LabelSpreading`.
+  This applies to `semi_supervised.LabelPropagation` and
+  `semi_supervised.label_propagation.LabelSpreading`.
 
 - Renamed all occurrences of ``learn_rate`` to ``learning_rate`` for
-  consistency in :class:`ensemble.BaseGradientBoosting` and
+  consistency in `ensemble.BaseGradientBoosting` and
   :class:`ensemble.GradientBoostingRegressor`.
 
 - The module ``sklearn.linear_model.sparse`` is gone. Sparse matrix support
   was already integrated into the "regular" linear models.
 
-- :func:`sklearn.metrics.mean_square_error`, which incorrectly returned the
-  accumulated error, was removed. Use ``mean_squared_error`` instead.
+- `sklearn.metrics.mean_square_error`, which incorrectly returned the
+  accumulated error, was removed. Use :func:`metrics.mean_squared_error` instead.
 
 - Passing ``class_weight`` parameters to ``fit`` methods is no longer
   supported. Pass them to estimator constructors instead.
@@ -244,17 +244,18 @@ API changes summary
   deprecated and will be removed in v0.14. Use the constructor option
   instead.
 
-- :class:`feature_extraction.text.DictVectorizer` now returns sparse
+- `feature_extraction.text.DictVectorizer` now returns sparse
   matrices in the CSR format, instead of COO.
 
-- Renamed ``k`` in :class:`cross_validation.KFold` and
-  :class:`cross_validation.StratifiedKFold` to ``n_folds``, renamed
+- Renamed ``k`` in `cross_validation.KFold` and
+  `cross_validation.StratifiedKFold` to ``n_folds``, renamed
   ``n_bootstraps`` to ``n_iter`` in ``cross_validation.Bootstrap``.
 
 - Renamed all occurrences of ``n_iterations`` to ``n_iter`` for consistency.
-  This applies to :class:`cross_validation.ShuffleSplit`,
-  :class:`cross_validation.StratifiedShuffleSplit`,
-  :func:`utils.randomized_range_finder` and :func:`utils.randomized_svd`.
+  This applies to `cross_validation.ShuffleSplit`,
+  `cross_validation.StratifiedShuffleSplit`,
+  :func:`utils.extmath.randomized_range_finder` and
+  :func:`utils.extmath.randomized_svd`.
 
 - Replaced ``rho`` in :class:`linear_model.ElasticNet` and
   :class:`linear_model.SGDClassifier` by ``l1_ratio``. The ``rho`` parameter
@@ -267,10 +268,10 @@ API changes summary
   store a list of paths in the case of multiple targets, rather than
   an array of paths.
 
-- The attribute ``gmm`` of :class:`hmm.GMMHMM` was renamed to ``gmm_``
+- The attribute ``gmm`` of `hmm.GMMHMM` was renamed to ``gmm_``
   to adhere more strictly with the API.
 
-- :func:`cluster.spectral_embedding` was moved to
+- `cluster.spectral_embedding` was moved to
   :func:`manifold.spectral_embedding`.
 
 - Renamed ``eig_tol`` in :func:`manifold.spectral_embedding`,
@@ -286,9 +287,9 @@ API changes summary
   multi-output problems.
 
 - The ``estimators_`` attribute of
-  :class:`ensemble.gradient_boosting.GradientBoostingRegressor` and
-  :class:`ensemble.gradient_boosting.GradientBoostingClassifier` is now an
-  array of :class:'tree.DecisionTreeRegressor'.
+  :class:`ensemble.GradientBoostingRegressor` and
+  :class:`ensemble.GradientBoostingClassifier` is now an
+  array of :class:`tree.DecisionTreeRegressor`.
 
 - Renamed ``chunk_size`` to ``batch_size`` in
   :class:`decomposition.MiniBatchDictionaryLearning` and
@@ -299,18 +300,18 @@ API changes summary
   Also, the dtype returned by ``predict`` now reflects the dtype of
   ``y`` during ``fit`` (used to be ``np.float``).
 
-- Changed default test_size in :func:`cross_validation.train_test_split`
+- Changed default test_size in `cross_validation.train_test_split`
   to None, added possibility to infer ``test_size`` from ``train_size`` in
-  :class:`cross_validation.ShuffleSplit` and
-  :class:`cross_validation.StratifiedShuffleSplit`.
+  `cross_validation.ShuffleSplit` and
+  `cross_validation.StratifiedShuffleSplit`.
 
-- Renamed function :func:`sklearn.metrics.zero_one` to
-  :func:`sklearn.metrics.zero_one_loss`. Be aware that the default behavior
-  in :func:`sklearn.metrics.zero_one_loss` is different from
-  :func:`sklearn.metrics.zero_one`: ``normalize=False`` is changed to
+- Renamed function `sklearn.metrics.zero_one` to
+  `sklearn.metrics.zero_one_loss`. Be aware that the default behavior
+  in `sklearn.metrics.zero_one_loss` is different from
+  `sklearn.metrics.zero_one`: ``normalize=False`` is changed to
   ``normalize=True``.
 
-- Renamed function :func:`metrics.zero_one_score` to
+- Renamed function `metrics.zero_one_score` to
   :func:`metrics.accuracy_score`.
 
 - :func:`datasets.make_circles` now has the same number of inner and outer points.
@@ -388,4 +389,3 @@ List of contributors for release 0.13 by number of commits.
  *   1  dengemann
  *   1  emanuele
  *   1  x006
-
