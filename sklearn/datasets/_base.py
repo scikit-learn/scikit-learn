@@ -1384,7 +1384,7 @@ def _fetch_remote(remote, dirname=None, progress=None, progress_task=None):
     progress : rich.progress.Progress
 
     progress_task : rich.progress.Task
-    
+
     Returns
     -------
     file_path: str
@@ -1398,7 +1398,10 @@ def _fetch_remote(remote, dirname=None, progress=None, progress_task=None):
             progress_task = progress.add_task("[green]Downloading...", total=total)
             is_new = True
         else:
-            total = progress_task.total
+            for task in progress.tasks:
+                if task.id == progress_task:
+                    total = task.total
+                    break
         def update_progress(count, block_size, total_size):
             percentage = total * count * block_size / total_size
             progress.update(progress_task, completed=percentage)
