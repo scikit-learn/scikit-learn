@@ -442,7 +442,7 @@ class SKExampleTitleSortKey(ExampleTitleSortKey):
         prefix = "plot_release_highlights_"
 
         # Use title to sort if not a release highlight
-        if not filename.startswith(prefix):
+        if not str(filename).startswith(prefix):
             return title
 
         major_minor = filename[len(prefix) :].split("_")[:2]
