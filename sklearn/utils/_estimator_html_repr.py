@@ -309,7 +309,7 @@ def _write_estimator_html(
         )
 
 
-with open(Path(__file__).with_suffix(".css"), "r") as style_file:
+with open(Path(__file__).with_suffix(".css"), mode="r", encoding="utf-8") as style_file:
     # use the style defined in the css file
     _STYLE = style_file.read()
 
