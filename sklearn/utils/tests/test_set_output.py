@@ -13,6 +13,7 @@ from sklearn.utils._set_output import (
     _safe_set_output,
     _SetOutputMixin,
     _wrap_data_with_container,
+    check_library_installed,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
 
@@ -389,3 +390,10 @@ def test_set_output_list_input(dataframe_lib):
 def test_adapter_class_has_interface(name):
     """Check adapters have the correct interface."""
     assert isinstance(CONTAINER_ADAPTERS[name], ContainerAdapterProtocol)
+
+
+def test_check_library_installed(hide_available_pandas):
+    """Check import error changed."""
+    msg = "Setting output container to 'pandas' requires"
+    with pytest.raises(ImportError, match=msg):
+        check_library_installed("pandas")
