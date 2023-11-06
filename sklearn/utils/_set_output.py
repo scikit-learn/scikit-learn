@@ -10,14 +10,14 @@ from ._available_if import available_if
 
 
 def check_library_installed(library):
-    """Check library is installed"""
+    """Check library is installed."""
     try:
         return importlib.import_module(library)
-    except ImportError as e:
+    except ImportError as exc:
         raise ImportError(
             f"Setting output container to '{library}' requires {library} to be"
             " installed"
-        ) from e
+        ) from exc
 
 
 def get_columns(columns):
@@ -30,16 +30,16 @@ def get_columns(columns):
 
 
 @runtime_checkable
-class ContainerAdapaterProtocol(Protocol):
+class ContainerAdapterProtocol(Protocol):
     container_lib: str
 
     def create_container(self, X_output, X_original, columns):
-        """Create container from X with additional metadata.
+        """Create container from `X_output` with additional metadata.
 
         Parameters
         ----------
         X_output : {ndarray, dataframe}
-            Data to wrap
+            Data to wrap.
 
         X_original : {ndarray, dataframe}
             Original input dataframe. This is used to extract the metadata that should
@@ -57,17 +57,17 @@ class ContainerAdapaterProtocol(Protocol):
         """
 
     def is_supported_container(self, X):
-        """Return True if X are the supported container.
+        """Return True if X is a supported container.
 
         Parameters
         ----------
-        X : container or list of containers
+        Xs: container
             Containers to be checked.
 
         Returns
         -------
         is_supported_container : bool
-            True if all items in `X` are the supported container.
+            True if X is a supported container.
         """
 
     def update_columns(self, X, columns):
@@ -79,11 +79,11 @@ class ContainerAdapaterProtocol(Protocol):
             Container which columns is updated.
 
         columns : ndarray of str
-            Columns to container columns with.
+            Columns to update the `X`'s columns with.
 
         Returns
         -------
-        updated-X : container
+        updated_container : container
             Container with new names.
         """
 
@@ -119,9 +119,7 @@ class PandasAdapter:
 
     def is_supported_container(self, X):
         pd = check_library_installed("pandas")
-        if not isinstance(X, list):
-            X = [X]
-        return all(isinstance(item, pd.DataFrame) for item in X)
+        return isinstance(X, pd.DataFrame)
 
     def update_columns(self, X, columns):
         X.columns = columns
@@ -168,7 +166,7 @@ CONTAINER_ADAPTERS = {
         PolarsAdapter(),
     ]
 }
-supported_outputs = {"default"} | set(CONTAINER_ADAPTERS)
+SUPPORTED_OUTPUTS = {"default"} | set(CONTAINER_ADAPTERS)
 
 
 def _get_container_adapter(method, estimator=None):
@@ -206,9 +204,9 @@ def _get_output_config(method, estimator=None):
     else:
         dense_config = get_config()[f"{method}_output"]
 
-    if dense_config not in supported_outputs:
+    if dense_config not in SUPPORTED_OUTPUTS:
         raise ValueError(
-            f"output config must be in {sorted(supported_outputs)}, got {dense_config}"
+            f"output config must be in {sorted(SUPPORTED_OUTPUTS)}, got {dense_config}"
         )
 
     return {"dense": dense_config}
@@ -356,7 +354,7 @@ class _SetOutputMixin:
             - `None`: Transform configuration is unchanged
 
             .. versionadded:: 1.4
-                `"polars"` option was added
+                `"polars"` option was added.
 
         Returns
         -------

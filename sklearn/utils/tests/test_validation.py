@@ -1730,7 +1730,7 @@ def test_get_feature_names_dataframe_protocol(constructor_name, minversion):
 
 @pytest.mark.parametrize(
     "constructor_name, minversion",
-    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
+    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.19.12")],
 )
 def test_is_pandas_df_other_libraries(constructor_name, minversion):
     df = _convert_container(

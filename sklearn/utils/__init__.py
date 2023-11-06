@@ -372,8 +372,7 @@ def _safe_indexing(X, indices, *, axis=0):
         and not (_is_pandas_df(X) or _use_interchange_protocol(X))
     ):
         raise ValueError(
-            "Specifying the columns using strings is only supported for "
-            "pandas DataFrames"
+            "Specifying the columns using strings is only supported for DataFrames"
         )
 
     if hasattr(X, "iloc"):
@@ -423,7 +422,7 @@ def _safe_assign(X, values, *, row_indexer=None, column_indexer=None):
         X[row_indexer, column_indexer] = values
 
 
-def _get_column_indices_bool_int(key, n_columns):
+def _get_column_indices_for_bool_or_int(key, n_columns):
     # Convert key into positive indexes
     try:
         idx = _safe_indexing(np.arange(n_columns), key)
@@ -451,14 +450,13 @@ def _get_column_indices(X, key):
         # we get an empty list
         return []
     elif key_dtype in ("bool", "int"):
-        return _get_column_indices_bool_int(key, n_columns)
+        return _get_column_indices_for_bool_or_int(key, n_columns)
     else:
         try:
             all_columns = X.columns
         except AttributeError:
             raise ValueError(
-                "Specifying the columns using strings is only "
-                "supported for pandas DataFrames"
+                "Specifying the columns using strings is only supported for DataFrames"
             )
         if isinstance(key, str):
             columns = [key]
@@ -499,7 +497,7 @@ def _get_column_indices_interchange(X_interchange, key, key_dtype):
         # we get an empty list
         return []
     elif key_dtype in ("bool", "int"):
-        return _get_column_indices_bool_int(key, n_columns)
+        return _get_column_indices_for_bool_or_int(key, n_columns)
     else:
         column_names = list(X_interchange.column_names())
 

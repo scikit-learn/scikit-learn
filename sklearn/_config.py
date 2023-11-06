@@ -139,7 +139,7 @@ def set_config(
 
         .. versionadded:: 1.2
         .. versionadded:: 1.4
-            `"polars"` option was added
+            `"polars"` option was added.
 
     enable_metadata_routing : bool, default=None
         Enable metadata routing. By default this feature is disabled.
@@ -289,7 +289,7 @@ def config_context(
 
         .. versionadded:: 1.2
         .. versionadded:: 1.4
-            `"polars"` option was added
+            `"polars"` option was added.
 
     enable_metadata_routing : bool, default=None
         Enable metadata routing. By default this feature is disabled.

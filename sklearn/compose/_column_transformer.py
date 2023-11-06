@@ -1015,7 +1015,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         else:
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
             adapter = _get_container_adapter("transform", self)
-            if adapter and adapter.is_supported_container(Xs):
+            if adapter and all(adapter.is_supported_container(X) for X in Xs):
                 output = adapter.hstack(Xs)
 
                 output_samples = output.shape[0]

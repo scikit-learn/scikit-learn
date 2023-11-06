@@ -296,8 +296,7 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
 
     if isinstance(indices[0], str) and array_type != "dataframe":
         err_msg = (
-            "Specifying the columns using strings is only supported "
-            "for pandas DataFrames"
+            "Specifying the columns using strings is only supported for DataFrames"
         )
         with pytest.raises(ValueError, match=err_msg):
             _safe_indexing(array, indices_converted, axis=1)
@@ -398,8 +397,7 @@ def test_safe_indexing_2d_scalar_axis_1(array_type, expected_output_type, indice
 
     if isinstance(indices, str) and array_type != "dataframe":
         err_msg = (
-            "Specifying the columns using strings is only supported "
-            "for pandas DataFrames"
+            "Specifying the columns using strings is only supported for DataFrames"
         )
         with pytest.raises(ValueError, match=err_msg):
             _safe_indexing(array, indices, axis=1)

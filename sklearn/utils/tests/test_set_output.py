@@ -8,7 +8,7 @@ from sklearn._config import config_context, get_config
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._set_output import (
     CONTAINER_ADAPTERS,
-    ContainerAdapaterProtocol,
+    ContainerAdapterProtocol,
     _get_output_config,
     _safe_set_output,
     _SetOutputMixin,
@@ -388,4 +388,4 @@ def test_set_output_list_input(dataframe_lib):
 @pytest.mark.parametrize("name", CONTAINER_ADAPTERS)
 def test_adapter_class_has_interface(name):
     """Check adapters have the correct interface."""
-    assert isinstance(CONTAINER_ADAPTERS[name], ContainerAdapaterProtocol)
+    assert isinstance(CONTAINER_ADAPTERS[name], ContainerAdapterProtocol)

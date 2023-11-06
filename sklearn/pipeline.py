@@ -1681,7 +1681,7 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
 
     def _hstack(self, Xs):
         adapter = _get_container_adapter("transform", self)
-        if adapter and adapter.is_supported_container(Xs):
+        if adapter and all(adapter.is_supported_container(X) for X in Xs):
             return adapter.hstack(Xs)
 
         if any(sparse.issparse(f) for f in Xs):
