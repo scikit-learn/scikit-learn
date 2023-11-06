@@ -247,7 +247,9 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
     dense_config = output_config["dense"]
     if issparse(data_to_wrap):
         raise ValueError(
-            f"{dense_config.capitalize()} output does not support sparse data."
+            "The transformer outputs a scipy sparse matrix. "
+            "Try to set the transformer output to a dense array or disable "
+            f"{dense_config.capitalize()} output with set_output(transform='default')."
         )
 
     adapter = CONTAINER_ADAPTERS[dense_config]
