@@ -35,7 +35,7 @@
 .. |PythonMinVersion| replace:: 3.8
 .. |NumPyMinVersion| replace:: 1.17.3
 .. |SciPyMinVersion| replace:: 1.5.0
-.. |JoblibMinVersion| replace:: 1.1.1
+.. |JoblibMinVersion| replace:: 1.2.0
 .. |ThreadpoolctlMinVersion| replace:: 2.0.0
 .. |MatplotlibMinVersion| replace:: 3.3.4
 .. |Scikit-ImageMinVersion| replace:: 0.16.2
@@ -89,7 +89,7 @@ require pandas >= |PandasMinVersion|, some examples require seaborn >=
 User installation
 ~~~~~~~~~~~~~~~~~
 
-If you already have a working installation of numpy and scipy,
+If you already have a working installation of NumPy and SciPy,
 the easiest way to install scikit-learn is using ``pip``::
 
     pip install -U scikit-learn

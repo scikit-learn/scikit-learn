@@ -167,7 +167,7 @@ X.iloc[train_4]
 # -----------------
 #
 # Gradient Boosting Regression with decision trees is often flexible enough to
-# efficiently handle heteorogenous tabular data with a mix of categorical and
+# efficiently handle heterogenous tabular data with a mix of categorical and
 # numerical features as long as the number of samples is large enough.
 #
 # Here, we use the modern
@@ -795,7 +795,7 @@ _ = ax.legend()
 # to the geographical repartition of the fleet at any point in time or the
 # fraction of bikes that are immobilized because they need servicing.
 #
-# Let us finally get a more quantative look at the prediction errors of those
+# Let us finally get a more quantitative look at the prediction errors of those
 # three models using the true vs predicted demand scatter plots:
 from sklearn.metrics import PredictionErrorDisplay
 

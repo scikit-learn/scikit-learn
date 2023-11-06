@@ -382,6 +382,16 @@ def confusion_matrix(
             cm = cm / cm.sum()
         cm = np.nan_to_num(cm)
 
+    if cm.shape == (1, 1):
+        warnings.warn(
+            (
+                "A single label was found in 'y_true' and 'y_pred'. For the confusion "
+                "matrix to have the correct shape, use the 'labels' parameter to pass "
+                "all known labels."
+            ),
+            UserWarning,
+        )
+
     return cm
 
 
@@ -726,6 +736,16 @@ def jaccard_score(
     sets, is used to compare set of predicted labels for a sample to the
     corresponding set of labels in ``y_true``.
 
+    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    and :term:`multilabel` data as a collection of binary problems, one for each
+    label. For the :term:`binary` case, setting `average='binary'` will return the
+    Jaccard similarity coefficient for `pos_label`. If `average` is not `'binary'`,
+    `pos_label` is ignored and scores for both classes are computed, then averaged or
+    both returned (when `average=None`). Similarly, for :term:`multiclass` and
+    :term:`multilabel` targets, scores for all `labels` are either returned or
+    averaged depending on the `average` parameter. Use `labels` specify the set of
+    labels to calculate the score for.
+
     Read more in the :ref:`User Guide <jaccard_similarity_score>`.
 
     Parameters
@@ -737,19 +757,18 @@ def jaccard_score(
         Predicted labels, as returned by a classifier.
 
     labels : array-like of shape (n_classes,), default=None
-        The set of labels to include when ``average != 'binary'``, and their
-        order if ``average is None``. Labels present in the data can be
-        excluded, for example to calculate a multiclass average ignoring a
-        majority negative class, while labels not present in the data will
-        result in 0 components in a macro average. For multilabel targets,
-        labels are column indices. By default, all labels in ``y_true`` and
-        ``y_pred`` are used in sorted order.
+        The set of labels to include when `average != 'binary'`, and their
+        order if `average is None`. Labels present in the data can be
+        excluded, for example in multiclass classification to exclude a "negative
+        class". Labels not present in the data can be included and will be
+        "assigned" 0 samples. For multilabel targets, labels are column indices.
+        By default, all labels in `y_true` and `y_pred` are used in sorted order.
 
     pos_label : int, float, bool or str, default=1
-        The class to report if ``average='binary'`` and the data is binary.
-        If the data are multiclass or multilabel, this will be ignored;
-        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
-        scores for that label only.
+        The class to report if `average='binary'` and the data is binary,
+        otherwise this parameter is ignored.
+        For multiclass or multilabel targets, set `labels=[pos_label]` and
+        `average != 'binary'` to report metrics for one label only.
 
     average : {'micro', 'macro', 'samples', 'weighted', \
             'binary'} or None, default='binary'
@@ -1099,9 +1118,15 @@ def f1_score(
 
         F1 = 2 * (precision * recall) / (precision + recall)
 
-    In the multi-class and multi-label case, this is the average of
-    the F1 score of each class with weighting depending on the ``average``
-    parameter.
+    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    and :term:`multilabel` data as a collection of binary problems, one for each
+    label. For the :term:`binary` case, setting `average='binary'` will return
+    F1 score for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
+    and F1 score for both classes are computed, then averaged or both returned (when
+    `average=None`). Similarly, for :term:`multiclass` and :term:`multilabel` targets,
+    F1 score for all `labels` are either returned or averaged depending on the
+    `average` parameter. Use `labels` specify the set of labels to calculate F1 score
+    for.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
@@ -1114,22 +1139,21 @@ def f1_score(
         Estimated targets as returned by a classifier.
 
     labels : array-like, default=None
-        The set of labels to include when ``average != 'binary'``, and their
-        order if ``average is None``. Labels present in the data can be
-        excluded, for example to calculate a multiclass average ignoring a
-        majority negative class, while labels not present in the data will
-        result in 0 components in a macro average. For multilabel targets,
-        labels are column indices. By default, all labels in ``y_true`` and
-        ``y_pred`` are used in sorted order.
+        The set of labels to include when `average != 'binary'`, and their
+        order if `average is None`. Labels present in the data can be
+        excluded, for example in multiclass classification to exclude a "negative
+        class". Labels not present in the data can be included and will be
+        "assigned" 0 samples. For multilabel targets, labels are column indices.
+        By default, all labels in `y_true` and `y_pred` are used in sorted order.
 
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
-    pos_label : int, float, bool, str or None, default=1
-        The class to report if ``average='binary'`` and the data is binary.
-        If the data are multiclass or multilabel, this will be ignored;
-        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
-        scores for that label only.
+    pos_label : int, float, bool or str, default=1
+        The class to report if `average='binary'` and the data is binary,
+        otherwise this parameter is ignored.
+        For multiclass or multilabel targets, set `labels=[pos_label]` and
+        `average != 'binary'` to report metrics for one label only.
 
     average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
@@ -1285,6 +1309,16 @@ def fbeta_score(
     Asymptotically, `beta -> +inf` considers only recall, and `beta -> 0`
     only precision.
 
+    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    and :term:`multilabel` data as a collection of binary problems, one for each
+    label. For the :term:`binary` case, setting `average='binary'` will return
+    F-beta score for `pos_label`. If `average` is not `'binary'`, `pos_label` is
+    ignored and F-beta score for both classes are computed, then averaged or both
+    returned (when `average=None`). Similarly, for :term:`multiclass` and
+    :term:`multilabel` targets, F-beta score for all `labels` are either returned or
+    averaged depending on the `average` parameter. Use `labels` specify the set of
+    labels to calculate F-beta score for.
+
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
@@ -1299,22 +1333,21 @@ def fbeta_score(
         Determines the weight of recall in the combined score.
 
     labels : array-like, default=None
-        The set of labels to include when ``average != 'binary'``, and their
-        order if ``average is None``. Labels present in the data can be
-        excluded, for example to calculate a multiclass average ignoring a
-        majority negative class, while labels not present in the data will
-        result in 0 components in a macro average. For multilabel targets,
-        labels are column indices. By default, all labels in ``y_true`` and
-        ``y_pred`` are used in sorted order.
+        The set of labels to include when `average != 'binary'`, and their
+        order if `average is None`. Labels present in the data can be
+        excluded, for example in multiclass classification to exclude a "negative
+        class". Labels not present in the data can be included and will be
+        "assigned" 0 samples. For multilabel targets, labels are column indices.
+        By default, all labels in `y_true` and `y_pred` are used in sorted order.
 
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
     pos_label : int, float, bool or str, default=1
-        The class to report if ``average='binary'`` and the data is binary.
-        If the data are multiclass or multilabel, this will be ignored;
-        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
-        scores for that label only.
+        The class to report if `average='binary'` and the data is binary,
+        otherwise this parameter is ignored.
+        For multiclass or multilabel targets, set `labels=[pos_label]` and
+        `average != 'binary'` to report metrics for one label only.
 
     average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
@@ -1577,9 +1610,14 @@ def precision_recall_fscore_support(
 
     The support is the number of occurrences of each class in ``y_true``.
 
-    If ``pos_label is None`` and in binary classification, this function
-    returns the average precision, recall and F-measure if ``average``
-    is one of ``'micro'``, ``'macro'``, ``'weighted'`` or ``'samples'``.
+    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    and :term:`multilabel` data as a collection of binary problems, one for each
+    label. For the :term:`binary` case, setting `average='binary'` will return
+    metrics for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
+    and metrics for both classes are computed, then averaged or both returned (when
+    `average=None`). Similarly, for :term:`multiclass` and :term:`multilabel` targets,
+    metrics for all `labels` are either returned or averaged depending on the `average`
+    parameter. Use `labels` specify the set of labels to calculate metrics for.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
@@ -1595,23 +1633,22 @@ def precision_recall_fscore_support(
         The strength of recall versus precision in the F-score.
 
     labels : array-like, default=None
-        The set of labels to include when ``average != 'binary'``, and their
-        order if ``average is None``. Labels present in the data can be
-        excluded, for example to calculate a multiclass average ignoring a
-        majority negative class, while labels not present in the data will
-        result in 0 components in a macro average. For multilabel targets,
-        labels are column indices. By default, all labels in ``y_true`` and
-        ``y_pred`` are used in sorted order.
+        The set of labels to include when `average != 'binary'`, and their
+        order if `average is None`. Labels present in the data can be
+        excluded, for example in multiclass classification to exclude a "negative
+        class". Labels not present in the data can be included and will be
+        "assigned" 0 samples. For multilabel targets, labels are column indices.
+        By default, all labels in `y_true` and `y_pred` are used in sorted order.
 
     pos_label : int, float, bool or str, default=1
-        The class to report if ``average='binary'`` and the data is binary.
-        If the data are multiclass or multilabel, this will be ignored;
-        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
-        scores for that label only.
+        The class to report if `average='binary'` and the data is binary,
+        otherwise this parameter is ignored.
+        For multiclass or multilabel targets, set `labels=[pos_label]` and
+        `average != 'binary'` to report metrics for one label only.
 
     average : {'binary', 'micro', 'macro', 'samples', 'weighted'}, \
             default=None
-        If ``None``, the scores for each class are returned. Otherwise, this
+        If ``None``, the metrics for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
         ``'binary'``:
@@ -2002,6 +2039,16 @@ def precision_score(
 
     The best value is 1 and the worst value is 0.
 
+    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    and :term:`multilabel` data as a collection of binary problems, one for each
+    label. For the :term:`binary` case, setting `average='binary'` will return
+    precision for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
+    and precision for both classes are computed, then averaged or both returned (when
+    `average=None`). Similarly, for :term:`multiclass` and :term:`multilabel` targets,
+    precision for all `labels` are either returned or averaged depending on the
+    `average` parameter. Use `labels` specify the set of labels to calculate precision
+    for.
+
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
@@ -2013,22 +2060,21 @@ def precision_score(
         Estimated targets as returned by a classifier.
 
     labels : array-like, default=None
-        The set of labels to include when ``average != 'binary'``, and their
-        order if ``average is None``. Labels present in the data can be
-        excluded, for example to calculate a multiclass average ignoring a
-        majority negative class, while labels not present in the data will
-        result in 0 components in a macro average. For multilabel targets,
-        labels are column indices. By default, all labels in ``y_true`` and
-        ``y_pred`` are used in sorted order.
+        The set of labels to include when `average != 'binary'`, and their
+        order if `average is None`. Labels present in the data can be
+        excluded, for example in multiclass classification to exclude a "negative
+        class". Labels not present in the data can be included and will be
+        "assigned" 0 samples. For multilabel targets, labels are column indices.
+        By default, all labels in `y_true` and `y_pred` are used in sorted order.
 
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
     pos_label : int, float, bool or str, default=1
-        The class to report if ``average='binary'`` and the data is binary.
-        If the data are multiclass or multilabel, this will be ignored;
-        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
-        scores for that label only.
+        The class to report if `average='binary'` and the data is binary,
+        otherwise this parameter is ignored.
+        For multiclass or multilabel targets, set `labels=[pos_label]` and
+        `average != 'binary'` to report metrics for one label only.
 
     average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
@@ -2172,6 +2218,15 @@ def recall_score(
 
     The best value is 1 and the worst value is 0.
 
+    Support beyond term:`binary` targets is achieved by treating :term:`multiclass`
+    and :term:`multilabel` data as a collection of binary problems, one for each
+    label. For the :term:`binary` case, setting `average='binary'` will return
+    recall for `pos_label`. If `average` is not `'binary'`, `pos_label` is ignored
+    and recall for both classes are computed then averaged or both returned (when
+    `average=None`). Similarly, for :term:`multiclass` and :term:`multilabel` targets,
+    recall for all `labels` are either returned or averaged depending on the `average`
+    parameter. Use `labels` specify the set of labels to calculate recall for.
+
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
@@ -2183,22 +2238,21 @@ def recall_score(
         Estimated targets as returned by a classifier.
 
     labels : array-like, default=None
-        The set of labels to include when ``average != 'binary'``, and their
-        order if ``average is None``. Labels present in the data can be
-        excluded, for example to calculate a multiclass average ignoring a
-        majority negative class, while labels not present in the data will
-        result in 0 components in a macro average. For multilabel targets,
-        labels are column indices. By default, all labels in ``y_true`` and
-        ``y_pred`` are used in sorted order.
+        The set of labels to include when `average != 'binary'`, and their
+        order if `average is None`. Labels present in the data can be
+        excluded, for example in multiclass classification to exclude a "negative
+        class". Labels not present in the data can be included and will be
+        "assigned" 0 samples. For multilabel targets, labels are column indices.
+        By default, all labels in `y_true` and `y_pred` are used in sorted order.
 
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
     pos_label : int, float, bool or str, default=1
-        The class to report if ``average='binary'`` and the data is binary.
-        If the data are multiclass or multilabel, this will be ignored;
-        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
-        scores for that label only.
+        The class to report if `average='binary'` and the data is binary,
+        otherwise this parameter is ignored.
+        For multiclass or multilabel targets, set `labels=[pos_label]` and
+        `average != 'binary'` to report metrics for one label only.
 
     average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
