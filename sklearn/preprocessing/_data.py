@@ -156,7 +156,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
 
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
-        This is not guaranteed to always work inplace; e.g. if the data is
+        This is not guaranteed to always work in place; e.g. if the data is
         not a NumPy array, is scipy.sparse CSR matrix, or is not of dtype
         float, a copy may still be returned.
 
@@ -1340,7 +1340,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
 
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
-        This is not guaranteed to always work inplace; e.g. if the data is
+        This is not guaranteed to always work in place; e.g. if the data is
         not a NumPy array, is scipy.sparse CSR matrix, or is not of dtype
         float, a copy may still be returned.
 
@@ -1719,7 +1719,7 @@ def robust_scale(
 
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
-        This is not guaranteed to always work inplace; e.g. if the data is
+        This is not guaranteed to always work in place; e.g. if the data is
         not a NumPy array, is scipy.sparse CSR matrix, or is not of dtype
         float, a copy may still be returned.
 
@@ -1833,7 +1833,7 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
 
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
-        This is not guaranteed to always work inplace; e.g. if the data is
+        This is not guaranteed to always work in place; e.g. if the data is
         not a NumPy array, is scipy.sparse CSR matrix, or is not of dtype
         float, a copy may still be returned.
 
@@ -2067,8 +2067,9 @@ def binarize(X, *, threshold=0.0, copy=True):
 
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
-        This is not guaranteed to always work inplace; e.g. if the data is
-        not a NumPy array, a copy may still be returned.
+        This is not guaranteed to always work in place; e.g. if the data is
+        not a NumPy array, is scipy.sparse CSR matrix, or is not of dtype
+        float, a copy may still be returned.
 
     Returns
     -------
@@ -2953,7 +2954,7 @@ def quantile_transform(
 
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
-        This is not guaranteed to always work inplace; e.g. if the data is
+        This is not guaranteed to always work in place; e.g. if the data is
         not a NumPy array, is scipy.sparse CSR matrix, or is not of dtype
         float, a copy may still be returned.
 
@@ -3490,7 +3491,7 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
 
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
-        This is not guaranteed to always work inplace; e.g. if the data is
+        This is not guaranteed to always work in place; e.g. if the data is
         not a NumPy array, is scipy.sparse CSR matrix, or is not of dtype
         float, a copy may still be returned.
 
