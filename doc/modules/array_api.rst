@@ -104,6 +104,7 @@ Metrics
 -------
 
 - :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.zero_one_loss`
 
 Tools

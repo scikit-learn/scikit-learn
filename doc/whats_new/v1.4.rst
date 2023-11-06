@@ -386,9 +386,14 @@ Changelog
 - |Enhancement| Added `neg_root_mean_squared_log_error_scorer` as scorer
   :pr:`26734` by :user:`Alejandro Martin Gil <101AlexMartin>`.
 
-- |Enhancement| :func:`sklearn.metrics.accuracy_score` and
-  :func:`sklearn.metrics.zero_one_loss` now support Array API compatible inputs.
-  :pr:`27137` by :user:`Edoardo Abati <EdAbati>`.
+- |MajorFeature| The following metrics now support the
+  `Array API <https://data-apis.org/array-api/latest/>`_. See
+  :ref:`array_api` for more details.
+
+  - :func:`sklearn.metrics.accuracy_score` :pr:`27137`` by :user:`Edoardo Abati <EdAbati>`
+  - :func:`sklearn.metrics.mean_absolute_error` :pr:`27736` by :user:`Edoardo Abati <EdAbati>`
+  - :func:`sklearn.metrics.zero_one_loss` :pr:`27137` by :user:`Edoardo Abati <EdAbati>`
+
 
 - |API| Deprecated `needs_threshold` and `needs_proba` from :func:`metrics.make_scorer`.
   These parameters will be removed in version 1.6. Instead, use `response_method` that
