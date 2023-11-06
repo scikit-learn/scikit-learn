@@ -48,7 +48,6 @@ Changes impacting all modules
   to work with our estimators and functions.
   :pr:`26464` by `Thomas Fan`_.
 
-<<<<<<< HEAD
 - |Enhancement| Experimental engine API (no backward compatibility guarantees)
   to allow for external packages to contribute alternative implementations for
   the core computational routines of some selected scikit-learn estimators.
@@ -66,7 +65,6 @@ Changes impacting all modules
 
   :pr:`25535` by :user:`ogrisel`, :user:`fcharras` and :user:`betatim`.
 
-=======
 - |Enhancement| The HTML representation of estimators now includes a link to the
   documentation and is color-coded to denote whether the estimator is fitted or
   not (unfitted estimators are orange, fitted estimators are blue).
@@ -197,7 +195,6 @@ and classes are impacted:
   :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`preprocessing.PolynomialFeatures` in :pr:`27166` by
   :user:`Mohit Joshi <work-mohit>`.
->>>>>>> main
 
 Changelog
 ---------
