@@ -472,7 +472,7 @@ def test_html_documentation_link_mixin_get_doc_link():
 def set_non_utf8_locale():
     """Pytest fixture to set non utf-8 locale during the test.
 
-    The locale is set to the default one after the test has run.
+    The locale is set to the original one after the test has run.
     """
     orig_locale = locale.getlocale()
     try:
