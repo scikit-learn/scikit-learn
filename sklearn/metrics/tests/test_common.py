@@ -1743,8 +1743,13 @@ def check_array_api_metric(
 
     with config_context(array_api_dispatch=True):
         if sample_weight is not None:
-            sample_weight = xp.asarray(sample_weight, device=device)
+            sample_weight = xp.asarray(sample_weight.astype(dtype), device=device)
         metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
+
+        if not isinstance(metric_xp, float):
+            # if the result is not a scalar, the array has to be in the CPU
+            # before transforming it to numpy
+            metric_xp = xp.asarray(metric_xp, device="cpu")
 
         assert_allclose(
             metric_xp,
@@ -1794,8 +1799,8 @@ def check_array_api_multiclass_classification_metric(
 
 
 def check_array_api_regression_metric(metric, array_namespace, device, dtype):
-    y_true_np = np.array([3, -0.5, 2, 7])
-    y_pred_np = np.array([2.5, 0.0, 2, 8])
+    y_true_np = np.array([3, -0.5, 2, 7], dtype="float32")
+    y_pred_np = np.array([2.5, 0.0, 2, 8], dtype="float32")
     check_array_api_metric(
         metric, array_namespace, device, dtype, y_true_np=y_true_np, y_pred_np=y_pred_np
     )

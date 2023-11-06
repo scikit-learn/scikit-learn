@@ -462,13 +462,15 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
             sample_weight_np = None
         return float(numpy.average(sample_score_np, weights=sample_weight_np))
 
+    # We move to cpu device ahead of time since certain devices may not support
+    # float64, but we want the same precision for all devices and namespaces.
     if not xp.isdtype(sample_score.dtype, "real floating"):
-        # We move to cpu device ahead of time since certain devices may not support
-        # float64, but we want the same precision for all devices and namespaces.
         sample_score = xp.astype(xp.asarray(sample_score, device="cpu"), xp.float64)
 
     if sample_weight is not None:
-        sample_weight = xp.asarray(sample_weight, dtype=sample_score.dtype)
+        sample_weight = xp.asarray(
+            xp.asarray(sample_weight, device="cpu"), dtype=sample_score.dtype
+        )
         if not xp.isdtype(sample_weight.dtype, "real floating"):
             sample_weight = xp.astype(sample_weight, xp.float64)
 
