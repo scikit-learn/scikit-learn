@@ -280,15 +280,12 @@ def _estimate_mi(
 
     rng = check_random_state(random_state)
     if np.any(continuous_mask):
-        if copy:
-            X = X.copy()
-
+        X = X.astype(np.float64, copy=copy)
         X[:, continuous_mask] = scale(
             X[:, continuous_mask], with_mean=False, copy=False
         )
 
         # Add small noise to continuous features as advised in Kraskov et. al.
-        X = X.astype(np.float64, copy=False)
         means = np.maximum(1, np.mean(np.abs(X[:, continuous_mask]), axis=0))
         X[:, continuous_mask] += (
             1e-10

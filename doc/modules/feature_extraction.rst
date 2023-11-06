@@ -206,8 +206,9 @@ Note the use of a generator comprehension,
 which introduces laziness into the feature extraction:
 tokens are only processed on demand from the hasher.
 
-Implementation details
-----------------------
+|details-start|
+**Implementation details**
+|details-split|
 
 :class:`FeatureHasher` uses the signed 32-bit variant of MurmurHash3.
 As a result (and because of limitations in ``scipy.sparse``),
@@ -223,15 +224,17 @@ Since a simple modulo is used to transform the hash function to a column index,
 it is advisable to use a power of two as the ``n_features`` parameter;
 otherwise the features will not be mapped evenly to the columns.
 
+.. topic:: References:
+
+  * `MurmurHash3 <https://github.com/aappleby/smhasher>`_.
+
+|details-end|
 
 .. topic:: References:
 
  * Kilian Weinberger, Anirban Dasgupta, John Langford, Alex Smola and
    Josh Attenberg (2009). `Feature hashing for large scale multitask learning
    <https://alex.smola.org/papers/2009/Weinbergeretal09.pdf>`_. Proc. ICML.
-
- * `MurmurHash3 <https://github.com/aappleby/smhasher>`_.
-
 
 .. _text_feature_extraction:
 
@@ -396,7 +399,7 @@ last document::
 .. _stop_words:
 
 Using stop words
-................
+----------------
 
 Stop words are words like "and", "the", "him", which are presumed to be
 uninformative in representing the content of a text, and which may be
@@ -425,6 +428,7 @@ identify and warn about some kinds of inconsistencies.
                `"Stop Word Lists in Free Open-source Software Packages"
                <https://aclweb.org/anthology/W18-2502>`__.
                In *Proc. Workshop for NLP Open Source Software*.
+
 
 .. _tfidf:
 
@@ -489,6 +493,10 @@ class::
 
 Again please see the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details on all the parameters.
+
+|details-start|
+**Numeric example of a tf-idf matrix**
+|details-split|
 
 Let's take an example with the following counts. The first term is present
 100% of the time hence not very interesting. The two other features only
@@ -609,6 +617,7 @@ feature extractor with a classifier:
 
  * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
 
+|details-end|
 
 Decoding text files
 -------------------
@@ -636,6 +645,10 @@ by setting the ``decode_error`` parameter to either ``"ignore"``
 or ``"replace"``. See the documentation for the Python function
 ``bytes.decode`` for more details
 (type ``help(bytes.decode)`` at the Python prompt).
+
+|details-start|
+**Troubleshooting decoding text**
+|details-split|
 
 If you are having trouble decoding text, here are some things to try:
 
@@ -690,6 +703,7 @@ About Unicode <https://www.joelonsoftware.com/articles/Unicode.html>`_.
 
 .. _`ftfy`: https://github.com/LuminosoInsight/python-ftfy
 
+|details-end|
 
 Applications and examples
 -------------------------
@@ -870,8 +884,9 @@ The :class:`HashingVectorizer` also comes with the following limitations:
   model. A :class:`TfidfTransformer` can be appended to it in a pipeline if
   required.
 
-Performing out-of-core scaling with HashingVectorizer
-------------------------------------------------------
+|details-start|
+**Performing out-of-core scaling with HashingVectorizer**
+|details-split|
 
 An interesting development of using a :class:`HashingVectorizer` is the ability
 to perform `out-of-core`_ scaling. This means that we can learn from data that
@@ -889,6 +904,8 @@ time is often limited by the CPU time one wants to spend on the task.
 
 For a full-fledged example of out-of-core scaling in a text classification
 task see :ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`.
+
+|details-end|
 
 Customizing the vectorizer classes
 ----------------------------------
@@ -927,6 +944,10 @@ To make the preprocessor, tokenizer and analyzers aware of the model
 parameters it is possible to derive from the class and override the
 ``build_preprocessor``, ``build_tokenizer`` and ``build_analyzer``
 factory methods instead of passing custom functions.
+
+|details-start|
+**Tips and tricks**
+|details-split|
 
 Some tips and tricks:
 
@@ -981,6 +1002,8 @@ Some tips and tricks:
 
 Customizing the vectorizer can also be useful when handling Asian languages
 that do not use an explicit word separator such as whitespace.
+
+|details-end|
 
 .. _image_feature_extraction:
 

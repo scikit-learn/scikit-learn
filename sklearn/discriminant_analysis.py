@@ -6,6 +6,7 @@ Linear Discriminant Analysis and Quadratic Discriminant Analysis
 #          Martin Billinger
 #          Matthieu Perrot
 #          Mathieu Blondel
+#          Matthew Ning <mhn@bu.edu>
 
 # License: BSD 3-Clause
 
@@ -172,6 +173,27 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
         Xg = X[y == group, :]
         cov += priors[idx] * np.atleast_2d(_cov(Xg, shrinkage, covariance_estimator))
     return cov
+
+
+def calc_posterior_proba(values):
+    """Compute posterior probability from log posterior
+
+    The per-class posterior probability
+
+    Parameters
+    ----------
+    value : ndarray of shape (n_samples, n_classes)
+        Array of samples/test vectors.
+
+    Returns
+    -------
+    post_prob : ndarray of shape (n_samples, n_classes)
+        Array of posterior probabilities.
+    """
+    likelihood = np.exp(values - values.max(axis=1)[:, np.newaxis])
+    # compute posterior probabilities
+    post_prob = likelihood / likelihood.sum(axis=1)[:, np.newaxis]
+    return post_prob
 
 
 class LinearDiscriminantAnalysis(
@@ -1025,9 +1047,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         values = self._decision_function(X)
         # compute the likelihood of the underlying gaussian models
         # up to a multiplicative constant.
-        likelihood = np.exp(values - values.max(axis=1)[:, np.newaxis])
-        # compute posterior probabilities
-        return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
+        return calc_posterior_proba(values)
 
     def predict_log_proba(self, X):
         """Return log of posterior probabilities of classification.
