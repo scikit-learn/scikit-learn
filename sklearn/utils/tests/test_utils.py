@@ -12,7 +12,6 @@ from sklearn.utils import (
     _approximate_mode,
     _determine_key_type,
     _get_column_indices,
-    _get_column_indices_interchange,
     _message_with_time,
     _print_elapsed_time,
     _safe_assign,
@@ -766,11 +765,21 @@ def test_safe_assign(array_type):
 
 
 def test_get_column_indices_interchange():
-    """Check _get_column_indices_interchange for edge cases."""
+    """Check _get_column_indices for edge cases with the interchange"""
     pd = pytest.importorskip("pandas", minversion="1.5")
 
     df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
-    df_interchange = df.__dataframe__()
+
+    # Hide the fact this is a pandas dataframe to trigger the dataframe protocol code
+    # path
+    class MockDataFrame:
+        def __init__(self, df):
+            self._df = df
+
+        def __getattr__(self, name):
+            return getattr(self._df, name)
+
+    df_mocked = MockDataFrame(df)
 
     key_results = [
         (slice(1, None), [1, 2]),
@@ -784,16 +793,11 @@ def test_get_column_indices_interchange():
         ([], []),
     ]
     for key, result in key_results:
-        assert (
-            _get_column_indices_interchange(
-                df_interchange, key, _determine_key_type(key)
-            )
-            == result
-        )
+        assert _get_column_indices(df_mocked, key) == result
 
     msg = "A given column is not a column of the dataframe"
     with pytest.raises(ValueError, match=msg):
-        _get_column_indices_interchange(df_interchange, ["not_a_column"], "str")
+        _get_column_indices(df_mocked, ["not_a_column"])
 
 
 def test_polars_indexing():
