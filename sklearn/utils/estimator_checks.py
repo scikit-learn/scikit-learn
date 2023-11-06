@@ -1,3 +1,8 @@
+"""
+The :mod:`sklearn.utils.estimator_checks` module includes various utilities to
+check the compatibility of estimators with the scikit-learn API.
+"""
+
 import pickle
 import re
 import warnings
@@ -1489,8 +1494,8 @@ def _apply_on_subsets(func, X):
         result_by_batch = list(map(lambda x: x[0], result_by_batch))
 
     if sparse.issparse(result_full):
-        result_full = result_full.A
-        result_by_batch = [x.A for x in result_by_batch]
+        result_full = result_full.toarray()
+        result_by_batch = [x.toarray() for x in result_by_batch]
 
     return np.ravel(result_full), np.ravel(result_by_batch)
 
@@ -2066,7 +2071,7 @@ def check_estimators_pickle(name, estimator_orig, readonly_memmap=False):
     if readonly_memmap:
         unpickled_estimator = create_memmap_backed_data(estimator)
     else:
-        # pickle and unpickle!
+        # No need to touch the file system in that case.
         pickled_estimator = pickle.dumps(estimator)
         module_name = estimator.__module__
         if module_name.startswith("sklearn.") and not (
@@ -2074,7 +2079,7 @@ def check_estimators_pickle(name, estimator_orig, readonly_memmap=False):
         ):
             # strict check for sklearn estimators that are not implemented in test
             # modules.
-            assert b"version" in pickled_estimator
+            assert b"_sklearn_version" in pickled_estimator
         unpickled_estimator = pickle.loads(pickled_estimator)
 
     result = dict()
@@ -4575,7 +4580,11 @@ def _check_set_output_transform_dataframe(
     except ValueError as e:
         # transformer does not support sparse data
         capitalize_lib = dataframe_lib.capitalize()
-        assert f"{capitalize_lib} output does not support sparse data." in str(e), e
+        error_message = str(e)
+        assert (
+            f"{capitalize_lib} output does not support sparse data." in error_message
+            or "The transformer outputs a scipy sparse matrix." in error_message
+        ), e
         return
 
     for case in outputs_default:

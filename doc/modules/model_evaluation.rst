@@ -94,8 +94,9 @@ Scoring                                Function                                 
 'max_error'                            :func:`metrics.max_error`
 'neg_mean_absolute_error'              :func:`metrics.mean_absolute_error`
 'neg_mean_squared_error'               :func:`metrics.mean_squared_error`
-'neg_root_mean_squared_error'          :func:`metrics.mean_squared_error`
+'neg_root_mean_squared_error'          :func:`metrics.root_mean_squared_error`
 'neg_mean_squared_log_error'           :func:`metrics.mean_squared_log_error`
+'neg_root_mean_squared_log_error'      :func:`metrics.root_mean_squared_log_error`
 'neg_median_absolute_error'            :func:`metrics.median_absolute_error`
 'r2'                                   :func:`metrics.r2_score`
 'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
@@ -180,9 +181,15 @@ take several parameters:
   of the python function is negated by the scorer object, conforming to
   the cross validation convention that scorers return higher values for better models.
 
-* for classification metrics only: whether the python function you provided requires continuous decision
-  certainties (``needs_threshold=True``).  The default value is
-  False.
+* for classification metrics only: whether the python function you provided requires
+  continuous decision certainties. If the scoring function only accepts probability
+  estimates (e.g. :func:`metrics.log_loss`) then one needs to set the parameter
+  `response_method`, thus in this case `response_method="predict_proba"`. Some scoring
+  function do not necessarily require probability estimates but rather non-thresholded
+  decision values (e.g. :func:`metrics.roc_auc_score`). In this case, one provides a
+  list such as `response_method=["decision_function", "predict_proba"]`. In this case,
+  the scorer will use the first available method, in the order given in the list,
+  to compute the scores.
 
 * any additional parameters, such as ``beta`` or ``labels`` in :func:`f1_score`.
 
@@ -1496,7 +1503,7 @@ In applications where a high false positive rate is not tolerable the parameter
 to the given limit.
 
 The following figure shows the micro-averaged ROC curve and its corresponding
-ROC-AUC score for a classifier aimed to distinguish the the different species in
+ROC-AUC score for a classifier aimed to distinguish the different species in
 the :ref:`iris_dataset`:
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
@@ -2310,6 +2317,10 @@ function::
     for an example of mean squared error usage to
     evaluate gradient boosting regression.
 
+Taking the square root of the MSE, called the root mean squared error (RMSE), is another
+common metric that provides a measure in the same units as the target variable. RSME is
+available through the :func:`root_mean_squared_error` function.
+
 .. _mean_squared_log_error:
 
 Mean squared logarithmic error
@@ -2346,6 +2357,9 @@ function::
   >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
   >>> mean_squared_log_error(y_true, y_pred)
   0.044...
+
+The root mean squared logarithmic error (RMSLE) is available through the
+:func:`root_mean_squared_log_error` function.
 
 .. _mean_absolute_percentage_error:
 

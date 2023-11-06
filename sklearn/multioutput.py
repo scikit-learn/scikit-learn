@@ -888,7 +888,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     >>> chain.predict_proba(X_test)
     array([[0.8387..., 0.9431..., 0.4576...],
            [0.8878..., 0.3684..., 0.2640...],
-           [0.0321..., 0.9935..., 0.0625...]])
+           [0.0321..., 0.9935..., 0.0626...]])
     """
 
     @_fit_context(
@@ -922,9 +922,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         _raise_for_params(fit_params, self, "fit")
 
         super().fit(X, Y, **fit_params)
-        self.classes_ = [
-            estimator.classes_ for chain_idx, estimator in enumerate(self.estimators_)
-        ]
+        self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
 
     @_available_if_base_estimator_has("predict_proba")

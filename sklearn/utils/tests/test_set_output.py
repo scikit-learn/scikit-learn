@@ -3,7 +3,6 @@ from collections import namedtuple
 import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
-from scipy.sparse import csr_matrix
 
 from sklearn._config import config_context, get_config
 from sklearn.preprocessing import StandardScaler
@@ -15,6 +14,7 @@ from sklearn.utils._set_output import (
     _SetOutputMixin,
     _wrap_data_with_container,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 def test_pandas_adapter():
@@ -91,11 +91,12 @@ def test_polars_adapter():
     assert_frame_equal(X_stacked, expected_df)
 
 
-def test__container_error_validation():
-    """Check errors in _wrap_in_pandas_container."""
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test__container_error_validation(csr_container):
+    """Check errors in _wrap_data_with_container."""
     X = np.asarray([[1, 0, 3], [0, 0, 1]])
-    X_csr = csr_matrix(X)
-    match = "Pandas output does not support sparse data."
+    X_csr = csr_container(X)
+    match = "The transformer outputs a scipy sparse matrix."
     with config_context(transform_output="pandas"):
         with pytest.raises(ValueError, match=match):
             _wrap_data_with_container("transform", X_csr, X, StandardScaler())
