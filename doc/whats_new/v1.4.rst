@@ -237,7 +237,7 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
-- |API| outputs that use pandas extension dtypes and contain `pd.NA` in :class:`~compose.ColumnTransformer` now result in a `ValueError` unless the output container has been configured as "pandas" with `set_output(transform="pandas")`. Before, such outputs resulted in numpy arrays of dtype `object` containing `pd.NA` which could not be converted to numpy floats and caused errors when passed to other scikit-learn estimators. :pr:`27734` by :user:`Jérôme Dockès <jeromedockes>`.
+- |API| outputs that use pandas extension dtypes and contain `pd.NA` in :class:`~compose.ColumnTransformer` now result in a `FutureWarning` and will cause a `ValueError` in version 1.6, unless the output container has been configured as "pandas" with `set_output(transform="pandas")`. Before, such outputs resulted in numpy arrays of dtype `object` containing `pd.NA` which could not be converted to numpy floats and caused errors when passed to other scikit-learn estimators. :pr:`27734` by :user:`Jérôme Dockès <jeromedockes>`.
 
 - |API| |FIX| :class:`~compose.ColumnTransformer` now replaces `"passthrough"`
   with a corresponding :class:`~preprocessing.FunctionTransformer` in the

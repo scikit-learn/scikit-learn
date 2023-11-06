@@ -3,6 +3,7 @@ Test the ColumnTransformer.
 """
 import pickle
 import re
+import warnings
 
 import numpy as np
 import pytest
@@ -2251,22 +2252,30 @@ def test_remainder_set_output():
 def test_transform_pd_na():
     """Check behavior when a tranformer's output contains pandas.NA
 
-    it should raise an error unless the output config is set to 'pandas'.
+    it should emit a warning unless the output config is set to 'pandas'.
     """
+    # TODO in version 1.6: warning should be replaced with an exception
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame({"a": [1.5, None]})
     ct = make_column_transformer(("passthrough", ["a"]))
-    # No problem with non-extension dtypes and np.nan
-    ct.fit_transform(df)
+    # No warning with non-extension dtypes and np.nan
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.fit_transform(df)
     df = df.convert_dtypes()
     # Error with extension dtype and pd.NA
-    with pytest.raises(ValueError, match=r"set_output\(transform='pandas'\)"):
+    with pytest.warns(FutureWarning, match=r"set_output\(transform='pandas'\)"):
         ct.fit_transform(df)
-    # No error when output is set to pandas
-    ct.set_output(transform="pandas")
-    ct.fit_transform(df)
+    # No warning when output is set to pandas
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.set_output(transform="pandas")
+        ct.fit_transform(df)
     ct.set_output(transform="default")
-    ct.fit_transform(df.fillna(-1.0))
+    # No warning when there are no pd.NA
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ct.fit_transform(df.fillna(-1.0))
 
 
 # Metadata Routing Tests
