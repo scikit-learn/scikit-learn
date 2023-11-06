@@ -613,7 +613,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
         otherwise (if 1) scale each sample.
 
     copy : bool, default=True
-        If False, try to avoid a copy and do inplace scaling instead.
+        If False, try to avoid a copy and scale in place.
         This is not guaranteed to always work inplace; e.g. if the data is
         not a NumPy array, is scipy.sparse CSR matrix, or is not of dtype
         float, a copy may still be returned.
