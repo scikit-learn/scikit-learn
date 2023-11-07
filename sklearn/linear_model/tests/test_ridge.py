@@ -2066,7 +2066,8 @@ def test_ridge_sample_weight_consistency(
 
 @pytest.mark.parametrize("with_weights", [True, False])
 @pytest.mark.parametrize("scoring", ["neg_mean_squared_error", mean_squared_error])
-def test_ridge_cv_predictions_original_space(with_weights, scoring):
+@pytest.mark.parametrize("n_targets", [1, 2])
+def test_ridge_cv_predictions_original_space(with_weights, scoring, n_targets):
     """Check that predictions store in `cv_results_` are in the original space.
 
     Non-regression test for:
@@ -2074,7 +2075,7 @@ def test_ridge_cv_predictions_original_space(with_weights, scoring):
     """
     rng = np.random.RandomState(42)
     n_samples = 6
-    X, y = make_regression(n_samples=n_samples, random_state=42)
+    X, y = make_regression(n_samples=n_samples, n_targets=n_targets, random_state=42)
     sample_weight = rng.randint(1, 4, n_samples) if with_weights else None
     scoring_ = (
         make_scorer(scoring, greater_is_better=False) if callable(scoring) else scoring
@@ -2087,13 +2088,14 @@ def test_ridge_cv_predictions_original_space(with_weights, scoring):
     ridgecv_default_scoring.fit(X, y, sample_weight=sample_weight)
     ridgecv_custom_scoring.fit(X, y, sample_weight=sample_weight)
 
+    y = y.ravel() if y.ndim == 2 else y
     errors_default_scoring = ridgecv_default_scoring.cv_values_.ravel()
     errors_custom_scoring = (y - ridgecv_custom_scoring.cv_values_.ravel()) ** 2
     # FIXME: The errors is by default weighted with sample weights which should
     # not be the case. Once a fix done for this case, we can remove the
     # following lines. See #15648 for more details.
     if sample_weight is not None:
-        errors_custom_scoring *= sample_weight
+        errors_custom_scoring *= np.repeat(sample_weight, n_targets)
 
     assert_allclose(errors_default_scoring, errors_custom_scoring)
 
