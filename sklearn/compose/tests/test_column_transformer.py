@@ -30,6 +30,7 @@ from sklearn.tests.metadata_routing_common import (
     check_recorded_metadata,
 )
 from sklearn.utils._testing import (
+    SkipTest,
     assert_allclose_dense_sparse,
     assert_almost_equal,
     assert_array_equal,
@@ -2256,6 +2257,11 @@ def test_transform_pd_na():
     """
     # TODO in version 1.6: warning should be replaced with an exception
     pd = pytest.importorskip("pandas")
+    if not hasattr(pd, "Float64Dtype"):
+        raise SkipTest(
+            "The issue with pd.NA tested here does not happen in old versions that do"
+            " not have the extension dtypes"
+        )
     df = pd.DataFrame({"a": [1.5, None]})
     ct = make_column_transformer(("passthrough", ["a"]))
     # No warning with non-extension dtypes and np.nan
