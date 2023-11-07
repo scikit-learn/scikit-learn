@@ -176,14 +176,12 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
 
 
 def calc_posterior_proba(values):
-    """Compute posterior probability from log posterior
-
-    The per-class posterior probability
+    """Compute posterior probability from log posterior.
 
     Parameters
     ----------
-    value : ndarray of shape (n_samples, n_classes)
-        Array of samples/test vectors.
+    values : ndarray of shape (n_samples, n_classes)
+        Array of log posterior probabilities.
 
     Returns
     -------

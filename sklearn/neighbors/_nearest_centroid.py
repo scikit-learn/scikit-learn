@@ -120,6 +120,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     [2] Hastie, T., Tibshirani, R., Friedman, J. (2009). The Elements of Statistical
     Learning Data Mining, Inference, and Prediction. 2nd Edition. New York, Springer.
+
     Examples
     --------
     >>> from sklearn.neighbors import NearestCentroid
@@ -279,6 +280,8 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             # Now adjust the centroids using the deviation
             msd = ms * self.deviation_
             self.centroids_ = dataset_centroid_[np.newaxis, :] + msd
+        else:
+            self.deviation_ = np.empty(n_classes, n_features)
         return self
 
     # TODO(1.5) remove note about precomputed metric
@@ -290,7 +293,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Test samples.
+            Array of samples (test vectors).
 
         Returns
         -------
@@ -361,14 +364,16 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         return dec_func
 
     def predict_proba(self, X):
-        """Class probability estimates.
+        """Estimate class probabilities.
+
         The returned estimates for all classes are ordered by the
         label of classes. The estimation has been implemented according to
-        Hastie et al. (2009), p. 652 equation (18.2)
+        Hastie et al. (2009), p. 652 equation (18.2).
 
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+            Array of samples (test vectors).
 
         Returns
         -------
@@ -380,12 +385,12 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         return calc_posterior_proba(coef)
 
     def predict_log_proba(self, X):
-        """Estimate log probability.
+        """Estimate log class probabilities.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Input data.
+            Array of samples (test vectors).
 
         Returns
         -------
