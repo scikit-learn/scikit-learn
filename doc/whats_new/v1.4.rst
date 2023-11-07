@@ -530,6 +530,10 @@ Changelog
   misdetects the CPU architecture.
   :pr:`27614` by :user:`Olivier Grisel <ogrisel>`.
 
+- |Fix| Fix the function :func:`~utils.check_array` to output the right error message when
+  the input is Series instead of a DataFrame. 
+  :pr:`xxxxx` by :user:`Stan Furrer <stanFurrer>`.
+
 Code and Documentation Contributors
 -----------------------------------
 

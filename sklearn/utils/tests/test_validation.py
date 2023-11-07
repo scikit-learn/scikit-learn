@@ -303,6 +303,14 @@ def test_check_array_force_all_finite_object_unsafe_casting(
         check_array(X, dtype=int, force_all_finite=force_all_finite)
 
 
+def test_check_array_series():
+    # ensure_2d=True with Serie
+    pd = pytest.importorskip("pandas")
+    serie = pd.Series([1, 2, 3])
+    with pytest.raises(ValueError, match="Expected 2D array, got Serie instead"):
+        check_array(serie, ensure_2d=True)
+
+
 @ignore_warnings
 def test_check_array():
     # accept_sparse == False
