@@ -281,7 +281,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             msd = ms * self.deviation_
             self.centroids_ = dataset_centroid_[np.newaxis, :] + msd
         else:
-            self.deviation_ = np.empty(n_classes, n_features)
+            self.deviation_ = np.empty((n_classes, n_features), dtype=np.float64)
         return self
 
     # TODO(1.5) remove note about precomputed metric
