@@ -87,7 +87,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         .. versionadded:: 1.0
 
     deviations_ : ndarray of shape(n_classes, n_features)
-        Deviation of each class using soft thresholding
+        Deviation of each class using soft thresholding.
 
         .. versionadded:: 1.4
 
