@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
 
+from numpy.testing import assert_array_almost_equal
+
 from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import (
     ExtraTreesClassifier,
@@ -77,18 +79,19 @@ def test_monotonic_constraints_classifications(
     if sparse_splitter:
         X_train = csc_container(X_train)
     est.fit(X_train, y_train)
-    y = est.predict_proba(X_test)[:, 1]
+    proba_test = est.predict_proba(X_test)
 
-    assert np.all(est.predict_proba(X_test) >= 0.0)
-    assert np.all(est.predict_proba(X_test) <= 1.0)
+    assert np.all(proba_test >= 0.0)
+    assert np.all(proba_test <= 1.0)
+    assert_array_almost_equal(np.sum(proba_test, axis=1), np.ones(proba_test.shape[0]))
 
     # Monotonic increase constraint, it applies to the positive class
-    assert np.all(est.predict_proba(X_test_0incr)[:, 1] >= y)
-    assert np.all(est.predict_proba(X_test_0decr)[:, 1] <= y)
+    assert np.all(est.predict_proba(X_test_0incr)[:, 1] >= proba_test[:, 1])
+    assert np.all(est.predict_proba(X_test_0decr)[:, 1] <= proba_test[:, 1])
 
     # Monotonic decrease constraint, it applies to the positive class
-    assert np.all(est.predict_proba(X_test_1incr)[:, 1] <= y)
-    assert np.all(est.predict_proba(X_test_1decr)[:, 1] >= y)
+    assert np.all(est.predict_proba(X_test_1incr)[:, 1] <= proba_test[:, 1])
+    assert np.all(est.predict_proba(X_test_1decr)[:, 1] >= proba_test[:, 1])
 
 
 @pytest.mark.parametrize("TreeRegressor", TREE_BASED_REGRESSOR_CLASSES)
