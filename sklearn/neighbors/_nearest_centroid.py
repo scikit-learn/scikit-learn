@@ -259,22 +259,22 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         variance = variance.sum(axis=0)
         self.within_class_std_ = np.sqrt(variance / (n_samples - n_classes))
 
-        if self.shrink_threshold:
-            if np.all(np.ptp(X, axis=0) == 0):
-                raise ValueError("All features have zero variance.Division by zero.")
-            dataset_centroid_ = np.mean(X, axis=0)
+        if np.all(np.ptp(X, axis=0) == 0):
+            raise ValueError("All features have zero variance.Division by zero.")
+        dataset_centroid_ = np.mean(X, axis=0)
 
-            # m parameter for determining deviation
-            m = np.sqrt((1.0 / nk) - (1.0 / n_samples))
-            # Calculate deviation using the standard deviation of centroids.
-            # To deter outliers from affecting the results.
-            s = self.within_class_std_ + np.median(self.within_class_std_)
-            mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
-            ms = mm * s
-            self.deviation_ = (self.centroids_ - dataset_centroid_) / ms
-            # Soft thresholding: if the deviation crosses 0 during shrinking,
-            # it becomes zero.
-            signs = np.sign(self.deviation_)
+        # m parameter for determining deviation
+        m = np.sqrt((1.0 / nk) - (1.0 / n_samples))
+        # Calculate deviation using the standard deviation of centroids.
+        # To deter outliers from affecting the results.
+        s = self.within_class_std_ + np.median(self.within_class_std_)
+        mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
+        ms = mm * s
+        self.deviation_ = (self.centroids_ - dataset_centroid_) / ms
+        # Soft thresholding: if the deviation crosses 0 during shrinking,
+        # it becomes zero.
+        signs = np.sign(self.deviation_)
+        if self.shrink_threshold:
             self.deviation_ = np.abs(self.deviation_) - self.shrink_threshold
             np.clip(self.deviation_, 0, None, out=self.deviation_)
             self.deviation_ *= signs
