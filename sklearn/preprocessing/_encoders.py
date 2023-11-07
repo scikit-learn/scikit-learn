@@ -123,6 +123,22 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     )
                     raise ValueError(msg)
 
+                # `nan` must be the last stated category
+                for category in cats[:-1]:
+                    if is_scalar_nan(category):
+                        raise ValueError(
+                            "Nan should be the last element in user"
+                            f" provided categories, see categories {cats}"
+                            f" in column #{i}"
+                        )
+
+                if cats.size != len(_unique(cats)):
+                    msg = (
+                        f"In column {i}, the predefined categories"
+                        " contain duplicate elements."
+                    )
+                    raise ValueError(msg)
+
                 if Xi.dtype.kind not in "OUS":
                     sorted_cats = np.sort(cats)
                     error_msg = (
@@ -130,9 +146,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     )
                     # if there are nans, nan should be the last element
                     stop_idx = -1 if np.isnan(sorted_cats[-1]) else None
-                    if np.any(sorted_cats[:stop_idx] != cats[:stop_idx]) or (
-                        np.isnan(sorted_cats[-1]) and not np.isnan(sorted_cats[-1])
-                    ):
+                    if np.any(sorted_cats[:stop_idx] != cats[:stop_idx]):
                         raise ValueError(error_msg)
 
                 if handle_unknown == "error":
