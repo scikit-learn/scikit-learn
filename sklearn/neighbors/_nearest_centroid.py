@@ -228,6 +228,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
         # Mask mapping each class to its members.
         self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)
+        self.deviation_ = np.empty((n_classes, n_features), dtype=np.float64)
         # Number of clusters in each class.
         nk = np.zeros(n_classes)
 
@@ -280,8 +281,6 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             # Now adjust the centroids using the deviation
             msd = ms * self.deviation_
             self.centroids_ = dataset_centroid_[np.newaxis, :] + msd
-        else:
-            self.deviation_ = np.empty((n_classes, n_features), dtype=np.float64)
         return self
 
     # TODO(1.5) remove note about precomputed metric
