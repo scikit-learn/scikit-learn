@@ -31,13 +31,13 @@ capture well the variance of the original features. See :ref:`decompositions`.
 Random projections
 -------------------
 
-The module: :mod:`random_projection` provides several tools for data
+The module: :mod:`~sklearn.random_projection` provides several tools for data
 reduction by random projections. See the relevant section of the
 documentation: :ref:`random_projection`.
 
 .. topic:: **Examples**
 
-   * :ref:`sphx_glr_auto_examples_plot_johnson_lindenstrauss_bound.py`
+   * :ref:`sphx_glr_auto_examples_miscellaneous_plot_johnson_lindenstrauss_bound.py`
 
 Feature agglomeration
 ------------------------
@@ -55,6 +55,5 @@ similarly.
 
    Note that if features have very different scaling or statistical
    properties, :class:`cluster.FeatureAgglomeration` may not be able to
-   capture the links between related features. Using a 
+   capture the links between related features. Using a
    :class:`preprocessing.StandardScaler` can be useful in these settings.
-

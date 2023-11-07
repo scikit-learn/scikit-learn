@@ -27,31 +27,27 @@ algorithm implemented in scikit-learn.
 
 The graph data is fetched from the DBpedia dumps. DBpedia is an extraction
 of the latent structured data of the Wikipedia content.
+
 """
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from bz2 import BZ2File
 import os
+from bz2 import BZ2File
 from datetime import datetime
 from pprint import pprint
 from time import time
-
-import numpy as np
-
-from scipy import sparse
-
-from joblib import Memory
-
-from sklearn.decomposition import randomized_svd
 from urllib.request import urlopen
 
+import numpy as np
+from scipy import sparse
 
-print(__doc__)
+from sklearn.decomposition import randomized_svd
 
-# #############################################################################
-# Where to download the data, if not already on disk
+# %%
+# Download data, if not already on disk
+# -------------------------------------
 redirects_url = "http://downloads.dbpedia.org/3.5.1/en/redirects_en.nt.bz2"
 redirects_filename = redirects_url.rsplit("/", 1)[1]
 
@@ -67,16 +63,14 @@ for url, filename in resources:
     if not os.path.exists(filename):
         print("Downloading data from '%s', please wait..." % url)
         opener = urlopen(url)
-        open(filename, 'wb').write(opener.read())
+        with open(filename, "wb") as f:
+            f.write(opener.read())
         print()
 
 
-# #############################################################################
+# %%
 # Loading the redirect files
-
-memory = Memory(cachedir=".")
-
-
+# --------------------------
 def index(redirects, index_map, k):
     """Find the index of an article name after redirect resolution"""
     k = redirects.get(k, k)
@@ -124,8 +118,9 @@ def get_redirects(redirects_filename):
     return redirects
 
 
-# disabling joblib as the pickling of large dicts seems much too slow
-#@memory.cache
+# %%
+# Computing the Adjacency matrix
+# ------------------------------
 def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
     """Extract the adjacency graph as a scipy sparse matrix
 
@@ -169,9 +164,14 @@ def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
 
 # stop after 5M links to make it possible to work in RAM
 X, redirects, index_map = get_adjacency_matrix(
-    redirects_filename, page_links_filename, limit=5000000)
+    redirects_filename, page_links_filename, limit=5000000
+)
 names = {i: name for name, i in index_map.items()}
 
+
+# %%
+# Computing Principal Singular Vector using Randomized SVD
+# --------------------------------------------------------
 print("Computing the principal singular vectors using randomized_svd")
 t0 = time()
 U, s, V = randomized_svd(X, 5, n_iter=3)
@@ -184,6 +184,9 @@ pprint([names[i] for i in np.abs(U.T[0]).argsort()[-10:]])
 pprint([names[i] for i in np.abs(V[0]).argsort()[-10:]])
 
 
+# %%
+# Computing Centrality scores
+# ---------------------------
 def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
     """Power iteration computation of the principal eigenvector
 
@@ -201,16 +204,17 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
 
     print("Normalizing the graph")
     for i in incoming_counts.nonzero()[0]:
-        X.data[X.indptr[i]:X.indptr[i + 1]] *= 1.0 / incoming_counts[i]
-    dangle = np.asarray(np.where(np.isclose(X.sum(axis=1), 0),
-                                 1.0 / n, 0)).ravel()
+        X.data[X.indptr[i] : X.indptr[i + 1]] *= 1.0 / incoming_counts[i]
+    dangle = np.asarray(np.where(np.isclose(X.sum(axis=1), 0), 1.0 / n, 0)).ravel()
 
-    scores = np.full(n, 1. / n, dtype=np.float32)  # initial guess
+    scores = np.full(n, 1.0 / n, dtype=np.float32)  # initial guess
     for i in range(max_iter):
         print("power iteration #%d" % i)
         prev_scores = scores
-        scores = (alpha * (scores * X + np.dot(dangle, prev_scores))
-                  + (1 - alpha) * prev_scores.sum() / n)
+        scores = (
+            alpha * (scores * X + np.dot(dangle, prev_scores))
+            + (1 - alpha) * prev_scores.sum() / n
+        )
         # check convergence: normalized l_inf norm
         scores_max = np.abs(scores).max()
         if scores_max == 0.0:
@@ -221,6 +225,7 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
             return scores
 
     return scores
+
 
 print("Computing principal eigenvector score using a power iteration method")
 t0 = time()

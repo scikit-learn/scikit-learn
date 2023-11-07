@@ -21,14 +21,7 @@ K-means clustering
 -------------------
 
 Note that there exist a lot of different clustering criteria and associated
-algorithms. The simplest clustering algorithm is
-:ref:`k_means`.
-
-.. image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_002.png
-    :target: ../../auto_examples/cluster/plot_cluster_iris.html
-    :scale: 70
-    :align: right
-
+algorithms. The simplest clustering algorithm is :ref:`k_means`.
 
 ::
 
@@ -43,15 +36,7 @@ algorithms. The simplest clustering algorithm is
     >>> print(y_iris[::10])
     [0 0 0 0 0 1 1 1 1 1 2 2 2 2 2]
 
-.. |k_means_iris_bad_init| image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_003.png
-   :target: ../../auto_examples/cluster/plot_cluster_iris.html
-   :scale: 63
-
-.. |k_means_iris_8| image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_001.png
-   :target: ../../auto_examples/cluster/plot_cluster_iris.html
-   :scale: 63
-
-.. |cluster_iris_truth| image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_004.png
+.. figure:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_001.png
    :target: ../../auto_examples/cluster/plot_cluster_iris.html
    :scale: 63
 
@@ -62,42 +47,13 @@ algorithms. The simplest clustering algorithm is
     is sensitive to initialization, and can fall into local minima,
     although scikit-learn employs several tricks to mitigate this issue.
 
-    .. list-table::
-        :class: centered
+    For instance, on the image above, we can observe the difference between the
+    ground-truth (bottom right figure) and different clustering. We do not
+    recover the expected labels, either because the number of cluster was
+    chosen to be to large (top left figure) or suffer from a bad initialization
+    (bottom left figure).
 
-        *
-
-            - |k_means_iris_bad_init|
-
-            - |k_means_iris_8|
-
-            - |cluster_iris_truth|
-
-        *
-
-            - **Bad initialization**
-
-            - **8 clusters**
-
-            - **Ground truth**
-
-    **Don't over-interpret clustering results**
-
-.. |face| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_001.png
-   :target: ../../auto_examples/cluster/plot_face_compress.html
-   :scale: 60
-
-.. |face_regular| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_002.png
-   :target: ../../auto_examples/cluster/plot_face_compress.html
-   :scale: 60
-
-.. |face_compressed| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_003.png
-   :target: ../../auto_examples/cluster/plot_face_compress.html
-   :scale: 60
-
-.. |face_histogram| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_004.png
-   :target: ../../auto_examples/cluster/plot_face_compress.html
-   :scale: 60
+    **It is therefore important to not over-interpret clustering results.**
 
 .. topic:: **Application example: vector quantization**
 
@@ -122,28 +78,20 @@ algorithms. The simplest clustering algorithm is
     	>>> face_compressed = np.choose(labels, values)
     	>>> face_compressed.shape = face.shape
 
-    .. list-table::
-      :class: centered
+**Raw image**
 
-      *
-        - |face|
+.. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_001.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
 
-        - |face_compressed|
+**K-means quantization**
 
-        - |face_regular|
+.. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_004.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
 
-        - |face_histogram|
+**Equal bins**
 
-      *
-
-        - Raw image
-
-        - K-means quantization
-
-        - Equal bins
-
-        - Image histogram
-
+.. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_002.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
 
 Hierarchical agglomerative clustering: Ward
 ---------------------------------------------
@@ -172,21 +120,40 @@ With agglomerative clustering, it is possible to specify which samples can be
 clustered together by giving a connectivity graph. Graphs in scikit-learn
 are represented by their adjacency matrix. Often, a sparse matrix is used.
 This can be useful, for instance, to retrieve connected regions (sometimes
-also referred to as connected components) when
-clustering an image:
+also referred to as connected components) when clustering an image.
 
 .. image:: /auto_examples/cluster/images/sphx_glr_plot_coin_ward_segmentation_001.png
-    :target: ../../auto_examples/cluster/plot_coin_ward_segmentation.html
-    :scale: 40
-    :align: right
+   :target: ../../auto_examples/cluster/plot_coin_ward_segmentation.html
+   :scale: 40
+   :align: center
 
-.. literalinclude:: ../../auto_examples/cluster/plot_coin_ward_segmentation.py
-    :lines: 21-45
+::
 
-..
-    >>> from sklearn.feature_extraction.image import grid_to_graph
-    >>> connectivity = grid_to_graph(*face.shape)
+    >>> from skimage.data import coins
+    >>> from scipy.ndimage import gaussian_filter
+    >>> from skimage.transform import rescale
+    >>> rescaled_coins = rescale(
+    ...     gaussian_filter(coins(), sigma=2),
+    ...     0.2, mode='reflect', anti_aliasing=False
+    ... )
+    >>> X = np.reshape(rescaled_coins, (-1, 1))
 
+We need a vectorized version of the image. `'rescaled_coins'` is a down-scaled
+version of the coins image to speed up the process::
+
+    >>> from sklearn.feature_extraction import grid_to_graph
+    >>> connectivity = grid_to_graph(*rescaled_coins.shape)
+
+Define the graph structure of the data. Pixels connected to their neighbors::
+
+    >>> n_clusters = 27  # number of regions
+
+    >>> from sklearn.cluster import AgglomerativeClustering
+    >>> ward = AgglomerativeClustering(n_clusters=n_clusters, linkage='ward',
+    ...                                connectivity=connectivity)
+    >>> ward.fit(X)
+    AgglomerativeClustering(connectivity=..., n_clusters=27)
+    >>> label = np.reshape(ward.labels_, rescaled_coins.shape)
 
 Feature agglomeration
 ......................
@@ -199,9 +166,9 @@ clustering in the feature direction, in other words clustering the
 transposed data.
 
 .. image:: /auto_examples/cluster/images/sphx_glr_plot_digits_agglomeration_001.png
-    :target: ../../auto_examples/cluster/plot_digits_agglomeration.html
-    :align: right
-    :scale: 57
+   :target: ../../auto_examples/cluster/plot_digits_agglomeration.html
+   :align: center
+   :scale: 57
 
 ::
 

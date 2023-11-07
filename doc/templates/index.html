@@ -1,5 +1,15 @@
 {% extends "layout.html" %}
 {% set title = 'scikit-learn: machine learning in Python' %}
+
+{% if theme_link_to_live_contributing_page|tobool %}
+  {%- set contributing_link = "https://scikit-learn.org/dev/developers/contributing.html" %}
+  {%- set contributing_attrs = 'target="_blank" rel="noopener noreferrer"' %}
+{%- else %}
+  {%- set contributing_link = pathto('developers/contributing') %}
+  {%- set contributing_attrs = '' %}
+{%- endif %}
+
+
 {% block content %}
 <div class="container-fluid sk-landing-bg py-3">
   <div class="container sk-landing-container">
@@ -8,7 +18,7 @@
         <h1 class="sk-landing-header text-white text-monospace">scikit-learn</h1>
         <h4 class="sk-landing-subheader text-white font-italic mb-3">Machine Learning in Python</h4>
         <a class="btn sk-landing-btn mb-1" href="{{ pathto('getting_started') }}" role="button">Getting Started</a>
-        <a class="btn sk-landing-btn mb-1" href="whats_new/v{{ version }}.html" role="button">What's New in {{ version }}</a>
+        <a class="btn sk-landing-btn mb-1" href="{{ pathto(release_highlights) }}" role="button">Release Highlights for {{ release_highlights_version }}</a>
         <a class="btn sk-landing-btn mb-1" href="https://github.com/scikit-learn/scikit-learn" role="button">GitHub</a>
       </div>
       <div class="col-md-6 d-flex">
@@ -32,9 +42,10 @@
           <p class="card-text">Identifying which category an object belongs to.</p>
           <p class="card-text"><strong>Applications:</strong> Spam detection, image recognition.</br>
           <strong>Algorithms:</strong>
-          <a href="modules/svm.html#svm-classification">SVM</a>,
+          <a href="modules/ensemble.html#histogram-based-gradient-boosting">Gradient boosting</a>,
           <a href="modules/neighbors.html#classification">nearest neighbors</a>,
           <a href="modules/ensemble.html#forest">random forest</a>,
+          <a href="modules/linear_model.html#logistic-regression">logistic regression</a>,
           and <a href="supervised_learning.html#supervised-learning">more...</a></p>
         </div>
         <div class="overflow-hidden mx-2 text-center flex-fill">
@@ -52,9 +63,10 @@
           <p class="card-text">Predicting a continuous-valued attribute associated with an object.</p>
           <p class="card-text"><strong>Applications:</strong> Drug response, Stock prices.</br>
           <strong>Algorithms:</strong>
-          <a href="modules/svm.html#svm-regression">SVR</a>,
-          <a href="modules/linear_model.html#ridge-regression">nearest neighbors</a>,
-          <a href="modules/linear_model.html#lasso">random forest</a>,
+          <a href="modules/ensemble.html#histogram-based-gradient-boosting">Gradient boosting</a>,
+          <a href="modules/neighbors.html#regression">nearest neighbors</a>,
+          <a href="modules/ensemble.html#forest">random forest</a>,
+          <a href="modules/linear_model.html#ridge-regression-and-classification">ridge</a>,
           and <a href="supervised_learning.html#supervised-learning">more...</a></p>
         </div>
         <div class="overflow-hidden mx-2 text-center flex-fill">
@@ -73,8 +85,9 @@
           <p class="card-text"><strong>Applications:</strong> Customer segmentation, Grouping experiment outcomes</br>
           <strong>Algorithms:</strong>
           <a href="modules/clustering.html#k-means">k-Means</a>,
-          <a href="modules/clustering.html#spectral-clustering">spectral clustering</a>,
-          <a href="modules/clustering.html#mean-shift">mean-shift</a>,
+          <a href="modules/clustering.html#hdbscan">HDBSCAN</a>,
+          <a href="modules/clustering.html#hierarchical-clustering">hierarchical
+	  clustering</a>,
           and <a href="modules/clustering.html#clustering">more...</a></p>
         </div>
         <div class="overflow-hidden mx-2 text-center flex-fill">
@@ -92,7 +105,7 @@
           <p class="card-text">Reducing the number of random variables to consider.</p>
           <p class="card-text"><strong>Applications:</strong> Visualization, Increased efficiency</br>
           <strong>Algorithms:</strong>
-          <a href="modules/decomposition.html#pca">k-Means</a>,
+          <a href="modules/decomposition.html#pca">PCA</a>,
           <a href="modules/feature_selection.html#feature-selection">feature selection</a>,
           <a href="modules/decomposition.html#nmf">non-negative matrix factorization</a>,
           and <a href="modules/decomposition.html#decompositions">more...</a></p>
@@ -115,7 +128,7 @@
           <a href="modules/grid_search.html#grid-search">grid search</a>,
           <a href="modules/cross_validation.html#cross-validation">cross validation</a>,
           <a href="modules/model_evaluation.html#model-evaluation">metrics</a>,
-          and <a href="modules/decomposition.html#decompositions">more...</a></p>
+          and <a href="model_selection.html">more...</a></p>
         </div>
         <div class="overflow-hidden mx-2 text-center flex-fill">
           <a href="auto_examples/model_selection/plot_multi_metric_evaluation.html"  aria-label="Model selection">
@@ -156,39 +169,41 @@
         <li><strong>On-going development:</strong>
         <a href="https://scikit-learn.org/dev/whats_new.html"><strong>What's new</strong> (Changelog)</a>
         </li>
-        <li><strong>December 2019.</strong> scikit-learn 0.22 is available for download (<a href="whats_new/v0.22.html#version-0-22-0">Changelog</a>).
+        <li><strong>October 2023.</strong> scikit-learn 1.3.2 is available for download (<a href="whats_new/v1.3.html#version-1-3-2">Changelog</a>).
         </li>
-        <li><strong>Scikit-learn from 0.21 requires Python 3.5 or greater.</strong>
+	      <li><strong>September 2023.</strong> scikit-learn 1.3.1 is available for download (<a href="whats_new/v1.3.html#version-1-3-1">Changelog</a>).
         </li>
-        <li><strong>July 2019.</strong> scikit-learn 0.21.3 (<a href="whats_new/v0.21.html#version-0-21-3">Changelog</a>) and 0.20.4 (<a href="whats_new/v0.20.html#version-0-20-4">Changelog</a>) are available for download.
+        <li><strong>June 2023.</strong> scikit-learn 1.3.0 is available for download (<a href="whats_new/v1.3.html#version-1-3-0">Changelog</a>).
         </li>
-        <li><strong>May 2019.</strong> scikit-learn 0.21.0 to 0.21.2 are available for download (<a href="whats_new/v0.21.html#version-0-21-2">Changelog</a>).
+        <li><strong>March 2023.</strong> scikit-learn 1.2.2 is available for download (<a href="whats_new/v1.2.html#version-1-2-2">Changelog</a>).
         </li>
-        <li><strong>March 2019.</strong> scikit-learn 0.20.3 is available for download (<a href="whats_new/v0.20.html#version-0-20-3">Changelog</a>).
+        <li><strong>January 2023.</strong> scikit-learn 1.2.1 is available for download (<a href="whats_new/v1.2.html#version-1-2-1">Changelog</a>).
         </li>
-        <li><strong>September 2018.</strong> scikit-learn 0.20.0 is available for download (<a href="whats_new/v0.20.html#version-0-20-0">Changelog</a>).
-        </li>
-        <li><strong>July 2018.</strong> scikit-learn 0.19.2 is available for download (<a href="whats_new/v0.19.html#version-0-19-2">Changelog</a>).
-        </li>
-        <li><strong>July 2017.</strong> scikit-learn 0.19.0 is available for download (<a href="whats_new/v0.19.html#version-0-19">Changelog</a>).
-        </li>
+        <li><strong>December 2022.</strong> scikit-learn 1.2.0 is available for download (<a href="whats_new/v1.2.html#version-1-2-0">Changelog</a>).
+	</li>
         </ul>
       </div>
       <div class="col-md-4">
         <h4 class="sk-landing-call-header">Community</h4>
         <ul class="sk-landing-call-list list-unstyled">
-        <li><strong>About us:</strong> See <a href="about.html#people">authors</a> and <a href="developers/contributing.html">contributing</a></li>
+        <li><strong>About us:</strong> See <a href="about.html#people">authors</a> and <a href="{{ contributing_link }}" {{ contributing_attrs }}>contributing</a></li>
         <li><strong>More Machine Learning:</strong> Find <a href="related_projects.html">related projects</a></li>
         <li><strong>Questions?</strong> See <a href="faq.html">FAQ</a> and <a href="https://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
-        <li><strong>Mailing list:</strong> <a href="https://mail.python.org/mailman/listinfo/scikit-learn">scikit-learn@python.org</a></li>
+        <li><strong>Subscribe to the</strong> <a href="https://mail.python.org/mailman/listinfo/scikit-learn">mailing list</a></li>
         <li><strong>Gitter:</strong> <a href="https://gitter.im/scikit-learn/scikit-learn">gitter.im/scikit-learn</a></li>
+        <li><strong>Blog:</strong> <a href="https://blog.scikit-learn.org">blog.scikit-learn.org</a></li>
+        <li><strong>Logos & Branding:</strong> <a href="https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos">logos and branding</a></li>
+        <li><strong>Calendar:</strong> <a href="https://blog.scikit-learn.org/calendar/">calendar</a></li>
+        <li><strong>Twitter:</strong> <a href="https://twitter.com/scikit_learn">@scikit_learn</a></li>
+        <li><strong>LinkedIn:</strong> <a href="https://www.linkedin.com/company/scikit-learn">linkedin/scikit-learn</a></li>
+        <li><strong>YouTube:</strong> <a href="https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists">youtube.com/scikit-learn</a></li>
+        <li><strong>Facebook:</strong> <a href="https://www.facebook.com/scikitlearnofficial/">@scikitlearnofficial</a></li>
+        <li><strong>Instagram:</strong> <a href="https://www.instagram.com/scikitlearnofficial/">@scikitlearnofficial</a></li>
+        <li><strong>TikTok:</strong> <a href="https://www.tiktok.com/@scikit.learn">@scikit.learn</a></li>
+        <li>Communication on all channels should respect <a href="https://www.python.org/psf/conduct/">PSF's code of conduct.</a></li>
         </ul>
 
-        <form target="_top" id="paypal-form" method="post" action="https://www.paypal.com/cgi-bin/webscr">
-          <input type="hidden" value="_s-xclick" name="cmd">
-          <input type="hidden" value="74EYUMF3FTSW8" name="hosted_button_id">
-        </form>
-        <a class="btn btn-warning btn-big sk-donate-btn mb-1" onclick="document.getElementById('paypal-form').submit(); ">Help us, <strong>donate!</strong></a>
+        <a class="btn btn-warning btn-big sk-donate-btn mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
         <a class="btn btn-warning btn-big mb-1" href="about.html#citing-scikit-learn"><strong>Cite us!</strong></a>
       </div>
       <div class="col-md-4">
@@ -236,18 +251,11 @@
                   scikit-learn development and maintenance are financially supported by
                 </p>
                 <img class="sk-footer-funding-logo" src="_static/inria-small.png" title="INRIA">
-                <img class="sk-footer-funding-logo" src="_static/columbia-small.png" title="Columbia University">
-                <img class="sk-footer-funding-logo" src="_static/sloan_logo-small.png" title="Alfred P. Sloan Foundation" >
-                <img class="sk-footer-funding-logo" src="_static/sydney-stacked-small.png" title="The University of Sydney">
-                <img class="sk-footer-funding-logo" src="_static/microsoft-small.png" title="Microsoft" >
-                <img class="sk-footer-funding-logo" src="_static/bcg-small.png" title="Boston Consulting Group" >
                 <img class="sk-footer-funding-logo" src="_static/axa-small.png" title="AXA Assurances" >
                 <img class="sk-footer-funding-logo" src="_static/bnp-small.png" title="BNP Paris Bas Cardif" >
-                <img class="sk-footer-funding-logo" src="_static/fujitsu-small.png" title="Fujitsu" >
-                <img class="sk-footer-funding-logo" src="_static/intel-small.png" title="Intel" >
+                <img class="sk-footer-funding-logo" src="_static/huggingface_logo-noborder.png" title="Hugging Face" >
                 <img class="sk-footer-funding-logo" src="_static/nvidia-small.png" title="Nvidia" >
-                <img class="sk-footer-funding-logo" src="_static/dataiku-small.png" title="Dataiku" >
-                <img class="sk-footer-funding-logo" src="_static/anaconda-small.png" title="Anaconda" >
+                <img class="sk-footer-funding-logo" src="_static/quansight-labs-small.png" title="Quansight Labs" >
         </div>
         </a>
   </div>

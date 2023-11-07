@@ -1,0 +1,48 @@
+# For workflows to use this workflow include the following:
+#
+# update-tracker:
+#   uses: ./.github/workflows/update_tracking_issue.yml
+#   if: ${{ always() }}
+#   needs: [JOB_NAME]
+#   with:
+#     job_status: ${{ needs.JOB_NAME.result }}
+#   secrets:
+#     BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+# Where JOB_NAME is contains the status of the job you are interested in
+
+name: "Update tracking issue"
+on:
+  workflow_call:
+    inputs:
+      job_status:
+        required: true
+        type: string
+    secrets:
+      BOT_GITHUB_TOKEN:
+        required: true
+
+jobs:
+  update_tracking_issue:
+    runs-on: ubuntu-latest
+    if: github.repository == 'scikit-learn/scikit-learn' && github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Update tracking issue on GitHub
+        run: |
+          set -ex
+          if [[ ${{ inputs.job_status }} == "success" ]]; then
+            TESTS_PASSED=true
+          else
+            TESTS_PASSED=false
+          fi
+
+          pip install defusedxml PyGithub
+          python maint_tools/update_tracking_issue.py \
+            ${{ secrets.BOT_GITHUB_TOKEN }} \
+            "$GITHUB_WORKFLOW" \
+            "$GITHUB_REPOSITORY" \
+            https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
+            --tests-passed $TESTS_PASSED

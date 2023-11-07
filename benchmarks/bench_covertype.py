@@ -25,13 +25,13 @@ magnitude faster to train::
 
 The same task has been used in a number of papers including:
 
- * `"SVM Optimization: Inverse Dependence on Training Set Size"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.139.2112>`_
+ * :doi:`"SVM Optimization: Inverse Dependence on Training Set Size"
    S. Shalev-Shwartz, N. Srebro - In Proceedings of ICML '08.
+   <10.1145/1390156.1390273>`
 
- * `"Pegasos: Primal estimated sub-gradient solver for svm"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
+ * :doi:`"Pegasos: Primal estimated sub-gradient solver for svm"
    S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
+   <10.1145/1273496.1273598>`
 
  * `"Training Linear SVMs in Linear Time"
    <https://www.cs.cornell.edu/people/tj/publications/joachims_06a.pdf>`_
@@ -45,38 +45,44 @@ The same task has been used in a number of papers including:
 #         Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: BSD 3 clause
 
+import argparse
 import os
 from time import time
-import argparse
+
 import numpy as np
 from joblib import Memory
 
 from sklearn.datasets import fetch_covtype, get_data_home
-from sklearn.svm import LinearSVC
-from sklearn.linear_model import SGDClassifier, LogisticRegression
-from sklearn.naive_bayes import GaussianNB
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import (
+    ExtraTreesClassifier,
+    GradientBoostingClassifier,
+    RandomForestClassifier,
+)
+from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.metrics import zero_one_loss
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import LinearSVC
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_array
 
 # Memoize the data extraction and memory map the resulting
 # train / test splits in readonly mode
-memory = Memory(os.path.join(get_data_home(), 'covertype_benchmark_data'),
-                mmap_mode='r')
+memory = Memory(
+    os.path.join(get_data_home(), "covertype_benchmark_data"), mmap_mode="r"
+)
 
 
 @memory.cache
-def load_data(dtype=np.float32, order='C', random_state=13):
+def load_data(dtype=np.float32, order="C", random_state=13):
     """Load the data, then cache and memmap the train/test split"""
     ######################################################################
     # Load dataset
     print("Loading dataset...")
-    data = fetch_covtype(download_if_missing=True, shuffle=True,
-                         random_state=random_state)
-    X = check_array(data['data'], dtype=dtype, order=order)
-    y = (data['target'] != 1).astype(np.int)
+    data = fetch_covtype(
+        download_if_missing=True, shuffle=True, random_state=random_state
+    )
+    X = check_array(data["data"], dtype=dtype, order=order)
+    y = (data["target"] != 1).astype(int)
 
     # Create train-test split (as [Joachims, 2006])
     print("Creating train-test split...")
@@ -97,39 +103,59 @@ def load_data(dtype=np.float32, order='C', random_state=13):
 
 
 ESTIMATORS = {
-    'GBRT': GradientBoostingClassifier(n_estimators=250),
-    'ExtraTrees': ExtraTreesClassifier(n_estimators=20),
-    'RandomForest': RandomForestClassifier(n_estimators=20),
-    'CART': DecisionTreeClassifier(min_samples_split=5),
-    'SGD': SGDClassifier(alpha=0.001),
-    'GaussianNB': GaussianNB(),
-    'liblinear': LinearSVC(loss="l2", penalty="l2", C=1000, dual=False,
-                           tol=1e-3),
-    'SAG': LogisticRegression(solver='sag', max_iter=2, C=1000)
+    "GBRT": GradientBoostingClassifier(n_estimators=250),
+    "ExtraTrees": ExtraTreesClassifier(n_estimators=20),
+    "RandomForest": RandomForestClassifier(n_estimators=20),
+    "CART": DecisionTreeClassifier(min_samples_split=5),
+    "SGD": SGDClassifier(alpha=0.001),
+    "GaussianNB": GaussianNB(),
+    "liblinear": LinearSVC(loss="l2", penalty="l2", C=1000, dual=False, tol=1e-3),
+    "SAG": LogisticRegression(solver="sag", max_iter=2, C=1000),
 }
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--classifiers', nargs="+",
-                        choices=ESTIMATORS, type=str,
-                        default=['liblinear', 'GaussianNB', 'SGD', 'CART'],
-                        help="list of classifiers to benchmark.")
-    parser.add_argument('--n-jobs', nargs="?", default=1, type=int,
-                        help="Number of concurrently running workers for "
-                             "models that support parallelism.")
-    parser.add_argument('--order', nargs="?", default="C", type=str,
-                        choices=["F", "C"],
-                        help="Allow to choose between fortran and C ordered "
-                             "data")
-    parser.add_argument('--random-seed', nargs="?", default=13, type=int,
-                        help="Common seed used by random number generator.")
+    parser.add_argument(
+        "--classifiers",
+        nargs="+",
+        choices=ESTIMATORS,
+        type=str,
+        default=["liblinear", "GaussianNB", "SGD", "CART"],
+        help="list of classifiers to benchmark.",
+    )
+    parser.add_argument(
+        "--n-jobs",
+        nargs="?",
+        default=1,
+        type=int,
+        help=(
+            "Number of concurrently running workers for "
+            "models that support parallelism."
+        ),
+    )
+    parser.add_argument(
+        "--order",
+        nargs="?",
+        default="C",
+        type=str,
+        choices=["F", "C"],
+        help="Allow to choose between fortran and C ordered data",
+    )
+    parser.add_argument(
+        "--random-seed",
+        nargs="?",
+        default=13,
+        type=int,
+        help="Common seed used by random number generator.",
+    )
     args = vars(parser.parse_args())
 
     print(__doc__)
 
     X_train, X_test, y_train, y_test = load_data(
-        order=args["order"], random_state=args["random_seed"])
+        order=args["order"], random_state=args["random_seed"]
+    )
 
     print("")
     print("Dataset statistics:")
@@ -137,14 +163,26 @@ if __name__ == "__main__":
     print("%s %d" % ("number of features:".ljust(25), X_train.shape[1]))
     print("%s %d" % ("number of classes:".ljust(25), np.unique(y_train).size))
     print("%s %s" % ("data type:".ljust(25), X_train.dtype))
-    print("%s %d (pos=%d, neg=%d, size=%dMB)"
-          % ("number of train samples:".ljust(25),
-             X_train.shape[0], np.sum(y_train == 1),
-             np.sum(y_train == 0), int(X_train.nbytes / 1e6)))
-    print("%s %d (pos=%d, neg=%d, size=%dMB)"
-          % ("number of test samples:".ljust(25),
-             X_test.shape[0], np.sum(y_test == 1),
-             np.sum(y_test == 0), int(X_test.nbytes / 1e6)))
+    print(
+        "%s %d (pos=%d, neg=%d, size=%dMB)"
+        % (
+            "number of train samples:".ljust(25),
+            X_train.shape[0],
+            np.sum(y_train == 1),
+            np.sum(y_train == 0),
+            int(X_train.nbytes / 1e6),
+        )
+    )
+    print(
+        "%s %d (pos=%d, neg=%d, size=%dMB)"
+        % (
+            "number of test samples:".ljust(25),
+            X_test.shape[0],
+            np.sum(y_test == 1),
+            np.sum(y_test == 0),
+            int(X_test.nbytes / 1e6),
+        )
+    )
 
     print()
     print("Training Classifiers")
@@ -155,9 +193,13 @@ if __name__ == "__main__":
         estimator = ESTIMATORS[name]
         estimator_params = estimator.get_params()
 
-        estimator.set_params(**{p: args["random_seed"]
-                                for p in estimator_params
-                                if p.endswith("random_state")})
+        estimator.set_params(
+            **{
+                p: args["random_seed"]
+                for p in estimator_params
+                if p.endswith("random_state")
+            }
+        )
 
         if "n_jobs" in estimator_params:
             estimator.set_params(n_jobs=args["n_jobs"])
@@ -177,13 +219,17 @@ if __name__ == "__main__":
     print()
     print("Classification performance:")
     print("===========================")
-    print("%s %s %s %s"
-          % ("Classifier  ", "train-time", "test-time", "error-rate"))
+    print("%s %s %s %s" % ("Classifier  ", "train-time", "test-time", "error-rate"))
     print("-" * 44)
     for name in sorted(args["classifiers"], key=error.get):
-        print("%s %s %s %s" % (name.ljust(12),
-                               ("%.4fs" % train_time[name]).center(10),
-                               ("%.4fs" % test_time[name]).center(10),
-                               ("%.4f" % error[name]).center(10)))
+        print(
+            "%s %s %s %s"
+            % (
+                name.ljust(12),
+                ("%.4fs" % train_time[name]).center(10),
+                ("%.4fs" % test_time[name]).center(10),
+                ("%.4f" % error[name]).center(10),
+            )
+        )
 
     print()

@@ -14,35 +14,75 @@ Courtesy of Jock A. Blackard and Colorado State University.
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 # License: BSD 3 clause
 
-from gzip import GzipFile
 import logging
-from os.path import dirname, exists, join
-from os import remove, makedirs
+import os
+from gzip import GzipFile
+from os.path import exists, join
+from tempfile import TemporaryDirectory
 
-import numpy as np
 import joblib
+import numpy as np
 
+from ..utils import Bunch, check_random_state
+from ..utils._param_validation import validate_params
 from . import get_data_home
-from ._base import _fetch_remote
-from ._base import RemoteFileMetadata
-from ._base import _refresh_cache
-from ..utils import Bunch
-from ._base import _pkl_filepath
-from ..utils import check_random_state
+from ._base import (
+    RemoteFileMetadata,
+    _convert_data_dataframe,
+    _fetch_remote,
+    _pkl_filepath,
+    load_descr,
+)
 
 # The original data can be found in:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
 ARCHIVE = RemoteFileMetadata(
-    filename='covtype.data.gz',
-    url='https://ndownloader.figshare.com/files/5976039',
-    checksum=('614360d0257557dd1792834a85a1cdeb'
-              'fadc3c4f30b011d56afee7ffb5b15771'))
+    filename="covtype.data.gz",
+    url="https://ndownloader.figshare.com/files/5976039",
+    checksum="614360d0257557dd1792834a85a1cdebfadc3c4f30b011d56afee7ffb5b15771",
+)
 
 logger = logging.getLogger(__name__)
 
+# Column names reference:
+# https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.info
+FEATURE_NAMES = [
+    "Elevation",
+    "Aspect",
+    "Slope",
+    "Horizontal_Distance_To_Hydrology",
+    "Vertical_Distance_To_Hydrology",
+    "Horizontal_Distance_To_Roadways",
+    "Hillshade_9am",
+    "Hillshade_Noon",
+    "Hillshade_3pm",
+    "Horizontal_Distance_To_Fire_Points",
+]
+FEATURE_NAMES += [f"Wilderness_Area_{i}" for i in range(4)]
+FEATURE_NAMES += [f"Soil_Type_{i}" for i in range(40)]
+TARGET_NAMES = ["Cover_Type"]
 
-def fetch_covtype(data_home=None, download_if_missing=True,
-                  random_state=None, shuffle=False, return_X_y=False):
+
+@validate_params(
+    {
+        "data_home": [str, os.PathLike, None],
+        "download_if_missing": ["boolean"],
+        "random_state": ["random_state"],
+        "shuffle": ["boolean"],
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
+def fetch_covtype(
+    *,
+    data_home=None,
+    download_if_missing=True,
+    random_state=None,
+    shuffle=False,
+    return_X_y=False,
+    as_frame=False,
+):
     """Load the covertype dataset (classification).
 
     Download it if necessary.
@@ -58,15 +98,15 @@ def fetch_covtype(data_home=None, download_if_missing=True,
 
     Parameters
     ----------
-    data_home : string, optional
+    data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing : boolean, default=True
-        If False, raise a IOError if the data is not locally available
+    download_if_missing : bool, default=True
+        If False, raise an OSError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -74,62 +114,84 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
 
         .. versionadded:: 0.20
 
+    as_frame : bool, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric). The target is a pandas DataFrame or
+        Series depending on the number of target columns. If `return_X_y` is
+        True, then (`data`, `target`) will be pandas DataFrames or Series as
+        described below.
+
+        .. versionadded:: 0.24
+
     Returns
     -------
-    dataset : dict-like object with the following attributes:
+    dataset : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
-    dataset.data : numpy array of shape (581012, 54)
-        Each row corresponds to the 54 features in the dataset.
-
-    dataset.target : numpy array of shape (581012,)
-        Each value corresponds to one of the 7 forest covertypes with values
-        ranging between 1 to 7.
-
-    dataset.DESCR : string
-        Description of the forest covertype dataset.
+        data : ndarray of shape (581012, 54)
+            Each row corresponds to the 54 features in the dataset.
+        target : ndarray of shape (581012,)
+            Each value corresponds to one of
+            the 7 forest covertypes with values
+            ranging between 1 to 7.
+        frame : dataframe of shape (581012, 55)
+            Only present when `as_frame=True`. Contains `data` and `target`.
+        DESCR : str
+            Description of the forest covertype dataset.
+        feature_names : list
+            The names of the dataset columns.
+        target_names: list
+            The names of the target columns.
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarray. The first containing a 2D array of
+        shape (n_samples, n_features) with each row representing one
+        sample and each column representing the features. The second
+        ndarray of shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
     """
-
     data_home = get_data_home(data_home=data_home)
     covtype_dir = join(data_home, "covertype")
     samples_path = _pkl_filepath(covtype_dir, "samples")
     targets_path = _pkl_filepath(covtype_dir, "targets")
-    available = exists(samples_path)
+    available = exists(samples_path) and exists(targets_path)
 
     if download_if_missing and not available:
-        if not exists(covtype_dir):
-            makedirs(covtype_dir)
-        logger.info("Downloading %s" % ARCHIVE.url)
+        os.makedirs(covtype_dir, exist_ok=True)
 
-        archive_path = _fetch_remote(ARCHIVE, dirname=covtype_dir)
-        Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=',')
-        # delete archive
-        remove(archive_path)
+        # Creating temp_dir as a direct subdirectory of the target directory
+        # guarantees that both reside on the same filesystem, so that we can use
+        # os.rename to atomically move the data files to their target location.
+        with TemporaryDirectory(dir=covtype_dir) as temp_dir:
+            logger.info(f"Downloading {ARCHIVE.url}")
+            archive_path = _fetch_remote(ARCHIVE, dirname=temp_dir)
+            Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=",")
 
-        X = Xy[:, :-1]
-        y = Xy[:, -1].astype(np.int32, copy=False)
+            X = Xy[:, :-1]
+            y = Xy[:, -1].astype(np.int32, copy=False)
 
-        joblib.dump(X, samples_path, compress=9)
-        joblib.dump(y, targets_path, compress=9)
+            samples_tmp_path = _pkl_filepath(temp_dir, "samples")
+            joblib.dump(X, samples_tmp_path, compress=9)
+            os.rename(samples_tmp_path, samples_path)
+
+            targets_tmp_path = _pkl_filepath(temp_dir, "targets")
+            joblib.dump(y, targets_tmp_path, compress=9)
+            os.rename(targets_tmp_path, targets_path)
 
     elif not available and not download_if_missing:
-        raise IOError("Data not found and `download_if_missing` is False")
+        raise OSError("Data not found and `download_if_missing` is False")
     try:
         X, y
     except NameError:
-        X, y = _refresh_cache([samples_path, targets_path], 9)
-        # TODO: Revert to the following two lines in v0.23
-        # X = joblib.load(samples_path)
-        # y = joblib.load(targets_path)
+        X = joblib.load(samples_path)
+        y = joblib.load(targets_path)
 
     if shuffle:
         ind = np.arange(X.shape[0])
@@ -138,11 +200,25 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         X = X[ind]
         y = y[ind]
 
-    module_path = dirname(__file__)
-    with open(join(module_path, 'descr', 'covtype.rst')) as rst_file:
-        fdescr = rst_file.read()
+    fdescr = load_descr("covtype.rst")
 
+    frame = None
+    if as_frame:
+        frame, X, y = _convert_data_dataframe(
+            caller_name="fetch_covtype",
+            data=X,
+            target=y,
+            feature_names=FEATURE_NAMES,
+            target_names=TARGET_NAMES,
+        )
     if return_X_y:
         return X, y
 
-    return Bunch(data=X, target=y, DESCR=fdescr)
+    return Bunch(
+        data=X,
+        target=y,
+        frame=frame,
+        target_names=TARGET_NAMES,
+        feature_names=FEATURE_NAMES,
+        DESCR=fdescr,
+    )

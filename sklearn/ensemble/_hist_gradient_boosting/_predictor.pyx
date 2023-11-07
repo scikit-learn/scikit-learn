@@ -1,106 +1,156 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: language_level=3
-
 # Author: Nicolas Hug
 
-cimport cython
 from cython.parallel import prange
 from libc.math cimport isnan
 import numpy as np
-cimport numpy as np
-from numpy.math cimport INFINITY
 
 from .common cimport X_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common import Y_DTYPE
 from .common cimport X_BINNED_DTYPE_C
+from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport node_struct
+from ._bitset cimport in_bitset_2d_memoryview
+from sklearn.utils._typedefs cimport intp_t
 
 
-def _predict_from_numeric_data(
-        node_struct [:] nodes,
+def _predict_from_raw_data(  # raw data = non-binned data
+        const node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
+        const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
+        const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
+        const unsigned int [::1] f_idx_map,
+        int n_threads,
         Y_DTYPE_C [:] out):
 
     cdef:
         int i
 
-    for i in prange(numeric_data.shape[0], schedule='static', nogil=True):
-        out[i] = _predict_one_from_numeric_data(nodes, numeric_data, i)
+    for i in prange(numeric_data.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
+        out[i] = _predict_one_from_raw_data(
+            nodes, numeric_data, raw_left_cat_bitsets,
+            known_cat_bitsets,
+            f_idx_map, i)
 
 
-cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
-        node_struct [:] nodes,
+cdef inline Y_DTYPE_C _predict_one_from_raw_data(
+        const node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
-        const int row) nogil:
+        const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
+        const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
+        const unsigned int [::1] f_idx_map,
+        const int row) noexcept nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
 
     cdef:
         node_struct node = nodes[0]
+        unsigned int node_idx = 0
+        X_DTYPE_C data_val
 
     while True:
         if node.is_leaf:
             return node.value
 
-        if isnan(numeric_data[row, node.feature_idx]):
+        data_val = numeric_data[row, node.feature_idx]
+
+        if isnan(data_val):
             if node.missing_go_to_left:
-                node = nodes[node.left]
+                node_idx = node.left
             else:
-                node = nodes[node.right]
+                node_idx = node.right
+        elif node.is_categorical:
+            if data_val < 0:
+                # data_val is not in the accepted range, so it is treated as missing value
+                node_idx = node.left if node.missing_go_to_left else node.right
+            elif in_bitset_2d_memoryview(
+                    raw_left_cat_bitsets,
+                    <X_BINNED_DTYPE_C>data_val,
+                    node.bitset_idx):
+                node_idx = node.left
+            elif in_bitset_2d_memoryview(
+                    known_cat_bitsets,
+                    <X_BINNED_DTYPE_C>data_val,
+                    f_idx_map[node.feature_idx]):
+                node_idx = node.right
+            else:
+                # Treat unknown categories as missing.
+                node_idx = node.left if node.missing_go_to_left else node.right
         else:
-            if numeric_data[row, node.feature_idx] <= node.threshold:
-                node = nodes[node.left]
+            if data_val <= node.num_threshold:
+                node_idx = node.left
             else:
-                node = nodes[node.right]
+                node_idx = node.right
+        node = nodes[node_idx]
 
 
 def _predict_from_binned_data(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
+        BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
         const unsigned char missing_values_bin_idx,
+        int n_threads,
         Y_DTYPE_C [:] out):
 
     cdef:
         int i
 
-    for i in prange(binned_data.shape[0], schedule='static', nogil=True):
-        out[i] = _predict_one_from_binned_data(nodes, binned_data, i,
+    for i in prange(binned_data.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
+        out[i] = _predict_one_from_binned_data(nodes,
+                                               binned_data,
+                                               binned_left_cat_bitsets, i,
                                                missing_values_bin_idx)
 
 
 cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
+        const BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
         const int row,
-        const unsigned char missing_values_bin_idx) nogil:
+        const unsigned char missing_values_bin_idx) noexcept nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
 
     cdef:
         node_struct node = nodes[0]
+        unsigned int node_idx = 0
+        X_BINNED_DTYPE_C data_val
 
     while True:
         if node.is_leaf:
             return node.value
-        if binned_data[row, node.feature_idx] ==  missing_values_bin_idx:
+
+        data_val = binned_data[row, node.feature_idx]
+
+        if data_val == missing_values_bin_idx:
             if node.missing_go_to_left:
-                node = nodes[node.left]
+                node_idx = node.left
             else:
-                node = nodes[node.right]
+                node_idx = node.right
+        elif node.is_categorical:
+            if in_bitset_2d_memoryview(
+                    binned_left_cat_bitsets,
+                    data_val,
+                    node.bitset_idx):
+                node_idx = node.left
+            else:
+                node_idx = node.right
         else:
-            if binned_data[row, node.feature_idx] <= node.bin_threshold:
-                node = nodes[node.left]
+            if data_val <= node.bin_threshold:
+                node_idx = node.left
             else:
-                node = nodes[node.right]
+                node_idx = node.right
+        node = nodes[node_idx]
+
 
 def _compute_partial_dependence(
     node_struct [:] nodes,
     const X_DTYPE_C [:, ::1] X,
     int [:] target_features,
-    Y_DTYPE_C [:] out):
+    Y_DTYPE_C [:] out
+):
     """Partial dependence of the response on the ``target_features`` set.
 
     For each sample in ``X`` a tree traversal is performed.
@@ -140,7 +190,7 @@ def _compute_partial_dependence(
         node_struct * current_node  # pointer to avoid copying attributes
 
         unsigned int sample_idx
-        unsigned feature_idx
+        intp_t feature_idx
         unsigned stack_size
         Y_DTYPE_C left_sample_frac
         Y_DTYPE_C current_weight
@@ -175,7 +225,7 @@ def _compute_partial_dependence(
 
                 if is_target_feature:
                     # In this case, we push left or right child on stack
-                    if X[sample_idx, feature_idx] <= current_node.threshold:
+                    if X[sample_idx, feature_idx] <= current_node.num_threshold:
                         node_idx_stack[stack_size] = current_node.left
                     else:
                         node_idx_stack[stack_size] = current_node.right
@@ -202,5 +252,4 @@ def _compute_partial_dependence(
 
         # Sanity check. Should never happen.
         if not (0.999 < total_weight < 1.001):
-            raise ValueError("Total weight should be 1.0 but was %.9f" %
-                                total_weight)
+            raise ValueError("Total weight should be 1.0 but was %.9f" %total_weight)

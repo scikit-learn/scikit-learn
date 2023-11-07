@@ -31,7 +31,7 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/* 
+/*
    Modified 2010:
 
    - Support for dense data by Ming-Fang Weng
@@ -48,6 +48,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
    - Make labels sorted in svm_group_classes, Fabian Pedregosa.
 
+   Modified 2020:
+
+   - Improved random number generator by using a mersenne twister + tweaked
+     lemire postprocessor. This fixed a convergence issue on windows targets.
+     Sylvain Marie, Schneider Electric
+     see <https://github.com/scikit-learn/scikit-learn/pull/13511#issuecomment-481729756>
+
+   Modified 2021:
+
+   - Exposed number of iterations run in optimization, Juan Martín Loyola.
+     See <https://github.com/scikit-learn/scikit-learn/pull/21408/>
  */
 
 #include <math.h>
@@ -57,7 +68,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <float.h>
 #include <string.h>
 #include <stdarg.h>
+#include <climits>
+#include <random>
 #include "svm.h"
+#include "_svm_cython_blas_helpers.h"
+#include "../newrand/newrand.h"
+
 
 #ifndef _LIBSVM_CPP
 typedef float Qfloat;
@@ -113,7 +129,7 @@ static void info(const char *fmt,...)
 and dense versions of this library */
 #ifdef _DENSE_REP
   #ifdef PREFIX
-    #undef PREFIX  
+    #undef PREFIX
   #endif
   #ifdef NAMESPACE
     #undef NAMESPACE
@@ -124,7 +140,7 @@ and dense versions of this library */
 #else
   /* sparse representation */
   #ifdef PREFIX
-    #undef PREFIX  
+    #undef PREFIX
   #endif
   #ifdef NAMESPACE
     #undef NAMESPACE
@@ -151,7 +167,7 @@ public:
 	// return some position p where [p,len) need to be filled
 	// (p >= len if nothing needs to be filled)
 	int get_data(const int index, Qfloat **data, int len);
-	void swap_index(int i, int j);	
+	void swap_index(int i, int j);
 private:
 	int l;
 	long int size;
@@ -279,14 +295,14 @@ public:
 class Kernel: public QMatrix {
 public:
 #ifdef _DENSE_REP
-	Kernel(int l, PREFIX(node) * x, const svm_parameter& param);
+	Kernel(int l, PREFIX(node) * x, const svm_parameter& param, BlasFunctions *blas_functions);
 #else
-	Kernel(int l, PREFIX(node) * const * x, const svm_parameter& param);
+	Kernel(int l, PREFIX(node) * const * x, const svm_parameter& param, BlasFunctions *blas_functions);
 #endif
 	virtual ~Kernel();
 
 	static double k_function(const PREFIX(node) *x, const PREFIX(node) *y,
-				 const svm_parameter& param);
+				 const svm_parameter& param, BlasFunctions *blas_functions);
 	virtual Qfloat *get_Q(int column, int len) const = 0;
 	virtual double *get_QD() const = 0;
 	virtual void swap_index(int i, int j) const	// no so const...
@@ -305,6 +321,8 @@ private:
 	const PREFIX(node) **x;
 #endif
 	double *x_square;
+	// scipy blas pointer
+	BlasFunctions *m_blas;
 
 	// svm_parameter
 	const int kernel_type;
@@ -312,26 +330,26 @@ private:
 	const double gamma;
 	const double coef0;
 
-	static double dot(const PREFIX(node) *px, const PREFIX(node) *py);
+	static double dot(const PREFIX(node) *px, const PREFIX(node) *py, BlasFunctions *blas_functions);
 #ifdef _DENSE_REP
-	static double dot(const PREFIX(node) &px, const PREFIX(node) &py);
+	static double dot(const PREFIX(node) &px, const PREFIX(node) &py, BlasFunctions *blas_functions);
 #endif
 
 	double kernel_linear(int i, int j) const
 	{
-		return dot(x[i],x[j]);
+		return dot(x[i],x[j],m_blas);
 	}
 	double kernel_poly(int i, int j) const
 	{
-		return powi(gamma*dot(x[i],x[j])+coef0,degree);
+		return powi(gamma*dot(x[i],x[j],m_blas)+coef0,degree);
 	}
 	double kernel_rbf(int i, int j) const
 	{
-		return exp(-gamma*(x_square[i]+x_square[j]-2*dot(x[i],x[j])));
+		return exp(-gamma*(x_square[i]+x_square[j]-2*dot(x[i],x[j],m_blas)));
 	}
 	double kernel_sigmoid(int i, int j) const
 	{
-		return tanh(gamma*dot(x[i],x[j])+coef0);
+		return tanh(gamma*dot(x[i],x[j],m_blas)+coef0);
 	}
 	double kernel_precomputed(int i, int j) const
 	{
@@ -344,13 +362,14 @@ private:
 };
 
 #ifdef _DENSE_REP
-Kernel::Kernel(int l, PREFIX(node) * x_, const svm_parameter& param)
+Kernel::Kernel(int l, PREFIX(node) * x_, const svm_parameter& param, BlasFunctions *blas_functions)
 #else
-Kernel::Kernel(int l, PREFIX(node) * const * x_, const svm_parameter& param)
+Kernel::Kernel(int l, PREFIX(node) * const * x_, const svm_parameter& param, BlasFunctions *blas_functions)
 #endif
 :kernel_type(param.kernel_type), degree(param.degree),
  gamma(param.gamma), coef0(param.coef0)
 {
+	m_blas = blas_functions;
 	switch(kernel_type)
 	{
 		case LINEAR:
@@ -376,7 +395,7 @@ Kernel::Kernel(int l, PREFIX(node) * const * x_, const svm_parameter& param)
 	{
 		x_square = new double[l];
 		for(int i=0;i<l;i++)
-			x_square[i] = dot(x[i],x[i]);
+			x_square[i] = dot(x[i],x[i],blas_functions);
 	}
 	else
 		x_square = 0;
@@ -389,27 +408,25 @@ Kernel::~Kernel()
 }
 
 #ifdef _DENSE_REP
-double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py)
+double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py, BlasFunctions *blas_functions)
 {
 	double sum = 0;
 
 	int dim = min(px->dim, py->dim);
-	for (int i = 0; i < dim; i++)
-		sum += (px->values)[i] * (py->values)[i];
+	sum = blas_functions->dot(dim, px->values, 1, py->values, 1);
 	return sum;
 }
 
-double Kernel::dot(const PREFIX(node) &px, const PREFIX(node) &py)
+double Kernel::dot(const PREFIX(node) &px, const PREFIX(node) &py, BlasFunctions *blas_functions)
 {
 	double sum = 0;
 
 	int dim = min(px.dim, py.dim);
-	for (int i = 0; i < dim; i++)
-		sum += px.values[i] * py.values[i];
+	sum = blas_functions->dot(dim, px.values, 1, py.values, 1);
 	return sum;
 }
 #else
-double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py)
+double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py, BlasFunctions *blas_functions)
 {
 	double sum = 0;
 	while(px->index != -1 && py->index != -1)
@@ -426,31 +443,33 @@ double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py)
 				++py;
 			else
 				++px;
-		}			
+		}
 	}
 	return sum;
 }
 #endif
 
 double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
-			  const svm_parameter& param)
+			  const svm_parameter& param, BlasFunctions *blas_functions)
 {
 	switch(param.kernel_type)
 	{
 		case LINEAR:
-			return dot(x,y);
+			return dot(x,y,blas_functions);
 		case POLY:
-			return powi(param.gamma*dot(x,y)+param.coef0,param.degree);
+			return powi(param.gamma*dot(x,y,blas_functions)+param.coef0,param.degree);
 		case RBF:
 		{
 			double sum = 0;
 #ifdef _DENSE_REP
 			int dim = min(x->dim, y->dim), i;
+			double* m_array = (double*)malloc(sizeof(double)*dim);
 			for (i = 0; i < dim; i++)
 			{
-				double d = x->values[i] - y->values[i];
-				sum += d*d;
+				m_array[i] = x->values[i] - y->values[i];
 			}
+			sum = blas_functions->dot(dim, m_array, 1, m_array, 1);
+			free(m_array);
 			for (; i < x->dim; i++)
 				sum += x->values[i] * x->values[i];
 			for (; i < y->dim; i++)
@@ -468,7 +487,7 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 				else
 				{
 					if(x->index > y->index)
-					{	
+					{
 						sum += y->value * y->value;
 						++y;
 					}
@@ -495,7 +514,7 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			return exp(-param.gamma*sum);
 		}
 		case SIGMOID:
-			return tanh(param.gamma*dot(x,y)+param.coef0);
+			return tanh(param.gamma*dot(x,y,blas_functions)+param.coef0);
 		case PRECOMPUTED:  //x: test (validation), y: SV
                     {
 #ifdef _DENSE_REP
@@ -505,10 +524,9 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 #endif
                     }
 		default:
-			return 0;  // Unreachable 
+			return 0;  // Unreachable
 	}
 }
-
 // An SMO algorithm in Fan et al., JMLR 6(2005), p. 1889--1918
 // Solves:
 //
@@ -539,6 +557,7 @@ public:
                 double *upper_bound;
 		double r;	// for Solver_NU
                 bool solve_timed_out;
+		int n_iter;
 	};
 
 	void Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
@@ -583,7 +602,7 @@ protected:
 	virtual double calculate_rho();
 	virtual void do_shrinking();
 private:
-	bool be_shrunk(int i, double Gmax1, double Gmax2);	
+	bool be_shrunk(int i, double Gmax1, double Gmax2);
 };
 
 void Solver::swap_index(int i, int j)
@@ -731,11 +750,11 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 			else
 				counter = 1;	// do shrinking next iteration
 		}
-		
+
 		++iter;
 
 		// update alpha[i] and alpha[j], handle bounds carefully
-		
+
 		const Qfloat *Q_i = Q.get_Q(i,active_size);
 		const Qfloat *Q_j = Q.get_Q(j,active_size);
 
@@ -754,7 +773,7 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 			double diff = alpha[i] - alpha[j];
 			alpha[i] += delta;
 			alpha[j] += delta;
-			
+
 			if(diff > 0)
 			{
 				if(alpha[j] < 0)
@@ -836,7 +855,7 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 
 		double delta_alpha_i = alpha[i] - old_alpha_i;
 		double delta_alpha_j = alpha[j] - old_alpha_j;
-		
+
 		for(int k=0;k<active_size;k++)
 		{
 			G[k] += Q_i[k]*delta_alpha_i + Q_j[k]*delta_alpha_j;
@@ -905,6 +924,9 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 	for(int i=0;i<l;i++)
 		si->upper_bound[i] = C[i];
 
+	// store number of iterations
+	si->n_iter = iter;
+
 	info("\noptimization finished, #iter = %d\n",iter);
 
 	delete[] p;
@@ -923,9 +945,9 @@ int Solver::select_working_set(int &out_i, int &out_j)
 	// return i,j such that
 	// i: maximizes -y_i * grad(f)_i, i in I_up(\alpha)
 	// j: minimizes the decrease of obj value
-	//    (if quadratic coefficeint <= 0, replace it with tau)
+	//    (if quadratic coefficient <= 0, replace it with tau)
 	//    -y_j*grad(f)_j < -y_i*grad(f)_i, j in I_low(\alpha)
-	
+
 	double Gmax = -INF;
 	double Gmax2 = -INF;
 	int Gmax_idx = -1;
@@ -933,7 +955,7 @@ int Solver::select_working_set(int &out_i, int &out_j)
 	double obj_diff_min = INF;
 
 	for(int t=0;t<active_size;t++)
-		if(y[t]==+1)	
+		if(y[t]==+1)
 		{
 			if(!is_upper_bound(t))
 				if(-G[t] >= Gmax)
@@ -968,7 +990,7 @@ int Solver::select_working_set(int &out_i, int &out_j)
 					Gmax2 = G[j];
 				if (grad_diff > 0)
 				{
-					double obj_diff; 
+					double obj_diff;
 					double quad_coef = QD[i]+QD[j]-2.0*y[i]*Q_i[j];
 					if (quad_coef > 0)
 						obj_diff = -(grad_diff*grad_diff)/quad_coef;
@@ -992,7 +1014,7 @@ int Solver::select_working_set(int &out_i, int &out_j)
 					Gmax2 = -G[j];
 				if (grad_diff > 0)
 				{
-					double obj_diff; 
+					double obj_diff;
 					double quad_coef = QD[i]+QD[j]+2.0*y[i]*Q_i[j];
 					if (quad_coef > 0)
 						obj_diff = -(grad_diff*grad_diff)/quad_coef;
@@ -1030,7 +1052,7 @@ bool Solver::be_shrunk(int i, double Gmax1, double Gmax2)
 	{
 		if(y[i]==+1)
 			return(G[i] > Gmax2);
-		else	
+		else
 			return(G[i] > Gmax1);
 	}
 	else
@@ -1046,27 +1068,27 @@ void Solver::do_shrinking()
 	// find maximal violating pair first
 	for(i=0;i<active_size;i++)
 	{
-		if(y[i]==+1)	
+		if(y[i]==+1)
 		{
-			if(!is_upper_bound(i))	
+			if(!is_upper_bound(i))
 			{
 				if(-G[i] >= Gmax1)
 					Gmax1 = -G[i];
 			}
-			if(!is_lower_bound(i))	
+			if(!is_lower_bound(i))
 			{
 				if(G[i] >= Gmax2)
 					Gmax2 = G[i];
 			}
 		}
-		else	
+		else
 		{
-			if(!is_upper_bound(i))	
+			if(!is_upper_bound(i))
 			{
 				if(-G[i] >= Gmax2)
 					Gmax2 = -G[i];
 			}
-			if(!is_lower_bound(i))	
+			if(!is_lower_bound(i))
 			{
 				if(G[i] >= Gmax1)
 					Gmax1 = G[i];
@@ -1074,7 +1096,7 @@ void Solver::do_shrinking()
 		}
 	}
 
-	if(unshrink == false && Gmax1 + Gmax2 <= eps*10) 
+	if(unshrink == false && Gmax1 + Gmax2 <= eps*10)
 	{
 		unshrink = true;
 		reconstruct_gradient();
@@ -1166,7 +1188,7 @@ int Solver_NU::select_working_set(int &out_i, int &out_j)
 	// return i,j such that y_i = y_j and
 	// i: maximizes -y_i * grad(f)_i, i in I_up(\alpha)
 	// j: minimizes the decrease of obj value
-	//    (if quadratic coefficeint <= 0, replace it with tau)
+	//    (if quadratic coefficient <= 0, replace it with tau)
 	//    -y_j*grad(f)_j < -y_i*grad(f)_i, j in I_low(\alpha)
 
 	double Gmaxp = -INF;
@@ -1213,14 +1235,14 @@ int Solver_NU::select_working_set(int &out_i, int &out_j)
 	{
 		if(y[j]==+1)
 		{
-			if (!is_lower_bound(j))	
+			if (!is_lower_bound(j))
 			{
 				double grad_diff=Gmaxp+G[j];
 				if (G[j] >= Gmaxp2)
 					Gmaxp2 = G[j];
 				if (grad_diff > 0)
 				{
-					double obj_diff; 
+					double obj_diff;
 					double quad_coef = QD[ip]+QD[j]-2*Q_ip[j];
 					if (quad_coef > 0)
 						obj_diff = -(grad_diff*grad_diff)/quad_coef;
@@ -1244,7 +1266,7 @@ int Solver_NU::select_working_set(int &out_i, int &out_j)
 					Gmaxn2 = -G[j];
 				if (grad_diff > 0)
 				{
-					double obj_diff; 
+					double obj_diff;
 					double quad_coef = QD[in]+QD[j]-2*Q_in[j];
 					if (quad_coef > 0)
 						obj_diff = -(grad_diff*grad_diff)/quad_coef;
@@ -1279,14 +1301,14 @@ bool Solver_NU::be_shrunk(int i, double Gmax1, double Gmax2, double Gmax3, doubl
 	{
 		if(y[i]==+1)
 			return(-G[i] > Gmax1);
-		else	
+		else
 			return(-G[i] > Gmax4);
 	}
 	else if(is_lower_bound(i))
 	{
 		if(y[i]==+1)
 			return(G[i] > Gmax2);
-		else	
+		else
 			return(G[i] > Gmax3);
 	}
 	else
@@ -1315,14 +1337,14 @@ void Solver_NU::do_shrinking()
 		if(!is_lower_bound(i))
 		{
 			if(y[i]==+1)
-			{	
+			{
 				if(G[i] > Gmax2) Gmax2 = G[i];
 			}
 			else	if(G[i] > Gmax3) Gmax3 = G[i];
 		}
 	}
 
-	if(unshrink == false && max(Gmax1+Gmax2,Gmax3+Gmax4) <= eps*10) 
+	if(unshrink == false && max(Gmax1+Gmax2,Gmax3+Gmax4) <= eps*10)
 	{
 		unshrink = true;
 		reconstruct_gradient();
@@ -1385,12 +1407,12 @@ double Solver_NU::calculate_rho()
 		r1 = sum_free1/nr_free1;
 	else
 		r1 = (ub1+lb1)/2;
-	
+
 	if(nr_free2 > 0)
 		r2 = sum_free2/nr_free2;
 	else
 		r2 = (ub2+lb2)/2;
-	
+
 	si->r = (r1+r2)/2;
 	return (r1-r2)/2;
 }
@@ -1399,10 +1421,10 @@ double Solver_NU::calculate_rho()
 // Q matrices for various formulations
 //
 class SVC_Q: public Kernel
-{ 
+{
 public:
-	SVC_Q(const PREFIX(problem)& prob, const svm_parameter& param, const schar *y_)
-	:Kernel(prob.l, prob.x, param)
+	SVC_Q(const PREFIX(problem)& prob, const svm_parameter& param, const schar *y_, BlasFunctions *blas_functions)
+	:Kernel(prob.l, prob.x, param, blas_functions)
 	{
 		clone(y,y_,prob.l);
 		cache = new Cache(prob.l,(long int)(param.cache_size*(1<<20)));
@@ -1410,7 +1432,7 @@ public:
 		for(int i=0;i<prob.l;i++)
 			QD[i] = (this->*kernel_function)(i,i);
 	}
-	
+
 	Qfloat *get_Q(int i, int len) const
 	{
 		Qfloat *data;
@@ -1451,15 +1473,15 @@ private:
 class ONE_CLASS_Q: public Kernel
 {
 public:
-	ONE_CLASS_Q(const PREFIX(problem)& prob, const svm_parameter& param)
-	:Kernel(prob.l, prob.x, param)
+	ONE_CLASS_Q(const PREFIX(problem)& prob, const svm_parameter& param, BlasFunctions *blas_functions)
+	:Kernel(prob.l, prob.x, param, blas_functions)
 	{
 		cache = new Cache(prob.l,(long int)(param.cache_size*(1<<20)));
 		QD = new double[prob.l];
 		for(int i=0;i<prob.l;i++)
 			QD[i] = (this->*kernel_function)(i,i);
 	}
-	
+
 	Qfloat *get_Q(int i, int len) const
 	{
 		Qfloat *data;
@@ -1495,10 +1517,10 @@ private:
 };
 
 class SVR_Q: public Kernel
-{ 
+{
 public:
-	SVR_Q(const PREFIX(problem)& prob, const svm_parameter& param)
-	:Kernel(prob.l, prob.x, param)
+	SVR_Q(const PREFIX(problem)& prob, const svm_parameter& param, BlasFunctions *blas_functions)
+	:Kernel(prob.l, prob.x, param, blas_functions)
 	{
 		l = prob.l;
 		cache = new Cache(l,(long int)(param.cache_size*(1<<20)));
@@ -1525,7 +1547,7 @@ public:
 		swap(index[i],index[j]);
 		swap(QD[i],QD[j]);
 	}
-	
+
 	Qfloat *get_Q(int i, int len) const
 	{
 		Qfloat *data;
@@ -1574,7 +1596,7 @@ private:
 //
 static void solve_c_svc(
 	const PREFIX(problem) *prob, const svm_parameter* param,
-	double *alpha, Solver::SolutionInfo* si, double Cp, double Cn)
+	double *alpha, Solver::SolutionInfo* si, double Cp, double Cn, BlasFunctions *blas_functions)
 {
 	int l = prob->l;
 	double *minus_ones = new double[l];
@@ -1600,7 +1622,7 @@ static void solve_c_svc(
 	}
 
 	Solver s;
-	s.Solve(l, SVC_Q(*prob,*param,y), minus_ones, y,
+	s.Solve(l, SVC_Q(*prob,*param,y, blas_functions), minus_ones, y,
 		alpha, C, param->eps, si, param->shrinking,
                 param->max_iter);
 
@@ -1623,7 +1645,7 @@ static void solve_c_svc(
 
 static void solve_nu_svc(
 	const PREFIX(problem) *prob, const svm_parameter *param,
-	double *alpha, Solver::SolutionInfo* si)
+	double *alpha, Solver::SolutionInfo* si, BlasFunctions *blas_functions)
 {
 	int i;
 	int l = prob->l;
@@ -1641,7 +1663,7 @@ static void solve_nu_svc(
 
 		C[i] = prob->W[i];
 	}
-	
+
 	double nu_l = 0;
 	for(i=0;i<l;i++) nu_l += nu*C[i];
 	double sum_pos = nu_l/2;
@@ -1665,7 +1687,7 @@ static void solve_nu_svc(
 		zeros[i] = 0;
 
 	Solver_NU s;
-	s.Solve(l, SVC_Q(*prob,*param,y), zeros, y,
+	s.Solve(l, SVC_Q(*prob,*param,y,blas_functions), zeros, y,
 		alpha, C, param->eps, si,  param->shrinking, param->max_iter);
 	double r = si->r;
 
@@ -1674,7 +1696,7 @@ static void solve_nu_svc(
 	for(i=0;i<l;i++)
         {
 		alpha[i] *= y[i]/r;
-		si->upper_bound[i] /= r;                
+		si->upper_bound[i] /= r;
         }
 
 	si->rho /= r;
@@ -1687,7 +1709,7 @@ static void solve_nu_svc(
 
 static void solve_one_class(
 	const PREFIX(problem) *prob, const svm_parameter *param,
-	double *alpha, Solver::SolutionInfo* si)
+	double *alpha, Solver::SolutionInfo* si, BlasFunctions *blas_functions)
 {
 	int l = prob->l;
 	double *zeros = new double[l];
@@ -1720,7 +1742,7 @@ static void solve_one_class(
 	}
 
 	Solver s;
-	s.Solve(l, ONE_CLASS_Q(*prob,*param), zeros, ones,
+	s.Solve(l, ONE_CLASS_Q(*prob,*param,blas_functions), zeros, ones,
 		alpha, C, param->eps, si, param->shrinking, param->max_iter);
 
         delete[] C;
@@ -1730,7 +1752,7 @@ static void solve_one_class(
 
 static void solve_epsilon_svr(
 	const PREFIX(problem) *prob, const svm_parameter *param,
-	double *alpha, Solver::SolutionInfo* si)
+	double *alpha, Solver::SolutionInfo* si, BlasFunctions *blas_functions)
 {
 	int l = prob->l;
 	double *alpha2 = new double[2*l];
@@ -1753,7 +1775,7 @@ static void solve_epsilon_svr(
 	}
 
 	Solver s;
-	s.Solve(2*l, SVR_Q(*prob,*param), linear_term, y,
+	s.Solve(2*l, SVR_Q(*prob,*param,blas_functions), linear_term, y,
 		alpha2, C, param->eps, si, param->shrinking, param->max_iter);
 
 	double sum_alpha = 0;
@@ -1772,7 +1794,7 @@ static void solve_epsilon_svr(
 
 static void solve_nu_svr(
 	const PREFIX(problem) *prob, const svm_parameter *param,
-	double *alpha, Solver::SolutionInfo* si)
+	double *alpha, Solver::SolutionInfo* si, BlasFunctions *blas_functions)
 {
 	int l = prob->l;
 	double *C = new double[2*l];
@@ -1802,7 +1824,7 @@ static void solve_nu_svr(
 	}
 
 	Solver_NU s;
-	s.Solve(2*l, SVR_Q(*prob,*param), linear_term, y,
+	s.Solve(2*l, SVR_Q(*prob,*param,blas_functions), linear_term, y,
 		alpha2, C, param->eps, si, param->shrinking, param->max_iter);
 
 	info("epsilon = %f\n",-si->r);
@@ -1822,36 +1844,37 @@ static void solve_nu_svr(
 struct decision_function
 {
 	double *alpha;
-	double rho;	
+	double rho;
+	int n_iter;
 };
 
 static decision_function svm_train_one(
 	const PREFIX(problem) *prob, const svm_parameter *param,
-	double Cp, double Cn, int *status)
+	double Cp, double Cn, int *status, BlasFunctions *blas_functions)
 {
 	double *alpha = Malloc(double,prob->l);
 	Solver::SolutionInfo si;
 	switch(param->svm_type)
 	{
  		case C_SVC:
-			si.upper_bound = Malloc(double,prob->l); 
- 			solve_c_svc(prob,param,alpha,&si,Cp,Cn);
+			si.upper_bound = Malloc(double,prob->l);
+ 			solve_c_svc(prob,param,alpha,&si,Cp,Cn,blas_functions);
  			break;
  		case NU_SVC:
-			si.upper_bound = Malloc(double,prob->l); 
- 			solve_nu_svc(prob,param,alpha,&si);
+			si.upper_bound = Malloc(double,prob->l);
+ 			solve_nu_svc(prob,param,alpha,&si,blas_functions);
  			break;
  		case ONE_CLASS:
-			si.upper_bound = Malloc(double,prob->l); 
- 			solve_one_class(prob,param,alpha,&si);
+			si.upper_bound = Malloc(double,prob->l);
+ 			solve_one_class(prob,param,alpha,&si,blas_functions);
  			break;
  		case EPSILON_SVR:
-			si.upper_bound = Malloc(double,2*prob->l); 
- 			solve_epsilon_svr(prob,param,alpha,&si);
+			si.upper_bound = Malloc(double,2*prob->l);
+ 			solve_epsilon_svr(prob,param,alpha,&si,blas_functions);
  			break;
  		case NU_SVR:
-			si.upper_bound = Malloc(double,2*prob->l); 
- 			solve_nu_svr(prob,param,alpha,&si);
+			si.upper_bound = Malloc(double,2*prob->l);
+ 			solve_nu_svr(prob,param,alpha,&si,blas_functions);
  			break;
 	}
 
@@ -1888,12 +1911,13 @@ static decision_function svm_train_one(
 	decision_function f;
 	f.alpha = alpha;
 	f.rho = si.rho;
+	f.n_iter = si.n_iter;
 	return f;
 }
 
 // Platt's binary SVM Probabilistic Output: an improvement from Lin et al.
 static void sigmoid_train(
-	int l, const double *dec_values, const double *labels, 
+	int l, const double *dec_values, const double *labels,
 	double& A, double& B)
 {
 	double prior1=0, prior0 = 0;
@@ -1902,7 +1926,7 @@ static void sigmoid_train(
 	for (i=0;i<l;i++)
 		if (labels[i] > 0) prior1+=1;
 		else prior0+=1;
-	
+
 	int max_iter=100;	// Maximal number of iterations
 	double min_step=1e-10;	// Minimal step taken in line search
 	double sigma=1e-12;	// For numerically strict PD of Hessian
@@ -1912,8 +1936,8 @@ static void sigmoid_train(
 	double *t=Malloc(double,l);
 	double fApB,p,q,h11,h22,h21,g1,g2,det,dA,dB,gd,stepsize;
 	double newA,newB,newf,d1,d2;
-	int iter; 
-	
+	int iter;
+
 	// Initial Point and Initial Fun Value
 	A=0.0; B=log((prior0+1.0)/(prior1+1.0));
 	double fval = 0.0;
@@ -2023,7 +2047,7 @@ static void multiclass_probability(int k, double **r, double *p)
 	double **Q=Malloc(double *,k);
 	double *Qp=Malloc(double,k);
 	double pQp, eps=0.005/k;
-	
+
 	for (t=0;t<k;t++)
 	{
 		p[t]=1.0/k;  // Valid if k = 1
@@ -2059,7 +2083,7 @@ static void multiclass_probability(int k, double **r, double *p)
 				max_error=error;
 		}
 		if (max_error<eps) break;
-		
+
 		for (t=0;t<k;t++)
 		{
 			double diff=(-Qp[t]+pQp)/Q[t][t];
@@ -2082,7 +2106,7 @@ static void multiclass_probability(int k, double **r, double *p)
 // Cross-validation decision values for probability estimates
 static void svm_binary_svc_probability(
 	const PREFIX(problem) *prob, const svm_parameter *param,
-	double Cp, double Cn, double& probA, double& probB, int * status)
+	double Cp, double Cn, double& probA, double& probB, int * status, BlasFunctions *blas_functions)
 {
 	int i;
 	int nr_fold = 5;
@@ -2093,7 +2117,7 @@ static void svm_binary_svc_probability(
 	for(i=0;i<prob->l;i++) perm[i]=i;
 	for(i=0;i<prob->l;i++)
 	{
-		int j = i+rand()%(prob->l-i);
+		int j = i+bounded_rand_int(prob->l-i);
 		swap(perm[i],perm[j]);
 	}
 	for(i=0;i<nr_fold;i++)
@@ -2111,7 +2135,7 @@ static void svm_binary_svc_probability(
 #endif
 		subprob.y = Malloc(double,subprob.l);
                 subprob.W = Malloc(double,subprob.l);
-			
+
 		k=0;
 		for(j=0;j<begin;j++)
 		{
@@ -2155,32 +2179,32 @@ static void svm_binary_svc_probability(
 			subparam.weight_label[1]=-1;
 			subparam.weight[0]=Cp;
 			subparam.weight[1]=Cn;
-			struct PREFIX(model) *submodel = PREFIX(train)(&subprob,&subparam, status);
+			struct PREFIX(model) *submodel = PREFIX(train)(&subprob,&subparam, status, blas_functions);
 			for(j=begin;j<end;j++)
 			{
 #ifdef _DENSE_REP
-                                PREFIX(predict_values)(submodel,(prob->x+perm[j]),&(dec_values[perm[j]])); 
+                                PREFIX(predict_values)(submodel,(prob->x+perm[j]),&(dec_values[perm[j]]), blas_functions);
 #else
-				PREFIX(predict_values)(submodel,prob->x[perm[j]],&(dec_values[perm[j]])); 
+				PREFIX(predict_values)(submodel,prob->x[perm[j]],&(dec_values[perm[j]]), blas_functions);
 #endif
 				// ensure +1 -1 order; reason not using CV subroutine
 				dec_values[perm[j]] *= submodel->label[0];
-			}		
+			}
 			PREFIX(free_and_destroy_model)(&submodel);
 			PREFIX(destroy_param)(&subparam);
 		}
 		free(subprob.x);
 		free(subprob.y);
                 free(subprob.W);
-	}		
+	}
 	sigmoid_train(prob->l,dec_values,prob->y,probA,probB);
 	free(dec_values);
 	free(perm);
 }
 
-// Return parameter of a Laplace distribution 
+// Return parameter of a Laplace distribution
 static double svm_svr_probability(
-	const PREFIX(problem) *prob, const svm_parameter *param)
+	const PREFIX(problem) *prob, const svm_parameter *param, BlasFunctions *blas_functions)
 {
 	int i;
 	int nr_fold = 5;
@@ -2191,20 +2215,20 @@ static double svm_svr_probability(
 	newparam.probability = 0;
     newparam.random_seed = -1; // This is called from train, which already sets
                                // the seed.
-	PREFIX(cross_validation)(prob,&newparam,nr_fold,ymv);
+	PREFIX(cross_validation)(prob,&newparam,nr_fold,ymv, blas_functions);
 	for(i=0;i<prob->l;i++)
 	{
 		ymv[i]=prob->y[i]-ymv[i];
 		mae += fabs(ymv[i]);
-	}		
+	}
 	mae /= prob->l;
 	double std=sqrt(2*mae*mae);
 	int count=0;
 	mae=0;
 	for(i=0;i<prob->l;i++)
-		if (fabs(ymv[i]) > 5*std) 
+		if (fabs(ymv[i]) > 5*std)
 			count=count+1;
-		else 
+		else
 			mae+=fabs(ymv[i]);
 	mae /= (prob->l-count);
 	info("Prob. model for test data: target value = predicted value + z,\nz: Laplace distribution e^(-|z|/sigma)/(2sigma),sigma= %g\n",mae);
@@ -2223,7 +2247,7 @@ static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, in
 	int nr_class = 0;
 	int *label = Malloc(int,max_nr_class);
 	int *count = Malloc(int,max_nr_class);
-	int *data_label = Malloc(int,l);	
+	int *data_label = Malloc(int,l);
 	int i, j, this_label, this_count;
 
 	for(i=0;i<l;i++)
@@ -2251,7 +2275,7 @@ static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, in
 		}
 	}
 
-        /* 
+        /*
          * Sort labels by straight insertion and apply the same
          * transformation to array count.
          */
@@ -2278,7 +2302,7 @@ static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, in
                         j ++;
                 }
                 data_label[i] = j;
-        }                
+        }
 
 	int *start = Malloc(int,nr_class);
 	start[0] = 0;
@@ -2305,7 +2329,7 @@ static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, in
 
 // Remove zero weighed data as libsvm and some liblinear solvers require C > 0.
 //
-static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *prob) 
+static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *prob)
 {
 	int i;
 	int l = 0;
@@ -2336,7 +2360,7 @@ static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *
 // Interface functions
 //
 PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *param,
-        int *status)
+        int *status, BlasFunctions *blas_functions)
 {
 	PREFIX(problem) newprob;
 	remove_zero_weight(&newprob, prob);
@@ -2348,7 +2372,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 
     if(param->random_seed >= 0)
     {
-        srand(param->random_seed);
+        set_seed(param->random_seed);
     }
 
 	if(param->svm_type == ONE_CLASS ||
@@ -2362,17 +2386,19 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 		model->probA = NULL; model->probB = NULL;
 		model->sv_coef = Malloc(double *,1);
 
-		if(param->probability && 
+		if(param->probability &&
 		   (param->svm_type == EPSILON_SVR ||
 		    param->svm_type == NU_SVR))
 		{
 			model->probA = Malloc(double,1);
-			model->probA[0] = NAMESPACE::svm_svr_probability(prob,param);
+			model->probA[0] = NAMESPACE::svm_svr_probability(prob,param,blas_functions);
 		}
 
-                NAMESPACE::decision_function f = NAMESPACE::svm_train_one(prob,param,0,0, status);
+                NAMESPACE::decision_function f = NAMESPACE::svm_train_one(prob,param,0,0, status,blas_functions);
 		model->rho = Malloc(double,1);
 		model->rho[0] = f.rho;
+		model->n_iter = Malloc(int,1);
+		model->n_iter[0] = f.n_iter;
 
 		int nSV = 0;
 		int i;
@@ -2394,7 +2420,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
                                 model->sv_ind[j] = i;
 				model->sv_coef[0][j] = f.alpha[i];
 				++j;
-			}		
+			}
 
 		free(f.alpha);
 	}
@@ -2409,7 +2435,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 		int *perm = Malloc(int,l);
 
 		// group training data of the same class
-                NAMESPACE::svm_group_classes(prob,&nr_class,&label,&start,&count,perm);		
+                NAMESPACE::svm_group_classes(prob,&nr_class,&label,&start,&count,perm);
 #ifdef _DENSE_REP
 		PREFIX(node) *x = Malloc(PREFIX(node),l);
 #else
@@ -2430,7 +2456,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 		for(i=0;i<nr_class;i++)
 			weighted_C[i] = param->C;
 		for(i=0;i<param->nr_weight;i++)
-		{	
+		{
 			int j;
 			for(j=0;j<nr_class;j++)
 				if(param->weight_label[i] == label[j])
@@ -2442,7 +2468,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 		}
 
 		// train k*(k-1)/2 models
-		
+
 		bool *nonzero = Malloc(bool,l);
 		for(i=0;i<l;i++)
 			nonzero[i] = false;
@@ -2485,9 +2511,9 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 				}
 
 				if(param->probability)
-                                    NAMESPACE::svm_binary_svc_probability(&sub_prob,param,weighted_C[i],weighted_C[j],probA[p],probB[p], status);
+                                    NAMESPACE::svm_binary_svc_probability(&sub_prob,param,weighted_C[i],weighted_C[j],probA[p],probB[p], status, blas_functions);
 
-				f[p] = NAMESPACE::svm_train_one(&sub_prob,param,weighted_C[i],weighted_C[j], status);
+				f[p] = NAMESPACE::svm_train_one(&sub_prob,param,weighted_C[i],weighted_C[j], status, blas_functions);
 				for(k=0;k<ci;k++)
 					if(!nonzero[si+k] && fabs(f[p].alpha[k]) > 0)
 						nonzero[si+k] = true;
@@ -2503,14 +2529,18 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 		// build output
 
 		model->nr_class = nr_class;
-		
+
 		model->label = Malloc(int,nr_class);
 		for(i=0;i<nr_class;i++)
 			model->label[i] = label[i];
-		
+
 		model->rho = Malloc(double,nr_class*(nr_class-1)/2);
+		model->n_iter = Malloc(int,nr_class*(nr_class-1)/2);
 		for(i=0;i<nr_class*(nr_class-1)/2;i++)
+		{
 			model->rho[i] = f[i].rho;
+			model->n_iter[i] = f[i].n_iter;
+		}
 
 		if(param->probability)
 		{
@@ -2536,7 +2566,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 			int nSV = 0;
 			for(int j=0;j<count[i];j++)
 				if(nonzero[start[i]+j])
-				{	
+				{
 					++nSV;
 					++total_sv;
 				}
@@ -2555,7 +2585,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 #endif
 		p = 0;
 		for(i=0;i<l;i++) {
-			if(nonzero[i]) { 
+			if(nonzero[i]) {
                                 model->SV[p] = x[i];
                                 model->sv_ind[p] = perm[i];
                                 ++p;
@@ -2583,7 +2613,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 				int sj = start[j];
 				int ci = count[i];
 				int cj = count[j];
-				
+
 				int q = nz_start[i];
 				int k;
 				for(k=0;k<ci;k++)
@@ -2595,7 +2625,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 						model->sv_coef[i][q++] = f[p].alpha[ci+k];
 				++p;
 			}
-		
+
 		free(label);
 		free(probA);
 		free(probB);
@@ -2619,7 +2649,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 }
 
 // Stratified cross validation
-void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *param, int nr_fold, double *target)
+void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *param, int nr_fold, double *target, BlasFunctions *blas_functions)
 {
 	int i;
 	int *fold_start = Malloc(int,nr_fold+1);
@@ -2628,7 +2658,7 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 	int nr_class;
     if(param->random_seed >= 0)
     {
-        srand(param->random_seed);
+        set_seed(param->random_seed);
     }
 
 	// stratified cv may not give leave-one-out rate
@@ -2647,10 +2677,10 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 		int *index = Malloc(int,l);
 		for(i=0;i<l;i++)
 			index[i]=perm[i];
-		for (c=0; c<nr_class; c++) 
+		for (c=0; c<nr_class; c++)
 			for(i=0;i<count[c];i++)
 			{
-				int j = i+rand()%(count[c]-i);
+				int j = i+bounded_rand_int(count[c]-i);
 				swap(index[start[c]+j],index[start[c]+i]);
 			}
 		for(i=0;i<nr_fold;i++)
@@ -2676,9 +2706,9 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 		fold_start[0]=0;
 		for (i=1;i<=nr_fold;i++)
 			fold_start[i] = fold_start[i-1]+fold_count[i-1];
-		free(start);	
+		free(start);
 		free(label);
-		free(count);	
+		free(count);
 		free(index);
 		free(fold_count);
 	}
@@ -2687,7 +2717,7 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 		for(i=0;i<l;i++) perm[i]=i;
 		for(i=0;i<l;i++)
 		{
-			int j = i+rand()%(l-i);
+			int j = i+bounded_rand_int(l-i);
 			swap(perm[i],perm[j]);
 		}
 		for(i=0;i<=nr_fold;i++)
@@ -2709,7 +2739,7 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 #endif
 		subprob.y = Malloc(double,subprob.l);
 		subprob.W = Malloc(double,subprob.l);
-			
+
 		k=0;
 		for(j=0;j<begin;j++)
 		{
@@ -2726,33 +2756,33 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 			++k;
 		}
                 int dummy_status = 0; // IGNORES TIMEOUT ERRORS
-		struct PREFIX(model) *submodel = PREFIX(train)(&subprob,param, &dummy_status);
-		if(param->probability && 
+		struct PREFIX(model) *submodel = PREFIX(train)(&subprob,param, &dummy_status, blas_functions);
+		if(param->probability &&
 		   (param->svm_type == C_SVC || param->svm_type == NU_SVC))
 		{
 			double *prob_estimates=Malloc(double, PREFIX(get_nr_class)(submodel));
 			for(j=begin;j<end;j++)
 #ifdef _DENSE_REP
-				target[perm[j]] = PREFIX(predict_probability)(submodel,(prob->x + perm[j]),prob_estimates);
+				target[perm[j]] = PREFIX(predict_probability)(submodel,(prob->x + perm[j]),prob_estimates, blas_functions);
 #else
-                                target[perm[j]] = PREFIX(predict_probability)(submodel,prob->x[perm[j]],prob_estimates);
+                                target[perm[j]] = PREFIX(predict_probability)(submodel,prob->x[perm[j]],prob_estimates, blas_functions);
 #endif
-			free(prob_estimates);			
+			free(prob_estimates);
 		}
 		else
 			for(j=begin;j<end;j++)
 #ifdef _DENSE_REP
-				target[perm[j]] = PREFIX(predict)(submodel,prob->x+perm[j]);
+				target[perm[j]] = PREFIX(predict)(submodel,prob->x+perm[j],blas_functions);
 #else
-                target[perm[j]] = PREFIX(predict)(submodel,prob->x[perm[j]]);
+                target[perm[j]] = PREFIX(predict)(submodel,prob->x[perm[j]],blas_functions);
 #endif
 		PREFIX(free_and_destroy_model)(&submodel);
 		free(subprob.x);
 		free(subprob.y);
                 free(subprob.W);
-	}		
+	}
 	free(fold_start);
-	free(perm);	
+	free(perm);
 }
 
 
@@ -2785,7 +2815,7 @@ double PREFIX(get_svr_probability)(const PREFIX(model) *model)
 	}
 }
 
-double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x, double* dec_values)
+double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x, double* dec_values, BlasFunctions *blas_functions)
 {
 	int i;
 	if(model->param.svm_type == ONE_CLASS ||
@@ -2794,12 +2824,12 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 	{
 		double *sv_coef = model->sv_coef[0];
 		double sum = 0;
-		
+
 		for(i=0;i<model->l;i++)
 #ifdef _DENSE_REP
-                    sum += sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV+i,model->param);
+                    sum += sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV+i,model->param,blas_functions);
 #else
-                sum += sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV[i],model->param);
+                sum += sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV[i],model->param,blas_functions);
 #endif
 		sum -= model->rho[0];
 		*dec_values = sum;
@@ -2813,13 +2843,13 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 	{
 		int nr_class = model->nr_class;
 		int l = model->l;
-		
+
 		double *kvalue = Malloc(double,l);
 		for(i=0;i<l;i++)
 #ifdef _DENSE_REP
-                    kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV+i,model->param);
+                    kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV+i,model->param,blas_functions);
 #else
-                kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV[i],model->param);
+                kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV[i],model->param,blas_functions);
 #endif
 
 		int *start = Malloc(int,nr_class);
@@ -2840,7 +2870,7 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 				int sj = start[j];
 				int ci = model->nSV[i];
 				int cj = model->nSV[j];
-				
+
 				int k;
 				double *coef1 = model->sv_coef[j-1];
 				double *coef2 = model->sv_coef[i];
@@ -2870,7 +2900,7 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 	}
 }
 
-double PREFIX(predict)(const PREFIX(model) *model, const PREFIX(node) *x)
+double PREFIX(predict)(const PREFIX(model) *model, const PREFIX(node) *x, BlasFunctions *blas_functions)
 {
 	int nr_class = model->nr_class;
 	double *dec_values;
@@ -2878,15 +2908,15 @@ double PREFIX(predict)(const PREFIX(model) *model, const PREFIX(node) *x)
 	   model->param.svm_type == EPSILON_SVR ||
 	   model->param.svm_type == NU_SVR)
 		dec_values = Malloc(double, 1);
-	else 
+	else
 		dec_values = Malloc(double, nr_class*(nr_class-1)/2);
-	double pred_result = PREFIX(predict_values)(model, x, dec_values);
+	double pred_result = PREFIX(predict_values)(model, x, dec_values, blas_functions);
 	free(dec_values);
 	return pred_result;
 }
 
 double PREFIX(predict_probability)(
-	const PREFIX(model) *model, const PREFIX(node) *x, double *prob_estimates)
+	const PREFIX(model) *model, const PREFIX(node) *x, double *prob_estimates, BlasFunctions *blas_functions)
 {
 	if ((model->param.svm_type == C_SVC || model->param.svm_type == NU_SVC) &&
 	    model->probA!=NULL && model->probB!=NULL)
@@ -2894,7 +2924,7 @@ double PREFIX(predict_probability)(
 		int i;
 		int nr_class = model->nr_class;
 		double *dec_values = Malloc(double, nr_class*(nr_class-1)/2);
-		PREFIX(predict_values)(model, x, dec_values);
+		PREFIX(predict_values)(model, x, dec_values, blas_functions);
 
 		double min_prob=1e-7;
 		double **pairwise_prob=Malloc(double *,nr_class);
@@ -2917,11 +2947,11 @@ double PREFIX(predict_probability)(
 		for(i=0;i<nr_class;i++)
 			free(pairwise_prob[i]);
 		free(dec_values);
-		free(pairwise_prob);	     
+		free(pairwise_prob);
 		return model->label[prob_max_idx];
 	}
-	else 
-		return PREFIX(predict)(model, x);
+	else
+		return PREFIX(predict)(model, x, blas_functions);
 }
 
 
@@ -2964,6 +2994,9 @@ void PREFIX(free_model_content)(PREFIX(model)* model_ptr)
 
 	free(model_ptr->nSV);
 	model_ptr->nSV = NULL;
+
+	free(model_ptr->n_iter);
+	model_ptr->n_iter = NULL;
 }
 
 void PREFIX(free_and_destroy_model)(PREFIX(model)** model_ptr_ptr)
@@ -2993,9 +3026,9 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	   svm_type != EPSILON_SVR &&
 	   svm_type != NU_SVR)
 		return "unknown svm type";
-	
+
 	// kernel_type, degree
-	
+
 	int kernel_type = param->kernel_type;
 	if(kernel_type != LINEAR &&
 	   kernel_type != POLY &&
@@ -3048,7 +3081,7 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 
 
 	// check whether nu-svc is feasible
-	
+
 	if(svm_type == NU_SVC)
 	{
 		int l = prob->l;
@@ -3082,7 +3115,7 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 				++nr_class;
 			}
 		}
-	
+
 		for(i=0;i<nr_class;i++)
 		{
 			double n1 = count[i];
@@ -3107,14 +3140,17 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	   svm_type == ONE_CLASS)
 	{
 		PREFIX(problem) newprob;
-		// filter samples with negative and null weights 
+		// filter samples with negative and null weights
 		remove_zero_weight(&newprob, prob);
 
-		char* msg = NULL;
 		// all samples were removed
-		if(newprob.l == 0)
-			msg =  "Invalid input - all samples have zero or negative weights.";
-		else if(prob->l != newprob.l && 
+		if(newprob.l == 0) {
+			free(newprob.x);
+			free(newprob.y);
+			free(newprob.W);
+			return "Invalid input - all samples have zero or negative weights.";
+		}
+		else if(prob->l != newprob.l &&
 		        svm_type == C_SVC)
 		{
 			bool only_one_label = true;
@@ -3127,15 +3163,17 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 					break;
 				}
 			}
-			if(only_one_label == true)
-				msg = "Invalid input - all samples with positive weights have the same label.";
+			if(only_one_label) {
+				free(newprob.x);
+				free(newprob.y);
+				free(newprob.W);
+				return "Invalid input - all samples with positive weights belong to the same class.";
+			}
 		}
 
 		free(newprob.x);
 		free(newprob.y);
 		free(newprob.W);
-		if(msg != NULL)
-			return msg;
 	}
 	return NULL;
 }

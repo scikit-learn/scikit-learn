@@ -1,7 +1,8 @@
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
-from ...utils.validation import check_consistent_length, check_array
+from ...utils._param_validation import StrOptions, validate_params
+from ...utils.validation import check_array, check_consistent_length
 
 __all__ = ["consensus_score"]
 
@@ -18,8 +19,7 @@ def _check_rows_and_columns(a, b):
 
 def _jaccard(a_rows, a_cols, b_rows, b_cols):
     """Jaccard coefficient on the elements of the two biclusters."""
-    intersection = ((a_rows * b_rows).sum() *
-                    (a_cols * b_cols).sum())
+    intersection = (a_rows * b_rows).sum() * (a_cols * b_cols).sum()
 
     a_size = a_rows.sum() * a_cols.sum()
     b_size = b_rows.sum() * b_cols.sum()
@@ -37,14 +37,24 @@ def _pairwise_similarity(a, b, similarity):
     a_rows, a_cols, b_rows, b_cols = _check_rows_and_columns(a, b)
     n_a = a_rows.shape[0]
     n_b = b_rows.shape[0]
-    result = np.array(list(list(similarity(a_rows[i], a_cols[i],
-                                           b_rows[j], b_cols[j])
-                                for j in range(n_b))
-                           for i in range(n_a)))
+    result = np.array(
+        [
+            [similarity(a_rows[i], a_cols[i], b_rows[j], b_cols[j]) for j in range(n_b)]
+            for i in range(n_a)
+        ]
+    )
     return result
 
 
-def consensus_score(a, b, similarity="jaccard"):
+@validate_params(
+    {
+        "a": [tuple],
+        "b": [tuple],
+        "similarity": [callable, StrOptions({"jaccard"})],
+    },
+    prefer_skip_nested_validation=True,
+)
+def consensus_score(a, b, *, similarity="jaccard"):
     """The similarity of two sets of biclusters.
 
     Similarity between individual biclusters is computed. Then the
@@ -56,16 +66,22 @@ def consensus_score(a, b, similarity="jaccard"):
 
     Parameters
     ----------
-    a : (rows, columns)
+    a : tuple (rows, columns)
         Tuple of row and column indicators for a set of biclusters.
 
-    b : (rows, columns)
+    b : tuple (rows, columns)
         Another set of biclusters like ``a``.
 
-    similarity : string or function, optional, default: "jaccard"
+    similarity : 'jaccard' or callable, default='jaccard'
         May be the string "jaccard" to use the Jaccard coefficient, or
         any function that takes four arguments, each of which is a 1d
         indicator vector: (a_rows, a_columns, b_rows, b_columns).
+
+    Returns
+    -------
+    consensus_score : float
+       Consensus score, a non-negative value, sum of similarities
+       divided by size of larger set.
 
     References
     ----------
@@ -73,12 +89,11 @@ def consensus_score(a, b, similarity="jaccard"):
     * Hochreiter, Bodenhofer, et. al., 2010. `FABIA: factor analysis
       for bicluster acquisition
       <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2881408/>`__.
-
     """
     if similarity == "jaccard":
         similarity = _jaccard
     matrix = _pairwise_similarity(a, b, similarity)
-    row_indices, col_indices = linear_sum_assignment(1. - matrix)
+    row_indices, col_indices = linear_sum_assignment(1.0 - matrix)
     n_a = len(a[0])
     n_b = len(b[0])
     return matrix[row_indices, col_indices].sum() / max(n_a, n_b)

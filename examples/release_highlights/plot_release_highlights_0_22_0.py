@@ -16,29 +16,33 @@ To install the latest version (with pip)::
 
 or with conda::
 
-    conda install scikit-learn
+    conda install -c conda-forge scikit-learn
+
 """
 
-##############################################################################
+# %%
 # New plotting API
 # ----------------
 #
 # A new plotting API is available for creating visualizations. This new API
 # allows for quickly adjusting the visuals of a plot without involving any
 # recomputation. It is also possible to add different plots to the same
-# figure. The following example illustrates :class:`~metrics.plot_roc_curve`,
+# figure. The following example illustrates `plot_roc_curve`,
 # but other plots utilities are supported like
-# :class:`~inspection.plot_partial_dependence`,
-# :class:`~metrics.plot_precision_recall_curve`, and
-# :class:`~metrics.plot_confusion_matrix`. Read more about this new API in the
+# `plot_partial_dependence`,
+# `plot_precision_recall_curve`, and
+# `plot_confusion_matrix`. Read more about this new API in the
 # :ref:`User Guide <visualizations>`.
 
+import matplotlib.pyplot as plt
+
+from sklearn.datasets import make_classification
+from sklearn.ensemble import RandomForestClassifier
+
+# from sklearn.metrics import plot_roc_curve
+from sklearn.metrics import RocCurveDisplay
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
-from sklearn.metrics import plot_roc_curve
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.datasets import make_classification
-import matplotlib.pyplot as plt
 
 X, y = make_classification(random_state=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
@@ -48,13 +52,16 @@ svc.fit(X_train, y_train)
 rfc = RandomForestClassifier(random_state=42)
 rfc.fit(X_train, y_train)
 
-svc_disp = plot_roc_curve(svc, X_test, y_test)
-rfc_disp = plot_roc_curve(rfc, X_test, y_test, ax=svc_disp.ax_)
+# plot_roc_curve has been removed in version 1.2. From 1.2, use RocCurveDisplay instead.
+# svc_disp = plot_roc_curve(svc, X_test, y_test)
+# rfc_disp = plot_roc_curve(rfc, X_test, y_test, ax=svc_disp.ax_)
+svc_disp = RocCurveDisplay.from_estimator(svc, X_test, y_test)
+rfc_disp = RocCurveDisplay.from_estimator(rfc, X_test, y_test, ax=svc_disp.ax_)
 rfc_disp.figure_.suptitle("ROC curve comparison")
 
 plt.show()
 
-############################################################################
+# %%
 # Stacking Classifier and Regressor
 # ---------------------------------
 # :class:`~ensemble.StackingClassifier` and
@@ -72,52 +79,53 @@ plt.show()
 # Read more in the :ref:`User Guide <stacking>`.
 
 from sklearn.datasets import load_iris
-from sklearn.svm import LinearSVC
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
 from sklearn.ensemble import StackingClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import LinearSVC
 
 X, y = load_iris(return_X_y=True)
 estimators = [
-    ('rf', RandomForestClassifier(n_estimators=10, random_state=42)),
-    ('svr', make_pipeline(StandardScaler(),
-                          LinearSVC(random_state=42)))
+    ("rf", RandomForestClassifier(n_estimators=10, random_state=42)),
+    ("svr", make_pipeline(StandardScaler(), LinearSVC(dual="auto", random_state=42))),
 ]
-clf = StackingClassifier(
-    estimators=estimators, final_estimator=LogisticRegression()
-)
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, stratify=y, random_state=42
-)
+clf = StackingClassifier(estimators=estimators, final_estimator=LogisticRegression())
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
 clf.fit(X_train, y_train).score(X_test, y_test)
 
-##############################################################################
+# %%
 # Permutation-based feature importance
 # ------------------------------------
 #
 # The :func:`inspection.permutation_importance` can be used to get an
 # estimate of the importance of each feature, for any fitted estimator:
 
+import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.inspection import permutation_importance
 
 X, y = make_classification(random_state=0, n_features=5, n_informative=3)
+feature_names = np.array([f"x_{i}" for i in range(X.shape[1])])
+
 rf = RandomForestClassifier(random_state=0).fit(X, y)
-result = permutation_importance(rf, X, y, n_repeats=10, random_state=0,
-                                n_jobs=-1)
+result = permutation_importance(rf, X, y, n_repeats=10, random_state=0, n_jobs=2)
 
 fig, ax = plt.subplots()
 sorted_idx = result.importances_mean.argsort()
-ax.boxplot(result.importances[sorted_idx].T,
-           vert=False, labels=range(X.shape[1]))
+ax.boxplot(
+    result.importances[sorted_idx].T, vert=False, labels=feature_names[sorted_idx]
+)
 ax.set_title("Permutation Importance of each feature")
 ax.set_ylabel("Features")
 fig.tight_layout()
 plt.show()
 
-##############################################################################
+# %%
 # Native support for missing values for gradient boosting
 # -------------------------------------------------------
 #
@@ -126,9 +134,7 @@ plt.show()
 # support for missing values (NaNs). This means that there is no need for
 # imputing data when training or predicting.
 
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
-import numpy as np
 
 X = np.array([0, 1, 2, np.nan]).reshape(-1, 1)
 y = [0, 0, 1, 1]
@@ -136,7 +142,7 @@ y = [0, 0, 1, 1]
 gbdt = HistGradientBoostingClassifier(min_samples_leaf=1).fit(X, y)
 print(gbdt.predict(X))
 
-############################################################################
+# %%
 # Precomputed sparse nearest neighbors graph
 # ------------------------------------------
 # Most estimators based on nearest neighbors graphs now accept precomputed
@@ -150,17 +156,19 @@ print(gbdt.predict(X))
 # See more details in the :ref:`User Guide <neighbors_transformer>`.
 
 from tempfile import TemporaryDirectory
-from sklearn.neighbors import KNeighborsTransformer
+
 from sklearn.manifold import Isomap
+from sklearn.neighbors import KNeighborsTransformer
 from sklearn.pipeline import make_pipeline
 
 X, y = make_classification(random_state=0)
 
 with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
     estimator = make_pipeline(
-        KNeighborsTransformer(n_neighbors=10, mode='distance'),
-        Isomap(n_neighbors=10, metric='precomputed'),
-        memory=tmpdir)
+        KNeighborsTransformer(n_neighbors=10, mode="distance"),
+        Isomap(n_neighbors=10, metric="precomputed"),
+        memory=tmpdir,
+    )
     estimator.fit(X)
 
     # We can decrease the number of neighbors and the graph will not be
@@ -168,7 +176,7 @@ with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
     estimator.set_params(isomap__n_neighbors=5)
     estimator.fit(X)
 
-##############################################################################
+# %%
 # KNN Based Imputation
 # ------------------------------------
 # We now support imputation for completing missing values using k-Nearest
@@ -179,19 +187,18 @@ with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
 # close if the features that neither is missing are close.
 # By default, a euclidean distance metric
 # that supports missing values,
-# :func:`~metrics.nan_euclidean_distances`, is used to find the nearest
+# :func:`~sklearn.metrics.pairwise.nan_euclidean_distances`, is used to find the nearest
 # neighbors.
 #
 # Read more in the :ref:`User Guide <knnimpute>`.
 
-import numpy as np
 from sklearn.impute import KNNImputer
 
 X = [[1, 2, np.nan], [3, 4, 3], [np.nan, 6, 5], [8, 8, 7]]
 imputer = KNNImputer(n_neighbors=2)
 print(imputer.fit_transform(X))
 
-#############################################################################
+# %%
 # Tree pruning
 # ------------
 #
@@ -202,14 +209,20 @@ print(imputer.fit_transform(X))
 X, y = make_classification(random_state=0)
 
 rf = RandomForestClassifier(random_state=0, ccp_alpha=0).fit(X, y)
-print("Average number of nodes without pruning {:.1f}".format(
-    np.mean([e.tree_.node_count for e in rf.estimators_])))
+print(
+    "Average number of nodes without pruning {:.1f}".format(
+        np.mean([e.tree_.node_count for e in rf.estimators_])
+    )
+)
 
 rf = RandomForestClassifier(random_state=0, ccp_alpha=0.05).fit(X, y)
-print("Average number of nodes with pruning {:.1f}".format(
-    np.mean([e.tree_.node_count for e in rf.estimators_])))
+print(
+    "Average number of nodes with pruning {:.1f}".format(
+        np.mean([e.tree_.node_count for e in rf.estimators_])
+    )
+)
 
-############################################################################
+# %%
 # Retrieve dataframes from OpenML
 # -------------------------------
 # :func:`datasets.fetch_openml` can now return pandas dataframe and thus
@@ -217,32 +230,37 @@ print("Average number of nodes with pruning {:.1f}".format(
 
 from sklearn.datasets import fetch_openml
 
-titanic = fetch_openml('titanic', version=1, as_frame=True)
-print(titanic.data.head()[['pclass', 'embarked']])
+titanic = fetch_openml("titanic", version=1, as_frame=True, parser="pandas")
+print(titanic.data.head()[["pclass", "embarked"]])
 
-############################################################################
+# %%
 # Checking scikit-learn compatibility of an estimator
 # ---------------------------------------------------
 # Developers can check the compatibility of their scikit-learn compatible
 # estimators using :func:`~utils.estimator_checks.check_estimator`. For
-# instance, the ``check_estimator(LinearSVC)`` passes.
+# instance, the ``check_estimator(LinearSVC())`` passes.
 #
 # We now provide a ``pytest`` specific decorator which allows ``pytest``
 # to run all checks independently and report the checks that are failing.
+#
+# ..note::
+#   This entry was slightly updated in version 0.24, where passing classes
+#   isn't supported anymore: pass instances instead.
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils.estimator_checks import parametrize_with_checks
 
 
-@parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
+@parametrize_with_checks([LogisticRegression(), DecisionTreeRegressor()])
 def test_sklearn_compatible_estimator(estimator, check):
     check(estimator)
 
-############################################################################
+
+# %%
 # ROC AUC now supports multiclass classification
 # ----------------------------------------------
-# The :func:`roc_auc_score` function can also be used in multi-class
+# The :func:`~sklearn.metrics.roc_auc_score` function can also be used in multi-class
 # classification. Two averaging strategies are currently supported: the
 # one-vs-one algorithm computes the average of the pairwise ROC AUC scores, and
 # the one-vs-rest algorithm computes the average of the ROC AUC scores for each
@@ -256,9 +274,9 @@ def test_sklearn_compatible_estimator(estimator, check):
 
 
 from sklearn.datasets import make_classification
-from sklearn.svm import SVC
 from sklearn.metrics import roc_auc_score
+from sklearn.svm import SVC
 
 X, y = make_classification(n_classes=4, n_informative=16)
-clf = SVC(decision_function_shape='ovo', probability=True).fit(X, y)
-print(roc_auc_score(y, clf.predict_proba(X), multi_class='ovo'))
+clf = SVC(decision_function_shape="ovo", probability=True).fit(X, y)
+print(roc_auc_score(y, clf.predict_proba(X), multi_class="ovo"))

@@ -17,21 +17,6 @@ as GitHub gists; to install them, click on the "Raw" button on the gist page.
 .. _TamperMonkey: https://tampermonkey.net/
 .. _GreaseMonkey: https://www.greasespot.net/
 
-
-.. _viewing_rendered_html_documentation:
-
-Viewing the rendered HTML documentation for a pull request
-----------------------------------------------------------
-
-We use CircleCI to build the HTML documentation for every pull request. To
-access that documentation, instructions are provided in the :ref:`documentation
-section of the contributor guide <contribute_documentation>`. To save you a few
-clicks, we provide a `userscript
-<https://raw.githubusercontent.com/lesteve/userscripts/master/add-button-for-pr-circleci-doc.user.js>`__
-that adds a button to every PR. After installing the userscript, navigate to
-any GitHub PR; a new button labeled "See CircleCI doc for this PR" should
-appear in the top-right area.
-
 Folding and unfolding outdated diffs on pull requests
 -----------------------------------------------------
 
@@ -70,13 +55,17 @@ Useful pytest aliases and flags
 The full test suite takes fairly long to run. For faster iterations,
 it is possibly to select a subset of tests using pytest selectors.
 In particular, one can run a `single test based on its node ID
-<https://docs.pytest.org/en/latest/example/markers.html#selecting-tests-based-on-their-node-id>`_::
+<https://docs.pytest.org/en/latest/example/markers.html#selecting-tests-based-on-their-node-id>`_:
+
+.. prompt:: bash $
 
   pytest -v sklearn/linear_model/tests/test_logistic.py::test_sparsify
 
 or use the `-k pytest parameter
 <https://docs.pytest.org/en/latest/example/markers.html#using-k-expr-to-select-tests-based-on-their-name>`_
-to select tests based on their name. For instance,::
+to select tests based on their name. For instance,:
+
+.. prompt:: bash $
 
   pytest sklearn/tests/test_common.py -v -k LogisticRegression
 
@@ -89,9 +78,11 @@ When a unit test fails, the following tricks can make debugging easier:
 
   2. The argument ``pytest --pdb`` drops into the Python debugger on failure. To
      instead drop into the rich IPython debugger ``ipdb``, you may set up a
-     shell alias to::
+     shell alias to:
 
-         pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
+.. prompt:: bash $
+
+    pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
 
 Other `pytest` options that may become useful include:
 
@@ -101,6 +92,8 @@ Other `pytest` options that may become useful include:
   - ``-s`` so that pytest does not capture the output of ``print()``
     statements
   - ``--tb=short`` or ``--tb=line`` to control the length of the logs
+  - ``--runxfail`` also run tests marked as a known failure (XFAIL) and report
+    errors.
 
 Since our continuous integration tests will error if
 ``FutureWarning`` isn't properly caught,
@@ -123,7 +116,10 @@ replies <https://github.com/settings/replies/>`_ for reviewing:
 Issue: Usage questions
     ::
 
-        You're asking a usage question. The issue tracker is mainly for bugs and new features. For usage questions, it is recommended to try [Stack Overflow](https://stackoverflow.com/questions/tagged/scikit-learn) or [the Mailing List](https://mail.python.org/mailman/listinfo/scikit-learn).
+        You are asking a usage question. The issue tracker is for bugs and new features. For usage questions, it is recommended to try [Stack Overflow](https://stackoverflow.com/questions/tagged/scikit-learn) or [the Mailing List](https://mail.python.org/mailman/listinfo/scikit-learn).
+
+        Unfortunately, we need to close this issue as this issue tracker is a communication tool used for the development of scikit-learn. The additional activity created by usage questions crowds it too much and impedes this development. The conversation can continue here, however there is no guarantee that is will receive attention from core developers.
+
 
 Issue: You're welcome to update the docs
     ::
@@ -133,7 +129,7 @@ Issue: You're welcome to update the docs
 Issue: Self-contained example for bug
     ::
 
-        Please provide [self-contained example code](https://stackoverflow.com/help/mcve), including imports and data (if possible), so that other contributors can just run it and reproduce your issue. Ideally your example code should be minimal.
+        Please provide [self-contained example code](https://scikit-learn.org/dev/developers/minimal_reproducer.html), including imports and data (if possible), so that other contributors can just run it and reproduce your issue. Ideally your example code should be minimal.
 
 Issue: Software versions
     ::
@@ -181,10 +177,10 @@ Issue/Comment: Linking to comments
 
         Please use links to comments, which make it a lot easier to see what you are referring to, rather than just linking to the issue. See [this](https://stackoverflow.com/questions/25163598/how-do-i-reference-a-specific-issue-comment-on-github) for more details.
 
-PR-NEW: Better description
+PR-NEW: Better description and title
     ::
 
-        Thanks for the pull request! Please make the title of the PR descriptive so that we can easily recall the issue it is resolving. You should state what issue (or PR) it fixes/resolves in the description (see [here](http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests)).
+        Thanks for the pull request! Please make the title of the PR more descriptive. The title will become the commit message when this is merged. You should state what issue (or PR) it fixes/resolves in the description using the syntax described [here](https://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests).
 
 PR-NEW: Fix #
     ::
@@ -194,7 +190,7 @@ PR-NEW: Fix #
 PR-NEW or Issue: Maintenance cost
     ::
 
-        Every feature we include has a [maintenance cost](http://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](https://scikit-learn-contrib.github.io).
+        Every feature we include has a [maintenance cost](https://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](https://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. Also, we expect PR authors to take part in the maintenance for the code they submit, at least initially. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](https://scikit-learn-contrib.github.io).
 
 PR-WIP: What's needed before merge?
     ::
@@ -204,7 +200,7 @@ PR-WIP: What's needed before merge?
 PR-WIP: Regression test needed
     ::
 
-        Please add a [non-regression test](https://en.wikipedia.org/wiki/Non-regression_testing) that would fail at master but pass in this PR.
+        Please add a [non-regression test](https://en.wikipedia.org/wiki/Non-regression_testing) that would fail at main but pass in this PR.
 
 PR-WIP: PEP8
     ::
@@ -214,7 +210,7 @@ PR-WIP: PEP8
 PR-MRG: Patience
     ::
 
-        Before merging, we generally require two core developers to agree that your pull request is desirable and ready. [Please be patient](http://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-attention), as we mostly rely on volunteered time from busy core developers. (You are also welcome to help us out with [reviewing other PRs](http://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines).)
+        Before merging, we generally require two core developers to agree that your pull request is desirable and ready. [Please be patient](https://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-attention), as we mostly rely on volunteered time from busy core developers. (You are also welcome to help us out with [reviewing other PRs](https://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines).)
 
 PR-MRG: Add to what's new
     ::
@@ -233,7 +229,7 @@ Debugging memory errors in Cython with valgrind
 
 While python/numpy's built-in memory management is relatively robust, it can
 lead to performance penalties for some routines. For this reason, much of
-the high-performance code in scikit-learn in written in cython. This
+the high-performance code in scikit-learn is written in cython. This
 performance gain comes with a tradeoff, however: it is very easy for memory
 bugs to crop up in cython code, especially in situations where that code
 relies heavily on pointer arithmetic.
@@ -256,13 +252,15 @@ code. Follow these steps:
      python suppressions. If you don't, you will have spurious output coming
      related to the python interpreter instead of your own code.
 
-  4. Run valgrind as follows::
+  4. Run valgrind as follows:
 
-       $> valgrind -v --suppressions=valgrind-python.supp python my_test_script.py
+.. prompt:: bash $
 
-.. _valgrind: http://valgrind.org
-.. _`README.valgrind`: https://svn.python.org/projects/python/trunk/Misc/README.valgrind
-.. _`valgrind-python.supp`: https://svn.python.org/projects/python/trunk/Misc/valgrind-python.supp
+  valgrind -v --suppressions=valgrind-python.supp python my_test_script.py
+
+.. _valgrind: https://valgrind.org
+.. _`README.valgrind`: https://github.com/python/cpython/blob/master/Misc/README.valgrind
+.. _`valgrind-python.supp`: https://github.com/python/cpython/blob/master/Misc/valgrind-python.supp
 
 
 The result will be a list of all the memory-related errors, which reference
@@ -272,4 +270,68 @@ corresponding location in your .pyx source file. Hopefully the output will
 give you clues as to the source of your memory error.
 
 For more information on valgrind and the array of options it has, see the
-tutorials and documentation on the `valgrind web site <http://valgrind.org>`_.
+tutorials and documentation on the `valgrind web site <https://valgrind.org>`_.
+
+.. _arm64_dev_env:
+
+Building and testing for the ARM64 platform on a x86_64 machine
+===============================================================
+
+ARM-based machines are a popular target for mobile, edge or other low-energy
+deployments (including in the cloud, for instance on Scaleway or AWS Graviton).
+
+Here are instructions to setup a local dev environment to reproduce
+ARM-specific bugs or test failures on a x86_64 host laptop or workstation. This
+is based on QEMU user mode emulation using docker for convenience (see
+https://github.com/multiarch/qemu-user-static).
+
+.. note::
+
+    The following instructions are illustrated for ARM64 but they also apply to
+    ppc64le, after changing the Docker image and Miniforge paths appropriately.
+
+Prepare a folder on the host filesystem and download the necessary tools and
+source code:
+
+.. prompt:: bash $
+
+    mkdir arm64
+    pushd arm64
+    wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh
+    git clone https://github.com/scikit-learn/scikit-learn.git
+
+Use docker to install QEMU user mode and run an ARM64v8 container with access
+to your shared folder under the `/io` mount point:
+
+.. prompt:: bash $
+
+    docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+    docker run -v`pwd`:/io --rm -it arm64v8/ubuntu /bin/bash
+
+In the container, install miniforge3 for the ARM64 (a.k.a. aarch64)
+architecture:
+
+.. prompt:: bash $
+
+    bash Miniforge3-Linux-aarch64.sh
+    # Choose to install miniforge3 under: `/io/miniforge3`
+
+Whenever you restart a new container, you will need to reinit the conda env
+previously installed under `/io/miniforge3`:
+
+.. prompt:: bash $
+
+    /io/miniforge3/bin/conda init
+    source /root/.bashrc
+
+as the `/root` home folder is part of the ephemeral docker container. Every
+file or directory stored under `/io` is persistent on the other hand.
+
+You can then build scikit-learn as usual (you will need to install compiler
+tools and dependencies using apt or conda as usual). Building scikit-learn
+takes a lot of time because of the emulation layer, however it needs to be
+done only once if you put the scikit-learn folder under the `/io` mount
+point.
+
+Then use pytest to run only the tests of the module you are interested in
+debugging.

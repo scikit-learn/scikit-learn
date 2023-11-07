@@ -39,13 +39,15 @@ what you observed instead in the details field.
 Code and data snippets are welcome. Minimalistic (up to ~20 lines long)
 reproduction script very helpful.
 
-Please describe the nature of your data and the how you preprocessed it:
+Please describe the nature of your data and how you preprocessed it:
 what is the number of samples, what is the number and type of features
 (i.d. categorical or numerical) and for supervised learning tasks,
 what target are your trying to predict: binary, multiclass (1 out of
 ``n_classes``) or multilabel (``k`` out of ``n_classes``) classification
 or continuous variable regression.
 
+User questions should **not be asked on the bug tracker**, as it crowds
+the list of issues and makes the development of the project harder.
 
 .. _bug_tracker:
 
@@ -62,27 +64,24 @@ Don't forget to include:
 
   - expected outcome,
 
-  - observed outcome or python (or gdb) tracebacks
+  - observed outcome or Python (or gdb) tracebacks
 
 To help developers fix your bug faster, please link to a https://gist.github.com
 holding a standalone minimalistic python script that reproduces your bug and
-optionally a minimalistic subsample of your dataset (for instance exported
+optionally a minimalistic subsample of your dataset (for instance, exported
 as CSV files using ``numpy.savetxt``).
 
-Note: gists are git cloneable repositories and thus you can use git to
+Note: Gists are Git cloneable repositories and thus you can use Git to
 push datafiles to them.
 
 
-.. _irc:
+.. _gitter:
 
-IRC
-===
+Gitter
+======
 
-Some developers like to hang out on channel ``#scikit-learn`` on
-``irc.freenode.net``.
-
-If you do not have an IRC client or are behind a firewall this web
-client works fine: https://webchat.freenode.net
+Some developers like to hang out on scikit-learn Gitter room:
+https://gitter.im/scikit-learn/scikit-learn.
 
 
 .. _documentation_resources:
@@ -92,7 +91,7 @@ Documentation resources
 
 This documentation is relative to |release|. Documentation for
 other versions can be found `here
-<http://scikit-learn.org/dev/versions.html>`__.
+<https://scikit-learn.org/dev/versions.html>`__.
 
 Printable pdf documentation for old versions can be found `here
 <https://sourceforge.net/projects/scikit-learn/files/documentation/>`_.

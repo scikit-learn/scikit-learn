@@ -4,8 +4,7 @@
 Biclustering
 ============
 
-Biclustering can be performed with the module
-:mod:`sklearn.cluster.bicluster`. Biclustering algorithms simultaneously
+Biclustering algorithms simultaneously
 cluster rows and columns of a data matrix. These clusters of rows and
 columns are known as biclusters. Each determines a submatrix of the
 original data matrix with some desired properties.
@@ -82,7 +81,7 @@ diagonal and checkerboard bicluster structures.
     these alternate names.
 
 
-.. currentmodule:: sklearn.cluster.bicluster
+.. currentmodule:: sklearn.cluster
 
 
 .. _spectral_coclustering:
@@ -160,9 +159,9 @@ and the remaining ``n_columns`` labels provide the column partitioning.
 
 .. topic:: References:
 
- * Dhillon, Inderjit S, 2001. `Co-clustering documents and words using
+ * Dhillon, Inderjit S, 2001. :doi:`Co-clustering documents and words using
    bipartite spectral graph partitioning
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011>`__.
+   <10.1145/502512.502550>`
 
 
 .. _spectral_biclustering:
@@ -243,9 +242,9 @@ clustering this :math:`n \times q` matrix yields the column labels.
 
 .. topic:: References:
 
- * Kluger, Yuval, et. al., 2003. `Spectral biclustering of microarray
+ * Kluger, Yuval, et. al., 2003. :doi:`Spectral biclustering of microarray
    data: coclustering genes and conditions
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608>`__.
+   <10.1101/gr.648603>`
 
 
 .. _biclustering_evaluation:

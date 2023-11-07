@@ -1,20 +1,16 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
-#
-# cython: boundscheck=False, cdivision=True
 
-import sys
-import array
-from cpython cimport array
-cimport cython
 from libc.stdlib cimport abs
-cimport numpy as np
+from libcpp.vector cimport vector
+
+cimport numpy as cnp
 import numpy as np
-
+from ..utils._typedefs cimport int32_t, int64_t
 from ..utils.murmurhash cimport murmurhash3_bytes_s32
-from ..utils.fixes import sp_version
+from ..utils._vector_sentinel cimport vector_to_nd_array
 
-np.import_array()
+cnp.import_array()
 
 
 def transform(raw_X, Py_ssize_t n_features, dtype,
@@ -28,25 +24,18 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
         For constructing a scipy.sparse.csr_matrix.
 
     """
-    assert n_features > 0
-
-    cdef np.int32_t h
+    cdef int32_t h
     cdef double value
 
-    cdef array.array indices
-    cdef array.array indptr
-    indices = array.array("i")
-    indices_array_dtype = "q"
-    indices_np_dtype = np.longlong
-
-
-    indptr = array.array(indices_array_dtype, [0])
+    cdef vector[int32_t] indices
+    cdef vector[int64_t] indptr
+    indptr.push_back(0)
 
     # Since Python array does not understand Numpy dtypes, we grow the indices
     # and values arrays ourselves. Use a Py_ssize_t capacity for safety.
     cdef Py_ssize_t capacity = 8192     # arbitrary
-    cdef np.int64_t size = 0
-    cdef np.ndarray values = np.empty(capacity, dtype=dtype)
+    cdef int64_t size = 0
+    cdef cnp.ndarray values = np.empty(capacity, dtype=dtype)
 
     for x in raw_X:
         for f, v in x:
@@ -68,8 +57,12 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
 
             h = murmurhash3_bytes_s32(<bytes>f, seed)
 
-            array.resize_smart(indices, len(indices) + 1)
-            indices[len(indices) - 1] = abs(h) % n_features
+            if h == - 2147483648:
+                # abs(-2**31) is undefined behavior because h is a `np.int32`
+                # The following is defined such that it is equal to: abs(-2**31) % n_features
+                indices.push_back((2147483647 - (n_features - 1)) % n_features)
+            else:
+                indices.push_back(abs(h) % n_features)
             # improve inner product preservation in the hashed space
             if alternate_sign:
                 value *= (h >= 0) * 2 - 1
@@ -82,22 +75,15 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
                 # references to the arrays due to Cython's error checking
                 values = np.resize(values, capacity)
 
-        array.resize_smart(indptr, len(indptr) + 1)
-        indptr[len(indptr) - 1] = size
+        indptr.push_back(size)
 
-    indices_a = np.frombuffer(indices, dtype=np.int32)
-    indptr_a = np.frombuffer(indptr, dtype=indices_np_dtype)
+    indices_array = vector_to_nd_array(&indices)
+    indptr_array = vector_to_nd_array(&indptr)
 
-    if indptr[-1] > 2147483648:  # = 2**31
-        if sp_version < (0, 14):
-            raise ValueError(('sparse CSR array has {} non-zero '
-                              'elements and requires 64 bit indexing, '
-                              ' which is unsupported with scipy {}. '
-                              'Please upgrade to scipy >=0.14')
-                             .format(indptr[-1], '.'.join(sp_version)))
+    if indptr_array[indptr_array.shape[0]-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
         # both indices and indptr have the same dtype in CSR arrays
-        indices_a = indices_a.astype(np.int64, copy=False)
+        indices_array = indices_array.astype(np.int64, copy=False)
     else:
-        indptr_a = indptr_a.astype(np.int32, copy=False)
+        indptr_array = indptr_array.astype(np.int32, copy=False)
 
-    return (indices_a, indptr_a, values[:size])
+    return (indices_array, indptr_array, values[:size])

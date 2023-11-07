@@ -1,4 +1,4 @@
-﻿.. _feature_extraction:
+.. _feature_extraction:
 
 ==================
 Feature extraction
@@ -33,7 +33,7 @@ need not be stored) and storing feature names in addition to values.
 :class:`DictVectorizer` implements what is called one-of-K or "one-hot"
 coding for categorical (aka nominal, discrete) features. Categorical
 features are "attribute-value" pairs where the value is restricted
-to a list of discrete of possibilities without ordering (e.g. topic
+to a list of discrete possibilities without ordering (e.g. topic
 identifiers, types of objects, tags, names...).
 
 In the following, "city" is a categorical attribute while "temperature"
@@ -53,8 +53,28 @@ is a traditional numerical feature::
          [ 0.,  1.,  0., 12.],
          [ 0.,  0.,  1., 18.]])
 
-  >>> vec.get_feature_names()
-  ['city=Dubai', 'city=London', 'city=San Francisco', 'temperature']
+  >>> vec.get_feature_names_out()
+  array(['city=Dubai', 'city=London', 'city=San Francisco', 'temperature'], ...)
+
+:class:`DictVectorizer` accepts multiple string values for one
+feature, like, e.g., multiple categories for a movie.
+
+Assume a database classifies each movie using some categories (not mandatories)
+and its year of release.
+
+    >>> movie_entry = [{'category': ['thriller', 'drama'], 'year': 2003},
+    ...                {'category': ['animation', 'family'], 'year': 2011},
+    ...                {'year': 1974}]
+    >>> vec.fit_transform(movie_entry).toarray()
+    array([[0.000e+00, 1.000e+00, 0.000e+00, 1.000e+00, 2.003e+03],
+           [1.000e+00, 0.000e+00, 1.000e+00, 0.000e+00, 2.011e+03],
+           [0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 1.974e+03]])
+    >>> vec.get_feature_names_out()
+    array(['category=animation', 'category=drama', 'category=family',
+           'category=thriller', 'year'], ...)
+    >>> vec.transform({'category': ['thriller'],
+    ...                'unseen_feature': '3'}).toarray()
+    array([[0., 0., 0., 1., 0.]])
 
 :class:`DictVectorizer` is also a useful representation transformation
 for training sequence classifiers in Natural Language Processing models
@@ -81,7 +101,7 @@ such a window of features extracted around the word 'sat' in the sentence
 
 This description can be vectorized into a sparse two-dimensional matrix
 suitable for feeding into a classifier (maybe after being piped into a
-:class:`text.TfidfTransformer` for normalization)::
+:class:`~text.TfidfTransformer` for normalization)::
 
   >>> vec = DictVectorizer()
   >>> pos_vectorized = vec.fit_transform(pos_window)
@@ -90,8 +110,9 @@ suitable for feeding into a classifier (maybe after being piped into a
       with 6 stored elements in Compressed Sparse ... format>
   >>> pos_vectorized.toarray()
   array([[1., 1., 1., 1., 1., 1.]])
-  >>> vec.get_feature_names()
-  ['pos+1=PP', 'pos-1=NN', 'pos-2=DT', 'word+1=on', 'word-1=cat', 'word-2=the']
+  >>> vec.get_feature_names_out()
+  array(['pos+1=PP', 'pos-1=NN', 'pos-2=DT', 'word+1=on', 'word-1=cat',
+         'word-2=the'], ...)
 
 As you can imagine, if one extracts such a context around each individual
 word of a corpus of documents the resulting matrix will be very wide
@@ -129,8 +150,8 @@ and the expected mean of any output feature's value is zero. This mechanism
 is enabled by default with ``alternate_sign=True`` and is particularly useful
 for small hash table sizes (``n_features < 10000``). For large hash table
 sizes, it can be disabled, to allow the output to be passed to estimators like
-:class:`sklearn.naive_bayes.MultinomialNB` or
-:class:`sklearn.feature_selection.chi2`
+:class:`~sklearn.naive_bayes.MultinomialNB` or
+:class:`~sklearn.feature_selection.chi2`
 feature selectors that expect non-negative inputs.
 
 :class:`FeatureHasher` accepts either mappings
@@ -148,7 +169,7 @@ The output from :class:`FeatureHasher` is always a ``scipy.sparse`` matrix
 in the CSR format.
 
 Feature hashing can be employed in document classification,
-but unlike :class:`text.CountVectorizer`,
+but unlike :class:`~text.CountVectorizer`,
 :class:`FeatureHasher` does not do word
 splitting or any other preprocessing except Unicode-to-UTF-8 encoding;
 see :ref:`hashing_vectorizer`, below, for a combined tokenizer/hasher.
@@ -185,8 +206,9 @@ Note the use of a generator comprehension,
 which introduces laziness into the feature extraction:
 tokens are only processed on demand from the hasher.
 
-Implementation details
-----------------------
+|details-start|
+**Implementation details**
+|details-split|
 
 :class:`FeatureHasher` uses the signed 32-bit variant of MurmurHash3.
 As a result (and because of limitations in ``scipy.sparse``),
@@ -202,15 +224,17 @@ Since a simple modulo is used to transform the hash function to a column index,
 it is advisable to use a power of two as the ``n_features`` parameter;
 otherwise the features will not be mapped evenly to the columns.
 
+.. topic:: References:
+
+  * `MurmurHash3 <https://github.com/aappleby/smhasher>`_.
+
+|details-end|
 
 .. topic:: References:
 
  * Kilian Weinberger, Anirban Dasgupta, John Langford, Alex Smola and
    Josh Attenberg (2009). `Feature hashing for large scale multitask learning
    <https://alex.smola.org/papers/2009/Weinbergeretal09.pdf>`_. Proc. ICML.
-
- * `MurmurHash3 <https://github.com/aappleby/smhasher>`_.
-
 
 .. _text_feature_extraction:
 
@@ -319,10 +343,9 @@ Each term found by the analyzer during the fit is assigned a unique
 integer index corresponding to a column in the resulting matrix. This
 interpretation of the columns can be retrieved as follows::
 
-  >>> vectorizer.get_feature_names() == (
-  ...     ['and', 'document', 'first', 'is', 'one',
-  ...      'second', 'the', 'third', 'this'])
-  True
+  >>> vectorizer.get_feature_names_out()
+  array(['and', 'document', 'first', 'is', 'one', 'second', 'the',
+         'third', 'this'], ...)
 
   >>> X.toarray()
   array([[0, 1, 1, 1, 0, 0, 1, 0, 1],
@@ -376,7 +399,7 @@ last document::
 .. _stop_words:
 
 Using stop words
-................
+----------------
 
 Stop words are words like "and", "the", "him", which are presumed to be
 uninformative in representing the content of a text, and which may be
@@ -385,8 +408,8 @@ however, similar words are useful for prediction, such as in classifying
 writing style or personality.
 
 There are several known issues in our provided 'english' stop word list. It
-does not aim to be a general, 'one-size-fits-all' solution as some tasks 
-may require a more custom solution. See [NQY18]_ for more details. 
+does not aim to be a general, 'one-size-fits-all' solution as some tasks
+may require a more custom solution. See [NQY18]_ for more details.
 
 Please take care in choosing a stop word list.
 Popular stop word lists may include words that are highly informative to
@@ -405,6 +428,7 @@ identify and warn about some kinds of inconsistencies.
                `"Stop Word Lists in Free Open-source Software Packages"
                <https://aclweb.org/anthology/W18-2502>`__.
                In *Proc. Workshop for NLP Open Source Software*.
+
 
 .. _tfidf:
 
@@ -469,6 +493,10 @@ class::
 
 Again please see the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details on all the parameters.
+
+|details-start|
+**Numeric example of a tf-idf matrix**
+|details-split|
 
 Let's take an example with the following counts. The first term is present
 100% of the time hence not very interesting. The two other features only
@@ -587,8 +615,9 @@ As usual the best way to adjust the feature extraction parameters
 is to use a cross-validated grid search, for instance by pipelining the
 feature extractor with a classifier:
 
- * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
+ * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
 
+|details-end|
 
 Decoding text files
 -------------------
@@ -616,6 +645,10 @@ by setting the ``decode_error`` parameter to either ``"ignore"``
 or ``"replace"``. See the documentation for the Python function
 ``bytes.decode`` for more details
 (type ``help(bytes.decode)`` at the Python prompt).
+
+|details-start|
+**Troubleshooting decoding text**
+|details-split|
 
 If you are having trouble decoding text, here are some things to try:
 
@@ -670,6 +703,7 @@ About Unicode <https://www.joelonsoftware.com/articles/Unicode.html>`_.
 
 .. _`ftfy`: https://github.com/LuminosoInsight/python-ftfy
 
+|details-end|
 
 Applications and examples
 -------------------------
@@ -721,9 +755,8 @@ decide better::
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 2))
   >>> counts = ngram_vectorizer.fit_transform(['words', 'wprds'])
-  >>> ngram_vectorizer.get_feature_names() == (
-  ...     [' w', 'ds', 'or', 'pr', 'rd', 's ', 'wo', 'wp'])
-  True
+  >>> ngram_vectorizer.get_feature_names_out()
+  array([' w', 'ds', 'or', 'pr', 'rd', 's ', 'wo', 'wp'], ...)
   >>> counts.toarray().astype(int)
   array([[1, 1, 1, 0, 1, 1, 1, 0],
          [1, 1, 0, 1, 1, 1, 0, 1]])
@@ -737,17 +770,15 @@ span across words::
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   <1x4 sparse matrix of type '<... 'numpy.int64'>'
      with 4 stored elements in Compressed Sparse ... format>
-  >>> ngram_vectorizer.get_feature_names() == (
-  ...     [' fox ', ' jump', 'jumpy', 'umpy '])
-  True
+  >>> ngram_vectorizer.get_feature_names_out()
+  array([' fox ', ' jump', 'jumpy', 'umpy '], ...)
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char', ngram_range=(5, 5))
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   <1x5 sparse matrix of type '<... 'numpy.int64'>'
       with 5 stored elements in Compressed Sparse ... format>
-  >>> ngram_vectorizer.get_feature_names() == (
-  ...     ['jumpy', 'mpy f', 'py fo', 'umpy ', 'y fox'])
-  True
+  >>> ngram_vectorizer.get_feature_names_out()
+  array(['jumpy', 'mpy f', 'py fo', 'umpy ', 'y fox'], ...)
 
 The word boundaries-aware variant ``char_wb`` is especially interesting
 for languages that use white-spaces for word separation as it generates
@@ -800,7 +831,7 @@ datasets**:
 
 It is possible to overcome those limitations by combining the "hashing trick"
 (:ref:`Feature_hashing`) implemented by the
-:class:`sklearn.feature_extraction.FeatureHasher` class and the text
+:class:`~sklearn.feature_extraction.FeatureHasher` class and the text
 preprocessing and tokenization features of the :class:`CountVectorizer`.
 
 This combination is implementing in :class:`HashingVectorizer`,
@@ -829,7 +860,7 @@ Note that the dimensionality does not affect the CPU training time of
 algorithms which operate on CSR matrices (``LinearSVC(dual=True)``,
 ``Perceptron``, ``SGDClassifier``, ``PassiveAggressive``) but it does for
 algorithms that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
-etc).
+etc.).
 
 Let's try again with the default setting::
 
@@ -853,8 +884,9 @@ The :class:`HashingVectorizer` also comes with the following limitations:
   model. A :class:`TfidfTransformer` can be appended to it in a pipeline if
   required.
 
-Performing out-of-core scaling with HashingVectorizer
-------------------------------------------------------
+|details-start|
+**Performing out-of-core scaling with HashingVectorizer**
+|details-split|
 
 An interesting development of using a :class:`HashingVectorizer` is the ability
 to perform `out-of-core`_ scaling. This means that we can learn from data that
@@ -872,6 +904,8 @@ time is often limited by the CPU time one wants to spend on the task.
 
 For a full-fledged example of out-of-core scaling in a text classification
 task see :ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`.
+
+|details-end|
 
 Customizing the vectorizer classes
 ----------------------------------
@@ -910,6 +944,10 @@ To make the preprocessor, tokenizer and analyzers aware of the model
 parameters it is possible to derive from the class and override the
 ``build_preprocessor``, ``build_tokenizer`` and ``build_analyzer``
 factory methods instead of passing custom functions.
+
+|details-start|
+**Tips and tricks**
+|details-split|
 
 Some tips and tricks:
 
@@ -965,6 +1003,8 @@ Some tips and tricks:
 Customizing the vectorizer can also be useful when handling Asian languages
 that do not use an explicit word separator such as whitespace.
 
+|details-end|
+
 .. _image_feature_extraction:
 
 Image feature extraction
@@ -978,7 +1018,7 @@ Patch extraction
 The :func:`extract_patches_2d` function extracts patches from an image stored
 as a two-dimensional array, or three-dimensional with color information along
 the third axis. For rebuilding an image from all its patches, use
-:func:`reconstruct_from_patches_2d`. For example let use generate a 4x4 pixel
+:func:`reconstruct_from_patches_2d`. For example let us generate a 4x4 pixel
 picture with 3 color channels (e.g. in RGB format)::
 
     >>> import numpy as np
@@ -1016,10 +1056,10 @@ on overlapping areas::
 
 The :class:`PatchExtractor` class works in the same way as
 :func:`extract_patches_2d`, only it supports multiple images as input. It is
-implemented as an estimator, so it can be used in pipelines. See::
+implemented as a scikit-learn transformer, so it can be used in pipelines. See::
 
     >>> five_images = np.arange(5 * 4 * 4 * 3).reshape(5, 4, 4, 3)
-    >>> patches = image.PatchExtractor((2, 2)).transform(five_images)
+    >>> patches = image.PatchExtractor(patch_size=(2, 2)).transform(five_images)
     >>> patches.shape
     (45, 2, 2, 3)
 

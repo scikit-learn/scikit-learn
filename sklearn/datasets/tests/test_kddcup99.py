@@ -1,55 +1,89 @@
-"""Test  kddcup99 loader. Only 'percent10' mode is tested, as the full data
-is too big to use in unit-testing.
+"""Test  kddcup99 loader, if the data is available,
+or if specifically requested via environment variable
+(e.g. for CI jobs).
 
-The test is skipped if the data wasn't previously fetched and saved to
-scikit-learn data folder.
+Only 'percent10' mode is tested, as the full data
+is too big to use in unit-testing.
 """
 
-from sklearn.datasets import fetch_kddcup99
-from sklearn.datasets.tests.test_common import check_return_X_y
-from sklearn.utils._testing import SkipTest
 from functools import partial
 
+import pytest
+
+from sklearn.datasets.tests.test_common import (
+    check_as_frame,
+    check_pandas_dependency_message,
+    check_return_X_y,
+)
 
 
-def test_percent10():
-    try:
-        data = fetch_kddcup99(download_if_missing=False)
-    except IOError:
-        raise SkipTest("kddcup99 dataset can not be loaded.")
+@pytest.mark.parametrize("as_frame", [True, False])
+@pytest.mark.parametrize(
+    "subset, n_samples, n_features",
+    [
+        (None, 494021, 41),
+        ("SA", 100655, 41),
+        ("SF", 73237, 4),
+        ("http", 58725, 3),
+        ("smtp", 9571, 3),
+    ],
+)
+def test_fetch_kddcup99_percent10(
+    fetch_kddcup99_fxt, as_frame, subset, n_samples, n_features
+):
+    data = fetch_kddcup99_fxt(subset=subset, as_frame=as_frame)
+    assert data.data.shape == (n_samples, n_features)
+    assert data.target.shape == (n_samples,)
+    if as_frame:
+        assert data.frame.shape == (n_samples, n_features + 1)
+    assert data.DESCR.startswith(".. _kddcup99_dataset:")
 
-    assert data.data.shape == (494021, 41)
-    assert data.target.shape == (494021,)
 
-    data_shuffled = fetch_kddcup99(shuffle=True, random_state=0)
-    assert data.data.shape == data_shuffled.data.shape
-    assert data.target.shape == data_shuffled.target.shape
-
-    data = fetch_kddcup99('SA')
-    assert data.data.shape == (100655, 41)
-    assert data.target.shape == (100655,)
-
-    data = fetch_kddcup99('SF')
-    assert data.data.shape == (73237, 4)
-    assert data.target.shape == (73237,)
-
-    data = fetch_kddcup99('http')
-    assert data.data.shape == (58725, 3)
-    assert data.target.shape == (58725,)
-
-    data = fetch_kddcup99('smtp')
-    assert data.data.shape == (9571, 3)
-    assert data.target.shape == (9571,)
-
-    fetch_func = partial(fetch_kddcup99, 'smtp')
+def test_fetch_kddcup99_return_X_y(fetch_kddcup99_fxt):
+    fetch_func = partial(fetch_kddcup99_fxt, subset="smtp")
+    data = fetch_func()
     check_return_X_y(data, fetch_func)
 
 
-def test_shuffle():
-    try:
-        dataset = fetch_kddcup99(random_state=0, subset='SA', shuffle=True,
-                                 percent10=True, download_if_missing=False)
-    except IOError:
-        raise SkipTest("kddcup99 dataset can not be loaded.")
+def test_fetch_kddcup99_as_frame(fetch_kddcup99_fxt):
+    bunch = fetch_kddcup99_fxt()
+    check_as_frame(bunch, fetch_kddcup99_fxt)
 
-    assert(any(dataset.target[-100:] == b'normal.'))
+
+def test_fetch_kddcup99_shuffle(fetch_kddcup99_fxt):
+    dataset = fetch_kddcup99_fxt(
+        random_state=0,
+        subset="SA",
+        percent10=True,
+    )
+    dataset_shuffled = fetch_kddcup99_fxt(
+        random_state=0,
+        subset="SA",
+        shuffle=True,
+        percent10=True,
+    )
+    assert set(dataset["target"]) == set(dataset_shuffled["target"])
+    assert dataset_shuffled.data.shape == dataset.data.shape
+    assert dataset_shuffled.target.shape == dataset.target.shape
+
+
+def test_pandas_dependency_message(fetch_kddcup99_fxt, hide_available_pandas):
+    check_pandas_dependency_message(fetch_kddcup99_fxt)
+
+
+def test_corrupted_file_error_message(fetch_kddcup99_fxt, tmp_path):
+    """Check that a nice error message is raised when cache is corrupted."""
+    kddcup99_dir = tmp_path / "kddcup99_10-py3"
+    kddcup99_dir.mkdir()
+    samples_path = kddcup99_dir / "samples"
+
+    with samples_path.open("wb") as f:
+        f.write(b"THIS IS CORRUPTED")
+
+    msg = (
+        "The cache for fetch_kddcup99 is invalid, please "
+        f"delete {str(kddcup99_dir)} and run the fetch_kddcup99 again"
+    )
+
+    with pytest.raises(OSError, match=msg):
+        fetch_kddcup99_fxt(data_home=str(tmp_path))

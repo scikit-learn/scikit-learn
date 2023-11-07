@@ -110,9 +110,9 @@ The dataset is structured such that points nearby in index order are nearby
 in parameter space, leading to an approximately block-diagonal matrix of
 K-nearest neighbors.  Such a sparse graph is useful in a variety of
 circumstances which make use of spatial relationships between points for
-unsupervised learning: in particular, see :class:`sklearn.manifold.Isomap`,
-:class:`sklearn.manifold.LocallyLinearEmbedding`, and
-:class:`sklearn.cluster.SpectralClustering`.
+unsupervised learning: in particular, see :class:`~sklearn.manifold.Isomap`,
+:class:`~sklearn.manifold.LocallyLinearEmbedding`, and
+:class:`~sklearn.cluster.SpectralClustering`.
 
 KDTree and BallTree Classes
 ---------------------------
@@ -136,8 +136,13 @@ have the same interface; we'll show an example of using the KD Tree here:
 Refer to the :class:`KDTree` and :class:`BallTree` class documentation
 for more information on the options available for nearest neighbors searches,
 including specification of query strategies, distance metrics, etc. For a list
-of available metrics, see the documentation of the :class:`DistanceMetric`
-class.
+of valid metrics use `KDTree.valid_metrics` and `BallTree.valid_metrics`:
+
+    >>> from sklearn.neighbors import KDTree, BallTree
+    >>> KDTree.valid_metrics
+    ['euclidean', 'l2', 'minkowski', 'p', 'manhattan', 'cityblock', 'l1', 'chebyshev', 'infinity']
+    >>> BallTree.valid_metrics
+    ['euclidean', 'l2', 'minkowski', 'p', 'manhattan', 'cityblock', 'l1', 'chebyshev', 'infinity', 'seuclidean', 'mahalanobis', 'hamming', 'canberra', 'braycurtis', 'jaccard', 'dice', 'rogerstanimoto', 'russellrao', 'sokalmichener', 'sokalsneath', 'haversine', 'pyfunc']
 
 .. _classification:
 
@@ -183,13 +188,9 @@ distance can be supplied to compute the weights.
 
 .. |classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_classification_001.png
    :target: ../auto_examples/neighbors/plot_classification.html
-   :scale: 50
+   :scale: 75
 
-.. |classification_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_classification_002.png
-   :target: ../auto_examples/neighbors/plot_classification.html
-   :scale: 50
-
-.. centered:: |classification_1| |classification_2|
+.. centered:: |classification_1|
 
 .. topic:: Examples:
 
@@ -230,12 +231,12 @@ which will be used to compute the weights.
    :scale: 75
 
 The use of multi-output nearest neighbors for regression is demonstrated in
-:ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`. In this example, the inputs
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`. In this example, the inputs
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_multioutput_face_completion_001.png
-   :target: ../auto_examples/plot_multioutput_face_completion.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_multioutput_face_completion_001.png
+   :target: ../auto_examples/miscellaneous/plot_multioutput_face_completion.html
    :scale: 75
    :align: center
 
@@ -245,7 +246,7 @@ the lower half of those faces.
   * :ref:`sphx_glr_auto_examples_neighbors_plot_regression.py`: an example of regression
     using nearest neighbors.
 
-  * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`: an example of
+  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`: an example of
     multi-output regression using nearest neighbors.
 
 
@@ -339,13 +340,13 @@ a *KD-tree* in high dimensions, though the actual performance is highly
 dependent on the structure of the training data.
 In scikit-learn, ball-tree-based
 neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
-and are computed using the class :class:`sklearn.neighbors.BallTree`.
+and are computed using the class :class:`BallTree`.
 Alternatively, the user can work with the :class:`BallTree` class directly.
 
 .. topic:: References:
 
-   * `"Five balltree construction algorithms"
-     <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.91.8209>`_,
+   * `"Five Balltree Construction Algorithms"
+     <https://citeseerx.ist.psu.edu/doc_view/pid/17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
      Omohundro, S.M., International Computer Science Institute
      Technical Report (1989)
 
@@ -415,14 +416,25 @@ depends on a number of factors:
   a significant fraction of the total cost.  If very few query points
   will be required, brute force is better than a tree-based method.
 
-Currently, ``algorithm = 'auto'`` selects ``'brute'`` if :math:`k >= N/2`,
-the input data is sparse, or ``effective_metric_`` isn't in
-the ``VALID_METRICS`` list for either ``'kd_tree'`` or ``'ball_tree'``.
-Otherwise, it selects the first out of ``'kd_tree'`` and ``'ball_tree'``
-that has ``effective_metric_`` in its ``VALID_METRICS`` list.
-This choice is based on the assumption that the number of query points is at
-least the same order as the number of training points, and that ``leaf_size``
-is close to its default value of ``30``.
+Currently, ``algorithm = 'auto'`` selects ``'brute'`` if any of the following
+conditions are verified:
+
+* input data is sparse
+* ``metric = 'precomputed'``
+* :math:`D > 15`
+* :math:`k >= N/2`
+* ``effective_metric_`` isn't in the ``VALID_METRICS`` list for either
+  ``'kd_tree'`` or ``'ball_tree'``
+
+Otherwise, it selects the first out of ``'kd_tree'`` and ``'ball_tree'`` that
+has ``effective_metric_`` in its ``VALID_METRICS`` list. This heuristic is
+based on the following assumptions:
+
+* the number of query points is at least the same order as the number of
+  training points
+* ``leaf_size`` is close to its default value of ``30``
+* when :math:`D > 15`, the intrinsic dimensionality of the data is generally
+  too high for tree-based methods
 
 Effect of ``leaf_size``
 -----------------------
@@ -453,6 +465,22 @@ leaf nodes.  The level of this switch can be specified with the parameter
 
 ``leaf_size`` is not referenced for brute force queries.
 
+Valid Metrics for Nearest Neighbor Algorithms
+---------------------------------------------
+
+For a list of available metrics, see the documentation of the
+:class:`~sklearn.metrics.DistanceMetric` class and the metrics listed in
+`sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the "cosine"
+metric uses :func:`~sklearn.metrics.pairwise.cosine_distances`.
+
+A list of valid metrics for any of the above algorithms can be obtained by using their
+``valid_metric`` attribute. For example, valid metrics for ``KDTree`` can be generated by:
+
+    >>> from sklearn.neighbors import KDTree
+    >>> print(sorted(KDTree.valid_metrics))
+    ['chebyshev', 'cityblock', 'euclidean', 'infinity', 'l1', 'l2', 'manhattan', 'minkowski', 'p']
+
+
 .. _nearest_centroid_classifier:
 
 Nearest Centroid Classifier
@@ -460,12 +488,12 @@ Nearest Centroid Classifier
 
 The :class:`NearestCentroid` classifier is a simple algorithm that represents
 each class by the centroid of its members. In effect, this makes it
-similar to the label updating phase of the :class:`sklearn.cluster.KMeans` algorithm.
+similar to the label updating phase of the :class:`~sklearn.cluster.KMeans` algorithm.
 It also has no parameters to choose, making it a good baseline classifier. It
 does, however, suffer on non-convex classes, as well as when classes have
 drastically different variances, as equal variance in all dimensions is
-assumed. See Linear Discriminant Analysis (:class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`)
-and Quadratic Discriminant Analysis (:class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`)
+assumed. See Linear Discriminant Analysis (:class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`)
+and Quadratic Discriminant Analysis (:class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`)
 for more complex methods that do not make this assumption. Usage of the default
 :class:`NearestCentroid` is simple:
 
@@ -537,13 +565,20 @@ First, the precomputed graph can be re-used multiple times, for instance while
 varying a parameter of the estimator. This can be done manually by the user, or
 using the caching properties of the scikit-learn pipeline:
 
+    >>> import tempfile
     >>> from sklearn.manifold import Isomap
     >>> from sklearn.neighbors import KNeighborsTransformer
     >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.datasets import make_regression
+    >>> cache_path = tempfile.gettempdir()  # we use a temporary folder here
+    >>> X, _ = make_regression(n_samples=50, n_features=25, random_state=0)
     >>> estimator = make_pipeline(
-    ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
-    ...     Isomap(neighbors_algorithm='precomputed'),
-    ...     memory='/path/to/cache')
+    ...     KNeighborsTransformer(mode='distance'),
+    ...     Isomap(n_components=3, metric='precomputed'),
+    ...     memory=cache_path)
+    >>> X_embedded = estimator.fit_transform(X)
+    >>> X_embedded.shape
+    (50, 3)
 
 Second, precomputing the graph can give finer control on the nearest neighbors
 estimation, for instance enabling multiprocessing though the parameter
@@ -695,8 +730,8 @@ are projected onto a linear subspace consisting of the directions which
 minimize the NCA objective. The desired dimensionality can be set using the
 parameter ``n_components``. For instance, the following figure shows a
 comparison of dimensionality reduction with Principal Component Analysis
-(:class:`sklearn.decomposition.PCA`), Linear Discriminant Analysis
-(:class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`) and
+(:class:`~sklearn.decomposition.PCA`), Linear Discriminant Analysis
+(:class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`) and
 Neighborhood Component Analysis (:class:`NeighborhoodComponentsAnalysis`) on
 the Digits dataset, a dataset with size :math:`n_{samples} = 1797` and
 :math:`n_{features} = 64`. The data set is split into a training and a test set

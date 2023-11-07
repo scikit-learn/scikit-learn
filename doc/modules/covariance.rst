@@ -27,8 +27,8 @@ by the classical *maximum likelihood estimator* (or "empirical
 covariance"), provided the number of observations is large enough
 compared to the number of features (the variables describing the
 observations). More precisely, the Maximum Likelihood Estimator of a
-sample is an unbiased estimator of the corresponding population's
-covariance matrix.
+sample is an asymptotically unbiased estimator of the corresponding
+population's covariance matrix.
 
 The empirical covariance matrix of a sample can be computed using the
 :func:`empirical_covariance` function of the package, or by fitting an
@@ -55,8 +55,8 @@ Shrunk Covariance
 Basic shrinkage
 ---------------
 
-Despite being an unbiased estimator of the covariance matrix, the
-Maximum Likelihood Estimator is not a good estimator of the
+Despite being an asymptotically unbiased estimator of the covariance matrix,
+the Maximum Likelihood Estimator is not a good estimator of the
 eigenvalues of the covariance matrix, so the precision matrix obtained
 from its inversion is not accurate. Sometimes, it even occurs that the
 empirical covariance matrix cannot be inverted for numerical
@@ -160,8 +160,10 @@ object to the same sample.
 
 .. topic:: References:
 
-    .. [2] Chen et al., "Shrinkage Algorithms for MMSE Covariance Estimation",
-           IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
+    .. [2] :arxiv:`"Shrinkage algorithms for MMSE covariance estimation.",
+           Chen, Y., Wiesel, A., Eldar, Y. C., & Hero, A. O.
+           IEEE Transactions on Signal Processing, 58(10), 5016-5029, 2010.
+           <0907.4698>`
 
 .. topic:: Examples:
 

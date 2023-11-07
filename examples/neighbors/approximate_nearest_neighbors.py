@@ -3,55 +3,24 @@
 Approximate nearest neighbors in TSNE
 =====================================
 
-This example presents how to chain KNeighborsTransformer and TSNE in a
-pipeline. It also shows how to wrap the packages `annoy` and `nmslib` to
-replace KNeighborsTransformer and perform approximate nearest neighbors.
-These packages can be installed with `pip install annoy nmslib`.
-
-Note: Currently `TSNE(metric='precomputed')` does not modify the precomputed
-distances, and thus assumes that precomputed euclidean distances are squared.
-In future versions, a parameter in TSNE will control the optional squaring of
-precomputed distances (see #12401).
+This example presents how to chain KNeighborsTransformer and TSNE in a pipeline.
+It also shows how to wrap the packages `nmslib` and `pynndescent` to replace
+KNeighborsTransformer and perform approximate nearest neighbors. These packages
+can be installed with `pip install nmslib pynndescent`.
 
 Note: In KNeighborsTransformer we use the definition which includes each
 training point as its own neighbor in the count of `n_neighbors`, and for
-compatibility reasons, one extra neighbor is computed when
-`mode == 'distance'`. Please note that we do the same in the proposed wrappers.
-
-Sample output::
-
-    Benchmarking on MNIST_2000:
-    ---------------------------
-    AnnoyTransformer:                    0.583 sec
-    NMSlibTransformer:                   0.321 sec
-    KNeighborsTransformer:               1.225 sec
-    TSNE with AnnoyTransformer:          4.903 sec
-    TSNE with NMSlibTransformer:         5.009 sec
-    TSNE with KNeighborsTransformer:     6.210 sec
-    TSNE with internal NearestNeighbors: 6.365 sec
-
-    Benchmarking on MNIST_10000:
-    ----------------------------
-    AnnoyTransformer:                    4.457 sec
-    NMSlibTransformer:                   2.080 sec
-    KNeighborsTransformer:               30.680 sec
-    TSNE with AnnoyTransformer:          30.225 sec
-    TSNE with NMSlibTransformer:         43.295 sec
-    TSNE with KNeighborsTransformer:     64.845 sec
-    TSNE with internal NearestNeighbors: 64.984 sec
-
+compatibility reasons, one extra neighbor is computed when `mode == 'distance'`.
+Please note that we do the same in the proposed `nmslib` wrapper.
 """
-# Author: Tom Dupre la Tour
-#
-# License: BSD 3 clause
-import time
-import sys
 
-try:
-    import annoy
-except ImportError:
-    print("The package 'annoy' is required to run this example.")
-    sys.exit()
+# Author: Tom Dupre la Tour
+# License: BSD 3 clause
+
+# %%
+# First we try to import the packages and warn the user in case they are
+# missing.
+import sys
 
 try:
     import nmslib
@@ -59,27 +28,28 @@ except ImportError:
     print("The package 'nmslib' is required to run this example.")
     sys.exit()
 
+try:
+    from pynndescent import PyNNDescentTransformer
+except ImportError:
+    print("The package 'pynndescent' is required to run this example.")
+    sys.exit()
+
+# %%
+# We define a wrapper class for implementing the scikit-learn API to the
+# `nmslib`, as well as a loading function.
+import joblib
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.ticker import NullFormatter
 from scipy.sparse import csr_matrix
 
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.neighbors import KNeighborsTransformer
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.datasets import fetch_openml
-from sklearn.pipeline import make_pipeline
-from sklearn.manifold import TSNE
 from sklearn.utils import shuffle
-
-print(__doc__)
 
 
 class NMSlibTransformer(TransformerMixin, BaseEstimator):
     """Wrapper for using nmslib as sklearn's KNeighborsTransformer"""
 
-    def __init__(self, n_neighbors=5, metric='euclidean', method='sw-graph',
-                 n_jobs=1):
+    def __init__(self, n_neighbors=5, metric="euclidean", method="sw-graph", n_jobs=-1):
         self.n_neighbors = n_neighbors
         self.method = method
         self.metric = metric
@@ -91,15 +61,14 @@ class NMSlibTransformer(TransformerMixin, BaseEstimator):
         # see more metric in the manual
         # https://github.com/nmslib/nmslib/tree/master/manual
         space = {
-            'sqeuclidean': 'l2',
-            'euclidean': 'l2',
-            'cosine': 'cosinesimil',
-            'l1': 'l1',
-            'l2': 'l2',
+            "euclidean": "l2",
+            "cosine": "cosinesimil",
+            "l1": "l1",
+            "l2": "l2",
         }[self.metric]
 
         self.nmslib_ = nmslib.init(method=self.method, space=space)
-        self.nmslib_.addDataPointBatch(X)
+        self.nmslib_.addDataPointBatch(X.copy())
         self.nmslib_.createIndex()
         return self
 
@@ -110,185 +79,236 @@ class NMSlibTransformer(TransformerMixin, BaseEstimator):
         # neighbor, one extra neighbor will be computed.
         n_neighbors = self.n_neighbors + 1
 
-        results = self.nmslib_.knnQueryBatch(X, k=n_neighbors,
-                                             num_threads=self.n_jobs)
+        if self.n_jobs < 0:
+            # Same handling as done in joblib for negative values of n_jobs:
+            # in particular, `n_jobs == -1` means "as many threads as CPUs".
+            num_threads = joblib.cpu_count() + self.n_jobs + 1
+        else:
+            num_threads = self.n_jobs
+
+        results = self.nmslib_.knnQueryBatch(
+            X.copy(), k=n_neighbors, num_threads=num_threads
+        )
         indices, distances = zip(*results)
         indices, distances = np.vstack(indices), np.vstack(distances)
 
-        if self.metric == 'sqeuclidean':
-            distances **= 2
-
-        indptr = np.arange(0, n_samples_transform * n_neighbors + 1,
-                           n_neighbors)
-        kneighbors_graph = csr_matrix((distances.ravel(), indices.ravel(),
-                                       indptr), shape=(n_samples_transform,
-                                                       self.n_samples_fit_))
+        indptr = np.arange(0, n_samples_transform * n_neighbors + 1, n_neighbors)
+        kneighbors_graph = csr_matrix(
+            (distances.ravel(), indices.ravel(), indptr),
+            shape=(n_samples_transform, self.n_samples_fit_),
+        )
 
         return kneighbors_graph
-
-
-class AnnoyTransformer(TransformerMixin, BaseEstimator):
-    """Wrapper for using annoy.AnnoyIndex as sklearn's KNeighborsTransformer"""
-
-    def __init__(self, n_neighbors=5, metric='euclidean', n_trees=10,
-                 search_k=-1):
-        self.n_neighbors = n_neighbors
-        self.n_trees = n_trees
-        self.search_k = search_k
-        self.metric = metric
-
-    def fit(self, X):
-        self.n_samples_fit_ = X.shape[0]
-        metric = self.metric if self.metric != 'sqeuclidean' else 'euclidean'
-        self.annoy_ = annoy.AnnoyIndex(X.shape[1], metric=metric)
-        for i, x in enumerate(X):
-            self.annoy_.add_item(i, x.tolist())
-        self.annoy_.build(self.n_trees)
-        return self
-
-    def transform(self, X):
-        return self._transform(X)
-
-    def fit_transform(self, X, y=None):
-        return self.fit(X)._transform(X=None)
-
-    def _transform(self, X):
-        """As `transform`, but handles X is None for faster `fit_transform`."""
-
-        n_samples_transform = self.n_samples_fit_ if X is None else X.shape[0]
-
-        # For compatibility reasons, as each sample is considered as its own
-        # neighbor, one extra neighbor will be computed.
-        n_neighbors = self.n_neighbors + 1
-
-        indices = np.empty((n_samples_transform, n_neighbors),
-                           dtype=np.int)
-        distances = np.empty((n_samples_transform, n_neighbors))
-
-        if X is None:
-            for i in range(self.annoy_.get_n_items()):
-                ind, dist = self.annoy_.get_nns_by_item(
-                    i, n_neighbors, self.search_k, include_distances=True)
-
-                indices[i], distances[i] = ind, dist
-        else:
-            for i, x in enumerate(X):
-                indices[i], distances[i] = self.annoy_.get_nns_by_vector(
-                    x.tolist(), n_neighbors, self.search_k,
-                    include_distances=True)
-
-        if self.metric == 'sqeuclidean':
-            distances **= 2
-
-        indptr = np.arange(0, n_samples_transform * n_neighbors + 1,
-                           n_neighbors)
-        kneighbors_graph = csr_matrix((distances.ravel(), indices.ravel(),
-                                       indptr), shape=(n_samples_transform,
-                                                       self.n_samples_fit_))
-
-        return kneighbors_graph
-
-
-def test_transformers():
-    """Test that AnnoyTransformer and KNeighborsTransformer give same results
-    """
-    X = np.random.RandomState(42).randn(10, 2)
-
-    knn = KNeighborsTransformer()
-    Xt0 = knn.fit_transform(X)
-
-    ann = AnnoyTransformer()
-    Xt1 = ann.fit_transform(X)
-
-    nms = NMSlibTransformer()
-    Xt2 = nms.fit_transform(X)
-
-    assert_array_almost_equal(Xt0.toarray(), Xt1.toarray(), decimal=5)
-    assert_array_almost_equal(Xt0.toarray(), Xt2.toarray(), decimal=5)
 
 
 def load_mnist(n_samples):
     """Load MNIST, shuffle the data, and return only n_samples."""
-    mnist = fetch_openml(data_id=41063)
-    X, y = shuffle(mnist.data, mnist.target, random_state=42)
-    return X[:n_samples], y[:n_samples]
+    mnist = fetch_openml("mnist_784", as_frame=False, parser="pandas")
+    X, y = shuffle(mnist.data, mnist.target, random_state=2)
+    return X[:n_samples] / 255, y[:n_samples]
 
 
-def run_benchmark():
-    datasets = [
-        ('MNIST_2000', load_mnist(n_samples=2000)),
-        ('MNIST_10000', load_mnist(n_samples=10000)),
-    ]
+# %%
+# We benchmark the different exact/approximate nearest neighbors transformers.
+import time
 
-    n_iter = 500
-    perplexity = 30
-    # TSNE requires a certain number of neighbors which depends on the
-    # perplexity parameter.
-    # Add one since we include each sample as its own neighbor.
-    n_neighbors = int(3. * perplexity + 1) + 1
+from sklearn.manifold import TSNE
+from sklearn.neighbors import KNeighborsTransformer
+from sklearn.pipeline import make_pipeline
 
-    transformers = [
-        ('AnnoyTransformer', AnnoyTransformer(n_neighbors=n_neighbors,
-                                              metric='sqeuclidean')),
-        ('NMSlibTransformer', NMSlibTransformer(n_neighbors=n_neighbors,
-                                                metric='sqeuclidean')),
-        ('KNeighborsTransformer', KNeighborsTransformer(
-            n_neighbors=n_neighbors, mode='distance', metric='sqeuclidean')),
-        ('TSNE with AnnoyTransformer', make_pipeline(
-            AnnoyTransformer(n_neighbors=n_neighbors, metric='sqeuclidean'),
-            TSNE(metric='precomputed', perplexity=perplexity,
-                 method="barnes_hut", random_state=42, n_iter=n_iter), )),
-        ('TSNE with NMSlibTransformer', make_pipeline(
-            NMSlibTransformer(n_neighbors=n_neighbors, metric='sqeuclidean'),
-            TSNE(metric='precomputed', perplexity=perplexity,
-                 method="barnes_hut", random_state=42, n_iter=n_iter), )),
-        ('TSNE with KNeighborsTransformer', make_pipeline(
-            KNeighborsTransformer(n_neighbors=n_neighbors, mode='distance',
-                                  metric='sqeuclidean'),
-            TSNE(metric='precomputed', perplexity=perplexity,
-                 method="barnes_hut", random_state=42, n_iter=n_iter), )),
-        ('TSNE with internal NearestNeighbors',
-         TSNE(metric='sqeuclidean', perplexity=perplexity, method="barnes_hut",
-              random_state=42, n_iter=n_iter)),
-    ]
+datasets = [
+    ("MNIST_10000", load_mnist(n_samples=10_000)),
+    ("MNIST_20000", load_mnist(n_samples=20_000)),
+]
 
-    # init the plot
-    nrows = len(datasets)
-    ncols = np.sum([1 for name, model in transformers if 'TSNE' in name])
-    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, squeeze=False,
-                             figsize=(5 * ncols, 4 * nrows))
-    axes = axes.ravel()
-    i_ax = 0
+n_iter = 500
+perplexity = 30
+metric = "euclidean"
+# TSNE requires a certain number of neighbors which depends on the
+# perplexity parameter.
+# Add one since we include each sample as its own neighbor.
+n_neighbors = int(3.0 * perplexity + 1) + 1
 
-    for dataset_name, (X, y) in datasets:
+tsne_params = dict(
+    init="random",  # pca not supported for sparse matrices
+    perplexity=perplexity,
+    method="barnes_hut",
+    random_state=42,
+    n_iter=n_iter,
+    learning_rate="auto",
+)
 
-        msg = 'Benchmarking on %s:' % dataset_name
-        print('\n%s\n%s' % (msg, '-' * len(msg)))
+transformers = [
+    (
+        "KNeighborsTransformer",
+        KNeighborsTransformer(n_neighbors=n_neighbors, mode="distance", metric=metric),
+    ),
+    (
+        "NMSlibTransformer",
+        NMSlibTransformer(n_neighbors=n_neighbors, metric=metric),
+    ),
+    (
+        "PyNNDescentTransformer",
+        PyNNDescentTransformer(
+            n_neighbors=n_neighbors, metric=metric, parallel_batch_queries=True
+        ),
+    ),
+]
 
-        for transformer_name, transformer in transformers:
+for dataset_name, (X, y) in datasets:
+    msg = f"Benchmarking on {dataset_name}:"
+    print(f"\n{msg}\n" + str("-" * len(msg)))
+
+    for transformer_name, transformer in transformers:
+        longest = np.max([len(name) for name, model in transformers])
+        start = time.time()
+        transformer.fit(X)
+        fit_duration = time.time() - start
+        print(f"{transformer_name:<{longest}} {fit_duration:.3f} sec (fit)")
+        start = time.time()
+        Xt = transformer.transform(X)
+        transform_duration = time.time() - start
+        print(f"{transformer_name:<{longest}} {transform_duration:.3f} sec (transform)")
+        if transformer_name == "PyNNDescentTransformer":
             start = time.time()
-            Xt = transformer.fit_transform(X)
-            duration = time.time() - start
+            Xt = transformer.transform(X)
+            transform_duration = time.time() - start
+            print(
+                f"{transformer_name:<{longest}} {transform_duration:.3f} sec"
+                " (transform)"
+            )
 
-            # print the duration report
-            longest = np.max([len(name) for name, model in transformers])
-            whitespaces = ' ' * (longest - len(transformer_name))
-            print('%s: %s%.3f sec' % (transformer_name, whitespaces, duration))
+# %%
+# Sample output::
+#
+#     Benchmarking on MNIST_10000:
+#     ----------------------------
+#     KNeighborsTransformer  0.007 sec (fit)
+#     KNeighborsTransformer  1.139 sec (transform)
+#     NMSlibTransformer      0.208 sec (fit)
+#     NMSlibTransformer      0.315 sec (transform)
+#     PyNNDescentTransformer 4.823 sec (fit)
+#     PyNNDescentTransformer 4.884 sec (transform)
+#     PyNNDescentTransformer 0.744 sec (transform)
+#
+#     Benchmarking on MNIST_20000:
+#     ----------------------------
+#     KNeighborsTransformer  0.011 sec (fit)
+#     KNeighborsTransformer  5.769 sec (transform)
+#     NMSlibTransformer      0.733 sec (fit)
+#     NMSlibTransformer      1.077 sec (transform)
+#     PyNNDescentTransformer 14.448 sec (fit)
+#     PyNNDescentTransformer 7.103 sec (transform)
+#     PyNNDescentTransformer 1.759 sec (transform)
+#
+# Notice that the `PyNNDescentTransformer` takes more time during the first
+# `fit` and the first `transform` due to the overhead of the numba just in time
+# compiler. But after the first call, the compiled Python code is kept in a
+# cache by numba and subsequent calls do not suffer from this initial overhead.
+# Both :class:`~sklearn.neighbors.KNeighborsTransformer` and `NMSlibTransformer`
+# are only run once here as they would show more stable `fit` and `transform`
+# times (they don't have the cold start problem of PyNNDescentTransformer).
 
-            # plot TSNE embedding which should be very similar across methods
-            if 'TSNE' in transformer_name:
-                axes[i_ax].set_title(transformer_name + '\non ' + dataset_name)
-                axes[i_ax].scatter(Xt[:, 0], Xt[:, 1], c=y, alpha=0.2,
-                                   cmap=plt.cm.viridis)
-                axes[i_ax].xaxis.set_major_formatter(NullFormatter())
-                axes[i_ax].yaxis.set_major_formatter(NullFormatter())
-                axes[i_ax].axis('tight')
-                i_ax += 1
+# %%
+import matplotlib.pyplot as plt
+from matplotlib.ticker import NullFormatter
 
-    fig.tight_layout()
-    plt.show()
+transformers = [
+    ("TSNE with internal NearestNeighbors", TSNE(metric=metric, **tsne_params)),
+    (
+        "TSNE with KNeighborsTransformer",
+        make_pipeline(
+            KNeighborsTransformer(
+                n_neighbors=n_neighbors, mode="distance", metric=metric
+            ),
+            TSNE(metric="precomputed", **tsne_params),
+        ),
+    ),
+    (
+        "TSNE with NMSlibTransformer",
+        make_pipeline(
+            NMSlibTransformer(n_neighbors=n_neighbors, metric=metric),
+            TSNE(metric="precomputed", **tsne_params),
+        ),
+    ),
+]
 
+# init the plot
+nrows = len(datasets)
+ncols = np.sum([1 for name, model in transformers if "TSNE" in name])
+fig, axes = plt.subplots(
+    nrows=nrows, ncols=ncols, squeeze=False, figsize=(5 * ncols, 4 * nrows)
+)
+axes = axes.ravel()
+i_ax = 0
 
-if __name__ == '__main__':
-    test_transformers()
-    run_benchmark()
+for dataset_name, (X, y) in datasets:
+    msg = f"Benchmarking on {dataset_name}:"
+    print(f"\n{msg}\n" + str("-" * len(msg)))
+
+    for transformer_name, transformer in transformers:
+        longest = np.max([len(name) for name, model in transformers])
+        start = time.time()
+        Xt = transformer.fit_transform(X)
+        transform_duration = time.time() - start
+        print(
+            f"{transformer_name:<{longest}} {transform_duration:.3f} sec"
+            " (fit_transform)"
+        )
+
+        # plot TSNE embedding which should be very similar across methods
+        axes[i_ax].set_title(transformer_name + "\non " + dataset_name)
+        axes[i_ax].scatter(
+            Xt[:, 0],
+            Xt[:, 1],
+            c=y.astype(np.int32),
+            alpha=0.2,
+            cmap=plt.cm.viridis,
+        )
+        axes[i_ax].xaxis.set_major_formatter(NullFormatter())
+        axes[i_ax].yaxis.set_major_formatter(NullFormatter())
+        axes[i_ax].axis("tight")
+        i_ax += 1
+
+fig.tight_layout()
+plt.show()
+
+# %%
+# Sample output::
+#
+#     Benchmarking on MNIST_10000:
+#     ----------------------------
+#     TSNE with internal NearestNeighbors 24.828 sec (fit_transform)
+#     TSNE with KNeighborsTransformer     20.111 sec (fit_transform)
+#     TSNE with NMSlibTransformer         21.757 sec (fit_transform)
+#
+#     Benchmarking on MNIST_20000:
+#     ----------------------------
+#     TSNE with internal NearestNeighbors 51.955 sec (fit_transform)
+#     TSNE with KNeighborsTransformer     50.994 sec (fit_transform)
+#     TSNE with NMSlibTransformer         43.536 sec (fit_transform)
+#
+# We can observe that the default :class:`~sklearn.manifold.TSNE` estimator with
+# its internal :class:`~sklearn.neighbors.NearestNeighbors` implementation is
+# roughly equivalent to the pipeline with :class:`~sklearn.manifold.TSNE` and
+# :class:`~sklearn.neighbors.KNeighborsTransformer` in terms of performance.
+# This is expected because both pipelines rely internally on the same
+# :class:`~sklearn.neighbors.NearestNeighbors` implementation that performs
+# exacts neighbors search. The approximate `NMSlibTransformer` is already
+# slightly faster than the exact search on the smallest dataset but this speed
+# difference is expected to become more significant on datasets with a larger
+# number of samples.
+#
+# Notice however that not all approximate search methods are guaranteed to
+# improve the speed of the default exact search method: indeed the exact search
+# implementation significantly improved since scikit-learn 1.1. Furthermore, the
+# brute-force exact search method does not require building an index at `fit`
+# time. So, to get an overall performance improvement in the context of the
+# :class:`~sklearn.manifold.TSNE` pipeline, the gains of the approximate search
+# at `transform` need to be larger than the extra time spent to build the
+# approximate search index at `fit` time.
+#
+# Finally, the TSNE algorithm itself is also computationally intensive,
+# irrespective of the nearest neighbors search. So speeding-up the nearest
+# neighbors search step by a factor of 5 would not result in a speed up by a
+# factor of 5 for the overall pipeline.

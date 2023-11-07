@@ -84,8 +84,8 @@ For a given value of ``n_components`` :class:`RBFSampler` is often less accurate
 as :class:`Nystroem`. :class:`RBFSampler` is cheaper to compute, though, making
 use of larger feature spaces more efficient.
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_kernel_approximation_002.png
-    :target: ../auto_examples/plot_kernel_approximation.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_kernel_approximation_002.png
+    :target: ../auto_examples/miscellaneous/plot_kernel_approximation.html
     :scale: 50%
     :align: center
 
@@ -93,7 +93,7 @@ use of larger feature spaces more efficient.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_plot_kernel_approximation.py`
+    * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
 
 .. _additive_chi_kernel_approx:
 
@@ -108,7 +108,7 @@ The additive chi squared kernel as used here is given by
 
         k(x, y) = \sum_i \frac{2x_iy_i}{x_i+y_i}
 
-This is not exactly the same as :func:`sklearn.metrics.additive_chi2_kernel`.
+This is not exactly the same as :func:`sklearn.metrics.pairwise.additive_chi2_kernel`.
 The authors of [VZ2010]_ prefer the version above as it is always positive
 definite.
 Since the kernel is additive, it is possible to treat all components
@@ -149,6 +149,51 @@ above for the :class:`RBFSampler`. The only difference is in the free
 parameter, that is called :math:`c`.
 For a motivation for this mapping and the mathematical details see [LS2010]_.
 
+.. _polynomial_kernel_approx:
+
+Polynomial Kernel Approximation via Tensor Sketch
+-------------------------------------------------
+
+The :ref:`polynomial kernel <polynomial_kernel>` is a popular type of kernel
+function given by:
+
+.. math::
+
+        k(x, y) = (\gamma x^\top y +c_0)^d
+
+where:
+
+    * ``x``, ``y`` are the input vectors
+    * ``d`` is the kernel degree
+
+Intuitively, the feature space of the polynomial kernel of degree `d`
+consists of all possible degree-`d` products among input features, which enables
+learning algorithms using this kernel to account for interactions between features.
+
+The TensorSketch [PP2013]_ method, as implemented in :class:`PolynomialCountSketch`, is a
+scalable, input data independent method for polynomial kernel approximation.
+It is based on the concept of Count sketch [WIKICS]_ [CCF2002]_ , a dimensionality
+reduction technique similar to feature hashing, which instead uses several
+independent hash functions. TensorSketch obtains a Count Sketch of the outer product
+of two vectors (or a vector with itself), which can be used as an approximation of the
+polynomial kernel feature space. In particular, instead of explicitly computing
+the outer product, TensorSketch computes the Count Sketch of the vectors and then
+uses polynomial multiplication via the Fast Fourier Transform to compute the
+Count Sketch of their outer product.
+
+Conveniently, the training phase of TensorSketch simply consists of initializing
+some random variables. It is thus independent of the input data, i.e. it only
+depends on the number of input features, but not the data values.
+In addition, this method can transform samples in
+:math:`\mathcal{O}(n_{\text{samples}}(n_{\text{features}} + n_{\text{components}} \log(n_{\text{components}})))`
+time, where :math:`n_{\text{components}}` is the desired output dimension,
+determined by ``n_components``.
+
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_kernel_approximation_plot_scalable_poly_kernels.py`
+
+.. _tensor_sketch_kernel_approx:
 
 Mathematical Details
 --------------------
@@ -189,15 +234,23 @@ or store training examples.
 .. topic:: References:
 
     .. [RR2007] `"Random features for large-scale kernel machines"
-      <https://www.robots.ox.ac.uk/~vgg/rg/papers/randomfeatures.pdf>`_
+      <https://papers.nips.cc/paper/2007/hash/013a006f03dbc5392effeb8f18fda755-Abstract.html>`_
       Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
     .. [LS2010] `"Random Fourier approximations for skewed multiplicative histogram kernels"
-      <http://www.maths.lth.se/matematiklth/personal/sminchis/papers/lis_dagm10.pdf>`_
-      Random Fourier approximations for skewed multiplicative histogram kernels
-      - Lecture Notes for Computer Sciencd (DAGM)
+      <https://www.researchgate.net/publication/221114584_Random_Fourier_Approximations_for_Skewed_Multiplicative_Histogram_Kernels>`_
+      Li, F., Ionescu, C., and Sminchisescu, C.
+      - Pattern Recognition,  DAGM 2010, Lecture Notes in Computer Science.
     .. [VZ2010] `"Efficient additive kernels via explicit feature maps"
       <https://www.robots.ox.ac.uk/~vgg/publications/2011/Vedaldi11/vedaldi11.pdf>`_
       Vedaldi, A. and Zisserman, A. - Computer Vision and Pattern Recognition 2010
     .. [VVZ2010] `"Generalized RBF feature maps for Efficient Detection"
       <https://www.robots.ox.ac.uk/~vgg/publications/2010/Sreekanth10/sreekanth10.pdf>`_
       Vempati, S. and Vedaldi, A. and Zisserman, A. and Jawahar, CV - 2010
+    .. [PP2013] :doi:`"Fast and scalable polynomial kernels via explicit feature maps"
+      <10.1145/2487575.2487591>`
+      Pham, N., & Pagh, R. - 2013
+    .. [CCF2002] `"Finding frequent items in data streams"
+      <https://www.cs.princeton.edu/courses/archive/spring04/cos598B/bib/CharikarCF.pdf>`_
+      Charikar, M., Chen, K., & Farach-Colton - 2002
+    .. [WIKICS] `"Wikipedia: Count sketch"
+      <https://en.wikipedia.org/wiki/Count_sketch>`_

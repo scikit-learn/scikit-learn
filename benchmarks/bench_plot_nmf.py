@@ -6,29 +6,26 @@ Benchmarks of Non-Negative Matrix Factorization
 #          Anthony Di Franco (projected gradient, Python and NumPy port)
 # License: BSD 3 clause
 
-from time import time
+import numbers
 import sys
 import warnings
-import numbers
+from time import time
 
-import numpy as np
 import matplotlib.pyplot as plt
-from joblib import Memory
+import numpy as np
 import pandas
+from joblib import Memory
 
-from sklearn.utils._testing import ignore_warnings
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import NMF
-from sklearn.decomposition._nmf import _initialize_nmf
-from sklearn.decomposition._nmf import _beta_divergence
-from sklearn.decomposition._nmf import _check_init
+from sklearn.decomposition._nmf import _beta_divergence, _check_init, _initialize_nmf
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.extmath import safe_sparse_dot, squared_norm
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.utils import check_array
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.extmath import safe_sparse_dot, squared_norm
 from sklearn.utils.validation import check_is_fitted, check_non_negative
 
-
-mem = Memory(cachedir='.', verbose=0)
+mem = Memory(cachedir=".", verbose=0)
 
 ###################
 # Start of _PGNMF #
@@ -41,13 +38,14 @@ mem = Memory(cachedir='.', verbose=0)
 
 def _norm(x):
     """Dot product-based Euclidean norm implementation
-    See: http://fseoane.net/blog/2011/computing-the-vector-norm/
+    See: https://fa.bianp.net/blog/2011/computing-the-vector-norm/
     """
     return np.sqrt(squared_norm(x))
 
 
-def _nls_subproblem(X, W, H, tol, max_iter, alpha=0., l1_ratio=0.,
-                    sigma=0.01, beta=0.1):
+def _nls_subproblem(
+    X, W, H, tol, max_iter, alpha=0.0, l1_ratio=0.0, sigma=0.01, beta=0.1
+):
     """Non-negative least square solver
     Solves a non-negative least squares subproblem using the projected
     gradient descent algorithm.
@@ -104,7 +102,7 @@ def _nls_subproblem(X, W, H, tol, max_iter, alpha=0., l1_ratio=0.,
     gamma = 1
     for n_iter in range(1, max_iter + 1):
         grad = np.dot(WtW, H) - WtX
-        if alpha > 0 and l1_ratio == 1.:
+        if alpha > 0 and l1_ratio == 1.0:
             grad += alpha
         elif alpha > 0:
             grad += alpha * (l1_ratio + (1 - l1_ratio) * H)
@@ -142,18 +140,14 @@ def _nls_subproblem(X, W, H, tol, max_iter, alpha=0., l1_ratio=0.,
                 Hp = Hn
 
     if n_iter == max_iter:
-        warnings.warn("Iteration limit reached in nls subproblem.",
-                      ConvergenceWarning)
+        warnings.warn("Iteration limit reached in nls subproblem.", ConvergenceWarning)
 
     return H, grad, n_iter
 
 
-def _fit_projected_gradient(X, W, H, tol, max_iter, nls_max_iter, alpha,
-                            l1_ratio):
-    gradW = (np.dot(W, np.dot(H, H.T)) -
-             safe_sparse_dot(X, H.T, dense_output=True))
-    gradH = (np.dot(np.dot(W.T, W), H) -
-             safe_sparse_dot(W.T, X, dense_output=True))
+def _fit_projected_gradient(X, W, H, tol, max_iter, nls_max_iter, alpha, l1_ratio):
+    gradW = np.dot(W, np.dot(H, H.T)) - safe_sparse_dot(X, H.T, dense_output=True)
+    gradH = np.dot(np.dot(W.T, W), H) - safe_sparse_dot(W.T, X, dense_output=True)
 
     init_grad = squared_norm(gradW) + squared_norm(gradH.T)
     # max(0.001, tol) to force alternating minimizations of W and H
@@ -165,28 +159,31 @@ def _fit_projected_gradient(X, W, H, tol, max_iter, nls_max_iter, alpha,
         proj_grad_W = squared_norm(gradW * np.logical_or(gradW < 0, W > 0))
         proj_grad_H = squared_norm(gradH * np.logical_or(gradH < 0, H > 0))
 
-        if (proj_grad_W + proj_grad_H) / init_grad < tol ** 2:
+        if (proj_grad_W + proj_grad_H) / init_grad < tol**2:
             break
 
         # update W
-        Wt, gradWt, iterW = _nls_subproblem(X.T, H.T, W.T, tolW, nls_max_iter,
-                                            alpha=alpha, l1_ratio=l1_ratio)
+        Wt, gradWt, iterW = _nls_subproblem(
+            X.T, H.T, W.T, tolW, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio
+        )
         W, gradW = Wt.T, gradWt.T
 
         if iterW == 1:
             tolW = 0.1 * tolW
 
         # update H
-        H, gradH, iterH = _nls_subproblem(X, W, H, tolH, nls_max_iter,
-                                          alpha=alpha, l1_ratio=l1_ratio)
+        H, gradH, iterH = _nls_subproblem(
+            X, W, H, tolH, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio
+        )
         if iterH == 1:
             tolH = 0.1 * tolH
 
-    H[H == 0] = 0   # fix up negative zeros
+    H[H == 0] = 0  # fix up negative zeros
 
     if n_iter == max_iter:
-        Wt, _, _ = _nls_subproblem(X.T, H.T, W.T, tolW, nls_max_iter,
-                                   alpha=alpha, l1_ratio=l1_ratio)
+        Wt, _, _ = _nls_subproblem(
+            X.T, H.T, W.T, tolW, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio
+        )
         W = Wt.T
 
     return W, H, n_iter
@@ -199,13 +196,30 @@ class _PGNMF(NMF):
     It may change or disappear without notice.
 
     """
-    def __init__(self, n_components=None, solver='pg', init=None,
-                 tol=1e-4, max_iter=200, random_state=None,
-                 alpha=0., l1_ratio=0., nls_max_iter=10):
+
+    def __init__(
+        self,
+        n_components=None,
+        solver="pg",
+        init=None,
+        tol=1e-4,
+        max_iter=200,
+        random_state=None,
+        alpha=0.0,
+        l1_ratio=0.0,
+        nls_max_iter=10,
+    ):
         super().__init__(
-            n_components=n_components, init=init, solver=solver, tol=tol,
-            max_iter=max_iter, random_state=random_state, alpha=alpha,
-            l1_ratio=l1_ratio)
+            n_components=n_components,
+            init=init,
+            solver=solver,
+            tol=tol,
+            max_iter=max_iter,
+            random_state=random_state,
+            alpha_W=alpha,
+            alpha_H=alpha,
+            l1_ratio=l1_ratio,
+        )
         self.nls_max_iter = nls_max_iter
 
     def fit(self, X, y=None, **params):
@@ -228,7 +242,7 @@ class _PGNMF(NMF):
         return W
 
     def _fit_transform(self, X, y=None, W=None, H=None, update_H=True):
-        X = check_array(X, accept_sparse=('csr', 'csc'))
+        X = check_array(X, accept_sparse=("csr", "csc"))
         check_non_negative(X, "NMF (input X)")
 
         n_samples, n_features = X.shape
@@ -236,46 +250,68 @@ class _PGNMF(NMF):
         if n_components is None:
             n_components = n_features
 
-        if (not isinstance(n_components, numbers.Integral) or
-                n_components <= 0):
-            raise ValueError("Number of components must be a positive integer;"
-                             " got (n_components=%r)" % n_components)
-        if (not isinstance(self.max_iter, numbers.Integral) or
-                self.max_iter < 0):
-            raise ValueError("Maximum number of iterations must be a positive "
-                             "integer; got (max_iter=%r)" % self.max_iter)
+        if not isinstance(n_components, numbers.Integral) or n_components <= 0:
+            raise ValueError(
+                "Number of components must be a positive integer; got (n_components=%r)"
+                % n_components
+            )
+        if not isinstance(self.max_iter, numbers.Integral) or self.max_iter < 0:
+            raise ValueError(
+                "Maximum number of iterations must be a positive "
+                "integer; got (max_iter=%r)"
+                % self.max_iter
+            )
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
-            raise ValueError("Tolerance for stopping criteria must be "
-                             "positive; got (tol=%r)" % self.tol)
+            raise ValueError(
+                "Tolerance for stopping criteria must be positive; got (tol=%r)"
+                % self.tol
+            )
 
         # check W and H, or initialize them
-        if self.init == 'custom' and update_H:
+        if self.init == "custom" and update_H:
             _check_init(H, (n_components, n_features), "NMF (input H)")
             _check_init(W, (n_samples, n_components), "NMF (input W)")
         elif not update_H:
             _check_init(H, (n_components, n_features), "NMF (input H)")
             W = np.zeros((n_samples, n_components))
         else:
-            W, H = _initialize_nmf(X, n_components, init=self.init,
-                                   random_state=self.random_state)
+            W, H = _initialize_nmf(
+                X, n_components, init=self.init, random_state=self.random_state
+            )
 
         if update_H:  # fit_transform
             W, H, n_iter = _fit_projected_gradient(
-                X, W, H, self.tol, self.max_iter, self.nls_max_iter,
-                self.alpha, self.l1_ratio)
+                X,
+                W,
+                H,
+                self.tol,
+                self.max_iter,
+                self.nls_max_iter,
+                self.alpha,
+                self.l1_ratio,
+            )
         else:  # transform
-            Wt, _, n_iter = _nls_subproblem(X.T, H.T, W.T, self.tol,
-                                            self.nls_max_iter,
-                                            alpha=self.alpha,
-                                            l1_ratio=self.l1_ratio)
+            Wt, _, n_iter = _nls_subproblem(
+                X.T,
+                H.T,
+                W.T,
+                self.tol,
+                self.nls_max_iter,
+                alpha=self.alpha,
+                l1_ratio=self.l1_ratio,
+            )
             W = Wt.T
 
         if n_iter == self.max_iter and self.tol > 0:
-            warnings.warn("Maximum number of iteration %d reached. Increase it"
-                          " to improve convergence." % self.max_iter,
-                          ConvergenceWarning)
+            warnings.warn(
+                "Maximum number of iteration %d reached. Increase it"
+                " to improve convergence."
+                % self.max_iter,
+                ConvergenceWarning,
+            )
 
         return W, H, n_iter
+
 
 #################
 # End of _PGNMF #
@@ -287,22 +323,27 @@ def plot_results(results_df, plot_name):
         return None
 
     plt.figure(figsize=(16, 6))
-    colors = 'bgr'
-    markers = 'ovs'
+    colors = "bgr"
+    markers = "ovs"
     ax = plt.subplot(1, 3, 1)
-    for i, init in enumerate(np.unique(results_df['init'])):
+    for i, init in enumerate(np.unique(results_df["init"])):
         plt.subplot(1, 3, i + 1, sharex=ax, sharey=ax)
-        for j, method in enumerate(np.unique(results_df['method'])):
-            mask = np.logical_and(results_df['init'] == init,
-                                  results_df['method'] == method)
+        for j, method in enumerate(np.unique(results_df["method"])):
+            mask = np.logical_and(
+                results_df["init"] == init, results_df["method"] == method
+            )
             selected_items = results_df[mask]
 
-            plt.plot(selected_items['time'], selected_items['loss'],
-                     color=colors[j % len(colors)], ls='-',
-                     marker=markers[j % len(markers)],
-                     label=method)
+            plt.plot(
+                selected_items["time"],
+                selected_items["loss"],
+                color=colors[j % len(colors)],
+                ls="-",
+                marker=markers[j % len(markers)],
+                label=method,
+            )
 
-        plt.legend(loc=0, fontsize='x-small')
+        plt.legend(loc=0, fontsize="x-small")
         plt.xlabel("Time (s)")
         plt.ylabel("loss")
         plt.title("%s" % init)
@@ -312,9 +353,10 @@ def plot_results(results_df, plot_name):
 @ignore_warnings(category=ConvergenceWarning)
 # use joblib to cache the results.
 # X_shape is specified in arguments for avoiding hashing X
-@mem.cache(ignore=['X', 'W0', 'H0'])
-def bench_one(name, X, W0, H0, X_shape, clf_type, clf_params, init,
-              n_components, random_state):
+@mem.cache(ignore=["X", "W0", "H0"])
+def bench_one(
+    name, X, W0, H0, X_shape, clf_type, clf_params, init, n_components, random_state
+):
     W = W0.copy()
     H = H0.copy()
 
@@ -334,22 +376,22 @@ def run_bench(X, clfs, plot_name, n_components, tol, alpha, l1_ratio):
     results = []
     for name, clf_type, iter_range, clf_params in clfs:
         print("Training %s:" % name)
-        for rs, init in enumerate(('nndsvd', 'nndsvdar', 'random')):
+        for rs, init in enumerate(("nndsvd", "nndsvdar", "random")):
             print("    %s %s: " % (init, " " * (8 - len(init))), end="")
             W, H = _initialize_nmf(X, n_components, init, 1e-6, rs)
 
             for max_iter in iter_range:
-                clf_params['alpha'] = alpha
-                clf_params['l1_ratio'] = l1_ratio
-                clf_params['max_iter'] = max_iter
-                clf_params['tol'] = tol
-                clf_params['random_state'] = rs
-                clf_params['init'] = 'custom'
-                clf_params['n_components'] = n_components
+                clf_params["alpha"] = alpha
+                clf_params["l1_ratio"] = l1_ratio
+                clf_params["max_iter"] = max_iter
+                clf_params["tol"] = tol
+                clf_params["random_state"] = rs
+                clf_params["init"] = "custom"
+                clf_params["n_components"] = n_components
 
-                this_loss, duration = bench_one(name, X, W, H, X.shape,
-                                                clf_type, clf_params,
-                                                init, n_components, rs)
+                this_loss, duration = bench_one(
+                    name, X, W, H, X.shape, clf_type, clf_params, init, n_components, rs
+                )
 
                 init_name = "init='%s'" % init
                 results.append((name, this_loss, duration, init_name))
@@ -359,8 +401,7 @@ def run_bench(X, clfs, plot_name, n_components, tol, alpha, l1_ratio):
             print(" ")
 
     # Use a panda dataframe to organize the results
-    results_df = pandas.DataFrame(results,
-                                  columns="method loss time init".split())
+    results_df = pandas.DataFrame(results, columns="method loss time init".split())
     print("Total time = %0.3f sec\n" % (time() - start))
 
     # plot the results
@@ -372,9 +413,11 @@ def load_20news():
     print("Loading 20 newsgroups dataset")
     print("-----------------------------")
     from sklearn.datasets import fetch_20newsgroups
-    dataset = fetch_20newsgroups(shuffle=True, random_state=1,
-                                 remove=('headers', 'footers', 'quotes'))
-    vectorizer = TfidfVectorizer(max_df=0.95, min_df=2, stop_words='english')
+
+    dataset = fetch_20newsgroups(
+        shuffle=True, random_state=1, remove=("headers", "footers", "quotes")
+    )
+    vectorizer = TfidfVectorizer(max_df=0.95, min_df=2, stop_words="english")
     tfidf = vectorizer.fit_transform(dataset.data)
     return tfidf
 
@@ -383,20 +426,22 @@ def load_faces():
     print("Loading Olivetti face dataset")
     print("-----------------------------")
     from sklearn.datasets import fetch_olivetti_faces
+
     faces = fetch_olivetti_faces(shuffle=True)
     return faces.data
 
 
 def build_clfs(cd_iters, pg_iters, mu_iters):
-    clfs = [("Coordinate Descent", NMF, cd_iters, {'solver': 'cd'}),
-            ("Projected Gradient", _PGNMF, pg_iters, {'solver': 'pg'}),
-            ("Multiplicative Update", NMF, mu_iters, {'solver': 'mu'}),
-            ]
+    clfs = [
+        ("Coordinate Descent", NMF, cd_iters, {"solver": "cd"}),
+        ("Projected Gradient", _PGNMF, pg_iters, {"solver": "pg"}),
+        ("Multiplicative Update", NMF, mu_iters, {"solver": "mu"}),
+    ]
     return clfs
 
 
-if __name__ == '__main__':
-    alpha = 0.
+if __name__ == "__main__":
+    alpha = 0.0
     l1_ratio = 0.5
     n_components = 10
     tol = 1e-15
@@ -417,6 +462,14 @@ if __name__ == '__main__':
     mu_iters = np.arange(1, 30)
     clfs = build_clfs(cd_iters, pg_iters, mu_iters)
     X_faces = load_faces()
-    run_bench(X_faces, clfs, plot_name, n_components, tol, alpha, l1_ratio,)
+    run_bench(
+        X_faces,
+        clfs,
+        plot_name,
+        n_components,
+        tol,
+        alpha,
+        l1_ratio,
+    )
 
     plt.show()

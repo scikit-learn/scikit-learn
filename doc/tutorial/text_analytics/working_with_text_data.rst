@@ -34,7 +34,7 @@ The source of this tutorial can be found within your scikit-learn folder::
     scikit-learn/doc/tutorial/text_analytics/
 
 The source can also be found `on Github
-<https://github.com/scikit-learn/scikit-learn/tree/master/doc/tutorial/text_analytics>`_.
+<https://github.com/scikit-learn/scikit-learn/tree/main/doc/tutorial/text_analytics>`_.
 
 The tutorial folder should contain the following sub-folders:
 
@@ -48,21 +48,26 @@ The tutorial folder should contain the following sub-folders:
 
 
 You can already copy the skeletons into a new folder somewhere
-on your hard-drive named ``sklearn_tut_workspace`` where you
+on your hard-drive named ``sklearn_tut_workspace``, where you
 will edit your own files for the exercises while keeping
-the original skeletons intact::
+the original skeletons intact:
 
-    % cp -r skeletons work_directory/sklearn_tut_workspace
+.. prompt:: bash $
+
+  cp -r skeletons work_directory/sklearn_tut_workspace
+
 
 Machine learning algorithms need data. Go to each ``$TUTORIAL_HOME/data``
 sub-folder and run the ``fetch_data.py`` script from there (after
 having read them first).
 
-For instance::
+For instance:
 
-    % cd $TUTORIAL_HOME/data/languages
-    % less fetch_data.py
-    % python fetch_data.py
+.. prompt:: bash $
+
+  cd $TUTORIAL_HOME/data/languages
+  less fetch_data.py
+  python fetch_data.py
 
 
 Loading the 20 newsgroups dataset
@@ -87,7 +92,7 @@ manually from the website and use the :func:`sklearn.datasets.load_files`
 function by pointing it to the ``20news-bydate-train`` sub-folder of the
 uncompressed archive folder.
 
-In order to get faster execution times for this first example we will
+In order to get faster execution times for this first example, we will
 work on a partial dataset with only 4 categories out of the 20 available
 in the dataset::
 
@@ -131,7 +136,7 @@ document in the training set. In this case the category is the name of the
 newsgroup which also happens to be the name of the folder holding the
 individual documents.
 
-For speed and space efficiency reasons ``scikit-learn`` loads the
+For speed and space efficiency reasons, ``scikit-learn`` loads the
 target attribute as an array of integers that corresponds to the
 index of the category name in the ``target_names`` list. The category
 integer id of each sample is stored in the ``target`` attribute::
@@ -287,7 +292,7 @@ Now that we have our features, we can train a classifier to try to predict
 the category of a post. Let's start with a :ref:`naïve Bayes <naive_bayes>`
 classifier, which
 provides a nice baseline for this task. ``scikit-learn`` includes several
-variants of this classifier; the one most suitable for word counts is the
+variants of this classifier, and the one most suitable for word counts is the
 multinomial variant::
 
   >>> from sklearn.naive_bayes import MultinomialNB
@@ -487,9 +492,12 @@ Exercises
 ~~~~~~~~~
 
 To do the exercises, copy the content of the 'skeletons' folder as
-a new folder named 'workspace'::
+a new folder named 'workspace':
 
-  % cp -r skeletons workspace
+.. prompt:: bash $
+
+  cp -r skeletons workspace
+
 
 You can then edit the content of the workspace without fear of losing
 the original exercise instructions.
@@ -512,7 +520,7 @@ Exercise 1: Language identification
 -----------------------------------
 
 - Write a text classification pipeline using a custom preprocessor and
-  ``CharNGramAnalyzer`` using data from Wikipedia articles as training set.
+  ``TfidfVectorizer`` set up to use character based n-grams, using data from Wikipedia articles as the training set.
 
 - Evaluate the performance on some held out test set.
 
@@ -563,7 +571,7 @@ upon the completion of this tutorial:
   :ref:`Clustering <sphx_glr_auto_examples_text_plot_document_clustering.py>`
   on your problem.
 
-* If you have multiple labels per document, e.g categories, have a look
+* If you have multiple labels per document, e.g. categories, have a look
   at the :ref:`Multiclass and multilabel section <multiclass>`.
 
 * Try using :ref:`Truncated SVD <LSA>` for

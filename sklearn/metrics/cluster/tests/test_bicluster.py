@@ -2,10 +2,9 @@
 
 import numpy as np
 
-from sklearn.utils._testing import assert_almost_equal
-
-from sklearn.metrics.cluster._bicluster import _jaccard
 from sklearn.metrics import consensus_score
+from sklearn.metrics.cluster._bicluster import _jaccard
+from sklearn.utils._testing import assert_almost_equal
 
 
 def test_jaccard():
@@ -21,8 +20,7 @@ def test_jaccard():
 
 
 def test_consensus_score():
-    a = [[True, True, False, False],
-         [False, False, True, True]]
+    a = [[True, True, False, False], [False, False, True, True]]
     b = a[::-1]
 
     assert consensus_score((a, a), (a, a)) == 1
@@ -37,14 +35,22 @@ def test_consensus_score():
 
 
 def test_consensus_score_issue2445():
-    ''' Different number of biclusters in A and B'''
-    a_rows = np.array([[True, True, False, False],
-                       [False, False, True, True],
-                       [False, False, False, True]])
-    a_cols = np.array([[True, True, False, False],
-                       [False, False, True, True],
-                       [False, False, False, True]])
+    """Different number of biclusters in A and B"""
+    a_rows = np.array(
+        [
+            [True, True, False, False],
+            [False, False, True, True],
+            [False, False, False, True],
+        ]
+    )
+    a_cols = np.array(
+        [
+            [True, True, False, False],
+            [False, False, True, True],
+            [False, False, False, True],
+        ]
+    )
     idx = [0, 2]
     s = consensus_score((a_rows, a_cols), (a_rows[idx], a_cols[idx]))
     # B contains 2 of the 3 biclusters in A, so score should be 2/3
-    assert_almost_equal(s, 2.0/3.0)
+    assert_almost_equal(s, 2.0 / 3.0)

@@ -8,9 +8,9 @@ Density Estimation
 Density estimation walks the line between unsupervised learning, feature
 engineering, and data modeling.  Some of the most popular and useful
 density estimation techniques are mixture models such as
-Gaussian Mixtures (:class:`sklearn.mixture.GaussianMixture`), and
+Gaussian Mixtures (:class:`~sklearn.mixture.GaussianMixture`), and
 neighbor-based approaches such as the kernel density estimate
-(:class:`sklearn.neighbors.KernelDensity`).
+(:class:`~sklearn.neighbors.KernelDensity`).
 Gaussian Mixtures are discussed more fully in the context of
 :ref:`clustering <clustering>`, because the technique is also useful as
 an unsupervised clustering scheme.
@@ -58,7 +58,7 @@ distribution of points.
 Kernel Density Estimation
 =========================
 Kernel density estimation in scikit-learn is implemented in the
-:class:`sklearn.neighbors.KernelDensity` estimator, which uses the
+:class:`~sklearn.neighbors.KernelDensity` estimator, which uses the
 Ball Tree or KD Tree for efficient queries (see :ref:`neighbors` for
 a discussion of these).  Though the above example
 uses a 1D data set for simplicity, kernel density estimation can be
@@ -93,14 +93,18 @@ Given this kernel form, the density estimate at a point :math:`y` within
 a group of points :math:`x_i; i=1\cdots N` is given by:
 
 .. math::
-    \rho_K(y) = \sum_{i=1}^{N} K((y - x_i) / h)
+    \rho_K(y) = \sum_{i=1}^{N} K(y - x_i; h)
 
 The bandwidth here acts as a smoothing parameter, controlling the tradeoff
 between bias and variance in the result.  A large bandwidth leads to a very
 smooth (i.e. high-bias) density distribution.  A small bandwidth leads
 to an unsmooth (i.e. high-variance) density distribution.
 
-:class:`sklearn.neighbors.KernelDensity` implements several common kernel
+The parameter `bandwidth` controls this smoothing. One can either set
+manually this parameter or use Scott's and Silvermann's estimation
+methods.
+
+:class:`~sklearn.neighbors.KernelDensity` implements several common kernel
 forms, which are shown in the following figure:
 
 .. |kde_kernels| image:: ../auto_examples/neighbors/images/sphx_glr_plot_kde_1d_002.png
@@ -108,6 +112,10 @@ forms, which are shown in the following figure:
    :scale: 80
 
 .. centered:: |kde_kernels|
+
+|details-start|
+**kernels' mathematical expressions**
+|details-split|
 
 The form of these kernels is as follows:
 
@@ -135,10 +143,12 @@ The form of these kernels is as follows:
 
   :math:`K(x; h) \propto \cos(\frac{\pi x}{2h})` if :math:`x < h`
 
+|details-end|
+
 The kernel density estimator can be used with any of the valid distance
-metrics (see :class:`sklearn.neighbors.DistanceMetric` for a list of available metrics), though
-the results are properly normalized only for the Euclidean metric.  One
-particularly useful metric is the
+metrics (see :class:`~sklearn.metrics.DistanceMetric` for a list of
+available metrics), though the results are properly normalized only
+for the Euclidean metric.  One particularly useful metric is the
 `Haversine distance <https://en.wikipedia.org/wiki/Haversine_formula>`_
 which measures the angular distance between points on a sphere.  Here
 is an example of using a kernel density estimate for a visualization

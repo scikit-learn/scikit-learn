@@ -1,30 +1,34 @@
-version: 2
+version: 2.1
 
 jobs:
+  lint:
+    docker:
+      - image: cimg/python:3.8.12
+    steps:
+      - checkout
+      - run:
+          name: dependencies
+          command: |
+            source build_tools/shared.sh
+            # Include pytest compatibility with mypy
+            pip install pytest ruff $(get_dep mypy min) $(get_dep black min) cython-lint
+      - run:
+          name: linting
+          command: ./build_tools/linting.sh
+
   doc-min-dependencies:
     docker:
-      - image: circleci/python:3.7.3-stretch
+      - image: cimg/python:3.8.12
     environment:
-      - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
-      - MINICONDA_PATH: ~/miniconda
+      - OPENBLAS_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3.5
-      - NUMPY_VERSION: 1.11.0
-      - SCIPY_VERSION: 0.17.0
-      - MATPLOTLIB_VERSION: 1.5.1
-      # on conda, this is the latest for python 3.5
-      # The following places need to be in sync with regard to Cython version:
-      # - .circleci config file
-      # - sklearn/_build_utils/__init__.py
-      # - advanced installation guide
-      - CYTHON_VERSION: 0.28.5
-      - SCIKIT_IMAGE_VERSION: 0.12.3
+      - LOCK_FILE: build_tools/circle/doc_min_dependencies_linux-64_conda.lock
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v1-doc-min-deps-datasets-{{ .Branch }}
       - restore_cache:
           keys:
             - doc-min-deps-ccache-{{ .Branch }}
@@ -36,7 +40,7 @@ jobs:
             - ~/.ccache
             - ~/.cache/pip
       - save_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v1-doc-min-deps-datasets-{{ .Branch }}
           paths:
             - ~/scikit_learn_data
       - store_artifacts:
@@ -48,18 +52,17 @@ jobs:
 
   doc:
     docker:
-      - image: circleci/python:3.7.3-stretch
+      - image: cimg/python:3.8.12
     environment:
-      - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
-      - MINICONDA_PATH: ~/miniconda
+      - OPENBLAS_NUM_THREADS: 2
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3
+      - LOCK_FILE: build_tools/circle/doc_linux-64_conda.lock
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v1-doc-datasets-{{ .Branch }}
       - restore_cache:
           keys:
             - doc-ccache-{{ .Branch }}
@@ -71,7 +74,7 @@ jobs:
             - ~/.ccache
             - ~/.cache/pip
       - save_cache:
-          key: v1-datasets-{{ .Branch }}
+          key: v1-doc-datasets-{{ .Branch }}
           paths:
             - ~/scikit_learn_data
       - store_artifacts:
@@ -86,38 +89,9 @@ jobs:
           root: doc/_build/html
           paths: .
 
-  lint:
-    docker:
-      - image: circleci/python:3.6
-    steps:
-      - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
-      - run:
-          name: dependencies
-          command: sudo pip install flake8
-      - run:
-          name: linting
-          command: ./build_tools/circle/linting.sh
-
-  pypy3:
-    docker:
-      - image: pypy:3.6-7.1.1
-    steps:
-      - restore_cache:
-          keys:
-            - pypy3-ccache-{{ .Branch }}
-            - pypy3-ccache
-      - checkout
-      - run: ./build_tools/circle/build_test_pypy.sh
-      - save_cache:
-          key: pypy3-ccache-{{ .Branch }}-{{ .BuildNum }}
-          paths:
-            - ~/.ccache
-            - ~/.cache/pip
-
   deploy:
     docker:
-      - image: circleci/python:3.6
+      - image: cimg/python:3.8.12
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -128,7 +102,7 @@ jobs:
       - run: ls -ltrh doc/_build/html/stable
       - deploy:
           command: |
-            if [[ "${CIRCLE_BRANCH}" =~ ^master$|^[0-9]+\.[0-9]+\.X$ ]]; then
+            if [[ "${CIRCLE_BRANCH}" =~ ^main$|^[0-9]+\.[0-9]+\.X$ ]]; then
               bash build_tools/circle/push_doc.sh doc/_build/html/stable
             fi
 
@@ -143,21 +117,6 @@ workflows:
       - doc-min-dependencies:
           requires:
             - lint
-      - pypy3:
-          filters:
-            branches:
-              only:
-                - 0.20.X
       - deploy:
           requires:
             - doc
-  pypy:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - pypy3

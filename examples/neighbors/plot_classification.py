@@ -3,56 +3,92 @@
 Nearest Neighbors Classification
 ================================
 
-Sample usage of Nearest Neighbors classification.
-It will plot the decision boundaries for each class.
+This example shows how to use :class:`~sklearn.neighbors.KNeighborsClassifier`.
+We train such a classifier on the iris dataset and observe the difference of the
+decision boundary obtained with regards to the parameter `weights`.
 """
-print(__doc__)
 
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
-from sklearn import neighbors, datasets
+# %%
+# Load the data
+# -------------
+#
+# In this example, we use the iris dataset. We split the data into a train and test
+# dataset.
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
 
-n_neighbors = 15
-
-# import some data to play with
-iris = datasets.load_iris()
-
-# we only take the first two features. We could avoid this ugly
-# slicing by using a two-dim dataset
-X = iris.data[:, :2]
+iris = load_iris(as_frame=True)
+X = iris.data[["sepal length (cm)", "sepal width (cm)"]]
 y = iris.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=0)
 
-h = .02  # step size in the mesh
+# %%
+# K-nearest neighbors classifier
+# ------------------------------
+#
+# We want to use a k-nearest neighbors classifier considering a neighborhood of 11 data
+# points. Since our k-nearest neighbors model uses euclidean distance to find the
+# nearest neighbors, it is therefore important to scale the data beforehand. Refer to
+# the example entitled
+# :ref:`sphx_glr_auto_examples_preprocessing_plot_scaling_importance.py` for more
+# detailed information.
+#
+# Thus, we use a :class:`~sklearn.pipeline.Pipeline` to chain a scaler before to use
+# our classifier.
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
-# Create color maps
-cmap_light = ListedColormap(['orange', 'cyan', 'cornflowerblue'])
-cmap_bold = ListedColormap(['darkorange', 'c', 'darkblue'])
+clf = Pipeline(
+    steps=[("scaler", StandardScaler()), ("knn", KNeighborsClassifier(n_neighbors=11))]
+)
 
-for weights in ['uniform', 'distance']:
-    # we create an instance of Neighbours Classifier and fit the data.
-    clf = neighbors.KNeighborsClassifier(n_neighbors, weights=weights)
-    clf.fit(X, y)
+# %%
+# Decision boundary
+# -----------------
+#
+# Now, we fit two classifiers with different values of the parameter
+# `weights`. We plot the decision boundary of each classifier as well as the original
+# dataset to observe the difference.
+import matplotlib.pyplot as plt
 
-    # Plot the decision boundary. For that, we will assign a color to each
-    # point in the mesh [x_min, x_max]x[y_min, y_max].
-    x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-    y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-                         np.arange(y_min, y_max, h))
-    Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
+from sklearn.inspection import DecisionBoundaryDisplay
 
-    # Put the result into a color plot
-    Z = Z.reshape(xx.shape)
-    plt.figure()
-    plt.pcolormesh(xx, yy, Z, cmap=cmap_light)
+_, axs = plt.subplots(ncols=2, figsize=(12, 5))
 
-    # Plot also the training points
-    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold,
-                edgecolor='k', s=20)
-    plt.xlim(xx.min(), xx.max())
-    plt.ylim(yy.min(), yy.max())
-    plt.title("3-Class classification (k = %i, weights = '%s')"
-              % (n_neighbors, weights))
+for ax, weights in zip(axs, ("uniform", "distance")):
+    clf.set_params(knn__weights=weights).fit(X_train, y_train)
+    disp = DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X_test,
+        response_method="predict",
+        plot_method="pcolormesh",
+        xlabel=iris.feature_names[0],
+        ylabel=iris.feature_names[1],
+        shading="auto",
+        alpha=0.5,
+        ax=ax,
+    )
+    scatter = disp.ax_.scatter(X.iloc[:, 0], X.iloc[:, 1], c=y, edgecolors="k")
+    disp.ax_.legend(
+        scatter.legend_elements()[0],
+        iris.target_names,
+        loc="lower left",
+        title="Classes",
+    )
+    _ = disp.ax_.set_title(
+        f"3-Class classification\n(k={clf[-1].n_neighbors}, weights={weights!r})"
+    )
 
 plt.show()
+
+# %%
+# Conclusion
+# ----------
+#
+# We observe that the parameter `weights` has an impact on the decision boundary. When
+# `weights="unifom"` all nearest neighbors will have the same impact on the decision.
+# Whereas when `weights="distance"` the weight given to each neighbor is proportional
+# to the inverse of the distance from that neighbor to the query point.
+#
+# In some cases, taking the distance into account might improve the model.

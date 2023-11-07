@@ -1,8 +1,8 @@
-/* 
+/*
    Modified 2011:
 
    - Make labels sorted in group_classes, Dan Yamins.
-   
+
    Modified 2012:
 
    - Changes roles of +1 and -1 to match scikit API, Andreas Mueller
@@ -22,6 +22,13 @@
    Modified 2015:
    - Patched liblinear for sample_weights - Manoj Kumar
      See https://github.com/scikit-learn/scikit-learn/pull/5274
+
+   Modified 2020:
+   - Improved random number generator by using a mersenne twister + tweaked
+     lemire postprocessor. This fixed a convergence issue on windows targets.
+     Sylvain Marie, Schneider Electric
+     See <https://github.com/scikit-learn/scikit-learn/pull/13511#issuecomment-481729756>
+
  */
 
 #include <math.h>
@@ -32,6 +39,10 @@
 #include <locale.h>
 #include "linear.h"
 #include "tron.h"
+#include <climits>
+#include <random>
+#include "../newrand/newrand.h"
+
 typedef signed char schar;
 template <class T> static inline void swap(T& x, T& y) { T t=x; x=y; y=t; }
 #ifndef min
@@ -456,19 +467,19 @@ void l2r_l2_svr_fun::grad(double *w, double *g)
 		g[i] = w[i] + 2*g[i];
 }
 
-// A coordinate descent algorithm for 
+// A coordinate descent algorithm for
 // multi-class support vector machines by Crammer and Singer
 //
 //  min_{\alpha}  0.5 \sum_m ||w_m(\alpha)||^2 + \sum_i \sum_m e^m_i alpha^m_i
 //    s.t.     \alpha^m_i <= C^m_i \forall m,i , \sum_m \alpha^m_i=0 \forall i
-// 
+//
 //  where e^m_i = 0 if y_i  = m,
 //        e^m_i = 1 if y_i != m,
-//  C^m_i = C if m  = y_i, 
-//  C^m_i = 0 if m != y_i, 
-//  and w_m(\alpha) = \sum_i \alpha^m_i x_i 
+//  C^m_i = C if m  = y_i,
+//  C^m_i = 0 if m != y_i,
+//  and w_m(\alpha) = \sum_i \alpha^m_i x_i
 //
-// Given: 
+// Given:
 // x, y, C
 // eps is the stopping tolerance
 //
@@ -579,7 +590,7 @@ int Solver_MCSVM_CS::Solve(double *w)
 	double eps_shrink = max(10.0*eps, 1.0); // stopping tolerance for shrinking
 	bool start_from_all = true;
 
-	// Initial alpha can be set here. Note that 
+	// Initial alpha can be set here. Note that
 	// sum_m alpha[i*nr_class+m] = 0, for all i=1,...,l-1
 	// alpha[i*nr_class+m] <= C[GETI(i)] if prob->y[i] == m
 	// alpha[i*nr_class+m] <= 0 if prob->y[i] != m
@@ -615,7 +626,7 @@ int Solver_MCSVM_CS::Solve(double *w)
 		double stopping = -INF;
 		for(i=0;i<active_size;i++)
 		{
-			int j = i+rand()%(active_size-i);
+			int j = i+bounded_rand_int(active_size-i);
 			swap(index[i], index[j]);
 		}
 		for(s=0;s<active_size;s++)
@@ -775,14 +786,14 @@ int Solver_MCSVM_CS::Solve(double *w)
 	return iter;
 }
 
-// A coordinate descent algorithm for 
+// A coordinate descent algorithm for
 // L1-loss and L2-loss SVM dual problems
 //
 //  min_\alpha  0.5(\alpha^T (Q + D)\alpha) - e^T \alpha,
 //    s.t.      0 <= \alpha_i <= upper_bound_i,
-// 
+//
 //  where Qij = yi yj xi^T xj and
-//  D is a diagonal matrix 
+//  D is a diagonal matrix
 //
 // In L1-SVM case:
 // 		upper_bound_i = Cp if y_i = 1
@@ -793,12 +804,12 @@ int Solver_MCSVM_CS::Solve(double *w)
 // 		D_ii = 1/(2*Cp)	if y_i = 1
 // 		D_ii = 1/(2*Cn)	if y_i = -1
 //
-// Given: 
+// Given:
 // x, y, Cp, Cn
 // eps is the stopping tolerance
 //
 // solution will be put in w
-// 
+//
 // See Algorithm 3 of Hsieh et al., ICML 2008
 
 #undef GETI
@@ -888,7 +899,7 @@ static int solve_l2r_l1l2_svc(
 
 		for (i=0; i<active_size; i++)
 		{
-			int j = i+rand()%(active_size-i);
+			int j = i+bounded_rand_int(active_size-i);
 			swap(index[i], index[j]);
 		}
 
@@ -1009,14 +1020,14 @@ static int solve_l2r_l1l2_svc(
 }
 
 
-// A coordinate descent algorithm for 
+// A coordinate descent algorithm for
 // L1-loss and L2-loss epsilon-SVR dual problem
 //
 //  min_\beta  0.5\beta^T (Q + diag(lambda)) \beta - p \sum_{i=1}^l|\beta_i| + \sum_{i=1}^l yi\beta_i,
 //    s.t.      -upper_bound_i <= \beta_i <= upper_bound_i,
-// 
+//
 //  where Qij = xi^T xj and
-//  D is a diagonal matrix 
+//  D is a diagonal matrix
 //
 // In L1-SVM case:
 // 		upper_bound_i = C
@@ -1025,13 +1036,13 @@ static int solve_l2r_l1l2_svc(
 // 		upper_bound_i = INF
 // 		lambda_i = 1/(2*C)
 //
-// Given: 
+// Given:
 // x, y, p, C
 // eps is the stopping tolerance
 //
 // solution will be put in w
 //
-// See Algorithm 4 of Ho and Lin, 2012   
+// See Algorithm 4 of Ho and Lin, 2012
 
 #undef GETI
 #define GETI(i) (i)
@@ -1107,7 +1118,7 @@ static int solve_l2r_l1l2_svr(
 
 		for(i=0; i<active_size; i++)
 		{
-			int j = i+rand()%(active_size-i);
+			int j = i+bounded_rand_int(active_size-i);
 			swap(index[i], index[j]);
 		}
 
@@ -1253,17 +1264,17 @@ static int solve_l2r_l1l2_svr(
 }
 
 
-// A coordinate descent algorithm for 
+// A coordinate descent algorithm for
 // the dual of L2-regularized logistic regression problems
 //
 //  min_\alpha  0.5(\alpha^T Q \alpha) + \sum \alpha_i log (\alpha_i) + (upper_bound_i - \alpha_i) log (upper_bound_i - \alpha_i),
 //    s.t.      0 <= \alpha_i <= upper_bound_i,
-// 
-//  where Qij = yi yj xi^T xj and 
+//
+//  where Qij = yi yj xi^T xj and
 //  upper_bound_i = Cp if y_i = 1
 //  upper_bound_i = Cn if y_i = -1
 //
-// Given: 
+// Given:
 // x, y, Cp, Cn
 // eps is the stopping tolerance
 //
@@ -1333,7 +1344,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 	{
 		for (i=0; i<l; i++)
 		{
-			int j = i+rand()%(l-i);
+			int j = i+bounded_rand_int(l-i);
 			swap(index[i], index[j]);
 		}
 		int newton_iter = 0;
@@ -1521,7 +1532,7 @@ static int solve_l1r_l2_svc(
 
 		for(j=0; j<active_size; j++)
 		{
-			int i = j+rand()%(active_size-j);
+			int i = j+bounded_rand_int(active_size-j);
 			swap(index[i], index[j]);
 		}
 
@@ -1758,6 +1769,7 @@ static int solve_l1r_lr(
 	int max_num_linesearch = 20;
 	int active_size;
 	int QP_active_size;
+	int QP_no_change = 0;
 
 	double nu = 1e-12;
 	double inner_eps = 1;
@@ -1885,8 +1897,12 @@ static int solve_l1r_lr(
 		if(newton_iter == 0)
 			Gnorm1_init = Gnorm1_new;
 
-		if(Gnorm1_new <= eps*Gnorm1_init)
+		// Break outer-loop if the accumulated violation is small.
+		// Also break if no update in QP inner-loop ten times in a row.
+		if(Gnorm1_new <= eps*Gnorm1_init || QP_no_change >= 10)
 			break;
+
+		QP_no_change++;
 
 		iter = 0;
 		QP_Gmax_old = INF;
@@ -1903,7 +1919,7 @@ static int solve_l1r_lr(
 
 			for(j=0; j<QP_active_size; j++)
 			{
-				int i = j+rand()%(QP_active_size-j);
+				int i = j+bounded_rand_int(QP_active_size-j);
 				swap(index[i], index[j]);
 			}
 
@@ -1944,9 +1960,6 @@ static int solve_l1r_lr(
 				else
 					violation = fabs(Gn);
 
-				QP_Gmax_new = max(QP_Gmax_new, violation);
-				QP_Gnorm1_new += violation;
-
 				// obtain solution of one-variable problem
 				if(Gp < H*wpd[j])
 					z = -Gp/H;
@@ -1958,6 +1971,10 @@ static int solve_l1r_lr(
 				if(fabs(z) < 1.0e-12)
 					continue;
 				z = min(max(z,-10.0),10.0);
+
+				QP_no_change = 0;
+				QP_Gmax_new = max(QP_Gmax_new, violation);
+				QP_Gnorm1_new += violation;
 
 				wpd[j] += z;
 
@@ -2234,14 +2251,14 @@ static void group_classes(const problem *prob, int *nr_class_ret, int **label_re
                 label[i+1] = this_label;
                 count[i+1] = this_count;
         }
-        
+
         for (i=0; i <l; i++)
         {
                 j = 0;
                 int this_label = (int)prob->y[i];
                 while(this_label != label[j])
                 {
-                        j++;      
+                        j++;
                 }
                 data_label[i] = j;
 
@@ -2442,7 +2459,6 @@ model* train(const problem *prob, const parameter *param, BlasFunctions *blas_fu
 	int l = prob->l;
 	int n = prob->n;
 	int w_size = prob->n;
-	int n_iter;
 	model *model_ = Malloc(model,1);
 
 	if(prob->bias>=0)
@@ -2594,7 +2610,7 @@ void cross_validation(const problem *prob, const parameter *param, int nr_fold, 
 	for(i=0;i<l;i++) perm[i]=i;
 	for(i=0;i<l;i++)
 	{
-		int j = i+rand()%(l-i);
+		int j = i+bounded_rand_int(l-i);
 		swap(perm[i],perm[j]);
 	}
 	for(i=0;i<=nr_fold;i++)
@@ -3057,4 +3073,3 @@ void set_print_string_function(void (*print_func)(const char*))
 	else
 		liblinear_print_string = print_func;
 }
-

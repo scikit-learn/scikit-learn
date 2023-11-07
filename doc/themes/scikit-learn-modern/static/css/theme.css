@@ -36,8 +36,8 @@ code {
   color: #222;
   background-color: #ecf0f3;
   border-radius: 0.2rem;
-  white-space: nowrap;
   padding: 0.15rem;
+  word-break: normal;
 }
 
 nav {
@@ -46,6 +46,10 @@ nav {
 
 h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
   background-color: transparent;
+}
+
+h4 .section-number, h5 .section-number, h6 .section-number {
+  display: none;
 }
 
 h1:hover a.headerlink,
@@ -72,6 +76,7 @@ a code {
   color: #2878A2;
   border-radius: 0;
   padding: 0;
+  white-space: nowrap;
 }
 
 img {
@@ -83,14 +88,14 @@ span.highlighted {
 }
 
 div.highlight {
-  padding: 0.2rem 0.5rem;
   border: 1px solid #ddd;
   margin-bottom: 1rem;
 }
 
 div.highlight pre {
+  padding: 0.2rem 0.5rem;
   margin-bottom: 0;
-  line-height: 1rem;
+  line-height: 1.2rem;
 }
 
 div.highlight a {
@@ -140,6 +145,74 @@ a.sk-landing-btn:hover {
 
 div.clearer {
   clear: both;
+}
+
+/* details / summary */
+
+/* Enables section links to be visible when anchor-linked */
+div.sk-page-content details::before {
+  display: block;
+  height: 52px;
+  margin-top: -52px;
+  visibility: hidden;
+  content: "";
+}
+
+div.sk-page-content details {
+    margin: 4ex 0pt;
+}
+
+div.sk-page-content summary.btn {
+    display: list-item;
+    padding: 6px 20px;
+    border: 1pt solid #999;
+}
+
+div.sk-page-content details div.card {
+    padding: 0pt .5ex;
+    margin: 1ex 0pt;
+    border: 1px solid #e9ecef;
+    border-left-width: .25rem;
+    border-radius: .25rem;
+    background: rgb(250, 252, 253)
+}
+
+div.sk-page-content summary {
+  position: relative; /* Needed for the tooltips */
+}
+
+div.sk-page-content summary .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 150%;
+  left: 50%;
+  margin-left: -60px;
+}
+
+div.sk-page-content summary .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: black transparent transparent transparent;
+}
+
+div.sk-page-content summary:hover .tooltiptext {
+  visibility: visible;
+}
+
+div.sk-page-content summary:hover .headerlink {
+  visibility: visible;
 }
 
 /* Button */
@@ -199,6 +272,28 @@ ul.search li div.context {
 @media screen and (min-width: 768px) {
   ul.search li div.context {
     margin-left: 1rem;
+  }
+
+  .sk-search-text-input {
+    width: 5rem;
+  }
+}
+
+@media screen and (min-width: 806px) {
+  .sk-search-text-input {
+    width: 7rem;
+  }
+}
+
+@media screen and (min-width: 820px) {
+  .sk-search-text-input {
+    width: 8rem;
+  }
+}
+
+@media screen and (min-width: 886px) {
+  .sk-search-text-input {
+    width: 12rem;
   }
 }
 
@@ -368,6 +463,15 @@ a.sk-footer-funding-link:hover {
   width: 100%;
 }
 
+/* Enables section links to be visible when anchor-linked */
+section[id]::before {
+  display: block;
+  height: 52px;
+  margin-top: -52px;
+  visibility: hidden;
+  content: "";
+}
+
 div.sk-page-content {
   background-color: white;
   position: relative;
@@ -507,8 +611,8 @@ a.sk-documentation-index-anchor:hover {
 
 /* toc  */
 
-div.sk-sidebar-toc-logo {
-  height: 52px;
+.sk-toc-active {
+  font-weight: bold;
 }
 
 div.sk-sidebar-toc-wrapper {
@@ -518,6 +622,17 @@ div.sk-sidebar-toc-wrapper {
   overflow-y: scroll;
   height: 100vh;
   padding-right: 1.75rem;
+  padding-top: 52px;
+
+  /* Hide scrollbar for IE and Edge */
+  -ms-overflow-style: none;
+
+  /* Hide scrollbar for Firefox */
+  scrollbar-width: none;
+}
+
+div.sk-sidebar-toc-wrapper::-webkit-scrollbar {
+  display: none;
 }
 
 div.sk-sidebar-toc-wrapper::after {
@@ -539,7 +654,6 @@ div.sk-sidebar-toc ul ul {
 }
 
 div.sk-sidebar-toc ul ul ul {
-  list-style: square;
   margin-left: 1rem;
 }
 
@@ -560,10 +674,17 @@ div.sk-sidebar-global-toc ul ul {
 div.sk-page-content h1 {
   background-color: #cde8ef;
   padding: 0.5rem;
+  margin-top: calc(max(1rem, 1vh));
   border-radius: 0 1rem;
   text-align: center;
   font-size: 2rem;
   word-wrap: break-word;
+}
+
+/* General sibling selector: does not apply to first h1, to avoid gap in
+ * top of page */
+div.sk-page-content ~ h1 {
+    margin-top: calc(max(2.5rem, 1vh));
 }
 
 div.sk-page-content h2 {
@@ -571,6 +692,7 @@ div.sk-page-content h2 {
   background-color: #BED4EB;
   border-radius: 0.3rem;
   font-size: 1.5rem;
+  margin-top: calc(max(2rem, .7vh));
   margin-bottom: 1rem;
   word-wrap: break-word;
 }
@@ -581,6 +703,7 @@ div.sk-page-content h3 {
   border-radius: 0.3rem;
   font-size: 1.2rem;
   word-wrap: break-word;
+  margin-top: 1.5rem;
 }
 
 div.sk-page-content h4 {
@@ -636,14 +759,16 @@ table.longtable tr.row-odd {
   overflow: auto;
 }
 
-code.descname {
+span.descname {
   font-weight: bold;
   background-color: transparent;
   padding: 0;
+  font-family: monospace;
 }
 
-code.descclassname {
+span.descclassname {
   background-color: transparent;
+  font-family: monospace;
 }
 
 .viewcode-link {
@@ -653,6 +778,7 @@ code.descclassname {
 dl.field-list {
   display: flex;
   flex-wrap: wrap;
+  overflow-x: scroll;
 }
 
 dl.field-list > dt {
@@ -689,22 +815,29 @@ dt.field-odd, dt.field-even {
   box-sizing: border-box;
 }
 
-dl.field-list > dt:after {
-  content: ":";
-}
-
 .classifier {
   font-style: italic;
 }
 
 .classifier::before {
   font-style: normal;
-  margin: 0.3em;
+  margin: 0 0.3em;
   content: ":";
+  display: inline-block;
 }
 
 dd {
   padding-left: 1rem;
+}
+
+dl.class > dd {
+  padding-left: 0;
+}
+
+@media screen and (min-width: 768px) {
+  dl.class > dd {
+    padding-left: 1rem;
+  }
 }
 
 .rubric {
@@ -712,11 +845,11 @@ dd {
   margin-top: 1rem;
 }
 
-ul.simple li p {
+ul.simple li p, ol.simple li p {
   margin-bottom: 0;
 }
 
-ul.simple {
+ul.simple, ol.simple {
   padding-left: 1.5rem;
 }
 
@@ -761,43 +894,47 @@ div.admonition p.admonition-title + p, div.deprecated p {
   display: inline;
 }
 
-div.admonition, div.deprecated {
+div.admonition, div.deprecated,
+div.versionchanged {
+  margin-top: 0.5rem;
   padding: 0.5rem;
   border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
   border: 1px solid #ddd;
-  margin-bottom: 1rem;
+}
+
+div.versionadded {
+  margin: 1rem 0;
 }
 
 div.admonition {
   background-color: #eee;
 }
 
-div.admonition p, div.admonition dl, div.admonition dd {
+div.admonition p:last-child,
+div.admonition dl:last-child,
+div.admonition dd:last-child,
+div.deprecated p:last-child,
+div.versionchanged p:last-child,
+div.versionadded p:last-child{
   margin-bottom: 0
 }
 
 div.deprecated {
   color: #b94a48;
   background-color: #F3E5E5;
-  border: 1px solid #eed3d7;
+  border-color: #eed3d7;
 }
 
 div.seealso {
   background-color: #FFFBE8;
-  border: 1px solid #fbeed5;
+  border-color: #fbeed5;
   color: #AF8A4B;
 }
 
 div.versionchanged {
-  margin-top: 0.5rem;
-  padding: 0.5rem;
   background-color: #FFFBE8;
-  border: 1px solid #fbeed5;
-  border-radius: 0.5rem;
-}
-
-div.versionchanged p {
-  margin-bottom: 0;
+  border-color: #fbeed5;
 }
 
 dt.label {
@@ -805,18 +942,8 @@ dt.label {
   padding-right: 0.5rem;
 }
 
-/* copy buttonn */
-div.highlight:hover span.copybutton {
-  background-color: #3F556B;
-  color: white;
-}
-
-div.highlight:hover span.copybutton:hover {
-    background-color: #20252B;
-}
-
-div.body img.align-center {
-  max-width: 800px;
+button.copybtn {
+  border: 0;
 }
 
 div.body img {
@@ -828,7 +955,8 @@ div.body dd > p {
     hyphens: none;
 }
 
-img.align-center, .figure.align-center, object.align-center {
+img.align-center, figure.align-center,
+.figure.align-center, object.align-center {
   display: block;
   margin-left: auto;
   margin-right: auto;
@@ -836,46 +964,11 @@ img.align-center, .figure.align-center, object.align-center {
   text-align: center;
 }
 
-img.align-right, .figure.align-right, object.align-right {
+img.align-right, figure.align-right,
+.figure.align-right, object.align-right {
   clear: right;
   float: right;
   margin-left: 1em;
-}
-
-a.brackets::after, span.brackets > a::after {
-  content: "]";
-}
-
-a.brackets::before, span.brackets > a::before {
-    content: "[";
-}
-
-/* copybutton */
-
-.copybutton {
-  cursor: pointer;
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  border: 1px solid rgb(221, 221, 221);
-  color: rgb(221, 221, 221);
-  font-family: monospace;
-  padding-left: 0.2rem;
-  padding-right: 0.2rem;
-}
-
-div.highlight:hover span.copybutton::after {
-  background: #3F556B;
-  border-radius: 0.25rem;
-  color: white;
-  content: attr(title);
-  padding: 0.25rem;
-  position: absolute;
-  z-index: 98;
-  width: 100px;
-  font-size: 0.7rem;
-  top: 0;
-  right: 0;
 }
 
 /* world */
@@ -908,6 +1001,8 @@ table.docutils {
   margin-bottom: 1rem;
   line-height: 1rem;
   max-width: 100%;
+  display: block;
+  overflow-x: scroll;
 }
 
 table.docutils p {
@@ -943,14 +1038,51 @@ div.sphx-glr-thumbcontainer {
   padding: 0;
 }
 
-
 @media screen and (min-width: 1540px) {
-  .sphx-glr-download-link-note {
-    position: absolute;
+  div.sphx-glr-download-link-note.admonition.note {
     position: absolute;
     left: 98%;
     width: 20ex;
+    margin-top: calc(max(5.75rem, 1vh));
   }
+}
+
+/* Pandas dataframe css */
+/* Taken from: https://github.com/spatialaudio/nbsphinx/blob/fb3ba670fc1ba5f54d4c487573dbc1b4ecf7e9ff/src/nbsphinx.py#L587-L619 */
+/* FIXME: to be removed when sphinx-gallery >= 5.0 will be released */
+
+table.dataframe {
+  border: none !important;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border-color: transparent;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+table.dataframe thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+table.dataframe tr,
+table.dataframe th,
+table.dataframe td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+table.dataframe th {
+  font-weight: bold;
+}
+table.dataframe tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+table.dataframe tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
 }
 
 /* rellinks */
@@ -1085,8 +1217,11 @@ div.install > input:checked + label {
 .sk-expandable {
   display: none;
 }
+.sk-expandable + .copybtn {
+  display: none;
+}
 
-div.highlight span.sk-expandable:before {
+pre.sk-expandable > span:before {
   content: "$ ";
 }
 
@@ -1095,13 +1230,22 @@ div.highlight span.sk-expandable:before {
 #quickstart-conda:checked  ~* [data-packager="conda"] {
   display: block;
 }
+#quickstart-conda:checked  ~* [data-packager="conda"] + .copybtn {
+  display: block;
+}
 
-#quickstart-conda:checked ~ label[for="quickstart-venv"]:before  {
-  content: "Use conda environment";
+#quickstart-conda:checked ~ #quickstart-venv ~ label[for="quickstart-venv"] {
+  display: none;
+}
+#quickstart-conda:checked ~ #quickstart-venv ~ label[for="quickstart-venv"] + .copybtn {
+  display: none;
 }
 
 /* for pip */
 #quickstart-pip:checked ~* [data-packager="pip"] {
+  display: block;
+}
+#quickstart-pip:checked ~* [data-packager="pip"] + .copybtn {
   display: block;
 }
 
@@ -1112,18 +1256,35 @@ div.highlight span.sk-expandable:before {
 #quickstart-win:not(:checked) ~* [data-os="windows"] {
   display: none;
 }
+#quickstart-win:not(:checked) ~* [data-os="windows"] + .copybtn {
+  display: none;
+}
+
 #quickstart-lin:not(:checked) ~* [data-os="linux"] {
   display: none;
 }
+#quickstart-lin:not(:checked) ~* [data-os="linux"] + .copybtn {
+  display: none;
+}
+
 #quickstart-mac:not(:checked) ~* [data-os="mac"] {
+  display: none;
+}
+#quickstart-mac:not(:checked) ~* [data-os="mac"] + .copybtn {
   display: none;
 }
 
 #quickstart-venv:not(:checked) ~* [data-venv=""] {
   display: none;
 }
+#quickstart-venv:not(:checked) ~* [data-venv=""] + .copybtn {
+  display: none;
+}
 
 #quickstart-venv:checked ~* [data-venv="no"] {
+  display: none;
+}
+#quickstart-venv:checked ~* [data-venv="no"] + .copybtn {
   display: none;
 }
 
@@ -1170,7 +1331,11 @@ table.sk-sponsor-table td {
   padding: 0.30rem;
 }
 
-/* pygments - highlightning */
+.caption {
+  text-align: center
+}
+
+/* pygments - highlighting */
 
 .highlight .hll { background-color: #ffffcc }
 .highlight  { background: #f8f8f8; }

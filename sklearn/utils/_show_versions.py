@@ -7,25 +7,26 @@ adapted from :func:`pandas.show_versions`
 
 import platform
 import sys
-import importlib
 
+from .. import __version__
+from ..utils.fixes import threadpool_info
 from ._openmp_helpers import _openmp_parallelism_enabled
 
 
 def _get_sys_info():
     """System information
 
-    Return
-    ------
+    Returns
+    -------
     sys_info : dict
         system and Python version information
 
     """
-    python = sys.version.replace('\n', ' ')
+    python = sys.version.replace("\n", " ")
 
     blob = [
         ("python", python),
-        ('executable', sys.executable),
+        ("executable", sys.executable),
         ("machine", platform.platform()),
     ]
 
@@ -34,6 +35,9 @@ def _get_sys_info():
 
 def _get_deps_info():
     """Overview of the installed version of main dependencies
+
+    This function does not import the modules to collect the version numbers
+    but instead relies on standard Python package metadata.
 
     Returns
     -------
@@ -44,47 +48,60 @@ def _get_deps_info():
     deps = [
         "pip",
         "setuptools",
-        "sklearn",
         "numpy",
         "scipy",
         "Cython",
         "pandas",
         "matplotlib",
         "joblib",
+        "threadpoolctl",
     ]
 
-    def get_version(module):
-        return module.__version__
+    deps_info = {
+        "sklearn": __version__,
+    }
 
-    deps_info = {}
+    from importlib.metadata import PackageNotFoundError, version
 
     for modname in deps:
         try:
-            if modname in sys.modules:
-                mod = sys.modules[modname]
-            else:
-                mod = importlib.import_module(modname)
-            ver = get_version(mod)
-            deps_info[modname] = ver
-        except ImportError:
+            deps_info[modname] = version(modname)
+        except PackageNotFoundError:
             deps_info[modname] = None
-
     return deps_info
 
 
 def show_versions():
-    """Print useful debugging information"""
+    """Print useful debugging information"
+
+    .. versionadded:: 0.20
+    """
 
     sys_info = _get_sys_info()
     deps_info = _get_deps_info()
 
-    print('\nSystem:')
+    print("\nSystem:")
     for k, stat in sys_info.items():
         print("{k:>10}: {stat}".format(k=k, stat=stat))
 
-    print('\nPython dependencies:')
+    print("\nPython dependencies:")
     for k, stat in deps_info.items():
-        print("{k:>10}: {stat}".format(k=k, stat=stat))
+        print("{k:>13}: {stat}".format(k=k, stat=stat))
 
-    print("\n{k:>10}: {stat}".format(k="Built with OpenMP",
-                                     stat=_openmp_parallelism_enabled()))
+    print(
+        "\n{k}: {stat}".format(
+            k="Built with OpenMP", stat=_openmp_parallelism_enabled()
+        )
+    )
+
+    # show threadpoolctl results
+    threadpool_results = threadpool_info()
+    if threadpool_results:
+        print()
+        print("threadpoolctl info:")
+
+        for i, result in enumerate(threadpool_results):
+            for key, val in result.items():
+                print(f"{key:>15}: {val}")
+            if i != len(threadpool_results) - 1:
+                print()

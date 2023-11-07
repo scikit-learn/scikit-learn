@@ -13,11 +13,12 @@ this project as part of his thesis.
 In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
 Michel of INRIA took leadership of the project and made the first public
 release, February the 1st 2010. Since then, several releases have appeared
-following a ~3 month cycle, and a thriving international community has
+following a ~ 3-month cycle, and a thriving international community has
 been leading the development.
 
 Governance
 ----------
+
 The decision making process and governance structure of scikit-learn is laid
 out in the :ref:`governance document <governance>`.
 
@@ -31,20 +32,61 @@ and maintenance:
 
 Please do not email the authors directly to ask for assistance or report issues.
 Instead, please see `What's the best way to ask questions about scikit-learn
-<http://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
+<https://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
 in the FAQ.
 
 .. seealso::
 
    :ref:`How you can contribute to the project <contributing>`
 
+Documentation Team
+------------------
+
+The following people help with documenting the project:
+
+.. include:: documentation_team.rst
+
+Contributor Experience Team
+---------------------------
+
+The following people are active contributors who also help with
+:ref:`triaging issues <bug_triaging>`, PRs, and general
+maintenance:
+
+.. include:: contributor_experience_team.rst
+
+Communication Team
+------------------
+
+The following people help with :ref:`communication around scikit-learn
+<communication_team>`.
+
+.. include:: communication_team.rst
+
+
 Emeritus Core Developers
 ------------------------
+
 The following people have been active contributors in the past, but are no
 longer active in the project:
 
 .. include:: authors_emeritus.rst
 
+Emeritus Communication Team
+---------------------------
+
+The following people have been active in the communication team in the
+past, but no longer have communication responsibilities:
+
+.. include:: communication_team_emeritus.rst
+
+Emeritus Contributor Experience Team
+------------------------------------
+
+The following people have been active in the contributor experience team in the
+past:
+
+.. include:: contributor_experience_team_emeritus.rst
 
 .. _citing-scikit-learn:
 
@@ -55,7 +97,7 @@ If you use scikit-learn in a scientific publication, we would appreciate
 citations to the following paper:
 
   `Scikit-learn: Machine Learning in Python
-  <http://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa
+  <https://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa
   *et al.*, JMLR 12, pp. 2825-2830, 2011.
 
   Bibtex entry::
@@ -75,8 +117,8 @@ citations to the following paper:
 If you want to cite scikit-learn for its API or design, you may also want to consider the
 following paper:
 
-  `API design for machine learning software: experiences from the scikit-learn
-  project <https://arxiv.org/abs/1309.0238>`_, Buitinck *et al.*, 2013.
+  :arxiv:`API design for machine learning software: experiences from the scikit-learn
+  project <1309.0238>`, Buitinck *et al.*, 2013.
 
   Bibtex entry::
 
@@ -97,7 +139,7 @@ Artwork
 -------
 
 High quality PNG and SVG logos are available in the `doc/logos/
-<https://github.com/scikit-learn/scikit-learn/tree/master/doc/logos>`_
+<https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos>`_
 source directory.
 
 .. image:: images/scikit-learn-logo-notext.png
@@ -108,7 +150,7 @@ Funding
 Scikit-Learn is a community driven project, however institutional and private
 grants help to assure its sustainability.
 
-The project would like to thank the following funders. 
+The project would like to thank the following funders.
 
 ...................................
 
@@ -120,43 +162,31 @@ The project would like to thank the following funders.
 The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
 the `Scikit-Learn Consortium at Inria Foundation
 <https://scikit-learn.fondation-inria.fr/en/home/>`_  fund Olivier
-Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
+Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
 
 .. raw:: html
 
    </div>
-
-.. |msn| image:: images/microsoft.png
-   :width: 100pt
-   :target: https://www.microsoft.com/
-
-.. |bcg| image:: images/bcg.png
-   :width: 100pt
-   :target: https://www.bcg.com/beyond-consulting/bcg-gamma/default.aspx
 
 .. |axa| image:: images/axa.png
    :width: 50pt
    :target: https://www.axa.fr/
 
 .. |bnp| image:: images/bnp.png
-   :width: 170pt
+   :width: 150pt
    :target: https://www.bnpparibascardif.com/
-
-.. |fujitsu| image:: images/fujitsu.png
-   :width: 100pt
-   :target: https://www.fujitsu.com/global/
-
-.. |intel| image:: images/intel.png
-   :width: 70pt
-   :target: https://www.intel.com/
-
-.. |nvidia| image:: images/nvidia.png
-   :width: 70pt
-   :target: https://www.nvidia.com/
 
 .. |dataiku| image:: images/dataiku.png
    :width: 70pt
    :target: https://www.dataiku.com/
+
+.. |hf| image:: images/huggingface_logo-noborder.png
+   :width: 70pt
+   :target: https://huggingface.co
+
+.. |nvidia| image:: images/nvidia.png
+   :width: 70pt
+   :target: https://www.nvidia.com
 
 .. |inria| image:: images/inria-logo.jpg
    :width: 100pt
@@ -170,46 +200,21 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
 .. table::
    :class: sk-sponsor-table align-default
 
-   +---------+----------+
-   | |msn|   |  |bcg|   |
-   +---------+----------+
-   |                    |
-   +---------+----------+ 
-   |  |axa|  ||fujitsu| |
-   +---------+----------+
-   |        |bnp|       |
-   +---------+----------+
-   | |intel| | |nvidia| |
-   +---------+----------+
-   |                    |
-   +---------+----------+
-   ||dataiku|| |inria|  |
-   +---------+----------+
-
-.. raw:: html
-
-   </div>
-   </div>
-
-........  
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`Columbia University <https://columbia.edu/>`_ funds Andreas Müller since 2016
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: themes/scikit-learn/static/img/columbia.png 
-   :width: 50pt
-   :align: center
-   :target: https://www.columbia.edu/
+   +----------+-----------+
+   |  |axa|   |    |bnp|  |
+   +----------+-----------+
+   |                      |
+   +----------+-----------+
+   | |nvidia| |    |hf|   |
+   +----------+-----------+
+   |                      |
+   +----------+-----------+
+   |       |dataiku|      |
+   +----------+-----------+
+   |                      |
+   +----------+-----------+
+   |        |inria|       |
+   +----------+-----------+
 
 .. raw:: html
 
@@ -220,12 +225,169 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">   
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`NVidia <https://nvidia.com>`_ funds Tim Head since 2022
+and is part of the scikit-learn consortium at Inria.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/nvidia.png
+   :width: 55pt
+   :align: center
+   :target: https://nvidia.com
+
+.. raw:: html
+
+   </div>
+   </div>
+
+
+..........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Hugging Face <https://huggingface.co/>`_ funded Adrin Jalali in 2022,
+2023 and is part of the scikit-learn consortium at Inria.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/huggingface_logo-noborder.png
+   :width: 55pt
+   :align: center
+   :target: https://huggingface.co/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+...........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Microsoft <https://microsoft.com/>`_ funds Andreas Müller since 2020.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/microsoft.png
+   :width: 100pt
+   :align: center
+   :target: https://www.microsoft.com/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+...........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu and
+Meekail Zain since 2022 and funded Thomas J. Fan from 2021 to 2023.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/quansight-labs.png
+   :width: 100pt
+   :align: center
+   :target: https://labs.quansight.org
+
+.. raw:: html
+
+   </div>
+   </div>
+
+Past Sponsors
+.............
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Columbia University <https://columbia.edu/>`_ funded Andreas Müller
+(2016-2020).
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/columbia.png
+   :width: 50pt
+   :align: center
+   :target: https://www.columbia.edu/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`The University of Sydney <https://sydney.edu.au/>`_ funded Joel Nothman
+(2017-2021).
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/sydney-primary.jpeg
+   :width: 100pt
+   :align: center
+   :target: https://sydney.edu.au/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+...........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
 Andreas Müller received a grant to improve scikit-learn from the
 `Alfred P. Sloan Foundation <https://sloan.org>`_ .
-This grant supports the position of Nicolas Hug and Thomas J. Fan.
+This grant supported the position of Nicolas Hug and Thomas J. Fan.
 
 .. raw:: html
 
@@ -243,58 +405,6 @@ This grant supports the position of Nicolas Hug and Thomas J. Fan.
    </div>
    </div>
 
-...........
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`The University of Sydney <https://sydney.edu.au/>`_ funds Joel Nothman since
-July 2017.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: themes/scikit-learn/static/img/sydney-primary.jpeg
-   :width: 100pt
-   :align: center
-   :target: https://sydney.edu.au/
-
-.. raw:: html
-
-   </div>
-   </div>
-
-............
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`Anaconda, Inc <https://www.anaconda.com/>`_ funds Adrin Jalali since 2019.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/anaconda.png
-   :width: 100pt
-   :align: center
-   :target: https://sydney.edu.au/
-
-.. raw:: html
-
-   </div>
-   </div>
-
-Past Sponsors
 .............
 
 .. raw:: html
@@ -331,7 +441,7 @@ full-time. It also hosts coding sprints and other events.
    <div class="sk-sponsor-div-box">
 
 `Paris-Saclay Center for Data Science
-<https://www.datascience-paris-saclay.fr/>`_
+<http://www.datascience-paris-saclay.fr/>`_
 funded one year for a developer to work on the project full-time
 (2014-2015), 50% of the time of Guillaume Lemaitre (2016-2017) and 50% of the
 time of Joris van den Bossche (2017-2018).
@@ -344,7 +454,7 @@ time of Joris van den Bossche (2017-2018).
 .. image:: images/cds-logo.png
    :width: 100pt
    :align: center
-   :target: https://www.datascience-paris-saclay.fr/
+   :target: http://www.datascience-paris-saclay.fr/
 
 .. raw:: html
 
@@ -394,7 +504,7 @@ part-time.
    </div>
    <div class="sk-sponsor-div-box">
 
-.. image:: themes/scikit-learn/static/img/telecom.png
+.. image:: images/telecom.png
    :width: 50pt
    :align: center
    :target: https://www.telecom-paristech.fr/
@@ -421,7 +531,7 @@ funded a scikit-learn coding sprint in 2015.
    </div>
    <div class="sk-sponsor-div-box">
 
-.. image:: themes/scikit-learn/static/img/digicosme.png
+.. image:: images/digicosme.png
    :width: 100pt
    :align: center
    :target: https://digicosme.lri.fr
@@ -431,10 +541,35 @@ funded a scikit-learn coding sprint in 2015.
    </div>
    </div>
 
+.....................
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ funded Nicolas
+Hug to work full-time on scikit-learn in 2020.
+
+.. raw:: html
+
+   </div>
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/czi_logo.svg
+   :width: 100pt
+   :align: center
+   :target: https://chanzuckerberg.com
+
+.. raw:: html
+
+   </div>
+   </div>
+
 ......................
 
 The following students were sponsored by `Google
-<https://developers.google.com/open-source/>`_ to work on scikit-learn through
+<https://opensource.google/>`_ to work on scikit-learn through
 the `Google Summer of Code <https://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
 program.
 
@@ -444,7 +579,7 @@ program.
 - 2013 - Kemal Eren, Nicolas Trésegnie
 - 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
 - 2015 - `Raghav RV <https://github.com/raghavrv>`_, Wei Xue
-- 2016 - `Nelson Liu <http://nelsonliu.me>`_, `YenChen Lin <https://yclin.me/>`_
+- 2016 - `Nelson Liu <http://nelsonliu.me>`_, `YenChen Lin <https://yenchenlin.me/>`_
 
 .. _Vlad Niculae: https://vene.ro/
 
@@ -454,6 +589,31 @@ The `NeuroDebian <http://neuro.debian.net>`_ project providing `Debian
 <https://www.debian.org/>`_ packaging and contributions is supported by
 `Dr. James V. Haxby <http://haxbylab.dartmouth.edu/>`_ (`Dartmouth
 College <https://pbs.dartmouth.edu/>`_).
+
+...................
+
+The following organizations funded the scikit-learn consortium at Inria in
+the past:
+
+.. |msn| image:: images/microsoft.png
+   :width: 100pt
+   :target: https://www.microsoft.com/
+
+.. |bcg| image:: images/bcg.png
+   :width: 100pt
+   :target: https://www.bcg.com/beyond-consulting/bcg-gamma/default.aspx
+
+.. |fujitsu| image:: images/fujitsu.png
+   :width: 100pt
+   :target: https://www.fujitsu.com/global/
+
+.. |aphp| image:: images/logo_APHP_text.png
+   :width: 150pt
+   :target: https://aphp.fr/
+
+
+|bcg| |msn| |fujitsu| |aphp|
+
 
 Sprints
 -------
@@ -470,7 +630,7 @@ The 2013 International Paris Sprint was made possible thanks to the support of
 `Télécom Paristech <https://www.telecom-paristech.fr/>`_, `tinyclues
 <https://www.tinyclues.com/>`_, the `French Python Association
 <https://www.afpy.org/>`_ and the `Fonds de la Recherche Scientifique
-<https://www.frs-fnrs.be/-fnrs>`_.
+<https://www.frs-fnrs.be>`_.
 
 ..............
 
@@ -482,9 +642,15 @@ Donating to the project
 .......................
 
 If you are interested in donating to the project or to one of our code-sprints,
-you can use the *Paypal* button below or the `NumFOCUS Donations Page
-<https://www.numfocus.org/support-numfocus.html>`_ (if you use the latter,
-please indicate that you are donating for the scikit-learn project).
+please donate via the `NumFOCUS Donations Page
+<https://numfocus.org/donate-to-scikit-learn>`_.
+
+.. raw :: html
+
+   <div style="text-align: center;">
+   <a class="btn btn-warning btn-big sk-donate-btn mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
+   </div>
+   </br>
 
 All donations will be handled by `NumFOCUS
 <https://numfocus.org/>`_, a non-profit-organization which is
@@ -498,40 +664,18 @@ The received donations for the scikit-learn project mostly will go towards
 covering travel-expenses for code sprints, as well as towards the organization
 budget of the project [#f1]_.
 
-.. raw :: html
-
-    </br></br>
-    <form action="https://www.paypal.com/cgi-bin/webscr" method="post"
-    target="_top">
-    <input type="hidden" name="cmd" value="_s-xclick">
-    <input type="hidden" name="hosted_button_id" value="74EYUMF3FTSW8">
-    <input type="image"
-    src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"
-    border="0" name="submit" alt="PayPal - The safer, easier way to pay
-    online!" style="position: relative;
-    left: 40%;">
-    <img alt="" border="0"
-    src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1"
-    height="1">
-    </form>
-    </br>
 
 .. rubric:: Notes
 
-.. [#f1] Regarding the organization budget in particular, we might use some of
+.. [#f1] Regarding the organization budget, in particular, we might use some of
          the donated funds to pay for other project expenses such as DNS,
          hosting or continuous integration services.
 
 Infrastructure support
 ----------------------
 
-- We would like to thank `Rackspace <https://www.rackspace.com>`_ for providing
-  us with a free `Rackspace Cloud <https://www.rackspace.com/cloud/>`_ account
-  to automatically build the documentation and the example gallery from for the
-  development version of scikit-learn using `this tool
-  <https://github.com/scikit-learn/sklearn-docbuilder>`_.
-
 - We would also like to thank `Microsoft Azure
-  <https://azure.microsoft.com/en-us/>`_, `Travis Cl <https://travis-ci.org/>`_,
+  <https://azure.microsoft.com/en-us/>`_, `Cirrus Cl <https://cirrus-ci.org>`_,
   `CircleCl <https://circleci.com/>`_ for free CPU time on their Continuous
-  Integration servers.
+  Integration servers, and `Anaconda Inc. <https://www.anaconda.com>`_ for the
+  storage they provide for our staging and nightly builds.

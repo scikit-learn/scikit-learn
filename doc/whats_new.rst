@@ -4,7 +4,7 @@
 Release History
 ===============
 
-Release notes for all scikit-learn releases are linked in this this page.
+Release notes for all scikit-learn releases are linked in this page.
 
 **Tip:** `Subscribe to scikit-learn releases <https://libraries.io/pypi/scikit-learn>`__
 on libraries.io to be notified when new versions are released.
@@ -12,6 +12,12 @@ on libraries.io to be notified when new versions are released.
 .. toctree::
     :maxdepth: 1
 
+    Version 1.4 <whats_new/v1.4.rst>
+    Version 1.3 <whats_new/v1.3.rst>
+    Version 1.2 <whats_new/v1.2.rst>
+    Version 1.1 <whats_new/v1.1.rst>
+    Version 1.0 <whats_new/v1.0.rst>
+    Version 0.24 <whats_new/v0.24.rst>
     Version 0.23 <whats_new/v0.23.rst>
     Version 0.22 <whats_new/v0.22.rst>
     Version 0.21 <whats_new/v0.21.rst>

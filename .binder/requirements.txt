@@ -1,8 +1,9 @@
---find-links https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
+--find-links https://pypi.anaconda.org/scientific-python-nightly-wheels/simple/scikit-learn
 --pre
 matplotlib
 scikit-image
 pandas
+seaborn
+Pillow
 sphinx-gallery
 scikit-learn
-
