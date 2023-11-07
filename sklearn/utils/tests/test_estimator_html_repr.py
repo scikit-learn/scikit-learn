@@ -474,13 +474,21 @@ def set_non_utf8_locale():
 
     The locale is set to the original one after the test has run.
     """
-    orig_locale = locale.getlocale()
     try:
-        locale.setlocale(locale.LC_ALL, "C")
+        locale.setlocale(locale.LC_CTYPE, "C")
     except locale.Error:
         pytest.skip("'C' locale is not available on this OS")
+
     yield
-    locale.setlocale(locale.LC_ALL, orig_locale)
+
+    # Resets the locale to the original one. Python calles setlocale(LC_TYPE, "")
+    # at startup according to
+    # https://docs.python.org/3/library/locale.html#background-details-hints-tips-and-caveats.
+    # This assumes that no other locale changes have been made. For some reason,
+    # on some platforms, trying to restore locale with something like
+    # locale.setlocale(locale.LC_CTYPE, locale.getlocale()) raises a
+    # locale.Error: unsupported locale setting
+    locale.setlocale(locale.LC_CTYPE, "")
 
 
 def test_non_utf8_locale(set_non_utf8_locale):
