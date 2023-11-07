@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 from numpy.testing import assert_array_almost_equal
 
 from sklearn.datasets import make_classification, make_regression
