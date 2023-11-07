@@ -271,6 +271,13 @@ Changelog
   :pr:`26315` and :pr:`27098` by :user:`Mateusz Sokół <mtsokol>`,
   :user:`Olivier Grisel <ogrisel>` and :user:`Edoardo Abati <EdAbati>`.
 
+- |Feature| :class:`decomposition.PCA` now supports :class:`scipy.sparse.sparray`
+  and :class:`scipy.sparse.spmatrix` inputs when using the `arpack` solver.
+  When used on sparse data like :func:`datasets.fetch_20newsgroups_vectorized` this
+  can lead to speed-ups of 100x (single threaded) and 70x lower memory usage.
+  Based on :user:`Alexander Tarashansky <atarashansky>`'s implementation in `scanpy <https://github.com/scverse/scanpy>`.
+  :pr:`18689` by :user:`Isaac Virshup <ivirshup>` and :user:`Andrey Portnoy <andportnoy>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
