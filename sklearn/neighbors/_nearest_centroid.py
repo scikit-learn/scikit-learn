@@ -305,7 +305,6 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
         d = self._decision_function(X)
         y_pred = self.classes_.take(d.argmax(1))
         return y_pred
@@ -366,9 +365,11 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         The returned estimates for all classes are ordered by the
         label of classes. The estimation has been implemented according to
         Hastie et al. (2009), p. 652 equation (18.2)
+
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
+
         Returns
         -------
         T : array-like, shape = [n_samples, n_classes]
