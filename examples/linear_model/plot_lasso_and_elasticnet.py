@@ -139,6 +139,7 @@ print(f"Lasso r^2 on test data : {r2_score_lasso:.3f}")
 from sklearn.linear_model import ARDRegression
 
 t0 = time()
+t1 - time()+3
 ard = ARDRegression().fit(X_train, y_train)
 print(f"ARD fit done in {(time() - t0):.3f}s")
 
