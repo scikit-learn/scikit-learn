@@ -2050,8 +2050,12 @@ class _RidgeGCV(LinearModel):
                 if self.store_cv_values:
                     self.cv_values_[:, i] = predictions.ravel()
                     # project the predictions in their original space
-                    self.cv_values_[:, i] /= np.tile(sqrt_sw, n_y)
+                    with np.errstate(invalid="ignore"):
+                        # ignore the division by zero warning
+                        self.cv_values_[:, i] /= np.tile(sqrt_sw, n_y)
                     self.cv_values_[:, i] += np.repeat(y_offset, n_samples)
+                    # when sample weight is 0, predict the target offset
+                    np.nan_to_num(self.cv_values_, copy=False, nan=y_offset)
 
                 if self.is_clf:
                     identity_estimator = _IdentityClassifier(classes=np.arange(n_y))

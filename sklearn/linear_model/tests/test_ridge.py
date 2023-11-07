@@ -2096,3 +2096,17 @@ def test_ridge_cv_predictions_original_space(with_weights, scoring):
         errors_custom_scoring *= sample_weight
 
     assert_allclose(errors_default_scoring, errors_custom_scoring)
+
+
+def test_ridge_cv_values_predictions_with_null_weights():
+    """Check the case when null weights are passed and predictions are stores in
+    `cv_values_`.
+
+    We should have `nan` but instead the `y_offset`.
+    """
+    x, y = make_regression(n_targets=1)
+    sample_weight = np.ones_like(y)
+    sample_weight[0] = 0.0
+    ridge_cv = RidgeCV(store_cv_values=True, scoring="neg_mean_squared_error")
+    ridge_cv.fit(x, y, sample_weight=sample_weight)
+    assert_allclose(ridge_cv.cv_values_[0], y[1:].mean(axis=0))
