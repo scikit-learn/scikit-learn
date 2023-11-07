@@ -2048,10 +2048,10 @@ class _RidgeGCV(LinearModel):
             else:
                 predictions = y - (c / G_inverse_diag)
                 if self.store_cv_values:
-                    # compute the predictions in the original space
-                    self.cv_values_[:, i] = predictions.ravel() / np.tile(
-                        sqrt_sw, n_y
-                    ) + np.repeat(y_offset, X.shape[0])
+                    self.cv_values_[:, i] = predictions.ravel()
+                    # project the predictions in their original space
+                    self.cv_values_[:, i] /= np.tile(sqrt_sw, n_y)
+                    self.cv_values_[:, i] += np.repeat(y_offset, n_samples)
 
                 if self.is_clf:
                     identity_estimator = _IdentityClassifier(classes=np.arange(n_y))
@@ -2324,8 +2324,8 @@ class RidgeCV(
         Cross-validation values for each alpha (only available if
         ``store_cv_values=True`` and ``cv=None``). After ``fit()`` has been
         called, this attribute will contain the mean squared errors if
-        `scoring is None` otherwise it will contain standardized per point
-        prediction values.
+        `scoring is None` otherwise it will contain per point prediction
+        values.
 
     coef_ : ndarray of shape (n_features) or (n_targets, n_features)
         Weight vector(s).
