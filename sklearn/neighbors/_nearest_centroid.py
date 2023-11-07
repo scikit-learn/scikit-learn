@@ -17,9 +17,8 @@ from scipy import sparse as sp
 
 from sklearn.metrics.pairwise import _VALID_METRICS
 
-from ..discriminant_analysis import calc_posterior_proba
-
 from ..base import BaseEstimator, ClassifierMixin, _fit_context
+from ..discriminant_analysis import calc_posterior_proba
 from ..preprocessing import LabelEncoder
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
@@ -216,7 +215,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             _, class_counts = np.unique(y, return_inverse=True)  # non-negative ints
             self.class_priors_ = np.bincount(class_counts) / float(len(y))
         elif self.priors == "uniform":
-            self.class_priors_ = np.asarray([1/n_classes]*n_classes)
+            self.class_priors_ = np.asarray([1 / n_classes] * n_classes)
         else:
             self.class_priors_ = np.asarray(self.priors)
 
@@ -326,7 +325,8 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             Xdist_norm = np.square(Xdist / self.within_class_std_)
             # Hastie et al. (2009), p. 652, Eq. (18.2)
             discriminant_score[:, cur_class] = np.squeeze(
-                -np.sum(Xdist_norm, axis=1) + 2.0 * np.log(self.class_priors_[cur_class])
+                -np.sum(Xdist_norm, axis=1)
+                + 2.0 * np.log(self.class_priors_[cur_class])
             )
 
         return discriminant_score
