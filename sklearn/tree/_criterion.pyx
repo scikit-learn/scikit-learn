@@ -22,6 +22,7 @@ cnp.import_array()
 
 from scipy.special.cython_special cimport xlogy
 
+from ..utils._typedefs cimport float32_t
 from ._utils cimport log
 from ._utils cimport WeightedMedianCalculator
 
@@ -575,17 +576,20 @@ cdef class ClassificationCriterion(Criterion):
             dest += self.max_n_classes
 
     cdef void clip_node_value(self, float64_t * dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil:
-        """Clip the value in dest between lower_bound and upper_bound for monotonic constraints.
+        """Clip the values in dest such that predicted probabilities stay between lower_bound and upper_bound when
+        monotonic constraints are enforced.
 
         Note that monotonicity constraints are only supported for:
         - single-output trees and
         - binary classifications.
         """
         cdef float64_t total_weighted_count = dest[0] + dest[1]
-        if dest[0] < (lower_bound * total_weighted_count):
-            dest[0] = lower_bound * total_weighted_count
-        elif dest[0] > (upper_bound * total_weighted_count):
-            dest[0] = upper_bound * total_weighted_count
+        cdef float64_t scaled_lower_bound = (<float32_t>lower_bound) * total_weighted_count
+        cdef float64_t scaled_upper_bound = (<float32_t>upper_bound) * total_weighted_count
+        if dest[0] < scaled_lower_bound:
+            dest[0] = scaled_lower_bound
+        elif dest[0] > scaled_upper_bound:
+            dest[0] = scaled_upper_bound
 
         # Values for binary classification must sum to total_weighted_count.
         dest[1] = total_weighted_count - dest[0]
