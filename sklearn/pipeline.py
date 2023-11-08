@@ -1400,7 +1400,7 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
     array([[ 1.5       ,  3.0...,  0.8...],
            [-1.5       ,  5.7..., -0.4...]])
     >>> # An estimator's parameter can be set using '__' syntax
-    >>> union.set_params(pca__n_components=1).fit_transform(X)
+    >>> union.set_params(svd__n_components=1).fit_transform(X)
     array([[ 1.5       ,  3.0...],
            [-1.5       ,  5.7...]])
 
