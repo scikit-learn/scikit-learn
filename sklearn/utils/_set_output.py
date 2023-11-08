@@ -158,21 +158,28 @@ class PolarsAdapter:
         return pl.concat(Xs, how="horizontal")
 
 
-CONTAINER_ADAPTERS = {
-    obj.container_lib: obj  # type: ignore
-    for obj in [
-        PandasAdapter(),
-        PolarsAdapter(),
-    ]
-}
-SUPPORTED_OUTPUTS = {"default"} | set(CONTAINER_ADAPTERS)
+class ContainerAdaptersManager:
+    def __init__(self):
+        self.adapters = {}
+
+    @property
+    def supported_outputs(self):
+        return {"default"} | set(self.adapters)
+
+    def register(self, adapter):
+        self.adapters[adapter.container_lib] = adapter
+
+
+ADAPTERS_MANAGER = ContainerAdaptersManager()
+ADAPTERS_MANAGER.register(PandasAdapter())
+ADAPTERS_MANAGER.register(PolarsAdapter())
 
 
 def _get_container_adapter(method, estimator=None):
     """Get container adapter."""
     dense_config = _get_output_config(method, estimator)["dense"]
     try:
-        return CONTAINER_ADAPTERS[dense_config]
+        return ADAPTERS_MANAGER.adapters[dense_config]
     except KeyError:
         return None
 
@@ -203,9 +210,10 @@ def _get_output_config(method, estimator=None):
     else:
         dense_config = get_config()[f"{method}_output"]
 
-    if dense_config not in SUPPORTED_OUTPUTS:
+    supported_outputs = ADAPTERS_MANAGER.supported_outputs
+    if dense_config not in supported_outputs:
         raise ValueError(
-            f"output config must be in {sorted(SUPPORTED_OUTPUTS)}, got {dense_config}"
+            f"output config must be in {sorted(supported_outputs)}, got {dense_config}"
         )
 
     return {"dense": dense_config}
@@ -249,7 +257,7 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
             f"{dense_config.capitalize()} output with set_output(transform='default')."
         )
 
-    adapter = CONTAINER_ADAPTERS[dense_config]
+    adapter = ADAPTERS_MANAGER.adapters[dense_config]
     return adapter.create_container(
         data_to_wrap,
         original_input,

@@ -8,7 +8,7 @@ from numpy.testing import assert_array_equal
 from sklearn._config import config_context, get_config
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._set_output import (
-    CONTAINER_ADAPTERS,
+    ADAPTERS_MANAGER,
     ContainerAdapterProtocol,
     _get_output_config,
     _safe_set_output,
@@ -27,7 +27,7 @@ def test_pandas_adapter():
     index = np.asarray([0, 1])
     X_df_orig = pd.DataFrame([[1, 2], [1, 3]], index=index)
 
-    adapter = CONTAINER_ADAPTERS["pandas"]
+    adapter = ADAPTERS_MANAGER.adapters["pandas"]
     X_container = adapter.create_container(X_np, X_df_orig, columns=lambda: columns)
     assert isinstance(X_container, pd.DataFrame)
     assert_array_equal(X_container.columns, columns)
@@ -66,7 +66,7 @@ def test_polars_adapter():
     columns = ["f1", "f2", "f3"]
     X_df_orig = pl.DataFrame(X_np, schema=columns)
 
-    adapter = CONTAINER_ADAPTERS["polars"]
+    adapter = ADAPTERS_MANAGER.adapters["polars"]
     X_container = adapter.create_container(X_np, X_df_orig, columns=lambda: columns)
 
     assert isinstance(X_container, pl.DataFrame)
@@ -392,10 +392,10 @@ def test_set_output_list_input(dataframe_lib):
     assert_array_equal(X_out.columns, ["X0", "X1", "X2", "X3"])
 
 
-@pytest.mark.parametrize("name", CONTAINER_ADAPTERS)
+@pytest.mark.parametrize("name", sorted(ADAPTERS_MANAGER.adapters))
 def test_adapter_class_has_interface(name):
     """Check adapters have the correct interface."""
-    assert isinstance(CONTAINER_ADAPTERS[name], ContainerAdapterProtocol)
+    assert isinstance(ADAPTERS_MANAGER.adapters[name], ContainerAdapterProtocol)
 
 
 def test_check_library_installed(monkeypatch):
