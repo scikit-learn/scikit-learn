@@ -70,8 +70,8 @@ class ContainerAdapterProtocol(Protocol):
             True if X is a supported container.
         """
 
-    def update_columns(self, X, columns):
-        """Update columns in X.
+    def rename_columns(self, X, columns):
+        """Rename columns in X.
 
         Parameters
         ----------
@@ -121,7 +121,7 @@ class PandasAdapter:
         pd = check_library_installed("pandas")
         return isinstance(X, pd.DataFrame)
 
-    def update_columns(self, X, columns):
+    def rename_columns(self, X, columns):
         return X.rename(columns=dict(zip(X.columns, columns)))
 
     def hstack(self, Xs):
@@ -138,7 +138,7 @@ class PolarsAdapter:
 
         if isinstance(X_output, pl.DataFrame):
             if columns is not None:
-                return self.update_columns(X_output, columns)
+                return self.rename_columns(X_output, columns)
             return X_output
 
         if isinstance(columns, np.ndarray):
@@ -150,7 +150,7 @@ class PolarsAdapter:
         pl = check_library_installed("polars")
         return isinstance(X, pl.DataFrame)
 
-    def update_columns(self, X, columns):
+    def rename_columns(self, X, columns):
         return X.rename(dict(zip(X.columns, columns)))
 
     def hstack(self, Xs):

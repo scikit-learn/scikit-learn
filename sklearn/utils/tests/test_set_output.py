@@ -45,7 +45,7 @@ def test_pandas_adapter():
 
     # adapter.update_columns updates the columns
     new_columns = np.array(["a", "c"], dtype=object)
-    new_df = adapter.update_columns(X_df, new_columns)
+    new_df = adapter.rename_columns(X_df, new_columns)
     assert_array_equal(new_df.columns, new_columns)
 
     # adapter.hstack stacks the dataframes horizontally.
@@ -82,7 +82,7 @@ def test_polars_adapter():
 
     # adapter.update_columns updates the columns
     new_columns = np.array(["a", "c", "g"], dtype=object)
-    new_df = adapter.update_columns(X_df_orig, new_columns)
+    new_df = adapter.rename_columns(X_df_orig, new_columns)
     assert_array_equal(new_df.columns, new_columns)
 
     # adapter.hstack stacks the dataframes horizontally.

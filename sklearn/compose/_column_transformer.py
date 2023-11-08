@@ -3,6 +3,7 @@ The :mod:`sklearn.compose._column_transformer` module implements utilities
 to work with heterogeneous data and to apply different transformers to
 different columns.
 """
+
 # Author: Andreas Mueller
 #         Joris Van den Bossche
 # License: BSD
@@ -1049,7 +1050,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 names_out = self._add_prefix_for_feature_names_out(
                     list(zip(transformer_names, feature_names_outs))
                 )
-                return adapter.update_columns(output, names_out)
+                return adapter.rename_columns(output, names_out)
 
             return np.hstack(Xs)
 
