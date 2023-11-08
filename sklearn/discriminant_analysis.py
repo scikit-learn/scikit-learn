@@ -175,23 +175,24 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
     return cov
 
 
-def calc_posterior_proba(values):
-    """Compute posterior probability from log posterior.
+def _from_discriminant_score_to_probability(discriminant_scores):
+    """Compute posterior probabilities from discriminant scores.
 
     Parameters
     ----------
-    values : ndarray of shape (n_samples, n_classes)
-        Array of log posterior probabilities.
+    discriminant_scores : ndarray of shape (n_samples, n_classes)
+        Array of discriminant scores.
 
     Returns
     -------
-    post_prob : ndarray of shape (n_samples, n_classes)
+    posterior_probailities  : ndarray of shape (n_samples, n_classes)
         Array of posterior probabilities.
     """
-    likelihood = np.exp(values - values.max(axis=1)[:, np.newaxis])
+    likelihood = np.exp(
+        discriminant_scores - discriminant_scores.max(axis=1)[:, np.newaxis]
+    )
     # compute posterior probabilities
-    post_prob = likelihood / likelihood.sum(axis=1)[:, np.newaxis]
-    return post_prob
+    return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
 
 
 class LinearDiscriminantAnalysis(
@@ -1042,10 +1043,9 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         C : ndarray of shape (n_samples, n_classes)
             Posterior probabilities of classification per class.
         """
-        values = self._decision_function(X)
         # compute the likelihood of the underlying gaussian models
         # up to a multiplicative constant.
-        return calc_posterior_proba(values)
+        return _from_discriminant_score_to_probability(self._decision_function(X))
 
     def predict_log_proba(self, X):
         """Return log of posterior probabilities of classification.

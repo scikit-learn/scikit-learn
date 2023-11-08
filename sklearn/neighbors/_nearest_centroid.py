@@ -18,7 +18,8 @@ from scipy import sparse as sp
 from sklearn.metrics.pairwise import _VALID_METRICS
 
 from ..base import BaseEstimator, ClassifierMixin, _fit_context
-from ..discriminant_analysis import calc_posterior_proba
+from ..discriminant_analysis import _from_discriminant_score_to_probability
+from ..metrics.pairwise import pairwise_distances_argmin
 from ..preprocessing import LabelEncoder
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
@@ -60,7 +61,8 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             `metric='precomputed'` was deprecated and now raises an error
 
     shrink_threshold : float, default=None
-        Threshold for shrinking centroids to remove features.
+        Threshold for shrinking centroids to remove features. Not supported
+        for sparse matrices.
 
     priors : {"uniform", "empirical"} or array-like of shape (n_classes,), \
     default="empirical"
@@ -87,7 +89,8 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         .. versionadded:: 1.0
 
     deviations_ : ndarray of shape(n_classes, n_features)
-        Deviation of each class using soft thresholding.
+        Deviation of each class using soft thresholding. Not supported
+        for sparse matices.
 
         .. versionadded:: 1.4
 
@@ -223,12 +226,15 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         if (self.class_priors_ < 0).any():
             raise ValueError("priors must be non-negative")
         if not np.isclose(self.class_priors_.sum(), 1.0):
-            warnings.warn("The priors do not sum to 1. Renormalizing", UserWarning)
+            warnings.warn(
+                "The priors do not sum to 1. Normalizing such that it sums to one.",
+                UserWarning,
+            )
             self.class_priors_ = self.class_priors_ / self.class_priors_.sum()
 
         # Mask mapping each class to its members.
         self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)
-        self.deviation_ = np.empty((n_classes, n_features), dtype=np.float64)
+        self.deviations_ = np.empty((n_classes, n_features), dtype=np.float64)
         # Number of clusters in each class.
         nk = np.zeros(n_classes)
 
@@ -256,31 +262,30 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
         # Compute within-class std_dev with unshrunked centroids
         variance = np.square(X - self.centroids_[y_ind])
-        variance = variance.sum(axis=0)
-        self.within_class_std_ = np.sqrt(variance / (n_samples - n_classes))
+        self.within_class_std_ = np.sqrt(variance.sum(axis=0) / (n_samples - n_classes))
 
-        if np.all(np.ptp(X, axis=0) == 0):
-            raise ValueError("All features have zero variance.Division by zero.")
-        dataset_centroid_ = np.mean(X, axis=0)
-
-        # m parameter for determining deviation
-        m = np.sqrt((1.0 / nk) - (1.0 / n_samples))
-        # Calculate deviation using the standard deviation of centroids.
-        # To deter outliers from affecting the results.
-        s = self.within_class_std_ + np.median(self.within_class_std_)
-        mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
-        ms = mm * s
-        self.deviation_ = (self.centroids_ - dataset_centroid_) / ms
-        # Soft thresholding: if the deviation crosses 0 during shrinking,
-        # it becomes zero.
-        signs = np.sign(self.deviation_)
-        if self.shrink_threshold:
-            self.deviation_ = np.abs(self.deviation_) - self.shrink_threshold
-            np.clip(self.deviation_, 0, None, out=self.deviation_)
-            self.deviation_ *= signs
-            # Now adjust the centroids using the deviation
-            msd = ms * self.deviation_
-            self.centroids_ = dataset_centroid_[np.newaxis, :] + msd
+        if not is_X_sparse:
+            if np.all(np.ptp(X, axis=0) == 0):
+                raise ValueError("All features have zero variance. Division by zero.")
+            dataset_centroid_ = np.mean(X, axis=0)
+            # m parameter for determining deviation
+            m = np.sqrt((1.0 / nk) - (1.0 / n_samples))
+            # Calculate deviation using the standard deviation of centroids.
+            # To deter outliers from affecting the results.
+            s = self.within_class_std_ + np.median(self.within_class_std_)
+            mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
+            ms = mm * s
+            self.deviations_ = (self.centroids_ - dataset_centroid_) / ms
+            # Soft thresholding: if the deviation crosses 0 during shrinking,
+            # it becomes zero.
+            if self.shrink_threshold:
+                signs = np.sign(self.deviations_)
+                self.deviations_ = np.abs(self.deviations_) - self.shrink_threshold
+                np.clip(self.deviations_, 0, None, out=self.deviations_)
+                self.deviations_ *= signs
+                # Now adjust the centroids using the deviation
+                msd = ms * self.deviations_
+                self.centroids_ = dataset_centroid_[np.newaxis, :] + msd
         return self
 
     # TODO(1.5) remove note about precomputed metric
@@ -292,11 +297,11 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Array of samples (test vectors).
+            Input data.
 
         Returns
         -------
-        C : ndarray of shape (n_samples,)
+        y_pred : ndarray of shape (n_samples,)
             The predicted classes.
 
         Notes
@@ -307,9 +312,14 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        d = self._decision_function(X)
-        y_pred = self.classes_.take(d.argmax(1))
-        return y_pred
+        if len(np.unique(self.class_priors_, return_counts=True)[0]) == 1:
+            X = self._validate_data(X, accept_sparse="csr", reset=False)
+            return self.classes_[
+                pairwise_distances_argmin(X, self.centroids_, metric=self.metric)
+            ]
+        else:
+            d = self._decision_function(X)
+            return self.classes_.take(d.argmax(1))
 
     def _decision_function(self, X):
         check_is_fitted(self, "centroids_")
@@ -365,23 +375,18 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     def predict_proba(self, X):
         """Estimate class probabilities.
 
-        The returned estimates for all classes are ordered by the
-        label of classes. The estimation has been implemented according to
-        Hastie et al. (2009), p. 652 equation (18.2).
-
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Array of samples (test vectors).
+        X : array-like of shape (n_samples, n_features)
+            Input data.
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
-            Returns the probability of the sample for each class in the model,
-            where classes are ordered as they are in ``self.classes_``.
+        y_proba : ndarray of shape (n_samples, n_classes)
+            Returns the probability estimate of the sample for each class in the
+            model, where classes are ordered as they are in `self.classes_`.
         """
-        coef = self._decision_function(X)
-        return calc_posterior_proba(coef)
+        return _from_discriminant_score_to_probability(self._decision_function(X))
 
     def predict_log_proba(self, X):
         """Estimate log class probabilities.
@@ -389,11 +394,11 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Array of samples (test vectors).
+            Input data.
 
         Returns
         -------
-        C : ndarray of shape (n_samples, n_classes)
+        y_log_proba : ndarray of shape (n_samples, n_classes)
             Estimated log probabilities.
         """
         prediction = self.predict_proba(X)
