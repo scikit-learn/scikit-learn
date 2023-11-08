@@ -182,7 +182,7 @@ def mean_absolute_error(
 
     Returns
     -------
-    loss : float or ndarray of floats
+    loss : float or array of floats
         If multioutput is 'raw_values', then mean absolute error is returned
         for each output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
@@ -219,7 +219,10 @@ def mean_absolute_error(
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return _average(output_errors, weights=multioutput)
+    mean_absolute_error = _average(output_errors, weights=multioutput)
+    if mean_absolute_error.shape == ():
+        return float(mean_absolute_error)
+    return mean_absolute_error
 
 
 @validate_params(
