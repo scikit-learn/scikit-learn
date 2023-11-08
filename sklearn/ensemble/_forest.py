@@ -1568,7 +1568,7 @@ class RandomForestRegressor(ForestRegressor):
     A random forest regressor.
 
     A random forest is a meta estimator that fits a number of decision tree
-    classifiers on various sub-samples of the dataset and uses averaging to
+    regressors on various sub-samples of the dataset and uses averaging to
     improve the predictive accuracy and control over-fitting.
     Trees in the forest use the best split strategy, i.e. equivalent to passing
     `splitter="best"` to the underlying :class:`~sklearn.tree.DecisionTreeRegressor`.
