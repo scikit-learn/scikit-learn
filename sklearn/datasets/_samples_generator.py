@@ -1608,7 +1608,7 @@ def make_sparse_spd_matrix(
     n_dim : int, default=1
         The size of the random matrix to generate.
 
-        .. versionchanged:: 1.3
+        .. versionchanged:: 1.4
             Renamed from ``dim`` to ``n_dim``.
 
     alpha : float, default=0.95
