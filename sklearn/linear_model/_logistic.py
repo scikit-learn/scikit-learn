@@ -349,6 +349,7 @@ def _logistic_regression_path(
             # LabelEncoder also saves memory compared to LabelBinarizer, especially
             # when n_classes is large.
             le = LabelEncoder()
+            print(le)
             Y_multi = le.fit_transform(y).astype(X.dtype, copy=False)
         else:
             # For liblinear solver, apply LabelBinarizer, i.e. y is one-hot encoded.
