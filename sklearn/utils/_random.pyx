@@ -314,17 +314,20 @@ def sample_without_replacement(
         cnp.intp_t n_pop_intp, n_samples_intp
         long n_pop_long, n_samples_long
 
-    # Note: the legacy rng will use `long` internally in either case
-    # If NumPy 2.0 is guaranteed at compile time this could also be written
-    # as `cnp.NPY_DEFAULT_INT == cnp.NPY_INTP`.
+    # On most platforms `np.int_ is np.intp`.  However, before NumPy 2 the
+    # default integer `np.int_` was a long which is 32bit on 64bit windows
+    # while `intp` is 64bit on 64bit platforms and 32bit on 32bit ones.
     if np.int_ is np.intp:
-        # converting to long will allow conversion to integer (from float)
-        # via `int()`, but conversion from other objects does not.
+        # Branch always taken on NumPy >=2 (or when not on 64bit windows).
+        # Cython has different rules for conversion of values to integers.
+        # For NumPy <1.26.2 AND Cython 3, this first branch requires `int()`
+        # called explicitly to allow e.g. floats.
         n_pop_intp = int(n_population)
         n_samples_intp = int(n_samples)
         return _sample_without_replacement(
                 n_pop_intp, n_samples_intp, method, random_state)
     else:
+        # Branch taken on 64bit windows with Numpy<2.0 where `long` is 32bit
         n_pop_long = n_population
         n_samples_long = n_samples
         return _sample_without_replacement(
