@@ -1307,8 +1307,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         If an array, the features are mapped to constraints by position. See
         :ref:`monotonic_cst_features_names` for a usage example.
 
-        The constraints are only valid for binary classifications and hold
-        over the probability of the positive class.
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 0.23
