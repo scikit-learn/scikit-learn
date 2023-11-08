@@ -2052,7 +2052,7 @@ class _RidgeGCV(LinearModel):
                     # avoid division by zero for null sample weights
                     mask_null_sample_weight = sample_weight == 0.0
                     unormalized_predictions[mask_null_sample_weight] = 0.0
-                    scale = sqrt_sw[:, np.newaxis] if n_y > 1 else sqrt_sw
+                    scale = sqrt_sw[:, np.newaxis] if predictions.ndim == 2 else sqrt_sw
                     unormalized_predictions[~mask_null_sample_weight] /= scale[
                         ~mask_null_sample_weight
                     ]
