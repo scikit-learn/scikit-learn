@@ -319,7 +319,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             - `None`: Transform configuration is unchanged
 
             .. versionadded:: 1.4
-                `"polars"` option was added
+                `"polars"` option was added.
 
         Returns
         -------

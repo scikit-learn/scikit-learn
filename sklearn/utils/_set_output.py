@@ -71,7 +71,7 @@ class ContainerAdapterProtocol(Protocol):
         """
 
     def rename_columns(self, X, columns):
-        """Rename columns in X.
+        """Rename columns in `X`.
 
         Parameters
         ----------
