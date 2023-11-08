@@ -1,3 +1,4 @@
+import importlib
 from collections import namedtuple
 
 import numpy as np
@@ -70,6 +71,11 @@ def test_polars_adapter():
 
     assert isinstance(X_container, pl.DataFrame)
     assert_array_equal(X_container.columns, columns)
+
+    # Update columns with create_container
+    new_columns = np.asarray(["a", "b", "c"], dtype=object)
+    new_df = adapter.create_container(X_df_orig, X_df_orig, columns=new_columns)
+    assert_array_equal(new_df.columns, new_columns)
 
     assert adapter.is_supported_container(X_df_orig)
     assert not adapter.is_supported_container(X_np)
@@ -392,8 +398,17 @@ def test_adapter_class_has_interface(name):
     assert isinstance(CONTAINER_ADAPTERS[name], ContainerAdapterProtocol)
 
 
-def test_check_library_installed(hide_available_pandas):
+def test_check_library_installed(monkeypatch):
     """Check import error changed."""
+    orig_import_module = importlib.import_module
+
+    def patched_import_module(name):
+        if name == "pandas":
+            raise ImportError()
+        orig_import_module(name, package=None)
+
+    monkeypatch.setattr(importlib, "import_module", patched_import_module)
+
     msg = "Setting output container to 'pandas' requires"
     with pytest.raises(ImportError, match=msg):
         check_library_installed("pandas")

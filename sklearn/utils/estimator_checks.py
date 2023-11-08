@@ -4691,9 +4691,6 @@ def _check_set_output_transform_polars_context(name, transformer_orig, context):
         if isinstance(columns, np.ndarray):
             columns = columns.tolist()
 
-        if isinstance(X, pl.DataFrame):
-            return X.rename(dict(zip(X.columns, columns)))
-
         return pl.DataFrame(X, schema=columns)
 
     _check_set_output_transform_dataframe(

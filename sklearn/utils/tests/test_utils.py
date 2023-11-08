@@ -12,6 +12,7 @@ from sklearn.utils import (
     _approximate_mode,
     _determine_key_type,
     _get_column_indices,
+    _is_polars_df,
     _message_with_time,
     _print_elapsed_time,
     _safe_assign,
@@ -829,3 +830,14 @@ def test_polars_indexing():
     for key in axis_0_keys:
         out = _safe_indexing(df, key, axis=0)
         assert_frame_equal(df[key], out)
+
+
+def test__is_polars_df():
+    """Check that _is_polars_df return False for non-dataframe objects."""
+
+    class LooksLikePolars:
+        def __init__(self):
+            self.columns = ["a", "b"]
+            self.schema = ["a", "b"]
+
+    assert not _is_polars_df(LooksLikePolars())

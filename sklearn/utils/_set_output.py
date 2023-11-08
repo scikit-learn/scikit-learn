@@ -122,8 +122,7 @@ class PandasAdapter:
         return isinstance(X, pd.DataFrame)
 
     def update_columns(self, X, columns):
-        X.columns = columns
-        return X
+        return X.rename(columns=dict(zip(X.columns, columns)))
 
     def hstack(self, Xs):
         pd = check_library_installed("pandas")
