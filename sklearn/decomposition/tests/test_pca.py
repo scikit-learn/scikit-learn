@@ -21,10 +21,27 @@ from sklearn.utils.estimator_checks import (
     _get_check_estimator_ids,
     check_array_api_input_and_values,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
+
+# `SPARSE_M` and `SPARSE_N` could be larger, but be aware:
+# * SciPy's generation of random sparse matrix can be costly
+# * A (SPARSE_M, SPARSE_N) dense array is allocated to compare against
+SPARSE_M, SPARSE_N = 1000, 300  # arbitrary
+SPARSE_MAX_COMPONENTS = min(SPARSE_M, SPARSE_N)
+
+
+def _check_fitted_pca_close(pca1, pca2, rtol):
+    assert_allclose(pca1.components_, pca2.components_, rtol=rtol)
+    assert_allclose(pca1.explained_variance_, pca2.explained_variance_, rtol=rtol)
+    assert_allclose(pca1.singular_values_, pca2.singular_values_, rtol=rtol)
+    assert_allclose(pca1.mean_, pca2.mean_, rtol=rtol)
+    assert_allclose(pca1.n_components_, pca2.n_components_, rtol=rtol)
+    assert_allclose(pca1.n_samples_, pca2.n_samples_, rtol=rtol)
+    assert_allclose(pca1.noise_variance_, pca2.noise_variance_, rtol=rtol)
+    assert_allclose(pca1.n_features_in_, pca2.n_features_in_, rtol=rtol)
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
@@ -47,6 +64,118 @@ def test_pca(svd_solver, n_components):
     cov = pca.get_covariance()
     precision = pca.get_precision()
     assert_allclose(np.dot(cov, precision), np.eye(X.shape[1]), atol=1e-12)
+
+
+@pytest.mark.parametrize("density", [0.01, 0.1, 0.30])
+@pytest.mark.parametrize("n_components", [1, 2, 10])
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+@pytest.mark.parametrize("svd_solver", ["arpack"])
+@pytest.mark.parametrize("scale", [1, 10, 100])
+def test_pca_sparse(
+    global_random_seed, svd_solver, sparse_container, n_components, density, scale
+):
+    # Make sure any tolerance changes pass with SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
+    rtol = 5e-07
+    transform_rtol = 3e-05
+
+    random_state = np.random.default_rng(global_random_seed)
+    X = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+            density=density,
+        )
+    )
+    # Scale the data + vary the column means
+    scale_vector = random_state.random(X.shape[1]) * scale
+    X = X.multiply(scale_vector)
+
+    pca = PCA(
+        n_components=n_components,
+        svd_solver=svd_solver,
+        random_state=global_random_seed,
+    )
+    pca.fit(X)
+
+    Xd = X.toarray()
+    pcad = PCA(
+        n_components=n_components,
+        svd_solver=svd_solver,
+        random_state=global_random_seed,
+    )
+    pcad.fit(Xd)
+
+    # Fitted attributes equality
+    _check_fitted_pca_close(pca, pcad, rtol=rtol)
+
+    # Test transform
+    X2 = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+            density=density,
+        )
+    )
+    X2d = X2.toarray()
+
+    assert_allclose(pca.transform(X2), pca.transform(X2d), rtol=transform_rtol)
+    assert_allclose(pca.transform(X2), pcad.transform(X2d), rtol=transform_rtol)
+
+
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+def test_pca_sparse_fit_transform(global_random_seed, sparse_container):
+    random_state = np.random.default_rng(global_random_seed)
+    X = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+            density=0.01,
+        )
+    )
+    X2 = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+            density=0.01,
+        )
+    )
+
+    pca_fit = PCA(n_components=10, svd_solver="arpack", random_state=global_random_seed)
+    pca_fit_transform = PCA(
+        n_components=10, svd_solver="arpack", random_state=global_random_seed
+    )
+
+    pca_fit.fit(X)
+    transformed_X = pca_fit_transform.fit_transform(X)
+
+    _check_fitted_pca_close(pca_fit, pca_fit_transform, rtol=1e-10)
+    assert_allclose(transformed_X, pca_fit_transform.transform(X), rtol=2e-9)
+    assert_allclose(transformed_X, pca_fit.transform(X), rtol=2e-9)
+    assert_allclose(pca_fit.transform(X2), pca_fit_transform.transform(X2), rtol=2e-9)
+
+
+@pytest.mark.parametrize("svd_solver", ["randomized", "full", "auto"])
+@pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
+def test_sparse_pca_solver_error(global_random_seed, svd_solver, sparse_container):
+    random_state = np.random.RandomState(global_random_seed)
+    X = sparse_container(
+        sp.sparse.random(
+            SPARSE_M,
+            SPARSE_N,
+            random_state=random_state,
+        )
+    )
+    pca = PCA(n_components=30, svd_solver=svd_solver)
+    error_msg_pattern = (
+        f'PCA only support sparse inputs with the "arpack" solver, while "{svd_solver}"'
+        " was passed"
+    )
+    with pytest.raises(TypeError, match=error_msg_pattern):
+        pca.fit(X)
 
 
 def test_no_empty_slice_warning():
@@ -500,18 +629,6 @@ def test_pca_svd_solver_auto(data, n_components, expected_solver):
     pca_auto.fit(data)
     pca_test.fit(data)
     assert_allclose(pca_auto.components_, pca_test.components_)
-
-
-@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_pca_sparse_input(svd_solver, csr_container):
-    X = np.random.RandomState(0).rand(5, 4)
-    X = csr_container(X)
-    assert sp.sparse.issparse(X)
-
-    pca = PCA(n_components=3, svd_solver=svd_solver)
-    with pytest.raises(TypeError):
-        pca.fit(X)
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
