@@ -65,13 +65,11 @@ import seaborn as sns
 colors = sns.color_palette("colorblind")
 
 fig, ax = plt.subplots(figsize=(15, 10))
-pointplot = sns.pointplot(x=df["period"], y=df["transfer"], hue=df["day"], ax=ax)
+pointplot = sns.lineplot(x=df["period"], y=df["transfer"], hue=df["day"], ax=ax)
 handles, lables = ax.get_legend_handles_labels()
 ax.set(
     title="Hourly energy transfer for different days of the week",
-    xticks=[i * 2 for i in range(24)],
-    xticklabels=list(range(24)),
-    xlabel="Time of the day",
+    xlabel="Normalized time of the day",
     ylabel="Normalized energy transfer",
 )
 _ = ax.legend(handles, ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"])
