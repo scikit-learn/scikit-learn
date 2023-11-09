@@ -44,8 +44,9 @@ is :math:`\mathcal{O}(n^2_{\text{components}} \cdot n_{\text{samples}})`, where
 one can set :math:`n_{\text{components}} \ll n_{\text{samples}}` without a
 significative decrease in performance [WS2001]_.
 
-For the dataset we can construct eigendecomposition of kernel matrix `K` and
-split it by sampled and unsampled data
+We can construct the eigendecomposition of the kernel matrix :math:`K`, based
+on the features of the data, and then split it into sampled and unsampled data
+points.
 
 .. math::
 
