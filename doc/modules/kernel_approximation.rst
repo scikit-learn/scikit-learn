@@ -85,7 +85,11 @@ multiplied by the ``normalization_`` matrix for the final result.
 By default :class:`Nystroem` uses the ``rbf`` kernel, but it can use any kernel
 function or a precomputed kernel matrix. The number of samples used - which is
 also the dimensionality of the features computed - is given by the parameter
-is given by the parameter ``n_components``.
+``n_components``.
+
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
 
 .. _rbf_kernel_approx:
 
