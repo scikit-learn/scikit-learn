@@ -63,7 +63,7 @@ where:
 
 Given that :math:`U_1 \Lambda U_1^T` can be obtained by orthonormalization of
 the matrix :math:`K_{11}`, and :math:`U_2 \Lambda U_1^T` can be evaluated (as
-well as its transpose), the only remaining term to elucidate is 
+well as its transpose), the only remaining term to elucidate is
 :math:`U_2 \Lambda U_2^T`. To do this we can express it in terms of the already
 evaluated matrices:
 
