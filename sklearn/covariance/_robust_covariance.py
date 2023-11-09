@@ -373,7 +373,7 @@ def fast_mcd(
         The proportion of points to be included in the support of the raw
         MCD estimate. Default is `None`, which implies that the minimum
         value of `support_fraction` will be used within the algorithm:
-        `(n_sample + n_features + 1) / 2`. This parameter must be in the
+        `(n_samples + n_features + 1) / 2 * n_samples`. This parameter must be in the
         range (0, 1).
 
     cov_computation_method : callable, \
@@ -607,7 +607,7 @@ class MinCovDet(EmpiricalCovariance):
         The proportion of points to be included in the support of the raw
         MCD estimate. Default is None, which implies that the minimum
         value of support_fraction will be used within the algorithm:
-        `(n_sample + n_features + 1) / 2`. The parameter must be in the range
+        `(n_samples + n_features + 1) / 2 * n_samples`. The parameter must be in the range
         (0, 1].
 
     random_state : int, RandomState instance or None, default=None
