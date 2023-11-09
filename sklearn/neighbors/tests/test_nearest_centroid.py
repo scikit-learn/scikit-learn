@@ -17,6 +17,7 @@ y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 T_csr = sp.csr_matrix(T)
 true_result = [-1, 1, 1]
+true_result_prior1 = [-1, 1, 1]
 
 # also load the iris dataset
 # and randomly permute it
@@ -32,6 +33,16 @@ def test_classification_toy():
     clf = NearestCentroid()
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
+
+    # Test uniform priors
+    clf = NearestCentroid(priors="uniform")
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+
+    # Test custom priors
+    clf = NearestCentroid(priors=[0.25, 0.75])
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result_prior1)
 
     # Same test, but with a sparse matrix to fit and test.
     clf = NearestCentroid()
@@ -203,4 +214,22 @@ def test_features_zero_var():
 
     clf = NearestCentroid(shrink_threshold=0.1)
     with pytest.raises(ValueError):
+        clf.fit(X, y)
+
+
+def test_neg_priors():
+    # Test negative priors.
+
+    clf = NearestCentroid(priors=[-2, 4])
+    with pytest.raises(ValueError):
+        clf.fit(X, y)
+
+
+def test_wrong_priors():
+    # Test normalizing priors that don't sum to 1.
+    clf = NearestCentroid(priors=[2, 4])
+    with pytest.warns(
+        UserWarning,
+        match="The priors do not sum to 1. Normalizing such that it sums to one.",
+    ):
         clf.fit(X, y)
