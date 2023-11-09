@@ -35,20 +35,24 @@ is advisable to compare results against exact kernel methods when possible.
 
 Nystroem Method for Kernel Approximation
 ----------------------------------------
-The Nystroem method, as implemented in :class:`Nystroem` is a general method
-for reduced rank approximations of kernels. It achieves this by subsampling without replacement
-rows/columns of the data on which the kernel is evaluated.
-While the exact computational complexity is :math:`\mathcal{O}(n^3_{\text{samples}})`,
-one can set :math:`n_{\text{components}} \ll n_{\text{samples}}` without a significative decrease in performance 
-(:math:`\mathcal{O}(n^2_{\text{components}} \cdot n_{\text{samples}})`) [WS2001]_.
+The Nystroem method, as implemented in :class:`Nystroem` is a general method for
+reduced rank approximations of kernels. It achieves this by subsampling without
+replacement rows/columns of the data on which the kernel is evaluated. While the
+computational complexity of the exact method is
+:math:`\mathcal{O}(n^3_{\text{samples}})`, the complexity of the approximation
+is :math:`\mathcal{O}(n^2_{\text{components}} \cdot n_{\text{samples}})`, where
+one can set :math:`n_{\text{components}} \ll n_{\text{samples}}` without a
+significative decrease in performance [WS2001]_.
 
-For the dataset we can construct eigendecomposition of kernel matrix `K` and split it by sampled and unsampled data
+For the dataset we can construct eigendecomposition of kernel matrix `K` and
+split it by sampled and unsampled data
 
 .. math::
 
         K = U \Lambda U^T
         = \begin{bmatrix} U_1 \\ U_2\end{bmatrix} \Lambda \begin{bmatrix} U_1 \\ U_2 \end{bmatrix}^T
         = \begin{bmatrix} U_1 \Lambda U_1^T & U_1 \Lambda U_2^T \\ U_2 \Lambda U_1^T & U_2 \Lambda U_2^T \end{bmatrix}
+        \equiv \begin{bmatrix} K_{11} & K_{12} \\ K_{21} & K_{22} \end{bmatrix}
 
 where:
 
@@ -57,9 +61,11 @@ where:
     * :math:`U_1` is orthonormal matrix of samples that were chosen
     * :math:`U_2` is orthonormal matrix of samples that were not chosen
 
-Since we already evaluated :math:`U_1 \Lambda U_1^T` by orthonormalization of matrix `K`, and can evaluate :math:`U_2 \Lambda U_1^T`.
-The only thing for us to find out is :math:`U_2 \Lambda U_2^T`.
-To do this we can try to express it from the already evaluated matricies
+Given that :math:`U_1 \Lambda U_1^T` can be obtained by orthonormalization of
+the matrix :math:`K_{11}`, and :math:`U_2 \Lambda U_1^T` can be evaluated (as
+well as its transpose), the only remaining term to elucidate is 
+:math:`U_2 \Lambda U_2^T`. To do this we can express it in terms of the already
+evaluated matrices:
 
 .. math::
 
@@ -73,12 +79,12 @@ To do this we can try to express it from the already evaluated matricies
 During ``fit``, the class :class:`Nystroem` evaluates the basis :math:`U_1`, and
 computes the normalization constant, :math:`K_{11}^{-\frac12}`. Later, during
 ``transform``, the kernel matrix is determined between the basis (given by the
-components_ attribute) and the new datapoints, ``X``. This matrix is then
+`components_` attribute) and the new data points, ``X``. This matrix is then
 multiplied by the ``normalization_`` matrix for the final result.
 
-By default :class:`Nystroem` uses the ``rbf`` kernel, but it can use any
-kernel function or a precomputed kernel matrix.
-The number of samples used - which is also the dimensionality of the features computed -
+By default :class:`Nystroem` uses the ``rbf`` kernel, but it can use any kernel
+function or a precomputed kernel matrix. The number of samples used - which is
+also the dimensionality of the features computed - is given by the parameter
 is given by the parameter ``n_components``.
 
 .. _rbf_kernel_approx:
