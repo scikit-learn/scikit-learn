@@ -39,9 +39,9 @@ This example aims at showcasing points 2-5 in a real life setting.
 # Victoria were done to alleviate fluctuations.
 #
 # The dataset (originally named ELEC2) contains 45,312 instances dated from 7
-# May 1996 to 5 December 1998. Each example of the dataset refers to a period of
+# May 1996 to 5 December 1998. Each sample of the dataset refers to a period of
 # 30 minutes, i.e. there are 48 instances for each time period of one day. Each
-# example on the dataset has 5 fields: the day of week, the time stamp, the New
+# sample on the dataset has 5 fields: the day of week, the time stamp, the New
 # South Wales electricity demand, the Victoria electricity demand. It is
 # originally a classification task, but here we use it as a regression where the
 # target is the scheduled electricity transfer between states.
