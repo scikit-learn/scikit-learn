@@ -78,8 +78,9 @@ graph.data = np.exp(-graph.data / graph.data.std())
 # %%
 # Here we perform spectral clustering using the arpack solver since amg is
 # numerically unstable on this example. We then plot the results.
-from sklearn.cluster import spectral_clustering
 import matplotlib.pyplot as plt
+
+from sklearn.cluster import spectral_clustering
 
 labels = spectral_clustering(graph, n_clusters=4, eigen_solver="arpack")
 label_im = np.full(mask.shape, -1.0)

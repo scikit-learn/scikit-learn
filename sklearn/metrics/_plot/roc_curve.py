@@ -1,6 +1,5 @@
-from .. import auc
-from .. import roc_curve
 from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
+from .._ranking import auc, roc_curve
 
 
 class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
@@ -122,7 +121,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.plot.RocCurveDisplay`
+        display : :class:`~sklearn.metrics.RocCurveDisplay`
             Object that stores computed values.
         """
         self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
@@ -153,7 +152,13 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         xlabel = "False Positive Rate" + info_pos_label
         ylabel = "True Positive Rate" + info_pos_label
-        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(
+            xlabel=xlabel,
+            xlim=(-0.01, 1.01),
+            ylabel=ylabel,
+            ylim=(-0.01, 1.01),
+            aspect="equal",
+        )
 
         if plot_chance_level:
             (self.chance_level_,) = self.ax_.plot(
@@ -241,7 +246,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.plot.RocCurveDisplay`
+        display : :class:`~sklearn.metrics.RocCurveDisplay`
             The ROC Curve display.
 
         See Also

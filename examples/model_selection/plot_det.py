@@ -79,9 +79,10 @@ classifiers = {
 # DET curves are commonly plotted in normal deviate scale. To achieve this the
 # DET display transforms the error rates as returned by the
 # :func:`~sklearn.metrics.det_curve` and the axis scale using
-# :func:`scipy.stats.norm`.
+# `scipy.stats.norm`.
 
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import DetCurveDisplay, RocCurveDisplay
 
 fig, [ax_roc, ax_det] = plt.subplots(1, 2, figsize=(11, 5))

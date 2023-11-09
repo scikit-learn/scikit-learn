@@ -1,13 +1,15 @@
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-from sklearn.datasets import make_classification, make_regression
 import numpy as np
 import pytest
 
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.datasets import make_classification, make_regression
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estimator
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
 
 
 @pytest.mark.parametrize("seed", range(5))

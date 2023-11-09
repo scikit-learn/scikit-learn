@@ -2,14 +2,15 @@
 #
 # License: BSD 3 clause
 
-import numpy as np
 from numbers import Real
-from . import MinCovDet
+
+import numpy as np
+
+from ..base import OutlierMixin, _fit_context
+from ..metrics import accuracy_score
 from ..utils._param_validation import Interval
 from ..utils.validation import check_is_fitted
-from ..metrics import accuracy_score
-from ..base import OutlierMixin
-from ..base import _fit_context
+from ._robust_covariance import MinCovDet
 
 
 class EllipticEnvelope(OutlierMixin, MinCovDet):

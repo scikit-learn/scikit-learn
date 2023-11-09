@@ -21,28 +21,34 @@ the lower the better.
 
 import warnings
 from functools import partial
-from numbers import Real, Integral
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
-from ..utils import assert_all_finite
-from ..utils import check_consistent_length
-from ..utils.validation import _check_pos_label_consistency, _check_sample_weight
-from ..utils import column_or_1d, check_array
-from ..utils.multiclass import type_of_target
-from ..utils.extmath import stable_cumsum
-from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import validate_params, StrOptions, Interval
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
+from ..utils import (
+    assert_all_finite,
+    check_array,
+    check_consistent_length,
+    column_or_1d,
+)
 from ..utils._encode import _encode, _unique
-
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.extmath import stable_cumsum
+from ..utils.fixes import trapezoid
+from ..utils.multiclass import type_of_target
+from ..utils.sparsefuncs import count_nonzero
+from ..utils.validation import _check_pos_label_consistency, _check_sample_weight
 from ._base import _average_binary_score, _average_multiclass_ovo_score
 
 
-@validate_params({"x": ["array-like"], "y": ["array-like"]})
+@validate_params(
+    {"x": ["array-like"], "y": ["array-like"]},
+    prefer_skip_nested_validation=True,
+)
 def auc(x, y):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule.
 
@@ -99,9 +105,9 @@ def auc(x, y):
         else:
             raise ValueError("x is neither increasing nor decreasing : {}.".format(x))
 
-    area = direction * np.trapz(y, x)
+    area = direction * trapezoid(y, x)
     if isinstance(area, np.memmap):
-        # Reductions such as .sum used internally in np.trapz do not return a
+        # Reductions such as .sum used internally in trapezoid do not return a
         # scalar by default for numpy.memmap instances contrary to
         # regular numpy.ndarray instances.
         area = area.dtype.type(area)
@@ -115,7 +121,8 @@ def auc(x, y):
         "average": [StrOptions({"micro", "samples", "weighted", "macro"}), None],
         "pos_label": [Real, str, "boolean"],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def average_precision_score(
     y_true, y_score, *, average="macro", pos_label=1, sample_weight=None
@@ -269,7 +276,8 @@ def average_precision_score(
         "y_score": ["array-like"],
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     """Compute error rates for different probability thresholds.
@@ -306,7 +314,7 @@ def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     fpr : ndarray of shape (n_thresholds,)
         False positive rate (FPR) such that element i is the false positive
         rate of predictions with score >= thresholds[i]. This is occasionally
-        referred to as false acceptance propability or fall-out.
+        referred to as false acceptance probability or fall-out.
 
     fnr : ndarray of shape (n_thresholds,)
         False negative rate (FNR) such that element i is the false negative
@@ -406,7 +414,8 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
         "max_fpr": [Interval(Real, 0.0, 1, closed="right"), None],
         "multi_class": [StrOptions({"raise", "ovr", "ovo"})],
         "labels": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def roc_auc_score(
     y_true,
@@ -847,7 +856,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
         "drop_intermediate": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def precision_recall_curve(
     y_true, probas_pred, *, pos_label=None, sample_weight=None, drop_intermediate=False
@@ -987,7 +997,8 @@ def precision_recall_curve(
         "pos_label": [Real, str, "boolean", None],
         "sample_weight": ["array-like", None],
         "drop_intermediate": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def roc_curve(
     y_true, y_score, *, pos_label=None, sample_weight=None, drop_intermediate=True
@@ -1135,7 +1146,8 @@ def roc_curve(
         "y_true": ["array-like", "sparse matrix"],
         "y_score": ["array-like"],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None):
     """Compute ranking-based average precision.
@@ -1233,7 +1245,8 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
         "y_true": ["array-like"],
         "y_score": ["array-like"],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def coverage_error(y_true, y_score, *, sample_weight=None):
     """Coverage error measure.
@@ -1299,7 +1312,8 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
         "y_true": ["array-like", "sparse matrix"],
         "y_score": ["array-like"],
         "sample_weight": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     """Compute Ranking loss measure.
@@ -1516,7 +1530,8 @@ def _check_dcg_target_type(y_true):
         "log_base": [Interval(Real, 0.0, None, closed="neither")],
         "sample_weight": ["array-like", None],
         "ignore_ties": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def dcg_score(
     y_true, y_score, *, k=None, log_base=2, sample_weight=None, ignore_ties=False
@@ -1683,7 +1698,8 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
         "k": [Interval(Integral, 1, None, closed="left"), None],
         "sample_weight": ["array-like", None],
         "ignore_ties": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False):
     """Compute Normalized Discounted Cumulative Gain.
@@ -1814,7 +1830,8 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         "normalize": ["boolean"],
         "sample_weight": ["array-like", None],
         "labels": ["array-like", None],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def top_k_accuracy_score(
     y_true, y_score, *, k=2, normalize=True, sample_weight=None, labels=None

@@ -8,7 +8,6 @@ from typing import List
 import numpy as np
 import scipy as sp
 
-
 from ..externals import _arff
 from ..externals._arff import ArffSparseDataType
 from ..utils import (
@@ -16,6 +15,7 @@ from ..utils import (
     check_pandas_support,
     get_chunk_n_rows,
 )
+from ..utils.fixes import pd_fillna
 
 
 def _split_sparse_columns(
@@ -207,7 +207,8 @@ def _liac_arff_parser(
         # liac-arff parser does not depend on NumPy and uses None to represent
         # missing values. To be consistent with the pandas parser, we replace
         # None with np.nan.
-        frame = pd.concat(dfs, ignore_index=True).fillna(value=np.nan)
+        frame = pd.concat(dfs, ignore_index=True)
+        frame = pd_fillna(pd, frame)
         del dfs, first_df
 
         # cast the columns frame

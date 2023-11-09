@@ -3,25 +3,23 @@
 # License: BSD 3 clause
 
 import numbers
+from numbers import Integral, Real
+from warnings import warn
+
 import numpy as np
 from scipy.sparse import issparse
-from warnings import warn
-from numbers import Integral, Real
 
+from ..base import OutlierMixin, _fit_context
 from ..tree import ExtraTreeRegressor
 from ..tree._tree import DTYPE as tree_dtype
 from ..utils import (
-    check_random_state,
     check_array,
+    check_random_state,
     gen_batches,
     get_chunk_n_rows,
 )
-from ..utils._param_validation import Interval, StrOptions
-from ..utils._param_validation import RealNotInt
-from ..utils.validation import check_is_fitted, _num_samples
-from ..base import OutlierMixin
-from ..base import _fit_context
-
+from ..utils._param_validation import Interval, RealNotInt, StrOptions
+from ..utils.validation import _num_samples, check_is_fitted
 from ._bagging import BaseBagging
 
 __all__ = ["IsolationForest"]
@@ -201,6 +199,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
     >>> clf = IsolationForest(random_state=0).fit(X)
     >>> clf.predict([[0.1], [0], [90]])
     array([ 1,  1, -1])
+
+    For an example of using isolation forest for anomaly detection see
+    :ref:`sphx_glr_auto_examples_ensemble_plot_isolation_forest.py`.
     """
 
     _parameter_constraints: dict = {

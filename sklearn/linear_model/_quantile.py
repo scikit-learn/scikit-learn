@@ -8,14 +8,13 @@ import numpy as np
 from scipy import sparse
 from scipy.optimize import linprog
 
-from ..base import BaseEstimator, RegressorMixin
-from ..base import _fit_context
-from ._base import LinearModel
+from ..base import BaseEstimator, RegressorMixin, _fit_context
 from ..exceptions import ConvergenceWarning
 from ..utils import _safe_indexing
-from ..utils.validation import _check_sample_weight
-from ..utils.fixes import sp_version, parse_version
 from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils.fixes import parse_version, sp_version
+from ..utils.validation import _check_sample_weight
+from ._base import LinearModel
 
 
 class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):

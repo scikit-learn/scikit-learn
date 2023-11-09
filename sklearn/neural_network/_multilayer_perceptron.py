@@ -6,40 +6,44 @@
 #          Jiyuan Qian
 # License: BSD 3 clause
 
-from numbers import Integral, Real
-import numpy as np
-
-from abc import ABCMeta, abstractmethod
 import warnings
+from abc import ABCMeta, abstractmethod
 from itertools import chain
+from numbers import Integral, Real
 
+import numpy as np
 import scipy.optimize
 
 from ..base import (
     BaseEstimator,
     ClassifierMixin,
     RegressorMixin,
+    _fit_context,
+    is_classifier,
 )
-from ..base import is_classifier
-from ..base import _fit_context
-from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
-from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
+from ..exceptions import ConvergenceWarning
 from ..metrics import accuracy_score, r2_score
 from ..model_selection import train_test_split
 from ..preprocessing import LabelBinarizer
-from ..utils import gen_batches, check_random_state
-from ..utils import shuffle
-from ..utils import _safe_indexing
-from ..utils import column_or_1d
-from ..exceptions import ConvergenceWarning
+from ..utils import (
+    _safe_indexing,
+    check_random_state,
+    column_or_1d,
+    gen_batches,
+    shuffle,
+)
+from ..utils._param_validation import Interval, Options, StrOptions
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted
-from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
-from ..utils.multiclass import type_of_target
-from ..utils.optimize import _check_optimize_result
 from ..utils.metaestimators import available_if
-from ..utils._param_validation import StrOptions, Options, Interval
-
+from ..utils.multiclass import (
+    _check_partial_fit_first_call,
+    type_of_target,
+    unique_labels,
+)
+from ..utils.optimize import _check_optimize_result
+from ..utils.validation import check_is_fitted
+from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
+from ._stochastic_optimizers import AdamOptimizer, SGDOptimizer
 
 _STOCHASTIC_SOLVERS = ["sgd", "adam"]
 
@@ -697,7 +701,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             # restore best weights
             self.coefs_ = self._best_coefs
             self.intercepts_ = self._best_intercepts
-            self.validation_scores_ = self.validation_scores_
 
     def _update_no_improvement_count(self, early_stopping, X_val, y_val):
         if early_stopping:
@@ -883,7 +886,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
-        validation score is not improving by at least tol for
+        validation score is not improving by at least ``tol`` for
         ``n_iter_no_change`` consecutive epochs. The split is stratified,
         except in a multilabel setting.
         If early stopping is False, then the training stops when the training

@@ -2,9 +2,10 @@ from functools import wraps
 
 from scipy.sparse import issparse
 
-from . import check_pandas_support
 from .._config import get_config
+from . import check_pandas_support
 from ._available_if import available_if
+from .validation import _is_pandas_df
 
 
 def _wrap_in_pandas_container(
@@ -42,7 +43,11 @@ def _wrap_in_pandas_container(
         Container with column names or unchanged `output`.
     """
     if issparse(data_to_wrap):
-        raise ValueError("Pandas output does not support sparse data.")
+        raise ValueError(
+            "The transformer outputs a scipy sparse matrix. "
+            "Try to set the transformer output to a dense array or disable "
+            "pandas output with set_output(transform='default')."
+        )
 
     if callable(columns):
         try:
@@ -125,9 +130,10 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
         return data_to_wrap
 
     # dense_config == "pandas"
+    index = original_input.index if _is_pandas_df(original_input) else None
     return _wrap_in_pandas_container(
         data_to_wrap=data_to_wrap,
-        index=getattr(original_input, "index", None),
+        index=index,
         columns=estimator.get_feature_names_out,
     )
 
