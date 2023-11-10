@@ -14,7 +14,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/bzip2-1.0.8-h7b6447c_0.conda#9303f4
 https://repo.anaconda.com/pkgs/main/linux-64/libffi-3.4.4-h6a678d5_0.conda#06e288f9250abef59b9a367d151fc339
 https://repo.anaconda.com/pkgs/main/linux-64/libuuid-1.41.5-h5eee18b_0.conda#4a6a2354414c9080327274aa514e5299
 https://repo.anaconda.com/pkgs/main/linux-64/ncurses-6.4-h6a678d5_0.conda#5558eec6e2191741a92f832ea826251c
-https://repo.anaconda.com/pkgs/main/linux-64/openssl-3.0.11-h7f8727e_2.conda#6cad6f2dcde73f8625d729c6db1272d0
+https://repo.anaconda.com/pkgs/main/linux-64/openssl-3.0.12-h7f8727e_0.conda#48caaebab690276acf1bc1f3b56febf4
 https://repo.anaconda.com/pkgs/main/linux-64/xz-5.4.2-h5eee18b_0.conda#bcd31de48a0dcb44bc5b99675800c5cc
 https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.13-h5eee18b_0.conda#333e31fbfbb5057c92fa845ad6adef93
 https://repo.anaconda.com/pkgs/main/linux-64/ccache-3.7.9-hfe4627d_0.conda#bef6fc681c273bb7bd0c67d1a591365e
@@ -28,7 +28,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-23.3-py311h06a4308_0.conda#36ce
 # pip alabaster @ https://files.pythonhosted.org/packages/64/88/c7083fc61120ab661c5d0b82cb77079fc1429d3f913a456c1c82cf4658f7/alabaster-0.7.13-py3-none-any.whl#sha256=1ee19aca801bbabb5ba3f5f258e4422dfa86f82f3e9cefb0859b283cdd7f62a3
 # pip babel @ https://files.pythonhosted.org/packages/86/14/5dc2eb02b7cc87b2f95930310a2cc5229198414919a116b564832c747bc1/Babel-2.13.1-py3-none-any.whl#sha256=7077a4984b02b6727ac10f1f7294484f737443d7e2e66c5e4380e41a3ae0b4ed
 # pip certifi @ https://files.pythonhosted.org/packages/4c/dd/2234eab22353ffc7d94e8d13177aaa050113286e93e7b40eae01fbf7c3d9/certifi-2023.7.22-py3-none-any.whl#sha256=92d6037539857d8206b8f6ae472e8b77db8058fec5937a1ef3f54304089edbb9
-# pip charset-normalizer @ https://files.pythonhosted.org/packages/ae/e5/8c290f1dd50aae55d1ec20420a6df3c051d6f5ad78ee5b88b1a7ef26634b/charset_normalizer-3.3.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=ae55d592b02c4349525b6ed8f74c692509e5adffa842e582c0f861751701a673
+# pip charset-normalizer @ https://files.pythonhosted.org/packages/40/26/f35951c45070edc957ba40a5b1db3cf60a9dbb1b350c2d5bef03e01e61de/charset_normalizer-3.3.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=753f10e867343b4511128c6ed8c82f7bec3bd026875576dfd88483c5c73b2fd8
 # pip coverage @ https://files.pythonhosted.org/packages/bc/01/bf243cf5c926681b35d0c6aa9a3b33da35ab65323c4a593d386b08a0249e/coverage-7.3.2-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=4175e10cc8dda0265653e8714b3174430b07c1dca8957f4966cbd6c2b1b8065a
 # pip docutils @ https://files.pythonhosted.org/packages/26/87/f238c0670b94533ac0353a4e2a1a771a0cc73277b88bff23d3ae35a256c1/docutils-0.20.1-py3-none-any.whl#sha256=96f387a2c5562db4476f09f13bbab2192e764cac08ebbf3a34a95d9b1e4a59d6
 # pip execnet @ https://files.pythonhosted.org/packages/e8/9c/a079946da30fac4924d92dbc617e5367d454954494cf1e71567bcc4e00ee/execnet-2.0.2-py3-none-any.whl#sha256=88256416ae766bc9e8895c76a87928c0012183da3cc4fc18016e6f050e025f41
