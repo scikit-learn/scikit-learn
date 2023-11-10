@@ -25,7 +25,6 @@ The top usability features of HGBT models are:
 This example aims at showcasing points 2-5 in a real life setting.
 """
 
-
 # Author: Arturo Amor <david-arturo.amor-quiroz@inria.fr>
 # License: BSD 3 clause
 
@@ -57,12 +56,22 @@ y = df["transfer"]
 X
 
 # %%
-# Let us explore the hourly electricity transfer over different days of the week:
+# This particular dataset has a stepwise constant target for the first 17,760
+# samples:
+
+y[:17760].unique()
+
+# %%
+# Let us drop those entries and explore the hourly electricity transfer over
+# different days of the week:
 
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 colors = sns.color_palette("colorblind")
+
+X = X.iloc[17760:]
+y = y.iloc[17760:]
 
 fig, ax = plt.subplots(figsize=(15, 10))
 pointplot = sns.lineplot(x=df["period"], y=df["transfer"], hue=df["day"], ax=ax)
