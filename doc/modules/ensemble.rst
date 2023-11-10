@@ -347,6 +347,10 @@ Note that features not listed in ``interaction_cst`` are automatically
 assigned an interaction group for themselves. With again 3 features, this
 means that ``[{0}]`` is equivalent to ``[{0}, {1, 2}]``.
 
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+
 .. topic:: References
 
   .. [Mayer2022] M. Mayer, S.C. Bourassa, M. Hoesli, and D.F. Scognamiglio.
@@ -736,8 +740,10 @@ of ``learning_rate`` require larger numbers of weak learners to maintain
 a constant training error. Empirical evidence suggests that small
 values of ``learning_rate`` favor better test error. [HTF]_
 recommend to set the learning rate to a small constant
-(e.g. ``learning_rate <= 0.1``) and choose ``n_estimators`` by early
-stopping. For a more detailed discussion of the interaction between
+(e.g. ``learning_rate <= 0.1``) and choose ``n_estimators`` large enough
+that early stopping applies,
+see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`
+for a more detailed discussion of the interaction between
 ``learning_rate`` and ``n_estimators`` see [R2007]_.
 
 Subsampling
@@ -879,9 +885,9 @@ from a sample drawn with replacement (i.e., a bootstrap sample) from the
 training set.
 
 Furthermore, when splitting each node during the construction of a tree, the
-best split is found either from all input features or a random subset of size
-``max_features``. (See the :ref:`parameter tuning guidelines
-<random_forest_parameters>` for more details).
+best split is found through an exhaustive search of the features values of 
+either all input features or a random subset of size ``max_features``. 
+(See the :ref:`parameter tuning guidelines <random_forest_parameters>` for more details.)
 
 The purpose of these two sources of randomness is to decrease the variance of
 the forest estimator. Indeed, individual decision trees typically exhibit high
@@ -1570,15 +1576,15 @@ ever-increasing influence. Each subsequent weak learner is thereby forced to
 concentrate on the examples that are missed by the previous ones in the sequence
 [HTF]_.
 
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_adaboost_hastie_10_2_001.png
-   :target: ../auto_examples/ensemble/plot_adaboost_hastie_10_2.html
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_adaboost_multiclass_001.png
+   :target: ../auto_examples/ensemble/plot_adaboost_multiclass.html
    :align: center
    :scale: 75
 
 AdaBoost can be used both for classification and regression problems:
 
   - For multi-class classification, :class:`AdaBoostClassifier` implements
-    AdaBoost-SAMME and AdaBoost-SAMME.R [ZZRH2009]_.
+    AdaBoost.SAMME [ZZRH2009]_.
 
   - For regression, :class:`AdaBoostRegressor` implements AdaBoost.R2 [D1997]_.
 
@@ -1593,7 +1599,7 @@ learners::
     >>> from sklearn.ensemble import AdaBoostClassifier
 
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = AdaBoostClassifier(n_estimators=100)
+    >>> clf = AdaBoostClassifier(n_estimators=100, algorithm="SAMME",)
     >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
     0.9...
@@ -1608,12 +1614,8 @@ minimum required number of samples to consider a split ``min_samples_split``).
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_hastie_10_2.py` compares the
-   classification error of a decision stump, decision tree, and a boosted
-   decision stump using AdaBoost-SAMME and AdaBoost-SAMME.R.
-
  * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py` shows the performance
-   of AdaBoost-SAMME and AdaBoost-SAMME.R on a multi-class problem.
+   of AdaBoost on a multi-class problem.
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py` shows the decision boundary
    and decision function values for a non-linearly separable two-class problem
@@ -1634,4 +1636,3 @@ minimum required number of samples to consider a split ``min_samples_split``).
 
  .. [HTF] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
               Statistical Learning Ed. 2", Springer, 2009.
-
