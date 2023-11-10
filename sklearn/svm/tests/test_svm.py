@@ -565,7 +565,7 @@ def test_svm_equivalence_sample_weight_C():
     "Estimator, err_msg",
     [
         (svm.SVC, "Invalid input - all samples have zero or negative weights."),
-        (svm.NuSVC, "(negative dimensions are not allowed|nu is infeasible)"),
+        (svm.NuSVC, "Invalid input - all samples have zero|specified nu is infeasible"),
         (svm.SVR, "Invalid input - all samples have zero or negative weights."),
         (svm.NuSVR, "Invalid input - all samples have zero or negative weights."),
         (svm.OneClassSVM, "Invalid input - all samples have zero or negative weights."),
