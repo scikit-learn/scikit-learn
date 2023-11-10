@@ -74,7 +74,7 @@ out-of-core Principal Component Analysis either by:
  * Using its ``partial_fit`` method on chunks of data fetched sequentially
    from the local hard drive or a network database.
 
- * Calling its fit method on a sparse matrix or a memory mapped file using
+ * Calling its fit method on a memory mapped file using
    ``numpy.memmap``.
 
 :class:`IncrementalPCA` only stores estimates of component and noise variances,
@@ -420,10 +420,6 @@ in that the matrix :math:`X` does not need to be centered.
 When the columnwise (per-feature) means of :math:`X`
 are subtracted from the feature values,
 truncated SVD on the resulting matrix is equivalent to PCA.
-In practical terms, this means
-that the :class:`TruncatedSVD` transformer accepts ``scipy.sparse``
-matrices without the need to densify them,
-as densifying may fill up memory even for medium-sized document collections.
 
 While the :class:`TruncatedSVD` transformer
 works with any feature matrix,

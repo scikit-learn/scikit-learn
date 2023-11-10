@@ -26,6 +26,7 @@ from ..utils._array_api import get_namespace
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.deprecation import deprecated
 from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
+from ..utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
 from ..utils.validation import check_is_fitted
 from ._base import _BasePCA
 
@@ -440,7 +441,7 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
@@ -461,7 +462,7 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
@@ -497,12 +498,12 @@ class PCA(_BasePCA):
         """Dispatch to the right submethod depending on the chosen solver."""
         xp, is_array_api_compliant = get_namespace(X)
 
-        # Raise an error for sparse input.
-        # This is more informative than the generic one raised by check_array.
-        if issparse(X):
+        # Raise an error for sparse input and unsupported svd_solver
+        if issparse(X) and self.svd_solver != "arpack":
             raise TypeError(
-                "PCA does not support sparse input. See "
-                "TruncatedSVD for a possible alternative."
+                'PCA only support sparse inputs with the "arpack" solver, while '
+                f'"{self.svd_solver}" was passed. See TruncatedSVD for a possible'
+                " alternative."
             )
         # Raise an error for non-Numpy input and arpack solver.
         if self.svd_solver == "arpack" and is_array_api_compliant:
@@ -510,14 +511,18 @@ class PCA(_BasePCA):
                 "PCA with svd_solver='arpack' is not supported for Array API inputs."
             )
 
-        # Validate the data, without ever forcing a copy as the
-        # `covariance_eigh` solver is written in a way to avoid the need for
-        # any inplace modification of the input data contrary to the other
-        # solvers. Forcing a copy here would be wasteful when using  large
-        # datasets. The copy will happen later, only if needed, once the solver
-        # negotiation below is done.
+        # Validate the data, without ever forcing a copy as any solvers that
+        # support sparse input data and the `covariance_eigh` solver are
+        # written in a way to avoid the need for any inplace modification of
+        # the input data contrary to the other solvers. Forcing a copy here
+        # would be wasteful when using  large datasets. The copy will happen
+        # later, only if needed, once the solver negotiation below is done.
         X = self._validate_data(
-            X, dtype=[xp.float64, xp.float32], ensure_2d=True, copy=False
+            X,
+            dtype=[xp.float64, xp.float32],
+            accept_sparse=("csr", "csc"),
+            ensure_2d=True,
+            copy=False,
         )
 
         # Handle n_components==None
@@ -704,10 +709,18 @@ class PCA(_BasePCA):
 
         random_state = check_random_state(self.random_state)
 
-        self.mean_ = xp.mean(X, axis=0)
-        X_centered = xp.asarray(X, copy=True) if self.copy else X
-        X_centered -= self.mean_
-        x_is_centered = not self.copy
+        # Center data
+        total_var = None
+        if issparse(X):
+            self.mean_, var = mean_variance_axis(X, axis=0)
+            total_var = var.sum() * n_samples / (n_samples - 1)  # ddof=1
+            X_centered = _implicit_column_offset(X, self.mean_)
+            x_is_centered = True
+        else:
+            self.mean_ = xp.mean(X, axis=0)
+            X_centered = xp.asarray(X, copy=True) if self.copy else X
+            X_centered -= self.mean_
+            x_is_centered = not self.copy
 
         if svd_solver == "arpack":
             v0 = _init_arpack_v0(min(X.shape), random_state)
@@ -740,9 +753,15 @@ class PCA(_BasePCA):
 
         # Workaround in-place variance calculation since at the time numpy
         # did not have a way to calculate variance in-place.
-        N = X.shape[0] - 1
-        X_centered **= 2
-        total_var = xp.sum(X_centered) / N
+        #
+        # TODO: update this code to either:
+        # * Use the array-api variance calculation, unless memory usage suffers
+        # * Update sklearn.utils.extmath._incremental_mean_and_var to support array-api
+        # See: https://github.com/scikit-learn/scikit-learn/pull/18689#discussion_r1335540991
+        if total_var is None:
+            N = X.shape[0] - 1
+            X_centered **= 2
+            total_var = xp.sum(X_centered) / N
 
         self.explained_variance_ratio_ = self.explained_variance_ / total_var
         self.singular_values_ = xp.asarray(S, copy=True)  # Store the singular values.

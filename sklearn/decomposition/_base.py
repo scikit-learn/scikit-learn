@@ -12,9 +12,11 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy import linalg
+from scipy.sparse import issparse
 
 from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
 from ..utils._array_api import _add_to_diagonal, device, get_namespace
+from ..utils.sparsefuncs import _implicit_column_offset
 from ..utils.validation import check_is_fitted
 
 
@@ -126,7 +128,7 @@ class _BasePCA(
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
@@ -141,7 +143,7 @@ class _BasePCA(
         check_is_fitted(self)
 
         X = self._validate_data(
-            X, dtype=[xp.float64, xp.float32], copy=False, reset=False
+            X, dtype=[xp.float64, xp.float32], accept_sparse=("csr", "csc"), reset=False
         )
         return self._transform(
             X,
@@ -150,8 +152,12 @@ class _BasePCA(
         )
 
     def _transform(self, X, xp, x_is_centered=False):
+        if not x_is_centered and issparse(X):
+            X = _implicit_column_offset(X, self.mean_)
         X_transformed = X @ self.components_.T
-        if not x_is_centered:
+        if not x_is_centered and not issparse(X):
+            # Apply the centering a posteriori for dense data so as to avoid a
+            # copy of X or mutating the data passed by the caller.
             X_transformed -= xp.reshape(self.mean_, (1, -1)) @ self.components_.T
         if self.whiten:
             # For some solvers (such as "arpack" and "covariance_eigh"), on
