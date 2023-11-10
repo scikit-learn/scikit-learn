@@ -865,10 +865,12 @@ class OneHotEncoder(_BaseEncoder):
                     continue
 
                 # drop_val is nan, find nan in categories manually
-                if is_scalar_nan(cat_list[-1]):
-                    drop_indices.append(
-                        self._map_drop_idx_to_infrequent(feature_idx, cat_list.size - 1)
-                    )
+                for cat_idx, cat in enumerate(cat_list):
+                    if is_scalar_nan(cat):
+                        drop_indices.append(
+                            self._map_drop_idx_to_infrequent(feature_idx, cat_idx)
+                        )
+                        break
                 else:  # loop did not break thus drop is missing
                     missing_drops.append((feature_idx, drop_val))
 
