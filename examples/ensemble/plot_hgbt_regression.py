@@ -91,21 +91,29 @@ _ = ax.legend(handles, ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"])
 # For the sake of illustrating the effect of the (maximum) number of trees, we
 # train a :class:`~sklearn.ensemble.HistGradientBoostingRegressor` over the
 # daily electricity transfer using the whole dataset. Then we visualize its
-# predictions depending on the `max_iter` parameter.
+# predictions depending on the `max_iter` parameter. Here we don't try to
+# evaluate the performance of the model and its capacity to generalize but
+# rather its capacity to learn from the training data.
 
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.model_selection import train_test_split
 
-max_iter_list = [10, 50]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, shuffle=False)
+
+max_iter_list = [5, 50]
 
 fig, ax = plt.subplots(figsize=(10, 5))
-average_week_demand = df.groupby(["day", "period"], observed=False)["transfer"].mean()
-average_week_demand.plot(color=colors[0], label="training data", linewidth=2, ax=ax)
+average_week_demand = (
+    df.loc[X_test.index].groupby(["day", "period"], observed=False)["transfer"].mean()
+)
+average_week_demand.plot(color=colors[0], label="ground truth", linewidth=2, ax=ax)
 
 for idx, max_iter in enumerate(max_iter_list):
     hgbt = HistGradientBoostingRegressor(max_iter=max_iter)
-    hgbt.fit(X, y)
-    y_pred = hgbt.predict(X)
-    prediction_df = df.copy()
+    hgbt.fit(X_train, y_train)
+
+    y_pred = hgbt.predict(X_test)
+    prediction_df = df.loc[X_test.index].copy()
     prediction_df["y_pred"] = y_pred
     average_pred = prediction_df.groupby(["day", "period"], observed=False)[
         "y_pred"
@@ -113,8 +121,9 @@ for idx, max_iter in enumerate(max_iter_list):
     average_pred.plot(
         color=colors[idx + 1], label=f"max_iter={max_iter}", linewidth=2, ax=ax
     )
+
 ax.set(
-    title="Average daily energy transfer during the week",
+    title="Predicted average energy transfer during the week",
     xticks=[(i + 0.2) * 48 for i in range(7)],
     xticklabels=["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     xlabel="Time of the week",
