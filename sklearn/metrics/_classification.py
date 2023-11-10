@@ -770,6 +770,10 @@ def jaccard_score(
         For multiclass or multilabel targets, set `labels=[pos_label]` and
         `average != 'binary'` to report metrics for one label only.
 
+        .. versionchanged:: 1.4
+            Deprecated `None` as an option, since v0.18 `pos_label` is ignored
+            when `average` is not 'binary'.
+
     average : {'micro', 'macro', 'samples', 'weighted', \
             'binary'} or None, default='binary'
         If ``None``, the scores for each class are returned. Otherwise, this
@@ -1155,6 +1159,10 @@ def f1_score(
         For multiclass or multilabel targets, set `labels=[pos_label]` and
         `average != 'binary'` to report metrics for one label only.
 
+        .. versionchanged:: 1.4
+            Deprecated `None` as an option, since v0.18 `pos_label` is ignored
+            when `average` is not 'binary'.
+
     average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
@@ -1348,6 +1356,10 @@ def fbeta_score(
         otherwise this parameter is ignored.
         For multiclass or multilabel targets, set `labels=[pos_label]` and
         `average != 'binary'` to report metrics for one label only.
+
+        .. versionchanged:: 1.4
+            Deprecated `None` as an option, since v0.18 `pos_label` is ignored
+            when `average` is not 'binary'.
 
     average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
@@ -1546,7 +1558,13 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
                 "Target is %s but average='binary'. Please "
                 "choose another average setting, one of %r." % (y_type, average_options)
             )
-    elif pos_label not in (None, 1):
+    elif pos_label is None:
+        warnings.warn(
+            "The None option for 'pos_label' was deprecated in version 1.4 "
+            "and will be removed in 1.6. To keep past behavior, leave 'pos_label' "
+            " as default value.", FutureWarning
+        )
+    elif pos_label != 1:
         warnings.warn(
             "Note that pos_label (set to %r) is ignored when "
             "average != 'binary' (got %r). You may use "
@@ -1554,6 +1572,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
             % (pos_label, average),
             UserWarning,
         )
+
     return labels
 
 
@@ -1645,6 +1664,10 @@ def precision_recall_fscore_support(
         otherwise this parameter is ignored.
         For multiclass or multilabel targets, set `labels=[pos_label]` and
         `average != 'binary'` to report metrics for one label only.
+
+        .. versionchanged:: 1.4
+            Deprecated `None` as an option, since v0.18 `pos_label` is ignored
+            when `average` is not 'binary'.
 
     average : {'binary', 'micro', 'macro', 'samples', 'weighted'}, \
             default=None
@@ -2076,6 +2099,10 @@ def precision_score(
         For multiclass or multilabel targets, set `labels=[pos_label]` and
         `average != 'binary'` to report metrics for one label only.
 
+        .. versionchanged:: 1.4
+            Deprecated `None` as an option, since v0.18 `pos_label` is ignored
+            when `average` is not 'binary'.
+
     average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
@@ -2253,6 +2280,10 @@ def recall_score(
         otherwise this parameter is ignored.
         For multiclass or multilabel targets, set `labels=[pos_label]` and
         `average != 'binary'` to report metrics for one label only.
+
+        .. versionchanged:: 1.4
+            Deprecated `None` as an option, since v0.18 `pos_label` is ignored
+            when `average` is not 'binary'.
 
     average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
