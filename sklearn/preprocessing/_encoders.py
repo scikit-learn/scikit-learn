@@ -169,10 +169,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         missing_indices = {}
         if return_and_ignore_missing_for_infrequent:
             for feature_idx, categories_for_idx in enumerate(self.categories_):
-                for category_idx, category in enumerate(categories_for_idx):
-                    if is_scalar_nan(category):
-                        missing_indices[feature_idx] = category_idx
-                        break
+                if is_scalar_nan(categories_for_idx[-1]):
+                    missing_indices[feature_idx] = categories_for_idx.size - 1
             output["missing_indices"] = missing_indices
 
         if self._infrequent_enabled:
@@ -867,12 +865,10 @@ class OneHotEncoder(_BaseEncoder):
                     continue
 
                 # drop_val is nan, find nan in categories manually
-                for cat_idx, cat in enumerate(cat_list):
-                    if is_scalar_nan(cat):
-                        drop_indices.append(
-                            self._map_drop_idx_to_infrequent(feature_idx, cat_idx)
-                        )
-                        break
+                if is_scalar_nan(cat_list[-1]):
+                    drop_indices.append(
+                        self._map_drop_idx_to_infrequent(feature_idx, cat_list.size - 1)
+                    )
                 else:  # loop did not break thus drop is missing
                     missing_drops.append((feature_idx, drop_val))
 
@@ -1534,10 +1530,8 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         # missing values are not considered part of the cardinality
         # when considering unknown categories or encoded_missing_value
         for cat_idx, categories_for_idx in enumerate(self.categories_):
-            for cat in categories_for_idx:
-                if is_scalar_nan(cat):
-                    cardinalities[cat_idx] -= 1
-                    continue
+            if is_scalar_nan(categories_for_idx[-1]):
+                cardinalities[cat_idx] -= 1
 
         if self.handle_unknown == "use_encoded_value":
             for cardinality in cardinalities:
