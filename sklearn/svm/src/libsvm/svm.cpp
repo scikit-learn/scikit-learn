@@ -2330,13 +2330,13 @@ static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, in
 // Remove zero weighed data as libsvm and some liblinear solvers require C > 0.
 //
 static void remove_negative_and_null_weights(
-	PREFIX(problem) *newprob, const PREFIX(problem) *prob
+	PREFIX(problem) *newprob, const PREFIX(problem) *prob, int *positive_samples_idx
 )
 {
 	int sample_idx;
 	int n_samples = prob->l;
 	int n_positive_samples = 0;
-	for(sample_idx=0; sample_idx < n_samples; sample_idx++)
+	for(sample_idx=0; sample_idx < n_samples; ++sample_idx)
 		if(prob->W[sample_idx] > 0) n_positive_samples++;
 
 	*newprob = *prob;
@@ -2350,13 +2350,18 @@ static void remove_negative_and_null_weights(
 	newprob->W = Malloc(double, n_positive_samples);
 
 	int subsample_idx = 0;
-	for(sample_idx=0; sample_idx < n_samples; sample_idx++)
+	positive_samples_idx = (int*)realloc(
+		positive_samples_idx, n_positive_samples * sizeof(int)
+	);
+	for(sample_idx=0; sample_idx < n_samples; sample_idx++) {
 		if(prob->W[sample_idx] > 0) {
 			newprob->x[subsample_idx] = prob->x[sample_idx];
 			newprob->y[subsample_idx] = prob->y[sample_idx];
 			newprob->W[subsample_idx] = prob->W[sample_idx];
+			positive_samples_idx[subsample_idx] = sample_idx;
 			subsample_idx++;
 		}
+	}
 }
 
 //
@@ -2369,15 +2374,18 @@ PREFIX(model) *PREFIX(train)(
 	BlasFunctions *blas_functions
 ) {
 	PREFIX(problem) newprob;
-	remove_negative_and_null_weights(&newprob, prob);
+	// positive_samples_idx will be resized in remove_negative_and_null_weights
+	int *positive_samples_idx = Malloc(int, prob->l);
+	remove_negative_and_null_weights(&newprob, prob, positive_samples_idx);
 	prob = &newprob;
 
 	PREFIX(model) *model = Malloc(PREFIX(model), 1);
 	model->param = *param;
 	model->free_sv = 0;	// XXX
 
-    if(param->random_seed >= 0)
+    if(param->random_seed >= 0) {
         set_seed(param->random_seed);
+	}
 
 	if(
 		param->svm_type == ONE_CLASS ||
@@ -2428,9 +2436,7 @@ PREFIX(model) *PREFIX(train)(
 		for(sample_idx=0; sample_idx < n_samples; ++sample_idx)
 			if(fabs(f.alpha[sample_idx]) > 0) {
 				model->SV[support_vector_idx] = prob->x[sample_idx];
-				// FIXME: sv_ind does not take into account the removed samples at the
-				// beginning of this function
-				model->sv_ind[support_vector_idx] = sample_idx;
+				model->sv_ind[support_vector_idx] = positive_samples_idx[sample_idx];
 				model->sv_coef[0][support_vector_idx] = f.alpha[sample_idx];
 				++support_vector_idx;
 			}
@@ -2628,9 +2634,7 @@ PREFIX(model) *PREFIX(train)(
 		for(sample_idx=0; sample_idx < n_samples; ++sample_idx) {
 			if(nonzero[sample_idx]) {
 				model->SV[p] = x[sample_idx];
-				// FIXME: The index does not take into account the sample removed at the
-				// beginning of this function
-				model->sv_ind[p] = perm[sample_idx];
+				model->sv_ind[p] = positive_samples_idx[perm[sample_idx]];
 				++p;
 			}
 		}
@@ -2688,6 +2692,7 @@ PREFIX(model) *PREFIX(train)(
 		free(f);
 		free(nz_count);
 		free(nz_start);
+		free(positive_samples_idx);
 	}
 	free(newprob.x);
 	free(newprob.y);
@@ -3184,7 +3189,8 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	// Check that we are not in a ill-posed problem once we remove negative and null
 	// weights
 	PREFIX(problem) newprob;
-	remove_negative_and_null_weights(&newprob, prob);
+	int *positive_samples_idx = Malloc(int, prob->l);
+	remove_negative_and_null_weights(&newprob, prob, positive_samples_idx);
 
 	if(newprob.l == 0) {
 		// No samples are positive
