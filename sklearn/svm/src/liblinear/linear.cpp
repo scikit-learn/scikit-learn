@@ -2424,26 +2424,27 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 //
 // Remove zero weighed data as libsvm and some liblinear solvers require C > 0.
 //
-static void remove_zero_weight(problem *newprob, const problem *prob)
+static void remove_negative_and_null_weights(problem *newprob, const problem *prob)
 {
-	int i;
-	int l = 0;
-	for(i=0;i<prob->l;i++)
-		if(prob->W[i] > 0) l++;
-	*newprob = *prob;
-	newprob->l = l;
-	newprob->x = Malloc(feature_node*,l);
-	newprob->y = Malloc(double,l);
-	newprob->W = Malloc(double,l);
+	int sample_idx;
+	int n_samples = prob->l;
+	int n_positive_samples = 0;
+	for(sample_idx=0; sample_idx < n_samples; sample_idx++)
+		if(prob->W[sample_idx] > 0) n_positive_samples++;
 
-	int j = 0;
-	for(i=0;i<prob->l;i++)
-		if(prob->W[i] > 0)
-		{
-			newprob->x[j] = prob->x[i];
-			newprob->y[j] = prob->y[i];
-			newprob->W[j] = prob->W[i];
-			j++;
+	*newprob = *prob;
+	newprob->l = n_positive_samples;
+	newprob->x = Malloc(feature_node*, n_positive_samples);
+	newprob->y = Malloc(double, n_positive_samples);
+	newprob->W = Malloc(double, n_positive_samples);
+
+	int subsample_idx = 0;
+	for(sample_idx=0; sample_idx < n_samples; sample_idx++)
+		if(prob->W[sample_idx] > 0) {
+			newprob->x[subsample_idx] = prob->x[sample_idx];
+			newprob->y[subsample_idx] = prob->y[sample_idx];
+			newprob->W[subsample_idx] = prob->W[sample_idx];
+			subsample_idx++;
 		}
 }
 
@@ -2453,7 +2454,7 @@ static void remove_zero_weight(problem *newprob, const problem *prob)
 model* train(const problem *prob, const parameter *param, BlasFunctions *blas_functions)
 {
 	problem newprob;
-	remove_zero_weight(&newprob, prob);
+	remove_negative_and_null_weights(&newprob, prob);
 	prob = &newprob;
 	int i,j;
 	int l = prob->l;
