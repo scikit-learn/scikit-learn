@@ -1560,9 +1560,12 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
             )
     elif pos_label is None:
         warnings.warn(
-            "The None option for 'pos_label' was deprecated in version 1.4 "
-            "and will be removed in 1.6. To keep past behavior, leave 'pos_label' "
-            " as default value.", FutureWarning
+            (
+                "The None option for 'pos_label' was deprecated in version 1.4 "
+                "and will be removed in 1.6. To keep past behavior, leave 'pos_label' "
+                " as default value."
+            ),
+            FutureWarning,
         )
     elif pos_label != 1:
         warnings.warn(
