@@ -715,7 +715,7 @@ class PCA(_BasePCA):
             self.mean_, var = mean_variance_axis(X, axis=0)
             total_var = var.sum() * n_samples / (n_samples - 1)  # ddof=1
             X_centered = _implicit_column_offset(X, self.mean_)
-            x_is_centered = True
+            x_is_centered = False
         else:
             self.mean_ = xp.mean(X, axis=0)
             X_centered = xp.asarray(X, copy=True) if self.copy else X
