@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from numpy.testing import assert_allclose, assert_array_equal
 from scipy import sparse
 
 from sklearn import base, datasets, linear_model, svm
@@ -35,14 +35,12 @@ Y2 = [1, 2, 2, 2, 3]
 T2 = np.array([[-1, -1, -1], [1, 1, 1], [2, 2, 2]])
 true_result2 = [1, 2, 3]
 
-# iris
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
 perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
-# gaussian blobs
 X_blobs, y_blobs = make_blobs(n_samples=100, centers=10, random_state=0)
 
 
@@ -59,28 +57,24 @@ def check_svm_model_equal(dense_svm, X_train, y_train, X_test):
     sparse_svm.fit(X_train, y_train)
     assert sparse.issparse(sparse_svm.support_vectors_)
     assert sparse.issparse(sparse_svm.dual_coef_)
-    assert_array_almost_equal(
-        dense_svm.support_vectors_, sparse_svm.support_vectors_.toarray()
-    )
-    assert_array_almost_equal(dense_svm.dual_coef_, sparse_svm.dual_coef_.toarray())
+    assert_allclose(dense_svm.support_vectors_, sparse_svm.support_vectors_.toarray())
+    assert_allclose(dense_svm.dual_coef_, sparse_svm.dual_coef_.toarray())
     if dense_svm.kernel == "linear":
         assert sparse.issparse(sparse_svm.coef_)
-        assert_array_almost_equal(dense_svm.coef_, sparse_svm.coef_.toarray())
-    assert_array_almost_equal(dense_svm.support_, sparse_svm.support_)
-    assert_array_almost_equal(
-        dense_svm.predict(X_test_dense), sparse_svm.predict(X_test)
-    )
-    assert_array_almost_equal(
+        assert_allclose(dense_svm.coef_, sparse_svm.coef_.toarray())
+    assert_allclose(dense_svm.support_, sparse_svm.support_)
+    assert_allclose(dense_svm.predict(X_test_dense), sparse_svm.predict(X_test))
+    assert_allclose(
         dense_svm.decision_function(X_test_dense), sparse_svm.decision_function(X_test)
     )
-    assert_array_almost_equal(
+    assert_allclose(
         dense_svm.decision_function(X_test_dense),
         sparse_svm.decision_function(X_test_dense),
     )
     if isinstance(dense_svm, svm.OneClassSVM):
         msg = "cannot use sparse input in 'OneClassSVM' trained on dense data"
     else:
-        assert_array_almost_equal(
+        assert_allclose(
             dense_svm.predict_proba(X_test_dense), sparse_svm.predict_proba(X_test), 4
         )
         msg = "cannot use sparse input in 'SVC' trained on dense data"
@@ -133,7 +127,7 @@ def test_unsorted_indices(csr_container):
     )
     coef_sorted = sparse_svc.coef_
     # make sure dense and sparse SVM give the same result
-    assert_array_almost_equal(coef_dense, coef_sorted.toarray())
+    assert_allclose(coef_dense, coef_sorted.toarray())
 
     # reverse each row's indices
     def scramble_indices(X):
@@ -156,8 +150,8 @@ def test_unsorted_indices(csr_container):
     )
     coef_unsorted = unsorted_svc.coef_
     # make sure unsorted indices give same result
-    assert_array_almost_equal(coef_unsorted.toarray(), coef_sorted.toarray())
-    assert_array_almost_equal(
+    assert_allclose(coef_unsorted.toarray(), coef_sorted.toarray())
+    assert_allclose(
         sparse_svc.predict_proba(X_test_unsorted), sparse_svc.predict_proba(X_test)
     )
 
@@ -183,11 +177,11 @@ def test_svc_iris(csr_container, kernel):
     sp_clf = svm.SVC(kernel=kernel).fit(iris_data_sp, iris.target)
     clf = svm.SVC(kernel=kernel).fit(iris.data, iris.target)
 
-    assert_array_almost_equal(clf.support_vectors_, sp_clf.support_vectors_.toarray())
-    assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.toarray())
-    assert_array_almost_equal(clf.predict(iris.data), sp_clf.predict(iris_data_sp))
+    assert_allclose(clf.support_vectors_, sp_clf.support_vectors_.toarray())
+    assert_allclose(clf.dual_coef_, sp_clf.dual_coef_.toarray())
+    assert_allclose(clf.predict(iris.data), sp_clf.predict(iris_data_sp))
     if kernel == "linear":
-        assert_array_almost_equal(clf.coef_, sp_clf.coef_.toarray())
+        assert_allclose(clf.coef_, sp_clf.coef_.toarray())
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -204,18 +198,18 @@ def test_sparse_decision_function(csr_container):
 
     dec = safe_sparse_dot(iris_data_sp, clf.coef_.T) + clf.intercept_
 
-    assert_array_almost_equal(dec, clf.decision_function(iris_data_sp))
+    assert_allclose(dec, clf.decision_function(iris_data_sp))
 
     # binary:
     clf.fit(X, Y)
     dec = np.dot(X, clf.coef_.T) + clf.intercept_
     prediction = clf.predict(X)
-    assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
-    assert_array_almost_equal(
+    assert_allclose(dec.ravel(), clf.decision_function(X))
+    assert_allclose(
         prediction, clf.classes_[(clf.decision_function(X) > 0).astype(int).ravel()]
     )
     expected = np.array([-1.0, -0.66, -1.0, 0.66, 1.0, 1.0])
-    assert_array_almost_equal(clf.decision_function(X), expected, 2)
+    assert_allclose(clf.decision_function(X), expected, 2)
 
 
 @pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
@@ -245,16 +239,16 @@ def test_linearsvc(lil_container, dok_container):
 
     assert sp_clf.fit_intercept
 
-    assert_array_almost_equal(clf.coef_, sp_clf.coef_, decimal=4)
-    assert_array_almost_equal(clf.intercept_, sp_clf.intercept_, decimal=4)
+    assert_allclose(clf.coef_, sp_clf.coef_, decimal=4)
+    assert_allclose(clf.intercept_, sp_clf.intercept_, decimal=4)
 
-    assert_array_almost_equal(clf.predict(X), sp_clf.predict(X_sp))
+    assert_allclose(clf.predict(X), sp_clf.predict(X_sp))
 
     clf.fit(X2, Y2)
     sp_clf.fit(X2_sp, Y2)
 
-    assert_array_almost_equal(clf.coef_, sp_clf.coef_, decimal=4)
-    assert_array_almost_equal(clf.intercept_, sp_clf.intercept_, decimal=4)
+    assert_allclose(clf.coef_, sp_clf.coef_, decimal=4)
+    assert_allclose(clf.intercept_, sp_clf.intercept_, decimal=4)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -267,13 +261,13 @@ def test_linearsvc_iris(csr_container):
 
     assert clf.fit_intercept == sp_clf.fit_intercept
 
-    assert_array_almost_equal(clf.coef_, sp_clf.coef_, decimal=1)
-    assert_array_almost_equal(clf.intercept_, sp_clf.intercept_, decimal=1)
-    assert_array_almost_equal(clf.predict(iris.data), sp_clf.predict(iris_data_sp))
+    assert_allclose(clf.coef_, sp_clf.coef_, decimal=1)
+    assert_allclose(clf.intercept_, sp_clf.intercept_, decimal=1)
+    assert_allclose(clf.predict(iris.data), sp_clf.predict(iris_data_sp))
 
     # check decision_function
     pred = np.argmax(sp_clf.decision_function(iris_data_sp), 1)
-    assert_array_almost_equal(pred, clf.predict(iris.data))
+    assert_allclose(pred, clf.predict(iris.data))
 
     # sparsify the coefficients on both models and check that they still
     # produce the same results
@@ -488,4 +482,4 @@ def test_consistent_proba():
     a = svm.SVC(probability=True, max_iter=1, random_state=0)
     with ignore_warnings(category=ConvergenceWarning):
         proba_2 = a.fit(X, Y).predict_proba(X)
-    assert_array_almost_equal(proba_1, proba_2)
+    assert_allclose(proba_1, proba_2)
