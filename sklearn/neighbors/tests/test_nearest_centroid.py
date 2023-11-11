@@ -239,7 +239,7 @@ def test_manhattan_decision_func_error():
     # Make sure error is raised when calling decision_function with
     # manhattan metric.
 
-    clf = NearestCentroid(priors=[0.2, 0.8])
+    clf = NearestCentroid(metric="manhattan", priors=[0.2, 0.8])
     clf.fit(X, y)
     with pytest.raises(TypeError):
         clf.decision_function(X)
@@ -249,7 +249,7 @@ def test_manhattan_pred_proba_error():
     # Make sure error is raised when calling predict_proba with
     # manhattan metric.
 
-    clf = NearestCentroid(priors=[0.2, 0.8])
+    clf = NearestCentroid(metric="manhattan", priors=[0.2, 0.8])
     clf.fit(X, y)
     with pytest.raises(TypeError):
         clf.predict_proba(X)
@@ -259,7 +259,7 @@ def test_manhattan_pred_log_proba_error():
     # Make sure error is raised when calling predict_log_proba with
     # manhattan metric.
 
-    clf = NearestCentroid(priors=[0.2, 0.8])
+    clf = NearestCentroid(metric="manhattan", priors=[0.2, 0.8])
     clf.fit(X, y)
     with pytest.raises(TypeError):
         clf.predict_log_proba(X)
