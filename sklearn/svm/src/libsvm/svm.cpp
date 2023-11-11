@@ -70,6 +70,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdarg.h>
 #include <climits>
 #include <random>
+#include <map>
 #include "svm.h"
 #include "_svm_cython_blas_helpers.h"
 #include "../newrand/newrand.h"
@@ -2327,12 +2328,64 @@ static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, in
 
 } /* end namespace */
 
+// Helper function to count the number of elements in classes
+//
+static void class_counter_with_positive_weights(
+	const PREFIX(problem) *prob,
+	int *nr_classes_ret,
+	int **class_label_ret,
+	int **class_count_ret
+) {
+	int n_samples = prob->l;
+
+	std::map<int, int> class_counter;
+	for (int sample_idx = 0; sample_idx < n_samples; ++sample_idx) {
+		int this_label = (int)prob->y[sample_idx];
+		if (prob->W[sample_idx] > 0) {
+			if (class_counter.find(this_label) == class_counter.end())
+				class_counter[this_label] = 1;
+			else
+				++class_counter[this_label];
+		} else {
+			if (class_counter.find(this_label) == class_counter.end())
+				class_counter[this_label] = 0;
+		}
+	}
+
+	int nr_classes = class_counter.size();
+	int *class_label = Malloc(int, nr_classes);
+	int *class_count = Malloc(int, nr_classes);
+
+	for (auto it = class_counter.begin(); it != class_counter.end(); ++it) {
+		class_label[it->first] = it->first;
+		class_count[it->first] = it->second;
+	}
+
+	*nr_classes_ret = nr_classes;
+	*class_label_ret = class_label;
+	*class_count_ret = class_count;
+}
+
 // Remove zero weighed data as libsvm and some liblinear solvers require C > 0.
 //
 static void remove_negative_and_null_weights(
-	PREFIX(problem) *newprob, const PREFIX(problem) *prob, int *positive_samples_idx
+	PREFIX(problem) *newprob,
+	const PREFIX(problem) *prob,
+	bool return_positive_samples_idx,
+	int **positive_samples_idx_ret,
+	bool return_classes_info,
+	int *nr_classes_ret,
+	int **class_label_ret,
+	int **class_count_ret
 )
 {
+
+	if (return_classes_info) {
+		class_counter_with_positive_weights(
+			prob, nr_classes_ret, class_label_ret, class_count_ret
+		);
+	}
+
 	int sample_idx;
 	int n_samples = prob->l;
 	int n_positive_samples = 0;
@@ -2350,18 +2403,23 @@ static void remove_negative_and_null_weights(
 	newprob->W = Malloc(double, n_positive_samples);
 
 	int subsample_idx = 0;
-	positive_samples_idx = (int*)realloc(
-		positive_samples_idx, n_positive_samples * sizeof(int)
-	);
+	int *positive_samples_idx = NULL;
+	if (return_positive_samples_idx)
+		positive_samples_idx = Malloc(int, n_positive_samples);
+
 	for(sample_idx=0; sample_idx < n_samples; sample_idx++) {
 		if(prob->W[sample_idx] > 0) {
 			newprob->x[subsample_idx] = prob->x[sample_idx];
 			newprob->y[subsample_idx] = prob->y[sample_idx];
 			newprob->W[subsample_idx] = prob->W[sample_idx];
-			positive_samples_idx[subsample_idx] = sample_idx;
+			if (return_positive_samples_idx)
+				positive_samples_idx[subsample_idx] = sample_idx;
 			subsample_idx++;
 		}
 	}
+
+	if (return_positive_samples_idx)
+		*positive_samples_idx_ret = positive_samples_idx;
 }
 
 //
@@ -2375,8 +2433,31 @@ PREFIX(model) *PREFIX(train)(
 ) {
 	PREFIX(problem) newprob;
 	// positive_samples_idx will be resized in remove_negative_and_null_weights
-	int *positive_samples_idx = Malloc(int, prob->l);
-	remove_negative_and_null_weights(&newprob, prob, positive_samples_idx);
+	int *positive_samples_idx = NULL;
+	int nr_classes_original = 0;
+	int *class_label_original = NULL;
+	int *class_count_original = NULL;
+	if (
+		param->svm_type == ONE_CLASS ||
+	    param->svm_type == EPSILON_SVR ||
+	    param->svm_type == NU_SVR
+	) {
+		remove_negative_and_null_weights(
+			&newprob, prob, true, &positive_samples_idx, false, NULL, NULL, NULL
+		);
+	} else {
+		// Only get information about the classes for the SVC classifier.
+		remove_negative_and_null_weights(
+			&newprob,
+			prob,
+			true,
+			&positive_samples_idx,
+			true,
+			&nr_classes_original,
+			&class_label_original,
+			&class_count_original
+		);
+	}
 	prob = &newprob;
 
 	PREFIX(model) *model = Malloc(PREFIX(model), 1);
@@ -2489,6 +2570,21 @@ PREFIX(model) *PREFIX(train)(
 		}
 
 		// train k*(k-1)/2 models
+
+		// If some sample weights to zero cancelled out a class, we need to know later
+		// which combination of classes were skipped.
+		bool *train_binary_classifier = Malloc(
+			bool, nr_classes_original * (nr_classes_original - 1) / 2
+		);
+		for (int i = 0; i < nr_classes_original; ++i) {
+			for (int j = i + 1; j < nr_classes_original; ++j) {
+				if (class_count_original[i] == 0 || class_count_original[j] == 0)
+					train_binary_classifier[i * nr_classes_original + j] = false;
+				else
+					train_binary_classifier[i * nr_classes_original + j] = true;
+			}
+		}
+
 		bool *nonzero = Malloc(bool, n_samples);
 		for(sample_idx=0; sample_idx < n_samples; ++sample_idx)
 			nonzero[sample_idx] = false;
@@ -2579,27 +2675,50 @@ PREFIX(model) *PREFIX(train)(
 			}
 
 		// build output
-		model->nr_class = nr_classes;
-		model->label = Malloc(int, nr_classes);
-		for(class_idx=0; class_idx < nr_classes; ++class_idx)
-			model->label[class_idx] = label[class_idx];
-		model->rho = Malloc(double, nr_classes * (nr_classes - 1) / 2);
-		model->n_iter = Malloc(int, nr_classes * (nr_classes - 1) / 2);
-		for(class_idx=0; class_idx < nr_classes * (nr_classes - 1) / 2; ++class_idx) {
-			model->rho[class_idx] = f[class_idx].rho;
-			model->n_iter[class_idx] = f[class_idx].n_iter;
+
+		model->nr_class = nr_classes_original;
+		model->label = Malloc(int, nr_classes_original);
+		for(class_idx=0; class_idx < nr_classes_original; ++class_idx)
+			model->label[class_idx] = class_label_original[class_idx];
+		model->rho = Malloc(
+			double, nr_classes_original * (nr_classes_original - 1) / 2
+		);
+		model->n_iter = Malloc(
+			int, nr_classes_original * (nr_classes_original - 1) / 2
+		);
+		for(
+			class_idx = 0;
+			class_idx < nr_classes_original * (nr_classes_original - 1) / 2;
+			++class_idx
+		) {
+			if (train_binary_classifier[class_idx]) {
+				model->rho[class_idx] = f[class_idx].rho;
+				model->n_iter[class_idx] = f[class_idx].n_iter;
+			} else {
+				model->rho[class_idx] = 0;
+				model->n_iter[class_idx] = 0;
+			}
 		}
 
 		if(param->probability) {
-			model->probA = Malloc(double, nr_classes * (nr_classes - 1) / 2);
-			model->probB = Malloc(double, nr_classes * (nr_classes - 1) / 2);
+			model->probA = Malloc(
+				double, nr_classes_original * (nr_classes_original - 1) / 2
+			);
+			model->probB = Malloc(
+				double, nr_classes_original * (nr_classes_original - 1) / 2
+			);
 			for(
 				class_idx=0;
 				class_idx < nr_classes * (nr_classes - 1) / 2;
 				++class_idx
 			){
-				model->probA[class_idx] = probA[class_idx];
-				model->probB[class_idx] = probB[class_idx];
+				if (train_binary_classifier[class_idx]) {
+					model->probA[class_idx] = probA[class_idx];
+					model->probB[class_idx] = probB[class_idx];
+				} else {
+					model->probA[class_idx] = 0;
+					model->probB[class_idx] = 0;
+				}
 			}
 		}
 		else {
@@ -2609,7 +2728,6 @@ PREFIX(model) *PREFIX(train)(
 
 		int total_sv = 0;
 		int *nz_count = Malloc(int, nr_classes);
-		model->nSV = Malloc(int, nr_classes);
 		for(class_idx=0; class_idx < nr_classes; ++class_idx) {
 			int nSV = 0;
 			for(sample_idx=0; sample_idx < count[class_idx]; ++sample_idx)
@@ -2617,11 +2735,28 @@ PREFIX(model) *PREFIX(train)(
 					++nSV;
 					++total_sv;
 				}
-			model->nSV[class_idx] = nSV;
 			nz_count[class_idx] = nSV;
 		}
+		model->nSV = Malloc(int, nr_classes_original);
+		if (nr_classes < nr_classes_original) {
+			// Some classes have been washed out because of the null or negative
+			// sample weights. We need to add them back with zero support vectors.
+			int nz_count_idx = 0;
+			for (class_idx = 0; class_idx < nr_classes_original; ++class_idx) {
+				if (class_count_original[class_idx] > 0) {
+					model->nSV[class_idx] = nz_count[nz_count_idx];
+					++nz_count_idx;
+				} else {
+					model->nSV[class_idx] = 0;
+				}
+			}
+		} else {
+			for (class_idx = 0; class_idx < nr_classes; ++class_idx) {
+				model->nSV[class_idx] = nz_count[class_idx];
+			}
+		}
 
-		info("Total nSV = %d\n",total_sv);
+		info("Total nSV = %d\n", total_sv);
 
 		model->l = total_sv;
 		model->sv_ind = Malloc(int, total_sv);
@@ -2644,10 +2779,12 @@ PREFIX(model) *PREFIX(train)(
 		for(class_idx=1; class_idx < nr_classes; ++class_idx)
 			nz_start[class_idx] = nz_start[class_idx - 1] + nz_count[class_idx - 1];
 
-		model->sv_coef = Malloc(double *, nr_classes - 1);
-		for(class_idx=0; class_idx < nr_classes - 1; ++class_idx)
+		model->sv_coef = Malloc(double *, nr_classes_original - 1);
+		for(class_idx=0; class_idx < nr_classes_original - 1; ++class_idx)
 			model->sv_coef[class_idx] = Malloc(double, total_sv);
 
+		fprintf(stderr, "XXXXXXX\n");
+		// FIXME: Need to figure out how to output the dual coefficients properly.
 		p = 0;
 		for(neg_class_idx=0; neg_class_idx < nr_classes; ++neg_class_idx)
 			for(
@@ -2655,27 +2792,37 @@ PREFIX(model) *PREFIX(train)(
 				pos_class_idx< nr_classes;
 				++pos_class_idx
 			) {
-				// classifier (i, j): coefficients with
-				// i are in sv_coef[j-1][nz_start[i]...],
-				// j are in sv_coef[i][nz_start[j]...]
 
-				int start_neg_class = start[neg_class_idx];
-				int start_pos_class = start[pos_class_idx];
-				int count_neg_class = count[neg_class_idx];
-				int count_pos_class = count[pos_class_idx];
+				if (
+					class_count_original[neg_class_idx] != 0 &&
+					class_count_original[pos_class_idx] != 0
+				) {
+					// classifier (i, j): coefficients with
+					// i are in sv_coef[j-1][nz_start[i]...],
+					// j are in sv_coef[i][nz_start[j]...]
 
-				int q = nz_start[neg_class_idx];
-				for(sample_idx=0; sample_idx < count_neg_class; ++sample_idx)
-					if(nonzero[start_neg_class + sample_idx])
-						model->sv_coef[pos_class_idx - 1][q++] = f[p].alpha[sample_idx];
-				q = nz_start[pos_class_idx];
-				for(sample_idx=0; sample_idx < count_pos_class; ++sample_idx)
-					if(nonzero[start_pos_class + sample_idx])
-						model->sv_coef[neg_class_idx][q++] = f[p].alpha[
-							count_neg_class + sample_idx
-						];
-				++p;
+					int start_neg_class = start[neg_class_idx];
+					int start_pos_class = start[pos_class_idx];
+					int count_neg_class = count[neg_class_idx];
+					int count_pos_class = count[pos_class_idx];
+
+					int q = nz_start[neg_class_idx];
+					for(sample_idx=0; sample_idx < count_neg_class; ++sample_idx)
+						if(nonzero[start_neg_class + sample_idx])
+							model->sv_coef[pos_class_idx - 1][q++] = f[p].alpha[
+								sample_idx
+							];
+					q = nz_start[pos_class_idx];
+					for(sample_idx=0; sample_idx < count_pos_class; ++sample_idx)
+						if(nonzero[start_pos_class + sample_idx])
+							model->sv_coef[neg_class_idx][q++] = f[p].alpha[
+								count_neg_class + sample_idx
+							];
+					++p;
+				}
 			}
+
+		fprintf(stderr, "YYYYYYYYY\n");
 
 		free(label);
 		free(probA);
@@ -2693,6 +2840,13 @@ PREFIX(model) *PREFIX(train)(
 		free(nz_count);
 		free(nz_start);
 		free(positive_samples_idx);
+		if (class_count_original != NULL) {
+			free(class_count_original);
+		}
+		if (class_label_original != NULL) {
+			free(class_label_original);
+		}
+		free(train_binary_classifier);
 	}
 	free(newprob.x);
 	free(newprob.y);
@@ -3189,8 +3343,9 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	// Check that we are not in a ill-posed problem once we remove negative and null
 	// weights
 	PREFIX(problem) newprob;
-	int *positive_samples_idx = Malloc(int, prob->l);
-	remove_negative_and_null_weights(&newprob, prob, positive_samples_idx);
+	remove_negative_and_null_weights(
+		&newprob, prob, false, NULL, false, NULL, NULL, NULL
+	);
 
 	if(newprob.l == 0) {
 		// No samples are positive
