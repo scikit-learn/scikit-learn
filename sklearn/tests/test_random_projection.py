@@ -506,7 +506,7 @@ def test_inverse_transform(
         coo_container,
         n_samples,
         n_features,
-        n_samples * n_features // 100 + 1,
+        n_nonzeros=n_samples * n_features // 100 + 1,
         random_state=global_random_seed,
         sparse_format=None,
     )
