@@ -274,9 +274,9 @@ def test_too_many_samples_to_find_a_safe_embedding(coo_container, global_random_
 def test_random_projection_embedding_quality(coo_container):
     data = make_sparse_random_data(
         coo_container,
-        8,
-        5000,
-        15000,
+        n_samples=8,
+        n_features=5000,
+        n_nonzeros=15000,
         random_state=0,
         sparse_format=None,
     )
