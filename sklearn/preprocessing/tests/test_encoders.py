@@ -494,12 +494,6 @@ def test_one_hot_encoder_categories(X, cat_exp, cat_dtype):
             [["a", None, "z"]],
             object,
         ),
-        (
-            np.array([["a", np.nan]], dtype=object).T,
-            np.array([["a", None]], dtype=object).T,
-            [["a", np.nan, "z"]],
-            object,
-        ),
     ],
     ids=[
         "object",
@@ -508,7 +502,6 @@ def test_one_hot_encoder_categories(X, cat_exp, cat_dtype):
         "object-string-none",
         "object-string-nan",
         "object-None-and-nan",
-        "object-nan-and-None",
     ],
 )
 def test_one_hot_encoder_specified_categories(X, X2, cats, cat_dtype, handle_unknown):
@@ -548,11 +541,19 @@ def test_one_hot_encoder_unsorted_categories():
     with pytest.raises(ValueError, match=msg):
         enc.fit_transform(X)
 
-    # np.nan must be the last category in categories[0] to be considered sorted
-    X = np.array([[1, 2, np.nan]]).T
-    enc = OneHotEncoder(categories=[[1, np.nan, 2]])
-    with pytest.raises(ValueError, match=msg):
-        enc.fit_transform(X)
+
+@pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
+def test_encoder_nan_ending_specified_categories(Encoder):
+    """Test encoder for specified categories that nan is at the end.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27088
+    """
+    cats = [np.array([0, np.nan, 1])]
+    enc = Encoder(categories=cats)
+    X = np.array([[0, 1]], dtype=object).T
+    with pytest.raises(ValueError, match="Nan should be the last element"):
+        enc.fit(X)
 
 
 def test_one_hot_encoder_specified_categories_mixed_columns():
@@ -1681,7 +1682,7 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(
             (
                 np.array([["a", np.nan]], dtype=object).T,
                 np.array([["a", "b"]], dtype=object).T,
-                [np.array(["a", np.nan, "d"], dtype=object)],
+                [np.array(["a", "d", np.nan], dtype=object)],
                 np.object_,
             )
         ),
@@ -1689,7 +1690,7 @@ def test_ordinal_encoder_missing_value_support_pandas_categorical(
             (
                 np.array([["a", np.nan]], dtype=object).T,
                 np.array([["a", "b"]], dtype=object).T,
-                [np.array(["a", np.nan, "d"], dtype=object)],
+                [np.array(["a", "d", np.nan], dtype=object)],
                 np.object_,
             )
         ),
@@ -1724,6 +1725,22 @@ def test_ordinal_encoder_specified_categories_missing_passthrough(
     oe = OrdinalEncoder(categories=cats)
     with pytest.raises(ValueError, match="Found unknown categories"):
         oe.fit(X2)
+
+
+@pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
+def test_encoder_duplicate_specified_categories(Encoder):
+    """Test encoder for specified categories have duplicate values.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27088
+    """
+    cats = [np.array(["a", "b", "a"], dtype=object)]
+    enc = Encoder(categories=cats)
+    X = np.array([["a", "b"]], dtype=object).T
+    with pytest.raises(
+        ValueError, match="the predefined categories contain duplicate elements."
+    ):
+        enc.fit(X)
 
 
 @pytest.mark.parametrize(
