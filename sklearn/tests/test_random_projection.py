@@ -402,11 +402,13 @@ def test_warning_n_components_greater_than_n_features(
     coo_container, global_random_seed
 ):
     n_features = 20
+    n_samples = 5
+    n_nonzeros = int(n_features / 4)
     data = make_sparse_random_data(
         coo_container,
-        5,
+        n_samples,
         n_features,
-        int(n_features / 4),
+        n_nonzeros,
         random_state=global_random_seed,
         sparse_format=None,
     )
