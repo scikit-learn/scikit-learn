@@ -1112,7 +1112,7 @@ class Pipeline(_BaseComposition):
         Returns
         -------
         routing : MetadataRouter
-            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
         router = MetadataRouter(owner=self.__class__.__name__)
@@ -1400,7 +1400,7 @@ class FeatureUnion(_RoutingNotSupportedMixin, TransformerMixin, _BaseComposition
     array([[ 1.5       ,  3.0...,  0.8...],
            [-1.5       ,  5.7..., -0.4...]])
     >>> # An estimator's parameter can be set using '__' syntax
-    >>> union.set_params(pca__n_components=1).fit_transform(X)
+    >>> union.set_params(svd__n_components=1).fit_transform(X)
     array([[ 1.5       ,  3.0...],
            [-1.5       ,  5.7...]])
 
