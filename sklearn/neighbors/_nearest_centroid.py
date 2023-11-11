@@ -18,7 +18,7 @@ from scipy import sparse as sp
 from sklearn.metrics.pairwise import _VALID_METRICS
 
 from ..base import BaseEstimator, ClassifierMixin, _fit_context
-from ..discriminant_analysis import _from_discriminant_score_to_probability
+from ..discriminant_analysis import DiscriminantAnalysisPredictionMixin
 from ..metrics.pairwise import pairwise_distances_argmin
 from ..preprocessing import LabelEncoder
 from ..utils._param_validation import Interval, StrOptions
@@ -27,7 +27,9 @@ from ..utils.sparsefuncs import csc_median_axis_0
 from ..utils.validation import check_is_fitted
 
 
-class NearestCentroid(ClassifierMixin, BaseEstimator):
+class NearestCentroid(
+    ClassifierMixin, BaseEstimator, DiscriminantAnalysisPredictionMixin
+):
     """Nearest centroid classifier.
 
     Each class is represented by its centroid, with test samples classified to
@@ -318,8 +320,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
                 pairwise_distances_argmin(X, self.centroids_, metric=self.metric)
             ]
         else:
-            d = self._decision_function(X)
-            return self.classes_.take(d.argmax(1))
+            return super().predict(X)
 
     def _decision_function(self, X):
         check_is_fitted(self, "centroids_")
@@ -345,13 +346,11 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     def decision_function(self, X):
         """Apply decision function to an array of samples.
 
-        The decision function is equal (up to a constant factor) to the
-        log-posterior of the model, i.e. `log p(y = k | x)`.
-        However, the decision function uses the argmax definition instead
-        of argmin definition as in the predict() function, which are just
-        -1 factor of each other.
         The estimation has been implemented according to
-        Hastie et al. (2009), p. 652 equation (18.2)
+        Hastie et al. (2009), p. 652 equation (18.2).
+
+        Note that this function is only supported for
+        "euclidean" metric.
 
         Parameters
         ----------
@@ -365,15 +364,16 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             In the two-class case, the shape is (n_samples,), giving the
             log likelihood ratio of the positive class.
         """
-
-        dec_func = self._decision_function(X)
-        # handle special case of two classes
-        if len(self.classes_) == 2:
-            return dec_func[:, 1] - dec_func[:, 0]
-        return dec_func
+        if self.metric == "euclidean":
+            return super().decision_function(X)
+        else:
+            raise TypeError("decision_function is only supported for Euclidean metric")
 
     def predict_proba(self, X):
         """Estimate class probabilities.
+
+        Note that this function is only supported for
+        "euclidean" metric.
 
         Parameters
         ----------
@@ -386,10 +386,16 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             Returns the probability estimate of the sample for each class in the
             model, where classes are ordered as they are in `self.classes_`.
         """
-        return _from_discriminant_score_to_probability(self._decision_function(X))
+        if self.metric == "euclidean":
+            return super().predict_proba(X)
+        else:
+            raise TypeError("predict_proba is only supported for Euclidean metric")
 
     def predict_log_proba(self, X):
         """Estimate log class probabilities.
+
+        Note that this function is only supported for
+        "euclidean" metric.
 
         Parameters
         ----------
@@ -401,6 +407,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         y_log_proba : ndarray of shape (n_samples, n_classes)
             Estimated log probabilities.
         """
-        prediction = self.predict_proba(X)
-        prediction[prediction == 0.0] += np.finfo(prediction.dtype).tiny
-        return np.log(prediction)
+        if self.metric == "euclidean":
+            return super().predict_log_proba(X)
+        else:
+            raise TypeError("predict_log_proba is only supported for Euclidean metric")
