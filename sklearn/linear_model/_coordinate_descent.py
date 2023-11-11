@@ -2407,7 +2407,8 @@ class MultiTaskElasticNet(Lasso):
     MultiTaskElasticNetCV : Multi-task L1/L2 ElasticNet with built-in
         cross-validation.
     ElasticNet : Linear regression with combined L1 and L2 priors as regularizer.
-    MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation.
+    MultiTaskLasso : Multi-task Lasso model trained with L1/L2
+        mixed-norm as regularizer.
 
     Notes
     -----
@@ -2643,8 +2644,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
     See Also
     --------
     Lasso: Linear Model trained with L1 prior as regularizer (aka the Lasso).
-    MultiTaskLasso: Multi-task L1/L2 Lasso with built-in cross-validation.
-    MultiTaskElasticNet: Multi-task L1/L2 ElasticNet with built-in cross-validation.
+    MultiTaskLassoCV: Multi-task L1 regularized linear model with built-in
+        cross-validation.
+    MultiTaskElasticNetCV: Multi-task L1/L2 ElasticNet with built-in cross-validation.
 
     Notes
     -----
@@ -2841,8 +2843,8 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     MultiTaskElasticNet : Multi-task L1/L2 ElasticNet with built-in cross-validation.
     ElasticNetCV : Elastic net model with best model selection by
         cross-validation.
-    MultiTaskLassoCV : Multi-task Lasso model trained with L1/L2
-        mixed-norm as regularizer.
+    MultiTaskLassoCV : Multi-task Lasso model trained with L1 norm
+        as regularizer and built-in cross-validation.
 
     Notes
     -----

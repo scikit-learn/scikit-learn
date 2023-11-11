@@ -1505,7 +1505,7 @@ def _apply_on_subsets(func, X):
         result_by_batch = list(map(lambda x: x[0], result_by_batch))
 
     if sparse.issparse(result_full):
-        result_full = result_full.A
+        result_full = result_full.toarray()
         result_by_batch = [x.toarray() for x in result_by_batch]
 
     return np.ravel(result_full), np.ravel(result_by_batch)
@@ -2082,7 +2082,7 @@ def check_estimators_pickle(name, estimator_orig, readonly_memmap=False):
     if readonly_memmap:
         unpickled_estimator = create_memmap_backed_data(estimator)
     else:
-        # pickle and unpickle!
+        # No need to touch the file system in that case.
         pickled_estimator = pickle.dumps(estimator)
         module_name = estimator.__module__
         if module_name.startswith("sklearn.") and not (
