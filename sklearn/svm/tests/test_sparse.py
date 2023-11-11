@@ -10,7 +10,6 @@ from sklearn.svm.tests import test_svm
 from sklearn.utils._testing import ignore_warnings, skip_if_32bit
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.fixes import (
-    COO_CONTAINERS,
     CSR_CONTAINERS,
     DOK_CONTAINERS,
     LIL_CONTAINERS,
@@ -342,16 +341,19 @@ def test_sparse_oneclasssvm(X_train, y_train, X_test, kernel, sparse_container):
     check_svm_model_equal(clf, X_train, y_train, X_test)
 
 
-@pytest.mark.parametrize(
-    "csr_container, coo_container", zip(CSR_CONTAINERS, COO_CONTAINERS)
-)
-def test_sparse_realdata(csr_container, coo_container):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_realdata(csr_container):
     # Test on a subset from the 20newsgroups dataset.
     # This catches some bugs if input is not correctly converted into
     # sparse format or weights are not correctly initialized.
     data = np.array([0.03771744, 0.1003567, 0.01174647, 0.027069])
-    indices = np.array([6, 5, 35, 31])
-    indptr = np.array([0] * 8 + [1] * 32 + [2] * 38 + [4] * 3)
+
+    # SVC does not support large sparse, so we specify int32 indices
+    # In this case, `csr_matrix` automatically uses int32 regardless of the dtypes of
+    # `indices` and `indptr` but `csr_array` may or may not use the same dtype as
+    # `indices` and `indptr`, which would be int64 if not specified
+    indices = np.array([6, 5, 35, 31], dtype=np.int32)
+    indptr = np.array([0] * 8 + [1] * 32 + [2] * 38 + [4] * 3, dtype=np.int32)
 
     X = csr_container((data, indices, indptr))
     y = np.array(
@@ -440,7 +442,7 @@ def test_sparse_realdata(csr_container, coo_container):
     )
 
     clf = svm.SVC(kernel="linear").fit(X.toarray(), y)
-    sp_clf = svm.SVC(kernel="linear").fit(coo_container(X), y)
+    sp_clf = svm.SVC(kernel="linear").fit(X.tocoo(), y)
 
     assert_array_equal(clf.support_vectors_, sp_clf.support_vectors_.toarray())
     assert_array_equal(clf.dual_coef_, sp_clf.dual_coef_.toarray())
