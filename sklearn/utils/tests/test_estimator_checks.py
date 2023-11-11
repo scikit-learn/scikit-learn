@@ -678,12 +678,14 @@ def test_check_estimator():
         "Estimator LargeSparseNotSupportedClassifier doesn't seem to "
         r"support \S{3}_64 matrix, and is not failing gracefully.*"
     )
-    with raises(AssertionError, match=msg):
-        check_estimator(LargeSparseNotSupportedClassifier("sparse_matrix"))
-
-    if SPARRAY_PRESENT:
+    with warnings.catch_warnings(record=True) as records:
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
         with raises(AssertionError, match=msg):
-            check_estimator(LargeSparseNotSupportedClassifier("sparse_array"))
+            check_estimator(LargeSparseNotSupportedClassifier("sparse_matrix"))
+
+        if SPARRAY_PRESENT:
+            with raises(AssertionError, match=msg):
+                check_estimator(LargeSparseNotSupportedClassifier("sparse_array"))
 
     # does error on binary_only untagged estimator
     msg = "Only 2 classes are supported"

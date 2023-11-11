@@ -839,9 +839,7 @@ def _generate_sparse_data(X_csr):
 
     assert X_csr.format == "csr"
     yield "csr", X_csr.copy()
-    # re-insert "dia" when PR #27372 is merged
-    # only merge the present PR afterwards
-    for sparse_format in ["dok", "lil", "bsr", "csc", "coo"]:
+    for sparse_format in ["dok", "lil", "dia", "bsr", "csc", "coo"]:
         yield sparse_format, X_csr.asformat(sparse_format)
 
     # Generate large indices matrix only if its supported by scipy
