@@ -252,9 +252,9 @@ def test_try_to_transform_before_fit(coo_container, global_random_seed):
 def test_too_many_samples_to_find_a_safe_embedding(coo_container, global_random_seed):
     data = make_sparse_random_data(
         coo_container,
-        1000,
-        100,
-        1000,
+        n_samples=1000,
+        n_features=100,
+        n_nonzeros=1000,
         random_state=global_random_seed,
         sparse_format=None,
     )
