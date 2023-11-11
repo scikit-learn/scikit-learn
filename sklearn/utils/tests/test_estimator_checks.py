@@ -678,8 +678,7 @@ def test_check_estimator():
         "Estimator LargeSparseNotSupportedClassifier doesn't seem to "
         r"support \S{3}_64 matrix, and is not failing gracefully.*"
     )
-    with warnings.catch_warnings(record=True) as records:
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
+    with ignore_warnings(category=DeprecationWarning):
         with raises(AssertionError, match=msg):
             check_estimator(LargeSparseNotSupportedClassifier("sparse_matrix"))
 
