@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_array_equal
+from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
 from sklearn import base, datasets, linear_model, svm
@@ -239,16 +239,16 @@ def test_linearsvc(lil_container, dok_container):
 
     assert sp_clf.fit_intercept
 
-    assert_allclose(clf.coef_, sp_clf.coef_, decimal=4)
-    assert_allclose(clf.intercept_, sp_clf.intercept_, decimal=4)
+    assert_array_almost_equal(clf.coef_, sp_clf.coef_, decimal=4)
+    assert_array_almost_equal(clf.intercept_, sp_clf.intercept_, decimal=4)
 
     assert_allclose(clf.predict(X), sp_clf.predict(X_sp))
 
     clf.fit(X2, Y2)
     sp_clf.fit(X2_sp, Y2)
 
-    assert_allclose(clf.coef_, sp_clf.coef_, decimal=4)
-    assert_allclose(clf.intercept_, sp_clf.intercept_, decimal=4)
+    assert_array_almost_equal(clf.coef_, sp_clf.coef_, decimal=4)
+    assert_array_almost_equal(clf.intercept_, sp_clf.intercept_, decimal=4)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -261,8 +261,8 @@ def test_linearsvc_iris(csr_container):
 
     assert clf.fit_intercept == sp_clf.fit_intercept
 
-    assert_allclose(clf.coef_, sp_clf.coef_, decimal=1)
-    assert_allclose(clf.intercept_, sp_clf.intercept_, decimal=1)
+    assert_array_almost_equal(clf.coef_, sp_clf.coef_, decimal=1)
+    assert_array_almost_equal(clf.intercept_, sp_clf.intercept_, decimal=1)
     assert_allclose(clf.predict(iris.data), sp_clf.predict(iris_data_sp))
 
     # check decision_function
