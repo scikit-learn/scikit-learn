@@ -12,11 +12,9 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy import linalg
-from scipy.sparse import issparse
 
 from ..base import BaseEstimator, ClassNamePrefixFeaturesOutMixin, TransformerMixin
 from ..utils._array_api import _add_to_diagonal, device, get_namespace
-from ..utils.sparsefuncs import _implicit_column_offset
 from ..utils.validation import check_is_fitted
 
 
@@ -152,12 +150,13 @@ class _BasePCA(
         )
 
     def _transform(self, X, xp, x_is_centered=False):
-        if not x_is_centered and issparse(X):
-            X = _implicit_column_offset(X, self.mean_)
         X_transformed = X @ self.components_.T
-        if not x_is_centered and not issparse(X):
+        if not x_is_centered:
             # Apply the centering a posteriori for dense data so as to avoid a
             # copy of X or mutating the data passed by the caller.
+            # This also works for sparse X without having to wrap it into a
+            # linear operator a priori.
+            X_transformed = X @ self.components_.T
             X_transformed -= xp.reshape(self.mean_, (1, -1)) @ self.components_.T
         if self.whiten:
             # For some solvers (such as "arpack" and "covariance_eigh"), on
