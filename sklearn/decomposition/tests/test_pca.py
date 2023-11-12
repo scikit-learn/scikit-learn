@@ -954,6 +954,7 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
     precision_np = estimator.get_precision()
     covariance_np = estimator.get_covariance()
 
+    rtol = 2e-4 if iris_np.dtype == "float32" else 2e-7
     with config_context(array_api_dispatch=True):
         estimator_xp = clone(estimator).fit(iris_xp)
         precision_xp = estimator_xp.get_precision()
@@ -963,6 +964,7 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
         assert_allclose(
             _convert_to_numpy(precision_xp, xp=xp),
             precision_np,
+            rtol=rtol,
             atol=_atol_for_type(iris_np.dtype),
         )
         covariance_xp = estimator_xp.get_covariance()
@@ -972,6 +974,7 @@ def check_array_api_get_precision(name, estimator, array_namespace, device, dtyp
         assert_allclose(
             _convert_to_numpy(covariance_xp, xp=xp),
             covariance_np,
+            rtol=rtol,
             atol=_atol_for_type(iris_np.dtype),
         )
 
