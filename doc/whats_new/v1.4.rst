@@ -301,9 +301,10 @@ Changelog
 - |Enhancement| :class:`decomposition.PCA` now supports a new solver option
   named `svd_solver="covariance_eigh"` which offers an order of magnitude
   speed-up and reduced memory usage for datasets with a large number of data
-  points and a small number of features (say, less than 500). The
+  points and a small number of features (say, less than 1000). The
   `svd_solver="auto"` option has been updated to use the new solver
-  automatically for such datasets.
+  automatically for such datasets. This solver also accepts sparse input
+  data.
   :pr:`27491` by :user:`Olivier Grisel <ogrisel>`.
 
 - |Enhancement| :class:`decomposition.PCA` now supports the Array API for the

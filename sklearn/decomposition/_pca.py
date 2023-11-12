@@ -133,8 +133,9 @@ class PCA(_BasePCA):
     It can also use the scipy.sparse.linalg ARPACK implementation of the
     truncated SVD.
 
-    Notice that this class does not support sparse input. See
-    :class:`TruncatedSVD` for an alternative with sparse data.
+    Notice that this class only supports sparse inputs for some solvers such as
+    "arpack" and "covariance_eigh". See :class:`TruncatedSVD` for an
+    alternative with sparse data.
 
     Read more in the :ref:`User Guide <PCA>`.
 
@@ -499,11 +500,11 @@ class PCA(_BasePCA):
         xp, is_array_api_compliant = get_namespace(X)
 
         # Raise an error for sparse input and unsupported svd_solver
-        if issparse(X) and self.svd_solver != "arpack":
+        if issparse(X) and self.svd_solver not in ["arpack", "covariance_eigh"]:
             raise TypeError(
-                'PCA only support sparse inputs with the "arpack" solver, while '
-                f'"{self.svd_solver}" was passed. See TruncatedSVD for a possible'
-                " alternative."
+                'PCA only support sparse inputs with the "arpack" and'
+                f' "covariance_eigh" solvers, while "{self.svd_solver}" was passed. See'
+                " TruncatedSVD for a possible alternative."
             )
         # Raise an error for non-Numpy input and arpack solver.
         if self.svd_solver == "arpack" and is_array_api_compliant:
@@ -573,6 +574,10 @@ class PCA(_BasePCA):
             )
 
         self.mean_ = xp.mean(X, axis=0)
+        if isinstance(self.mean_, np.matrix):
+            # This can happen when X is a scipy sparse matrix.
+            self.mean_ = np.asarray(self.mean_).ravel()
+
         if self._fit_svd_solver == "full":
             X_centered = xp.asarray(X, copy=True) if self.copy else X
             X_centered -= self.mean_
@@ -616,6 +621,13 @@ class PCA(_BasePCA):
             )
             C /= n_samples - 1
             eigenvals, eigenvecs = xp.linalg.eigh(C)
+
+            # The following can happen when X is a scipy sparse matrix.
+            if isinstance(eigenvals, np.matrix):
+                eigenvals = np.asarray(eigenvals).ravel()
+            if isinstance(eigenvecs, np.matrix):
+                eigenvecs = np.asarray(eigenvecs)
+
             eigenvals = xp.flip(eigenvals, axis=0)
             eigenvecs = xp.flip(eigenvecs, axis=1)
 

@@ -69,7 +69,7 @@ def test_pca(svd_solver, n_components):
 @pytest.mark.parametrize("density", [0.01, 0.1, 0.30])
 @pytest.mark.parametrize("n_components", [1, 2, 10])
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
-@pytest.mark.parametrize("svd_solver", ["arpack"])
+@pytest.mark.parametrize("svd_solver", ["arpack", "covariance_eigh"])
 @pytest.mark.parametrize("scale", [1, 10, 100])
 def test_pca_sparse(
     global_random_seed, svd_solver, sparse_container, n_components, density, scale
