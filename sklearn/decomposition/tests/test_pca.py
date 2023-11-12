@@ -171,8 +171,8 @@ def test_sparse_pca_solver_error(global_random_seed, svd_solver, sparse_containe
     )
     pca = PCA(n_components=30, svd_solver=svd_solver)
     error_msg_pattern = (
-        f'PCA only support sparse inputs with the "arpack" solver, while "{svd_solver}"'
-        " was passed"
+        'PCA only support sparse inputs with the "arpack" and "covariance_eigh"'
+        f' solvers, while "{svd_solver}" was passed'
     )
     with pytest.raises(TypeError, match=error_msg_pattern):
         pca.fit(X)
