@@ -64,18 +64,21 @@ def check_svm_model_equal(dense_svm, X_train, y_train, X_test):
         assert_allclose(dense_svm.coef_, sparse_svm.coef_.toarray())
     assert_allclose(dense_svm.support_, sparse_svm.support_)
     assert_allclose(dense_svm.predict(X_test_dense), sparse_svm.predict(X_test))
-    assert_allclose(
+
+    assert_array_almost_equal(
         dense_svm.decision_function(X_test_dense), sparse_svm.decision_function(X_test)
     )
-    assert_allclose(
+    assert_array_almost_equal(
         dense_svm.decision_function(X_test_dense),
         sparse_svm.decision_function(X_test_dense),
     )
     if isinstance(dense_svm, svm.OneClassSVM):
         msg = "cannot use sparse input in 'OneClassSVM' trained on dense data"
     else:
-        assert_allclose(
-            dense_svm.predict_proba(X_test_dense), sparse_svm.predict_proba(X_test), 4
+        assert_array_almost_equal(
+            dense_svm.predict_proba(X_test_dense),
+            sparse_svm.predict_proba(X_test),
+            decimal=4,
         )
         msg = "cannot use sparse input in 'SVC' trained on dense data"
     if sparse.issparse(X_test):
@@ -209,7 +212,7 @@ def test_sparse_decision_function(csr_container):
         prediction, clf.classes_[(clf.decision_function(X) > 0).astype(int).ravel()]
     )
     expected = np.array([-1.0, -0.66, -1.0, 0.66, 1.0, 1.0])
-    assert_allclose(clf.decision_function(X), expected, 2)
+    assert_array_almost_equal(clf.decision_function(X), expected, decimal=2)
 
 
 @pytest.mark.parametrize("lil_container", LIL_CONTAINERS)
@@ -266,7 +269,7 @@ def test_linearsvc_iris(csr_container):
     assert_allclose(clf.predict(iris.data), sp_clf.predict(iris_data_sp))
 
     # check decision_function
-    pred = np.argmax(sp_clf.decision_function(iris_data_sp), 1)
+    pred = np.argmax(sp_clf.decision_function(iris_data_sp), axis=1)
     assert_allclose(pred, clf.predict(iris.data))
 
     # sparsify the coefficients on both models and check that they still
