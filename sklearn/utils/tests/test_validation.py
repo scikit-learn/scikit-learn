@@ -599,7 +599,7 @@ def test_check_array_accept_sparse_type_exception():
     invalid_type = SVR()
 
     msg = (
-        "A sparse matrix was passed, but dense data is required. "
+        "Sparse data was passed, but dense data is required. "
         r"Use '.toarray\(\)' to convert to a dense numpy array."
     )
     with pytest.raises(TypeError, match=msg):
