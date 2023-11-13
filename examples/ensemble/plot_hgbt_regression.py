@@ -68,10 +68,9 @@ y[:17760].unique()
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-colors = sns.color_palette("colorblind")
-
-X = X.iloc[17760:]
-y = y.iloc[17760:]
+df = electricity.frame.iloc[17760:]
+X = df.drop(columns=["transfer", "class"])
+y = df["transfer"]
 
 fig, ax = plt.subplots(figsize=(15, 10))
 pointplot = sns.lineplot(x=df["period"], y=df["transfer"], hue=df["day"], ax=ax)
@@ -98,14 +97,14 @@ _ = ax.legend(handles, ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"])
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import train_test_split
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, shuffle=False)
-
 max_iter_list = [5, 50]
-
-fig, ax = plt.subplots(figsize=(10, 5))
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, shuffle=False)
 average_week_demand = (
     df.loc[X_test.index].groupby(["day", "period"], observed=False)["transfer"].mean()
 )
+
+colors = sns.color_palette("colorblind")
+fig, ax = plt.subplots(figsize=(10, 5))
 average_week_demand.plot(color=colors[0], label="ground truth", linewidth=2, ax=ax)
 
 for idx, max_iter in enumerate(max_iter_list):
