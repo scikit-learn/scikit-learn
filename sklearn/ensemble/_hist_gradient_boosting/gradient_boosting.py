@@ -396,12 +396,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         rng = check_random_state(self.random_state)
 
         # When warm starting, we want to reuse the same seed that was used
-        # the first time fit was called (e.g. for subsampling or for the
-        # train/val split).
-        if not (self.warm_start and self._is_fitted()):
+        # the first time fit was called (e.g. train/val split).
+        # For feature subsampling, we want to continue with the rng we started with.
+        if not self.warm_start or not self._is_fitted():
             self._random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
-            self._random_seed2 = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
-        rng2 = np.random.default_rng(self._random_seed2)
+            feature_subsample_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
+            self._feature_subsample_rng = np.random.default_rng(feature_subsample_seed)
 
         self._validate_parameters()
         monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
@@ -706,7 +706,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     min_samples_leaf=self.min_samples_leaf,
                     l2_regularization=self.l2_regularization,
                     feature_fraction_per_split=self.max_features,
-                    rng=rng2,
+                    rng=self._feature_subsample_rng,
                     shrinkage=self.learning_rate,
                     n_threads=n_threads,
                 )
