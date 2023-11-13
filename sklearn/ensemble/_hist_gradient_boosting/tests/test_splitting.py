@@ -1015,7 +1015,7 @@ def test_split_feature_fraction_per_split(forbidden_features):
     is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
     missing_values_bin_idx = n_bins - 1
 
-    splitter = Splitter(
+    params = dict(
         X_binned=X_binned,
         n_bins_non_missing=n_bins_non_missing,
         missing_values_bin_idx=missing_values_bin_idx,
@@ -1027,17 +1027,22 @@ def test_split_feature_fraction_per_split(forbidden_features):
         min_samples_leaf=min_samples_leaf,
         min_gain_to_split=min_gain_to_split,
         hessians_are_constant=hessians_are_constant,
-        feature_fraction_per_split=0.25,  # THIS is the important setting here.
         rng=rng,
     )
+    splitter_subsample = Splitter(
+        feature_fraction_per_split=0.25,  # THIS is the important setting here.
+        **params,
+    )
+    splitter_all_features = Splitter(feature_fraction_per_split=1.0, **params)
 
-    assert np.all(sample_indices == splitter.partition)
+    assert np.all(sample_indices == splitter_subsample.partition)
 
-    split_features = []
+    split_features_subsample = []
+    split_features_all = []
     # The loop is to ensure that we split at least once on each feature.
     # This is tracked by split_features and checked at the end.
     for i in range(20):
-        si_root = splitter.find_node_split(
+        si_root = splitter_subsample.find_node_split(
             n_samples,
             histograms,
             sum_gradients,
@@ -1045,7 +1050,21 @@ def test_split_feature_fraction_per_split(forbidden_features):
             value,
             allowed_features=allowed_features,
         )
-        split_features.append(si_root.feature_idx)
+        split_features_subsample.append(si_root.feature_idx)
 
-    # make sure all features are split on
-    assert set(split_features) == set(allowed_features)
+        # This second splitter is our "counterfactual".
+        si_root = splitter_all_features.find_node_split(
+            n_samples,
+            histograms,
+            sum_gradients,
+            sum_hessians,
+            value,
+            allowed_features=allowed_features,
+        )
+        split_features_all.append(si_root.feature_idx)
+
+    # Make sure all features are split on.
+    assert set(split_features_subsample) == set(allowed_features)
+
+    # Make sure, our counterfactual always splits on same feature.
+    assert len(set(split_features_all)) == 1
