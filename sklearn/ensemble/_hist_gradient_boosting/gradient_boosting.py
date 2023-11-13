@@ -414,8 +414,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         sample_weight = self._finalize_sample_weight(sample_weight, y)
 
-        validation_data_provided = X_val is not None
+        validation_data_provided = X_val is not None or y_val is not None
         if validation_data_provided:
+            if y_val is None:
+                raise ValueError("X_val is provided, but y_val was not provided.")
+            if X_val is None:
+                raise ValueError("y_val is provided, but X_val was not provided.")
             X_val, y_val = self._validate_data(
                 X_val, y_val, dtype=X_DTYPE, force_all_finite=False, reset=False
             )
