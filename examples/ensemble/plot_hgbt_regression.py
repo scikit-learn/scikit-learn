@@ -160,7 +160,7 @@ common_params = {
 }
 
 hgbt = HistGradientBoostingRegressor(early_stopping=True, **common_params)
-hgbt.fit(X, y)
+hgbt.fit(X_train, y_train)
 plt.plot(-hgbt.validation_score_)
 plt.xlabel("number of iterations")
 plt.ylabel("root mean squared error")
@@ -169,10 +169,10 @@ _ = plt.title(f"Loss of hgbt with early stopping (n_iter={hgbt.n_iter_})")
 # %%
 # We can then overwrite the value for `max_iter` to a reasonable value and avoid
 # the extra computational cost of the inner validation. In this case, rounding
-# up the number of iterations to 600 may account for variability of the training
+# up the number of iterations to 400 may account for variability of the training
 # set:
 
-common_params["max_iter"] = 600
+common_params["max_iter"] = 400
 common_params["early_stopping"] = False
 hgbt = HistGradientBoostingRegressor(**common_params)
 
