@@ -1402,6 +1402,7 @@ def _fetch_remote(remote, dirname=None, progress=None, progress_task=None):
                 if task.id == progress_task:
                     total = task.total
                     break
+
         def update_progress(count, block_size, total_size):
             percentage = total * count * block_size / total_size
             progress.update(progress_task, completed=percentage)
@@ -1409,12 +1410,11 @@ def _fetch_remote(remote, dirname=None, progress=None, progress_task=None):
                 if is_new:
                     progress.remove_task(progress_task)
                 return
-            
+
         urlretrieve(remote.url, file_path, reporthook=update_progress)
     else:
         urlretrieve(remote.url, file_path)
-    
-    
+
     checksum = _sha256(file_path)
     if remote.checksum != checksum:
         raise OSError(

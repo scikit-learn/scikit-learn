@@ -18,6 +18,7 @@ Pace, R. Kelley and Ronald Barry, Sparse Spatial Autoregressions,
 Statistics and Probability Letters, 33 (1997) 291-297.
 
 """
+
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
@@ -61,7 +62,12 @@ logger = logging.getLogger(__name__)
     prefer_skip_nested_validation=True,
 )
 def fetch_california_housing(
-    *, data_home=None, download_if_missing=True, return_X_y=False, as_frame=False, show_progress=False
+    *,
+    data_home=None,
+    download_if_missing=True,
+    return_X_y=False,
+    as_frame=False,
+    show_progress=False,
 ):
     """Load the California housing dataset (regression).
 
@@ -138,15 +144,15 @@ def fetch_california_housing(
 
     filepath = _pkl_filepath(data_home, "cal_housing.pkz")
     if not exists(filepath):
-        
         progress = None
         task = 0
-        
+
         if not download_if_missing:
             raise OSError("Data not found and `download_if_missing` is False")
         if show_progress:
             try:
                 from rich.progress import Progress
+
                 progress = Progress()
                 task = progress.add_task("[red]Downloading Cal. housing...", total=1)
                 progress.start()
@@ -157,7 +163,9 @@ def fetch_california_housing(
             "Downloading Cal. housing from {} to {}".format(ARCHIVE.url, data_home)
         )
 
-        archive_path = _fetch_remote(ARCHIVE, dirname=data_home, progress=progress, progress_task=task)
+        archive_path = _fetch_remote(
+            ARCHIVE, dirname=data_home, progress=progress, progress_task=task
+        )
 
         with tarfile.open(mode="r:gz", name=archive_path) as f:
             cal_housing = np.loadtxt(
