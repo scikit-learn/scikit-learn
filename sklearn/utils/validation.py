@@ -535,7 +535,7 @@ def _ensure_sparse_format(
 
     if accept_sparse is False:
         raise TypeError(
-            "A sparse matrix was passed, but dense data is required. Use '.toarray()' "
+            "Sparse data was passed, but dense data is required. Use '.toarray()' "
             "to convert to a dense numpy array."
         )
     elif isinstance(accept_sparse, (list, tuple)):
