@@ -198,6 +198,7 @@ class TreeGrower:
         This is a form of regularization, smaller values make the trees weaker
         learners and might prevent overfitting.
     rng : Generator
+        Numpy random Generator used for feature subsampling.
     shrinkage : float, default=1.
         The shrinkage parameter to apply to the leaves values, also known as
         learning rate.

@@ -963,7 +963,14 @@ def test_split_interaction_constraints():
 
 @pytest.mark.parametrize("forbidden_features", [set(), {1, 3}])
 def test_split_feature_fraction_per_split(forbidden_features):
-    """Check that feature_fraction_per_split is respected."""
+    """Check that feature_fraction_per_split is respected.
+    
+    Because we set `n_features = 4` and `feature_fraction_per_split = 0.25`, it means
+    that caling `splitter.find_node_split` will be allowed to select a split for a
+    single completely random feature at each call. So if we iterate enough, we should
+    cover all the allowed features, irrespective of the values of the gradients and
+    Hessians of the objective.
+    """
     n_features = 4
     allowed_features = np.array(
         list(set(range(n_features)) - forbidden_features), dtype=np.uint32
