@@ -252,7 +252,14 @@ Meta-estimators and functions supporting metadata routing:
 
 - :class:`sklearn.calibration.CalibratedClassifierCV`
 - :class:`sklearn.compose.ColumnTransformer`
+- :class:`sklearn.feature_selection.SelectFromModel`
+- :class:`sklearn.linear_model.ElasticNetCV`
+- :class:`sklearn.linear_model.LarsCV`
+- :class:`sklearn.linear_model.LassoCV`
+- :class:`sklearn.linear_model.LassoLarsCV`
 - :class:`sklearn.linear_model.LogisticRegressionCV`
+- :class:`sklearn.linear_model.MultiTaskElasticNetCV`
+- :class:`sklearn.linear_model.MultiTaskLassoCV`
 - :class:`sklearn.model_selection.GridSearchCV`
 - :class:`sklearn.model_selection.HalvingGridSearchCV`
 - :class:`sklearn.model_selection.HalvingRandomSearchCV`
@@ -260,9 +267,13 @@ Meta-estimators and functions supporting metadata routing:
 - :func:`sklearn.model_selection.cross_validate`
 - :func:`sklearn.model_selection.cross_val_score`
 - :func:`sklearn.model_selection.cross_val_predict`
+- :class:`sklearn.multiclass.OneVsOneClassifier`
+- :class:`sklearn.multiclass.OneVsRestClassifier`
+- :class:`sklearn.multiclass.OutputCodeClassifier`
 - :class:`sklearn.multioutput.ClassifierChain`
 - :class:`sklearn.multioutput.MultiOutputClassifier`
 - :class:`sklearn.multioutput.MultiOutputRegressor`
+- :class:`sklearn.linear_model.OrthogonalMatchingPursuitCV`
 - :class:`sklearn.multioutput.RegressorChain`
 - :class:`sklearn.pipeline.Pipeline`
 
@@ -280,24 +291,13 @@ Meta-estimators and tools not supporting metadata routing yet:
 - :class:`sklearn.ensemble.VotingRegressor`
 - :class:`sklearn.feature_selection.RFE`
 - :class:`sklearn.feature_selection.RFECV`
-- :class:`sklearn.feature_selection.SelectFromModel`
 - :class:`sklearn.feature_selection.SequentialFeatureSelector`
 - :class:`sklearn.impute.IterativeImputer`
-- :class:`sklearn.linear_model.ElasticNetCV`
-- :class:`sklearn.linear_model.LarsCV`
-- :class:`sklearn.linear_model.LassoCV`
-- :class:`sklearn.linear_model.LassoLarsCV`
-- :class:`sklearn.linear_model.MultiTaskElasticNetCV`
-- :class:`sklearn.linear_model.MultiTaskLassoCV`
-- :class:`sklearn.linear_model.OrthogonalMatchingPursuitCV`
 - :class:`sklearn.linear_model.RANSACRegressor`
 - :class:`sklearn.linear_model.RidgeClassifierCV`
 - :class:`sklearn.linear_model.RidgeCV`
 - :class:`sklearn.model_selection.learning_curve`
 - :class:`sklearn.model_selection.permutation_test_score`
 - :class:`sklearn.model_selection.validation_curve`
-- :class:`sklearn.multiclass.OneVsOneClassifier`
-- :class:`sklearn.multiclass.OneVsRestClassifier`
-- :class:`sklearn.multiclass.OutputCodeClassifier`
 - :class:`sklearn.pipeline.FeatureUnion`
 - :class:`sklearn.semi_supervised.SelfTrainingClassifier`

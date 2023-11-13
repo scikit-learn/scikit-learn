@@ -39,7 +39,7 @@ class TreeNode:
     ----------
     depth : int
         The depth of the node, i.e. its distance from the root.
-    sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint
+    sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint32
         The indices of the samples at the node.
     sum_gradients : float
         The sum of the gradients of the samples at the node.
@@ -50,7 +50,7 @@ class TreeNode:
     ----------
     depth : int
         The depth of the node, i.e. its distance from the root.
-    sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint
+    sample_indices : ndarray of shape (n_samples_at_node,), dtype=np.uint32
         The indices of the samples at the node.
     sum_gradients : float
         The sum of the gradients of the samples at the node.

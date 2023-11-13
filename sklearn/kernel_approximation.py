@@ -122,6 +122,9 @@ class PolynomialCountSketch(
     SGDClassifier(max_iter=10)
     >>> clf.score(X_features, y)
     1.0
+
+    For a more detailed example of usage, see
+    :ref:`sphx_glr_auto_examples_kernel_approximation_plot_scalable_poly_kernels.py`
     """
 
     _parameter_constraints: dict = {
