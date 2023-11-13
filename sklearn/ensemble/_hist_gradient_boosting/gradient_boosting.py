@@ -401,6 +401,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if not (self.warm_start and self._is_fitted()):
             self._random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
             self._random_seed2 = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
+        rng2 = np.random.default_rng(self._random_seed2)
 
         self._validate_parameters()
         monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
@@ -705,7 +706,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     min_samples_leaf=self.min_samples_leaf,
                     l2_regularization=self.l2_regularization,
                     feature_fraction_per_split=self.max_features,
-                    rng=np.random.default_rng(self._random_seed2),
+                    rng=rng2,
                     shrinkage=self.learning_rate,
                     n_threads=n_threads,
                 )
@@ -1273,9 +1274,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         This is a form of regularization, smaller values make the trees weaker
         learners and might prevent overfitting.
         If interaction constraints from `interaction_cst` are present, only allowed
-        features taken into account for the subsampling.
+        features are taken into account for the subsampling.
 
-        .. versionchanged:: 1.4
+        .. versionadded:: 1.4
 
     max_bins : int, default=255
         The maximum number of bins to use for non-missing values. Before
@@ -1644,9 +1645,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         This is a form of regularization, smaller values make the trees weaker
         learners and might prevent overfitting.
         If interaction constraints from `interaction_cst` are present, only allowed
-        features taken into account for the subsampling.
+        features are taken into account for the subsampling.
 
-        .. versionchanged:: 1.4
+        .. versionadded:: 1.4
 
     max_bins : int, default=255
         The maximum number of bins to use for non-missing values. Before
