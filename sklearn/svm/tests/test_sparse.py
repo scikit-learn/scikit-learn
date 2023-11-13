@@ -61,7 +61,7 @@ def check_svm_model_equal(dense_svm, X_train, y_train, X_test):
     assert_allclose(dense_svm.dual_coef_, sparse_svm.dual_coef_.toarray())
     if dense_svm.kernel == "linear":
         assert sparse.issparse(sparse_svm.coef_)
-        assert_allclose(dense_svm.coef_, sparse_svm.coef_.toarray())
+        assert_array_almost_equal(dense_svm.coef_, sparse_svm.coef_.toarray())
     assert_allclose(dense_svm.support_, sparse_svm.support_)
     assert_allclose(dense_svm.predict(X_test_dense), sparse_svm.predict(X_test))
 
