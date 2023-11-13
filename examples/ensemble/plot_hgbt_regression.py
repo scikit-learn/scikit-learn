@@ -196,52 +196,44 @@ hgbt = HistGradientBoostingRegressor(**common_params)
 
 import numpy as np
 
-from sklearn.model_selection import TimeSeriesSplit, cross_validate
+from sklearn.metrics import root_mean_squared_error
 
-np.random.seed(42)
+rng = np.random.RandomState(42)
+first_week = slice(0, 336)  # first week in the test set as 7 * 48 = 336
+missing_fraction_list = [0, 0.02, 0.05]
 
-ts_cv = TimeSeriesSplit(n_splits=5, gap=48, max_train_size=10000, test_size=1000)
-train_0, test_0 = next(ts_cv.split(df))
-last_days = slice(-192, None)
-total_cells = X.shape[0] * X.shape[1]
-missing_fraction_list = [0, 0.01, 0.03]
+
+def generate_missing_values(X, missing_fraction):
+    total_cells = X.shape[0] * X.shape[1]
+    num_missing_cells = int(total_cells * missing_fraction)
+    row_indices = rng.choice(X.shape[0], num_missing_cells, replace=True)
+    col_indices = rng.choice(X.shape[1], num_missing_cells, replace=True)
+    X_missing = X.copy()
+    X_missing.iloc[row_indices, col_indices] = np.nan
+    return X_missing
+
 
 fig, ax = plt.subplots(figsize=(12, 6))
-ax.plot(y.iloc[test_0].values[last_days], label="Actual transfer")
+ax.plot(y_test.values[first_week], label="Actual transfer")
 
 for missing_fraction in missing_fraction_list:
-    num_missing_cells = int(total_cells * missing_fraction)
-    row_indices = np.random.choice(X.shape[0], num_missing_cells, replace=True)
-    col_indices = np.random.choice(X.shape[1], num_missing_cells, replace=True)
-    X = df.drop(columns=["transfer", "class"])
-    X.iloc[row_indices, col_indices] = np.nan
-
-    hgbt.fit(X.iloc[train_0], y.iloc[train_0])
-    hgbt_predictions = hgbt.predict(X.iloc[test_0])
-    cv_results = cross_validate(
-        hgbt,
-        X,
-        y,
-        cv=ts_cv,
-        scoring="neg_root_mean_squared_error",
-    )
-    rmse = -cv_results["test_score"]
+    X_missing = generate_missing_values(X_train, missing_fraction)
+    hgbt.fit(X_missing, y_train)
+    y_pred = hgbt.predict(X_test[first_week])
+    rmse = root_mean_squared_error(y_test[first_week], y_pred)
     ax.plot(
-        hgbt_predictions[last_days],
-        label=(
-            f"missing_fraction={missing_fraction}, RMSE={rmse.mean():.2f} +/-"
-            f" {rmse.std():.2f}"
-        ),
+        y_pred[first_week],
+        label=f"missing_fraction={missing_fraction}, RMSE={rmse:.2f}",
         alpha=0.5,
     )
 ax.set(
     title="Daily energy transfer predictions on data with MCAR values",
-    xticks=[(i + 0.25) * 48 for i in range(4)],
-    xticklabels=["Tue", "Wed", "Thu", "Fri"],
+    xticks=[(i + 0.2) * 48 for i in range(7)],
+    xticklabels=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     xlabel="Time of the week",
     ylabel="Normalized energy transfer",
 )
-_ = ax.legend()
+_ = ax.legend(loc="lower right")
 
 # %%
 # Support for quantile loss
@@ -252,55 +244,44 @@ _ = ax.legend()
 # percentiles can provide a 90% prediction interval, i.e. the range within which
 # we expect the true value to fall with 90% probability.
 
-from sklearn.metrics import make_scorer, mean_pinball_loss
+from sklearn.metrics import mean_pinball_loss
 
 quantiles = [0.95, 0.05]
 predictions = []
-X = df.drop(columns=["transfer", "class"])  # reset X
 
 fig, ax = plt.subplots(figsize=(12, 6))
-ax.plot(y.iloc[test_0].values[last_days], label="Actual transfer")
+ax.plot(y_test.values[first_week], label="Actual transfer")
 
 for quantile in quantiles:
     hgbt_quantile = HistGradientBoostingRegressor(
         loss="quantile", quantile=quantile, **common_params
     )
-    hgbt_quantile.fit(X.iloc[train_0], y.iloc[train_0])
-    hgbt_predictions = hgbt_quantile.predict(X.iloc[test_0])
+    hgbt_quantile.fit(X_train, y_train)
+    y_pred = hgbt_quantile.predict(X_test[first_week])
 
-    predictions.append(hgbt_predictions)
-    cv_results = cross_validate(
-        hgbt_quantile,
-        X,
-        y,
-        cv=ts_cv,
-        scoring=make_scorer(mean_pinball_loss, alpha=quantile),
-    )
-    score = cv_results["test_score"]
+    predictions.append(y_pred)
+    score = mean_pinball_loss(y_test[first_week], y_pred)
     ax.plot(
-        hgbt_predictions[last_days],
-        label=(
-            f"quantile={quantile}, pinball loss={score.mean():.3f} +/-"
-            f" {score.std():.3f}"
-        ),
+        y_pred[first_week],
+        label=f"quantile={quantile}, pinball loss={score:.2f}",
         alpha=0.5,
     )
 
 ax.fill_between(
-    range(len(predictions[0][last_days])),
-    predictions[0][last_days],
-    predictions[1][last_days],
+    range(len(predictions[0][first_week])),
+    predictions[0][first_week],
+    predictions[1][first_week],
     color=colors[0],
     alpha=0.1,
 )
 ax.set(
     title="Daily energy transfer predictions with quantile loss",
-    xticks=[(i + 0.25) * 48 for i in range(4)],
-    xticklabels=["Tue", "Wed", "Thu", "Fri"],
+    xticks=[(i + 0.2) * 48 for i in range(7)],
+    xticklabels=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     xlabel="Time of the week",
     ylabel="Normalized energy transfer",
 )
-_ = ax.legend()
+_ = ax.legend(loc="lower right")
 
 # %%
 # Keep in mind that those predicted percentiles are just estimations from a
@@ -386,6 +367,10 @@ _ = plt.legend()
 # %%
 # Indeed, we can verify that the predictive quality of the model is not
 # significantly degraded by introducing the monotonic constraints:
+
+from sklearn.model_selection import TimeSeriesSplit, cross_validate
+
+ts_cv = TimeSeriesSplit(n_splits=5, gap=48, test_size=336)
 
 cv_results = cross_validate(
     hgbt_no_cst,
