@@ -396,6 +396,6 @@ rmse = -cv_results["test_score"]
 print(f"RMSE with constraints    = {rmse.mean():.2f} +/- {rmse.std():.2f}")
 
 # %%
-# That being said, notice the comparison is between to different models that may
+# That being said, notice the comparison is between two different models that may
 # be optimized by a different combination of hyperparameters. That is the reason
 # why we do no use the `common_params` in this section as done before.
