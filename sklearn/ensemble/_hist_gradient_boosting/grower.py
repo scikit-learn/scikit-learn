@@ -618,9 +618,8 @@ class TreeGrower:
                 if child.is_leaf:
                     del child.histograms
 
-        # Release memory used by histograms as they are no longer needed for
-        # internal nodes once children histograms have been computed.
-        del node.histograms
+        # We do not release the memory of node.histograms as it is reused in one of the
+        # child nodes.
 
         return left_child_node, right_child_node
 
