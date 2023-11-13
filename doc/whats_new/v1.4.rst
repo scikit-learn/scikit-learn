@@ -169,7 +169,7 @@ and classes are impacted:
 - :class:`feature_extraction.text.TfidfTransformer` in :pr:`27219` by
   :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`cluster.Isomap` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
-- :func:`manifold.SpectralEmbedding` in :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`;
+- :class:`manifold.SpectralEmbedding` in :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`manifold.TSNE` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`impute.SimpleImputer` in :pr:`27277` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`impute.IterativeImputer` in :pr:`27277` by :user:`Yao Xiao <Charlie-XIAO>`;
@@ -180,6 +180,10 @@ and classes are impacted:
   :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`preprocessing.PolynomialFeatures` in :pr:`27166` by
   :user:`Mohit Joshi <work-mohit>`.
+- :class:`random_projection.GaussianRandomProjection` in :pr:`27314` by
+  :user:`Stefanie Senger <StefanieSenger>`.
+- :class:`random_projection.SparseRandomProjection`in :pr:`27314` by
+  :user:`Stefanie Senger <StefanieSenger>`.
 
 Changelog
 ---------
