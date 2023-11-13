@@ -32,7 +32,7 @@
 .. |Benchmark| image:: https://img.shields.io/badge/Benchmarked%20by-asv-blue
 .. _`Benchmark`: https://scikit-learn.org/scikit-learn-benchmarks/
 
-.. |PythonMinVersion| replace:: 3.8
+.. |PythonMinVersion| replace:: 3.9
 .. |NumPyMinVersion| replace:: 1.17.3
 .. |SciPyMinVersion| replace:: 1.5.0
 .. |JoblibMinVersion| replace:: 1.2.0
