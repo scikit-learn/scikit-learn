@@ -19,6 +19,10 @@ from . import check_random_state
 cdef UINT32_t DEFAULT_SEED = 1
 
 
+# Compatibility type to always accept the default int type used by NumPy, both
+# before and after NumPy 2. On Windows, `long` does not always match `cnp.inp_t`.
+# See the comments in the `sample_without_replacement` Python function for more
+# details.
 ctypedef fused default_int:
     cnp.intp_t
     long
