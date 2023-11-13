@@ -284,6 +284,9 @@ ax.set(
 _ = ax.legend(loc="lower right")
 
 # %%
+# We observe a tendence to over-estimate the energy transfer. This could be be
+# quantitatively confirmed by computing empirical coverage numbers as done in
+# the :ref:`calibration of confidence intervals section <calibration-section>`.
 # Keep in mind that those predicted percentiles are just estimations from a
 # model. One can still improve the quality of such estimations by:
 #
