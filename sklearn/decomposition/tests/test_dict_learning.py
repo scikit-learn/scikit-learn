@@ -1079,6 +1079,6 @@ class SparseCoderForCommonTests(SparseCoder):
         }
 
 
-@parametrize_with_checks([SparseCoderTest(dictionary=np.ones((2, 2)))])
+@parametrize_with_checks([SparseCoderForCommonTests(dictionary=np.ones((2, 2)))])
 def test_common_test_sparse_coder(estimator, check):
     check(estimator)
