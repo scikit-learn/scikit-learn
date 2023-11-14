@@ -575,9 +575,6 @@ cdef class ClassificationCriterion(Criterion):
             memcpy(dest, &self.sum_total[k, 0], self.n_classes[k] * sizeof(float64_t))
             dest += self.max_n_classes
 
-    cdef void clip_node_value(self, float64_t * dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil:
-        """Clip the values in dest such that predicted probabilities stay between lower_bound and upper_bound when
-        monotonic constraints are enforced.
     cdef void clip_node_value(
         self, float64_t * dest, float64_t lower_bound, float64_t upper_bound
     ) noexcept nogil:
