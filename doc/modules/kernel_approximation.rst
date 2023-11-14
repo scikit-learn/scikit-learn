@@ -74,7 +74,7 @@ evaluated matrices:
          \\&= K_{21} U_1 (\Lambda^{-1} \Lambda) \Lambda^{-1} U_1^T K_{21}^T
          \\&= K_{21} U_1 \Lambda^{-1} U_1^T K_{21}^T
          \\&= K_{21} K_{11}^{-1} K_{21}^T
-         \\&= \left( K_{21} K_{11}^{-\frac12} \right) \left( K_{21} K_{11}^{-\frac12} \right)^T 
+         \\&= \left( K_{21} K_{11}^{-\frac12} \right) \left( K_{21} K_{11}^{-\frac12} \right)^T
          .\end{align}
 
 During ``fit``, the class :class:`Nystroem` evaluates the basis :math:`U_1`, and
@@ -90,7 +90,10 @@ also the dimensionality of the features computed - is given by the parameter
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
+    * See the example entitled
+      :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`,
+      that shows an efficient machine learning pipeline that uses a
+      :class:`Nystroem` kernel.
 
 .. _rbf_kernel_approx:
 
