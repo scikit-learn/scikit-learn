@@ -578,14 +578,19 @@ cdef class ClassificationCriterion(Criterion):
     cdef void clip_node_value(self, float64_t * dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil:
         """Clip the values in dest such that predicted probabilities stay between lower_bound and upper_bound when
         monotonic constraints are enforced.
-
+    cdef void clip_node_value(
+        self, float64_t * dest, float64_t lower_bound, float64_t upper_bound
+    ) noexcept nogil:
+        """Clip the values in dest such that predicted probabilities stay between
+        `lower_bound` and `upper_bound` when monotonic constraints are enforced.
         Note that monotonicity constraints are only supported for:
         - single-output trees and
         - binary classifications.
         """
-        cdef float64_t total_weighted_count = dest[0] + dest[1]
-        cdef float64_t scaled_lower_bound = (<float32_t>lower_bound) * total_weighted_count
-        cdef float64_t scaled_upper_bound = (<float32_t>upper_bound) * total_weighted_count
+        cdef:
+            float64_t total_weighted_count = dest[0] + dest[1]
+            float64_t scaled_lower_bound = (<float32_t>lower_bound) * total_weighted_count
+            float64_t scaled_upper_bound = (<float32_t>upper_bound) * total_weighted_count
         if dest[0] < scaled_lower_bound:
             dest[0] = scaled_lower_bound
         elif dest[0] > scaled_upper_bound:
