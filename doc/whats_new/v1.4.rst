@@ -461,14 +461,16 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |MajorFeature| :class:`preprocessing.MinMaxScaler`, :class:`preprocessing.MaxAbsScaler`
-  and :class:`preprocessing.KernelCenterer` now
-  support the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
+- |MajorFeature| The following classes now support the
+  `Array API <https://data-apis.org/array-api/latest/>`_. Array API
   support is considered experimental and might evolve without being subject to
   our usual rolling deprecation cycle policy. See
   :ref:`array_api` for more details.
-  :pr:`26243` by `Tim Head`_, :pr:`27110` by :user:`Edoardo Abati <EdAbati>` and
-  :pr:`27556` by :user:`Edoardo Abati <EdAbati>`.
+
+  - :class:`preprocessing.MinMaxScaler` :pr:`26243` by `Tim Head`_
+  - :class:`preprocessing.MaxAbsScaler` :pr:`27110` by :user:`Edoardo Abati <EdAbati>`
+  - :class:`preprocessing.KernelCenterer` :pr:`27556` by :user:`Edoardo Abati <EdAbati>`
+  - :class:`preprocessing.Normalizer` :pr:`27558` by :user:`Edoardo Abati <EdAbati>`
 
 - |Efficiency| :class:`preprocessing.OrdinalEncoder` avoids calculating
   missing indices twice to improve efficiency.
