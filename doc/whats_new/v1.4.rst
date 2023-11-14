@@ -538,6 +538,10 @@ Changelog
   misdetects the CPU architecture.
   :pr:`27614` by :user:`Olivier Grisel <ogrisel>`.
 
+- |Fix| Error message in :func:`~utils.check_array` when a sparse matrix was
+  passed but `accept_sparse` is `False` now suggests to use `.toarray()` and not
+  `X.toarray()`. :pr:`27757` by :user:`Lucy Liu <lucyleeow>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
