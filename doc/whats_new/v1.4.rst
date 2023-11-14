@@ -224,9 +224,7 @@ Changelog
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
-- |Fix| : Improve error message when checking the number of connected
-   components in the `fit` method of :class:`cluster.HDBSCAN`.
-  :pr:`27678` by :user:`Ganesh Tata <tataganesh>`.
+- |Fix| : Improve error message when checking the number of connected components in the `fit` method of :class:`cluster.HDBSCAN`. :pr:`27678` by :user:`Ganesh Tata <tataganesh>`.
 
 :mod:`sklearn.compose`
 ......................
