@@ -466,14 +466,16 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |MajorFeature| :class:`preprocessing.MinMaxScaler`, :class:`preprocessing.MaxAbsScaler`
-  and :class:`preprocessing.KernelCenterer` now
-  support the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
+- |MajorFeature| The following classes now support the
+  `Array API <https://data-apis.org/array-api/latest/>`_. Array API
   support is considered experimental and might evolve without being subject to
   our usual rolling deprecation cycle policy. See
   :ref:`array_api` for more details.
-  :pr:`26243` by `Tim Head`_, :pr:`27110` by :user:`Edoardo Abati <EdAbati>` and
-  :pr:`27556` by :user:`Edoardo Abati <EdAbati>`.
+
+  - :class:`preprocessing.MinMaxScaler` :pr:`26243` by `Tim Head`_
+  - :class:`preprocessing.MaxAbsScaler` :pr:`27110` by :user:`Edoardo Abati <EdAbati>`
+  - :class:`preprocessing.KernelCenterer` :pr:`27556` by :user:`Edoardo Abati <EdAbati>`
+  - :class:`preprocessing.Normalizer` :pr:`27558` by :user:`Edoardo Abati <EdAbati>`
 
 - |Efficiency| :class:`preprocessing.OrdinalEncoder` avoids calculating
   missing indices twice to improve efficiency.
@@ -542,6 +544,10 @@ Changelog
   calling a dedicated private function that would crash when OpenBLAS
   misdetects the CPU architecture.
   :pr:`27614` by :user:`Olivier Grisel <ogrisel>`.
+
+- |Fix| Error message in :func:`~utils.check_array` when a sparse matrix was
+  passed but `accept_sparse` is `False` now suggests to use `.toarray()` and not
+  `X.toarray()`. :pr:`27757` by :user:`Lucy Liu <lucyleeow>`.
 
 Code and Documentation Contributors
 -----------------------------------
