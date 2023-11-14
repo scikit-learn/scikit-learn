@@ -217,6 +217,11 @@ Changelog
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
+- |FIX| : Create copy of precomputed sparse matrix within the
+  `fit` method of `cluster.DBSCAN` to avoid in-place modification of
+  the sparse matrix.
+  :pr:`27651` by :user:`Ganesh Tata <tataganesh>`.
+
 :mod:`sklearn.compose`
 ......................
 
