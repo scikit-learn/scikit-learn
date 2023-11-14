@@ -402,8 +402,8 @@ Changelog
 - |Enhancement| :class:`decomposition.NMF` now supports the optional parameter
   `regularization`, which can take the values `None`, 'components',
   'transformation' or 'both', in accordance with
-  :func:`decomposition.NMF.non_negative_factorization`.
-  :pr:`17414` by :user:`Bharat Raghunathan <Bharat123rox>`.
+  `decomposition.NMF.non_negative_factorization`.
+  :pr:`17414` by :user:`Bharat Raghunathan <bharatr21>`.
 
 - |Fix| :class:`decomposition.KernelPCA` behaviour is now more consistent
   between 32-bits and 64-bits data input when the kernel has small positive
