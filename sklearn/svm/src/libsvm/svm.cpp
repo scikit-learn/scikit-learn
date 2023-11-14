@@ -2783,8 +2783,6 @@ PREFIX(model) *PREFIX(train)(
 		for(class_idx=0; class_idx < nr_classes_original - 1; ++class_idx)
 			model->sv_coef[class_idx] = Malloc(double, total_sv);
 
-		fprintf(stderr, "XXXXXXX\n");
-		// FIXME: Need to figure out how to output the dual coefficients properly.
 		p = 0;
 		for(neg_class_idx=0; neg_class_idx < nr_classes; ++neg_class_idx)
 			for(
@@ -2792,37 +2790,29 @@ PREFIX(model) *PREFIX(train)(
 				pos_class_idx< nr_classes;
 				++pos_class_idx
 			) {
+				// classifier (i, j): coefficients with
+				// i are in sv_coef[j-1][nz_start[i]...],
+				// j are in sv_coef[i][nz_start[j]...]
 
-				if (
-					class_count_original[neg_class_idx] != 0 &&
-					class_count_original[pos_class_idx] != 0
-				) {
-					// classifier (i, j): coefficients with
-					// i are in sv_coef[j-1][nz_start[i]...],
-					// j are in sv_coef[i][nz_start[j]...]
+				int start_neg_class = start[neg_class_idx];
+				int start_pos_class = start[pos_class_idx];
+				int count_neg_class = count[neg_class_idx];
+				int count_pos_class = count[pos_class_idx];
 
-					int start_neg_class = start[neg_class_idx];
-					int start_pos_class = start[pos_class_idx];
-					int count_neg_class = count[neg_class_idx];
-					int count_pos_class = count[pos_class_idx];
-
-					int q = nz_start[neg_class_idx];
-					for(sample_idx=0; sample_idx < count_neg_class; ++sample_idx)
-						if(nonzero[start_neg_class + sample_idx])
-							model->sv_coef[pos_class_idx - 1][q++] = f[p].alpha[
-								sample_idx
-							];
-					q = nz_start[pos_class_idx];
-					for(sample_idx=0; sample_idx < count_pos_class; ++sample_idx)
-						if(nonzero[start_pos_class + sample_idx])
-							model->sv_coef[neg_class_idx][q++] = f[p].alpha[
-								count_neg_class + sample_idx
-							];
-					++p;
-				}
+				int q = nz_start[neg_class_idx];
+				for(sample_idx=0; sample_idx < count_neg_class; ++sample_idx)
+					if(nonzero[start_neg_class + sample_idx])
+						model->sv_coef[class_label_original[pos_class_idx - 1]][q++] = (
+							f[p].alpha[sample_idx]
+						);
+				q = nz_start[pos_class_idx];
+				for(sample_idx=0; sample_idx < count_pos_class; ++sample_idx)
+					if(nonzero[start_pos_class + sample_idx])
+						model->sv_coef[class_label_original[neg_class_idx]][q++] = (
+							f[p].alpha[count_neg_class + sample_idx]
+						);
+				++p;
 			}
-
-		fprintf(stderr, "YYYYYYYYY\n");
 
 		free(label);
 		free(probA);
