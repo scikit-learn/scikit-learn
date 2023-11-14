@@ -7,21 +7,24 @@ Permutation feature importance
 .. currentmodule:: sklearn.inspection
 
 Permutation feature importance is a model inspection technique that measures the
-contribution of each feature to a :term:`fitted` model's performance on a given
-tabular dataset. This technique is particularly useful for non-linear or opaque
-:term:`estimators`, and involves randomly shuffling the values of a single
-feature and observing the resulting degradation of the model's score [1]_. By
-breaking the relationship between the feature and the target, we determine how
-much the model relies on such particular feature. One key advantage of
-permutation feature importance is that it is model-agnostic, i.e. it can be
-applied to any fitted estimator. Moreover, it can be calculated multiple times
-with different permutations of the feature, providing a robust measure of
-feature importance for the specific trained model.
+contribution of each feature to a :term:`fitted` model's statistical performance
+on a given tabular dataset. This technique is particularly useful for non-linear
+or opaque :term:`estimators`, and involves randomly shuffling the values of a
+single feature and observing the resulting degradation of the model's score
+[1]_. By breaking the relationship between the feature and the target, we
+determine how much the model relies on such particular feature.
+
+One key advantage of permutation feature importance is that it is
+model-agnostic, i.e. it can be applied to any fitted estimator. Moreover, it can
+be calculated multiple times with different permutations of the feature, further
+providing a measure of the variance in the estimated feature importances for the
+specific trained model.
 
 The figure below shows the permutation feature importance of a
 :class:`~sklearn.ensemble.RandomForestClassifier` trained on an augmented
 version of the titanic dataset that contains a `random_cat` and a `random_num`
-features:
+features, i.e. a categrical and a numerical feature that are not correlated in
+any way with the target variable:
 
 .. figure:: ../auto_examples/inspection/images/sphx_glr_plot_permutation_importance_002.png
    :target: ../auto_examples/inspection/plot_permutation_importance.html
