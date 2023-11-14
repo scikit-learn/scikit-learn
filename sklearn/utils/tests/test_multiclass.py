@@ -174,6 +174,127 @@ EXAMPLES = {
     ],
 }
 
+ARRAY_API_EXAMPLES = {
+    "multilabel-indicator": [
+        # valid when the data is formatted as sparse or dense, identified
+        # by CSR format when the testing takes place
+        *_generate_sparse(
+            np.random.RandomState(42).randint(2, size=(10, 10)),
+            sparse_containers=CSR_CONTAINERS,
+            dtypes=(int,),
+        ),
+        [[0, 1], [1, 0]],
+        [[0, 1]],
+        *_generate_sparse(
+            multilabel_explicit_zero, sparse_containers=CSC_CONTAINERS, dtypes=(int,)
+        ),
+        *_generate_sparse([[0, 1], [1, 0]]),
+        *_generate_sparse([[0, 0], [0, 0]]),
+        *_generate_sparse([[0, 1]]),
+        # Only valid when data is dense
+        [[-1, 1], [1, -1]],
+        np.array([[-1, 1], [1, -1]]),
+        np.array([[-3, 3], [3, -3]]),
+        _NotAnArray(np.array([[-3, 3], [3, -3]])),
+    ],
+    "multiclass": [
+        [1, 0, 2, 2, 1, 4, 2, 4, 4, 4],
+        np.array([1, 0, 2]),
+        np.array([1, 0, 2], dtype=np.int8),
+        np.array([1, 0, 2], dtype=np.uint8),
+        np.array([1, 0, 2], dtype=float),
+        np.array([1, 0, 2], dtype=np.float32),
+        np.array([[1], [0], [2]]),
+        _NotAnArray(np.array([1, 0, 2])),
+        [0, 1, 2],
+        ["a", "b", "c"],
+        np.array(["a", "b", "c"]),
+        np.array(["a", "b", "c"], dtype=object),
+        np.array(["a", "b", "c"], dtype=object),
+    ],
+    "multiclass-multioutput": [
+        [[1, 0, 2, 2], [1, 4, 2, 4]],
+        [["a", "b"], ["c", "d"]],
+        np.array([[1, 0, 2, 2], [1, 4, 2, 4]]),
+        np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.int8),
+        np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.uint8),
+        np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=float),
+        np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float32),
+        *_generate_sparse(
+            [[1, 0, 2, 2], [1, 4, 2, 4]],
+            sparse_containers=CSC_CONTAINERS + CSR_CONTAINERS,
+            dtypes=(int, np.int8, np.uint8, float, np.float32),
+        ),
+        np.array([["a", "b"], ["c", "d"]]),
+        np.array([["a", "b"], ["c", "d"]]),
+        np.array([["a", "b"], ["c", "d"]], dtype=object),
+        np.array([[1, 0, 2]]),
+        _NotAnArray(np.array([[1, 0, 2]])),
+    ],
+    "binary": [
+        [0, 1],
+        [1, 1],
+        [],
+        [0],
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1]),
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=bool),
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.int8),
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.uint8),
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=float),
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.float32),
+        np.array([[0], [1]]),
+        _NotAnArray(np.array([[0], [1]])),
+        [1, -1],
+        [3, 5],
+        ["a"],
+        ["a", "b"],
+        ["abc", "def"],
+        np.array(["abc", "def"]),
+        ["a", "b"],
+        np.array(["abc", "def"], dtype=object),
+    ],
+    "continuous": [
+        [1e-5],
+        [0, 0.5],
+        np.array([[0], [0.5]]),
+        np.array([[0], [0.5]], dtype=np.float32),
+    ],
+    "continuous-multioutput": [
+        np.array([[0, 0.5], [0.5, 0]]),
+        np.array([[0, 0.5], [0.5, 0]], dtype=np.float32),
+        np.array([[0, 0.5]]),
+        *_generate_sparse(
+            [[0, 0.5], [0.5, 0]],
+            sparse_containers=CSC_CONTAINERS + CSR_CONTAINERS,
+            dtypes=(float, np.float32),
+        ),
+        *_generate_sparse(
+            [[0, 0.5]],
+            sparse_containers=CSC_CONTAINERS + CSR_CONTAINERS,
+            dtypes=(float, np.float32),
+        ),
+    ],
+    "unknown": [
+        [[]],
+        np.array([[]], dtype=object),
+        [()],
+        # sequence of sequences that weren't supported even before deprecation
+        np.array([np.array([]), np.array([1, 2, 3])], dtype=object),
+        [np.array([]), np.array([1, 2, 3])],
+        [{1, 2, 3}, {1, 2}],
+        [frozenset([1, 2, 3]), frozenset([1, 2])],
+        # and also confusable as sequences of sequences
+        [{0: "a", 1: "b"}, {0: "a"}],
+        # ndim 0
+        np.array(0),
+        # empty second dimension
+        np.array([[], []]),
+        # 3d
+        np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]]),
+    ],
+}
+
+
 NON_ARRAY_LIKE_EXAMPLES = [
     {1, 2, 3},
     {0: "a", 1: "b"},
