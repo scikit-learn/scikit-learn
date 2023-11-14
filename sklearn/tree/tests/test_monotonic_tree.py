@@ -14,8 +14,8 @@ from sklearn.tree import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
-from sklearn.utils.fixes import CSC_CONTAINERS
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils.fixes import CSC_CONTAINERS
 
 TREE_CLASSIFIER_CLASSES = [DecisionTreeClassifier, ExtraTreeClassifier]
 TREE_REGRESSOR_CLASSES = [DecisionTreeRegressor, ExtraTreeRegressor]
@@ -80,10 +80,10 @@ def test_monotonic_constraints_classifications(
     est.fit(X_train, y_train)
     proba_test = est.predict_proba(X_test)
 
-    assert np.logical_and(proba_test >= 0.0, proba_test <= 1.0).all(), (
-        "Probability should always be in [0, 1] range."
-    )
-    assert_allclose(proba_test.sum(axis=1), 1.)
+    assert np.logical_and(
+        proba_test >= 0.0, proba_test <= 1.0
+    ).all(), "Probability should always be in [0, 1] range."
+    assert_allclose(proba_test.sum(axis=1), 1.0)
 
     # Monotonic increase constraint, it applies to the positive class
     assert np.all(est.predict_proba(X_test_0incr)[:, 1] >= proba_test[:, 1])
