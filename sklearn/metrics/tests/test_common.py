@@ -1747,8 +1747,8 @@ def check_array_api_metric(
         metric_xp = metric(y_true_xp, y_pred_xp, sample_weight=sample_weight)
 
         if not isinstance(metric_xp, float):
-            # if the result is not a scalar, the array has to be in the CPU
-            # before transforming it to numpy
+            # If the result is not a scalar, the array has to be in the CPU
+            # before transforming it to a numpy array.
             metric_xp = xp.asarray(metric_xp, device="cpu")
 
         assert_allclose(
