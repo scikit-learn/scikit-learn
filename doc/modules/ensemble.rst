@@ -740,8 +740,10 @@ of ``learning_rate`` require larger numbers of weak learners to maintain
 a constant training error. Empirical evidence suggests that small
 values of ``learning_rate`` favor better test error. [HTF]_
 recommend to set the learning rate to a small constant
-(e.g. ``learning_rate <= 0.1``) and choose ``n_estimators`` by early
-stopping. For a more detailed discussion of the interaction between
+(e.g. ``learning_rate <= 0.1``) and choose ``n_estimators`` large enough
+that early stopping applies,
+see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`
+for a more detailed discussion of the interaction between
 ``learning_rate`` and ``n_estimators`` see [R2007]_.
 
 Subsampling
@@ -883,9 +885,9 @@ from a sample drawn with replacement (i.e., a bootstrap sample) from the
 training set.
 
 Furthermore, when splitting each node during the construction of a tree, the
-best split is found either from all input features or a random subset of size
-``max_features``. (See the :ref:`parameter tuning guidelines
-<random_forest_parameters>` for more details).
+best split is found through an exhaustive search of the features values of 
+either all input features or a random subset of size ``max_features``. 
+(See the :ref:`parameter tuning guidelines <random_forest_parameters>` for more details.)
 
 The purpose of these two sources of randomness is to decrease the variance of
 the forest estimator. Indeed, individual decision trees typically exhibit high
