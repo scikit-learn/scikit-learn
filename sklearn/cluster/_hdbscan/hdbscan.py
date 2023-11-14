@@ -106,7 +106,9 @@ def _brute_mst(mutual_reachability, min_samples):
 
     # Check if the mutual reachability matrix has any rows which have
     # less than `min_samples` non-zero elements.
-    if (mutual_reachability.getnnz(1) < min_samples).sum():
+    indptr = mutual_reachability.indptr
+    num_points = mutual_reachability.shape[0]
+    if any((indptr[i + 1] - indptr[i]) < min_samples for i in range(num_points)):
         raise ValueError(
             f"There exists points with fewer than {min_samples} neighbors. Ensure"
             " your distance matrix has non-zero values for at least"
