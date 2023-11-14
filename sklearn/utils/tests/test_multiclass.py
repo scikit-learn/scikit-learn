@@ -319,14 +319,11 @@ def test_is_multilabel_array_api_compliance(array_namespace, device, dtype):
     for group, group_examples in EXAMPLES.items():
         dense_exp = group == "multilabel-indicator"
         for example in group_examples:
-            if not (
-                hasattr(example, "__array__")
-                and np.asarray(example).dtype.kind in "biuf"
-            ):
-                continue
             # Densify sparse examples before testing
             if issparse(example):
                 example = example.toarray()
+            if np.asarray(example).dtype.kind not in "biuf":
+                continue
             if np.asarray(example).dtype.kind == "f":
                 example = np.asarray(example, dtype=dtype)
             else:
