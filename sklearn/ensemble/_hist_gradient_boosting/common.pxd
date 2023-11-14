@@ -38,6 +38,26 @@ cdef packed struct node_struct:
     # Only used if is_categorical is True
     unsigned int bitset_idx
 
+
+cdef struct split_info_struct:
+    # Same as the SplitInfo class, but we need a C struct to use it in the
+    # nogil sections and to use in arrays.
+    Y_DTYPE_C gain
+    int feature_idx
+    unsigned int bin_idx
+    unsigned char missing_go_to_left
+    Y_DTYPE_C sum_gradient_left
+    Y_DTYPE_C sum_gradient_right
+    Y_DTYPE_C sum_hessian_left
+    Y_DTYPE_C sum_hessian_right
+    unsigned int n_samples_left
+    unsigned int n_samples_right
+    Y_DTYPE_C value_left
+    Y_DTYPE_C value_right
+    unsigned char is_categorical
+    BITSET_DTYPE_C left_cat_bitset
+
+
 cpdef enum MonotonicConstraint:
     NO_CST = 0
     POS = 1
