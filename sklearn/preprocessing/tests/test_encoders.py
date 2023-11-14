@@ -1790,7 +1790,7 @@ def test_ordinal_encoder_sparse(csr_container):
 
     encoder = OrdinalEncoder()
 
-    err_msg = "A sparse matrix was passed, but dense data is required"
+    err_msg = "Sparse data was passed, but dense data is required"
     with pytest.raises(TypeError, match=err_msg):
         encoder.fit(X_sparse)
     with pytest.raises(TypeError, match=err_msg):
