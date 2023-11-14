@@ -1799,6 +1799,8 @@ def check_array_api_multiclass_classification_metric(
 
 
 def check_array_api_regression_metric(metric, array_namespace, device, dtype):
+    # Not all Array API / device combinations support `float64` values, hence
+    # limit this test to the `float32` case for now.
     y_true_np = np.array([3, -0.5, 2, 7], dtype="float32")
     y_pred_np = np.array([2.5, 0.0, 2, 8], dtype="float32")
     check_array_api_metric(
