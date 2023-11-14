@@ -574,13 +574,11 @@ class TreeGrower:
             if n_samples_left < n_samples_right:
                 smallest_child = left_child_node
                 largest_child = right_child_node
-                split_bin_start = 0
-                split_bin_end = node.split_info.bin_idx + 1
+                is_left_child = True
             else:
                 smallest_child = right_child_node
                 largest_child = left_child_node
-                split_bin_start = node.split_info.bin_idx + 1
-                split_bin_end = self.histogram_builder.n_bins
+                is_left_child = False
 
             # We use the brute O(n_samples) method on the child that has the
             # smallest number of samples, and the subtraction trick O(n_bins)
@@ -590,10 +588,9 @@ class TreeGrower:
             smallest_child.histograms = self.histogram_builder.compute_histograms_brute(
                 smallest_child.sample_indices,
                 smallest_child.allowed_features,
-                node.split_info.feature_idx,
-                split_bin_start,
-                split_bin_end,
-                node.histograms,
+                parent_split_info=node.split_info,
+                parent_histograms=node.histograms,
+                is_left_child=is_left_child,
             )
             largest_child.histograms = (
                 self.histogram_builder.compute_histograms_subtraction(

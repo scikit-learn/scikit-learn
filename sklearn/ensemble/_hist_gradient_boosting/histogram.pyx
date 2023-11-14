@@ -7,10 +7,12 @@ from cython.parallel import prange
 
 import numpy as np
 
+from .common cimport BITSET_INNER_DTYPE_C
 from .common import HISTOGRAM_DTYPE
-from .common cimport hist_struct
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport G_H_DTYPE_C
+from .common cimport hist_struct
+from ._bitset cimport in_bitset
 
 
 # Notes:
@@ -102,12 +104,11 @@ cdef class HistogramBuilder:
 
     def compute_histograms_brute(
         HistogramBuilder self,
-        const unsigned int [::1] sample_indices,       # IN
-        const unsigned int [:] allowed_features=None,  # IN
-        const int split_feature_idx=-1,                # IN
-        const unsigned int split_bin_start=0,          # IN
-        const unsigned int split_bin_end=0,            # IN
+        const unsigned int [::1] sample_indices,            # IN
+        const unsigned int [:] allowed_features=None,       # IN
+        object parent_split_info=None,                      # IN
         const hist_struct [:, ::1] parent_histograms=None,  # IN
+        const bint is_left_child=True,                      # IN
     ):
         """Compute the histograms of the node by scanning through all the data.
 
@@ -122,17 +123,15 @@ cdef class HistogramBuilder:
             Indices of the features that are allowed by interaction constraints to be
             split.
 
-        split_feature_idx : int
-            Feature index of the feature that the parent node was split on.
-
-        split_bin_start : unsigned int
-            Start of the bin indices belonging to the feature that was split on.
-
-        split_bin_end : unsigned int
-            End (+1) of the bin indices belonging to the feature that was split on.
+        parent_split_info : split_info_struct
+            The split_info of the parent node.
 
         parent_histograms : ndarray of HISTOGRAM_DTYPE, shape (n_features, n_bins)
             The histograms of the parent.
+
+        is_left_child : bool
+            True if the histogram of a left child is being computed, False for a right
+            child.
 
         Returns
         -------
@@ -157,8 +156,29 @@ cdef class HistogramBuilder:
                 dtype=HISTOGRAM_DTYPE
             )
             bint has_interaction_cst = allowed_features is not None
-            bint has_parent_hist = split_feature_idx >= 0
+            # Feature index of the feature that the parent node was split on.
+            int split_feature_idx
+            # Start of the bin indices belonging to the feature that was split on.
+            unsigned int split_bin_start
+            # End (+1) of the bin indices belonging to the feature that was split on.
+            unsigned int split_bin_end
+            unsigned char is_categorical
+            BITSET_INNER_DTYPE_C [:] left_cat_bitset
+            bint has_parent_hist = False
             int n_threads = self.n_threads
+
+        if parent_split_info is not None:
+            has_parent_hist = True
+            split_feature_idx = parent_split_info.feature_idx
+            is_categorical = parent_split_info.is_categorical
+            if is_left_child:
+                split_bin_start = 0
+                split_bin_end = parent_split_info.bin_idx + 1
+            else:
+                split_bin_start = parent_split_info.bin_idx + 1
+                split_bin_end = self.n_bins
+            if is_categorical:
+                left_cat_bitset = parent_split_info.left_cat_bitset
 
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
@@ -194,6 +214,9 @@ cdef class HistogramBuilder:
                         feature_idx=feature_idx,
                         split_bin_start=split_bin_start,
                         split_bin_end=split_bin_end,
+                        is_categorical=is_categorical,
+                        left_cat_bitset=left_cat_bitset,
+                        is_left_child=is_left_child,
                         histograms=histograms,
                         parent_histograms=parent_histograms,
                     )
@@ -204,38 +227,61 @@ cdef class HistogramBuilder:
 
         return histograms
 
-    cdef void _compute_histogram_single_feature_from_parent(
+    cpdef void _compute_histogram_single_feature_from_parent(
         HistogramBuilder self,
         const int feature_idx,
-        const unsigned int split_bin_start,            # IN
-        const unsigned int split_bin_end,              # IN
-        const hist_struct [:, ::1] parent_histograms,  # IN
-        hist_struct [:, ::1] histograms,               # OUT
+        const unsigned int split_bin_start,              # IN
+        const unsigned int split_bin_end,                # IN
+        const unsigned char is_categorical,              # IN
+        const BITSET_INNER_DTYPE_C [:] left_cat_bitset,  # IN
+        const bint is_left_child,                        # IN
+        const hist_struct [:, ::1] parent_histograms,    # IN
+        hist_struct [:, ::1] histograms,                 # OUT
     ) noexcept nogil:
         """Compute the histogram for the feature that was split on."""
         cdef:
             unsigned int bin_idx = 0
+            unsigned char in_left_binset
+            BITSET_INNER_DTYPE_C* p_left_cat_bitset = &left_cat_bitset[0]
 
-        for bin_idx in range(split_bin_start):
-            histograms[feature_idx, bin_idx].sum_gradients = 0.
-            histograms[feature_idx, bin_idx].sum_hessians = 0.
-            histograms[feature_idx, bin_idx].count = 0
+        if is_categorical:
+            for bin_idx in range(self.n_bins):
+                in_left_binset = in_bitset(p_left_cat_bitset, bin_idx)
+                if (is_left_child and in_left_binset) or (not is_left_child and not in_left_binset):
+                    histograms[feature_idx, bin_idx].sum_gradients = (
+                        parent_histograms[feature_idx, bin_idx].sum_gradients
+                    )
+                    histograms[feature_idx, bin_idx].sum_hessians = (
+                        parent_histograms[feature_idx, bin_idx].sum_hessians
+                    )
+                    histograms[feature_idx, bin_idx].count = (
+                        parent_histograms[feature_idx, bin_idx].count
+                    )
+                else:
+                    histograms[feature_idx, bin_idx].sum_gradients = 0.
+                    histograms[feature_idx, bin_idx].sum_hessians = 0.
+                    histograms[feature_idx, bin_idx].count = 0
+        else:
+            for bin_idx in range(split_bin_start):
+                histograms[feature_idx, bin_idx].sum_gradients = 0.
+                histograms[feature_idx, bin_idx].sum_hessians = 0.
+                histograms[feature_idx, bin_idx].count = 0
 
-        for bin_idx in range(split_bin_end, self.n_bins):
-            histograms[feature_idx, bin_idx].sum_gradients = 0.
-            histograms[feature_idx, bin_idx].sum_hessians = 0.
-            histograms[feature_idx, bin_idx].count = 0
+            for bin_idx in range(split_bin_end, self.n_bins):
+                histograms[feature_idx, bin_idx].sum_gradients = 0.
+                histograms[feature_idx, bin_idx].sum_hessians = 0.
+                histograms[feature_idx, bin_idx].count = 0
 
-        for bin_idx in range(split_bin_start, split_bin_end):
-            histograms[feature_idx, bin_idx].sum_gradients = (
-                parent_histograms[feature_idx, bin_idx].sum_gradients
-            )
-            histograms[feature_idx, bin_idx].sum_hessians = (
-                parent_histograms[feature_idx, bin_idx].sum_hessians
-            )
-            histograms[feature_idx, bin_idx].count = (
-                parent_histograms[feature_idx, bin_idx].count
-            )
+            for bin_idx in range(split_bin_start, split_bin_end):
+                histograms[feature_idx, bin_idx].sum_gradients = (
+                    parent_histograms[feature_idx, bin_idx].sum_gradients
+                )
+                histograms[feature_idx, bin_idx].sum_hessians = (
+                    parent_histograms[feature_idx, bin_idx].sum_hessians
+                )
+                histograms[feature_idx, bin_idx].count = (
+                    parent_histograms[feature_idx, bin_idx].count
+                )
 
     cdef void _compute_histogram_brute_single_feature(
             HistogramBuilder self,
