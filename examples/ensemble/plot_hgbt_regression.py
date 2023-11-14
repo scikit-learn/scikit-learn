@@ -163,12 +163,11 @@ hgbt.fit(X_train, y_train)
 
 _, ax = plt.subplots()
 plt.plot(-hgbt.validation_score_)
-ax.set(
+_ = ax.set(
     xlabel="number of iterations",
     ylabel="root mean squared error",
     title=f"Loss of hgbt with early stopping (n_iter={hgbt.n_iter_})",
 )
-_ = ax.legend()
 
 # %%
 # We can then overwrite the value for `max_iter` to a reasonable value and avoid
@@ -204,7 +203,7 @@ from sklearn.metrics import root_mean_squared_error
 
 rng = np.random.RandomState(42)
 first_week = slice(0, 336)  # first week in the test set as 7 * 48 = 336
-missing_fraction_list = [0, 0.02, 0.05]
+missing_fraction_list = [0, 0.01, 0.03]
 
 
 def generate_missing_values(X, missing_fraction):
@@ -221,9 +220,10 @@ fig, ax = plt.subplots(figsize=(12, 6))
 ax.plot(y_test.values[first_week], label="Actual transfer")
 
 for missing_fraction in missing_fraction_list:
-    X_missing = generate_missing_values(X_train, missing_fraction)
-    hgbt.fit(X_missing, y_train)
-    y_pred = hgbt.predict(X_test[first_week])
+    X_train_missing = generate_missing_values(X_train, missing_fraction)
+    X_test_missing = generate_missing_values(X_test, missing_fraction)
+    hgbt.fit(X_train_missing, y_train)
+    y_pred = hgbt.predict(X_test_missing[first_week])
     rmse = root_mean_squared_error(y_test[first_week], y_pred)
     ax.plot(
         y_pred[first_week],
@@ -240,6 +240,8 @@ ax.set(
 _ = ax.legend(loc="lower right")
 
 # %%
+# As expected, the model degrades as the proportion of missing values increases.
+#
 # Support for quantile loss
 # =========================
 #
