@@ -170,6 +170,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         if return_and_ignore_missing_for_infrequent:
             for feature_idx, categories_for_idx in enumerate(self.categories_):
                 if is_scalar_nan(categories_for_idx[-1]):
+                    # `nan` values can only be placed in the latest position
                     missing_indices[feature_idx] = categories_for_idx.size - 1
             output["missing_indices"] = missing_indices
 
