@@ -67,7 +67,7 @@ y[:17_760].unique()
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-df = electricity.frame.iloc[17760:]
+df = electricity.frame.iloc[17_760:]
 X = df.drop(columns=["transfer", "class"])
 y = df["transfer"]
 
@@ -160,10 +160,15 @@ common_params = {
 
 hgbt = HistGradientBoostingRegressor(early_stopping=True, **common_params)
 hgbt.fit(X_train, y_train)
+
+_, ax = plt.subplots()
 plt.plot(-hgbt.validation_score_)
-plt.xlabel("number of iterations")
-plt.ylabel("root mean squared error")
-_ = plt.title(f"Loss of hgbt with early stopping (n_iter={hgbt.n_iter_})")
+ax.set(
+    xlabel="number of iterations",
+    ylabel="root mean squared error",
+    title=f"Loss of hgbt with early stopping (n_iter={hgbt.n_iter_})",
+)
+_ = ax.legend()
 
 # %%
 # We can then overwrite the value for `max_iter` to a reasonable value and avoid
