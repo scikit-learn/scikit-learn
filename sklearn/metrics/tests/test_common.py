@@ -1818,6 +1818,31 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype):
         )
 
 
+def check_array_api_multioutput_regression_metric(
+    metric, array_namespace, device, dtype
+):
+    # Not all Array API / device combinations support `float64` values, hence
+    # limit this test to the `float32` case for now.
+    y_true_np = np.array([[0.5, 1], [-1, 1], [7, -6]], dtype="float32")
+    y_pred_np = np.array([[0, 2], [-1, 2], [8, -5]], dtype="float32")
+
+    metric = partial(metric, multioutput="raw_values")
+
+    check_array_api_metric(
+        metric, array_namespace, device, dtype, y_true_np=y_true_np, y_pred_np=y_pred_np
+    )
+    if "sample_weight" in signature(metric).parameters:
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype,
+            y_true_np=y_true_np,
+            y_pred_np=y_pred_np,
+            sample_weight=np.array([0.0, 0.1, 2.0], dtype="float32"),
+        )
+
+
 metric_checkers = {
     accuracy_score: [
         check_array_api_binary_classification_metric,
@@ -1827,7 +1852,10 @@ metric_checkers = {
         check_array_api_binary_classification_metric,
         check_array_api_multiclass_classification_metric,
     ],
-    mean_absolute_error: [check_array_api_regression_metric],
+    mean_absolute_error: [
+        check_array_api_regression_metric,
+        check_array_api_multioutput_regression_metric,
+    ],
 }
 
 
