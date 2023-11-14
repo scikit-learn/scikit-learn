@@ -1814,7 +1814,7 @@ def check_array_api_regression_metric(metric, array_namespace, device, dtype):
             dtype,
             y_true_np=y_true_np,
             y_pred_np=y_pred_np,
-            sample_weight=np.array([0.0, 0.1, 2.0, 1.0]),
+            sample_weight=np.array([0.0, 0.1, 2.0, 1.0], dtype="float32"),
         )
 
 
