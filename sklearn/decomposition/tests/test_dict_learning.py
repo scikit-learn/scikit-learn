@@ -1027,12 +1027,14 @@ def test_minibatch_dictionary_learning_warns_and_ignore_n_iter():
     assert model.n_iter_ == 2
 
 
-class SparseCoderTest(SparseCoder):
+class SparseCoderForCommonTests(SparseCoder):
     """Inheriting from SparseCoder to pass the common test.
 
-    SparseCoder is annoying because the size of the dictionary depends on the
-    size of the input. Therefore, we need to set the dictionary during fit to be
-    able to pass the common tests.
+    SparseCoder is fundamentally stateless and requires a dictionary parameter
+    as constructor parameter which makes it challenging to run the usual transformer
+    checks. This stateful subclass instead creates a random dictionary that is
+    compatible with the input data dimensions passed to fit to benefit from the
+    test coverage provided by the usual stateful transformer checks.
     """
 
     # Helpers to set the dictionary based on the input data in fit/transform

@@ -265,9 +265,9 @@ Changelog
   :user:`Olivier Grisel <ogrisel>` and :user:`Edoardo Abati <EdAbati>`.
 
 - |Fix| :class:`decomposition.SparseCoder` now follows the transformer API of
-  scikit-learn. This class is defined as a stateless transformer meaning that it is note
-  required to call `fit` before calling `transform`. Parameter validation only happens
-  at `fit` time.
+  scikit-learn. This class is defined as a stateless transformer meaning that it is not
+  required to call `fit` before calling `transform`. Note however that parameter 
+  validation only happens at `fit` time as for other scikit-learn estimators.
   :pr:`27724` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.ensemble`
