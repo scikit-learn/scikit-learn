@@ -523,6 +523,10 @@ Changelog
   accept the same sparse input formats for SciPy sparse matrices and arrays.
   :pr:`27372` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :func:`~utils.multiclass.is_multilabel` now supports the Array API
+  compatible inputs.
+  :pr:`27601` by :user:`Yaroslav Korobko <Tialo>`.
+
 - |Fix| :func:`sklearn.utils.check_array` should accept both matrix and array from
   the sparse SciPy module. The previous implementation would fail if `copy=True` by
   calling specific NumPy `np.may_share_memory` that does not work with SciPy sparse
