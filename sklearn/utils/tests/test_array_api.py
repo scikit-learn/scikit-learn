@@ -410,3 +410,39 @@ def test__average(library, X, axis, weights, expected):
         result = _average(xp.asarray(X), axis=axis, weights=weights)
 
     assert_allclose(result, expected)
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize("library", ["cupy", "cupy.array_api", "torch"])
+@pytest.mark.parametrize(
+    "axis,weights,expected_error,expected_msg",
+    [
+        (
+            None,
+            [0.5, 2.0],
+            TypeError,
+            "Axis must be specified when shapes of X and weights differ.",
+        ),
+        (
+            0,
+            [[0.5], [2.0]],
+            TypeError,
+            "1D weights expected when shapes of X and weights differ.",
+        ),
+        (
+            1,
+            [0.5, 2.0],
+            ValueError,
+            "Length of weights not compatible with specified axis.",
+        ),
+        (0, [0.5, -0.5], ZeroDivisionError, "Weights sum to zero, can't be normalized"),
+    ],
+)
+def test__average_error(library, axis, weights, expected_error, expected_msg):
+    xp = pytest.importorskip(library)
+
+    X = xp.asarray([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]], dtype=xp.float32)
+
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(expected_error, match=expected_msg):
+            _average(X, axis=axis, weights=weights)
