@@ -135,6 +135,7 @@ def test_dbscan_input_not_modified_precomputed_sparse_nodiag(csr_container):
     # the diagonal will be made explicit.
     np.fill_diagonal(X, 0)
     X = csr_container(X)
+    assert all(row != col for row, col in zip(*X.nonzero()))
     X_copy = X.copy()
     dbscan(X, metric="precomputed")
     # Make sure that we did not modify `X` in-place even by creating
