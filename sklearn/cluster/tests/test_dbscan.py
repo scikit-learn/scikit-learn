@@ -125,7 +125,7 @@ def test_dbscan_input_not_modified(metric, csr_container):
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_dbscan_input_not_modified_precomputed_sparse_nodiag(csr_container):
     """Check that we don't modify in-place the pre-computed sparse matrix.
-    
+
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/27508
     """
