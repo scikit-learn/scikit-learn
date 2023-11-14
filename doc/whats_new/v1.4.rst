@@ -169,7 +169,7 @@ and classes are impacted:
 - :class:`feature_extraction.text.TfidfTransformer` in :pr:`27219` by
   :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`cluster.Isomap` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
-- :func:`manifold.SpectralEmbedding` in :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`;
+- :class:`manifold.SpectralEmbedding` in :pr:`27240` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`manifold.TSNE` in :pr:`27250` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`impute.SimpleImputer` in :pr:`27277` by :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`impute.IterativeImputer` in :pr:`27277` by :user:`Yao Xiao <Charlie-XIAO>`;
@@ -180,6 +180,10 @@ and classes are impacted:
   :user:`Yao Xiao <Charlie-XIAO>`;
 - :class:`preprocessing.PolynomialFeatures` in :pr:`27166` by
   :user:`Mohit Joshi <work-mohit>`.
+- :class:`random_projection.GaussianRandomProjection` in :pr:`27314` by
+  :user:`Stefanie Senger <StefanieSenger>`.
+- :class:`random_projection.SparseRandomProjection`in :pr:`27314` by
+  :user:`Stefanie Senger <StefanieSenger>`.
 
 Changelog
 ---------
@@ -255,6 +259,10 @@ Changelog
   which returns a dense numpy ndarray as before.
   :pr:`27438` by :user:`Yao Xiao <Charlie-XIAO>`.
 
+- |API| :func:`datasets.make_sparse_spd_matrix` deprecated the keyword argument ``dim``
+  in favor of ``n_dim``. ``dim`` will be removed in version 1.6.
+  :pr:`27718` by :user:`Adam Li <adam2392>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -270,6 +278,13 @@ Changelog
   :ref:`array_api` for more details.
   :pr:`26315` and :pr:`27098` by :user:`Mateusz Sokół <mtsokol>`,
   :user:`Olivier Grisel <ogrisel>` and :user:`Edoardo Abati <EdAbati>`.
+
+- |Feature| :class:`decomposition.PCA` now supports :class:`scipy.sparse.sparray`
+  and :class:`scipy.sparse.spmatrix` inputs when using the `arpack` solver.
+  When used on sparse data like :func:`datasets.fetch_20newsgroups_vectorized` this
+  can lead to speed-ups of 100x (single threaded) and 70x lower memory usage.
+  Based on :user:`Alexander Tarashansky <atarashansky>`'s implementation in `scanpy <https://github.com/scverse/scanpy>`.
+  :pr:`18689` by :user:`Isaac Virshup <ivirshup>` and :user:`Andrey Portnoy <andportnoy>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -287,6 +302,12 @@ Changelog
   Missing values in the train data and multi-output targets are not supported.
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
   initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
+
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` got the new parameter
+  `max_features` to specify the proportion of randomly chosen features considered
+  in each split.
+  :pr:`27139` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Efficiency| :class:`ensemble.GradientBoostingClassifier` is faster,
   for binary and in particular for multiclass problems thanks to the private loss
@@ -451,14 +472,16 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |MajorFeature| :class:`preprocessing.MinMaxScaler`, :class:`preprocessing.MaxAbsScaler`
-  and :class:`preprocessing.KernelCenterer` now
-  support the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
+- |MajorFeature| The following classes now support the
+  `Array API <https://data-apis.org/array-api/latest/>`_. Array API
   support is considered experimental and might evolve without being subject to
   our usual rolling deprecation cycle policy. See
   :ref:`array_api` for more details.
-  :pr:`26243` by `Tim Head`_, :pr:`27110` by :user:`Edoardo Abati <EdAbati>` and
-  :pr:`27556` by :user:`Edoardo Abati <EdAbati>`.
+
+  - :class:`preprocessing.MinMaxScaler` :pr:`26243` by `Tim Head`_
+  - :class:`preprocessing.MaxAbsScaler` :pr:`27110` by :user:`Edoardo Abati <EdAbati>`
+  - :class:`preprocessing.KernelCenterer` :pr:`27556` by :user:`Edoardo Abati <EdAbati>`
+  - :class:`preprocessing.Normalizer` :pr:`27558` by :user:`Edoardo Abati <EdAbati>`
 
 - |Efficiency| :class:`preprocessing.OrdinalEncoder` avoids calculating
   missing indices twice to improve efficiency.
@@ -511,6 +534,10 @@ Changelog
   accept the same sparse input formats for SciPy sparse matrices and arrays.
   :pr:`27372` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :func:`~utils.multiclass.is_multilabel` now supports the Array API
+  compatible inputs.
+  :pr:`27601` by :user:`Yaroslav Korobko <Tialo>`.
+
 - |Fix| :func:`sklearn.utils.check_array` should accept both matrix and array from
   the sparse SciPy module. The previous implementation would fail if `copy=True` by
   calling specific NumPy `np.may_share_memory` that does not work with SciPy sparse
@@ -527,6 +554,10 @@ Changelog
   calling a dedicated private function that would crash when OpenBLAS
   misdetects the CPU architecture.
   :pr:`27614` by :user:`Olivier Grisel <ogrisel>`.
+
+- |Fix| Error message in :func:`~utils.check_array` when a sparse matrix was
+  passed but `accept_sparse` is `False` now suggests to use `.toarray()` and not
+  `X.toarray()`. :pr:`27757` by :user:`Lucy Liu <lucyleeow>`.
 
 Code and Documentation Contributors
 -----------------------------------
