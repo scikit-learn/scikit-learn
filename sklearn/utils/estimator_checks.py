@@ -1493,7 +1493,7 @@ def _apply_on_subsets(func, X):
         result_by_batch = list(map(lambda x: x[0], result_by_batch))
 
     if sparse.issparse(result_full):
-        result_full = result_full.A
+        result_full = result_full.toarray()
         result_by_batch = [x.toarray() for x in result_by_batch]
 
     return np.ravel(result_full), np.ravel(result_by_batch)
