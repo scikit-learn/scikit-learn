@@ -634,10 +634,14 @@ def _average(X, axis=None, weights=None):
     if X.shape != weights.shape:
         if axis is None:
             raise TypeError(
-                "Axis must be specified when shapes of a and weights differ."
+                "Axis must be specified when shapes of X and weights differ. "
+                f"Got {X.shape = } and {weights.shape = }."
             )
         if weights.ndim != 1:
-            raise TypeError("1D weights expected when shapes of a and weights differ.")
+            raise TypeError(
+                "1D weights expected when shapes of X and weights differ. "
+                f"Got {X.shape = } and {weights.shape = }."
+            )
         if weights.shape[0] != X.shape[axis]:
             raise ValueError("Length of weights not compatible with specified axis.")
         weights = xp.broadcast_to(weights, (X.ndim - 1) * (1,) + weights.shape)
