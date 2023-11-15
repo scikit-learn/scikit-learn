@@ -10,7 +10,7 @@ class Perceptron(BaseSGDClassifier):
     """Linear perceptron classifier.
 
     The implementation is a wrapper around :class:`~sklearn.linear_model.SGDClassifier`
-    by fixing the `loss` and `learning_rate` parameter such as::
+    by fixing the `loss` and `learning_rate` parameters as::
 
         SGDClassifier(loss="perceptron", learning_rate="constant")
 
