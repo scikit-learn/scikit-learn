@@ -428,7 +428,7 @@ Different choices for :math:`L` entail different classifiers or regressors:
   :math:`L(y_i, f(x_i)) = \max(0, - y_i f(x_i))`.
 - Modified Huber:
   :math:`L(y_i, f(x_i)) = \max(0, 1 - y_i f(x_i))^2` if :math:`y_i f(x_i) >
-  1`, and :math:`L(y_i, f(x_i)) = -4 y_i f(x_i)` otherwise.
+  -1`, and :math:`L(y_i, f(x_i)) = -4 y_i f(x_i)` otherwise.
 - Log Loss: equivalent to Logistic Regression.
   :math:`L(y_i, f(x_i)) = \log(1 + \exp (-y_i f(x_i)))`.
 - Squared Error: Linear regression (Ridge or Lasso depending on

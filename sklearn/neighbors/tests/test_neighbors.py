@@ -2117,7 +2117,7 @@ def test_sparse_metric_callable(csr_container):
         [[1, 1, 1, 1, 1], [1, 0, 1, 0, 1], [0, 0, 1, 0, 0]]  # Population matrix
     )
 
-    Y = csr_container([[1, 1, 0, 1, 1], [1, 0, 0, 0, 1]])  # Query matrix
+    Y = csr_container([[1, 1, 0, 1, 1], [1, 0, 0, 1, 1]])  # Query matrix
 
     nn = neighbors.NearestNeighbors(
         algorithm="brute", n_neighbors=2, metric=sparse_metric

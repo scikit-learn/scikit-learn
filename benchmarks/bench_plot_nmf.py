@@ -38,7 +38,7 @@ mem = Memory(cachedir=".", verbose=0)
 
 def _norm(x):
     """Dot product-based Euclidean norm implementation
-    See: http://fseoane.net/blog/2011/computing-the-vector-norm/
+    See: https://fa.bianp.net/blog/2011/computing-the-vector-norm/
     """
     return np.sqrt(squared_norm(x))
 

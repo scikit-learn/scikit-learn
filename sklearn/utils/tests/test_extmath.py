@@ -687,16 +687,20 @@ def test_cartesian_mix_types(arrays, output_dtype):
     assert output.dtype == output_dtype
 
 
+# TODO(1.6): remove this test
 def test_logistic_sigmoid():
     # Check correctness and robustness of logistic sigmoid implementation
     def naive_log_logistic(x):
         return np.log(expit(x))
 
     x = np.linspace(-2, 2, 50)
-    assert_array_almost_equal(log_logistic(x), naive_log_logistic(x))
+    warn_msg = "`log_logistic` is deprecated and will be removed"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        assert_array_almost_equal(log_logistic(x), naive_log_logistic(x))
 
     extreme_x = np.array([-100.0, 100.0])
-    assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
+    with pytest.warns(FutureWarning, match=warn_msg):
+        assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
 
 
 @pytest.fixture()
