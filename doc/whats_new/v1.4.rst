@@ -470,7 +470,6 @@ Changelog
   is a user-defined function.
   :pr:`26410` by :user:`Yao Xiao <Charlie-XIAO>`
 
-
 :mod:`sklearn.preprocessing`
 ............................
 
