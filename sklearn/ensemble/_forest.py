@@ -40,18 +40,24 @@ Single and multi-output problems are both handled.
 # License: BSD 3 clause
 
 
+import threading
+from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 from warnings import catch_warnings, simplefilter, warn
-import threading
 
-from abc import ABCMeta, abstractmethod
 import numpy as np
-from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
+from scipy.sparse import issparse
 
-from ..base import is_classifier
-from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin, TransformerMixin
-
+from ..base import (
+    ClassifierMixin,
+    MultiOutputMixin,
+    RegressorMixin,
+    TransformerMixin,
+    _fit_context,
+    is_classifier,
+)
+from ..exceptions import DataConversionWarning
 from ..metrics import accuracy_score, r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (
@@ -61,21 +67,19 @@ from ..tree import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
-from ..tree._tree import DTYPE, DOUBLE
+from ..tree._tree import DOUBLE, DTYPE
 from ..utils import check_random_state, compute_sample_weight
-from ..exceptions import DataConversionWarning
-from ._base import BaseEnsemble, _partition_estimators
-from ..utils.parallel import delayed, Parallel
+from ..utils._param_validation import Interval, RealNotInt, StrOptions
+from ..utils._tags import _safe_tags
 from ..utils.multiclass import check_classification_targets, type_of_target
+from ..utils.parallel import Parallel, delayed
 from ..utils.validation import (
-    check_is_fitted,
-    _check_sample_weight,
     _check_feature_names_in,
+    _check_sample_weight,
+    _num_samples,
+    check_is_fitted,
 )
-from ..utils.validation import _num_samples
-from ..utils._param_validation import Interval, StrOptions
-from ..utils._param_validation import RealNotInt
-
+from ._base import BaseEnsemble, _partition_estimators
 
 __all__ = [
     "RandomForestClassifier",
@@ -126,7 +130,9 @@ def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
     Private function used to _parallel_build_trees function."""
 
     random_instance = check_random_state(random_state)
-    sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
+    sample_indices = random_instance.randint(
+        0, n_samples, n_samples_bootstrap, dtype=np.int32
+    )
 
     return sample_indices
 
@@ -156,6 +162,7 @@ def _parallel_build_trees(
     verbose=0,
     class_weight=None,
     n_samples_bootstrap=None,
+    missing_values_in_feature_mask=None,
 ):
     """
     Private function used to fit a single tree in parallel."""
@@ -182,9 +189,21 @@ def _parallel_build_trees(
         elif class_weight == "balanced_subsample":
             curr_sample_weight *= compute_sample_weight("balanced", y, indices=indices)
 
-        tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
+        tree._fit(
+            X,
+            y,
+            sample_weight=curr_sample_weight,
+            check_input=False,
+            missing_values_in_feature_mask=missing_values_in_feature_mask,
+        )
     else:
-        tree.fit(X, y, sample_weight=sample_weight, check_input=False)
+        tree._fit(
+            X,
+            y,
+            sample_weight=sample_weight,
+            check_input=False,
+            missing_values_in_feature_mask=missing_values_in_feature_mask,
+        )
 
     return tree
 
@@ -311,6 +330,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         return sparse_hstack(indicators).tocsr(), n_nodes_ptr
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """
         Build a forest of trees from the training set (X, y).
@@ -338,14 +358,29 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         # Validate or convert input data
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
+
         X, y = self._validate_data(
-            X, y, multi_output=True, accept_sparse="csc", dtype=DTYPE
+            X,
+            y,
+            multi_output=True,
+            accept_sparse="csc",
+            dtype=DTYPE,
+            force_all_finite=False,
         )
+        # _compute_missing_values_in_feature_mask checks if X has missing values and
+        # will raise an error if the underlying tree base estimator can't handle missing
+        # values. Only the criterion is required to determine if the tree supports
+        # missing values.
+        estimator = type(self.estimator)(criterion=self.criterion)
+        missing_values_in_feature_mask = (
+            estimator._compute_missing_values_in_feature_mask(
+                X, estimator_name=self.__class__.__name__
+            )
+        )
+
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -383,7 +418,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     "is necessary for Poisson regression."
                 )
 
-        self.n_outputs_ = y.shape[1]
+        self._n_samples, self.n_outputs_ = y.shape
 
         y, expanded_class_weight = self._validate_y_class_weight(y)
 
@@ -408,6 +443,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             )
         else:
             n_samples_bootstrap = None
+
+        self._n_samples_bootstrap = n_samples_bootstrap
 
         self._validate_estimator()
 
@@ -467,6 +504,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     verbose=self.verbose,
                     class_weight=self.class_weight,
                     n_samples_bootstrap=n_samples_bootstrap,
+                    missing_values_in_feature_mask=missing_values_in_feature_mask,
                 )
                 for i, t in enumerate(trees)
             )
@@ -474,7 +512,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # Collect newly grown trees
             self.estimators_.extend(trees)
 
-        if self.oob_score:
+        if self.oob_score and (
+            n_more_estimators > 0 or not hasattr(self, "oob_score_")
+        ):
             y_type = type_of_target(y)
             if y_type in ("multiclass-multioutput", "unknown"):
                 # FIXME: we could consider to support multiclass-multioutput if
@@ -592,7 +632,18 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         Validate X whenever one tries to predict, apply, predict_proba."""
         check_is_fitted(self)
-        X = self._validate_data(X, dtype=DTYPE, accept_sparse="csr", reset=False)
+        if self.estimators_[0]._support_missing_values(X):
+            force_all_finite = "allow-nan"
+        else:
+            force_all_finite = True
+
+        X = self._validate_data(
+            X,
+            dtype=DTYPE,
+            accept_sparse="csr",
+            reset=False,
+            force_all_finite=force_all_finite,
+        )
         if issparse(X) and (X.indices.dtype != np.intc or X.indptr.dtype != np.intc):
             raise ValueError("No support for np.int64 index based sparse matrices")
         return X
@@ -631,6 +682,42 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         all_importances = np.mean(all_importances, axis=0, dtype=np.float64)
         return all_importances / np.sum(all_importances)
+
+    def _get_estimators_indices(self):
+        # Get drawn indices along both sample and feature axes
+        for tree in self.estimators_:
+            if not self.bootstrap:
+                yield np.arange(self._n_samples, dtype=np.int32)
+            else:
+                # tree.random_state is actually an immutable integer seed rather
+                # than a mutable RandomState instance, so it's safe to use it
+                # repeatedly when calling this property.
+                seed = tree.random_state
+                # Operations accessing random_state must be performed identically
+                # to those in `_parallel_build_trees()`
+                yield _generate_sample_indices(
+                    seed, self._n_samples, self._n_samples_bootstrap
+                )
+
+    @property
+    def estimators_samples_(self):
+        """The subset of drawn samples for each base estimator.
+
+        Returns a dynamically generated list of indices identifying
+        the samples used for fitting each member of the ensemble, i.e.,
+        the in-bag samples.
+
+        Note: the list is re-created at each call to the property in order
+        to reduce the object memory footprint by not storing the sampling
+        data. Thus fetching the property may be slower than expected.
+        """
+        return [sample_indices for sample_indices in self._get_estimators_indices()]
+
+    def _more_tags(self):
+        # Only the criterion is required to determine if the tree supports
+        # missing values
+        estimator = type(self.estimator)(criterion=self.criterion)
+        return {"allow_nan": _safe_tags(estimator, key="allow_nan")}
 
 
 def _accumulate_prediction(predict, X, out, lock):
@@ -1090,9 +1177,14 @@ class RandomForestClassifier(ForestClassifier):
     A random forest is a meta estimator that fits a number of decision tree
     classifiers on various sub-samples of the dataset and uses averaging to
     improve the predictive accuracy and control over-fitting.
+    Trees in the forest use the best split strategy, i.e. equivalent to passing
+    `splitter="best"` to the underlying :class:`~sklearn.tree.DecisionTreeRegressor`.
     The sub-sample size is controlled with the `max_samples` parameter if
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
+
+    For a comparison between tree-based ensemble models see the example
+    :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`.
 
     Read more in the :ref:`User Guide <forest>`.
 
@@ -1266,6 +1358,25 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 0.22
 
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonic increase
+          - 0: no constraint
+          - -1: monotonic decrease
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multiclass classifications (i.e. when `n_classes > 2`),
+          - multioutput classifications (i.e. when `n_outputs_ > 1`),
+          - classifications trained on data with missing values.
+
+        The constraints hold over the probability of the positive class.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.DecisionTreeClassifier`
@@ -1330,6 +1441,12 @@ class RandomForestClassifier(ForestClassifier):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
+
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
 
     See Also
     --------
@@ -1406,6 +1523,7 @@ class RandomForestClassifier(ForestClassifier):
         class_weight=None,
         ccp_alpha=0.0,
         max_samples=None,
+        monotonic_cst=None,
     ):
         super().__init__(
             estimator=DecisionTreeClassifier(),
@@ -1421,6 +1539,7 @@ class RandomForestClassifier(ForestClassifier):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "monotonic_cst",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1440,6 +1559,7 @@ class RandomForestClassifier(ForestClassifier):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
+        self.monotonic_cst = monotonic_cst
         self.ccp_alpha = ccp_alpha
 
 
@@ -1447,12 +1567,17 @@ class RandomForestRegressor(ForestRegressor):
     """
     A random forest regressor.
 
-    A random forest is a meta estimator that fits a number of classifying
-    decision trees on various sub-samples of the dataset and uses averaging
-    to improve the predictive accuracy and control over-fitting.
+    A random forest is a meta estimator that fits a number of decision tree
+    regressors on various sub-samples of the dataset and uses averaging to
+    improve the predictive accuracy and control over-fitting.
+    Trees in the forest use the best split strategy, i.e. equivalent to passing
+    `splitter="best"` to the underlying :class:`~sklearn.tree.DecisionTreeRegressor`.
     The sub-sample size is controlled with the `max_samples` parameter if
     `bootstrap=True` (default), otherwise the whole dataset is used to build
     each tree.
+
+    For a comparison between tree-based ensemble models see the example
+    :ref:`sphx_glr_auto_examples_ensemble_plot_forest_hist_grad_boosting_comparison.py`.
 
     Read more in the :ref:`User Guide <forest>`.
 
@@ -1617,6 +1742,22 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 0.22
 
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonically increasing
+          - 0: no constraint
+          - -1: monotonically decreasing
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multioutput regressions (i.e. when `n_outputs_ > 1`),
+          - regressions trained on data with missing values.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
@@ -1669,6 +1810,12 @@ class RandomForestRegressor(ForestRegressor):
     oob_prediction_ : ndarray of shape (n_samples,) or (n_samples, n_outputs)
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
+
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
 
     See Also
     --------
@@ -1744,6 +1891,7 @@ class RandomForestRegressor(ForestRegressor):
         warm_start=False,
         ccp_alpha=0.0,
         max_samples=None,
+        monotonic_cst=None,
     ):
         super().__init__(
             estimator=DecisionTreeRegressor(),
@@ -1759,6 +1907,7 @@ class RandomForestRegressor(ForestRegressor):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "monotonic_cst",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1778,6 +1927,7 @@ class RandomForestRegressor(ForestRegressor):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
+        self.monotonic_cst = monotonic_cst
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -1965,9 +2115,28 @@ class ExtraTreesClassifier(ForestClassifier):
 
         .. versionadded:: 0.22
 
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonically increasing
+          - 0: no constraint
+          - -1: monotonically decreasing
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multiclass classifications (i.e. when `n_classes > 2`),
+          - multioutput classifications (i.e. when `n_outputs_ > 1`),
+          - classifications trained on data with missing values.
+
+        The constraints hold over the probability of the positive class.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
-    estimator_ : :class:`~sklearn.tree.ExtraTreesClassifier`
+    estimator_ : :class:`~sklearn.tree.ExtraTreeClassifier`
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
@@ -2029,6 +2198,12 @@ class ExtraTreesClassifier(ForestClassifier):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
+
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
 
     See Also
     --------
@@ -2094,6 +2269,7 @@ class ExtraTreesClassifier(ForestClassifier):
         class_weight=None,
         ccp_alpha=0.0,
         max_samples=None,
+        monotonic_cst=None,
     ):
         super().__init__(
             estimator=ExtraTreeClassifier(),
@@ -2109,6 +2285,7 @@ class ExtraTreesClassifier(ForestClassifier):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "monotonic_cst",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -2129,6 +2306,7 @@ class ExtraTreesClassifier(ForestClassifier):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
+        self.monotonic_cst = monotonic_cst
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -2304,6 +2482,22 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionadded:: 0.22
 
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonically increasing
+          - 0: no constraint
+          - -1: monotonically decreasing
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonicity constraints are not supported for:
+          - multioutput regressions (i.e. when `n_outputs_ > 1`),
+          - regressions trained on data with missing values.
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+
+        .. versionadded:: 1.4
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor`
@@ -2356,6 +2550,12 @@ class ExtraTreesRegressor(ForestRegressor):
     oob_prediction_ : ndarray of shape (n_samples,) or (n_samples, n_outputs)
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
+
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
 
     See Also
     --------
@@ -2416,6 +2616,7 @@ class ExtraTreesRegressor(ForestRegressor):
         warm_start=False,
         ccp_alpha=0.0,
         max_samples=None,
+        monotonic_cst=None,
     ):
         super().__init__(
             estimator=ExtraTreeRegressor(),
@@ -2431,6 +2632,7 @@ class ExtraTreesRegressor(ForestRegressor):
                 "min_impurity_decrease",
                 "random_state",
                 "ccp_alpha",
+                "monotonic_cst",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -2450,6 +2652,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
+        self.monotonic_cst = monotonic_cst
 
 
 class RandomTreesEmbedding(TransformerMixin, BaseForest):
@@ -2601,6 +2804,12 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
     one_hot_encoder_ : OneHotEncoder instance
         One-hot encoder used to create the sparse embedding.
 
+    estimators_samples_ : list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator. Each subset is defined by an array of the indices selected.
+
+        .. versionadded:: 1.4
+
     See Also
     --------
     ExtraTreesClassifier : An extra-trees classifier.
@@ -2643,7 +2852,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         **BaseDecisionTree._parameter_constraints,
         "sparse_output": ["boolean"],
     }
-    for param in ("max_features", "ccp_alpha", "splitter"):
+    for param in ("max_features", "ccp_alpha", "splitter", "monotonic_cst"):
         _parameter_constraints.pop(param)
 
     criterion = "squared_error"
@@ -2729,6 +2938,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         self.fit_transform(X, y, sample_weight=sample_weight)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None, sample_weight=None):
         """
         Fit estimator and transform dataset.
@@ -2754,8 +2964,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         X_transformed : sparse matrix of shape (n_samples, n_out)
             Transformed dataset.
         """
-        self._validate_params()
-
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=_num_samples(X))
         super().fit(X, y, sample_weight=sample_weight)

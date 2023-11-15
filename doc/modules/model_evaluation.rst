@@ -94,8 +94,9 @@ Scoring                                Function                                 
 'max_error'                            :func:`metrics.max_error`
 'neg_mean_absolute_error'              :func:`metrics.mean_absolute_error`
 'neg_mean_squared_error'               :func:`metrics.mean_squared_error`
-'neg_root_mean_squared_error'          :func:`metrics.mean_squared_error`
+'neg_root_mean_squared_error'          :func:`metrics.root_mean_squared_error`
 'neg_mean_squared_log_error'           :func:`metrics.mean_squared_log_error`
+'neg_root_mean_squared_log_error'      :func:`metrics.root_mean_squared_log_error`
 'neg_median_absolute_error'            :func:`metrics.median_absolute_error`
 'r2'                                   :func:`metrics.r2_score`
 'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
@@ -159,8 +160,14 @@ the :func:`fbeta_score` function::
     >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
     >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.svm import LinearSVC
-    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
+    >>> grid = GridSearchCV(LinearSVC(dual="auto"), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer, cv=5)
+
+
+|details-start|
+**Custom scorer objects**
+|details-split|
+
 
 The second use case is to build a completely custom scorer object
 from a simple python function using :func:`make_scorer`, which can
@@ -174,9 +181,15 @@ take several parameters:
   of the python function is negated by the scorer object, conforming to
   the cross validation convention that scorers return higher values for better models.
 
-* for classification metrics only: whether the python function you provided requires continuous decision
-  certainties (``needs_threshold=True``).  The default value is
-  False.
+* for classification metrics only: whether the python function you provided requires
+  continuous decision certainties. If the scoring function only accepts probability
+  estimates (e.g. :func:`metrics.log_loss`) then one needs to set the parameter
+  `response_method`, thus in this case `response_method="predict_proba"`. Some scoring
+  function do not necessarily require probability estimates but rather non-thresholded
+  decision values (e.g. :func:`metrics.roc_auc_score`). In this case, one provides a
+  list such as `response_method=["decision_function", "predict_proba"]`. In this case,
+  the scorer will use the first available method, in the order given in the list,
+  to compute the scores.
 
 * any additional parameters, such as ``beta`` or ``labels`` in :func:`f1_score`.
 
@@ -202,13 +215,21 @@ Here is an example of building custom scorers, and of using the
     >>> score(clf, X, y)
     -0.69...
 
+|details-end|
 
 .. _diy_scoring:
 
 Implementing your own scoring object
 ------------------------------------
+
 You can generate even more flexible model scorers by constructing your own
 scoring object from scratch, without using the :func:`make_scorer` factory.
+
+
+|details-start|
+**How to build a scorer from scratch**
+|details-split|
+
 For a callable to be a scorer, it needs to meet the protocol specified by
 the following two rules:
 
@@ -221,6 +242,14 @@ the following two rules:
   ``estimator`` prediction quality on ``X``, with reference to ``y``.
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
+
+- Advanced: If it requires extra metadata to be passed to it, it should expose
+  a ``get_metadata_routing`` method returning the requested metadata. The user
+  should be able to set the requested metadata via a ``set_score_request``
+  method. Please see :ref:`User Guide <metadata_routing>` and :ref:`Developer
+  Guide <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for
+  more details.
+
 
 .. note:: **Using custom scorers in functions where n_jobs > 1**
 
@@ -240,6 +269,8 @@ the following two rules:
         ...  scoring=make_scorer(custom_scoring_function, greater_is_better=False),
         ...  cv=5,
         ...  n_jobs=-1) # doctest: +SKIP
+
+|details-end|
 
 .. _multimetric_scoring:
 
@@ -270,7 +301,7 @@ parameter:
     >>> from sklearn.metrics import confusion_matrix
     >>> # A sample toy binary classification dataset
     >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
-    >>> svm = LinearSVC(random_state=0)
+    >>> svm = LinearSVC(dual="auto", random_state=0)
     >>> def confusion_matrix_scorer(clf, X, y):
     ...      y_pred = clf.predict(X)
     ...      cm = confusion_matrix(y, y_pred)
@@ -427,7 +458,7 @@ where :math:`1(x)` is the `indicator function
   >>> accuracy_score(y_true, y_pred)
   0.5
   >>> accuracy_score(y_true, y_pred, normalize=False)
-  2
+  2.0
 
 In the multilabel case with binary label indicators::
 
@@ -799,8 +830,8 @@ binary case. The :func:`average_precision_score` function supports multiclass
 and multilabel formats by computing each class score in a One-vs-the-rest (OvR)
 fashion and averaging them or not depending of its ``average`` argument value.
 
-The :func:`PredictionRecallDisplay.from_estimator` and
-:func:`PredictionRecallDisplay.from_predictions` functions will plot the
+The :func:`PrecisionRecallDisplay.from_estimator` and
+:func:`PrecisionRecallDisplay.from_predictions` functions will plot the
 precision-recall curve as follows.
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_precision_recall_001.png
@@ -1086,9 +1117,9 @@ with a svm classifier in a binary class problem::
   >>> from sklearn.metrics import hinge_loss
   >>> X = [[0], [1]]
   >>> y = [-1, 1]
-  >>> est = svm.LinearSVC(random_state=0)
+  >>> est = svm.LinearSVC(dual="auto", random_state=0)
   >>> est.fit(X, y)
-  LinearSVC(random_state=0)
+  LinearSVC(dual='auto', random_state=0)
   >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
   >>> pred_decision
   array([-2.18...,  2.36...,  0.09...])
@@ -1101,9 +1132,9 @@ with a svm classifier in a multiclass problem::
   >>> X = np.array([[0], [1], [2], [3]])
   >>> Y = np.array([0, 1, 2, 3])
   >>> labels = np.array([0, 1, 2, 3])
-  >>> est = svm.LinearSVC()
+  >>> est = svm.LinearSVC(dual="auto")
   >>> est.fit(X, Y)
-  LinearSVC()
+  LinearSVC(dual='auto')
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
   >>> hinge_loss(y_true, pred_decision, labels=labels)
@@ -1472,7 +1503,7 @@ In applications where a high false positive rate is not tolerable the parameter
 to the given limit.
 
 The following figure shows the micro-averaged ROC curve and its corresponding
-ROC-AUC score for a classifier aimed to distinguish the the different species in
+ROC-AUC score for a classifier aimed to distinguish the different species in
 the :ref:`iris_dataset`:
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
@@ -1672,7 +1703,7 @@ loss can also be computed as :math:`zero-one loss = 1 - accuracy`.
   >>> zero_one_loss(y_true, y_pred)
   0.25
   >>> zero_one_loss(y_true, y_pred, normalize=False)
-  1
+  1.0
 
 In the multilabel case with binary label indicators, where the first label
 set [0,1] has an error::
@@ -1681,7 +1712,7 @@ set [0,1] has an error::
   0.5
 
   >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)),  normalize=False)
-  1
+  1.0
 
 .. topic:: Example:
 
@@ -2286,6 +2317,10 @@ function::
     for an example of mean squared error usage to
     evaluate gradient boosting regression.
 
+Taking the square root of the MSE, called the root mean squared error (RMSE), is another
+common metric that provides a measure in the same units as the target variable. RSME is
+available through the :func:`root_mean_squared_error` function.
+
 .. _mean_squared_log_error:
 
 Mean squared logarithmic error
@@ -2322,6 +2357,9 @@ function::
   >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
   >>> mean_squared_log_error(y_true, y_pred)
   0.044...
+
+The root mean squared logarithmic error (RMSLE) is available through the
+:func:`root_mean_squared_log_error` function.
 
 .. _mean_absolute_percentage_error:
 
@@ -2761,8 +2799,8 @@ model would grow with the predicted value of `E[y|X]` (either linearly for
 Poisson or quadratically for Gamma).
 
 When fitting a linear least squares regression model (see
-:class:`~sklearn.linear_mnodel.LinearRegression` and
-:class:`~sklearn.linear_mnodel.Ridge`), we can use this plot to check
+:class:`~sklearn.linear_model.LinearRegression` and
+:class:`~sklearn.linear_model.Ridge`), we can use this plot to check
 if some of the `model assumptions
 <https://en.wikipedia.org/wiki/Ordinary_least_squares#Assumptions>`_
 are met, in particular that the residuals should be uncorrelated, their

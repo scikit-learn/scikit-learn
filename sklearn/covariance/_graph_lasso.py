@@ -5,31 +5,31 @@ estimator.
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 # Copyright: INRIA
-import warnings
 import operator
 import sys
 import time
-
+import warnings
 from numbers import Integral, Real
+
 import numpy as np
 from scipy import linalg
 
-from . import empirical_covariance, EmpiricalCovariance, log_likelihood
-
+from ..base import _fit_context
 from ..exceptions import ConvergenceWarning
-from ..utils.validation import (
-    _is_arraylike_not_scalar,
-    check_random_state,
-    check_scalar,
-)
-from ..utils.parallel import delayed, Parallel
-from ..utils._param_validation import Interval, StrOptions
-from ..utils._param_validation import validate_params
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
+from ..utils._param_validation import Interval, StrOptions, validate_params
+from ..utils.metadata_routing import _RoutingNotSupportedMixin
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import (
+    _is_arraylike_not_scalar,
+    check_random_state,
+    check_scalar,
+)
+from . import EmpiricalCovariance, empirical_covariance, log_likelihood
 
 
 # Helper functions to compute the objective and dual objective functions
@@ -218,7 +218,8 @@ def alpha_max(emp_cov):
         "cov_init": ["array-like", None],
         "return_costs": ["boolean"],
         "return_n_iter": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def graphical_lasso(
     emp_cov,
@@ -532,6 +533,7 @@ class GraphicalLasso(BaseGraphicalLasso):
         self.alpha = alpha
         self.covariance = covariance
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the GraphicalLasso model to X.
 
@@ -548,7 +550,6 @@ class GraphicalLasso(BaseGraphicalLasso):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         # Covariance does not make sense for a single feature
         X = self._validate_data(X, ensure_min_features=2, ensure_min_samples=2)
 
@@ -705,7 +706,7 @@ def graphical_lasso_path(
     return covariances_, precisions_
 
 
-class GraphicalLassoCV(BaseGraphicalLasso):
+class GraphicalLassoCV(_RoutingNotSupportedMixin, BaseGraphicalLasso):
     """Sparse inverse covariance w/ cross-validated choice of the l1 penalty.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -737,7 +738,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs :class:`KFold` is used.
+        For integer/None inputs :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -925,6 +926,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         self.cv = cv
         self.n_jobs = n_jobs
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the GraphicalLasso covariance model to X.
 
@@ -941,7 +943,6 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
         # Covariance does not make sense for a single feature
         X = self._validate_data(X, ensure_min_features=2)
         if self.assume_centered:

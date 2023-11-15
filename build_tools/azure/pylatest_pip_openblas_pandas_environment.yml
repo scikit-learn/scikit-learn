@@ -6,7 +6,6 @@ channels:
 dependencies:
   - python=3.9
   - ccache
-  - sphinx
   - pip
   - pip:
     - numpy
@@ -15,13 +14,15 @@ dependencies:
     - joblib
     - threadpoolctl
     - matplotlib
-    - pandas==1.5.3
+    - pandas
     - pyamg
     - pytest
     - pytest-xdist==2.5.0
     - pillow
+    - setuptools
     - pytest-cov
     - coverage
+    - sphinx
     - numpydoc
     - lightgbm
     - scikit-image

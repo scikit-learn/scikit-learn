@@ -27,20 +27,22 @@ To run this script you need:
   sklearn/_min_dependencies.py
 - pip-tools
 
+To only update the environment and lock files for specific builds, you can use
+the command line argument `--select-build` which will take a regex. For example,
+to only update the documentation builds you can use:
+`python build_tools/update_environments_and_lock_files.py --select-build doc`
 """
 
-import re
-import subprocess
-import sys
-from pathlib import Path
-import shlex
 import json
 import logging
+import re
+import shlex
+import subprocess
+import sys
 from importlib.metadata import version
+from pathlib import Path
 
 import click
-
-from conda_lock import __version__ as conda_lock_version
 from jinja2 import Environment
 from packaging.version import Version
 
@@ -48,6 +50,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
 logger.addHandler(handler)
+
+TRACE = logging.DEBUG - 5
 
 
 common_dependencies_without_coverage = [
@@ -64,6 +68,7 @@ common_dependencies_without_coverage = [
     "pytest",
     "pytest-xdist",
     "pillow",
+    "setuptools",
 ]
 
 common_dependencies = common_dependencies_without_coverage + [
@@ -94,6 +99,8 @@ conda_build_metadata_list = [
             "ccache",
             "pytorch",
             "pytorch-cpu",
+            "polars",
+            "pyarrow",
             "array-api-compat",
         ],
         "package_constraints": {
@@ -120,26 +127,13 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "osx-64",
         "channel": "defaults",
-        # TODO work-around to get cython>=0.29.33 via PyPi until it is in conda defaults
-        # See: https://github.com/ContinuumIO/anaconda-issues/issues/13120
-        "conda_dependencies": remove_from(common_dependencies, ["cython"]) + ["ccache"],
-        # TODO work-around to get cython>=0.29.33 via PyPi until it is in conda defaults
-        # See: https://github.com/ContinuumIO/anaconda-issues/issues/13120
-        "pip_dependencies": ["cython"],
+        "conda_dependencies": common_dependencies + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
-            # 2022-06-09 currently mamba install 1.23 and scipy 1.7 which
-            # should be compatible but actually are not. This pin can be
-            # removed when scipy 1.8 is available in conda defaults channel.
-            # For more details, see
-            # https://github.com/scikit-learn/scikit-learn/pull/24363#issuecomment-1236927660
-            # and https://github.com/scipy/scipy/issues/16964
-            "numpy": "1.22",
-            # XXX: coverage is temporary pinned to 6.2 because 6.3 is not
-            # fork-safe and 6.4 is not available yet (July 2022) in conda
-            # defaults channel. For more details, see:
-            # https://github.com/nedbat/coveragepy/issues/1310
-            "coverage": "6.2",
+            # TODO: temporary pin for numpy to avoid what seems a loky issue,
+            # for more details see
+            # https://github.com/scikit-learn/scikit-learn/pull/26845#issuecomment-1639917135
+            "numpy": "<1.25",
         },
     },
     {
@@ -157,12 +151,7 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
-        # TODO work-around to get cython>=0.29.33 via PyPi until it is in conda defaults
-        # See: https://github.com/ContinuumIO/anaconda-issues/issues/13120
-        "conda_dependencies": remove_from(common_dependencies, ["cython"]) + ["ccache"],
-        # TODO work-around to get cython>=0.29.33 via PyPi until it is in conda defaults
-        # See: https://github.com/ContinuumIO/anaconda-issues/issues/13120
-        "pip_dependencies": ["cython"],
+        "conda_dependencies": common_dependencies + ["ccache"],
         "package_constraints": {
             "python": "3.8",
             "blas": "[build=openblas]",
@@ -170,11 +159,7 @@ conda_build_metadata_list = [
             "scipy": "min",
             "matplotlib": "min",
             "threadpoolctl": "2.2.0",
-            # XXX: coverage is temporary pinned to 6.2 because 6.3 is not
-            # fork-safe and 6.4 is not available yet (July 2022) in conda
-            # defaults channel. For more details, see:
-            # https://github.com/nedbat/coveragepy/issues/1310
-            "coverage": "6.2",
+            "cython": "min",
         },
     },
     {
@@ -183,32 +168,24 @@ conda_build_metadata_list = [
         "platform": "linux-64",
         "channel": "conda-forge",
         "conda_dependencies": common_dependencies_without_coverage + ["ccache"],
-        "package_constraints": {"python": "3.8", "blas": "[build=openblas]"},
+        "package_constraints": {
+            "python": "3.8",
+            "blas": "[build=openblas]",
+        },
     },
     {
         "build_name": "pylatest_pip_openblas_pandas",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
-        # sphinx in conda_dependencies as a temporary work-around for
-        # https://github.com/conda-incubator/conda-lock/issues/309
-        "conda_dependencies": ["python", "ccache", "sphinx"],
+        "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": (
             remove_from(common_dependencies, ["python", "blas"])
-            + remove_from(docstring_test_dependencies, ["sphinx"])
+            + docstring_test_dependencies
             + ["lightgbm", "scikit-image"]
         ),
         "package_constraints": {
             "python": "3.9",
-            # TODO: remove the following pin when we have a solution since
-            # pinning a pandas version partially defeats the purpose of the
-            # `pylastest` CI configurations which are meant to test
-            # scikit-learn against the most recently released versions of
-            # its dependencies.
-            # pandas 2.0 depends on tzdata as well as python installed via conda
-            # We currently have a mix of conda/pip and run into the following issue:
-            # https://github.com/conda/conda-lock/issues/179
-            "pandas": "1.5.3",
         },
     },
     {
@@ -216,9 +193,7 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
-        # sphinx in conda_dependencies as a temporary work-around for
-        # https://github.com/conda-incubator/conda-lock/issues/309
-        "conda_dependencies": ["python", "ccache", "sphinx"],
+        "conda_dependencies": ["python", "ccache"],
         "pip_dependencies": (
             remove_from(
                 common_dependencies,
@@ -239,11 +214,16 @@ conda_build_metadata_list = [
                 ],
             )
             + ["pooch"]
-            + remove_from(docstring_test_dependencies, ["sphinx"])
+            + docstring_test_dependencies
             # python-dateutil is a dependency of pandas and pandas is removed from
             # the environment.yml. Adding python-dateutil so it is pinned
             + ["python-dateutil"]
         ),
+        "package_constraints": {
+            # Temporary pin for other dependencies to be able with deprecation
+            # warnings introduced by Python 3.12.
+            "python": "3.11",
+        },
     },
     {
         "build_name": "pypy3",
@@ -288,6 +268,7 @@ conda_build_metadata_list = [
             "compilers",
             "sphinx",
             "sphinx-gallery",
+            "sphinx-copybutton",
             "numpydoc",
             "sphinx-prompt",
             "plotly",
@@ -304,6 +285,7 @@ conda_build_metadata_list = [
             "sphinx": "min",
             "pandas": "min",
             "sphinx-gallery": "min",
+            "sphinx-copybutton": "min",
             "numpydoc": "min",
             "sphinx-prompt": "min",
             "sphinxext-opengraph": "min",
@@ -322,6 +304,7 @@ conda_build_metadata_list = [
             "compilers",
             "sphinx",
             "sphinx-gallery",
+            "sphinx-copybutton",
             "numpydoc",
             "sphinx-prompt",
             "plotly",
@@ -331,8 +314,6 @@ conda_build_metadata_list = [
         "pip_dependencies": ["jupyterlite-sphinx", "jupyterlite-pyodide-kernel"],
         "package_constraints": {
             "python": "3.9",
-            # XXX: sphinx > 6.0 does not correctly generate searchindex.js
-            "sphinx": "6.0.0",
         },
     },
     {
@@ -367,6 +348,7 @@ pip_build_metadata_list = [
             "pytest": "min",
             "pytest-cov": "min",
             # no pytest-xdist because it causes issue on 32bit
+            "cython": "min",
         },
         # same Python version as in debian-32 build
         "python_version": "3.9.2",
@@ -381,13 +363,18 @@ pip_build_metadata_list = [
             "pytest",
             "pytest-xdist",
         ],
-        "package_constraints": {"joblib": "min", "threadpoolctl": "min"},
+        "package_constraints": {
+            "joblib": "min",
+            "threadpoolctl": "min",
+            "cython": "min",
+        },
         "python_version": "3.10.4",
     },
 ]
 
 
 def execute_command(command_list):
+    logger.debug(" ".join(command_list))
     proc = subprocess.Popen(
         command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
@@ -404,6 +391,7 @@ def execute_command(command_list):
             "stdout:\n{}\n"
             "stderr:\n{}\n".format(proc.returncode, command_str, out, err)
         )
+    logger.log(TRACE, out)
     return out
 
 
@@ -463,6 +451,7 @@ def write_conda_environment(build_metadata):
     build_name = build_metadata["build_name"]
     folder_path = Path(build_metadata["folder"])
     output_path = folder_path / f"{build_name}_environment.yml"
+    logger.debug(output_path)
     output_path.write_text(content)
 
 
@@ -476,8 +465,6 @@ def conda_lock(environment_path, lock_file_path, platform):
         f"conda-lock lock --mamba --kind explicit --platform {platform} "
         f"--file {environment_path} --filename-template {lock_file_path}"
     )
-
-    logger.debug("conda-lock command: %s", command)
     execute_command(shlex.split(command))
 
 
@@ -496,7 +483,7 @@ def create_conda_lock_file(build_metadata):
 
 def write_all_conda_lock_files(build_metadata_list):
     for build_metadata in build_metadata_list:
-        logger.info(build_metadata["build_name"])
+        logger.info(f"# Locking dependencies for {build_metadata['build_name']}")
         create_conda_lock_file(build_metadata)
 
 
@@ -516,19 +503,17 @@ def write_pip_requirements(build_metadata):
     content = get_pip_requirements_content(build_metadata)
     folder_path = Path(build_metadata["folder"])
     output_path = folder_path / f"{build_name}_requirements.txt"
+    logger.debug(output_path)
     output_path.write_text(content)
 
 
 def write_all_pip_requirements(build_metadata_list):
     for build_metadata in build_metadata_list:
-        logger.info(build_metadata["build_name"])
         write_pip_requirements(build_metadata)
 
 
 def pip_compile(pip_compile_path, requirements_path, lock_file_path):
     command = f"{pip_compile_path} --upgrade {requirements_path} -o {lock_file_path}"
-
-    logger.debug("pip-compile command: %s", command)
     execute_command(shlex.split(command))
 
 
@@ -563,36 +548,8 @@ def write_pip_lock_file(build_metadata):
 
 def write_all_pip_lock_files(build_metadata_list):
     for build_metadata in build_metadata_list:
+        logger.info(f"# Locking dependencies for {build_metadata['build_name']}")
         write_pip_lock_file(build_metadata)
-
-
-def remove_unnecessary_package_from_lock_file(build_metadata_list, build_name, package):
-    # find the build metadata from the list
-    build_metadata = None
-    for metadata in build_metadata_list:
-        if metadata["build_name"] == build_name:
-            build_metadata = metadata
-            break
-    if build_metadata is None:
-        raise ValueError(f"Could not find build metadata for {build_name}")
-    folder_path = Path(build_metadata["folder"])
-    platform = build_metadata["platform"]
-    lock_file_basename = build_name
-    if not lock_file_basename.endswith(platform):
-        lock_file_basename = f"{lock_file_basename}_{platform}"
-
-    lock_file_path = folder_path / f"{lock_file_basename}_conda.lock"
-    with open(lock_file_path, "r") as f_read_only:
-        lock_file_content = f_read_only.readlines()
-        with open(lock_file_path, "w") as f_write:
-            for line in lock_file_content:
-                if package in line:
-                    # simple heuristic to remove the package
-                    # it will not work if package that have partial string in common
-                    logger.debug(f"Removing {package} from {build_name} lock file")
-                    logger.debug(f"Removed line: {line}")
-                    continue
-                f_write.write(line)
 
 
 def check_conda_lock_version():
@@ -609,42 +566,92 @@ def check_conda_lock_version():
         )
 
 
+def check_conda_version():
+    # Avoid issues with glibc (https://github.com/conda/conda-lock/issues/292)
+    # or osx (https://github.com/conda/conda-lock/issues/408) virtual package.
+    # The glibc one has been fixed in conda 23.1.0 and the osx has been fixed
+    # in conda 23.7.0.
+    conda_info_output = execute_command(["conda", "info", "--json"])
+
+    conda_info = json.loads(conda_info_output)
+    conda_version = Version(conda_info["conda_version"])
+
+    if Version("22.9.0") < conda_version < Version("23.7"):
+        raise RuntimeError(
+            f"conda version should be <= 22.9.0 or >= 23.7 got: {conda_version}"
+        )
+
+
 @click.command()
 @click.option(
     "--select-build",
     default="",
-    help="Regex to restrict the builds we want to update environment and lock files",
+    help=(
+        "Regex to restrict the builds we want to update environment and lock files. By"
+        " default all the builds are selected."
+    ),
 )
-def main(select_build):
+@click.option(
+    "--skip-build",
+    default=None,
+    help="Regex to skip some builds from the builds selected by --select-build",
+)
+@click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Print commands executed by the script",
+)
+@click.option(
+    "-vv",
+    "--very-verbose",
+    is_flag=True,
+    help="Print output of commands executed by the script",
+)
+def main(verbose, very_verbose, select_build, skip_build):
+    if verbose:
+        logger.setLevel(logging.DEBUG)
+    if very_verbose:
+        logger.setLevel(TRACE)
+        handler.setLevel(TRACE)
     check_conda_lock_version()
+    check_conda_version()
+
     filtered_conda_build_metadata_list = [
         each
         for each in conda_build_metadata_list
         if re.search(select_build, each["build_name"])
     ]
-    logger.info("Writing conda environments")
-    write_all_conda_environments(filtered_conda_build_metadata_list)
-    logger.info("Writing conda lock files")
-    write_all_conda_lock_files(filtered_conda_build_metadata_list)
-    if Version(conda_lock_version) < Version("1.5"):
-        # In conda-lock < 1.5, `os_name` was not considered when creating the
-        # dependency trees:
-        # https://github.com/conda/conda-lock/issues/293
-        # Here, we need to manually remove the package `pywinpty` from the `doc`
-        # build which is only needed on Windows required by `jupyter-server`.
-        remove_unnecessary_package_from_lock_file(
-            filtered_conda_build_metadata_list, "doc", "pywinpty"
-        )
+    if skip_build is not None:
+        filtered_conda_build_metadata_list = [
+            each
+            for each in filtered_conda_build_metadata_list
+            if not re.search(skip_build, each["build_name"])
+        ]
+
+    if filtered_conda_build_metadata_list:
+        logger.info("# Writing conda environments")
+        write_all_conda_environments(filtered_conda_build_metadata_list)
+        logger.info("# Writing conda lock files")
+        write_all_conda_lock_files(filtered_conda_build_metadata_list)
 
     filtered_pip_build_metadata_list = [
         each
         for each in pip_build_metadata_list
         if re.search(select_build, each["build_name"])
     ]
-    logger.info("Writing pip requirements")
-    write_all_pip_requirements(filtered_pip_build_metadata_list)
-    logger.info("Writing pip lock files")
-    write_all_pip_lock_files(filtered_pip_build_metadata_list)
+    if skip_build is not None:
+        filtered_pip_build_metadata_list = [
+            each
+            for each in filtered_pip_build_metadata_list
+            if not re.search(skip_build, each["build_name"])
+        ]
+
+    if filtered_pip_build_metadata_list:
+        logger.info("# Writing pip requirements")
+        write_all_pip_requirements(filtered_pip_build_metadata_list)
+        logger.info("# Writing pip lock files")
+        write_all_pip_lock_files(filtered_pip_build_metadata_list)
 
 
 if __name__ == "__main__":

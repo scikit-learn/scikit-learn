@@ -1,13 +1,14 @@
 """Fast Gradient Boosting decision trees for classification and regression."""
 # Author: Nicolas Hug
 
+import itertools
 from abc import ABC, abstractmethod
 from functools import partial
-import itertools
-from numbers import Real, Integral
+from numbers import Integral, Real
+from timeit import default_timer as time
 
 import numpy as np
-from timeit import default_timer as time
+
 from ..._loss.loss import (
     _LOSSES,
     BaseLoss,
@@ -17,27 +18,30 @@ from ..._loss.loss import (
     HalfPoissonLoss,
     PinballLoss,
 )
-from ...base import BaseEstimator, RegressorMixin, ClassifierMixin, is_classifier
-from ...utils import check_random_state, resample, compute_sample_weight
-from ...utils.validation import (
-    check_is_fitted,
-    check_consistent_length,
-    _check_sample_weight,
-    _check_monotonic_cst,
+from ...base import (
+    BaseEstimator,
+    ClassifierMixin,
+    RegressorMixin,
+    _fit_context,
+    is_classifier,
 )
-from ...utils._param_validation import Interval, StrOptions
-from ...utils._param_validation import RealNotInt
-from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
+from ...utils import check_random_state, compute_sample_weight, resample
+from ...utils._openmp_helpers import _openmp_effective_n_threads
+from ...utils._param_validation import Interval, RealNotInt, StrOptions
+from ...utils.multiclass import check_classification_targets
+from ...utils.validation import (
+    _check_monotonic_cst,
+    _check_sample_weight,
+    check_consistent_length,
+    check_is_fitted,
+)
 from ._gradient_boosting import _update_raw_predictions
-from .common import Y_DTYPE, X_DTYPE, G_H_DTYPE
-
 from .binning import _BinMapper
+from .common import G_H_DTYPE, X_DTYPE, Y_DTYPE
 from .grower import TreeGrower
-
 
 _LOSSES = _LOSSES.copy()
 _LOSSES.update(
@@ -55,13 +59,23 @@ def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
     Update equals:
         loss.fit_intercept_only(y_true - raw_prediction)
 
-    This is only applied if loss.need_update_leaves_values is True.
+    This is only applied if loss.differentiable is False.
     Note: It only works, if the loss is a function of the residual, as is the
     case for AbsoluteError and PinballLoss. Otherwise, one would need to get
     the minimum of loss(y_true, raw_prediction + x) in x. A few examples:
       - AbsoluteError: median(y_true - raw_prediction).
       - PinballLoss: quantile(y_true - raw_prediction).
-    See also notes about need_update_leaves_values in BaseLoss.
+
+    More background:
+    For the standard gradient descent method according to "Greedy Function
+    Approximation: A Gradient Boosting Machine" by Friedman, all loss functions but the
+    squared loss need a line search step. BaseHistGradientBoosting, however, implements
+    a so called Newton boosting where the trees are fitted to a 2nd order
+    approximations of the loss in terms of gradients and hessians. In this case, the
+    line search step is only necessary if the loss is not smooth, i.e. not
+    differentiable, which renders the 2nd order approximation invalid. In fact,
+    non-smooth losses arbitrarily set hessians to 1 and effectively use the standard
+    gradient descent method with line search.
     """
     # TODO: Ideally this should be computed in parallel over the leaves using something
     # similar to _update_raw_predictions(), but this requires a cython version of
@@ -91,6 +105,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "max_depth": [Interval(Integral, 1, None, closed="left"), None],
         "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
         "l2_regularization": [Interval(Real, 0, None, closed="left")],
+        "max_features": [Interval(RealNotInt, 0, 1, closed="right")],
         "monotonic_cst": ["array-like", dict, None],
         "interaction_cst": [
             list,
@@ -125,6 +140,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         max_depth,
         min_samples_leaf,
         l2_regularization,
+        max_features,
         max_bins,
         categorical_features,
         monotonic_cst,
@@ -145,6 +161,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
         self.l2_regularization = l2_regularization
+        self.max_features = max_features
         self.max_bins = max_bins
         self.monotonic_cst = monotonic_cst
         self.interaction_cst = interaction_cst
@@ -336,6 +353,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         return constraints
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the gradient boosting model.
 
@@ -357,8 +375,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self : object
             Fitted estimator.
         """
-        self._validate_params()
-
         fit_start_time = time()
         acc_find_split_time = 0.0  # time spent finding the best splits
         acc_apply_split_time = 0.0  # time spent splitting nodes
@@ -379,11 +395,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         rng = check_random_state(self.random_state)
 
-        # When warm starting, we want to re-use the same seed that was used
-        # the first time fit was called (e.g. for subsampling or for the
-        # train/val split).
-        if not (self.warm_start and self._is_fitted()):
+        # When warm starting, we want to reuse the same seed that was used
+        # the first time fit was called (e.g. train/val split).
+        # For feature subsampling, we want to continue with the rng we started with.
+        if not self.warm_start or not self._is_fitted():
             self._random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
+            feature_subsample_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
+            self._feature_subsample_rng = np.random.default_rng(feature_subsample_seed)
 
         self._validate_parameters()
         monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
@@ -535,7 +553,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # we're going to compute scoring w.r.t the loss. As losses
                     # take raw predictions as input (unlike the scorers), we
                     # can optimize a bit and avoid repeating computing the
-                    # predictions of the previous trees. We'll re-use
+                    # predictions of the previous trees. We'll reuse
                     # raw_predictions (as it's needed for training anyway) for
                     # evaluating the training loss, and create
                     # raw_predictions_val for storing the raw predictions of
@@ -687,6 +705,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,
                     l2_regularization=self.l2_regularization,
+                    feature_fraction_per_split=self.max_features,
+                    rng=self._feature_subsample_rng,
                     shrinkage=self.learning_rate,
                     n_threads=n_threads,
                 )
@@ -696,7 +716,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 acc_find_split_time += grower.total_find_split_time
                 acc_compute_hist_time += grower.total_compute_hist_time
 
-                if self._loss.need_update_leaves_values:
+                if not self._loss.differentiable:
                     _update_leaves_values(
                         loss=self._loss,
                         grower=grower,
@@ -1248,8 +1268,16 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
     l2_regularization : float, default=0
-        The L2 regularization parameter. Use ``0`` for no regularization
-        (default).
+        The L2 regularization parameter. Use ``0`` for no regularization (default).
+    max_features : float, default=1.0
+        Proportion of randomly chosen features in each and every node split.
+        This is a form of regularization, smaller values make the trees weaker
+        learners and might prevent overfitting.
+        If interaction constraints from `interaction_cst` are present, only allowed
+        features are taken into account for the subsampling.
+
+        .. versionadded:: 1.4
+
     max_bins : int, default=255
         The maximum number of bins to use for non-missing values. Before
         training, each feature of the input array `X` is binned into
@@ -1271,6 +1299,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         For each categorical feature, there must be at most `max_bins` unique
         categories, and each categorical value must be less then `max_bins - 1`.
         Negative values for categorical features are treated as missing values.
+        All categorical values are converted to floating point numbers.
+        This means that categorical values of 1.0 and 1 are treated as
+        the same category.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
@@ -1291,8 +1322,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         If an array, the features are mapped to constraints by position. See
         :ref:`monotonic_cst_features_names` for a usage example.
 
-        The constraints are only valid for binary classifications and hold
-        over the probability of the positive class.
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 0.23
@@ -1449,6 +1478,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         max_depth=None,
         min_samples_leaf=20,
         l2_regularization=0.0,
+        max_features=1.0,
         max_bins=255,
         categorical_features=None,
         monotonic_cst=None,
@@ -1470,6 +1500,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization,
+            max_features=max_features,
             max_bins=max_bins,
             monotonic_cst=monotonic_cst,
             interaction_cst=interaction_cst,
@@ -1606,7 +1637,16 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
     l2_regularization : float, default=0
-        The L2 regularization parameter. Use 0 for no regularization.
+        The L2 regularization parameter. Use ``0`` for no regularization (default).
+    max_features : float, default=1.0
+        Proportion of randomly chosen features in each and every node split.
+        This is a form of regularization, smaller values make the trees weaker
+        learners and might prevent overfitting.
+        If interaction constraints from `interaction_cst` are present, only allowed
+        features are taken into account for the subsampling.
+
+        .. versionadded:: 1.4
+
     max_bins : int, default=255
         The maximum number of bins to use for non-missing values. Before
         training, each feature of the input array `X` is binned into
@@ -1628,6 +1668,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         For each categorical feature, there must be at most `max_bins` unique
         categories, and each categorical value must be less then `max_bins - 1`.
         Negative values for categorical features are treated as missing values.
+        All categorical values are converted to floating point numbers.
+        This means that categorical values of 1.0 and 1 are treated as
+        the same category.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
@@ -1806,6 +1849,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         max_depth=None,
         min_samples_leaf=20,
         l2_regularization=0.0,
+        max_features=1.0,
         max_bins=255,
         categorical_features=None,
         monotonic_cst=None,
@@ -1828,6 +1872,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization,
+            max_features=max_features,
             max_bins=max_bins,
             categorical_features=categorical_features,
             monotonic_cst=monotonic_cst,

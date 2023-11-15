@@ -35,9 +35,9 @@ kernel and its parameters.
 """
 
 import matplotlib.pyplot as plt
-from sklearn import svm, datasets
-from sklearn.inspection import DecisionBoundaryDisplay
 
+from sklearn import datasets, svm
+from sklearn.inspection import DecisionBoundaryDisplay
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -50,7 +50,7 @@ y = iris.target
 C = 1.0  # SVM regularization parameter
 models = (
     svm.SVC(kernel="linear", C=C),
-    svm.LinearSVC(C=C, max_iter=10000),
+    svm.LinearSVC(C=C, max_iter=10000, dual="auto"),
     svm.SVC(kernel="rbf", gamma=0.7, C=C),
     svm.SVC(kernel="poly", degree=3, gamma="auto", C=C),
 )

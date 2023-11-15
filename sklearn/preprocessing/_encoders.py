@@ -3,22 +3,19 @@
 # License: BSD 3 clause
 
 import numbers
-from numbers import Integral
 import warnings
+from numbers import Integral
 
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
-from ..utils import check_array, is_scalar_nan, _safe_indexing
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_feature_names_in
-from ..utils._param_validation import Interval, StrOptions, Hidden
-from ..utils._param_validation import RealNotInt
+from ..base import BaseEstimator, OneToOneFeatureMixin, TransformerMixin, _fit_context
+from ..utils import _safe_indexing, check_array, is_scalar_nan
+from ..utils._encode import _check_unknown, _encode, _get_counts, _unique
 from ..utils._mask import _get_mask
-
-from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
-
+from ..utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
+from ..utils._set_output import _get_output_config
+from ..utils.validation import _check_feature_names_in, check_is_fitted
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
 
@@ -126,6 +123,22 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     )
                     raise ValueError(msg)
 
+                # `nan` must be the last stated category
+                for category in cats[:-1]:
+                    if is_scalar_nan(category):
+                        raise ValueError(
+                            "Nan should be the last element in user"
+                            f" provided categories, see categories {cats}"
+                            f" in column #{i}"
+                        )
+
+                if cats.size != len(_unique(cats)):
+                    msg = (
+                        f"In column {i}, the predefined categories"
+                        " contain duplicate elements."
+                    )
+                    raise ValueError(msg)
+
                 if Xi.dtype.kind not in "OUS":
                     sorted_cats = np.sort(cats)
                     error_msg = (
@@ -133,9 +146,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     )
                     # if there are nans, nan should be the last element
                     stop_idx = -1 if np.isnan(sorted_cats[-1]) else None
-                    if np.any(sorted_cats[:stop_idx] != cats[:stop_idx]) or (
-                        np.isnan(sorted_cats[-1]) and not np.isnan(sorted_cats[-1])
-                    ):
+                    if np.any(sorted_cats[:stop_idx] != cats[:stop_idx]):
                         raise ValueError(error_msg)
 
                 if handle_unknown == "error":
@@ -180,11 +191,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         warn_on_unknown=False,
         ignore_category_indices=None,
     ):
-        self._check_feature_names(X, reset=False)
-        self._check_n_features(X, reset=False)
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite
         )
+        self._check_feature_names(X, reset=False)
+        self._check_n_features(X, reset=False)
 
         X_int = np.zeros((n_samples, n_features), dtype=int)
         X_mask = np.ones((n_samples, n_features), dtype=bool)
@@ -370,7 +381,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
             n_cats = len(cats)
             if feature_idx in missing_indices:
-                # Missing index was removed from ths category when computing
+                # Missing index was removed from this category when computing
                 # infrequent indices, thus we need to decrease the number of
                 # total categories when considering the infrequent mapping.
                 n_cats -= 1
@@ -441,7 +452,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             X_int[rows_to_update, i] = np.take(mapping, X_int[rows_to_update, i])
 
     def _more_tags(self):
-        return {"X_types": ["categorical"]}
+        return {"X_types": ["2darray", "categorical"], "allow_nan": True}
 
 
 class OneHotEncoder(_BaseEncoder):
@@ -453,7 +464,7 @@ class OneHotEncoder(_BaseEncoder):
     The features are encoded using a one-hot (aka 'one-of-K' or 'dummy')
     encoding scheme. This creates a binary column for each category and
     returns a sparse matrix or dense array (depending on the ``sparse_output``
-    parameter)
+    parameter).
 
     By default, the encoder derives the categories based on the unique values
     in each feature. Alternatively, you can also specify the `categories`
@@ -466,6 +477,8 @@ class OneHotEncoder(_BaseEncoder):
     instead.
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
+    For a comparison of different encoders, refer to:
+    :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`.
 
     Parameters
     ----------
@@ -523,12 +536,13 @@ class OneHotEncoder(_BaseEncoder):
            `sparse_output` instead.
 
     sparse_output : bool, default=True
-        Will return sparse matrix if set True else will return an array.
+        When ``True``, it returns a :class:`scipy.sparse.csr_matrix`,
+        i.e. a sparse matrix in "Compressed Sparse Row" (CSR) format.
 
         .. versionadded:: 1.2
            `sparse` was renamed to `sparse_output`
 
-    dtype : number type, default=float
+    dtype : number type, default=np.float64
         Desired dtype of output.
 
     handle_unknown : {'error', 'ignore', 'infrequent_if_exist'}, \
@@ -777,8 +791,8 @@ class OneHotEncoder(_BaseEncoder):
         if infrequent_indices is not None and drop_idx in infrequent_indices:
             categories = self.categories_[feature_idx]
             raise ValueError(
-                f"Unable to drop category {categories[drop_idx]!r} from feature"
-                f" {feature_idx} because it is infrequent"
+                f"Unable to drop category {categories[drop_idx].item()!r} from"
+                f" feature {feature_idx} because it is infrequent"
             )
         return default_to_infrequent[drop_idx]
 
@@ -953,6 +967,7 @@ class OneHotEncoder(_BaseEncoder):
 
         return output
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """
         Fit OneHotEncoder to X.
@@ -971,8 +986,6 @@ class OneHotEncoder(_BaseEncoder):
         self
             Fitted encoder.
         """
-        self._validate_params()
-
         if self.sparse != "deprecated":
             warnings.warn(
                 (
@@ -997,8 +1010,12 @@ class OneHotEncoder(_BaseEncoder):
         """
         Transform X using one-hot encoding.
 
-        If there are infrequent categories for a feature, the infrequent
-        categories will be grouped into a single category.
+        If `sparse_output=True` (default), it returns an instance of
+        :class:`scipy.sparse._csr.csr_matrix` (CSR format).
+
+        If there are infrequent categories for a feature, set by specifying
+        `max_categories` or `min_frequency`, the infrequent categories are
+        grouped into a single category.
 
         Parameters
         ----------
@@ -1013,6 +1030,14 @@ class OneHotEncoder(_BaseEncoder):
             returned.
         """
         check_is_fitted(self)
+        transform_output = _get_output_config("transform", estimator=self)["dense"]
+        if transform_output == "pandas" and self.sparse_output:
+            raise ValueError(
+                "Pandas output does not support sparse data. Set sparse_output=False to"
+                " output pandas DataFrames or disable pandas output via"
+                ' `ohe.set_output(transform="default").'
+            )
+
         # validation of X happens in _check_X called by _transform
         warn_on_unknown = self.drop is not None and self.handle_unknown in {
             "ignore",
@@ -1239,6 +1264,8 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     a single column of integers (0 to n_categories - 1) per feature.
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
+    For a comparison of different encoders, refer to:
+    :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`.
 
     .. versionadded:: 0.20
 
@@ -1446,6 +1473,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.min_frequency = min_frequency
         self.max_categories = max_categories
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """
         Fit the OrdinalEncoder to X.
@@ -1464,8 +1492,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self : object
             Fitted encoder.
         """
-        self._validate_params()
-
         if self.handle_unknown == "use_encoded_value":
             if is_scalar_nan(self.unknown_value):
                 if np.dtype(self.dtype).kind != "f":
@@ -1505,15 +1531,11 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 if infrequent is not None:
                     cardinalities[feature_idx] -= len(infrequent)
 
-        # stores the missing indices per category
-        self._missing_indices = {}
+        # missing values are not considered part of the cardinality
+        # when considering unknown categories or encoded_missing_value
         for cat_idx, categories_for_idx in enumerate(self.categories_):
-            for i, cat in enumerate(categories_for_idx):
+            for cat in categories_for_idx:
                 if is_scalar_nan(cat):
-                    self._missing_indices[cat_idx] = i
-
-                    # missing values are not considered part of the cardinality
-                    # when considering unknown categories or encoded_missing_value
                     cardinalities[cat_idx] -= 1
                     continue
 
@@ -1551,7 +1573,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 ]
 
                 if invalid_features:
-                    # Use feature names if they are avaliable
+                    # Use feature names if they are available
                     if hasattr(self, "feature_names_in_"):
                         invalid_features = self.feature_names_in_[invalid_features]
                     raise ValueError(
