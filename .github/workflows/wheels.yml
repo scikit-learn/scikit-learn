@@ -67,6 +67,9 @@ jobs:
           - os: windows-latest
             python: 311
             platform_id: win_amd64
+          - os: windows-latest
+            python: 312
+            platform_id: win_amd64
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
@@ -88,6 +91,10 @@ jobs:
             python: 311
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
+          - os: ubuntu-latest
+            python: 312
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
 
           # MacOS x86_64
           - os: macos-latest
@@ -102,6 +109,27 @@ jobs:
           - os: macos-latest
             python: 311
             platform_id: macosx_x86_64
+          - os: macos-latest
+            python: 312
+            platform_id: macosx_x86_64
+
+          # MacOS arm64
+          # The wheel for the latest Python version is built and tested on
+          # Cirrus CI but due to limited build time for free accounts on Cirrus
+          # CI, we build the macOS arm64 wheels for the other Python versions on
+          # Github Actions via cross-compilation (without running the tests).
+          - os: macos-latest
+            python: 38
+            platform_id: macosx_arm64
+          - os: macos-latest
+            python: 39
+            platform_id: macosx_arm64
+          - os: macos-latest
+            python: 310
+            platform_id: macosx_arm64
+          - os: macos-latest
+            python: 311
+            platform_id: macosx_arm64
 
     steps:
       - name: Checkout scikit-learn
@@ -116,6 +144,7 @@ jobs:
         env:
           CONFTEST_PATH: ${{ github.workspace }}/conftest.py
           CONFTEST_NAME: conftest.py
+          CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease }}
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}

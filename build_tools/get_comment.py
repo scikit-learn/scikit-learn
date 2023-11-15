@@ -7,6 +7,23 @@ import os
 import requests
 
 
+def get_versions(versions_file):
+    """Get the versions of the packages used in the linter job.
+
+    Parameters
+    ----------
+    versions_file : str
+        The path to the file that contains the versions of the packages.
+
+    Returns
+    -------
+    versions : dict
+        A dictionary with the versions of the packages.
+    """
+    with open("versions.txt", "r") as f:
+        return dict(line.strip().split("=") for line in f)
+
+
 def get_step_message(log, start, end, title, message, details):
     """Get the message for a specific test.
 
@@ -52,9 +69,28 @@ def get_step_message(log, start, end, title, message, details):
     return res
 
 
-def get_message(log_file, repo, pr_number, sha, run_id, details):
+def get_message(log_file, repo, pr_number, sha, run_id, details, versions):
     with open(log_file, "r") as f:
         log = f.read()
+
+    sub_text = (
+        "\n\n<sub> _Generated for commit:"
+        f" [{sha[:7]}](https://github.com/{repo}/pull/{pr_number}/commits/{sha}). "
+        "Link to the linter CI: [here]"
+        f"(https://github.com/{repo}/actions/runs/{run_id})_ </sub>"
+    )
+
+    if "### Linting completed ###" not in log:
+        return (
+            "## ❌ Linting issues\n\n"
+            "There was an issue running the linter job. Please update with "
+            "`upstream/main` ([link]("
+            "https://scikit-learn.org/dev/developers/contributing.html"
+            "#how-to-contribute)) and push the changes. If you already have done "
+            "that, please send an empty commit with `git commit --allow-empty` "
+            "and push the changes to trigger the CI.\n\n"
+            + sub_text
+        )
 
     message = ""
 
@@ -68,7 +104,8 @@ def get_message(log_file, repo, pr_number, sha, run_id, details):
             "`black` detected issues. Please run `black .` locally and push "
             "the changes. Here you can see the detected issues. Note that "
             "running black might also fix some of the issues which might be "
-            "detected by `ruff`."
+            "detected by `ruff`. Note that the installed `black` version is "
+            f"`black={versions['black']}`."
         ),
         details=details,
     )
@@ -82,7 +119,8 @@ def get_message(log_file, repo, pr_number, sha, run_id, details):
         message=(
             "`ruff` detected issues. Please run `ruff --fix --show-source .` "
             "locally, fix the remaining issues, and push the changes. "
-            "Here you can see the detected issues."
+            "Here you can see the detected issues. Note that the installed "
+            f"`ruff` version is `ruff={versions['ruff']}`."
         ),
         details=details,
     )
@@ -95,7 +133,8 @@ def get_message(log_file, repo, pr_number, sha, run_id, details):
         title="`mypy`",
         message=(
             "`mypy` detected issues. Please fix them locally and push the changes. "
-            "Here you can see the detected issues."
+            "Here you can see the detected issues. Note that the installed `mypy` "
+            f"version is `mypy={versions['mypy']}`."
         ),
         details=details,
     )
@@ -108,7 +147,9 @@ def get_message(log_file, repo, pr_number, sha, run_id, details):
         title="`cython-lint`",
         message=(
             "`cython-lint` detected issues. Please fix them locally and push "
-            "the changes. Here you can see the detected issues."
+            "the changes. Here you can see the detected issues. Note that the "
+            "installed `cython-lint` version is "
+            f"`cython-lint={versions['cython-lint']}`."
         ),
         details=details,
     )
@@ -150,13 +191,6 @@ def get_message(log_file, repo, pr_number, sha, run_id, details):
             "push the changes. Here you can see the detected issues."
         ),
         details=details,
-    )
-
-    sub_text = (
-        "\n\n<sub> _Generated for commit:"
-        f" [{sha[:7]}](https://github.com/{repo}/pull/{pr_number}/commits/{sha}). "
-        "Link to the linter CI: [here]"
-        f"(https://github.com/{repo}/actions/runs/{run_id})_ </sub>"
     )
 
     if not message:
@@ -215,10 +249,8 @@ def find_lint_bot_comments(repo, token, pr_number):
     response.raise_for_status()
     all_comments = response.json()
 
-    failed_comment = "This PR is introducing linting issues. Here's a summary of the"
-    success_comment = (
-        "All linting checks passed. Your pull request is in excellent shape"
-    )
+    failed_comment = "❌ Linting issues"
+    success_comment = "✔️ Linting Passed"
 
     # Find all comments that match the linting bot, and return the first one.
     # There should always be only one such comment, or none, if the PR is
@@ -269,6 +301,9 @@ if __name__ == "__main__":
     sha = os.environ["BRANCH_SHA"]
     log_file = os.environ["LOG_FILE"]
     run_id = os.environ["RUN_ID"]
+    versions_file = os.environ["VERSIONS_FILE"]
+
+    versions = get_versions(versions_file)
 
     if not repo or not token or not pr_number or not log_file or not run_id:
         raise ValueError(
@@ -290,6 +325,7 @@ if __name__ == "__main__":
             sha=sha,
             run_id=run_id,
             details=True,
+            versions=versions,
         )
         create_or_update_comment(
             comment=comment,
@@ -309,6 +345,7 @@ if __name__ == "__main__":
             sha=sha,
             run_id=run_id,
             details=False,
+            versions=versions,
         )
         create_or_update_comment(
             comment=comment,

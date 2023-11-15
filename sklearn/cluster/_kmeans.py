@@ -229,7 +229,7 @@ def _kmeans_plusplus(
     center_id = random_state.choice(n_samples, p=sample_weight / sample_weight.sum())
     indices = np.full(n_clusters, -1, dtype=int)
     if sp.issparse(X):
-        centers[0] = X[center_id].toarray()
+        centers[0] = X[[center_id]].toarray()
     else:
         centers[0] = X[center_id]
     indices[0] = center_id
@@ -268,7 +268,7 @@ def _kmeans_plusplus(
 
         # Permanently add best center candidate found in local tries
         if sp.issparse(X):
-            centers[c] = X[best_candidate].toarray()
+            centers[c] = X[[best_candidate]].toarray()
         else:
             centers[c] = X[best_candidate]
         indices[c] = best_candidate
@@ -354,7 +354,8 @@ def k_means(
         n_init consecutive runs in terms of inertia.
 
         When `n_init='auto'`, the number of runs depends on the value of init:
-        10 if using `init='random'`, 1 if using `init='k-means++'`.
+        10 if using `init='random'` or `init` is a callable;
+        1 if using `init='k-means++'` or `init` is an array-like.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
@@ -884,10 +885,14 @@ class _BaseKMeans(
             )
             self._n_init = default_n_init
         if self._n_init == "auto":
-            if self.init == "k-means++":
+            if isinstance(self.init, str) and self.init == "k-means++":
                 self._n_init = 1
-            else:
+            elif isinstance(self.init, str) and self.init == "random":
                 self._n_init = default_n_init
+            elif callable(self.init):
+                self._n_init = default_n_init
+            else:  # array-like
+                self._n_init = 1
 
         if _is_arraylike_not_scalar(self.init) and self._n_init != 1:
             warnings.warn(
@@ -958,9 +963,9 @@ class _BaseKMeans(
         x_squared_norms,
         init,
         random_state,
+        sample_weight,
         init_size=None,
         n_centroids=None,
-        sample_weight=None,
     ):
         """Compute the initial centroids.
 
@@ -981,6 +986,11 @@ class _BaseKMeans(
             Determines random number generation for centroid initialization.
             See :term:`Glossary <random_state>`.
 
+        sample_weight : ndarray of shape (n_samples,)
+            The weights for each observation in X. `sample_weight` is not used
+            during initialization if `init` is a callable or a user provided
+            array.
+
         init_size : int, default=None
             Number of samples to randomly sample for speeding up the
             initialization (sometimes at the expense of accuracy).
@@ -988,16 +998,12 @@ class _BaseKMeans(
         n_centroids : int, default=None
             Number of centroids to initialize.
             If left to 'None' the number of centroids will be equal to
-            number of clusters to form (self.n_clusters)
-
-        sample_weight : ndarray of shape (n_samples,), default=None
-            The weights for each observation in X. If None, all observations
-            are assigned equal weight. `sample_weight` is not used during
-            initialization if `init` is a callable or a user provided array.
+            number of clusters to form (self.n_clusters).
 
         Returns
         -------
         centers : ndarray of shape (n_clusters, n_features)
+            Initial centroids of clusters.
         """
         n_samples = X.shape[0]
         n_clusters = self.n_clusters if n_centroids is None else n_centroids
@@ -1218,21 +1224,24 @@ class KMeans(_BaseKMeans):
             (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
-        'k-means++' : selects initial cluster centroids using sampling based on
-        an empirical probability distribution of the points' contribution to the
-        overall inertia. This technique speeds up convergence. The algorithm
-        implemented is "greedy k-means++". It differs from the vanilla k-means++
-        by making several trials at each sampling step and choosing the best centroid
-        among them.
+        * 'k-means++' : selects initial cluster centroids using sampling \
+            based on an empirical probability distribution of the points' \
+            contribution to the overall inertia. This technique speeds up \
+            convergence. The algorithm implemented is "greedy k-means++". It \
+            differs from the vanilla k-means++ by making several trials at \
+            each sampling step and choosing the best centroid among them.
 
-        'random': choose `n_clusters` observations (rows) at random from data
-        for the initial centroids.
+        * 'random': choose `n_clusters` observations (rows) at random from \
+        data for the initial centroids.
 
-        If an array is passed, it should be of shape (n_clusters, n_features)
+        * If an array is passed, it should be of shape (n_clusters, n_features)\
         and gives the initial centers.
 
-        If a callable is passed, it should take arguments X, n_clusters and a
+        * If a callable is passed, it should take arguments X, n_clusters and a\
         random state and return an initialization.
+
+        For an example of how to use the different `init` strategy, see the example
+        entitled :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`.
 
     n_init : 'auto' or int, default=10
         Number of times the k-means algorithm is run with different centroid
@@ -1241,7 +1250,8 @@ class KMeans(_BaseKMeans):
         high-dimensional problems (see :ref:`kmeans_sparse_high_dim`).
 
         When `n_init='auto'`, the number of runs depends on the value of init:
-        10 if using `init='random'`, 1 if using `init='k-means++'`.
+        10 if using `init='random'` or `init` is a callable;
+        1 if using `init='k-means++'` or `init` is an array-like.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.
@@ -1777,7 +1787,8 @@ class MiniBatchKMeans(_BaseKMeans):
         :ref:`kmeans_sparse_high_dim`).
 
         When `n_init='auto'`, the number of runs depends on the value of init:
-        3 if using `init='random'`, 1 if using `init='k-means++'`.
+        3 if using `init='random'` or `init` is a callable;
+        1 if using `init='k-means++'` or `init` is an array-like.
 
         .. versionadded:: 1.2
            Added 'auto' option for `n_init`.

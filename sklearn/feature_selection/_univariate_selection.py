@@ -323,10 +323,13 @@ def r_regression(X, y, *, center=True, force_finite=True):
     # need not center X
     if center:
         y = y - np.mean(y)
-        if issparse(X):
-            X_means = X.mean(axis=0).getA1()
-        else:
-            X_means = X.mean(axis=0)
+        # TODO: for Scipy <= 1.10, `isspmatrix(X)` returns `True` for sparse arrays.
+        # Here, we check the output of the `.mean` operation that returns a `np.matrix`
+        # for sparse matrices while a `np.array` for dense and sparse arrays.
+        # We can reconsider using `isspmatrix` when the minimum version is
+        # SciPy >= 1.11
+        X_means = X.mean(axis=0)
+        X_means = X_means.getA1() if isinstance(X_means, np.matrix) else X_means
         # Compute the scaled standard deviations via moments
         X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means**2)
     else:

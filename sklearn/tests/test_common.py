@@ -60,7 +60,7 @@ from sklearn.preprocessing import (
     StandardScaler,
 )
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
-from sklearn.utils import IS_PYPY, all_estimators
+from sklearn.utils import _IS_WASM, IS_PYPY, all_estimators
 from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
 from sklearn.utils._testing import (
     SkipTest,
@@ -75,7 +75,7 @@ from sklearn.utils.estimator_checks import (
     check_dataframe_column_names_consistency,
     check_estimator,
     check_get_feature_names_out_error,
-    check_global_ouptut_transform_pandas,
+    check_global_output_transform_pandas,
     check_n_features_in_after_fitting,
     check_param_validation,
     check_set_output_transform,
@@ -206,6 +206,7 @@ def test_class_weight_balanced_linear_classifiers(name, Classifier):
     check_class_weight_balanced_linear_classifier(name, Classifier)
 
 
+@pytest.mark.xfail(_IS_WASM, reason="importlib not supported for Pyodide packages")
 @ignore_warnings
 def test_import_all_consistency():
     # Smoke test to check that any name in a __all__ list is actually defined
@@ -216,6 +217,9 @@ def test_import_all_consistency():
     submods = [modname for _, modname, _ in pkgs]
     for modname in submods + ["sklearn"]:
         if ".tests." in modname:
+            continue
+        # Avoid test suite depending on setuptools
+        if "sklearn._build_utils" in modname:
             continue
         if IS_PYPY and (
             "_svmlight_format_io" in modname
@@ -596,9 +600,9 @@ def test_global_output_transform_pandas(estimator):
     name = estimator.__class__.__name__
     if not hasattr(estimator, "set_output"):
         pytest.skip(
-            f"Skipping check_global_ouptut_transform_pandas for {name}: Does not"
+            f"Skipping check_global_output_transform_pandas for {name}: Does not"
             " support set_output API yet"
         )
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
-        check_global_ouptut_transform_pandas(estimator.__class__.__name__, estimator)
+        check_global_output_transform_pandas(estimator.__class__.__name__, estimator)

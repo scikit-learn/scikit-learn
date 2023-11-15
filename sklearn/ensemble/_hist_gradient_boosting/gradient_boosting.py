@@ -65,13 +65,23 @@ def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
     Update equals:
         loss.fit_intercept_only(y_true - raw_prediction)
 
-    This is only applied if loss.need_update_leaves_values is True.
+    This is only applied if loss.differentiable is False.
     Note: It only works, if the loss is a function of the residual, as is the
     case for AbsoluteError and PinballLoss. Otherwise, one would need to get
     the minimum of loss(y_true, raw_prediction + x) in x. A few examples:
       - AbsoluteError: median(y_true - raw_prediction).
       - PinballLoss: quantile(y_true - raw_prediction).
-    See also notes about need_update_leaves_values in BaseLoss.
+
+    More background:
+    For the standard gradient descent method according to "Greedy Function
+    Approximation: A Gradient Boosting Machine" by Friedman, all loss functions but the
+    squared loss need a line search step. BaseHistGradientBoosting, however, implements
+    a so called Newton boosting where the trees are fitted to a 2nd order
+    approximations of the loss in terms of gradients and hessians. In this case, the
+    line search step is only necessary if the loss is not smooth, i.e. not
+    differentiable, which renders the 2nd order approximation invalid. In fact,
+    non-smooth losses arbitrarily set hessians to 1 and effectively use the standard
+    gradient descent method with line search.
     """
     # TODO: Ideally this should be computed in parallel over the leaves using something
     # similar to _update_raw_predictions(), but this requires a cython version of
@@ -101,6 +111,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "max_depth": [Interval(Integral, 1, None, closed="left"), None],
         "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
         "l2_regularization": [Interval(Real, 0, None, closed="left")],
+        "max_features": [Interval(RealNotInt, 0, 1, closed="right")],
         "monotonic_cst": ["array-like", dict, None],
         "interaction_cst": [
             list,
@@ -140,6 +151,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         max_depth,
         min_samples_leaf,
         l2_regularization,
+        max_features,
         max_bins,
         categorical_features,
         monotonic_cst,
@@ -160,6 +172,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
         self.l2_regularization = l2_regularization
+        self.max_features = max_features
         self.max_bins = max_bins
         self.monotonic_cst = monotonic_cst
         self.interaction_cst = interaction_cst
@@ -519,11 +532,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         rng = check_random_state(self.random_state)
 
-        # When warm starting, we want to re-use the same seed that was used
-        # the first time fit was called (e.g. for subsampling or for the
-        # train/val split).
-        if not (self.warm_start and self._is_fitted()):
+        # When warm starting, we want to reuse the same seed that was used
+        # the first time fit was called (e.g. train/val split).
+        # For feature subsampling, we want to continue with the rng we started with.
+        if not self.warm_start or not self._is_fitted():
             self._random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
+            feature_subsample_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
+            self._feature_subsample_rng = np.random.default_rng(feature_subsample_seed)
 
         self._validate_parameters()
         monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
@@ -673,7 +688,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # we're going to compute scoring w.r.t the loss. As losses
                     # take raw predictions as input (unlike the scorers), we
                     # can optimize a bit and avoid repeating computing the
-                    # predictions of the previous trees. We'll re-use
+                    # predictions of the previous trees. We'll reuse
                     # raw_predictions (as it's needed for training anyway) for
                     # evaluating the training loss, and create
                     # raw_predictions_val for storing the raw predictions of
@@ -825,6 +840,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,
                     l2_regularization=self.l2_regularization,
+                    feature_fraction_per_split=self.max_features,
+                    rng=self._feature_subsample_rng,
                     shrinkage=self.learning_rate,
                     n_threads=n_threads,
                 )
@@ -834,7 +851,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 acc_find_split_time += grower.total_find_split_time
                 acc_compute_hist_time += grower.total_compute_hist_time
 
-                if self._loss.need_update_leaves_values:
+                if not self._loss.differentiable:
                     _update_leaves_values(
                         loss=self._loss,
                         grower=grower,
@@ -1380,8 +1397,16 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
     l2_regularization : float, default=0
-        The L2 regularization parameter. Use ``0`` for no regularization
-        (default).
+        The L2 regularization parameter. Use ``0`` for no regularization (default).
+    max_features : float, default=1.0
+        Proportion of randomly chosen features in each and every node split.
+        This is a form of regularization, smaller values make the trees weaker
+        learners and might prevent overfitting.
+        If interaction constraints from `interaction_cst` are present, only allowed
+        features are taken into account for the subsampling.
+
+        .. versionadded:: 1.4
+
     max_bins : int, default=255
         The maximum number of bins to use for non-missing values. Before
         training, each feature of the input array `X` is binned into
@@ -1432,8 +1457,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         If an array, the features are mapped to constraints by position. See
         :ref:`monotonic_cst_features_names` for a usage example.
 
-        The constraints are only valid for binary classifications and hold
-        over the probability of the positive class.
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 0.23
@@ -1590,6 +1613,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         max_depth=None,
         min_samples_leaf=20,
         l2_regularization=0.0,
+        max_features=1.0,
         max_bins=255,
         categorical_features="warn",
         monotonic_cst=None,
@@ -1611,6 +1635,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization,
+            max_features=max_features,
             max_bins=max_bins,
             monotonic_cst=monotonic_cst,
             interaction_cst=interaction_cst,
@@ -1747,7 +1772,16 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
     l2_regularization : float, default=0
-        The L2 regularization parameter. Use 0 for no regularization.
+        The L2 regularization parameter. Use ``0`` for no regularization (default).
+    max_features : float, default=1.0
+        Proportion of randomly chosen features in each and every node split.
+        This is a form of regularization, smaller values make the trees weaker
+        learners and might prevent overfitting.
+        If interaction constraints from `interaction_cst` are present, only allowed
+        features are taken into account for the subsampling.
+
+        .. versionadded:: 1.4
+
     max_bins : int, default=255
         The maximum number of bins to use for non-missing values. Before
         training, each feature of the input array `X` is binned into
@@ -1956,6 +1990,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         max_depth=None,
         min_samples_leaf=20,
         l2_regularization=0.0,
+        max_features=1.0,
         max_bins=255,
         categorical_features="warn",
         monotonic_cst=None,
@@ -1978,6 +2013,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization,
+            max_features=max_features,
             max_bins=max_bins,
             categorical_features=categorical_features,
             monotonic_cst=monotonic_cst,
