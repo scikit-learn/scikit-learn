@@ -608,7 +608,7 @@ def compute_optics_graph(
     for ordering_idx in range(X.shape[0]):
         # Choose next based on smallest reachability distance
         # (And prefer smaller ids on ties, possibly np.inf!)
-        index = np.where(processed == False)[0]
+        index = np.where(processed == 0)[0]
         point = index[np.argmin(reachability_[index])]
 
         processed[point] = True
