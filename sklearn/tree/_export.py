@@ -78,8 +78,8 @@ SENTINEL = Sentinel()
     {
         "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
         "max_depth": [Interval(Integral, 0, None, closed="left"), None],
-        "feature_names": [list, None],
-        "class_names": [list, None],
+        "feature_names": ["array-like", None],
+        "class_names": ["array-like", "boolean", None],
         "label": [StrOptions({"all", "root", "none"})],
         "filled": ["boolean"],
         "impurity": ["boolean"],
@@ -130,11 +130,11 @@ def plot_tree(
         The maximum depth of the representation. If None, the tree is fully
         generated.
 
-    feature_names : list of str, default=None
+    feature_names : array-like of str, default=None
         Names of each of the features.
         If None, generic names will be used ("x[0]", "x[1]", ...).
 
-    class_names : list of str or bool, default=None
+    class_names : array-like of str or True, default=None
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
         If ``True``, shows a symbolic representation of the class name.

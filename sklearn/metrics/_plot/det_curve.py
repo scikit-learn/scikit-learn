@@ -292,7 +292,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.plot.DetCurveDisplay`
+        display : :class:`~sklearn.metrics.DetCurveDisplay`
             Object that stores computed values.
         """
         self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
