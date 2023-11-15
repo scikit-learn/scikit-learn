@@ -9,6 +9,16 @@ from ._stochastic_gradient import BaseSGDClassifier
 class Perceptron(BaseSGDClassifier):
     """Linear perceptron classifier.
 
+    The implementation is a wrapper around :class:`~sklearn.linear_model.SGDClassifier`
+    by fixing the `loss` and `learning_rate` parameter such as::
+
+        SGDClassifier(loss="perceptron", learning_rate="constant")
+
+    Other available parameters are described below and are forwarded to
+    :class:`~sklearn.linear_model.SGDClassifier`. Refer to
+    :ref:`mathematical section <sgd_mathematical_formulation>` of the SGD procedure for
+    more details.
+
     Read more in the :ref:`User Guide <perceptron>`.
 
     Parameters
