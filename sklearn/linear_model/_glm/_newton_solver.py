@@ -672,7 +672,7 @@ class NewtonLSMRSolver(NewtonSolver):
         Update pointwise gradient and hessian, self.g and self.h,
         as well as the full gradient, self.gradient.
         """
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
         if not self.linear_loss.base_loss.is_multiclass:
             self.linear_loss.base_loss.gradient_hessian(
                 y_true=y,
@@ -682,6 +682,9 @@ class NewtonLSMRSolver(NewtonSolver):
                 hessian_out=self.h,
                 n_threads=self.n_threads,
             )
+            sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
+            self.g /= sw_sum
+            self.h /= sw_sum
 
             # See LinearModelLoss.gradient_hessian
             # For non-canonical link functions and far away from the optimum, the
