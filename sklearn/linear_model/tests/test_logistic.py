@@ -719,14 +719,17 @@ def test_logistic_regression_solvers_multiclass():
     }
 
     for solver_1, solver_2 in itertools.combinations(regressors, r=2):
-        assert_array_almost_equal(
-            regressors[solver_1].coef_, regressors[solver_2].coef_, decimal=4
+        assert_allclose(
+            regressors[solver_1].coef_,
+            regressors[solver_2].coef_,
+            rtol=5e-3 if solver_2 == "saga" else 1e-3,
+            err_msg=f"{solver_1} vs {solver_2}",
         )
 
 
 @pytest.mark.parametrize("weight", [{0: 0.1, 1: 0.2}, {0: 0.1, 1: 0.2, 2: 0.5}])
 @pytest.mark.parametrize("class_weight", ["weight", "balanced"])
-def test_logistic_regressioncv_class_weights(weight, class_weight):
+def test_logistic_regressioncv_class_weights(weight, class_weight, global_random_seed):
     """Test class_weight for LogisticRegressionCV."""
     n_classes = len(weight)
     if class_weight == "weight":
@@ -739,13 +742,14 @@ def test_logistic_regressioncv_class_weights(weight, class_weight):
         n_informative=3,
         n_redundant=0,
         n_classes=n_classes,
-        random_state=0,
+        random_state=global_random_seed,
     )
     params = dict(
         Cs=1,
         fit_intercept=False,
         multi_class="ovr",
         class_weight=class_weight,
+        tol=1e-8,
     )
     clf_lbfgs = LogisticRegressionCV(solver="lbfgs", **params)
     clf_lbfgs.fit(X, y)
@@ -753,9 +757,14 @@ def test_logistic_regressioncv_class_weights(weight, class_weight):
     for solver in set(SOLVERS) - set(["lbfgs"]):
         clf = LogisticRegressionCV(solver=solver, **params)
         if solver in ("sag", "saga"):
-            clf.set_params(tol=1e-5, max_iter=10000, random_state=0)
+            clf.set_params(
+                tol=1e-18, max_iter=10000, random_state=global_random_seed + 1
+            )
         clf.fit(X, y)
-        assert_allclose(clf.coef_, clf_lbfgs.coef_, rtol=1e-3)
+
+        assert_allclose(
+            clf.coef_, clf_lbfgs.coef_, rtol=1e-3, err_msg=f"{solver} vs lbfgs"
+        )
 
 
 def test_logistic_regression_sample_weights():
@@ -780,7 +789,7 @@ def test_logistic_regression_sample_weights():
 
         # Test that sample weights work the same with the lbfgs,
         # newton-cg, newton-cholesky and 'sag' solvers
-        clf_sw_lbfgs = LR(**kw)
+        clf_sw_lbfgs = LR(**kw, tol=1e-5)
         clf_sw_lbfgs.fit(X, y, sample_weight=sample_weight)
         for solver in set(SOLVERS) - set(("lbfgs", "saga")):
             clf_sw = LR(solver=solver, tol=1e-10 if solver == "sag" else 1e-5, **kw)
@@ -906,9 +915,9 @@ def test_logistic_regression_multinomial():
 
     # 'lbfgs' is used as a referenced
     solver = "lbfgs"
-    ref_i = LogisticRegression(solver=solver, multi_class="multinomial")
+    ref_i = LogisticRegression(solver=solver, multi_class="multinomial", tol=1e-6)
     ref_w = LogisticRegression(
-        solver=solver, multi_class="multinomial", fit_intercept=False
+        solver=solver, multi_class="multinomial", fit_intercept=False, tol=1e-6
     )
     ref_i.fit(X, y)
     ref_w.fit(X, y)
@@ -936,9 +945,9 @@ def test_logistic_regression_multinomial():
         assert clf_w.coef_.shape == (n_classes, n_features)
 
         # Compare solutions between lbfgs and the other solvers
-        assert_allclose(ref_i.coef_, clf_i.coef_, rtol=1e-2)
+        assert_allclose(ref_i.coef_, clf_i.coef_, rtol=1e-3)
         assert_allclose(ref_w.coef_, clf_w.coef_, rtol=1e-2)
-        assert_allclose(ref_i.intercept_, clf_i.intercept_, rtol=1e-2)
+        assert_allclose(ref_i.intercept_, clf_i.intercept_, rtol=1e-3)
 
     # Test that the path give almost the same results. However since in this
     # case we take the average of the coefs after fitting across all the
@@ -948,8 +957,8 @@ def test_logistic_regression_multinomial():
             solver=solver, max_iter=2000, tol=1e-6, multi_class="multinomial", Cs=[1.0]
         )
         clf_path.fit(X, y)
-        assert_allclose(clf_path.coef_, ref_i.coef_, rtol=2e-2)
-        assert_allclose(clf_path.intercept_, ref_i.intercept_, rtol=2e-2)
+        assert_allclose(clf_path.coef_, ref_i.coef_, rtol=1e-2)
+        assert_allclose(clf_path.intercept_, ref_i.intercept_, rtol=1e-2)
 
 
 def test_liblinear_decision_function_zero():
