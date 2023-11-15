@@ -429,12 +429,7 @@ def test__average(library, X, axis, weights, expected):
             TypeError,
             "1D weights expected when shapes of X and weights differ.",
         ),
-        (
-            1,
-            [0.5, 2.0],
-            ValueError,
-            "Length of weights not compatible with specified axis.",
-        ),
+        (1, [0.5, 2.0], ValueError, "Length of weights"),
         (0, [0.5, -0.5], ZeroDivisionError, "Weights sum to zero, can't be normalized"),
     ],
 )

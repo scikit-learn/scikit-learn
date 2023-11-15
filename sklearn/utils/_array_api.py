@@ -643,7 +643,10 @@ def _average(X, axis=None, weights=None):
                 f"Got {X.shape = } and {weights.shape = }."
             )
         if weights.shape[0] != X.shape[axis]:
-            raise ValueError("Length of weights not compatible with specified axis.")
+            raise ValueError(
+                f"Length of weights ({weights.shape=}) not compatible with "
+                f"{X.shape=} and {axis=}."
+            )
         weights = xp.broadcast_to(weights, (X.ndim - 1) * (1,) + weights.shape)
         weights = xp.swapaxes(weights, -1, axis)
     weights_sum = xp.sum(weights, axis=axis)
