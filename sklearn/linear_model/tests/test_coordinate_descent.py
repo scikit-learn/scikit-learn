@@ -38,10 +38,12 @@ from sklearn.linear_model import (
 )
 from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.model_selection import (
+    BaseCrossValidator,
     GridSearchCV,
     LeaveOneGroupOut,
     train_test_split,
 )
+from sklearn.model_selection._split import GroupsConsumerMixin
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_array
@@ -1632,3 +1634,63 @@ def test_read_only_buffer():
 
     y = rng.rand(100)
     clf.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "EstimatorCV",
+    [ElasticNetCV, LassoCV, MultiTaskElasticNetCV, MultiTaskLassoCV],
+)
+def test_cv_estimators_reject_params_with_no_routing_enabled(EstimatorCV):
+    """Check that the models inheriting from class:`LinearModelCV` raise an
+    error when any `params` are passed when routing is not enabled.
+    """
+    X, y = make_regression(random_state=42)
+    groups = np.array([0, 1] * (len(y) // 2))
+    estimator = EstimatorCV()
+    msg = "is only supported if enable_metadata_routing=True"
+    with pytest.raises(ValueError, match=msg):
+        estimator.fit(X, y, groups=groups)
+
+
+@pytest.mark.usefixtures("enable_slep006")
+@pytest.mark.parametrize(
+    "MultiTaskEstimatorCV",
+    [MultiTaskElasticNetCV, MultiTaskLassoCV],
+)
+def test_multitask_cv_estimators_with_sample_weight(MultiTaskEstimatorCV):
+    """Check that for :class:`MultiTaskElasticNetCV` and
+    class:`MultiTaskLassoCV` if `sample_weight` is passed and the
+    CV splitter does not support `sample_weight` an error is raised.
+    On the other hand if the splitter does support `sample_weight`
+    while `sample_weight` is passed there is no error and process
+    completes smoothly as before.
+    """
+
+    class CVSplitter(BaseCrossValidator, GroupsConsumerMixin):
+        def get_n_splits(self, X=None, y=None, groups=None, metadata=None):
+            pass  # pragma: nocover
+
+    class CVSplitterSampleWeight(CVSplitter):
+        def split(self, X, y=None, groups=None, sample_weight=None):
+            split_index = len(X) // 2
+            train_indices = list(range(0, split_index))
+            test_indices = list(range(split_index, len(X)))
+            yield test_indices, train_indices
+            yield train_indices, test_indices
+
+    X, y = make_regression(random_state=42, n_targets=2)
+    sample_weight = np.ones(X.shape[0])
+
+    # If CV splitter does not support sample_weight an error is raised
+    splitter = CVSplitter().set_split_request(groups=True)
+    estimator = MultiTaskEstimatorCV(cv=splitter)
+    msg = "do not support sample weights"
+    with pytest.raises(ValueError, match=msg):
+        estimator.fit(X, y, sample_weight=sample_weight)
+
+    # If CV splitter does support sample_weight no error is raised
+    splitter = CVSplitterSampleWeight().set_split_request(
+        groups=True, sample_weight=True
+    )
+    estimator = MultiTaskEstimatorCV(cv=splitter)
+    estimator.fit(X, y, sample_weight=sample_weight)

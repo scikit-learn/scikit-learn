@@ -61,7 +61,6 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import sparse
-from scipy.sparse import csgraph
 
 from ..base import BaseEstimator, ClassifierMixin, _fit_context
 from ..exceptions import ConvergenceWarning
@@ -69,6 +68,7 @@ from ..metrics.pairwise import rbf_kernel
 from ..neighbors import NearestNeighbors
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import safe_sparse_dot
+from ..utils.fixes import laplacian as csgraph_laplacian
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 
@@ -613,7 +613,7 @@ class LabelSpreading(BaseLabelPropagation):
             self.nn_fit = None
         n_samples = self.X_.shape[0]
         affinity_matrix = self._get_kernel(self.X_)
-        laplacian = csgraph.laplacian(affinity_matrix, normed=True)
+        laplacian = csgraph_laplacian(affinity_matrix, normed=True)
         laplacian = -laplacian
         if sparse.issparse(laplacian):
             diag_mask = laplacian.row == laplacian.col

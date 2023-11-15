@@ -7,7 +7,7 @@ on:
   - pull_request_target
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
 jobs:
@@ -62,7 +62,7 @@ jobs:
 
   comment:
     needs: lint
-    if: always()
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
 
     # We need these permissions to be able to post / update comments

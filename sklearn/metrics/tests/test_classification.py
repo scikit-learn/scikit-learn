@@ -27,6 +27,7 @@ from sklearn.metrics import (
     hinge_loss,
     jaccard_score,
     log_loss,
+    make_scorer,
     matthews_corrcoef,
     multilabel_confusion_matrix,
     precision_recall_fscore_support,
@@ -35,7 +36,9 @@ from sklearn.metrics import (
     zero_one_loss,
 )
 from sklearn.metrics._classification import _check_targets
+from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelBinarizer, label_binarize
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
     assert_allclose,
@@ -628,6 +631,15 @@ def test_confusion_matrix_normalize_single_class():
     with warnings.catch_warnings():
         warnings.simplefilter("error", RuntimeWarning)
         confusion_matrix(y_pred, y_test, normalize="true")
+
+
+def test_confusion_matrix_single_label():
+    """Test `confusion_matrix` warns when only one label found."""
+    y_test = [0, 0, 0, 0]
+    y_pred = [0, 0, 0, 0]
+
+    with pytest.warns(UserWarning, match="A single label was found in"):
+        confusion_matrix(y_pred, y_test)
 
 
 @pytest.mark.parametrize(
@@ -2804,3 +2816,27 @@ def test_classification_metric_pos_label_types(metric, classes):
         y_pred = y_true.copy()
     result = metric(y_true, y_pred, pos_label=pos_label)
     assert not np.any(np.isnan(result))
+
+
+@pytest.mark.parametrize(
+    "scoring",
+    [
+        make_scorer(f1_score, zero_division=np.nan),
+        make_scorer(fbeta_score, beta=2, zero_division=np.nan),
+        make_scorer(precision_score, zero_division=np.nan),
+        make_scorer(recall_score, zero_division=np.nan),
+    ],
+)
+def test_classification_metric_division_by_zero_nan_validaton(scoring):
+    """Check that we validate `np.nan` properly for classification metrics.
+
+    With `n_jobs=2` in cross-validation, the `np.nan` used for the singleton will be
+    different in the sub-process and we should not use the `is` operator but
+    `math.isnan`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27563
+    """
+    X, y = datasets.make_classification(random_state=0)
+    classifier = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X, y)
+    cross_val_score(classifier, X, y, scoring=scoring, n_jobs=2, error_score="raise")
