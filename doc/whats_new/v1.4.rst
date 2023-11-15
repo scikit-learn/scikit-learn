@@ -238,6 +238,12 @@ Changelog
   `kdtree` and `balltree` values will be removed in 1.6.
   :pr:`26744` by :user:`Shreesha Kumar Bhat <Shreesha3112>`.
 
+- |Fix| Fixes a bug in :class:`cluster.OPTICS` where the cluster correction based
+  on predecessor was not using the right indexing. It would lead to inconsistent results
+  depedendent on the order of the data.
+  :pr:`26459` by :user:`Haoying Zhang <stevezhang1999>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.compose`
 ......................
 
