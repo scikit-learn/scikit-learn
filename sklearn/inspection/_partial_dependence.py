@@ -11,17 +11,23 @@ import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
-from ._pd_utils import _check_feature_names, _get_feature_index
 from ..base import is_classifier, is_regressor
-from ..utils.extmath import cartesian
-from ..utils import check_array
-from ..utils import check_matplotlib_support  # noqa
-from ..utils import _safe_indexing
-from ..utils import _safe_assign
-from ..utils import _determine_key_type
-from ..utils import _get_column_indices
-from ..utils.validation import check_is_fitted
-from ..utils import Bunch
+from ..ensemble import RandomForestRegressor
+from ..ensemble._gb import BaseGradientBoosting
+from ..ensemble._hist_gradient_boosting.gradient_boosting import (
+    BaseHistGradientBoosting,
+)
+from ..exceptions import NotFittedError
+from ..tree import DecisionTreeRegressor
+from ..utils import (
+    Bunch,
+    _determine_key_type,
+    _get_column_indices,
+    _safe_assign,
+    _safe_indexing,
+    check_array,
+    check_matplotlib_support,  # noqa
+)
 from ..utils._param_validation import (
     HasMethods,
     Integral,
@@ -29,14 +35,9 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from ..tree import DecisionTreeRegressor
-from ..ensemble import RandomForestRegressor
-from ..exceptions import NotFittedError
-from ..ensemble._gb import BaseGradientBoosting
-from ..ensemble._hist_gradient_boosting.gradient_boosting import (
-    BaseHistGradientBoosting,
-)
-
+from ..utils.extmath import cartesian
+from ..utils.validation import _check_sample_weight, check_is_fitted
+from ._pd_utils import _check_feature_names, _get_feature_index
 
 __all__ = [
     "partial_dependence",
@@ -136,6 +137,54 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
 
 
 def _partial_dependence_recursion(est, grid, features):
+    """Calculate partial dependence via the recursion method.
+
+    The recursion method is in particular enabled for tree-based estimators.
+
+    For each `grid` value, a weighted tree traversal is performed: if a split node
+    involves an input feature of interest, the corresponding left or right branch
+    is followed; otherwise both branches are followed, each branch being weighted
+    by the fraction of training samples that entered that branch. Finally, the
+    partial dependence is given by a weighted average of all the visited leaves
+    values.
+
+    This method is more efficient in terms of speed than the `'brute'` method
+    (:func:`~sklearn.inspection._partial_dependence._partial_dependence_brute`).
+    However, here, the partial dependence computation is done explicitly with the
+    `X` used during training of `est`.
+
+    Parameters
+    ----------
+    est : BaseEstimator
+        A fitted estimator object implementing :term:`predict` or
+        :term:`decision_function`. Multioutput-multiclass classifiers are not
+        supported. Note that `'recursion'` is only supported for some tree-based
+        estimators (namely
+        :class:`~sklearn.ensemble.GradientBoostingClassifier`,
+        :class:`~sklearn.ensemble.GradientBoostingRegressor`,
+        :class:`~sklearn.ensemble.HistGradientBoostingClassifier`,
+        :class:`~sklearn.ensemble.HistGradientBoostingRegressor`,
+        :class:`~sklearn.tree.DecisionTreeRegressor`,
+        :class:`~sklearn.ensemble.RandomForestRegressor`,
+        ).
+
+    grid : array-like of shape (n_points, n_target_features)
+        The grid of feature values for which the partial dependence is calculated.
+        Note that `n_points` is the number of points in the grid and `n_target_features`
+        is the number of features you are doing partial dependence at.
+
+    features : array-like of {int, str}
+        The feature (e.g. `[0]`) or pair of interacting features
+        (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
+
+    Returns
+    -------
+    averaged_predictions : array-like of shape (n_targets, n_points)
+        The averaged predictions for the given `grid` of features values.
+        Note that `n_targets` is the number of targets (e.g. 1 for binary
+        classification, `n_tasks` for multi-output regression, and `n_classes` for
+        multiclass classification) and `n_points` is the number of points in the `grid`.
+    """
     averaged_predictions = est._compute_partial_dependence_recursion(grid, features)
     if averaged_predictions.ndim == 1:
         # reshape to (1, n_points) for consistency with
@@ -145,7 +194,78 @@ def _partial_dependence_recursion(est, grid, features):
     return averaged_predictions
 
 
-def _partial_dependence_brute(est, grid, features, X, response_method):
+def _partial_dependence_brute(
+    est, grid, features, X, response_method, sample_weight=None
+):
+    """Calculate partial dependence via the brute force method.
+
+    The brute method explicitly averages the predictions of an estimator over a
+    grid of feature values.
+
+    For each `grid` value, all the samples from `X` have their variables of
+    interest replaced by that specific `grid` value. The predictions are then made
+    and averaged across the samples.
+
+    This method is slower than the `'recursion'`
+    (:func:`~sklearn.inspection._partial_dependence._partial_dependence_recursion`)
+    version for estimators with this second option. However, with the `'brute'`
+    force method, the average will be done with the given `X` and not the `X`
+    used during training, as it is done in the `'recursion'` version. Therefore
+    the average can always accept `sample_weight` (even when the estimator was
+    fitted without).
+
+    Parameters
+    ----------
+    est : BaseEstimator
+        A fitted estimator object implementing :term:`predict`,
+        :term:`predict_proba`, or :term:`decision_function`.
+        Multioutput-multiclass classifiers are not supported.
+
+    grid : array-like of shape (n_points, n_target_features)
+        The grid of feature values for which the partial dependence is calculated.
+        Note that `n_points` is the number of points in the grid and `n_target_features`
+        is the number of features you are doing partial dependence at.
+
+    features : array-like of {int, str}
+        The feature (e.g. `[0]`) or pair of interacting features
+        (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
+
+    X : array-like of shape (n_samples, n_features)
+        `X` is used to generate values for the complement features. That is, for
+        each value in `grid`, the method will average the prediction of each
+        sample from `X` having that grid value for `features`.
+
+    response_method : {'auto', 'predict_proba', 'decision_function'}, \
+            default='auto'
+        Specifies whether to use :term:`predict_proba` or
+        :term:`decision_function` as the target response. For regressors
+        this parameter is ignored and the response is always the output of
+        :term:`predict`. By default, :term:`predict_proba` is tried first
+        and we revert to :term:`decision_function` if it doesn't exist.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights are used to calculate weighted means when averaging the
+        model output. If `None`, then samples are equally weighted. Note that
+        `sample_weight` does not change the individual predictions.
+
+    Returns
+    -------
+    averaged_predictions : array-like of shape (n_targets, n_points)
+        The averaged predictions for the given `grid` of features values.
+        Note that `n_targets` is the number of targets (e.g. 1 for binary
+        classification, `n_tasks` for multi-output regression, and `n_classes` for
+        multiclass classification) and `n_points` is the number of points in the `grid`.
+
+    predictions : array-like
+        The predictions for the given `grid` of features values over the samples
+        from `X`. For non-multioutput regression and binary classification the
+        shape is `(n_instances, n_points)` and for multi-output regression and
+        multiclass classification the shape is `(n_targets, n_instances, n_points)`,
+        where `n_targets` is the number of targets (`n_tasks` for multi-output
+        regression, and `n_classes` for multiclass classification), `n_instances`
+        is the number of instances in `X`, and `n_points` is the number of points
+        in the `grid`.
+    """
     predictions = []
     averaged_predictions = []
 
@@ -191,7 +311,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
 
             predictions.append(pred)
             # average over samples
-            averaged_predictions.append(np.mean(pred, axis=0))
+            averaged_predictions.append(np.average(pred, axis=0, weights=sample_weight))
         except NotFittedError as e:
             raise ValueError("'estimator' parameter must be a fitted estimator") from e
 
@@ -239,6 +359,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
         ],
         "X": ["array-like", "sparse matrix"],
         "features": ["array-like", Integral, str],
+        "sample_weight": ["array-like", None],
         "categorical_features": ["array-like", None],
         "feature_names": ["array-like", None],
         "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
@@ -246,13 +367,15 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
         "grid_resolution": [Interval(Integral, 1, None, closed="left")],
         "method": [StrOptions({"auto", "recursion", "brute"})],
         "kind": [StrOptions({"average", "individual", "both"})],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 def partial_dependence(
     estimator,
     X,
     features,
     *,
+    sample_weight=None,
     categorical_features=None,
     feature_names=None,
     response_method="auto",
@@ -302,6 +425,14 @@ def partial_dependence(
     features : array-like of {int, str, bool} or int or str
         The feature (e.g. `[0]`) or pair of interacting features
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights are used to calculate weighted means when averaging the
+        model output. If `None`, then samples are equally weighted. If
+        `sample_weight` is not `None`, then `method` will be set to `'brute'`.
+        Note that `sample_weight` is ignored for `kind='individual'`.
+
+        .. versionadded:: 1.3
 
     categorical_features : array-like of shape (n_features,) or shape \
             (n_categorical_features,), dtype={bool, int, str}, default=None
@@ -366,7 +497,8 @@ def partial_dependence(
           computationally intensive.
 
         - `'auto'`: the `'recursion'` is used for estimators that support it,
-          and `'brute'` is used otherwise.
+          and `'brute'` is used otherwise. If `sample_weight` is not `None`,
+          then `'brute'` is used regardless of the estimator.
 
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the `'brute'` and `'recursion'` method.
@@ -377,8 +509,9 @@ def partial_dependence(
         See Returns below.
 
         Note that the fast `method='recursion'` option is only available for
-        `kind='average'`. Computing individual dependencies requires using the
-        slower `method='brute'` option.
+        `kind='average'` and `sample_weights=None`. Computing individual
+        dependencies and doing weighted averages requires using the slower
+        `method='brute'`.
 
         .. versionadded:: 0.24
 
@@ -391,14 +524,15 @@ def partial_dependence(
                 len(values[0]), len(values[1]), ...)
             The predictions for all the points in the grid for all
             samples in X. This is also known as Individual
-            Conditional Expectation (ICE)
+            Conditional Expectation (ICE).
+            Only available when `kind='individual'` or `kind='both'`.
 
         average : ndarray of shape (n_outputs, len(values[0]), \
                 len(values[1]), ...)
             The predictions for all the points in the grid, averaged
             over all samples in X (or over the training data if
-            ``method`` is 'recursion').
-            Only available when ``kind='both'``.
+            `method` is 'recursion').
+            Only available when `kind='average'` or `kind='both'`.
 
         values : seq of 1d ndarrays
             The values with which the grid has been created.
@@ -410,17 +544,17 @@ def partial_dependence(
 
         grid_values : seq of 1d ndarrays
             The values with which the grid has been created. The generated
-            grid is a cartesian product of the arrays in ``grid_values`` where
-            ``len(grid_values) == len(features)``. The size of each array
-            ``grid_values[j]`` is either ``grid_resolution``, or the number of
-            unique values in ``X[:, j]``, whichever is smaller.
+            grid is a cartesian product of the arrays in `grid_values` where
+            `len(grid_values) == len(features)`. The size of each array
+            `grid_values[j]` is either `grid_resolution`, or the number of
+            unique values in `X[:, j]`, whichever is smaller.
 
             .. versionadded:: 1.3
 
-        ``n_outputs`` corresponds to the number of classes in a multi-class
+        `n_outputs` corresponds to the number of classes in a multi-class
         setting, or to the number of tasks for multi-output regression.
-        For classical regression and binary classification ``n_outputs==1``.
-        ``n_values_feature_j`` corresponds to the size ``grid_values[j]``.
+        For classical regression and binary classification `n_outputs==1`.
+        `n_values_feature_j` corresponds to the size `grid_values[j]`.
 
     See Also
     --------
@@ -463,8 +597,15 @@ def partial_dependence(
             )
         method = "brute"
 
+    if method == "recursion" and sample_weight is not None:
+        raise ValueError(
+            "The 'recursion' method can only be applied when sample_weight is None."
+        )
+
     if method == "auto":
-        if isinstance(estimator, BaseGradientBoosting) and estimator.init is None:
+        if sample_weight is not None:
+            method = "brute"
+        elif isinstance(estimator, BaseGradientBoosting) and estimator.init is None:
             method = "recursion"
         elif isinstance(
             estimator,
@@ -507,6 +648,9 @@ def partial_dependence(
                 "With the 'recursion' method, the response_method must be "
                 "'decision_function'. Got {}.".format(response_method)
             )
+
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(sample_weight, X)
 
     if _determine_key_type(features, accept_slice=False) == "int":
         # _get_column_indices() supports negative indexing. Here, we limit
@@ -560,7 +704,7 @@ def partial_dependence(
 
     if method == "brute":
         averaged_predictions, predictions = _partial_dependence_brute(
-            estimator, grid, features_indices, X, response_method
+            estimator, grid, features_indices, X, response_method, sample_weight
         )
 
         # reshape predictions to

@@ -18,11 +18,13 @@ is only caused by the random selection of anomalies in the SA dataset.
 """
 
 from time import time
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.datasets import fetch_covtype, fetch_kddcup99, fetch_openml
+from sklearn.metrics import auc, roc_curve
 from sklearn.neighbors import LocalOutlierFactor
-from sklearn.metrics import roc_curve, auc
-from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_openml
 from sklearn.preprocessing import LabelBinarizer
 
 print(__doc__)

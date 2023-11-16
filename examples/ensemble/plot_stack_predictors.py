@@ -131,8 +131,7 @@ tree_preprocessor
 # Then, we will now define the preprocessor used when the ending regressor
 # is a linear model.
 
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 cat_linear_processor = OneHotEncoder(handle_unknown="ignore")
 num_linear_processor = make_pipeline(
@@ -206,9 +205,11 @@ stacking_regressor
 
 
 import time
+
 import matplotlib.pyplot as plt
+
 from sklearn.metrics import PredictionErrorDisplay
-from sklearn.model_selection import cross_validate, cross_val_predict
+from sklearn.model_selection import cross_val_predict, cross_validate
 
 fig, axs = plt.subplots(2, 2, figsize=(9, 7))
 axs = np.ravel(axs)

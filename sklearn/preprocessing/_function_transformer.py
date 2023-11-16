@@ -2,14 +2,16 @@ import warnings
 
 import numpy as np
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _fit_context
+from ..utils._param_validation import StrOptions
+from ..utils._set_output import _get_output_config
 from ..utils.metaestimators import available_if
 from ..utils.validation import (
     _allclose_dense_sparse,
     _check_feature_names_in,
+    _is_pandas_df,
     check_array,
 )
-from ..utils._param_validation import StrOptions
 
 
 def _identity(X):
@@ -197,6 +199,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                 UserWarning,
             )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit transformer by checking X.
 
@@ -216,7 +219,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         self : object
             FunctionTransformer class instance.
         """
-        self._validate_params()
         X = self._check_input(X, reset=True)
         if self.check_inverse and not (self.func is None or self.inverse_func is None):
             self._check_inverse_transform(X)
@@ -237,7 +239,20 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             Transformed input.
         """
         X = self._check_input(X, reset=False)
-        return self._transform(X, func=self.func, kw_args=self.kw_args)
+        out = self._transform(X, func=self.func, kw_args=self.kw_args)
+
+        output_config = _get_output_config("transform", self)["dense"]
+        if (
+            output_config == "pandas"
+            and self.feature_names_out is None
+            and not _is_pandas_df(out)
+        ):
+            warnings.warn(
+                "When `set_output` is configured to be 'pandas', `func` should return "
+                "a DataFrame to follow the `set_output` API  or `feature_names_out` "
+                "should be defined."
+            )
+        return out
 
     def inverse_transform(self, X):
         """Transform X using the inverse function.
@@ -338,13 +353,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         self : estimator instance
             Estimator instance.
         """
-        if hasattr(super(), "set_output"):
-            return super().set_output(transform=transform)
+        if not hasattr(self, "_sklearn_output_config"):
+            self._sklearn_output_config = {}
 
-        if transform == "pandas" and self.feature_names_out is None:
-            warnings.warn(
-                'With transform="pandas", `func` should return a DataFrame to follow'
-                " the set_output API."
-            )
-
+        self._sklearn_output_config["transform"] = transform
         return self

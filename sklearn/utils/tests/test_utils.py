@@ -1,37 +1,40 @@
-from copy import copy
-from itertools import chain
-import warnings
 import string
 import timeit
+import warnings
+from copy import copy
+from itertools import chain
 
-import pytest
 import numpy as np
-import scipy.sparse as sp
+import pytest
 
-from sklearn.utils._testing import (
-    assert_array_equal,
-    assert_allclose_dense_sparse,
-    assert_no_warnings,
-    _convert_container,
-)
-from sklearn.utils import check_random_state
-from sklearn.utils import _determine_key_type
-from sklearn.utils import deprecated
-from sklearn.utils import _get_column_indices
-from sklearn.utils import resample
-from sklearn.utils import safe_mask
-from sklearn.utils import column_or_1d
-from sklearn.utils import _safe_indexing
-from sklearn.utils import _safe_assign
-from sklearn.utils import shuffle
-from sklearn.utils import gen_even_slices
-from sklearn.utils import _message_with_time, _print_elapsed_time
-from sklearn.utils import get_chunk_n_rows
-from sklearn.utils import is_scalar_nan
-from sklearn.utils import _to_object_array
-from sklearn.utils import _approximate_mode
-from sklearn.utils._mocking import MockDataFrame
 from sklearn import config_context
+from sklearn.utils import (
+    _approximate_mode,
+    _determine_key_type,
+    _get_column_indices,
+    _message_with_time,
+    _print_elapsed_time,
+    _safe_assign,
+    _safe_indexing,
+    _to_object_array,
+    check_random_state,
+    column_or_1d,
+    deprecated,
+    gen_even_slices,
+    get_chunk_n_rows,
+    is_scalar_nan,
+    resample,
+    safe_mask,
+    shuffle,
+)
+from sklearn.utils._mocking import MockDataFrame
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_allclose_dense_sparse,
+    assert_array_equal,
+    assert_no_warnings,
+)
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 # toy array
 X_toy = np.arange(9).reshape((3, 3))
@@ -157,21 +160,23 @@ def test_resample_stratify_2dy():
     assert y.ndim == 2
 
 
-def test_resample_stratify_sparse_error():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_resample_stratify_sparse_error(csr_container):
     # resample must be ndarray
     rng = np.random.RandomState(0)
     n_samples = 100
     X = rng.normal(size=(n_samples, 2))
     y = rng.randint(0, 2, size=n_samples)
-    stratify = sp.csr_matrix(y)
-    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+    stratify = csr_container(y)
+    with pytest.raises(TypeError, match="Sparse data was passed"):
         X, y = resample(X, y, n_samples=50, random_state=rng, stratify=stratify)
 
 
-def test_safe_mask():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_safe_mask(csr_container):
     random_state = check_random_state(0)
     X = random_state.rand(5, 4)
-    X_csr = sp.csr_matrix(X)
+    X_csr = csr_container(X)
     mask = [False, False, True, True, True]
 
     mask = safe_mask(X, mask)
@@ -511,27 +516,28 @@ def test_shuffle_on_ndim_equals_three():
     assert set(to_tuple(A)) == S
 
 
-def test_shuffle_dont_convert_to_array():
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_shuffle_dont_convert_to_array(csc_container):
     # Check that shuffle does not try to convert to numpy arrays with float
     # dtypes can let any indexable datastructure pass-through.
     a = ["a", "b", "c"]
     b = np.array(["a", "b", "c"], dtype=object)
     c = [1, 2, 3]
     d = MockDataFrame(np.array([["a", 0], ["b", 1], ["c", 2]], dtype=object))
-    e = sp.csc_matrix(np.arange(6).reshape(3, 2))
+    e = csc_container(np.arange(6).reshape(3, 2))
     a_s, b_s, c_s, d_s, e_s = shuffle(a, b, c, d, e, random_state=0)
 
     assert a_s == ["c", "b", "a"]
-    assert type(a_s) == list
+    assert type(a_s) == list  # noqa: E721
 
     assert_array_equal(b_s, ["c", "b", "a"])
     assert b_s.dtype == object
 
     assert c_s == [3, 2, 1]
-    assert type(c_s) == list
+    assert type(c_s) == list  # noqa: E721
 
     assert_array_equal(d_s, np.array([["c", 2], ["b", 1], ["a", 0]], dtype=object))
-    assert type(d_s) == MockDataFrame
+    assert type(d_s) == MockDataFrame  # noqa: E721
 
     assert_array_equal(e_s.toarray(), np.array([[4, 5], [2, 3], [0, 1]]))
 
@@ -541,11 +547,6 @@ def test_gen_even_slices():
     some_range = range(10)
     joined_range = list(chain(*[some_range[slice] for slice in gen_even_slices(10, 3)]))
     assert_array_equal(some_range, joined_range)
-
-    # check that passing negative n_chunks raises an error
-    slices = gen_even_slices(10, -1)
-    with pytest.raises(ValueError, match="gen_even_slices got n_packs=-1, must be >=1"):
-        next(slices)
 
 
 @pytest.mark.parametrize(

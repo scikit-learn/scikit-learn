@@ -32,10 +32,10 @@ tends to divide natural clusters into unnecessary sub-components.
 # Author: Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.mixture import BayesianGaussianMixture
 

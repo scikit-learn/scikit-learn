@@ -1,22 +1,21 @@
 import numpy as np
-from scipy.stats.mstats import mquantiles
-
 import pytest
 from numpy.testing import assert_allclose
+from scipy.stats.mstats import mquantiles
 
-from sklearn.datasets import load_diabetes
-from sklearn.datasets import load_iris
-from sklearn.datasets import make_classification, make_regression
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.linear_model import LinearRegression
-from sklearn.utils._testing import _convert_container
 from sklearn.compose import make_column_transformer
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.pipeline import make_pipeline
-
+from sklearn.datasets import (
+    load_diabetes,
+    load_iris,
+    make_classification,
+    make_regression,
+)
+from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
 from sklearn.inspection import PartialDependenceDisplay
-
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.utils._testing import _convert_container
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
@@ -1087,3 +1086,34 @@ def test_partial_dependence_display_kind_centered_interaction(
     )
 
     assert all([ln._y[0] == 0.0 for ln in disp.lines_.ravel() if ln is not None])
+
+
+def test_partial_dependence_display_with_constant_sample_weight(
+    pyplot,
+    clf_diabetes,
+    diabetes,
+):
+    """Check that the utilization of a constant sample weight maintains the
+    standard behavior.
+    """
+    disp = PartialDependenceDisplay.from_estimator(
+        clf_diabetes,
+        diabetes.data,
+        [0, 1],
+        kind="average",
+        method="brute",
+    )
+
+    sample_weight = np.ones_like(diabetes.target)
+    disp_sw = PartialDependenceDisplay.from_estimator(
+        clf_diabetes,
+        diabetes.data,
+        [0, 1],
+        sample_weight=sample_weight,
+        kind="average",
+        method="brute",
+    )
+
+    assert np.array_equal(
+        disp.pd_results[0]["average"], disp_sw.pd_results[0]["average"]
+    )

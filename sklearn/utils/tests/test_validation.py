@@ -1,73 +1,85 @@
 """Tests for input validation functions"""
 
 import numbers
-import warnings
 import re
-
-from tempfile import NamedTemporaryFile
+import warnings
 from itertools import product
 from operator import itemgetter
+from tempfile import NamedTemporaryFile
 
-import pytest
-from pytest import importorskip
 import numpy as np
+import pytest
 import scipy.sparse as sp
+from pytest import importorskip
 
+import sklearn
 from sklearn._config import config_context
-from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import SkipTest
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import _convert_container
-from sklearn.utils import as_float_array, check_array, check_symmetric
-from sklearn.utils import check_X_y
-from sklearn.utils import deprecated
+from sklearn.base import BaseEstimator
+from sklearn.datasets import make_blobs
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
+from sklearn.linear_model import ARDRegression
 
 # TODO: add this estimator into the _mocking module in a further refactoring
 from sklearn.metrics.tests.test_score_objects import EstimatorWithFit
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.random_projection import _sparse_random_matrix
+from sklearn.svm import SVR
+from sklearn.utils import (
+    _safe_indexing,
+    as_float_array,
+    check_array,
+    check_symmetric,
+    check_X_y,
+    deprecated,
+)
 from sklearn.utils._mocking import (
     MockDataFrame,
     _MockEstimatorOnOffPrediction,
 )
-from sklearn.utils.fixes import parse_version
+from sklearn.utils._testing import (
+    SkipTest,
+    TempMemmap,
+    _convert_container,
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    assert_array_equal,
+    assert_no_warnings,
+    ignore_warnings,
+    skip_if_array_api_compat_not_configured,
+)
 from sklearn.utils.estimator_checks import _NotAnArray
-from sklearn.random_projection import _sparse_random_matrix
-from sklearn.linear_model import ARDRegression
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.svm import SVR
-from sklearn.datasets import make_blobs
-from sklearn.utils import _safe_indexing
+from sklearn.utils.fixes import (
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    DIA_CONTAINERS,
+    DOK_CONTAINERS,
+    parse_version,
+)
 from sklearn.utils.validation import (
-    has_fit_parameter,
-    check_is_fitted,
-    check_consistent_length,
-    assert_all_finite,
-    check_memory,
-    check_non_negative,
-    _num_samples,
-    check_scalar,
+    FLOAT_DTYPES,
+    _allclose_dense_sparse,
+    _check_feature_names_in,
+    _check_method_params,
     _check_psd_eigenvalues,
+    _check_response_method,
+    _check_sample_weight,
     _check_y,
     _deprecate_positional_args,
-    _check_sample_weight,
-    _allclose_dense_sparse,
-    _num_features,
-    FLOAT_DTYPES,
     _get_feature_names,
-    _check_feature_names_in,
-    _check_fit_params,
-    _check_response_method,
+    _is_fitted,
+    _is_pandas_df,
+    _num_features,
+    _num_samples,
+    assert_all_finite,
+    check_consistent_length,
+    check_is_fitted,
+    check_memory,
+    check_non_negative,
+    check_scalar,
+    has_fit_parameter,
 )
-from sklearn.base import BaseEstimator
-import sklearn
-
-from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
-
-from sklearn.utils._testing import TempMemmap
-from sklearn.utils._testing import skip_if_array_api_compat_not_configured
 
 
 def test_as_float_array():
@@ -351,13 +363,20 @@ def test_check_array():
                 assert X is X_checked
 
     # allowed sparse != None
-    X_csc = sp.csc_matrix(X_C)
-    X_coo = X_csc.tocoo()
-    X_dok = X_csc.todok()
-    X_int = X_csc.astype(int)
-    X_float = X_csc.astype(float)
 
-    Xs = [X_csc, X_coo, X_dok, X_int, X_float]
+    # try different type of sparse format
+    Xs = []
+    Xs.extend(
+        [
+            sparse_container(X_C)
+            for sparse_container in CSR_CONTAINERS
+            + CSC_CONTAINERS
+            + COO_CONTAINERS
+            + DOK_CONTAINERS
+        ]
+    )
+    Xs.extend([Xs[0].astype(np.int64), Xs[0].astype(np.float64)])
+
     accept_sparses = [["csr", "coo"], ["coo", "dok"]]
     # scipy sparse matrices do not support the object dtype so
     # this dtype is skipped in this loop
@@ -580,8 +599,8 @@ def test_check_array_accept_sparse_type_exception():
     invalid_type = SVR()
 
     msg = (
-        "A sparse matrix was passed, but dense data is required. "
-        r"Use X.toarray\(\) to convert to a dense numpy array."
+        "Sparse data was passed, but dense data is required. "
+        r"Use '.toarray\(\)' to convert to a dense numpy array."
     )
     with pytest.raises(TypeError, match=msg):
         check_array(X_csr, accept_sparse=False)
@@ -848,23 +867,32 @@ def test_check_is_fitted_attributes():
     msg = "not fitted"
     est = MyEstimator()
 
+    assert not _is_fitted(est, attributes=["a_", "b_"])
     with pytest.raises(NotFittedError, match=msg):
         check_is_fitted(est, attributes=["a_", "b_"])
+    assert not _is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
     with pytest.raises(NotFittedError, match=msg):
         check_is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
+    assert not _is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
     with pytest.raises(NotFittedError, match=msg):
         check_is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
 
     est.a_ = "a"
+    assert not _is_fitted(est, attributes=["a_", "b_"])
     with pytest.raises(NotFittedError, match=msg):
         check_is_fitted(est, attributes=["a_", "b_"])
+    assert not _is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
     with pytest.raises(NotFittedError, match=msg):
         check_is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
+    assert _is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
     check_is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
 
     est.b_ = "b"
+    assert _is_fitted(est, attributes=["a_", "b_"])
     check_is_fitted(est, attributes=["a_", "b_"])
+    assert _is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
     check_is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
+    assert _is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
     check_is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
 
 
@@ -1489,9 +1517,9 @@ def test_deprecate_positional_args_warns_for_class():
 
 
 @pytest.mark.parametrize("indices", [None, [1, 3]])
-def test_check_fit_params(indices):
+def test_check_method_params(indices):
     X = np.random.randn(4, 2)
-    fit_params = {
+    _params = {
         "list": [1, 2, 3, 4],
         "array": np.array([1, 2, 3, 4]),
         "sparse-col": sp.csc_matrix([1, 2, 3, 4]).T,
@@ -1500,16 +1528,16 @@ def test_check_fit_params(indices):
         "scalar-str": "xxx",
         "None": None,
     }
-    result = _check_fit_params(X, fit_params, indices)
+    result = _check_method_params(X, params=_params, indices=indices)
     indices_ = indices if indices is not None else list(range(X.shape[0]))
 
     for key in ["sparse-row", "scalar-int", "scalar-str", "None"]:
-        assert result[key] is fit_params[key]
+        assert result[key] is _params[key]
 
-    assert result["list"] == _safe_indexing(fit_params["list"], indices_)
-    assert_array_equal(result["array"], _safe_indexing(fit_params["array"], indices_))
+    assert result["list"] == _safe_indexing(_params["list"], indices_)
+    assert_array_equal(result["array"], _safe_indexing(_params["array"], indices_))
     assert_allclose_dense_sparse(
-        result["sparse-col"], _safe_indexing(fit_params["sparse-col"], indices_)
+        result["sparse-col"], _safe_indexing(_params["sparse-col"], indices_)
     )
 
 
@@ -1572,7 +1600,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
 @pytest.mark.parametrize(
     "ntype1, ntype2, expected_subtype",
     [
-        ("longfloat", "longdouble", np.floating),
+        ("double", "longdouble", np.floating),
         ("float16", "half", np.floating),
         ("single", "float32", np.floating),
         ("double", "float64", np.floating),
@@ -1682,6 +1710,54 @@ def test_get_feature_names_pandas():
     feature_names = _get_feature_names(X)
 
     assert_array_equal(feature_names, columns)
+
+
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
+)
+def test_get_feature_names_dataframe_protocol(constructor_name, minversion):
+    """Uses the dataframe exchange protocol to get feature names."""
+    data = [[1, 4, 2], [3, 3, 6]]
+    columns = ["col_0", "col_1", "col_2"]
+    df = _convert_container(
+        data, constructor_name, columns_name=columns, minversion=minversion
+    )
+    feature_names = _get_feature_names(df)
+
+    assert_array_equal(feature_names, columns)
+
+
+@pytest.mark.parametrize(
+    "constructor_name, minversion",
+    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
+)
+def test_is_pandas_df_other_libraries(constructor_name, minversion):
+    df = _convert_container(
+        [[1, 4, 2], [3, 3, 6]],
+        constructor_name,
+        minversion=minversion,
+    )
+    if constructor_name in ("pyarrow", "polars"):
+        assert not _is_pandas_df(df)
+    else:
+        assert _is_pandas_df(df)
+
+
+def test_is_pandas_df():
+    """Check behavior of is_pandas_df when pandas is installed."""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame([[1, 2, 3]])
+    assert _is_pandas_df(df)
+    assert not _is_pandas_df(np.asarray([1, 2, 3]))
+    assert not _is_pandas_df(1)
+
+
+def test_is_pandas_df_pandas_not_installed(hide_available_pandas):
+    """Check _is_pandas_df when pandas is not installed."""
+
+    assert not _is_pandas_df(np.asarray([1, 2, 3]))
+    assert not _is_pandas_df(1)
 
 
 def test_get_feature_names_numpy():
@@ -1886,3 +1962,30 @@ def test_check_array_multiple_extensions(
     X_regular_checked = check_array(X_regular, dtype=None)
     X_extension_checked = check_array(X_extension, dtype=None)
     assert_array_equal(X_regular_checked, X_extension_checked)
+
+
+@pytest.mark.parametrize(
+    "sparse_container",
+    CSR_CONTAINERS + CSC_CONTAINERS + COO_CONTAINERS + DIA_CONTAINERS,
+)
+@pytest.mark.parametrize("output_format", ["csr", "csc", "coo"])
+def test_check_array_dia_to_int32_indexed_csr_csc_coo(sparse_container, output_format):
+    """Check the consistency of the indices dtype with sparse matrices/arrays."""
+    X = sparse_container([[0, 1], [1, 0]], dtype=np.float64)
+
+    # Explicitely set the dtype of the indexing arrays
+    if hasattr(X, "offsets"):  # DIA matrix
+        X.offsets = X.offsets.astype(np.int32)
+    elif hasattr(X, "row") and hasattr(X, "col"):  # COO matrix
+        X.row = X.row.astype(np.int32)
+    elif hasattr(X, "indices") and hasattr(X, "indptr"):  # CSR or CSC matrix
+        X.indices = X.indices.astype(np.int32)
+        X.indptr = X.indptr.astype(np.int32)
+
+    X_checked = check_array(X, accept_sparse=output_format)
+    if output_format == "coo":
+        assert X_checked.row.dtype == np.int32
+        assert X_checked.col.dtype == np.int32
+    else:  # output_format in ["csr", "csc"]
+        assert X_checked.indices.dtype == np.int32
+        assert X_checked.indptr.dtype == np.int32

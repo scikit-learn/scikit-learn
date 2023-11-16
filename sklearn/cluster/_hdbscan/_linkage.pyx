@@ -35,11 +35,13 @@ cimport numpy as cnp
 from libc.float cimport DBL_MAX
 
 import numpy as np
-from ...metrics._dist_metrics cimport DistanceMetric
+from ...metrics._dist_metrics cimport DistanceMetric64
 from ...cluster._hierarchical_fast cimport UnionFind
 from ...cluster._hdbscan._tree cimport HIERARCHY_t
 from ...cluster._hdbscan._tree import HIERARCHY_dtype
 from ...utils._typedefs cimport intp_t, float64_t, int64_t, uint8_t
+
+cnp.import_array()
 
 cdef extern from "numpy/arrayobject.h":
     intp_t * PyArray_SHAPE(cnp.PyArrayObject *)
@@ -90,7 +92,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
     mst = np.empty(n_samples - 1, dtype=MST_edge_dtype)
     current_labels = np.arange(n_samples, dtype=np.int64)
     current_node = 0
-    min_reachability = np.full(n_samples, fill_value=np.infty, dtype=np.float64)
+    min_reachability = np.full(n_samples, fill_value=np.inf, dtype=np.float64)
     for i in range(0, n_samples - 1):
         label_filter = current_labels != current_node
         current_labels = current_labels[label_filter]
@@ -111,7 +113,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
 cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
     const float64_t[:, ::1] raw_data,
     const float64_t[::1] core_distances,
-    DistanceMetric dist_metric,
+    DistanceMetric64 dist_metric,
     float64_t alpha=1.0
 ):
     """Compute the Minimum Spanning Tree (MST) representation of the mutual-
@@ -156,7 +158,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
     mst = np.empty(n_samples - 1, dtype=MST_edge_dtype)
 
     in_tree = np.zeros(n_samples, dtype=np.uint8)
-    min_reachability = np.full(n_samples, fill_value=np.infty, dtype=np.float64)
+    min_reachability = np.full(n_samples, fill_value=np.inf, dtype=np.float64)
     current_sources = np.ones(n_samples, dtype=np.int64)
 
     current_node = 0

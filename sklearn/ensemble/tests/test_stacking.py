@@ -3,55 +3,48 @@
 # Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: BSD 3 clause
 
-import pytest
+from unittest.mock import Mock
+
 import numpy as np
+import pytest
 from numpy.testing import assert_array_equal
-import scipy.sparse as sparse
+from scipy import sparse
 
-from sklearn.base import BaseEstimator
-from sklearn.base import ClassifierMixin
-from sklearn.base import RegressorMixin
-from sklearn.base import clone
-
-from sklearn.exceptions import ConvergenceWarning
-
-from sklearn.datasets import load_iris
-from sklearn.datasets import load_diabetes
-from sklearn.datasets import load_breast_cancer
-from sklearn.datasets import make_regression
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_multilabel_classification
-
-from sklearn.dummy import DummyClassifier
-from sklearn.dummy import DummyRegressor
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import Ridge
-from sklearn.linear_model import RidgeClassifier
-from sklearn.svm import LinearSVC
-from sklearn.svm import LinearSVR
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
+from sklearn.datasets import (
+    load_breast_cancer,
+    load_diabetes,
+    load_iris,
+    make_classification,
+    make_multilabel_classification,
+    make_regression,
+)
+from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.ensemble import (
+    RandomForestClassifier,
+    RandomForestRegressor,
+    StackingClassifier,
+    StackingRegressor,
+)
+from sklearn.exceptions import ConvergenceWarning, NotFittedError
+from sklearn.linear_model import (
+    LinearRegression,
+    LogisticRegression,
+    Ridge,
+    RidgeClassifier,
+)
+from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import scale
-
-from sklearn.ensemble import StackingClassifier
-from sklearn.ensemble import StackingRegressor
-
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import KFold
-
+from sklearn.svm import SVC, LinearSVC, LinearSVR
 from sklearn.utils._mocking import CheckingClassifier
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.exceptions import NotFittedError
-
-from unittest.mock import Mock
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_allclose_dense_sparse,
+    ignore_warnings,
+)
+from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 
 diabetes = load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
@@ -225,11 +218,13 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params, passth
         assert_allclose(X_test, X_trans[:, -10:])
 
 
-@pytest.mark.parametrize("fmt", ["csc", "csr", "coo"])
-def test_stacking_regressor_sparse_passthrough(fmt):
+@pytest.mark.parametrize(
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
+)
+def test_stacking_regressor_sparse_passthrough(sparse_container):
     # Check passthrough behavior on a sparse X matrix
     X_train, X_test, y_train, _ = train_test_split(
-        sparse.coo_matrix(scale(X_diabetes)).asformat(fmt), y_diabetes, random_state=42
+        sparse_container(scale(X_diabetes)), y_diabetes, random_state=42
     )
     estimators = [("lr", LinearRegression()), ("svr", LinearSVR(dual="auto"))]
     rf = RandomForestRegressor(n_estimators=10, random_state=42)
@@ -243,11 +238,13 @@ def test_stacking_regressor_sparse_passthrough(fmt):
     assert X_test.format == X_trans.format
 
 
-@pytest.mark.parametrize("fmt", ["csc", "csr", "coo"])
-def test_stacking_classifier_sparse_passthrough(fmt):
+@pytest.mark.parametrize(
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
+)
+def test_stacking_classifier_sparse_passthrough(sparse_container):
     # Check passthrough behavior on a sparse X matrix
     X_train, X_test, y_train, _ = train_test_split(
-        sparse.coo_matrix(scale(X_iris)).asformat(fmt), y_iris, random_state=42
+        sparse_container(scale(X_iris)), y_iris, random_state=42
     )
     estimators = [("lr", LogisticRegression()), ("svc", LinearSVC(dual="auto"))]
     rf = RandomForestClassifier(n_estimators=10, random_state=42)

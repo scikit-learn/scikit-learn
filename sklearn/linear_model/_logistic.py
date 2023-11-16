@@ -11,34 +11,49 @@ Logistic Regression
 #         Arthur Mensch <arthur.mensch@m4x.org
 
 import numbers
-from numbers import Integral, Real
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
-from scipy import optimize
 from joblib import effective_n_jobs
+from scipy import optimize
 
 from sklearn.metrics import get_scorer_names
 
-from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
+from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
+from ..base import _fit_context
+from ..metrics import get_scorer
+from ..model_selection import check_cv
+from ..preprocessing import LabelBinarizer, LabelEncoder
+from ..svm._base import _fit_liblinear
+from ..utils import (
+    Bunch,
+    check_array,
+    check_consistent_length,
+    check_random_state,
+    compute_class_weight,
+)
+from ..utils._param_validation import Interval, StrOptions
+from ..utils.extmath import row_norms, softmax
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
+from ..utils.multiclass import check_classification_targets
+from ..utils.optimize import _check_optimize_result, _newton_cg
+from ..utils.parallel import Parallel, delayed
+from ..utils.validation import (
+    _check_method_params,
+    _check_sample_weight,
+    check_is_fitted,
+)
+from ._base import BaseEstimator, LinearClassifierMixin, SparseCoefMixin
+from ._glm.glm import NewtonCholeskySolver
 from ._linear_loss import LinearModelLoss
 from ._sag import sag_solver
-from ._glm.glm import NewtonCholeskySolver
-from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
-from ..preprocessing import LabelEncoder, LabelBinarizer
-from ..svm._base import _fit_liblinear
-from ..utils import check_array, check_consistent_length, compute_class_weight
-from ..utils import check_random_state
-from ..utils.extmath import softmax
-from ..utils.extmath import row_norms
-from ..utils.optimize import _newton_cg, _check_optimize_result
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.multiclass import check_classification_targets
-from ..utils.parallel import delayed, Parallel
-from ..utils._param_validation import StrOptions, Interval
-from ..model_selection import check_cv
-from ..metrics import get_scorer
-
 
 _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
     "Please also refer to the documentation for alternative solver options:\n"
@@ -289,33 +304,16 @@ def _logistic_regression_path(
         # np.unique(y) gives labels in sorted order.
         pos_class = classes[1]
 
-    # If sample weights exist, convert them to array (support for lists)
-    # and check length
-    # Otherwise set them to 1 for all examples
-    sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype, copy=True)
-
-    if solver == "newton-cholesky":
-        # IMPORTANT NOTE: Rescaling of sample_weight:
-        # Same as in _GeneralizedLinearRegressor.fit().
-        # We want to minimize
-        #     obj = 1/(2*sum(sample_weight)) * sum(sample_weight * deviance)
-        #         + 1/2 * alpha * L2,
-        # with
-        #     deviance = 2 * log_loss.
-        # The objective is invariant to multiplying sample_weight by a constant. We
-        # choose this constant such that sum(sample_weight) = 1. Thus, we end up with
-        #     obj = sum(sample_weight * loss) + 1/2 * alpha * L2.
-        # Note that LinearModelLoss.loss() computes sum(sample_weight * loss).
-        #
-        # This rescaling has to be done before multiplying by class_weights.
-        sw_sum = sample_weight.sum()  # needed to rescale penalty, nasty matter!
-        sample_weight = sample_weight / sw_sum
+    if sample_weight is not None or class_weight is not None:
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype, copy=True)
 
     # If class_weights is a dict (provided by the user), the weights
     # are assigned to the original labels. If it is "balanced", then
     # the class_weights are assigned after masking the labels with a OvR.
     le = LabelEncoder()
-    if isinstance(class_weight, dict) or multi_class == "multinomial":
+    if isinstance(class_weight, dict) or (
+        multi_class == "multinomial" and class_weight is not None
+    ):
         class_weight_ = compute_class_weight(class_weight, classes=classes, y=y)
         sample_weight *= class_weight_[le.fit_transform(y)]
 
@@ -359,6 +357,19 @@ def _logistic_regression_path(
         w0 = np.zeros(
             (classes.size, n_features + int(fit_intercept)), order="F", dtype=X.dtype
         )
+
+    # IMPORTANT NOTE:
+    # All solvers relying on LinearModelLoss need to scale the penalty with n_samples
+    # or the sum of sample weights because the implemented logistic regression
+    # objective here is (unfortunately)
+    #     C * sum(pointwise_loss) + penalty
+    # instead of (as LinearModelLoss does)
+    #     mean(pointwise_loss) + 1/C * penalty
+    if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
+        # This needs to be calculated after sample_weight is multiplied by
+        # class_weight. It is even tested that passing class_weight is equivalent to
+        # passing sample_weights according to class_weight.
+        sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
 
     if coef is not None:
         # it must work both giving the bias term and not
@@ -442,7 +453,7 @@ def _logistic_regression_path(
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     for i, C in enumerate(Cs):
         if solver == "lbfgs":
-            l2_reg_strength = 1.0 / C
+            l2_reg_strength = 1.0 / (C * sw_sum)
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)
             ]
@@ -452,7 +463,13 @@ def _logistic_regression_path(
                 method="L-BFGS-B",
                 jac=True,
                 args=(X, target, sample_weight, l2_reg_strength, n_threads),
-                options={"iprint": iprint, "gtol": tol, "maxiter": max_iter},
+                options={
+                    "maxiter": max_iter,
+                    "maxls": 50,  # default is 20
+                    "iprint": iprint,
+                    "gtol": tol,
+                    "ftol": 64 * np.finfo(float).eps,
+                },
             )
             n_iter_i = _check_optimize_result(
                 solver,
@@ -462,15 +479,13 @@ def _logistic_regression_path(
             )
             w0, loss = opt_res.x, opt_res.fun
         elif solver == "newton-cg":
-            l2_reg_strength = 1.0 / C
+            l2_reg_strength = 1.0 / (C * sw_sum)
             args = (X, target, sample_weight, l2_reg_strength, n_threads)
             w0, n_iter_i = _newton_cg(
                 hess, func, grad, w0, args=args, maxiter=max_iter, tol=tol
             )
         elif solver == "newton-cholesky":
-            # The division by sw_sum is a consequence of the rescaling of
-            # sample_weight, see comment above.
-            l2_reg_strength = 1.0 / C / sw_sum
+            l2_reg_strength = 1.0 / (C * sw_sum)
             sol = NewtonCholeskySolver(
                 coef=w0,
                 linear_loss=loss,
@@ -506,6 +521,9 @@ def _logistic_regression_path(
                 w0 = np.concatenate([coef_.ravel(), intercept_])
             else:
                 w0 = coef_.ravel()
+            # n_iter_i is an array for each class. However, `target` is always encoded
+            # in {-1, 1}, so we only take the first element of n_iter_i.
+            n_iter_i = n_iter_i.item()
 
         elif solver in ["sag", "saga"]:
             if multi_class == "multinomial":
@@ -570,23 +588,25 @@ def _log_reg_scoring_path(
     y,
     train,
     test,
-    pos_class=None,
-    Cs=10,
-    scoring=None,
-    fit_intercept=False,
-    max_iter=100,
-    tol=1e-4,
-    class_weight=None,
-    verbose=0,
-    solver="lbfgs",
-    penalty="l2",
-    dual=False,
-    intercept_scaling=1.0,
-    multi_class="auto",
-    random_state=None,
-    max_squared_sum=None,
-    sample_weight=None,
-    l1_ratio=None,
+    *,
+    pos_class,
+    Cs,
+    scoring,
+    fit_intercept,
+    max_iter,
+    tol,
+    class_weight,
+    verbose,
+    solver,
+    penalty,
+    dual,
+    intercept_scaling,
+    multi_class,
+    random_state,
+    max_squared_sum,
+    sample_weight,
+    l1_ratio,
+    score_params,
 ):
     """Computes scores across logistic_regression_path
 
@@ -604,34 +624,32 @@ def _log_reg_scoring_path(
     test : list of indices
         The indices of the test set.
 
-    pos_class : int, default=None
+    pos_class : int
         The class with respect to which we perform a one-vs-all fit.
         If None, then it is assumed that the given problem is binary.
 
-    Cs : int or list of floats, default=10
+    Cs : int or list of floats
         Each of the values in Cs describes the inverse of
         regularization strength. If Cs is as an int, then a grid of Cs
         values are chosen in a logarithmic scale between 1e-4 and 1e4.
-        If not provided, then a fixed set of values for Cs are used.
 
-    scoring : callable, default=None
+    scoring : callable
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``. For a list of scoring functions
-        that can be used, look at :mod:`sklearn.metrics`. The
-        default scoring option used is accuracy_score.
+        that can be used, look at :mod:`sklearn.metrics`.
 
-    fit_intercept : bool, default=False
+    fit_intercept : bool
         If False, then the bias term is set to zero. Else the last
         term of each coef_ gives us the intercept.
 
-    max_iter : int, default=100
+    max_iter : int
         Maximum number of iterations for the solver.
 
-    tol : float, default=1e-4
+    tol : float
         Tolerance for stopping criteria.
 
-    class_weight : dict or 'balanced', default=None
+    class_weight : dict or 'balanced'
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one.
 
@@ -642,25 +660,24 @@ def _log_reg_scoring_path(
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-    verbose : int, default=0
+    verbose : int
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
 
-    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
-            default='lbfgs'
+    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}
         Decides which solver to use.
 
-    penalty : {'l1', 'l2', 'elasticnet'}, default='l2'
+    penalty : {'l1', 'l2', 'elasticnet'}
         Used to specify the norm used in the penalization. The 'newton-cg',
         'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
         only supported by the 'saga' solver.
 
-    dual : bool, default=False
+    dual : bool
         Dual or primal formulation. Dual formulation is only implemented for
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    intercept_scaling : float, default=1.
+    intercept_scaling : float
         Useful only when the solver 'liblinear' is used
         and self.fit_intercept is set to True. In this case, x becomes
         [x, self.intercept_scaling],
@@ -672,31 +689,34 @@ def _log_reg_scoring_path(
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    multi_class : {'auto', 'ovr', 'multinomial'}, default='auto'
+    multi_class : {'auto', 'ovr', 'multinomial'}
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
         binary*. 'multinomial' is unavailable when solver='liblinear'.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance
         Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
         data. See :term:`Glossary <random_state>` for details.
 
-    max_squared_sum : float, default=None
+    max_squared_sum : float
         Maximum squared sum of X over samples. Used only in SAG solver.
         If None, it will be computed, going through all the samples.
         The value should be precomputed to speed up cross validation.
 
-    sample_weight : array-like of shape(n_samples,), default=None
+    sample_weight : array-like of shape(n_samples,)
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
 
-    l1_ratio : float, default=None
+    l1_ratio : float
         The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
         used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
         to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
         combination of L1 and L2.
+
+    score_params : dict
+        Parameters to pass to the `score` method of the underlying scorer.
 
     Returns
     -------
@@ -778,7 +798,9 @@ def _log_reg_scoring_path(
         if scoring is None:
             scores.append(log_reg.score(X_test, y_test))
         else:
-            scores.append(scoring(log_reg, X_test, y_test))
+            score_params = score_params or {}
+            score_params = _check_method_params(X=X, params=score_params, indices=test)
+            scores.append(scoring(log_reg, X_test, y_test, **score_params))
 
     return coefs, Cs, np.array(scores), n_iter
 
@@ -831,8 +853,9 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            in 1.4. Use `None` instead.
 
     dual : bool, default=False
-        Dual or primal formulation. Dual formulation is only implemented for
-        l2 penalty with liblinear solver. Prefer dual=False when
+        Dual (constrained) or primal (regularized, see also
+        :ref:`this equation <regularized-logistic-loss>`) formulation. Dual formulation
+        is only implemented for l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
     tol : float, default=1e-4
@@ -1129,6 +1152,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.l1_ratio = l1_ratio
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """
         Fit the model according to the given training data.
@@ -1158,9 +1182,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         -----
         The SAGA solver supports both float64 and float32 bit arrays.
         """
-
-        self._validate_params()
-
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
         if self.penalty != "elasticnet" and self.l1_ratio is not None:
@@ -1350,7 +1371,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         For a multi_class problem, if multi_class is set to be "multinomial"
         the softmax function is used to find the predicted probability of
         each class.
-        Else use a one-vs-rest approach, i.e calculate the probability
+        Else use a one-vs-rest approach, i.e. calculate the probability
         of each class assuming it to be positive using the logistic function.
         and normalize these values across all the classes.
 
@@ -1451,8 +1472,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     dual : bool, default=False
-        Dual or primal formulation. Dual formulation is only implemented for
-        l2 penalty with liblinear solver. Prefer dual=False when
+        Dual (constrained) or primal (regularized, see also
+        :ref:`this equation <regularized-logistic-loss>`) formulation. Dual formulation
+        is only implemented for l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
     penalty : {'l1', 'l2', 'elasticnet'}, default='l2'
@@ -1742,7 +1764,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self.random_state = random_state
         self.l1_ratios = l1_ratios
 
-    def fit(self, X, y, sample_weight=None):
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(self, X, y, sample_weight=None, **params):
         """Fit the model according to the given training data.
 
         Parameters
@@ -1758,13 +1781,17 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             Array of weights that are assigned to individual samples.
             If not provided, then each sample is given unit weight.
 
+        **params : dict
+            Parameters to pass to the underlying splitter and scorer.
+
+            .. versionadded:: 1.4
+
         Returns
         -------
         self : object
             Fitted LogisticRegressionCV estimator.
         """
-
-        self._validate_params()
+        _raise_for_params(params, self, "fit")
 
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
@@ -1827,9 +1854,23 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         else:
             max_squared_sum = None
 
+        if _routing_enabled():
+            routed_params = process_routing(
+                self,
+                "fit",
+                sample_weight=sample_weight,
+                **params,
+            )
+        else:
+            routed_params = Bunch()
+            routed_params.splitter = Bunch(split={})
+            routed_params.scorer = Bunch(score=params)
+            if sample_weight is not None:
+                routed_params.scorer.score["sample_weight"] = sample_weight
+
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
-        folds = list(cv.split(X, y))
+        folds = list(cv.split(X, y, **routed_params.splitter.split))
 
         # Use the label encoded classes
         n_classes = len(encoded_labels)
@@ -1896,6 +1937,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 max_squared_sum=max_squared_sum,
                 sample_weight=sample_weight,
                 l1_ratio=l1_ratio,
+                score_params=routed_params.scorer.score,
             )
             for label in iter_encoded_labels
             for train, test in folds
@@ -2076,7 +2118,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         return self
 
-    def score(self, X, y, sample_weight=None):
+    def score(self, X, y, sample_weight=None, **score_params):
         """Score using the `scoring` option on the given test data and labels.
 
         Parameters
@@ -2090,15 +2132,69 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
+        **score_params : dict
+            Parameters to pass to the `score` method of the underlying scorer.
+
+            .. versionadded:: 1.4
+
         Returns
         -------
         score : float
             Score of self.predict(X) w.r.t. y.
         """
-        scoring = self.scoring or "accuracy"
-        scoring = get_scorer(scoring)
+        _raise_for_params(score_params, self, "score")
 
-        return scoring(self, X, y, sample_weight=sample_weight)
+        scoring = self._get_scorer()
+        if _routing_enabled():
+            routed_params = process_routing(
+                self,
+                "score",
+                sample_weight=sample_weight,
+                **score_params,
+            )
+        else:
+            routed_params = Bunch()
+            routed_params.scorer = Bunch(score={})
+            if sample_weight is not None:
+                routed_params.scorer.score["sample_weight"] = sample_weight
+
+        return scoring(
+            self,
+            X,
+            y,
+            **routed_params.scorer.score,
+        )
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.4
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add_self_request(self)
+            .add(
+                splitter=self.cv,
+                method_mapping=MethodMapping().add(callee="split", caller="fit"),
+            )
+            .add(
+                scorer=self._get_scorer(),
+                method_mapping=MethodMapping()
+                .add(callee="score", caller="score")
+                .add(callee="score", caller="fit"),
+            )
+        )
+        return router
 
     def _more_tags(self):
         return {
@@ -2108,3 +2204,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 ),
             }
         }
+
+    def _get_scorer(self):
+        """Get the scorer based on the scoring method specified.
+        The default scoring method is `accuracy`.
+        """
+        scoring = self.scoring or "accuracy"
+        return get_scorer(scoring)

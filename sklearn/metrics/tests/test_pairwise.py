@@ -3,10 +3,15 @@ from types import GeneratorType
 
 import numpy as np
 from numpy import linalg
-
-from scipy.sparse import dok_matrix, csr_matrix, issparse
-from scipy.spatial.distance import cosine, cityblock, minkowski
-from scipy.spatial.distance import cdist, pdist, squareform
+from scipy.sparse import issparse
+from scipy.spatial.distance import (
+    cdist,
+    cityblock,
+    cosine,
+    minkowski,
+    pdist,
+    squareform,
+)
 
 try:
     from scipy.spatial.distance import wminkowski
@@ -15,51 +20,61 @@ except ImportError:
     # should be used instead.
     from scipy.spatial.distance import minkowski as wminkowski
 
-from sklearn.utils.fixes import sp_version, parse_version
-from sklearn.utils.parallel import delayed, Parallel
-
 import pytest
 
 from sklearn import config_context
-
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
-
-from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.metrics.pairwise import nan_euclidean_distances
-from sklearn.metrics.pairwise import manhattan_distances
-from sklearn.metrics.pairwise import haversine_distances
-from sklearn.metrics.pairwise import linear_kernel
-from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
-from sklearn.metrics.pairwise import polynomial_kernel
-from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.metrics.pairwise import laplacian_kernel
-from sklearn.metrics.pairwise import sigmoid_kernel
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.metrics.pairwise import cosine_distances
-from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.metrics.pairwise import pairwise_distances_chunked
-from sklearn.metrics.pairwise import pairwise_distances_argmin_min
-from sklearn.metrics.pairwise import pairwise_distances_argmin
-from sklearn.metrics.pairwise import pairwise_kernels
-from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
-from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from sklearn.metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
-from sklearn.metrics.pairwise import PAIRED_DISTANCES
-from sklearn.metrics.pairwise import check_pairwise_arrays
-from sklearn.metrics.pairwise import check_paired_arrays
-from sklearn.metrics.pairwise import paired_distances
-from sklearn.metrics.pairwise import paired_euclidean_distances
-from sklearn.metrics.pairwise import paired_manhattan_distances
-from sklearn.metrics.pairwise import paired_cosine_distances
-from sklearn.metrics.pairwise import _euclidean_distances_upcast
-from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
+from sklearn.metrics.pairwise import (
+    PAIRED_DISTANCES,
+    PAIRWISE_BOOLEAN_FUNCTIONS,
+    PAIRWISE_DISTANCE_FUNCTIONS,
+    PAIRWISE_KERNEL_FUNCTIONS,
+    _euclidean_distances_upcast,
+    additive_chi2_kernel,
+    check_paired_arrays,
+    check_pairwise_arrays,
+    chi2_kernel,
+    cosine_distances,
+    cosine_similarity,
+    euclidean_distances,
+    haversine_distances,
+    laplacian_kernel,
+    linear_kernel,
+    manhattan_distances,
+    nan_euclidean_distances,
+    paired_cosine_distances,
+    paired_distances,
+    paired_euclidean_distances,
+    paired_manhattan_distances,
+    pairwise_distances,
+    pairwise_distances_argmin,
+    pairwise_distances_argmin_min,
+    pairwise_distances_chunked,
+    pairwise_kernels,
+    polynomial_kernel,
+    rbf_kernel,
+    sigmoid_kernel,
+)
+from sklearn.preprocessing import normalize
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+)
+from sklearn.utils.fixes import (
+    BSR_CONTAINERS,
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    DOK_CONTAINERS,
+    parse_version,
+    sp_version,
+)
+from sklearn.utils.parallel import Parallel, delayed
 
 
-def test_pairwise_distances(global_dtype):
+def test_pairwise_distances_for_dense_data(global_dtype):
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
 
@@ -137,10 +152,23 @@ def test_pairwise_distances(global_dtype):
     assert S.shape[1] == Y.shape[0]
     assert_allclose(S, S2)
 
+
+@pytest.mark.parametrize("coo_container", COO_CONTAINERS)
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+@pytest.mark.parametrize("bsr_container", BSR_CONTAINERS)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_pairwise_distances_for_sparse_data(
+    coo_container, csc_container, bsr_container, csr_container, global_dtype
+):
+    # Test the pairwise_distance helper function.
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4)).astype(global_dtype, copy=False)
+    Y = rng.random_sample((2, 4)).astype(global_dtype, copy=False)
+
     # Test with sparse X and Y,
     # currently only supported for Euclidean, L1 and cosine.
-    X_sparse = csr_matrix(X)
-    Y_sparse = csr_matrix(Y)
+    X_sparse = csr_container(X)
+    Y_sparse = csr_container(Y)
 
     S = pairwise_distances(X_sparse, Y_sparse, metric="euclidean")
     S2 = euclidean_distances(X_sparse, Y_sparse)
@@ -152,8 +180,8 @@ def test_pairwise_distances(global_dtype):
     assert_allclose(S, S2)
     assert S.dtype == S2.dtype == global_dtype
 
-    S = pairwise_distances(X_sparse, Y_sparse.tocsc(), metric="manhattan")
-    S2 = manhattan_distances(X_sparse.tobsr(), Y_sparse.tocoo())
+    S = pairwise_distances(X_sparse, csc_container(Y), metric="manhattan")
+    S2 = manhattan_distances(bsr_container(X), coo_container(Y))
     assert_allclose(S, S2)
     if global_dtype == np.float64:
         assert S.dtype == S2.dtype == global_dtype
@@ -192,10 +220,6 @@ def test_pairwise_distances(global_dtype):
         pairwise_distances(X_sparse, metric="minkowski")
     with pytest.raises(TypeError):
         pairwise_distances(X, Y_sparse, metric="minkowski")
-
-    # Test that a value error is raised if the metric is unknown
-    with pytest.raises(ValueError):
-        pairwise_distances(X, Y, metric="blah")
 
 
 # TODO(1.4): Remove test when `sum_over_features` parameter is removed
@@ -298,11 +322,10 @@ _wminkowski_kwds = {"w": np.arange(1, 5).astype("double", copy=False), "p": 1}
 def callable_rbf_kernel(x, y, **kwds):
     # Callable version of pairwise.rbf_kernel.
     K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
-    return K
+    # unpack the output since this is a scalar packed in a 0-dim array
+    return K.item()
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "func, metric, kwds",
     [
@@ -366,7 +389,8 @@ def test_pairwise_callable_nonstrict_metric():
     "metric",
     ["rbf", "laplacian", "sigmoid", "polynomial", "linear", "chi2", "additive_chi2"],
 )
-def test_pairwise_kernels(metric):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_pairwise_kernels(metric, csr_container):
     # Test the pairwise_kernels helper function.
 
     rng = np.random.RandomState(0)
@@ -388,8 +412,8 @@ def test_pairwise_kernels(metric):
     assert_allclose(K1, K2)
 
     # Test with sparse X and Y
-    X_sparse = csr_matrix(X)
-    Y_sparse = csr_matrix(Y)
+    X_sparse = csr_container(X)
+    Y_sparse = csr_container(Y)
     if metric in ["chi2", "additive_chi2"]:
         # these don't support sparse matrices yet
         return
@@ -430,7 +454,8 @@ def test_pairwise_kernels_filter_param():
 
 
 @pytest.mark.parametrize("metric, func", PAIRED_DISTANCES.items())
-def test_paired_distances(metric, func):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_paired_distances(metric, func, csr_container):
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
@@ -441,7 +466,7 @@ def test_paired_distances(metric, func):
     S = paired_distances(X, Y, metric=metric)
     S2 = func(X, Y)
     assert_allclose(S, S2)
-    S3 = func(csr_matrix(X), csr_matrix(Y))
+    S3 = func(csr_container(X), csr_container(Y))
     assert_allclose(S, S3)
     if metric in PAIRWISE_DISTANCE_FUNCTIONS:
         # Check the pairwise_distances implementation
@@ -471,13 +496,15 @@ def test_paired_distances_callable(global_dtype):
         paired_distances(X, Y)
 
 
-def test_pairwise_distances_argmin_min(global_dtype):
+@pytest.mark.parametrize("dok_container", DOK_CONTAINERS)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_pairwise_distances_argmin_min(dok_container, csr_container, global_dtype):
     # Check pairwise minimum distances computation for any metric
     X = np.asarray([[0], [1]], dtype=global_dtype)
     Y = np.asarray([[-2], [3]], dtype=global_dtype)
 
-    Xsp = dok_matrix(X)
-    Ysp = csr_matrix(Y, dtype=global_dtype)
+    Xsp = dok_container(X)
+    Ysp = csr_container(Y, dtype=global_dtype)
 
     expected_idx = [0, 1]
     expected_vals = [2, 2]
@@ -631,9 +658,19 @@ def test_pairwise_distances_chunked_reduce_none(global_dtype):
     [
         lambda D, start: list(D),
         lambda D, start: np.array(D),
-        lambda D, start: csr_matrix(D),
         lambda D, start: (list(D), list(D)),
-        lambda D, start: (dok_matrix(D), np.array(D), list(D)),
+    ]
+    + [
+        lambda D, start, scipy_csr_type=scipy_csr_type: scipy_csr_type(D)
+        for scipy_csr_type in CSR_CONTAINERS
+    ]
+    + [
+        lambda D, start, scipy_dok_type=scipy_dok_type: (
+            scipy_dok_type(D),
+            np.array(D),
+            list(D),
+        )
+        for scipy_dok_type in DOK_CONTAINERS
     ],
 )
 def test_pairwise_distances_chunked_reduce_valid(good_reduce):
@@ -746,9 +783,6 @@ def test_pairwise_distances_chunked(global_dtype):
     # "cityblock" uses scikit-learn metric, cityblock (function) is
     # scipy.spatial.
     check_pairwise_distances_chunked(X, Y, working_memory=1, metric="cityblock")
-    # Test that a value error is raised if the metric is unknown
-    with pytest.raises(ValueError):
-        next(pairwise_distances_chunked(X, Y, metric="blah"))
 
     # Test precomputed returns all at once
     D = pairwise_distances(X)
@@ -760,10 +794,14 @@ def test_pairwise_distances_chunked(global_dtype):
 
 
 @pytest.mark.parametrize(
-    "x_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
+    "x_array_constr",
+    [np.array] + CSR_CONTAINERS,
+    ids=["dense"] + [container.__name__ for container in CSR_CONTAINERS],
 )
 @pytest.mark.parametrize(
-    "y_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
+    "y_array_constr",
+    [np.array] + CSR_CONTAINERS,
+    ids=["dense"] + [container.__name__ for container in CSR_CONTAINERS],
 )
 def test_euclidean_distances_known_result(x_array_constr, y_array_constr):
     # Check the pairwise Euclidean distances computation on known result
@@ -774,7 +812,9 @@ def test_euclidean_distances_known_result(x_array_constr, y_array_constr):
 
 
 @pytest.mark.parametrize(
-    "y_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
+    "y_array_constr",
+    [np.array] + CSR_CONTAINERS,
+    ids=["dense"] + [container.__name__ for container in CSR_CONTAINERS],
 )
 def test_euclidean_distances_with_norms(global_dtype, y_array_constr):
     # check that we still get the right answers with {X,Y}_norm_squared
@@ -806,6 +846,23 @@ def test_euclidean_distances_with_norms(global_dtype, y_array_constr):
     )
     with pytest.raises(AssertionError):
         assert_allclose(wrong_D, D1)
+
+
+@pytest.mark.parametrize("symmetric", [True, False])
+def test_euclidean_distances_float32_norms(global_random_seed, symmetric):
+    # Non-regression test for #27621
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.random_sample((10, 10))
+    Y = X if symmetric else rng.random_sample((20, 10))
+    X_norm_sq = (X.astype(np.float32) ** 2).sum(axis=1).reshape(1, -1)
+    Y_norm_sq = (Y.astype(np.float32) ** 2).sum(axis=1).reshape(1, -1)
+    D1 = euclidean_distances(X, Y)
+    D2 = euclidean_distances(X, Y, X_norm_squared=X_norm_sq)
+    D3 = euclidean_distances(X, Y, Y_norm_squared=Y_norm_sq)
+    D4 = euclidean_distances(X, Y, X_norm_squared=X_norm_sq, Y_norm_squared=Y_norm_sq)
+    assert_allclose(D2, D1)
+    assert_allclose(D3, D1)
+    assert_allclose(D4, D1)
 
 
 def test_euclidean_distances_norm_shapes():
@@ -843,10 +900,14 @@ def test_euclidean_distances_norm_shapes():
 
 
 @pytest.mark.parametrize(
-    "x_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
+    "x_array_constr",
+    [np.array] + CSR_CONTAINERS,
+    ids=["dense"] + [container.__name__ for container in CSR_CONTAINERS],
 )
 @pytest.mark.parametrize(
-    "y_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
+    "y_array_constr",
+    [np.array] + CSR_CONTAINERS,
+    ids=["dense"] + [container.__name__ for container in CSR_CONTAINERS],
 )
 def test_euclidean_distances(global_dtype, x_array_constr, y_array_constr):
     # check that euclidean distances gives same result as scipy cdist
@@ -870,7 +931,9 @@ def test_euclidean_distances(global_dtype, x_array_constr, y_array_constr):
 
 
 @pytest.mark.parametrize(
-    "x_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
+    "x_array_constr",
+    [np.array] + CSR_CONTAINERS,
+    ids=["dense"] + [container.__name__ for container in CSR_CONTAINERS],
 )
 def test_euclidean_distances_sym(global_dtype, x_array_constr):
     # check that euclidean distances gives same result as scipy pdist
@@ -892,10 +955,14 @@ def test_euclidean_distances_sym(global_dtype, x_array_constr):
 
 @pytest.mark.parametrize("batch_size", [None, 5, 7, 101])
 @pytest.mark.parametrize(
-    "x_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
+    "x_array_constr",
+    [np.array] + CSR_CONTAINERS,
+    ids=["dense"] + [container.__name__ for container in CSR_CONTAINERS],
 )
 @pytest.mark.parametrize(
-    "y_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
+    "y_array_constr",
+    [np.array] + CSR_CONTAINERS,
+    ids=["dense"] + [container.__name__ for container in CSR_CONTAINERS],
 )
 def test_euclidean_distances_upcast(batch_size, x_array_constr, y_array_constr):
     # check batches handling when Y != X (#13910)
@@ -919,7 +986,9 @@ def test_euclidean_distances_upcast(batch_size, x_array_constr, y_array_constr):
 
 @pytest.mark.parametrize("batch_size", [None, 5, 7, 101])
 @pytest.mark.parametrize(
-    "x_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
+    "x_array_constr",
+    [np.array] + CSR_CONTAINERS,
+    ids=["dense"] + [container.__name__ for container in CSR_CONTAINERS],
 )
 def test_euclidean_distances_upcast_sym(batch_size, x_array_constr):
     # check batches handling when X is Y (#13910)
@@ -1268,10 +1337,11 @@ def test_kernel_symmetry(kernel):
         cosine_similarity,
     ),
 )
-def test_kernel_sparse(kernel):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_kernel_sparse(kernel, csr_container):
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
-    X_sparse = csr_matrix(X)
+    X_sparse = csr_container(X)
     K = kernel(X, X)
     K2 = kernel(X_sparse, X_sparse)
     assert_allclose(K, K2)
@@ -1306,14 +1376,16 @@ def test_laplacian_kernel():
 
 
 @pytest.mark.parametrize(
-    "metric, pairwise_func", [("linear", linear_kernel), ("cosine", cosine_similarity)]
+    "metric, pairwise_func",
+    [("linear", linear_kernel), ("cosine", cosine_similarity)],
 )
-def test_pairwise_similarity_sparse_output(metric, pairwise_func):
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_pairwise_similarity_sparse_output(metric, pairwise_func, csr_container):
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((3, 4))
-    Xcsr = csr_matrix(X)
-    Ycsr = csr_matrix(Y)
+    Xcsr = csr_container(X)
+    Ycsr = csr_container(Y)
 
     # should be sparse
     K1 = pairwise_func(Xcsr, Ycsr, dense_output=False)
@@ -1329,14 +1401,15 @@ def test_pairwise_similarity_sparse_output(metric, pairwise_func):
     assert_allclose(K1.toarray(), K3)
 
 
-def test_cosine_similarity():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_cosine_similarity(csr_container):
     # Test the cosine_similarity.
 
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((3, 4))
-    Xcsr = csr_matrix(X)
-    Ycsr = csr_matrix(Y)
+    Xcsr = csr_container(X)
+    Ycsr = csr_container(Y)
 
     for X_, Y_ in ((X, None), (X, Y), (Xcsr, None), (Xcsr, Ycsr)):
         # Test that the cosine is kernel is equal to a linear kernel when data
@@ -1400,13 +1473,14 @@ def test_check_invalid_dimensions():
         check_pairwise_arrays(XA, XB)
 
 
-def test_check_sparse_arrays():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_check_sparse_arrays(csr_container):
     # Ensures that checks return valid sparse matrices.
     rng = np.random.RandomState(0)
     XA = rng.random_sample((5, 4))
-    XA_sparse = csr_matrix(XA)
+    XA_sparse = csr_container(XA)
     XB = rng.random_sample((5, 4))
-    XB_sparse = csr_matrix(XB)
+    XB_sparse = csr_container(XB)
     XA_checked, XB_checked = check_pairwise_arrays(XA_sparse, XB_sparse)
     # compare their difference because testing csr matrices for
     # equality with '==' does not work as expected.
@@ -1551,10 +1625,11 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
     assert_allclose(dist, expected_dist)
 
 
-def test_sparse_manhattan_readonly_dataset():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse_manhattan_readonly_dataset(csr_container):
     # Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/7981
-    matrices1 = [csr_matrix(np.ones((5, 5)))]
-    matrices2 = [csr_matrix(np.ones((5, 5)))]
+    matrices1 = [csr_container(np.ones((5, 5)))]
+    matrices2 = [csr_container(np.ones((5, 5)))]
     # Joblib memory maps datasets which makes them read-only.
     # The following call was reporting as failing in #7981, but this must pass.
     Parallel(n_jobs=2, max_nbytes=0)(

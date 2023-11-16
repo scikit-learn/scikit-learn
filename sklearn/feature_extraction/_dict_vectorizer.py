@@ -3,14 +3,14 @@
 # License: BSD 3 clause
 
 from array import array
-from collections.abc import Mapping, Iterable
-from operator import itemgetter
+from collections.abc import Iterable, Mapping
 from numbers import Number
+from operator import itemgetter
 
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _fit_context
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 
@@ -41,6 +41,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
     Features that do not occur in a sample (mapping) will have a zero value
     in the resulting array/matrix.
+
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
     Read more in the :ref:`User Guide <dict_feature_extraction>`.
 
@@ -133,6 +136,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                 indices.append(vocab[feature_name])
                 values.append(self.dtype(vv))
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Learn a list of feature name -> indices mappings.
 
@@ -153,7 +157,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         self : object
             DictVectorizer class instance.
         """
-        self._validate_params()
         feature_names = []
         vocab = {}
 
@@ -286,6 +289,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         return result_matrix
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Learn a list of feature name -> indices mappings and transform X.
 
@@ -309,7 +313,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
-        self._validate_params()
         return self._transform(X, fitting=True)
 
     def inverse_transform(self, X, dict_type=dict):
