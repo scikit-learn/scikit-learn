@@ -439,6 +439,10 @@ Changelog
 - |Enhancement| :func:`sklearn.model_selection.train_test_split` now supports
   Array API compatible inputs. :pr:`26855` by `Tim Head`_.
 
+- |Enhancement| :func:`model_selection.learning_curve` raises a warning when
+  every cross validation fold fails.
+  :pr:`26299` by :user:`Rahil Parikh <rprkh>`.
+
 - |Fix| :class:`model_selection.GridSearchCV`,
   :class:`model_selection.RandomizedSearchCV`, and
   :class:`model_selection.HalvingGridSearchCV` now don't change the given
