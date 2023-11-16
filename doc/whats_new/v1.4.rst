@@ -276,7 +276,7 @@ Changelog
 - |Enhancement| :class:`decomposition.PCA` now supports the Array API for the
   `full` and `randomized` solvers (with QR power iterations). See
   :ref:`array_api` for more details.
-  :pr:`26315` and :pr:`27098` by :user:`Mateusz Sokół <mtsokol>`,
+  :pr:`26315`, :pr:`27098` and :pr:`27431` by :user:`Mateusz Sokół <mtsokol>`,
   :user:`Olivier Grisel <ogrisel>` and :user:`Edoardo Abati <EdAbati>`.
 
 - |Feature| :class:`decomposition.PCA` now supports :class:`scipy.sparse.sparray`

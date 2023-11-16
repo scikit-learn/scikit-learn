@@ -3470,7 +3470,7 @@ def check_parameters_default_constructible(name, Estimator):
                 type,
             }
             # Any numpy numeric such as np.int32.
-            allowed_types.update(np.core.numerictypes.allTypes.values())
+            allowed_types.update(np.sctypeDict.values())
 
             allowed_value = (
                 type(init_param.default) in allowed_types
