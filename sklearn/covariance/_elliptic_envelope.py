@@ -2,14 +2,15 @@
 #
 # License: BSD 3 clause
 
-import numpy as np
 from numbers import Real
-from . import MinCovDet
+
+import numpy as np
+
+from ..base import OutlierMixin, _fit_context
+from ..metrics import accuracy_score
 from ..utils._param_validation import Interval
 from ..utils.validation import check_is_fitted
-from ..metrics import accuracy_score
-from ..base import OutlierMixin
-from ..base import _fit_context
+from ._robust_covariance import MinCovDet
 
 
 class EllipticEnvelope(OutlierMixin, MinCovDet):
@@ -34,7 +35,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     support_fraction : float, default=None
         The proportion of points to be included in the support of the raw
         MCD estimate. If None, the minimum value of support_fraction will
-        be used within the algorithm: `[n_sample + n_features + 1] / 2`.
+        be used within the algorithm: `(n_samples + n_features + 1) / 2 * n_samples`.
         Range is (0, 1).
 
     contamination : float, default=0.1

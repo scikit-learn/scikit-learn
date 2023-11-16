@@ -35,7 +35,7 @@ jobs:
     - bash: |
         source build_tools/shared.sh
         # Include pytest compatibility with mypy
-        pip install pytest flake8 $(get_dep mypy min) $(get_dep black min) cython-lint
+        pip install pytest ruff $(get_dep mypy min) $(get_dep black min) cython-lint
       displayName: Install linters
     - bash: |
         ./build_tools/linting.sh
@@ -127,11 +127,11 @@ jobs:
     vmImage: ubuntu-22.04
   variables:
     # Need to match Python version and Emscripten version for the correct
-    # Pyodide version. For Pyodide version 0.23.2, see
-    # https://github.com/pyodide/pyodide/blob/0.23.2/Makefile.envs
-    PYODIDE_VERSION: '0.23.2'
-    EMSCRIPTEN_VERSION: '3.1.32'
-    PYTHON_VERSION: '3.11.2'
+    # Pyodide version. For example, for Pyodide version 0.24.1, see
+    # https://github.com/pyodide/pyodide/blob/0.24.1/Makefile.envs
+    PYODIDE_VERSION: '0.24.1'
+    EMSCRIPTEN_VERSION: '3.1.45'
+    PYTHON_VERSION: '3.11.3'
 
   dependsOn: [git_commit, linting]
   condition: |
@@ -150,7 +150,7 @@ jobs:
         addToPath: true
 
     - bash: bash build_tools/azure/install_pyodide.sh
-      displayName: Build Pyodide wheel and install it in a Pyodide venv
+      displayName: Build Pyodide wheel
 
     - bash: bash build_tools/azure/test_script_pyodide.sh
       displayName: Test Pyodide wheel
@@ -171,7 +171,6 @@ jobs:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/pylatest_conda_forge_mkl_linux-64_conda.lock'
         COVERAGE: 'true'
-        SHOW_SHORT_SUMMARY: 'true'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
 
 # Check compilation with Ubuntu 22.04 LTS (Jammy Jellyfish) and scipy from conda-forge
@@ -235,6 +234,10 @@ jobs:
       py38_conda_defaults_openblas:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/py38_conda_defaults_openblas_linux-64_conda.lock'
+        # Enable debug Cython directives to capture IndexError exceptions in
+        # combination with the -Werror::pytest.PytestUnraisableExceptionWarning
+        # flag for pytest.
+        # https://github.com/scikit-learn/scikit-learn/pull/24438
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
         SKLEARN_RUN_FLOAT32_TESTS: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '2'  # non-default seed
@@ -317,5 +320,9 @@ jobs:
         # code should have windows-specific code branches, it should be enable
         # to restrict the code coverage collection to the non-windows runners.
         COVERAGE: 'false'
+        # Enable debug Cython directives to capture IndexError exceptions in
+        # combination with the -Werror::pytest.PytestUnraisableExceptionWarning
+        # flag for pytest.
+        # https://github.com/scikit-learn/scikit-learn/pull/24438
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '7'  # non-default seed

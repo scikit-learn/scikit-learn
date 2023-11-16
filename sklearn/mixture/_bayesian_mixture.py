@@ -4,19 +4,22 @@
 # License: BSD 3 clause
 
 import math
-import numpy as np
-from scipy.special import betaln, digamma, gammaln
 from numbers import Real
 
-from ._base import BaseMixture, _check_shape
-from ._gaussian_mixture import _check_precision_matrix
-from ._gaussian_mixture import _check_precision_positivity
-from ._gaussian_mixture import _compute_log_det_cholesky
-from ._gaussian_mixture import _compute_precision_cholesky
-from ._gaussian_mixture import _estimate_gaussian_parameters
-from ._gaussian_mixture import _estimate_log_gaussian_prob
+import numpy as np
+from scipy.special import betaln, digamma, gammaln
+
 from ..utils import check_array
 from ..utils._param_validation import Interval, StrOptions
+from ._base import BaseMixture, _check_shape
+from ._gaussian_mixture import (
+    _check_precision_matrix,
+    _check_precision_positivity,
+    _compute_log_det_cholesky,
+    _compute_precision_cholesky,
+    _estimate_gaussian_parameters,
+    _estimate_log_gaussian_prob,
+)
 
 
 def _log_dirichlet_norm(dirichlet_concentration):

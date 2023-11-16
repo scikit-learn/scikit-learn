@@ -8,16 +8,16 @@ from abc import ABCMeta, abstractmethod
 from operator import attrgetter
 
 import numpy as np
-from scipy.sparse import issparse, csc_matrix
+from scipy.sparse import csc_matrix, issparse
 
 from ..base import TransformerMixin
 from ..utils import (
+    _safe_indexing,
     check_array,
     safe_sqr,
 )
-from ..utils._tags import _safe_tags
-from ..utils import _safe_indexing
 from ..utils._set_output import _get_output_config
+from ..utils._tags import _safe_tags
 from ..utils.validation import _check_feature_names_in, check_is_fitted
 
 

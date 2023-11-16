@@ -19,7 +19,6 @@ comes in to choose a direction that is not flat.
 # ---------------
 
 import numpy as np
-
 from scipy import stats
 
 e = np.exp(1)
@@ -52,12 +51,12 @@ b /= norm
 # Plot the figures
 # ----------------
 
-from sklearn.decomposition import PCA
-
 import matplotlib.pyplot as plt
 
 # unused but required import for doing 3d projections with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401
+
+from sklearn.decomposition import PCA
 
 
 def plot_figs(fig_num, elev, azim):

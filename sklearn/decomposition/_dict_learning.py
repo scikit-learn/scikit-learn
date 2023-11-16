@@ -3,27 +3,29 @@
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
-import time
-import sys
 import itertools
-from numbers import Integral, Real
+import sys
+import time
 import warnings
-
 from math import ceil
+from numbers import Integral, Real
 
 import numpy as np
-from scipy import linalg
 from joblib import effective_n_jobs
+from scipy import linalg
 
-from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
-from ..base import _fit_context
-from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils._param_validation import validate_params
+from ..base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from ..linear_model import Lars, Lasso, LassoLars, orthogonal_mp_gram
+from ..utils import check_array, check_random_state, gen_batches, gen_even_slices
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
+from ..utils.parallel import Parallel, delayed
 from ..utils.validation import check_is_fitted
-from ..utils.parallel import delayed, Parallel
-from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
 def _check_positive_coding(method, positive):
@@ -218,7 +220,8 @@ def _sparse_encode_precomputed(
         "check_input": ["boolean"],
         "verbose": ["verbose"],
         "positive": ["boolean"],
-    }
+    },
+    prefer_skip_nested_validation=True,
 )
 # XXX : could be moved to the linear_model module
 def sparse_encode(
@@ -733,7 +736,8 @@ def dict_learning_online(
     dict_init : ndarray of shape (n_components, n_features), default=None
         Initial values for the dictionary for warm restart scenarios.
         If `None`, the initial values for the dictionary are created
-        with an SVD decomposition of the data via :func:`~sklearn.utils.randomized_svd`.
+        with an SVD decomposition of the data via
+        :func:`~sklearn.utils.extmath.randomized_svd`.
 
     callback : callable, default=None
         A callable that gets invoked at the end of each iteration.
@@ -1077,7 +1081,8 @@ def dict_learning_online(
         "method": [StrOptions({"lars", "cd"})],
         "return_n_iter": ["boolean"],
         "method_max_iter": [Interval(Integral, 0, None, closed="left")],
-    }
+    },
+    prefer_skip_nested_validation=False,
 )
 def dict_learning(
     X,
@@ -1687,7 +1692,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> from sklearn.datasets import make_sparse_coded_signal
     >>> from sklearn.decomposition import DictionaryLearning
     >>> X, dictionary, code = make_sparse_coded_signal(
-    ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
+    ...     n_samples=30, n_components=15, n_features=20, n_nonzero_coefs=10,
     ...     random_state=42,
     ... )
     >>> dict_learner = DictionaryLearning(
@@ -1699,7 +1704,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     We can check the level of sparsity of `X_transformed`:
 
     >>> np.mean(X_transformed == 0)
-    0.41...
+    0.52...
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1707,7 +1712,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.07...
+    0.05...
     """
 
     _parameter_constraints: dict = {
@@ -2057,16 +2062,16 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> from sklearn.datasets import make_sparse_coded_signal
     >>> from sklearn.decomposition import MiniBatchDictionaryLearning
     >>> X, dictionary, code = make_sparse_coded_signal(
-    ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
+    ...     n_samples=30, n_components=15, n_features=20, n_nonzero_coefs=10,
     ...     random_state=42)
     >>> dict_learner = MiniBatchDictionaryLearning(
     ...     n_components=15, batch_size=3, transform_algorithm='lasso_lars',
-    ...     transform_alpha=0.1, random_state=42)
+    ...     transform_alpha=0.1, max_iter=20, random_state=42)
     >>> X_transformed = dict_learner.fit_transform(X)
 
     We can check the level of sparsity of `X_transformed`:
 
-    >>> np.mean(X_transformed == 0) < 0.5
+    >>> np.mean(X_transformed == 0) > 0.5
     True
 
     We can compare the average squared euclidean norm of the reconstruction
@@ -2075,7 +2080,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.057...
+    0.052...
     """
 
     _parameter_constraints: dict = {

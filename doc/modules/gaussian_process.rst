@@ -1,5 +1,3 @@
-
-
 .. _gaussian_process:
 
 ==================
@@ -8,7 +6,7 @@ Gaussian Processes
 
 .. currentmodule:: sklearn.gaussian_process
 
-**Gaussian Processes (GP)** are a generic supervised learning method designed
+**Gaussian Processes (GP)** are a nonparametric supervised learning method used
 to solve *regression* and *probabilistic classification* problems.
 
 The advantages of Gaussian processes are:
@@ -27,8 +25,8 @@ The advantages of Gaussian processes are:
 
 The disadvantages of Gaussian processes include:
 
-    - They are not sparse, i.e., they use the whole samples/features information to
-      perform the prediction.
+    - Our implementation is not sparse, i.e., they use the whole samples/features
+      information to perform the prediction.
 
     - They lose efficiency in high dimensional spaces -- namely when the number
       of features exceeds a few dozens.
@@ -42,31 +40,44 @@ Gaussian Process Regression (GPR)
 .. currentmodule:: sklearn.gaussian_process
 
 The :class:`GaussianProcessRegressor` implements Gaussian processes (GP) for
-regression purposes. For this, the prior of the GP needs to be specified. The
-prior mean is assumed to be constant and zero (for ``normalize_y=False``) or the
-training data's mean (for ``normalize_y=True``). The prior's
-covariance is specified by passing a :ref:`kernel <gp_kernels>` object. The
-hyperparameters of the kernel are optimized during fitting of
-GaussianProcessRegressor by maximizing the log-marginal-likelihood (LML) based
-on the passed ``optimizer``. As the LML may have multiple local optima, the
-optimizer can be started repeatedly by specifying ``n_restarts_optimizer``. The
-first run is always conducted starting from the initial hyperparameter values
-of the kernel; subsequent runs are conducted from hyperparameter values
-that have been chosen randomly from the range of allowed values.
-If the initial hyperparameters should be kept fixed, `None` can be passed as
-optimizer.
+regression purposes. For this, the prior of the GP needs to be specified. GP
+will combine this prior and the likelihood function based on training samples.
+It allows to give a probabilistic approach to prediction by giving the mean and
+standard deviation as output when predicting.
 
-The noise level in the targets can be specified by passing it via the
-parameter ``alpha``, either globally as a scalar or per datapoint.
-Note that a moderate noise level can also be helpful for dealing with numeric
-issues during fitting as it is effectively implemented as Tikhonov
-regularization, i.e., by adding it to the diagonal of the kernel matrix. An
-alternative to specifying the noise level explicitly is to include a
-WhiteKernel component into the kernel, which can estimate the global noise
-level from the data (see example below).
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_targets_002.png
+   :target: ../auto_examples/gaussian_process/plot_gpr_noisy_targets.html
+   :align: center
+
+The prior mean is assumed to be constant and zero (for `normalize_y=False`) or
+the training data's mean (for `normalize_y=True`). The prior's covariance is
+specified by passing a :ref:`kernel <gp_kernels>` object. The hyperparameters
+of the kernel are optimized when fitting the :class:`GaussianProcessRegressor`
+by maximizing the log-marginal-likelihood (LML) based on the passed
+`optimizer`. As the LML may have multiple local optima, the optimizer can be
+started repeatedly by specifying `n_restarts_optimizer`. The first run is
+always conducted starting from the initial hyperparameter values of the kernel;
+subsequent runs are conducted from hyperparameter values that have been chosen
+randomly from the range of allowed values. If the initial hyperparameters
+should be kept fixed, `None` can be passed as optimizer.
+
+The noise level in the targets can be specified by passing it via the parameter
+`alpha`, either globally as a scalar or per datapoint. Note that a moderate
+noise level can also be helpful for dealing with numeric instabilities during
+fitting as it is effectively implemented as Tikhonov regularization, i.e., by
+adding it to the diagonal of the kernel matrix. An alternative to specifying
+the noise level explicitly is to include a
+:class:`~sklearn.gaussian_process.kernels.WhiteKernel` component into the
+kernel, which can estimate the global noise level from the data (see example
+below). The figure below shows the effect of noisy target handled by setting
+the parameter `alpha`.
+
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_targets_003.png
+   :target: ../auto_examples/gaussian_process/plot_gpr_noisy_targets.html
+   :align: center
 
 The implementation is based on Algorithm 2.1 of [RW2006]_. In addition to
-the API of standard scikit-learn estimators, GaussianProcessRegressor:
+the API of standard scikit-learn estimators, :class:`GaussianProcessRegressor`:
 
 * allows prediction without prior fitting (based on the GP prior)
 
@@ -77,149 +88,12 @@ the API of standard scikit-learn estimators, GaussianProcessRegressor:
   externally for other ways of selecting hyperparameters, e.g., via
   Markov chain Monte Carlo.
 
+.. topic:: Examples
 
-GPR examples
-============
-
-GPR with noise-level estimation
--------------------------------
-This example illustrates that GPR with a sum-kernel including a WhiteKernel can
-estimate the noise level of data. An illustration of the
-log-marginal-likelihood (LML) landscape shows that there exist two local
-maxima of LML.
-
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_003.png
-   :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
-   :align: center
-
-The first corresponds to a model with a high noise level and a
-large length scale, which explains all variations in the data by noise.
-
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_004.png
-   :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
-   :align: center
-
-The second one has a smaller noise level and shorter length scale, which explains
-most of the variation by the noise-free functional relationship. The second
-model has a higher likelihood; however, depending on the initial value for the
-hyperparameters, the gradient-based optimization might also converge to the
-high-noise solution. It is thus important to repeat the optimization several
-times for different initializations.
-
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_005.png
-   :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
-   :align: center
-
-
-Comparison of GPR and Kernel Ridge Regression
----------------------------------------------
-
-Both kernel ridge regression (KRR) and GPR learn
-a target function by employing internally the "kernel trick". KRR learns a
-linear function in the space induced by the respective kernel which corresponds
-to a non-linear function in the original space. The linear function in the
-kernel space is chosen based on the mean-squared error loss with
-ridge regularization. GPR uses the kernel to define the covariance of
-a prior distribution over the target functions and uses the observed training
-data to define a likelihood function. Based on Bayes theorem, a (Gaussian)
-posterior distribution over target functions is defined, whose mean is used
-for prediction.
-
-A major difference is that GPR can choose the kernel's hyperparameters based
-on gradient-ascent on the marginal likelihood function while KRR needs to
-perform a grid search on a cross-validated loss function (mean-squared error
-loss). A further difference is that GPR learns a generative, probabilistic
-model of the target function and can thus provide meaningful confidence
-intervals and posterior samples along with the predictions while KRR only
-provides predictions.
-
-The following figure illustrates both methods on an artificial dataset, which
-consists of a sinusoidal target function and strong noise. The figure compares
-the learned model of KRR and GPR based on a ExpSineSquared kernel, which is
-suited for learning periodic functions. The kernel's hyperparameters control
-the smoothness (length_scale) and periodicity of the kernel (periodicity).
-Moreover, the noise level
-of the data is learned explicitly by GPR by an additional WhiteKernel component
-in the kernel and by the regularization parameter alpha of KRR.
-
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_compare_gpr_krr_005.png
-   :target: ../auto_examples/gaussian_process/plot_compare_gpr_krr.html
-   :align: center
-
-The figure shows that both methods learn reasonable models of the target
-function. GPR provides reasonable confidence bounds on the prediction which are not
-available for KRR. A major difference between the two methods is the time
-required for fitting and predicting: while fitting KRR is fast in principle,
-the grid-search for hyperparameter optimization scales exponentially with the
-number of hyperparameters ("curse of dimensionality"). The gradient-based
-optimization of the parameters in GPR does not suffer from this exponential
-scaling and is thus considerably faster on this example with 3-dimensional
-hyperparameter space. The time for predicting is similar; however, generating
-the variance of the predictive distribution of GPR takes considerably longer
-than just predicting the mean.
-
-GPR on Mauna Loa CO2 data
--------------------------
-
-This example is based on Section 5.4.3 of [RW2006]_.
-It illustrates an example of complex kernel engineering and
-hyperparameter optimization using gradient ascent on the
-log-marginal-likelihood. The data consists of the monthly average atmospheric
-CO2 concentrations (in parts per million by volume (ppmv)) collected at the
-Mauna Loa Observatory in Hawaii, between 1958 and 1997. The objective is to
-model the CO2 concentration as a function of the time t.
-
-The kernel is composed of several terms that are responsible for explaining
-different properties of the signal:
-
-- a long term, smooth rising trend is to be explained by an RBF kernel. The
-  RBF kernel with a large length-scale enforces this component to be smooth;
-  it is not enforced that the trend is rising which leaves this choice to the
-  GP. The specific length-scale and the amplitude are free hyperparameters.
-
-- a seasonal component, which is to be explained by the periodic
-  ExpSineSquared kernel with a fixed periodicity of 1 year. The length-scale
-  of this periodic component, controlling its smoothness, is a free parameter.
-  In order to allow decaying away from exact periodicity, the product with an
-  RBF kernel is taken. The length-scale of this RBF component controls the
-  decay time and is a further free parameter.
-
-- smaller, medium term irregularities are to be explained by a
-  RationalQuadratic kernel component, whose length-scale and alpha parameter,
-  which determines the diffuseness of the length-scales, are to be determined.
-  According to [RW2006]_, these irregularities can better be explained by
-  a RationalQuadratic than an RBF kernel component, probably because it can
-  accommodate several length-scales.
-
-- a "noise" term, consisting of an RBF kernel contribution, which shall
-  explain the correlated noise components such as local weather phenomena,
-  and a WhiteKernel contribution for the white noise. The relative amplitudes
-  and the RBF's length scale are further free parameters.
-
-Maximizing the log-marginal-likelihood after subtracting the target's mean
-yields the following kernel with an LML of -83.214:
-
-::
-
-   34.4**2 * RBF(length_scale=41.8)
-   + 3.27**2 * RBF(length_scale=180) * ExpSineSquared(length_scale=1.44,
-                                                      periodicity=1)
-   + 0.446**2 * RationalQuadratic(alpha=17.7, length_scale=0.957)
-   + 0.197**2 * RBF(length_scale=0.138) + WhiteKernel(noise_level=0.0336)
-
-Thus, most of the target signal (34.4ppm) is explained by a long-term rising
-trend (length-scale 41.8 years). The periodic component has an amplitude of
-3.27ppm, a decay time of 180 years and a length-scale of 1.44. The long decay
-time indicates that we have a locally very close to periodic seasonal
-component. The correlated noise has an amplitude of 0.197ppm with a length
-scale of 0.138 years and a white-noise contribution of 0.197ppm. Thus, the
-overall noise level is very small, indicating that the data can be very well
-explained by the model. The figure shows also that the model makes very
-confident predictions until around 2015
-
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_co2_003.png
-   :target: ../auto_examples/gaussian_process/plot_gpr_co2.html
-   :align: center
+   * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_noisy_targets.py`
+   * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_noisy.py`
+   * :ref:`sphx_glr_auto_examples_gaussian_process_plot_compare_gpr_krr.py`
+   * :ref:`sphx_glr_auto_examples_gaussian_process_plot_gpr_co2.py`
 
 .. _gpc:
 
@@ -401,15 +275,17 @@ The specification of each hyperparameter is stored in the form of an instance of
 hyperparameter with name "x" must have the attributes self.x and self.x_bounds.
 
 The abstract base class for all kernels is :class:`Kernel`. Kernel implements a
-similar interface as :class:`Estimator`, providing the methods ``get_params()``,
-``set_params()``, and ``clone()``. This allows setting kernel values also via
-meta-estimators such as :class:`Pipeline` or :class:`GridSearch`. Note that due to the nested
+similar interface as :class:`~sklearn.base.BaseEstimator`, providing the
+methods ``get_params()``, ``set_params()``, and ``clone()``. This allows
+setting kernel values also via meta-estimators such as
+:class:`~sklearn.pipeline.Pipeline` or
+:class:`~sklearn.model_selection.GridSearchCV`. Note that due to the nested
 structure of kernels (by applying kernel operators, see below), the names of
-kernel parameters might become relatively complicated. In general, for a
-binary kernel operator, parameters of the left operand are prefixed with ``k1__``
-and parameters of the right operand with ``k2__``. An additional convenience
-method is ``clone_with_theta(theta)``, which returns a cloned version of the
-kernel but with the hyperparameters set to ``theta``. An illustrative example:
+kernel parameters might become relatively complicated. In general, for a binary
+kernel operator, parameters of the left operand are prefixed with ``k1__`` and
+parameters of the right operand with ``k2__``. An additional convenience method
+is ``clone_with_theta(theta)``, which returns a cloned version of the kernel
+but with the hyperparameters set to ``theta``. An illustrative example:
 
     >>> from sklearn.gaussian_process.kernels import ConstantKernel, RBF
     >>> kernel = ConstantKernel(constant_value=1.0, constant_value_bounds=(0.0, 10.0)) * RBF(length_scale=0.5, length_scale_bounds=(0.0, 10.0)) + RBF(length_scale=2.0, length_scale_bounds=(0.0, 10.0))

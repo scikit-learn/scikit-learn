@@ -1,22 +1,22 @@
 import pickle
 
 import numpy as np
-from numpy.testing import assert_allclose, assert_array_equal
 import pytest
+from numpy.testing import assert_allclose, assert_array_equal
 from pytest import approx
 from scipy.optimize import (
+    LinearConstraint,
     minimize,
     minimize_scalar,
     newton,
-    LinearConstraint,
 )
 from scipy.special import logsumexp
 
-from sklearn._loss.link import _inclusive_low_high, IdentityLink
+from sklearn._loss.link import IdentityLink, _inclusive_low_high
 from sklearn._loss.loss import (
     _LOSSES,
-    BaseLoss,
     AbsoluteError,
+    BaseLoss,
     HalfBinomialLoss,
     HalfGammaLoss,
     HalfMultinomialLoss,
@@ -27,9 +27,8 @@ from sklearn._loss.loss import (
     HuberLoss,
     PinballLoss,
 )
-from sklearn.utils import assert_all_finite
+from sklearn.utils import _IS_WASM, assert_all_finite
 from sklearn.utils._testing import create_memmap_backed_data, skip_if_32bit
-
 
 ALL_LOSSES = list(_LOSSES.values())
 
@@ -287,6 +286,9 @@ def test_loss_dtype(
 
     Also check that input arrays can be readonly, e.g. memory mapped.
     """
+    if _IS_WASM and readonly_memmap:  # pragma: nocover
+        pytest.xfail(reason="memmap not fully supported")
+
     loss = loss()
     # generate a y_true and raw_prediction in valid range
     n_samples = 5
@@ -308,10 +310,10 @@ def test_loss_dtype(
         out2 = np.empty_like(raw_prediction, dtype=dtype_out)
 
     if readonly_memmap:
-        y_true = create_memmap_backed_data(y_true, aligned=True)
-        raw_prediction = create_memmap_backed_data(raw_prediction, aligned=True)
+        y_true = create_memmap_backed_data(y_true)
+        raw_prediction = create_memmap_backed_data(raw_prediction)
         if sample_weight is not None:
-            sample_weight = create_memmap_backed_data(sample_weight, aligned=True)
+            sample_weight = create_memmap_backed_data(sample_weight)
 
     loss.loss(
         y_true=y_true,
@@ -381,34 +383,32 @@ def test_loss_same_as_C_functions(loss, sample_weight):
     out_g2 = np.empty_like(raw_prediction)
     out_h1 = np.empty_like(raw_prediction)
     out_h2 = np.empty_like(raw_prediction)
-    assert_allclose(
-        loss.loss(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            loss_out=out_l1,
-        ),
-        loss.closs.loss(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            loss_out=out_l2,
-        ),
+    loss.loss(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+        loss_out=out_l1,
     )
-    assert_allclose(
-        loss.gradient(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            gradient_out=out_g1,
-        ),
-        loss.closs.gradient(
-            y_true=y_true,
-            raw_prediction=raw_prediction,
-            sample_weight=sample_weight,
-            gradient_out=out_g2,
-        ),
+    loss.closs.loss(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+        loss_out=out_l2,
+    ),
+    assert_allclose(out_l1, out_l2)
+    loss.gradient(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+        gradient_out=out_g1,
     )
+    loss.closs.gradient(
+        y_true=y_true,
+        raw_prediction=raw_prediction,
+        sample_weight=sample_weight,
+        gradient_out=out_g2,
+    )
+    assert_allclose(out_g1, out_g2)
     loss.closs.loss_gradient(
         y_true=y_true,
         raw_prediction=raw_prediction,

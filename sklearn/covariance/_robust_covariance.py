@@ -10,15 +10,16 @@ Here are implemented estimators that are resistant to outliers.
 
 import warnings
 from numbers import Integral, Real
+
 import numpy as np
 from scipy import linalg
 from scipy.stats import chi2
 
-from . import empirical_covariance, EmpiricalCovariance
 from ..base import _fit_context
-from ..utils.extmath import fast_logdet
-from ..utils import check_random_state, check_array
+from ..utils import check_array, check_random_state
 from ..utils._param_validation import Interval
+from ..utils.extmath import fast_logdet
+from ._empirical_covariance import EmpiricalCovariance, empirical_covariance
 
 
 # Minimum Covariance Determinant
@@ -372,8 +373,8 @@ def fast_mcd(
         The proportion of points to be included in the support of the raw
         MCD estimate. Default is `None`, which implies that the minimum
         value of `support_fraction` will be used within the algorithm:
-        `(n_sample + n_features + 1) / 2`. This parameter must be in the
-        range (0, 1).
+        `(n_samples + n_features + 1) / 2 * n_samples`. This parameter must be
+        in the range (0, 1).
 
     cov_computation_method : callable, \
             default=:func:`sklearn.covariance.empirical_covariance`
@@ -606,8 +607,8 @@ class MinCovDet(EmpiricalCovariance):
         The proportion of points to be included in the support of the raw
         MCD estimate. Default is None, which implies that the minimum
         value of support_fraction will be used within the algorithm:
-        `(n_sample + n_features + 1) / 2`. The parameter must be in the range
-        (0, 1].
+        `(n_samples + n_features + 1) / 2 * n_samples`. The parameter must be
+        in the range (0, 1].
 
     random_state : int, RandomState instance or None, default=None
         Determines the pseudo random number generator for shuffling the data.

@@ -7,25 +7,23 @@
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.linalg import svd, qr, solve
-from scipy.sparse import eye, csr_matrix
+from scipy.linalg import eigh, qr, solve, svd
+from scipy.sparse import csr_matrix, eye
 from scipy.sparse.linalg import eigsh
-from scipy.linalg import eigh
 
 from ..base import (
     BaseEstimator,
-    TransformerMixin,
-    _UnstableArchMixin,
     ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
     _fit_context,
+    _UnstableArchMixin,
 )
-from ..utils import check_random_state, check_array
+from ..neighbors import NearestNeighbors
+from ..utils import check_array, check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import stable_cumsum
-from ..utils.validation import check_is_fitted
-from ..utils.validation import FLOAT_DTYPES
-from ..neighbors import NearestNeighbors
+from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 
 
 def barycenter_weights(X, Y, indices, reg=1e-3):
