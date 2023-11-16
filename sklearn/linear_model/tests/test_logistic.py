@@ -772,7 +772,7 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
                 tol=1e-18, max_iter=10000, random_state=global_random_seed + 1
             )
         elif solver == "newton-lsmr":
-            clf.set_params(tol=1e-5)
+            clf.set_params(tol=1e-6)
         clf.fit(X, y)
 
         assert_allclose(

@@ -614,7 +614,11 @@ def test_multinomial_LDL_decomposition(global_random_seed):
         l2_reg_strength=0.0,
     )
     # C.shape = (n_samples, n_classes), hessp(coef).shape = (n_classes, n_features)
-    assert_allclose(np.tensordot(C, C, axes=2), np.tensordot(coef, hessp(coef), axes=2))
+    # LinearModelLoss normalizes loss as 1 / n_samples * sum(loss_i), therefore, we
+    # need to devide C'C by 1/n_samples.
+    assert_allclose(
+        np.tensordot(C, C, axes=2) / n_samples, np.tensordot(coef, hessp(coef), axes=2)
+    )
     CtC = LDL.L_sqrt_D_matmul(C.copy())
     CtC = np.tensordot(raw_prediction, CtC, axes=2)
     assert_allclose(CtC, np.tensordot(C, C, axes=2))
