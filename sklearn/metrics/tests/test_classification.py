@@ -2113,6 +2113,7 @@ def test_prf_no_warnings_if_zero_division_set(zero_division):
         assert_no_warnings(
             f, [0, 1, 2], [1, 1, 2], average=average, zero_division=zero_division
         )
+
         assert_no_warnings(
             f, [1, 1, 2], [0, 1, 2], average=average, zero_division=zero_division
         )
