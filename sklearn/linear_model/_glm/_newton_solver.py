@@ -617,6 +617,8 @@ class NewtonLSMRSolver(NewtonSolver):
             - self.r_norm
             - self.atol
             - self.lsmr_iter
+            - self.sw_sum
+            - self.sqrt_sw_sum
         """
         super().setup(X=X, y=y, sample_weight=sample_weight)
         (
@@ -665,6 +667,8 @@ class NewtonLSMRSolver(NewtonSolver):
         self.r_norm = 1
         self.atol = 0
         self.lsmr_iter = 0  # number of total LSMR iterations
+        self.sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
+        self.sqrt_sw_sum = np.sqrt(self.sw_sum)
 
     def update_gradient_hessian(self, X, y, sample_weight):
         """Update gradient and hessian.
@@ -682,9 +686,8 @@ class NewtonLSMRSolver(NewtonSolver):
                 hessian_out=self.h,
                 n_threads=self.n_threads,
             )
-            sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
-            self.g /= sw_sum
-            self.h /= sw_sum
+            self.g /= self.sw_sum
+            self.h /= self.sw_sum
 
             # See LinearModelLoss.gradient_hessian
             # For non-canonical link functions and far away from the optimum, the
@@ -710,6 +713,7 @@ class NewtonLSMRSolver(NewtonSolver):
                 proba_out=self.h,
                 n_threads=self.n_threads,
             )
+            self.g /= self.sw_sum
             # Note: Multinomial hessian is always non-negative.
 
             # This duplicates a bit of code from LinearModelLoss.gradient.
@@ -813,8 +817,11 @@ class NewtonLSMRSolver(NewtonSolver):
                 # Sample weights sw enter the hessian multiplicatively, i.e. sw * h.
                 # They can be dealt with by adding them to D, which means sqrt(sw)
                 # to sqrt(D) in every place.
-                sqrt_sw = np.sqrt(sample_weight)
+                sqrt_sw = np.sqrt(sample_weight) / self.sqrt_sw_sum
                 g_over_h /= sqrt_sw[:, None]
+            else:
+                sqrt_sw = 1 / self.sqrt_sw_sum
+                g_over_h *= self.sqrt_sw_sum
 
             # For ravelled results we use the convention that all values for the same
             # class are in sequence. For n_classes = 2, the ravelled b looks like
@@ -852,6 +859,8 @@ class NewtonLSMRSolver(NewtonSolver):
                     # C_coef.shape = (n_samples, n_classes)
                     if sample_weight is not None:
                         C_coef *= sqrt_sw[:, None]
+                    else:
+                        C_coef *= sqrt_sw
                     # For n_classes = 2, the ravelled result looks like
                     #   [         C_Coef[:, 0]]    n_samples elements of class 0
                     #   [sqrt_P * coef.T[:, 0]]    n_features elements of class 0
@@ -870,6 +879,8 @@ class NewtonLSMRSolver(NewtonSolver):
                     y = y.copy(order="F")
                     if sample_weight is not None:
                         y *= sqrt_sw[:, None]
+                    else:
+                        y *= sqrt_sw
                     L_sqrtD_y = LDL.L_sqrt_D_matmul(y)
                     Ct_y = X.T @ L_sqrtD_y  # shape = (n_features, n_classes)
                     return np.r_[
@@ -890,6 +901,8 @@ class NewtonLSMRSolver(NewtonSolver):
                     LDL.sqrt_D_Lt_matmul(C_coef)
                     if sample_weight is not None:
                         C_coef *= sqrt_sw[:, None]
+                    else:
+                        C_coef *= sqrt_sw
                     return np.r_[
                         C_coef,
                         self.sqrt_P[:, None] * coef.T,
@@ -903,6 +916,8 @@ class NewtonLSMRSolver(NewtonSolver):
                     y = y.copy(order="F")
                     if sample_weight is not None:
                         y *= sqrt_sw[:, None]
+                    else:
+                        y *= sqrt_sw
                     L_sqrtD_y = LDL.L_sqrt_D_matmul(y)
                     Ct_y = X.T @ L_sqrtD_y  # shape = (n_features, n_classes)
                     return (Ct_y + self.sqrt_P[:, None] * x[n_samples:, :]).ravel(
@@ -987,6 +1002,8 @@ class NewtonLSMRSolver(NewtonSolver):
         if atol < self.atol / 10:
             atol = self.atol / 10 * np.sqrt(atol * 10 / self.atol)
         self.atol = atol
+        if self.verbose >= 3:
+            print(f"    {self.A_norm=} {self.r_norm=} {eta=} {atol=}")
         result = scipy.sparse.linalg.lsmr(
             A,
             b,
@@ -1019,8 +1036,8 @@ class NewtonLSMRSolver(NewtonSolver):
         if not self.linear_loss.base_loss.is_multiclass:
             self.gradient_times_newton = self.gradient @ self.coef_newton
         else:
-            # Center result such that sum over classes equals zero.
             self.coef_newton = self.coef_newton.reshape((n_classes, -1), order="C")
+            # Center result such that sum over classes equals zero.
             # Note: The L2 penalty guarantees that coef_newton step is centered, i.e.
             # np.mean(self.coef_newton, axis=0) = 0.
             # But for the intercept term self.coef_newton[:, -1] this is less clear.

@@ -351,7 +351,12 @@ def test_glm_regression_vstacked_X(solver, fit_intercept, glm_dataset):
         intercept = 0
     model.fit(X, y)
 
-    rtol = 3e-5 if solver == "lbfgs" else 5e-9
+    if solver == "lbfgs":
+        rtol = 3e-5
+    elif solver == "newton-lsmr":
+        rtol = 1e-8
+    else:
+        rtol = 5e-9
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
     assert_allclose(model.coef_, coef, rtol=rtol)
 
@@ -1354,8 +1359,10 @@ def test_NewtonLSMRSolver_multinomial_A_b_on_3_classes(
 
     if with_sample_weight:
         sw = 1.0 + np.arange(n_samples)
+        sw_sum = np.sum(sw)
     else:
         sw = None
+        sw_sum = n_samples
 
     multinomial_loss = LinearModelLoss(
         base_loss=HalfMultinomialLoss(n_classes=n_classes, sample_weight=sw),
@@ -1396,8 +1403,8 @@ def test_NewtonLSMRSolver_multinomial_A_b_on_3_classes(
     W01 = np.diag(-p[:, 0] * p[:, 1])
     W02 = np.diag(-p[:, 0] * p[:, 2])
     W12 = np.diag(-p[:, 1] * p[:, 2])
-    W_ext = np.block([[W00, W01, W02], [W01, W11, W12], [W02, W12, W22]])
-    g_ext = p_ext - y_ext  # pointwise gradient
+    W_ext = np.block([[W00, W01, W02], [W01, W11, W12], [W02, W12, W22]]) / sw_sum
+    g_ext = (p_ext - y_ext) / sw_sum  # pointwise gradient
     if with_sample_weight:
         W_ext *= sw_ext[:, None]
         g_ext *= sw_ext
@@ -1425,7 +1432,7 @@ def test_NewtonLSMRSolver_multinomial_A_b_on_3_classes(
 
     # Check that A is constructed from LDL decomposition.
     LDL = Multinomial_LDL_Decomposition(proba=p)
-    D_Lt_X_v = LDL.sqrt_D_Lt_matmul(Xi @ v.T)
+    D_Lt_X_v = LDL.sqrt_D_Lt_matmul(Xi @ v.T) / np.sqrt(sw_sum)
     if with_sample_weight:
         D_Lt_X_v *= np.sqrt(sw)[:, None]
     assert_allclose(A_v.reshape((-1, n_classes), order="F")[:n_samples, :], D_Lt_X_v)
@@ -1545,11 +1552,9 @@ def test_NewtonLSMRSolver_multinomial_on_binary_problem(
 
     # Note that the factor of 2 for BinomialRegressor is to adjust for the
     # parametrization difference to the multinomial loss.
-    # The factor 1/n_samples is due to the scaling happening in BinomialRegressor
-    # in contrast to NewtonLSMRSolver.
     bin = BinomialRegressor(
         fit_intercept=fit_intercept,
-        alpha=l2_reg_strength / 2 / n_samples,
+        alpha=l2_reg_strength / 2,
         solver="newton-cholesky",
         tol=1e-8,
     ).fit(X, y)
