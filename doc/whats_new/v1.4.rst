@@ -533,6 +533,11 @@ Changelog
   compatible inputs.
   :pr:`27601` by :user:`Yaroslav Korobko <Tialo>`.
 
+- |Enhancement| :func:`utils.multiclass.type_of_target` raises
+  a warning when the number of unique classes is greater than 50% of the number of
+  samples. This warning is raised only if `y` has 20 samples.
+  :pr:`26335` by :user:`Rahil Parikh <rprkh>`.
+
 - |Fix| :func:`sklearn.utils.check_array` should accept both matrix and array from
   the sparse SciPy module. The previous implementation would fail if `copy=True` by
   calling specific NumPy `np.may_share_memory` that does not work with SciPy sparse

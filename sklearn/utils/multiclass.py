@@ -393,7 +393,8 @@ def type_of_target(y, input_name=""):
     if issparse(first_row):
         first_row = first_row.data
     classes = xp.unique_values(y)
-    if y.shape[0] > 100 and classes.shape[0] > round(0.5 * y.shape[0]):
+    if y.shape[0] > 20 and classes.shape[0] > round(0.5 * y.shape[0]):
+        # Only raise the warning when we have at least 20 samples.
         warnings.warn(
             r"The number of unique classes is greater than 50% of the number "
             r"of samples.",

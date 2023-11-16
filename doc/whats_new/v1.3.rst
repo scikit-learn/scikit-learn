@@ -939,10 +939,6 @@ Changelog
   :pr:`25733` by :user:`Brigitta Sipőcz <bsipocz>` and
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Enhancement| :func:`utils.multiclass.type_of_target` raises
-  a warning when the number of unique classes is greater than 50% of
-  `n_samples`. :pr:`26335` by :user:`Rahil Parikh <rprkh>`.
-
 :mod:`sklearn.semi_supervised`
 ..............................
 
