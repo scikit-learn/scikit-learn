@@ -19,7 +19,7 @@ from sklearn.metrics.pairwise import _VALID_METRICS
 
 from ..base import BaseEstimator, ClassifierMixin, _fit_context
 from ..discriminant_analysis import DiscriminantAnalysisPredictionMixin
-from ..metrics.pairwise import pairwise_distances_argmin
+from ..metrics.pairwise import pairwise_distances, pairwise_distances_argmin
 from ..preprocessing import LabelEncoder
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
@@ -28,7 +28,7 @@ from ..utils.validation import check_is_fitted
 
 
 class NearestCentroid(
-    ClassifierMixin, BaseEstimator, DiscriminantAnalysisPredictionMixin
+    DiscriminantAnalysisPredictionMixin, ClassifierMixin, BaseEstimator
 ):
     """Nearest centroid classifier.
 
@@ -63,13 +63,14 @@ class NearestCentroid(
             `metric='precomputed'` was deprecated and now raises an error
 
     shrink_threshold : float, default=None
-        Threshold for shrinking centroids to remove features. Not supported
-        for sparse matrices.
+        Threshold for shrinking centroids to remove features.
 
     priors : {"uniform", "empirical"} or array-like of shape (n_classes,), \
     default="empirical"
         The class prior probabilities. By default, the class proportions are
         inferred from the training data.
+
+        .. versionadded:: 1.4
 
     Attributes
     ----------
@@ -91,19 +92,17 @@ class NearestCentroid(
         .. versionadded:: 1.0
 
     deviations_ : ndarray of shape(n_classes, n_features)
-        Deviation of each class using soft thresholding. Not supported
-        for sparse matices.
+        Deviation of each class using soft thresholding.
 
         .. versionadded:: 1.4
 
     within_class_std_ : ndarray of shape(n_features,)
-        Within-class std_dev with unshrunked centroids.
+        Within-class standard deviation with unshrunked centroids.
 
         .. versionadded:: 1.4
 
     class_priors_ : ndarray of shape(n_classes,)
-        The class prior probabilities. By default, the class proportions are
-        inferred from the training data.
+        The class prior probabilities.
 
         .. versionadded:: 1.4
 
@@ -157,7 +156,7 @@ class NearestCentroid(
         metric="euclidean",
         *,
         shrink_threshold=None,
-        priors="empirical",
+        priors="uniform",
     ):
         self.metric = metric
         self.shrink_threshold = shrink_threshold
@@ -269,25 +268,28 @@ class NearestCentroid(
         if not is_X_sparse:
             if np.all(np.ptp(X, axis=0) == 0):
                 raise ValueError("All features have zero variance. Division by zero.")
-            dataset_centroid_ = np.mean(X, axis=0)
-            # m parameter for determining deviation
-            m = np.sqrt((1.0 / nk) - (1.0 / n_samples))
-            # Calculate deviation using the standard deviation of centroids.
-            # To deter outliers from affecting the results.
-            s = self.within_class_std_ + np.median(self.within_class_std_)
-            mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
-            ms = mm * s
-            self.deviations_ = (self.centroids_ - dataset_centroid_) / ms
-            # Soft thresholding: if the deviation crosses 0 during shrinking,
-            # it becomes zero.
-            if self.shrink_threshold:
-                signs = np.sign(self.deviations_)
-                self.deviations_ = np.abs(self.deviations_) - self.shrink_threshold
-                np.clip(self.deviations_, 0, None, out=self.deviations_)
-                self.deviations_ *= signs
-                # Now adjust the centroids using the deviation
-                msd = ms * self.deviations_
-                self.centroids_ = dataset_centroid_[np.newaxis, :] + msd
+        else:
+            if np.all((X.max(axis=0) - X.min(axis=0)).toarray() == 0):
+                raise ValueError("All features have zero variance. Division by zero.")
+        dataset_centroid_ = np.mean(X, axis=0)
+        # m parameter for determining deviation
+        m = np.sqrt((1.0 / nk) - (1.0 / n_samples))
+        # Calculate deviation using the standard deviation of centroids.
+        # To deter outliers from affecting the results.
+        s = self.within_class_std_ + np.median(self.within_class_std_)
+        mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
+        ms = mm * s
+        self.deviations_ = (self.centroids_ - dataset_centroid_) / ms
+        # Soft thresholding: if the deviation crosses 0 during shrinking,
+        # it becomes zero.
+        if self.shrink_threshold:
+            signs = np.sign(self.deviations_)
+            self.deviations_ = np.abs(self.deviations_) - self.shrink_threshold
+            np.clip(self.deviations_, 0, None, out=self.deviations_)
+            self.deviations_ *= signs
+            # Now adjust the centroids using the deviation
+            msd = ms * self.deviations_
+            self.centroids_ = dataset_centroid_[np.newaxis, :] + msd
         return self
 
     # TODO(1.5) remove note about precomputed metric
@@ -333,12 +335,15 @@ class NearestCentroid(
         )
 
         for cur_class in range(self.classes_.size):
-            Xdist = X - self.centroids_[cur_class, :]
-            Xdist_norm = np.square(Xdist / self.within_class_std_)
-            # Hastie et al. (2009), p. 652, Eq. (18.2)
+            # use pairwise_distances function instead. line 2093
+            Xdist_norm = pairwise_distances(
+                X / self.within_class_std_,
+                (self.centroids_[cur_class, :].reshape(1, -1) / self.within_class_std_),
+                metric=self.metric,
+            ).reshape(-1)
+            Xdist_norm = Xdist_norm**2
             discriminant_score[:, cur_class] = np.squeeze(
-                -np.sum(Xdist_norm, axis=1)
-                + 2.0 * np.log(self.class_priors_[cur_class])
+                -Xdist_norm + 2.0 * np.log(self.class_priors_[cur_class])
             )
 
         return discriminant_score
@@ -350,7 +355,7 @@ class NearestCentroid(
         Hastie et al. (2009), p. 652 equation (18.2).
 
         Note that this function is only supported for
-        "euclidean" metric.
+        ``euclidean`` metric.
 
         Parameters
         ----------
@@ -373,7 +378,7 @@ class NearestCentroid(
         """Estimate class probabilities.
 
         Note that this function is only supported for
-        "euclidean" metric.
+        ``euclidean`` metric.
 
         Parameters
         ----------
@@ -395,7 +400,7 @@ class NearestCentroid(
         """Estimate log class probabilities.
 
         Note that this function is only supported for
-        "euclidean" metric.
+        ``euclidean`` metric.
 
         Parameters
         ----------

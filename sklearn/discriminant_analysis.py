@@ -188,31 +188,31 @@ class DiscriminantAnalysisPredictionMixin:
 
         Returns
         -------
-        C : ndarray of shape (n_samples,) or (n_samples, n_classes)
+        y_scores : ndarray of shape (n_samples,) or (n_samples, n_classes)
             Decision function values related to each class, per sample.
-            In the two-class case, the shape is (n_samples,), giving the
+            In the two-class case, the shape is `(n_samples,)`, giving the
             log likelihood ratio of the positive class.
         """
-        scores = self._decision_function(X)
+        y_scores = self._decision_function(X)
         if len(self.classes_) == 2:
-            return scores[:, 1] - scores[:, 0]
-        return scores
+            return y_scores[:, 1] - y_scores[:, 0]
+        return y_scores
 
     def predict(self, X):
-        """Perform classification on an array of test vectors X.
+        """Perform classification on an array of vectors `X`.
 
-        The predicted class C for each sample in X is returned.
+        Returns the class label for each sample.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Vector to be scored, where `n_samples` is the number of samples and
+            Input vectors, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
         Returns
         -------
-        C : ndarray of shape (n_samples,)
-            Estimated probabilities.
+        y_pred : ndarray of shape (n_samples,)
+            Class label for each sample.
         """
         scores = self._decision_function(X)
         return self.classes_.take(scores.argmax(axis=1))
@@ -228,7 +228,7 @@ class DiscriminantAnalysisPredictionMixin:
         Returns
         -------
         y_proba : ndarray of shape (n_samples, n_classes)
-            Returns the probability estimate of the sample for each class in the
+            Probability estimate of the sample for each class in the
             model, where classes are ordered as they are in `self.classes_`.
         """
         scores = self._decision_function(X)
@@ -248,9 +248,7 @@ class DiscriminantAnalysisPredictionMixin:
         y_log_proba : ndarray of shape (n_samples, n_classes)
             Estimated log probabilities.
         """
-        prediction = self.predict_proba(X)
-        prediction[prediction == 0.0] += np.finfo(prediction.dtype).tiny
-        return np.log(prediction)
+        return np.log(self.predict_proba(X))
 
 
 class LinearDiscriminantAnalysis(
@@ -835,7 +833,7 @@ class LinearDiscriminantAnalysis(
 
 
 class QuadraticDiscriminantAnalysis(
-    ClassifierMixin, BaseEstimator, DiscriminantAnalysisPredictionMixin
+    DiscriminantAnalysisPredictionMixin, ClassifierMixin, BaseEstimator
 ):
     """Quadratic Discriminant Analysis.
 
@@ -1043,28 +1041,6 @@ class QuadraticDiscriminantAnalysis(
         norm2 = np.array(norm2).T  # shape = [len(X), n_classes]
         u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
         return -0.5 * (norm2 + u) + np.log(self.priors_)
-
-    def decision_function(self, X):
-        """Apply decision function to an array of samples.
-
-        The decision function is equal (up to a constant factor) to the
-        log-posterior of the model, i.e. `log p(y = k | x)`. In a binary
-        classification setting this instead corresponds to the difference
-        `log p(y = 1 | x) - log p(y = 0 | x)`. See :ref:`lda_qda_math`.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Array of samples (test vectors).
-
-        Returns
-        -------
-        C : ndarray of shape (n_samples,) or (n_samples, n_classes)
-            Decision function values related to each class, per sample.
-            In the two-class case, the shape is (n_samples,), giving the
-            log likelihood ratio of the positive class.
-        """
-        return super().decision_function(X)
 
     def predict(self, X):
         """Perform classification on an array of test vectors X.

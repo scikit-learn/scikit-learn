@@ -124,7 +124,7 @@ def _brute_mst(mutual_reachability, min_samples):
     # Compute the minimum spanning tree for the sparse graph
     sparse_min_spanning_tree = csgraph.minimum_spanning_tree(mutual_reachability)
     rows, cols = sparse_min_spanning_tree.nonzero()
-    mst = np.core.records.fromarrays(
+    mst = np.rec.fromarrays(
         [rows, cols, sparse_min_spanning_tree.data],
         dtype=MST_edge_dtype,
     )
