@@ -308,10 +308,11 @@ Changelog
   :pr:`27491` by :user:`Olivier Grisel <ogrisel>`.
 
 - |Enhancement| :class:`decomposition.PCA` now supports the Array API for the
-  `full`, `covariance_eigh` and `randomized` solvers (with QR power
-  iterations). See :ref:`array_api` for more details.
-  :pr:`26315` and :pr:`27098` by :user:`Mateusz Sokół <mtsokol>`,
-  :user:`Olivier Grisel <ogrisel>` and :user:`Edoardo Abati <EdAbati>`.
+  `full`, `covariance_eigh` and `randomized` solvers (with QR power iterations).
+  See :ref:`array_api` for more details.
+  :pr:`26315`, :pr:`27098`, :pr:`27431` and :pr:`27491`
+  by :user:`Mateusz Sokół <mtsokol>`, :user:`Olivier Grisel <ogrisel>`
+  and :user:`Edoardo Abati <EdAbati>`.
 
 - |Fix| :class:`decomposition.PCA` fit with `svd_solver="arpack"`,
   `whiten=True` and a value for `n_components` that is larger than the rank of
@@ -335,6 +336,12 @@ Changelog
   Missing values in the train data and multi-output targets are not supported.
   :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
   initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
+
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` got the new parameter
+  `max_features` to specify the proportion of randomly chosen features considered
+  in each split.
+  :pr:`27139` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Efficiency| :class:`ensemble.GradientBoostingClassifier` is faster,
   for binary and in particular for multiclass problems thanks to the private loss
@@ -466,6 +473,10 @@ Changelog
 - |Enhancement| :func:`sklearn.model_selection.train_test_split` now supports
   Array API compatible inputs. :pr:`26855` by `Tim Head`_.
 
+- |Enhancement| :func:`model_selection.learning_curve` raises a warning when
+  every cross validation fold fails.
+  :pr:`26299` by :user:`Rahil Parikh <rprkh>`.
+
 - |Fix| :class:`model_selection.GridSearchCV`,
   :class:`model_selection.RandomizedSearchCV`, and
   :class:`model_selection.HalvingGridSearchCV` now don't change the given
@@ -494,14 +505,16 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |MajorFeature| :class:`preprocessing.MinMaxScaler`, :class:`preprocessing.MaxAbsScaler`
-  and :class:`preprocessing.KernelCenterer` now
-  support the `Array API <https://data-apis.org/array-api/latest/>`_. Array API
+- |MajorFeature| The following classes now support the
+  `Array API <https://data-apis.org/array-api/latest/>`_. Array API
   support is considered experimental and might evolve without being subject to
   our usual rolling deprecation cycle policy. See
   :ref:`array_api` for more details.
-  :pr:`26243` by `Tim Head`_, :pr:`27110` by :user:`Edoardo Abati <EdAbati>` and
-  :pr:`27556` by :user:`Edoardo Abati <EdAbati>`.
+
+  - :class:`preprocessing.MinMaxScaler` :pr:`26243` by `Tim Head`_
+  - :class:`preprocessing.MaxAbsScaler` :pr:`27110` by :user:`Edoardo Abati <EdAbati>`
+  - :class:`preprocessing.KernelCenterer` :pr:`27556` by :user:`Edoardo Abati <EdAbati>`
+  - :class:`preprocessing.Normalizer` :pr:`27558` by :user:`Edoardo Abati <EdAbati>`
 
 - |Efficiency| :class:`preprocessing.OrdinalEncoder` avoids calculating
   missing indices twice to improve efficiency.
@@ -554,6 +567,10 @@ Changelog
   accept the same sparse input formats for SciPy sparse matrices and arrays.
   :pr:`27372` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| :func:`~utils.multiclass.is_multilabel` now supports the Array API
+  compatible inputs.
+  :pr:`27601` by :user:`Yaroslav Korobko <Tialo>`.
+
 - |Fix| :func:`sklearn.utils.check_array` should accept both matrix and array from
   the sparse SciPy module. The previous implementation would fail if `copy=True` by
   calling specific NumPy `np.may_share_memory` that does not work with SciPy sparse
@@ -570,6 +587,10 @@ Changelog
   calling a dedicated private function that would crash when OpenBLAS
   misdetects the CPU architecture.
   :pr:`27614` by :user:`Olivier Grisel <ogrisel>`.
+
+- |Fix| Error message in :func:`~utils.check_array` when a sparse matrix was
+  passed but `accept_sparse` is `False` now suggests to use `.toarray()` and not
+  `X.toarray()`. :pr:`27757` by :user:`Lucy Liu <lucyleeow>`.
 
 Code and Documentation Contributors
 -----------------------------------
