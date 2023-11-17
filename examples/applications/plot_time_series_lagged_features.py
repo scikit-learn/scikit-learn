@@ -170,25 +170,27 @@ print(f"CV MAPE: {cv_mape_scores.mean():.3f} ± {cv_mape_scores.std():.3f}")
 # %%
 # We can compute several combinations of evaluation metrics and loss functions,
 # which are reported a bit below.
+from collections import defaultdict
+
 from sklearn.metrics import (
     make_scorer,
     mean_absolute_error,
     mean_pinball_loss,
-    mean_squared_error,
+    root_mean_squared_error,
 )
 from sklearn.model_selection import cross_validate
 
 scoring = {
     "MAPE": make_scorer(mean_absolute_percentage_error),
-    "RMSE": make_scorer(mean_squared_error, squared=False),
+    "RMSE": make_scorer(root_mean_squared_error),
+
     "MAE": make_scorer(mean_absolute_error),
     "pinball_loss_05": make_scorer(mean_pinball_loss, alpha=0.05),
     "pinball_loss_50": make_scorer(mean_pinball_loss, alpha=0.50),
     "pinball_loss_95": make_scorer(mean_pinball_loss, alpha=0.95),
 }
 loss_functions = ["squared_error", "poisson", "absolute_error"]
-scores = {"loss": [], "fit_time": []}
-scores.update({key: [] for key in scoring.keys()})
+scores = defaultdict(list)
 for loss_func in loss_functions:
     model = HistGradientBoostingRegressor(loss=loss_func)
     cv_results = cross_validate(
