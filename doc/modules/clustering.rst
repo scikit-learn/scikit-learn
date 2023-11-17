@@ -233,6 +233,11 @@ to the dataset :math:`X`.
 K-means can be used for vector quantization. This is achieved using the
 transform method of a trained model of :class:`KMeans`.
 
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`: Example usage of KMeans
+   using the iris dataset
+
 Low-level parallelism
 ---------------------
 
