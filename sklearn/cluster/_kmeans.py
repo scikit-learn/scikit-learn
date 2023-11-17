@@ -1376,6 +1376,9 @@ class KMeans(_BaseKMeans):
     >>> kmeans.cluster_centers_
     array([[10.,  2.],
            [ 1.,  2.]])
+
+    For a more detailed example using the iris dataset, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`.
     """
 
     _parameter_constraints: dict = {
