@@ -4515,7 +4515,7 @@ def _check_generated_dataframe(
 ):
     """Check if the generated DataFrame by the transformer is valid.
 
-    The DataFrame implementation is specified throught the parameter of this function.
+    The DataFrame implementation is specified through the parameters of this function.
 
     Parameters
     ----------
@@ -4531,8 +4531,7 @@ def _check_generated_dataframe(
     outputs_dataframe_lib : tuple
         A tuple containing the output data and feature names for the pandas case.
     is_supported_dataframe : callable
-        A callable that take a DataFrame instance as input and return whether or
-        not it is supported by the dataframe library.
+        A callable that takes a DataFrame instance as input and return whether or
         E.g. `lambda X: isintance(X, pd.DataFrame)`.
     create_dataframe : callable
         A callable taking as parameters `data`, `columns`, and `index` and returns
@@ -4576,7 +4575,7 @@ def _check_set_output_transform_dataframe(
 ):
     """Check that a transformer can output a DataFrame when requested.
 
-    The DataFrame implementation is specified throught the parameter of this function.
+    The DataFrame implementation is specified through the parameters of this function.
 
     Parameters
     ----------
@@ -4585,10 +4584,10 @@ def _check_set_output_transform_dataframe(
     transformer_orig : estimator
         The original transformer instance.
     dataframe_lib : str
-        The name of the library implementing the DataaFrame.
+        The name of the library implementing the DataFrame.
     is_supported_dataframe : callable
-        A callable that take a DataFrame instance as input and return whether or
         not it is supported by the dataframe library.
+        A callable that takes a DataFrame instance as input and returns whether or
         E.g. `lambda X: isintance(X, pd.DataFrame)`.
     create_dataframe : callable
         A callable taking as parameters `data`, `columns`, and `index` and returns

@@ -43,7 +43,7 @@ class ContainerAdapterProtocol(Protocol):
 
         X_original : {ndarray, dataframe}
             Original input dataframe. This is used to extract the metadata that should
-            be passed to `X_output`.
+            be passed to `X_output`, e.g. pandas row index.
 
         columns : callable, ndarray, or None
             The column names or a callable that returns the column names. The
@@ -113,6 +113,8 @@ class PandasAdapter:
         if isinstance(X_output, pd.DataFrame):
             if columns is not None:
                 X_output.columns = columns
+            if index is not None:
+                X_output.index = index
             return X_output
 
         return pd.DataFrame(X_output, index=index, columns=columns, copy=False)
@@ -136,13 +138,13 @@ class PolarsAdapter:
         pl = check_library_installed("polars")
         columns = get_columns(columns)
 
+        if isinstance(columns, np.ndarray):
+            columns = columns.tolist()
+
         if isinstance(X_output, pl.DataFrame):
             if columns is not None:
                 return self.rename_columns(X_output, columns)
             return X_output
-
-        if isinstance(columns, np.ndarray):
-            columns = columns.tolist()
 
         return pl.DataFrame(X_output, schema=columns)
 

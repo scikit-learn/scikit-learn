@@ -771,8 +771,8 @@ def test_get_column_indices_interchange():
 
     df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
 
-    # Hide the fact this is a pandas dataframe to trigger the dataframe protocol code
-    # path
+    # Hide the fact that this is a pandas dataframe to trigger the dataframe protocol
+    # code path.
     class MockDataFrame:
         def __init__(self, df):
             self._df = df
