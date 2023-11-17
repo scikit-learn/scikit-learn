@@ -2420,7 +2420,9 @@ def test_learning_curve_partial_fit_regressors():
 def test_learning_curve_some_failing_fits_warning():
     """Checks for fit failures in `learning_curve` and raises the required warning"""
 
-    X, y = make_classification(n_classes=3, n_informative=6, shuffle=False)
+    X, y = make_classification(
+        n_classes=3, n_informative=6, shuffle=False, random_state=0
+    )
     svc = SVC()
     warning_message = "10 fits failed out of a total of 50"
 
