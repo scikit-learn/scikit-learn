@@ -34,7 +34,13 @@ from ..base import (
 )
 from ..preprocessing._data import _is_constant_feature
 from ..utils import check_array, check_random_state
-from ..utils._array_api import get_namespace
+from ..utils._array_api import (
+    _asarray_with_order,
+    _safe_per_col_average,
+    device,
+    get_namespace,
+    supported_float_dtypes,
+)
 from ..utils._seq_dataset import (
     ArrayDataset32,
     ArrayDataset64,
@@ -44,7 +50,7 @@ from ..utils._seq_dataset import (
 from ..utils.extmath import _incremental_mean_and_var, safe_sparse_dot
 from ..utils.parallel import Parallel, delayed
 from ..utils.sparsefuncs import inplace_column_scale, mean_variance_axis
-from ..utils.validation import FLOAT_DTYPES, _check_sample_weight, check_is_fitted
+from ..utils.validation import _check_sample_weight, check_is_fitted
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.
@@ -229,24 +235,32 @@ def _preprocess_data(
     X_scale : ndarray of shape (n_features,)
         The standard deviation per column of input X.
     """
+    xp, _ = get_namespace(X)
+    device_ = device(X)
+    dtype_ = X.dtype
+    n_samples, n_features = X
+    _X_is_sparse = sp.issparse(X)
+
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
     if sample_weight is not None:
-        sample_weight = np.asarray(sample_weight)
+        sample_weight = xp.asarray(sample_weight)
 
     if check_input:
-        X = check_array(X, copy=copy, accept_sparse=["csr", "csc"], dtype=FLOAT_DTYPES)
+        X = check_array(
+            X, copy=copy, accept_sparse=["csr", "csc"], dtype=supported_float_dtypes()
+        )
         y = check_array(y, dtype=X.dtype, copy=copy_y, ensure_2d=False)
     else:
         y = y.astype(X.dtype, copy=copy_y)
         if copy:
-            if sp.issparse(X):
+            if _X_is_sparse:
                 X = X.copy()
             else:
-                X = X.copy(order="K")
+                X = _asarray_with_order(X, order="K", copy=True, xp=xp)
 
     if fit_intercept:
-        if sp.issparse(X):
+        if _X_is_sparse:
             X_offset, X_var = mean_variance_axis(X, axis=0, weights=sample_weight)
         else:
             if normalize:
@@ -258,7 +272,11 @@ def _preprocess_data(
                     sample_weight=sample_weight,
                 )
             else:
-                X_offset = np.average(X, axis=0, weights=sample_weight)
+                # NB: linear models do not work with missing values
+                # so we don't worry about the different support for
+                # missing values for `X_offset` depending on if
+                # `normalize` is `True` or `False`
+                X_offset = _safe_per_col_average(X, sample_weight, xp=xp)
 
             X_offset = X_offset.astype(X.dtype, copy=False)
             X -= X_offset
@@ -270,7 +288,7 @@ def _preprocess_data(
             # sample weights.
             constant_mask = _is_constant_feature(X_var, X_offset, X.shape[0])
             if sample_weight is None:
-                X_var *= X.shape[0]
+                X_var *= n_samples
             else:
                 X_var *= sample_weight.sum()
             X_scale = np.sqrt(X_var, out=X_var)
@@ -280,17 +298,17 @@ def _preprocess_data(
             else:
                 X /= X_scale
         else:
-            X_scale = np.ones(X.shape[1], dtype=X.dtype)
+            X_scale = xp.ones(n_features, dtype=dtype_, device=device_)
 
-        y_offset = np.average(y, axis=0, weights=sample_weight)
+        y_offset = _safe_per_col_average(y, sample_weight)
         y -= y_offset
     else:
-        X_offset = np.zeros(X.shape[1], dtype=X.dtype)
-        X_scale = np.ones(X.shape[1], dtype=X.dtype)
+        X_offset = xp.zeros(n_features, dtype=dtype_, device=device_)
+        X_scale = xp.ones(n_features, dtype=dtype_, device=device_)
         if y.ndim == 1:
-            y_offset = X.dtype.type(0)
+            y_offset = xp.zeros((1,), dtype=dtype_, device=device_)[0]
         else:
-            y_offset = np.zeros(y.shape[1], dtype=X.dtype)
+            y_offset = xp.zeros(y.shape[1], dtype=dtype_, device=device_)
 
     return X, y, X_offset, y_offset, X_scale
 

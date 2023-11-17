@@ -31,6 +31,7 @@ from ..utils import (
     column_or_1d,
     compute_sample_weight,
 )
+from ..utils._array_api import get_namespace
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.fixes import _sparse_linalg_cg
@@ -838,6 +839,14 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             raise ValueError(
                 "'lbfgs' solver can be used only when positive=True. "
                 "Please use another solver."
+            )
+
+        xp, is_array_api_compliant = get_namespace(X)
+
+        if is_array_api_compliant and self.solver not in ["auto", "svd"]:
+            raise ValueError(
+                f"solver={self.solver} is not supported for Array API inputs. Only "
+                "'svd' or 'auto' are supported"
             )
 
         if self.positive:

@@ -206,7 +206,7 @@ class _ArrayAPIWrapper:
         return self._namespace == other._namespace
 
     def take(self, X, indices, *, axis=0):
-        # When array_api supports `take` we can use this directly
+        # TODO: Now that array_api supports `take` we should use this directly
         # https://github.com/data-apis/array-api/issues/177
         if self._namespace.__name__ == "numpy.array_api":
             X_np = numpy.take(X, indices, axis=axis)
@@ -420,8 +420,9 @@ def get_namespace(*arrays):
     return namespace, is_array_api_compliant
 
 
-def _expit(X):
-    xp, _ = get_namespace(X)
+def _expit(X, xp=None):
+    if xp is None:
+        xp, _ = get_namespace(X)
     if _is_numpy_namespace(xp):
         return xp.asarray(special.expit(numpy.asarray(X)))
 
@@ -486,10 +487,58 @@ def _weighted_sum(sample_score, sample_weight, normalize=False, xp=None):
         return float(xp.sum(sample_score))
 
 
-def _nanmin(X, axis=None):
+# Use at least float64 for the accumulating functions to avoid precision issue
+# see https://github.com/numpy/numpy/issues/9393. The float64 is also retained
+# as it is in case the float overflows
+def _safe_per_col_weighted_accumulator(X, sample_weight, xp=None):
+    if xp is None:
+        xp, _ = get_namespace(X)
+
+    if _is_numpy_namespace(xp):
+        if numpy.issubdtype(X.dtype, numpy.floating) and X.dtype.itemsize < 8:
+            return numpy.matmul(sample_weight, X, dtype=numpy.float64)
+
+    _is_float16 = hasattr(xp, "float16") and xp.isdtype(X.dtype, xp.float16)
+
+    if xp.isdtype(X.dtype, xp.float32) or _is_float16:
+        sample_weight = xp.asarray(sample_weight, dtype=xp.float64, device=device(X))
+
+    return xp.matmul(sample_weight, X)
+
+
+def _safe_per_col_average(X, sample_weight, xp=None):
+    if xp is None:
+        xp, _ = get_namespace(X)
+
+    if sample_weight is not None:
+        # equivalent to xp.sum(X * sample_weight, axis=0)
+        # safer because xp.float64(X*W) != xp.float64(X)*xp.float64(W)
+        per_col_sum = _safe_per_col_weighted_accumulator(X, sample_weight)
+        total_weight = _safe_accumulator_op(xp.sum, sample_weight, axis=0)
+    else:
+        per_col_sum = _safe_accumulator_op(xp.sum, X, axis=0)
+        total_weight = X.shape[0]
+
+    return per_col_sum / total_weight
+
+
+def _safe_accumulator_op(op, X, axis=None, xp=None):
+    if xp is None:
+        xp, _ = get_namespace(X)
+
+    _is_float16 = hasattr(xp, "float16") and xp.isdtype(X.dtype, xp.float16)
+
+    if xp.isdtype(X.dtype, xp.float32) or _is_float16:
+        return op(X, axis=axis, dtype=xp.float64)
+
+    return op(X, axis=axis)
+
+
+def _nanmin(X, axis=None, xp=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
-    xp, _ = get_namespace(X)
+    if xp is None:
+        xp, _ = get_namespace(X)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmin(X, axis=axis))
 
@@ -503,10 +552,11 @@ def _nanmin(X, axis=None):
         return X
 
 
-def _nanmax(X, axis=None):
+def _nanmax(X, axis=None, xp=None):
     # TODO: refactor once nan-aware reductions are standardized:
     # https://github.com/data-apis/array-api/issues/621
-    xp, _ = get_namespace(X)
+    if xp is None:
+        xp, _ = get_namespace(X)
     if _is_numpy_namespace(xp):
         return xp.asarray(numpy.nanmax(X, axis=axis))
 
@@ -518,6 +568,79 @@ def _nanmax(X, axis=None):
         if xp.any(mask):
             X = xp.where(mask, xp.asarray(xp.nan), X)
         return X
+
+
+def _nansum(X, axis=None, dtype=None, xp=None):
+    # TODO: refactor once nan-aware reductions are standardized:
+    # https://github.com/data-apis/array-api/issues/621
+    if xp is None:
+        xp, _ = get_namespace(X)
+
+    if _is_numpy_namespace(xp):
+        return xp.asarray(numpy.nansum(X, axis=axis, dtype=dtype))
+
+    else:
+        mask = xp.isnan(X)
+        return xp.sum(
+            xp.where(mask, xp.asarray(0.0, dtype=X.dtype, device=device(X)), X),
+            axis=axis,
+            dtype=dtype,
+        )
+
+
+def _float_itemwise_divide_and_ignore_errors(dividend, divisor, xp=None):
+    if xp is None:
+        xp, _ = get_namespace(dividend)
+
+    if _is_numpy_namespace(xp):
+        with numpy.errstate(divide="ignore", invalid="ignore"):
+            return xp.asarray(dividend / divisor)
+
+    device_ = device(dividend)
+    dtype = divisor.dtype
+    one_ = xp.asarray(1.0, dtype=dtype, device=device_)
+    nan_ = xp.asarray(xp.nan, dtype=dtype, device=device_)
+    inf_ = xp.asarray(xp.inf, dtype=dtype, device=device_)
+
+    dividend_isinf = xp.isinf(dividend)
+    divisor_iszero = ~xp.astype(divisor, xp.bool)
+    divisor_isinf = xp.isinf(divisor)
+
+    invalid_result = (dividend_isinf & divisor_isinf) | (
+        (~xp.astype(dividend, xp.bool)) & divisor_iszero
+    )
+
+    divisor = xp.where(invalid_result, one_, divisor)
+
+    division_by_zero = (~invalid_result) & divisor_iszero  # & (~divisor_isinf)
+    division_by_zero_pinf = division_by_zero & (
+        _signbit(X=divisor, X_isinf=divisor_isinf)
+        == _signbit(X=dividend, X_isinf=dividend_isinf)
+    )
+    division_by_zero_ninf = division_by_zero & (~division_by_zero_pinf)
+
+    divisor = xp.where(division_by_zero, one_, divisor)
+
+    result = dividend / divisor
+    result = xp.where(invalid_result, nan_, result)
+    result = xp.where(division_by_zero_pinf, inf_, result)
+    return xp.where(division_by_zero_ninf, -inf_, result)
+
+
+def _signbit(X, X_isnan=None, X_isinf=None, xp=None):
+    # TODO: refactor once signbit is standardized:
+    # https://github.com/data-apis/array-api/issues/670
+    if xp is None:
+        xp, _ = get_namespace(X)
+
+    if _is_numpy_namespace(xp):
+        return numpy.signbit(X)
+
+    one = xp.asarray(1.0, device=device(X), dtype=X.dtype)
+
+    X = xp.where(X_isnan or xp.isnan(X), one, X)
+    X = xp.where(X_isinf or xp.isinf(X), xp.sign(X), X)
+    return (xp.sign(X) < 0) | (xp.sign(xp.inf / X) < 0)
 
 
 def _asarray_with_order(array, dtype=None, order=None, copy=None, *, xp=None):

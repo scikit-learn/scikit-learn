@@ -22,7 +22,7 @@ from scipy.special import gammaln
 from ..base import _fit_context
 from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
-from ..utils._array_api import _convert_to_numpy, get_namespace
+from ..utils._array_api import _is_numpy_namespace, _convert_to_numpy, get_namespace
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.deprecation import deprecated
 from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
@@ -486,7 +486,11 @@ class PCA(_BasePCA):
                 " alternative."
             )
         # Raise an error for non-Numpy input and arpack solver.
-        if self.svd_solver == "arpack" and is_array_api_compliant:
+        if (
+            self.svd_solver == "arpack"
+            and is_array_api_compliant
+            and not _is_numpy_namespace(xp)
+        ):
             raise ValueError(
                 "PCA with svd_solver='arpack' is not supported for Array API inputs."
             )

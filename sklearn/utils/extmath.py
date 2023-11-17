@@ -22,7 +22,15 @@ from scipy import linalg, sparse
 from ..utils import deprecated
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from . import check_random_state
-from ._array_api import _is_numpy_namespace, device, get_namespace
+from ._array_api import (
+    _float_itemwise_divide_and_ignore_errors,
+    _is_numpy_namespace,
+    _nansum,
+    _safe_accumulator_op,
+    _safe_per_col_weighted_accumulator,
+    device,
+    get_namespace,
+)
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 
@@ -1007,39 +1015,6 @@ def make_nonnegative(X, min_value=0):
     return X
 
 
-# Use at least float64 for the accumulating functions to avoid precision issue
-# see https://github.com/numpy/numpy/issues/9393. The float64 is also retained
-# as it is in case the float overflows
-def _safe_accumulator_op(op, x, *args, **kwargs):
-    """
-    This function provides numpy accumulator functions with a float64 dtype
-    when used on a floating point input. This prevents accumulator overflow on
-    smaller floating point dtypes.
-
-    Parameters
-    ----------
-    op : function
-        A numpy accumulator function such as np.mean or np.sum.
-    x : ndarray
-        A numpy array to apply the accumulator function.
-    *args : positional arguments
-        Positional arguments passed to the accumulator function after the
-        input x.
-    **kwargs : keyword arguments
-        Keyword arguments passed to the accumulator function.
-
-    Returns
-    -------
-    result
-        The output of the accumulator function passed to this function.
-    """
-    if np.issubdtype(x.dtype, np.floating) and x.dtype.itemsize < 8:
-        result = op(x, *args, **kwargs, dtype=np.float64)
-    else:
-        result = op(x, *args, **kwargs)
-    return result
-
-
 def _incremental_mean_and_var(
     X, last_mean, last_variance, last_sample_count, sample_weight=None
 ):
@@ -1095,28 +1070,31 @@ def _incremental_mean_and_var(
     `utils.sparsefuncs.incr_mean_variance_axis` and
     `utils.sparsefuncs_fast.incr_mean_variance_axis0`
     """
+    xp, _ = get_namespace(X)
+    zero_ = xp.asarray(0.0, dtype=X.dtype, device=device(X))
+
     # old = stats until now
     # new = the current increment
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
-    X_nan_mask = np.isnan(X)
-    if np.any(X_nan_mask):
-        sum_op = np.nansum
+    X_nan_mask = xp.isnan(X)
+    if xp.any(X_nan_mask):
+        sum_op = _nansum
     else:
-        sum_op = np.sum
+        sum_op = xp.sum
     if sample_weight is not None:
-        # equivalent to np.nansum(X * sample_weight, axis=0)
-        # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
-        new_sum = _safe_accumulator_op(
-            np.matmul, sample_weight, np.where(X_nan_mask, 0, X)
+        # equivalent to _nansum(X * sample_weight, axis=0)
+        # safer because xp.float64(X*W) != xp.float64(X)*xp.float64(W)
+        new_sum = _safe_per_col_weighted_accumulator(
+            xp.where(X_nan_mask, zero_, X), sample_weight, xp=xp
         )
         new_sample_count = _safe_accumulator_op(
-            np.sum, sample_weight[:, None] * (~X_nan_mask), axis=0
+            xp.sum, sample_weight[:, xp.newaxis] * (~X_nan_mask), axis=0, xp=xp
         )
     else:
-        new_sum = _safe_accumulator_op(sum_op, X, axis=0)
+        new_sum = _safe_accumulator_op(sum_op, X, axis=0, xp=xp)
         n_samples = X.shape[0]
-        new_sample_count = n_samples - np.sum(X_nan_mask, axis=0)
+        new_sample_count = n_samples - xp.sum(X_nan_mask, axis=0)
 
     updated_sample_count = last_sample_count + new_sample_count
 
@@ -1130,17 +1108,19 @@ def _incremental_mean_and_var(
         if sample_weight is not None:
             # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
             # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
-            correction = _safe_accumulator_op(
-                np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
+            correction = _safe_per_col_weighted_accumulator(
+                xp.where(X_nan_mask, zero_, temp), sample_weight, xp=xp
             )
             temp **= 2
-            new_unnormalized_variance = _safe_accumulator_op(
-                np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
+            new_unnormalized_variance = _safe_per_col_weighted_accumulator(
+                xp.where(X_nan_mask, zero_, temp), sample_weight, xp=xp
             )
         else:
-            correction = _safe_accumulator_op(sum_op, temp, axis=0)
+            correction = _safe_accumulator_op(sum_op, temp, axis=0, xp=xp)
             temp **= 2
-            new_unnormalized_variance = _safe_accumulator_op(sum_op, temp, axis=0)
+            new_unnormalized_variance = _safe_accumulator_op(
+                sum_op, temp, axis=0, xp=xp
+            )
 
         # correction term of the corrected 2 pass algorithm.
         # See "Algorithms for computing the sample variance: analysis
@@ -1149,9 +1129,41 @@ def _incremental_mean_and_var(
 
         last_unnormalized_variance = last_variance * last_sample_count
 
+        updated_unnormalized_variance = _update_unnormalized_variance(
+            last_unnormalized_variance,
+            new_unnormalized_variance,
+            last_sample_count,
+            last_sum,
+            new_sum,
+            new_sample_count,
+            updated_sample_count,
+            xp,
+        )
+
+        updated_unnormalized_variance = xp.where(
+            last_sample_count == 0,
+            new_unnormalized_variance,
+            updated_unnormalized_variance,
+        )
+        updated_variance = updated_unnormalized_variance / updated_sample_count
+
+    return updated_mean, updated_variance, updated_sample_count
+
+
+def _update_unnormalized_variance(
+    last_unnormalized_variance,
+    new_unnormalized_variance,
+    last_sample_count,
+    last_sum,
+    new_sum,
+    new_sample_count,
+    updated_sample_count,
+    xp,
+):
+    if _is_numpy_namespace(xp):
         with np.errstate(divide="ignore", invalid="ignore"):
             last_over_new_count = last_sample_count / new_sample_count
-            updated_unnormalized_variance = (
+            return (
                 last_unnormalized_variance
                 + new_unnormalized_variance
                 + last_over_new_count
@@ -1159,11 +1171,23 @@ def _incremental_mean_and_var(
                 * (last_sum / last_over_new_count - new_sum) ** 2
             )
 
-        zeros = last_sample_count == 0
-        updated_unnormalized_variance[zeros] = new_unnormalized_variance[zeros]
-        updated_variance = updated_unnormalized_variance / updated_sample_count
-
-    return updated_mean, updated_variance, updated_sample_count
+    last_over_new_count = _float_itemwise_divide_and_ignore_errors(
+        last_sample_count, new_sample_count, xp=xp
+    )
+    return (
+        last_unnormalized_variance
+        + new_unnormalized_variance
+        + _float_itemwise_divide_and_ignore_errors(
+            last_over_new_count, updated_sample_count, xp=xp
+        )
+        * (
+            _float_itemwise_divide_and_ignore_errors(
+                last_sum, last_over_new_count, xp=xp
+            )
+            - new_sum
+        )
+        ** 2
+    )
 
 
 def _deterministic_vector_sign_flip(u):
