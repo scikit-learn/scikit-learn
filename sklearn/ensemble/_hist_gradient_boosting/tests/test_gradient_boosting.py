@@ -1391,10 +1391,11 @@ def test_unknown_category_that_are_negative():
 
 
 @pytest.mark.parametrize(
-    "Hist", [HistGradientBoostingClassifier, HistGradientBoostingRegressor]
+    "HistGradientBoosting",
+    [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
 )
-def test_pandas_categorical_results_same_as_ndarray(Hist):
-    """Check that pandas categorical give the same results as ndarray"""
+def test_pandas_categorical_results_same_as_ndarray(HistGradientBoosting):
+    """Check that pandas categorical give the same results as ndarray."""
     pd = pytest.importorskip("pandas")
 
     rng = np.random.RandomState(42)
@@ -1418,10 +1419,10 @@ def test_pandas_categorical_results_same_as_ndarray(Hist):
     )
 
     hist_kwargs = dict(max_iter=10, max_bins=max_bins, random_state=0)
-    hist_np = Hist(categorical_features=[False, True], **hist_kwargs)
+    hist_np = HistGradientBoosting(categorical_features=[False, True], **hist_kwargs)
     hist_np.fit(X_train, y_train)
 
-    hist_pd = Hist(categorical_features="from_dtype", **hist_kwargs)
+    hist_pd = HistGradientBoosting(categorical_features="from_dtype", **hist_kwargs)
     hist_pd.fit(X_train_df, y_train)
 
     assert len(hist_np._predictors) == len(hist_pd._predictors)
@@ -1435,14 +1436,15 @@ def test_pandas_categorical_results_same_as_ndarray(Hist):
 
 
 @pytest.mark.parametrize(
-    "Hist", [HistGradientBoostingClassifier, HistGradientBoostingRegressor]
+    "HistGradientBoosting",
+    [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
 )
-def test_pandas_categorical_errors(Hist):
+def test_pandas_categorical_errors(HistGradientBoosting):
     """Check error cases for pandas categorical feature."""
     pd = pytest.importorskip("pandas")
 
     msg = "Categorical feature 'f_cat' is expected to have a cardinality <= 16"
-    hist = Hist(categorical_features="from_dtype", max_bins=16)
+    hist = HistGradientBoosting(categorical_features="from_dtype", max_bins=16)
 
     rng = np.random.RandomState(42)
     f_cat = rng.randint(0, high=100, size=100)
@@ -1496,6 +1498,6 @@ def test_categorical_features_warn():
     y = [0, 1, 0]
     hist = HistGradientBoostingClassifier(random_state=0)
 
-    msg = "The categorical_features parameter will change to 'by_dtype' in v1.6"
+    msg = "The categorical_features parameter will change to 'from_dtype' in v1.6"
     with pytest.warns(FutureWarning, match=msg):
         hist.fit(X, y)

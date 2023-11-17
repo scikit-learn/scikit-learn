@@ -1,4 +1,5 @@
 """Fast Gradient Boosting decision trees for classification and regression."""
+
 # Author: Nicolas Hug
 
 import itertools
@@ -40,6 +41,7 @@ from ...utils.validation import (
     _check_monotonic_cst,
     _check_sample_weight,
     _check_y,
+    _is_pandas_df,
     check_array,
     check_consistent_length,
     check_is_fitted,
@@ -231,6 +233,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 return self._validate_data(X, reset=False, **check_X_kwargs)
             return self._preprocessor.transform(X)
 
+        # At this point, reset is False, which runs during `fit`.
         self.is_categorical_, known_categories = self._check_categories(X)
 
         if known_categories is None:
@@ -288,7 +291,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         Parameters
         ----------
         X : {array-like, pandas DataFrame} of shape (n_samples, n_features)
-            Input data
+            Input data.
 
         Return
         ------
@@ -301,7 +304,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 - None if the feature is not categorical
             None if no feature is categorical.
         """
-        X_is_dataframe = hasattr(X, "dtypes")  # sufficient here
+        X_is_dataframe = _is_pandas_df(X)
 
         # TODO(1.6): Remove warning and change default to "from_dtype" in v1.6
         if (
@@ -311,8 +314,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if X_is_dataframe and (X.dtypes == "category").any():
                 warnings.warn(
                     (
-                        "The categorical_features parameter will change to 'by_dtype'"
-                        " in v1.6. The 'by_dtype' option automatically treats"
+                        "The categorical_features parameter will change to 'from_dtype'"
+                        " in v1.6. The 'from_dtype' option automatically treats"
                         " categorical dtypes in a DataFrame as categorical features."
                     ),
                     FutureWarning,
@@ -356,6 +359,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 )
 
         n_features = X.shape[1]
+        # At this point `_validate_data` was not called yet because we want to use the
+        # dtypes are used to discover the categorical features. Thus `feature_names_in_`
+        # is not defined yet.
         feature_names_in_ = getattr(X, "columns", None)
 
         if categorical_features.dtype.kind in ("U", "O"):
