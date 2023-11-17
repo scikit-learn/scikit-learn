@@ -501,6 +501,11 @@ Changelog
   raise an exception if the user provided categories contain duplicates.
   :pr:`27328` by :user:`Xuefeng Xu <xuefeng-xu>`.
 
+- |Fix| :class:`preprocessing.FunctionTransformer` raises an error at `transform` if
+  the output of `get_feature_names_out` is not consistent with the column names of the
+  output container if those are defined.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.tree`
 ...................
 
