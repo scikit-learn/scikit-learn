@@ -1425,6 +1425,10 @@ def test_pandas_categorical_results_same_as_ndarray(HistGradientBoosting):
     hist_pd = HistGradientBoosting(categorical_features="from_dtype", **hist_kwargs)
     hist_pd.fit(X_train_df, y_train)
 
+    # Check categories are correct and sorted
+    categories = hist_pd._preprocessor.named_transformers_["encoder"].categories[0]
+    assert_array_equal(categories, np.unique(f_cat))
+
     assert len(hist_np._predictors) == len(hist_pd._predictors)
     for predictor_1, predictor_2 in zip(hist_np._predictors, hist_pd._predictors):
         assert len(predictor_1[0].nodes) == len(predictor_2[0].nodes)
