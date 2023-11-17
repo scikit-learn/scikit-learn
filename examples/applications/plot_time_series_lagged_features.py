@@ -183,7 +183,6 @@ from sklearn.model_selection import cross_validate
 scoring = {
     "MAPE": make_scorer(mean_absolute_percentage_error),
     "RMSE": make_scorer(root_mean_squared_error),
-
     "MAE": make_scorer(mean_absolute_error),
     "pinball_loss_05": make_scorer(mean_pinball_loss, alpha=0.05),
     "pinball_loss_50": make_scorer(mean_pinball_loss, alpha=0.50),
