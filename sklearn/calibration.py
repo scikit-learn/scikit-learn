@@ -441,7 +441,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             else:
                 this_estimator = clone(estimator)
                 method_name = _check_response_method(
-                    this_estimator, ["decision_function", "predict_proba"],
+                    this_estimator,
+                    ["decision_function", "predict_proba"],
                 ).__name__
                 predictions = cross_val_predict(
                     estimator=this_estimator,
