@@ -330,17 +330,11 @@ def test_function_transformer_get_feature_names_out(
     transformer = FunctionTransformer(
         feature_names_out=feature_names_out, validate=validate
     )
-    transformer.fit_transform(X)
+    transformer.fit(X)
     names = transformer.get_feature_names_out(input_features)
     assert isinstance(names, np.ndarray)
     assert names.dtype == object
     assert_array_equal(names, expected)
-
-    from sklearn.preprocessing import StandardScaler
-
-    pipeline = make_pipeline(transformer, StandardScaler())
-    pipeline.fit_transform(X)
-    pipeline.get_feature_names_out()
 
 
 def test_function_transformer_get_feature_names_out_without_validation():
@@ -427,7 +421,14 @@ def test_get_feature_names_out_dataframe_with_string_data(
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame({"pet": ["dog", "cat"], "color": ["red", "green"]})
 
-    transformer = FunctionTransformer(feature_names_out=feature_names_out)
+    def func(X):
+        if feature_names_out == "one-to-one":
+            return X
+        else:
+            name = feature_names_out(None, X.columns)
+            return X.rename(columns=dict(zip(X.columns, name)))
+
+    transformer = FunctionTransformer(func=func, feature_names_out=feature_names_out)
     if in_pipeline:
         transformer = make_pipeline(transformer)
 

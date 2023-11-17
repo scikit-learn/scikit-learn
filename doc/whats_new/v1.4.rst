@@ -504,7 +504,7 @@ Changelog
 - |Fix| :class:`preprocessing.FunctionTransformer` raises an error at `transform` if
   the output of `get_feature_names_out` is not consistent with the column names of the
   output container if those are defined.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`27801` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.tree`
 ...................
