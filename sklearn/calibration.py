@@ -44,6 +44,7 @@ from .utils._param_validation import (
     validate_params,
 )
 from .utils._plotting import _BinaryClassifierCurveDisplayMixin
+from .utils._response import _get_response_values, _process_predict_proba
 from .utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -52,7 +53,6 @@ from .utils.metadata_routing import (
 )
 from .utils.multiclass import check_classification_targets
 from .utils.parallel import Parallel, delayed
-from .utils._response import _get_response_values, _process_predict_proba
 from .utils.validation import (
     _check_method_params,
     _check_pos_label_consistency,
