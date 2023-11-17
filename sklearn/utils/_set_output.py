@@ -113,8 +113,6 @@ class PandasAdapter:
         if isinstance(X_output, pd.DataFrame):
             if columns is not None:
                 X_output.columns = columns
-            if index is not None:
-                X_output.index = index
             return X_output
 
         return pd.DataFrame(X_output, index=index, columns=columns, copy=False)
