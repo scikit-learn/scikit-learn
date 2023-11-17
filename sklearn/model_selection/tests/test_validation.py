@@ -2172,11 +2172,9 @@ def test_cross_validate_some_failing_fits_warning(error_score):
         "ValueError: Classifier fit failed with 1 values too high"
     )
     warning_message = re.compile(
-        (
-            "2 fits failed.+total of 3.+The score on these"
-            " train-test partitions for these parameters will be set to"
-            f" {cross_validate_kwargs['error_score']}.+{individual_fit_error_message}"
-        ),
+        "2 fits failed.+total of 3.+The score on these"
+        " train-test partitions for these parameters will be set to"
+        f" {cross_validate_kwargs['error_score']}.+{individual_fit_error_message}",
         flags=re.DOTALL,
     )
 
@@ -2197,10 +2195,8 @@ def test_cross_validate_all_failing_fits_error(error_score):
 
     individual_fit_error_message = "ValueError: Failing classifier failed as required"
     error_message = re.compile(
-        (
-            "All the 7 fits failed.+your model is misconfigured.+"
-            f"{individual_fit_error_message}"
-        ),
+        "All the 7 fits failed.+your model is misconfigured.+"
+        f"{individual_fit_error_message}",
         flags=re.DOTALL,
     )
 
@@ -2422,19 +2418,20 @@ def test_learning_curve_some_failing_fits_warning():
 
     X, y = make_classification(n_classes=3, n_informative=6, shuffle=False)
     svc = SVC()
-    svc.fit(X, y)
-    warning_message = re.compile(
-        (
-            "10 fits failed out of a total of 50.+The score on these train-test"
-            " partitions for these parameters will be set to nan.+If these failures"
-            " are not expected, you can try to debug them by setting"
-            " error_score='raise'.+ValueError: The number of classes has to be greater"
-            " than one; got 1 class"
-        ),
-        flags=re.DOTALL,
-    )
+    warning_message = "10 fits failed out of a total of 50"
+
     with pytest.warns(FitFailedWarning, match=warning_message):
-        learning_curve(svc, X, y, cv=10, error_score=np.nan)
+        _, train_score, test_score, *_ = learning_curve(
+            svc, X, y, cv=10, error_score=np.nan
+        )
+
+    # the first split should lead to raise the warning
+    assert np.isnan(train_score[0]).all()
+    assert np.isnan(test_score[0]).all()
+
+    for idx in range(1, train_score.shape[0]):
+        assert not np.isnan(train_score[idx]).any()
+        assert not np.isnan(test_score[idx]).any()
 
 
 def test_cross_validate_return_indices(global_random_seed):
