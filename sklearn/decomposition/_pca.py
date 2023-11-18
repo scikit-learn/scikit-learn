@@ -22,7 +22,7 @@ from scipy.special import gammaln
 from ..base import _fit_context
 from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
-from ..utils._array_api import get_namespace
+from ..utils._array_api import _convert_to_numpy, get_namespace
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.deprecation import deprecated
 from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
@@ -60,6 +60,7 @@ def _assess_dimension(spectrum, rank, n_samples):
     Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
     <https://proceedings.neurips.cc/paper/2000/file/7503cfacd12053d309b6bed5c89de212-Paper.pdf>`_
     """
+    xp, _ = get_namespace(spectrum)
 
     n_features = spectrum.shape[0]
     if not 1 <= rank < n_features:
@@ -73,29 +74,29 @@ def _assess_dimension(spectrum, rank, n_samples):
         # small and won't be the max anyway. Also, it can lead to numerical
         # issues below when computing pa, in particular in log((spectrum[i] -
         # spectrum[j]) because this will take the log of something very small.
-        return -np.inf
+        return -xp.inf
 
     pu = -rank * log(2.0)
     for i in range(1, rank + 1):
         pu += (
             gammaln((n_features - i + 1) / 2.0)
-            - log(np.pi) * (n_features - i + 1) / 2.0
+            - log(xp.pi) * (n_features - i + 1) / 2.0
         )
 
-    pl = np.sum(np.log(spectrum[:rank]))
+    pl = xp.sum(xp.log(spectrum[:rank]))
     pl = -pl * n_samples / 2.0
 
-    v = max(eps, np.sum(spectrum[rank:]) / (n_features - rank))
-    pv = -np.log(v) * n_samples * (n_features - rank) / 2.0
+    v = max(eps, xp.sum(spectrum[rank:]) / (n_features - rank))
+    pv = -log(v) * n_samples * (n_features - rank) / 2.0
 
     m = n_features * rank - rank * (rank + 1.0) / 2.0
-    pp = log(2.0 * np.pi) * (m + rank) / 2.0
+    pp = log(2.0 * xp.pi) * (m + rank) / 2.0
 
     pa = 0.0
-    spectrum_ = spectrum.copy()
+    spectrum_ = xp.asarray(spectrum, copy=True)
     spectrum_[rank:n_features] = v
     for i in range(rank):
-        for j in range(i + 1, len(spectrum)):
+        for j in range(i + 1, spectrum.shape[0]):
             pa += log(
                 (spectrum[i] - spectrum[j]) * (1.0 / spectrum_[j] - 1.0 / spectrum_[i])
             ) + log(n_samples)
@@ -116,7 +117,7 @@ def _infer_dimension(spectrum, n_samples):
     ll[0] = -xp.inf  # we don't want to return n_components = 0
     for rank in range(1, spectrum.shape[0]):
         ll[rank] = _assess_dimension(spectrum, rank, n_samples)
-    return ll.argmax()
+    return xp.argmax(ll)
 
 
 class PCA(_BasePCA):
@@ -578,8 +579,24 @@ class PCA(_BasePCA):
             # side='right' ensures that number of features selected
             # their variance is always greater than n_components float
             # passed. More discussion in issue: #15669
-            ratio_cumsum = stable_cumsum(explained_variance_ratio_)
-            n_components = xp.searchsorted(ratio_cumsum, n_components, side="right") + 1
+            if is_array_api_compliant:
+                # Convert to numpy as xp.cumsum and xp.searchsorted are not
+                # part of the Array API standard yet:
+                #
+                # https://github.com/data-apis/array-api/issues/597
+                # https://github.com/data-apis/array-api/issues/688
+                #
+                # Furthermore, it's not always safe to call them for namespaces
+                # that already implement them: for instance as
+                # cupy.searchsorted does not accept a float as second argument.
+                explained_variance_ratio_np = _convert_to_numpy(
+                    explained_variance_ratio_, xp=xp
+                )
+            else:
+                explained_variance_ratio_np = explained_variance_ratio_
+            ratio_cumsum = stable_cumsum(explained_variance_ratio_np)
+            n_components = np.searchsorted(ratio_cumsum, n_components, side="right") + 1
+
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):

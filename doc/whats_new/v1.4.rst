@@ -276,7 +276,7 @@ Changelog
 - |Enhancement| :class:`decomposition.PCA` now supports the Array API for the
   `full` and `randomized` solvers (with QR power iterations). See
   :ref:`array_api` for more details.
-  :pr:`26315` and :pr:`27098` by :user:`Mateusz Sokół <mtsokol>`,
+  :pr:`26315`, :pr:`27098` and :pr:`27431` by :user:`Mateusz Sokół <mtsokol>`,
   :user:`Olivier Grisel <ogrisel>` and :user:`Edoardo Abati <EdAbati>`.
 
 - |Feature| :class:`decomposition.PCA` now supports :class:`scipy.sparse.sparray`
@@ -294,6 +294,12 @@ Changelog
   the criterion is `gini`, `entropy`, or `log_loss`,
   for classification or `squared_error`, `friedman_mse`, or `poisson`
   for regression. :pr:`26391` by `Thomas Fan`_.
+
+- |MajorFeature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` supports
+  `categorical_features="from_dtype"`, which treats columns with Pandas Categorical
+  dtype as categories in the algorithm. `categorical_features="from_dtype"` will become
+  the default in v1.6. :pr:`26411` by `Thomas Fan`_.
 
 - |Feature| :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`, :class:`ensemble.ExtraTreesClassifier`
@@ -438,6 +444,10 @@ Changelog
 
 - |Enhancement| :func:`sklearn.model_selection.train_test_split` now supports
   Array API compatible inputs. :pr:`26855` by `Tim Head`_.
+
+- |Enhancement| :func:`model_selection.learning_curve` raises a warning when
+  every cross validation fold fails.
+  :pr:`26299` by :user:`Rahil Parikh <rprkh>`.
 
 - |Fix| :class:`model_selection.GridSearchCV`,
   :class:`model_selection.RandomizedSearchCV`, and
