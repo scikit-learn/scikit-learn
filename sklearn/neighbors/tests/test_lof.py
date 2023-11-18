@@ -2,26 +2,22 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
+import re
 from math import sqrt
 
 import numpy as np
-from scipy.sparse import csr_matrix
-
-from sklearn import neighbors
-import re
 import pytest
 
-from sklearn import metrics
-from sklearn.metrics import roc_auc_score
-
-from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils.estimator_checks import check_outlier_corruption
-from sklearn.utils.estimator_checks import parametrize_with_checks
-
+from sklearn import metrics, neighbors
 from sklearn.datasets import load_iris
-
+from sklearn.metrics import roc_auc_score
+from sklearn.utils import check_random_state
+from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils.estimator_checks import (
+    check_outlier_corruption,
+    parametrize_with_checks,
+)
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 # load the iris dataset
 # and randomly permute it
@@ -242,11 +238,12 @@ def test_predicted_outlier_number(expected_outliers):
         check_outlier_corruption(num_outliers, expected_outliers, y_dec)
 
 
-def test_sparse():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_sparse(csr_container):
     # LocalOutlierFactor must support CSR inputs
     # TODO: compare results on dense and sparse data as proposed in:
     # https://github.com/scikit-learn/scikit-learn/pull/23585#discussion_r968388186
-    X = csr_matrix(iris.data)
+    X = csr_container(iris.data)
 
     lof = neighbors.LocalOutlierFactor(novelty=True)
     lof.fit(X)

@@ -1,14 +1,10 @@
 import scipy as sp
 
-from .base import _get_response
-
-from .. import det_curve
-from .._base import _check_pos_label_consistency
-
-from ...utils import check_matplotlib_support
+from ...utils._plotting import _BinaryClassifierCurveDisplayMixin
+from .._ranking import det_curve
 
 
-class DetCurveDisplay:
+class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     """DET curve visualization.
 
     It is recommend to use :func:`~sklearn.metrics.DetCurveDisplay.from_estimator`
@@ -30,7 +26,7 @@ class DetCurveDisplay:
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
 
-    pos_label : str or int, default=None
+    pos_label : int, float, bool or str, default=None
         The label of the positive class.
 
     Attributes
@@ -121,7 +117,7 @@ class DetCurveDisplay:
             to 'auto', :term:`predict_proba` is tried first and if it does not
             exist :term:`decision_function` is tried next.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The label of the positive class. When `pos_label=None`, if `y_true`
             is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
             error will be raised.
@@ -164,15 +160,13 @@ class DetCurveDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_estimator")
-
-        name = estimator.__class__.__name__ if name is None else name
-
-        y_pred, pos_label = _get_response(
-            X,
+        y_pred, pos_label, name = cls._validate_and_get_response_values(
             estimator,
-            response_method,
+            X,
+            y,
+            response_method=response_method,
             pos_label=pos_label,
+            name=name,
         )
 
         return cls.from_predictions(
@@ -216,7 +210,7 @@ class DetCurveDisplay:
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-        pos_label : str or int, default=None
+        pos_label : int, float, bool or str, default=None
             The label of the positive class. When `pos_label=None`, if `y_true`
             is in {-1, 1} or {0, 1}, `pos_label` is set to 1, otherwise an
             error will be raised.
@@ -260,7 +254,10 @@ class DetCurveDisplay:
         <...>
         >>> plt.show()
         """
-        check_matplotlib_support(f"{cls.__name__}.from_predictions")
+        pos_label_validated, name = cls._validate_from_predictions_params(
+            y_true, y_pred, sample_weight=sample_weight, pos_label=pos_label, name=name
+        )
+
         fpr, fnr, _ = det_curve(
             y_true,
             y_pred,
@@ -268,14 +265,11 @@ class DetCurveDisplay:
             sample_weight=sample_weight,
         )
 
-        pos_label = _check_pos_label_consistency(pos_label, y_true)
-        name = "Classifier" if name is None else name
-
         viz = DetCurveDisplay(
             fpr=fpr,
             fnr=fnr,
             estimator_name=name,
-            pos_label=pos_label,
+            pos_label=pos_label_validated,
         )
 
         return viz.plot(ax=ax, name=name, **kwargs)
@@ -298,21 +292,15 @@ class DetCurveDisplay:
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.plot.DetCurveDisplay`
+        display : :class:`~sklearn.metrics.DetCurveDisplay`
             Object that stores computed values.
         """
-        check_matplotlib_support("DetCurveDisplay.plot")
+        self.ax_, self.figure_, name = self._validate_plot_params(ax=ax, name=name)
 
-        name = self.estimator_name if name is None else name
         line_kwargs = {} if name is None else {"label": name}
         line_kwargs.update(**kwargs)
 
-        import matplotlib.pyplot as plt
-
-        if ax is None:
-            _, ax = plt.subplots()
-
-        (self.line_,) = ax.plot(
+        (self.line_,) = self.ax_.plot(
             sp.stats.norm.ppf(self.fpr),
             sp.stats.norm.ppf(self.fnr),
             **line_kwargs,
@@ -323,10 +311,10 @@ class DetCurveDisplay:
 
         xlabel = "False Positive Rate" + info_pos_label
         ylabel = "False Negative Rate" + info_pos_label
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+        self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
         if "label" in line_kwargs:
-            ax.legend(loc="lower right")
+            self.ax_.legend(loc="lower right")
 
         ticks = [0.001, 0.01, 0.05, 0.20, 0.5, 0.80, 0.95, 0.99, 0.999]
         tick_locations = sp.stats.norm.ppf(ticks)
@@ -334,13 +322,11 @@ class DetCurveDisplay:
             "{:.0%}".format(s) if (100 * s).is_integer() else "{:.1%}".format(s)
             for s in ticks
         ]
-        ax.set_xticks(tick_locations)
-        ax.set_xticklabels(tick_labels)
-        ax.set_xlim(-3, 3)
-        ax.set_yticks(tick_locations)
-        ax.set_yticklabels(tick_labels)
-        ax.set_ylim(-3, 3)
+        self.ax_.set_xticks(tick_locations)
+        self.ax_.set_xticklabels(tick_labels)
+        self.ax_.set_xlim(-3, 3)
+        self.ax_.set_yticks(tick_locations)
+        self.ax_.set_yticklabels(tick_labels)
+        self.ax_.set_ylim(-3, 3)
 
-        self.ax_ = ax
-        self.figure_ = ax.figure
         return self

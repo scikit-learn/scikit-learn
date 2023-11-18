@@ -1,6 +1,6 @@
 """
 ===================================
-Early stopping of Gradient Boosting
+Early stopping in Gradient Boosting
 ===================================
 
 Gradient boosting is an ensembling technique where several weak learners
@@ -38,11 +38,10 @@ memory usage and prediction latency.
 
 import time
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn import ensemble
-from sklearn import datasets
+from sklearn import datasets, ensemble
 from sklearn.model_selection import train_test_split
 
 data_list = [

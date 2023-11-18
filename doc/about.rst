@@ -39,6 +39,13 @@ in the FAQ.
 
    :ref:`How you can contribute to the project <contributing>`
 
+Documentation Team
+------------------
+
+The following people help with documenting the project:
+
+.. include:: documentation_team.rst
+
 Contributor Experience Team
 ---------------------------
 
@@ -73,6 +80,13 @@ past, but no longer have communication responsibilities:
 
 .. include:: communication_team_emeritus.rst
 
+Emeritus Contributor Experience Team
+------------------------------------
+
+The following people have been active in the contributor experience team in the
+past:
+
+.. include:: contributor_experience_team_emeritus.rst
 
 .. _citing-scikit-learn:
 
@@ -147,20 +161,16 @@ The project would like to thank the following funders.
 
 The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
 the `Scikit-Learn Consortium at Inria Foundation
-<https://scikit-learn.fondation-inria.fr/en/home/>`_  fund Olivier
-Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
+<https://scikit-learn.fondation-inria.fr/en/home/>`_  fund Arturo Amor,
+François Goupil, Guillaume Lemaitre, Jérémie du Boisberranger, and Olivier Grisel.
 
 .. raw:: html
 
    </div>
 
-.. |msn| image:: images/microsoft.png
-   :width: 100pt
-   :target: https://www.microsoft.com/
-
-.. |bcg| image:: images/bcg.png
-   :width: 100pt
-   :target: https://www.bcg.com/beyond-consulting/bcg-gamma/default.aspx
+.. |chanel| image:: images/chanel.png
+   :width: 70pt
+   :target: https://www.chanel.com
 
 .. |axa| image:: images/axa.png
    :width: 50pt
@@ -170,17 +180,17 @@ Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
    :width: 150pt
    :target: https://www.bnpparibascardif.com/
 
-.. |fujitsu| image:: images/fujitsu.png
-   :width: 100pt
-   :target: https://www.fujitsu.com/global/
-
 .. |dataiku| image:: images/dataiku.png
    :width: 70pt
    :target: https://www.dataiku.com/
 
-.. |aphp| image:: images/logo_APHP_text.png
-   :width: 150pt
-   :target: https://aphp.fr/
+.. |hf| image:: images/huggingface_logo-noborder.png
+   :width: 70pt
+   :target: https://huggingface.co
+
+.. |nvidia| image:: images/nvidia.png
+   :width: 70pt
+   :target: https://www.nvidia.com
 
 .. |inria| image:: images/inria-logo.jpg
    :width: 100pt
@@ -194,25 +204,25 @@ Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
 .. table::
    :class: sk-sponsor-table align-default
 
-   +---------+----------+
-   |       |bcg|        |
-   +---------+----------+
-   |                    |
-   +---------+----------+
-   |  |axa|  |   |bnp|  |
-   +---------+----------+
-   ||fujitsu||  |msn|   |
-   +---------+----------+
-   |                    |
-   +---------+----------+
-   |     |dataiku|      |
-   +---------+----------+
-   |       |aphp|       |
-   +---------+----------+
-   |                    |
-   +---------+----------+
-   |       |inria|      |
-   +---------+----------+
+   +----------+-----------+
+   |       |chanel|       |
+   +----------+-----------+
+   |                      |
+   +----------+-----------+
+   |  |axa|   |    |bnp|  |
+   +----------+-----------+
+   |                      |
+   +----------+-----------+
+   | |nvidia| |    |hf|   |
+   +----------+-----------+
+   |                      |
+   +----------+-----------+
+   |       |dataiku|      |
+   +----------+-----------+
+   |                      |
+   +----------+-----------+
+   |        |inria|       |
+   +----------+-----------+
 
 .. raw:: html
 
@@ -226,7 +236,35 @@ Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Hugging Face <https://huggingface.co/>`_ funds Adrin Jalali since 2022.
+`NVidia <https://nvidia.com>`_ funds Tim Head since 2022
+and is part of the scikit-learn consortium at Inria.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/nvidia.png
+   :width: 55pt
+   :align: center
+   :target: https://nvidia.com
+
+.. raw:: html
+
+   </div>
+   </div>
+
+
+..........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Hugging Face <https://huggingface.co/>`_ funded Adrin Jalali in 2022,
+2023 and is part of the scikit-learn consortium at Inria.
 
 .. raw:: html
 
@@ -276,7 +314,8 @@ Grisel, Guillaume Lemaitre, and Jérémie du Boisberranger.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-`Quansight Labs <https://labs.quansight.org>`_ funds Thomas J. Fan since 2021.
+`Quansight Labs <https://labs.quansight.org>`_ funds Lucy Liu and
+Meekail Zain since 2022 and funded Thomas J. Fan from 2021 to 2023.
 
 .. raw:: html
 
@@ -559,6 +598,31 @@ The `NeuroDebian <http://neuro.debian.net>`_ project providing `Debian
 `Dr. James V. Haxby <http://haxbylab.dartmouth.edu/>`_ (`Dartmouth
 College <https://pbs.dartmouth.edu/>`_).
 
+...................
+
+The following organizations funded the scikit-learn consortium at Inria in
+the past:
+
+.. |msn| image:: images/microsoft.png
+   :width: 100pt
+   :target: https://www.microsoft.com/
+
+.. |bcg| image:: images/bcg.png
+   :width: 100pt
+   :target: https://www.bcg.com/beyond-consulting/bcg-gamma/default.aspx
+
+.. |fujitsu| image:: images/fujitsu.png
+   :width: 100pt
+   :target: https://www.fujitsu.com/global/
+
+.. |aphp| image:: images/logo_APHP_text.png
+   :width: 150pt
+   :target: https://aphp.fr/
+
+
+|bcg| |msn| |fujitsu| |aphp|
+
+
 Sprints
 -------
 
@@ -619,7 +683,7 @@ Infrastructure support
 ----------------------
 
 - We would also like to thank `Microsoft Azure
-  <https://azure.microsoft.com/en-us/>`_, `Travis Cl <https://travis-ci.org/>`_,
+  <https://azure.microsoft.com/en-us/>`_, `Cirrus Cl <https://cirrus-ci.org>`_,
   `CircleCl <https://circleci.com/>`_ for free CPU time on their Continuous
   Integration servers, and `Anaconda Inc. <https://www.anaconda.com>`_ for the
   storage they provide for our staging and nightly builds.

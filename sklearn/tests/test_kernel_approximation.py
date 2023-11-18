@@ -1,21 +1,28 @@
 import re
 
 import numpy as np
-from scipy.sparse import csr_matrix
 import pytest
 
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
-
-from sklearn.metrics.pairwise import kernel_metrics
-from sklearn.kernel_approximation import RBFSampler
-from sklearn.kernel_approximation import AdditiveChi2Sampler
-from sklearn.kernel_approximation import SkewedChi2Sampler
-from sklearn.kernel_approximation import Nystroem
-from sklearn.kernel_approximation import PolynomialCountSketch
 from sklearn.datasets import make_classification
-from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel, chi2_kernel
+from sklearn.kernel_approximation import (
+    AdditiveChi2Sampler,
+    Nystroem,
+    PolynomialCountSketch,
+    RBFSampler,
+    SkewedChi2Sampler,
+)
+from sklearn.metrics.pairwise import (
+    chi2_kernel,
+    kernel_metrics,
+    polynomial_kernel,
+    rbf_kernel,
+)
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 # generate data
 rng = np.random.RandomState(0)
@@ -54,10 +61,11 @@ def test_polynomial_count_sketch(gamma, degree, coef0, n_components):
     assert np.mean(error) <= 0.05  # mean is fairly close
 
 
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("gamma", [0.1, 1.0])
 @pytest.mark.parametrize("degree", [1, 2, 3])
 @pytest.mark.parametrize("coef0", [0, 2.5])
-def test_polynomial_count_sketch_dense_sparse(gamma, degree, coef0):
+def test_polynomial_count_sketch_dense_sparse(gamma, degree, coef0, csr_container):
     """Check that PolynomialCountSketch results are the same for dense and sparse
     input.
     """
@@ -70,8 +78,8 @@ def test_polynomial_count_sketch_dense_sparse(gamma, degree, coef0):
     ps_sparse = PolynomialCountSketch(
         n_components=500, gamma=gamma, degree=degree, coef0=coef0, random_state=42
     )
-    Xt_sparse = ps_sparse.fit_transform(csr_matrix(X))
-    Yt_sparse = ps_sparse.transform(csr_matrix(Y))
+    Xt_sparse = ps_sparse.fit_transform(csr_container(X))
+    Yt_sparse = ps_sparse.transform(csr_container(Y))
 
     assert_allclose(Xt_dense, Xt_sparse)
     assert_allclose(Yt_dense, Yt_sparse)
@@ -81,7 +89,8 @@ def _linear_kernel(X, Y):
     return np.dot(X, Y.T)
 
 
-def test_additive_chi2_sampler():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_additive_chi2_sampler(csr_container):
     # test that AdditiveChi2Sampler approximates kernel on random data
 
     # compute exact kernel
@@ -103,45 +112,60 @@ def test_additive_chi2_sampler():
 
     assert_array_almost_equal(kernel, kernel_approx, 1)
 
-    X_sp_trans = transform.fit_transform(csr_matrix(X))
-    Y_sp_trans = transform.transform(csr_matrix(Y))
+    X_sp_trans = transform.fit_transform(csr_container(X))
+    Y_sp_trans = transform.transform(csr_container(Y))
 
-    assert_array_equal(X_trans, X_sp_trans.A)
-    assert_array_equal(Y_trans, Y_sp_trans.A)
+    assert_array_equal(X_trans, X_sp_trans.toarray())
+    assert_array_equal(Y_trans, Y_sp_trans.toarray())
 
     # test error is raised on negative input
     Y_neg = Y.copy()
     Y_neg[0, 0] = -1
     msg = "Negative values in data passed to"
     with pytest.raises(ValueError, match=msg):
-        transform.transform(Y_neg)
+        transform.fit(Y_neg)
 
-    # test error on invalid sample_steps
-    transform = AdditiveChi2Sampler(sample_steps=4)
+
+@pytest.mark.parametrize("method", ["fit", "fit_transform", "transform"])
+@pytest.mark.parametrize("sample_steps", range(1, 4))
+def test_additive_chi2_sampler_sample_steps(method, sample_steps):
+    """Check that the input sample step doesn't raise an error
+    and that sample interval doesn't change after fit.
+    """
+    transformer = AdditiveChi2Sampler(sample_steps=sample_steps)
+    getattr(transformer, method)(X)
+
+    sample_interval = 0.5
+    transformer = AdditiveChi2Sampler(
+        sample_steps=sample_steps,
+        sample_interval=sample_interval,
+    )
+    getattr(transformer, method)(X)
+    assert transformer.sample_interval == sample_interval
+
+
+# TODO(1.5): remove
+def test_additive_chi2_sampler_future_warnings():
+    """Check that we raise a FutureWarning when accessing to `sample_interval_`."""
+    transformer = AdditiveChi2Sampler()
+    transformer.fit(X)
+    msg = re.escape(
+        "The ``sample_interval_`` attribute was deprecated in version 1.3 and "
+        "will be removed 1.5."
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        assert transformer.sample_interval_ is not None
+
+
+@pytest.mark.parametrize("method", ["fit", "fit_transform", "transform"])
+def test_additive_chi2_sampler_wrong_sample_steps(method):
+    """Check that we raise a ValueError on invalid sample_steps"""
+    transformer = AdditiveChi2Sampler(sample_steps=4)
     msg = re.escape(
         "If sample_steps is not in [1, 2, 3], you need to provide sample_interval"
     )
     with pytest.raises(ValueError, match=msg):
-        transform.fit(X)
-
-    # test that the sample interval is set correctly
-    sample_steps_available = [1, 2, 3]
-    for sample_steps in sample_steps_available:
-
-        # test that the sample_interval is initialized correctly
-        transform = AdditiveChi2Sampler(sample_steps=sample_steps)
-        assert transform.sample_interval is None
-
-        # test that the sample_interval is changed in the fit method
-        transform.fit(X)
-        assert transform.sample_interval_ is not None
-
-    # test that the sample_interval is set correctly
-    sample_interval = 0.3
-    transform = AdditiveChi2Sampler(sample_steps=4, sample_interval=sample_interval)
-    assert transform.sample_interval == sample_interval
-    transform.fit(X)
-    assert transform.sample_interval_ == sample_interval
+        getattr(transformer, method)(X)
 
 
 def test_skewed_chi2_sampler():
@@ -281,7 +305,8 @@ def test_skewed_chi2_sampler_dtype_equivalence():
     )
 
 
-def test_input_validation():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_input_validation(csr_container):
     # Regression test: kernel approx. transformers should work on lists
     # No assertions; the old versions would simply crash
     X = [[1, 2], [3, 4], [5, 6]]
@@ -289,7 +314,7 @@ def test_input_validation():
     SkewedChi2Sampler().fit(X).transform(X)
     RBFSampler().fit(X).transform(X)
 
-    X = csr_matrix(X)
+    X = csr_container(X)
     RBFSampler().fit(X).transform(X)
 
 

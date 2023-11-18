@@ -1,34 +1,36 @@
 import re
-import pytest
-import numpy as np
 import warnings
 from unittest.mock import Mock
 
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import skip_if_32bit
-from sklearn.utils._testing import MinimalClassifier
+import numpy as np
+import pytest
 
 from sklearn import datasets
+from sklearn.base import BaseEstimator
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
 from sklearn.datasets import make_friedman1
+from sklearn.decomposition import PCA
+from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
+from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import (
-    LogisticRegression,
-    SGDClassifier,
-    Lasso,
-    LassoCV,
     ElasticNet,
     ElasticNetCV,
+    Lasso,
+    LassoCV,
+    LogisticRegression,
+    PassiveAggressiveClassifier,
+    SGDClassifier,
 )
-from sklearn.svm import LinearSVC
-from sklearn.feature_selection import SelectFromModel
-from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
-from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.base import BaseEstimator
 from sklearn.pipeline import make_pipeline
-from sklearn.decomposition import PCA
+from sklearn.svm import LinearSVC
+from sklearn.utils._testing import (
+    MinimalClassifier,
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+    skip_if_32bit,
+)
 
 
 class NaNTag(BaseEstimator):
@@ -405,7 +407,7 @@ def test_partial_fit():
 
 
 def test_calling_fit_reinitializes():
-    est = LinearSVC(random_state=0)
+    est = LinearSVC(dual="auto", random_state=0)
     transformer = SelectFromModel(estimator=est)
     transformer.fit(data, y)
     transformer.set_params(estimator__C=100)
@@ -487,11 +489,12 @@ def test_prefit_get_feature_names_out():
     clf.fit(data, y)
     model = SelectFromModel(clf, prefit=True, max_features=1)
 
-    # FIXME: the error message should be improved. Raising a `NotFittedError`
-    # would be better since it would force to validate all class attribute and
-    # create all the necessary fitted attribute
-    err_msg = "Unable to generate feature names without n_features_in_"
-    with pytest.raises(ValueError, match=err_msg):
+    name = type(model).__name__
+    err_msg = (
+        f"This {name} instance is not fitted yet. Call 'fit' with "
+        "appropriate arguments before using this estimator."
+    )
+    with pytest.raises(NotFittedError, match=err_msg):
         model.get_feature_names_out()
 
     model.fit(data, y)
@@ -531,8 +534,8 @@ def test_fit_accepts_nan_inf():
     model = SelectFromModel(estimator=clf)
 
     nan_data = data.copy()
-    nan_data[0] = np.NaN
-    nan_data[1] = np.Inf
+    nan_data[0] = np.nan
+    nan_data[1] = np.inf
 
     model.fit(data, y)
 
@@ -545,8 +548,8 @@ def test_transform_accepts_nan_inf():
     model = SelectFromModel(estimator=clf)
     model.fit(nan_data, y)
 
-    nan_data[0] = np.NaN
-    nan_data[1] = np.Inf
+    nan_data[0] = np.nan
+    nan_data[1] = np.inf
 
     model.transform(nan_data)
 

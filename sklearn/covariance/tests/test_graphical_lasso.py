@@ -1,29 +1,35 @@
 """ Test the graphical_lasso module.
 """
 import sys
-import pytest
+from io import StringIO
 
 import numpy as np
+import pytest
+from numpy.testing import assert_allclose
 from scipy import linalg
 
-from numpy.testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_less
-from sklearn.utils._testing import _convert_container
-
+from sklearn import datasets
 from sklearn.covariance import (
-    graphical_lasso,
     GraphicalLasso,
     GraphicalLassoCV,
     empirical_covariance,
+    graphical_lasso,
 )
 from sklearn.datasets import make_sparse_spd_matrix
-from io import StringIO
 from sklearn.utils import check_random_state
-from sklearn import datasets
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_array_almost_equal,
+    assert_array_less,
+)
 
 
-def test_graphical_lasso(random_state=0):
+def test_graphical_lassos(random_state=1):
+    """Test the graphical lasso solvers.
+
+    This checks is unstable for some random seeds where the covariance found with "cd"
+    and "lars" solvers are different (4 cases / 100 tries).
+    """
     # Sample data from a sparse multivariate normal
     dim = 20
     n_samples = 100
@@ -45,10 +51,11 @@ def test_graphical_lasso(random_state=0):
             costs, dual_gap = np.array(costs).T
             # Check that the costs always decrease (doesn't hold if alpha == 0)
             if not alpha == 0:
-                assert_array_less(np.diff(costs), 0)
+                # use 1e-12 since the cost can be exactly 0
+                assert_array_less(np.diff(costs), 1e-12)
         # Check that the 2 approaches give similar results
-        assert_array_almost_equal(covs["cd"], covs["lars"], decimal=4)
-        assert_array_almost_equal(icovs["cd"], icovs["lars"], decimal=4)
+        assert_allclose(covs["cd"], covs["lars"], atol=1e-4)
+        assert_allclose(icovs["cd"], icovs["lars"], atol=1e-4)
 
     # Smoke test the estimator
     model = GraphicalLasso(alpha=0.25).fit(X)
@@ -64,6 +71,29 @@ def test_graphical_lasso(random_state=0):
         prec_ = GraphicalLasso(assume_centered=assume_centered).fit(Z).precision_
         precs.append(prec_)
     assert_array_almost_equal(precs[0], precs[1])
+
+
+def test_graphical_lasso_when_alpha_equals_0():
+    """Test graphical_lasso's early return condition when alpha=0."""
+    X = np.random.randn(100, 10)
+    emp_cov = empirical_covariance(X, assume_centered=True)
+
+    model = GraphicalLasso(alpha=0, covariance="precomputed").fit(emp_cov)
+    assert_allclose(model.precision_, np.linalg.inv(emp_cov))
+
+    _, precision = graphical_lasso(emp_cov, alpha=0)
+    assert_allclose(precision, np.linalg.inv(emp_cov))
+
+
+@pytest.mark.parametrize("mode", ["cd", "lars"])
+def test_graphical_lasso_n_iter(mode):
+    X, _ = datasets.make_classification(n_samples=5_000, n_features=20, random_state=0)
+    emp_cov = empirical_covariance(X)
+
+    _, _, n_iter = graphical_lasso(
+        emp_cov, 0.2, mode=mode, max_iter=2, return_n_iter=True
+    )
+    assert n_iter == 2
 
 
 def test_graphical_lasso_iris():
@@ -240,3 +270,17 @@ def test_graphical_lasso_cv_scores():
 
     assert_allclose(cov.cv_results_["mean_test_score"], expected_mean)
     assert_allclose(cov.cv_results_["std_test_score"], expected_std)
+
+
+# TODO(1.5): remove in 1.5
+def test_graphical_lasso_cov_init_deprecation():
+    """Check that we raise a deprecation warning if providing `cov_init` in
+    `graphical_lasso`."""
+    rng, dim, n_samples = np.random.RandomState(0), 20, 100
+    prec = make_sparse_spd_matrix(dim, alpha=0.95, random_state=0)
+    cov = linalg.inv(prec)
+    X = rng.multivariate_normal(np.zeros(dim), cov, size=n_samples)
+
+    emp_cov = empirical_covariance(X)
+    with pytest.warns(FutureWarning, match="cov_init parameter is deprecated"):
+        graphical_lasso(emp_cov, alpha=0.1, cov_init=emp_cov)

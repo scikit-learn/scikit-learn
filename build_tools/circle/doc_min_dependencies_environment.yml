@@ -1,0 +1,34 @@
+# DO NOT EDIT: this file is generated from the specification found in the
+# following script to centralize the configuration for CI builds:
+# build_tools/update_environments_and_lock_files.py
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8
+  - numpy=1.17.3  # min
+  - blas
+  - scipy=1.5.0  # min
+  - cython=0.29.33  # min
+  - joblib
+  - threadpoolctl
+  - matplotlib=3.3.4  # min
+  - pandas=1.0.5  # min
+  - pyamg
+  - pytest
+  - pytest-xdist=2.5.0
+  - pillow
+  - setuptools
+  - scikit-image=0.16.2  # min
+  - seaborn
+  - memory_profiler
+  - compilers
+  - sphinx=6.0.0  # min
+  - sphinx-gallery=0.10.1  # min
+  - sphinx-copybutton=0.5.2  # min
+  - numpydoc=1.2.0  # min
+  - sphinx-prompt=1.3.0  # min
+  - plotly=5.14.0  # min
+  - pooch
+  - pip
+  - pip:
+    - sphinxext-opengraph==0.4.2  # min

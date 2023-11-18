@@ -10,9 +10,9 @@ measurement encoded with a dictionary
 
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.linear_model import OrthogonalMatchingPursuit
-from sklearn.linear_model import OrthogonalMatchingPursuitCV
+
 from sklearn.datasets import make_sparse_coded_signal
+from sklearn.linear_model import OrthogonalMatchingPursuit, OrthogonalMatchingPursuitCV
 
 n_components, n_features = 512, 100
 n_nonzero_coefs = 17
@@ -28,8 +28,8 @@ y, X, w = make_sparse_coded_signal(
     n_features=n_features,
     n_nonzero_coefs=n_nonzero_coefs,
     random_state=0,
-    data_transposed=True,
 )
+X = X.T
 
 (idx,) = w.nonzero()
 

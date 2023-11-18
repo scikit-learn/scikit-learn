@@ -16,6 +16,7 @@ trained and evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
 
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 from sklearn.datasets import make_moons
 
 X, y = make_moons(noise=0.352, random_state=1, n_samples=100)

@@ -4,14 +4,14 @@
 channels:
   - defaults
 dependencies:
-  - python
+  - python=3.11
   - ccache
   - pip
   - pip:
     - threadpoolctl
     - pytest
     - pytest-xdist==2.5.0
-    - codecov
+    - setuptools
     - pytest-cov
     - coverage
     - pooch

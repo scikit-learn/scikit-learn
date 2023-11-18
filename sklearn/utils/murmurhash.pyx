@@ -124,11 +124,9 @@ def murmurhash3_32(key, seed=0, positive=False):
             raise TypeError(
                 "key.dtype should be int32, got %s" % key.dtype)
         if positive:
-            return _murmurhash3_bytes_array_u32(key.ravel(),
-                                               seed).reshape(key.shape)
+            return _murmurhash3_bytes_array_u32(key.ravel(), seed).reshape(key.shape)
         else:
-            return _murmurhash3_bytes_array_s32(key.ravel(),
-                                               seed).reshape(key.shape)
+            return _murmurhash3_bytes_array_s32(key.ravel(), seed).reshape(key.shape)
     else:
         raise TypeError(
             "key %r with type %s is not supported. "
