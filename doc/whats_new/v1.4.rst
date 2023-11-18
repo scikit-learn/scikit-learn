@@ -474,6 +474,10 @@ Changelog
   when `radius` is large and `algorithm="brute"` with non-Euclidean metrics.
   :pr:`26828` by :user:`Omar Salman <OmarManzoor>`.
 
+- |Fix| Improve error message for :class:`neighbors.LocalOutlierFactor`
+  when it is invoked with `n_samples = n_neighbors`.
+  :pr:`23317` by :user:`Bharat Raghunathan <Bharat123rox>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
