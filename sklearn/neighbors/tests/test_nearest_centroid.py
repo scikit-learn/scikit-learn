@@ -241,7 +241,7 @@ def test_manhattan_decision_func_error():
 
     clf = NearestCentroid(metric="manhattan", priors=[0.2, 0.8])
     clf.fit(X, y)
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         clf.decision_function(X)
 
 
@@ -251,7 +251,7 @@ def test_manhattan_pred_proba_error():
 
     clf = NearestCentroid(metric="manhattan", priors=[0.2, 0.8])
     clf.fit(X, y)
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         clf.predict_proba(X)
 
 
@@ -261,5 +261,5 @@ def test_manhattan_pred_log_proba_error():
 
     clf = NearestCentroid(metric="manhattan", priors=[0.2, 0.8])
     clf.fit(X, y)
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         clf.predict_log_proba(X)

@@ -19,9 +19,12 @@ from sklearn.metrics.pairwise import _VALID_METRICS
 
 from ..base import BaseEstimator, ClassifierMixin, _fit_context
 from ..discriminant_analysis import DiscriminantAnalysisPredictionMixin
-from ..metrics.pairwise import pairwise_distances_argmin
+from ..metrics.pairwise import (
+    pairwise_distances,
+    pairwise_distances_argmin,
+)
 from ..preprocessing import LabelEncoder
-from ..utils._array_api import get_namespace
+from ..utils._available_if import available_if
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.sparsefuncs import csc_median_axis_0
@@ -264,7 +267,16 @@ class NearestCentroid(
 
         # Compute within-class std_dev with unshrunked centroids
         variance = np.square(X - self.centroids_[y_ind])
+        if isinstance(variance, np.matrix):
+            variance = np.asarray(variance)
         self.within_class_std_ = np.sqrt(variance.sum(axis=0) / (n_samples - n_classes))
+
+        if not sp.issparse(self.within_class_std_):
+            if any(self.within_class_std_ == 0):
+                raise ValueError("self.within_class_std_ has at least one 0.")
+        else:
+            if any(self.within_class_std_.toarray() == 0):
+                raise ValueError("self.within_class_std_ has at least one 0.")
 
         if not is_X_sparse:
             if np.all(np.ptp(X, axis=0) == 0):
@@ -327,96 +339,37 @@ class NearestCentroid(
 
     def _decision_function(self, X):
         check_is_fitted(self, "centroids_")
-        is_X_sparse = sp.issparse(X)
+
         X = self._validate_data(X, reset=False, accept_sparse="csr")
-
-        xp, _ = get_namespace(X)
-
-        if not is_X_sparse and xp.any(xp.isnan(X)):
-            raise ValueError("Input array contains NaN.")
-        elif is_X_sparse and np.any(np.isnan(X.data)):
-            raise ValueError("Input array contains NaN.")
 
         discriminant_score = np.empty(
             (X.shape[0], self.classes_.size), dtype=np.float64
         )
 
         for cur_class in range(self.classes_.size):
-            Xdist = X - self.centroids_[cur_class, :]
-            Xdist_norm = np.square(Xdist / self.within_class_std_)
-            # Hastie et al. (2009), p. 652, Eq. (18.2)
+            Xdist_norm = pairwise_distances(
+                X / self.within_class_std_,
+                (self.centroids_[cur_class, :].reshape(1, -1) / self.within_class_std_),
+                metric=self.metric,
+            ).reshape(-1)
+            Xdist_norm = Xdist_norm**2
             discriminant_score[:, cur_class] = np.squeeze(
-                -np.sum(Xdist_norm, axis=1)
-                + 2.0 * np.log(self.class_priors_[cur_class])
+                -Xdist_norm + 2.0 * np.log(self.class_priors_[cur_class])
             )
 
         return discriminant_score
 
-    def decision_function(self, X):
-        """Apply decision function to an array of samples.
+    def _check_euclidean_metric(self):
+        return self.metric == "euclidean"
 
-        The estimation has been implemented according to
-        Hastie et al. (2009), p. 652 equation (18.2).
+    decision_function = available_if(_check_euclidean_metric)(
+        DiscriminantAnalysisPredictionMixin.decision_function
+    )
 
-        Note that this function is only supported for
-        ``euclidean`` metric.
+    predict_proba = available_if(_check_euclidean_metric)(
+        DiscriminantAnalysisPredictionMixin.predict_proba
+    )
 
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Array of samples (test vectors).
-
-        Returns
-        -------
-        C : ndarray of shape (n_samples,) or (n_samples, n_classes)
-            Decision function values related to each class, per sample.
-            In the two-class case, the shape is (n_samples,), giving the
-            log likelihood ratio of the positive class.
-        """
-        if self.metric == "euclidean":
-            return super().decision_function(X)
-        else:
-            raise TypeError("decision_function is only supported for Euclidean metric")
-
-    def predict_proba(self, X):
-        """Estimate class probabilities.
-
-        Note that this function is only supported for
-        ``euclidean`` metric.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Input data.
-
-        Returns
-        -------
-        y_proba : ndarray of shape (n_samples, n_classes)
-            Returns the probability estimate of the sample for each class in the
-            model, where classes are ordered as they are in `self.classes_`.
-        """
-        if self.metric == "euclidean":
-            return super().predict_proba(X)
-        else:
-            raise TypeError("predict_proba is only supported for Euclidean metric")
-
-    def predict_log_proba(self, X):
-        """Estimate log class probabilities.
-
-        Note that this function is only supported for
-        ``euclidean`` metric.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Input data.
-
-        Returns
-        -------
-        y_log_proba : ndarray of shape (n_samples, n_classes)
-            Estimated log probabilities.
-        """
-        if self.metric == "euclidean":
-            return super().predict_log_proba(X)
-        else:
-            raise TypeError("predict_log_proba is only supported for Euclidean metric")
+    predict_log_proba = available_if(_check_euclidean_metric)(
+        DiscriminantAnalysisPredictionMixin.predict_log_proba
+    )
