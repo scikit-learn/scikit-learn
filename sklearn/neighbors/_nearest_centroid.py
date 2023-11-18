@@ -70,7 +70,7 @@ class NearestCentroid(
         Threshold for shrinking centroids to remove features.
 
     priors : {"uniform", "empirical"} or array-like of shape (n_classes,), \
-    default="empirical"
+    default="uniform"
         The class prior probabilities. By default, the class proportions are
         inferred from the training data.
 
@@ -347,10 +347,16 @@ class NearestCentroid(
         )
 
         for cur_class in range(self.classes_.size):
+            X_norm = X / self.within_class_std_
+            if isinstance(X_norm, np.matrix):
+                X_norm = np.asarray(X_norm)
+            centroid_norm = (
+                self.centroids_[cur_class, :].reshape(1, -1) / self.within_class_std_
+            )
+            if isinstance(centroid_norm, np.matrix):
+                centroid_norm = np.asarray(centroid_norm)
             Xdist_norm = pairwise_distances(
-                X / self.within_class_std_,
-                (self.centroids_[cur_class, :].reshape(1, -1) / self.within_class_std_),
-                metric=self.metric,
+                X_norm, centroid_norm, metric=self.metric
             ).reshape(-1)
             Xdist_norm = Xdist_norm**2
             discriminant_score[:, cur_class] = np.squeeze(
