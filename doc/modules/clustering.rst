@@ -235,8 +235,11 @@ transform method of a trained model of :class:`KMeans`.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`: Example usage of KMeans
+ * :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`: Example usage of K-Means
    using the iris dataset
+
+ * :ref:`ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`: Example of
+   using K-Means for performing color quantization
 
 Low-level parallelism
 ---------------------
