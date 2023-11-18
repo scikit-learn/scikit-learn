@@ -1,13 +1,18 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
 from sklearn import base, datasets, linear_model, svm
 from sklearn.datasets import load_digits, make_blobs, make_classification
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.svm.tests import test_svm
-from sklearn.utils._testing import ignore_warnings, skip_if_32bit
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+    ignore_warnings,
+    skip_if_32bit,
+)
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.fixes import (
     CSR_CONTAINERS,
