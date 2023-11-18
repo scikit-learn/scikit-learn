@@ -15,7 +15,11 @@ X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 X_csr = sp.csr_matrix(X)  # Sparse matrix
 y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
+T_nan = np.asarray([[-1, -1], [2, 2], [3, 2]], dtype=np.float64)
+T_nan[0][0] = float("nan")
 T_csr = sp.csr_matrix(T)
+T_nan_csr = sp.csr_matrix(T_nan)
+T_zero_var = [[1, 2], [1, 2], [1, 2], [1, 2], [1, 2], [1, 2]]
 true_result = [-1, 1, 1]
 true_result_prior1 = [-1, 1, 1]
 
@@ -242,7 +246,7 @@ def test_manhattan_decision_func_error():
     clf = NearestCentroid(metric="manhattan", priors=[0.2, 0.8])
     clf.fit(X, y)
     with pytest.raises(AttributeError):
-        clf.decision_function(X)
+        clf.decision_function(T)
 
 
 def test_manhattan_pred_proba_error():
@@ -252,7 +256,7 @@ def test_manhattan_pred_proba_error():
     clf = NearestCentroid(metric="manhattan", priors=[0.2, 0.8])
     clf.fit(X, y)
     with pytest.raises(AttributeError):
-        clf.predict_proba(X)
+        clf.predict_proba(T)
 
 
 def test_manhattan_pred_log_proba_error():
@@ -262,4 +266,30 @@ def test_manhattan_pred_log_proba_error():
     clf = NearestCentroid(metric="manhattan", priors=[0.2, 0.8])
     clf.fit(X, y)
     with pytest.raises(AttributeError):
-        clf.predict_log_proba(X)
+        clf.predict_log_proba(T)
+
+
+def test_zero_var():
+    clf = NearestCentroid(priors=[0.2, 0.8])
+    with pytest.raises(ValueError):
+        clf.fit(T_zero_var, y)
+
+
+def test_sparse_shrink():
+    clf = NearestCentroid(priors=[0.2, 0.8], shrink_threshold=0.5)
+    with pytest.raises(ValueError):
+        clf.fit(X_csr, y)
+
+
+def test_nan():
+    clf = NearestCentroid(priors=[0.2, 0.8], shrink_threshold=0.5)
+    clf.fit(X, y)
+    with pytest.raises(ValueError):
+        clf.decision_function(T_nan)
+
+
+def test_nan_sparse():
+    clf = NearestCentroid(priors=[0.2, 0.8], shrink_threshold=0.5)
+    clf.fit(X, y)
+    with pytest.raises(ValueError):
+        clf.decision_function(T_nan_csr)
