@@ -19,8 +19,9 @@ from sklearn.metrics.pairwise import _VALID_METRICS
 
 from ..base import BaseEstimator, ClassifierMixin, _fit_context
 from ..discriminant_analysis import DiscriminantAnalysisPredictionMixin
-from ..metrics.pairwise import pairwise_distances, pairwise_distances_argmin
+from ..metrics.pairwise import pairwise_distances_argmin
 from ..preprocessing import LabelEncoder
+from ..utils._array_api import get_namespace
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.multiclass import check_classification_targets
 from ..utils.sparsefuncs import csc_median_axis_0
@@ -326,24 +327,27 @@ class NearestCentroid(
 
     def _decision_function(self, X):
         check_is_fitted(self, "centroids_")
-
+        is_X_sparse = sp.issparse(X)
         X = self._validate_data(X, reset=False, accept_sparse="csr")
 
-        # check if this works with sparse matrix formats later
+        xp, _ = get_namespace(X)
+
+        if not is_X_sparse and xp.any(xp.isnan(X)):
+            raise ValueError("Input array contains NaN.")
+        elif is_X_sparse and np.any(np.isnan(X.data)):
+            raise ValueError("Input array contains NaN.")
+
         discriminant_score = np.empty(
             (X.shape[0], self.classes_.size), dtype=np.float64
         )
 
         for cur_class in range(self.classes_.size):
-            # use pairwise_distances function instead. line 2093
-            Xdist_norm = pairwise_distances(
-                X / self.within_class_std_,
-                (self.centroids_[cur_class, :].reshape(1, -1) / self.within_class_std_),
-                metric=self.metric,
-            ).reshape(-1)
-            Xdist_norm = Xdist_norm**2
+            Xdist = X - self.centroids_[cur_class, :]
+            Xdist_norm = np.square(Xdist / self.within_class_std_)
+            # Hastie et al. (2009), p. 652, Eq. (18.2)
             discriminant_score[:, cur_class] = np.squeeze(
-                -Xdist_norm + 2.0 * np.log(self.class_priors_[cur_class])
+                -np.sum(Xdist_norm, axis=1)
+                + 2.0 * np.log(self.class_priors_[cur_class])
             )
 
         return discriminant_score
