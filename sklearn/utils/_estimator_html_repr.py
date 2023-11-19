@@ -21,8 +21,13 @@ class _IDCounter:
         return f"{self.prefix}-{self.count}"
 
 
+def _get_css_style():
+    return Path(__file__).with_suffix(".css").read_text(encoding="utf-8")
+
+
 _CONTAINER_ID_COUNTER = _IDCounter("sk-container-id")
 _ESTIMATOR_ID_COUNTER = _IDCounter("sk-estimator-id")
+_CSS_STYLE = _get_css_style()
 
 
 class _VisualBlock:
@@ -309,11 +314,6 @@ def _write_estimator_html(
         )
 
 
-with open(Path(__file__).with_suffix(".css"), "r") as style_file:
-    # use the style defined in the css file
-    _STYLE = style_file.read()
-
-
 def estimator_html_repr(estimator):
     """Build a HTML representation of an estimator.
 
@@ -350,7 +350,7 @@ def estimator_html_repr(estimator):
     )
     with closing(StringIO()) as out:
         container_id = _CONTAINER_ID_COUNTER.get_id()
-        style_template = Template(_STYLE)
+        style_template = Template(_CSS_STYLE)
         style_with_id = style_template.substitute(id=container_id)
         estimator_str = str(estimator)
 

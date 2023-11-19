@@ -741,11 +741,11 @@ def test_ecoc_delegate_sparse_base_estimator(csc_container):
     )
     ecoc = OutputCodeClassifier(base_estimator, random_state=0)
 
-    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+    with pytest.raises(TypeError, match="Sparse data was passed"):
         ecoc.fit(X_sp, y)
 
     ecoc.fit(X, y)
-    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+    with pytest.raises(TypeError, match="Sparse data was passed"):
         ecoc.predict(X_sp)
 
     # smoke test to check when sparse input should be supported
