@@ -325,12 +325,12 @@ class NearestCentroid(
         `self.centroids_`.
         """
         check_is_fitted(self)
-
         if len(np.unique(self.class_priors_, return_counts=True)[0]) == 1:
             X = self._validate_data(X, accept_sparse="csr", reset=False)
             return self.classes_[
                 pairwise_distances_argmin(X, self.centroids_, metric=self.metric)
             ]
+        # _validate_data() will validate data during call to super().predict(X)
         else:
             return super().predict(X)
 
