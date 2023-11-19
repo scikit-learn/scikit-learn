@@ -382,7 +382,7 @@ plt.show()
 # optimistic Mean Average Percentage Error (MAPE). The results
 # produced from the time-based split better represent the performance
 # of our time-series regression model. We also analyzed the predictive uncertainty
-# of our model via Quantile Regression. Predictions based on the 5th, 50th and
+# of our model via Quantile Regression. Predictions based on the 5th and
 # 95th percentile using `loss="quantile"` provide us with a quantitative estimate
 # of the uncertainty of the forecasts made by our time series regression model.
 # Uncertainty estimation can also be performed
