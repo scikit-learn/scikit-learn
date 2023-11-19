@@ -1035,7 +1035,7 @@ class OneHotEncoder(_BaseEncoder):
             capitalize_transform_output = transform_output.capitalize()
             raise ValueError(
                 f"{capitalize_transform_output} output does not support sparse data."
-                f" Set sparse_output=False to output {transform_output} DataFrames or"
+                f" Set sparse_output=False to output {transform_output} dataframes or"
                 f" disable {capitalize_transform_output} output via"
                 '` ohe.set_output(transform="default").'
             )

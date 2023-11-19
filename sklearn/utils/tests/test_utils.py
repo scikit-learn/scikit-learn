@@ -296,7 +296,7 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
 
     if isinstance(indices[0], str) and array_type != "dataframe":
         err_msg = (
-            "Specifying the columns using strings is only supported for DataFrames"
+            "Specifying the columns using strings is only supported for dataframes"
         )
         with pytest.raises(ValueError, match=err_msg):
             _safe_indexing(array, indices_converted, axis=1)
@@ -397,7 +397,7 @@ def test_safe_indexing_2d_scalar_axis_1(array_type, expected_output_type, indice
 
     if isinstance(indices, str) and array_type != "dataframe":
         err_msg = (
-            "Specifying the columns using strings is only supported for DataFrames"
+            "Specifying the columns using strings is only supported for dataframes"
         )
         with pytest.raises(ValueError, match=err_msg):
             _safe_indexing(array, indices, axis=1)
@@ -799,6 +799,10 @@ def test_get_column_indices_interchange():
     msg = "A given column is not a column of the dataframe"
     with pytest.raises(ValueError, match=msg):
         _get_column_indices(df_mocked, ["not_a_column"])
+
+    msg = "key.step must be 1 or None"
+    with pytest.raises(NotImplementedError, match=msg):
+        _get_column_indices(df_mocked, slice("a", None, 2))
 
 
 def test_polars_indexing():

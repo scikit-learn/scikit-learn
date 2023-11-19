@@ -4535,9 +4535,10 @@ def _check_generated_dataframe(
         E.g. `lambda X: isintance(X, pd.DataFrame)`.
     create_dataframe : callable
         A callable taking as parameters `data`, `columns`, and `index` and returns
-        a callable. Be aware that `index` can be ignore if not used.
+        a callable. Be aware that `index` can be ignored. For example, polars dataframes
+        would ignore the idnex.
     assert_frame_equal : callable
-        A callable taking 2 DataFrames to compare if they are equal.
+        A callable taking 2 dataframes to compare if they are equal.
     """
     X_trans, feature_names_default = outputs_default
     df_trans, feature_names_dataframe_lib = outputs_dataframe_lib
@@ -4586,14 +4587,15 @@ def _check_set_output_transform_dataframe(
     dataframe_lib : str
         The name of the library implementing the DataFrame.
     is_supported_dataframe : callable
-        not it is supported by the dataframe library.
         A callable that takes a DataFrame instance as input and returns whether or
+        not it is supported by the dataframe library.
         E.g. `lambda X: isintance(X, pd.DataFrame)`.
     create_dataframe : callable
         A callable taking as parameters `data`, `columns`, and `index` and returns
-        a callable. Be aware that `index` can be ignore if not used.
+        a callable. Be aware that `index` can be ignored. For example, polars dataframes
+        will ignore the index.
     assert_frame_equal : callable
-        A callable taking 2 DataFrames to compare if they are equal.
+        A callable taking 2 dataframes to compare if they are equal.
     context : {"local", "global"}
         Whether to use a local context by setting `set_output(...)` on the transformer
         or a global context by using the `with config_context(...)`
@@ -4631,10 +4633,10 @@ def _check_set_output_transform_dataframe(
             outputs_df = _output_from_fit_transform(transformer_df, name, X, df, y)
     except ValueError as e:
         # transformer does not support sparse data
-        capitalize_lib = dataframe_lib.capitalize()
+        capitalized_lib = dataframe_lib.capitalize()
         error_message = str(e)
         assert (
-            f"{capitalize_lib} output does not support sparse data." in error_message
+            f"{capitalized_lib} output does not support sparse data." in error_message
             or "The transformer outputs a scipy sparse matrix." in error_message
         ), e
         return

@@ -373,10 +373,12 @@ def _safe_indexing(X, indices, *, axis=0):
         and not (_is_pandas_df(X) or _use_interchange_protocol(X))
     ):
         raise ValueError(
-            "Specifying the columns using strings is only supported for DataFrames"
+            "Specifying the columns using strings is only supported for dataframes."
         )
 
     if hasattr(X, "iloc"):
+        # TODO: we should probably use _is_pandas_df(X) instead but this would
+        # require updating some tests such as test_train_test_split_mock_pandas.
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
     elif _is_polars_df(X):
         return _polars_indexing(X, indices, indices_dtype, axis=axis)
@@ -455,7 +457,7 @@ def _get_column_indices(X, key):
             all_columns = X.columns
         except AttributeError:
             raise ValueError(
-                "Specifying the columns using strings is only supported for DataFrames"
+                "Specifying the columns using strings is only supported for dataframes."
             )
         if isinstance(key, str):
             columns = [key]
@@ -490,6 +492,7 @@ def _get_column_indices(X, key):
 
 def _get_column_indices_interchange(X_interchange, key, key_dtype):
     """Same as _get_column_indices but for X with __dataframe__ protocol."""
+
     n_columns = X_interchange.num_columns()
 
     if isinstance(key, (list, tuple)) and not key:
@@ -501,6 +504,8 @@ def _get_column_indices_interchange(X_interchange, key, key_dtype):
         column_names = list(X_interchange.column_names())
 
         if isinstance(key, slice):
+            if key.step not in [1, None]:
+                raise NotImplementedError("key.step must be 1 or None")
             start, stop = key.start, key.stop
             if start is not None:
                 start = column_names.index(start)
