@@ -372,7 +372,6 @@ plt.show()
 # %%
 # Conclusion
 # ----------
-
 # Through this example we explored time series forecasting using lagged
 # features. We compared a naive regression (using the standardized
 # :class:`~sklearn.model_selection.train_test_split`) with a proper time
