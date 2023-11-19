@@ -41,6 +41,9 @@ random sampling procedures.
 Changes impacting all modules
 -----------------------------
 
+- |MajorFeature| Transformers now support polars output with `set_output(transform="polars")`.
+  :pr:`27315` by `Thomas Fan`_.
+
 - |Enhancement| All estimators now recognizes the column names from any dataframe
   that adopts the
   `DataFrame Interchange Protocol <https://data-apis.org/dataframe-protocol/latest/purpose_and_scope.html>`__.
