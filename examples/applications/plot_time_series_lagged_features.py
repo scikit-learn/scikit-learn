@@ -1,6 +1,6 @@
 """
 ===========================================
-Lagged Features for Time Series Forecasting
+Lagged features for time series forecasting
 ===========================================
 
 This example demonstrates how pandas-engineered lagged features can be used
@@ -52,7 +52,7 @@ df["season"].value_counts()
 
 
 # %%
-# Generating Pandas-Engineered Lagged Features
+# Generating pandas-engineered lagged features
 # --------------------------------------------
 # Let's consider the problem of predicting the demand at the
 # next hour given past demands. Since the demand is a continuous
@@ -122,7 +122,7 @@ y_pred = model.predict(X_test)
 mean_absolute_percentage_error(y_test, y_pred)
 
 # %%
-# Proper Next Hour Forecasting Evaluation
+# Proper next hour forecasting evaluation
 # ---------------------------------------
 # Let's use a proper evaluation splitting strategies that takes into account
 # the temporal structure of the dataset to evaluate our model's ability to
@@ -210,7 +210,7 @@ for loss_func in loss_functions:
 
 
 # %%
-# Modeling Predictive Uncertainty via Quantile Regression
+# Modeling predictive uncertainty via quantile regression
 # -------------------------------------------------------
 # Instead of modeling the expected value of the distribution of
 # :math:`Y|X` like the least squares and Poisson losses do, one could try to
@@ -256,7 +256,7 @@ scores
 # corresponds to the "gbrt_poisson" model. This is due to the local nature of
 # the Poisson Loss normalization.
 #
-# A Qualitative Look at the Predictions
+# A qualitative look at the predictions
 # -------------------------------------
 # We can now visualize the performance of the model with regards
 # to the 5th percentile, median and the 95th percentile:
