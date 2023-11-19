@@ -20,10 +20,13 @@ T_nan[0][0] = float("nan")
 T_csr = sp.csr_matrix(T)
 T_nan_csr = sp.csr_matrix(T_nan)
 T_zero_var = [[1, 2], [1, 2], [1, 2], [1, 2], [1, 2], [1, 2]]
+T_zero_var_csr = sp.csr_matrix([[1, 2], [1, 2], [1, 2], [1, 2], [1, 2], [1, 2]])
 true_result = [-1, 1, 1]
 true_result_prior1 = [-1, 1, 1]
 
 true_discriminant_scores = [-32, 64, 80]
+true_proba = [[1, 1.26642e-14], [1.60381e-28, 1], [1.80485e-35, 1]]
+
 
 # also load the iris dataset
 # and randomly permute it
@@ -40,12 +43,20 @@ def test_classification_toy():
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
     assert_array_almost_equal(clf.decision_function(T), true_discriminant_scores)
+    assert_array_almost_equal(clf.predict_proba(T), true_proba)
 
     # Test uniform priors
     clf = NearestCentroid(priors="uniform")
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
     assert_array_almost_equal(clf.decision_function(T), true_discriminant_scores)
+    assert_array_almost_equal(clf.predict_proba(T), true_proba)
+
+    clf = NearestCentroid(priors="empirical")
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert_array_almost_equal(clf.decision_function(T), true_discriminant_scores)
+    assert_array_almost_equal(clf.predict_proba(T), true_proba)
 
     # Test custom priors
     clf = NearestCentroid(priors=[0.25, 0.75])
@@ -277,6 +288,12 @@ def test_zero_var():
     clf = NearestCentroid(priors=[0.2, 0.8])
     with pytest.raises(ValueError):
         clf.fit(T_zero_var, y)
+
+
+def test_zero_var_csr():
+    clf = NearestCentroid(priors=[0.2, 0.8])
+    with pytest.raises(ValueError):
+        clf.fit(T_zero_var_csr, y)
 
 
 def test_nan():
