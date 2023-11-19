@@ -205,8 +205,6 @@ class NearestCentroid(
         else:
             X, y = self._validate_data(X, y, accept_sparse=["csr", "csc"])
         is_X_sparse = sp.issparse(X)
-        if is_X_sparse and self.shrink_threshold:
-            raise ValueError("threshold shrinking not supported for sparse input")
         check_classification_targets(y)
 
         n_samples, n_features = X.shape
@@ -239,7 +237,7 @@ class NearestCentroid(
 
         # Mask mapping each class to its members.
         self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)
-        self.deviations_ = np.empty((n_classes, n_features), dtype=np.float64)
+
         # Number of clusters in each class.
         nk = np.zeros(n_classes)
 
@@ -266,25 +264,22 @@ class NearestCentroid(
                 self.centroids_[cur_class] = X[center_mask].mean(axis=0)
 
         # Compute within-class std_dev with unshrunked centroids
-        variance = np.square(X - self.centroids_[y_ind])
-        if isinstance(variance, np.matrix):
-            variance = np.asarray(variance)
-        self.within_class_std_ = np.sqrt(variance.sum(axis=0) / (n_samples - n_classes))
+        variance = np.array(X - self.centroids_[y_ind], copy=False) ** 2
+        self.within_class_std_ = np.array(
+            np.sqrt(variance.sum(axis=0) / (n_samples - n_classes)), copy=False
+        )
+        if any(self.within_class_std_ == 0):
+            warnings.warn(
+                "self.within_class_std_ has at least 1 zerostandard deviation"
+            )
 
-        if not sp.issparse(self.within_class_std_):
-            if any(self.within_class_std_ == 0):
-                raise ValueError("self.within_class_std_ has at least one 0.")
-        else:
-            if any(self.within_class_std_.toarray() == 0):
-                raise ValueError("self.within_class_std_ has at least one 0.")
+        err_msg = "All features have zero variance. Division by zero."
+        if is_X_sparse and np.all((X.max(axis=0) - X.min(axis=0)).toarray() == 0):
+            raise ValueError(err_msg)
+        elif not is_X_sparse and np.all(np.ptp(X, axis=0) == 0):
+            raise ValueError(err_msg)
 
-        if not is_X_sparse:
-            if np.all(np.ptp(X, axis=0) == 0):
-                raise ValueError("All features have zero variance. Division by zero.")
-        else:
-            if np.all((X.max(axis=0) - X.min(axis=0)).toarray() == 0):
-                raise ValueError("All features have zero variance. Division by zero.")
-        dataset_centroid_ = np.mean(X, axis=0)
+        dataset_centroid_ = X.mean(axis=0)
         # m parameter for determining deviation
         m = np.sqrt((1.0 / nk) - (1.0 / n_samples))
         # Calculate deviation using the standard deviation of centroids.
@@ -292,7 +287,9 @@ class NearestCentroid(
         s = self.within_class_std_ + np.median(self.within_class_std_)
         mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
         ms = mm * s
-        self.deviations_ = (self.centroids_ - dataset_centroid_) / ms
+        self.deviations_ = np.array(
+            (self.centroids_ - dataset_centroid_) / ms, copy=False
+        )
         # Soft thresholding: if the deviation crosses 0 during shrinking,
         # it becomes zero.
         if self.shrink_threshold:
@@ -302,7 +299,7 @@ class NearestCentroid(
             self.deviations_ *= signs
             # Now adjust the centroids using the deviation
             msd = ms * self.deviations_
-            self.centroids_ = dataset_centroid_[np.newaxis, :] + msd
+            self.centroids_ = np.array(dataset_centroid_ + msd, copy=False)
         return self
 
     # TODO(1.5) remove note about precomputed metric
@@ -340,27 +337,26 @@ class NearestCentroid(
     def _decision_function(self, X):
         check_is_fitted(self, "centroids_")
 
-        X = self._validate_data(X, reset=False, accept_sparse="csr")
-
-        discriminant_score = np.empty(
-            (X.shape[0], self.classes_.size), dtype=np.float64
+        X_normalized = self._validate_data(
+            X, copy=True, reset=False, accept_sparse="csr", dtype=np.float64
         )
 
-        for cur_class in range(self.classes_.size):
-            X_norm = X / self.within_class_std_
-            if isinstance(X_norm, np.matrix):
-                X_norm = np.asarray(X_norm)
-            centroid_norm = (
-                self.centroids_[cur_class, :].reshape(1, -1) / self.within_class_std_
-            )
-            if isinstance(centroid_norm, np.matrix):
-                centroid_norm = np.asarray(centroid_norm)
-            Xdist_norm = pairwise_distances(
-                X_norm, centroid_norm, metric=self.metric
-            ).reshape(-1)
-            Xdist_norm = Xdist_norm**2
-            discriminant_score[:, cur_class] = np.squeeze(
-                -Xdist_norm + 2.0 * np.log(self.class_priors_[cur_class])
+        discriminant_score = np.empty(
+            (X_normalized.shape[0], self.classes_.size), dtype=np.float64
+        )
+
+        mask = self.within_class_std_ != 0
+        X_normalized[:, mask] /= self.within_class_std_[mask]
+        centroids_normalized = self.centroids_.copy()
+        centroids_normalized[:, mask] /= self.within_class_std_[mask]
+
+        for class_idx in range(self.classes_.size):
+            distances = pairwise_distances(
+                X_normalized, centroids_normalized[[class_idx]], metric=self.metric
+            ).ravel()
+            distances **= 2
+            discriminant_score[:, class_idx] = np.squeeze(
+                -distances + 2.0 * np.log(self.class_priors_[class_idx])
             )
 
         return discriminant_score

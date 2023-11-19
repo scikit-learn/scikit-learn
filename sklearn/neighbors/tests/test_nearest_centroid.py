@@ -23,6 +23,8 @@ T_zero_var = [[1, 2], [1, 2], [1, 2], [1, 2], [1, 2], [1, 2]]
 true_result = [-1, 1, 1]
 true_result_prior1 = [-1, 1, 1]
 
+true_discriminant_scores = [-32, 64, 80]
+
 # also load the iris dataset
 # and randomly permute it
 iris = datasets.load_iris()
@@ -37,11 +39,13 @@ def test_classification_toy():
     clf = NearestCentroid()
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
+    assert_array_almost_equal(clf.decision_function(T), true_discriminant_scores)
 
     # Test uniform priors
     clf = NearestCentroid(priors="uniform")
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
+    assert_array_almost_equal(clf.decision_function(T), true_discriminant_scores)
 
     # Test custom priors
     clf = NearestCentroid(priors=[0.25, 0.75])
@@ -273,12 +277,6 @@ def test_zero_var():
     clf = NearestCentroid(priors=[0.2, 0.8])
     with pytest.raises(ValueError):
         clf.fit(T_zero_var, y)
-
-
-def test_sparse_shrink():
-    clf = NearestCentroid(priors=[0.2, 0.8], shrink_threshold=0.5)
-    with pytest.raises(ValueError):
-        clf.fit(X_csr, y)
 
 
 def test_nan():
