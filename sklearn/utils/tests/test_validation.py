@@ -1728,16 +1728,9 @@ def test_get_feature_names_dataframe_protocol(constructor_name, minversion):
     assert_array_equal(feature_names, columns)
 
 
-@pytest.mark.parametrize(
-    "constructor_name, minversion",
-    [("pyarrow", "12.0.0"), ("dataframe", "1.5.0"), ("polars", "0.18.2")],
-)
-def test_is_pandas_df_other_libraries(constructor_name, minversion):
-    df = _convert_container(
-        [[1, 4, 2], [3, 3, 6]],
-        constructor_name,
-        minversion=minversion,
-    )
+@pytest.mark.parametrize("constructor_name", ["pyarrow", "dataframe", "polars"])
+def test_is_pandas_df_other_libraries(constructor_name):
+    df = _convert_container([[1, 4, 2], [3, 3, 6]], constructor_name)
     if constructor_name in ("pyarrow", "polars"):
         assert not _is_pandas_df(df)
     else:
