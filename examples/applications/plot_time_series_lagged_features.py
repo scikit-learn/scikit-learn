@@ -16,7 +16,7 @@ engineering.
 """
 
 # %%
-# Analyzing the Bike Sharing Demand Dataset
+# Analyzing the Bike Sharing Demand dataset
 # -----------------------------------------
 #
 # We start by loading the data from the OpenML repository.
