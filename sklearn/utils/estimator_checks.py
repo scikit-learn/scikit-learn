@@ -49,6 +49,7 @@ from ..model_selection._validation import _safe_split
 from ..pipeline import make_pipeline
 from ..preprocessing import StandardScaler, scale
 from ..random_projection import BaseRandomProjection
+from ..tree import DecisionTreeClassifier
 from ..utils._array_api import (
     _convert_to_numpy,
     get_namespace,
@@ -441,8 +442,8 @@ def _construct_instance(Estimator):
             else:
                 estimator = Estimator(
                     estimators=[
-                        ("est1", LogisticRegression(C=0.1)),
-                        ("est2", LogisticRegression(C=1)),
+                        ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
+                        ("est2", DecisionTreeClassifier(max_depth=4, random_state=0)),
                     ]
                 )
         else:

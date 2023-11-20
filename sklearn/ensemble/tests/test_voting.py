@@ -25,6 +25,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
+    _convert_container,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
@@ -247,19 +248,35 @@ def test_predict_proba_on_toy_problem():
         eclf.fit(X, y).predict_proba(X)
 
 
-def test_multilabel():
-    """Check if error is raised for multilabel classification."""
+@pytest.mark.parametrize("container_type", ["list", "array", "dataframe"])
+def test_voting_classifier_support_multilabel(container_type):
+    """Check support for multilabel classification."""
     X, y = make_multilabel_classification(
         n_classes=2, n_labels=1, allow_unlabeled=False, random_state=123
     )
+    y = _convert_container(y, container_type)
     clf = OneVsRestClassifier(SVC(kernel="linear"))
 
     eclf = VotingClassifier(estimators=[("ovr", clf)], voting="hard")
+    eclf.fit(X, y)
 
-    try:
-        eclf.fit(X, y)
-    except NotImplementedError:
-        return
+    assert eclf.le_ is None
+    assert isinstance(eclf.classes_, list)
+    assert len(eclf.classes_) == np.shape(y)[1]
+    for labels in eclf.classes_:
+        assert isinstance(labels, np.ndarray)
+        assert_array_equal(labels, np.array([0, 1]))
+
+    y_pred = eclf.predict(X)
+    assert isinstance(y_pred, np.ndarray)
+    assert y_pred.shape == np.shape(y)
+
+    eclf = VotingClassifier(
+        estimators=[("clf", RandomForestClassifier(random_state=0))],
+        voting="soft",
+    ).fit(X, y)
+    print(eclf.predict_proba(X).shape)
+    print(eclf.predict(X))
 
 
 def test_gridsearch():
