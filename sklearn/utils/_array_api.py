@@ -205,6 +205,10 @@ class _ArrayAPIWrapper:
     def __eq__(self, other):
         return self._namespace == other._namespace
 
+    @property
+    def newaxis(self):
+        return None
+
     def take(self, X, indices, *, axis=0):
         # TODO: Now that array_api supports `take` we should use this directly
         # https://github.com/data-apis/array-api/issues/177

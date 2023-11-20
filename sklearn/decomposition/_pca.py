@@ -22,7 +22,7 @@ from scipy.special import gammaln
 from ..base import _fit_context
 from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
-from ..utils._array_api import _is_numpy_namespace, _convert_to_numpy, get_namespace
+from ..utils._array_api import _convert_to_numpy, _is_numpy_namespace, get_namespace
 from ..utils._param_validation import Interval, RealNotInt, StrOptions
 from ..utils.deprecation import deprecated
 from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip

@@ -283,12 +283,12 @@ def _solve_svd(X, y, alpha, xp):
     U, s, Vt = xp.linalg.svd(X, full_matrices=False)
     idx = s > 1e-15  # same default value as scipy.linalg.pinv
     s_nnz = s[idx][:, xp.newaxis]
-    y = xp.reshape(y, (y.shape[0], -1))
     UTy = (U.T) @ y
     d = xp.zeros((s.size, alpha.size), dtype=X.dtype)
     d[idx] = s_nnz / (s_nnz**2 + alpha)
     d_UT_y = d * UTy
-    return (Vt.T @ d_UT_y).T
+    result = (Vt.T @ d_UT_y).T
+    return result
 
 
 def _solve_lbfgs(
@@ -683,7 +683,7 @@ def _ridge_regression(
         )
 
     # There should be either 1 or n_targets penalties
-    alpha = _asarray_with_order(alpha, dtype=alpha.dtype, order="C", copy=None, xp=xp)
+    alpha = _asarray_with_order(alpha, dtype=X.dtype, order="C", copy=None, xp=xp)
     alpha = xp.reshape(alpha, shape=(-1,), copy=False)
     if alpha.size not in [1, n_targets]:
         raise ValueError(

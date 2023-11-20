@@ -238,7 +238,7 @@ def _preprocess_data(
     xp, _ = get_namespace(X)
     device_ = device(X)
     dtype_ = X.dtype
-    n_samples, n_features = X
+    n_samples, n_features = X.shape
     _X_is_sparse = sp.issparse(X)
 
     if isinstance(sample_weight, numbers.Number):
@@ -248,7 +248,7 @@ def _preprocess_data(
 
     if check_input:
         X = check_array(
-            X, copy=copy, accept_sparse=["csr", "csc"], dtype=supported_float_dtypes()
+            X, copy=copy, accept_sparse=["csr", "csc"], dtype=supported_float_dtypes(xp)
         )
         y = check_array(y, dtype=X.dtype, copy=copy_y, ensure_2d=False)
     else:
@@ -278,7 +278,7 @@ def _preprocess_data(
                 # `normalize` is `True` or `False`
                 X_offset = _safe_per_col_average(X, sample_weight, xp=xp)
 
-            X_offset = X_offset.astype(X.dtype, copy=False)
+            X_offset = xp.astype(X_offset, X.dtype, copy=False)
             X -= X_offset
 
         if normalize:
@@ -406,12 +406,31 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         return self._decision_function(X)
 
     def _set_intercept(self, X_offset, y_offset, X_scale):
+        xp, _ = get_namespace(X_offset)
         """Set the intercept_"""
+
         if self.fit_intercept:
             # We always want coef_.dtype=X.dtype. For instance, X.dtype can differ from
             # coef_.dtype if warm_start=True.
-            self.coef_ = np.divide(self.coef_, X_scale, dtype=X_scale.dtype)
-            self.intercept_ = y_offset - np.dot(X_offset, self.coef_.T)
+            coef_ = self.coef_ = xp.divide(
+                xp.astype(self.coef_, X_scale.dtype), X_scale
+            )
+
+            ravel = False
+            if self.coef_.ndim == 1:
+                coef_ = xp.reshape(coef_, (1, -1))
+                ravel = True
+
+            intercept_ = y_offset - (X_offset @ (coef_.T))
+
+            if ravel:
+                intercept_ = _asarray_with_order(
+                    intercept_, dtype=intercept_.dtype, order="C", copy=None, xp=xp
+                )
+                intercept_ = xp.reshape(intercept_, shape=(-1,), copy=False)
+
+            self.intercept_ = intercept_
+
         else:
             self.intercept_ = 0.0
 
