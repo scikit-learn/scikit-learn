@@ -422,7 +422,7 @@ def _logistic_regression_path(
                 fit_intercept=fit_intercept,
             )
         target = Y_multi
-        if solver in "lbfgs":
+        if solver == "lbfgs":
             func = loss.loss_gradient
         elif solver == "newton-cg":
             func = loss.loss
@@ -449,6 +449,7 @@ def _logistic_regression_path(
             )
         warm_start_sag = {"coef": np.expand_dims(w0, axis=1)}
 
+    print(func)
     coefs = list()
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     for i, C in enumerate(Cs):
