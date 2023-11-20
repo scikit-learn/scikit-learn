@@ -6,8 +6,8 @@ from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
-from joblib import Memory
 
+from joblib import Memory
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estimator
 from sklearn.metrics import accuracy_score, roc_auc_score
@@ -25,7 +25,7 @@ parser.add_argument("--max-bins", type=int, default=255)
 parser.add_argument("--no-predict", action="store_true", default=False)
 parser.add_argument("--cache-loc", type=str, default="/tmp")
 parser.add_argument("--no-interactions", type=bool, default=False)
-parser.add_argument("--max-features", type=float, default=1)
+parser.add_argument("--max-features", type=float, default=1.0)
 args = parser.parse_args()
 
 HERE = os.path.dirname(__file__)
