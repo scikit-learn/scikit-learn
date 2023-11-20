@@ -5,9 +5,10 @@ from typing import NamedTuple
 import numpy as np
 
 from . import is_scalar_nan
+from .validation import _check_sample_weight
 
 
-def _unique(values, *, return_inverse=False, return_counts=False):
+def _unique(values, *, sample_weight=None, return_inverse=False, return_counts=False):
     """Helper function to find unique values with support for python objects.
 
     Uses pure python method for object dtype, and numpy method for
@@ -40,20 +41,63 @@ def _unique(values, *, return_inverse=False, return_counts=False):
     """
     if values.dtype == object:
         return _unique_python(
-            values, return_inverse=return_inverse, return_counts=return_counts
+            values,
+            return_inverse=return_inverse,
+            return_counts=return_counts,
+            sample_weight=sample_weight,
         )
     # numerical
     return _unique_np(
-        values, return_inverse=return_inverse, return_counts=return_counts
+        values,
+        return_inverse=return_inverse,
+        return_counts=return_counts,
+        sample_weight=sample_weight,
     )
 
 
-def _unique_np(values, return_inverse=False, return_counts=False):
+def _unique_groupby_sum(arr, sample_weight, return_inverse=False, return_counts=False):
+    """This functions behaves like np.unique but it counts the values of `arr` taking
+    into acount `samplt_weight`."""
+    sample_weight = _check_sample_weight(sample_weight, arr)
+
+    sorted_indices = np.argsort(arr)
+    sorted_arr = arr[sorted_indices]
+    sorted_sample_weight = sample_weight[sorted_indices]
+
+    unique_elements, unique_indices = np.unique(sorted_arr, return_index=True)
+    _, unique_inverse = np.unique(arr, return_inverse=True)
+
+    unique_indices = np.append(unique_indices, len(arr))
+    subarrays = np.split(sorted_sample_weight, unique_indices[1:])
+    group_sums = np.array(
+        [np.sum(subarray.astype(float)) for subarray in subarrays[:-1]]
+    )
+
+    results = [unique_elements]
+    if return_inverse:
+        results.append(unique_inverse)
+    if return_counts:
+        results.append(group_sums)
+
+    if len(results) > 1:
+        return tuple(results)
+    return results[0]
+
+
+def _unique_np(values, return_inverse=False, return_counts=False, sample_weight=None):
     """Helper function to find unique values for numpy arrays that correctly
     accounts for nans. See `_unique` documentation for details."""
-    uniques = np.unique(
-        values, return_inverse=return_inverse, return_counts=return_counts
-    )
+    if sample_weight is None:
+        uniques = np.unique(
+            values, return_inverse=return_inverse, return_counts=return_counts
+        )
+    else:
+        uniques = _unique_groupby_sum(
+            values,
+            sample_weight=sample_weight,
+            return_inverse=return_inverse,
+            return_counts=return_counts,
+        )
 
     inverse, counts = None, None
 
@@ -165,7 +209,7 @@ def _map_to_integer(values, uniques):
     return np.array([table[v] for v in values])
 
 
-def _unique_python(values, *, return_inverse, return_counts):
+def _unique_python(values, *, return_inverse, return_counts, sample_weight=None):
     # Only used in `_uniques`, see docstring there for details
     try:
         uniques_set = set(values)
@@ -186,7 +230,7 @@ def _unique_python(values, *, return_inverse, return_counts):
         ret += (_map_to_integer(values, uniques),)
 
     if return_counts:
-        ret += (_get_counts(values, uniques),)
+        ret += (_get_counts(values, uniques, sample_weight),)
 
     return ret[0] if len(ret) == 1 else ret
 
@@ -340,8 +384,11 @@ class _NaNCounter(Counter):
         raise KeyError(key)
 
 
-def _get_counts(values, uniques):
+def _get_counts(values, uniques, sample_weight=None):
     """Get the count of each of the `uniques` in `values`.
+
+    If `sample_weight` is not `None` then the count is actually the sum of
+    `sample_weight` for that unique value.
 
     The counts will use the order passed in by `uniques`. For non-object dtypes,
     `uniques` is assumed to be sorted and `np.nan` is at the end.
@@ -351,10 +398,17 @@ def _get_counts(values, uniques):
         output = np.zeros(len(uniques), dtype=np.int64)
         for i, item in enumerate(uniques):
             with suppress(KeyError):
-                output[i] = counter[item]
+                if sample_weight is None:
+                    output[i] = counter[item]
+                else:
+                    # TODO ohe_sw: I need to create tests for this. Is this
+                    # values == item working for NaN items?
+                    output[i] = np.sum(sample_weight[values == item])
         return output
 
-    unique_values, counts = _unique_np(values, return_counts=True)
+    unique_values, counts = _unique_np(
+        values, return_counts=True, sample_weight=sample_weight
+    )
 
     # Recorder unique_values based on input: `uniques`
     uniques_in_values = np.isin(uniques, unique_values, assume_unique=True)
