@@ -31,7 +31,12 @@ from ..utils import (
     column_or_1d,
     compute_sample_weight,
 )
-from ..utils._array_api import get_namespace
+from ..utils._array_api import (
+    _asarray_with_order,
+    _is_numpy_namespace,
+    device,
+    get_namespace,
+)
 from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.fixes import _sparse_linalg_cg
@@ -274,15 +279,16 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         return dual_coefs.T
 
 
-def _solve_svd(X, y, alpha):
-    U, s, Vt = linalg.svd(X, full_matrices=False)
+def _solve_svd(X, y, alpha, xp):
+    U, s, Vt = xp.linalg.svd(X, full_matrices=False)
     idx = s > 1e-15  # same default value as scipy.linalg.pinv
-    s_nnz = s[idx][:, np.newaxis]
-    UTy = np.dot(U.T, y)
-    d = np.zeros((s.size, alpha.size), dtype=X.dtype)
+    s_nnz = s[idx][:, xp.newaxis]
+    y = xp.reshape(y, (y.shape[0], -1))
+    UTy = (U.T) @ y
+    d = xp.zeros((s.size, alpha.size), dtype=X.dtype)
     d[idx] = s_nnz / (s_nnz**2 + alpha)
     d_UT_y = d * UTy
-    return np.dot(Vt.T, d_UT_y).T
+    return (Vt.T @ d_UT_y).T
 
 
 def _solve_lbfgs(
@@ -588,10 +594,15 @@ def _ridge_regression(
     check_input=True,
     fit_intercept=False,
 ):
+    xp, is_array_api_compliant = get_namespace(X)
+    device_ = device(X)
+
     has_sw = sample_weight is not None
 
     if solver == "auto":
-        if positive:
+        if is_array_api_compliant and not _is_numpy_namespace(xp):
+            solver = "svd"
+        elif positive:
             solver = "lbfgs"
         elif return_intercept:
             # sag supports fitting intercept directly
@@ -628,7 +639,7 @@ def _ridge_regression(
         )
 
     if check_input:
-        _dtype = [np.float64, np.float32]
+        _dtype = [xp.float64, xp.float32]
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
         X = check_array(X, accept_sparse=_accept_sparse, dtype=_dtype, order="C")
         y = check_array(y, dtype=X.dtype, ensure_2d=False, order=None)
@@ -641,7 +652,7 @@ def _ridge_regression(
 
     ravel = False
     if y.ndim == 1:
-        y = y.reshape(-1, 1)
+        y = xp.reshape(y, (-1, 1))
         ravel = True
 
     n_samples_, n_targets = y.shape
@@ -662,7 +673,7 @@ def _ridge_regression(
 
     # Some callers of this method might pass alpha as single
     # element array which already has been validated.
-    if alpha is not None and not isinstance(alpha, np.ndarray):
+    if alpha is not None and not isinstance(alpha, type(xp.asarray([0.0]))):
         alpha = check_scalar(
             alpha,
             "alpha",
@@ -672,7 +683,8 @@ def _ridge_regression(
         )
 
     # There should be either 1 or n_targets penalties
-    alpha = np.asarray(alpha, dtype=X.dtype).ravel()
+    alpha = _asarray_with_order(alpha, dtype=alpha.dtype, order="C", copy=None, xp=xp)
+    alpha = xp.reshape(alpha, shape=(-1,), copy=False)
     if alpha.size not in [1, n_targets]:
         raise ValueError(
             "Number of targets and number of penalties do not correspond: %d != %d"
@@ -680,7 +692,9 @@ def _ridge_regression(
         )
 
     if alpha.size == 1 and n_targets > 1:
-        alpha = np.repeat(alpha, n_targets)
+        alpha = xp.full(
+            shape=(n_targets,), fill_value=alpha, dtype=alpha.dtype, device=device_
+        )
 
     n_iter = None
     if solver == "sparse_cg":
@@ -780,11 +794,12 @@ def _ridge_regression(
     if solver == "svd":
         if sparse.issparse(X):
             raise TypeError("SVD solver does not support sparse inputs currently")
-        coef = _solve_svd(X, y, alpha)
+        coef = _solve_svd(X, y, alpha, xp)
 
     if ravel:
         # When y was passed as a 1d-array, we flatten the coefficients.
-        coef = coef.ravel()
+        coef = _asarray_with_order(coef, dtype=coef.dtype, order="C", copy=None, xp=xp)
+        coef = xp.reshape(coef, shape=(-1,), copy=False)
 
     if return_n_iter and return_intercept:
         return coef, n_iter, intercept
@@ -1159,6 +1174,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             Fitted estimator.
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
+
+        xp, _ = get_namespace(X)
+
         X, y = self._validate_data(
             X,
             y,

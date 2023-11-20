@@ -340,10 +340,12 @@ def _rescale_data(X, y, sample_weight, inplace=False):
 
     y_rescaled : {array-like, sparse matrix}
     """
+    xp, _ = get_namespace(X)
+
     # Assume that _validate_data and _check_sample_weight have been called by
     # the caller.
     n_samples = X.shape[0]
-    sample_weight_sqrt = np.sqrt(sample_weight)
+    sample_weight_sqrt = xp.sqrt(sample_weight)
 
     if sp.issparse(X) or sp.issparse(y):
         sw_matrix = sparse.dia_matrix(
@@ -354,9 +356,9 @@ def _rescale_data(X, y, sample_weight, inplace=False):
         X = safe_sparse_dot(sw_matrix, X)
     else:
         if inplace:
-            X *= sample_weight_sqrt[:, np.newaxis]
+            X *= sample_weight_sqrt[:, xp.newaxis]
         else:
-            X = X * sample_weight_sqrt[:, np.newaxis]
+            X = X * sample_weight_sqrt[:, xp.newaxis]
 
     if sp.issparse(y):
         y = safe_sparse_dot(sw_matrix, y)
@@ -365,12 +367,12 @@ def _rescale_data(X, y, sample_weight, inplace=False):
             if y.ndim == 1:
                 y *= sample_weight_sqrt
             else:
-                y *= sample_weight_sqrt[:, np.newaxis]
+                y *= sample_weight_sqrt[:, xp.newaxis]
         else:
             if y.ndim == 1:
                 y = y * sample_weight_sqrt
             else:
-                y = y * sample_weight_sqrt[:, np.newaxis]
+                y = y * sample_weight_sqrt[:, xp.newaxis]
     return X, y, sample_weight_sqrt
 
 

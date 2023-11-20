@@ -410,7 +410,14 @@ def get_namespace(*arrays):
     # message in case it is missing.
     import array_api_compat
 
-    namespace, is_array_api_compliant = array_api_compat.get_namespace(*arrays), True
+    try:
+        namespace, is_array_api_compliant = (
+            array_api_compat.get_namespace(*arrays),
+            True,
+        )
+    except TypeError as e:
+        if "The input is not a supported array type" in repr(e):
+            return _NUMPY_API_WRAPPER_INSTANCE, False
 
     # These namespaces need additional wrapping to smooth out small differences
     # between implementations
