@@ -15,9 +15,7 @@ class Perceptron(BaseSGDClassifier):
         SGDClassifier(loss="perceptron", learning_rate="constant")
 
     Other available parameters are described below and are forwarded to
-    :class:`~sklearn.linear_model.SGDClassifier`. Refer to
-    :ref:`mathematical section <sgd_mathematical_formulation>` of the SGD procedure for
-    more details.
+    :class:`~sklearn.linear_model.SGDClassifier`.
 
     Read more in the :ref:`User Guide <perceptron>`.
 
