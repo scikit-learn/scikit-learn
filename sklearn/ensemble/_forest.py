@@ -516,7 +516,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             n_more_estimators > 0 or not hasattr(self, "oob_score_")
         ):
             y_type = type_of_target(y)
-            if y_type in ("multiclass-multioutput", "unknown"):
+            if y_type == "unknown" or (
+                y_type == "multiclass-multioutput"
+                and isinstance(self, (RandomForestClassifier, ExtraTreesClassifier))
+            ):
                 # FIXME: we could consider to support multiclass-multioutput if
                 # we introduce or reuse a constructor parameter (e.g.
                 # oob_score) allowing our user to pass a callable defining the
