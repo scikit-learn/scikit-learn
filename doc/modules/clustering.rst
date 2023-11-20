@@ -182,6 +182,9 @@ It suffers from various drawbacks:
    :align: center
    :scale: 50
 
+For more detailed descriptions of the issues shown above and how to address them,
+refer to this example: :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`.
+
 K-means is often referred to as Lloyd's algorithm. In basic terms, the
 algorithm has three steps. The first step chooses the initial centroids, with
 the most basic method being to choose :math:`k` samples from the dataset
@@ -231,18 +234,14 @@ weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.
 
 K-means can be used for vector quantization. This is achieved using the
-transform method of a trained model of :class:`KMeans`.
+transform method of a trained model of :class:`KMeans`. For an example of
+performing vector quantization on an image refer to
+:ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
 
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_cluster_iris.py`: Example usage of K-Means
    using the iris dataset
-
- * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`: Examples of common
-   problems with the K-Means algorithm and how to address them
-
- * :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`: Example of
-   using K-Means for performing color quantization
 
 Low-level parallelism
 ---------------------
