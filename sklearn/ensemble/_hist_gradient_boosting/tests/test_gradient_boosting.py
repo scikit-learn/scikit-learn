@@ -1019,6 +1019,7 @@ def test_categorical_encoding_strategies():
         clf_cat = HistGradientBoostingClassifier(
             max_iter=1, max_depth=1, categorical_features=native_cat_spec
         )
+        clf_cat.fit(X, y)
 
         # Using native categorical encoding, we get perfect predictions with just
         # one split
@@ -1193,7 +1194,7 @@ def test_categorical_bad_encoding_errors(Est, use_pandas, feature_name):
     msg = (
         f"Categorical feature {feature_name} is expected to be encoded "
         "with values < 2 but the largest value for the encoded categories "
-        "is 2.0."
+        "is 2."
     )
     with pytest.raises(ValueError, match=msg):
         gb.fit(X, y)
@@ -1387,3 +1388,120 @@ def test_unknown_category_that_are_negative():
     X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
 
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
+
+
+@pytest.mark.parametrize(
+    "HistGradientBoosting",
+    [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
+)
+def test_pandas_categorical_results_same_as_ndarray(HistGradientBoosting):
+    """Check that pandas categorical give the same results as ndarray."""
+    pd = pytest.importorskip("pandas")
+
+    rng = np.random.RandomState(42)
+    n_samples = 5_000
+    n_cardinality = 50
+    max_bins = 100
+    f_num = rng.rand(n_samples)
+    f_cat = rng.randint(n_cardinality, size=n_samples)
+
+    # Make f_cat an informative feature
+    y = (f_cat % 3 == 0) & (f_num > 0.2)
+
+    X = np.c_[f_num, f_cat]
+    X_df = pd.DataFrame(
+        {"f_num": f_num, "f_cat": pd.Series(f_cat, dtype="category")},
+        columns=["f_num", "f_cat"],
+    )
+
+    X_train, X_test, X_train_df, X_test_df, y_train, y_test = train_test_split(
+        X, X_df, y, random_state=0
+    )
+
+    hist_kwargs = dict(max_iter=10, max_bins=max_bins, random_state=0)
+    hist_np = HistGradientBoosting(categorical_features=[False, True], **hist_kwargs)
+    hist_np.fit(X_train, y_train)
+
+    hist_pd = HistGradientBoosting(categorical_features="from_dtype", **hist_kwargs)
+    hist_pd.fit(X_train_df, y_train)
+
+    # Check categories are correct and sorted
+    categories = hist_pd._preprocessor.named_transformers_["encoder"].categories[0]
+    assert_array_equal(categories, np.unique(f_cat))
+
+    assert len(hist_np._predictors) == len(hist_pd._predictors)
+    for predictor_1, predictor_2 in zip(hist_np._predictors, hist_pd._predictors):
+        assert len(predictor_1[0].nodes) == len(predictor_2[0].nodes)
+
+    score_np = hist_np.score(X_test, y_test)
+    score_pd = hist_pd.score(X_test_df, y_test)
+    assert score_np == pytest.approx(score_pd)
+    assert_allclose(hist_np.predict(X_test), hist_pd.predict(X_test_df))
+
+
+@pytest.mark.parametrize(
+    "HistGradientBoosting",
+    [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
+)
+def test_pandas_categorical_errors(HistGradientBoosting):
+    """Check error cases for pandas categorical feature."""
+    pd = pytest.importorskip("pandas")
+
+    msg = "Categorical feature 'f_cat' is expected to have a cardinality <= 16"
+    hist = HistGradientBoosting(categorical_features="from_dtype", max_bins=16)
+
+    rng = np.random.RandomState(42)
+    f_cat = rng.randint(0, high=100, size=100)
+    X_df = pd.DataFrame({"f_cat": pd.Series(f_cat, dtype="category")})
+    y = rng.randint(0, high=2, size=100)
+
+    with pytest.raises(ValueError, match=msg):
+        hist.fit(X_df, y)
+
+
+def test_categorical_different_order_same_model():
+    """Check that the order of the categorical gives same model."""
+    pd = pytest.importorskip("pandas")
+    rng = np.random.RandomState(42)
+    n_samples = 1_000
+    f_ints = rng.randint(low=0, high=2, size=n_samples)
+
+    # Construct a target with some noise
+    y = f_ints.copy()
+    flipped = rng.choice([True, False], size=n_samples, p=[0.1, 0.9])
+    y[flipped] = 1 - y[flipped]
+
+    # Construct categorical where 0 -> A and 1 -> B and 1 -> A and 0 -> B
+    f_cat = pd.Categorical(f_ints)
+    f_cat_a_b = f_cat.rename_categories({0: "A", 1: "B"})
+    f_cat_b_a = f_cat.rename_categories({0: "B", 1: "A"})
+
+    df_a_b = pd.DataFrame({"f_cat": f_cat_a_b})
+    df_b_a = pd.DataFrame({"f_cat": f_cat_b_a})
+
+    hist_a_b = HistGradientBoostingClassifier(
+        categorical_features="from_dtype", random_state=0
+    )
+    hist_b_a = HistGradientBoostingClassifier(
+        categorical_features="from_dtype", random_state=0
+    )
+
+    hist_a_b.fit(df_a_b, y)
+    hist_b_a.fit(df_b_a, y)
+
+    assert len(hist_a_b._predictors) == len(hist_b_a._predictors)
+    for predictor_1, predictor_2 in zip(hist_a_b._predictors, hist_b_a._predictors):
+        assert len(predictor_1[0].nodes) == len(predictor_2[0].nodes)
+
+
+# TODO(1.6): Remove warning and change default in 1.6
+def test_categorical_features_warn():
+    """Raise warning when there are categorical features in the input DataFrame."""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"a": pd.Series([1, 2, 3], dtype="category"), "b": [4, 5, 6]})
+    y = [0, 1, 0]
+    hist = HistGradientBoostingClassifier(random_state=0)
+
+    msg = "The categorical_features parameter will change to 'from_dtype' in v1.6"
+    with pytest.warns(FutureWarning, match=msg):
+        hist.fit(X, y)
