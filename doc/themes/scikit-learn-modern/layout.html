@@ -9,8 +9,9 @@
 {%- set lang_attr = 'en' %}
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="{{ lang_attr }}" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="{{ lang_attr }}" > <!--<![endif]-->
+<!-- data-theme below is forced to be "light" but should be changed if we use pydata-theme-sphinx in the future -->
+<!--[if IE 8]><html class="no-js lt-ie9" lang="{{ lang_attr }}" data-content_root="{{ url_root }}" data-theme="light"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="{{ lang_attr }}" data-content_root="{{ url_root }}" data-theme="light"> <!--<![endif]-->
 <head>
   <meta charset="utf-8">
   {{ metatags }}
@@ -34,8 +35,9 @@
     {%- endif %}
   {%- endfor %}
   <link rel="stylesheet" href="{{ pathto('_static/' + styles[0], 1) }}" type="text/css" />
-<script id="documentation_options" data-url_root="{{ pathto('', 1) }}" src="{{ pathto('_static/documentation_options.js', 1) }}"></script>
+<script id="documentation_options" data-url_root="{{ url_root }}" src="{{ pathto('_static/documentation_options.js', 1) }}"></script>
 <script src="{{ pathto('_static/js/vendor/jquery-3.6.3.slim.min.js', 1) }}"></script>
+<script src="{{ pathto('_static/js/details-permalink.js', 1) }}"></script>
 {%- block extrahead %} {% endblock %}
 </head>
 <body>

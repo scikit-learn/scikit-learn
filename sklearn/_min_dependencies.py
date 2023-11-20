@@ -14,7 +14,7 @@ else:
     NUMPY_MIN_VERSION = "1.17.3"
 
 SCIPY_MIN_VERSION = "1.5.0"
-JOBLIB_MIN_VERSION = "1.1.1"
+JOBLIB_MIN_VERSION = "1.2.0"
 THREADPOOLCTL_MIN_VERSION = "2.0.0"
 PYTEST_MIN_VERSION = "7.1.2"
 CYTHON_MIN_VERSION = "0.29.33"
@@ -29,7 +29,7 @@ dependent_packages = {
     "joblib": (JOBLIB_MIN_VERSION, "install"),
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
-    "matplotlib": ("3.1.3", "benchmark, docs, examples, tests"),
+    "matplotlib": ("3.3.4", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.16.2", "docs, examples, tests"),
     "pandas": ("1.0.5", "benchmark, docs, examples, tests"),
     "seaborn": ("0.9.0", "docs, examples"),
@@ -40,7 +40,7 @@ dependent_packages = {
     "black": ("23.3.0", "tests"),
     "mypy": ("1.3", "tests"),
     "pyamg": ("4.0.0", "tests"),
-    "polars": ("0.18.2", "tests"),
+    "polars": ("0.19.12", "tests"),
     "pyarrow": ("12.0.0", "tests"),
     "sphinx": ("6.0.0", "docs"),
     "sphinx-copybutton": ("0.5.2", "docs"),
@@ -53,7 +53,7 @@ dependent_packages = {
     "plotly": ("5.14.0", "docs, examples"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
-    "conda-lock": ("2.1.1", "maintenance"),
+    "conda-lock": ("2.4.2", "maintenance"),
 }
 
 

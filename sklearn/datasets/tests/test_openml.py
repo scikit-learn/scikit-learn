@@ -1088,7 +1088,7 @@ def test_fetch_openml_auto_mode(monkeypatch, data_id, data_type):
     pd = pytest.importorskip("pandas")
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    data = fetch_openml(data_id=data_id, as_frame="auto", parser="auto", cache=False)
+    data = fetch_openml(data_id=data_id, as_frame="auto", cache=False)
     klass = pd.DataFrame if data_type == "dataframe" else scipy.sparse.csr_matrix
     assert isinstance(data.data, klass)
 
@@ -1667,18 +1667,3 @@ def test_fetch_openml_quotechar_escapechar(monkeypatch):
     adult_pandas = fetch_openml(parser="pandas", **common_params)
     adult_liac_arff = fetch_openml(parser="liac-arff", **common_params)
     pd.testing.assert_frame_equal(adult_pandas.frame, adult_liac_arff.frame)
-
-
-###############################################################################
-# Deprecation-changed parameters
-
-
-# TODO(1.4): remove this test
-def test_fetch_openml_deprecation_parser(monkeypatch):
-    """Check that we raise a deprecation warning for parser parameter."""
-    pytest.importorskip("pandas")
-    data_id = 61
-    _monkey_patch_webbased_functions(monkeypatch, data_id=data_id, gzip_response=False)
-
-    with pytest.warns(FutureWarning, match="The default value of `parser` will change"):
-        sklearn.datasets.fetch_openml(data_id=data_id)
