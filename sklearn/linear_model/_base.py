@@ -36,7 +36,6 @@ from ..preprocessing._data import _is_constant_feature
 from ..utils import check_array, check_random_state
 from ..utils._array_api import (
     _asarray_with_order,
-    _safe_per_col_average,
     device,
     get_namespace,
     supported_float_dtypes,
@@ -47,7 +46,11 @@ from ..utils._seq_dataset import (
     CSRDataset32,
     CSRDataset64,
 )
-from ..utils.extmath import _incremental_mean_and_var, safe_sparse_dot
+from ..utils.extmath import (
+    _incremental_mean_and_var,
+    _safe_average_axis0,
+    safe_sparse_dot,
+)
 from ..utils.parallel import Parallel, delayed
 from ..utils.sparsefuncs import inplace_column_scale, mean_variance_axis
 from ..utils.validation import _check_sample_weight, check_is_fitted
@@ -272,11 +275,11 @@ def _preprocess_data(
                     sample_weight=sample_weight,
                 )
             else:
-                # NB: linear models do not work with missing values
-                # so we don't worry about the different support for
-                # missing values for `X_offset` depending on if
-                # `normalize` is `True` or `False`
-                X_offset = _safe_per_col_average(X, sample_weight, xp=xp)
+                # NB: linear models will filter out inputs with missing values
+                # earlier in the pipeline so it can be assumed here that X does not
+                # contain any. Hence we don't have to worry that missing values would
+                # be handled differently when `normalize` is `True` or `False`.
+                X_offset = _safe_average_axis0(X, sample_weight, xp=xp)
 
             X_offset = xp.astype(X_offset, X.dtype, copy=False)
             X -= X_offset
@@ -300,7 +303,7 @@ def _preprocess_data(
         else:
             X_scale = xp.ones(n_features, dtype=dtype_, device=device_)
 
-        y_offset = _safe_per_col_average(y, sample_weight)
+        y_offset = _safe_average_axis0(y, sample_weight)
         y -= y_offset
     else:
         X_offset = xp.zeros(n_features, dtype=dtype_, device=device_)

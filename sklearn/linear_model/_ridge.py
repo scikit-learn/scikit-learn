@@ -33,7 +33,6 @@ from ..utils import (
 )
 from ..utils._array_api import (
     _asarray_with_order,
-    _is_numpy_namespace,
     device,
     get_namespace,
 )
@@ -287,8 +286,7 @@ def _solve_svd(X, y, alpha, xp):
     d = xp.zeros((s.size, alpha.size), dtype=X.dtype)
     d[idx] = s_nnz / (s_nnz**2 + alpha)
     d_UT_y = d * UTy
-    result = (Vt.T @ d_UT_y).T
-    return result
+    return (Vt.T @ d_UT_y).T
 
 
 def _solve_lbfgs(
@@ -600,7 +598,7 @@ def _ridge_regression(
     has_sw = sample_weight is not None
 
     if solver == "auto":
-        if is_array_api_compliant and not _is_numpy_namespace(xp):
+        if is_array_api_compliant:
             solver = "svd"
         elif positive:
             solver = "lbfgs"
@@ -1181,7 +1179,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             X,
             y,
             accept_sparse=_accept_sparse,
-            dtype=[np.float64, np.float32],
+            dtype=[xp.float64, xp.float32],
             multi_output=True,
             y_numeric=True,
         )

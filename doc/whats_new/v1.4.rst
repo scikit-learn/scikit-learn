@@ -283,8 +283,8 @@ Changelog
   :user:`Olivier Grisel <ogrisel>` and :user:`Edoardo Abati <EdAbati>`.
 
 - |Enhancement| :class:`linear_model.Ridge` now supports the Array API for the
-  `TODO` and `TODO` solvers. See :ref:`array_api` for more details.
-  :pr:`TODO` :user:`Franck Charras <fcharras>`, :user:`TODO <TODO>` and
+  `svd` solver. See :ref:`array_api` for more details.
+  :pr:`27800` by :user:`Franck Charras <fcharras>`, :user:`TODO <TODO>` and
   :user:`TODO <TODO>`.
 
 - |Feature| :class:`decomposition.PCA` now supports :class:`scipy.sparse.sparray`
