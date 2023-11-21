@@ -13,13 +13,13 @@ thousands of samples (see
 
 The top usability features of HGBT models are:
 
-1. :ref:`categorical_support_gbdt` (see
-   :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`).
-1. Early stopping.
-1. :ref:`nan_support_hgbt`, which avoids the need for an imputer.
-1. Support for several losses such as the :ref:`Quantile loss <quantile_support_hgbdt>`.
-1. :ref:`monotonic_cst_gbdt`.
-1. :ref:`interaction_cst_hgbt`.
+- :ref:`categorical_support_gbdt` (see
+  :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`).
+- Early stopping.
+- :ref:`nan_support_hgbt`, which avoids the need for an imputer.
+- Support for several losses such as the :ref:`Quantile loss <quantile_support_hgbdt>`.
+- :ref:`monotonic_cst_gbdt`.
+- :ref:`interaction_cst_hgbt`.
 
 This example aims at showcasing points 2-5 in a real life setting.
 """
