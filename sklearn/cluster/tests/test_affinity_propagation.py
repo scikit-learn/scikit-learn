@@ -106,7 +106,7 @@ def test_affinity_propagation_affinity_shape():
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_affinity_propagation_precomputed_with_sparse_input(csr_container):
-    err_msg = "A sparse matrix was passed, but dense data is required"
+    err_msg = "Sparse data was passed for X, but dense data is required"
     with pytest.raises(TypeError, match=err_msg):
         AffinityPropagation(affinity="precomputed").fit(csr_container((3, 3)))
 

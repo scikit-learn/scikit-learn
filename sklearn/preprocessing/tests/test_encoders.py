@@ -1600,7 +1600,7 @@ def test_ohe_more_informative_error_message():
 
     msg = (
         "Pandas output does not support sparse data. Set "
-        "sparse_output=False to output pandas DataFrames or disable pandas output"
+        "sparse_output=False to output pandas dataframes or disable Pandas output"
     )
     with pytest.raises(ValueError, match=msg):
         ohe.fit_transform(df)
@@ -1790,7 +1790,7 @@ def test_ordinal_encoder_sparse(csr_container):
 
     encoder = OrdinalEncoder()
 
-    err_msg = "A sparse matrix was passed, but dense data is required"
+    err_msg = "Sparse data was passed, but dense data is required"
     with pytest.raises(TypeError, match=err_msg):
         encoder.fit(X_sparse)
     with pytest.raises(TypeError, match=err_msg):
