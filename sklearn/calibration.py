@@ -75,8 +75,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     `ensemble=False`, cross-validation is used to obtain unbiased predictions,
     via :func:`~sklearn.model_selection.cross_val_predict`, which are then
     used for calibration. For prediction, the base estimator, trained using all
-    the data, is used. This is the method implemented when `probabilities=True`
-    for :mod:`sklearn.svm` estimators.
+    the data, is used. This is the prediction method implemented when
+    `probabilities=True` for :class:`~sklearn.svm.SVC` and :class:`~sklearn.svm.NuSVC`
+    estimators (see :ref:`User Guide <scores_probabilities>` for details).
 
     Already fitted classifiers can be calibrated via the parameter
     `cv="prefit"`. In this case, no cross-validation is used and all provided
