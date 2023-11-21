@@ -1600,6 +1600,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         X_out : ndarray of shape (n_samples, n_features)
             Transformed input.
         """
+        check_is_fitted(self, "categories_")
         X_int, X_mask = self._transform(
             X,
             handle_unknown=self.handle_unknown,
