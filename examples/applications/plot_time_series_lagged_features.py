@@ -208,6 +208,7 @@ for loss_func in loss_functions:
         y,
         cv=ts_cv,
         scoring=scoring,
+        n_jobs=2,
     )
     time = cv_results["fit_time"]
     scores["loss"].append(loss_func)
@@ -246,6 +247,7 @@ for quantile in quantile_list:
         y,
         cv=ts_cv,
         scoring=scoring,
+        n_jobs=2,
     )
     time = cv_results["fit_time"]
     scores["fit_time"].append(f"{time.mean():.2f} ± {time.std():.2f} s")
@@ -288,11 +290,12 @@ styled_df_copy
 
 
 # %%
-# The minimal value for the Mean Pinball Loss is achieved by the GBRT
-# with the corresponding quantile. Similarly, the lowest RMSE is obtained
-# by the "gbrt_mse" model, as expected. A bit less intuitive, the best MAPE
-# corresponds to the "gbrt_poisson" model. This is due to the local nature of
-# the Poisson Loss normalization.
+# Even if the score distributions overlap due to the variance in the dataset, it
+# is true that the average RMSE is lower when `loss="squared_error"`, whereas
+# the average MAPE is lower when `loss="absolute_error"` as expected. That is
+# also the case for the Mean Pinball Loss with the quantiles 5 and 95. The score
+# corresponding to the 50 quantile loss is overlapping with the score obtained
+# by minimizing other loss functions, which is also the case for the MAE.
 #
 # A qualitative look at the predictions
 # -------------------------------------
