@@ -492,9 +492,8 @@ shown in the following figure:
    :target: ../auto_examples/gaussian_process/plot_gpr_prior_posterior.html
    :align: center
 
-|details-start|
-**References**
-|details-split|
+References
+----------
 
 .. [RW2006] `Carl E. Rasmussen and Christopher K.I. Williams,
    "Gaussian Processes for Machine Learning",
@@ -502,7 +501,5 @@ shown in the following figure:
 
 .. [Duv2014] `David Duvenaud, "The Kernel Cookbook: Advice on Covariance functions", 2014
    <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
-
-|details-end|
 
 .. currentmodule:: sklearn.gaussian_process
