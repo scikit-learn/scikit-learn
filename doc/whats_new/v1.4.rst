@@ -41,6 +41,9 @@ random sampling procedures.
 Changes impacting all modules
 -----------------------------
 
+- |MajorFeature| Transformers now support polars output with `set_output(transform="polars")`.
+  :pr:`27315` by `Thomas Fan`_.
+
 - |Enhancement| All estimators now recognizes the column names from any dataframe
   that adopts the
   `DataFrame Interchange Protocol <https://data-apis.org/dataframe-protocol/latest/purpose_and_scope.html>`__.
@@ -473,6 +476,10 @@ Changelog
   and of :meth:`neighbors.RadiusNeighborsClassifier.predict_proba` has been improved
   when `radius` is large and `algorithm="brute"` with non-Euclidean metrics.
   :pr:`26828` by :user:`Omar Salman <OmarManzoor>`.
+
+- |Fix| Improve error message for :class:`neighbors.LocalOutlierFactor`
+  when it is invoked with `n_samples = n_neighbors`.
+  :pr:`23317` by :user:`Bharat Raghunathan <Bharat123rox>`.
 
 :mod:`sklearn.preprocessing`
 ............................

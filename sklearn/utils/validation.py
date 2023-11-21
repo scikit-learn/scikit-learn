@@ -278,6 +278,16 @@ def _is_arraylike_not_scalar(array):
     return _is_arraylike(array) and not np.isscalar(array)
 
 
+def _use_interchange_protocol(X):
+    """Use interchange protocol for non-pandas dataframes that follow the protocol.
+
+    Note: at this point we chose not to use the interchange API on pandas dataframe
+    to ensure strict behavioral backward compatibility with older versions of
+    scikit-learn.
+    """
+    return not _is_pandas_df(X) and hasattr(X, "__dataframe__")
+
+
 def _num_features(X):
     """Return the number of features in an array-like X.
 
@@ -2010,6 +2020,18 @@ def _is_pandas_df(X):
         except KeyError:
             return False
         return isinstance(X, pd.DataFrame)
+    return False
+
+
+def _is_polars_df(X):
+    """Return True if the X is a polars dataframe."""
+    if hasattr(X, "columns") and hasattr(X, "schema"):
+        # Likely a polars DataFrame, we explicitly check the type to confirm.
+        try:
+            pl = sys.modules["polars"]
+        except KeyError:
+            return False
+        return isinstance(X, pl.DataFrame)
     return False
 
 
