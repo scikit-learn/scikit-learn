@@ -256,34 +256,35 @@ for quantile in quantile_list:
             metric = key.split("test_")[1]
             scores = consolidate_scores(cv_results, scores, metric)
 
-scores = pd.DataFrame(scores)
+df = pd.DataFrame(scores)
 
-styled_df_copy = scores.copy()
+styled_df_copy = df.copy()
 
 
 def extract_numeric(value):
     parts = value.split("±")
     mean_value = float(parts[0])
     std_value = float(parts[1].split()[0])
+
     return mean_value, std_value
 
 
 # Convert columns containing "±" to tuples of numerical values
-cols_to_convert = scores.columns[1:]  # Exclude the "loss" column
+cols_to_convert = df.columns[1:]  # Exclude the "loss" column
 for col in cols_to_convert:
-    scores[col] = scores[col].apply(extract_numeric)
+    df[col] = df[col].apply(extract_numeric)
 
-min_values = scores.min()
+min_values = df.min()
 
-# Create a mask for highlighting the minimum values
+# Create a mask for highlighting minimum values
 mask = pd.DataFrame("", index=df.index, columns=df.columns)
 for col in cols_to_convert:
-    mask[col] = scores[col].apply(
+    mask[col] = df[col].apply(
         lambda x: "font-weight: bold" if x == min_values[col] else ""
     )
 
-scores = styled_df_copy.style.apply(lambda x: mask, axis=None)
-scores
+styled_df_copy = styled_df_copy.style.apply(lambda x: mask, axis=None)
+styled_df_copy
 
 
 # %%
