@@ -516,7 +516,7 @@ Changelog
 
 - |Fix| Raise a `NotFittedError` in :class:`preprocessing.OrdinalEncoder` when calling
   `transform` without calling `fit` since `categories` always requires to be checked.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`27821` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.tree`
 ...................
