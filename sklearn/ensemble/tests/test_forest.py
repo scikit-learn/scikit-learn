@@ -597,7 +597,7 @@ def test_forest_oob_warning(ForestEstimator):
         estimator.fit(iris.data, iris.target)
 
 
-@pytest.mark.parametrize("ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values())
+@pytest.mark.parametrize("ForestEstimator", FOREST_CLASSIFIERS.values())
 @pytest.mark.parametrize(
     "X, y, params, err_msg",
     [
