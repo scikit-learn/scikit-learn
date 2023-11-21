@@ -73,17 +73,16 @@ and a two-way PDP between the two features::
 You can access the newly created figure and Axes objects using ``plt.gcf()``
 and ``plt.gca()``.
 
-The ``extra_plots`` parameter adds plots to the partial dependence
-display. These plots can be used to visualize the distribution of the
-features of interest. For more
-details, see
-:ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_extras.py`.
-For example, the following code adds a histogram
-of the features of interest to the partial dependence display:
+The ``marginal_dist`` parameter adds plots to visualize the marginal
+distributions of the feature values directly in the partial dependence display
+figure. For more details, see
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_marginal_dist.py`.
+For example, the following code adds a histogram to the partial dependence
+display:
 ::
 
     >>> PartialDependenceDisplay.from_estimator(clf, X, features,
-    ...     extra_plots='hist')
+    ...     marginal_dist=True)
     <...>
 
 To make a partial dependence plot with categorical features, you need to specify

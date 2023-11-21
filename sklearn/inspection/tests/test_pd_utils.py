@@ -1,14 +1,7 @@
 import numpy as np
 import pytest
 
-from sklearn.cluster import KMeans
-from sklearn.datasets import make_classification, make_regression
-from sklearn.inspection._pd_utils import (
-    _check_feature_names,
-    _get_feature_index,
-    _robust_predict_for_scatter,
-)
-from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
 from sklearn.utils._testing import _convert_container
 
 
@@ -52,58 +45,3 @@ def test_get_feature_index(fx, idx):
 def test_get_feature_names_error(fx, feature_names, err_msg):
     with pytest.raises(ValueError, match=err_msg):
         _get_feature_index(fx, feature_names)
-
-
-class TestRobustPredictForRegression:
-    @pytest.fixture
-    def est(self):
-        X, y = make_regression(n_samples=100, n_features=5, random_state=42)
-        return LinearRegression().fit(X, y)
-
-    def test_predict(self, est):
-        X = np.random.rand(100, 5)
-        y_pred = _robust_predict_for_scatter(X, est, "auto")
-        assert y_pred.shape == (100, 1)
-
-    def test_not_fitted(self):
-        X = np.random.rand(100, 5)
-        est = LinearRegression()
-        with pytest.raises(ValueError):
-            _robust_predict_for_scatter(X, est, "auto")
-
-
-class TestRobustPredictForClassification:
-    @pytest.fixture
-    def lr(self):
-        X, y = make_classification(n_samples=100, n_features=5, random_state=42)
-        return LogisticRegression().fit(X, y)
-
-    @pytest.fixture
-    def km(self):
-        X, y = make_classification(n_samples=100, n_features=5, random_state=42)
-        return KMeans(n_init=10).fit(X, y)
-
-    def test_predict_proba(self, lr):
-        X = np.random.rand(100, 5)
-        y_pred = _robust_predict_for_scatter(X, lr, "predict_proba")
-        assert y_pred.shape == (100, 1)
-
-    def test_decision_function(self, lr):
-        X = np.random.rand(100, 5)
-        y_pred = _robust_predict_for_scatter(X, lr, "decision_function")
-        assert y_pred.shape == (100, 1)
-
-    def test_none_auto(self, km):
-        with pytest.raises(ValueError):
-            X = np.random.rand(100, 5)
-            _ = _robust_predict_for_scatter(X, km, "auto")
-
-    def test_none_predict_proba(self, km):
-        with pytest.raises(ValueError):
-            X = np.random.rand(100, 5)
-            _ = _robust_predict_for_scatter(X, km, "predict_proba")
-
-    def test_none_decision_function(self, km):
-        with pytest.raises(ValueError):
-            X = np.random.rand(100, 5)
-            _ = _robust_predict_for_scatter(X, km, "decision_function")
