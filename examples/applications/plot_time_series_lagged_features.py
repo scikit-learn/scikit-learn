@@ -180,6 +180,16 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import cross_validate
 
+
+def consolidate_scores(cv_results, scores, metric):
+    if metric == "MAPE":
+        scores[metric].append(f"{value.mean():.2f} ± {value.std():.2f}")
+    else:
+        scores[metric].append(f"{value.mean():.1f} ± {value.std():.1f}")
+
+    return scores
+
+
 scoring = {
     "MAPE": make_scorer(mean_absolute_percentage_error),
     "RMSE": make_scorer(root_mean_squared_error),
@@ -206,7 +216,7 @@ for loss_func in loss_functions:
     for key, value in cv_results.items():
         if key.startswith("test_"):
             metric = key.split("test_")[1]
-            scores[metric].append(f"{value.mean():.3f} ± {value.std():.3f}")
+            scores = consolidate_scores(cv_results, scores, metric)
 
 
 # %%
@@ -239,11 +249,12 @@ for quantile in quantile_list:
     )
     time = cv_results["fit_time"]
     scores["fit_time"].append(f"{time.mean():.2f} ± {time.std():.2f} s")
+
     scores["loss"].append(f"quantile {int(quantile*100)}")
     for key, value in cv_results.items():
         if key.startswith("test_"):
             metric = key.split("test_")[1]
-            scores[metric].append(f"{value.mean():.3f} ± {value.std():.3f}")
+            scores = consolidate_scores(cv_results, scores, metric)
 
 scores = pd.DataFrame(scores)
 scores
