@@ -116,7 +116,7 @@ def _clone_parametrized(estimator, *, safe=True):
 
     params_set = new_object.get_params(deep=False)
 
-    # copy callbacks
+    # attach callbacks to the new estimator
     if hasattr(estimator, "_callbacks"):
         new_object._callbacks = estimator._callbacks
 
@@ -672,7 +672,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
     # XXX should be a method of MetaEstimatorMixin but this mixin can't handle all
     # meta-estimators.
     def _propagate_callbacks(self, sub_estimator, *, parent_node):
-        """Propagate the auto-propagated callbacks to a sub-estimator
+        """Propagate the auto-propagated callbacks to a sub-estimator.
 
         Parameters
         ----------
@@ -680,7 +680,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
             The sub-estimator to propagate the callbacks to.
 
         parent_node : ComputationNode instance
-            The computation node in this estimator to set as parent_node to the
+            The computation node in this estimator to set as `parent_node` to the
             computation tree of the sub-estimator. It must be the node where the fit
             method of the sub-estimator is called.
         """
@@ -716,7 +716,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         )
 
     def _eval_callbacks_on_fit_begin(self, *, levels, X=None, y=None):
-        """Evaluate the on_fit_begin method of the callbacks
+        """Evaluate the `on_fit_begin` method of the callbacks.
 
         The computation tree is also built at this point.
 
@@ -757,7 +757,7 @@ class BaseEstimator(_HTMLDocumentationLinkMixin, _MetadataRequester):
         return self._computation_tree
 
     def _eval_callbacks_on_fit_end(self):
-        """Evaluate the on_fit_end method of the callbacks"""
+        """Evaluate the `on_fit_end` method of the callbacks."""
         if not hasattr(self, "_callbacks") or not hasattr(self, "_computation_tree"):
             return
 

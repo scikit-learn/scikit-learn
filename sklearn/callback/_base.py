@@ -7,14 +7,14 @@ from abc import ABC, abstractmethod
 # Not a method of BaseEstimator because it might not be directly called from fit but
 # by a non-method function called by fit
 def _eval_callbacks_on_fit_iter_end(**kwargs):
-    """Evaluate the on_fit_iter_end method of the callbacks
+    """Evaluate the `on_fit_iter_end` method of the callbacks.
 
     This function must be called at the end of each computation node.
 
     Parameters
     ----------
     kwargs : dict
-        arguments passed to the callback.
+        Arguments passed to the callback.
 
     Returns
     -------

@@ -21,18 +21,21 @@ from sklearn.callback.tests._utils import (
     ],
 )
 def test_set_callbacks(callbacks):
-    """Sanity check for the _set_callbacks method"""
+    """Sanity check for the `_set_callbacks` method."""
     estimator = Estimator()
 
     set_callbacks_return = estimator._set_callbacks(callbacks)
     assert hasattr(estimator, "_callbacks")
-    assert estimator._callbacks in (callbacks, [callbacks])
+
+    expected_callbacks = [callbacks] if not isinstance(callbacks, list) else callbacks
+    assert estimator._callbacks == expected_callbacks
+
     assert set_callbacks_return is estimator
 
 
 @pytest.mark.parametrize("callbacks", [None, NotValidCallback()])
 def test_set_callbacks_error(callbacks):
-    """Check the error message when not passing a valid callback to _set_callbacks"""
+    """Check the error message when not passing a valid callback to `_set_callbacks`."""
     estimator = Estimator()
 
     with pytest.raises(TypeError, match="callbacks must be subclasses of BaseCallback"):
@@ -40,7 +43,7 @@ def test_set_callbacks_error(callbacks):
 
 
 def test_propagate_callbacks():
-    """Sanity check for the _propagate_callbacks method"""
+    """Sanity check for the `_propagate_callbacks` method."""
     not_propagated_callback = TestingCallback()
     propagated_callback = TestingAutoPropagatedCallback()
 
@@ -56,7 +59,7 @@ def test_propagate_callbacks():
 
 
 def test_propagate_callback_no_callback():
-    """Check that no callback is propagated if there's no callback"""
+    """Check that no callback is propagated if there's no callback."""
     estimator = Estimator()
     sub_estimator = Estimator()
     estimator._propagate_callbacks(sub_estimator, parent_node=None)
@@ -82,7 +85,7 @@ def test_auto_propagated_callbacks():
 
 
 def test_eval_callbacks_on_fit_begin():
-    """Check that _eval_callbacks_on_fit_begin creates the computation tree"""
+    """Check that `_eval_callbacks_on_fit_begin` creates the computation tree."""
     estimator = Estimator()._set_callbacks(TestingCallback())
     assert not hasattr(estimator, "_computation_tree")
 

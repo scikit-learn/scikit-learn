@@ -13,7 +13,7 @@ from ._utils import Estimator, MetaEstimator
 @pytest.mark.parametrize("n_jobs", [1, 2])
 @pytest.mark.parametrize("prefer", ["threads", "processes"])
 def test_progressbar(n_jobs, prefer, capsys):
-    """Check the output of the progress bars and their completion"""
+    """Check the output of the progress bars and their completion."""
     pytest.importorskip("rich")
 
     est = Estimator()

@@ -5,7 +5,7 @@ import numpy as np
 
 from sklearn.callback import build_computation_tree
 
-levels = [
+LEVELS = [
     {"descr": "level0", "max_iter": 3},
     {"descr": "level1", "max_iter": 5},
     {"descr": "level2", "max_iter": 7},
@@ -14,8 +14,8 @@ levels = [
 
 
 def test_computation_tree():
-    """Check the construction of the computation tree"""
-    computation_tree = build_computation_tree(estimator_name="estimator", levels=levels)
+    """Check the construction of the computation tree."""
+    computation_tree = build_computation_tree(estimator_name="estimator", levels=LEVELS)
     assert computation_tree.estimator_name == ("estimator",)
     assert computation_tree.parent is None
     assert computation_tree.idx == 0
@@ -36,12 +36,12 @@ def test_computation_tree():
 
 
 def test_n_nodes():
-    """Check that the number of node in a comutation tree corresponds to what we expect
-    from the level descriptions
+    """Check that the number of node in a computation tree corresponds to what we expect
+    from the level descriptions.
     """
-    computation_tree = build_computation_tree(estimator_name="", levels=levels)
+    computation_tree = build_computation_tree(estimator_name="", levels=LEVELS)
 
-    max_iter_per_level = [level["max_iter"] for level in levels[:-1]]
+    max_iter_per_level = [level["max_iter"] for level in LEVELS[:-1]]
     expected_n_nodes = 1 + np.sum(np.cumprod(max_iter_per_level))
 
     actual_n_nodes = sum(1 for _ in computation_tree)
@@ -50,8 +50,8 @@ def test_n_nodes():
 
 
 def test_path():
-    """Check that the path from the root to a node is correct"""
-    computation_tree = build_computation_tree(estimator_name="", levels=levels)
+    """Check that the path from the root to a node is correct."""
+    computation_tree = build_computation_tree(estimator_name="", levels=LEVELS)
 
     assert computation_tree.path == [computation_tree]
 

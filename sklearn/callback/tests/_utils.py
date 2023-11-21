@@ -1,11 +1,10 @@
 # License: BSD 3 clause
 # Authors: the scikit-learn developers
 
-from joblib.parallel import Parallel, delayed
-
 from sklearn.base import BaseEstimator, _fit_context, clone
 from sklearn.callback import BaseCallback
 from sklearn.callback._base import _eval_callbacks_on_fit_iter_end
+from sklearn.utils.parallel import Parallel, delayed
 
 
 class TestingCallback(BaseCallback):
@@ -24,6 +23,8 @@ class TestingAutoPropagatedCallback(TestingCallback):
 
 
 class NotValidCallback:
+    """Unvalid callback since it does not inherit from `BaseCallback`."""
+
     def on_fit_begin(self, estimator, *, X=None, y=None):
         pass
 
@@ -88,20 +89,19 @@ class MetaEstimator(BaseEstimator):
         )
 
         Parallel(n_jobs=self.n_jobs, prefer=self.prefer)(
-            delayed(self._func)(self.estimator, X, y, node, i)
-            for i, node in enumerate(root.children)
+            delayed(_func)(self, self.estimator, X, y, node)
+            for _, node in enumerate(root.children)
         )
 
         return self
 
-    def _func(self, estimator, X, y, parent_node, i):
-        for j, node in enumerate(parent_node.children):
-            est = clone(estimator)
-            self._propagate_callbacks(est, parent_node=node)
-            est.fit(X, y)
 
-            _eval_callbacks_on_fit_iter_end(estimator=self, node=node)
+def _func(meta_estimator, inner_estimator, X, y, parent_node):
+    for _, node in enumerate(parent_node.children):
+        est = clone(inner_estimator)
+        meta_estimator._propagate_callbacks(est, parent_node=node)
+        est.fit(X, y)
 
-        _eval_callbacks_on_fit_iter_end(estimator=self, node=parent_node)
+        _eval_callbacks_on_fit_iter_end(estimator=meta_estimator, node=node)
 
-        return
+    _eval_callbacks_on_fit_iter_end(estimator=meta_estimator, node=parent_node)

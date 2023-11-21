@@ -9,7 +9,7 @@ from . import BaseCallback
 
 
 class ProgressBar(BaseCallback):
-    """Callback that displays progress bars for each iterative steps of an estimator"""
+    """Callback that displays progress bars for each iterative steps of an estimator."""
 
     auto_propagate = True
 
@@ -34,19 +34,18 @@ class ProgressBar(BaseCallback):
     def __getstate__(self):
         state = self.__dict__.copy()
         if "progress_monitor" in state:
-            del state["progress_monitor"]
+            del state["progress_monitor"]  # a thread is not picklable
         return state
 
-
-# Custom Progress class to allow showing the tasks in a given order (given by setting
-# the _ordered_tasks attribute). In particular it allows to dynamically create and
-# insert tasks between existing tasks.
 
 try:
     from rich.progress import BarColumn, Progress, TextColumn, TimeRemainingColumn
     from rich.style import Style
 
     class _Progress(Progress):
+        # Custom Progress class to allow showing the tasks in a given order (given by
+        # setting the _ordered_tasks attribute). In particular it allows to dynamically
+        # create and insert tasks between existing tasks.
         def get_renderables(self):
             table = self.make_tasks_table(getattr(self, "_ordered_tasks", []))
             yield table
@@ -56,14 +55,14 @@ except ImportError:
 
 
 class _RichProgressMonitor(Thread):
-    """Thread monitoring the progress of an estimator with rich based display
+    """Thread monitoring the progress of an estimator with rich based display.
 
-    The display is a list of nested rich tasks using rich.Progress. There is one for
+    The display is a list of nested rich tasks using `rich.Progress`. There is one for
     each non-leaf node in the computation tree of the estimator.
 
     Parameters
     ----------
-    queue : multiprocessing.Manager.Queue instance
+    queue : `multiprocessing.Manager.Queue` instance
         This thread will run until the queue is empty.
     """
 
@@ -94,7 +93,7 @@ class _RichProgressMonitor(Thread):
                 self.progress_ctx.refresh()
 
     def _update_task_tree(self, node):
-        """Update the tree of tasks from a new node"""
+        """Update the tree of tasks from a new node."""
         curr_task, parent_task = None, None
 
         for curr_node in node.path:
@@ -116,7 +115,7 @@ class _RichProgressMonitor(Thread):
         curr_task.finished = True
 
     def _update_tasks(self):
-        """Loop through the tasks in their display oder and update their progress"""
+        """Loop through the tasks in their display order and update their progress."""
         self.progress_ctx._ordered_tasks = []
 
         for task_node in self.root_task:
@@ -140,17 +139,17 @@ class _RichProgressMonitor(Thread):
 
 
 class TaskNode:
-    """A node in the tree of rich tasks
+    """A node in the tree of rich tasks.
 
     Parameters
     ----------
-    node : ComputationNode instance
+    node : `ComputationNode` instance
         The computation node this task corresponds to.
 
-    progress_ctx : rich.Progress instance
+    progress_ctx : `rich.Progress` instance
         The progress context to which this task belongs.
 
-    parent : TaskNode instance
+    parent : `TaskNode` instance
         The parent of this task.
     """
 
@@ -165,7 +164,7 @@ class TaskNode:
             self.task_id = progress_ctx.add_task(description, total=node.max_iter)
 
     def _format_task_description(self, node):
-        """Return a formatted description for the task of the node"""
+        """Return a formatted description for the task of the node."""
         colors = ["bright_magenta", "cyan", "dark_orange"]
 
         indent = f"{'  ' * (node.depth)}"
@@ -180,7 +179,7 @@ class TaskNode:
         return f"{style}{indent}{description}"
 
     def __iter__(self):
-        """Pre-order depth-first traversal, excluding leaves"""
+        """Pre-order depth-first traversal, excluding leaves."""
         if self.children:
             yield self
             for child in self.children.values():

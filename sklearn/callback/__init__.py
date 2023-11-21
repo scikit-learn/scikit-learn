@@ -1,3 +1,8 @@
+"""
+The :mod:`sklearn.callback` module implements the framework and off the shelf
+callbacks for scikit-learn estimators.
+"""
+
 # License: BSD 3 clause
 # Authors: the scikit-learn developers
 

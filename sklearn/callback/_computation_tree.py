@@ -3,7 +3,7 @@
 
 
 class ComputationNode:
-    """A node in a computation tree
+    """A node in a computation tree.
 
     Parameters
     ----------
@@ -52,12 +52,12 @@ class ComputationNode:
 
     @property
     def depth(self):
-        """The depth of this node in the computation tree"""
+        """The depth of this node in the computation tree."""
         return 0 if self.parent is None else self.parent.depth + 1
 
     @property
     def path(self):
-        """List of all the nodes in the path from the root to this node"""
+        """List of all the nodes in the path from the root to this node."""
         return [self] if self.parent is None else self.parent.path + [self]
 
     def __iter__(self):
