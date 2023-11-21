@@ -331,12 +331,18 @@ Changelog
 - |API| In :class:`ensemble.AdaBoostClassifier`, the `algorithm` argument `SAMME.R` was
   deprecated and will be removed in 1.6. :pr:`26830` by :user:`Stefanie Senger
   <StefanieSenger>`.
+
 - |Enhancement| A fitted property, ``estimators_samples_``, was added to all Forest methods,
   including
   :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`,
   which allows to retrieve the training sample indices used for each tree estimator.
   :pr:`26736` by :user:`Adam Li <adam2392>`.
+
+- |Fix| ValueError in :class:`ensemble._forest.BaseForest` when requesting OOB score
+  with multioutput model and regression training data for the targets being all
+  rounded to integer, as :func:`~utils.multiclass.type_of_target` recognizes the dataset as
+  a multiclass problem. :pr:`27817` by :user:`Daniele Ongari <danieleongari>`
 
 :mod:`sklearn.feature_selection`
 ................................
