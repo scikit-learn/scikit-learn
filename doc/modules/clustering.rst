@@ -183,7 +183,8 @@ It suffers from various drawbacks:
    :scale: 50
 
 For more detailed descriptions of the issues shown above and how to address them,
-refer to this example: :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`.
+refer to the examples :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`
+and :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py`.
 
 K-means is often referred to as Lloyd's algorithm. In basic terms, the
 algorithm has three steps. The first step chooses the initial centroids, with
