@@ -1600,7 +1600,7 @@ def test_ohe_more_informative_error_message():
 
     msg = (
         "Pandas output does not support sparse data. Set "
-        "sparse_output=False to output pandas DataFrames or disable pandas output"
+        "sparse_output=False to output pandas dataframes or disable Pandas output"
     )
     with pytest.raises(ValueError, match=msg):
         ohe.fit_transform(df)
