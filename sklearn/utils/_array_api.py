@@ -398,6 +398,7 @@ def get_namespace(*arrays):
     except TypeError as e:
         if "The input is not a supported array type" in repr(e):
             return _NUMPY_API_WRAPPER_INSTANCE, False
+        raise
 
     # These namespaces need additional wrapping to smooth out small differences
     # between implementations
@@ -537,10 +538,12 @@ def _signbit(X, X_isinf=None, xp=None):
     if _is_numpy_namespace(xp):
         return numpy.signbit(X)
 
-    X = xp.where(X_isinf or xp.isinf(X), xp.sign(X), X)
-
     # NB: this trick is necessary because signbit(0) can be either True or False,
     # and it affects the result from +-inf/0, despite always having +0 == -0 !
+
+    # This step to avoid invalid inf/+-inf division
+    X = xp.where(X_isinf or xp.isinf(X), xp.sign(X), X)
+
     return (xp.inf / X) < 0
 
 

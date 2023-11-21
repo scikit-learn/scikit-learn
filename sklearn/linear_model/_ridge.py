@@ -278,7 +278,9 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         return dual_coefs.T
 
 
-def _solve_svd(X, y, alpha, xp):
+def _solve_svd(X, y, alpha, xp=None):
+    if xp is None:
+        xp, _ = get_namespace(X)
     U, s, Vt = xp.linalg.svd(X, full_matrices=False)
     idx = s > 1e-15  # same default value as scipy.linalg.pinv
     s_nnz = s[idx][:, xp.newaxis]
@@ -593,7 +595,10 @@ def _ridge_regression(
     fit_intercept=False,
 ):
     xp, is_array_api_compliant = get_namespace(X)
-    device_ = device(X)
+
+    X_is_sparse = sparse.issparse(X)
+    if not X_is_sparse:
+        device_ = device(X)
 
     has_sw = sample_weight is not None
 
@@ -690,9 +695,12 @@ def _ridge_regression(
         )
 
     if alpha.size == 1 and n_targets > 1:
-        alpha = xp.full(
-            shape=(n_targets,), fill_value=alpha, dtype=alpha.dtype, device=device_
-        )
+        if X_is_sparse:
+            alpha = xp.full(shape=(n_targets,), fill_value=alpha, dtype=alpha.dtype)
+        else:
+            alpha = xp.full(
+                shape=(n_targets,), fill_value=alpha, dtype=alpha.dtype, device=device_
+            )
 
     n_iter = None
     if solver == "sparse_cg":
@@ -848,18 +856,23 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
+        if sample_weight is None:
+            input_arrays = (X, y)
+        else:
+            input_arrays = (X, y, sample_weight)
+
+        xp, is_array_api_compliant = get_namespace(*input_arrays)
+
+        if is_array_api_compliant and self.solver not in ["auto", "svd"]:
+            raise ValueError(
+                f"solver='{self.solver}' is not supported for Array API inputs. Only "
+                "'svd' or 'auto' are supported"
+            )
+
         if self.solver == "lbfgs" and not self.positive:
             raise ValueError(
                 "'lbfgs' solver can be used only when positive=True. "
                 "Please use another solver."
-            )
-
-        xp, is_array_api_compliant = get_namespace(X)
-
-        if is_array_api_compliant and self.solver not in ["auto", "svd"]:
-            raise ValueError(
-                f"solver={self.solver} is not supported for Array API inputs. Only "
-                "'svd' or 'auto' are supported"
             )
 
         if self.positive:
@@ -1173,7 +1186,12 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
 
-        xp, _ = get_namespace(X)
+        if sample_weight is None:
+            input_arrays = (X, y)
+        else:
+            input_arrays = (X, y, sample_weight)
+
+        xp, _ = get_namespace(*input_arrays)
 
         X, y = self._validate_data(
             X,
@@ -1184,6 +1202,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             y_numeric=True,
         )
         return super().fit(X, y, sample_weight=sample_weight)
+
+    def _more_tags(self):
+        return {"array_api_support": True}
 
 
 class _RidgeClassifierMixin(LinearClassifierMixin):

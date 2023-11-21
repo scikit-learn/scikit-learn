@@ -238,11 +238,18 @@ def _preprocess_data(
     X_scale : ndarray of shape (n_features,)
         The standard deviation per column of input X.
     """
-    xp, _ = get_namespace(X)
-    device_ = device(X)
+    if sample_weight is None:
+        input_arrays = (X, y)
+    else:
+        input_arrays = (X, y, sample_weight)
+
+    xp, _ = get_namespace(*input_arrays)
     dtype_ = X.dtype
     n_samples, n_features = X.shape
     _X_is_sparse = sp.issparse(X)
+
+    if not _X_is_sparse:
+        device_ = device(X)
 
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
@@ -285,7 +292,7 @@ def _preprocess_data(
             X -= X_offset
 
         if normalize:
-            X_var = X_var.astype(X.dtype, copy=False)
+            X_var = xp.astype(X_var, X.dtype, copy=False)
             # Detect constant features on the computed variance, before taking
             # the np.sqrt. Otherwise constant features cannot be detected with
             # sample weights.
@@ -296,15 +303,25 @@ def _preprocess_data(
                 X_var *= sample_weight.sum()
             X_scale = np.sqrt(X_var, out=X_var)
             X_scale[constant_mask] = 1.0
-            if sp.issparse(X):
+            if _X_is_sparse:
                 inplace_column_scale(X, 1.0 / X_scale)
             else:
                 X /= X_scale
+        elif _X_is_sparse:
+            X_scale = np.ones(n_features, dtype=dtype_)
         else:
             X_scale = xp.ones(n_features, dtype=dtype_, device=device_)
 
         y_offset = _safe_average_axis0(y, sample_weight)
+        y_offset = xp.astype(y_offset, X.dtype, copy=False)
         y -= y_offset
+    elif _X_is_sparse:
+        X_offset = np.zeros(n_features, dtype=dtype_)
+        X_scale = np.ones(n_features, dtype=dtype_)
+        if y.ndim == 1:
+            y_offset = np.zeros((1,), dtype=dtype_)[0]
+        else:
+            y_offset = np.zeros(y.shape[1], dtype=dtype_)
     else:
         X_offset = xp.zeros(n_features, dtype=dtype_, device=device_)
         X_scale = xp.ones(n_features, dtype=dtype_, device=device_)
@@ -343,7 +360,12 @@ def _rescale_data(X, y, sample_weight, inplace=False):
 
     y_rescaled : {array-like, sparse matrix}
     """
-    xp, _ = get_namespace(X)
+    if sample_weight is None:
+        input_arrays = (X, y)
+    else:
+        input_arrays = (X, y, sample_weight)
+
+    xp, _ = get_namespace(*input_arrays)
 
     # Assume that _validate_data and _check_sample_weight have been called by
     # the caller.
@@ -390,7 +412,8 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         X = self._validate_data(X, accept_sparse=["csr", "csc", "coo"], reset=False)
-        return safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
+        coef_T = self.coef_ if (self.coef_.ndim < 2) else self.coef_.T
+        return safe_sparse_dot(X, coef_T, dense_output=True) + self.intercept_
 
     def predict(self, X):
         """
@@ -409,7 +432,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         return self._decision_function(X)
 
     def _set_intercept(self, X_offset, y_offset, X_scale):
-        xp, _ = get_namespace(X_offset)
+        xp, _ = get_namespace(X_offset, y_offset, X_scale)
         """Set the intercept_"""
 
         if self.fit_intercept:
@@ -431,6 +454,9 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
                     intercept_, dtype=intercept_.dtype, order="C", copy=None, xp=xp
                 )
                 intercept_ = xp.reshape(intercept_, shape=(-1,), copy=False)
+
+            if y_offset.ndim < 1:
+                intercept_ = intercept_[0]
 
             self.intercept_ = intercept_
 

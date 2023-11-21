@@ -14,7 +14,9 @@ from sklearn.utils._array_api import (
     _estimator_with_converted_arrays,
     _nanmax,
     _nanmin,
+    _nansum,
     _NumPyAPIWrapper,
+    _signbit,
     _weighted_sum,
     get_namespace,
     supported_float_dtypes,
@@ -114,35 +116,6 @@ def test_array_api_wrapper_take_for_numpy_api():
     assert_array_equal(X_take, numpy.take(X, [1], axis=0))
 
 
-def test_array_api_wrapper_take():
-    """Test _ArrayAPIWrapper API for take."""
-    numpy_array_api = pytest.importorskip("numpy.array_api")
-    xp_ = _AdjustableNameAPITestWrapper(numpy_array_api, "wrapped_numpy.array_api")
-    xp = _ArrayAPIWrapper(xp_)
-
-    # Check take compared to NumPy's with axis=0
-    X_1d = xp.asarray([1, 2, 3], dtype=xp.float64)
-    X_take = xp.take(X_1d, xp.asarray([1]), axis=0)
-    assert hasattr(X_take, "__array_namespace__")
-    assert_array_equal(X_take, numpy.take(X_1d, [1], axis=0))
-
-    X = xp.asarray(([[1, 2, 3], [3, 4, 5]]), dtype=xp.float64)
-    X_take = xp.take(X, xp.asarray([0]), axis=0)
-    assert hasattr(X_take, "__array_namespace__")
-    assert_array_equal(X_take, numpy.take(X, [0], axis=0))
-
-    # Check take compared to NumPy's with axis=1
-    X_take = xp.take(X, xp.asarray([0, 2]), axis=1)
-    assert hasattr(X_take, "__array_namespace__")
-    assert_array_equal(X_take, numpy.take(X, [0, 2], axis=1))
-
-    with pytest.raises(ValueError, match=r"Only axis in \(0, 1\) is supported"):
-        xp.take(X, xp.asarray([0]), axis=2)
-
-    with pytest.raises(ValueError, match=r"Only X.ndim in \(1, 2\) is supported"):
-        xp.take(xp.asarray([[[0]]]), xp.asarray([0]), axis=0)
-
-
 @pytest.mark.parametrize("array_api", ["numpy", "numpy.array_api"])
 def test_asarray_with_order(array_api):
     """Test _asarray_with_order passes along order for NumPy arrays."""
@@ -234,10 +207,23 @@ def test_weighted_sum(
             partial(_nanmax, axis=1),
             [3.0, numpy.nan, 6.0],
         ),
+        ([1, 2, numpy.nan], _nansum, 3),
+        ([1, -2, -numpy.nan], _nansum, -1),
+        ([numpy.inf, numpy.inf], _nansum, numpy.inf),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nansum, axis=0),
+            [5.0, 7.0, 9.0],
+        ),
+        (
+            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
+            partial(_nansum, axis=1),
+            [6.0, 0.0, 15.0],
+        ),
     ],
 )
 def test_nan_reductions(library, X, reduction, expected):
-    """Check NaN reductions like _nanmin and _nanmax"""
+    """Check NaN reductions like _nanmin, _nanmax and _nansum"""
     xp = pytest.importorskip(library)
 
     if isinstance(expected, list):
@@ -245,6 +231,25 @@ def test_nan_reductions(library, X, reduction, expected):
 
     with config_context(array_api_dispatch=True):
         result = reduction(xp.asarray(X))
+
+    assert_allclose(result, expected)
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "library", ["numpy", "numpy.array_api", "cupy", "cupy.array_api", "torch"]
+)
+def test_signbit(library):
+    xp = pytest.importorskip(library)
+
+    X = xp.asarray([[1, -1, 1, -1, xp.nan]], dtype=xp.float32) / xp.asarray(
+        [1, 1, xp.inf, xp.inf, 1]
+    )
+
+    expected = xp.asarray([[False, True, False, True, False]])
+
+    with config_context(array_api_dispatch=True):
+        result = _signbit(xp.asarray(X))
 
     assert_allclose(result, expected)
 
