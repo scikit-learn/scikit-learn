@@ -257,6 +257,32 @@ for quantile in quantile_list:
             scores = consolidate_scores(cv_results, scores, metric)
 
 scores = pd.DataFrame(scores)
+
+styled_df_copy = scores.copy()
+
+
+def extract_numeric(value):
+    parts = value.split("±")
+    mean_value = float(parts[0])
+    std_value = float(parts[1].split()[0])
+    return mean_value, std_value
+
+
+# Convert columns containing "±" to tuples of numerical values
+cols_to_convert = scores.columns[1:]  # Exclude the "loss" column
+for col in cols_to_convert:
+    scores[col] = scores[col].apply(extract_numeric)
+
+min_values = scores.min()
+
+# Create a mask for highlighting the minimum values
+mask = pd.DataFrame("", index=df.index, columns=df.columns)
+for col in cols_to_convert:
+    mask[col] = scores[col].apply(
+        lambda x: "font-weight: bold" if x == min_values[col] else ""
+    )
+
+scores = styled_df_copy.style.apply(lambda x: mask, axis=None)
 scores
 
 
