@@ -9,9 +9,11 @@ from inspect import signature
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import csr_matrix, issparse
+from scipy import sparse
+from scipy.sparse import issparse, isspmatrix
 
 from .._config import config_context, get_config
+from .fixes import parse_version, sp_version
 from .validation import _is_arraylike_not_scalar
 
 
@@ -37,6 +39,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         - an Interval object, representing a continuous or discrete range of numbers
         - the string "array-like"
         - the string "sparse matrix"
+        - the string "sparse container"
         - the string "random_state"
         - callable
         - None, meaning that None is a valid value for the parameter
@@ -116,6 +119,8 @@ def make_constraint(constraint):
         return _ArrayLikes()
     if isinstance(constraint, str) and constraint == "sparse matrix":
         return _SparseMatrices()
+    if isinstance(constraint, str) and constraint == "sparse container":
+        return _SparseContainers()
     if isinstance(constraint, str) and constraint == "random_state":
         return _RandomStates()
     if constraint is callable:
@@ -534,10 +539,20 @@ class _SparseMatrices(_Constraint):
     """Constraint representing sparse matrices."""
 
     def is_satisfied_by(self, val):
-        return issparse(val)
+        return isspmatrix(val)
 
     def __str__(self):
         return "a sparse matrix"
+
+
+class _SparseContainers(_Constraint):
+    """Constraint representing sparse containers."""
+
+    def is_satisfied_by(self, val):
+        return issparse(val)
+
+    def __str__(self):
+        return "a sparse container"
 
 
 class _Callables(_Constraint):
@@ -851,7 +866,12 @@ def generate_valid_param(constraint):
         return np.array([1, 2, 3])
 
     if isinstance(constraint, _SparseMatrices):
-        return csr_matrix([[0, 1], [1, 0]])
+        return sparse.csr_matrix([[0, 1], [1, 0]])
+
+    if isinstance(constraint, _SparseContainers):
+        if sp_version >= parse_version("1.8"):
+            return sparse.csr_array([[0, 1], [1, 0]])
+        return sparse.csr_matrix([[0, 1], [1, 0]])
 
     if isinstance(constraint, _RandomStates):
         return np.random.RandomState(42)

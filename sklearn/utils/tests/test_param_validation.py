@@ -27,6 +27,7 @@ from sklearn.utils._param_validation import (
     _NoneConstraint,
     _PandasNAConstraint,
     _RandomStates,
+    _SparseContainers,
     _SparseMatrices,
     _VerboseHelper,
     generate_invalid_param_val,
@@ -34,6 +35,7 @@ from sklearn.utils._param_validation import (
     make_constraint,
     validate_params,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 
 # Some helpers for the tests
@@ -348,6 +350,7 @@ def test_generate_invalid_param_val_2_intervals(integer_interval, real_interval)
         _NoneConstraint(),
         _RandomStates(),
         _SparseMatrices(),
+        _SparseContainers(),
         _Booleans(),
         Interval(Integral, None, None, closed="neither"),
     ],
@@ -369,6 +372,7 @@ def test_generate_invalid_param_val_all_valid(constraint):
         _NoneConstraint(),
         _RandomStates(),
         _SparseMatrices(),
+        _SparseContainers(),
         _Booleans(),
         _VerboseHelper(),
         MissingValues(),
@@ -405,6 +409,10 @@ def test_generate_valid_param(constraint):
         ("array-like", [[1, 2], [3, 4]]),
         ("array-like", np.array([[1, 2], [3, 4]])),
         ("sparse matrix", csr_matrix([[1, 2], [3, 4]])),
+        *[
+            ("sparse container", container([[1, 2], [3, 4]]))
+            for container in CSR_CONTAINERS
+        ],
         ("random_state", 0),
         ("random_state", np.random.RandomState(0)),
         ("random_state", None),
@@ -439,6 +447,7 @@ def test_is_satisfied_by(constraint_declaration, value):
         (Options(Real, {0.42, 1.23}), Options),
         ("array-like", _ArrayLikes),
         ("sparse matrix", _SparseMatrices),
+        ("sparse container", _SparseContainers),
         ("random_state", _RandomStates),
         (None, _NoneConstraint),
         (callable, _Callables),
