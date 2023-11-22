@@ -437,7 +437,7 @@ def test_assert_compatible_argkmin_results():
     # Detect missing indices within the expected precision level, even when the
     # distances match exactly.
     msg = re.escape(
-        "neighbors in b missing from a: [12]\nneighors in a missing from b: [1]"
+        "neighbors in b missing from a: [12]\nneighbors in a missing from b: [1]"
     )
     with pytest.raises(AssertionError, match=msg):
         assert_compatible_argkmin_results(
@@ -450,7 +450,7 @@ def test_assert_compatible_argkmin_results():
 
     # Detect missing indices outside the expected precision level.
     msg = re.escape(
-        "neighbors in b missing from a: []\nneighors in a missing from b: [3]"
+        "neighbors in b missing from a: []\nneighbors in a missing from b: [3]"
     )
     with pytest.raises(AssertionError, match=msg):
         assert_compatible_argkmin_results(
@@ -464,7 +464,7 @@ def test_assert_compatible_argkmin_results():
     # Detect missing indices outside the expected precision level, in the other
     # direction:
     msg = re.escape(
-        "neighbors in b missing from a: [5]\nneighors in a missing from b: []"
+        "neighbors in b missing from a: [5]\nneighbors in a missing from b: []"
     )
     with pytest.raises(AssertionError, match=msg):
         assert_compatible_argkmin_results(
@@ -571,8 +571,8 @@ def test_assert_compatible_radius_results(check_sorted):
     # Any discrepancy outside the tolerated rounding error range is invalid and
     # indicates a missing neighbor in one of the result sets.
     msg = re.escape(
-        "Query vector with index 0 lead to mismatched result indices:\nneighors in b"
-        " missing from a: []\nneighors in a missing from b: [3]"
+        "Query vector with index 0 lead to mismatched result indices:\nneighbors in b"
+        " missing from a: []\nneighbors in a missing from b: [3]"
     )
     with pytest.raises(AssertionError, match=msg):
         assert_compatible_radius_results(
@@ -585,8 +585,8 @@ def test_assert_compatible_radius_results(check_sorted):
             **tols,
         )
     msg = re.escape(
-        "Query vector with index 0 lead to mismatched result indices:\nneighors in b"
-        " missing from a: [4]\nneighors in a missing from b: [2]"
+        "Query vector with index 0 lead to mismatched result indices:\nneighbors in b"
+        " missing from a: [4]\nneighbors in a missing from b: [2]"
     )
     with pytest.raises(AssertionError, match=msg):
         assert_compatible_radius_results(
