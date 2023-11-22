@@ -519,7 +519,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             if y_type == "unknown" or (
                 self._estimator_type == "classifier"
                 and y_type == "multiclass-multioutput"
-            )):
+            ):
                 # FIXME: we could consider to support multiclass-multioutput if
                 # we introduce or reuse a constructor parameter (e.g.
                 # oob_score) allowing our user to pass a callable defining the
