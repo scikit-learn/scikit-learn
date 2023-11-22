@@ -244,7 +244,6 @@ def _preprocess_data(
         input_arrays = (X, y, sample_weight)
 
     xp, _ = get_namespace(*input_arrays)
-    dtype_ = X.dtype
     n_samples, n_features = X.shape
     _X_is_sparse = sp.issparse(X)
 
@@ -269,6 +268,8 @@ def _preprocess_data(
             else:
                 X = _asarray_with_order(X, order="K", copy=True, xp=xp)
 
+    dtype_ = X.dtype
+
     if fit_intercept:
         if _X_is_sparse:
             X_offset, X_var = mean_variance_axis(X, axis=0, weights=sample_weight)
@@ -288,6 +289,7 @@ def _preprocess_data(
                 # be handled differently when `normalize` is `True` or `False`.
                 X_offset = _safe_average_axis0(X, sample_weight, xp=xp)
 
+            # XXX: this would not work with an array of int input
             X_offset = xp.astype(X_offset, X.dtype, copy=False)
             X -= X_offset
 
@@ -313,7 +315,7 @@ def _preprocess_data(
             X_scale = xp.ones(n_features, dtype=dtype_, device=device_)
 
         y_offset = _safe_average_axis0(y, sample_weight)
-        y_offset = xp.astype(y_offset, X.dtype, copy=False)
+        y_offset = xp.astype(y_offset, y.dtype, copy=False)
         y -= y_offset
     elif _X_is_sparse:
         X_offset = np.zeros(n_features, dtype=dtype_)
@@ -432,8 +434,9 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         return self._decision_function(X)
 
     def _set_intercept(self, X_offset, y_offset, X_scale):
-        xp, _ = get_namespace(X_offset, y_offset, X_scale)
         """Set the intercept_"""
+
+        xp, _ = get_namespace(X_offset, y_offset, X_scale)
 
         if self.fit_intercept:
             # We always want coef_.dtype=X.dtype. For instance, X.dtype can differ from

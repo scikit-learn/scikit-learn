@@ -26,6 +26,7 @@ from sklearn.utils.extmath import (
     _incremental_mean_and_var,
     _randomized_eigsh,
     _safe_accumulator_op,
+    _safe_average_axis0,
     cartesian,
     density,
     log_logistic,
@@ -752,10 +753,8 @@ def test_incremental_weighted_mean_and_variance(
 
     # Compare to weighted average: np.average
     X = rng.normal(loc=mean, scale=var, size=size)
-    expected_mean = _safe_accumulator_op(np.average, X, weights=weight, axis=0)
-    expected_var = _safe_accumulator_op(
-        np.average, (X - expected_mean) ** 2, weights=weight, axis=0
-    )
+    expected_mean = _safe_average_axis0(X, weight)
+    expected_var = _safe_average_axis0((X - expected_mean) ** 2, weight)
     _assert(X, weight, expected_mean, expected_var)
 
     # Compare to unweighted mean: np.mean
