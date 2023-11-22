@@ -339,10 +339,10 @@ Changelog
   which allows to retrieve the training sample indices used for each tree estimator.
   :pr:`26736` by :user:`Adam Li <adam2392>`.
 
-- |Fix| ValueError in :class:`ensemble._forest.BaseForest` when requesting OOB score
-  with multioutput model and regression training data for the targets being all
-  rounded to integer, as :func:`~utils.multiclass.type_of_target` recognizes the dataset as
-  a multiclass problem. :pr:`27817` by :user:`Daniele Ongari <danieleongari>`
+- |Fix| ValueError in :class:`ensemble.RandomForestRegressor` and
+  :class:`ensemble.ExtraTreesRegressor` when requesting OOB score with multioutput model
+  for the targets being all rounded to integer. It was recognized as a multiclass problem.
+  :pr:`27817` by :user:`Daniele Ongari <danieleongari>`
 
 :mod:`sklearn.feature_selection`
 ................................
