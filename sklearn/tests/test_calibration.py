@@ -74,7 +74,7 @@ def test_calibration(data, method, csr_container, ensemble):
     X_test, y_test = X[n_samples:], y[n_samples:]
 
     # Naive-Bayes
-    clf = MultinomialNB(force_alpha=True).fit(X_train, y_train, sample_weight=sw_train)
+    clf = MultinomialNB().fit(X_train, y_train, sample_weight=sw_train)
     prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
     cal_clf = CalibratedClassifierCV(clf, cv=y.size + 1, ensemble=ensemble)
@@ -304,7 +304,7 @@ def test_calibration_prefit(csr_container):
     X_test, y_test = X[2 * n_samples :], y[2 * n_samples :]
 
     # Naive-Bayes
-    clf = MultinomialNB(force_alpha=True)
+    clf = MultinomialNB()
     # Check error if clf not prefit
     unfit_clf = CalibratedClassifierCV(clf, cv="prefit")
     with pytest.raises(NotFittedError):

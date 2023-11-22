@@ -926,26 +926,6 @@ def test_check_accuracy_on_digits():
     assert scores.mean() > 0.86
 
 
-# TODO(1.4): Remove
-@pytest.mark.parametrize("Estimator", DISCRETE_NAIVE_BAYES_CLASSES)
-@pytest.mark.parametrize("alpha", [1, [0.1, 1e-11], 1e-12])
-def test_force_alpha_deprecation(Estimator, alpha):
-    if Estimator is CategoricalNB and isinstance(alpha, list):
-        pytest.skip("CategoricalNB does not support array-like alpha values.")
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    alpha_min = 1e-10
-    msg = "The default value for `force_alpha` will change to `True`"
-    est = Estimator(alpha=alpha)
-    est_force = Estimator(alpha=alpha, force_alpha=True)
-    if np.min(alpha) < alpha_min:
-        with pytest.warns(FutureWarning, match=msg):
-            est.fit(X, y)
-    else:
-        est.fit(X, y)
-    est_force.fit(X, y)
-
-
 def test_check_alpha():
     """The provided value for alpha must only be
     used if alpha < _ALPHA_MIN and force_alpha is True.
