@@ -597,28 +597,35 @@ def test_forest_oob_warning(ForestEstimator):
         estimator.fit(iris.data, iris.target)
 
 
-@pytest.mark.parametrize("ForestEstimator", FOREST_CLASSIFIERS.values())
-@pytest.mark.parametrize(
-    "X, y, params, err_msg",
-    [
-        (
-            iris.data,
-            iris.target,
-            {"oob_score": True, "bootstrap": False},
-            "Out of bag estimation only available if bootstrap=True",
-        ),
-        (
-            iris.data,
-            rng.randint(low=0, high=5, size=(iris.data.shape[0], 2)),
-            {"oob_score": True, "bootstrap": True},
-            "The type of target cannot be used to compute OOB estimates",
-        ),
-    ],
-)
-def test_forest_oob_error(ForestEstimator, X, y, params, err_msg):
+@pytest.mark.parametrize("ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values())
+def test_forest_boostrap_false_oob_error(ForestEstimator):
+    X = iris.data
+    y = iris.target
+    params = {"oob_score": True, "bootstrap": False}
+    err_msg = "Out of bag estimation only available if bootstrap=True"
     estimator = ForestEstimator(**params)
     with pytest.raises(ValueError, match=err_msg):
         estimator.fit(X, y)
+
+
+@pytest.mark.parametrize("ForestClassifier", FOREST_CLASSIFIERS.values())
+def test_forest_moutput_int_oob_error(ForestClassifier):
+    X = iris.data
+    y = rng.randint(low=0, high=5, size=(iris.data.shape[0], 2))
+    params = {"oob_score": True, "bootstrap": True}
+    err_msg = "The type of target cannot be used to compute OOB estimates"
+    estimator = ForestClassifier(**params)
+    with pytest.raises(ValueError, match=err_msg):
+        estimator.fit(X, y)
+
+
+@pytest.mark.parametrize("ForestRegressor", FOREST_REGRESSORS.values())
+def test_forest_moutput_int_oob(ForestRegressor):
+    X = iris.data
+    y = rng.randint(low=0, high=5, size=(iris.data.shape[0], 2))
+    params = {"oob_score": True, "bootstrap": True}
+    estimator = ForestRegressor(**params)
+    estimator.fit(X, y)
 
 
 @pytest.mark.parametrize("oob_score", [True, False])
