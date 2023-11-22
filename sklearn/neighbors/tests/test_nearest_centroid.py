@@ -310,6 +310,7 @@ def test_nan():
         clf.decision_function(T_nan)
 
 
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_nan_sparse(csr_container):
     T_nan_csr = csr_container(T_nan)
     clf = NearestCentroid(priors=[0.2, 0.8], shrink_threshold=0.5)
