@@ -174,7 +174,6 @@ mamba install "$(get_dep conda-lock min)" -y
 
 conda-lock install --log-level DEBUG --name $CONDA_ENV_NAME $LOCK_FILE
 source activate $CONDA_ENV_NAME
-pip install -U git+https://github.com/ArturoAmorQ/sphinx-gallery.git@recommender_system
 
 show_installed_libraries
 
