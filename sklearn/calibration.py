@@ -359,7 +359,14 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             check_is_fitted(self.estimator, attributes=["classes_"])
             self.classes_ = self.estimator.classes_
 
-            predictions = _get_response_and_reshape(estimator, X)
+            predictions, _ = _get_response_values(
+                estimator,
+                X,
+                response_method=["decision_function", "predict_proba"],
+            )
+            # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
+            if predictions.ndim == 1:
+                response = response.reshape(-1, 1)
 
             calibrated_classifier = _fit_calibrator(
                 estimator,
@@ -626,28 +633,20 @@ def _fit_classifier_calibrator_pair(
 
     estimator.fit(X_train, y_train, **fit_params_train)
 
-    predictions = _get_response_and_reshape(estimator, X_test)
+    predictions, _ = _get_response_values(
+        estimator,
+        X_test,
+        response_method=["decision_function", "predict_proba"],
+    )
+    # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
+    if predictions.ndim == 1:
+        response = response.reshape(-1, 1)
 
     sw_test = None if sample_weight is None else _safe_indexing(sample_weight, test)
     calibrated_classifier = _fit_calibrator(
         estimator, predictions, y_test, classes, method, sample_weight=sw_test
     )
     return calibrated_classifier
-
-
-def _get_response_and_reshape(estimator, X, pos_label=None):
-    """Compute response values and reshape binary output to `(n_samples, 1)`."""
-    response, _ = _get_response_values(
-        estimator,
-        X,
-        response_method=["decision_function", "predict_proba"],
-        pos_label=pos_label,
-    )
-    # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
-    binary = len(estimator.classes_) == 2
-    if binary:
-        response = response.reshape(-1, 1)
-    return response
 
 
 def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
@@ -743,7 +742,15 @@ class _CalibratedClassifier:
         proba : array, shape (n_samples, n_classes)
             The predicted probabilities. Can be exact zeros.
         """
-        predictions = _get_response_and_reshape(self.estimator, X)
+        predictions, _ = _get_response_values(
+            self.estimator,
+            X,
+            response_method=["decision_function", "predict_proba"],
+        )
+        # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
+        if predictions.ndim == 1:
+            response = response.reshape(-1, 1)
+
         n_classes = len(self.classes)
 
         label_encoder = LabelEncoder().fit(self.classes)
