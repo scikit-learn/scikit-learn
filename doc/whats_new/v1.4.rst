@@ -571,12 +571,6 @@ Changelog
   passed but `accept_sparse` is `False` now suggests to use `.toarray()` and not
   `X.toarray()`. :pr:`27757` by :user:`Lucy Liu <lucyleeow>`.
 
-Miscellaneous
-.............
-
-- |Enhancement| Update Sphinx-Gallery to 0.15.0 for adding example recommender system.
-  :pr:`26180` by :user:`Arturo Amor <ArturoAmorQ>`.
-
 Code and Documentation Contributors
 -----------------------------------
 
