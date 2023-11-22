@@ -1,10 +1,10 @@
 # License: BSD 3 clause
 # Authors: the scikit-learn developers
 
-import importlib
 from multiprocessing import Manager
 from threading import Thread
 
+from ..utils import check_rich_support
 from . import BaseCallback
 
 
@@ -14,10 +14,7 @@ class ProgressBar(BaseCallback):
     auto_propagate = True
 
     def __init__(self):
-        try:
-            importlib.import_module("rich")  # noqa
-        except ImportError as e:
-            raise ImportError("ProgressBar requires rich installed.") from e
+        check_rich_support()
 
     def on_fit_begin(self, estimator, X=None, y=None):
         self._queue = Manager().Queue()

@@ -64,6 +64,7 @@ common_dependencies_without_coverage = [
     "threadpoolctl",
     "matplotlib",
     "pandas",
+    "rich",
     "pyamg",
     "pytest",
     "pytest-xdist",
@@ -208,6 +209,7 @@ conda_build_metadata_list = [
                     "numpy",
                     "scipy",
                     "pandas",
+                    "rich",
                     "cython",
                     "joblib",
                     "pillow",
@@ -233,7 +235,8 @@ conda_build_metadata_list = [
         "conda_dependencies": (
             ["pypy", "python"]
             + remove_from(
-                common_dependencies_without_coverage, ["python", "pandas", "pillow"]
+                common_dependencies_without_coverage,
+                ["python", "pandas", "rich", "pillow"],
             )
             + ["ccache"]
         ),
@@ -247,7 +250,9 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "win-64",
         "channel": "conda-forge",
-        "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"]) + [
+        "conda_dependencies": remove_from(
+            common_dependencies, ["pandas", "rich", "pyamg"]
+        ) + [
             "wheel",
             "pip",
         ],
@@ -322,7 +327,7 @@ conda_build_metadata_list = [
         "platform": "linux-aarch64",
         "channel": "conda-forge",
         "conda_dependencies": remove_from(
-            common_dependencies_without_coverage, ["pandas", "pyamg"]
+            common_dependencies_without_coverage, ["pandas", "rich", "pyamg"]
         ) + ["pip", "ccache"],
         "package_constraints": {
             "python": "3.9",

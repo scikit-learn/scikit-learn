@@ -1213,3 +1213,19 @@ def check_pandas_support(caller_name):
         return pandas
     except ImportError as e:
         raise ImportError("{} requires pandas.".format(caller_name)) from e
+
+
+def check_rich_support(caller_name):
+    """Raise ImportError with detailed error message if rich is not installed.
+
+    caller should lazily import rich and call this helper before any computation.
+
+    Parameters
+    ----------
+    caller_name : str
+        The name of the caller that requires rich.
+    """
+    try:
+        import rich  # noqa
+    except ImportError as e:
+        raise ImportError("{} requires rich.".format(caller_name)) from e
