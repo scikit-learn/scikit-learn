@@ -1388,6 +1388,9 @@ class KMeans(_BaseKMeans):
 
     For an example of how to use K-Means to perform color quantization see
     :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`.
+
+    For a comparison between K-Means and MiniBatchKMeans refer to example
+    :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`.
     """
 
     _parameter_constraints: dict = {
