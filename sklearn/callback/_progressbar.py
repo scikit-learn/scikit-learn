@@ -14,7 +14,7 @@ class ProgressBar(BaseCallback):
     auto_propagate = True
 
     def __init__(self):
-        check_rich_support()
+        check_rich_support("Progressbar")
 
     def on_fit_begin(self, estimator, X=None, y=None):
         self._queue = Manager().Queue()
