@@ -366,7 +366,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             )
             # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
             if predictions.ndim == 1:
-                response = response.reshape(-1, 1)
+                predictions = predictions.reshape(-1, 1)
 
             calibrated_classifier = _fit_calibrator(
                 estimator,
@@ -640,7 +640,7 @@ def _fit_classifier_calibrator_pair(
     )
     # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
     if predictions.ndim == 1:
-        response = response.reshape(-1, 1)
+        predictions = predictions.reshape(-1, 1)
 
     sw_test = None if sample_weight is None else _safe_indexing(sample_weight, test)
     calibrated_classifier = _fit_calibrator(
@@ -749,7 +749,7 @@ class _CalibratedClassifier:
         )
         # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
         if predictions.ndim == 1:
-            response = response.reshape(-1, 1)
+            predictions = predictions.reshape(-1, 1)
 
         n_classes = len(self.classes)
 
