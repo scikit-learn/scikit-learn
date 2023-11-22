@@ -9,16 +9,14 @@ from scipy import sparse as sp
 from sklearn import datasets
 from sklearn.neighbors import NearestCentroid
 from sklearn.utils import check_random_state
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
-X_csr = sp.csr_matrix(X)  # Sparse matrix
 y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 T_nan = np.asarray([[-1, -1], [2, 2], [3, 2]], dtype=np.float64)
 T_nan[0][0] = float("nan")
-T_csr = sp.csr_matrix(T)
-T_nan_csr = sp.csr_matrix(T_nan)
 T_zero_var = [[1, 2], [1, 2], [1, 2], [1, 2], [1, 2], [1, 2]]
 T_zero_var_csr = sp.csr_matrix([[1, 2], [1, 2], [1, 2], [1, 2], [1, 2], [1, 2]])
 true_result = [-1, 1, 1]
@@ -37,7 +35,12 @@ iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
 
-def test_classification_toy():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_classification_toy(csr_container):
+    # Check classification on a toy dataset, including sparse versions.
+    X_csr = csr_container(X)
+    T_csr = csr_container(T)
+
     # Check classification on a toy dataset, including sparse versions.
     clf = NearestCentroid()
     clf.fit(X, y)
@@ -197,8 +200,10 @@ def test_predict_translated_data():
     assert_array_equal(y_init, y_translate)
 
 
-def test_manhattan_metric():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_manhattan_metric(csr_container):
     # Test the manhattan metric.
+    X_csr = csr_container(X)
 
     clf = NearestCentroid(metric="manhattan")
     clf.fit(X, y)
@@ -290,7 +295,9 @@ def test_zero_var():
         clf.fit(T_zero_var, y)
 
 
-def test_zero_var_csr():
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_zero_var_csr(csr_container):
+    T_zero_var_csr = csr_container(T_zero_var)
     clf = NearestCentroid(priors=[0.2, 0.8])
     with pytest.raises(ValueError):
         clf.fit(T_zero_var_csr, y)
@@ -303,7 +310,8 @@ def test_nan():
         clf.decision_function(T_nan)
 
 
-def test_nan_sparse():
+def test_nan_sparse(csr_container):
+    T_nan_csr = csr_container(T_nan)
     clf = NearestCentroid(priors=[0.2, 0.8], shrink_threshold=0.5)
     clf.fit(X, y)
     with pytest.raises(ValueError):

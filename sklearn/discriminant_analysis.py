@@ -183,7 +183,7 @@ class DiscriminantAnalysisPredictionMixin:
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Array of samples (test vectors).
 
         Returns
@@ -205,7 +205,7 @@ class DiscriminantAnalysisPredictionMixin:
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input vectors, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
@@ -222,7 +222,7 @@ class DiscriminantAnalysisPredictionMixin:
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data.
 
         Returns
@@ -240,7 +240,7 @@ class DiscriminantAnalysisPredictionMixin:
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data.
 
         Returns
@@ -1041,6 +1041,23 @@ class QuadraticDiscriminantAnalysis(
         norm2 = np.array(norm2).T  # shape = [len(X), n_classes]
         u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
         return -0.5 * (norm2 + u) + np.log(self.priors_)
+
+    def decision_function(self, X):
+        """Apply decision function to an array of samples.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Array of samples (test vectors).
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Decision function values related to each class, per sample.
+            In the two-class case, the shape is `(n_samples,)`, giving the
+            log likelihood ratio of the positive class.
+        """
+        return super().decision_function(X)
 
     def predict(self, X):
         """Perform classification on an array of test vectors X.

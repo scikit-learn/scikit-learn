@@ -95,17 +95,17 @@ class NearestCentroid(
 
         .. versionadded:: 1.0
 
-    deviations_ : ndarray of shape(n_classes, n_features)
+    deviations_ : ndarray of shape (n_classes, n_features)
         Deviation of each class using soft thresholding.
 
         .. versionadded:: 1.4
 
-    within_class_std_ : ndarray of shape(n_features,)
+    within_class_std_dev_ : ndarray of shape (n_features,)
         Within-class standard deviation with unshrunked centroids.
 
         .. versionadded:: 1.4
 
-    class_priors_ : ndarray of shape(n_classes,)
+    class_priors_ : ndarray of shape (n_classes,)
         The class prior probabilities.
 
         .. versionadded:: 1.4
@@ -265,12 +265,12 @@ class NearestCentroid(
 
         # Compute within-class std_dev with unshrunked centroids
         variance = np.array(X - self.centroids_[y_ind], copy=False) ** 2
-        self.within_class_std_ = np.array(
+        self.within_class_std_dev_ = np.array(
             np.sqrt(variance.sum(axis=0) / (n_samples - n_classes)), copy=False
         )
-        if any(self.within_class_std_ == 0):
+        if any(self.within_class_std_dev_ == 0):
             warnings.warn(
-                "self.within_class_std_ has at least 1 zerostandard deviation"
+                "self.within_class_std_dev_ has at least 1 zerostandard deviation"
             )
 
         err_msg = "All features have zero variance. Division by zero."
@@ -284,7 +284,7 @@ class NearestCentroid(
         m = np.sqrt((1.0 / nk) - (1.0 / n_samples))
         # Calculate deviation using the standard deviation of centroids.
         # To deter outliers from affecting the results.
-        s = self.within_class_std_ + np.median(self.within_class_std_)
+        s = self.within_class_std_dev_ + np.median(self.within_class_std_dev_)
         mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
         ms = mm * s
         self.deviations_ = np.array(
@@ -325,12 +325,12 @@ class NearestCentroid(
         `self.centroids_`.
         """
         check_is_fitted(self)
-        if len(np.unique(self.class_priors_, return_counts=True)[0]) == 1:
+        if np.isclose(self.class_priors_, 1 / len(self.classes_)).all():
+            # `_validate_data` is called here since we are not calling `super()`
             X = self._validate_data(X, accept_sparse="csr", reset=False)
             return self.classes_[
                 pairwise_distances_argmin(X, self.centroids_, metric=self.metric)
             ]
-        # _validate_data() will validate data during call to super().predict(X)
         else:
             return super().predict(X)
 
@@ -345,10 +345,10 @@ class NearestCentroid(
             (X_normalized.shape[0], self.classes_.size), dtype=np.float64
         )
 
-        mask = self.within_class_std_ != 0
-        X_normalized[:, mask] /= self.within_class_std_[mask]
+        mask = self.within_class_std_dev_ != 0
+        X_normalized[:, mask] /= self.within_class_std_dev_[mask]
         centroids_normalized = self.centroids_.copy()
-        centroids_normalized[:, mask] /= self.within_class_std_[mask]
+        centroids_normalized[:, mask] /= self.within_class_std_dev_[mask]
 
         for class_idx in range(self.classes_.size):
             distances = pairwise_distances(
