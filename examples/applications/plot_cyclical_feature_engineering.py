@@ -165,7 +165,7 @@ X.iloc[train_4]
 # -----------------
 #
 # Gradient Boosting Regression with decision trees is often flexible enough to
-# efficiently handle heterogenous tabular data with a mix of categorical and
+# efficiently handle heterogeneous tabular data with a mix of categorical and
 # numerical features as long as the number of samples is large enough.
 #
 # Here, we use the modern
