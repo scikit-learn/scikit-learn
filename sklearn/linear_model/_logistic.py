@@ -422,7 +422,7 @@ def _logistic_regression_path(
                 fit_intercept=fit_intercept,
             )
         target = Y_multi
-        if solver in "lbfgs":
+        if solver == "lbfgs":
             func = loss.loss_gradient
         elif solver == "newton-cg":
             func = loss.loss
