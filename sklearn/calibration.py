@@ -364,8 +364,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 X,
                 response_method=["decision_function", "predict_proba"],
             )
-            # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
             if predictions.ndim == 1:
+                # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
                 predictions = predictions.reshape(-1, 1)
 
             calibrated_classifier = _fit_calibrator(
@@ -460,9 +460,10 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     n_jobs=self.n_jobs,
                     params=routed_params.estimator.fit,
                 )
-                # Reshape in the binary case
-                if len(self.classes_) == 2:
+                if predictions.ndim == 1:
+                    # Ensure shape (n_samples, 1) in the binary case
                     if method_name == "predict_proba":
+                        # Select the probability column of the postive class
                         predictions = _process_predict_proba(
                             y_pred=predictions,
                             target_type="binary",
@@ -638,8 +639,8 @@ def _fit_classifier_calibrator_pair(
         X_test,
         response_method=["decision_function", "predict_proba"],
     )
-    # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
     if predictions.ndim == 1:
+        # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
         predictions = predictions.reshape(-1, 1)
 
     sw_test = None if sample_weight is None else _safe_indexing(sample_weight, test)
@@ -747,8 +748,8 @@ class _CalibratedClassifier:
             X,
             response_method=["decision_function", "predict_proba"],
         )
-        # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
         if predictions.ndim == 1:
+            # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
             predictions = predictions.reshape(-1, 1)
 
         n_classes = len(self.classes)
