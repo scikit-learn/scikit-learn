@@ -901,11 +901,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
     _parameter_constraints: dict = {
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
-        "affinity": [
-            Hidden(StrOptions({"deprecated"})),
-            StrOptions(set(_VALID_METRICS) | {"precomputed"}),
-            callable,
-        ],
         "metric": [
             StrOptions(set(_VALID_METRICS) | {"precomputed"}),
             callable,
