@@ -895,6 +895,7 @@ def test_dict_learning_online_numerical_consistency(method):
     U_64, V_64 = dict_learning_online(
         X.astype(np.float64),
         n_components=n_components,
+        max_iter=1_000,
         alpha=alpha,
         batch_size=10,
         random_state=0,
@@ -903,6 +904,7 @@ def test_dict_learning_online_numerical_consistency(method):
     U_32, V_32 = dict_learning_online(
         X.astype(np.float32),
         n_components=n_components,
+        max_iter=1_000,
         alpha=alpha,
         batch_size=10,
         random_state=0,
