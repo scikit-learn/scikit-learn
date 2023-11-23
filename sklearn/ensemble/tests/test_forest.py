@@ -34,6 +34,7 @@ from sklearn.ensemble import (
     RandomForestRegressor,
     RandomTreesEmbedding,
 )
+from sklearn.ensemble._forest import _generate_sample_indices, _get_n_samples_bootstrap
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics import (
     explained_variance_score,
@@ -632,10 +633,25 @@ def test_forest_multioutput_integral_regression_target(ForestRegressor):
     as a multiclass-multioutput target and OOB score can be computed.
     """
     X = iris.data
-    y = rng.randint(low=0, high=5, size=(iris.data.shape[0], 2))
-    params = {"oob_score": True, "bootstrap": True}
-    estimator = ForestRegressor(**params)
+    y = rng.randint(low=0, high=10, size=(iris.data.shape[0], 2))
+    estimator = ForestRegressor(n_estimators=20, oob_score=True, bootstrap=True)
     estimator.fit(X, y)
+
+    n_samples_bootstrap = _get_n_samples_bootstrap(len(X), estimator.max_samples)
+    nsamples_test = 3
+    oob_pred = np.zeros([nsamples_test, 2])
+    for isample, sample in enumerate(X[:nsamples_test]):
+        nsamples_oob = 0
+        oob_pred_sample = np.zeros(2)
+        for tree in estimator.estimators_:
+            sample_idx = _generate_sample_indices(
+                tree.random_state, len(X), n_samples_bootstrap
+            )
+            if isample not in sample_idx:
+                nsamples_oob += 1
+                oob_pred_sample += tree.predict(np.atleast_2d(sample))[0]
+        oob_pred[isample] = oob_pred_sample / nsamples_oob
+    assert (oob_pred == estimator.oob_prediction_[:nsamples_test]).all()
 
 
 @pytest.mark.parametrize("oob_score", [True, False])
