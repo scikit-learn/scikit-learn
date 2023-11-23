@@ -1000,6 +1000,7 @@ def test_fetch_openml_validation_parameter(monkeypatch, params, err_msg):
         {"as_frame": True, "parser": "auto"},
         {"as_frame": "auto", "parser": "auto"},
         {"as_frame": False, "parser": "pandas"},
+        {"as_frame": False, "parser": "auto"},
     ],
 )
 def test_fetch_openml_requires_pandas_error(monkeypatch, params):
