@@ -1034,20 +1034,7 @@ def fetch_openml(
                     f"Using `parser={parser_!r}` requires pandas to be installed. "
                     "Alternatively, explicitly set `parser='liac-arff'`."
                 )
-                if parser == "auto":
-                    # TODO(1.4): In version 1.4, we will raise an error instead of
-                    # a warning.
-                    warn(
-                        (
-                            "From version 1.4, `parser='auto'` with `as_frame=False` "
-                            "will use pandas. Either install pandas or set explicitly "
-                            "`parser='liac-arff'` to preserve the current behavior."
-                        ),
-                        FutureWarning,
-                    )
-                    parser_ = "liac-arff"
-                else:
-                    raise ImportError(err_msg) from exc
+                raise ImportError(err_msg) from exc
 
     if return_sparse:
         if as_frame:
