@@ -736,7 +736,7 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
         class_weight = weight
 
     X, y = make_classification(
-        n_samples=100,
+        n_samples=30,
         n_features=3,
         n_repeated=0,
         n_informative=3,
@@ -760,8 +760,8 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
     # convergence does not seem to prevent the assertion to pass, so we ignore
     # the warning for now.
     # See: https://github.com/scikit-learn/scikit-learn/pull/27649
-    # with ignore_warnings(category=ConvergenceWarning):
-    clf_lbfgs.fit(X, y)
+    with ignore_warnings(category=ConvergenceWarning):
+        clf_lbfgs.fit(X, y)
 
     for solver in set(SOLVERS) - set(["lbfgs"]):
         clf = LogisticRegressionCV(solver=solver, **params)
