@@ -1390,13 +1390,16 @@ def test_unknown_category_that_are_negative():
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
 
 
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize(
     "HistGradientBoosting",
     [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
 )
-def test_pandas_categorical_results_same_as_ndarray(HistGradientBoosting):
+def test_dataframe_categorical_results_same_as_ndarray(
+    dataframe_lib, HistGradientBoosting
+):
     """Check that pandas categorical give the same results as ndarray."""
-    pd = pytest.importorskip("pandas")
+    px = pytest.importorskip(dataframe_lib)
 
     rng = np.random.RandomState(42)
     n_samples = 5_000
@@ -1409,10 +1412,9 @@ def test_pandas_categorical_results_same_as_ndarray(HistGradientBoosting):
     y = (f_cat % 3 == 0) & (f_num > 0.2)
 
     X = np.c_[f_num, f_cat]
-    X_df = pd.DataFrame(
-        {"f_num": f_num, "f_cat": pd.Series(f_cat, dtype="category")},
-        columns=["f_num", "f_cat"],
-    )
+    f_cat = [f"cat{c}" for c in f_cat]
+    dtype = "category" if dataframe_lib == "pandas" else px.Categorical
+    X_df = px.DataFrame({"f_num": f_num, "f_cat": px.Series(f_cat, dtype=dtype)})
 
     X_train, X_test, X_train_df, X_test_df, y_train, y_test = train_test_split(
         X, X_df, y, random_state=0
@@ -1439,29 +1441,32 @@ def test_pandas_categorical_results_same_as_ndarray(HistGradientBoosting):
     assert_allclose(hist_np.predict(X_test), hist_pd.predict(X_test_df))
 
 
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize(
     "HistGradientBoosting",
     [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
 )
-def test_pandas_categorical_errors(HistGradientBoosting):
+def test_dataframe_categorical_errors(dataframe_lib, HistGradientBoosting):
     """Check error cases for pandas categorical feature."""
-    pd = pytest.importorskip("pandas")
+    px = pytest.importorskip(dataframe_lib)
 
     msg = "Categorical feature 'f_cat' is expected to have a cardinality <= 16"
     hist = HistGradientBoosting(categorical_features="from_dtype", max_bins=16)
 
     rng = np.random.RandomState(42)
-    f_cat = rng.randint(0, high=100, size=100)
-    X_df = pd.DataFrame({"f_cat": pd.Series(f_cat, dtype="category")})
+    f_cat = rng.randint(0, high=100, size=100).astype(str)
+    dtype = "category" if dataframe_lib == "pandas" else px.Categorical
+    X_df = px.DataFrame({"f_cat": px.Series(f_cat, dtype=dtype)})
     y = rng.randint(0, high=2, size=100)
 
     with pytest.raises(ValueError, match=msg):
         hist.fit(X_df, y)
 
 
-def test_categorical_different_order_same_model():
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
+def test_categorical_different_order_same_model(dataframe_lib):
     """Check that the order of the categorical gives same model."""
-    pd = pytest.importorskip("pandas")
+    px = pytest.importorskip(dataframe_lib)
     rng = np.random.RandomState(42)
     n_samples = 1_000
     f_ints = rng.randint(low=0, high=2, size=n_samples)
@@ -1472,12 +1477,12 @@ def test_categorical_different_order_same_model():
     y[flipped] = 1 - y[flipped]
 
     # Construct categorical where 0 -> A and 1 -> B and 1 -> A and 0 -> B
-    f_cat = pd.Categorical(f_ints)
-    f_cat_a_b = f_cat.rename_categories({0: "A", 1: "B"})
-    f_cat_b_a = f_cat.rename_categories({0: "B", 1: "A"})
+    f_cat_a_b = np.asarray(["A", "B"])[f_ints]
+    f_cat_b_a = np.asarray(["B", "A"])[f_ints]
 
-    df_a_b = pd.DataFrame({"f_cat": f_cat_a_b})
-    df_b_a = pd.DataFrame({"f_cat": f_cat_b_a})
+    dtype = "category" if dataframe_lib == "pandas" else px.Categorical
+    df_a_b = px.DataFrame({"f_cat": px.Series(f_cat_a_b, dtype=dtype)})
+    df_b_a = px.DataFrame({"f_cat": px.Series(f_cat_b_a, dtype=dtype)})
 
     hist_a_b = HistGradientBoostingClassifier(
         categorical_features="from_dtype", random_state=0
@@ -1496,7 +1501,12 @@ def test_categorical_different_order_same_model():
 
 # TODO(1.6): Remove warning and change default in 1.6
 def test_categorical_features_warn():
-    """Raise warning when there are categorical features in the input DataFrame."""
+    """Raise warning when there are categorical features in the input DataFrame.
+
+    This is not tested for polars because polars categories must be strings and
+    strings in X are only supported when categorical_features=='from_dtype' at
+    the moment.
+    """
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame({"a": pd.Series([1, 2, 3], dtype="category"), "b": [4, 5, 6]})
     y = [0, 1, 0]

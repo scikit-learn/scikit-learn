@@ -41,7 +41,6 @@ from ...utils.validation import (
     _check_monotonic_cst,
     _check_sample_weight,
     _check_y,
-    _is_pandas_df,
     check_array,
     check_consistent_length,
     check_is_fitted,
@@ -304,14 +303,25 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 - None if the feature is not categorical
             None if no feature is categorical.
         """
-        X_is_dataframe = _is_pandas_df(X)
+        X_is_dataframe = hasattr(X, "__dataframe__")
+        if X_is_dataframe:
+            categorical_columns_mask = np.asarray(
+                [
+                    c.dtype[0].name == "CATEGORICAL"
+                    and c.describe_categorical["is_dictionary"]
+                    for c in X.__dataframe__().get_columns()
+                ]
+            )
+            X_has_categorical_columns = categorical_columns_mask.any()
+        else:
+            X_has_categorical_columns = False
 
         # TODO(1.6): Remove warning and change default to "from_dtype" in v1.6
         if (
             isinstance(self.categorical_features, str)
             and self.categorical_features == "warn"
         ):
-            if X_is_dataframe and (X.dtypes == "category").any():
+            if X_has_categorical_columns:
                 warnings.warn(
                     (
                         "The categorical_features parameter will change to 'from_dtype'"
@@ -337,7 +347,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         use_pandas_categorical = categorical_by_dtype and X_is_dataframe
         if use_pandas_categorical:
-            categorical_features = np.asarray(X.dtypes == "category")
+            categorical_features = categorical_columns_mask
         else:
             categorical_features = np.asarray(categorical_features)
 
@@ -417,7 +427,16 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if use_pandas_categorical:
                     # pandas categories do not include missing values so there is
                     # no need to filter them out.
-                    categories = X.iloc[:, f_idx].unique().dropna().to_numpy()
+
+                    # relying on the _col attribute is how pandas converts
+                    # interchange Columns up to 2.1.3:
+                    # https://github.com/pandas-dev/pandas/blob/1c606d5f014c5296d6028af28001311b67ee3721/pandas/core/interchange/from_dataframe.py#L211 # noqa
+                    categories = np.sort(
+                        X.__dataframe__()
+                        .get_column(f_idx)
+                        .describe_categorical["categories"]
+                        ._col
+                    )
                     # OrdinalEncoder requires categories backed by numerical values
                     # to be sorted
                     if categories.dtype.kind not in "OUS":
