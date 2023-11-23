@@ -1412,7 +1412,7 @@ def test_dataframe_categorical_results_same_as_ndarray(
     y = (f_cat % 3 == 0) & (f_num > 0.2)
 
     X = np.c_[f_num, f_cat]
-    f_cat = [f"cat{c}" for c in f_cat]
+    f_cat = [f"cat{c:0>3}" for c in f_cat]
     dtype = "category" if dataframe_lib == "pandas" else px.Categorical
     X_df = px.DataFrame({"f_num": f_num, "f_cat": px.Series(f_cat, dtype=dtype)})
 
