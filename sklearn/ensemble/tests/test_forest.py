@@ -54,6 +54,7 @@ from sklearn.utils._testing import (
     skip_if_no_parallel,
 )
 from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.parallel import Parallel
 from sklearn.utils.validation import check_random_state
 
@@ -598,29 +599,38 @@ def test_forest_oob_warning(ForestEstimator):
 
 
 @pytest.mark.parametrize("ForestEstimator", FOREST_CLASSIFIERS_REGRESSORS.values())
-def test_forest_boostrap_false_oob_error(ForestEstimator):
+def test_forest_oob_score_requires_bootstrap(ForestEstimator):
+    """Check that we raise an error if OOB score is requested without
+    activating bootstrapping.
+    """
     X = iris.data
     y = iris.target
-    params = {"oob_score": True, "bootstrap": False}
     err_msg = "Out of bag estimation only available if bootstrap=True"
-    estimator = ForestEstimator(**params)
+    estimator = ForestEstimator(oob_score=True, bootstrap=False)
     with pytest.raises(ValueError, match=err_msg):
         estimator.fit(X, y)
 
 
 @pytest.mark.parametrize("ForestClassifier", FOREST_CLASSIFIERS.values())
-def test_forest_moutput_int_oob_error(ForestClassifier):
+def test_classifier_error_oob_score_multiclass_multioutput(ForestClassifier):
+    """Check that we raise an error with when requesting OOB score with
+    multiclass-multioutput classification target.
+    """
     X = iris.data
     y = rng.randint(low=0, high=5, size=(iris.data.shape[0], 2))
-    params = {"oob_score": True, "bootstrap": True}
+    y_type = type_of_target(y)
+    assert y_type == "multiclass-multioutput"
+    estimator = ForestClassifier(oob_score=True, bootstrap=True)
     err_msg = "The type of target cannot be used to compute OOB estimates"
-    estimator = ForestClassifier(**params)
     with pytest.raises(ValueError, match=err_msg):
         estimator.fit(X, y)
 
 
 @pytest.mark.parametrize("ForestRegressor", FOREST_REGRESSORS.values())
-def test_forest_moutput_int_oob(ForestRegressor):
+def test_forest_multioutput_integral_regression_target(ForestRegressor):
+    """Check that multioutput regression with integral values is not interpreted
+    as a multiclass-multioutput target and OOB score can be computed.
+    """
     X = iris.data
     y = rng.randint(low=0, high=5, size=(iris.data.shape[0], 2))
     params = {"oob_score": True, "bootstrap": True}
