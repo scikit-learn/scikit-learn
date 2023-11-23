@@ -1966,7 +1966,7 @@ def test_check_array_dia_to_int32_indexed_csr_csc_coo(sparse_container, output_f
     """Check the consistency of the indices dtype with sparse matrices/arrays."""
     X = sparse_container([[0, 1], [1, 0]], dtype=np.float64)
 
-    # Explicitely set the dtype of the indexing arrays
+    # Explicitly set the dtype of the indexing arrays
     if hasattr(X, "offsets"):  # DIA matrix
         X.offsets = X.offsets.astype(np.int32)
     elif hasattr(X, "row") and hasattr(X, "col"):  # COO matrix
