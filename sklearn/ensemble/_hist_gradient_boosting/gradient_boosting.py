@@ -437,10 +437,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         .describe_categorical["categories"]
                         ._col
                     )
-                    # OrdinalEncoder requires categories backed by numerical values
-                    # to be sorted
-                    if categories.dtype.kind not in "OUS":
-                        categories = np.sort(categories)
                 else:
                     categories = _unique(_safe_indexing(X, f_idx, axis=1))
                     missing = np.isnan(categories)
