@@ -1267,7 +1267,7 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
 
 
 @pytest.mark.parametrize(
-    "array_namepsace, device, dtype", yield_namespace_device_dtype_combinations()
+    "array_namespace, device, dtype", yield_namespace_device_dtype_combinations()
 )
 @pytest.mark.parametrize(
     "shuffle,stratify",
@@ -1278,8 +1278,8 @@ def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
         (False, None),
     ),
 )
-def test_array_api_train_test_split(shuffle, stratify, array_namepsace, device, dtype):
-    xp, device, dtype = _array_api_for_tests(array_namepsace, device, dtype)
+def test_array_api_train_test_split(shuffle, stratify, array_namespace, device, dtype):
+    xp, device, dtype = _array_api_for_tests(array_namespace, device, dtype)
 
     X = np.arange(100).reshape((10, 10))
     y = np.arange(10)
