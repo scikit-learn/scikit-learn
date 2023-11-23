@@ -651,7 +651,7 @@ def dict_learning_online(
     n_components=2,
     *,
     alpha=1,
-    max_iter=1_000,
+    max_iter=100,
     return_code=True,
     dict_init=None,
     callback=None,
@@ -697,7 +697,7 @@ def dict_learning_online(
         Sparsity controlling parameter.
 
 
-    max_iter : int, default=1_000
+    max_iter : int, default=100
         Maximum number of iterations over the complete dataset before
         stopping independently of any early stopping criterion heuristics.
 
