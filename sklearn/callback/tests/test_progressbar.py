@@ -6,6 +6,8 @@ import re
 import pytest
 
 from sklearn.callback import ProgressBar
+from sklearn.utils import check_rich_support
+from sklearn.utils._testing import SkipTest
 
 from ._utils import Estimator, MetaEstimator
 
@@ -32,3 +34,15 @@ def test_progressbar(n_jobs, prefer, capsys):
     # Check that all bars are 100% complete
     assert re.search(r"100%", captured.out)
     assert not re.search(r"[1-9]%", captured.out)
+
+
+def test_progressbar_requires_rich_error():
+    """Check that we raise an informative error when rich is not installed."""
+    try:
+        check_rich_support("test_fetch_openml_requires_pandas")
+    except ImportError:
+        err_msg = "Progressbar requires rich"
+        with pytest.raises(ImportError, match=err_msg):
+            ProgressBar()
+    else:
+        raise SkipTest("This test requires rich to not be installed.")

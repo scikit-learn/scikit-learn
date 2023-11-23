@@ -95,3 +95,13 @@ def test_eval_callbacks_on_fit_begin():
     ]
     estimator._eval_callbacks_on_fit_begin(levels=levels)
     assert hasattr(estimator, "_computation_tree")
+
+
+def test_no_callback_early_stop():
+    """Check that `eval_callbacks_on_fit_iter_end` doesn't trigger early stopping
+    when there's no callback.
+    """
+    estimator = Estimator()
+    estimator.fit(X=None, y=None)
+
+    assert estimator.n_iter_ == estimator.max_iter

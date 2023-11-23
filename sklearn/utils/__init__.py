@@ -1228,4 +1228,4 @@ def check_rich_support(caller_name):
     try:
         import rich  # noqa
     except ImportError as e:
-        raise ImportError("{} requires rich.".format(caller_name)) from e
+        raise ImportError(f"{caller_name} requires rich.") from e

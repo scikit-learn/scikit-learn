@@ -26,13 +26,13 @@ class NotValidCallback:
     """Unvalid callback since it does not inherit from `BaseCallback`."""
 
     def on_fit_begin(self, estimator, *, X=None, y=None):
-        pass
+        pass  # pragma: no cover
 
     def on_fit_end(self):
-        pass
+        pass  # pragma: no cover
 
     def on_fit_iter_end(self, estimator, node, **kwargs):
-        pass
+        pass  # pragma: no cover
 
 
 class Estimator(BaseEstimator):
