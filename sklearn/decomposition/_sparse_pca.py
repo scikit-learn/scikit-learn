@@ -546,7 +546,9 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
             callback=self.callback,
             tol=self.tol,
             max_no_improvement=self.max_no_improvement,
-        ).fit(X.T)
+        )
+        est.set_output(transform="default")
+        est.fit(X.T)
 
         self.components_, self.n_iter_ = est.transform(X.T).T, est.n_iter_
 
