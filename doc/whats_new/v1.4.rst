@@ -261,7 +261,7 @@ Changelog
   introducing sparsity into the model, making it particularly effective for
   high-dimensional data analysis. It combines the aspects of both PLS and Lasso
   regression to enhance dimensionality reduction and variable selection.
-  See :pr:27836 by :user:James Chapman <jameschapman19>
+  See :pr:`27836` by :user:`James Chapman <jameschapman19>`.
 
 :mod:`sklearn.datasets`
 .......................
